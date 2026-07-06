@@ -1,0 +1,8 @@
+[
+  { "id": "burger_flipper", "title": "Burger Flipper", "locationId": "burger_palace", "wage": 25, "requirements": [] },
+  { "id": "factory_worker", "title": "Factory Worker", "locationId": "factory", "wage": 40, "requirements": [{ "stat": "dependability", "minValue": 30 }] },
+  { "id": "clerk", "title": "Store Clerk", "locationId": "department_store", "wage": 35, "requirements": [{ "stat": "dependability", "minValue": 20 }] },
+  { "id": "junior_exec", "title": "Junior Executive", "locationId": "office_tower", "wage": 75, "requirements": [{ "stat": "education", "minValue": 50 }, { "stat": "dependability", "minValue": 50 }] },
+  { "id": "senior_exec", "title": "Senior Executive", "locationId": "office_tower", "wage": 150, "requirements": [{ "stat": "education", "minValue": 80 }, { "stat": "career", "minValue": 60 }] },
+  { "id": "temp_worker", "title": "Temp Worker", "locationId": "employment_office", "wage": 20, "requirements": [] }
+]

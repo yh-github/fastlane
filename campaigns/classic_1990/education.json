@@ -1,0 +1,23 @@
+[
+  {
+    "id": "associates",
+    "degreeName": "Associate's Degree",
+    "totalCreditsRequired": 6,
+    "classes": [
+      { "name": "English 101", "cost": 25, "creditsAwarded": 2 },
+      { "name": "Math 101", "cost": 25, "creditsAwarded": 2 },
+      { "name": "Science 101", "cost": 30, "creditsAwarded": 2 }
+    ]
+  },
+  {
+    "id": "bachelors",
+    "degreeName": "Bachelor's Degree",
+    "totalCreditsRequired": 12,
+    "classes": [
+      { "name": "Business 201", "cost": 40, "creditsAwarded": 3 },
+      { "name": "Economics 201", "cost": 40, "creditsAwarded": 3 },
+      { "name": "Management 301", "cost": 50, "creditsAwarded": 3 },
+      { "name": "Capstone Project", "cost": 60, "creditsAwarded": 3 }
+    ]
+  }
+]
