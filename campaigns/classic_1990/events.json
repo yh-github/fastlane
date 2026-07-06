@@ -1,0 +1,8 @@
+[
+  { "id": "found_money", "name": "Found Money!", "description": "You found some cash on the sidewalk.", "phase": "any", "probability": 0.05, "effects": [{ "stat": "money", "delta": 20 }] },
+  { "id": "mugged", "name": "Mugged!", "description": "Someone stole your wallet.", "phase": "weekend", "probability": 0.08, "effects": [{ "stat": "money", "delta": -50 }, { "stat": "happiness", "delta": -10 }] },
+  { "id": "great_weekend", "name": "Great Weekend", "description": "You had an amazing time relaxing.", "phase": "weekend", "probability": 0.1, "effects": [{ "stat": "happiness", "delta": 15 }] },
+  { "id": "car_trouble", "name": "Car Trouble", "description": "Your car broke down. Costly repairs.", "phase": "weekday", "probability": 0.06, "effects": [{ "stat": "money", "delta": -40 }] },
+  { "id": "bonus", "name": "Work Bonus!", "description": "Your boss noticed your hard work.", "phase": "weekday", "probability": 0.07, "effects": [{ "stat": "money", "delta": 50 }, { "stat": "career", "delta": 5 }] },
+  { "id": "sick_day", "name": "Sick Day", "description": "You caught a cold and missed obligations.", "phase": "weekday", "probability": 0.08, "effects": [{ "stat": "happiness", "delta": -5 }, { "stat": "dependability", "delta": -3 }] }
+]

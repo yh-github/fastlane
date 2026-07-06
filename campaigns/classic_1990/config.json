@@ -1,0 +1,16 @@
+{
+  "name": "The Fast Lane — Classic 1990",
+  "version": "1.0.0",
+  "description": "Original game campaign based on Jones in the Fast Lane (1990)",
+  "startingMoney": 200,
+  "winConditions": [
+    { "stat": "money", "target": 10000, "label": "Wealth" },
+    { "stat": "happiness", "target": 100, "label": "Happiness" },
+    { "stat": "education", "target": 100, "label": "Education" },
+    { "stat": "career", "target": 100, "label": "Career" }
+  ],
+  "mapRules": {
+    "allowDiagonalMovement": false,
+    "movementCostPerNode": 1
+  }
+}
