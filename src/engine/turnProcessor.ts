@@ -175,6 +175,9 @@ export function processTurnStart(state: GameState): GameState {
       p = processDoctorVisit(p);
     }
 
+    // Reset position to apartment at the start of the week
+    p.position = 'node_apartments';
+
     return p;
   });
 

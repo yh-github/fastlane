@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { initMapRenderer, movePlayerTo } from '../graphics/mapRenderer';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { PlayerState } from '../engine/gameState';
@@ -12,6 +12,7 @@ interface GameMapProps {
 export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current || !campaign) return;
@@ -31,6 +32,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick 
         cleanup();
       } else {
         cleanupRef.current = cleanup;
+        setIsMapReady(true);
       }
     });
 
@@ -44,7 +46,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick 
   }, [campaign]);
 
   useEffect(() => {
-    if (player && campaign) {
+    if (isMapReady && player && campaign) {
       const node = campaign.map.nodes.find(n => n.id === player.position);
       if (node) {
         movePlayerTo({
@@ -54,7 +56,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick 
         });
       }
     }
-  }, [player?.position, campaign]);
+  }, [player?.position, campaign, isMapReady]);
 
   return (
     <div
