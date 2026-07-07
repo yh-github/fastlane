@@ -205,7 +205,7 @@ export interface TurnFlags {
 // ─── Hour Cost Constants ────────────────────────────────────────
 
 export const HOURS_PER_TURN = 60;
-export const COST_BUILDING_ENTRY = 2;
+
 export const COST_WORK_SESSION = 6;
 export const COST_STUDY_SESSION = 6;
 export const COST_JOB_APPLICATION = 4;

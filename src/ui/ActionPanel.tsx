@@ -2,7 +2,7 @@
  * ActionPanel.tsx — Side drawer for player interactions.
  */
 
-import { type PlayerState, COST_BUILDING_ENTRY } from '../engine/gameState';
+import { type PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
 import { JobBoard, StoreFront, UniversityRegistry } from './BuildingInteractions';
 
@@ -32,15 +32,6 @@ export function ActionPanel({ player, campaign, currentBuildingId, onAction }: A
           <p>At: <strong>{building.name}</strong> ({building.archetype})</p>
           <p style={{ fontSize: '12px', fontStyle: 'italic', marginBottom: '10px' }}>{building.description}</p>
           
-          <button 
-            className="action-panel__btn" 
-            onClick={() => onAction({ type: 'enter', buildingId: building.id })} 
-            disabled={player.hoursRemaining < COST_BUILDING_ENTRY}
-            title={`Costs ${COST_BUILDING_ENTRY} hours to enter`}
-          >
-            Enter ({COST_BUILDING_ENTRY}h)
-          </button>
-
           <hr style={{ margin: '15px 0', borderColor: '#333' }} />
 
           {/* Archetype specific panels */}

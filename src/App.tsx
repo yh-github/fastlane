@@ -65,11 +65,7 @@ export default function App() {
     let updatedPlayers = [...gameState.players];
     let player = { ...updatedPlayers[activePlayerIndex] };
     
-    if (payload.type === 'enter') {
-      if (player.hoursRemaining >= 2) {
-        player = spendHours(player, 2);
-      }
-    } else if (payload.type === 'apply') {
+    if (payload.type === 'apply') {
       const jobDef = campaign.jobs.find(j => j.id === payload.jobId);
       if (jobDef) {
         const result = applyForJob(player, jobDef);
