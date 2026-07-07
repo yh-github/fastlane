@@ -155,7 +155,7 @@ export default function App() {
       <SetupScreen onConfirm={(goals) => {
         const updatedPlayers = [...gameState.players];
         updatedPlayers[0].goalAllotment = goals;
-        const firstTurnState = processTurnStart({ ...gameState, players: updatedPlayers });
+        const firstTurnState = processTurnStart({ ...gameState, phase: 'playing', players: updatedPlayers });
         setGameState(firstTurnState);
         addLog('Game started. Good luck!');
       }} />
