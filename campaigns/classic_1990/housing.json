@@ -1,6 +1,16 @@
 [
-  { "id": "shelter", "name": "Homeless Shelter", "rentPerWeek": 0, "deposit": 0, "robberyModifier": 0.3, "description": "Free but risky. High chance of losing belongings." },
-  { "id": "studio", "name": "Studio Apartment", "rentPerWeek": 30, "deposit": 60, "robberyModifier": 0.15, "description": "Tiny but functional." },
-  { "id": "one_bed", "name": "1-Bedroom Apt", "rentPerWeek": 50, "deposit": 100, "robberyModifier": 0.08, "description": "Comfortable living with moderate security." },
-  { "id": "condo", "name": "Luxury Condo", "rentPerWeek": 100, "deposit": 250, "robberyModifier": 0.02, "description": "Top-tier security and happiness bonus." }
+  {
+    "id": "low_cost",
+    "name": "Low-Cost Housing",
+    "baseRent": 325,
+    "isRobberyImmune": false,
+    "description": "Basic apartment. Subject to Wild Willy robberies based on relaxation."
+  },
+  {
+    "id": "security",
+    "name": "Security Apartments",
+    "baseRent": 475,
+    "isRobberyImmune": true,
+    "description": "Safe from robberies. Closer to Black's Market, Bank, and Factory."
+  }
 ]

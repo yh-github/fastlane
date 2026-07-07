@@ -1,12 +1,12 @@
 [
-  { "id": "burger_palace", "name": "Monolith Burger", "archetype": "restaurant", "spritePath": "images/burger_palace.png", "description": "A fast-food joint. Cheap eats, low prestige." },
-  { "id": "university", "name": "City University", "archetype": "education", "spritePath": "images/university.png", "description": "Earn credits toward a degree to unlock better jobs." },
-  { "id": "factory", "name": "Widget Factory", "archetype": "workplace", "spritePath": "images/factory.png", "description": "Blue-collar work. Steady pay, low career ceiling." },
-  { "id": "office_tower", "name": "Corporate Tower", "archetype": "workplace", "spritePath": "images/office_tower.png", "description": "White-collar careers. Higher pay requires education." },
-  { "id": "apartment_complex", "name": "Apartment Complex", "archetype": "housing", "spritePath": "images/apartments.png", "description": "Affordable housing with moderate robbery risk." },
-  { "id": "pawn_shop", "name": "Pawn & Loan", "archetype": "shop", "spritePath": "images/pawn_shop.png", "description": "Buy and sell items at fluctuating prices." },
-  { "id": "department_store", "name": "Department Store", "archetype": "shop", "spritePath": "images/dept_store.png", "description": "Clothes, appliances, and luxury goods." },
-  { "id": "grocery", "name": "Grocery Mart", "archetype": "shop", "spritePath": "images/grocery.png", "description": "Stock up on food to maintain happiness." },
-  { "id": "park", "name": "City Park", "archetype": "leisure", "spritePath": "images/park.png", "description": "Relax and gain happiness for free." },
-  { "id": "employment_office", "name": "Employment Office", "archetype": "service", "spritePath": "images/employment.png", "description": "Browse available job listings." }
+  { "id": "burger_palace", "name": "Monolith Burgers", "archetype": "restaurant", "spritePath": "images/burger_palace.png", "description": "Fast food." },
+  { "id": "university", "name": "Hi-Tech U", "archetype": "education", "spritePath": "images/university.png", "description": "Earn degrees." },
+  { "id": "factory", "name": "Factory", "archetype": "workplace", "spritePath": "images/factory.png", "description": "Blue-collar work." },
+  { "id": "bank", "name": "Bank", "archetype": "bank", "spritePath": "images/bank.png", "description": "Save money, get loans, invest in stocks. Watch out for Wild Willy." },
+  { "id": "apartment_complex", "name": "Rent Office", "archetype": "housing", "spritePath": "images/apartments.png", "description": "Pay rent or change apartments." },
+  { "id": "pawn_shop", "name": "Pawn Shop", "archetype": "pawnshop", "spritePath": "images/pawn_shop.png", "description": "Pawn items for quick cash." },
+  { "id": "qt_clothing", "name": "QT Clothing", "archetype": "shop", "spritePath": "images/qt_clothing.png", "description": "Buy clothes for work." },
+  { "id": "socket_city", "name": "Socket City", "archetype": "shop", "spritePath": "images/socket_city.png", "description": "High-end appliances and electronics." },
+  { "id": "z_mart", "name": "Z-Mart", "archetype": "shop", "spritePath": "images/z_mart.png", "description": "General store. Stock changes weekly." },
+  { "id": "blacks_market", "name": "Black's Market", "archetype": "grocery", "spritePath": "images/blacks_market.png", "description": "Fresh food and lottery tickets. Watch out for Wild Willy." }
 ]

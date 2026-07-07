@@ -1,12 +1,7 @@
 /**
  * dataLoader.ts — Campaign data parser and validator.
  *
- * Responsible for loading, parsing, and validating all JSON data
- * from /campaigns/<campaign_id>/. This is the single gateway
- * between raw campaign data files and the engine's typed models.
- *
- * Design principle: The engine never hard-codes game content.
- * All entities (jobs, items, buildings, etc.) come from campaign JSON.
+ * Single gateway between raw campaign data files and the engine's typed models.
  */
 
 // ─── Campaign Data Types ────────────────────────────────────────
@@ -14,8 +9,11 @@
 export interface CampaignConfig {
   name: string;
   version: string;
+  description: string;
   startingMoney: number;
   winConditions: WinCondition[];
+  timeRules: TimeRules;
+  economyRules: EconomyRules;
   mapRules: Record<string, unknown>;
 }
 
@@ -23,6 +21,27 @@ export interface WinCondition {
   stat: string;
   target: number;
   label: string;
+}
+
+export interface TimeRules {
+  hoursPerTurn: number;
+  buildingEntryCost: number;
+  workSessionCost: number;
+  studySessionCost: number;
+  jobApplicationCost: number;
+  relaxCost: number;
+  newspaperCost: number;
+  starvationPenalty: number;
+  doctorPenalty: number;
+}
+
+export interface EconomyRules {
+  rentGarnishRate: number;
+  rentFee: number;
+  repairCostMin: number;
+  repairCostMax: number;
+  pawnPayoutRate: number;
+  pawnRedeemRate: number;
 }
 
 export interface BuildingDef {
@@ -33,62 +52,72 @@ export interface BuildingDef {
   description: string;
 }
 
+export interface JobRequirements {
+  experience: number;
+  dependability: number;
+  degrees: string[];
+  uniform: 'casual' | 'dress' | 'business';
+}
+
 export interface JobDef {
   id: string;
   title: string;
   locationId: string;
-  wage: number;
-  requirements: JobRequirement[];
-}
-
-export interface JobRequirement {
-  stat: string;
-  minValue: number;
+  baseWage: number;
+  requirements: JobRequirements;
+  perks: string[];
 }
 
 export interface ItemDef {
   id: string;
   name: string;
-  category: 'food' | 'clothes' | 'appliance' | 'luxury';
-  price: number;
+  category: 'appliance' | 'clothes' | 'food' | 'book' | 'ticket' | 'junk';
+  store: string;
+  basePrice: number;
   happinessBonus: number;
-  description: string;
+  weeks?: number;
+  units?: number;
 }
 
 export interface EducationDef {
   id: string;
-  degreeName: string;
-  classes: EducationClass[];
-  totalCreditsRequired: number;
-}
-
-export interface EducationClass {
   name: string;
-  cost: number;
-  creditsAwarded: number;
+  prerequisites: string[];
+  baseTuitionFee: number;
+  lessonsRequired: number;
+  rewards: {
+    happiness: number;
+    dependability: number;
+    maxDepBoost: number;
+    maxExpBoost: number;
+  };
 }
 
 export interface HousingDef {
   id: string;
   name: string;
-  rentPerWeek: number;
-  deposit: number;
-  robberyModifier: number;
+  baseRent: number;
+  isRobberyImmune: boolean;
   description: string;
 }
 
 export interface EventDef {
   id: string;
-  name: string;
-  description: string;
-  phase: 'weekday' | 'weekend' | 'any';
-  probability: number;
-  effects: EventEffect[];
+  type: string;
+  trigger: string;
+  probability?: number;
+  severity?: string;
+  effects: Record<string, any>;
 }
 
-export interface EventEffect {
-  stat: string;
-  delta: number;
+export interface StockDef {
+  id: string;
+  name: string;
+  type: 'fixed' | 'fluctuating';
+  basePrice: number;
+  minPrice?: number;
+  maxPrice?: number;
+  sellFeePercent?: number;
 }
 
 export interface MapNode {
@@ -115,6 +144,7 @@ export interface CampaignBundle {
   education: EducationDef[];
   housing: HousingDef[];
   events: EventDef[];
+  stocks: StockDef[];
   map: MapData;
 }
 
@@ -122,7 +152,6 @@ export interface CampaignBundle {
 
 /**
  * Load a single JSON file from a campaign directory.
- * Uses Vite's dynamic import to resolve from /campaigns/.
  */
 async function loadJSON<T>(campaignId: string, filename: string): Promise<T> {
   const url = `/campaigns/${campaignId}/${filename}`;
@@ -137,7 +166,6 @@ async function loadJSON<T>(campaignId: string, filename: string): Promise<T> {
 
 /**
  * Validate that a loaded config has required fields.
- * Throws descriptive errors for missing/invalid data.
  */
 function validateConfig(config: unknown): asserts config is CampaignConfig {
   const c = config as Record<string, unknown>;
@@ -153,7 +181,7 @@ function validateConfig(config: unknown): asserts config is CampaignConfig {
  * @returns            Fully typed and validated campaign data
  */
 export async function loadCampaign(campaignId: string): Promise<CampaignBundle> {
-  const [config, buildings, jobs, items, education, housing, events, map] =
+  const [config, buildings, jobs, items, education, housing, events, stocks, map] =
     await Promise.all([
       loadJSON<CampaignConfig>(campaignId, 'config.json'),
       loadJSON<BuildingDef[]>(campaignId, 'buildings.json'),
@@ -162,19 +190,18 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
       loadJSON<EducationDef[]>(campaignId, 'education.json'),
       loadJSON<HousingDef[]>(campaignId, 'housing.json'),
       loadJSON<EventDef[]>(campaignId, 'events.json'),
+      loadJSON<StockDef[]>(campaignId, 'stocks.json'),
       loadJSON<MapData>(campaignId, 'map.json'),
     ]);
 
   // Validate critical files
   validateConfig(config);
 
-  return { config, buildings, jobs, items, education, housing, events, map };
+  return { config, buildings, jobs, items, education, housing, events, stocks, map };
 }
 
 /**
  * List available campaign IDs.
- * In production this would scan the /campaigns/ directory;
- * for now we maintain a static registry.
  */
 export function getAvailableCampaigns(): string[] {
   return ['classic_1990'];

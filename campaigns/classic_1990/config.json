@@ -1,14 +1,33 @@
 {
   "name": "The Fast Lane — Classic 1990",
   "version": "1.0.0",
-  "description": "Original game campaign based on Jones in the Fast Lane (1990)",
+  "description": "Original game campaign based on Jones in the Fast Lane (CD-ROM Version)",
   "startingMoney": 200,
   "winConditions": [
-    { "stat": "money", "target": 10000, "label": "Wealth" },
+    { "stat": "wealth", "target": 100, "label": "Wealth" },
     { "stat": "happiness", "target": 100, "label": "Happiness" },
     { "stat": "education", "target": 100, "label": "Education" },
     { "stat": "career", "target": 100, "label": "Career" }
   ],
+  "timeRules": {
+    "hoursPerTurn": 60,
+    "buildingEntryCost": 2,
+    "workSessionCost": 6,
+    "studySessionCost": 6,
+    "jobApplicationCost": 4,
+    "relaxCost": 1,
+    "newspaperCost": 1,
+    "starvationPenalty": 20,
+    "doctorPenalty": 10
+  },
+  "economyRules": {
+    "rentGarnishRate": 0.5,
+    "rentFee": 2,
+    "repairCostMin": 0.05,
+    "repairCostMax": 0.25,
+    "pawnPayoutRate": 0.4,
+    "pawnRedeemRate": 0.5
+  },
   "mapRules": {
     "allowDiagonalMovement": false,
     "movementCostPerNode": 1
