@@ -26,6 +26,8 @@ export interface GameState {
   campaignId: string;
   /** Game variant flags */
   variant: GameVariant;
+  /** Winner ID */
+  winnerId: string | null;
 }
 
 export type GamePhase =
@@ -146,7 +148,7 @@ export interface OwnedAppliance {
   /** Price originally paid (affects repair costs) */
   purchasePrice: number;
   /** Where it was bought — affects breakage chance */
-  purchaseSource: 'socket_city' | 'zmart' | 'pawnshop';
+  purchaseSource: 'socket_city' | 'z_mart' | 'pawnshop';
 }
 
 export interface TicketInventory {
@@ -301,6 +303,7 @@ export function createInitialGameState(
       createPlayerState(`player_${i + 1}`, name, startNode)
     ),
     phase: 'setup',
+    winnerId: null,
     campaignId,
     variant,
   };

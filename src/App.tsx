@@ -1,22 +1,29 @@
-/**
- * App.tsx — Main React entry point wrapping Canvas + UI overlay.
- */
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dashboard } from './ui/Dashboard';
 import { ActionPanel } from './ui/ActionPanel';
-import { createInitialGameState, GameState } from './engine/gameState';
+import { GameMap } from './ui/GameMap';
+import { TitleScreen } from './ui/TitleScreen';
+import { SetupScreen } from './ui/SetupScreen';
+import { GameOverScreen } from './ui/GameOverScreen';
+import { GameLog, type LogEntry } from './ui/GameLog';
+import { createInitialGameState, type GameState } from './engine/gameState';
 import { processTurnStart } from './engine/turnProcessor';
 import { spendHours } from './engine/timeManager';
 import { loadCampaign, type CampaignBundle } from './engine/dataLoader';
+import { buildAdjacencyMap, findShortestPath } from './graphics/pathfinding';
+import { applyForJob, workShift } from './engine/jobEngine';
+import { buyItem } from './engine/shoppingEngine';
+import { enrollInDegree, study } from './engine/educationEngine';
 
-type AppStatus = 'loading' | 'playing' | 'error';
+type AppStatus = 'loading' | 'ready' | 'error';
 
 export default function App() {
   const [status, setStatus] = useState<AppStatus>('loading');
   const [campaign, setCampaign] = useState<CampaignBundle | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showTitle, setShowTitle] = useState(true);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
 
   // For single player MVP, track active player
   const activePlayerIndex = 0;
@@ -25,13 +32,9 @@ export default function App() {
     loadCampaign('classic_1990')
       .then((bundle) => {
         setCampaign(bundle);
-        const initialState = createInitialGameState('classic_1990', ['Player 1'], 'node_start', 'cdrom');
-        
-        // Start the first turn immediately
-        const firstTurnState = processTurnStart(initialState);
-        
-        setGameState(firstTurnState);
-        setStatus('playing');
+        const initialState = createInitialGameState('classic_1990', ['Player 1'], 'node_apartments', 'cdrom');
+        setGameState(initialState);
+        setStatus('ready');
       })
       .catch((err) => {
         console.error('[App] Campaign load failed:', err);
@@ -40,29 +43,96 @@ export default function App() {
       });
   }, []);
 
-  const handleAction = (actionType: string) => {
-    if (!gameState) return;
+  const adjacencyMap = useMemo(() => {
+    if (!campaign) return new Map<string, string[]>();
+    return buildAdjacencyMap(campaign.map.nodes);
+  }, [campaign]);
 
-    if (actionType === 'end-turn') {
+  const addLog = (msg: string) => {
+    setLogs(prev => [...prev.slice(-19), { week: gameState?.turn || 1, message: msg }]);
+  };
+
+  const handleAction = (payload: any) => {
+    if (!gameState || !campaign) return;
+
+    if (payload.type === 'end-turn') {
       const nextState = processTurnStart(gameState);
       setGameState(nextState);
+      addLog(`Week ${nextState.turn} begins.`);
       return;
     }
 
-    // Temporary basic hour deduction logic until full building interaction is built
     let updatedPlayers = [...gameState.players];
     let player = { ...updatedPlayers[activePlayerIndex] };
     
-    let cost = 0;
-    if (actionType === 'enter') cost = 2;
-    else if (actionType === 'work' || actionType === 'study') cost = 6;
+    if (payload.type === 'enter') {
+      if (player.hoursRemaining >= 2) {
+        player = spendHours(player, 2);
+      }
+    } else if (payload.type === 'apply') {
+      const jobDef = campaign.jobs.find(j => j.id === payload.jobId);
+      if (jobDef) {
+        const result = applyForJob(player, jobDef);
+        player = result.updated;
+        addLog(result.message);
+      }
+    } else if (payload.type === 'work') {
+      const jobDef = campaign.jobs.find(j => j.id === payload.jobId);
+      if (jobDef) {
+        const result = workShift(player, jobDef);
+        player = result.updated;
+        addLog(`Worked at ${jobDef.title}: Earned $${result.wagesEarned}`);
+      }
+    } else if (payload.type === 'buy') {
+      const itemDef = campaign.items.find(i => i.id === payload.itemId);
+      if (itemDef) {
+        const result = buyItem(player, itemDef);
+        player = result.updated;
+        addLog(result.message);
+      }
+    } else if (payload.type === 'enroll') {
+      const degDef = campaign.education.find(d => d.id === payload.degreeId);
+      if (degDef) {
+        const result = enrollInDegree(player, degDef);
+        player = result.updated;
+        addLog(result.message);
+      }
+    } else if (payload.type === 'study') {
+      const degDef = campaign.education.find(d => d.id === payload.degreeId);
+      if (degDef) {
+        const result = study(player, degDef);
+        player = result.updated;
+        addLog(result.message);
+      }
+    }
+
+    updatedPlayers[activePlayerIndex] = player;
+    setGameState({ ...gameState, players: updatedPlayers });
+  };
+
+  const handleNodeClick = (nodeId: string) => {
+    if (!gameState || !campaign) return;
     
-    if (cost > 0 && player.hoursRemaining >= 1) {
-      // You can do actions if you have at least 1 hour, but you only spend up to what you have
-      const actualCost = Math.min(player.hoursRemaining, cost);
-      player = spendHours(player, actualCost);
-      updatedPlayers[activePlayerIndex] = player;
-      setGameState({ ...gameState, players: updatedPlayers });
+    let updatedPlayers = [...gameState.players];
+    let player = { ...updatedPlayers[activePlayerIndex] };
+
+    // Don't move if we are already there
+    if (player.position === nodeId) return;
+
+    const pathResult = findShortestPath(adjacencyMap, player.position, nodeId);
+    
+    if (pathResult.found) {
+      // Basic movement cost: 1 hour per step
+      const moveCost = pathResult.steps;
+      if (player.hoursRemaining >= moveCost) {
+        player = spendHours(player, moveCost);
+        player.position = nodeId;
+        
+        updatedPlayers[activePlayerIndex] = player;
+        setGameState({ ...gameState, players: updatedPlayers });
+      } else {
+        addLog(`Not enough hours to move. Needed: ${moveCost}, Have: ${player.hoursRemaining}`);
+      }
     }
   };
 
@@ -74,37 +144,62 @@ export default function App() {
     return <div className="error-screen">Error: {errorMsg}</div>;
   }
 
-  const activePlayer = gameState?.players[activePlayerIndex] || null;
+  if (showTitle) {
+    return <TitleScreen onStartGame={() => setShowTitle(false)} />;
+  }
+
+  if (!gameState) return null;
+
+  if (gameState.phase === 'setup') {
+    return (
+      <SetupScreen onConfirm={(goals) => {
+        const updatedPlayers = [...gameState.players];
+        updatedPlayers[0].goalAllotment = goals;
+        const firstTurnState = processTurnStart({ ...gameState, players: updatedPlayers });
+        setGameState(firstTurnState);
+        addLog('Game started. Good luck!');
+      }} />
+    );
+  }
+
+  if (gameState.phase === 'game-over') {
+    return (
+      <GameOverScreen 
+        playerName={gameState.winnerId || 'Player 1'} 
+        turn={gameState.turn}
+        onPlayAgain={() => {
+          setGameState(createInitialGameState('classic_1990', ['Player 1'], 'node_apartments', 'cdrom'));
+          setShowTitle(true);
+          setLogs([]);
+        }}
+      />
+    );
+  }
+
+  const activePlayer = gameState.players[activePlayerIndex] || null;
+  const currentBuildingId = (activePlayer && campaign) 
+    ? (campaign.map.nodes.find(n => n.id === activePlayer.position)?.buildingId || null)
+    : null;
 
   return (
     <div className="app-container">
       <Dashboard 
         player={activePlayer} 
-        turn={gameState?.turn || 1} 
-        economicIndex={gameState?.economicIndex || 0} 
+        turn={gameState.turn} 
+        economicIndex={gameState.economicIndex} 
       />
       <main className="game-viewport">
-        {/* Canvas mount point for PixiJS (Sprint 2) */}
-        <div id="pixi-canvas" className="game-viewport__canvas">
-          <div className="game-viewport__placeholder">
-            <h2>🎮 Fast Lane Modernized</h2>
-            <p>Engine Sprint — Canvas rendering coming in Sprint 2</p>
-            {campaign && <p>Campaign loaded: <strong>{campaign.config.name}</strong></p>}
-            {activePlayer && (
-              <div style={{ marginTop: '20px', textAlign: 'left', background: 'rgba(0,0,0,0.1)', padding: '10px', borderRadius: '4px' }}>
-                <p><strong>Dev State View</strong></p>
-                <p>Position: {activePlayer.position}</p>
-                <p>Bank: ${activePlayer.bankSavings}</p>
-                <p>Dep: {activePlayer.dependability}</p>
-                <p>Exp: {activePlayer.experience}</p>
-              </div>
-            )}
-          </div>
-        </div>
+        <GameMap 
+          campaign={campaign!} 
+          player={activePlayer} 
+          onNodeClick={handleNodeClick} 
+        />
+        <GameLog entries={logs} />
       </main>
       <ActionPanel
         player={activePlayer}
-        currentBuildingId={null} // Default null for now
+        campaign={campaign!}
+        currentBuildingId={currentBuildingId}
         onAction={handleAction}
       />
     </div>

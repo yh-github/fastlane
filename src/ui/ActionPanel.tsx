@@ -2,16 +2,23 @@
  * ActionPanel.tsx — Side drawer for player interactions.
  */
 
-import { PlayerState, COST_BUILDING_ENTRY, COST_WORK_SESSION, COST_STUDY_SESSION } from '../engine/gameState';
+import { type PlayerState, COST_BUILDING_ENTRY } from '../engine/gameState';
+import type { CampaignBundle } from '../engine/dataLoader';
+import { JobBoard, StoreFront, UniversityRegistry } from './BuildingInteractions';
 
 interface ActionPanelProps {
   player: PlayerState | null;
+  campaign: CampaignBundle | null;
   currentBuildingId: string | null;
-  onAction: (actionType: string) => void;
+  onAction: (actionPayload: any) => void;
 }
 
-export function ActionPanel({ player, currentBuildingId, onAction }: ActionPanelProps) {
-  if (!player) return <aside className="action-panel">Loading...</aside>;
+export function ActionPanel({ player, campaign, currentBuildingId, onAction }: ActionPanelProps) {
+  if (!player || !campaign) return <aside className="action-panel">Loading...</aside>;
+
+  const building = currentBuildingId 
+    ? campaign.buildings.find(b => b.id === currentBuildingId) 
+    : null;
 
   return (
     <aside className="action-panel">
@@ -19,40 +26,53 @@ export function ActionPanel({ player, currentBuildingId, onAction }: ActionPanel
       <div className="action-panel__budget">
         {player.hoursRemaining} hour{player.hoursRemaining !== 1 ? 's' : ''} remaining
       </div>
-      {currentBuildingId ? (
+      
+      {building ? (
         <div className="action-panel__context">
-          <p>At: <strong>{currentBuildingId}</strong></p>
-          <div className="action-panel__buttons">
-            <button 
-              className="action-panel__btn" 
-              onClick={() => onAction('enter')} 
-              disabled={player.hoursRemaining < 1}
-              title={`Costs ${COST_BUILDING_ENTRY} hours`}
-            >
-              Enter ({COST_BUILDING_ENTRY}h)
-            </button>
-            <button 
-              className="action-panel__btn" 
-              onClick={() => onAction('work')} 
-              disabled={player.hoursRemaining < 1}
-              title={`Costs up to ${COST_WORK_SESSION} hours`}
-            >
-              Work (up to {COST_WORK_SESSION}h)
-            </button>
-            <button 
-              className="action-panel__btn" 
-              onClick={() => onAction('study')} 
-              disabled={player.hoursRemaining < 1}
-              title={`Costs up to ${COST_STUDY_SESSION} hours`}
-            >
-              Study (up to {COST_STUDY_SESSION}h)
-            </button>
-          </div>
+          <p>At: <strong>{building.name}</strong> ({building.archetype})</p>
+          <p style={{ fontSize: '12px', fontStyle: 'italic', marginBottom: '10px' }}>{building.description}</p>
+          
+          <button 
+            className="action-panel__btn" 
+            onClick={() => onAction({ type: 'enter', buildingId: building.id })} 
+            disabled={player.hoursRemaining < COST_BUILDING_ENTRY}
+            title={`Costs ${COST_BUILDING_ENTRY} hours to enter`}
+          >
+            Enter ({COST_BUILDING_ENTRY}h)
+          </button>
+
+          <hr style={{ margin: '15px 0', borderColor: '#333' }} />
+
+          {/* Archetype specific panels */}
+          {(building.archetype === 'workplace' || building.archetype === 'restaurant') && (
+            <JobBoard 
+              player={player} 
+              onAction={onAction} 
+              availableJobs={campaign.jobs.filter(j => j.locationId === building.id)} 
+            />
+          )}
+
+          {(building.archetype === 'shop' || building.archetype === 'grocery' || building.archetype === 'pawnshop') && (
+            <StoreFront 
+              player={player} 
+              onAction={onAction} 
+              availableItems={campaign.items.filter(i => i.store === building.id)} 
+            />
+          )}
+
+          {building.archetype === 'education' && (
+            <UniversityRegistry 
+              player={player} 
+              onAction={onAction} 
+              availableDegrees={campaign.education} 
+            />
+          )}
+
         </div>
       ) : (
         <p className="action-panel__hint">Move to a building to see available actions.</p>
       )}
-      <button className="action-panel__btn action-panel__btn--secondary" onClick={() => onAction('end-turn')}>
+      <button className="action-panel__btn action-panel__btn--secondary" onClick={() => onAction({ type: 'end-turn' })} style={{ marginTop: 'auto' }}>
         End Turn
       </button>
     </aside>

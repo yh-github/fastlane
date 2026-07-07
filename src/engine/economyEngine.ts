@@ -5,7 +5,7 @@
  * and rent debt garnishment.
  */
 
-import { PlayerState } from './gameState';
+import type { PlayerState } from './gameState';
 
 /**
  * Calculate an economy-adjusted price.

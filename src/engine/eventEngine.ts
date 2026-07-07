@@ -5,7 +5,7 @@
  * and map-based triggers.
  */
 
-import { PlayerState, COST_DOCTOR_VISIT, COST_STARVATION_PENALTY } from './gameState';
+import { type PlayerState, COST_DOCTOR_VISIT, COST_STARVATION_PENALTY } from './gameState';
 import { spendHours } from './timeManager';
 import { calcRobberyChance } from './statMath';
 
@@ -88,8 +88,6 @@ export function processApartmentRobbery(player: PlayerState): PlayerState {
   
   if (Math.random() < chance) {
     let updated = { ...player, inventory: { ...player.inventory } };
-    let appliancesStolen = false;
-
     // Filter appliances. Each stealable durable has 25% chance to be stolen.
     // Fridge, Freezer, Stove can't be stolen.
     updated.inventory.appliances = updated.inventory.appliances.filter((app) => {
@@ -97,7 +95,6 @@ export function processApartmentRobbery(player: PlayerState): PlayerState {
         return true; // Keep
       }
       if (Math.random() < 0.25) {
-        appliancesStolen = true;
         return false; // Stolen
       }
       return true; // Keep
