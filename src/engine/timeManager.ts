@@ -1,107 +1,71 @@
 /**
- * timeManager.ts — Turn progression and phase management.
+ * timeManager.ts — Turn progression and 60-hour clock management.
  *
- * Manages the game clock: weeks, weekdays vs. weekends,
- * and the action-point economy within each phase.
- *
- * The game operates on a Week → Weekend cycle:
- *   - Weekday phase: work, education, shopping
- *   - Weekend phase: leisure, random events, social
+ * Implements the 60 hours/turn economy.
  */
 
-// ─── Types ──────────────────────────────────────────────────────
-
-export type Phase = 'weekday' | 'weekend';
-
-export interface GameTime {
-  /** Current week number (1-indexed, increments each full cycle) */
-  week: number;
-  /** Current phase within the week */
-  phase: Phase;
-  /** Action points remaining in the current phase */
-  actionsRemaining: number;
-  /** Total weeks elapsed since game start */
-  totalWeeksElapsed: number;
-}
-
-export interface TimeConfig {
-  /** Number of action points per weekday phase */
-  weekdayActions: number;
-  /** Number of action points per weekend phase */
-  weekendActions: number;
-  /** Maximum weeks before game ends (0 = unlimited) */
-  maxWeeks: number;
-}
-
-// ─── Constants ──────────────────────────────────────────────────
-
-export const DEFAULT_TIME_CONFIG: TimeConfig = {
-  weekdayActions: 4,
-  weekendActions: 3,
-  maxWeeks: 0,
-};
+import { GameState, PlayerState, HOURS_PER_TURN } from './gameState';
 
 // ─── Time Management Functions ──────────────────────────────────
 
 /**
- * Create the initial game time state.
+ * Check if the player has enough hours to perform an action.
+ * Most actions require at least 1 hour remaining, even if they cost more
+ * (e.g., you can work a 6-hour shift with only 2 hours left, for prorated pay).
+ *
+ * @param player     — The current player state
+ * @param strictCost — Optional: If true, player must have exactly the cost amount (e.g., building entry)
+ * @param cost       — The hour cost of the action
  */
-export function createInitialTime(config?: Partial<TimeConfig>): GameTime {
-  const merged = { ...DEFAULT_TIME_CONFIG, ...config };
-  return {
-    week: 1,
-    phase: 'weekday',
-    actionsRemaining: merged.weekdayActions,
-    totalWeeksElapsed: 0,
-  };
-}
-
-/**
- * Consume one action point. Returns null if no actions remain.
- */
-export function consumeAction(time: GameTime): GameTime | null {
-  if (time.actionsRemaining <= 0) return null;
-  return {
-    ...time,
-    actionsRemaining: time.actionsRemaining - 1,
-  };
-}
-
-/**
- * Advance to the next phase. Weekday → Weekend → next Week's Weekday.
- */
-export function advancePhase(
-  time: GameTime,
-  config: TimeConfig = DEFAULT_TIME_CONFIG
-): GameTime {
-  if (time.phase === 'weekday') {
-    return {
-      ...time,
-      phase: 'weekend',
-      actionsRemaining: config.weekendActions,
-    };
+export function canAffordAction(player: PlayerState, cost: number, strictCost: boolean = false): boolean {
+  if (strictCost) {
+    return player.hoursRemaining >= cost;
   }
-  // Weekend → next week's weekday
+  return player.hoursRemaining >= 1; // "At least 1 hour" rule for most activities
+}
+
+/**
+ * Consume hours from the player's turn.
+ * Does not let hours drop below 0.
+ *
+ * @param player — Current player state
+ * @param cost   — Hours to consume
+ * @returns        A new player state with deducted hours, or the same state if insufficient
+ */
+export function spendHours(player: PlayerState, cost: number): PlayerState {
+  // If they don't even have 1 hour, they can't do anything
+  if (player.hoursRemaining <= 0) return player;
+
+  const newHours = Math.max(0, player.hoursRemaining - cost);
+
   return {
-    week: time.week + 1,
-    phase: 'weekday',
-    actionsRemaining: config.weekdayActions,
-    totalWeeksElapsed: time.totalWeeksElapsed + 1,
+    ...player,
+    hoursRemaining: newHours,
+  };
+}
+
+/**
+ * Reset a player's clock for a new turn.
+ * Applies any caffeine debt carried over from the previous turn.
+ */
+export function resetPlayerClock(player: PlayerState): PlayerState {
+  const startingHours = Math.max(0, HOURS_PER_TURN - player.turnFlags.caffeineDebt);
+  
+  return {
+    ...player,
+    hoursRemaining: startingHours,
+    turnFlags: {
+      ...player.turnFlags,
+      caffeineDebt: 0, // Debt is resolved
+    }
   };
 }
 
 /**
  * Check if the game has reached its time limit.
+ * (Classic game often has no hard limit, or limits based on scenario)
  */
-export function isGameOver(time: GameTime, config: TimeConfig): boolean {
-  if (config.maxWeeks === 0) return false;
-  return time.totalWeeksElapsed >= config.maxWeeks;
-}
-
-/**
- * Get a human-readable label for the current time state.
- */
-export function getTimeLabel(time: GameTime): string {
-  const phaseLabel = time.phase === 'weekday' ? 'Weekday' : 'Weekend';
-  return `Week ${time.week} — ${phaseLabel} (${time.actionsRemaining} actions left)`;
+export function isGameOver(state: GameState, maxTurns: number = 0): boolean {
+  if (maxTurns === 0) return false;
+  return state.turn > maxTurns;
 }

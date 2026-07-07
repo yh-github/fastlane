@@ -2,27 +2,36 @@
  * Dashboard.tsx — Top bar HUD displaying player stats.
  *
  * Shows money, happiness, education, career progress,
- * and the current week/phase indicator.
+ * and the current week/economy indicator.
  */
 
-import type { PlayerStats } from '../engine/statMath';
-import type { GameTime } from '../engine/timeManager';
-import { getTimeLabel } from '../engine/timeManager';
+import type { PlayerState } from '../engine/gameState';
+import { calcEducationProgress, calcCareerProgress, calcWealthProgress } from '../engine/statMath';
 
 interface DashboardProps {
-  stats: PlayerStats;
-  time: GameTime;
+  player: PlayerState | null;
+  turn: number;
+  economicIndex: number;
 }
 
-export function Dashboard({ stats, time }: DashboardProps) {
+export function Dashboard({ player, turn, economicIndex }: DashboardProps) {
+  if (!player) return <header className="dashboard">Loading...</header>;
+
+  const education = calcEducationProgress(player.degrees.length);
+  const career = calcCareerProgress(player.dependability);
+  const wealth = calcWealthProgress(player.money + player.bankSavings);
+
   return (
     <header className="dashboard">
-      <div className="dashboard__time">{getTimeLabel(time)}</div>
+      <div className="dashboard__time">
+        Week {turn} | Econ: {economicIndex > 0 ? '+' : ''}{economicIndex}
+      </div>
       <div className="dashboard__stats">
-        <StatBadge label="Money" value={`$${stats.money}`} icon="💰" />
-        <StatBadge label="Happiness" value={stats.happiness} icon="😊" />
-        <StatBadge label="Education" value={stats.education} icon="🎓" />
-        <StatBadge label="Career" value={stats.career} icon="💼" />
+        <StatBadge label="Money" value={`$${player.money}`} icon="💰" />
+        <StatBadge label="Happiness" value={player.happiness} icon="😊" />
+        <StatBadge label="Education" value={education} icon="🎓" />
+        <StatBadge label="Career" value={career} icon="💼" />
+        <StatBadge label="Wealth" value={wealth} icon="🏦" />
       </div>
     </header>
   );

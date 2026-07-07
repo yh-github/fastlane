@@ -1,23 +1,90 @@
 [
   {
-    "id": "associates",
-    "degreeName": "Associate's Degree",
-    "totalCreditsRequired": 6,
-    "classes": [
-      { "name": "English 101", "cost": 25, "creditsAwarded": 2 },
-      { "name": "Math 101", "cost": 25, "creditsAwarded": 2 },
-      { "name": "Science 101", "cost": 30, "creditsAwarded": 2 }
-    ]
+    "id": "junior_college",
+    "name": "Junior College",
+    "prerequisites": [],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
   },
   {
-    "id": "bachelors",
-    "degreeName": "Bachelor's Degree",
-    "totalCreditsRequired": 12,
-    "classes": [
-      { "name": "Business 201", "cost": 40, "creditsAwarded": 3 },
-      { "name": "Economics 201", "cost": 40, "creditsAwarded": 3 },
-      { "name": "Management 301", "cost": 50, "creditsAwarded": 3 },
-      { "name": "Capstone Project", "cost": 60, "creditsAwarded": 3 }
-    ]
+    "id": "trade_school",
+    "name": "Trade School",
+    "prerequisites": [],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "business_admin",
+    "name": "Business Administration",
+    "prerequisites": ["junior_college"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "academic",
+    "name": "Academic",
+    "prerequisites": ["junior_college"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "electronics",
+    "name": "Electronics",
+    "prerequisites": ["trade_school"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "pre_engineering",
+    "name": "Pre-Engineering",
+    "prerequisites": ["trade_school"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "graduate_school",
+    "name": "Graduate School",
+    "prerequisites": ["academic"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "engineering",
+    "name": "Engineering",
+    "prerequisites": ["pre_engineering"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "post_doctoral",
+    "name": "Post-Doctoral",
+    "prerequisites": ["graduate_school"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "research",
+    "name": "Research",
+    "prerequisites": ["post_doctoral"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "publishing",
+    "name": "Publishing",
+    "prerequisites": ["research"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
   }
 ]

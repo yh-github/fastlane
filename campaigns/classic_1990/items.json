@@ -1,9 +1,49 @@
 [
-  { "id": "burger_meal", "name": "Burger Meal", "category": "food", "price": 5, "happinessBonus": 3, "description": "Greasy but satisfying." },
-  { "id": "groceries", "name": "Week's Groceries", "category": "food", "price": 15, "happinessBonus": 8, "description": "Home-cooked meals keep you going." },
-  { "id": "cheap_clothes", "name": "Basic Outfit", "category": "clothes", "price": 20, "happinessBonus": 5, "description": "Functional clothing." },
-  { "id": "nice_suit", "name": "Business Suit", "category": "clothes", "price": 80, "happinessBonus": 15, "description": "Look sharp for the corporate world." },
-  { "id": "radio", "name": "Radio", "category": "appliance", "price": 30, "happinessBonus": 10, "description": "Background tunes for your apartment." },
-  { "id": "television", "name": "Television", "category": "appliance", "price": 120, "happinessBonus": 20, "description": "Entertainment for lonely weekends." },
-  { "id": "fancy_watch", "name": "Gold Watch", "category": "luxury", "price": 200, "happinessBonus": 25, "description": "A status symbol." }
+  { "id": "refrigerator", "name": "Refrigerator", "category": "appliance", "store": "socket_city", "basePrice": 876, "happinessBonus": 1 },
+  { "id": "freezer", "name": "Freezer", "category": "appliance", "store": "socket_city", "basePrice": 513, "happinessBonus": 2 },
+  { "id": "stove", "name": "Stove", "category": "appliance", "store": "socket_city", "basePrice": 570, "happinessBonus": 1 },
+  { "id": "color_tv", "name": "Color TV", "category": "appliance", "store": "socket_city", "basePrice": 525, "happinessBonus": 2 },
+  { "id": "vcr", "name": "VCR", "category": "appliance", "store": "socket_city", "basePrice": 333, "happinessBonus": 2 },
+  { "id": "stereo", "name": "Stereo", "category": "appliance", "store": "socket_city", "basePrice": 412, "happinessBonus": 2 },
+  { "id": "microwave", "name": "Microwave", "category": "appliance", "store": "socket_city", "basePrice": 330, "happinessBonus": 2 },
+  { "id": "hot_tub", "name": "Hot Tub", "category": "appliance", "store": "socket_city", "basePrice": 1255, "happinessBonus": 3 },
+  { "id": "computer", "name": "Computer", "category": "appliance", "store": "socket_city", "basePrice": 1599, "happinessBonus": 3 },
+
+  { "id": "refrigerator_zmart", "name": "Refrigerator", "category": "appliance", "store": "z_mart", "basePrice": 650, "happinessBonus": 1 },
+  { "id": "stove_zmart", "name": "Stove", "category": "appliance", "store": "z_mart", "basePrice": 490, "happinessBonus": 1 },
+  { "id": "stereo_zmart", "name": "Stereo", "category": "appliance", "store": "z_mart", "basePrice": 450, "happinessBonus": 1 },
+  { "id": "color_tv_zmart", "name": "Color TV", "category": "appliance", "store": "z_mart", "basePrice": 349, "happinessBonus": 1 },
+  { "id": "bw_tv_zmart", "name": "Black & White TV", "category": "appliance", "store": "z_mart", "basePrice": 110, "happinessBonus": 0 },
+  { "id": "microwave_zmart", "name": "Microwave", "category": "appliance", "store": "z_mart", "basePrice": 220, "happinessBonus": 1 },
+  { "id": "vcr_zmart", "name": "VCR", "category": "appliance", "store": "z_mart", "basePrice": 250, "happinessBonus": 1 },
+
+  { "id": "encyclopedia", "name": "Encyclopedia", "category": "book", "store": "z_mart", "basePrice": 475, "happinessBonus": 1 },
+  { "id": "dictionary", "name": "Dictionary", "category": "book", "store": "z_mart", "basePrice": 70, "happinessBonus": 1 },
+  { "id": "atlas", "name": "Atlas", "category": "book", "store": "z_mart", "basePrice": 55, "happinessBonus": 1 },
+
+  { "id": "casual_clothes_qt", "name": "Casual Clothes", "category": "clothes", "store": "qt_clothing", "basePrice": 73, "happinessBonus": 0, "weeks": 11 },
+  { "id": "dress_clothes_qt", "name": "Dress Clothes", "category": "clothes", "store": "qt_clothing", "basePrice": 125, "happinessBonus": 1, "weeks": 13 },
+  { "id": "business_suit_qt", "name": "Business Suit", "category": "clothes", "store": "qt_clothing", "basePrice": 295, "happinessBonus": 2, "weeks": 13 },
+  { "id": "casual_clothes_zmart", "name": "Casual Clothes", "category": "clothes", "store": "z_mart", "basePrice": 35, "happinessBonus": 0, "weeks": 9 },
+  { "id": "dress_clothes_zmart", "name": "Dress Clothes", "category": "clothes", "store": "z_mart", "basePrice": 90, "happinessBonus": 0, "weeks": 9 },
+
+  { "id": "hamburger", "name": "Hamburgers", "category": "food", "store": "burger_palace", "basePrice": 79, "happinessBonus": 0 },
+  { "id": "cheeseburger", "name": "Cheeseburger", "category": "food", "store": "burger_palace", "basePrice": 89, "happinessBonus": 1 },
+  { "id": "astro_chicken", "name": "Astro Chicken", "category": "food", "store": "burger_palace", "basePrice": 124, "happinessBonus": 2 },
+  { "id": "fries", "name": "Fries", "category": "food", "store": "burger_palace", "basePrice": 65, "happinessBonus": 0 },
+  { "id": "food_1week", "name": "Food for 1 Week", "category": "food", "store": "blacks_market", "basePrice": 55, "happinessBonus": 1, "units": 1 },
+  { "id": "food_2weeks", "name": "Food for 2 Weeks", "category": "food", "store": "blacks_market", "basePrice": 100, "happinessBonus": 2, "units": 2 },
+  { "id": "food_4weeks", "name": "Food for 4 Weeks", "category": "food", "store": "blacks_market", "basePrice": 190, "happinessBonus": 4, "units": 4 },
+
+  { "id": "lottery_tickets", "name": "10 Lottery Tickets", "category": "ticket", "store": "blacks_market", "basePrice": 10, "happinessBonus": 2 },
+  { "id": "baseball_tickets", "name": "Baseball Tickets", "category": "ticket", "store": "z_mart", "basePrice": 45, "happinessBonus": 2 },
+  { "id": "theatre_tickets", "name": "Theatre Tickets", "category": "ticket", "store": "z_mart", "basePrice": 30, "happinessBonus": 2 },
+  { "id": "concert_tickets", "name": "Concert Tickets", "category": "ticket", "store": "z_mart", "basePrice": 40, "happinessBonus": 2 },
+
+  { "id": "cola", "name": "Colas", "category": "junk", "store": "burger_palace", "basePrice": 69, "happinessBonus": 1 },
+  { "id": "shake", "name": "Shakes", "category": "junk", "store": "burger_palace", "basePrice": 102, "happinessBonus": 2 },
+  { "id": "newspaper", "name": "Newspaper", "category": "junk", "store": "blacks_market", "basePrice": 1, "happinessBonus": 0 },
+  { "id": "dog_food", "name": "Dog Food", "category": "junk", "store": "z_mart", "basePrice": 18, "happinessBonus": -1 },
+  { "id": "8track", "name": "8-Track Player", "category": "junk", "store": "z_mart", "basePrice": 75, "happinessBonus": -1 },
+  { "id": "capote", "name": "Works of Capote", "category": "junk", "store": "z_mart", "basePrice": 100, "happinessBonus": -2 }
 ]
