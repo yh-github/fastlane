@@ -19,8 +19,8 @@
  * 12. Apartment Robbery
  */
 
-import { GameState, PlayerState, HOURS_PER_TURN } from './gameState';
-import { calcDependabilityDecay } from './statMath';
+import { type GameState } from './gameState';
+import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath';
 import { resetPlayerClock } from './timeManager';
 import { processStarvation, processDoctorVisit, processApartmentRobbery } from './eventEngine';
 import { fluctuateEconomy, applyMarketCrash } from './economyEngine';
@@ -178,11 +178,33 @@ export function processTurnStart(state: GameState): GameState {
     return p;
   });
 
+  // Check Win Conditions
+  let phase = state.phase;
+  let winnerId = state.winnerId;
+
+  for (const p of updatedPlayers) {
+    const wealth = calcWealthProgress(p.money + p.bankSavings);
+    const education = calcEducationProgress(p.degrees.length);
+    const career = calcCareerProgress(p.dependability);
+
+    if (
+      wealth >= p.goalAllotment.wealth &&
+      p.happiness >= p.goalAllotment.happiness &&
+      education >= p.goalAllotment.education &&
+      career >= p.goalAllotment.career
+    ) {
+      phase = 'game-over';
+      winnerId = p.name;
+      break;
+    }
+  }
+
   return {
     ...state,
     economicIndex: newEconomy,
     players: updatedPlayers,
     turn: state.turn + 1,
-    phase: 'playing',
+    phase,
+    winnerId,
   };
 }

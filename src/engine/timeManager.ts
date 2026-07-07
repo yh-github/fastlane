@@ -4,7 +4,7 @@
  * Implements the 60 hours/turn economy.
  */
 
-import { GameState, PlayerState, HOURS_PER_TURN } from './gameState';
+import { type GameState, type PlayerState, HOURS_PER_TURN } from './gameState';
 
 // ─── Time Management Functions ──────────────────────────────────
 

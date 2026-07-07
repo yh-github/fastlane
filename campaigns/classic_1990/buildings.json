@@ -8,5 +8,6 @@
   { "id": "qt_clothing", "name": "QT Clothing", "archetype": "shop", "spritePath": "images/qt_clothing.png", "description": "Buy clothes for work." },
   { "id": "socket_city", "name": "Socket City", "archetype": "shop", "spritePath": "images/socket_city.png", "description": "High-end appliances and electronics." },
   { "id": "z_mart", "name": "Z-Mart", "archetype": "shop", "spritePath": "images/z_mart.png", "description": "General store. Stock changes weekly." },
-  { "id": "blacks_market", "name": "Black's Market", "archetype": "grocery", "spritePath": "images/blacks_market.png", "description": "Fresh food and lottery tickets. Watch out for Wild Willy." }
+  { "id": "blacks_market", "name": "Black's Market", "archetype": "grocery", "spritePath": "images/blacks_market.png", "description": "Fresh food and lottery tickets. Watch out for Wild Willy." },
+  { "id": "employment_office", "name": "Employment Office", "archetype": "employment", "spritePath": "images/employment_office.png", "description": "Look for jobs and apply." }
 ]
