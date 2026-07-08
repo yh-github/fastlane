@@ -297,7 +297,7 @@ export function createInitialGameState(
   variant: GameVariant = 'cdrom'
 ): GameState {
   return {
-    turn: 1,
+    turn: 0,
     economicIndex: 0,
     players: playerNames.map((name, i) =>
       createPlayerState(`player_${i + 1}`, name, startNode)

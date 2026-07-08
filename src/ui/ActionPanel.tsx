@@ -49,6 +49,17 @@ export function ActionPanel({ player, campaign, currentBuildingId, onAction }: A
           
           <hr style={{ margin: '15px 0', borderColor: '#333' }} />
 
+          {/* If your job is at this building, show the Work button prominently at the top */}
+          {playerJobHere && (
+            <div style={{ padding: '10px', background: '#2c3e50', borderRadius: '4px', marginBottom: '15px' }}>
+              <WorkStation
+                player={player}
+                onAction={onAction}
+                job={playerJobHere}
+              />
+            </div>
+          )}
+
           {/* Employment Office: show ALL jobs for applying */}
           {building.archetype === 'employment' && (
             <JobBoard 
@@ -64,15 +75,6 @@ export function ActionPanel({ player, campaign, currentBuildingId, onAction }: A
               player={player} 
               onAction={onAction} 
               availableItems={itemsHere} 
-            />
-          )}
-
-          {/* If your job is at this building, show the Work button */}
-          {playerJobHere && (
-            <WorkStation
-              player={player}
-              onAction={onAction}
-              job={playerJobHere}
             />
           )}
 

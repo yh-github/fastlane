@@ -6,20 +6,48 @@ interface InteractionProps {
   onAction: (actionPayload: any) => void;
 }
 
+import React, { useState } from 'react';
+
 /**
  * JobBoard — Shown at the Employment Office.
- * Lists ALL jobs across the game for applying.
+ * Lists ALL jobs across the game for applying, grouped by building.
  */
 export function JobBoard({ player, onAction, availableJobs }: InteractionProps & { availableJobs: JobDef[] }) {
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+
+  // Group jobs by locationId
+  const locations = Array.from(new Set(availableJobs.map(j => j.locationId)));
+
+  if (!selectedLocation) {
+    return (
+      <div className="interaction-panel">
+        <h3>Job Board: Select Location</h3>
+        {locations.map(loc => {
+          const jobCount = availableJobs.filter(j => j.locationId === loc).length;
+          return (
+            <div key={loc} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444', cursor: 'pointer' }} onClick={() => setSelectedLocation(loc)}>
+              <strong>{loc.replace(/_/g, ' ').toUpperCase()}</strong>
+              <div style={{ fontSize: '12px' }}>{jobCount} position(s) available</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  const jobsAtLocation = availableJobs.filter(j => j.locationId === selectedLocation);
+
   return (
     <div className="interaction-panel">
-      <h3>Job Board</h3>
-      {availableJobs.map(job => {
+      <h3>
+        <button onClick={() => setSelectedLocation(null)} style={{ marginRight: '10px', padding: '2px 5px' }}>← Back</button>
+        Jobs at {selectedLocation.replace(/_/g, ' ')}
+      </h3>
+      {jobsAtLocation.map(job => {
         const isCurrentJob = player.currentJobId === job.id;
         return (
           <div key={job.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444' }}>
             <strong>{job.title}</strong> — ${job.baseWage}/hr
-            <div style={{ fontSize: '11px', color: '#aaa' }}>at {job.locationId.replace(/_/g, ' ')}</div>
             <div style={{ fontSize: '12px' }}>
               Reqs: Exp {job.requirements.experience}, Dep {job.requirements.dependability}
               {job.requirements.degrees.length > 0 && `, Degree: ${job.requirements.degrees.join(', ')}`}

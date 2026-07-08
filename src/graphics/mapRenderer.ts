@@ -173,3 +173,39 @@ export function highlightReachableNodes(nodeIds: string[]): void {
   // TODO: Add visual overlay to reachable nodes in Sprint 3 polish
   console.log('[MapRenderer] Reachable nodes: ', nodeIds);
 }
+
+/**
+ * Animate the player token along a path of nodes.
+ * @param path - Array of positions to visit in order
+ * @param speedMs - Time in milliseconds per step
+ */
+export async function animatePlayerPath(path: PlayerPosition[], speedMs: number = 300): Promise<void> {
+  if (!playerToken || path.length === 0) return;
+  playerToken.visible = true;
+
+  for (const pos of path) {
+    await new Promise<void>((resolve) => {
+      const startX = playerToken!.x;
+      const startY = playerToken!.y;
+      const targetX = pos.x;
+      const targetY = pos.y;
+      
+      const startTime = performance.now();
+      
+      function step(now: number) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / speedMs, 1);
+        
+        playerToken!.x = startX + (targetX - startX) * progress;
+        playerToken!.y = startY + (targetY - startY) * progress;
+        
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          resolve();
+        }
+      }
+      requestAnimationFrame(step);
+    });
+  }
+}
