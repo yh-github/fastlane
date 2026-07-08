@@ -12,7 +12,7 @@
     "name": "Security Apartments",
     "baseRent": 475,
     "isRobberyImmune": true,
-    "homeNodeId": "node_low_cost",
+    "homeNodeId": "node_security",
     "description": "Safe from robberies. More expensive but no risk."
   }
 ]

@@ -176,8 +176,7 @@ export function processTurnStart(state: GameState): GameState {
     }
 
     // Reset position to home at the start of the week
-    // Both housing types currently share the same node on the map
-    p.position = 'node_low_cost';
+    p.position = p.currentHousingId === 'security' ? 'node_security' : 'node_low_cost';
 
     return p;
   });
