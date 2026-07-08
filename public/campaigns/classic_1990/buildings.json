@@ -1,5 +1,6 @@
 [
   { "id": "low_cost_housing", "name": "Low-Cost Housing", "archetype": "home", "spritePath": "images/low_cost_housing.png", "description": "Your starting apartment. Subject to Wild Willy robberies." },
+  { "id": "security_apartments", "name": "Le Security Apartments", "archetype": "home", "spritePath": "images/security_apartments.png", "description": "High end apartments safe from robberies." },
   { "id": "burger_palace", "name": "Monolith Burgers", "archetype": "restaurant", "spritePath": "images/burger_palace.png", "description": "Fast food and drinks." },
   { "id": "factory", "name": "Factory", "archetype": "workplace", "spritePath": "images/factory.png", "description": "Blue-collar and white-collar jobs." },
   { "id": "employment_office", "name": "Employment Office", "archetype": "employment", "spritePath": "images/employment_office.png", "description": "Look for jobs and apply." },
