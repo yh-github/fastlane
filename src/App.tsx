@@ -11,6 +11,7 @@ import { processTurnStart } from './engine/turnProcessor';
 import { spendHours } from './engine/timeManager';
 import { loadCampaign, type CampaignBundle } from './engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath } from './graphics/pathfinding';
+import { initMapRenderer, movePlayerTo, animatePlayerPath, type PlayerPosition } from './graphics/mapRenderer';
 import { applyForJob, workShift } from './engine/jobEngine';
 import { buyItem } from './engine/shoppingEngine';
 import { enrollInDegree, study } from './engine/educationEngine';
@@ -24,6 +25,7 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showTitle, setShowTitle] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // For single player MVP, track active player
   const activePlayerIndex = 0;
@@ -106,8 +108,8 @@ export default function App() {
     setGameState({ ...gameState, players: updatedPlayers });
   };
 
-  const handleNodeClick = (nodeId: string) => {
-    if (!gameState || !campaign) return;
+  const handleNodeClick = async (nodeId: string) => {
+    if (!gameState || !campaign || isAnimating) return;
     
     let updatedPlayers = [...gameState.players];
     let player = { ...updatedPlayers[activePlayerIndex] };
@@ -121,11 +123,24 @@ export default function App() {
       // Basic movement cost: 1 hour per step
       const moveCost = pathResult.steps;
       if (player.hoursRemaining >= moveCost) {
+        setIsAnimating(true);
+        
+        // Build the physical path for animation
+        const pathCoords: PlayerPosition[] = pathResult.path.map(id => {
+          const node = campaign.map.nodes.find(n => n.id === id);
+          return { nodeId: id, x: node!.x, y: node!.y };
+        });
+
+        // The first node in pathCoords is the current position, so slice it off if length > 1
+        // (Wait, findShortestPath includes start node, so we slice(1))
+        await animatePlayerPath(pathCoords.slice(1));
+
         player = spendHours(player, moveCost);
         player.position = nodeId;
         
         updatedPlayers[activePlayerIndex] = player;
         setGameState({ ...gameState, players: updatedPlayers });
+        setIsAnimating(false);
       } else {
         addLog(`Not enough hours to move. Needed: ${moveCost}, Have: ${player.hoursRemaining}`);
       }
