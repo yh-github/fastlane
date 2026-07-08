@@ -1,10 +1,15 @@
 /**
  * ActionPanel.tsx — Side drawer for player interactions.
+ *
+ * In the classic 1990 version:
+ * - Job applications all happen at the Employment Office
+ * - You can only WORK at the building where your job is located
+ * - Items for sale appear at the building's storefront (shops, restaurant, grocery)
  */
 
 import { type PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
-import { JobBoard, StoreFront, UniversityRegistry } from './BuildingInteractions';
+import { JobBoard, StoreFront, UniversityRegistry, WorkStation } from './BuildingInteractions';
 
 interface ActionPanelProps {
   player: PlayerState | null;
@@ -20,6 +25,16 @@ export function ActionPanel({ player, campaign, currentBuildingId, onAction }: A
     ? campaign.buildings.find(b => b.id === currentBuildingId) 
     : null;
 
+  // Check if the player's current job is at this building
+  const playerJobHere = player.currentJobId 
+    ? campaign.jobs.find(j => j.id === player.currentJobId && j.locationId === currentBuildingId)
+    : null;
+
+  // Items available at this building
+  const itemsHere = building 
+    ? campaign.items.filter(i => i.store === building.id)
+    : [];
+
   return (
     <aside className="action-panel">
       <h2 className="action-panel__title">Actions</h2>
@@ -29,28 +44,39 @@ export function ActionPanel({ player, campaign, currentBuildingId, onAction }: A
       
       {building ? (
         <div className="action-panel__context">
-          <p>At: <strong>{building.name}</strong> ({building.archetype})</p>
+          <p>At: <strong>{building.name}</strong></p>
           <p style={{ fontSize: '12px', fontStyle: 'italic', marginBottom: '10px' }}>{building.description}</p>
           
           <hr style={{ margin: '15px 0', borderColor: '#333' }} />
 
-          {/* Archetype specific panels */}
-          {(building.archetype === 'workplace' || building.archetype === 'restaurant') && (
+          {/* Employment Office: show ALL jobs for applying */}
+          {building.archetype === 'employment' && (
             <JobBoard 
               player={player} 
               onAction={onAction} 
-              availableJobs={campaign.jobs.filter(j => j.locationId === building.id)} 
+              availableJobs={campaign.jobs} 
             />
           )}
 
-          {(building.archetype === 'shop' || building.archetype === 'grocery' || building.archetype === 'pawnshop') && (
+          {/* Any building with items for sale: shops, restaurant, grocery */}
+          {itemsHere.length > 0 && (
             <StoreFront 
               player={player} 
               onAction={onAction} 
-              availableItems={campaign.items.filter(i => i.store === building.id)} 
+              availableItems={itemsHere} 
             />
           )}
 
+          {/* If your job is at this building, show the Work button */}
+          {playerJobHere && (
+            <WorkStation
+              player={player}
+              onAction={onAction}
+              job={playerJobHere}
+            />
+          )}
+
+          {/* University: enrollment and study */}
           {building.archetype === 'education' && (
             <UniversityRegistry 
               player={player} 

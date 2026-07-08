@@ -32,7 +32,7 @@ export default function App() {
     loadCampaign('classic_1990')
       .then((bundle) => {
         setCampaign(bundle);
-        const initialState = createInitialGameState('classic_1990', ['Player 1'], 'node_apartments', 'cdrom');
+        const initialState = createInitialGameState('classic_1990', ['Player 1'], 'node_low_cost', 'cdrom');
         setGameState(initialState);
         setStatus('ready');
       })
@@ -164,7 +164,7 @@ export default function App() {
         playerName={gameState.winnerId || 'Player 1'} 
         turn={gameState.turn}
         onPlayAgain={() => {
-          setGameState(createInitialGameState('classic_1990', ['Player 1'], 'node_apartments', 'cdrom'));
+          setGameState(createInitialGameState('classic_1990', ['Player 1'], 'node_low_cost', 'cdrom'));
           setShowTitle(true);
           setLogs([]);
         }}

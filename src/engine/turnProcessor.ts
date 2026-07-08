@@ -175,8 +175,9 @@ export function processTurnStart(state: GameState): GameState {
       p = processDoctorVisit(p);
     }
 
-    // Reset position to apartment at the start of the week
-    p.position = 'node_apartments';
+    // Reset position to home at the start of the week
+    // Both housing types currently share the same node on the map
+    p.position = 'node_low_cost';
 
     return p;
   });

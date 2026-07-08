@@ -1,13 +1,14 @@
 [
-  { "id": "burger_palace", "name": "Monolith Burgers", "archetype": "restaurant", "spritePath": "images/burger_palace.png", "description": "Fast food." },
-  { "id": "university", "name": "Hi-Tech U", "archetype": "education", "spritePath": "images/university.png", "description": "Earn degrees." },
-  { "id": "factory", "name": "Factory", "archetype": "workplace", "spritePath": "images/factory.png", "description": "Blue-collar work." },
-  { "id": "bank", "name": "Bank", "archetype": "bank", "spritePath": "images/bank.png", "description": "Save money, get loans, invest in stocks. Watch out for Wild Willy." },
+  { "id": "low_cost_housing", "name": "Low-Cost Housing", "archetype": "home", "spritePath": "images/low_cost_housing.png", "description": "Your starting apartment. Subject to Wild Willy robberies." },
+  { "id": "burger_palace", "name": "Monolith Burgers", "archetype": "restaurant", "spritePath": "images/burger_palace.png", "description": "Fast food and drinks." },
+  { "id": "factory", "name": "Factory", "archetype": "workplace", "spritePath": "images/factory.png", "description": "Blue-collar and white-collar jobs." },
+  { "id": "employment_office", "name": "Employment Office", "archetype": "employment", "spritePath": "images/employment_office.png", "description": "Look for jobs and apply." },
+  { "id": "university", "name": "Hi-Tech U", "archetype": "education", "spritePath": "images/university.png", "description": "Earn degrees to unlock better jobs." },
+  { "id": "qt_clothing", "name": "QT Clothing", "archetype": "shop", "spritePath": "images/qt_clothing.png", "description": "Quality clothes for work." },
   { "id": "apartment_complex", "name": "Rent Office", "archetype": "housing", "spritePath": "images/apartments.png", "description": "Pay rent or change apartments." },
   { "id": "pawn_shop", "name": "Pawn Shop", "archetype": "pawnshop", "spritePath": "images/pawn_shop.png", "description": "Pawn items for quick cash." },
-  { "id": "qt_clothing", "name": "QT Clothing", "archetype": "shop", "spritePath": "images/qt_clothing.png", "description": "Buy clothes for work." },
+  { "id": "z_mart", "name": "Z-Mart", "archetype": "shop", "spritePath": "images/z_mart.png", "description": "General store. Appliances, books, clothes, and tickets." },
   { "id": "socket_city", "name": "Socket City", "archetype": "shop", "spritePath": "images/socket_city.png", "description": "High-end appliances and electronics." },
-  { "id": "z_mart", "name": "Z-Mart", "archetype": "shop", "spritePath": "images/z_mart.png", "description": "General store. Stock changes weekly." },
-  { "id": "blacks_market", "name": "Black's Market", "archetype": "grocery", "spritePath": "images/blacks_market.png", "description": "Fresh food and lottery tickets. Watch out for Wild Willy." },
-  { "id": "employment_office", "name": "Employment Office", "archetype": "employment", "spritePath": "images/employment_office.png", "description": "Look for jobs and apply." }
+  { "id": "bank", "name": "Bank", "archetype": "bank", "spritePath": "images/bank.png", "description": "Save money, get loans, invest in stocks." },
+  { "id": "blacks_market", "name": "Black's Market", "archetype": "grocery", "spritePath": "images/blacks_market.png", "description": "Fresh food, lottery tickets, and newspaper." }
 ]
