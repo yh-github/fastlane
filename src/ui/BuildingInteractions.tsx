@@ -6,6 +6,10 @@ interface InteractionProps {
   onAction: (actionPayload: any) => void;
 }
 
+/**
+ * JobBoard — Shown at the Employment Office.
+ * Lists ALL jobs across the game for applying.
+ */
 export function JobBoard({ player, onAction, availableJobs }: InteractionProps & { availableJobs: JobDef[] }) {
   return (
     <div className="interaction-panel">
@@ -14,16 +18,15 @@ export function JobBoard({ player, onAction, availableJobs }: InteractionProps &
         const isCurrentJob = player.currentJobId === job.id;
         return (
           <div key={job.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444' }}>
-            <strong>{job.title}</strong> - ${job.baseWage}/hr
+            <strong>{job.title}</strong> — ${job.baseWage}/hr
+            <div style={{ fontSize: '11px', color: '#aaa' }}>at {job.locationId.replace(/_/g, ' ')}</div>
             <div style={{ fontSize: '12px' }}>
               Reqs: Exp {job.requirements.experience}, Dep {job.requirements.dependability}
               {job.requirements.degrees.length > 0 && `, Degree: ${job.requirements.degrees.join(', ')}`}
             </div>
             <div style={{ marginTop: '5px' }}>
               {isCurrentJob ? (
-                <button onClick={() => onAction({ type: 'work', jobId: job.id })} disabled={player.hoursRemaining < 1}>
-                  Work Shift (up to 6h)
-                </button>
+                <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Current Job</span>
               ) : (
                 <button onClick={() => onAction({ type: 'apply', jobId: job.id })} disabled={player.hoursRemaining < 4}>
                   Apply (4h)
@@ -33,6 +36,22 @@ export function JobBoard({ player, onAction, availableJobs }: InteractionProps &
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * WorkStation — Shown at workplace buildings where the player is employed.
+ * Allows the player to work a shift.
+ */
+export function WorkStation({ player, onAction, job }: InteractionProps & { job: JobDef }) {
+  return (
+    <div className="interaction-panel">
+      <h3>Your Job: {job.title}</h3>
+      <p style={{ fontSize: '12px', marginBottom: '10px' }}>${job.baseWage}/hr</p>
+      <button onClick={() => onAction({ type: 'work', jobId: job.id })} disabled={player.hoursRemaining < 1}>
+        Work Shift (up to 6h)
+      </button>
     </div>
   );
 }
@@ -92,3 +111,4 @@ export function UniversityRegistry({ player, onAction, availableDegrees }: Inter
     </div>
   );
 }
+

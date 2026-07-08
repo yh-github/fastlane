@@ -4,6 +4,7 @@
     "name": "Low-Cost Housing",
     "baseRent": 325,
     "isRobberyImmune": false,
+    "homeNodeId": "node_low_cost",
     "description": "Basic apartment. Subject to Wild Willy robberies based on relaxation."
   },
   {
@@ -11,6 +12,7 @@
     "name": "Security Apartments",
     "baseRent": 475,
     "isRobberyImmune": true,
-    "description": "Safe from robberies. Closer to Black's Market, Bank, and Factory."
+    "homeNodeId": "node_low_cost",
+    "description": "Safe from robberies. More expensive but no risk."
   }
 ]

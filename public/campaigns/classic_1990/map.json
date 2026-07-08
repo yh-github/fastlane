@@ -3,81 +3,88 @@
   "height": 700,
   "nodes": [
     {
-      "id": "node_apartments",
+      "id": "node_low_cost",
       "x": 400,
-      "y": 600,
-      "buildingId": "apartment_complex",
-      "connections": ["node_grocery", "node_burger"]
+      "y": 620,
+      "buildingId": "low_cost_housing",
+      "connections": ["node_burger", "node_grocery"]
     },
     {
       "id": "node_burger",
-      "x": 265,
-      "y": 560,
+      "x": 200,
+      "y": 620,
       "buildingId": "burger_palace",
-      "connections": ["node_apartments", "node_qt"]
-    },
-    {
-      "id": "node_qt",
-      "x": 172,
-      "y": 452,
-      "buildingId": "qt_clothing",
-      "connections": ["node_burger", "node_factory"]
+      "connections": ["node_low_cost", "node_factory"]
     },
     {
       "id": "node_factory",
-      "x": 152,
-      "y": 315,
+      "x": 80,
+      "y": 500,
       "buildingId": "factory",
-      "connections": ["node_qt", "node_university"]
-    },
-    {
-      "id": "node_university",
-      "x": 212,
-      "y": 187,
-      "buildingId": "university",
-      "connections": ["node_factory", "node_socket"]
-    },
-    {
-      "id": "node_socket",
-      "x": 330,
-      "y": 110,
-      "buildingId": "socket_city",
-      "connections": ["node_university", "node_dept_store"]
-    },
-    {
-      "id": "node_dept_store",
-      "x": 470,
-      "y": 110,
-      "buildingId": "z_mart",
-      "connections": ["node_socket", "node_employment"]
+      "connections": ["node_burger", "node_employment"]
     },
     {
       "id": "node_employment",
-      "x": 588,
-      "y": 187,
+      "x": 80,
+      "y": 370,
       "buildingId": "employment_office",
+      "connections": ["node_factory", "node_university"]
+    },
+    {
+      "id": "node_university",
+      "x": 80,
+      "y": 240,
+      "buildingId": "university",
+      "connections": ["node_employment", "node_qt"]
+    },
+    {
+      "id": "node_qt",
+      "x": 200,
+      "y": 100,
+      "buildingId": "qt_clothing",
+      "connections": ["node_university", "node_apartments"]
+    },
+    {
+      "id": "node_apartments",
+      "x": 400,
+      "y": 100,
+      "buildingId": "apartment_complex",
+      "connections": ["node_qt", "node_pawn"]
+    },
+    {
+      "id": "node_pawn",
+      "x": 600,
+      "y": 100,
+      "buildingId": "pawn_shop",
+      "connections": ["node_apartments", "node_dept_store"]
+    },
+    {
+      "id": "node_dept_store",
+      "x": 720,
+      "y": 240,
+      "buildingId": "z_mart",
+      "connections": ["node_pawn", "node_socket"]
+    },
+    {
+      "id": "node_socket",
+      "x": 720,
+      "y": 370,
+      "buildingId": "socket_city",
       "connections": ["node_dept_store", "node_bank"]
     },
     {
       "id": "node_bank",
-      "x": 648,
-      "y": 315,
+      "x": 720,
+      "y": 500,
       "buildingId": "bank",
-      "connections": ["node_employment", "node_pawn"]
-    },
-    {
-      "id": "node_pawn",
-      "x": 628,
-      "y": 452,
-      "buildingId": "pawn_shop",
-      "connections": ["node_bank", "node_grocery"]
+      "connections": ["node_socket", "node_grocery"]
     },
     {
       "id": "node_grocery",
-      "x": 535,
-      "y": 560,
+      "x": 600,
+      "y": 620,
       "buildingId": "blacks_market",
-      "connections": ["node_pawn", "node_apartments"]
+      "connections": ["node_bank", "node_low_cost"]
     }
   ]
 }
