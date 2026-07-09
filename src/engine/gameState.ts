@@ -26,8 +26,15 @@ export interface GameState {
   campaignId: string;
   /** Game variant flags */
   variant: GameVariant;
+  /** Game rules configuration */
+  rules: GameRules;
   /** Winner ID */
   winnerId: string | null;
+}
+
+export interface GameRules {
+  strictEviction: boolean;
+  fluctuatingRent: boolean;
 }
 
 export type GamePhase =
@@ -35,6 +42,7 @@ export type GamePhase =
   | 'turn-start'    // Processing turn-start events
   | 'playing'       // Player is taking actions
   | 'turn-end'      // End-of-turn processing
+  | 'weekend'       // Displaying the end-of-turn summary
   | 'game-over';    // A player has won
 
 export type GameVariant = 'floppy' | 'cdrom';
@@ -84,8 +92,14 @@ export interface PlayerState {
   currentHousingId: string;
   /** Rent paid through this week number (4-week cycles) */
   rentPaidUntilWeek: number;
-  /** Whether the player is in a rent extension period */
+  /** The locked-in base rent price (used if fluctuatingRent is false) */
+  currentRentPrice: number;
+  /** Whether the player has been granted a rent extension for the current week */
   rentExtensionActive: boolean;
+  /** Number of extensions received (affects approval chance) */
+  rentExtensionsReceived: number;
+  /** Whether rent extensions are permanently denied (due to previous debt) */
+  rentExtensionsDeniedPermanently: boolean;
 
   // ── Education ──
   /** IDs of completed degrees */
@@ -109,11 +123,15 @@ export interface PlayerState {
   // ── Per-Turn Flags ──
   /** Flags that reset each turn for tracking one-time-per-turn effects */
   turnFlags: TurnFlags;
+  /** Notifications or events that occurred over the weekend */
+  turnEvents: string[];
 }
 
 // ─── Inventory ──────────────────────────────────────────────────
 
 export interface InventoryState {
+  /** The type of clothes the player has currently selected to wear */
+  selectedClothes?: 'casual' | 'dress' | 'business';
   /** Weeks of casual clothing remaining */
   casualClothesWeeks: number;
   /** Weeks of dress clothing remaining */
@@ -200,6 +218,8 @@ export interface TurnFlags {
   freshFoodHappinessGranted: boolean;
   /** Caffeine hours borrowed from next turn */
   caffeineDebt: number;
+  /** Whether the player already asked for an extension this turn */
+  askedForExtension: boolean;
 }
 
 // ─── Hour Cost Constants ────────────────────────────────────────
@@ -237,11 +257,13 @@ export function createDefaultTurnFlags(): TurnFlags {
     fastFoodHappinessGranted: false,
     freshFoodHappinessGranted: false,
     caffeineDebt: 0,
+    askedForExtension: false,
   };
 }
 
 export function createDefaultInventory(): InventoryState {
   return {
+    selectedClothes: 'casual',
     casualClothesWeeks: STARTING_CASUAL_CLOTHES_WEEKS,
     dressClothesWeeks: 0,
     businessClothesWeeks: 0,
@@ -278,8 +300,11 @@ export function createPlayerState(id: string, name: string, startNode: string): 
     currentWage: 0,
     raisesAtCurrentJob: 0,
     currentHousingId: 'low_cost',
+    currentRentPrice: 325, // Default base for low_cost
     rentPaidUntilWeek: 4,
     rentExtensionActive: false,
+    rentExtensionsReceived: 0,
+    rentExtensionsDeniedPermanently: false,
     degrees: [],
     currentDegreeId: null,
     lessonsCompleted: 0,
@@ -287,6 +312,7 @@ export function createPlayerState(id: string, name: string, startNode: string): 
     position: startNode,
     goalAllotment: createDefaultGoalAllotment(),
     turnFlags: createDefaultTurnFlags(),
+    turnEvents: [],
   };
 }
 
@@ -294,7 +320,8 @@ export function createInitialGameState(
   campaignId: string,
   playerNames: string[],
   startNode: string,
-  variant: GameVariant = 'cdrom'
+  variant: GameVariant = 'cdrom',
+  rules: GameRules = { strictEviction: false, fluctuatingRent: false }
 ): GameState {
   return {
     turn: 0,
@@ -306,5 +333,6 @@ export function createInitialGameState(
     winnerId: null,
     campaignId,
     variant,
+    rules,
   };
 }

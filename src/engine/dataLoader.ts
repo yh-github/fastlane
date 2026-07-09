@@ -99,6 +99,7 @@ export interface HousingDef {
   baseRent: number;
   isRobberyImmune: boolean;
   description: string;
+  homeNodeId: string;
 }
 
 export interface EventDef {

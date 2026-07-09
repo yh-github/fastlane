@@ -20,6 +20,7 @@
  */
 
 import { type GameState } from './gameState';
+import { calcEconomyPrice } from './economyEngine';
 import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath';
 import { resetPlayerClock } from './timeManager';
 import { processStarvation, processDoctorVisit, processApartmentRobbery } from './eventEngine';
@@ -53,10 +54,15 @@ export function processTurnStart(state: GameState): GameState {
       drinkHappinessGranted: false,
       fastFoodHappinessGranted: false,
       freshFoodHappinessGranted: false,
-      caffeineDebt: 0,
+      caffeineDebt: p.turnFlags?.caffeineDebt || 0,
+      askedForExtension: false
     };
+    p.turnEvents = [];
 
     // 1. Clothing Decay
+    if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push("Your casual clothes are worn out!");
+    if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push("Your dress clothes are worn out!");
+    if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push("Your business suit is worn out!");
     p.inventory.casualClothesWeeks = Math.max(0, p.inventory.casualClothesWeeks - 1);
     p.inventory.dressClothesWeeks = Math.max(0, p.inventory.dressClothesWeeks - 1);
     p.inventory.businessClothesWeeks = Math.max(0, p.inventory.businessClothesWeeks - 1);
@@ -81,7 +87,10 @@ export function processTurnStart(state: GameState): GameState {
       // Starvation
       const { updated, doctorTriggered } = processStarvation(p);
       p = updated;
-      if (doctorTriggered) doctorNeeded = true;
+      p.turnEvents.push("You didn't eat enough! You are starving.");
+      if (doctorTriggered) {
+        doctorNeeded = true;
+      }
     }
 
     // 3. Food Spoilage
@@ -89,12 +98,18 @@ export function processTurnStart(state: GameState): GameState {
     const hasFreezer = p.inventory.appliances.some(a => a.id === 'freezer');
     
     if (!hasFridge && p.inventory.freshFoodUnits > 0) {
+      const lostFood = p.inventory.freshFoodUnits;
       p.inventory.freshFoodUnits = 0;
       p.happiness = Math.max(10, p.happiness - 2);
-      if (p.money > 0 && Math.random() < 0.5) doctorNeeded = true;
+      p.turnEvents.push(`Without a fridge, ${lostFood} units of your food spoiled!`);
+      if (p.money > 0 && Math.random() < 0.5) {
+        doctorNeeded = true;
+        p.turnEvents.push("Eating bad food made you sick!");
+      }
     } else if (hasFridge) {
       const maxStorage = hasFreezer ? 12 : 6;
       if (p.inventory.freshFoodUnits > maxStorage) {
+        p.turnEvents.push("You had too much food for your fridge, some of it spoiled!");
         p.inventory.freshFoodUnits = maxStorage;
         p.happiness = Math.max(10, p.happiness - 1);
       }
@@ -111,6 +126,7 @@ export function processTurnStart(state: GameState): GameState {
           const repairCost = Math.floor(app.purchasePrice * (0.05 + Math.random() * 0.2));
           p.money = Math.max(0, p.money - repairCost);
           p.happiness = Math.max(10, p.happiness - 1);
+          p.turnEvents.push(`Your ${app.id.replace('_', ' ')} broke! Repair cost: $${repairCost}`);
         }
       }
     }
@@ -155,11 +171,31 @@ export function processTurnStart(state: GameState): GameState {
     }
 
     // 10. Rent Check
-    // Rent is due week 4. E.g., week 4, 8, 12.
-    if (state.turn % 4 === 0 && p.rentPaidUntilWeek < state.turn) {
-      // In full impl, this would trigger UI prompt.
-      // We'll mark extension active for now.
-      p.rentExtensionActive = true;
+    if (p.rentPaidUntilWeek <= state.turn) {
+      if (p.rentExtensionActive) {
+        // They asked for an extension this turn and were approved. The extension expires now.
+        p.rentExtensionActive = false;
+        p.turnEvents.push("Your rent extension expired. You must pay rent or get another extension this week!");
+      } else {
+        // They owe rent, and did not get an extension. They enter rent debt immediately.
+        p.rentExtensionsDeniedPermanently = true; // Permanently denied future extensions
+
+        if (p.currentHousingId === 'security' && state.rules.strictEviction) {
+          p.currentHousingId = 'low_cost';
+          p.currentRentPrice = 325; // Reset to low cost base
+          p.rentPaidUntilWeek = state.turn + 1; // Mark as paid via debt? Or we still charge debt?
+          // If evicted, they don't get rent debt for the old place, they just get evicted.
+          // Wait, actually, let's still charge them the low cost rent debt so they owe *something* for the month?
+          // The wiki says classic doesn't evict. With strict eviction, maybe they just lose the apartment and enter low cost.
+          p.turnEvents.push("You were evicted from your security apartment for failing to pay rent!");
+        } else {
+          const baseRent = p.currentHousingId === 'security' ? 475 : 325;
+          const debtAmount = state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice;
+          p.rentDebt += debtAmount;
+          p.rentPaidUntilWeek = state.turn + 4; // Debt covers them for 4 weeks
+          p.turnEvents.push(`You were charged $${debtAmount} in rent debt for failing to pay!`);
+        }
+      }
     }
 
     // 11. Apply Market Crash

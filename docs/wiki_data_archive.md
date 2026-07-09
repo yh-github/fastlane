@@ -93,11 +93,10 @@ Classes are taken at Hi-Tech U.
 - **Rent Office Rules**:
   - Rent is due on Week 4 of each month. Paid at Rent Office (only open during Week 4).
   - Rent Advance: Can pay future months (adds 4 weeks to lease). Lost if switching apartments.
-  - Rent Extension: Fails to pay on Week 4 triggers a 3-week extension.
-  - Eviction/Downgrade:
-    - Security Apartments: Evicted and downgraded to Low-Cost Housing if unpaid after extension. Displayed durables put in storage.
-    - Low-Cost Housing: Cannot be evicted, but enters Rent Debt if unpaid after extension.
-  - Rent Debt: 1/2 of wages garnished during work sessions to pay off debt + a $2 interest fee per garnish. Final garnish has no interest fee.
+  - Rent Extension: A player whose Rent is due can ask the Rent Officer for a 1-Week Extension. The first request is always approved. The chance of further approvals drops by 25% each time, down to a minimum of 25%. A player can only ask once per Turn, but there is no limit on consecutive extensions if approved. If a player ever goes into Rent Debt, future extensions are automatically denied for the rest of the game.
+  - Eviction/Rent Debt: If a player fails to pay rent by the end of the month (and does not have an active extension), they enter Rent Debt. In the classic rules, players are never evicted from their apartment, even from Security Apartments. They may remain in Rent Debt indefinitely.
+  - Optional Rule: Fast Lane Modernized adds an optional "Strict Eviction" rule where Security Apartment tenants are evicted and downgraded to Low-Cost Housing if they fail to pay rent.
+  - Rent Debt Mechanics: 1/2 of wages garnished during work sessions to pay off debt + a $2 interest fee per garnish. Final garnish has no interest fee.
 
 ## 5. Economy
 - **Economic Index/Reading**: Reading ranges from `-30` (depression) to `90` (boom).

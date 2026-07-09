@@ -40,8 +40,6 @@ export function study(player: PlayerState, degree: EducationDef): EducationResul
     return { updated: player, success: false, message: 'Cannot study right now.' };
   }
 
-  // We require full block of 6 hours for a lesson. If you have less, you can spend it but it doesn't count as a full lesson?
-  // Classic says: studying costs 6 hours per lesson.
   if (player.hoursRemaining < COST_STUDY_SESSION) {
     return { updated: player, success: false, message: `Need ${COST_STUDY_SESSION} hours to complete a lesson.` };
   }
@@ -49,10 +47,20 @@ export function study(player: PlayerState, degree: EducationDef): EducationResul
   let updated = spendHours(player, COST_STUDY_SESSION);
   updated.lessonsCompleted += 1;
 
-  let message = `Studied for ${degree.name}. Progress: ${updated.lessonsCompleted}/${degree.lessonsRequired}`;
+  // Calculate dynamic lessons required
+  let required = degree.lessonsRequired;
+  if (player.inventory.appliances.some(a => a.id === 'computer')) required -= 3;
+  if (player.inventory.books.includes('dictionary')) required -= 1;
+  if (player.inventory.books.includes('encyclopedia')) required -= 1;
+  if (player.inventory.books.includes('atlas')) required -= 1;
+  
+  // Ensure we don't drop requirement below 1, just in case
+  required = Math.max(1, required);
+
+  let message = `Studied for ${degree.name}. Progress: ${updated.lessonsCompleted}/${required}`;
 
   // Check for graduation
-  if (updated.lessonsCompleted >= degree.lessonsRequired) {
+  if (updated.lessonsCompleted >= required) {
     updated.degrees = [...updated.degrees, degree.id];
     updated.currentDegreeId = null;
     updated.lessonsCompleted = 0;

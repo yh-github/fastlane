@@ -5,16 +5,17 @@
  * and the current week/economy indicator.
  */
 
-import type { PlayerState } from '../engine/gameState';
+import { type PlayerState, HOURS_PER_TURN } from '../engine/gameState';
 import { calcEducationProgress, calcCareerProgress, calcWealthProgress } from '../engine/statMath';
 
 interface DashboardProps {
   player: PlayerState | null;
   turn: number;
   economicIndex: number;
+  onOpenInventory: () => void;
 }
 
-export function Dashboard({ player, turn, economicIndex }: DashboardProps) {
+export function Dashboard({ player, turn, economicIndex, onOpenInventory }: DashboardProps) {
   if (!player) return <header className="dashboard">Loading...</header>;
 
   const education = calcEducationProgress(player.degrees.length);
@@ -23,13 +24,26 @@ export function Dashboard({ player, turn, economicIndex }: DashboardProps) {
 
   return (
     <header className="dashboard">
-      <div className="dashboard__time">
-        Week {turn} | Econ: {economicIndex > 0 ? '+' : ''}{economicIndex}
+      <div className="dashboard__time" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+        <div>Week {turn} | Econ: {economicIndex > 0 ? '+' : ''}{economicIndex}</div>
+        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff' }}>
+          ⏳ {player.hoursRemaining} / {HOURS_PER_TURN}h Left
+        </div>
       </div>
-      <div className="dashboard__stats">
-        <StatBadge label="Hours" value={player.hoursRemaining} icon="⏳" />
-        <StatBadge label="Money" value={`$${player.money}`} icon="💰" />
-        <StatBadge label="Happiness" value={player.happiness} icon="😊" />
+      <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <button 
+          id="btn-inventory"
+          onClick={onOpenInventory}
+          style={{
+            padding: '8px 12px', marginRight: '10px',
+            backgroundColor: '#f39c12', color: '#000', border: 'none', borderRadius: '4px',
+            fontWeight: 'bold', cursor: 'pointer'
+          }}
+        >
+          📦 Inventory
+        </button>
+        <StatBadge label="Money" value={`$${player.money}`} icon="💰" id="stat-money" />
+        <StatBadge label="Happiness" value={player.happiness} icon="😊" id="stat-happiness" />
         <StatBadge label="Education" value={education} icon="🎓" />
         <StatBadge label="Career" value={career} icon="💼" />
         <StatBadge label="Wealth" value={wealth} icon="🏦" />
@@ -42,11 +56,12 @@ interface StatBadgeProps {
   label: string;
   value: string | number;
   icon: string;
+  id?: string;
 }
 
-function StatBadge({ label, value, icon }: StatBadgeProps) {
+function StatBadge({ label, value, icon, id }: StatBadgeProps) {
   return (
-    <div className="stat-badge" title={label}>
+    <div className="stat-badge" title={label} id={id}>
       <span className="stat-badge__icon">{icon}</span>
       <span className="stat-badge__value">{value}</span>
       <span className="stat-badge__label">{label}</span>
