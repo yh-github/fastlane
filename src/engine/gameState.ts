@@ -133,6 +133,14 @@ export interface PlayerState {
   turnEvents: string[];
   /** The newspaper headline for this turn */
   newspaperHeadline: string | null;
+  /** The result of the weekend activity processing */
+  weekendResult?: WeekendResult;
+}
+
+export interface WeekendResult {
+  text: string;
+  cost: number;
+  happinessBonus?: number;
 }
 
 // ─── Inventory ──────────────────────────────────────────────────
