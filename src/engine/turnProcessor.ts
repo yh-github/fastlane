@@ -265,6 +265,22 @@ export function processTurnStart(state: GameState): GameState {
         currentHeadline = "WILD WILLY RIPS OFF ANOTHER APARTMENT";
       }
 
+      // 13. Relaxation Decay & Hot Tub
+      const hasHotTub = p.inventory.appliances.some(a => a.id === 'hot_tub');
+      if (!hasHotTub) {
+        p.relaxation = Math.max(0, p.relaxation - 2); // Decay by 2 per turn
+      }
+
+      // 14. Pawn Shop Expiration
+      if (p.inventory.pawnedItems && p.inventory.pawnedItems.length > 0) {
+        const newTurn = state.turn + 1;
+        const expired = p.inventory.pawnedItems.filter(item => newTurn - item.weekPawned >= 3);
+        if (expired.length > 0) {
+          p.turnEvents.push("The pawn shop sold off your unredeemed items!");
+          p.inventory.pawnedItems = p.inventory.pawnedItems.filter(item => newTurn - item.weekPawned < 3);
+        }
+      }
+
       // Process delayed doctor visit
       if (doctorNeeded) {
         p = processDoctorVisit(p);

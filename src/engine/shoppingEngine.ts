@@ -12,10 +12,15 @@ export function buyItem(player: PlayerState, item: ItemDef): ShoppingResult {
     return { updated: player, success: false, message: 'Not enough money.' };
   }
 
+  let happinessBonus = item.happinessBonus || 0;
+  if (item.id === 'computer' && player.inventory.appliances.some(a => a.id === 'computer')) {
+    happinessBonus = 0;
+  }
+
   let updated = { 
     ...player, 
     money: player.money - item.basePrice,
-    happiness: Math.min(100, player.happiness + (item.happinessBonus || 0)),
+    happiness: Math.max(0, Math.min(100, player.happiness + happinessBonus)),
     inventory: { ...player.inventory }
   };
 

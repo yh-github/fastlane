@@ -136,7 +136,7 @@ Classes are taken at Hi-Tech U.
 | Stereo | $412 | $450 | Displayed at Security Apartment. |
 | Microwave | $330 | $220 | Gives +1 Happiness at start of turn (not cumulative with Stove). |
 | Hot Tub | $1255 | -- | Prevents Relaxation stat from decreasing each turn. |
-| Computer | $1599 | -- | Reduces number of Courses required to complete a Degree by -1. 1-in-7 chance each turn to make $20-$100 and receive +3 Happiness. |
+| Computer | $1599 | -- | Reduces Courses required for a Degree by 1. Purchasing gives +3 Happiness (first time only). 1-in-7 chance each turn to make $20-$100 and +3 Happiness. |
 
 ### Books (Z-Mart)
 | Item | Base Price | Effects / Notes |
