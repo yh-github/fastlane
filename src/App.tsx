@@ -111,7 +111,7 @@ export default function App() {
       updatedPlayers[activePlayerIndex] = player;
     }
 
-    const nextState = processTurnStart({ ...gameState!, players: updatedPlayers });
+    const nextState = processTurnStart({ ...gameState!, players: updatedPlayers }, campaign!);
     nextState.phase = 'weekend';
     setGameState(nextState);
     if (nextState.players[activePlayerIndex].turnFlags.freeNewspaper) {
@@ -507,7 +507,7 @@ export default function App() {
       <SetupScreen onConfirm={(goals) => {
         const updatedPlayers = [...gameState.players];
         updatedPlayers[0].goalAllotment = goals;
-        const firstTurnState = processTurnStart({ ...gameState, phase: 'playing', players: updatedPlayers });
+        const firstTurnState = processTurnStart({ ...gameState, phase: 'playing', players: updatedPlayers }, campaign!);
         setGameState(firstTurnState);
         addLog('Game started. Good luck!', firstTurnState.turn);
       }} />

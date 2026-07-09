@@ -20,6 +20,7 @@
  */
 
 import { type GameState } from './gameState';
+import { type CampaignBundle } from './dataLoader';
 import { calcEconomyPrice } from './economyEngine';
 import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath';
 import { resetPlayerClock } from './timeManager';
@@ -27,7 +28,7 @@ import { processStarvation, processDoctorVisit, processApartmentRobbery } from '
 import { fluctuateEconomy, applyMarketCrash } from './economyEngine';
 import { processWeekend } from './weekendEngine';
 
-export function processTurnStart(state: GameState): GameState {
+export function processTurnStart(state: GameState, campaign: CampaignBundle): GameState {
   // 1. Fluctuate the economy for the new turn
   const newEconomy = fluctuateEconomy(state.economicIndex);
 
@@ -295,7 +296,7 @@ export function processTurnStart(state: GameState): GameState {
       }
       
       // Process Weekend Activity
-      p = processWeekend(p, state.turn + 1, previousPlayerWeekends);
+      p = processWeekend(p, state.turn + 1, previousPlayerWeekends, campaign.weekends);
       if (p.weekendResult) {
         previousPlayerWeekends.push(p.weekendResult.text);
       }
