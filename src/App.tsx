@@ -15,6 +15,7 @@ import { animatePlayerPath, type PlayerPosition } from './graphics/mapRenderer';
 import { applyForJob, workShift } from './engine/jobEngine';
 import { buyItem } from './engine/shoppingEngine';
 import { enrollInDegree, study } from './engine/educationEngine';
+import { processStreetRobbery } from './engine/eventEngine';
 
 import { WeekendScreen } from './ui/WeekendScreen';
 import { InventoryModal } from './ui/InventoryModal';
@@ -194,10 +195,56 @@ export default function App() {
           actionLog = "Not enough savings to withdraw.";
         }
       }
+    } else if (payload.type === 'buy_stock') {
+      if (player.money >= payload.cost) {
+        player.money -= payload.cost;
+        if (payload.stockId === 'tbills') {
+          player.inventory.stocks.tBills += payload.quantity;
+        } else {
+          player.inventory.stocks.holdings[payload.stockId] = (player.inventory.stocks.holdings[payload.stockId] || 0) + payload.quantity;
+        }
+        actionLog = `Bought ${payload.quantity} shares of ${payload.stockId}.`;
+      } else {
+        actionLog = "Not enough cash to buy stocks.";
+      }
+    } else if (payload.type === 'sell_stock') {
+      const owned = payload.stockId === 'tbills' 
+        ? player.inventory.stocks.tBills 
+        : (player.inventory.stocks.holdings[payload.stockId] || 0);
+      
+      if (owned >= payload.quantity) {
+        if (payload.stockId === 'tbills') {
+          player.inventory.stocks.tBills -= payload.quantity;
+        } else {
+          player.inventory.stocks.holdings[payload.stockId] -= payload.quantity;
+        }
+        player.money += payload.revenue;
+        actionLog = `Sold ${payload.quantity} shares of ${payload.stockId}.`;
+      } else {
+        actionLog = "You do not own enough shares.";
+      }
+    } else if (payload.type === 'take_loan') {
+      const maxLoan = 500 + (player.experience * 20); // Basic loan limit logic
+      if ((player.loanDebt || 0) + payload.amount > maxLoan) {
+        actionLog = `The bank refused to lend you that much! (Max debt: $${maxLoan})`;
+      } else {
+        player.money += payload.amount;
+        player.loanDebt = (player.loanDebt || 0) + payload.amount;
+        actionLog = `Took out a loan of $${payload.amount}.`;
+      }
+    } else if (payload.type === 'pay_loan') {
+      if (player.money >= payload.amount) {
+        player.money -= payload.amount;
+        player.loanDebt -= payload.amount;
+        actionLog = `Paid $${payload.amount} towards loan.`;
+      } else {
+        actionLog = "Not enough cash to pay loan.";
+      }
     } else if (payload.type === 'rent_transaction') {
       if (player.money >= payload.amount) {
         player.money -= payload.amount;
         player.rentDebt = 0;
+        player.turnFlags.rentPaidThisTurn = true;
         actionLog = `Paid $${payload.amount} for rent.`;
       } else {
         actionLog = "Not enough cash to pay rent.";
@@ -211,6 +258,7 @@ export default function App() {
           player.rentPaidUntilWeek = gameState.turn + 4; // Pay for a month
           player.rentDebt = 0;
           player.rentExtensionActive = false;
+          player.turnFlags.rentPaidThisTurn = true;
           actionLog = `Moved into ${housingDef.name} for $${payload.cost}.`;
         } else {
           actionLog = `Not enough cash to move to ${housingDef.name}.`;
@@ -222,6 +270,7 @@ export default function App() {
         // Rent advance adds 4 weeks to lease
         player.rentPaidUntilWeek += 4;
         player.rentExtensionActive = false;
+        player.turnFlags.rentPaidThisTurn = true;
         actionLog = `Paid $${payload.amount} rent advance.`;
       } else {
         actionLog = `Not enough cash for rent advance.`;
@@ -314,6 +363,16 @@ export default function App() {
     if (pathResult.found) {
       setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
       setIsAnimating(true);
+
+      const currentBuilding = campaign.map.nodes.find(n => n.id === player.position)?.buildingId;
+      if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
+        const preRobberyMoney = player.money;
+        player = processStreetRobbery(player, currentBuilding, gameState.turn);
+        if (player.money < preRobberyMoney) {
+          addLog("Wild Willy robbed you in the street!");
+          triggerAnim('text', '-$$$', 'stat-money'); // stat-money is a guess, let's just trigger text at center
+        }
+      }
       
       const requestedSteps = pathResult.steps;
       const actualSteps = Math.min(requestedSteps, player.hoursRemaining);
@@ -326,9 +385,19 @@ export default function App() {
         });
 
         // Animate the path we can take
-        await animatePlayerPath(pathCoords.slice(1));
+        let pRef = { ...player };
+        await animatePlayerPath(pathCoords.slice(1), 300, () => {
+          pRef = spendHours(pRef, 1);
+          setGameState(prev => {
+            if (!prev) return prev;
+            const newPlayers = [...prev.players];
+            newPlayers[activePlayerIndex] = pRef;
+            return { ...prev, players: newPlayers };
+          });
+        });
 
-        player = spendHours(player, actualSteps);
+        // Ensure local player object matches the reference
+        player = { ...pRef };
         player.position = pathResult.path[actualSteps];
         
         updatedPlayers[activePlayerIndex] = player;
