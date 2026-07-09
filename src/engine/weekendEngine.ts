@@ -1,66 +1,5 @@
 import { PlayerState } from './gameState';
-
-export const TICKET_WEEKENDS = {
-  baseball: "You went to the baseball game this weekend and ate hotdogs till you puked.",
-  theatre: "You went to the theatre this weekend and saw the one MAN version of Cats.",
-  concert: "You had front row seats at a rock concert. The doctor said that the hearing loss shouldn't be permanent."
-};
-
-export const DURABLE_WEEKENDS: Record<string, string> = {
-  refrigerator: "You spent the whole weekend watching some of the food in your refrigerator grow mold and spores. It sure was fun.",
-  freezer: "You spent the whole weekend watching the water in your refrigerator freeze.",
-  stove: "You spent the whole weekend baking oatmeal cookies.",
-  color_tv: "You spent the entire weekend watching Star Trek reruns.",
-  vcr: "You rented some movies and ate artificially flavored buttered popcorn.",
-  stereo: "You spent the weekend playing your stereo and patching the plaster your speakers cracked.",
-  microwave: "You spent the weekend cleaning your microwave after you tried to dry your pet rat in it. You also need a new pet rat.",
-  hot_tub: "You and some friends had a hot tub party this weekend."
-};
-
-export const RANDOM_WEEKENDS = [
-  "You watched them change the mannequins at QT Clothing this weekend.",
-  "You washed and waxed your marble this weekend right before it rained.",
-  "You stayed home and did absolutely nothing this weekend.",
-  "You spent the weekend hiking around Yosemite.",
-  "You listened to the Talking Bear 256 times this weekend.",
-  "You read the 'Wall Street Journal' this weekend.",
-  "You thought about what you would do on your next turn.",
-  "You spent the weekend in a hotel because they had to fumigate your apartment.",
-  "You played in a ping pong tournament this weekend.",
-  "You pitched horseshoes in your apartment all weekend. The people downstairs love you.",
-  "You sat around and played solitaire all weekend.",
-  "You went panning for gold this weekend, but all you got was wet.",
-  "You spent the weekend in the laundromat washing your clothes. Now that was exciting.",
-  "You took a friend out to a cheap restaurant this weekend.",
-  "You went out and caught your own froglegs this weekend.",
-  "You crawled around on your knees chasing snails this weekend.",
-  "You spent your weekend thinking about work. Eccch.",
-  "You spent your weekend trying to remove the mildew between the shower tiles.",
-  "You spent the weekend listening to the newlyweds in the next apartment set up a new waterbed.",
-  "This weekend, you won first prize in a beauty contest and collected $10. Whoops, wrong game.",
-  "This weekend, you closed your curtains, locked your doors, turned off the lights, and ate presweetened morning breakfast cereal, with little marshmallows!",
-  "You played stickball this weekend with the neighborhood kids and ended up wrenching your back and spraining your ankle.",
-  "You read a romance novel, NURSE'S TURN TO CRY, in one sitting.",
-  "You took a long hot bath this weekend and emerged looking like a California Raisin.",
-  "You watched a torrid romance movie, LIBRARIAN'S DILEMMA, this weekend.",
-  "One of your fillings came loose this weekend. It's a good thing you're handy with a soldering iron.",
-  "You spent the weekend examining yourself under the fluorescent lights in the bathroom. Eccch!",
-  "You spent the weekend wondering if black holes were lit with black lights.",
-  "This weekend, you hung out at the mall, filled up on junk food, and made your mother ashamed of you.",
-  "You went bowling with friends this weekend.",
-  "You played two rounds of golf this weekend.",
-  "This weekend, you had to bail your nephew out of jail.",
-  "You had your marble repainted this weekend.",
-  "You played in a volleyball tournament this weekend.",
-  "You took a friend out to an expensive restaurant this weekend.",
-  "You went to San Diego to play in the Over The Line Tournament.",
-  "You went to Las Vegas in a $20,000 car and came back in a $200,000 Greyhound bus.",
-  "You tried to drive to Hawaii to watch a surfing contest.",
-  "You went scuba diving in La Jolla.",
-  "You went deep sea fishing this weekend.",
-  "You volunteered to take the local scouts to Disneyland.",
-  "You drove the senior citizens' bus this weekend and they drove you - crazy."
-];
+import { WeekendDef } from './dataLoader';
 
 // Helper to determine cost based on price range
 function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number): number {
@@ -85,7 +24,8 @@ function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney
 export function processWeekend(
   player: PlayerState, 
   turnNumber: number, 
-  previousPlayerWeekends: string[]
+  previousPlayerWeekends: string[],
+  weekendData: WeekendDef
 ): PlayerState {
   const newPlayer = { ...player, inventory: { ...player.inventory, tickets: { ...player.inventory.tickets } } };
   
@@ -94,16 +34,16 @@ export function processWeekend(
   let happinessBonus: number | undefined = undefined;
 
   // 1. Tickets
-  if (newPlayer.inventory.tickets.baseball > 0) {
-    weekendText = TICKET_WEEKENDS.baseball;
+  if (player.inventory.tickets.baseball > 0 && weekendData.ticketWeekends.baseball) {
+    weekendText = weekendData.ticketWeekends.baseball.text;
     newPlayer.inventory.tickets.baseball = 0;
     priceType = 'medium';
-  } else if (newPlayer.inventory.tickets.theatre > 0) {
-    weekendText = TICKET_WEEKENDS.theatre;
+  } else if (player.inventory.tickets.theatre > 0 && weekendData.ticketWeekends.theatre) {
+    weekendText = weekendData.ticketWeekends.theatre.text;
     newPlayer.inventory.tickets.theatre = 0;
     priceType = 'medium';
-  } else if (newPlayer.inventory.tickets.concert > 0) {
-    weekendText = TICKET_WEEKENDS.concert;
+  } else if (player.inventory.tickets.concert > 0 && weekendData.ticketWeekends.concert) {
+    weekendText = weekendData.ticketWeekends.concert.text;
     newPlayer.inventory.tickets.concert = 0;
     priceType = 'medium';
   } 
@@ -114,10 +54,10 @@ export function processWeekend(
     const shuffledAppliances = [...newPlayer.inventory.appliances].sort(() => Math.random() - 0.5);
     
     for (const app of shuffledAppliances) {
-      if (DURABLE_WEEKENDS[app.id]) {
+      if (weekendData.durableWeekends[app.id]) {
         // 20% chance to trigger
         if (Math.random() < 0.20) {
-          const candidateText = DURABLE_WEEKENDS[app.id];
+          const candidateText = weekendData.durableWeekends[app.id].text;
           if (!previousPlayerWeekends.includes(candidateText)) {
             weekendText = candidateText;
             priceType = 'cheap';
@@ -133,15 +73,15 @@ export function processWeekend(
       let chosenIndex = -1;
       let attempts = 0;
       while (attempts < 100) {
-        chosenIndex = Math.floor(Math.random() * RANDOM_WEEKENDS.length);
-        const candidateText = RANDOM_WEEKENDS[chosenIndex];
+        chosenIndex = Math.floor(Math.random() * weekendData.randomWeekends.length);
+        const candidateText = weekendData.randomWeekends[chosenIndex];
         if (!previousPlayerWeekends.includes(candidateText)) {
           break;
         }
         attempts++;
       }
       
-      weekendText = RANDOM_WEEKENDS[chosenIndex];
+      weekendText = weekendData.randomWeekends[chosenIndex];
       
       // Determine price of random weekend
       // 0-27 (1-28): Cheap
