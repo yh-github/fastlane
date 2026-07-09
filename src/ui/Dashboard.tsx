@@ -27,6 +27,7 @@ export function Dashboard({ player, turn, economicIndex }: DashboardProps) {
         Week {turn} | Econ: {economicIndex > 0 ? '+' : ''}{economicIndex}
       </div>
       <div className="dashboard__stats">
+        <StatBadge label="Hours" value={player.hoursRemaining} icon="⏳" />
         <StatBadge label="Money" value={`$${player.money}`} icon="💰" />
         <StatBadge label="Happiness" value={player.happiness} icon="😊" />
         <StatBadge label="Education" value={education} icon="🎓" />

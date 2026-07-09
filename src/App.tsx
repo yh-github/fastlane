@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Dashboard } from './ui/Dashboard';
-import { ActionPanel } from './ui/ActionPanel';
+import { BuildingModal } from './ui/BuildingModal';
 import { GameMap } from './ui/GameMap';
 import { TitleScreen } from './ui/TitleScreen';
 import { SetupScreen } from './ui/SetupScreen';
@@ -11,7 +11,7 @@ import { processTurnStart } from './engine/turnProcessor';
 import { spendHours } from './engine/timeManager';
 import { loadCampaign, type CampaignBundle } from './engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath } from './graphics/pathfinding';
-import { initMapRenderer, movePlayerTo, animatePlayerPath, type PlayerPosition } from './graphics/mapRenderer';
+import { animatePlayerPath, type PlayerPosition } from './graphics/mapRenderer';
 import { applyForJob, workShift } from './engine/jobEngine';
 import { buyItem } from './engine/shoppingEngine';
 import { enrollInDegree, study } from './engine/educationEngine';
@@ -26,6 +26,7 @@ export default function App() {
   const [showTitle, setShowTitle] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false);
 
   // For single player MVP, track active player
   const activePlayerIndex = 0;
@@ -50,8 +51,8 @@ export default function App() {
     return buildAdjacencyMap(campaign.map.nodes);
   }, [campaign]);
 
-  const addLog = (msg: string) => {
-    setLogs(prev => [...prev.slice(-19), { week: gameState?.turn || 1, message: msg }]);
+  const addLog = (msg: string, weekOverride?: number) => {
+    setLogs(prev => [...prev.slice(-19), { week: weekOverride ?? gameState?.turn ?? 1, message: msg }]);
   };
 
   const handleAction = (payload: any) => {
@@ -60,7 +61,8 @@ export default function App() {
     if (payload.type === 'end-turn') {
       const nextState = processTurnStart(gameState);
       setGameState(nextState);
-      addLog(`Week ${nextState.turn} begins.`);
+      setIsBuildingModalOpen(false);
+      addLog(`Week ${nextState.turn} begins.`, nextState.turn);
       return;
     }
 
@@ -114,8 +116,11 @@ export default function App() {
     let updatedPlayers = [...gameState.players];
     let player = { ...updatedPlayers[activePlayerIndex] };
 
-    // Don't move if we are already there
-    if (player.position === nodeId) return;
+    // If we are already there, just open the modal if it's a building
+    if (player.position === nodeId) {
+      setIsBuildingModalOpen(true);
+      return;
+    }
 
     const pathResult = findShortestPath(adjacencyMap, player.position, nodeId);
     
@@ -141,6 +146,7 @@ export default function App() {
         updatedPlayers[activePlayerIndex] = player;
         setGameState({ ...gameState, players: updatedPlayers });
         setIsAnimating(false);
+        setIsBuildingModalOpen(true);
       } else {
         addLog(`Not enough hours to move. Needed: ${moveCost}, Have: ${player.hoursRemaining}`);
       }
@@ -168,7 +174,7 @@ export default function App() {
         updatedPlayers[0].goalAllotment = goals;
         const firstTurnState = processTurnStart({ ...gameState, phase: 'playing', players: updatedPlayers });
         setGameState(firstTurnState);
-        addLog('Game started. Good luck!');
+        addLog('Game started. Good luck!', firstTurnState.turn);
       }} />
     );
   }
@@ -206,13 +212,16 @@ export default function App() {
           onNodeClick={handleNodeClick} 
         />
         <GameLog entries={logs} />
+        {isBuildingModalOpen && currentBuildingId && (
+          <BuildingModal
+            player={activePlayer}
+            campaign={campaign!}
+            currentBuildingId={currentBuildingId}
+            onAction={handleAction}
+            onClose={() => setIsBuildingModalOpen(false)}
+          />
+        )}
       </main>
-      <ActionPanel
-        player={activePlayer}
-        campaign={campaign!}
-        currentBuildingId={currentBuildingId}
-        onAction={handleAction}
-      />
     </div>
   );
 }

@@ -12,7 +12,12 @@ interface GameMapProps {
 export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const onNodeClickRef = useRef(onNodeClick);
   const [isMapReady, setIsMapReady] = useState(false);
+
+  useEffect(() => {
+    onNodeClickRef.current = onNodeClick;
+  }, [onNodeClick]);
 
   useEffect(() => {
     if (!containerRef.current || !campaign) return;
@@ -25,7 +30,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick 
       buildings: campaign.buildings,
       assetBasePath: `/campaigns/${campaign.config.name}`,
       onNodeClick: (nodeId) => {
-        onNodeClick(nodeId);
+        onNodeClickRef.current(nodeId);
       }
     }).then((cleanup) => {
       if (!isMounted) {
