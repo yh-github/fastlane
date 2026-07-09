@@ -25,6 +25,7 @@ import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calc
 import { resetPlayerClock } from './timeManager';
 import { processStarvation, processDoctorVisit, processApartmentRobbery } from './eventEngine';
 import { fluctuateEconomy, applyMarketCrash } from './economyEngine';
+import { processWeekend } from './weekendEngine';
 
 export function processTurnStart(state: GameState): GameState {
   // 1. Fluctuate the economy for the new turn
@@ -44,6 +45,8 @@ export function processTurnStart(state: GameState): GameState {
   }
   
   const economicBoom = crashSeverity === 'none' && newEconomy > state.economicIndex && Math.random() < 0.2;
+
+  const previousPlayerWeekends: string[] = [];
 
   // Process each player
   const updatedPlayers = state.players.map(player => {
@@ -289,6 +292,12 @@ export function processTurnStart(state: GameState): GameState {
       if (currentHeadline) {
         p.newspaperHeadline = currentHeadline;
         p.turnFlags.freeNewspaper = true;
+      }
+      
+      // Process Weekend Activity
+      p = processWeekend(p, state.turn + 1, previousPlayerWeekends);
+      if (p.weekendResult) {
+        previousPlayerWeekends.push(p.weekendResult.text);
       }
     }
 

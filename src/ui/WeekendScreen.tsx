@@ -18,19 +18,37 @@ export function WeekendScreen({ player, turn, onNextWeek }: WeekendScreenProps) 
       
       <div style={{
         marginTop: '20px', marginBottom: '30px', padding: '20px', 
-        backgroundColor: '#2c3e50', borderRadius: '8px', minWidth: '300px',
-        border: '2px solid #34495e'
+        backgroundColor: '#2c3e50', borderRadius: '8px', minWidth: '400px', maxWidth: '600px',
+        border: '2px solid #34495e', textAlign: 'center'
       }}>
-        <h3 style={{ marginTop: 0, borderBottom: '1px solid #555', paddingBottom: '10px' }}>What happened:</h3>
-        
-        {player.turnEvents && player.turnEvents.length > 0 ? (
-          <ul style={{ paddingLeft: '20px', textAlign: 'left' }}>
-            {player.turnEvents.map((event, idx) => (
-              <li key={idx} style={{ marginBottom: '8px' }}>{event}</li>
-            ))}
-          </ul>
+        {player.weekendResult ? (
+          <>
+            <h3 style={{ color: '#f1c40f', marginBottom: '10px' }}>What you did this weekend:</h3>
+            <p style={{ fontSize: '1.2em', fontStyle: 'italic', marginBottom: '15px' }}>
+              "{player.weekendResult.text}"
+            </p>
+            <p style={{ color: '#e74c3c', fontWeight: 'bold' }}>
+              Cost: ${player.weekendResult.cost}
+            </p>
+            {player.weekendResult.happinessBonus && (
+              <p style={{ color: '#2ecc71', fontWeight: 'bold', marginTop: '5px' }}>
+                Happiness +{player.weekendResult.happinessBonus}
+              </p>
+            )}
+          </>
         ) : (
           <p style={{ fontStyle: 'italic', color: '#aaa' }}>Nothing special happened this weekend.</p>
+        )}
+
+        {player.turnEvents && player.turnEvents.length > 0 && (
+          <div style={{ marginTop: '20px', borderTop: '1px solid #555', paddingTop: '15px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#ccc' }}>Other Events:</h4>
+            <ul style={{ paddingLeft: '20px', textAlign: 'left', margin: 0, fontSize: '0.9em' }}>
+              {player.turnEvents.map((event, idx) => (
+                <li key={idx} style={{ marginBottom: '5px' }}>{event}</li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
 
