@@ -46,11 +46,12 @@ export function InventoryModal({ player, onAction, onClose }: InventoryModalProp
           <div style={{ marginBottom: '10px' }}>
             <label style={{ marginRight: '10px' }}>Wearing:</label>
             <select 
-              value={inventory.selectedClothes || 'casual'} 
+              value={inventory.selectedClothes || 'none'} 
               onChange={(e) => onAction && onAction({ type: 'change_clothes', clothes: e.target.value })}
               style={{ padding: '4px' }}
             >
-              <option value="casual">Casual</option>
+              <option value="none">None</option>
+              <option value="casual" disabled={inventory.casualClothesWeeks <= 0}>Casual</option>
               <option value="dress" disabled={inventory.dressClothesWeeks <= 0}>Dress</option>
               <option value="business" disabled={inventory.businessClothesWeeks <= 0}>Business</option>
             </select>

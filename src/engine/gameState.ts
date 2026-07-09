@@ -64,6 +64,12 @@ export interface PlayerState {
   bankSavings: number;
   /** Outstanding rent debt (garnished from wages) */
   rentDebt: number;
+  /** Current bank loan debt */
+  loanDebt: number;
+  /** Number of times the player has defaulted on a loan */
+  timesDefaulted: number;
+  /** The absolute week number by which a loan payment must be made */
+  loanPaymentDeadline: number;
 
   // ── Core Stats ──
   /** Happiness: 10–100. Drives the Happiness goal. */
@@ -125,13 +131,15 @@ export interface PlayerState {
   turnFlags: TurnFlags;
   /** Notifications or events that occurred over the weekend */
   turnEvents: string[];
+  /** The newspaper headline for this turn */
+  newspaperHeadline: string | null;
 }
 
 // ─── Inventory ──────────────────────────────────────────────────
 
 export interface InventoryState {
   /** The type of clothes the player has currently selected to wear */
-  selectedClothes?: 'casual' | 'dress' | 'business';
+  selectedClothes?: 'casual' | 'dress' | 'business' | 'none';
   /** Weeks of casual clothing remaining */
   casualClothesWeeks: number;
   /** Weeks of dress clothing remaining */
@@ -220,6 +228,14 @@ export interface TurnFlags {
   caffeineDebt: number;
   /** Whether the player already asked for an extension this turn */
   askedForExtension: boolean;
+  /** Whether the player paid rent or moved this turn (keeps the Rent Office open in the UI) */
+  rentPaidThisTurn: boolean;
+  /** Whether the player receives a free newspaper this turn due to an event */
+  freeNewspaper: boolean;
+  /** Notice flag for loan payable (week 4 of month) */
+  loanPayableWarning?: boolean;
+  /** Notice flag for loan default/delinquency */
+  loanDefaultWarning?: boolean;
 }
 
 // ─── Hour Cost Constants ────────────────────────────────────────
@@ -258,6 +274,8 @@ export function createDefaultTurnFlags(): TurnFlags {
     freshFoodHappinessGranted: false,
     caffeineDebt: 0,
     askedForExtension: false,
+    rentPaidThisTurn: false,
+    freeNewspaper: false,
   };
 }
 
@@ -290,6 +308,9 @@ export function createPlayerState(id: string, name: string, startNode: string): 
     money: STARTING_MONEY,
     bankSavings: 0,
     rentDebt: 0,
+    loanDebt: 0,
+    timesDefaulted: 0,
+    loanPaymentDeadline: 0,
     happiness: STARTING_HAPPINESS,
     experience: STARTING_EXPERIENCE,
     dependability: STARTING_DEPENDABILITY,
@@ -313,6 +334,7 @@ export function createPlayerState(id: string, name: string, startNode: string): 
     goalAllotment: createDefaultGoalAllotment(),
     turnFlags: createDefaultTurnFlags(),
     turnEvents: [],
+    newspaperHeadline: null,
   };
 }
 

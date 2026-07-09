@@ -40,12 +40,12 @@ export function fluctuateEconomy(currentIndex: number): number {
  * @param basePrice     — Base price of the stock
  * @param economicIndex — Current economic index
  */
-export function calcStockPrice(basePrice: number, economicIndex: number): number {
-  // Base scales with economy, then we add some random volatility (-20% to +20%)
+export function calcStockPrice(basePrice: number, economicIndex: number, seed: number): number {
   const econPrice = calcEconomyPrice(basePrice, economicIndex);
-  const volatility = 0.8 + Math.random() * 0.4;
+  const x = Math.sin(seed) * 10000;
+  const pseudoRandom = x - Math.floor(x);
+  const volatility = 0.8 + pseudoRandom * 0.4;
   
-  // Ensure we respect the 50% to 250% bounds mentioned in the wiki
   const minPrice = Math.floor(basePrice * 0.5);
   const maxPrice = Math.floor(basePrice * 2.5);
   

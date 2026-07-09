@@ -42,6 +42,8 @@ export function processTurnStart(state: GameState): GameState {
     else if (roll < 0.9) crashSeverity = 'moderate';
     else crashSeverity = 'major';
   }
+  
+  const economicBoom = crashSeverity === 'none' && newEconomy > state.economicIndex && Math.random() < 0.2;
 
   // Process each player
   const updatedPlayers = state.players.map(player => {
@@ -55,7 +57,8 @@ export function processTurnStart(state: GameState): GameState {
       freshFoodHappinessGranted: false,
       caffeineDebt: p.turnFlags?.caffeineDebt || 0,
       askedForExtension: false,
-      rentPaidThisTurn: false
+      rentPaidThisTurn: false,
+      freeNewspaper: false
     };
     p.turnEvents = [];
 
@@ -71,6 +74,18 @@ export function processTurnStart(state: GameState): GameState {
         if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push("Your business suit is worn out!");
         p.inventory.businessClothesWeeks = Math.max(0, p.inventory.businessClothesWeeks - 1);
       }
+
+      // Auto-fallback clothes if worn out
+      const hasCasual = p.inventory.casualClothesWeeks > 0;
+      const hasDress = p.inventory.dressClothesWeeks > 0;
+      const hasBusiness = p.inventory.businessClothesWeeks > 0;
+      let activeClothes: 'casual' | 'dress' | 'business' | 'none' = (p.inventory.selectedClothes as any) || 'none';
+
+      if (activeClothes === 'business' && !hasBusiness) activeClothes = hasDress ? 'dress' : (hasCasual ? 'casual' : 'none');
+      if (activeClothes === 'dress' && !hasDress) activeClothes = hasBusiness ? 'business' : (hasCasual ? 'casual' : 'none');
+      if (activeClothes === 'casual' && !hasCasual) activeClothes = hasDress ? 'dress' : (hasBusiness ? 'business' : 'none');
+
+      p.inventory.selectedClothes = activeClothes as any;
 
       // 2. Food Consumption & Starvation
       let doctorNeeded = false;
@@ -175,7 +190,27 @@ export function processTurnStart(state: GameState): GameState {
         p.money = Math.max(0, p.money - 35);
       }
 
-      // 10. Rent Check
+      // 10. Loan Checks
+      if (p.loanDebt > 0) {
+        if (state.turn % 4 === 1) { // Week 1 of month
+          if (p.loanPaymentDeadline < state.turn) {
+            // Missed payment
+            p.timesDefaulted += 1;
+            if (p.loanPaymentDeadline < state.turn - 4) {
+              p.happiness = Math.max(10, p.happiness - 1);
+              p.turnFlags.loanDefaultWarning = true;
+            } else {
+              p.turnFlags.loanDefaultWarning = true;
+            }
+          }
+        } else if (state.turn % 4 === 0) { // Week 4 of month
+          if (p.loanPaymentDeadline <= state.turn) {
+            p.turnFlags.loanPayableWarning = true;
+          }
+        }
+      }
+
+      // 11. Rent Check
       if (p.rentPaidUntilWeek <= state.turn) {
         if (p.rentExtensionActive) {
           // They asked for an extension this turn and were approved. The extension expires now.
@@ -212,23 +247,44 @@ export function processTurnStart(state: GameState): GameState {
         }
       }
 
-      // 10.5 Loan interest
-      if (p.loanDebt > 0) {
-        p.loanDebt = Math.floor(p.loanDebt * 1.05);
-      }
-
-      // 11. Apply Market Crash
+      // 11. Apply Market Crash & Economy Headline
+      let currentHeadline = null;
       if (crashSeverity !== 'none') {
         p = applyMarketCrash(crashSeverity, p);
+        if (crashSeverity === 'minor') currentHeadline = "MORE S & L'S FAIL! ECONOMY SUFFERS";
+        else if (crashSeverity === 'moderate') currentHeadline = "SCANDAL ON WALL ST. ECONOMY DROPS! UNEMPLOYMENT RISES";
+        else currentHeadline = "BANKS FALTER! SAVINGS LOST! JOBS LOST!";
+      } else if (economicBoom) {
+        currentHeadline = "INFLATION IS UP! PRICES COULD SOAR!";
       }
 
       // 12. Apartment Robbery
-      p = processApartmentRobbery(p);
+      const robberyResult = processApartmentRobbery(p);
+      p = robberyResult.updated;
+      if (robberyResult.robbed) {
+        currentHeadline = "WILD WILLY RIPS OFF ANOTHER APARTMENT";
+      }
 
       // Process delayed doctor visit
       if (doctorNeeded) {
         p = processDoctorVisit(p);
       }
+
+      if (currentHeadline) {
+        p.newspaperHeadline = currentHeadline;
+        p.turnFlags.freeNewspaper = true;
+      }
+    }
+
+    // Generate fallback headline if no specific event
+    if (!p.newspaperHeadline) {
+      const randomHeadlines = [
+        "PRESIDENT HATES BROCCOLI",
+        "MORE FAST FOOD PLACES USING SOYBEANS",
+        "SCIENTISTS DISCOVER NEW PLANET",
+        "LOCAL SPORTS TEAM WINS CHAMPIONSHIP"
+      ];
+      p.newspaperHeadline = randomHeadlines[Math.floor(Math.random() * randomHeadlines.length)];
     }
 
     // Reset position to home at the start of the week
