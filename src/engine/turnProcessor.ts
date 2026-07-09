@@ -47,7 +47,6 @@ export function processTurnStart(state: GameState): GameState {
   const updatedPlayers = state.players.map(player => {
     let p = resetPlayerClock(player); // Resets hours to 60, applies caffeine debt
 
-    // Reset Turn Flags
     p.turnFlags = {
       hasEaten: false,
       hasWorked: false,
@@ -55,7 +54,8 @@ export function processTurnStart(state: GameState): GameState {
       fastFoodHappinessGranted: false,
       freshFoodHappinessGranted: false,
       caffeineDebt: p.turnFlags?.caffeineDebt || 0,
-      askedForExtension: false
+      askedForExtension: false,
+      rentPaidThisTurn: false
     };
     p.turnEvents = [];
 
@@ -204,7 +204,7 @@ export function processTurnStart(state: GameState): GameState {
       }
 
       // Check if rent is due for the UPCOMING turn (state.turn + 1)
-      if (p.rentPaidUntilWeek === state.turn + 1) {
+      if (p.rentPaidUntilWeek <= state.turn + 1) {
         if (p.rentExtensionsDeniedPermanently) {
           p.turnEvents.push("Rent is due this week! Pay at the Rent Office to avoid additional rent debt.");
         } else {

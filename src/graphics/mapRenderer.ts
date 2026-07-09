@@ -179,7 +179,7 @@ export function highlightReachableNodes(nodeIds: string[]): void {
  * @param path - Array of positions to visit in order
  * @param speedMs - Time in milliseconds per step
  */
-export async function animatePlayerPath(path: PlayerPosition[], speedMs: number = 300): Promise<void> {
+export async function animatePlayerPath(path: PlayerPosition[], speedMs: number = 300, onStep?: () => void): Promise<void> {
   if (!playerToken || path.length === 0) return;
   playerToken.visible = true;
 
@@ -202,6 +202,7 @@ export async function animatePlayerPath(path: PlayerPosition[], speedMs: number 
         if (progress < 1) {
           requestAnimationFrame(step);
         } else {
+          if (onStep) onStep();
           resolve();
         }
       }
