@@ -60,13 +60,17 @@ export function processTurnStart(state: GameState): GameState {
     p.turnEvents = [];
 
     if (state.turn > 0) {
-      // 1. Clothing Decay
-      if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push("Your casual clothes are worn out!");
-      if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push("Your dress clothes are worn out!");
-      if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push("Your business suit is worn out!");
-      p.inventory.casualClothesWeeks = Math.max(0, p.inventory.casualClothesWeeks - 1);
-      p.inventory.dressClothesWeeks = Math.max(0, p.inventory.dressClothesWeeks - 1);
-      p.inventory.businessClothesWeeks = Math.max(0, p.inventory.businessClothesWeeks - 1);
+      // 1. Clothing Decay (only decay what is actually worn)
+      if (p.inventory.selectedClothes === 'casual') {
+        if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push("Your casual clothes are worn out!");
+        p.inventory.casualClothesWeeks = Math.max(0, p.inventory.casualClothesWeeks - 1);
+      } else if (p.inventory.selectedClothes === 'dress') {
+        if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push("Your dress clothes are worn out!");
+        p.inventory.dressClothesWeeks = Math.max(0, p.inventory.dressClothesWeeks - 1);
+      } else if (p.inventory.selectedClothes === 'business') {
+        if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push("Your business suit is worn out!");
+        p.inventory.businessClothesWeeks = Math.max(0, p.inventory.businessClothesWeeks - 1);
+      }
 
       // 2. Food Consumption & Starvation
       let doctorNeeded = false;
@@ -206,6 +210,11 @@ export function processTurnStart(state: GameState): GameState {
         } else {
           p.turnEvents.push("Rent is due this week! You must visit the Rent Office to pay or ask for an extension.");
         }
+      }
+
+      // 10.5 Loan interest
+      if (p.loanDebt > 0) {
+        p.loanDebt = Math.floor(p.loanDebt * 1.05);
       }
 
       // 11. Apply Market Crash
