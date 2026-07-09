@@ -80,14 +80,14 @@ export function processDoctorVisit(player: PlayerState): PlayerState {
  * @param player — Current player state
  * @returns        Updated player state (stolen items removed)
  */
-export function processApartmentRobbery(player: PlayerState): PlayerState {
+export function processApartmentRobbery(player: PlayerState): { updated: PlayerState; robbed: boolean } {
   // Security Apartments are immune (assuming currentHousingId 'security' signifies this)
-  if (player.currentHousingId === 'security') return player;
+  if (player.currentHousingId === 'security') return { updated: player, robbed: false };
 
   const chance = calcRobberyChance(player.relaxation);
   
   if (Math.random() < chance) {
-    let updated = { ...player, inventory: { ...player.inventory } };
+    let updated = { ...player, inventory: { ...player.inventory }, turnEvents: [...player.turnEvents, "Wild Willy broke into your apartment!"] };
     // Filter appliances. Each stealable durable has 25% chance to be stolen.
     // Fridge, Freezer, Stove can't be stolen.
     updated.inventory.appliances = updated.inventory.appliances.filter((app) => {
@@ -100,10 +100,8 @@ export function processApartmentRobbery(player: PlayerState): PlayerState {
       return true; // Keep
     });
 
-    // If nothing was actually stolen, maybe no penalty? The wiki isn't strictly explicit,
-    // but usually getting robbed is bad. We'll leave happiness alone unless we want a general penalty.
-    return updated;
+    return { updated, robbed: true };
   }
 
-  return player;
+  return { updated: player, robbed: false };
 }

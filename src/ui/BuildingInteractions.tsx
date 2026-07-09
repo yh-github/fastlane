@@ -45,14 +45,28 @@ export function JobBoard({ player, onAction, availableJobs, buildings }: Interac
       </h3>
       {jobsAtLocation.map(job => {
         const isCurrentJob = player.currentJobId === job.id;
+        const missingExp = player.experience < job.requirements.experience;
+        const missingDep = player.dependability < job.requirements.dependability;
+        const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
+        
         return (
-          <div key={job.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444' }}>
+          <div key={job.id} className="interaction-item" style={{ marginBottom: '10px', padding: '10px', border: '1px solid #444', borderRadius: '4px' }}>
             <strong>{job.title}</strong> — ${job.baseWage}/hr
-            <div style={{ fontSize: '12px' }}>
-              Reqs: Exp {job.requirements.experience}, Dep {job.requirements.dependability}
-              {job.requirements.degrees.length > 0 && `, Degree: ${job.requirements.degrees.join(', ')}`}
+            <div style={{ fontSize: '12px', marginTop: '5px' }}>
+              <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>Exp: {job.requirements.experience}</span> | 
+              <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginLeft: '5px' }}>Dep: {job.requirements.dependability}</span>
+              {job.requirements.degrees.length > 0 && (
+                <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginLeft: '5px' }}>
+                  | Degrees: {job.requirements.degrees.join(', ')}
+                </span>
+              )}
             </div>
-            <div style={{ marginTop: '5px' }}>
+            {(missingExp || missingDep || missingDegrees.length > 0) && (
+              <div style={{ fontSize: '11px', color: '#e74c3c', fontStyle: 'italic', marginTop: '2px' }}>
+                You do not meet the minimum requirements for this position.
+              </div>
+            )}
+            <div style={{ marginTop: '10px' }}>
               {isCurrentJob ? (
                 <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Current Job</span>
               ) : (
@@ -120,7 +134,7 @@ export function HomeRelax({ onAction }: InteractionProps) {
   );
 }
 
-import { calcEconomyPrice } from '../engine/economyEngine';
+import { calcEconomyPrice, calcStockPrice } from '../engine/economyEngine';
 
 import type { GameRules } from '../engine/gameState';
 
@@ -132,7 +146,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const rentOwed = player.rentDebt;
   const isWeek4 = turn % 4 === 0;
   const rentDue = player.rentPaidUntilWeek <= turn;
-  const isOpen = isWeek4 || rentDue;
+  const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn;
 
   // The cost to move is always market rate (economy adjusted)
   const lowCostMovePrice = lowCostHousing ? calcEconomyPrice(lowCostHousing.baseRent, economicIndex) : 0;
@@ -246,35 +260,106 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   );
 }
 
-export function BankInterface({ player, onAction }: InteractionProps) {
+export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number }) {
+  const [tab, setTab] = useState<'bank'|'stocks'|'loans'>('bank');
+  
   return (
     <div className="interaction-panel">
       <h3>Bank of Jones</h3>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+        <button onClick={() => setTab('bank')} style={{ fontWeight: tab === 'bank' ? 'bold' : 'normal' }}>Bank</button>
+        <button onClick={() => setTab('stocks')} style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}>Stocks</button>
+        <button onClick={() => setTab('loans')} style={{ fontWeight: tab === 'loans' ? 'bold' : 'normal' }}>Loans</button>
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
           <strong>Cash:</strong> ${player.money}
         </div>
-        <div>
-          <strong>Savings:</strong> ${player.bankSavings}
+        {tab === 'bank' && (
+          <div>
+            <strong>Savings:</strong> ${player.bankSavings}
+          </div>
+        )}
+        {tab === 'loans' && (
+          <div>
+            <strong>Debt:</strong> ${player.loanDebt || 0}
+          </div>
+        )}
+      </div>
+      
+      {tab === 'bank' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button onClick={() => onAction({ type: 'bank_transaction', amount: 50 })} disabled={player.money < 50}>
+            Deposit $50
+          </button>
+          <button onClick={() => onAction({ type: 'bank_transaction', amount: 100 })} disabled={player.money < 100}>
+            Deposit $100
+          </button>
+          <button onClick={() => onAction({ type: 'bank_transaction', amount: -50 })} disabled={player.bankSavings < 50}>
+            Withdraw $50
+          </button>
+          <button onClick={() => onAction({ type: 'bank_transaction', amount: -100 })} disabled={player.bankSavings < 100}>
+            Withdraw $100
+          </button>
         </div>
-      </div>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <button onClick={() => onAction({ type: 'bank_transaction', amount: 50 })} disabled={player.money < 50}>
-          Deposit $50
-        </button>
-        <button onClick={() => onAction({ type: 'bank_transaction', amount: 100 })} disabled={player.money < 100}>
-          Deposit $100
-        </button>
-        <button onClick={() => onAction({ type: 'bank_transaction', amount: -50 })} disabled={player.bankSavings < 50}>
-          Withdraw $50
-        </button>
-        <button onClick={() => onAction({ type: 'bank_transaction', amount: -100 })} disabled={player.bankSavings < 100}>
-          Withdraw $100
-        </button>
-      </div>
-      
-      <p style={{ fontStyle: 'italic', marginTop: '20px', fontSize: '0.9em', color: '#888' }}>Loans and Stocks coming soon...</p>
+      )}
+
+      {tab === 'stocks' && campaign?.stocks && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {campaign.stocks.map(stock => {
+            let price = stock.basePrice;
+            if (stock.type === 'fluctuating') {
+              const seed = turn * 997 + stock.id.charCodeAt(0) * 31;
+              price = calcStockPrice(stock.basePrice, economicIndex, seed);
+            }
+            const owned = stock.id === 'tbills' 
+              ? player.inventory.stocks.tBills 
+              : (player.inventory.stocks.holdings[stock.id] || 0);
+            
+            const sellFee = stock.sellFeePercent ? Math.floor(price * (stock.sellFeePercent / 100)) : 0;
+            const sellRevenue = Math.max(0, price - sellFee);
+
+            return (
+              <div key={stock.id} style={{ padding: '10px', border: '1px solid #4aa', borderRadius: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <strong>{stock.name}</strong>
+                  <span>Price: ${price}</span>
+                </div>
+                <div style={{ fontSize: '12px', marginBottom: '5px' }}>Owned: {owned}</div>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <button onClick={() => onAction({ type: 'buy_stock', stockId: stock.id, quantity: 1, cost: price })} disabled={player.money < price}>
+                    Buy 1
+                  </button>
+                  <button onClick={() => onAction({ type: 'buy_stock', stockId: stock.id, quantity: 10, cost: price * 10 })} disabled={player.money < price * 10}>
+                    Buy 10
+                  </button>
+                  <button onClick={() => onAction({ type: 'sell_stock', stockId: stock.id, quantity: 1, revenue: sellRevenue })} disabled={owned < 1}>
+                    Sell 1
+                  </button>
+                  <button onClick={() => onAction({ type: 'sell_stock', stockId: stock.id, quantity: 10, revenue: sellRevenue * 10 })} disabled={owned < 10}>
+                    Sell 10
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === 'loans' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button onClick={() => onAction({ type: 'take_loan' })}>
+            Apply for Loan (Costs 2 Hours)
+          </button>
+          <button 
+            onClick={() => onAction({ type: 'pay_loan' })} 
+            disabled={player.money < Math.min(50, player.loanDebt || 0) || (player.loanDebt || 0) === 0}
+          >
+            Make Loan Payment ($50 or remainder)
+          </button>
+        </div>
+      )}
     </div>
   );
 }

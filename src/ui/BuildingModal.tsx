@@ -135,6 +135,9 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
         {building.archetype === 'bank' && (
           <BankInterface 
             player={player}
+            campaign={campaign}
+            turn={turn}
+            economicIndex={economicIndex}
             onAction={onAction}
           />
         )}

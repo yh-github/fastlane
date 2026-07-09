@@ -19,6 +19,7 @@ import { processStreetRobbery } from './engine/eventEngine';
 
 import { WeekendScreen } from './ui/WeekendScreen';
 import { InventoryModal } from './ui/InventoryModal';
+import { NewspaperModal } from './ui/NewspaperModal';
 import { AnimationLayer, type FloatingAnimation } from './ui/AnimationLayer';
 
 type AppStatus = 'loading' | 'ready' | 'error';
@@ -33,6 +34,7 @@ export default function App() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isNewspaperModalOpen, setIsNewspaperModalOpen] = useState(false);
   const [floatingAnims, setFloatingAnims] = useState<FloatingAnimation[]>([]);
 
   // For single player MVP, track active player
@@ -45,7 +47,10 @@ export default function App() {
         const initialState = createInitialGameState('classic_1990', ['Player 1'], 'node_low_cost', 'cdrom');
         setGameState(initialState);
         setStatus('ready');
-      })
+      if (initialState && initialState.players[activePlayerIndex].turnFlags.freeNewspaper) {
+        setIsNewspaperModalOpen(true);
+      }
+    })
       .catch((err) => {
         console.error('[App] Campaign load failed:', err);
         setErrorMsg(err.message);
@@ -109,6 +114,9 @@ export default function App() {
     const nextState = processTurnStart({ ...gameState!, players: updatedPlayers });
     nextState.phase = 'weekend';
     setGameState(nextState);
+    if (nextState.players[activePlayerIndex].turnFlags.freeNewspaper) {
+      setIsNewspaperModalOpen(true);
+    }
   };
 
   const handleAction = async (payload: any) => {
@@ -147,12 +155,25 @@ export default function App() {
     } else if (payload.type === 'buy') {
       const itemDef = campaign.items.find(i => i.id === payload.itemId);
       if (itemDef) {
-        const result = buyItem(player, itemDef);
-        player = result.updated;
-        actionLog = result.message;
-        
-        if (result.success) {
-          triggerAnim('item', '📦', 'btn-inventory');
+        if (itemDef.id === 'newspaper') {
+          if (player.hoursRemaining >= 1 && player.money >= itemDef.basePrice) {
+            player = spendHours(player, 1);
+            player.money -= itemDef.basePrice;
+            actionLog = "Read the Newspaper.";
+            setIsNewspaperModalOpen(true);
+          } else if (player.money < itemDef.basePrice) {
+            actionLog = "Not enough money for the newspaper.";
+          } else {
+            actionLog = "Not enough time to read the newspaper.";
+          }
+        } else {
+          const result = buyItem(player, itemDef);
+          player = result.updated;
+          actionLog = result.message;
+          
+          if (result.success) {
+            triggerAnim('item', '📦', 'btn-inventory');
+          }
         }
       }
     } else if (payload.type === 'enroll') {
@@ -224,21 +245,55 @@ export default function App() {
         actionLog = "You do not own enough shares.";
       }
     } else if (payload.type === 'take_loan') {
-      const maxLoan = 500 + (player.experience * 20); // Basic loan limit logic
-      if ((player.loanDebt || 0) + payload.amount > maxLoan) {
-        actionLog = `The bank refused to lend you that much! (Max debt: $${maxLoan})`;
-      } else {
-        player.money += payload.amount;
-        player.loanDebt = (player.loanDebt || 0) + payload.amount;
-        actionLog = `Took out a loan of $${payload.amount}.`;
+      const liquidAssets = player.money + player.bankSavings;
+      const liquidity = player.currentWage + (liquidAssets / 1000);
+      let risk = 5;
+      if (player.timesDefaulted > 0 || (player.loanDebt || 0) > 0) {
+        risk = 5 + player.timesDefaulted + ((player.loanDebt || 0) / 100) + ((player.loanDebt || 0) > 0 ? 1 : 0);
       }
-    } else if (payload.type === 'pay_loan') {
-      if (player.money >= payload.amount) {
-        player.money -= payload.amount;
-        player.loanDebt -= payload.amount;
-        actionLog = `Paid $${payload.amount} towards loan.`;
+      const maxLoan = 100 * Math.max(0, liquidity - risk);
+      const isDefaulted = player.loanPaymentDeadline > 0 && player.loanPaymentDeadline < gameState!.turn;
+
+      if (isDefaulted || liquidity <= risk) {
+        actionLog = "The bank refused to lend you money!";
+        player.happiness = Math.max(10, player.happiness - 1);
       } else {
-        actionLog = "Not enough cash to pay loan.";
+        const loanSize = Math.floor(maxLoan);
+        if (loanSize > 0) {
+          if ((player.loanDebt || 0) === 0) {
+            player.loanPaymentDeadline = Math.floor((gameState!.turn - 1) / 4) * 4 + 4; // Week 4 of current month
+          }
+          player.money += loanSize;
+          player.loanDebt = (player.loanDebt || 0) + loanSize;
+          player.happiness = Math.min(100, player.happiness + 5);
+          actionLog = `The bank approved a loan of $${loanSize}.`;
+        } else {
+          actionLog = "The bank refused to lend you money!";
+          player.happiness = Math.max(10, player.happiness - 1);
+        }
+      }
+      player = spendHours(player, 2);
+    } else if (payload.type === 'pay_loan') {
+      if ((player.loanDebt || 0) > 0) {
+        if (player.loanDebt < 50 && player.money >= player.loanDebt) {
+          const amount = player.loanDebt;
+          player.money -= amount;
+          player.loanDebt = 0;
+          player.loanPaymentDeadline += 4;
+          actionLog = `Paid off the remaining loan of $${amount}.`;
+        } else if (player.money >= 50) {
+          player.money -= 50;
+          player.loanDebt = Math.max(0, player.loanDebt - 45);
+          player.loanPaymentDeadline += 4;
+          actionLog = `Made a $50 loan payment ($45 principal, $5 interest).`;
+        } else {
+          actionLog = "Not enough cash to make a payment.";
+        }
+        if (player.loanDebt === 0) {
+          player.loanPaymentDeadline = 0;
+        }
+      } else {
+        actionLog = "You do not have a loan.";
       }
     } else if (payload.type === 'rent_transaction') {
       if (player.money >= payload.amount) {
@@ -371,6 +426,7 @@ export default function App() {
         if (player.money < preRobberyMoney) {
           addLog("Wild Willy robbed you in the street!");
           triggerAnim('text', '-$$$', 'stat-money'); // stat-money is a guess, let's just trigger text at center
+          player.newspaperHeadline = "WILD WILLY HAS LIFTED ANOTHER WALLET";
         }
       }
       
@@ -506,6 +562,14 @@ export default function App() {
             onClose={() => setIsBuildingModalOpen(false)}
           />
         )}
+
+        {isNewspaperModalOpen && (
+          <NewspaperModal 
+            headline={activePlayer?.newspaperHeadline || ""} 
+            onClose={() => setIsNewspaperModalOpen(false)} 
+          />
+        )}
+
         {isInventoryOpen && activePlayer && (
           <InventoryModal
             player={activePlayer}
