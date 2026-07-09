@@ -1,16 +1,28 @@
-import type { PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
-import { JobBoard, StoreFront, UniversityRegistry, WorkStation, HomeRelax } from './BuildingInteractions';
+import type { GameRules, PlayerState } from '../engine/gameState';
+import { 
+  JobBoard, 
+  StoreFront, 
+  UniversityRegistry, 
+  WorkStation,
+  HomeRelax,
+  RentOffice,
+  BankInterface,
+  PawnShop 
+} from './BuildingInteractions';
 
 interface BuildingModalProps {
   player: PlayerState | null;
   campaign: CampaignBundle | null;
   currentBuildingId: string | null;
+  turn: number;
+  economicIndex: number;
+  rules: GameRules;
   onAction: (actionPayload: any) => void;
   onClose: () => void;
 }
 
-export function BuildingModal({ player, campaign, currentBuildingId, onAction, onClose }: BuildingModalProps) {
+export function BuildingModal({ player, campaign, currentBuildingId, turn, economicIndex, rules, onAction, onClose }: BuildingModalProps) {
   if (!player || !campaign || !currentBuildingId) return null;
 
   const building = campaign.buildings.find(b => b.id === currentBuildingId);
@@ -22,7 +34,23 @@ export function BuildingModal({ player, campaign, currentBuildingId, onAction, o
     : null;
 
   // Items available at this building
-  const itemsHere = campaign.items.filter(i => i.store === building.id);
+  let itemsHere = campaign.items.filter(i => i.store === building.id);
+
+  // Z-Mart randomization (show 6 items consistently per week per player)
+  if (building.id === 'z_mart' && itemsHere.length > 6) {
+    let seed = turn * 1337 + (player.id.charCodeAt(player.id.length - 1) || 0) * 12345;
+    const random = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+    
+    let shuffled = [...itemsHere];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    itemsHere = shuffled.slice(0, 6);
+  }
 
   const getFace = (archetype: string) => {
     switch (archetype) {
@@ -70,6 +98,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, onAction, o
             player={player} 
             onAction={onAction} 
             availableJobs={campaign.jobs} 
+            buildings={campaign.buildings}
           />
         )}
 
@@ -92,11 +121,41 @@ export function BuildingModal({ player, campaign, currentBuildingId, onAction, o
         )}
 
         {/* Home: relax to end turn */}
-        {building.archetype === 'home' && (
-          <HomeRelax 
+        {/* Home: relax to end turn */}
+        {building.archetype === 'housing' && (
+          <RentOffice 
+            player={player}
+            campaign={campaign}
+            turn={turn}
+            economicIndex={economicIndex}
+            rules={rules}
+            onAction={onAction}
+          />
+        )}
+        {building.archetype === 'bank' && (
+          <BankInterface 
             player={player}
             onAction={onAction}
           />
+        )}
+        {building.archetype === 'pawnshop' && (
+          <PawnShop 
+            player={player}
+            onAction={onAction}
+          />
+        )}
+        {building.archetype === 'home' && (
+          player.currentHousingId === building.id ? (
+            <HomeRelax 
+              player={player}
+              onAction={onAction}
+            />
+          ) : (
+            <div className="interaction-panel">
+              <h3>{building.name}</h3>
+              <p style={{ fontSize: '12px' }}>You don't live here.</p>
+            </div>
+          )
         )}
       </div>
     </div>

@@ -402,3 +402,36 @@ button:disabled {
   font-weight: bold;
   margin-right: 5px;
 }
+
+/* Animation Layer */
+.animation-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.animated-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 2rem;
+  will-change: transform, opacity;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.animated-element--text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #2ecc71;
+  background: rgba(0,0,0,0.7);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
