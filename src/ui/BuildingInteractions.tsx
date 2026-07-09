@@ -56,7 +56,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings }: Interac
               {isCurrentJob ? (
                 <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Current Job</span>
               ) : (
-                <button onClick={() => onAction({ type: 'apply', jobId: job.id })} disabled={player.hoursRemaining < 4}>
+                <button onClick={() => onAction({ type: 'apply', jobId: job.id })}>
                   Apply (4h)
                 </button>
               )}
@@ -72,12 +72,12 @@ export function JobBoard({ player, onAction, availableJobs, buildings }: Interac
  * WorkStation — Shown at workplace buildings where the player is employed.
  * Allows the player to work a shift.
  */
-export function WorkStation({ player, onAction, job }: InteractionProps & { job: JobDef }) {
+export function WorkStation({ onAction, job }: InteractionProps & { job: JobDef }) {
   return (
     <div className="interaction-panel">
       <h3>Your Job: {job.title}</h3>
       <p style={{ fontSize: '12px', marginBottom: '10px' }}>${job.baseWage}/hr</p>
-      <button onClick={() => onAction({ type: 'work', jobId: job.id })} disabled={player.hoursRemaining < 1}>
+      <button onClick={() => onAction({ type: 'work', jobId: job.id })}>
         Work Shift (up to 6h)
       </button>
     </div>

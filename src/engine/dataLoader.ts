@@ -147,6 +147,7 @@ export interface CampaignBundle {
   events: EventDef[];
   stocks: StockDef[];
   map: MapData;
+  messages: Record<string, string>;
 }
 
 // ─── Loader Functions ───────────────────────────────────────────
@@ -182,7 +183,7 @@ function validateConfig(config: unknown): asserts config is CampaignConfig {
  * @returns            Fully typed and validated campaign data
  */
 export async function loadCampaign(campaignId: string): Promise<CampaignBundle> {
-  const [config, buildings, jobs, items, education, housing, events, stocks, map] =
+  const [config, buildings, jobs, items, education, housing, events, stocks, map, messages] =
     await Promise.all([
       loadJSON<CampaignConfig>(campaignId, 'config.json'),
       loadJSON<BuildingDef[]>(campaignId, 'buildings.json'),
@@ -193,12 +194,13 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
       loadJSON<EventDef[]>(campaignId, 'events.json'),
       loadJSON<StockDef[]>(campaignId, 'stocks.json'),
       loadJSON<MapData>(campaignId, 'map.json'),
+      loadJSON<Record<string, string>>(campaignId, 'messages.json').catch(() => ({})),
     ]);
 
   // Validate critical files
   validateConfig(config);
 
-  return { config, buildings, jobs, items, education, housing, events, stocks, map };
+  return { config, buildings, jobs, items, education, housing, events, stocks, map, messages };
 }
 
 /**

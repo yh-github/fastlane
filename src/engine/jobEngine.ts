@@ -9,9 +9,15 @@ export interface JobApplicationResult {
   message: string;
 }
 
-export function applyForJob(player: PlayerState, job: JobDef): JobApplicationResult {
+export function applyForJob(player: PlayerState, job: JobDef, messages: Record<string, string> = {}): JobApplicationResult {
+  const msg = (key: string, defaultMsg: string, vars: Record<string, string> = {}) => {
+    let m = messages[key] || defaultMsg;
+    for (const [k, v] of Object.entries(vars)) m = m.replace(`{${k}}`, v);
+    return m;
+  };
+
   if (player.hoursRemaining < COST_JOB_APPLICATION) {
-    return { updated: player, success: false, message: 'Not enough time to apply.' };
+    return { updated: player, success: false, message: msg('job_apply_not_enough_time', 'Not enough time to apply.') };
   }
 
   // Cost to apply
@@ -22,23 +28,23 @@ export function applyForJob(player: PlayerState, job: JobDef): JobApplicationRes
     updated.currentJobId = job.id;
     updated.currentWage = job.baseWage;
     updated.raisesAtCurrentJob = 0;
-    return { updated, success: true, message: `You got the job as ${job.title}!` };
+    return { updated, success: true, message: msg('job_apply_success', `You got the job as ${job.title}!`, { title: job.title }) };
   }
 
   // Check hard requirements
   const rejectionReasons: string[] = [];
 
   if (updated.experience < job.requirements.experience) {
-    rejectionReasons.push('Not enough experience.');
+    rejectionReasons.push(msg('job_apply_missing_experience', 'Not enough experience.'));
   }
   if (updated.dependability < job.requirements.dependability) {
-    rejectionReasons.push('Not dependable enough.');
+    rejectionReasons.push(msg('job_apply_missing_dependability', 'Not dependable enough.'));
   }
   
   // Check degrees
   for (const degree of job.requirements.degrees) {
     if (!updated.degrees.includes(degree)) {
-      rejectionReasons.push(`Missing required degree: ${degree}`);
+      rejectionReasons.push(msg('job_apply_missing_degree', `Missing required degree: ${degree}`, { degree }));
     }
   }
 
@@ -54,7 +60,7 @@ export function applyForJob(player: PlayerState, job: JobDef): JobApplicationRes
   const roll = Math.floor(Math.random() * 100) + 1;
 
   if (roll > luck) {
-    return { updated, success: false, message: 'They decided to hire someone else (bad luck).' };
+    return { updated, success: false, message: msg('job_apply_no_openings', 'They decided to hire someone else (bad luck).') };
   }
 
   // Success

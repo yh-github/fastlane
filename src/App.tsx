@@ -127,7 +127,7 @@ export default function App() {
     if (payload.type === 'apply') {
       const jobDef = campaign.jobs.find(j => j.id === payload.jobId);
       if (jobDef) {
-        const result = applyForJob(player, jobDef);
+        const result = applyForJob(player, jobDef, campaign.messages);
         player = result.updated;
         actionLog = result.message;
       }
@@ -312,24 +312,24 @@ export default function App() {
     const pathResult = findShortestPath(adjacencyMap, player.position, nodeId);
     
     if (pathResult.found) {
-      // Basic movement cost: 1 hour per step
-      const moveCost = pathResult.steps;
-      if (player.hoursRemaining >= moveCost) {
-        setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
-        setIsAnimating(true);
-        
-        // Build the physical path for animation
-        const pathCoords: PlayerPosition[] = pathResult.path.map(id => {
+      setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
+      setIsAnimating(true);
+      
+      const requestedSteps = pathResult.steps;
+      const actualSteps = Math.min(requestedSteps, player.hoursRemaining);
+
+      if (actualSteps > 0) {
+        // Build the physical path for animation, up to the actual steps we can take
+        const pathCoords: PlayerPosition[] = pathResult.path.slice(0, actualSteps + 1).map(id => {
           const node = campaign.map.nodes.find(n => n.id === id);
           return { nodeId: id, x: node!.x, y: node!.y };
         });
 
-        // The first node in pathCoords is the current position, so slice it off if length > 1
-        // (Wait, findShortestPath includes start node, so we slice(1))
+        // Animate the path we can take
         await animatePlayerPath(pathCoords.slice(1));
 
-        player = spendHours(player, moveCost);
-        player.position = nodeId;
+        player = spendHours(player, actualSteps);
+        player.position = pathResult.path[actualSteps];
         
         updatedPlayers[activePlayerIndex] = player;
         
@@ -340,10 +340,11 @@ export default function App() {
           setGameState({ ...gameState, players: updatedPlayers });
           setIsBuildingModalOpen(true);
         }
-        setIsAnimating(false);
       } else {
-        addLog(`Not enough hours to move. Needed: ${moveCost}, Have: ${player.hoursRemaining}`);
+        // If they had exactly 0 hours but somehow clicked
+        addLog('Out of time for the week!');
       }
+      setIsAnimating(false);
     }
   };
 
