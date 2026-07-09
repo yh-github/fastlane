@@ -6,7 +6,7 @@ interface InteractionProps {
   onAction: (actionPayload: any) => void;
 }
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 /**
  * JobBoard — Shown at the Employment Office.
@@ -88,14 +88,34 @@ export function StoreFront({ player, onAction, availableItems }: InteractionProp
   return (
     <div className="interaction-panel">
       <h3>Storefront</h3>
-      {availableItems.map(item => (
-        <div key={item.id} className="interaction-item" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-          <span>{item.name} (${item.basePrice})</span>
-          <button onClick={() => onAction({ type: 'buy', itemId: item.id })} disabled={player.money < item.basePrice}>
-            Buy
-          </button>
-        </div>
-      ))}
+      {availableItems.map(item => {
+        const canAfford = player.money >= item.basePrice;
+        return (
+          <div 
+            key={item.id} 
+            className={`interaction-item ${canAfford ? 'interaction-item--clickable' : 'interaction-item--disabled'}`} 
+            style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}
+            onClick={() => {
+              if (canAfford) onAction({ type: 'buy', itemId: item.id });
+            }}
+          >
+            <span>{item.name}</span>
+            <span>${item.basePrice}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function HomeRelax({ onAction }: InteractionProps) {
+  return (
+    <div className="interaction-panel">
+      <h3>Home Sweet Home</h3>
+      <p style={{ fontSize: '12px', marginBottom: '10px' }}>Relax to restore energy and end your week.</p>
+      <button onClick={() => onAction({ type: 'end-turn' })}>
+        Relax (End Week)
+      </button>
     </div>
   );
 }

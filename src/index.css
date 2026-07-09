@@ -28,10 +28,10 @@ body {
 .app-container {
   display: grid;
   grid-template-rows: auto 1fr;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr;
   grid-template-areas:
-    "dashboard dashboard"
-    "viewport  actions";
+    "dashboard"
+    "viewport";
   height: 100vh;
 }
 
@@ -103,45 +103,82 @@ body {
   display: block;
 }
 
-/* Action Panel */
-.action-panel {
-  grid-area: actions;
+/* Building Modal */
+.building-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 450px;
   background: var(--panel-bg);
-  backdrop-filter: blur(10px);
-  border-left: 1px solid var(--accent-cyan);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 12px;
   padding: 20px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan);
+  z-index: 50;
+  max-height: 80vh;
   overflow-y: auto;
-  box-shadow: -5px 0 15px rgba(0,0,0,0.5);
 }
 
-.action-panel__title {
-  color: var(--accent-magenta);
-  font-size: 1.5rem;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  text-shadow: 0 0 8px rgba(255, 64, 129, 0.6);
-}
-
-.action-panel__budget {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--accent-amber);
+.building-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
   margin-bottom: 20px;
-  padding-bottom: 10px;
+  padding-bottom: 15px;
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-.action-panel__context {
-  flex-grow: 1;
+.building-modal__face {
+  font-size: 3rem;
+  line-height: 1;
+  background: rgba(0,0,0,0.3);
+  border-radius: 50%;
+  padding: 10px;
+  border: 2px solid var(--accent-amber);
+  box-shadow: var(--glow-amber);
 }
 
-.action-panel__hint {
-  color: #888;
+.building-modal__title-group h2 {
+  color: var(--accent-cyan);
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.building-modal__title-group p {
+  font-size: 0.85rem;
+  color: #aaa;
   font-style: italic;
-  text-align: center;
-  margin-top: 20px;
+}
+
+.building-modal__close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.building-modal__close:hover {
+  color: var(--accent-magenta);
+  background: none;
+  box-shadow: none;
+}
+
+/* Dashboard Controls (for End Turn) */
+.dashboard__controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 /* Buttons */
@@ -171,23 +208,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button.action-panel__btn--secondary {
-  border-color: var(--accent-amber);
-  color: var(--accent-amber);
-}
-
-button.action-panel__btn--secondary:hover:not(:disabled) {
-  background: var(--accent-amber);
-  color: #000;
-  box-shadow: var(--glow-amber);
-}
-
-.action-panel__btn {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 12px;
-}
-
 /* Interactions */
 .interaction-panel {
   background: rgba(0,0,0,0.3);
@@ -210,6 +230,22 @@ button.action-panel__btn--secondary:hover:not(:disabled) {
   border-radius: 4px;
   padding: 10px;
   margin-bottom: 10px;
+}
+
+.interaction-item--clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.interaction-item--clickable:hover:not(.interaction-item--disabled) {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--accent-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.interaction-item--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .interaction-item button {
