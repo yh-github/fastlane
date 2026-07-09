@@ -310,6 +310,7 @@ export default function App() {
         if (player.money >= payload.cost) {
           player.money -= payload.cost;
           player.currentHousingId = housingDef.id;
+          player.currentRentPrice = payload.cost;
           player.rentPaidUntilWeek = gameState.turn + 4; // Pay for a month
           player.rentDebt = 0;
           player.rentExtensionActive = false;
@@ -333,15 +334,29 @@ export default function App() {
     } else if (payload.type === 'pawn_item') {
       player.inventory.appliances = player.inventory.appliances.filter(a => a !== payload.item);
       if (!player.inventory.pawnedItems) player.inventory.pawnedItems = [];
-      player.inventory.pawnedItems.push(payload.item);
+      const pawnedItem = {
+        itemId: payload.item.id,
+        originalPrice: payload.item.purchasePrice,
+        redeemCost: Math.floor(payload.item.purchasePrice * 0.5),
+        weekPawned: gameState.turn,
+        ownerId: player.id
+      };
+      player.inventory.pawnedItems.push(pawnedItem);
       player.money += payload.value;
-      actionLog = `Pawned ${payload.item.name} for $${payload.value}.`;
+      player.happiness = Math.max(0, player.happiness - 1);
+      const itemName = payload.item.id.replace(/_/g, ' ');
+      actionLog = `Pawned ${itemName} for $${payload.value}.`;
     } else if (payload.type === 'redeem_item') {
       if (player.money >= payload.cost) {
         player.money -= payload.cost;
         player.inventory.pawnedItems = player.inventory.pawnedItems.filter(a => a !== payload.item);
-        player.inventory.appliances.push(payload.item);
-        actionLog = `Bought back ${payload.item.name} for $${payload.cost}.`;
+        player.inventory.appliances.push({
+          id: payload.item.itemId,
+          purchasePrice: payload.item.originalPrice,
+          purchaseSource: 'pawnshop'
+        });
+        const itemName = payload.item.itemId.replace(/_/g, ' ');
+        actionLog = `Bought back ${itemName} for $${payload.cost}.`;
       } else {
         actionLog = "Not enough cash to buy back item.";
       }

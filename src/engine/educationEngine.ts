@@ -49,11 +49,19 @@ export function study(player: PlayerState, degree: EducationDef): EducationResul
 
   // Calculate dynamic lessons required
   let required = degree.lessonsRequired;
-  if (player.inventory.appliances.some(a => a.id === 'computer')) required -= 3;
-  if (player.inventory.books.includes('dictionary')) required -= 1;
-  if (player.inventory.books.includes('encyclopedia')) required -= 1;
-  if (player.inventory.books.includes('atlas')) required -= 1;
+  let reduction = 0;
   
+  if (player.inventory.appliances.some(a => a.id === 'computer')) reduction += 1;
+  
+  const hasAllBooks = player.inventory.books.includes('dictionary') && 
+                      player.inventory.books.includes('encyclopedia') && 
+                      player.inventory.books.includes('atlas');
+  if (hasAllBooks) reduction += 1;
+  
+  // Cumulative up to -2 lessons
+  reduction = Math.min(2, reduction);
+  required -= reduction;
+
   // Ensure we don't drop requirement below 1, just in case
   required = Math.max(1, required);
 

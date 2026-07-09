@@ -364,7 +364,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
   );
 }
 
-export function PawnShop({ player, onAction }: InteractionProps) {
+export function PawnShop({ player, onAction, economicIndex = 0 }: InteractionProps & { economicIndex?: number }) {
   const pawnableAppliances = player.inventory.appliances;
   const redeemableItems = player.inventory.pawnedItems || [];
 
@@ -372,13 +372,13 @@ export function PawnShop({ player, onAction }: InteractionProps) {
     <div className="interaction-panel">
       <h3>Pawn Shop</h3>
       
-      <h4>Sell Items (50% Value)</h4>
+      <h4>Sell Items (40% Value)</h4>
       {pawnableAppliances.length === 0 ? (
         <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>You have no appliances to pawn.</p>
       ) : (
         <ul className="store-list">
           {pawnableAppliances.map((app, idx) => {
-            const pawnValue = Math.floor(app.purchasePrice * 0.5);
+            const pawnValue = Math.floor(calcEconomyPrice(app.purchasePrice, economicIndex) * 0.4);
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item: app, value: pawnValue })}>
                 <span>{app.id.replace(/_/g, ' ')}</span>
@@ -389,7 +389,7 @@ export function PawnShop({ player, onAction }: InteractionProps) {
         </ul>
       )}
 
-      <h4 style={{ marginTop: '20px' }}>Buy Back (50% Value + 10% Fee)</h4>
+      <h4 style={{ marginTop: '20px' }}>Buy Back (50% Value)</h4>
       {redeemableItems.length === 0 ? (
         <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>You have no items pawned.</p>
       ) : (
