@@ -1,4 +1,4 @@
-import { type PlayerState, COST_STUDY_SESSION } from './gameState';
+import { type PlayerState, type GameRules, COST_STUDY_SESSION } from './gameState';
 import { spendHours } from './timeManager';
 import type { EducationDef } from './dataLoader';
 
@@ -28,34 +28,21 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef): Educa
   let updated = { 
     ...player, 
     money: player.money - degree.baseTuitionFee,
-    currentDegreeId: degree.id,
-    lessonsCompleted: 0
+    enrolledClasses: { ...(player.enrolledClasses || {}), [degree.id]: 0 }
   };
 
   return { updated, success: true, message: `Enrolled in ${degree.name}.` };
 }
 
-export function study(player: PlayerState, degree: EducationDef): EducationResult {
-  if (player.hoursRemaining < 1 || player.currentDegreeId !== degree.id) {
-    return { updated: player, success: false, message: 'Cannot study right now.' };
-  }
-
-  if (player.hoursRemaining < COST_STUDY_SESSION) {
-    return { updated: player, success: false, message: `Need ${COST_STUDY_SESSION} hours to complete a lesson.` };
-  }
-
-  let updated = spendHours(player, COST_STUDY_SESSION);
-  updated.lessonsCompleted += 1;
-
-  // Calculate dynamic lessons required
+export function calcRequiredLessons(player: PlayerState, degree: EducationDef): number {
   let required = degree.lessonsRequired;
   let reduction = 0;
   
   if (player.inventory.appliances.some(a => a.id === 'computer')) reduction += 1;
   
-  const hasAllBooks = player.inventory.books.includes('dictionary') && 
-                      player.inventory.books.includes('encyclopedia') && 
-                      player.inventory.books.includes('atlas');
+  const hasAllBooks = player.inventory.books?.includes('dictionary') && 
+                      player.inventory.books?.includes('encyclopedia') && 
+                      player.inventory.books?.includes('atlas');
   if (hasAllBooks) reduction += 1;
   
   // Cumulative up to -2 lessons
@@ -63,15 +50,34 @@ export function study(player: PlayerState, degree: EducationDef): EducationResul
   required -= reduction;
 
   // Ensure we don't drop requirement below 1, just in case
-  required = Math.max(1, required);
+  return Math.max(1, required);
+}
 
-  let message = `Studied for ${degree.name}. Progress: ${updated.lessonsCompleted}/${required}`;
+export function study(player: PlayerState, degree: EducationDef, rules?: GameRules): EducationResult {
+  if (player.hoursRemaining < 1 || player.enrolledClasses?.[degree.id] === undefined) {
+    return { updated: player, success: false, message: 'Cannot study right now.' };
+  }
+
+  const allowPartial = rules?.studyWithPartialHours;
+
+  if (!allowPartial && player.hoursRemaining < COST_STUDY_SESSION) {
+    return { updated: player, success: false, message: `Need ${COST_STUDY_SESSION} hours to complete a lesson.` };
+  }
+
+  const hoursToSpend = allowPartial ? Math.min(player.hoursRemaining, COST_STUDY_SESSION) : COST_STUDY_SESSION;
+  let updated = spendHours(player, hoursToSpend);
+  updated.enrolledClasses = { ...(updated.enrolledClasses || {}) };
+  updated.enrolledClasses[degree.id] += 1;
+
+  // Calculate dynamic lessons required
+  const required = calcRequiredLessons(player, degree);
+
+  let message = `Studied for ${degree.name}. Progress: ${updated.enrolledClasses[degree.id]}/${required}`;
 
   // Check for graduation
-  if (updated.lessonsCompleted >= required) {
+  if (updated.enrolledClasses[degree.id] >= required) {
     updated.degrees = [...updated.degrees, degree.id];
-    updated.currentDegreeId = null;
-    updated.lessonsCompleted = 0;
+    delete updated.enrolledClasses[degree.id];
 
     // Apply rewards
     updated.happiness = Math.min(100, updated.happiness + degree.rewards.happiness);
