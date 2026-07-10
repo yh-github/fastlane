@@ -77,6 +77,7 @@ export interface ItemDef {
   happinessBonus: number;
   weeks?: number;
   units?: number;
+  tags?: string[];
 }
 
 export interface EducationDef {
@@ -141,6 +142,19 @@ export interface WeekendDef {
   randomWeekends: string[];
 }
 
+export interface SynergyEffect {
+  type: string;
+  value: number;
+  operation: 'MAX' | 'ADD' | 'SET';
+}
+
+export interface SynergyDef {
+  id: string;
+  name: string;
+  requires: string[];
+  effects: SynergyEffect[];
+}
+
 // ─── Campaign Bundle ────────────────────────────────────────────
 
 export interface CampaignBundle {
@@ -155,6 +169,7 @@ export interface CampaignBundle {
   map: MapData;
   messages: Record<string, string>;
   weekends: WeekendDef;
+  synergies: SynergyDef[];
 }
 
 // ─── Loader Functions ───────────────────────────────────────────
@@ -190,7 +205,7 @@ function validateConfig(config: unknown): asserts config is CampaignConfig {
  * @returns            Fully typed and validated campaign data
  */
 export async function loadCampaign(campaignId: string): Promise<CampaignBundle> {
-  const [config, buildings, jobs, items, education, housing, events, stocks, map, messages, weekends] =
+  const [config, buildings, jobs, items, education, housing, events, stocks, map, messages, weekends, synergies] =
     await Promise.all([
       loadJSON<CampaignConfig>(campaignId, 'config.json'),
       loadJSON<BuildingDef[]>(campaignId, 'buildings.json'),
@@ -202,13 +217,14 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
       loadJSON<StockDef[]>(campaignId, 'stocks.json'),
       loadJSON<MapData>(campaignId, 'map.json'),
       loadJSON<Record<string, string>>(campaignId, 'messages.json').catch(() => ({})),
-      loadJSON<WeekendDef>(campaignId, 'weekends.json')
+      loadJSON<WeekendDef>(campaignId, 'weekends.json'),
+      loadJSON<SynergyDef[]>(campaignId, 'synergies.json').catch(() => [])
     ]);
 
   // Validate critical files
   validateConfig(config);
 
-  return { config, buildings, jobs, items, education, housing, events, stocks, map, messages, weekends };
+  return { config, buildings, jobs, items, education, housing, events, stocks, map, messages, weekends, synergies };
 }
 
 /**

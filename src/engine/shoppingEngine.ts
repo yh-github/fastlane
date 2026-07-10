@@ -1,4 +1,4 @@
-import { type PlayerState } from './gameState';
+import { type PlayerState, type GameRules } from './gameState';
 import type { ItemDef } from './dataLoader';
 
 export interface ShoppingResult {
@@ -7,7 +7,7 @@ export interface ShoppingResult {
   message: string;
 }
 
-export function buyItem(player: PlayerState, item: ItemDef): ShoppingResult {
+export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): ShoppingResult {
   if (player.money < item.basePrice) {
     return { updated: player, success: false, message: 'Not enough money.' };
   }
@@ -36,6 +36,16 @@ export function buyItem(player: PlayerState, item: ItemDef): ShoppingResult {
       if (item.name.includes('Casual')) updated.inventory.casualClothesWeeks += (item.weeks || 4);
       if (item.name.includes('Dress')) updated.inventory.dressClothesWeeks += (item.weeks || 4);
       if (item.name.includes('Business')) updated.inventory.businessClothesWeeks += (item.weeks || 4);
+      
+      if (rules?.autoEquipBestClothes) {
+        const hasCasual = updated.inventory.casualClothesWeeks > 0;
+        const hasDress = updated.inventory.dressClothesWeeks > 0;
+        const hasBusiness = updated.inventory.businessClothesWeeks > 0;
+        
+        if (hasBusiness) updated.inventory.selectedClothes = 'business';
+        else if (hasDress) updated.inventory.selectedClothes = 'dress';
+        else if (hasCasual) updated.inventory.selectedClothes = 'casual';
+      }
       break;
     case 'appliance':
       updated.inventory.appliances = [...updated.inventory.appliances, {

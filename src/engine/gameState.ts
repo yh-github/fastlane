@@ -11,6 +11,8 @@
  * state objects rather than mutating in place.
  */
 
+import { type CampaignBundle } from './dataLoader';
+
 // ─── Core Game State ────────────────────────────────────────────
 
 export interface GameState {
@@ -35,6 +37,9 @@ export interface GameState {
 export interface GameRules {
   strictEviction: boolean;
   fluctuatingRent: boolean;
+  clothingDecaysAll: boolean;
+  autoEquipBestClothes: boolean;
+  classicStockMarket: boolean;
 }
 
 export type GamePhase =
@@ -52,6 +57,7 @@ export type GameVariant = 'floppy' | 'cdrom';
 export interface PlayerState {
   id: string;
   name: string;
+  isAi?: boolean;
 
   // ── Time ──
   /** Hours remaining this turn (starts at 60) */
@@ -135,6 +141,10 @@ export interface PlayerState {
   newspaperHeadline: string | null;
   /** The result of the weekend activity processing */
   weekendResult?: WeekendResult;
+  
+  // ── Active Effects ──
+  /** Calculated effects from synergies and items */
+  activeEffects: Record<string, number>;
 }
 
 export interface WeekendResult {
@@ -308,10 +318,17 @@ export function createDefaultGoalAllotment(): GoalAllotment {
   return { wealth: 25, happiness: 25, education: 25, career: 25 };
 }
 
-export function createPlayerState(id: string, name: string, startNode: string): PlayerState {
+export interface PlayerConfig {
+  name: string;
+  isAi: boolean;
+  goals: GoalAllotment;
+}
+
+export function createPlayerState(id: string, name: string, isAi: boolean, goals: GoalAllotment, startNode: string): PlayerState {
   return {
     id,
     name,
+    isAi,
     hoursRemaining: HOURS_PER_TURN,
     money: STARTING_MONEY,
     bankSavings: 0,
@@ -339,30 +356,85 @@ export function createPlayerState(id: string, name: string, startNode: string): 
     lessonsCompleted: 0,
     inventory: createDefaultInventory(),
     position: startNode,
-    goalAllotment: createDefaultGoalAllotment(),
+    goalAllotment: goals,
     turnFlags: createDefaultTurnFlags(),
     turnEvents: [],
     newspaperHeadline: null,
+    activeEffects: {},
   };
 }
 
 export function createInitialGameState(
   campaignId: string,
-  playerNames: string[],
+  playersConfig: PlayerConfig[],
   startNode: string,
   variant: GameVariant = 'cdrom',
-  rules: GameRules = { strictEviction: false, fluctuatingRent: false }
+  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true }
 ): GameState {
   return {
     turn: 0,
     economicIndex: 0,
-    players: playerNames.map((name, i) =>
-      createPlayerState(`player_${i + 1}`, name, startNode)
+    players: playersConfig.map((cfg, i) =>
+      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode)
     ),
     phase: 'setup',
     winnerId: null,
     campaignId,
     variant,
     rules,
+  };
+}
+
+export function recalculatePlayerEffects(player: PlayerState, campaign: CampaignBundle): PlayerState {
+  const activeEffects: Record<string, number> = {};
+  const activeTags = new Set<string>();
+
+  // Gather tags from inventory
+  // 1. Appliances
+  for (const app of player.inventory.appliances) {
+    activeTags.add(`item:${app.id}`);
+    const itemDef = campaign.items.find(i => i.id === app.id);
+    if (itemDef?.tags) {
+      itemDef.tags.forEach(t => activeTags.add(`tag:${t}`));
+    }
+  }
+
+  // 2. Books
+  for (const bookId of player.inventory.books) {
+    activeTags.add(`item:${bookId}`);
+    const itemDef = campaign.items.find(i => i.id === bookId);
+    if (itemDef?.tags) {
+      itemDef.tags.forEach(t => activeTags.add(`tag:${t}`));
+    }
+  }
+
+  // Evaluate Synergies
+  for (const synergy of campaign.synergies || []) {
+    const requirementsMet = synergy.requires.every(req => activeTags.has(req));
+    if (requirementsMet) {
+      for (const effect of synergy.effects) {
+        const currentVal = activeEffects[effect.type];
+        if (currentVal === undefined) {
+          activeEffects[effect.type] = effect.value;
+        } else {
+          switch (effect.operation) {
+            case 'MAX':
+              activeEffects[effect.type] = Math.max(currentVal, effect.value);
+              break;
+            case 'ADD':
+              activeEffects[effect.type] = currentVal + effect.value;
+              break;
+            case 'SET':
+              activeEffects[effect.type] = effect.value;
+              break;
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    ...player,
+    activeEffects
   };
 }

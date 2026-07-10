@@ -6,7 +6,7 @@ import { TitleScreen } from './ui/TitleScreen';
 import { SetupScreen } from './ui/SetupScreen';
 import { GameOverScreen } from './ui/GameOverScreen';
 import { GameLog, type LogEntry } from './ui/GameLog';
-import { createInitialGameState, type GameState, type PlayerState } from './engine/gameState';
+import { createInitialGameState, recalculatePlayerEffects, type GameState, type PlayerState } from './engine/gameState';
 import { processTurnStart } from './engine/turnProcessor';
 import { spendHours } from './engine/timeManager';
 import { loadCampaign, type CampaignBundle } from './engine/dataLoader';
@@ -16,6 +16,7 @@ import { applyForJob, workShift } from './engine/jobEngine';
 import { buyItem } from './engine/shoppingEngine';
 import { enrollInDegree, study } from './engine/educationEngine';
 import { processStreetRobbery } from './engine/eventEngine';
+import { executeAITurn } from './engine/aiEngine';
 
 import { WeekendScreen } from './ui/WeekendScreen';
 import { InventoryModal } from './ui/InventoryModal';
@@ -36,18 +37,16 @@ export default function App() {
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [isNewspaperModalOpen, setIsNewspaperModalOpen] = useState(false);
   const [floatingAnims, setFloatingAnims] = useState<FloatingAnimation[]>([]);
-
-  // For single player MVP, track active player
-  const activePlayerIndex = 0;
+  const [activePlayerIndex, setActivePlayerIndex] = useState(0);
 
   useEffect(() => {
     loadCampaign('classic_1990')
       .then((bundle) => {
         setCampaign(bundle);
-        const initialState = createInitialGameState('classic_1990', ['Player 1'], 'node_low_cost', 'cdrom');
+        const initialState = createInitialGameState('classic_1990', [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
         setGameState(initialState);
         setStatus('ready');
-      if (initialState && initialState.players[activePlayerIndex].turnFlags.freeNewspaper) {
+      if (initialState && initialState.players[0].turnFlags.freeNewspaper) {
         setIsNewspaperModalOpen(true);
       }
     })
@@ -111,11 +110,17 @@ export default function App() {
       updatedPlayers[activePlayerIndex] = player;
     }
 
-    const nextState = processTurnStart({ ...gameState!, players: updatedPlayers }, campaign!);
-    nextState.phase = 'weekend';
-    setGameState(nextState);
-    if (nextState.players[activePlayerIndex].turnFlags.freeNewspaper) {
-      setIsNewspaperModalOpen(true);
+    if (activePlayerIndex + 1 < updatedPlayers.length) {
+      setGameState({ ...gameState!, players: updatedPlayers });
+      setActivePlayerIndex(activePlayerIndex + 1);
+    } else {
+      const nextState = processTurnStart({ ...gameState!, players: updatedPlayers }, campaign!);
+      nextState.phase = 'weekend';
+      setGameState(nextState);
+      setActivePlayerIndex(0);
+      if (nextState.players[0].turnFlags.freeNewspaper) {
+        setIsNewspaperModalOpen(true);
+      }
     }
   };
 
@@ -167,7 +172,7 @@ export default function App() {
             actionLog = "Not enough time to read the newspaper.";
           }
         } else {
-          const result = buyItem(player, itemDef);
+          const result = buyItem(player, itemDef, gameState.rules);
           player = result.updated;
           actionLog = result.message;
           
@@ -406,15 +411,31 @@ export default function App() {
       addLog(actionLog);
     }
 
+    player = recalculatePlayerEffects(player, campaign);
     updatedPlayers[activePlayerIndex] = player;
 
     if (player.hoursRemaining <= 0) {
-      addLog('Out of time for the week!');
+      addLog(`${player.name} is out of time for the week!`);
       await endTurnSequence(updatedPlayers);
     } else {
       setGameState({ ...gameState, players: updatedPlayers });
     }
   };
+
+  useEffect(() => {
+    if (gameState?.phase === 'playing' && gameState.players[activePlayerIndex]?.isAi) {
+      const runAi = async () => {
+        setIsAnimating(true);
+        const actions = executeAITurn(gameState.players[activePlayerIndex], gameState, campaign!);
+        for (const action of actions) {
+          await handleAction(action);
+          await new Promise(r => setTimeout(r, 200)); // small delay for visual feedback
+        }
+        setIsAnimating(false);
+      };
+      runAi();
+    }
+  }, [activePlayerIndex, gameState?.phase]);
 
   const handleNodeClick = async (nodeId: string) => {
     if (!gameState || !campaign || isAnimating) return;
@@ -471,10 +492,22 @@ export default function App() {
         player = { ...pRef };
         player.position = pathResult.path[actualSteps];
         
+        if (gameState.rules.autoEquipBestClothes) {
+          const hasCasual = player.inventory.casualClothesWeeks > 0;
+          const hasDress = player.inventory.dressClothesWeeks > 0;
+          const hasBusiness = player.inventory.businessClothesWeeks > 0;
+          
+          if (hasBusiness) player.inventory.selectedClothes = 'business';
+          else if (hasDress) player.inventory.selectedClothes = 'dress';
+          else if (hasCasual) player.inventory.selectedClothes = 'casual';
+          else player.inventory.selectedClothes = 'none';
+        }
+        
+        player = recalculatePlayerEffects(player, campaign);
         updatedPlayers[activePlayerIndex] = player;
         
         if (player.hoursRemaining <= 0) {
-          addLog('Out of time for the week!');
+          addLog(`${player.name} is out of time for the week!`);
           await endTurnSequence(updatedPlayers);
         } else {
           setGameState({ ...gameState, players: updatedPlayers });
@@ -482,7 +515,7 @@ export default function App() {
         }
       } else {
         // If they had exactly 0 hours but somehow clicked
-        addLog('Out of time for the week!');
+        addLog(`${player.name} is out of time for the week!`);
       }
       setIsAnimating(false);
     }
@@ -504,10 +537,9 @@ export default function App() {
 
   if (gameState.phase === 'setup') {
     return (
-      <SetupScreen onConfirm={(goals) => {
-        const updatedPlayers = [...gameState.players];
-        updatedPlayers[0].goalAllotment = goals;
-        const firstTurnState = processTurnStart({ ...gameState, phase: 'playing', players: updatedPlayers }, campaign!);
+      <SetupScreen onConfirm={(playersConfig) => {
+        const initialState = createInitialGameState('classic_1990', playersConfig, 'node_low_cost', 'cdrom');
+        const firstTurnState = processTurnStart({ ...initialState, phase: 'playing' }, campaign!);
         setGameState(firstTurnState);
         addLog('Game started. Good luck!', firstTurnState.turn);
       }} />
@@ -517,7 +549,7 @@ export default function App() {
   if (gameState.phase === 'weekend') {
     return (
       <WeekendScreen
-        player={gameState.players[activePlayerIndex]}
+        players={gameState.players}
         turn={gameState.turn - 1} // The current events were from the turn that just ended
         onNextWeek={() => {
           setGameState({ ...gameState, phase: 'playing' });
@@ -533,9 +565,10 @@ export default function App() {
         playerName={gameState.winnerId || 'Player 1'} 
         turn={gameState.turn}
         onPlayAgain={() => {
-          setGameState(createInitialGameState('classic_1990', ['Player 1'], 'node_low_cost', 'cdrom'));
+          setGameState(createInitialGameState('classic_1990', [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom'));
           setShowTitle(true);
           setLogs([]);
+          setActivePlayerIndex(0);
         }}
       />
     );

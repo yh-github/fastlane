@@ -259,8 +259,88 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
     </div>
   );
 }
+function StockTradeRow({ stock, price, owned, playerMoney, onAction }: any) {
+  const [tradeMode, setTradeMode] = useState<'shares' | 'cash'>('shares');
+  const [inputValue, setInputValue] = useState<number | ''>('');
 
-export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number }) {
+  const sellFee = stock.sellFeePercent ? Math.floor(price * (stock.sellFeePercent / 100)) : 0;
+  const sellRevenuePerShare = Math.max(0, price - sellFee);
+
+  const numShares = tradeMode === 'shares' 
+    ? (typeof inputValue === 'number' ? inputValue : 0)
+    : (typeof inputValue === 'number' ? Math.floor(inputValue / price) : 0);
+
+  const totalCost = numShares * price;
+  const totalRevenue = numShares * sellRevenuePerShare;
+
+  const canBuy = numShares > 0 && playerMoney >= totalCost;
+  const canSell = numShares > 0 && owned >= numShares;
+
+  return (
+    <div style={{ padding: '10px', border: '1px solid #4aa', borderRadius: '4px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <strong>{stock.name}</strong>
+        <span>Price: ${price}</span>
+      </div>
+      <div style={{ fontSize: '12px', marginBottom: '10px', color: '#ccc' }}>Owned: {owned} shares</div>
+      
+      <div style={{ display: 'flex', gap: '5px', marginBottom: '10px', alignItems: 'center' }}>
+        <button 
+          style={{ padding: '2px 8px', fontSize: '11px', background: tradeMode === 'shares' ? '#4aa' : '#333' }}
+          onClick={() => { setTradeMode('shares'); setInputValue(''); }}
+        >
+          Shares
+        </button>
+        <button 
+          style={{ padding: '2px 8px', fontSize: '11px', background: tradeMode === 'cash' ? '#4aa' : '#333' }}
+          onClick={() => { setTradeMode('cash'); setInputValue(''); }}
+        >
+          Cash ($)
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', gap: '5px', alignItems: 'center', marginBottom: '10px' }}>
+        <input 
+          type="number" 
+          min="0"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value ? parseInt(e.target.value) : '')}
+          style={{ width: '80px', padding: '4px', background: '#222', color: 'white', border: '1px solid #555' }}
+          placeholder={tradeMode === 'shares' ? '0 shares' : '$0'}
+        />
+        {tradeMode === 'cash' && typeof inputValue === 'number' && (
+          <span style={{ fontSize: '12px', color: '#aaa' }}>
+            ({numShares} shares)
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: '5px' }}>
+        <button 
+          onClick={() => onAction({ type: 'buy_stock', stockId: stock.id, quantity: numShares, cost: totalCost })} 
+          disabled={!canBuy}
+          style={{ flex: 1, background: canBuy ? '#2ecc71' : '#555', color: canBuy ? '#000' : '#888' }}
+        >
+          Buy (-${totalCost})
+        </button>
+        <button 
+          onClick={() => onAction({ type: 'sell_stock', stockId: stock.id, quantity: numShares, revenue: totalRevenue })} 
+          disabled={!canSell}
+          style={{ flex: 1, background: canSell ? '#e74c3c' : '#555', color: canSell ? '#000' : '#888' }}
+        >
+          Sell (+${totalRevenue})
+        </button>
+      </div>
+      {stock.sellFeePercent > 0 && canSell && (
+        <div style={{ fontSize: '11px', color: '#e74c3c', marginTop: '4px' }}>
+          *{stock.sellFeePercent}% transaction fee applied to sale.
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
   const [tab, setTab] = useState<'bank'|'stocks'|'loans'>('bank');
   
   return (
@@ -268,7 +348,9 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       <h3>Bank of Jones</h3>
       <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
         <button onClick={() => setTab('bank')} style={{ fontWeight: tab === 'bank' ? 'bold' : 'normal' }}>Bank</button>
-        <button onClick={() => setTab('stocks')} style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}>Stocks</button>
+        {(!rules || rules.classicStockMarket) && (
+          <button onClick={() => setTab('stocks')} style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}>Stocks</button>
+        )}
         <button onClick={() => setTab('loans')} style={{ fontWeight: tab === 'loans' ? 'bold' : 'normal' }}>Loans</button>
       </div>
 
@@ -305,7 +387,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
         </div>
       )}
 
-      {tab === 'stocks' && campaign?.stocks && (
+      {tab === 'stocks' && campaign?.stocks && (!rules || rules.classicStockMarket) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {campaign.stocks.map(stock => {
             let price = stock.basePrice;
@@ -316,33 +398,8 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
             const owned = stock.id === 'tbills' 
               ? player.inventory.stocks.tBills 
               : (player.inventory.stocks.holdings[stock.id] || 0);
-            
-            const sellFee = stock.sellFeePercent ? Math.floor(price * (stock.sellFeePercent / 100)) : 0;
-            const sellRevenue = Math.max(0, price - sellFee);
 
-            return (
-              <div key={stock.id} style={{ padding: '10px', border: '1px solid #4aa', borderRadius: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <strong>{stock.name}</strong>
-                  <span>Price: ${price}</span>
-                </div>
-                <div style={{ fontSize: '12px', marginBottom: '5px' }}>Owned: {owned}</div>
-                <div style={{ display: 'flex', gap: '5px' }}>
-                  <button onClick={() => onAction({ type: 'buy_stock', stockId: stock.id, quantity: 1, cost: price })} disabled={player.money < price}>
-                    Buy 1
-                  </button>
-                  <button onClick={() => onAction({ type: 'buy_stock', stockId: stock.id, quantity: 10, cost: price * 10 })} disabled={player.money < price * 10}>
-                    Buy 10
-                  </button>
-                  <button onClick={() => onAction({ type: 'sell_stock', stockId: stock.id, quantity: 1, revenue: sellRevenue })} disabled={owned < 1}>
-                    Sell 1
-                  </button>
-                  <button onClick={() => onAction({ type: 'sell_stock', stockId: stock.id, quantity: 10, revenue: sellRevenue * 10 })} disabled={owned < 10}>
-                    Sell 10
-                  </button>
-                </div>
-              </div>
-            );
+            return <StockTradeRow key={stock.id} stock={stock} price={price} owned={owned} playerMoney={player.money} onAction={onAction} />;
           })}
         </div>
       )}
