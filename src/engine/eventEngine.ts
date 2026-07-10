@@ -88,6 +88,9 @@ export function processApartmentRobbery(player: PlayerState): { updated: PlayerS
   
   if (Math.random() < chance) {
     let updated = { ...player, inventory: { ...player.inventory }, turnEvents: [...player.turnEvents, "Wild Willy broke into your apartment!"] };
+    // -4 Happiness penalty
+    updated.happiness = Math.max(10, updated.happiness - 4);
+    
     // Filter appliances. Each stealable durable has 25% chance to be stolen.
     // Fridge, Freezer, Stove can't be stolen.
     updated.inventory.appliances = updated.inventory.appliances.filter((app) => {

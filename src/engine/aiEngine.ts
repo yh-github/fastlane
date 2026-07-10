@@ -18,9 +18,9 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     // 1. Survival: Buy food if starving or empty fridge
     if (simulatedPlayer.inventory.freshFoodUnits === 0 && simulatedPlayer.money >= 55) {
       // Find food to buy. We'll buy 1 week of food for $55.
-      const foodItem = campaign.items.find(i => i.id === 'fresh_food_1w');
+      const foodItem = campaign.items.find(i => i.id === 'food_1week');
       if (foodItem && simulatedPlayer.hoursRemaining >= 2) {
-        actions.push({ type: 'buy', itemId: 'fresh_food_1w' });
+        actions.push({ type: 'buy', itemId: 'food_1week' });
         simulatedPlayer.money -= foodItem.basePrice;
         simulatedPlayer.inventory.freshFoodUnits += 6; // Approx
         simulatedPlayer.hoursRemaining -= 2; // Black's market entry
@@ -39,13 +39,13 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
 
     // 3. Buy clothes if out
     if (simulatedPlayer.inventory.casualClothesWeeks <= 1 && simulatedPlayer.money >= 35 && simulatedPlayer.hoursRemaining >= 2) {
-      // Buy casual clothes from Z-Mart
-      const clothesItem = campaign.items.find(i => i.id === 'casual_clothes_zmart');
+      // Buy casual clothes
+      const clothesItem = campaign.items.find(i => i.id === 'casual_clothes');
       if (clothesItem) {
-        actions.push({ type: 'buy', itemId: 'casual_clothes_zmart' });
+        actions.push({ type: 'buy', itemId: 'casual_clothes' });
         simulatedPlayer.money -= clothesItem.basePrice;
         simulatedPlayer.inventory.casualClothesWeeks += 9;
-        simulatedPlayer.hoursRemaining -= 2; // Z-Mart entry
+        simulatedPlayer.hoursRemaining -= 2; // Store entry
         continue;
       }
     }

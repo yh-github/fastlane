@@ -43,18 +43,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
     const updated = [...players];
     const goals = updated[index].goals;
     const newVal = Math.max(0, Math.min(100, value));
-    const total = goals.wealth + goals.happiness + goals.education + goals.career;
-    const diff = newVal - goals[key];
-    
-    if (total + diff <= 100) {
-      updated[index].goals = { ...goals, [key]: newVal };
-      setPlayers(updated);
-    }
+    updated[index].goals = { ...goals, [key]: newVal };
+    setPlayers(updated);
   };
 
   const isAllValid = players.every(p => {
-    const t = p.goals.wealth + p.goals.happiness + p.goals.education + p.goals.career;
-    return t === 100 && p.name.trim() !== '';
+    return p.name.trim() !== '';
   });
 
   return (
@@ -64,8 +58,6 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
         
         <div className="setup-players-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
           {players.map((player, index) => {
-            const total = player.goals.wealth + player.goals.happiness + player.goals.education + player.goals.career;
-            
             return (
               <div key={index} className="player-setup-card" style={{ background: 'var(--color-bg)', padding: '15px', borderRadius: '8px', border: '2px solid var(--color-border)', width: '320px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -96,10 +88,6 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
                   </label>
                 </div>
 
-                <div className="setup-screen__total" style={{ margin: '10px 0', fontSize: '0.9em' }}>
-                  Remaining Points: {100 - total}
-                </div>
-                
                 <div className="setup-screen__slider-group">
                   <label><span>Wealth</span> <span>{player.goals.wealth}%</span></label>
                   <input type="range" min="0" max="100" value={player.goals.wealth} onChange={(e) => updateGoal(index, 'wealth', parseInt(e.target.value))} />

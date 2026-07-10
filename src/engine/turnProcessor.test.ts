@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { processTurnStart } from './turnProcessor';
-import { createInitialGameState, recalculatePlayerEffects } from './gameState';
+import { createInitialGameState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 
 describe('Turn Processor', () => {
