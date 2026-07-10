@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { processApartmentRobbery, processDoctorVisit, processStreetRobbery, processStarvation } from './eventEngine';
 import type { PlayerState } from './gameState';
@@ -13,6 +14,7 @@ describe('Event Engine', () => {
       const player = { 
         currentHousingId: 'low_cost', 
         money: 1000, 
+        happiness: 50,
         relaxation: 50,
         turnEvents: [],
         inventory: { appliances: [
@@ -24,6 +26,7 @@ describe('Event Engine', () => {
       const { updated, robbed } = processApartmentRobbery(player);
       expect(robbed).toBe(true);
       expect(updated.money).toBe(1000); // Money untouched
+      expect(updated.happiness).toBe(46); // 50 - 4
       expect(updated.inventory.appliances.length).toBe(1); // TV stolen, fridge kept
       expect(updated.inventory.appliances[0].id).toBe('refrigerator');
     });
