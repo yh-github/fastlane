@@ -103,7 +103,7 @@ export default function App() {
           const node = campaign!.map.nodes.find(n => n.id === id);
           return { nodeId: id, x: node!.x, y: node!.y };
         });
-        await animatePlayerPath(pathCoords.slice(1));
+        await animatePlayerPath(pathCoords.slice(1), 150); // Double speed (150ms) when running home
       }
       setIsAnimating(false);
       player.position = homeNodeId;
@@ -115,7 +115,9 @@ export default function App() {
       setActivePlayerIndex(activePlayerIndex + 1);
     } else {
       const nextState = processTurnStart({ ...gameState!, players: updatedPlayers }, campaign!);
-      nextState.phase = 'weekend';
+      if (nextState.phase !== 'game-over') {
+        nextState.phase = 'weekend';
+      }
       setGameState(nextState);
       setActivePlayerIndex(0);
       if (nextState.players[0].turnFlags.freeNewspaper) {
@@ -128,7 +130,15 @@ export default function App() {
     if (!gameState || !campaign) return;
 
     if (payload.type === 'end-turn') {
-      await endTurnSequence([...gameState.players]);
+      let updatedPlayers = [...gameState.players];
+      // Zero out the remaining hours before running home
+      updatedPlayers[activePlayerIndex] = { ...updatedPlayers[activePlayerIndex], hoursRemaining: 0 };
+      setGameState({ ...gameState, players: updatedPlayers });
+      
+      // Allow a brief moment for the UI to update the hour counter to 0 before animating
+      await new Promise(r => setTimeout(r, 100));
+
+      await endTurnSequence(updatedPlayers);
       return;
     }
 
@@ -191,7 +201,7 @@ export default function App() {
     } else if (payload.type === 'study') {
       const degDef = campaign.education.find(d => d.id === payload.degreeId);
       if (degDef) {
-        const result = study(player, degDef);
+        const result = study(player, degDef, gameState.rules);
         player = result.updated;
         actionLog = result.message;
       }
