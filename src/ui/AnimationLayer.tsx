@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export interface FloatingAnimation {
   id: string;
@@ -33,6 +33,11 @@ function AnimatedElement({ anim, onComplete }: { anim: FloatingAnimation; onComp
     transition: 'none',
   });
 
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   useEffect(() => {
     // 1 frame delay to allow initial position to render without transition
     const reqId = requestAnimationFrame(() => {
@@ -53,14 +58,15 @@ function AnimatedElement({ anim, onComplete }: { anim: FloatingAnimation; onComp
 
     const timeout = setTimeout(() => {
       setStyle(prev => ({ ...prev, opacity: 0, transition: 'opacity 300ms' }));
-      setTimeout(onComplete, 300);
+      setTimeout(() => onCompleteRef.current(), 300);
     }, anim.duration || 1000);
 
     return () => {
       cancelAnimationFrame(reqId);
       clearTimeout(timeout);
     };
-  }, [anim, onComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={`animated-element animated-element--${anim.type}`} style={style}>
