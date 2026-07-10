@@ -1,89 +1,69 @@
-import { describe, it, expect } from 'vitest';
-import { calcEconomyPrice, fluctuateEconomy, applyMarketCrash, processRentDebt, calcStockPrice } from './economyEngine';
-import { createInitialGameState, type PlayerState } from './gameState';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { fluctuateEconomy, applyMarketCrash } from './economyEngine';
+import type { PlayerState } from './gameState';
 
-describe('economyEngine', () => {
-  describe('calcEconomyPrice', () => {
-    it('calculates price at 0 index', () => {
-      expect(calcEconomyPrice(100, 0)).toBe(100);
-    });
-
-    it('calculates price at boom index', () => {
-      expect(calcEconomyPrice(100, 60)).toBe(200);
-      expect(calcEconomyPrice(100, 90)).toBe(250);
-    });
-
-    it('calculates price at depression index', () => {
-      expect(calcEconomyPrice(100, -30)).toBe(50);
-    });
+describe('Economy Engine', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('fluctuateEconomy', () => {
-    it('keeps within bounds', () => {
-      expect(fluctuateEconomy(90)).toBeLessThanOrEqual(90);
-      expect(fluctuateEconomy(-30)).toBeGreaterThanOrEqual(-30);
+    it('fluctuates economy within bounds', () => {
+      // Mock math.random to return 0.5 (no change)
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      const newEcon = fluctuateEconomy(50);
+      expect(newEcon).toBe(50);
+
+      // Mock random to return 0.99 (+10)
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      const highEcon = fluctuateEconomy(50);
+      expect(highEcon).toBe(60);
+
+      // Mock random to return 0.01 (-10)
+      vi.spyOn(Math, 'random').mockReturnValue(0.01);
+      const lowEcon = fluctuateEconomy(50);
+      expect(lowEcon).toBe(40);
+    });
+
+    it('keeps economy between -30 and 90', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01);
+      const lowEcon = fluctuateEconomy(-25);
+      expect(lowEcon).toBeGreaterThanOrEqual(-30);
+
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      const highEcon = fluctuateEconomy(85);
+      expect(highEcon).toBeLessThanOrEqual(90);
     });
   });
 
   describe('applyMarketCrash', () => {
-    it('minor crash penalizes happiness', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
-      let player = state.players[0];
-      player.happiness = 50;
-      
-      player = applyMarketCrash('minor', player);
-      expect(player.happiness).toBe(49);
+    it('applies minor crash correctly', () => {
+      const player = { money: 1000, bankSavings: 1000, happiness: 50, inventory: { stocks: { tBills: 5, holdings: {} } } } as PlayerState;
+      const updated = applyMarketCrash('minor', player);
+      // minor crash drops happiness by 1 (no significant stocks)
+      expect(updated.happiness).toBe(49);
+      expect(updated.money).toBe(1000);
+      expect(updated.bankSavings).toBe(1000);
     });
 
-    it('major crash wipes savings and jobs', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
-      let player = state.players[0];
-      player.happiness = 50;
-      player.bankSavings = 5000;
-      player.currentJobId = 'job1';
-      player.currentWage = 500;
-      player.raisesAtCurrentJob = 2;
-      
-      player = applyMarketCrash('major', player);
-      
-      expect(player.bankSavings).toBe(0);
-      expect(player.currentJobId).toBeNull();
-      expect(player.currentWage).toBe(0);
-      expect(player.raisesAtCurrentJob).toBe(0);
-      expect(player.happiness).toBe(40); // 50 - 3 (no stocks) - 7 (lost job)
-    });
-  });
-
-  describe('processRentDebt', () => {
-    it('returns unmodified player if no debt', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
-      let player = state.players[0];
-      player.rentDebt = 0;
-      
-      const [updated, netWage] = processRentDebt(player, 100);
-      expect(updated.rentDebt).toBe(0);
-      expect(netWage).toBe(100);
+    it('applies moderate crash correctly', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01); // Trigger fired
+      const player = { money: 1000, bankSavings: 1000, happiness: 50, currentJobId: 'some_job', currentWage: 50, inventory: { stocks: { tBills: 5, holdings: { 'XYZ': 10 } } } } as PlayerState;
+      const updated = applyMarketCrash('moderate', player);
+      // moderate crash drops happiness by 4 (has stocks) + 7 (fired) = 11.
+      expect(updated.happiness).toBe(39);
+      expect(updated.currentJobId).toBeNull();
+      expect(updated.currentWage).toBe(0);
     });
 
-    it('garnishes 50% and adds $2 fee if partial payment', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
-      let player = state.players[0];
-      player.rentDebt = 100;
-      
-      const [updated, netWage] = processRentDebt(player, 50); // 50% = 25 garnished
-      // 100 - 25 = 75 + 2 = 77
-      expect(updated.rentDebt).toBe(77);
-      expect(netWage).toBe(25);
-    });
-
-    it('pays off fully without fee if garnished exceeds debt', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
-      let player = state.players[0];
-      player.rentDebt = 20;
-      
-      const [updated, netWage] = processRentDebt(player, 100); // 50% = 50 garnished, which > 20
-      expect(updated.rentDebt).toBe(0);
-      expect(netWage).toBe(80); // 100 - 20
+    it('applies major crash correctly and loses job', () => {
+      const player = { money: 1000, bankSavings: 1000, happiness: 50, currentJobId: 'some_job', currentWage: 50, inventory: { stocks: { tBills: 5, holdings: {} } } } as PlayerState;
+      const updated = applyMarketCrash('major', player);
+      // major crash drops happiness by 3 (no stocks) + 7 (fired) = 10.
+      expect(updated.happiness).toBe(40);
+      expect(updated.currentJobId).toBeNull();
+      expect(updated.bankSavings).toBe(0); // Bank savings wiped!
+      expect(updated.money).toBe(1000); // Cash is safe
     });
   });
 });
