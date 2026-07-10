@@ -19,7 +19,7 @@
  * 12. Apartment Robbery
  */
 
-import { type GameState } from './gameState';
+import { type GameState, recalculatePlayerEffects } from './gameState';
 import { type CampaignBundle } from './dataLoader';
 import { calcEconomyPrice } from './economyEngine';
 import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath';
@@ -52,6 +52,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
   // Process each player
   const updatedPlayers = state.players.map(player => {
     let p = resetPlayerClock(player); // Resets hours to 60, applies caffeine debt
+    p = recalculatePlayerEffects(p, campaign); // Sync effects with current inventory
 
     p.turnFlags = {
       hasEaten: false,
