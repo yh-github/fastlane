@@ -1,0 +1,64 @@
+import { describe, it, expect } from 'vitest';
+import { canAffordAction, spendHours, resetPlayerClock, isGameOver } from './timeManager';
+import { createInitialGameState } from './gameState';
+
+describe('timeManager', () => {
+  it('canAffordAction non-strict', () => {
+    let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+    let player = state.players[0];
+    
+    player.hoursRemaining = 2;
+    expect(canAffordAction(player, 6, false)).toBe(true);
+    
+    player.hoursRemaining = 0;
+    expect(canAffordAction(player, 6, false)).toBe(false);
+  });
+
+  it('canAffordAction strict', () => {
+    let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+    let player = state.players[0];
+    
+    player.hoursRemaining = 2;
+    expect(canAffordAction(player, 6, true)).toBe(false);
+    
+    player.hoursRemaining = 6;
+    expect(canAffordAction(player, 6, true)).toBe(true);
+  });
+
+  it('spendHours drops minimum to 0', () => {
+    let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+    let player = state.players[0];
+    
+    player.hoursRemaining = 2;
+    const updated = spendHours(player, 6);
+    expect(updated.hoursRemaining).toBe(0);
+  });
+
+  it('spendHours does not spend if already 0', () => {
+    let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+    let player = state.players[0];
+    
+    player.hoursRemaining = 0;
+    const updated = spendHours(player, 6);
+    expect(updated).toBe(player); // Reference equality check
+  });
+
+  it('resetPlayerClock applies caffeine debt', () => {
+    let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+    let player = state.players[0];
+    
+    player.turnFlags.caffeineDebt = 5;
+    const updated = resetPlayerClock(player);
+    expect(updated.hoursRemaining).toBe(55);
+    expect(updated.turnFlags.caffeineDebt).toBe(0);
+  });
+
+  it('isGameOver', () => {
+    let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+    
+    state.turn = 10;
+    expect(isGameOver(state, 0)).toBe(false); // 0 means no limit
+    expect(isGameOver(state, 20)).toBe(false);
+    expect(isGameOver(state, 5)).toBe(true);
+  });
+});
