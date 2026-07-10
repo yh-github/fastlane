@@ -139,10 +139,8 @@ export function workShift(player: PlayerState, job: JobDef): WorkResult {
   updated.experience = Math.min(updated.experience + 1, effectiveMaxExp);
   updated.dependability = Math.min(updated.dependability + 1, effectiveMaxDep);
 
-  // Deduct clothing wear (1 week worn per turn worked, handled here or turn end? 
-  // Standard classic is 1 week worn per turn you work at least once).
-  // We'll handle it via turn-end processor using `hasWorked`, or we can deduct fractional.
-  // For now, let's let turnProcessor handle clothes wear if `hasWorked` is true.
+  // Deduct fractional?
+  // We'll let the turnProcessor handle clothes wear unconditionally per turn as per the classic rules.
 
   return { updated, wagesEarned, success: true, message: garnishMessage };
 }
