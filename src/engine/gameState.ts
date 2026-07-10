@@ -40,6 +40,7 @@ export interface GameRules {
   clothingDecaysAll: boolean;
   autoEquipBestClothes: boolean;
   classicStockMarket: boolean;
+  studyWithPartialHours: boolean;
 }
 
 export type GamePhase =
@@ -116,10 +117,8 @@ export interface PlayerState {
   // ── Education ──
   /** IDs of completed degrees */
   degrees: string[];
-  /** Current degree being studied (null if not enrolled) */
-  currentDegreeId: string | null;
-  /** Lessons completed toward current degree */
-  lessonsCompleted: number;
+  /** Classes currently being studied (mapped to lessons completed) */
+  enrolledClasses: Record<string, number>;
 
   // ── Inventory ──
   inventory: InventoryState;
@@ -352,8 +351,7 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
     rentExtensionsReceived: 0,
     rentExtensionsDeniedPermanently: false,
     degrees: [],
-    currentDegreeId: null,
-    lessonsCompleted: 0,
+    enrolledClasses: {},
     inventory: createDefaultInventory(),
     position: startNode,
     goalAllotment: goals,
@@ -369,7 +367,7 @@ export function createInitialGameState(
   playersConfig: PlayerConfig[],
   startNode: string,
   variant: GameVariant = 'cdrom',
-  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true }
+  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, studyWithPartialHours: true }
 ): GameState {
   return {
     turn: 0,

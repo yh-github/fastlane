@@ -69,6 +69,25 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
       }
     }
 
+    // 4.5. Study if enrolled
+    const enrolledDegrees = Object.keys(simulatedPlayer.enrolledClasses || {});
+    if (enrolledDegrees.length > 0 && simulatedPlayer.hoursRemaining >= 6) {
+      actions.push({ type: 'study', degreeId: enrolledDegrees[0] });
+      simulatedPlayer.hoursRemaining -= 6;
+      continue;
+    }
+
+    // 4.6 Enroll if we have high money and aren't enrolled
+    if (enrolledDegrees.length === 0 && simulatedPlayer.money > 1500) {
+      const nextDegree = campaign.education.find(d => !simulatedPlayer.degrees.includes(d.id) && d.prerequisites.every(p => simulatedPlayer.degrees.includes(p)));
+      if (nextDegree && simulatedPlayer.money >= nextDegree.baseTuitionFee) {
+        actions.push({ type: 'enroll', degreeId: nextDegree.id });
+        simulatedPlayer.money -= nextDegree.baseTuitionFee;
+        simulatedPlayer.enrolledClasses[nextDegree.id] = 0;
+        continue;
+      }
+    }
+
     // 5. Work
     if (simulatedPlayer.currentJobId && simulatedPlayer.hoursRemaining >= 6) {
       actions.push({ type: 'work', jobId: simulatedPlayer.currentJobId });

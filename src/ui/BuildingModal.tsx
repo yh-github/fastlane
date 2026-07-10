@@ -117,6 +117,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             player={player} 
             onAction={onAction} 
             availableDegrees={campaign.education} 
+            rules={rules}
           />
         )}
 
@@ -149,8 +150,12 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             economicIndex={economicIndex}
           />
         )}
-        {building.archetype === 'home' && (
-          player.currentHousingId === building.id ? (
+        {building.archetype === 'home' && (() => {
+          const housing = campaign.housing.find(h => h.id === player.currentHousingId);
+          const homeNode = campaign.map.nodes.find(n => n.id === housing?.homeNodeId);
+          const livesHere = homeNode?.buildingId === building.id;
+
+          return livesHere ? (
             <HomeRelax 
               player={player}
               onAction={onAction}
@@ -160,8 +165,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
               <h3>{building.name}</h3>
               <p style={{ fontSize: '12px' }}>You don't live here.</p>
             </div>
-          )
-        )}
+          );
+        })()}
       </div>
     </div>
   );
