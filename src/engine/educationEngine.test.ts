@@ -29,53 +29,63 @@ describe('Education Engine', () => {
 
   describe('enrollInDegree', () => {
     it('fails if prereqs missing', () => {
-      const player = { degrees: [], money: 100 } as PlayerState;
+      const player = { degrees: [], money: 100, enrolledClasses: {} } as PlayerState;
       const result = enrollInDegree(player, mockAdvancedDegree);
       expect(result.success).toBe(false);
       expect(result.message).toContain('Prerequisite required');
     });
 
     it('fails if insufficient funds', () => {
-      const player = { degrees: [], money: 40 } as PlayerState;
+      const player = { degrees: [], money: 40, enrolledClasses: {} } as PlayerState;
       const result = enrollInDegree(player, mockDegree);
       expect(result.success).toBe(false);
       expect(result.message).toContain('Not enough money');
     });
 
     it('succeeds and deducts tuition', () => {
-      const player = { degrees: [], money: 100 } as PlayerState;
+      const player = { degrees: [], money: 100, enrolledClasses: {} } as PlayerState;
       const result = enrollInDegree(player, mockDegree);
       expect(result.success).toBe(true);
       expect(result.updated.money).toBe(50);
-      expect(result.updated.currentDegreeId).toBe('junior_college');
+      expect(result.updated.enrolledClasses['junior_college']).toBe(0);
     });
   });
 
   describe('study', () => {
-    it('fails if not enrolled or not enough hours', () => {
-      const player = { hoursRemaining: 5, currentDegreeId: 'junior_college' } as PlayerState;
-      const result = study(player, mockDegree);
+    it('fails if not enrolled or not enough hours (strict rules)', () => {
+      const player = { hoursRemaining: 5, enrolledClasses: { 'junior_college': 0 } } as PlayerState;
+      const result = study(player, mockDegree, { studyWithPartialHours: false } as any);
       expect(result.success).toBe(false); // requires 6 hours
+    });
+
+    it('succeeds with partial hours if rule is enabled', () => {
+      const player = { 
+        hoursRemaining: 5, 
+        enrolledClasses: { 'junior_college': 0 },
+        inventory: { appliances: [], books: [] }
+      } as PlayerState;
+      const result = study(player, mockDegree, { studyWithPartialHours: true } as any);
+      expect(result.success).toBe(true); 
+      expect(result.updated.enrolledClasses['junior_college']).toBe(1);
+      expect(result.updated.hoursRemaining).toBe(0);
     });
 
     it('progresses lesson by 1', () => {
       const player = { 
         hoursRemaining: 10, 
-        currentDegreeId: 'junior_college', 
-        lessonsCompleted: 0,
+        enrolledClasses: { 'junior_college': 0 },
         inventory: { appliances: [], books: [] }
       } as PlayerState;
       const result = study(player, mockDegree);
       expect(result.success).toBe(true);
-      expect(result.updated.lessonsCompleted).toBe(1);
+      expect(result.updated.enrolledClasses['junior_college']).toBe(1);
       expect(result.updated.hoursRemaining).toBe(4);
     });
 
     it('reduces required lessons if books/computer owned', () => {
       const player = { 
         hoursRemaining: 10, 
-        currentDegreeId: 'junior_college', 
-        lessonsCompleted: 7,
+        enrolledClasses: { 'junior_college': 7 },
         happiness: 50, dependability: 50, maxDependability: 50, maxExperience: 50,
         degrees: [],
         inventory: { appliances: [{id: 'computer'}], books: ['dictionary', 'encyclopedia', 'atlas'] }
@@ -84,7 +94,7 @@ describe('Education Engine', () => {
       const result = study(player, mockDegree); // completes 8th lesson, should graduate!
       expect(result.success).toBe(true);
       expect(result.updated.degrees).toContain('junior_college');
-      expect(result.updated.currentDegreeId).toBeNull();
+      expect(result.updated.enrolledClasses['junior_college']).toBeUndefined();
       // Rewards: +5 happ, +5 dep, +5 maxDep, +5 maxExp
       expect(result.updated.happiness).toBe(55);
       expect(result.updated.maxDependability).toBe(55);
