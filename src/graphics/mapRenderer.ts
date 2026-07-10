@@ -52,6 +52,9 @@ export async function initMapRenderer(
     resizeTo: config.container,
   });
 
+  if (!app.renderer) {
+    return () => {};
+  }
   config.container.appendChild(app.canvas);
 
   const mapContainer = new Container();

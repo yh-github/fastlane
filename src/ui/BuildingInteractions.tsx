@@ -1,4 +1,5 @@
 import type { PlayerState } from '../engine/gameState';
+import { COST_STUDY_SESSION } from '../engine/gameState';
 import type { JobDef, ItemDef, EducationDef, BuildingDef, CampaignBundle } from '../engine/dataLoader';
 
 interface InteractionProps {
@@ -135,6 +136,7 @@ export function HomeRelax({ onAction }: InteractionProps) {
 }
 
 import { calcEconomyPrice, calcStockPrice } from '../engine/economyEngine';
+import { calcRequiredLessons } from '../engine/educationEngine';
 
 import type { GameRules } from '../engine/gameState';
 
@@ -145,7 +147,8 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
 
   const rentOwed = player.rentDebt;
   const isWeek4 = turn % 4 === 0;
-  const rentDue = player.rentPaidUntilWeek <= turn;
+  // Rent is due if the paid-until week is the start of next week or earlier.
+  const rentDue = player.rentPaidUntilWeek <= turn + 1;
   const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn;
 
   // The cost to move is always market rate (economy adjusted)
@@ -342,6 +345,7 @@ function StockTradeRow({ stock, price, owned, playerMoney, onAction }: any) {
 
 export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
   const [tab, setTab] = useState<'bank'|'stocks'|'loans'>('bank');
+  const [customBankAmount, setCustomBankAmount] = useState<number | ''>('');
   
   return (
     <div className="interaction-panel">
@@ -372,17 +376,64 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       
       {tab === 'bank' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button onClick={() => onAction({ type: 'bank_transaction', amount: 50 })} disabled={player.money < 50}>
-            Deposit $50
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <input 
+              type="number" 
+              min="1"
+              value={customBankAmount}
+              onChange={(e) => setCustomBankAmount(e.target.value ? parseInt(e.target.value) : '')}
+              style={{ flex: 1, padding: '8px', background: '#222', color: 'white', border: '1px solid #555' }}
+              placeholder="Custom amount..."
+            />
+            <button 
+              onClick={() => {
+                if (typeof customBankAmount === 'number' && customBankAmount > 0) {
+                  onAction({ type: 'bank_transaction', amount: Math.min(customBankAmount, player.money) });
+                  setCustomBankAmount('');
+                }
+              }} 
+              disabled={player.money <= 0 || !customBankAmount || customBankAmount <= 0}
+              style={{ background: player.money > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#2ecc71' : '#555', color: player.money > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#000' : '#888' }}
+            >
+              Deposit
+            </button>
+            <button 
+              onClick={() => {
+                if (typeof customBankAmount === 'number' && customBankAmount > 0) {
+                  onAction({ type: 'bank_transaction', amount: -Math.min(customBankAmount, player.bankSavings) });
+                  setCustomBankAmount('');
+                }
+              }} 
+              disabled={player.bankSavings <= 0 || !customBankAmount || customBankAmount <= 0}
+              style={{ background: player.bankSavings > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#e74c3c' : '#555', color: player.bankSavings > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#000' : '#888' }}
+            >
+              Withdraw
+            </button>
+          </div>
+          <hr style={{ borderColor: '#444', margin: '5px 0' }} />
+          <button 
+            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(50, player.money) })} 
+            disabled={player.money <= 0}
+          >
+            Deposit $50 (or remainder)
           </button>
-          <button onClick={() => onAction({ type: 'bank_transaction', amount: 100 })} disabled={player.money < 100}>
-            Deposit $100
+          <button 
+            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(100, player.money) })} 
+            disabled={player.money <= 0}
+          >
+            Deposit $100 (or remainder)
           </button>
-          <button onClick={() => onAction({ type: 'bank_transaction', amount: -50 })} disabled={player.bankSavings < 50}>
-            Withdraw $50
+          <button 
+            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(50, player.bankSavings) })} 
+            disabled={player.bankSavings <= 0}
+          >
+            Withdraw $50 (or remainder)
           </button>
-          <button onClick={() => onAction({ type: 'bank_transaction', amount: -100 })} disabled={player.bankSavings < 100}>
-            Withdraw $100
+          <button 
+            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(100, player.bankSavings) })} 
+            disabled={player.bankSavings <= 0}
+          >
+            Withdraw $100 (or remainder)
           </button>
         </div>
       )}
@@ -466,37 +517,50 @@ export function PawnShop({ player, onAction, economicIndex = 0 }: InteractionPro
   );
 }
 
-export function UniversityRegistry({ player, onAction, availableDegrees }: InteractionProps & { availableDegrees: EducationDef[] }) {
-  const currentDegree = availableDegrees.find(d => d.id === player.currentDegreeId);
-
+export function UniversityRegistry({ player, onAction, availableDegrees, rules }: InteractionProps & { availableDegrees: EducationDef[], rules?: import('../engine/gameState').GameRules }) {
   return (
     <div className="interaction-panel">
       <h3>University Registry</h3>
-      {currentDegree ? (
-        <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #4aa' }}>
-          <strong>Currently Enrolled:</strong> {currentDegree.name}
-          <div>Progress: {player.lessonsCompleted} / {currentDegree.lessonsRequired}</div>
-          <button style={{ marginTop: '5px' }} onClick={() => onAction({ type: 'study', degreeId: currentDegree.id })} disabled={player.hoursRemaining < 6}>
-            Study (6h)
-          </button>
-        </div>
-      ) : (
-        <p>You are not currently enrolled.</p>
-      )}
 
       <h4>Available Degrees</h4>
       {availableDegrees
         .filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)))
         .map(deg => {
         const hasDegree = player.degrees.includes(deg.id);
-        if (hasDegree) return null;
+        if (hasDegree) return (
+          <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444' }}>
+            <strong>{deg.name}</strong>
+            <div style={{ color: '#2ecc71', fontWeight: 'bold' }}>Completed ✓</div>
+          </div>
+        );
+
+        const required = calcRequiredLessons(player, deg);
+        const hasBonus = required < deg.lessonsRequired;
+        const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
+        const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
 
         return (
-          <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444' }}>
-            <strong>{deg.name}</strong> - Tuition: ${deg.baseTuitionFee}
-            <div style={{ fontSize: '12px' }}>Lessons: {player.currentDegreeId === deg.id ? player.lessonsCompleted : 0} / {deg.lessonsRequired}</div>
-            {player.currentDegreeId !== deg.id && (
-              <button style={{ marginTop: '5px' }} onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} disabled={player.money < deg.baseTuitionFee}>
+          <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #4aa' }}>
+            <strong>{deg.name}</strong> {isEnrolled ? '' : `- Tuition: $${deg.baseTuitionFee}`}
+            {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginLeft: '5px', fontWeight: 'bold' }}>★ Bonus</span>}
+            
+            {isEnrolled ? (
+              <>
+                <div style={{ fontSize: '12px', marginTop: '4px' }}>Lessons: {lessonsCompleted} / {required}</div>
+                <button 
+                  style={{ marginTop: '5px' }} 
+                  onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
+                  disabled={player.hoursRemaining < (rules?.studyWithPartialHours ? 1 : COST_STUDY_SESSION)}
+                >
+                  Study ({COST_STUDY_SESSION}h)
+                </button>
+              </>
+            ) : (
+              <button 
+                style={{ marginTop: '5px' }} 
+                onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
+                disabled={player.money < deg.baseTuitionFee}
+              >
                 Enroll
               </button>
             )}
