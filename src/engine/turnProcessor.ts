@@ -67,27 +67,49 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
     p.turnEvents = [];
 
     if (state.turn > 0) {
-      // 1. Clothing Decay (only decay what is actually worn)
-      if (p.inventory.selectedClothes === 'casual') {
-        if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push("Your casual clothes are worn out!");
-        p.inventory.casualClothesWeeks = Math.max(0, p.inventory.casualClothesWeeks - 1);
-      } else if (p.inventory.selectedClothes === 'dress') {
-        if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push("Your dress clothes are worn out!");
-        p.inventory.dressClothesWeeks = Math.max(0, p.inventory.dressClothesWeeks - 1);
-      } else if (p.inventory.selectedClothes === 'business') {
-        if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push("Your business suit is worn out!");
-        p.inventory.businessClothesWeeks = Math.max(0, p.inventory.businessClothesWeeks - 1);
+      // 1. Clothing Decay (either all or just the selected one)
+      if (state.rules.clothingDecaysAll) {
+        if (p.inventory.casualClothesWeeks > 0) {
+          if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push("Your casual clothes are worn out!");
+          p.inventory.casualClothesWeeks--;
+        }
+        if (p.inventory.dressClothesWeeks > 0) {
+          if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push("Your dress clothes are worn out!");
+          p.inventory.dressClothesWeeks--;
+        }
+        if (p.inventory.businessClothesWeeks > 0) {
+          if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push("Your business suit is worn out!");
+          p.inventory.businessClothesWeeks--;
+        }
+      } else {
+        if (p.inventory.selectedClothes === 'casual') {
+          if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push("Your casual clothes are worn out!");
+          p.inventory.casualClothesWeeks = Math.max(0, p.inventory.casualClothesWeeks - 1);
+        } else if (p.inventory.selectedClothes === 'dress') {
+          if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push("Your dress clothes are worn out!");
+          p.inventory.dressClothesWeeks = Math.max(0, p.inventory.dressClothesWeeks - 1);
+        } else if (p.inventory.selectedClothes === 'business') {
+          if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push("Your business suit is worn out!");
+          p.inventory.businessClothesWeeks = Math.max(0, p.inventory.businessClothesWeeks - 1);
+        }
       }
 
-      // Auto-fallback clothes if worn out
+      // Auto-fallback clothes if worn out, or auto-equip best if rule is on
       const hasCasual = p.inventory.casualClothesWeeks > 0;
       const hasDress = p.inventory.dressClothesWeeks > 0;
       const hasBusiness = p.inventory.businessClothesWeeks > 0;
       let activeClothes: 'casual' | 'dress' | 'business' | 'none' = (p.inventory.selectedClothes as any) || 'none';
 
-      if (activeClothes === 'business' && !hasBusiness) activeClothes = hasDress ? 'dress' : (hasCasual ? 'casual' : 'none');
-      if (activeClothes === 'dress' && !hasDress) activeClothes = hasBusiness ? 'business' : (hasCasual ? 'casual' : 'none');
-      if (activeClothes === 'casual' && !hasCasual) activeClothes = hasDress ? 'dress' : (hasBusiness ? 'business' : 'none');
+      if (state.rules.autoEquipBestClothes) {
+        if (hasBusiness) activeClothes = 'business';
+        else if (hasDress) activeClothes = 'dress';
+        else if (hasCasual) activeClothes = 'casual';
+        else activeClothes = 'none';
+      } else {
+        if (activeClothes === 'business' && !hasBusiness) activeClothes = hasDress ? 'dress' : (hasCasual ? 'casual' : 'none');
+        if (activeClothes === 'dress' && !hasDress) activeClothes = hasBusiness ? 'business' : (hasCasual ? 'casual' : 'none');
+        if (activeClothes === 'casual' && !hasCasual) activeClothes = hasDress ? 'dress' : (hasBusiness ? 'business' : 'none');
+      }
 
       p.inventory.selectedClothes = activeClothes as any;
 
@@ -118,10 +140,9 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       }
 
       // 3. Food Spoilage
-      const hasFridge = p.inventory.appliances.some(a => a.id === 'refrigerator');
-      const hasFreezer = p.inventory.appliances.some(a => a.id === 'freezer');
+      const maxStorage = p.activeEffects['set_food_storage'] || 0;
       
-      if (!hasFridge && p.inventory.freshFoodUnits > 0) {
+      if (maxStorage === 0 && p.inventory.freshFoodUnits > 0) {
         const lostFood = p.inventory.freshFoodUnits;
         p.inventory.freshFoodUnits = 0;
         p.happiness = Math.max(10, p.happiness - 2);
@@ -130,8 +151,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
           doctorNeeded = true;
           p.turnEvents.push("Eating bad food made you sick!");
         }
-      } else if (hasFridge) {
-        const maxStorage = hasFreezer ? 12 : 6;
+      } else if (maxStorage > 0) {
         if (p.inventory.freshFoodUnits > maxStorage) {
           p.turnEvents.push("You had too much food for your fridge, some of it spoiled!");
           p.inventory.freshFoodUnits = maxStorage;
@@ -156,14 +176,14 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       }
 
       // 6. Appliance Happiness Bonuses
-      const hasStove = p.inventory.appliances.some(a => a.id === 'stove');
-      const hasMicrowave = p.inventory.appliances.some(a => a.id === 'microwave');
-      if (hasStove || hasMicrowave) {
-        p.happiness = Math.min(100, p.happiness + 1);
+      const addHappiness = p.activeEffects['add_turn_happiness'] || 0;
+      if (addHappiness > 0) {
+        p.happiness = Math.min(100, p.happiness + addHappiness);
       }
 
       // 7. Computer Income
-      if (p.inventory.appliances.some(a => a.id === 'computer')) {
+      const computerIncomeChance = p.activeEffects['computer_income_chance'] || 0;
+      if (computerIncomeChance > 0) {
         if (Math.random() < (1/7)) {
           p.money += Math.floor(Math.random() * 81) + 20; // $20-$100
           p.happiness = Math.min(100, p.happiness + 3);
@@ -270,8 +290,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       }
 
       // 13. Relaxation Decay & Hot Tub
-      const hasHotTub = p.inventory.appliances.some(a => a.id === 'hot_tub');
-      if (!hasHotTub) {
+      const preventRelaxationDecay = p.activeEffects['prevent_relaxation_decay'] || 0;
+      if (!preventRelaxationDecay) {
         p.relaxation = Math.max(0, p.relaxation - 2); // Decay by 2 per turn
       }
 

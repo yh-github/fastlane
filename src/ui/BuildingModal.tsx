@@ -138,6 +138,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             campaign={campaign}
             turn={turn}
             economicIndex={economicIndex}
+            rules={rules}
             onAction={onAction}
           />
         )}

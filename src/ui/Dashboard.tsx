@@ -24,13 +24,17 @@ export function Dashboard({ player, turn, economicIndex, onOpenInventory }: Dash
 
   return (
     <header className="dashboard">
-      <div className="dashboard__time" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-        <div>Week {turn} | Econ: {economicIndex > 0 ? '+' : ''}{economicIndex}</div>
+      <div className="dashboard-top-row">
+        <div className="dashboard-player-info">
+          <h2>{player ? player.name : ''} - Week {turn}</h2>
+          {player?.isAi && <span className="ai-badge">AI (Jones)</span>}
+          <div className="dashboard-stat economy">
+            <span>Economy Index: {economicIndex}</span>
+          </div>
+        </div>
         <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff' }}>
           ⏳ {player.hoursRemaining} / {HOURS_PER_TURN}h Left
         </div>
-      </div>
-      <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <button 
           id="btn-inventory"
           onClick={onOpenInventory}
@@ -42,6 +46,8 @@ export function Dashboard({ player, turn, economicIndex, onOpenInventory }: Dash
         >
           📦 Inventory
         </button>
+      </div>
+      <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <StatBadge label="Money" value={`$${player.money}`} icon="💰" id="stat-money" />
         <StatBadge label="Happiness" value={player.happiness} icon="😊" id="stat-happiness" />
         <StatBadge label="Education" value={education} icon="🎓" />

@@ -181,5 +181,18 @@ Classes are taken at Hi-Tech U.
 
 ## 8. Pawn Shop Mechanics
 - **Pawning**: Items can be pawned for a loan. Base payout is 40% of the item's original purchase price (adjusted for Economy). Pawning an item gives -1 Happiness.
-- **Redeeming**: Cost to redeem is 1/2 of the original purchase price (NOT affected by Economy). Item is held for 3 Weeks. Only the player who pawned the item can redeem it.
-- **Buying**: After 3 weeks, any player can buy the pawned item for 1/2 of the original purchase price. Appliances are flagged as "second hand", giving them a 1/36 chance to break down each turn (same as Z-Mart).
+| Redeeming | Cost to redeem is 1/2 of the original purchase price (NOT affected by Economy). Item is held for 3 Weeks. Only the player who pawned the item can redeem it. |
+| Buying | After 3 weeks, any player can buy the pawned item for 1/2 of the original purchase price. Appliances are flagged as "second hand", giving them a 1/36 chance to break down each turn (same as Z-Mart). |
+
+## 9. Multiplayer Mechanics
+- **Turn Structure:** The game supports up to four players in local "hot-seat" multiplayer. Each turn in the game represents one week. Players take turns sequentially to spend their hours for that week.
+- **Player Order:** The player order remains fixed throughout the game, based on the initial selection of players at the start of the session. There is no dynamic turn-order mechanic.
+- **Turn End:** Once a player runs out of hours, their turn ends, and the game proceeds to the next player. Once all players have finished their week, the weekend processing happens and a new week begins for all.
+- **Competition:** Players compete to be the first to reach the predefined life goals (Wealth, Happiness, Education, and Career).
+
+## 10. The "Jones" AI Opponent
+- **Solo Play:** When playing solo (1 human player), the player competes against the AI-controlled opponent named "Jones". In multiplayer sessions with 2-4 human players, Jones typically does not participate as a competitor.
+- **AI Behavior:** Jones functions as a competitive player bound by the same board game rules and time-management constraints as human players.
+- **Strategic Decision-Making:** Jones is programmed with knowledge of the game's core requirements. He understands which jobs he qualifies for based on his current stats, prioritizes working, and knows when to balance other activities (like buying food and paying rent).
+- **Survival Instincts:** The AI is designed to avoid losing; for example, Jones will not allow himself to starve if he can possibly avoid it.
+- **Difficulty:** Jones is known as a challenging, efficient opponent who manages his progression optimally to reach the win conditions quickly.

@@ -1,5 +1,5 @@
-import { PlayerState } from './gameState';
-import { WeekendDef } from './dataLoader';
+import type { PlayerState } from './gameState';
+import type { WeekendDef } from './dataLoader';
 
 // Helper to determine cost based on price range
 function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number): number {
