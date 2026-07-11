@@ -78,8 +78,12 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
     let doctorNeeded = false;
 
     // Check for Relaxation-triggered doctor visit
-    if (p.relaxation <= 10 && Math.random() < 0.20) {
-      doctorNeeded = true;
+    if (state.rules.enableRelaxationDoctor) {
+      const threshold = campaign.config.statRules?.relaxationDoctorThreshold ?? 10;
+      const chance = campaign.config.statRules?.relaxationDoctorChance ?? 0.20;
+      if (p.relaxation <= threshold && Math.random() < chance) {
+        doctorNeeded = true;
+      }
     }
 
     p.turnFlags = {
@@ -310,7 +314,9 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       // 13. Relaxation Decay & Hot Tub
       const preventRelaxationDecay = p.activeEffects['prevent_relaxation_decay'] || 0;
       if (!preventRelaxationDecay) {
-        p.relaxation = Math.max(10, p.relaxation - 1); // Decay by 1 per turn, min 10
+        const decay = campaign.config.statRules?.relaxationDecayRate ?? 1;
+        const threshold = campaign.config.statRules?.relaxationDoctorThreshold ?? 10;
+        p.relaxation = Math.max(threshold, p.relaxation - decay);
       }
 
       // 14. Pawn Shop Expiration

@@ -41,6 +41,7 @@ export interface GameRules {
   autoEquipBestClothes: boolean;
   classicStockMarket: boolean;
   studyWithPartialHours: boolean;
+  enableRelaxationDoctor: boolean;
 }
 
 export type GamePhase =
@@ -327,7 +328,7 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
     dependability: STARTING_DEPENDABILITY,
     maxExperience: STARTING_EXPERIENCE + 10,
     maxDependability: STARTING_DEPENDABILITY + 20,
-    relaxation: STARTING_RELAXATION,
+    relaxation: config.statRules?.startingRelaxation ?? STARTING_RELAXATION,
     currentJobId: null,
     currentWage: 0,
     raisesAtCurrentJob: 0,
@@ -354,7 +355,7 @@ export function createInitialGameState(
   playersConfig: PlayerConfig[],
   startNode: string,
   variant: GameVariant = 'cdrom',
-  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, studyWithPartialHours: true }
+  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, studyWithPartialHours: true, enableRelaxationDoctor: true }
 ): GameState {
   return {
     turn: 0,
