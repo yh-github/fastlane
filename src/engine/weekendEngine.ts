@@ -36,15 +36,15 @@ export function processWeekend(
   // 1. Tickets
   if (player.inventory.tickets.baseball > 0 && weekendData.ticketWeekends.baseball) {
     weekendText = weekendData.ticketWeekends.baseball.text;
-    newPlayer.inventory.tickets.baseball = 0;
+    newPlayer.inventory.tickets.baseball--;
     priceType = 'medium';
   } else if (player.inventory.tickets.theatre > 0 && weekendData.ticketWeekends.theatre) {
     weekendText = weekendData.ticketWeekends.theatre.text;
-    newPlayer.inventory.tickets.theatre = 0;
+    newPlayer.inventory.tickets.theatre--;
     priceType = 'medium';
   } else if (player.inventory.tickets.concert > 0 && weekendData.ticketWeekends.concert) {
     weekendText = weekendData.ticketWeekends.concert.text;
-    newPlayer.inventory.tickets.concert = 0;
+    newPlayer.inventory.tickets.concert--;
     priceType = 'medium';
   } 
   // 2. Durables
@@ -70,6 +70,17 @@ export function processWeekend(
 
     // 3. Random Weekends
     if (!triggeredDurableWeekend) {
+      if (newPlayer.money < 5) {
+        // Player is too broke to afford even the cheapest random weekend.
+        weekendText = "You were too broke to do anything this weekend.";
+        
+        newPlayer.weekendResult = {
+          text: weekendText,
+          cost: 0
+        };
+        return newPlayer;
+      }
+
       let chosenIndex = -1;
       let attempts = 0;
       while (attempts < 100) {

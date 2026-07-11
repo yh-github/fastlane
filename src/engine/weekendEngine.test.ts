@@ -37,16 +37,30 @@ describe('Weekend Engine', () => {
     expect(nextPlayer.money).toBeLessThan(1000); // Spent money
   });
 
-  it('safely handles poor players without putting them in negative cash', () => {
+  it('safely handles poor players without putting them in negative cash, but skips random events if broke', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.01); // First event
     const player = { 
-      money: 2, // Less than cheapest cost
+      money: 2, // Less than cheapest cost (5)
       happiness: 50,
       inventory: { casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 0, tickets: { baseball: 0, theatre: 0, concert: 0 }, appliances: [] },
       turnEvents: []
     } as unknown as PlayerState;
     
     const nextPlayer = processWeekend(player, 1, [], mockWeekendData);
-    expect(nextPlayer.money).toBe(0); // Takes whatever cash they have left
+    expect(nextPlayer.money).toBe(2); // Should not drain their last 2 dollars
+    expect(nextPlayer.weekendResult?.text).toContain('too broke');
+  });
+
+  it('consumes exactly 1 ticket, not all of them', () => {
+    const player = { 
+      money: 100, 
+      happiness: 50,
+      inventory: { casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 0, tickets: { baseball: 3, theatre: 0, concert: 0 }, appliances: [] },
+      turnEvents: []
+    } as unknown as PlayerState;
+    
+    const nextPlayer = processWeekend(player, 1, [], mockWeekendData);
+    expect(nextPlayer.inventory.tickets.baseball).toBe(2);
+    expect(nextPlayer.weekendResult?.text).toBe("Went to a baseball game.");
   });
 });

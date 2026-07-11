@@ -7,7 +7,7 @@ import type { CampaignBundle } from './dataLoader';
  */
 export function executeAITurn(player: PlayerState, gameState: GameState, campaign: CampaignBundle): any[] {
   const actions: any[] = [];
-  let simulatedPlayer = { ...player };
+  let simulatedPlayer = structuredClone(player);
   
   // Safe limit to prevent infinite loops if something goes wrong
   let maxActions = 20;
@@ -60,10 +60,10 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
         )
         .sort((a, b) => b.baseWage - a.baseWage)[0];
 
-      if (bestJob && bestJob.id !== simulatedPlayer.currentJobId) {
+      if (bestJob && bestJob.id !== simulatedPlayer.currentJobId && !actions.some(a => a.type === 'apply')) {
         actions.push({ type: 'apply', jobId: bestJob.id });
-        simulatedPlayer.currentJobId = bestJob.id;
-        simulatedPlayer.currentWage = bestJob.baseWage;
+        // Don't assume application success in the simulation, since it can fail.
+        // The AI will work its current job or do something else with remaining hours this turn.
         simulatedPlayer.hoursRemaining -= 4; // Job app time + travel roughly
         continue;
       }

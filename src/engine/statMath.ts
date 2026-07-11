@@ -114,7 +114,7 @@ export function calcRaiseThreshold(jobRequiredDep: number, raisesReceived: numbe
  * 80 Dependability = 100 Career.
  */
 export function calcCareerProgress(dependability: number): number {
-  return Math.floor(1.25 * dependability);
+  return Math.min(100, Math.floor(1.25 * dependability));
 }
 
 /**
@@ -122,7 +122,7 @@ export function calcCareerProgress(dependability: number): number {
  * $10,000 = 100 Wealth.
  */
 export function calcWealthProgress(liquidAssets: number): number {
-  return Math.floor(liquidAssets / 100);
+  return Math.min(100, Math.floor(liquidAssets / 100));
 }
 
 /**
@@ -130,5 +130,5 @@ export function calcWealthProgress(liquidAssets: number): number {
  * 11 Degrees = 100 Education.
  */
 export function calcEducationProgress(numDegrees: number): number {
-  return 1 + 9 * numDegrees;
+  return Math.min(100, 1 + 9 * numDegrees);
 }

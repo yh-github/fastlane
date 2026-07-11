@@ -48,7 +48,8 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
   };
 
   const isAllValid = players.every(p => {
-    return p.name.trim() !== '';
+    const sum = p.goals.wealth + p.goals.happiness + p.goals.education + p.goals.career;
+    return p.name.trim() !== '' && sum === 100;
   });
 
   return (
@@ -58,6 +59,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
         
         <div className="setup-players-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
           {players.map((player, index) => {
+            const sum = player.goals.wealth + player.goals.happiness + player.goals.education + player.goals.career;
             return (
               <div key={index} className="player-setup-card" style={{ background: 'var(--color-bg)', padding: '15px', borderRadius: '8px', border: '2px solid var(--color-border)', width: '320px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -88,7 +90,10 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
                   </label>
                 </div>
 
-                <div className="setup-screen__slider-group">
+                <div className="setup-screen__slider-group" style={{ marginTop: '10px' }}>
+                  <div style={{ marginBottom: '5px', fontSize: '12px', color: sum !== 100 ? '#e74c3c' : '#2ecc71' }}>
+                    Total Goals: {sum}% (Must be exactly 100%)
+                  </div>
                   <label><span>Wealth</span> <span>{player.goals.wealth}%</span></label>
                   <input type="range" min="0" max="100" value={player.goals.wealth} onChange={(e) => updateGoal(index, 'wealth', parseInt(e.target.value))} />
                 </div>

@@ -412,20 +412,17 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
     if (requirementsMet) {
       for (const effect of synergy.effects) {
         const currentVal = activeEffects[effect.type];
-        if (currentVal === undefined) {
-          activeEffects[effect.type] = effect.value;
-        } else {
-          switch (effect.operation) {
-            case 'MAX':
-              activeEffects[effect.type] = Math.max(currentVal, effect.value);
-              break;
-            case 'ADD':
-              activeEffects[effect.type] = currentVal + effect.value;
-              break;
-            case 'SET':
-              activeEffects[effect.type] = effect.value;
-              break;
-          }
+        
+        switch (effect.operation) {
+          case 'MAX':
+            activeEffects[effect.type] = currentVal === undefined ? effect.value : Math.max(currentVal, effect.value);
+            break;
+          case 'ADD':
+            activeEffects[effect.type] = (currentVal || 0) + effect.value;
+            break;
+          case 'SET':
+            activeEffects[effect.type] = effect.value;
+            break;
         }
       }
     }
