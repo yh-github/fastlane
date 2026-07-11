@@ -31,5 +31,11 @@
   "mapRules": {
     "allowDiagonalMovement": false,
     "movementCostPerNode": 1
+  },
+  "statRules": {
+    "startingRelaxation": 10,
+    "relaxationDecayRate": 1,
+    "relaxationDoctorThreshold": 10,
+    "relaxationDoctorChance": 0.20
   }
 }

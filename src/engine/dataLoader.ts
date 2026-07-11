@@ -15,6 +15,14 @@ export interface CampaignConfig {
   timeRules: TimeRules;
   economyRules: EconomyRules;
   mapRules: Record<string, unknown>;
+  statRules?: StatRules;
+}
+
+export interface StatRules {
+  startingRelaxation: number;
+  relaxationDecayRate: number;
+  relaxationDoctorThreshold: number;
+  relaxationDoctorChance: number;
 }
 
 export interface WinCondition {
