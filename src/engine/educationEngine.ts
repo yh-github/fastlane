@@ -1,4 +1,4 @@
-import { type PlayerState, type GameRules, COST_STUDY_SESSION } from './gameState';
+import { type PlayerState, type GameRules } from './gameState';
 import { spendHours } from './timeManager';
 import type { EducationDef } from './dataLoader';
 
@@ -8,7 +8,9 @@ export interface EducationResult {
   message: string;
 }
 
-export function enrollInDegree(player: PlayerState, degree: EducationDef): EducationResult {
+import { calcEconomyPrice } from './economyEngine';
+
+export function enrollInDegree(player: PlayerState, degree: EducationDef, economicIndex: number = 0): EducationResult {
   // Check if they already have it
   if (player.degrees.includes(degree.id)) {
     return { updated: player, success: false, message: 'You already have this degree.' };
@@ -21,13 +23,15 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef): Educa
     }
   }
 
-  if (player.money < degree.baseTuitionFee) {
+  const tuitionFee = calcEconomyPrice(degree.baseTuitionFee, economicIndex);
+
+  if (player.money < tuitionFee) {
     return { updated: player, success: false, message: 'Not enough money for tuition.' };
   }
 
   let updated = { 
     ...player, 
-    money: player.money - degree.baseTuitionFee,
+    money: player.money - tuitionFee,
     enrolledClasses: { ...(player.enrolledClasses || {}), [degree.id]: 0 }
   };
 
@@ -53,18 +57,23 @@ export function calcRequiredLessons(player: PlayerState, degree: EducationDef): 
   return Math.max(1, required);
 }
 
-export function study(player: PlayerState, degree: EducationDef, rules?: GameRules): EducationResult {
+export function study(player: PlayerState, degree: EducationDef, timeCost: number, rules?: GameRules): EducationResult {
   if (player.hoursRemaining < 1 || player.enrolledClasses?.[degree.id] === undefined) {
     return { updated: player, success: false, message: 'Cannot study right now.' };
   }
 
-  const allowPartial = rules?.studyWithPartialHours;
-
-  if (!allowPartial && player.hoursRemaining < COST_STUDY_SESSION) {
-    return { updated: player, success: false, message: `Need ${COST_STUDY_SESSION} hours to complete a lesson.` };
+  // Time check
+  if (player.hoursRemaining < timeCost) {
+    if (!rules?.studyWithPartialHours) {
+      return { updated: player, success: false, message: 'Not enough time to study.' };
+    }
   }
 
-  const hoursToSpend = allowPartial ? Math.min(player.hoursRemaining, COST_STUDY_SESSION) : COST_STUDY_SESSION;
+  // Cost to study (allow partial hours if rule is enabled)
+  const hoursToSpend = rules?.studyWithPartialHours
+    ? Math.min(player.hoursRemaining, timeCost)
+    : timeCost;
+    
   let updated = spendHours(player, hoursToSpend);
   updated.enrolledClasses = { ...(updated.enrolledClasses || {}) };
   updated.enrolledClasses[degree.id] += 1;

@@ -5,17 +5,18 @@
  * and the current week/economy indicator.
  */
 
-import { type PlayerState, HOURS_PER_TURN } from '../engine/gameState';
+import { type PlayerState } from '../engine/gameState';
 import { calcEducationProgress, calcCareerProgress, calcWealthProgress } from '../engine/statMath';
 
 interface DashboardProps {
   player: PlayerState | null;
   turn: number;
   economicIndex: number;
+  hoursPerTurn: number;
   onOpenInventory: () => void;
 }
 
-export function Dashboard({ player, turn, economicIndex, onOpenInventory }: DashboardProps) {
+export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInventory }: DashboardProps) {
   if (!player) return <header className="dashboard">Loading...</header>;
 
   const education = calcEducationProgress(player.degrees.length);
@@ -33,7 +34,7 @@ export function Dashboard({ player, turn, economicIndex, onOpenInventory }: Dash
           </div>
         </div>
         <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff' }}>
-          ⏳ {player.hoursRemaining} / {HOURS_PER_TURN}h Left
+          ⏳ {player.hoursRemaining} / {hoursPerTurn}h Left
         </div>
         <button 
           id="btn-inventory"
@@ -50,6 +51,7 @@ export function Dashboard({ player, turn, economicIndex, onOpenInventory }: Dash
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <StatBadge label="Money" value={`$${player.money}`} icon="💰" id="stat-money" />
         <StatBadge label="Happiness" value={player.happiness} icon="😊" id="stat-happiness" />
+        <StatBadge label="Relaxation" value={player.relaxation} icon="🧘" id="stat-relaxation" />
         <StatBadge label="Education" value={education} icon="🎓" />
         <StatBadge label="Career" value={career} icon="💼" />
         <StatBadge label="Wealth" value={wealth} icon="🏦" />

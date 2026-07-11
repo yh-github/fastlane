@@ -102,9 +102,19 @@ Classes are taken at Hi-Tech U.
 - **Economic Index/Reading**: Reading ranges from `-30` (depression) to `90` (boom).
 - **Price/Tuition/Wage Formula**: `Price = Base + (Base * Reading) / 60` (ranges from 50% to 250% of Base).
   - Pawnhouse items, Lottery tickets, and Newspaper have fixed prices.
-  - Wages and rent are static once locked in, but job offers and apartment listings change with the economy.
+  - Rent offered for apartments you do not currently live in fluctuates. Once moved in, the rent is completely static.
+  - Wages offered at the Employment Office fluctuate. If a player's current job is offered at a higher wage than they currently make, they may apply for it again to ask for a raise.
+    - Applying for a raise wastes 4 Hours regardless of outcome.
+    - Raises do NOT require an experience or education check, nor an RNG luck roll.
+    - To get the raise, the player's Dependability must be greater than or equal to: `Required Dependability + (Raises Received * 5)`.
+    - If successful, the wage increases immediately and the player gets +3 Happiness. If the wage offered is equal or less, the player just wastes 4 hours.
 
-## 6. Random Events and Mechanics
+## 6. Relaxation Stat
+- Each player has a "Relaxation" Stat that is set to 10 at the start of the game.
+- The Relaxation stat can only be increased by Relaxing at the player's current Apartment, to a maximum of 50.
+- The Relaxation Stat decreases by -1 point at the start of each Turn, unless the player own a Hot Tub (in which case the stat will not decrease at all). Relaxation can never drop below 10.
+
+## 7. Random Events and Mechanics
 - **Street Robbery (Wild Willy)**:
   - Triggers when carrying cash and leaving the Bank (1/31 chance) or Black's Market (1/51 chance). CD-ROM: Week #4 or later only.
   - Effect: Reduces cash to $0, -3 Happiness.
@@ -117,10 +127,18 @@ Classes are taken at Hi-Tech U.
   - Rolls a random number `R` between 0 and 500. Won if `R < Tickets`.
   - Prizes: `R <= Tickets / 20` ($5000), `R <= Tickets / 5` ($500), else $200. Tickets are consumed.
 - **Market Crash**:
+  - Can only occur if the economy is better than its worst possible state (-30), and only on or after Week #8.
   - Chance: `1 / (1 + (20 * Players))` for Floppy; `1 / (1 + (30 * Players))` for CD-ROM.
-  - Minor: Economy drops, -1 Happiness (-2 if >$1000 in stocks).
-  - Moderate: Economy drops, 50% chance of firing, wages cut to 80%, -2 Happiness (-4 if >$1000 in stocks).
-  - Major: Economy drops, 100% fired, Bank savings wiped out (T-Bills safe), -3 Happiness (-8 if >$1000 in stocks).
+  - Severity: 33% Minor, 33% Moderate, 33% Major.
+  - All crashes bias the Economic trend downwards and instantly reduce prices (Minor: 5%, Moderate: 10%, Major: 20%).
+  - **Minor**: Player whose turn it is loses Happiness (more if >$1000 in stocks).
+  - **Moderate**: 50% chance for each player to be fired. If not fired, wage is cut to 80%.
+  - **Major**: 100% of players fired. All Bank savings wiped out (Stocks and Cash unaffected).
+- **Economic Boom**:
+  - Can only occur if the economy is neutral or slightly better (>=0), and only on or after Week #8.
+  - Chance: `1 / (1 + (30 * Players))` for all versions.
+  - Biases the Economic trend upwards and instantly increases all prices by 10%.
+  - Player whose turn it is gets +5 Happiness if they have >$1000 in stocks.
 
 ## 7. Items & Stores
 
@@ -187,7 +205,7 @@ Classes are taken at Hi-Tech U.
 ## 9. Multiplayer Mechanics
 - **Turn Structure:** The game supports up to four players in local "hot-seat" multiplayer. Each turn in the game represents one week. Players take turns sequentially to spend their hours for that week.
 - **Player Order:** The player order remains fixed throughout the game, based on the initial selection of players at the start of the session. There is no dynamic turn-order mechanic.
-- **Turn End:** Once a player runs out of hours, their turn ends, and the game proceeds to the next player. Once all players have finished their week, the weekend processing happens and a new week begins for all.
+- **Turn End:** Once all 60 Hours have been spent, the turn can end - but doesn't necessarily do so immediately. If the clock runs out while the player is still inside a Location, they may continue performing actions that do not require any time, e.g. purchasing Items or depositing money at the Bank. They may not Work, Relax, or perform any other action that costs Hours. If at any point the player leaves a Location while their time has run out, or is traveling across the board when their time runs out, their turn ends immediately. Once all players have finished their week, the weekend processing happens and a new week begins for all.
 - **Competition:** Players compete to be the first to reach the predefined life goals (Wealth, Happiness, Education, and Career).
 
 ## 10. The "Jones" AI Opponent

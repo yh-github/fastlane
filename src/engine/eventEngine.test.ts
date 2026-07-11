@@ -43,7 +43,7 @@ describe('Event Engine', () => {
   describe('processDoctorVisit', () => {
     it('charges money and handles debt correctly', () => {
       const player = { money: 1000, bankSavings: 1000 } as PlayerState;
-      const updated = processDoctorVisit(player);
+      const updated = processDoctorVisit(player, 10);
       expect(updated.money + updated.bankSavings).toBeLessThan(2000); // Charged some money
     });
   });
@@ -62,7 +62,7 @@ describe('Event Engine', () => {
     it('drops happiness and may trigger doctor', () => {
       vi.spyOn(Math, 'random').mockReturnValue(0.01); // Trigger doctor (25%)
       const player = { hoursRemaining: 60, happiness: 50 } as PlayerState;
-      const { updated, doctorTriggered } = processStarvation(player);
+      const { updated, doctorTriggered } = processStarvation(player, 20);
       expect(updated.happiness).toBe(48); // 50 - 2
       expect(updated.hoursRemaining).toBeLessThan(60);
       expect(doctorTriggered).toBe(true);

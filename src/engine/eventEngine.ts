@@ -5,7 +5,7 @@
  * and map-based triggers.
  */
 
-import { type PlayerState, COST_DOCTOR_VISIT, COST_STARVATION_PENALTY } from './gameState';
+import { type PlayerState } from './gameState';
 import { spendHours } from './timeManager';
 import { calcRobberyChance } from './statMath';
 
@@ -44,8 +44,8 @@ export function processStreetRobbery(
  * @param player — Current player state
  * @returns        Updated player state and boolean indicating if doctor visit triggered
  */
-export function processStarvation(player: PlayerState): { updated: PlayerState; doctorTriggered: boolean } {
-  let updated = spendHours(player, COST_STARVATION_PENALTY);
+export function processStarvation(player: PlayerState, timePenalty: number): { updated: PlayerState; doctorTriggered: boolean } {
+  let updated = spendHours(player, timePenalty);
   updated.happiness = Math.max(10, updated.happiness - 2);
   
   // 25% chance of Doctor Visit
@@ -60,11 +60,11 @@ export function processStarvation(player: PlayerState): { updated: PlayerState; 
  * @param player — Current player state
  * @returns        Updated player state
  */
-export function processDoctorVisit(player: PlayerState): PlayerState {
+export function processDoctorVisit(player: PlayerState, timePenalty: number): PlayerState {
   // Bypassed entirely if carrying $0 cash
   if (player.money <= 0) return player;
 
-  let updated = spendHours(player, COST_DOCTOR_VISIT);
+  let updated = spendHours(player, timePenalty);
   updated.happiness = Math.max(10, updated.happiness - 4);
   
   // Cost: random between $30 and $200

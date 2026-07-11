@@ -5,7 +5,7 @@ import type { CampaignBundle } from './dataLoader';
 
 describe('Robbery and Synergy Sync Bug', () => {
   it('computer income effect should disappear the turn after a computer is stolen if no actions were taken', () => {
-    let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+
     
     const mockCampaign = {
       synergies: [
@@ -14,8 +14,11 @@ describe('Robbery and Synergy Sync Bug', () => {
       items: [
         { id: 'computer', tags: ['computer'] }
       ],
-      weekends: { randomWeekends: [], durableWeekends: {} }
+      weekends: { randomWeekends: [], durableWeekends: {} },
+      config: { name: 'test', startingMoney: 200, timeRules: { hoursPerTurn: 60, starvationPenalty: 20, doctorPenalty: 10 } }
     } as unknown as CampaignBundle;
+
+    let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
 
     let player = state.players[0];
     

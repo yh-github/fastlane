@@ -255,26 +255,13 @@ export interface TurnFlags {
   loanDefaultWarning?: boolean;
 }
 
-// ─── Hour Cost Constants ────────────────────────────────────────
-
-export const HOURS_PER_TURN = 60;
-
-export const COST_WORK_SESSION = 6;
-export const COST_STUDY_SESSION = 6;
-export const COST_JOB_APPLICATION = 4;
-export const COST_RELAX = 1;
-export const COST_NEWSPAPER = 1;
-export const COST_STARVATION_PENALTY = 20;
-export const COST_DOCTOR_VISIT = 10;
-
 // ─── Stat Constants ─────────────────────────────────────────────
 
 export const STARTING_EXPERIENCE = 10;
 export const STARTING_DEPENDABILITY = 20;
 export const STARTING_HAPPINESS = 50;
-export const STARTING_RELAXATION = 50;
+export const STARTING_RELAXATION = 10;
 export const STARTING_CASUAL_CLOTHES_WEEKS = 6;
-export const STARTING_MONEY = 200;
 
 export const MIN_HAPPINESS = 10;
 export const MAX_HAPPINESS = 100;
@@ -323,13 +310,13 @@ export interface PlayerConfig {
   goals: GoalAllotment;
 }
 
-export function createPlayerState(id: string, name: string, isAi: boolean, goals: GoalAllotment, startNode: string): PlayerState {
+export function createPlayerState(id: string, name: string, isAi: boolean, goals: GoalAllotment, startNode: string, config: any): PlayerState {
   return {
     id,
     name,
     isAi,
-    hoursRemaining: HOURS_PER_TURN,
-    money: STARTING_MONEY,
+    hoursRemaining: config.timeRules?.hoursPerTurn || 60,
+    money: config.startingMoney || 200,
     bankSavings: 0,
     rentDebt: 0,
     loanDebt: 0,
@@ -363,7 +350,7 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
 }
 
 export function createInitialGameState(
-  campaignId: string,
+  campaign: CampaignBundle,
   playersConfig: PlayerConfig[],
   startNode: string,
   variant: GameVariant = 'cdrom',
@@ -373,11 +360,11 @@ export function createInitialGameState(
     turn: 0,
     economicIndex: 0,
     players: playersConfig.map((cfg, i) =>
-      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode)
+      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config)
     ),
     phase: 'setup',
     winnerId: null,
-    campaignId,
+    campaignId: campaign.config.name,
     variant,
     rules,
   };

@@ -26,16 +26,16 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
 
   switch (item.category) {
     case 'food':
-      if (item.name.toLowerCase().includes('burger') || item.name.toLowerCase().includes('chicken') || item.name.toLowerCase().includes('fries')) {
+      if (item.subcategory === 'fast_food') {
         updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];
       } else {
         updated.inventory.freshFoodUnits += (item.units || 1);
       }
       break;
     case 'clothes':
-      if (item.name.includes('Casual')) updated.inventory.casualClothesWeeks += (item.weeks || 4);
-      if (item.name.includes('Dress')) updated.inventory.dressClothesWeeks += (item.weeks || 4);
-      if (item.name.includes('Business')) updated.inventory.businessClothesWeeks += (item.weeks || 4);
+      if (item.subcategory === 'casual') updated.inventory.casualClothesWeeks += (item.weeks || 4);
+      if (item.subcategory === 'dress') updated.inventory.dressClothesWeeks += (item.weeks || 4);
+      if (item.subcategory === 'business') updated.inventory.businessClothesWeeks += (item.weeks || 4);
       
       if (rules?.autoEquipBestClothes) {
         const hasCasual = updated.inventory.casualClothesWeeks > 0;

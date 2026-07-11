@@ -19,6 +19,7 @@ describe('Shopping Engine', () => {
     id: 'cheeseburger',
     name: 'Cheeseburger',
     category: 'food',
+    subcategory: 'fast_food',
     store: 'monolith_burgers',
     basePrice: 89,
     happinessBonus: 1
@@ -45,6 +46,7 @@ describe('Shopping Engine', () => {
     id: 'casual_clothes',
     name: 'Casual Clothes',
     category: 'clothes',
+    subcategory: 'casual',
     store: 'z_mart',
     basePrice: 35,
     weeks: 9
