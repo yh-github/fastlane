@@ -72,6 +72,7 @@ export interface ItemDef {
   id: string;
   name: string;
   category: 'appliance' | 'clothes' | 'food' | 'book' | 'ticket' | 'junk';
+  subcategory?: string;
   store: string;
   basePrice: number;
   happinessBonus: number;

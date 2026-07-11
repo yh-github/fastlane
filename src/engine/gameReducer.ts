@@ -7,7 +7,7 @@ import { spendHours } from './timeManager';
 import { recalculatePlayerEffects } from './gameState';
 
 export type GameAction =
-  | { type: 'apply'; jobId: string }
+  | { type: 'apply'; jobId: string; offeredWage?: number }
   | { type: 'work'; jobId: string }
   | { type: 'buy'; itemId: string }
   | { type: 'enroll'; degreeId: string }
@@ -49,7 +49,7 @@ export function gameReducer(
     case 'apply': {
       const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
       if (jobDef) {
-        const result = applyForJob(nextPlayer, jobDef, context.campaign.messages);
+        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
@@ -58,7 +58,7 @@ export function gameReducer(
     case 'work': {
       const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
       if (jobDef) {
-        const result = workShift(nextPlayer, jobDef);
+        const result = workShift(nextPlayer, jobDef, context.campaign.config.timeRules.workSessionCost);
         nextPlayer = result.updated;
         if (result.success) {
           const msg = result.message ? result.message : '';
@@ -72,20 +72,16 @@ export function gameReducer(
     case 'buy': {
       const itemDef = context.campaign.items.find(i => i.id === action.itemId);
       if (itemDef) {
-        if (itemDef.id === 'newspaper') {
-          if (nextPlayer.hoursRemaining >= 1 && nextPlayer.money >= itemDef.basePrice) {
-            nextPlayer = spendHours(nextPlayer, 1);
-            nextPlayer.money -= itemDef.basePrice;
-            actionLog = "Read the Newspaper.";
-            // UI handles modal opening separately
-          } else if (nextPlayer.money < itemDef.basePrice) {
-            actionLog = "Not enough money for the newspaper.";
-          } else {
-            actionLog = "Not enough time to read the newspaper.";
-          }
+        const timeCost = itemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : context.campaign.config.timeRules.buildingEntryCost;
+        if (nextPlayer.hoursRemaining < timeCost) {
+          actionLog = `Not enough time to buy ${itemDef.name}.`;
+          break;
+        }
+        const result = buyItem(nextPlayer, itemDef, context.rules);
+        if (result.success) {
+          nextPlayer = spendHours(result.updated, timeCost);
+          actionLog = result.message;
         } else {
-          const result = buyItem(nextPlayer, itemDef, context.rules);
-          nextPlayer = result.updated;
           actionLog = result.message;
         }
       }
@@ -94,7 +90,7 @@ export function gameReducer(
     case 'enroll': {
       const degDef = context.campaign.education.find(d => d.id === action.degreeId);
       if (degDef) {
-        const result = enrollInDegree(nextPlayer, degDef);
+        const result = enrollInDegree(nextPlayer, degDef, state.economicIndex);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
@@ -103,19 +99,21 @@ export function gameReducer(
     case 'study': {
       const degDef = context.campaign.education.find(d => d.id === action.degreeId);
       if (degDef) {
-        const result = study(nextPlayer, degDef, context.rules);
+        const result = study(nextPlayer, degDef, context.campaign.config.timeRules.studySessionCost, context.rules);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
       break;
     }
     case 'relax': {
-      const cost = Math.min(nextPlayer.hoursRemaining, 5);
-      if (cost > 0) {
-        nextPlayer = spendHours(nextPlayer, cost);
-        nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 1);
-        actionLog = `Relaxed at home for ${cost} hours.`;
+      const hoursToRelax = Math.min(nextPlayer.hoursRemaining, 5);
+      if (hoursToRelax < context.campaign.config.timeRules.relaxCost) {
+        actionLog = "Not enough time to relax.";
+        break;
       }
+      nextPlayer = spendHours(nextPlayer, hoursToRelax);
+      nextPlayer.happiness = Math.min(100, nextPlayer.happiness + hoursToRelax);
+      actionLog = `Relaxed for ${hoursToRelax} hours.`;
       break;
     }
     case 'bank_transaction': {

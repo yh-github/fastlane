@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/112</span>
+                <span class='fraction'>0/117</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/112</span>
+                <span class='fraction'>0/117</span>
             </div>
         
             
@@ -231,7 +231,12 @@
 <a name='L166'></a><a href='#L166'>166</a>
 <a name='L167'></a><a href='#L167'>167</a>
 <a name='L168'></a><a href='#L168'>168</a>
-<a name='L169'></a><a href='#L169'>169</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -351,19 +356,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -375,6 +371,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -394,7 +393,18 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -518,6 +528,7 @@ interface BuildingModalProps {
 <span class="cstat-no" title="statement not covered" >            player={player} </span>
 <span class="cstat-no" title="statement not covered" >            onAction={onAction} </span>
 <span class="cstat-no" title="statement not covered" >            availableDegrees={campaign.education} </span>
+<span class="cstat-no" title="statement not covered" >            rules={rules}</span>
 <span class="cstat-no" title="statement not covered" >          /&gt;</span>
         )}
 &nbsp;
@@ -550,8 +561,12 @@ interface BuildingModalProps {
 <span class="cstat-no" title="statement not covered" >            economicIndex={economicIndex}</span>
 <span class="cstat-no" title="statement not covered" >          /&gt;</span>
         )}
-<span class="cstat-no" title="statement not covered" >        {building.archetype === 'home' &amp;&amp; (</span>
-<span class="cstat-no" title="statement not covered" >          player.currentHousingId === building.id ? (</span>
+<span class="cstat-no" title="statement not covered" >        {building.archetype === 'home' &amp;&amp; (() =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >          const housing = campaign.housing.find(h =&gt; h.id === player.currentHousingId);</span>
+<span class="cstat-no" title="statement not covered" >          const homeNode = campaign.map.nodes.find(n =&gt; n.id === housing?.homeNodeId);</span>
+<span class="cstat-no" title="statement not covered" >          const livesHere = homeNode?.buildingId === building.id;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >          return livesHere ? (</span>
 <span class="cstat-no" title="statement not covered" >            &lt;HomeRelax </span>
 <span class="cstat-no" title="statement not covered" >              player={player}</span>
 <span class="cstat-no" title="statement not covered" >              onAction={onAction}</span>
@@ -561,8 +576,8 @@ interface BuildingModalProps {
 <span class="cstat-no" title="statement not covered" >              &lt;h3&gt;{building.name}&lt;/h3&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;p style={{ fontSize: '12px' }}&gt;You don't live here.&lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
-          )
-        )}
+          );
+<span class="cstat-no" title="statement not covered" >        })()}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >    &lt;/div&gt;</span>
   );
@@ -574,7 +589,7 @@ interface BuildingModalProps {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-10T10:12:08.951Z
+                at 2026-07-11T08:51:18.371Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

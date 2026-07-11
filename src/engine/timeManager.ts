@@ -4,7 +4,7 @@
  * Implements the 60 hours/turn economy.
  */
 
-import { type GameState, type PlayerState, HOURS_PER_TURN } from './gameState';
+import { type GameState, type PlayerState } from './gameState';
 
 // ─── Time Management Functions ──────────────────────────────────
 
@@ -48,8 +48,8 @@ export function spendHours(player: PlayerState, cost: number): PlayerState {
  * Reset a player's clock for a new turn.
  * Applies any caffeine debt carried over from the previous turn.
  */
-export function resetPlayerClock(player: PlayerState): PlayerState {
-  const startingHours = Math.max(0, HOURS_PER_TURN - player.turnFlags.caffeineDebt);
+export function resetPlayerClock(player: PlayerState, hoursPerTurn: number): PlayerState {
+  const startingHours = Math.max(0, hoursPerTurn - player.turnFlags.caffeineDebt);
   
   return {
     ...player,

@@ -53,8 +53,8 @@ describe('Education Engine', () => {
 
   describe('study', () => {
     it('fails if not enrolled or not enough hours (strict rules)', () => {
-      const player = { hoursRemaining: 5, enrolledClasses: { 'junior_college': 0 } } as PlayerState;
-      const result = study(player, mockDegree, { studyWithPartialHours: false } as any);
+      const player = { hoursRemaining: 5, enrolledClasses: { 'junior_college': 0 }, inventory: { appliances: [], books: [] } } as PlayerState;
+      const result = study(player, mockDegree, 6, { studyWithPartialHours: false } as any);
       expect(result.success).toBe(false); // requires 6 hours
     });
 
@@ -64,7 +64,7 @@ describe('Education Engine', () => {
         enrolledClasses: { 'junior_college': 0 },
         inventory: { appliances: [], books: [] }
       } as PlayerState;
-      const result = study(player, mockDegree, { studyWithPartialHours: true } as any);
+      const result = study(player, mockDegree, 6, { studyWithPartialHours: true } as any);
       expect(result.success).toBe(true); 
       expect(result.updated.enrolledClasses['junior_college']).toBe(1);
       expect(result.updated.hoursRemaining).toBe(0);
@@ -76,7 +76,7 @@ describe('Education Engine', () => {
         enrolledClasses: { 'junior_college': 0 },
         inventory: { appliances: [], books: [] }
       } as PlayerState;
-      const result = study(player, mockDegree);
+      const result = study(player, mockDegree, 6);
       expect(result.success).toBe(true);
       expect(result.updated.enrolledClasses['junior_college']).toBe(1);
       expect(result.updated.hoursRemaining).toBe(4);
@@ -91,7 +91,7 @@ describe('Education Engine', () => {
         inventory: { appliances: [{id: 'computer'}], books: ['dictionary', 'encyclopedia', 'atlas'] }
       } as PlayerState; // computer (-1), all books (-1) = 8 required
       
-      const result = study(player, mockDegree); // completes 8th lesson, should graduate!
+      const result = study(player, mockDegree, 6); // completes 8th lesson, should graduate!
       expect(result.success).toBe(true);
       expect(result.updated.degrees).toContain('junior_college');
       expect(result.updated.enrolledClasses['junior_college']).toBeUndefined();

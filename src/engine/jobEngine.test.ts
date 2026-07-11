@@ -33,7 +33,7 @@ describe('Job Engine', () => {
   describe('applyForJob', () => {
     it('burger cook is always accepted', () => {
       const player = { hoursRemaining: 20, experience: 0, dependability: 0, degrees: [] } as PlayerState;
-      const result = applyForJob(player, burgerCook);
+      const result = applyForJob(player, burgerCook, 4);
       expect(result.success).toBe(true);
       expect(result.updated.currentJobId).toBe('burger_cook');
       expect(result.updated.currentWage).toBe(5);
@@ -41,14 +41,14 @@ describe('Job Engine', () => {
 
     it('rejects if missing hard requirements (experience)', () => {
       const player = { hoursRemaining: 20, experience: 10, dependability: 60, degrees: ['business_admin'] } as PlayerState;
-      const result = applyForJob(player, salesManager);
+      const result = applyForJob(player, salesManager, 4);
       expect(result.success).toBe(false);
       expect(result.message).toContain('Not enough experience');
     });
 
     it('rejects if missing degree', () => {
       const player = { hoursRemaining: 20, experience: 60, dependability: 60, degrees: [] } as PlayerState;
-      const result = applyForJob(player, salesManager);
+      const result = applyForJob(player, salesManager, 4);
       expect(result.success).toBe(false);
       expect(result.message).toContain('Missing required degree: business_admin');
     });
@@ -56,7 +56,7 @@ describe('Job Engine', () => {
     it('rejects due to bad luck roll', () => {
       vi.spyOn(Math, 'random').mockReturnValue(0.99); // Force high roll (99)
       const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [] } as PlayerState;
-      const result = applyForJob(player, lowLevelJob); // Luck = 40 + 10 + 10 = 60. 99 > 60 = rejected.
+      const result = applyForJob(player, lowLevelJob, 4); // Luck = 40 + 10 + 10 = 60. 99 > 60 = rejected.
       expect(result.success).toBe(false);
       expect(result.message).toContain('bad luck');
     });
@@ -69,7 +69,7 @@ describe('Job Engine', () => {
         currentJobId: 'sales_manager',
         inventory: { casualClothesWeeks: 10, dressClothesWeeks: 0, businessClothesWeeks: 0, selectedClothes: 'casual' }
       } as unknown as PlayerState;
-      const result = workShift(player, salesManager);
+      const result = workShift(player, salesManager, 6);
       expect(result.success).toBe(false);
       expect(result.message).toContain('need business clothes');
     });
@@ -89,7 +89,7 @@ describe('Job Engine', () => {
         inventory: { casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 10, selectedClothes: 'business' }
       } as unknown as PlayerState;
       
-      const result = workShift(player, salesManager);
+      const result = workShift(player, salesManager, 6);
       expect(result.success).toBe(true);
       expect(result.wagesEarned).toBe(96); // 12 * 8 hours
       expect(result.updated.money).toBe(96);

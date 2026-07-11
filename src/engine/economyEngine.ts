@@ -83,10 +83,6 @@ export function applyMarketCrash(
     } else if (updated.currentWage > 0) {
       updated.currentWage = Math.floor(updated.currentWage * 0.8); // 80% wage cut
     }
-    // Lose 50% of stock holdings
-    for (const key of Object.keys(updated.inventory.stocks.holdings)) {
-      updated.inventory.stocks.holdings[key] = Math.floor(updated.inventory.stocks.holdings[key] * 0.5);
-    }
   } else if (severity === 'major') {
     updated.happiness -= hasSignificantStocks ? 8 : 3;
     // 100% fired
@@ -96,13 +92,27 @@ export function applyMarketCrash(
       updated.raisesAtCurrentJob = 0;
       updated.happiness -= 7;
     }
-    // Wipe bank savings and stock portfolios
+    // Wipe bank savings ONLY
     updated.bankSavings = 0;
-    updated.inventory.stocks.holdings = {};
   }
 
   // Ensure happiness doesn't drop below 10
   updated.happiness = Math.max(10, updated.happiness);
+  return updated;
+}
+
+/**
+ * Applies an Economic Boom to a player.
+ * Gives +5 Happiness if the player has significant stock investments.
+ */
+export function applyEconomicBoom(player: PlayerState): PlayerState {
+  let updated = { ...player };
+  const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
+  
+  if (hasSignificantStocks) {
+    updated.happiness += 5;
+  }
+
   return updated;
 }
 

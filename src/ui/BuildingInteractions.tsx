@@ -1,5 +1,5 @@
 import type { PlayerState } from '../engine/gameState';
-import { COST_STUDY_SESSION } from '../engine/gameState';
+
 import type { JobDef, ItemDef, EducationDef, BuildingDef, CampaignBundle } from '../engine/dataLoader';
 
 interface InteractionProps {
@@ -13,7 +13,7 @@ import { useState } from 'react';
  * JobBoard — Shown at the Employment Office.
  * Lists ALL jobs across the game for applying, grouped by building.
  */
-export function JobBoard({ player, onAction, availableJobs, buildings }: InteractionProps & { availableJobs: JobDef[], buildings: BuildingDef[] }) {
+export function JobBoard({ player, onAction, availableJobs, buildings, economicIndex = 0 }: InteractionProps & { availableJobs: JobDef[], buildings: BuildingDef[], economicIndex?: number }) {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   // Group jobs by locationId
@@ -49,10 +49,11 @@ export function JobBoard({ player, onAction, availableJobs, buildings }: Interac
         const missingExp = player.experience < job.requirements.experience;
         const missingDep = player.dependability < job.requirements.dependability;
         const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
+        const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
         
         return (
           <div key={job.id} className="interaction-item" style={{ marginBottom: '10px', padding: '10px', border: '1px solid #444', borderRadius: '4px' }}>
-            <strong>{job.title}</strong> — ${job.baseWage}/hr
+            <strong>{job.title}</strong> — ${offeredWage}/hr (Base: ${job.baseWage})
             <div style={{ fontSize: '12px', marginTop: '5px' }}>
               <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>Exp: {job.requirements.experience}</span> | 
               <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginLeft: '5px' }}>Dep: {job.requirements.dependability}</span>
@@ -69,9 +70,15 @@ export function JobBoard({ player, onAction, availableJobs, buildings }: Interac
             )}
             <div style={{ marginTop: '10px' }}>
               {isCurrentJob ? (
-                <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Current Job</span>
+                offeredWage > player.currentWage ? (
+                  <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
+                    Ask for Raise to ${offeredWage}/hr (4h)
+                  </button>
+                ) : (
+                  <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Current Job (${player.currentWage}/hr)</span>
+                )
               ) : (
-                <button onClick={() => onAction({ type: 'apply', jobId: job.id })}>
+                <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
                   Apply (4h)
                 </button>
               )}
@@ -489,7 +496,7 @@ export function PawnShop({ player, onAction, economicIndex = 0 }: InteractionPro
             const pawnValue = Math.floor(calcEconomyPrice(app.purchasePrice, economicIndex) * 0.4);
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item: app, value: pawnValue })}>
-                <span>{app.id.replace(/_/g, ' ')}</span>
+                <span>{app.id.replaceAll('_', ' ')}</span>
                 <span style={{ color: '#2ecc71' }}>+${pawnValue}</span>
               </li>
             );
@@ -506,7 +513,7 @@ export function PawnShop({ player, onAction, economicIndex = 0 }: InteractionPro
             const redeemCost = app.redeemCost;
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'redeem_item', item: app, cost: redeemCost })}>
-                <span>{app.itemId.replace(/_/g, ' ')}</span>
+                <span>{app.itemId.replaceAll('_', ' ')}</span>
                 <span style={{ color: '#e74c3c' }}>-${redeemCost}</span>
               </li>
             );
@@ -517,7 +524,7 @@ export function PawnShop({ player, onAction, economicIndex = 0 }: InteractionPro
   );
 }
 
-export function UniversityRegistry({ player, onAction, availableDegrees, rules }: InteractionProps & { availableDegrees: EducationDef[], rules?: import('../engine/gameState').GameRules }) {
+export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees: EducationDef[], rules?: import('../engine/gameState').GameRules, campaign: CampaignBundle, economicIndex?: number }) {
   return (
     <div className="interaction-panel">
       <h3>University Registry</h3>
@@ -539,9 +546,11 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules }
         const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
         const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
 
+        const tuitionFee = calcEconomyPrice(deg.baseTuitionFee, economicIndex);
+
         return (
           <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #4aa' }}>
-            <strong>{deg.name}</strong> {isEnrolled ? '' : `- Tuition: $${deg.baseTuitionFee}`}
+            <strong>{deg.name}</strong> {isEnrolled ? '' : `- Tuition: $${tuitionFee}`}
             {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginLeft: '5px', fontWeight: 'bold' }}>★ Bonus</span>}
             
             {isEnrolled ? (
@@ -550,16 +559,16 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules }
                 <button 
                   style={{ marginTop: '5px' }} 
                   onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
-                  disabled={player.hoursRemaining < (rules?.studyWithPartialHours ? 1 : COST_STUDY_SESSION)}
+                  disabled={player.hoursRemaining < (rules?.studyWithPartialHours ? 1 : campaign.config.timeRules.studySessionCost)}
                 >
-                  Study ({COST_STUDY_SESSION}h)
+                  Study ({campaign.config.timeRules.studySessionCost}h)
                 </button>
               </>
             ) : (
               <button 
                 style={{ marginTop: '5px' }} 
                 onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
-                disabled={player.money < deg.baseTuitionFee}
+                disabled={player.money < tuitionFee}
               >
                 Enroll
               </button>

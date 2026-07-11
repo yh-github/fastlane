@@ -32,7 +32,8 @@ describe('Turn Processor', () => {
       ],
       calendar: [
         { id: 'W1', name: 'Week 1' }
-      ]
+      ],
+      config: { name: 'test', startingMoney: 200, timeRules: { hoursPerTurn: 60, starvationPenalty: 20, doctorPenalty: 10 }, economyRules: { repairCostMin: 0.05, repairCostMax: 0.25 } }
     } as unknown as CampaignBundle;
   });
 
@@ -42,7 +43,7 @@ describe('Turn Processor', () => {
 
   describe('Food Spoilage', () => {
     it('spoils all food if no refrigerator', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 1; 
       state.players[0].inventory.freshFoodUnits = 5; 
       const nextState = processTurnStart(state, mockCampaign);
@@ -50,7 +51,7 @@ describe('Turn Processor', () => {
     });
 
     it('spoils excess food with only a refrigerator (capacity 6)', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 1;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].inventory.freshFoodUnits = 9;
@@ -61,7 +62,7 @@ describe('Turn Processor', () => {
 
   describe('Appliance Breakage', () => {
     it('breaks an appliance if random < breakChance', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].money = 1000; // Must have > 500 for breakage to occur
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
@@ -77,7 +78,7 @@ describe('Turn Processor', () => {
     });
 
     it('breaks an appliance even if player has < 500 money', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].money = 100; // < 500
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
@@ -89,7 +90,7 @@ describe('Turn Processor', () => {
 
   describe('Happiness Bonuses', () => {
     it('grants happiness for stove and microwave if food was eaten at home', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].inventory.appliances.push({ id: 'stove', purchasePrice: 500, purchaseSource: 'socket_city' });
@@ -104,7 +105,7 @@ describe('Turn Processor', () => {
     });
 
     it('does NOT grant happiness if they starved (no food)', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].inventory.appliances.push({ id: 'stove', purchasePrice: 500, purchaseSource: 'socket_city' });
@@ -121,9 +122,10 @@ describe('Turn Processor', () => {
 
   describe('Computer Income', () => {
     it('grants extra money from computer if chance hits', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].inventory.freshFoodUnits = 10;
+      state.players[0].relaxation = 50; // Prevent doctor visit
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].inventory.appliances.push({ id: 'computer', purchasePrice: 1500, purchaseSource: 'socket_city' });
       state.players[0].money = 100;
@@ -139,9 +141,10 @@ describe('Turn Processor', () => {
 
   describe('Lottery', () => {
     it('processes lottery tickets and can win', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].inventory.freshFoodUnits = 10;
+      state.players[0].relaxation = 50; // Prevent doctor visit
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].inventory.lotteryTickets = 10;
       state.players[0].money = 100;
@@ -157,7 +160,7 @@ describe('Turn Processor', () => {
 
   describe('Event Tickets', () => {
     it('does not consume tickets or charge $35 in turnProcessor (delegated to weekendEngine)', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].money = 100;
       state.players[0].inventory.tickets.baseball = 1;
@@ -177,7 +180,7 @@ describe('Turn Processor', () => {
 
   describe('Rent Check', () => {
     it('deducts rent, forces move if unpaid for 4 weeks', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].inventory.freshFoodUnits = 10;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
@@ -191,7 +194,7 @@ describe('Turn Processor', () => {
     });
 
     it('evicts player if rent debt > 4 weeks', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 5;
       state.rules.strictEviction = true;
       state.players[0].inventory.freshFoodUnits = 10;
@@ -209,7 +212,7 @@ describe('Turn Processor', () => {
 
   describe('Market Crash', () => {
     it('triggers market crash if chance hits', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].inventory.freshFoodUnits = 10;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
@@ -224,7 +227,7 @@ describe('Turn Processor', () => {
 
   describe('State Immutability', () => {
     it('deep clones player objects to prevent mutating previous state', () => {
-      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       state.players[0].inventory.freshFoodUnits = 5;
       
@@ -237,13 +240,50 @@ describe('Turn Processor', () => {
 
   describe('Win Condition', () => {
     it('uses player ID for winnerId, not name', () => {
-      let state = createInitialGameState('test', [{name: 'TestName', isAi: false, goals: {wealth:0, happiness:0, education:0, career:0}}], 'node_low_cost', 'cdrom');
+      let state = createInitialGameState(mockCampaign, [{name: 'TestName', isAi: false, goals: {wealth:0, happiness:0, education:0, career:0}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
       
       const nextState = processTurnStart(state, mockCampaign);
       
       expect(nextState.phase).toBe('game-over');
       expect(nextState.winnerId).toBe('player_1');
+    });
+  });
+
+  describe('Relaxation & Doctor', () => {
+    it('triggers a doctor visit if relaxation drops to 10 or below and chance hits', () => {
+      let state = createInitialGameState(mockCampaign, [{name: 'TestName', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      state.turn = 2;
+      state.players[0].relaxation = 10;
+      state.players[0].money = 1000;
+      state.players[0].inventory.freshFoodUnits = 10;
+      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+      
+      // Math.random() < 0.20 triggers doctor
+      vi.spyOn(Math, 'random').mockReturnValue(0.15);
+      
+      const nextState = processTurnStart(state, mockCampaign);
+      
+      expect(nextState.players[0].turnEvents.some(e => e.includes('doctor'))).toBe(true);
+      expect(nextState.players[0].hoursRemaining).toBe(50); // 60 - 10
+      expect(nextState.players[0].happiness).toBeLessThan(50);
+    });
+
+    it('does not trigger a doctor visit if relaxation is above 10', () => {
+      let state = createInitialGameState(mockCampaign, [{name: 'TestName', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      state.turn = 2;
+      state.players[0].relaxation = 11;
+      state.players[0].money = 1000;
+      state.players[0].inventory.freshFoodUnits = 10;
+      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+      
+      // Even if chance hits, it shouldn't trigger
+      vi.spyOn(Math, 'random').mockReturnValue(0.15);
+      
+      const nextState = processTurnStart(state, mockCampaign);
+      
+      expect(nextState.players[0].turnEvents.some(e => e.includes('doctor'))).toBe(false);
+      expect(nextState.players[0].hoursRemaining).toBe(60);
     });
   });
 });

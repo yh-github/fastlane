@@ -13,11 +13,16 @@ describe('AI Engine', () => {
     jobs: [
       { id: 'job_clerk', baseWage: 4, requirements: { experience: 0, dependability: 0, degrees: [] } },
       { id: 'job_manager', baseWage: 10, requirements: { experience: 10, dependability: 10, degrees: [] } }
-    ]
+    ],
+    config: {
+      name: 'test',
+      startingMoney: 200,
+      timeRules: { hoursPerTurn: 60 }
+    }
   } as unknown as CampaignBundle;
 
   it('should buy food if starving and has money', () => {
-    let state = createInitialGameState('p1', [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 0;
     aiPlayer.money = 100;
@@ -31,7 +36,7 @@ describe('AI Engine', () => {
   });
 
   it('should pay rent if due and has money', () => {
-    let state = createInitialGameState('p1', [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 10; // Not starving
     aiPlayer.rentPaidUntilWeek = 0; // Due
@@ -46,7 +51,7 @@ describe('AI Engine', () => {
   });
 
   it('should buy clothes if out of clothes', () => {
-    let state = createInitialGameState('p1', [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 10; 
     aiPlayer.rentPaidUntilWeek = 10; // Not due
@@ -60,7 +65,7 @@ describe('AI Engine', () => {
   });
 
   it('should apply for a better job if possible', () => {
-    let state = createInitialGameState('p1', [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 10; 
     aiPlayer.rentPaidUntilWeek = 10; 
@@ -79,7 +84,7 @@ describe('AI Engine', () => {
   });
 
   it('should just relax if not enough time for anything else', () => {
-    let state = createInitialGameState('p1', [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 10; 
     aiPlayer.rentPaidUntilWeek = 10; 

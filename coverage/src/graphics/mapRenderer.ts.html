@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/122</span>
+                <span class='fraction'>0/128</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/122</span>
+                <span class='fraction'>0/128</span>
             </div>
         
             
@@ -275,7 +275,13 @@
 <a name='L210'></a><a href='#L210'>210</a>
 <a name='L211'></a><a href='#L211'>211</a>
 <a name='L212'></a><a href='#L212'>212</a>
-<a name='L213'></a><a href='#L213'>213</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -321,6 +327,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -329,7 +336,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -416,6 +426,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -423,6 +434,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -532,16 +544,20 @@ export interface PlayerPosition {
 <span class="cstat-no" title="statement not covered" >export async function initMapRenderer(</span>
 <span class="cstat-no" title="statement not covered" >  config: MapRendererConfig</span>
 <span class="cstat-no" title="statement not covered" >): Promise&lt;() =&gt; void&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  app = new Application();</span>
+<span class="cstat-no" title="statement not covered" >  const localApp = new Application();</span>
+<span class="cstat-no" title="statement not covered" >  app = localApp;</span>
   
-<span class="cstat-no" title="statement not covered" >  await app.init({</span>
+<span class="cstat-no" title="statement not covered" >  await localApp.init({</span>
 <span class="cstat-no" title="statement not covered" >    width: config.mapData.width,</span>
 <span class="cstat-no" title="statement not covered" >    height: config.mapData.height,</span>
 <span class="cstat-no" title="statement not covered" >    backgroundAlpha: 0, // Transparent to show CSS background</span>
 <span class="cstat-no" title="statement not covered" >    resizeTo: config.container,</span>
 <span class="cstat-no" title="statement not covered" >  });</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  config.container.appendChild(app.canvas);</span>
+<span class="cstat-no" title="statement not covered" >  if (!localApp.renderer) {</span>
+<span class="cstat-no" title="statement not covered" >    return () =&gt; {};</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  config.container.appendChild(localApp.canvas);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  const mapContainer = new Container();</span>
   
@@ -549,7 +565,7 @@ export interface PlayerPosition {
 <span class="cstat-no" title="statement not covered" >  mapContainer.x = (config.container.clientWidth - config.mapData.width) / 2;</span>
 <span class="cstat-no" title="statement not covered" >  mapContainer.y = (config.container.clientHeight - config.mapData.height) / 2;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  app.stage.addChild(mapContainer);</span>
+<span class="cstat-no" title="statement not covered" >  localApp.stage.addChild(mapContainer);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  const edgesLayer = new Graphics();</span>
 <span class="cstat-no" title="statement not covered" >  mapContainer.addChild(edgesLayer);</span>
@@ -623,8 +639,9 @@ export interface PlayerPosition {
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
   // Create player token (magenta neon)
-<span class="cstat-no" title="statement not covered" >  playerToken = new Graphics();</span>
-<span class="cstat-no" title="statement not covered" >  playerToken.circle(0, 0, 12);</span>
+<span class="cstat-no" title="statement not covered" >  const localPlayerToken = new Graphics();</span>
+<span class="cstat-no" title="statement not covered" >  playerToken = localPlayerToken;</span>
+<span class="cstat-no" title="statement not covered" >  localPlayerToken.circle(0, 0, 12);</span>
 <span class="cstat-no" title="statement not covered" >  playerToken.fill({ color: 0xff4081 });</span>
 <span class="cstat-no" title="statement not covered" >  playerToken.setStrokeStyle({ width: 3, color: 0xffffff });</span>
 <span class="cstat-no" title="statement not covered" >  playerToken.stroke();</span>
@@ -636,9 +653,10 @@ export interface PlayerPosition {
 <span class="cstat-no" title="statement not covered" >  console.log('[MapRenderer] Initialized');</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return () =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (app) {</span>
-<span class="cstat-no" title="statement not covered" >      app.destroy(true, { children: true, texture: true });</span>
-<span class="cstat-no" title="statement not covered" >      app = null;</span>
+<span class="cstat-no" title="statement not covered" >    if (localApp) {</span>
+<span class="cstat-no" title="statement not covered" >      localApp.destroy(true, { children: true, texture: true });</span>
+<span class="cstat-no" title="statement not covered" >      if (app === localApp) app = null;</span>
+<span class="cstat-no" title="statement not covered" >      if (playerToken === localPlayerToken) playerToken = null;</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >    console.log('[MapRenderer] Destroyed');</span>
 <span class="cstat-no" title="statement not covered" >  };</span>
@@ -706,7 +724,7 @@ export interface PlayerPosition {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-07-10T10:12:08.951Z
+                at 2026-07-11T08:51:18.371Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

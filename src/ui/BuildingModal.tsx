@@ -99,6 +99,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             onAction={onAction} 
             availableJobs={campaign.jobs} 
             buildings={campaign.buildings}
+            economicIndex={economicIndex}
           />
         )}
 
@@ -118,6 +119,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             onAction={onAction} 
             availableDegrees={campaign.education} 
             rules={rules}
+            campaign={campaign}
+            economicIndex={gameState.economicIndex}
           />
         )}
 

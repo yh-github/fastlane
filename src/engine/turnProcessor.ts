@@ -25,34 +25,62 @@ import { calcEconomyPrice } from './economyEngine';
 import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath';
 import { resetPlayerClock } from './timeManager';
 import { processStarvation, processDoctorVisit, processApartmentRobbery } from './eventEngine';
-import { fluctuateEconomy, applyMarketCrash } from './economyEngine';
+import { fluctuateEconomy, applyMarketCrash, applyEconomicBoom } from './economyEngine';
 import { processWeekend } from './weekendEngine';
 
 export function processTurnStart(state: GameState, campaign: CampaignBundle): GameState {
   // 1. Fluctuate the economy for the new turn
   const newEconomy = fluctuateEconomy(state.economicIndex);
 
-  // 2. Market Crash Roll
+  // 2. Market Crash & Economic Boom Roll (Only Week 8 onwards)
   let crashSeverity: 'none' | 'minor' | 'moderate' | 'major' = 'none';
-  const crashChance = state.variant === 'cdrom' 
-    ? 1 / (1 + (30 * state.players.length)) 
-    : 1 / (1 + (20 * state.players.length));
+  let economicBoom = false;
   
-  if (Math.random() < crashChance) {
-    const roll = Math.random();
-    if (roll < 0.6) crashSeverity = 'minor';
-    else if (roll < 0.9) crashSeverity = 'moderate';
-    else crashSeverity = 'major';
+  if (state.turn >= 8) {
+    // Check for Market Crash
+    if (newEconomy > -30) {
+      const crashChance = state.variant === 'cdrom' 
+        ? 1 / (1 + (30 * state.players.length)) 
+        : 1 / (1 + (20 * state.players.length));
+      
+      if (Math.random() < crashChance) {
+        const roll = Math.random();
+        if (roll < 0.333) {
+          crashSeverity = 'minor';
+          newEconomy = Math.max(-30, newEconomy - 3);
+        } else if (roll < 0.666) {
+          crashSeverity = 'moderate';
+          newEconomy = Math.max(-30, newEconomy - 6);
+        } else {
+          crashSeverity = 'major';
+          newEconomy = Math.max(-30, newEconomy - 12);
+        }
+      }
+    }
+
+    // Check for Economic Boom
+    if (crashSeverity === 'none' && newEconomy >= 0) {
+      const boomChance = 1 / (1 + (30 * state.players.length));
+      if (Math.random() < boomChance) {
+        economicBoom = true;
+        newEconomy = Math.min(90, newEconomy + 6);
+      }
+    }
   }
-  
-  const economicBoom = crashSeverity === 'none' && newEconomy > state.economicIndex && Math.random() < 0.2;
 
   const previousPlayerWeekends: string[] = [];
 
   // Process each player
   const updatedPlayers = state.players.map(player => {
-    let p = resetPlayerClock(structuredClone(player)); // Resets hours to 60, applies caffeine debt
+    let p = resetPlayerClock(structuredClone(player), campaign.config.timeRules.hoursPerTurn); // Resets hours to 60, applies caffeine debt
     p = recalculatePlayerEffects(p, campaign); // Sync effects with current inventory
+
+    let doctorNeeded = false;
+
+    // Check for Relaxation-triggered doctor visit
+    if (p.relaxation <= 10 && Math.random() < 0.20) {
+      doctorNeeded = true;
+    }
 
     p.turnFlags = {
       hasEaten: false,
@@ -115,7 +143,6 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       p.inventory.selectedClothes = activeClothes as any;
 
       // 2. Food Consumption & Starvation
-      let doctorNeeded = false;
       let hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
       
       // Fast food is consumed immediately.
@@ -132,7 +159,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
         p.turnFlags.hasEaten = true;
       } else {
         // Starvation
-        const { updated, doctorTriggered } = processStarvation(p);
+        const { updated, doctorTriggered } = processStarvation(p, campaign.config.timeRules.starvationPenalty);
         p = updated;
         p.turnEvents.push("You didn't eat enough! You are starving.");
         if (doctorTriggered) {
@@ -269,6 +296,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
         else if (crashSeverity === 'moderate') currentHeadline = "SCANDAL ON WALL ST. ECONOMY DROPS! UNEMPLOYMENT RISES";
         else currentHeadline = "BANKS FALTER! SAVINGS LOST! JOBS LOST!";
       } else if (economicBoom) {
+        p = applyEconomicBoom(p);
         currentHeadline = "INFLATION IS UP! PRICES COULD SOAR!";
       }
 
@@ -282,7 +310,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       // 13. Relaxation Decay & Hot Tub
       const preventRelaxationDecay = p.activeEffects['prevent_relaxation_decay'] || 0;
       if (!preventRelaxationDecay) {
-        p.relaxation = Math.max(0, p.relaxation - 2); // Decay by 2 per turn
+        p.relaxation = Math.max(10, p.relaxation - 1); // Decay by 1 per turn, min 10
       }
 
       // 14. Pawn Shop Expiration
@@ -297,7 +325,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
 
       // Process delayed doctor visit
       if (doctorNeeded) {
-        p = processDoctorVisit(p);
+        p = processDoctorVisit(p, campaign.config.timeRules.doctorPenalty);
+        p.turnEvents.push("You got sick and had to visit the doctor!");
       }
 
       if (currentHeadline) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Dashboard } from './ui/Dashboard';
 import { BuildingModal } from './ui/BuildingModal';
 import { GameMap } from './ui/GameMap';
@@ -26,7 +26,17 @@ type AppStatus = 'loading' | 'ready' | 'error';
 export default function App() {
   const [status, setStatus] = useState<AppStatus>('loading');
   const [campaign, setCampaign] = useState<CampaignBundle | null>(null);
-  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [gameState, _setGameState] = useState<GameState | null>(null);
+  const gameStateRef = useRef<GameState | null>(null);
+
+  const setGameState = useCallback((updater: GameState | null | ((prev: GameState | null) => GameState | null)) => {
+    if (typeof updater === 'function') {
+      gameStateRef.current = updater(gameStateRef.current);
+    } else {
+      gameStateRef.current = updater;
+    }
+    _setGameState(gameStateRef.current);
+  }, []);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showTitle, setShowTitle] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -41,7 +51,7 @@ export default function App() {
     loadCampaign('classic_1990')
       .then((bundle) => {
         setCampaign(bundle);
-        const initialState = createInitialGameState('classic_1990', [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
         setGameState(initialState);
         setStatus('ready');
       if (initialState && initialState.players[0].turnFlags.freeNewspaper) {
@@ -74,7 +84,7 @@ export default function App() {
       endY = rect.top + rect.height / 2;
     }
     const newAnim: FloatingAnimation = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 11),
       type,
       content,
       startX: window.innerWidth / 2,
@@ -335,7 +345,7 @@ export default function App() {
   if (gameState.phase === 'setup') {
     return (
       <SetupScreen onConfirm={(playersConfig) => {
-        const initialState = createInitialGameState('classic_1990', playersConfig, 'node_low_cost', 'cdrom');
+        const initialState = createInitialGameState(campaign!, playersConfig, 'node_low_cost', 'cdrom');
         const firstTurnState = processTurnStart({ ...initialState, phase: 'playing' }, campaign!);
         setGameState(firstTurnState);
         addLog('Game started. Good luck!', firstTurnState.turn);
@@ -362,7 +372,7 @@ export default function App() {
         playerName={gameState.winnerId || 'Player 1'} 
         turn={gameState.turn}
         onPlayAgain={() => {
-          setGameState(createInitialGameState('classic_1990', [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom'));
+          setGameState(createInitialGameState(campaign!, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom'));
           setShowTitle(true);
           setLogs([]);
           setActivePlayerIndex(0);
@@ -382,6 +392,7 @@ export default function App() {
         player={activePlayer}
         turn={gameState.turn}
         economicIndex={gameState.economicIndex}
+        hoursPerTurn={campaign!.config.timeRules.hoursPerTurn}
         onOpenInventory={() => setIsInventoryOpen(true)}
       />
       <main className="game-viewport">
