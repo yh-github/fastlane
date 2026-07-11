@@ -43,19 +43,20 @@ let playerToken: Graphics | null = null;
 export async function initMapRenderer(
   config: MapRendererConfig
 ): Promise<() => void> {
-  app = new Application();
+  const localApp = new Application();
+  app = localApp;
   
-  await app.init({
+  await localApp.init({
     width: config.mapData.width,
     height: config.mapData.height,
     backgroundAlpha: 0, // Transparent to show CSS background
     resizeTo: config.container,
   });
 
-  if (!app.renderer) {
+  if (!localApp.renderer) {
     return () => {};
   }
-  config.container.appendChild(app.canvas);
+  config.container.appendChild(localApp.canvas);
 
   const mapContainer = new Container();
   
@@ -63,7 +64,7 @@ export async function initMapRenderer(
   mapContainer.x = (config.container.clientWidth - config.mapData.width) / 2;
   mapContainer.y = (config.container.clientHeight - config.mapData.height) / 2;
 
-  app.stage.addChild(mapContainer);
+  localApp.stage.addChild(mapContainer);
 
   const edgesLayer = new Graphics();
   mapContainer.addChild(edgesLayer);
@@ -137,8 +138,9 @@ export async function initMapRenderer(
   }
 
   // Create player token (magenta neon)
-  playerToken = new Graphics();
-  playerToken.circle(0, 0, 12);
+  const localPlayerToken = new Graphics();
+  playerToken = localPlayerToken;
+  localPlayerToken.circle(0, 0, 12);
   playerToken.fill({ color: 0xff4081 });
   playerToken.setStrokeStyle({ width: 3, color: 0xffffff });
   playerToken.stroke();
@@ -150,9 +152,10 @@ export async function initMapRenderer(
   console.log('[MapRenderer] Initialized');
 
   return () => {
-    if (app) {
-      app.destroy(true, { children: true, texture: true });
-      app = null;
+    if (localApp) {
+      localApp.destroy(true, { children: true, texture: true });
+      if (app === localApp) app = null;
+      if (playerToken === localPlayerToken) playerToken = null;
     }
     console.log('[MapRenderer] Destroyed');
   };

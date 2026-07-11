@@ -51,7 +51,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
 
   // Process each player
   const updatedPlayers = state.players.map(player => {
-    let p = resetPlayerClock(player); // Resets hours to 60, applies caffeine debt
+    let p = resetPlayerClock(structuredClone(player)); // Resets hours to 60, applies caffeine debt
     p = recalculatePlayerEffects(p, campaign); // Sync effects with current inventory
 
     p.turnFlags = {
@@ -85,13 +85,13 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       } else {
         if (p.inventory.selectedClothes === 'casual') {
           if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push("Your casual clothes are worn out!");
-          p.inventory.casualClothesWeeks = Math.max(0, p.inventory.casualClothesWeeks - 1);
+          if (p.inventory.casualClothesWeeks > 0) p.inventory.casualClothesWeeks--;
         } else if (p.inventory.selectedClothes === 'dress') {
           if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push("Your dress clothes are worn out!");
-          p.inventory.dressClothesWeeks = Math.max(0, p.inventory.dressClothesWeeks - 1);
+          if (p.inventory.dressClothesWeeks > 0) p.inventory.dressClothesWeeks--;
         } else if (p.inventory.selectedClothes === 'business') {
           if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push("Your business suit is worn out!");
-          p.inventory.businessClothesWeeks = Math.max(0, p.inventory.businessClothesWeeks - 1);
+          if (p.inventory.businessClothesWeeks > 0) p.inventory.businessClothesWeeks--;
         }
       }
 
@@ -163,16 +163,14 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       // 4. Dependability Decay
       p.dependability = calcDependabilityDecay(p.dependability);
 
-      // 5. Appliance Breakage (simplified - 1/36 chance per appliance if cash > $500)
-      if (p.money > 500) {
-        for (const app of p.inventory.appliances) {
-          const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
-          if (Math.random() < breakChance) {
-            const repairCost = Math.floor(app.purchasePrice * (0.05 + Math.random() * 0.2));
-            p.money = Math.max(0, p.money - repairCost);
-            p.happiness = Math.max(10, p.happiness - 1);
-            p.turnEvents.push(`Your ${app.id.replace('_', ' ')} broke! Repair cost: $${repairCost}`);
-          }
+      // 5. Appliance Breakage (simplified - 1/36 chance per appliance)
+      for (const app of p.inventory.appliances) {
+        const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
+        if (Math.random() < breakChance) {
+          const repairCost = Math.floor(app.purchasePrice * (0.05 + Math.random() * 0.2));
+          p.money = Math.max(0, p.money - repairCost);
+          p.happiness = Math.max(10, p.happiness - 1);
+          p.turnEvents.push(`Your ${app.id.replaceAll('_', ' ')} broke! Repair cost: $${repairCost}`);
         }
       }
 
@@ -203,17 +201,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
         p.inventory.lotteryTickets = 0;
       }
 
-      // 9. Event Tickets (Simplified: consumes one and triggers)
-      if (p.inventory.tickets.baseball > 0) {
-        p.inventory.tickets.baseball--;
-        p.money = Math.max(0, p.money - 35); // Cost of event
-      } else if (p.inventory.tickets.theatre > 0) {
-        p.inventory.tickets.theatre--;
-        p.money = Math.max(0, p.money - 35);
-      } else if (p.inventory.tickets.concert > 0) {
-        p.inventory.tickets.concert--;
-        p.money = Math.max(0, p.money - 35);
-      }
+      // 9. Event Tickets (Handled by weekendEngine to prevent double consumption)
+      // Removed ticket consumption here.
 
       // 10. Loan Checks
       if (p.loanDebt > 0) {
@@ -356,7 +345,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       career >= p.goalAllotment.career
     ) {
       phase = 'game-over';
-      winnerId = p.name;
+      winnerId = p.id;
       break;
     }
   }

@@ -15,7 +15,7 @@ export const GameLog: React.FC<GameLogProps> = ({ entries }) => {
   return (
     <div className="game-log">
       {entries.slice().reverse().map((e, i) => (
-        <div key={i} className="game-log__entry">
+        <div key={i} className="log-entry">
           <span>[Week {e.week}]</span> {e.message}
         </div>
       ))}

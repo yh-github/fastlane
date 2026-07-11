@@ -68,7 +68,7 @@ export function applyForJob(player: PlayerState, job: JobDef, messages: Record<s
   updated.currentWage = job.baseWage; // Lock in the wage
   updated.raisesAtCurrentJob = 0;
 
-  return { updated, success: true, message: `You got the job as ${job.title}!` };
+  return { updated, success: true, message: msg('job_apply_success', `You got the job as ${job.title}!`, { title: job.title }) };
 }
 
 export interface WorkResult {

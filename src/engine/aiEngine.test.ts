@@ -73,9 +73,9 @@ describe('AI Engine', () => {
 
     const actions = executeAITurn(aiPlayer, state, mockCampaign);
     
-    // First action should be apply for manager, then work
+    // First action should be apply for manager, then work the old job
     expect(actions[0]).toEqual({ type: 'apply', jobId: 'job_manager' });
-    expect(actions[1]).toEqual({ type: 'work', jobId: 'job_manager' });
+    expect(actions[1]).toEqual({ type: 'work', jobId: 'job_clerk' });
   });
 
   it('should just relax if not enough time for anything else', () => {

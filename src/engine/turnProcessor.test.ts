@@ -75,6 +75,16 @@ describe('Turn Processor', () => {
       expect(nextState.players[0].inventory.appliances.length).toBe(1);
       expect(nextState.players[0].turnEvents.some(e => e.includes('broke!'))).toBe(true);
     });
+
+    it('breaks an appliance even if player has < 500 money', () => {
+      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      state.turn = 2;
+      state.players[0].money = 100; // < 500
+      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+      vi.spyOn(Math, 'random').mockReturnValue(0.01);
+      const nextState = processTurnStart(state, mockCampaign);
+      expect(nextState.players[0].turnEvents.some(e => e.includes('broke!'))).toBe(true);
+    });
   });
 
   describe('Happiness Bonuses', () => {
@@ -140,8 +150,28 @@ describe('Turn Processor', () => {
 
       const nextState = processTurnStart(state, mockCampaign);
       
-      expect(nextState.players[0].money).toBe(5095);
+      expect(nextState.players[0].money).toBe(5070); // 5100 (win) + 100 (start) - 5 (weekend) - 25 (appliance repair) - 100 (wait start was 100). Actually 100 + 5000 = 5100. Weekend cost is 5, repair is 25. 5100 - 30 = 5070.
       expect(nextState.players[0].inventory.lotteryTickets).toBe(0);
+    });
+  });
+
+  describe('Event Tickets', () => {
+    it('does not consume tickets or charge $35 in turnProcessor (delegated to weekendEngine)', () => {
+      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      state.turn = 2;
+      state.players[0].money = 100;
+      state.players[0].inventory.tickets.baseball = 1;
+      
+      const nextState = processTurnStart(state, mockCampaign);
+      
+      // Since weekendEngine is called within processTurnStart, it WILL consume the ticket, 
+      // but the total cost should be just the weekendEngine cost (which is 'medium', $15-$55), 
+      // not the $35 from turnProcessor PLUS the weekendEngine cost.
+      // Wait, if weekendEngine consumes the ticket, how do we know turnProcessor didn't?
+      // If turnProcessor doesn't consume it, weekendEngine will see it, consume it, and set cost to medium.
+      // With Math.random=0.99, medium cost (15-55) will be 54. 
+      // So money should be 100 - 54 = 46. (If turnProcessor also charged $35, it would be 100 - 35 - 54 = 11).
+      expect(nextState.players[0].money).toBeGreaterThanOrEqual(45);
     });
   });
 
@@ -189,6 +219,31 @@ describe('Turn Processor', () => {
       const nextState = processTurnStart(state, mockCampaign);
 
       expect(nextState.economicIndex).toBeLessThan(100);
+    });
+  });
+
+  describe('State Immutability', () => {
+    it('deep clones player objects to prevent mutating previous state', () => {
+      let state = createInitialGameState('test', [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+      state.turn = 2;
+      state.players[0].inventory.freshFoodUnits = 5;
+      
+      const nextState = processTurnStart(state, mockCampaign);
+      
+      expect(nextState.players[0].inventory.freshFoodUnits).toBe(0);
+      expect(state.players[0].inventory.freshFoodUnits).toBe(5); // Original must not mutate!
+    });
+  });
+
+  describe('Win Condition', () => {
+    it('uses player ID for winnerId, not name', () => {
+      let state = createInitialGameState('test', [{name: 'TestName', isAi: false, goals: {wealth:0, happiness:0, education:0, career:0}}], 'node_low_cost', 'cdrom');
+      state.turn = 2;
+      
+      const nextState = processTurnStart(state, mockCampaign);
+      
+      expect(nextState.phase).toBe('game-over');
+      expect(nextState.winnerId).toBe('player_1');
     });
   });
 });

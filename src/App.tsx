@@ -12,11 +12,9 @@ import { spendHours } from './engine/timeManager';
 import { loadCampaign, type CampaignBundle } from './engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath } from './graphics/pathfinding';
 import { animatePlayerPath, type PlayerPosition } from './graphics/mapRenderer';
-import { applyForJob, workShift } from './engine/jobEngine';
-import { buyItem } from './engine/shoppingEngine';
-import { enrollInDegree, study } from './engine/educationEngine';
 import { processStreetRobbery } from './engine/eventEngine';
 import { executeAITurn } from './engine/aiEngine';
+import { gameReducer, type GameAction } from './engine/gameReducer';
 
 import { WeekendScreen } from './ui/WeekendScreen';
 import { InventoryModal } from './ui/InventoryModal';
@@ -106,8 +104,11 @@ export default function App() {
         await animatePlayerPath(pathCoords.slice(1), 150); // Double speed (150ms) when running home
       }
       setIsAnimating(false);
-      player.position = homeNodeId;
-      updatedPlayers[activePlayerIndex] = player;
+      // BUG FIX: Clone the array properly to prevent mutability leaks
+      const newPlayers = [...updatedPlayers];
+      player = { ...player, position: homeNodeId };
+      newPlayers[activePlayerIndex] = player;
+      updatedPlayers = newPlayers;
     }
 
     if (activePlayerIndex + 1 < updatedPlayers.length) {
@@ -142,293 +143,73 @@ export default function App() {
       return;
     }
 
-    let updatedPlayers = [...gameState.players];
-    let oldPlayer = { ...updatedPlayers[activePlayerIndex] };
-    let player = { ...oldPlayer };
-    
-    let actionLog = "";
+    setGameState(prevState => {
+      if (!prevState) return prevState;
 
-    if (payload.type === 'apply') {
-      const jobDef = campaign.jobs.find(j => j.id === payload.jobId);
-      if (jobDef) {
-        const result = applyForJob(player, jobDef, campaign.messages);
-        player = result.updated;
-        actionLog = result.message;
-      }
-    } else if (payload.type === 'work') {
-      const jobDef = campaign.jobs.find(j => j.id === payload.jobId);
-      if (jobDef) {
-        const result = workShift(player, jobDef);
-        player = result.updated;
-        if (result.success) {
-          const msg = result.message ? result.message : '';
-          actionLog = `Worked at ${jobDef.title}! Earned $${result.wagesEarned}${msg}`;
-        } else {
-          actionLog = result.message || 'Could not work.';
-        }
-      }
-    } else if (payload.type === 'buy') {
-      const itemDef = campaign.items.find(i => i.id === payload.itemId);
-      if (itemDef) {
-        if (itemDef.id === 'newspaper') {
-          if (player.hoursRemaining >= 1 && player.money >= itemDef.basePrice) {
-            player = spendHours(player, 1);
-            player.money -= itemDef.basePrice;
-            actionLog = "Read the Newspaper.";
-            setIsNewspaperModalOpen(true);
-          } else if (player.money < itemDef.basePrice) {
-            actionLog = "Not enough money for the newspaper.";
-          } else {
-            actionLog = "Not enough time to read the newspaper.";
-          }
-        } else {
-          const result = buyItem(player, itemDef, gameState.rules);
-          player = result.updated;
-          actionLog = result.message;
-          
-          if (result.success) {
-            triggerAnim('item', '📦', 'btn-inventory');
-          }
-        }
-      }
-    } else if (payload.type === 'enroll') {
-      const degDef = campaign.education.find(d => d.id === payload.degreeId);
-      if (degDef) {
-        const result = enrollInDegree(player, degDef);
-        player = result.updated;
-        actionLog = result.message;
-      }
-    } else if (payload.type === 'study') {
-      const degDef = campaign.education.find(d => d.id === payload.degreeId);
-      if (degDef) {
-        const result = study(player, degDef, gameState.rules);
-        player = result.updated;
-        actionLog = result.message;
-      }
-    } else if (payload.type === 'relax') {
-      const cost = Math.min(player.hoursRemaining, 5);
-      if (cost > 0) {
-        player = spendHours(player, cost);
-        player.happiness = Math.min(100, player.happiness + 1);
-        actionLog = `Relaxed at home for ${cost} hours.`;
-      }
-    } else if (payload.type === 'bank_transaction') {
-      if (payload.amount > 0) { // Deposit
-        if (player.money >= payload.amount) {
-          player.money -= payload.amount;
-          player.bankSavings += payload.amount;
-          actionLog = `Deposited $${payload.amount}.`;
-        } else {
-          actionLog = "Not enough cash to deposit.";
-        }
-      } else { // Withdraw
-        const absAmount = Math.abs(payload.amount);
-        if (player.bankSavings >= absAmount) {
-          player.bankSavings -= absAmount;
-          player.money += absAmount;
-          actionLog = `Withdrew $${absAmount}.`;
-        } else {
-          actionLog = "Not enough savings to withdraw.";
-        }
-      }
-    } else if (payload.type === 'buy_stock') {
-      if (player.money >= payload.cost) {
-        player.money -= payload.cost;
-        if (payload.stockId === 'tbills') {
-          player.inventory.stocks.tBills += payload.quantity;
-        } else {
-          player.inventory.stocks.holdings[payload.stockId] = (player.inventory.stocks.holdings[payload.stockId] || 0) + payload.quantity;
-        }
-        actionLog = `Bought ${payload.quantity} shares of ${payload.stockId}.`;
-      } else {
-        actionLog = "Not enough cash to buy stocks.";
-      }
-    } else if (payload.type === 'sell_stock') {
-      const owned = payload.stockId === 'tbills' 
-        ? player.inventory.stocks.tBills 
-        : (player.inventory.stocks.holdings[payload.stockId] || 0);
+      let updatedPlayers = [...prevState.players];
+      let oldPlayer = { ...updatedPlayers[activePlayerIndex] };
       
-      if (owned >= payload.quantity) {
-        if (payload.stockId === 'tbills') {
-          player.inventory.stocks.tBills -= payload.quantity;
-        } else {
-          player.inventory.stocks.holdings[payload.stockId] -= payload.quantity;
+      const { updatedPlayer: player, actionLog } = gameReducer(
+        oldPlayer,
+        payload as GameAction,
+        {
+          campaign: campaign!,
+          rules: prevState.rules,
+          turn: prevState.turn
         }
-        player.money += payload.revenue;
-        actionLog = `Sold ${payload.quantity} shares of ${payload.stockId}.`;
-      } else {
-        actionLog = "You do not own enough shares.";
-      }
-    } else if (payload.type === 'take_loan') {
-      const liquidAssets = player.money + player.bankSavings;
-      const liquidity = player.currentWage + (liquidAssets / 1000);
-      let risk = 5;
-      if (player.timesDefaulted > 0 || (player.loanDebt || 0) > 0) {
-        risk = 5 + player.timesDefaulted + ((player.loanDebt || 0) / 100) + ((player.loanDebt || 0) > 0 ? 1 : 0);
-      }
-      const maxLoan = 100 * Math.max(0, liquidity - risk);
-      const isDefaulted = player.loanPaymentDeadline > 0 && player.loanPaymentDeadline < gameState!.turn;
+      );
 
-      if (isDefaulted || liquidity <= risk) {
-        actionLog = "The bank refused to lend you money!";
-        player.happiness = Math.max(10, player.happiness - 1);
-      } else {
-        const loanSize = Math.floor(maxLoan);
-        if (loanSize > 0) {
-          if ((player.loanDebt || 0) === 0) {
-            player.loanPaymentDeadline = Math.floor((gameState!.turn - 1) / 4) * 4 + 4; // Week 4 of current month
-          }
-          player.money += loanSize;
-          player.loanDebt = (player.loanDebt || 0) + loanSize;
-          player.happiness = Math.min(100, player.happiness + 5);
-          actionLog = `The bank approved a loan of $${loanSize}.`;
-        } else {
-          actionLog = "The bank refused to lend you money!";
-          player.happiness = Math.max(10, player.happiness - 1);
+      // UI Side Effects
+      if (payload.type === 'buy' && payload.itemId === 'newspaper') {
+        if (player.money < oldPlayer.money) {
+          setIsNewspaperModalOpen(true);
         }
-      }
-      player = spendHours(player, 2);
-    } else if (payload.type === 'pay_loan') {
-      if ((player.loanDebt || 0) > 0) {
-        if (player.loanDebt < 50 && player.money >= player.loanDebt) {
-          const amount = player.loanDebt;
-          player.money -= amount;
-          player.loanDebt = 0;
-          player.loanPaymentDeadline += 4;
-          actionLog = `Paid off the remaining loan of $${amount}.`;
-        } else if (player.money >= 50) {
-          player.money -= 50;
-          player.loanDebt = Math.max(0, player.loanDebt - 45);
-          player.loanPaymentDeadline += 4;
-          actionLog = `Made a $50 loan payment ($45 principal, $5 interest).`;
-        } else {
-          actionLog = "Not enough cash to make a payment.";
-        }
-        if (player.loanDebt === 0) {
-          player.loanPaymentDeadline = 0;
-        }
-      } else {
-        actionLog = "You do not have a loan.";
-      }
-    } else if (payload.type === 'rent_transaction') {
-      if (player.money >= payload.amount) {
-        player.money -= payload.amount;
-        player.rentDebt = 0;
-        player.turnFlags.rentPaidThisTurn = true;
-        actionLog = `Paid $${payload.amount} for rent.`;
-      } else {
-        actionLog = "Not enough cash to pay rent.";
-      }
-    } else if (payload.type === 'move_apartment') {
-      const housingDef = campaign.housing.find(h => h.id === payload.housingId);
-      if (housingDef) {
-        if (player.money >= payload.cost) {
-          player.money -= payload.cost;
-          player.currentHousingId = housingDef.id;
-          player.currentRentPrice = payload.cost;
-          player.rentPaidUntilWeek = gameState.turn + 4; // Pay for a month
-          player.rentDebt = 0;
-          player.rentExtensionActive = false;
-          player.turnFlags.rentPaidThisTurn = true;
-          actionLog = `Moved into ${housingDef.name} for $${payload.cost}.`;
-        } else {
-          actionLog = `Not enough cash to move to ${housingDef.name}.`;
-        }
-      }
-    } else if (payload.type === 'pay_rent_advance') {
-      if (player.money >= payload.amount) {
-        player.money -= payload.amount;
-        // Rent advance adds 4 weeks to lease
-        player.rentPaidUntilWeek += 4;
-        player.rentExtensionActive = false;
-        player.turnFlags.rentPaidThisTurn = true;
-        actionLog = `Paid $${payload.amount} rent advance.`;
-      } else {
-        actionLog = `Not enough cash for rent advance.`;
-      }
-    } else if (payload.type === 'pawn_item') {
-      player.inventory.appliances = player.inventory.appliances.filter(a => a !== payload.item);
-      if (!player.inventory.pawnedItems) player.inventory.pawnedItems = [];
-      const pawnedItem = {
-        itemId: payload.item.id,
-        originalPrice: payload.item.purchasePrice,
-        redeemCost: Math.floor(payload.item.purchasePrice * 0.5),
-        weekPawned: gameState.turn,
-        ownerId: player.id
-      };
-      player.inventory.pawnedItems.push(pawnedItem);
-      player.money += payload.value;
-      player.happiness = Math.max(0, player.happiness - 1);
-      const itemName = payload.item.id.replace(/_/g, ' ');
-      actionLog = `Pawned ${itemName} for $${payload.value}.`;
-    } else if (payload.type === 'redeem_item') {
-      if (player.money >= payload.cost) {
-        player.money -= payload.cost;
-        player.inventory.pawnedItems = player.inventory.pawnedItems.filter(a => a !== payload.item);
-        player.inventory.appliances.push({
-          id: payload.item.itemId,
-          purchasePrice: payload.item.originalPrice,
-          purchaseSource: 'pawnshop'
-        });
-        const itemName = payload.item.itemId.replace(/_/g, ' ');
-        actionLog = `Bought back ${itemName} for $${payload.cost}.`;
-      } else {
-        actionLog = "Not enough cash to buy back item.";
-      }
-    } else if (payload.type === 'change_clothes') {
-      player.inventory.selectedClothes = payload.clothes;
-      // Do not use hours to change clothes, but do log it
-      actionLog = `Selected ${payload.clothes} clothes.`;
-    } else if (payload.type === 'ask_rent_extension') {
-      player.turnFlags.askedForExtension = true;
-      let approved = false;
-      if (player.rentExtensionsReceived === 0) {
-        approved = true;
-      } else {
-        const chance = Math.max(25, 100 - (player.rentExtensionsReceived * 25));
-        const roll = Math.floor(Math.random() * 100);
-        if (roll < chance) {
-          approved = true;
-        }
+      } else if (payload.type === 'buy' && player.inventory.appliances.length > oldPlayer.inventory.appliances.length) {
+        triggerAnim('item', '📦', 'btn-inventory');
       }
 
-      if (approved) {
-        player.rentExtensionsReceived += 1;
-        player.rentExtensionActive = true;
-        actionLog = "Rent Office approved your 1-week extension! You have until the end of the week to pay.";
-      } else {
-        actionLog = "The Rent Office denied your extension request.";
+      // Process explicit diffs and attach to log
+      if (actionLog) {
+        let finalActionLog = actionLog;
+        let diffStr = [];
+        const moneyDiff = player.money - oldPlayer.money;
+        const hapDiff = player.happiness - oldPlayer.happiness;
+        
+        if (moneyDiff !== 0) {
+          diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
+        }
+        if (hapDiff !== 0) {
+          diffStr.push(`${hapDiff > 0 ? '+' : ''}${hapDiff} Happiness`);
+          if (hapDiff > 0) triggerAnim('emoji', '😍', 'stat-happiness');
+        }
+        
+        if (diffStr.length > 0) {
+          finalActionLog += ` (${diffStr.join(', ')})`;
+        }
+        addLog(finalActionLog, prevState.turn);
       }
-    }
 
-    // Process explicit diffs and attach to log
-    if (actionLog) {
-      let diffStr = [];
-      const moneyDiff = player.money - oldPlayer.money;
-      const hapDiff = player.happiness - oldPlayer.happiness;
+      updatedPlayers[activePlayerIndex] = player;
       
-      if (moneyDiff !== 0) {
-        diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
-      }
-      if (hapDiff !== 0) {
-        diffStr.push(`${hapDiff > 0 ? '+' : ''}${hapDiff} Happiness`);
-        if (hapDiff > 0) triggerAnim('emoji', '😍', 'stat-happiness');
-      }
-      
-      if (diffStr.length > 0) {
-        actionLog += ` (${diffStr.join(', ')})`;
-      }
-      addLog(actionLog);
-    }
+      return { ...prevState, players: updatedPlayers };
+    });
 
-    player = recalculatePlayerEffects(player, campaign);
-    updatedPlayers[activePlayerIndex] = player;
+    // Check hours remaining asynchronously to end turn if needed.
+    // We use a functional setState to ensure we have the absolute latest state to check.
+    let needsEndTurn = false;
+    let latestPlayers: PlayerState[] = [];
+    setGameState(current => {
+      if (!current) return current;
+      if (current.players[activePlayerIndex].hoursRemaining <= 0) {
+        needsEndTurn = true;
+        latestPlayers = [...current.players];
+      }
+      return current;
+    });
 
-    if (player.hoursRemaining <= 0) {
-      addLog(`${player.name} is out of time for the week!`);
-      await endTurnSequence(updatedPlayers);
-    } else {
-      setGameState({ ...gameState, players: updatedPlayers });
+    if (needsEndTurn) {
+      addLog(`${latestPlayers[activePlayerIndex].name} is out of time for the week!`);
+      await endTurnSequence(latestPlayers);
     }
   };
 
@@ -436,8 +217,14 @@ export default function App() {
     if (gameState?.phase === 'playing' && gameState.players[activePlayerIndex]?.isAi) {
       const runAi = async () => {
         setIsAnimating(true);
-        const actions = executeAITurn(gameState.players[activePlayerIndex], gameState, campaign!);
+        // We get the actions initially.
+        let stateSnapshot = gameState;
+        const actions = executeAITurn(stateSnapshot.players[activePlayerIndex], stateSnapshot, campaign!);
         for (const action of actions) {
+          // Since handleAction now uses functional state updates, we can just call it sequentially.
+          // The delay gives React a moment to apply state, but handleAction handles its own state internally via setGameState(prev => ...)
+          // However, executeAITurn is called once and gets all actions up-front.
+          // That's fine because the AI makes decisions synchronously. 
           await handleAction(action);
           await new Promise(r => setTimeout(r, 200)); // small delay for visual feedback
         }

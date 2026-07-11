@@ -18,7 +18,7 @@ export function WeekendScreen({ players, turn, onNextWeek }: WeekendScreenProps)
       
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center', margin: '20px 0', maxWidth: '1200px' }}>
         {players.map((player) => (
-          <div key={player.id} style={{
+          <div key={player.id} className="weekend-player-summary" style={{
             padding: '20px', backgroundColor: '#2c3e50', borderRadius: '8px', 
             width: '350px', border: '2px solid #34495e', textAlign: 'center'
           }}>
