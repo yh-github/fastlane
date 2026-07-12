@@ -1,3 +1,4 @@
+import { Random } from '../utils/rng';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { processTurnStart } from './turnProcessor';
 import { createInitialGameState } from './gameState';
@@ -8,7 +9,7 @@ describe('Turn Processor', () => {
 
   beforeEach(() => {
     // 0.99 ensures events with lower probability do NOT fire unless we override it.
-    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99);
 
     mockCampaign = {
       weekends: {
@@ -69,7 +70,7 @@ describe('Turn Processor', () => {
       
       // Use 0.01 which triggers crash, breakage, etc.
       // But we just want to test if length is 0.
-      vi.spyOn(Math, 'random').mockReturnValue(0.01);
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
       
       const nextState = processTurnStart(state, mockCampaign);
       // The appliance is NOT removed from inventory, but the player pays a repair cost.
@@ -82,7 +83,7 @@ describe('Turn Processor', () => {
       state.turn = 2;
       state.players[0].money = 100; // < 500
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
-      vi.spyOn(Math, 'random').mockReturnValue(0.01);
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
       const nextState = processTurnStart(state, mockCampaign);
       expect(nextState.players[0].turnEvents.some(e => e.includes('broke!'))).toBe(true);
     });
@@ -131,7 +132,7 @@ describe('Turn Processor', () => {
       state.players[0].money = 100;
       
       // chance is 10%. Mocking 0.05 will hit.
-      vi.spyOn(Math, 'random').mockReturnValue(0.05);
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.05);
 
       const nextState = processTurnStart(state, mockCampaign);
       
@@ -149,7 +150,7 @@ describe('Turn Processor', () => {
       state.players[0].inventory.lotteryTickets = 10;
       state.players[0].money = 100;
       
-      vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.001);
 
       const nextState = processTurnStart(state, mockCampaign);
       
@@ -217,7 +218,7 @@ describe('Turn Processor', () => {
       state.players[0].inventory.freshFoodUnits = 10;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       
-      vi.spyOn(Math, 'random').mockReturnValue(0.0001);
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.0001);
 
       const nextState = processTurnStart(state, mockCampaign);
 
@@ -260,7 +261,7 @@ describe('Turn Processor', () => {
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       
       // Math.random() < 0.20 triggers doctor
-      vi.spyOn(Math, 'random').mockReturnValue(0.15);
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.15);
       
       const nextState = processTurnStart(state, mockCampaign);
       
@@ -278,7 +279,7 @@ describe('Turn Processor', () => {
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       
       // Even if chance hits, it shouldn't trigger
-      vi.spyOn(Math, 'random').mockReturnValue(0.15);
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.15);
       
       const nextState = processTurnStart(state, mockCampaign);
       

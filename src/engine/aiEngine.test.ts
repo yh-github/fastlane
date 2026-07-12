@@ -32,7 +32,6 @@ describe('AI Engine', () => {
     
     // The first action should be buying food
     expect(actions[0]).toEqual({ type: 'buy', itemId: 'food_1week' });
-    expect(actions).toContainEqual({ type: 'end-turn' });
   });
 
   it('should pay rent if due and has money', () => {

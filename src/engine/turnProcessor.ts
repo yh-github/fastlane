@@ -27,10 +27,13 @@ import { resetPlayerClock } from './timeManager';
 import { processStarvation, processDoctorVisit, processApartmentRobbery } from './eventEngine';
 import { fluctuateEconomy, applyMarketCrash, applyEconomicBoom } from './economyEngine';
 import { processWeekend } from './weekendEngine';
+import { Random } from '../utils/rng';
 
 export function processTurnStart(state: GameState, campaign: CampaignBundle): GameState {
+  const rng = new Random(state.rngState);
+
   // 1. Fluctuate the economy for the new turn
-  const newEconomy = fluctuateEconomy(state.economicIndex);
+  let newEconomy = fluctuateEconomy(state.economicIndex, rng);
 
   // 2. Market Crash & Economic Boom Roll (Only Week 8 onwards)
   let crashSeverity: 'none' | 'minor' | 'moderate' | 'major' = 'none';
@@ -43,8 +46,9 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
         ? 1 / (1 + (30 * state.players.length)) 
         : 1 / (1 + (20 * state.players.length));
       
-      if (Math.random() < crashChance) {
-        const roll = Math.random();
+      
+      if (rng.next() < crashChance) {
+        const roll = rng.next();
         if (roll < 0.333) {
           crashSeverity = 'minor';
           newEconomy = Math.max(-30, newEconomy - 3);
@@ -61,7 +65,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
     // Check for Economic Boom
     if (crashSeverity === 'none' && newEconomy >= 0) {
       const boomChance = 1 / (1 + (30 * state.players.length));
-      if (Math.random() < boomChance) {
+      if (rng.next() < boomChance) {
         economicBoom = true;
         newEconomy = Math.min(90, newEconomy + 6);
       }
@@ -81,7 +85,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
     if (state.rules.enableRelaxationDoctor) {
       const threshold = campaign.config.statRules?.relaxationDoctorThreshold ?? 10;
       const chance = campaign.config.statRules?.relaxationDoctorChance ?? 0.20;
-      if (p.relaxation <= threshold && Math.random() < chance) {
+      if (p.relaxation <= threshold && rng.next() < chance) {
         doctorNeeded = true;
       }
     }
@@ -154,16 +158,12 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
 
       if (hasEatenFastFood) {
         p.turnFlags.hasEaten = true;
-        // Note: Fast food doesn't stop fresh food from spoiling or being consumed wastefully
-        if (p.inventory.freshFoodUnits > 0) {
-          p.inventory.freshFoodUnits--;
-        }
       } else if (p.inventory.freshFoodUnits > 0) {
         p.inventory.freshFoodUnits--;
         p.turnFlags.hasEaten = true;
       } else {
         // Starvation
-        const { updated, doctorTriggered } = processStarvation(p, campaign.config.timeRules.starvationPenalty);
+        const { updated, doctorTriggered } = processStarvation(p, campaign.config.timeRules.starvationPenalty, rng);
         p = updated;
         p.turnEvents.push("You didn't eat enough! You are starving.");
         if (doctorTriggered) {
@@ -179,7 +179,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
         p.inventory.freshFoodUnits = 0;
         p.happiness = Math.max(10, p.happiness - 2);
         p.turnEvents.push(`Without a fridge, ${lostFood} units of your food spoiled!`);
-        if (p.money > 0 && Math.random() < 0.5) {
+        if (p.money > 0 && rng.next() < 0.5) {
           doctorNeeded = true;
           p.turnEvents.push("Eating bad food made you sick!");
         }
@@ -197,8 +197,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       // 5. Appliance Breakage (simplified - 1/36 chance per appliance)
       for (const app of p.inventory.appliances) {
         const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
-        if (Math.random() < breakChance) {
-          const repairCost = Math.floor(app.purchasePrice * (0.05 + Math.random() * 0.2));
+        if (rng.next() < breakChance) {
+          const repairCost = Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2));
           p.money = Math.max(0, p.money - repairCost);
           p.happiness = Math.max(10, p.happiness - 1);
           p.turnEvents.push(`Your ${app.id.replaceAll('_', ' ')} broke! Repair cost: $${repairCost}`);
@@ -214,15 +214,15 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       // 7. Computer Income
       const computerIncomeChance = p.activeEffects['computer_income_chance'] || 0;
       if (computerIncomeChance > 0) {
-        if (Math.random() < (1/7)) {
-          p.money += Math.floor(Math.random() * 81) + 20; // $20-$100
+        if (rng.next() < (1/7)) {
+          p.money += Math.floor(rng.next() * 81) + 20; // $20-$100
           p.happiness = Math.min(100, p.happiness + 3);
         }
       }
 
       // 8. Lottery
       if (p.inventory.lotteryTickets > 0) {
-        const r = Math.floor(Math.random() * 501);
+        const r = Math.floor(rng.next() * 501);
         const t = p.inventory.lotteryTickets;
         if (r < t) {
           if (r <= t / 20) { p.money += 5000; p.happiness = Math.min(100, p.happiness + 10); }
@@ -295,17 +295,17 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       // 11. Apply Market Crash & Economy Headline
       let currentHeadline = null;
       if (crashSeverity !== 'none') {
-        p = applyMarketCrash(crashSeverity, p);
+        p = applyMarketCrash(p, crashSeverity, rng);
         if (crashSeverity === 'minor') currentHeadline = "MORE S & L'S FAIL! ECONOMY SUFFERS";
         else if (crashSeverity === 'moderate') currentHeadline = "SCANDAL ON WALL ST. ECONOMY DROPS! UNEMPLOYMENT RISES";
         else currentHeadline = "BANKS FALTER! SAVINGS LOST! JOBS LOST!";
       } else if (economicBoom) {
-        p = applyEconomicBoom(p);
+        p = applyEconomicBoom(p, campaign, rng);
         currentHeadline = "INFLATION IS UP! PRICES COULD SOAR!";
       }
 
       // 12. Apartment Robbery
-      const robberyResult = processApartmentRobbery(p);
+      const robberyResult = processApartmentRobbery(p, rng);
       p = robberyResult.updated;
       if (robberyResult.robbed) {
         currentHeadline = "WILD WILLY RIPS OFF ANOTHER APARTMENT";
@@ -331,17 +331,18 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
 
       // Process delayed doctor visit
       if (doctorNeeded) {
-        p = processDoctorVisit(p, campaign.config.timeRules.doctorPenalty);
+        p = processDoctorVisit(p, campaign.config.timeRules.doctorPenalty, rng);
         p.turnEvents.push("You got sick and had to visit the doctor!");
       }
 
-      if (currentHeadline) {
+        else if (currentHeadline) {
         p.newspaperHeadline = currentHeadline;
         p.turnFlags.freeNewspaper = true;
       }
       
       // Process Weekend Activity
-      p = processWeekend(p, state.turn + 1, previousPlayerWeekends, campaign.weekends);
+      const weekendResult = processWeekend(p, state.turn + 1, previousPlayerWeekends, campaign.weekends, rng);
+      p = weekendResult;
       if (p.weekendResult) {
         previousPlayerWeekends.push(p.weekendResult.text);
       }

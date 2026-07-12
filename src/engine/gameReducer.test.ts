@@ -106,20 +106,18 @@ describe('gameReducer', () => {
   });
 
   describe('relax action', () => {
-    it('consumes up to 5 hours and adds 1 happiness', () => {
+    it('consumes up to 5 hours and adds 1 relaxation per hour', () => {
       player.hoursRemaining = 10;
-      player.happiness = 50;
       const result = gameReducer(player, { type: 'relax' }, context);
       expect(result.updatedPlayer.hoursRemaining).toBe(5);
-      expect(result.updatedPlayer.happiness).toBe(55);
+      expect(result.updatedPlayer.relaxation).toBe(15);
     });
 
     it('consumes remaining hours if less than 5', () => {
       player.hoursRemaining = 3;
-      player.happiness = 50;
       const result = gameReducer(player, { type: 'relax' }, context);
       expect(result.updatedPlayer.hoursRemaining).toBe(0);
-      expect(result.updatedPlayer.happiness).toBe(53);
+      expect(result.updatedPlayer.relaxation).toBe(13);
     });
   });
 

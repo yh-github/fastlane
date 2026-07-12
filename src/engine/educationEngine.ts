@@ -90,9 +90,9 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
 
     // Apply rewards
     updated.happiness = Math.min(100, updated.happiness + degree.rewards.happiness);
-    updated.dependability = Math.min(updated.dependability + degree.rewards.dependability, updated.maxDependability + degree.rewards.maxDepBoost);
-    
     updated.maxDependability += degree.rewards.maxDepBoost;
+    updated.dependability = Math.min(updated.dependability + degree.rewards.dependability, updated.maxDependability);
+    
     updated.maxExperience += degree.rewards.maxExpBoost;
 
     message = `Congratulations! You graduated with a ${degree.name}.`;

@@ -14,7 +14,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
 
   let happinessBonus = item.happinessBonus || 0;
   if (item.id === 'computer' && player.inventory.appliances.some(a => a.id === 'computer')) {
-    happinessBonus = 0;
+    return { updated: player, success: false, message: 'You already own a computer.' };
   }
 
   let updated = { 

@@ -8,6 +8,7 @@
 import { type PlayerState } from './gameState';
 import { spendHours } from './timeManager';
 import { calcRobberyChance } from './statMath';
+import type { Random } from '../utils/rng';
 
 /**
  * Attempt a Wild Willy street robbery when leaving Bank or Black's Market.
@@ -20,14 +21,15 @@ import { calcRobberyChance } from './statMath';
 export function processStreetRobbery(
   player: PlayerState,
   buildingType: 'bank' | 'blacks_market',
-  week: number
+  week: number,
+  rng: Random
 ): PlayerState {
   // Happens only from Week 4 onwards (CD-ROM rule), and only if carrying cash
   if (week < 4 || player.money <= 0) return player;
 
   const chance = buildingType === 'bank' ? 1 / 31 : 1 / 51;
   
-  if (Math.random() < chance) {
+  if (rng.next() < chance) {
     return {
       ...player,
       money: 0,
@@ -44,12 +46,12 @@ export function processStreetRobbery(
  * @param player — Current player state
  * @returns        Updated player state and boolean indicating if doctor visit triggered
  */
-export function processStarvation(player: PlayerState, timePenalty: number): { updated: PlayerState; doctorTriggered: boolean } {
+export function processStarvation(player: PlayerState, timePenalty: number, rng: Random): { updated: PlayerState; doctorTriggered: boolean } {
   let updated = spendHours(player, timePenalty);
   updated.happiness = Math.max(10, updated.happiness - 2);
   
   // 25% chance of Doctor Visit
-  const doctorTriggered = Math.random() < 0.25;
+  const doctorTriggered = rng.next() < 0.25;
   
   return { updated, doctorTriggered };
 }
@@ -60,7 +62,7 @@ export function processStarvation(player: PlayerState, timePenalty: number): { u
  * @param player — Current player state
  * @returns        Updated player state
  */
-export function processDoctorVisit(player: PlayerState, timePenalty: number): PlayerState {
+export function processDoctorVisit(player: PlayerState, timePenalty: number, rng: Random): PlayerState {
   // Bypassed entirely if carrying $0 cash
   if (player.money <= 0) return player;
 
@@ -68,7 +70,7 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number): Pl
   updated.happiness = Math.max(10, updated.happiness - 4);
   
   // Cost: random between $30 and $200
-  const cost = Math.floor(Math.random() * 171) + 30;
+  const cost = Math.floor(rng.next() * 171) + 30;
   updated.money = Math.max(0, updated.money - cost);
 
   return updated;
@@ -80,13 +82,13 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number): Pl
  * @param player — Current player state
  * @returns        Updated player state (stolen items removed)
  */
-export function processApartmentRobbery(player: PlayerState): { updated: PlayerState; robbed: boolean } {
+export function processApartmentRobbery(player: PlayerState, rng: Random): { updated: PlayerState; robbed: boolean } {
   // Security Apartments are immune (assuming currentHousingId 'security' signifies this)
   if (player.currentHousingId === 'security') return { updated: player, robbed: false };
 
   const chance = calcRobberyChance(player.relaxation);
   
-  if (Math.random() < chance) {
+  if (rng.next() < chance) {
     let updated = { ...player, inventory: { ...player.inventory }, turnEvents: [...player.turnEvents, "Wild Willy broke into your apartment!"] };
     // -4 Happiness penalty
     updated.happiness = Math.max(10, updated.happiness - 4);
@@ -97,7 +99,7 @@ export function processApartmentRobbery(player: PlayerState): { updated: PlayerS
       if (['refrigerator', 'freezer', 'stove'].includes(app.id)) {
         return true; // Keep
       }
-      if (Math.random() < 0.25) {
+      if (rng.next() < 0.25) {
         return false; // Stolen
       }
       return true; // Keep

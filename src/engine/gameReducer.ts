@@ -1,5 +1,6 @@
 import { type PlayerState, type GameRules, type OwnedAppliance, type PawnedItem } from './gameState';
 import { type CampaignBundle } from './dataLoader';
+import { type Random } from '../utils/rng';
 import { applyForJob, workShift } from './jobEngine';
 import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study } from './educationEngine';
@@ -30,6 +31,8 @@ export interface ReducerContext {
   campaign: CampaignBundle;
   rules: GameRules;
   turn: number;
+  economicIndex: number;
+  rng: Random;
 }
 
 export interface ReducerResult {
@@ -42,14 +45,14 @@ export function gameReducer(
   action: GameAction,
   context: ReducerContext
 ): ReducerResult {
-  let nextPlayer = { ...player };
+  let nextPlayer = structuredClone(player);
   let actionLog = "";
 
   switch (action.type) {
     case 'apply': {
       const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
       if (jobDef) {
-        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage);
+        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
@@ -90,7 +93,7 @@ export function gameReducer(
     case 'enroll': {
       const degDef = context.campaign.education.find(d => d.id === action.degreeId);
       if (degDef) {
-        const result = enrollInDegree(nextPlayer, degDef, state.economicIndex);
+        const result = enrollInDegree(nextPlayer, degDef, context.economicIndex);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
@@ -112,7 +115,7 @@ export function gameReducer(
         break;
       }
       nextPlayer = spendHours(nextPlayer, hoursToRelax);
-      nextPlayer.happiness = Math.min(100, nextPlayer.happiness + hoursToRelax);
+      nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + hoursToRelax);
       actionLog = `Relaxed for ${hoursToRelax} hours.`;
       break;
     }
@@ -273,7 +276,7 @@ export function gameReducer(
       break;
     }
     case 'pawn_item': {
-      nextPlayer.inventory.appliances = nextPlayer.inventory.appliances.filter(a => a !== action.item);
+      nextPlayer.inventory.appliances = nextPlayer.inventory.appliances.filter(a => a.id !== action.item.id);
       if (!nextPlayer.inventory.pawnedItems) nextPlayer.inventory.pawnedItems = [];
       const pawnedItem = {
         itemId: action.item.id,
@@ -284,7 +287,7 @@ export function gameReducer(
       };
       nextPlayer.inventory.pawnedItems.push(pawnedItem);
       nextPlayer.money += action.value;
-      nextPlayer.happiness = Math.max(0, nextPlayer.happiness - 1);
+      nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
       const itemName = action.item.id.replaceAll('_', ' ');
       actionLog = `Pawned ${itemName} for $${action.value}.`;
       break;
@@ -292,7 +295,7 @@ export function gameReducer(
     case 'redeem_item': {
       if (nextPlayer.money >= action.cost) {
         nextPlayer.money -= action.cost;
-        nextPlayer.inventory.pawnedItems = nextPlayer.inventory.pawnedItems.filter(a => a !== action.item);
+        nextPlayer.inventory.pawnedItems = nextPlayer.inventory.pawnedItems.filter(a => a.itemId !== action.item.itemId);
         nextPlayer.inventory.appliances.push({
           id: action.item.itemId,
           purchasePrice: action.item.originalPrice,
@@ -317,7 +320,7 @@ export function gameReducer(
         approved = true;
       } else {
         const chance = Math.max(25, 100 - (nextPlayer.rentExtensionsReceived * 25));
-        const roll = Math.floor(Math.random() * 100);
+        const roll = Math.floor(context.rng.next() * 100);
         if (roll < chance) {
           approved = true;
         }

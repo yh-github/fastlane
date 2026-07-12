@@ -1,12 +1,14 @@
 import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 
+import type { GameAction } from './gameReducer';
+
 /**
  * Returns an array of action payloads representing the AI's desired actions.
  * The AI evaluates its state and chooses actions deterministically.
  */
-export function executeAITurn(player: PlayerState, gameState: GameState, campaign: CampaignBundle): any[] {
-  const actions: any[] = [];
+export function executeAITurn(player: PlayerState, gameState: GameState, campaign: CampaignBundle): GameAction[] {
+  const actions: GameAction[] = [];
   let simulatedPlayer = structuredClone(player);
   
   // Safe limit to prevent infinite loops if something goes wrong
@@ -92,7 +94,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     if (simulatedPlayer.currentJobId && simulatedPlayer.hoursRemaining >= 6) {
       actions.push({ type: 'work', jobId: simulatedPlayer.currentJobId });
       simulatedPlayer.hoursRemaining -= 6;
-      simulatedPlayer.money += simulatedPlayer.currentWage * 6; // Roughly
+      simulatedPlayer.money += simulatedPlayer.currentWage * 8 * (6 / 6); // Actual formula: wage * 8 * (hoursWorked / shiftCost)
       continue;
     }
 
@@ -104,9 +106,6 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
       continue;
     }
   }
-
-  // Always end turn explicitly
-  actions.push({ type: 'end-turn' });
 
   return actions;
 }

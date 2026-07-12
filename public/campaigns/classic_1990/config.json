@@ -30,7 +30,7 @@
   },
   "mapRules": {
     "allowDiagonalMovement": false,
-    "movementCostPerNode": 1
+    "movementCostPerNode": 0.5
   },
   "statRules": {
     "startingRelaxation": 10,

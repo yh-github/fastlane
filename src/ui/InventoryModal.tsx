@@ -67,7 +67,7 @@ export function InventoryModal({ player, onAction, onClose }: InventoryModalProp
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>Appliances</h3>
           {inventory.appliances.length > 0 ? (
             <ul style={{ margin: 0, paddingLeft: '20px' }}>
-              {inventory.appliances.map((a, i) => <li key={i}>{a.id.replaceAll('_', ' ')}</li>)}
+              {inventory.appliances.map((a, i) => <li key={`${a.id}-${i}`}>{a.id.replaceAll('_', ' ')}</li>)}
             </ul>
           ) : <p style={{ margin: 0, fontStyle: 'italic', color: '#888' }}>None</p>}
         </div>
@@ -76,7 +76,7 @@ export function InventoryModal({ player, onAction, onClose }: InventoryModalProp
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>Books</h3>
           {inventory.books.length > 0 ? (
             <ul style={{ margin: 0, paddingLeft: '20px' }}>
-              {inventory.books.map((b, i) => <li key={i}>{b.replaceAll('_', ' ')}</li>)}
+              {inventory.books.map((b, i) => <li key={`${b}-${i}`}>{b.replaceAll('_', ' ')}</li>)}
             </ul>
           ) : <p style={{ margin: 0, fontStyle: 'italic', color: '#888' }}>None</p>}
         </div>
