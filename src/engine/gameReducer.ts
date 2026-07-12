@@ -16,6 +16,7 @@ export type GameAction =
   | { type: 'relax' }
   | { type: 'bank_transaction'; amount: number }
   | { type: 'open_broker' }
+  | { type: 'move'; nodeId: string }
   | { type: 'buy_stock'; stockId: string; quantity: number; cost: number }
   | { type: 'sell_stock'; stockId: string; quantity: number; revenue: number }
   | { type: 'take_loan' }

@@ -1,12 +1,12 @@
 import type { PlayerState } from '../engine/gameState';
 
 interface WeekendScreenProps {
-  players: PlayerState[];
+  player: PlayerState;
   turn: number;
-  onNextWeek: () => void;
+  onStartWeek: () => void;
 }
 
-export function WeekendScreen({ players, turn, onNextWeek }: WeekendScreenProps) {
+export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps) {
   return (
     <div className="weekend-screen" style={{
       position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -14,16 +14,15 @@ export function WeekendScreen({ players, turn, onNextWeek }: WeekendScreenProps)
       alignItems: 'center', color: 'white', zIndex: 1000, overflowY: 'auto', padding: '40px 20px'
     }}>
       <h1 style={{ color: '#00e5ff', textShadow: '0 0 10px #00e5ff' }}>Weekend!</h1>
-      <h2>Week {turn} Summary</h2>
+      <h2>Week {turn} Summary for {player.name}</h2>
       
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center', margin: '20px 0', maxWidth: '1200px' }}>
-        {players.map((player) => (
-          <div key={player.id} className="weekend-player-summary" style={{
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center', margin: '20px 0', maxWidth: '800px' }}>
+          <div className="weekend-player-summary" style={{
             padding: '20px', backgroundColor: '#2c3e50', borderRadius: '8px', 
             width: '350px', border: '2px solid #34495e', textAlign: 'center'
           }}>
             <h3 style={{ borderBottom: '1px solid #555', paddingBottom: '10px', margin: '0 0 15px 0' }}>
-              {player.name} {player.isAi ? '(AI)' : ''}
+              Your Weekend Activities
             </h3>
             
             {player.weekendResult ? (
@@ -58,18 +57,17 @@ export function WeekendScreen({ players, turn, onNextWeek }: WeekendScreenProps)
               </div>
             )}
           </div>
-        ))}
       </div>
 
       <button 
-        onClick={onNextWeek}
+        onClick={onStartWeek}
         style={{
           padding: '10px 30px', fontSize: '1.2em', cursor: 'pointer', marginTop: '20px',
           backgroundColor: '#00e5ff', color: '#000', border: 'none', borderRadius: '4px',
           fontWeight: 'bold', boxShadow: '0 0 10px #00e5ff'
         }}
       >
-        Start Next Week
+        Start Week {turn}
       </button>
     </div>
   );

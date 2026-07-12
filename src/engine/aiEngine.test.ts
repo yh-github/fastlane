@@ -11,14 +11,27 @@ describe('AI Engine', () => {
       { id: 'casual_clothes', basePrice: 35 }
     ],
     jobs: [
-      { id: 'job_clerk', baseWage: 4, requirements: { experience: 0, dependability: 0, degrees: [] } },
+      { id: 'job_clerk', baseWage: 4, requirements: { experience: 0, dependability: 0, degrees: [] }, buildingId: 'building_clerk' },
       { id: 'job_manager', baseWage: 10, requirements: { experience: 10, dependability: 10, degrees: [] } }
     ],
     config: {
       name: 'test',
       startingMoney: 200,
       timeRules: { hoursPerTurn: 60 }
-    }
+    },
+    map: {
+      nodes: [
+        { id: 'node_blacks_market', buildingId: 'blacks_market' },
+        { id: 'node_rent_office', buildingId: 'rent_office' },
+        { id: 'node_department_store', buildingId: 'department_store' },
+        { id: 'node_employment_office', buildingId: 'employment_office' },
+        { id: 'node_clerk_job', buildingId: 'building_clerk' },
+        { id: 'node1' },
+      ]
+    },
+    housing: [
+      { id: 'low_cost', homeNodeId: 'node1' }
+    ]
   } as unknown as CampaignBundle;
 
   it('should buy food if starving and has money', () => {
@@ -30,8 +43,8 @@ describe('AI Engine', () => {
 
     const actions = executeAITurn(aiPlayer, state, mockCampaign);
     
-    // The first action should be buying food
-    expect(actions[0]).toEqual({ type: 'buy', itemId: 'food_1week' });
+    // The first action should be moving to the market
+    expect(actions[0]).toEqual({ type: 'move', nodeId: 'node_blacks_market' });
   });
 
   it('should pay rent if due and has money', () => {
@@ -46,7 +59,7 @@ describe('AI Engine', () => {
 
     const actions = executeAITurn(aiPlayer, state, mockCampaign);
     
-    expect(actions[0]).toEqual({ type: 'rent_transaction', amount: 150 });
+    expect(actions[0]).toEqual({ type: 'move', nodeId: 'node_rent_office' });
   });
 
   it('should buy clothes if out of clothes', () => {
@@ -60,7 +73,7 @@ describe('AI Engine', () => {
 
     const actions = executeAITurn(aiPlayer, state, mockCampaign);
     
-    expect(actions[0]).toEqual({ type: 'buy', itemId: 'casual_clothes' });
+    expect(actions[0]).toEqual({ type: 'move', nodeId: 'node_department_store' });
   });
 
   it('should apply for a better job if possible', () => {
@@ -77,9 +90,8 @@ describe('AI Engine', () => {
 
     const actions = executeAITurn(aiPlayer, state, mockCampaign);
     
-    // First action should be apply for manager, then work the old job
-    expect(actions[0]).toEqual({ type: 'apply', jobId: 'job_manager' });
-    expect(actions[1]).toEqual({ type: 'work', jobId: 'job_clerk' });
+    // First action should be move to employment office
+    expect(actions[0]).toEqual({ type: 'move', nodeId: 'node_employment_office' });
   });
 
   it('should just relax if not enough time for anything else', () => {
