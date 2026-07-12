@@ -8,6 +8,13 @@
 import type { PlayerState } from './gameState';
 import type { Random } from '../utils/rng';
 
+export const BANK_DEPOSIT_SMALL = 50;
+export const BANK_DEPOSIT_LARGE = 100;
+
+export const LOAN_PAYMENT_AMOUNT = 50;
+export const LOAN_INTEREST_AMOUNT = 5;
+export const LOAN_PRINCIPAL_AMOUNT = LOAN_PAYMENT_AMOUNT - LOAN_INTEREST_AMOUNT;
+
 /**
  * Calculate an economy-adjusted price.
  * Formula: Price = Base + (Base * EconomicIndex) / 60

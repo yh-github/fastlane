@@ -13,7 +13,7 @@ import { useState } from 'react';
  * JobBoard — Shown at the Employment Office.
  * Lists ALL jobs across the game for applying, grouped by building.
  */
-export function JobBoard({ player, onAction, availableJobs, buildings, economicIndex = 0 }: InteractionProps & { availableJobs: JobDef[], buildings: BuildingDef[], economicIndex?: number }) {
+export function JobBoard({ player, onAction, availableJobs, buildings, economicIndex = 0, campaign }: InteractionProps & { availableJobs: JobDef[], buildings: BuildingDef[], economicIndex?: number, campaign: CampaignBundle }) {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   // Group jobs by locationId
@@ -72,14 +72,14 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
               {isCurrentJob ? (
                 offeredWage > player.currentWage ? (
                   <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                    Ask for Raise to ${offeredWage}/hr (4h)
+                    Ask for Raise to ${offeredWage}/hr ({campaign.config.timeRules?.jobApplicationCost ?? 4}h)
                   </button>
                 ) : (
                   <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Current Job (${player.currentWage}/hr)</span>
                 )
               ) : (
                 <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                  Apply (4h)
+                  Apply ({campaign.config.timeRules?.jobApplicationCost ?? 4}h)
                 </button>
               )}
             </div>
@@ -94,13 +94,13 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
  * WorkStation — Shown at workplace buildings where the player is employed.
  * Allows the player to work a shift.
  */
-export function WorkStation({ onAction, job }: InteractionProps & { job: JobDef }) {
+export function WorkStation({ onAction, job, campaign }: InteractionProps & { job: JobDef, campaign: CampaignBundle }) {
   return (
     <div className="interaction-panel">
       <h3>Your Job: {job.title}</h3>
       <p style={{ fontSize: '12px', marginBottom: '10px' }}>${job.baseWage}/hr</p>
       <button onClick={() => onAction({ type: 'work', jobId: job.id })}>
-        Work Shift (up to 6h)
+        Work Shift (up to {campaign.config.timeRules?.workSessionCost ?? 6}h)
       </button>
     </div>
   );
@@ -143,7 +143,7 @@ export function HomeRelax({ onAction, campaign }: InteractionProps & { campaign?
   );
 }
 
-import { calcEconomyPrice, calcStockPrice } from '../engine/economyEngine';
+import { calcEconomyPrice, calcStockPrice, BANK_DEPOSIT_SMALL, BANK_DEPOSIT_LARGE, LOAN_PAYMENT_AMOUNT } from '../engine/economyEngine';
 import { calcRequiredLessons } from '../engine/educationEngine';
 
 import type { GameRules } from '../engine/gameState';
@@ -425,28 +425,28 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
           </div>
           <hr style={{ borderColor: '#444', margin: '5px 0' }} />
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(50, player.money) })} 
+            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(BANK_DEPOSIT_SMALL, player.money) })} 
             disabled={player.money <= 0}
           >
-            Deposit $50 (or remainder)
+            Deposit ${BANK_DEPOSIT_SMALL} (or remainder)
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(100, player.money) })} 
+            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(BANK_DEPOSIT_LARGE, player.money) })} 
             disabled={player.money <= 0}
           >
-            Deposit $100 (or remainder)
+            Deposit ${BANK_DEPOSIT_LARGE} (or remainder)
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(50, player.bankSavings) })} 
+            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(BANK_DEPOSIT_SMALL, player.bankSavings) })} 
             disabled={player.bankSavings <= 0}
           >
-            Withdraw $50 (or remainder)
+            Withdraw ${BANK_DEPOSIT_SMALL} (or remainder)
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(100, player.bankSavings) })} 
+            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(BANK_DEPOSIT_LARGE, player.bankSavings) })} 
             disabled={player.bankSavings <= 0}
           >
-            Withdraw $100 (or remainder)
+            Withdraw ${BANK_DEPOSIT_LARGE} (or remainder)
           </button>
         </div>
       )}
@@ -475,9 +475,9 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
           </button>
           <button 
             onClick={() => onAction({ type: 'pay_loan' })} 
-            disabled={player.money < Math.min(50, player.loanDebt || 0) || (player.loanDebt || 0) === 0}
+            disabled={player.money < Math.min(LOAN_PAYMENT_AMOUNT, player.loanDebt || 0) || (player.loanDebt || 0) === 0}
           >
-            Make Loan Payment ($50 or remainder)
+            Make Loan Payment (${LOAN_PAYMENT_AMOUNT} or remainder)
           </button>
         </div>
       )}
