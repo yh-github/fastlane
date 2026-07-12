@@ -6,10 +6,7 @@ import {
   calcEconomyPrice, 
   processRentDebt, 
   applyMarketCrash, 
-  applyEconomicBoom,
-  LOAN_PAYMENT_AMOUNT,
-  LOAN_PRINCIPAL_AMOUNT,
-  LOAN_INTEREST_AMOUNT
+  applyEconomicBoom
 } from './economyEngine';
 import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study } from './educationEngine';
@@ -239,17 +236,21 @@ export function gameReducer(
     }
     case 'pay_loan': {
       if ((nextPlayer.loanDebt || 0) > 0) {
-        if (nextPlayer.loanDebt < LOAN_PAYMENT_AMOUNT && nextPlayer.money >= nextPlayer.loanDebt) {
+        const loanPaymentAmount = context.campaign.config.economyRules?.loanPaymentAmount ?? 50;
+        const loanPrincipalAmount = context.campaign.config.economyRules?.loanPrincipalAmount ?? 45;
+        const loanInterestAmount = context.campaign.config.economyRules?.loanInterestAmount ?? 5;
+        
+        if (nextPlayer.loanDebt < loanPaymentAmount && nextPlayer.money >= nextPlayer.loanDebt) {
           const amount = nextPlayer.loanDebt;
           nextPlayer.money -= amount;
           nextPlayer.loanDebt = 0;
           nextPlayer.loanPaymentDeadline += 4;
           actionLog = `Paid off the remaining loan of $${amount}.`;
-        } else if (nextPlayer.money >= LOAN_PAYMENT_AMOUNT) {
-          nextPlayer.money -= LOAN_PAYMENT_AMOUNT;
-          nextPlayer.loanDebt = Math.max(0, nextPlayer.loanDebt - LOAN_PRINCIPAL_AMOUNT);
+        } else if (nextPlayer.money >= loanPaymentAmount) {
+          nextPlayer.money -= loanPaymentAmount;
+          nextPlayer.loanDebt = Math.max(0, nextPlayer.loanDebt - loanPrincipalAmount);
           nextPlayer.loanPaymentDeadline += 4;
-          actionLog = `Made a $${LOAN_PAYMENT_AMOUNT} loan payment ($${LOAN_PRINCIPAL_AMOUNT} principal, $${LOAN_INTEREST_AMOUNT} interest).`;
+          actionLog = `Made a $${loanPaymentAmount} loan payment ($${loanPrincipalAmount} principal, $${loanInterestAmount} interest).`;
         } else {
           actionLog = "Not enough cash to make a payment.";
         }

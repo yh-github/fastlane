@@ -143,7 +143,7 @@ export function HomeRelax({ onAction, campaign }: InteractionProps & { campaign?
   );
 }
 
-import { calcEconomyPrice, calcStockPrice, BANK_DEPOSIT_SMALL, BANK_DEPOSIT_LARGE, LOAN_PAYMENT_AMOUNT } from '../engine/economyEngine';
+import { calcEconomyPrice, calcStockPrice } from '../engine/economyEngine';
 import { calcRequiredLessons } from '../engine/educationEngine';
 
 import type { GameRules } from '../engine/gameState';
@@ -351,15 +351,19 @@ function StockTradeRow({ stock, price, owned, playerMoney, onAction }: any) {
   );
 }
 
-export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
-  const [tab, setTab] = useState<'bank'|'stocks'|'loans'>('bank');
+export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number }) {
+  const [tab, setTab] = useState<'banking'|'stocks'|'loans'>('banking');
   const [customBankAmount, setCustomBankAmount] = useState<number | ''>('');
+  const rules = campaign?.config?.rules;
+  const bankDepositSmall = campaign?.config.economyRules?.bankTransactionIncrementSmall ?? 50;
+  const bankDepositLarge = campaign?.config.economyRules?.bankTransactionIncrementLarge ?? 100;
+  const loanPaymentAmount = campaign?.config.economyRules?.loanPaymentAmount ?? 50;
   
   return (
     <div className="interaction-panel">
       <h3>Bank of Jones</h3>
       <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-        <button onClick={() => setTab('bank')} style={{ fontWeight: tab === 'bank' ? 'bold' : 'normal' }}>Bank</button>
+        <button onClick={() => setTab('banking')} style={{ fontWeight: tab === 'banking' ? 'bold' : 'normal' }}>Bank</button>
         {(!rules || rules.classicStockMarket) && (
           <button onClick={() => {
             if (tab !== 'stocks') {
@@ -425,28 +429,28 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
           </div>
           <hr style={{ borderColor: '#444', margin: '5px 0' }} />
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(BANK_DEPOSIT_SMALL, player.money) })} 
+            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(bankDepositSmall, player.money) })} 
             disabled={player.money <= 0}
           >
-            Deposit ${BANK_DEPOSIT_SMALL} (or remainder)
+            Deposit ${bankDepositSmall} (or remainder)
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(BANK_DEPOSIT_LARGE, player.money) })} 
+            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(bankDepositLarge, player.money) })} 
             disabled={player.money <= 0}
           >
-            Deposit ${BANK_DEPOSIT_LARGE} (or remainder)
+            Deposit ${bankDepositLarge} (or remainder)
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(BANK_DEPOSIT_SMALL, player.bankSavings) })} 
+            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(bankDepositSmall, player.bankSavings) })} 
             disabled={player.bankSavings <= 0}
           >
-            Withdraw ${BANK_DEPOSIT_SMALL} (or remainder)
+            Withdraw ${bankDepositSmall} (or remainder)
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(BANK_DEPOSIT_LARGE, player.bankSavings) })} 
+            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(bankDepositLarge, player.bankSavings) })} 
             disabled={player.bankSavings <= 0}
           >
-            Withdraw ${BANK_DEPOSIT_LARGE} (or remainder)
+            Withdraw ${bankDepositLarge} (or remainder)
           </button>
         </div>
       )}
@@ -475,9 +479,9 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
           </button>
           <button 
             onClick={() => onAction({ type: 'pay_loan' })} 
-            disabled={player.money < Math.min(LOAN_PAYMENT_AMOUNT, player.loanDebt || 0) || (player.loanDebt || 0) === 0}
+            disabled={player.money < Math.min(loanPaymentAmount, player.loanDebt || 0) || (player.loanDebt || 0) === 0}
           >
-            Make Loan Payment (${LOAN_PAYMENT_AMOUNT} or remainder)
+            Make Loan Payment (${loanPaymentAmount} or remainder)
           </button>
         </div>
       )}
