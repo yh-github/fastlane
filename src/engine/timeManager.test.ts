@@ -14,6 +14,7 @@ describe('timeManager', () => {
     
     player.hoursRemaining = 0;
     expect(canAffordAction(player, 6, false)).toBe(false);
+    expect(canAffordAction(player, 0, false)).toBe(true); // 0 cost is always allowed
   });
 
   it('canAffordAction strict', () => {
@@ -43,6 +44,10 @@ describe('timeManager', () => {
     player.hoursRemaining = 0;
     const updated = spendHours(player, 6);
     expect(updated).toBe(player); // Reference equality check
+    
+    // Spend 0 hours when at 0 hours remaining
+    const updatedZero = spendHours(player, 0);
+    expect(updatedZero).toBe(player); // Reference equality check
   });
 
   it('resetPlayerClock applies caffeine debt', () => {

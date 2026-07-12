@@ -75,8 +75,8 @@ export function gameReducer(
     case 'buy': {
       const itemDef = context.campaign.items.find(i => i.id === action.itemId);
       if (itemDef) {
-        const timeCost = itemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : context.campaign.config.timeRules.buildingEntryCost;
-        if (nextPlayer.hoursRemaining < timeCost) {
+        const timeCost = itemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
+        if (timeCost > 0 && nextPlayer.hoursRemaining < timeCost) {
           actionLog = `Not enough time to buy ${itemDef.name}.`;
           break;
         }

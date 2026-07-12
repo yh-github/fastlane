@@ -18,10 +18,11 @@ import { type GameState, type PlayerState } from './gameState';
  * @param cost       — The hour cost of the action
  */
 export function canAffordAction(player: PlayerState, cost: number, strictCost: boolean = false): boolean {
+  if (cost === 0) return true; // Zero-cost actions are always allowed
   if (strictCost) {
     return player.hoursRemaining >= cost;
   }
-  return player.hoursRemaining >= 1; // "At least 1 hour" rule for most activities
+  return player.hoursRemaining > 0; // "At least some time left" rule
 }
 
 /**
@@ -33,7 +34,9 @@ export function canAffordAction(player: PlayerState, cost: number, strictCost: b
  * @returns        A new player state with deducted hours, or the same state if insufficient
  */
 export function spendHours(player: PlayerState, cost: number): PlayerState {
-  // If they don't even have 1 hour, they can't do anything
+  if (cost === 0) return player;
+  
+  // If they are out of time, they can't do actions with a cost
   if (player.hoursRemaining <= 0) return player;
 
   const newHours = Math.max(0, player.hoursRemaining - cost);
