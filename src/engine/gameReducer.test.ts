@@ -103,6 +103,24 @@ describe('gameReducer', () => {
       expect(result.updatedPlayer.hoursRemaining).toBe(10);
       expect(result.actionLog).toContain('Not enough money');
     });
+
+    it('buys a general item at 0 hours remaining (zero-cost action)', () => {
+      player.money = 500;
+      player.hoursRemaining = 0;
+      const result = gameReducer(player, { type: 'buy', itemId: 'refrigerator' }, context);
+      expect(result.updatedPlayer.money).toBe(100); // 500 - 400
+      expect(result.updatedPlayer.hoursRemaining).toBe(0);
+      expect(result.actionLog).toBe('Purchased Refrigerator');
+    });
+
+    it('fails to buy newspaper if 0 hours remaining (costs time)', () => {
+      player.money = 500;
+      player.hoursRemaining = 0;
+      const result = gameReducer(player, { type: 'buy', itemId: 'newspaper' }, context);
+      expect(result.updatedPlayer.money).toBe(500);
+      expect(result.updatedPlayer.hoursRemaining).toBe(0);
+      expect(result.actionLog).toContain('Not enough time to buy Newspaper');
+    });
   });
 
   describe('relax action', () => {
