@@ -161,6 +161,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           return livesHere ? (
             <HomeRelax 
               player={player}
+              campaign={campaign}
               onAction={onAction}
             />
           ) : (

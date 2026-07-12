@@ -130,13 +130,14 @@ export function StoreFront({ player, onAction, availableItems }: InteractionProp
   );
 }
 
-export function HomeRelax({ onAction }: InteractionProps) {
+export function HomeRelax({ onAction, campaign }: InteractionProps & { campaign?: CampaignBundle }) {
+  const relaxCost = campaign?.config.timeRules?.relaxCost ?? 6;
   return (
     <div className="interaction-panel">
       <h3>Home Sweet Home</h3>
-      <p style={{ fontSize: '12px', marginBottom: '10px' }}>Relax to restore happiness. Costs 5 hours.</p>
+      <p style={{ fontSize: '12px', marginBottom: '10px' }}>Relax to restore happiness. Costs {relaxCost} hours.</p>
       <button onClick={() => onAction({ type: 'relax' })}>
-        Relax (5h)
+        Relax ({relaxCost}h)
       </button>
     </div>
   );
@@ -470,7 +471,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       {tab === 'loans' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button onClick={() => onAction({ type: 'take_loan' })}>
-            Apply for Loan (Costs 2 Hours)
+            Apply for Loan (Costs {campaign?.config.timeRules?.loanCost ?? 2} Hours)
           </button>
           <button 
             onClick={() => onAction({ type: 'pay_loan' })} 
