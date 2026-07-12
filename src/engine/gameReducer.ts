@@ -2,6 +2,15 @@ import { type PlayerState, type GameRules, type OwnedAppliance, type PawnedItem 
 import { type CampaignBundle } from './dataLoader';
 import { type Random } from '../utils/rng';
 import { applyForJob, workShift } from './jobEngine';
+import { 
+  calcEconomyPrice, 
+  processRentDebt, 
+  applyMarketCrash, 
+  applyEconomicBoom,
+  LOAN_PAYMENT_AMOUNT,
+  LOAN_PRINCIPAL_AMOUNT,
+  LOAN_INTEREST_AMOUNT
+} from './economyEngine';
 import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study } from './educationEngine';
 import { spendHours } from './timeManager';
@@ -230,17 +239,17 @@ export function gameReducer(
     }
     case 'pay_loan': {
       if ((nextPlayer.loanDebt || 0) > 0) {
-        if (nextPlayer.loanDebt < 50 && nextPlayer.money >= nextPlayer.loanDebt) {
+        if (nextPlayer.loanDebt < LOAN_PAYMENT_AMOUNT && nextPlayer.money >= nextPlayer.loanDebt) {
           const amount = nextPlayer.loanDebt;
           nextPlayer.money -= amount;
           nextPlayer.loanDebt = 0;
           nextPlayer.loanPaymentDeadline += 4;
           actionLog = `Paid off the remaining loan of $${amount}.`;
-        } else if (nextPlayer.money >= 50) {
-          nextPlayer.money -= 50;
-          nextPlayer.loanDebt = Math.max(0, nextPlayer.loanDebt - 45);
+        } else if (nextPlayer.money >= LOAN_PAYMENT_AMOUNT) {
+          nextPlayer.money -= LOAN_PAYMENT_AMOUNT;
+          nextPlayer.loanDebt = Math.max(0, nextPlayer.loanDebt - LOAN_PRINCIPAL_AMOUNT);
           nextPlayer.loanPaymentDeadline += 4;
-          actionLog = `Made a $50 loan payment ($45 principal, $5 interest).`;
+          actionLog = `Made a $${LOAN_PAYMENT_AMOUNT} loan payment ($${LOAN_PRINCIPAL_AMOUNT} principal, $${LOAN_INTEREST_AMOUNT} interest).`;
         } else {
           actionLog = "Not enough cash to make a payment.";
         }
