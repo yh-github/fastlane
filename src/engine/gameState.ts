@@ -42,7 +42,7 @@ export interface GameRules {
   clothingDecaysAll: boolean;
   autoEquipBestClothes: boolean;
   classicStockMarket: boolean;
-  studyWithPartialHours: boolean;
+  allowPartialHours: boolean;
   enableRelaxationDoctor: boolean;
 }
 
@@ -357,7 +357,7 @@ export function createInitialGameState(
   playersConfig: PlayerConfig[],
   startNode: string,
   variant: GameVariant = 'cdrom',
-  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, studyWithPartialHours: true, enableRelaxationDoctor: true },
+  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, allowPartialHours: true, enableRelaxationDoctor: true },
   seed: number = 12345
 ): GameState {
   return {

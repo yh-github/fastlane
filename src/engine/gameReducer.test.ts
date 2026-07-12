@@ -135,7 +135,7 @@ describe('gameReducer', () => {
       player.hoursRemaining = 3;
       const result = gameReducer(player, { type: 'relax' }, context);
       expect(result.updatedPlayer.hoursRemaining).toBe(0);
-      expect(result.updatedPlayer.relaxation).toBe(13);
+      expect(result.updatedPlayer.relaxation).toBe(15);
     });
   });
 

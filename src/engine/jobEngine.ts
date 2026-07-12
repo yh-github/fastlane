@@ -10,7 +10,7 @@ export interface JobApplicationResult {
   message: string;
 }
 
-export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random): JobApplicationResult {
+export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules): JobApplicationResult {
   const msg = (key: string, defaultMsg: string, vars: Record<string, string> = {}) => {
     let m = messages[key] || defaultMsg;
     for (const [k, v] of Object.entries(vars)) m = m.replaceAll(`{${k}}`, v as string);
@@ -18,7 +18,9 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   };
 
   if (player.hoursRemaining < timeCost) {
-    return { updated: player, success: false, message: msg('job_apply_not_enough_time', 'Not enough time to apply.') };
+    if (!rules?.allowPartialHours) {
+      return { updated: player, success: false, message: msg('job_apply_not_enough_time', 'Not enough time to apply.') };
+    }
   }
 
   // Cost to apply

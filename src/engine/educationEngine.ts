@@ -64,13 +64,13 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
 
   // Time check
   if (player.hoursRemaining < timeCost) {
-    if (!rules?.studyWithPartialHours) {
+    if (!rules?.allowPartialHours) {
       return { updated: player, success: false, message: 'Not enough time to study.' };
     }
   }
 
   // Cost to study (allow partial hours if rule is enabled)
-  const hoursToSpend = rules?.studyWithPartialHours
+  const hoursToSpend = rules?.allowPartialHours
     ? Math.min(player.hoursRemaining, timeCost)
     : timeCost;
     
