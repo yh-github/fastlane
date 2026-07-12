@@ -360,7 +360,12 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
         <button onClick={() => setTab('bank')} style={{ fontWeight: tab === 'bank' ? 'bold' : 'normal' }}>Bank</button>
         {(!rules || rules.classicStockMarket) && (
-          <button onClick={() => setTab('stocks')} style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}>Stocks</button>
+          <button onClick={() => {
+            if (tab !== 'stocks') {
+              onAction({ type: 'open_broker' });
+            }
+            setTab('stocks');
+          }} style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}>Stocks</button>
         )}
         <button onClick={() => setTab('loans')} style={{ fontWeight: tab === 'loans' ? 'bold' : 'normal' }}>Loans</button>
       </div>

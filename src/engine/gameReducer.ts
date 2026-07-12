@@ -15,6 +15,7 @@ export type GameAction =
   | { type: 'study'; degreeId: string }
   | { type: 'relax' }
   | { type: 'bank_transaction'; amount: number }
+  | { type: 'open_broker' }
   | { type: 'buy_stock'; stockId: string; quantity: number; cost: number }
   | { type: 'sell_stock'; stockId: string; quantity: number; revenue: number }
   | { type: 'take_loan' }
@@ -111,23 +112,19 @@ export function gameReducer(
       break;
     }
     case 'relax': {
-      let hoursToRelax = Math.min(nextPlayer.hoursRemaining, 5);
-      if (hoursToRelax < context.campaign.config.timeRules.relaxCost) {
+      const relaxCost = context.campaign.config.timeRules.relaxCost || 6;
+      if (nextPlayer.hoursRemaining < relaxCost) {
         if (!context.rules.allowPartialHours || nextPlayer.hoursRemaining <= 0) {
           actionLog = "Not enough time to relax.";
           break;
         }
-        hoursToRelax = nextPlayer.hoursRemaining;
       }
-      // Give full 5 relaxation if allowPartialHours? No, the user says "In most cases this has no effect on the outcome of the action (except when Working)"
-      // So you still relax. But if relax gives you `hoursToRelax` points, should it give you 5 points or `hoursToRelax` points?
-      // Wait, let's just give `hoursToRelax` points? The original game doesn't have "relax for X hours". 
-      // But here we scale relaxation by hoursToRelax.
-      // Let's keep it scaling, but make sure we spend the intended max of 5 if we can.
-      const targetHours = 5;
-      nextPlayer = spendHours(nextPlayer, targetHours);
-      nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + targetHours);
-      actionLog = `Relaxed for 5 hours.`;
+      
+      // As per the rules, fractional hours don't penalize outcome except for working, 
+      // so we always grant full relaxation amount regardless of partial hours spent.
+      nextPlayer = spendHours(nextPlayer, relaxCost);
+      nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + relaxCost);
+      actionLog = `Relaxed.`;
       break;
     }
     case 'bank_transaction': {
@@ -149,6 +146,16 @@ export function gameReducer(
           actionLog = "Not enough savings to withdraw.";
         }
       }
+      break;
+    }
+    case 'open_broker': {
+      const timeCost = context.campaign.config.timeRules.brokerCost || 2;
+      if (nextPlayer.hoursRemaining < timeCost && !context.rules.allowPartialHours) {
+        actionLog = "Not enough time to visit the broker.";
+        break;
+      }
+      nextPlayer = spendHours(nextPlayer, timeCost);
+      actionLog = "Visited the stock broker.";
       break;
     }
     case 'buy_stock': {
@@ -184,6 +191,13 @@ export function gameReducer(
       break;
     }
     case 'take_loan': {
+      const timeCost = context.campaign.config.timeRules.loanCost || 2;
+      if (nextPlayer.hoursRemaining < timeCost && !context.rules.allowPartialHours) {
+        actionLog = "Not enough time to apply for a loan.";
+        break;
+      }
+      nextPlayer = spendHours(nextPlayer, timeCost);
+      
       const liquidAssets = nextPlayer.money + nextPlayer.bankSavings;
       const liquidity = nextPlayer.currentWage + (liquidAssets / 1000);
       let risk = 5;
@@ -211,7 +225,6 @@ export function gameReducer(
           nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
         }
       }
-      nextPlayer = spendHours(nextPlayer, 2);
       break;
     }
     case 'pay_loan': {

@@ -35,7 +35,7 @@ describe('gameReducer', () => {
       config: {
         name: 'test',
         startingMoney: 200,
-        timeRules: { hoursPerTurn: 60, workSessionCost: 6, studySessionCost: 6, jobApplicationCost: 4, relaxCost: 1, newspaperCost: 1, starvationPenalty: 20, doctorPenalty: 10, buildingEntryCost: 2 }
+        timeRules: { hoursPerTurn: 60, workSessionCost: 6, studySessionCost: 6, jobApplicationCost: 4, relaxCost: 6, newspaperCost: 1, starvationPenalty: 20, doctorPenalty: 10, buildingEntryCost: 2, loanCost: 2, brokerCost: 2 }
       }
     } as unknown as CampaignBundle;
 
@@ -124,18 +124,19 @@ describe('gameReducer', () => {
   });
 
   describe('relax action', () => {
-    it('consumes up to 5 hours and adds 1 relaxation per hour', () => {
+    it('consumes up to relaxCost hours and adds relaxation', () => {
       player.hoursRemaining = 10;
       const result = gameReducer(player, { type: 'relax' }, context);
-      expect(result.updatedPlayer.hoursRemaining).toBe(5);
-      expect(result.updatedPlayer.relaxation).toBe(15);
+      expect(result.updatedPlayer.hoursRemaining).toBe(4);
+      expect(result.updatedPlayer.relaxation).toBe(16);
     });
 
-    it('consumes remaining hours if less than 5', () => {
+    it('consumes remaining hours if less than relaxCost', () => {
       player.hoursRemaining = 3;
+      context.rules.allowPartialHours = true;
       const result = gameReducer(player, { type: 'relax' }, context);
       expect(result.updatedPlayer.hoursRemaining).toBe(0);
-      expect(result.updatedPlayer.relaxation).toBe(15);
+      expect(result.updatedPlayer.relaxation).toBe(16);
     });
   });
 

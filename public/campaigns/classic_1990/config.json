@@ -15,10 +15,12 @@
     "workSessionCost": 6,
     "studySessionCost": 6,
     "jobApplicationCost": 4,
-    "relaxCost": 1,
+    "relaxCost": 6,
     "newspaperCost": 1,
     "starvationPenalty": 20,
-    "doctorPenalty": 10
+    "doctorPenalty": 10,
+    "loanCost": 2,
+    "brokerCost": 2
   },
   "economyRules": {
     "rentGarnishRate": 0.5,

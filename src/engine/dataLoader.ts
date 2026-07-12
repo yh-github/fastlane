@@ -41,6 +41,8 @@ export interface TimeRules {
   newspaperCost: number;
   starvationPenalty: number;
   doctorPenalty: number;
+  loanCost: number;
+  brokerCost: number;
 }
 
 export interface EconomyRules {
