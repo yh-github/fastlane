@@ -6,6 +6,7 @@
  */
 
 import type { PlayerState } from './gameState';
+import type { Random } from '../utils/rng';
 
 /**
  * Calculate an economy-adjusted price.
@@ -25,10 +26,10 @@ export function calcEconomyPrice(basePrice: number, economicIndex: number): numb
  * @param currentIndex — Current economic index
  * @returns              New economic index
  */
-export function fluctuateEconomy(currentIndex: number): number {
+export function fluctuateEconomy(currentIndex: number, rng: Random): number {
   // Simplified random walk for the economic index
   // A real implementation would likely have momentum or trend mechanics
-  const change = Math.floor(Math.random() * 21) - 10; // -10 to +10
+  const change = Math.floor(rng.next() * 21) - 10; // -10 to +10
   return Math.max(-30, Math.min(90, currentIndex + change));
 }
 
@@ -60,8 +61,9 @@ export function calcStockPrice(basePrice: number, economicIndex: number, seed: n
  * @returns          Updated player state
  */
 export function applyMarketCrash(
+  player: PlayerState,
   severity: 'minor' | 'moderate' | 'major',
-  player: PlayerState
+  rng: Random
 ): PlayerState {
   let updated = { ...player };
 
@@ -75,7 +77,7 @@ export function applyMarketCrash(
   } else if (severity === 'moderate') {
     updated.happiness -= hasSignificantStocks ? 4 : 2;
     // 50% chance to be fired, or wage cut
-    if (updated.currentJobId && Math.random() < 0.5) {
+    if (updated.currentJobId && rng.next() < 0.5) {
       updated.currentJobId = null; // Fired
       updated.currentWage = 0;
       updated.raisesAtCurrentJob = 0;
@@ -105,13 +107,15 @@ export function applyMarketCrash(
  * Applies an Economic Boom to a player.
  * Gives +5 Happiness if the player has significant stock investments.
  */
-export function applyEconomicBoom(player: PlayerState): PlayerState {
+export function applyEconomicBoom(player: PlayerState, campaign: any): PlayerState {
   let updated = { ...player };
+
   const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
   
   if (hasSignificantStocks) {
-    updated.happiness += 5;
+    updated.happiness = Math.min(100, updated.happiness + 5);
   }
+
 
   return updated;
 }

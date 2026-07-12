@@ -26,6 +26,8 @@ export interface GameState {
   phase: GamePhase;
   /** Campaign configuration reference */
   campaignId: string;
+  /** Seed/State for the deterministic random number generator */
+  rngState: number;
   /** Game variant flags */
   variant: GameVariant;
   /** Game rules configuration */
@@ -355,11 +357,13 @@ export function createInitialGameState(
   playersConfig: PlayerConfig[],
   startNode: string,
   variant: GameVariant = 'cdrom',
-  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, studyWithPartialHours: true, enableRelaxationDoctor: true }
+  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, studyWithPartialHours: true, enableRelaxationDoctor: true },
+  seed: number = 12345
 ): GameState {
   return {
     turn: 0,
     economicIndex: 0,
+    rngState: seed,
     players: playersConfig.map((cfg, i) =>
       createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config)
     ),

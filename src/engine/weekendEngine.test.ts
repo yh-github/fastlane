@@ -1,3 +1,4 @@
+import { Random } from '../utils/rng';
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { processWeekend } from './weekendEngine';
@@ -24,7 +25,7 @@ describe('Weekend Engine', () => {
   });
 
   it('selects an event and charges the cost', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.01); // Picks first event (usually cheap like eating out)
+    vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); // Picks first event (usually cheap like eating out)
     const player = { 
       money: 1000, 
       happiness: 50,
@@ -32,13 +33,13 @@ describe('Weekend Engine', () => {
       turnEvents: []
     } as unknown as PlayerState;
     
-    const nextPlayer = processWeekend(player, 1, [], mockWeekendData);
+    const nextPlayer = processWeekend(player, 1, [], mockWeekendData, new Random(1));
     expect(nextPlayer.weekendResult?.text).toBeDefined();
     expect(nextPlayer.money).toBeLessThan(1000); // Spent money
   });
 
   it('safely handles poor players without putting them in negative cash, but skips random events if broke', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.01); // First event
+    vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); // First event
     const player = { 
       money: 2, // Less than cheapest cost (5)
       happiness: 50,
@@ -46,7 +47,7 @@ describe('Weekend Engine', () => {
       turnEvents: []
     } as unknown as PlayerState;
     
-    const nextPlayer = processWeekend(player, 1, [], mockWeekendData);
+    const nextPlayer = processWeekend(player, 1, [], mockWeekendData, new Random(1));
     expect(nextPlayer.money).toBe(2); // Should not drain their last 2 dollars
     expect(nextPlayer.weekendResult?.text).toContain('too broke');
   });
@@ -59,7 +60,7 @@ describe('Weekend Engine', () => {
       turnEvents: []
     } as unknown as PlayerState;
     
-    const nextPlayer = processWeekend(player, 1, [], mockWeekendData);
+    const nextPlayer = processWeekend(player, 1, [], mockWeekendData, new Random(1));
     expect(nextPlayer.inventory.tickets.baseball).toBe(2);
     expect(nextPlayer.weekendResult?.text).toBe("Went to a baseball game.");
   });

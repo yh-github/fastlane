@@ -1,3 +1,4 @@
+import { Random } from '../utils/rng';
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { applyForJob, workShift } from './jobEngine';
@@ -33,7 +34,7 @@ describe('Job Engine', () => {
   describe('applyForJob', () => {
     it('burger cook is always accepted', () => {
       const player = { hoursRemaining: 20, experience: 0, dependability: 0, degrees: [] } as PlayerState;
-      const result = applyForJob(player, burgerCook, 4);
+      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(true);
       expect(result.updated.currentJobId).toBe('burger_cook');
       expect(result.updated.currentWage).toBe(5);
@@ -41,22 +42,22 @@ describe('Job Engine', () => {
 
     it('rejects if missing hard requirements (experience)', () => {
       const player = { hoursRemaining: 20, experience: 10, dependability: 60, degrees: ['business_admin'] } as PlayerState;
-      const result = applyForJob(player, salesManager, 4);
+      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(false);
       expect(result.message).toContain('Not enough experience');
     });
 
     it('rejects if missing degree', () => {
       const player = { hoursRemaining: 20, experience: 60, dependability: 60, degrees: [] } as PlayerState;
-      const result = applyForJob(player, salesManager, 4);
+      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(false);
       expect(result.message).toContain('Missing required degree: business_admin');
     });
 
     it('rejects due to bad luck roll', () => {
-      vi.spyOn(Math, 'random').mockReturnValue(0.99); // Force high roll (99)
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99); // Force high roll (99)
       const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [] } as PlayerState;
-      const result = applyForJob(player, lowLevelJob, 4); // Luck = 40 + 10 + 10 = 60. 99 > 60 = rejected.
+      const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1)); // Luck = 40 + 10 + 10 = 60. 99 > 60 = rejected.
       expect(result.success).toBe(false);
       expect(result.message).toContain('bad luck');
     });

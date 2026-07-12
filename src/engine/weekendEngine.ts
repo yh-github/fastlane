@@ -1,8 +1,8 @@
-import type { PlayerState } from './gameState';
 import type { WeekendDef } from './dataLoader';
+import type { Random } from '../utils/rng';
 
 // Helper to determine cost based on price range
-function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number): number {
+function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number, rng: Random): number {
   let min = 0;
   let max = 0;
   switch (priceType) {
@@ -10,7 +10,7 @@ function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney
     case 'medium': min = 15; max = 55; break;
     case 'expensive': min = 50; max = 100; break;
   }
-  const cost = Math.floor(Math.random() * (max - min + 1)) + min;
+  const cost = Math.floor(rng.next() * (max - min + 1)) + min;
   return Math.min(cost, playerMoney);
 }
 
@@ -25,7 +25,8 @@ export function processWeekend(
   player: PlayerState, 
   turnNumber: number, 
   previousPlayerWeekends: string[],
-  weekendData: WeekendDef
+  weekendData: WeekendDef,
+  rng: Random
 ): PlayerState {
   const newPlayer = { ...player, inventory: { ...player.inventory, tickets: { ...player.inventory.tickets } } };
   
@@ -51,12 +52,12 @@ export function processWeekend(
   else {
     let triggeredDurableWeekend = false;
     // Shuffle the durables so if they have multiple, the order is random
-    const shuffledAppliances = [...newPlayer.inventory.appliances].sort(() => Math.random() - 0.5);
+    const shuffledAppliances = rng.shuffle(newPlayer.inventory.appliances);
     
     for (const app of shuffledAppliances) {
       if (weekendData.durableWeekends[app.id]) {
         // 20% chance to trigger
-        if (Math.random() < 0.20) {
+        if (rng.next() < 0.20) {
           const candidateText = weekendData.durableWeekends[app.id].text;
           if (!previousPlayerWeekends.includes(candidateText)) {
             weekendText = candidateText;
@@ -84,7 +85,7 @@ export function processWeekend(
       let chosenIndex = -1;
       let attempts = 0;
       while (attempts < 100) {
-        chosenIndex = Math.floor(Math.random() * weekendData.randomWeekends.length);
+        chosenIndex = Math.floor(rng.next() * weekendData.randomWeekends.length);
         const candidateText = weekendData.randomWeekends[chosenIndex];
         if (!previousPlayerWeekends.includes(candidateText)) {
           break;
@@ -108,12 +109,12 @@ export function processWeekend(
 
       // If they got #42 (index 41), +2 to +4 happiness
       if (chosenIndex === 41) {
-        happinessBonus = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4
+        happinessBonus = Math.floor(rng.next() * 3) + 2; // 2, 3, or 4
       }
     }
   }
 
-  const cost = getWeekendCost(priceType, newPlayer.money);
+  const cost = getWeekendCost(priceType, newPlayer.money, rng);
   newPlayer.money -= cost;
   
   if (happinessBonus !== undefined) {

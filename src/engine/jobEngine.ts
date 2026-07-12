@@ -2,6 +2,7 @@ import { type PlayerState } from './gameState';
 import { spendHours } from './timeManager';
 import { processRentDebt } from './economyEngine';
 import type { JobDef } from './dataLoader';
+import type { Random } from './rng';
 
 export interface JobApplicationResult {
   updated: PlayerState;
@@ -9,7 +10,7 @@ export interface JobApplicationResult {
   message: string;
 }
 
-export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number): JobApplicationResult {
+export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random): JobApplicationResult {
   const msg = (key: string, defaultMsg: string, vars: Record<string, string> = {}) => {
     let m = messages[key] || defaultMsg;
     for (const [k, v] of Object.entries(vars)) m = m.replaceAll(`{${k}}`, v as string);
@@ -77,7 +78,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
 
   // RNG Luck check for new jobs
   const luck = 40 + updated.dependability + updated.experience + (8 * updated.degrees.length);
-  const roll = Math.floor(Math.random() * 100) + 1;
+  const roll = Math.floor((rng ? rng.next() : Math.random()) * 100) + 1;
 
   if (roll > luck) {
     return { updated, success: false, message: msg('job_apply_no_openings', 'They decided to hire someone else (bad luck).') };

@@ -120,7 +120,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             availableDegrees={campaign.education} 
             rules={rules}
             campaign={campaign}
-            economicIndex={gameState.economicIndex}
+            economicIndex={economicIndex}
           />
         )}
 

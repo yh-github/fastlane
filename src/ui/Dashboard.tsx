@@ -33,8 +33,19 @@ export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInv
             <span>Economy Index: {economicIndex}</span>
           </div>
         </div>
-        <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff' }}>
-          ⏳ {player.hoursRemaining} / {hoursPerTurn}h Left
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: `conic-gradient(#ff3333 0% ${((hoursPerTurn - player.hoursRemaining) / hoursPerTurn) * 100}%, white ${((hoursPerTurn - player.hoursRemaining) / hoursPerTurn) * 100}% 100%)`,
+            border: '2px solid #333',
+            boxShadow: 'inset 0 0 4px rgba(0,0,0,0.4)',
+            marginRight: '10px'
+          }} />
+          <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff' }}>
+            ⏳ {Number(player.hoursRemaining).toFixed(1)} / {hoursPerTurn}h Left
+          </div>
         </div>
         <button 
           id="btn-inventory"
