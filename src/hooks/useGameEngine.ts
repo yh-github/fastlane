@@ -94,9 +94,6 @@ export function useGameEngine(
       setActivePlayerIndex(activePlayerIndex + 1);
     } else {
       const nextState = processTurnStart({ ...gameStateRef.current!, players: updatedPlayers }, campaign!);
-      if (nextState.phase !== 'game-over') {
-        nextState.phase = 'weekend';
-      }
       setGameState(nextState);
       setActivePlayerIndex(0);
       if (nextState.players[0].turnFlags.freeNewspaper) {
@@ -119,6 +116,108 @@ export function useGameEngine(
       await new Promise(r => setTimeout(r, 100));
 
       await endTurnSequence(updatedPlayers);
+      return;
+    }
+
+    if (payload.type === 'move') {
+      const nodeId = payload.nodeId;
+      let updatedPlayers = [...currentState.players];
+      let player = { ...updatedPlayers[activePlayerIndex] };
+
+      // If we are already there, just open the modal if it's a building
+      if (player.position === nodeId) {
+        setIsBuildingModalOpen(true);
+        return;
+      }
+
+      const pathResult = findShortestPath(adjacencyMap, player.position, nodeId);
+      
+      if (pathResult.found) {
+        setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
+        setIsAnimating(true);
+
+        const currentBuilding = campaign.map.nodes.find(n => n.id === player.position)?.buildingId;
+        if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
+          const preRobberyMoney = player.money;
+          const rng = new Random(currentState.rngState);
+          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng);
+          
+          if (player.money < preRobberyMoney) {
+            addLog("Wild Willy robbed you in the street!");
+            triggerAnim('text', '-$$$', 'stat-money'); 
+            player.newspaperHeadline = "WILD WILLY HAS LIFTED ANOTHER WALLET";
+          }
+          // Save the RNG state back since we used it!
+          setGameState(prev => prev ? { ...prev, rngState: rng.getState() } : prev);
+        }
+        
+        const movementCost = (campaign.config.mapRules as any)?.movementCostPerNode || 1;
+        const requestedSteps = pathResult.steps;
+        const maxAffordableSteps = Math.floor(player.hoursRemaining / movementCost);
+        const actualSteps = Math.min(requestedSteps, maxAffordableSteps);
+
+        if (actualSteps > 0) {
+          // Build the physical path for animation, up to the actual steps we can take
+          const pathCoords: PlayerPosition[] = pathResult.path.slice(0, actualSteps + 1).map(id => {
+            const node = campaign.map.nodes.find(n => n.id === id);
+            return { nodeId: id, x: node!.x, y: node!.y };
+          });
+
+          // Animate the path we can take
+          let pRef = { ...player };
+          await animatePlayerPath(pathCoords.slice(1), 300, () => {
+            pRef = spendHours(pRef, movementCost);
+            setGameState(prev => {
+              if (!prev) return prev;
+              const newPlayers = [...prev.players];
+              newPlayers[activePlayerIndex] = pRef;
+              return { ...prev, players: newPlayers };
+            });
+          });
+
+          // Ensure local player object matches the reference
+          player = { ...pRef };
+          player.position = pathResult.path[actualSteps];
+          
+          if (currentState.rules.autoEquipBestClothes) {
+            const hasCasual = player.inventory.casualClothesWeeks > 0;
+            const hasDress = player.inventory.dressClothesWeeks > 0;
+            const hasBusiness = player.inventory.businessClothesWeeks > 0;
+            
+            if (hasBusiness) player.inventory.selectedClothes = 'business';
+            else if (hasDress) player.inventory.selectedClothes = 'dress';
+            else if (hasCasual) player.inventory.selectedClothes = 'casual';
+            else player.inventory.selectedClothes = 'none';
+          }
+          
+          player = recalculatePlayerEffects(player, campaign);
+          updatedPlayers[activePlayerIndex] = player;
+          
+          if (player.hoursRemaining <= 0) {
+            addLog(`${player.name} is out of time for the week!`);
+            await endTurnSequence(updatedPlayers);
+          } else {
+            // If we reached the destination and it has a building, apply entry cost
+            const destNode = campaign.map.nodes.find(n => n.id === player.position);
+            if (destNode && destNode.buildingId && actualSteps === requestedSteps) {
+              const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
+              player = spendHours(player, entryCost);
+              updatedPlayers[activePlayerIndex] = player;
+            }
+
+            setGameState(prev => {
+               if (!prev) return prev;
+               return { ...prev, players: updatedPlayers };
+            });
+            setIsBuildingModalOpen(true);
+          }
+        } else {
+          // If they have no hours left to move
+          addLog(`${player.name} is out of time for the week!`);
+          await endTurnSequence(updatedPlayers);
+        }
+        setIsAnimating(false);
+      }
       return;
     }
 
@@ -183,122 +282,49 @@ export function useGameEngine(
 
   const handleNodeClick = async (nodeId: string) => {
     if (!gameStateRef.current || !campaign || isAnimating) return;
-    const currentState = gameStateRef.current;
-    
-    let updatedPlayers = [...currentState.players];
-    let player = { ...updatedPlayers[activePlayerIndex] };
-
-    // If we are already there, just open the modal if it's a building
-    if (player.position === nodeId) {
-      setIsBuildingModalOpen(true);
-      return;
-    }
-
-    const pathResult = findShortestPath(adjacencyMap, player.position, nodeId);
-    
-    if (pathResult.found) {
-      setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
-      setIsAnimating(true);
-
-      const currentBuilding = campaign.map.nodes.find(n => n.id === player.position)?.buildingId;
-      if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
-        const preRobberyMoney = player.money;
-        const rng = new Random(currentState.rngState);
-        player = processStreetRobbery(player, currentBuilding, currentState.turn, rng);
-        
-        if (player.money < preRobberyMoney) {
-          addLog("Wild Willy robbed you in the street!");
-          triggerAnim('text', '-$$$', 'stat-money'); // stat-money is a guess, let's just trigger text at center
-          player.newspaperHeadline = "WILD WILLY HAS LIFTED ANOTHER WALLET";
-        }
-        // Save the RNG state back since we used it!
-        setGameState(prev => prev ? { ...prev, rngState: rng.getState() } : prev);
-      }
-      
-      const movementCost = (campaign.config.mapRules as any)?.movementCostPerNode || 1;
-      const requestedSteps = pathResult.steps;
-      const maxAffordableSteps = Math.floor(player.hoursRemaining / movementCost);
-      const actualSteps = Math.min(requestedSteps, maxAffordableSteps);
-
-      if (actualSteps > 0) {
-        // Build the physical path for animation, up to the actual steps we can take
-        const pathCoords: PlayerPosition[] = pathResult.path.slice(0, actualSteps + 1).map(id => {
-          const node = campaign.map.nodes.find(n => n.id === id);
-          return { nodeId: id, x: node!.x, y: node!.y };
-        });
-
-        // Animate the path we can take
-        let pRef = { ...player };
-        await animatePlayerPath(pathCoords.slice(1), 300, () => {
-          pRef = spendHours(pRef, movementCost);
-          setGameState(prev => {
-            if (!prev) return prev;
-            const newPlayers = [...prev.players];
-            newPlayers[activePlayerIndex] = pRef;
-            return { ...prev, players: newPlayers };
-          });
-        });
-
-        // Ensure local player object matches the reference
-        player = { ...pRef };
-        player.position = pathResult.path[actualSteps];
-        
-        if (currentState.rules.autoEquipBestClothes) {
-          const hasCasual = player.inventory.casualClothesWeeks > 0;
-          const hasDress = player.inventory.dressClothesWeeks > 0;
-          const hasBusiness = player.inventory.businessClothesWeeks > 0;
-          
-          if (hasBusiness) player.inventory.selectedClothes = 'business';
-          else if (hasDress) player.inventory.selectedClothes = 'dress';
-          else if (hasCasual) player.inventory.selectedClothes = 'casual';
-          else player.inventory.selectedClothes = 'none';
-        }
-        
-        player = recalculatePlayerEffects(player, campaign);
-        updatedPlayers[activePlayerIndex] = player;
-        
-        if (player.hoursRemaining <= 0) {
-          addLog(`${player.name} is out of time for the week!`);
-          await endTurnSequence(updatedPlayers);
-        } else {
-          // If we reached the destination and it has a building, apply entry cost
-          const destNode = campaign.map.nodes.find(n => n.id === player.position);
-          if (destNode && destNode.buildingId && actualSteps === requestedSteps) {
-            const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
-            player = spendHours(player, entryCost);
-            updatedPlayers[activePlayerIndex] = player;
-          }
-
-          setGameState(prev => {
-             if (!prev) return prev;
-             return { ...prev, players: updatedPlayers };
-          });
-          setIsBuildingModalOpen(true);
-        }
-      } else {
-        // If they have no hours left to move
-        addLog(`${player.name} is out of time for the week!`);
-        await endTurnSequence(updatedPlayers);
-      }
-      setIsAnimating(false);
-    }
+    await handleAction({ type: 'move', nodeId });
   };
 
   useEffect(() => {
-    if (gameState?.phase === 'playing' && gameState.players[activePlayerIndex]?.isAi) {
+    // Only run AI if it's playing phase, it's an AI, AND they haven't just started their turn looking at the weekend screen
+    if (gameState?.phase === 'playing' && gameState.players[activePlayerIndex]?.isAi && gameState.players[activePlayerIndex]?.turnFlags?.hasSeenWeekend) {
       const runAi = async () => {
         setIsAnimating(true);
-        let stateSnapshot = gameStateRef.current!;
-        const actions = executeAITurn(stateSnapshot.players[activePlayerIndex], stateSnapshot, campaign!);
-        for (const action of actions) {
-          await handleAction(action);
-          await new Promise(r => setTimeout(r, 200)); // small delay for visual feedback
+        let maxLoops = 20;
+        
+        while (maxLoops > 0) {
+          let stateSnapshot = gameStateRef.current!;
+          let player = stateSnapshot.players[activePlayerIndex];
+          
+          if (player.hoursRemaining <= 0) {
+            await handleAction({ type: 'end-turn' });
+            break;
+          }
+
+          const actions = executeAITurn(player, stateSnapshot, campaign!);
+          if (actions.length === 0) {
+            await handleAction({ type: 'end-turn' });
+            break;
+          }
+
+          await handleAction(actions[0]);
+          await new Promise(r => setTimeout(r, 600)); // slightly longer delay for visual pathfinding feedback
+
+          // If the turn ended via the action (e.g. movement ran out of hours), stop
+          let currentSnapshot = gameStateRef.current!;
+          if (currentSnapshot.phase !== 'playing' || currentSnapshot.players[activePlayerIndex]?.hoursRemaining <= 0) {
+            if (currentSnapshot.phase === 'playing') await handleAction({ type: 'end-turn' });
+            break;
+          }
+          
+          maxLoops--;
         }
+        
         setIsAnimating(false);
       };
       runAi();
     }
-  }, [activePlayerIndex, gameState?.phase]);
+  }, [gameState?.phase, activePlayerIndex, gameState?.players[activePlayerIndex]?.turnFlags?.hasSeenWeekend]);
 
   return {
     status,

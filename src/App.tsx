@@ -63,18 +63,7 @@ export default function App() {
     );
   }
 
-  if (gameState.phase === 'weekend') {
-    return (
-      <WeekendScreen
-        players={gameState.players}
-        turn={gameState.turn - 1} // The current events were from the turn that just ended
-        onNextWeek={() => {
-          setGameState({ ...gameState, phase: 'playing' });
-          addLog(`Week ${gameState.turn} begins.`, gameState.turn);
-        }}
-      />
-    );
-  }
+
 
   if (gameState.phase === 'game-over') {
     return (
@@ -95,6 +84,24 @@ export default function App() {
   const currentBuildingId = (activePlayer && campaign) 
     ? (campaign.map.nodes.find(n => n.id === activePlayer.position)?.buildingId || null)
     : null;
+
+  if (activePlayer && !activePlayer.turnFlags.hasSeenWeekend && gameState.turn > 1) {
+    return (
+      <WeekendScreen
+        player={activePlayer}
+        turn={gameState.turn}
+        onStartWeek={() => {
+          const newPlayers = [...gameState.players];
+          newPlayers[activePlayerIndex] = {
+            ...activePlayer,
+            turnFlags: { ...activePlayer.turnFlags, hasSeenWeekend: true }
+          };
+          setGameState({ ...gameState, players: newPlayers });
+          addLog(`Week ${gameState.turn} begins for ${activePlayer.name}.`, gameState.turn);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="app-container">

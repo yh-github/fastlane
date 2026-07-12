@@ -252,6 +252,8 @@ export interface TurnFlags {
   rentPaidThisTurn: boolean;
   /** Whether the player receives a free newspaper this turn due to an event */
   freeNewspaper: boolean;
+  /** Whether the player has viewed their weekend summary this turn */
+  hasSeenWeekend: boolean;
   /** Notice flag for loan payable (week 4 of month) */
   loanPayableWarning?: boolean;
   /** Notice flag for loan default/delinquency */
@@ -283,6 +285,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     askedForExtension: false,
     rentPaidThisTurn: false,
     freeNewspaper: false,
+    hasSeenWeekend: false,
   };
 }
 

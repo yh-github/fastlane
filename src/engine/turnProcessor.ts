@@ -99,7 +99,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       caffeineDebt: p.turnFlags?.caffeineDebt || 0,
       askedForExtension: false,
       rentPaidThisTurn: false,
-      freeNewspaper: false
+      freeNewspaper: false,
+      hasSeenWeekend: state.turn === 0
     };
     p.turnEvents = [];
 
