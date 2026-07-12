@@ -52,6 +52,11 @@ export interface EconomyRules {
   repairCostMax: number;
   pawnPayoutRate: number;
   pawnRedeemRate: number;
+  bankTransactionIncrementSmall?: number;
+  bankTransactionIncrementLarge?: number;
+  loanPaymentAmount?: number;
+  loanInterestAmount?: number;
+  loanPrincipalAmount?: number;
 }
 
 export interface BuildingDef {

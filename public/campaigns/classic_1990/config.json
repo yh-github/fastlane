@@ -28,7 +28,12 @@
     "repairCostMin": 0.05,
     "repairCostMax": 0.25,
     "pawnPayoutRate": 0.4,
-    "pawnRedeemRate": 0.5
+    "pawnRedeemRate": 0.5,
+    "bankTransactionIncrementSmall": 50,
+    "bankTransactionIncrementLarge": 100,
+    "loanPaymentAmount": 50,
+    "loanInterestAmount": 5,
+    "loanPrincipalAmount": 45
   },
   "mapRules": {
     "allowDiagonalMovement": false,
