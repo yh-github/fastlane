@@ -261,6 +261,14 @@ export function useGameEngine(
           addLog(`${player.name} is out of time for the week!`);
           await endTurnSequence(updatedPlayers);
         } else {
+          // If we reached the destination and it has a building, apply entry cost
+          const destNode = campaign.map.nodes.find(n => n.id === player.position);
+          if (destNode && destNode.buildingId && actualSteps === requestedSteps) {
+            const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
+            player = spendHours(player, entryCost);
+            updatedPlayers[activePlayerIndex] = player;
+          }
+
           setGameState(prev => {
              if (!prev) return prev;
              return { ...prev, players: updatedPlayers };
