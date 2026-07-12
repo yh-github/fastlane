@@ -125,7 +125,12 @@ export default function App() {
             economicIndex={gameState.economicIndex}
             rules={gameState.rules}
             onAction={handleAction}
-            onClose={() => setIsBuildingModalOpen(false)}
+            onClose={() => {
+              setIsBuildingModalOpen(false);
+              if (activePlayer.hoursRemaining <= 0) {
+                handleAction({ type: 'end-turn' });
+              }
+            }}
           />
         )}
 

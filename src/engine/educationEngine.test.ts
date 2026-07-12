@@ -54,7 +54,7 @@ describe('Education Engine', () => {
   describe('study', () => {
     it('fails if not enrolled or not enough hours (strict rules)', () => {
       const player = { hoursRemaining: 5, enrolledClasses: { 'junior_college': 0 }, inventory: { appliances: [], books: [] } } as PlayerState;
-      const result = study(player, mockDegree, 6, { studyWithPartialHours: false } as any);
+      const result = study(player, mockDegree, 6, { allowPartialHours: false } as any);
       expect(result.success).toBe(false); // requires 6 hours
     });
 
@@ -64,10 +64,18 @@ describe('Education Engine', () => {
         enrolledClasses: { 'junior_college': 0 },
         inventory: { appliances: [], books: [] }
       } as PlayerState;
-      const result = study(player, mockDegree, 6, { studyWithPartialHours: true } as any);
+      const result = study(player, mockDegree, 6, { allowPartialHours: true } as any);
       expect(result.success).toBe(true); 
       expect(result.updated.enrolledClasses['junior_college']).toBe(1);
       expect(result.updated.hoursRemaining).toBe(0);
+    });
+
+    it('fails if not enough time and allowPartialHours is false', () => {
+      const player = { hoursRemaining: 2, enrolledClasses: { 'business_admin': 0 }, inventory: { appliances: [], books: [] } } as PlayerState;
+      const result = study(player, mockDegree, 6, { allowPartialHours: false } as any);
+      expect(result.success).toBe(false);
+      expect(result.updated.enrolledClasses['business_admin']).toBe(0);
+      expect(result.updated.hoursRemaining).toBe(2);
     });
 
     it('progresses lesson by 1', () => {

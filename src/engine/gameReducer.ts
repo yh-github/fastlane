@@ -52,7 +52,7 @@ export function gameReducer(
     case 'apply': {
       const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
       if (jobDef) {
-        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng);
+        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
@@ -77,8 +77,10 @@ export function gameReducer(
       if (itemDef) {
         const timeCost = itemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
         if (timeCost > 0 && nextPlayer.hoursRemaining < timeCost) {
-          actionLog = `Not enough time to buy ${itemDef.name}.`;
-          break;
+          if (!context.rules.allowPartialHours) {
+            actionLog = `Not enough time to buy ${itemDef.name}.`;
+            break;
+          }
         }
         const result = buyItem(nextPlayer, itemDef, context.rules);
         if (result.success) {
@@ -109,14 +111,23 @@ export function gameReducer(
       break;
     }
     case 'relax': {
-      const hoursToRelax = Math.min(nextPlayer.hoursRemaining, 5);
+      let hoursToRelax = Math.min(nextPlayer.hoursRemaining, 5);
       if (hoursToRelax < context.campaign.config.timeRules.relaxCost) {
-        actionLog = "Not enough time to relax.";
-        break;
+        if (!context.rules.allowPartialHours || nextPlayer.hoursRemaining <= 0) {
+          actionLog = "Not enough time to relax.";
+          break;
+        }
+        hoursToRelax = nextPlayer.hoursRemaining;
       }
-      nextPlayer = spendHours(nextPlayer, hoursToRelax);
-      nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + hoursToRelax);
-      actionLog = `Relaxed for ${hoursToRelax} hours.`;
+      // Give full 5 relaxation if allowPartialHours? No, the user says "In most cases this has no effect on the outcome of the action (except when Working)"
+      // So you still relax. But if relax gives you `hoursToRelax` points, should it give you 5 points or `hoursToRelax` points?
+      // Wait, let's just give `hoursToRelax` points? The original game doesn't have "relax for X hours". 
+      // But here we scale relaxation by hoursToRelax.
+      // Let's keep it scaling, but make sure we spend the intended max of 5 if we can.
+      const targetHours = 5;
+      nextPlayer = spendHours(nextPlayer, targetHours);
+      nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + targetHours);
+      actionLog = `Relaxed for 5 hours.`;
       break;
     }
     case 'bank_transaction': {
