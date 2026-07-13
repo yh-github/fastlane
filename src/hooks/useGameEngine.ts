@@ -10,6 +10,7 @@ import { executeAITurn } from '../engine/aiEngine';
 import { gameReducer, type GameAction } from '../engine/gameReducer';
 import { Random } from '../utils/rng';
 import type { LogEntry } from '../ui/GameLog';
+import { useTranslation } from 'react-i18next';
 
 export type AppStatus = 'loading' | 'ready' | 'error';
 
@@ -27,6 +28,7 @@ export function useGameEngine(
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
+  const { t } = useTranslation();
 
   const setGameState = useCallback((updater: GameState | null | ((prev: GameState | null) => GameState | null)) => {
     if (typeof updater === 'function') {
@@ -143,7 +145,7 @@ export function useGameEngine(
           player = processStreetRobbery(player, currentBuilding, currentState.turn, rng);
           
           if (player.money < preRobberyMoney) {
-            addLog("Wild Willy robbed you in the street!");
+            addLog(t('log.robbery'));
             triggerAnim('text', '-$$$', 'stat-money'); 
             player.newspaperHeadline = "WILD WILLY HAS LIFTED ANOTHER WALLET";
           }
@@ -194,7 +196,7 @@ export function useGameEngine(
           updatedPlayers[activePlayerIndex] = player;
           
           if (player.hoursRemaining <= 0) {
-            addLog(`${player.name} is out of time for the week!`);
+            addLog(t('log.outOfTime', { name: player.name }));
             await endTurnSequence(updatedPlayers);
           } else {
             // If we reached the destination and it has a building, apply entry cost
@@ -213,7 +215,7 @@ export function useGameEngine(
           }
         } else {
           // If they have no hours left to move
-          addLog(`${player.name} is out of time for the week!`);
+          addLog(t('log.outOfTime', { name: player.name }));
           await endTurnSequence(updatedPlayers);
         }
         setIsAnimating(false);

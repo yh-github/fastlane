@@ -1,0 +1,146 @@
+{
+  "titleScreen": {
+    "subtitle": "בגירסה מודרנית",
+    "startGame": "משחק חדש",
+    "language": "שפה"
+  },
+  "setupScreen": {
+    "title": "הגדרות משחק",
+    "playerX": "שחקן {{count}}",
+    "name": "שם: ",
+    "isAi": "האם בינה מלאכותית (ג'ונס)?",
+    "wealth": "עושר",
+    "happiness": "אושר",
+    "education": "השכלה",
+    "career": "קריירה",
+    "addPlayer": "הוסף שחקן",
+    "startLife": "התחל חיים"
+  },
+  "dashboard": {
+    "loading": "טוען...",
+    "aiBadge": "בינה מלאכותית (ג'ונס)",
+    "turn": "שבוע {{turn}}",
+    "economy": "מדד כלכלה: {{index}}",
+    "inventory": "מלאי",
+    "left": "נשארו",
+    "hrs": "שעות",
+    "money": "כסף",
+    "happiness": "אושר",
+    "relaxation": "מנוחה",
+    "education": "השכלה",
+    "career": "קריירה",
+    "wealth": "עושר"
+  },
+  "log": {
+    "robbery": "ווילי הפרא שדד אותך ברחוב!",
+    "outOfTime": "{{name}} נשאר ללא זמן פנוי השבוע!"
+  },
+  "weekendScreen": {
+    "title": "סוף שבוע!",
+    "summary": "סיכום שבוע {{turn}} עבור {{name}}",
+    "activities": "פעילויות סוף השבוע שלך",
+    "whatYouDid": "מה עשית בסוף השבוע:",
+    "cost": "עלות",
+    "happiness": "אושר",
+    "nothingSpecial": "שום דבר מיוחד לא קרה בסוף השבוע הזה.",
+    "otherEvents": "אירועים אחרים",
+    "startWeek": "התחל שבוע {{turn}}"
+  },
+  "gameOver": {
+    "congrats": "מזל טוב!",
+    "hasWon": "ניצח במשחק!",
+    "totalTime": "זמן כולל: {{turn}} שבועות",
+    "playAgain": "שחק שוב"
+  },
+  "building": {
+    "monolith_burgers": "מונולית בורגרס",
+    "z_mart": "זד-מארט",
+    "socket_city": "סוקט סיטי",
+    "rent_office": "משרד שכירות",
+    "employment_office": "לשכת התעסוקה",
+    "university": "אוניברסיטה",
+    "bank": "בנק",
+    "factory": "מפעל",
+    "joy_luck": "ג'וי לאק",
+    "clothing_store": "חנות בגדים",
+    "pawn_shop": "חנות משכונות",
+    "black_market": "השוק השחור"
+  },
+  "jobBoard": {
+    "title": "לוח דרושים: בחר מיקום",
+    "positions": "{{count}} משרות פנויות",
+    "back": "חזור",
+    "jobsAt": "עבודות ב-{{location}}",
+    "base": "בסיס",
+    "exp": "ניסיון",
+    "dep": "אמינות",
+    "degrees": "תארים",
+    "missingReq": "אינך עומד בדרישות המינימום למשרה זו.",
+    "askRaise": "בקש העלאה ל-{{wage}}$/שעה ({{cost}} שעות)",
+    "currentJob": "עבודה נוכחית ({{wage}}$/שעה)",
+    "apply": "הגש מועמדות ({{cost}} שעות)"
+  },
+  "workStation": {
+    "title": "העבודה שלך: {{jobTitle}}",
+    "workShift": "משמרת עבודה (עד {{cost}} שעות)"
+  },
+  "storeFront": {
+    "title": "חנות"
+  },
+  "homeRelax": {
+    "title": "אין כמו בבית",
+    "desc": "מנוחה משחזרת אושר. עולה {{cost}} שעות.",
+    "button": "לנוח ({{cost}} שעות)"
+  },
+  "rentOffice": {
+    "title": "משרד שכירות",
+    "current": "מגורים נוכחיים",
+    "homeless": "חסר בית",
+    "closed": "משרד השכירות סגור. חזור במהלך השבוע הרביעי כדי לשלם שכר דירה או לעבור לדירה חדשה.",
+    "rentDue": "שכר דירה לתשלום: {{amount}}$",
+    "payRentDebt": "שלם חוב שכר דירה",
+    "paidUntil": "שכר דירה שולם עד: שבוע {{week}}",
+    "weeksPaid": "(יש לך {{count}} שבועות של שכר דירה ששולם)",
+    "payAdvance": "שלם שכר דירה מראש ({{cost}}$ / חודש)",
+    "rentIsDue": "שכר הדירה לתשלום!",
+    "canAskExtension": "אתה יכול לבקש ארכה של שבוע אחד.",
+    "askExtension": "בקש ארכה",
+    "extensionGranted": "ארכה אושרה",
+    "dueByEnd": "שכר הדירה חייב בתשלום עד סוף השבוע.",
+    "extensionDenied": "ארכה נדחתה",
+    "mustPay": "פקיד השכירות דחה את בקשתך. עליך לשלם עד סוף השבוע.",
+    "permanentlyDenied": "ארכות נדחו לצמיתות",
+    "neverAnother": "בגלל חובות עבר, לעולם לא תוכל לקבל ארכה נוספת לשכר הדירה.",
+    "availableApts": "דירות זמינות",
+    "moveIn": "עבור דירה"
+  },
+  "inventoryModal": {
+    "title": "המלאי שלך",
+    "food": "אוכל",
+    "freshFood": "אוכל טרי",
+    "fastFood": "מזון מהיר",
+    "units": "יחידות",
+    "meals": "ארוחות",
+    "clothes": "בגדים",
+    "wearing": "לובש:",
+    "none": "כלום",
+    "casual": "יומיומי",
+    "dress": "אלגנטי",
+    "business": "עסקי",
+    "casualClothes": "בגדים יומיומיים",
+    "dressClothes": "בגדים אלגנטיים",
+    "businessSuit": "חליפת עסקים",
+    "weeksLeft": "נותרו {{count}} שבועות",
+    "appliances": "מכשירי חשמל",
+    "books": "ספרים",
+    "entertainment": "בידור",
+    "baseballTickets": "כרטיסים לבייסבול",
+    "theatreTickets": "כרטיסים לתיאטרון",
+    "concertTickets": "כרטיסים להופעה",
+    "lotteryTickets": "כרטיסי הגרלה"
+  },
+  "newspaper": {
+    "title": "חדשות היום",
+    "close": "סגור עיתון"
+  }
+}

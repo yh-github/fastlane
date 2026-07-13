@@ -1,5 +1,6 @@
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { GameRules, PlayerState } from '../engine/gameState';
+import { useTranslation } from 'react-i18next';
 import { 
   JobBoard, 
   StoreFront, 
@@ -21,8 +22,8 @@ interface BuildingModalProps {
   onAction: (actionPayload: any) => void;
   onClose: () => void;
 }
-
 export function BuildingModal({ player, campaign, currentBuildingId, turn, economicIndex, rules, onAction, onClose }: BuildingModalProps) {
+  const { t } = useTranslation();
   if (!player || !campaign || !currentBuildingId) return null;
 
   const building = campaign.buildings.find(b => b.id === currentBuildingId);
@@ -75,8 +76,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       <div className="building-modal__header">
         <div className="building-modal__face">{getFace(building.archetype)}</div>
         <div className="building-modal__title-group">
-          <h2>{building.name}</h2>
-          <p>{building.description}</p>
+          <h2>{t(`building.${building.id}`)}</h2>
+          <p>{t(`buildingDesc.${building.id}`, { defaultValue: building.description })}</p>
         </div>
       </div>
 
@@ -168,8 +169,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             />
           ) : (
             <div className="interaction-panel">
-              <h3>{building.name}</h3>
-              <p style={{ fontSize: '12px' }}>You don't live here.</p>
+              <h3>{t(`building.${building.id}`)}</h3>
+              <p style={{ fontSize: '12px' }}>{t('buildingModal.dontLiveHere', "You don't live here.")}</p>
             </div>
           );
         })()}

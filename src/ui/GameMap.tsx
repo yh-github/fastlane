@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { initMapRenderer, movePlayerTo } from '../graphics/mapRenderer';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { PlayerState } from '../engine/gameState';
+import { useTranslation } from 'react-i18next';
 
 interface GameMapProps {
   campaign: CampaignBundle | null;
@@ -10,6 +11,7 @@ interface GameMapProps {
 }
 
 export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick }) => {
+  const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const onNodeClickRef = useRef(onNodeClick);
@@ -24,10 +26,15 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick 
 
     let isMounted = true;
 
+    const translatedBuildings = campaign.buildings.map(b => ({
+      ...b,
+      name: t(`building.${b.id}`, { defaultValue: b.name })
+    }));
+
     initMapRenderer({
       container: containerRef.current,
       mapData: campaign.map,
-      buildings: campaign.buildings,
+      buildings: translatedBuildings,
       assetBasePath: `/campaigns/${campaign.config.name}`,
       onNodeClick: (nodeId) => {
         onNodeClickRef.current(nodeId);
@@ -48,7 +55,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick 
         cleanupRef.current = null;
       }
     };
-  }, [campaign]);
+  }, [campaign, i18n.language]);
 
   useEffect(() => {
     if (isMapReady && player && campaign) {

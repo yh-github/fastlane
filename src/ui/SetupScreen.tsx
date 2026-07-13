@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PlayerConfig, GoalAllotment } from '../engine/gameState';
 
 interface SetupScreenProps {
@@ -6,6 +7,7 @@ interface SetupScreenProps {
 }
 
 export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
+  const { t } = useTranslation();
   const [players, setPlayers] = useState<PlayerConfig[]>([
     {
       name: 'Player 1',
@@ -54,21 +56,21 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
   return (
     <div className="fullscreen-overlay">
       <div className="setup-screen" style={{ maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
-        <h2>Game Setup</h2>
+        <h2>{t('setupScreen.title')}</h2>
         
         <div className="setup-players-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
           {players.map((player, index) => {
             return (
               <div key={`player-setup-${index}`} className="player-setup-card" style={{ background: 'var(--color-bg)', padding: '15px', borderRadius: '8px', border: '2px solid var(--color-border)', width: '320px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <h3>Player {index + 1}</h3>
+                  <h3>{t('setupScreen.playerX', { count: index + 1 })}</h3>
                   {players.length > 1 && (
                     <button onClick={() => removePlayer(index)} style={{ background: 'red', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>X</button>
                   )}
                 </div>
 
                 <div style={{ marginBottom: '10px' }}>
-                  <label>Name: </label>
+                  <label>{t('setupScreen.name')}</label>
                   <input 
                     type="text" 
                     value={player.name} 
@@ -84,27 +86,27 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
                       checked={player.isAi} 
                       onChange={(e) => updatePlayer(index, 'isAi', e.target.checked)} 
                     />
-                    Is AI (Jones)?
+                    {t('setupScreen.isAi')}
                   </label>
                 </div>
 
                 <div className="setup-screen__slider-group" style={{ marginTop: '10px' }}>
-                  <label><span>Wealth</span> <span>{player.goals.wealth}%</span></label>
+                  <label><span>{t('setupScreen.wealth')}</span> <span>{player.goals.wealth}%</span></label>
                   <input type="range" min="0" max="100" value={player.goals.wealth} onChange={(e) => updateGoal(index, 'wealth', parseInt(e.target.value))} />
                 </div>
                 
                 <div className="setup-screen__slider-group">
-                  <label><span>Happiness</span> <span>{player.goals.happiness}%</span></label>
+                  <label><span>{t('setupScreen.happiness')}</span> <span>{player.goals.happiness}%</span></label>
                   <input type="range" min="0" max="100" value={player.goals.happiness} onChange={(e) => updateGoal(index, 'happiness', parseInt(e.target.value))} />
                 </div>
                 
                 <div className="setup-screen__slider-group">
-                  <label><span>Education</span> <span>{player.goals.education}%</span></label>
+                  <label><span>{t('setupScreen.education')}</span> <span>{player.goals.education}%</span></label>
                   <input type="range" min="0" max="100" value={player.goals.education} onChange={(e) => updateGoal(index, 'education', parseInt(e.target.value))} />
                 </div>
                 
                 <div className="setup-screen__slider-group">
-                  <label><span>Career</span> <span>{player.goals.career}%</span></label>
+                  <label><span>{t('setupScreen.career')}</span> <span>{player.goals.career}%</span></label>
                   <input type="range" min="0" max="100" value={player.goals.career} onChange={(e) => updateGoal(index, 'career', parseInt(e.target.value))} />
                 </div>
               </div>
@@ -115,7 +117,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
           {players.length < 4 && (
             <button className="action-panel__btn" onClick={addPlayer} style={{ background: '#4CAF50' }}>
-              Add Player
+              {t('setupScreen.addPlayer')}
             </button>
           )}
           <button 
@@ -123,7 +125,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
             onClick={() => onConfirm(players)}
             disabled={!isAllValid}
           >
-            Start Life
+            {t('setupScreen.startLife')}
           </button>
         </div>
       </div>

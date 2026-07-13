@@ -214,3 +214,77 @@ Classes are taken at Hi-Tech U.
 - **Strategic Decision-Making:** Jones is programmed with knowledge of the game's core requirements. He understands which jobs he qualifies for based on his current stats, prioritizes working, and knows when to balance other activities (like buying food and paying rent).
 - **Survival Instincts:** The AI is designed to avoid losing; for example, Jones will not allow himself to starve if he can possibly avoid it.
 - **Difficulty:** Jones is known as a challenging, efficient opponent who manages his progression optimally to reach the win conditions quickly.
+
+## 11. Loans
+
+A **Loan** is a sum of money given to the player by the Bank, with the promise to pay it back (with interest) over time.
+
+To get a loan, the player must have at least a bit of personal wealth to back it up. Otherwise the request for a Loan can be refused by the Bank. The amount of money loaned to the player is also based on their personal wealth.
+
+Payments must be made regularly by the end of the Month, though players can pay in advance to push the deadline back further. A player may pay back their entire loan all at once, if they wish.
+
+Failure to pay on time results in a slight loss of Happiness, but the Bank will not attempt to collect forcibly. Instead, failing to pay one's loan debt only results in lower chance to get additional loans in the future.
+
+### Applying for a Loan
+
+To get a **Loan**, the player must visit the Bank and click "Apply for a Loan". Clicking this option advances the clock by 2 Hours. It does nothing if the player's Turn is already over.
+
+Once the button is clicked, the Bank has to decide whether to approve the loan. This is done by weighing two factors against each other: The player's **Liquidity** and their **Risk Factor** (both explained below).
+
+If a player's Liquidity is *less than or equal to* their Risk, or if the player is currently in Default on an existing loan, the loan will be rejected. This gives the player **-1 Happiness**.
+
+If a player's Liquidity is *greater than* their Risk, the loan will be approved. The player receives a certain amount of Cash immediately (see next chapter), as well as **+5 Happiness**. The first Loan Payment is set to be due at the start of the next Month.
+
+#### Liquidity
+
+**Liquidity** is a rough measurement of the player's capability to pay back a Loan, based on their current financial situation and estimated wealth.
+
+Liquidity is based entirely on the player's current Wage and their Liquid Assets. Therefore getting a better job, and/or accumulating more money, increase the chance to be approved for a loan.
+
+`Liquidity = Current Wage + (Liquid Assets / 1000)`
+
+#### Risk Factor
+
+**Risk** is a rough measurement of the player's unlikelihood to pay back a loan on time, as demonstrated by their past behavior with previous Loans.
+
+If the player has never taken a Loan before, or has paid back all previous loans without Defaulting, their Risk factor **is equal to 5**.
+
+If the player currently *has* a loan, or has Defaulted on a loan at any point in the game, the formula is more complicated:
+
+`Risk Factor = 5 + Times Defaulted so far + (Current Loan Debt / 100) + (1 if Current Debt > 0)`
+
+Thus, currently *having* a loan makes it less likely to get more loan money until the debt is fully paid; whereas the more times you Default on a Loan the harder to get loans in the future altogether.
+
+### Loan Size
+
+The amount of Loan money given to the player changes based on their current circumstances. It is equal to their **Liquidity** minus their **Risk Factor**, multiplied by 100.
+
+`Loan Size = $100 * (Liquidity - Risk)`
+
+The result is reported to the player before they apply for the Loan.
+
+### Loan Payments
+
+At any time, the player may go to the Bank to pay back part or all of their Loan Debt.
+
+To make a Loan Payment, the player must have at least $50 in Cash, or as much as is left in their Loan Debt (whichever is lower). Click the "Loan Payment" button to make the payment. You can do this even if the clock has already run out.
+
+Each click of the "Loan Payment" button removes $50 from the player's Cash. $45 are deducted from their Loan Debt, while $5 are paid to the Bank as an Interest Fee.
+
+If the player's current Loan Debt is smaller than $50, that entire amount will be paid and the Debt will be completely cleared. No Interest Fee is paid in this case.
+
+So long as the debt is *not* fully cleared, each Loan Payment pushes the deadline for the next loan payment forward by four Weeks (one Month). Therefore, the player can make multiple Loan Payments to push the deadline forward so they don't have to worry about going to the Bank any time soon.
+
+At the start of the player's Turn on the fourth Week of every Month, if the player has any Loan Debt remaining they receive a notice stating that their debt is "Payable". Failing to make at least one Loan Payment *by the end of that Turn* will result in the player Defaulting on their loan. This impacts their chance to get additional Loans in the future (see Risk Factor, above).
+
+### Loan Default
+
+If a player's loan payment is due (on the fourth Week of the Month) and they do not make any Loan Payments by the end of that same turn, they are said to have "**Defaulted**" on their Loan.
+
+Once a player is in Default, if they keep withholding payments to the Bank they'll receive a more urgent message on the fourth Week of the coming Month indicating that they are delinquent in their payments. This message comes with a penalty of **-1 Happiness**. The player will Default *again* if they do not make a payment by the end of that same turn.
+
+This situation continues until the player makes one Loan Payment *for each month they've missed*. If they make those payments, they are no longer considered to be in Default.
+
+If the player is *currently* in Default, any Loan applications will automatically be rejected by the bank.
+
+The game keeps track of the number of times a player has Defaulted since the start of the game. This counter never decreases. The number of times the player has Defaulted so far is taken into account as part of their Risk Factor. This makes it harder to get Loans in the future (even after the player has repaid all of their Debts), and reduces the amount of money the Bank is willing to pay out for each Loan, as explained in the previous chapters above.

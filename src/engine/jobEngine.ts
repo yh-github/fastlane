@@ -102,7 +102,7 @@ export interface WorkResult {
 }
 
 export function workShift(player: PlayerState, job: JobDef, shiftCost: number): WorkResult {
-  if (player.hoursRemaining < 1 || player.currentJobId !== job.id) {
+  if (player.hoursRemaining <= 0 || player.currentJobId !== job.id) {
     return { updated: player, wagesEarned: 0, success: false, message: "Cannot work right now." };
   }
 

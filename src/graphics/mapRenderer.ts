@@ -33,6 +33,8 @@ export interface PlayerPosition {
 // Keep references to movable sprites/graphics
 let app: Application | null = null;
 let playerToken: Graphics | null = null;
+let testMarker: HTMLDivElement | null = null;
+let activeInstanceId = 0;
 
 /**
  * Initialize the PixiJS renderer and load map assets.
@@ -43,8 +45,8 @@ let playerToken: Graphics | null = null;
 export async function initMapRenderer(
   config: MapRendererConfig
 ): Promise<() => void> {
+  const instanceId = ++activeInstanceId;
   const localApp = new Application();
-  app = localApp;
   
   await localApp.init({
     width: config.mapData.width,
@@ -54,8 +56,20 @@ export async function initMapRenderer(
   });
 
   if (!localApp.renderer) {
+    localApp.destroy(true);
     return () => {};
   }
+
+  if (instanceId !== activeInstanceId) {
+    localApp.destroy(true, { children: true, texture: true });
+    return () => {};
+  }
+
+  if (app) {
+    app.destroy(true, { children: true, texture: true });
+  }
+
+  app = localApp;
   config.container.appendChild(localApp.canvas);
 
   const mapContainer = new Container();
@@ -149,15 +163,31 @@ export async function initMapRenderer(
   playerToken.visible = false;
   mapContainer.addChild(playerToken);
 
+  // Sync with a DOM element for testability
+  if (testMarker) {
+    testMarker.remove();
+  }
+  testMarker = document.createElement('div');
+  testMarker.dataset.testid = 'player-character';
+  testMarker.style.display = 'none';
+  testMarker.dataset.visible = 'false';
+  config.container.appendChild(testMarker);
+
   console.log('[MapRenderer] Initialized');
 
   return () => {
-    if (localApp) {
-      localApp.destroy(true, { children: true, texture: true });
-      if (app === localApp) app = null;
-      if (playerToken === localPlayerToken) playerToken = null;
+    if (instanceId === activeInstanceId) {
+      if (app) {
+        app.destroy(true, { children: true, texture: true });
+        app = null;
+        playerToken = null;
+      }
+      if (testMarker) {
+        testMarker.remove();
+        testMarker = null;
+      }
+      console.log('[MapRenderer] Destroyed');
     }
-    console.log('[MapRenderer] Destroyed');
   };
 }
 
@@ -169,6 +199,12 @@ export function movePlayerTo(position: PlayerPosition): void {
     playerToken.x = position.x;
     playerToken.y = position.y;
     playerToken.visible = true;
+
+    if (testMarker) {
+      testMarker.dataset.x = position.x.toString();
+      testMarker.dataset.y = position.y.toString();
+      testMarker.dataset.visible = 'true';
+    }
   }
 }
 
@@ -205,6 +241,11 @@ export async function animatePlayerPath(path: PlayerPosition[], speedMs: number 
         playerToken!.x = startX + (targetX - startX) * progress;
         playerToken!.y = startY + (targetY - startY) * progress;
         
+        if (testMarker) {
+          testMarker.dataset.x = playerToken!.x.toString();
+          testMarker.dataset.y = playerToken!.y.toString();
+        }
+
         if (progress < 1) {
           requestAnimationFrame(step);
         } else {
