@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { GameMap } from './ui/GameMap';
 
 // Mock PixiJS entirely so mapRenderer can initialize headless
