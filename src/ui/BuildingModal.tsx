@@ -44,8 +44,17 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
   // Initialize greeting
   useEffect(() => {
     if (!building) return;
-    setClerkMessage(getRandomMessage(`clerkDialogs.${building.id}.greeting`, t('clerkDialogs.default.greeting')));
-  }, [building, t, getRandomMessage]);
+    const isWeek4 = turn % 4 === 0;
+    const rentDue = player?.rentPaidUntilWeek !== undefined && player.rentPaidUntilWeek <= turn + 1;
+    const isRentOfficeOpen = isWeek4 || rentDue || !!player?.turnFlags?.rentPaidThisTurn;
+    const shouldShow = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
+
+    if (shouldShow) {
+      setClerkMessage(getRandomMessage(`clerkDialogs.${building.id}.greeting`, t('clerkDialogs.default.greeting')));
+    } else {
+      setClerkMessage('');
+    }
+  }, [building, t, getRandomMessage, turn, player?.rentPaidUntilWeek, player?.turnFlags?.rentPaidThisTurn]);
 
   // Handle global click to close speech bubble
   useEffect(() => {
@@ -213,6 +222,11 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     }
   };
 
+  const isWeek4 = turn % 4 === 0;
+  const rentDue = player.rentPaidUntilWeek <= turn + 1;
+  const isRentOfficeOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn;
+  const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
+
   return (
     <div className="building-modal">
       <button className="building-modal__close" onClick={onClose}>&times;</button>
@@ -220,7 +234,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       <div className="building-modal__header">
         <div className="building-modal__face" style={{ position: 'relative' }}>
           {getFace(building.archetype)}
-          {clerkMessage && <SpeechBubble message={clerkMessage} />}
+          {clerkMessage && shouldShowSpeechBubble && <SpeechBubble message={clerkMessage} />}
         </div>
         <div className="building-modal__title-group">
           <h2>{t(`building.${building.id}`, { defaultValue: building.name })}</h2>
