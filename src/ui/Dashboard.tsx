@@ -29,10 +29,11 @@ export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInv
     <header className="dashboard">
       <div className="dashboard-top-row">
         <div className="dashboard-player-info">
-          <h2>{player ? player.name : ''} - {t('dashboard.turn', { turn })}</h2>
-          {player?.isAi && <span className="ai-badge">{t('dashboard.aiBadge')}</span>}
+          <h2>{player ? player.name : ''} - {t('dashboard.turn', { turn, defaultValue: 'Week {{turn}}' })}</h2>
+          {player?.isAi && <span className="ai-badge">{t('dashboard.aiBadge', { defaultValue: 'AI' })}</span>}
+          {player?.inventory.selectedClothes === 'none' && <span style={{ background: 'red', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '8px', fontWeight: 'bold' }}>⚠️ NAKED</span>}
           <div className="dashboard-stat economy">
-            <span>{t('dashboard.economy', { index: economicIndex })}</span>
+            <span>{t('dashboard.economy', { index: economicIndex, defaultValue: 'Economy: {{index}}' })}</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -46,7 +47,7 @@ export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInv
             marginRight: '10px'
           }} />
           <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff', whiteSpace: 'nowrap' }}>
-            ⏳ {Number(player.hoursRemaining).toFixed(1)} / {hoursPerTurn}{t('dashboard.hrs')} {t('dashboard.left')}
+            ⏳ {Number(player.hoursRemaining).toFixed(1)} / {hoursPerTurn}{t('dashboard.hrs', { defaultValue: ' hrs' })} {t('dashboard.left', { defaultValue: 'left' })}
           </div>
         </div>
         <button 
@@ -58,16 +59,18 @@ export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInv
             fontWeight: 'bold', cursor: 'pointer'
           }}
         >
-          📦 {t('dashboard.inventory')}
+          📦 {t('dashboard.inventory', { defaultValue: 'Inventory' })}
         </button>
       </div>
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <StatBadge label={t('dashboard.money')} value={`$${player.money}`} icon="💰" id="stat-money" />
-        <StatBadge label={t('dashboard.happiness')} value={player.happiness} icon="😊" id="stat-happiness" />
-        <StatBadge label={t('dashboard.relaxation')} value={player.relaxation} icon="🧘" id="stat-relaxation" />
-        <StatBadge label={t('dashboard.education')} value={education} icon="🎓" />
-        <StatBadge label={t('dashboard.career')} value={career} icon="💼" />
-        <StatBadge label={t('dashboard.wealth')} value={wealth} icon="🏦" />
+        <StatBadge label={t('dashboard.money', { defaultValue: 'Money' })} value={`$${player.money}`} icon="💰" id="stat-money" />
+        <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" />
+        <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={player.dependability} icon="🤝" id="stat-dependability" />
+        <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={player.experience} icon="👌" id="stat-experience" />
+        <StatBadge label={t('dashboard.happiness', { defaultValue: 'Happiness' })} value={player.happiness} icon="😊" id="stat-happiness" />
+        <StatBadge label={t('dashboard.education', { defaultValue: 'Education' })} value={education} icon="🎓" />
+        <StatBadge label={t('dashboard.career', { defaultValue: 'Career' })} value={career} icon="💼" />
+        <StatBadge label={t('dashboard.wealth', { defaultValue: 'Wealth' })} value={wealth} icon="🤑" />
       </div>
     </header>
   );
