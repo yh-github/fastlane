@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { GameRules, PlayerState } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
@@ -22,18 +22,55 @@ interface BuildingModalProps {
   economicIndex: number;
   rules: GameRules;
   pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[];
-  onAction: (actionPayload: any) => void;
+  onAction: (actionPayload: any) => Promise<any>;
   onClose: () => void;
 }
 export function BuildingModal({ player, campaign, currentBuildingId, turn, economicIndex, rules, pawnShopItemsForSale, onAction, onClose }: BuildingModalProps) {
   const { t } = useTranslation();
   const [clerkMessage, setClerkMessage] = useState<string>('');
-  const [pendingExtension, setPendingExtension] = useState(false);
-  
-  if (!player || !campaign || !currentBuildingId) return null;
+  const justUpdatedMessageRef = useRef(false);
 
-  const building = campaign.buildings.find(b => b.id === currentBuildingId);
-  if (!building) return null;
+  // Helper to pick random string if translation is an array
+  const getRandomMessage = useCallback((key: string, defaultValue: string) => {
+    const messages = t(key, { returnObjects: true, defaultValue });
+    if (Array.isArray(messages)) {
+      return messages[Math.floor(Math.random() * messages.length)];
+    }
+    return messages as unknown as string;
+  }, [t]);
+
+  const building = campaign?.buildings.find(b => b.id === currentBuildingId) || null;
+
+  // Initialize greeting
+  useEffect(() => {
+    if (!building) return;
+    setClerkMessage(getRandomMessage(`clerkDialogs.${building.id}.greeting`, t('clerkDialogs.default.greeting')));
+  }, [building, t, getRandomMessage]);
+
+  // Handle global click to close speech bubble
+  useEffect(() => {
+    if (!clerkMessage) return;
+
+    const handleGlobalClick = () => {
+      if (justUpdatedMessageRef.current) {
+        justUpdatedMessageRef.current = false;
+        return;
+      }
+      setClerkMessage('');
+    };
+
+    // Tiny delay to prevent the click that triggered the speech bubble from instantly closing it
+    const timeoutId = setTimeout(() => {
+      window.addEventListener('click', handleGlobalClick);
+    }, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('click', handleGlobalClick);
+    };
+  }, [clerkMessage]);
+
+  if (!player || !campaign || !currentBuildingId || !building) return null;
 
   // Check if the player's current job is at this building
   const playerJobHere = player.currentJobId 
@@ -59,89 +96,105 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     itemsHere = shuffled.slice(0, 6);
   }
 
-  // Helper to pick random string if translation is an array
-  const getRandomMessage = (key: string, defaultValue: string) => {
-    const messages = t(key, { returnObjects: true, defaultValue });
-    if (Array.isArray(messages)) {
-      return messages[Math.floor(Math.random() * messages.length)];
-    }
-    return messages as unknown as string;
-  };
 
-  // Initialize greeting
-  useEffect(() => {
-    setClerkMessage(getRandomMessage(`clerkDialogs.${building.id}.greeting`, t('clerkDialogs.default.greeting')));
-    setPendingExtension(false);
-  }, [building.id, t]);
-
-  // Show extension result quote once engine resolves ask_rent_extension
-  useEffect(() => {
-    if (!pendingExtension || !player) return;
-    if (player.turnFlags?.askedForExtension) {
-      // Extension was processed — show approved or denied quote
-      const approved = player.rentExtensionActive;
-      const key = approved ? 'extensionApproved' : 'extensionDenied';
-      setClerkMessage(getRandomMessage(`clerkDialogs.${building.id}.${key}`, approved ? 'Sure, you can pay next week.' : 'Sorry, you must pay now.'));
-      setPendingExtension(false);
-    }
-  }, [player?.turnFlags?.askedForExtension, pendingExtension]);
-
-  const handleActionIntercept = (payload: any) => {
+  const handleActionIntercept = async (payload: any) => {
+    const actionLog = await onAction(payload);
     let nextMsg = '';
-    
-    if (payload.type === 'buy') {
-      const item = campaign.items.find(i => i.id === payload.itemId);
-      if (item && player.money >= (item.basePrice || 0)) {
-         nextMsg = getRandomMessage(`clerkDialogs.${building.id}.buySuccess`, t('clerkDialogs.default.buySuccess'));
-      } else {
-         nextMsg = getRandomMessage(`clerkDialogs.${building.id}.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
-      }
-    } else if (payload.type === 'pawn_item') {
-      nextMsg = getRandomMessage(`clerkDialogs.${building.id}.pawnSuccess`, t('clerkDialogs.default.buySuccess'));
-    } else if (payload.type === 'redeem_item' || payload.type === 'buy_pawn_item') {
-      if (player.money >= payload.cost) {
-        nextMsg = getRandomMessage(`clerkDialogs.${building.id}.redeemSuccess`, t('clerkDialogs.default.buySuccess'));
-      } else {
-        nextMsg = getRandomMessage(`clerkDialogs.${building.id}.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
-      }
-    } else if (payload.type === 'ask_rent_extension') {
-      // The engine decides approval/denial after this action fires.
-      // Set a pending flag so our useEffect can show the result quote once state updates.
-      setPendingExtension(true);
-    } else if (payload.type === 'move_apartment') {
-      // Pick quote pool based on the apartment type being moved into
-      const isLowCost = payload.housingId === 'low_cost';
-      const moveKey = isLowCost ? 'moveInLowCost' : 'moveInSecurity';
-      nextMsg = getRandomMessage(`clerkDialogs.${building.id}.${moveKey}`, t('clerkDialogs.default.buySuccess'));
-    } else if (payload.type === 'bank_transaction') {
-      if (payload.amount < 0) {
-        nextMsg = getRandomMessage(`clerkDialogs.${building.id}.withdrawSuccess`, "There is always a penalty for early withdrawal.");
-      } else {
-        if (player.money >= payload.amount) {
+
+    if (actionLog) {
+      const success = !actionLog.key.includes('.error') && 
+                      actionLog.key !== 'action.loan.refused' && 
+                      actionLog.key !== 'action.rent.extensionDenied';
+
+      if (payload.type === 'buy') {
+        if (success) {
           nextMsg = getRandomMessage(`clerkDialogs.${building.id}.buySuccess`, t('clerkDialogs.default.buySuccess'));
         } else {
           nextMsg = getRandomMessage(`clerkDialogs.${building.id}.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
         }
-      }
-    } else if (payload.type === 'rent_transaction' || payload.type === 'pay_rent_advance' || payload.type === 'enroll' || payload.type === 'take_loan' || payload.type === 'pay_loan') {
-      let cost = payload.amount || payload.cost || 0;
-      if (payload.type === 'enroll') {
-        const deg = campaign.education.find(d => d.id === payload.degreeId);
-        cost = deg ? deg.baseTuitionFee : 0; // ignoring economy index for rough estimate
-      }
-      
-      if (player.money >= cost) {
-        nextMsg = getRandomMessage(`clerkDialogs.${building.id}.buySuccess`, t('clerkDialogs.default.buySuccess'));
-      } else {
-        nextMsg = getRandomMessage(`clerkDialogs.${building.id}.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
+      } else if (payload.type === 'pawn_item') {
+        if (success) {
+          nextMsg = getRandomMessage(`clerkDialogs.${building.id}.pawnSuccess`, t('clerkDialogs.default.buySuccess'));
+        } else {
+          nextMsg = t(actionLog.key, { defaultValue: 'Pawn failed.' });
+        }
+      } else if (payload.type === 'redeem_item' || payload.type === 'buy_pawn_item') {
+        if (success) {
+          nextMsg = getRandomMessage(`clerkDialogs.${building.id}.redeemSuccess`, t('clerkDialogs.default.buySuccess'));
+        } else {
+          nextMsg = getRandomMessage(`clerkDialogs.${building.id}.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
+        }
+      } else if (payload.type === 'apply') {
+        if (actionLog.key === 'action.job.gotJob') {
+          nextMsg = getRandomMessage(`clerkDialogs.employment_office.buySuccess`, t('clerkDialogs.employment_office.buySuccess'));
+        } else if (actionLog.key === 'action.job.rejected') {
+          nextMsg = actionLog.params?.reasons || t('jobBoard.missingReq');
+        } else if (actionLog.key === 'action.job.noOpenings') {
+          nextMsg = t('action.job.noOpenings', { defaultValue: 'No openings.' });
+        } else if (actionLog.key === 'action.job.raiseSuccess') {
+          nextMsg = t('action.job.raiseSuccess');
+        } else if (actionLog.key === 'action.job.raiseDenied') {
+          nextMsg = t('action.job.raiseDenied');
+        } else if (actionLog.key === 'action.job.raiseWaste') {
+          nextMsg = t('action.job.raiseWaste');
+        }
+      } else if (payload.type === 'ask_rent_extension') {
+        if (actionLog.key === 'action.rent.extensionApproved') {
+          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionApproved`, 'Sure, you can pay next week.');
+        } else {
+          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionDenied`, 'Sorry, your rent must be paid now.');
+        }
+      } else if (payload.type === 'move_apartment') {
+        if (success) {
+          const isLowCost = payload.housingId === 'low_cost' || payload.housingId === 'low_cost_housing';
+          const moveKey = isLowCost ? 'moveInLowCost' : 'moveInSecurity';
+          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.${moveKey}`, 'Welcome.');
+        } else {
+          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
+        }
+      } else if (payload.type === 'bank_transaction') {
+        if (success) {
+          if (actionLog.key === 'action.bank.withdraw') {
+            nextMsg = getRandomMessage(`clerkDialogs.bank.withdrawSuccess`, 'There is always a penalty for early withdrawal.');
+          } else {
+            nextMsg = getRandomMessage(`clerkDialogs.bank.buySuccess`, 'Transaction complete.');
+          }
+        } else {
+          nextMsg = getRandomMessage(`clerkDialogs.bank.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
+        }
+      } else if (payload.type === 'take_loan') {
+        if (actionLog.key === 'action.loan.approved') {
+          nextMsg = t('action.loan.approved', { loanSize: actionLog.params?.loanSize });
+        } else {
+          nextMsg = t('action.loan.refused');
+        }
+      } else if (payload.type === 'pay_loan') {
+        if (actionLog.key === 'action.loan.paidOff') {
+          nextMsg = t('action.loan.paidOff', { amount: actionLog.params?.amount });
+        } else if (actionLog.key === 'action.loan.paidInstallment') {
+          nextMsg = t('action.loan.paidInstallment', { payment: actionLog.params?.payment });
+        } else {
+          nextMsg = getRandomMessage(`clerkDialogs.bank.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
+        }
+      } else if (payload.type === 'rent_transaction' || payload.type === 'pay_rent_advance') {
+        if (success) {
+          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.buySuccess`, t('clerkDialogs.default.buySuccess'));
+        } else {
+          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
+        }
+      } else if (payload.type === 'enroll') {
+        if (success) {
+          nextMsg = getRandomMessage(`clerkDialogs.university.buySuccess`, 'You are now enrolled.');
+        } else {
+          nextMsg = getRandomMessage(`clerkDialogs.university.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
+        }
       }
     }
 
     if (nextMsg) {
-       setClerkMessage(nextMsg);
+      justUpdatedMessageRef.current = true;
+      setClerkMessage(nextMsg);
     }
-    
-    onAction(payload);
   };
 
   const getFace = (archetype: string) => {

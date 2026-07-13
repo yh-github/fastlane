@@ -223,6 +223,8 @@ export function useGameEngine(
       return;
     }
 
+    let resultActionLog: GameEvent | undefined = undefined;
+
     setGameState(prevState => {
       if (!prevState) return prevState;
 
@@ -242,6 +244,8 @@ export function useGameEngine(
           state: prevState
         }
       );
+
+      resultActionLog = actionLog;
 
       // UI Side Effects
       if (payload.type === 'buy' && payload.itemId === 'newspaper') {
@@ -283,6 +287,7 @@ export function useGameEngine(
       return newState;
     });
 
+    return resultActionLog;
     // We intentionally do NOT auto-end the turn when hours drop to 0.
     // The player may still perform 0-cost actions (like buying items) while in the building.
     // Their turn will end when they attempt to move (leave the location).
