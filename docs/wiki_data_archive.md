@@ -288,3 +288,983 @@ This situation continues until the player makes one Loan Payment *for each month
 If the player is *currently* in Default, any Loan applications will automatically be rejected by the bank.
 
 The game keeps track of the number of times a player has Defaulted since the start of the game. This counter never decreases. The number of times the player has Defaulted so far is taken into account as part of their Risk Factor. This makes it harder to get Loans in the future (even after the player has repaid all of their Debts), and reduces the amount of money the Bank is willing to pay out for each Loan, as explained in the previous chapters above.
+
+## 12. Career Goal
+
+The **Career Goal** is one of four Goals a player must meet in order to win a game of Jones in the Fast Lane.
+
+The precise goal to fulfill is determined at the beginning of the game, separately for each player. Its range is between 10 and 100.
+
+Fulfilling a player's Career Goal requires them to increase their Career Stat, which is directly proportional to the player's Dependibility. This stat is then compared to their Career Goal to determine whether they've fulfilled it.
+
+Dependibility is increased by Working, but is limited by several factors. The limits must be increased to allow Dependibility to increase as needed for the Career Stat.
+
+Since Dependibility decreases each Turn, it is possible to "unfulfill" the Career Goal after it had already been fulfilled.
+
+### Career Stat
+
+At the start of the game, each player's Career Stat is equal to 0. It will remain 0 so long as the player does not have a Job. If the player ever loses their job, the Career Stat gets temporarily set to 0 until they can find a new Job.
+
+Once the player acquires a Job, their Career Stat is immediately set to `1.25 * Dependibility`, and will continue tracking the Dependibility stat this way as long as the player remains employed.
+
+As such, for a player to get 100 in their Career Stat, they would need to have 80 Dependibility.
+
+Note that Dependibility is limited according to the parameters of the player's current Job. Only high-paying jobs allow Dependibility to increase to high levels. On the other hand, Degrees help push the limit higher than the job itself would allow.
+
+## 13. Education Goal
+
+The **Education Goal** is one of four Goals a player must meet in order to win a game of Jones in the Fast Lane.
+
+The precise goal to fulfill is determined at the beginning of the game, separately for each player. Its range is between 10 and 100.
+
+Fulfilling a player's Education Goal requires them to earn Degrees at Hi-Tech U. Each Degree adds 9 points to their Education Stat. This stat is then compared to their Education Goal to determine whether they've fulfilled it.
+
+Since the number of Degrees a player owns cannot decrease during the game, once the Education Goal is fulfilled it will remain fulfilled.
+
+### Education Stat
+
+At the start of the game, each player's Education Stat is equal to 1.
+
+A player's current Education Stat is recalculated each time they earn a new Degree at Hi-Tech U by completing a course.
+
+Each Degree acquired adds exactly 9 points to the Education Stat.
+
+With exactly 11 Degrees available in the game, the maximum achievable Education Stat is 1 + (11*9) = 100.
+
+This Stat is then compared to the Education Goal to determine whether the player has accomplished that goal. For example, if the player has an Education Goal of 50 (the default), they need to earn at least 50 Education Stat points to achieve it (by completing at least 6 Degrees).
+
+## 14. Wealth Goal
+
+The **Wealth Goal** is one of four Goals a player must meet in order to win a game of Jones in the Fast Lane.
+
+The precise goal to fulfill is determined at the beginning of the game, separately for each player. Its range is between 10 and 100.
+
+Fulfilling a player's Wealth Goal is a simply function of accumulating money. To count towards the Wealth Goal, the money must be held in Cash, in the Bank, or in Stocks.
+
+### Liquid Assets
+
+To measure a player's progress towards fulfilling their Wealth Goal, the game calculates and tracks a special hidden Stat called "Liquid Assets".
+
+The Liquid Assets Stat is equal to the sum of all of the following:
+
+* All Cash currently in the player's wallet.
+* All money currently deposited in the player's Bank account.
+* The current total value of all Stocks owned by the player, based on their price this Turn.
+
+This sum is recalculated constantly as the player's assets fluctuate, but the only calculation that really matters happens at the start of the player's turn, just before the game checks whether they've won.
+
+Each $100 the player owns in Liquid Assets is worth 1 point towards their Wealth Goal. Thus, a player needs exactly $10,000 in Liquid Assets to fulfill a 100-point Wealth Goal.
+
+Note that the Liquid Assets formula **completely ignores all Items owned by the player**, including even expensive Durables like the Computer. Thus, purchasing Items actually *decreases* the player's advancement towards the Wealth goal, since it spends liquid money on assets that don't count. This can be confusing, since the Liquid Assets stat is *not* displayed in the player's Statistics page, but "Net Worth" *is* (which does take Items into account).
+
+This also means that owning multiple Durables of the same type (e.g. two Refrigerators) doesn't help the player *at all*, and is actually a detriment to their progress towards the Wealth Goal!
+
+A '''Job''' is the permission to [[#Working|Work]] at a specific [[Workplace]] and receive a specific hourly [[Wage]]. Each Workplace in the game offers 2 to 9 different Jobs, usually at different Wages.
+
+Players may apply for Jobs at the [[Employment Office]]. Each Job has three minimum requirements ([[Experience]], [[Dependibility]] and [[Degrees|Education]]) that must be met in order to be hired for that Job.
+
+Pressing the "Work" button at a player's Workplace causes the player to spend several [[Hour]]s of their time in exchange for a proportional amount of [[Cash]], based on their current Wage.
+
+Certain events can cause players to lose their Jobs or get a Wage cut. Players can also ask for a [[Raise]] at the Employment Office as the [[Economy]] improves. 
+
+Players can't work at their Jobs if they don't own the required [[Uniform]] (or better).
+
+Players can only achieve their [[Career Goal]] by getting a sufficiently high-paying Job.
+
+== List of Jobs ==
+
+See [[List of Jobs]].
+
+== Getting a Job ==
+
+At the start of the game, all players are unemployed (they have no job). In order to work and make money, each player must apply for a Job.
+
+Jobs are acquired at the [[Employment Office]]. Players may apply for a new job at any time before the end of their turn.
+
+To get a new Job, the player must qualify for that job. Each job has three requirements:
+
+* '''[[Experience]]:''' Gained by [[#Working|Working]], but there is a limit to how much Experience a player can get at any Job; Better jobs allow accumulating more Experience.
+* '''[[Dependibility]]:''' Gained by [[#Working|Working]], but there is a limit to how much Dependibility a player can get at any Job; Better jobs allow accumulating more Dependibility. This stat '''gradually decreases every [[Week]]'''.
+* '''[[Degrees|Education]]:''' Gained by [[Hi-Tech U#Graduting|Graduating]] from courses at [[Hi-Tech U]]. Some Jobs have no Education requirements, but many Jobs require the player to hold one or two ''specific'' [[Degree]]s.
+
+Additionally, there is a luck-based random factor that may prevent a player from getting a ''specific'' job until the end of their current turn.
+
+If a player manages to get a new Job, they can immediately start Working at their new [[Workplace]].
+
+== Working ==
+
+[[File:Item WorkClock Animated.gif|thumb|The Work Clock appears each time the "Work" button is pressed.]]
+Whenever the player is at their current [[Workplace]], a button labeled "Work" appears at the bottom left of the center menu.
+
+Clicking this button attempts to trigger a "Work Session". If successful, the player will spend 6 [[Hour]]s working, and will make an amount of [[Cash]] equivalent to 8 times their [[Wage]].
+
+If the player has fewer than 6 Hours remaining on the clock when clicking the "Work" button, they will receive less payment relative to how many Hours are left.
+
+Players are not allowed to Work if their [[Turn]] is over. Players also can't work if they aren't wearing the [[Uniform]] required by their job.
+
+Should the player lack sufficient [[Dependibility]] when attempting to Work, they may get [[#Getting Fired|Fired]] from their Job. This does not prevent them from getting the same Job again later, but the low Dependibility has to be rectified first.
+
+If the player is in [[Rent Debt]], their income will be [[Garnishment|Garnished]] when they Work - taking half of the earned money to pay off part of the Debt, plus $2 as an Interest Fee.
+
+Working increases the player's [[Dependibility]] and [[Experience]], as long as these stats have not yet reached their maximums. The maximums are different for each Job, depending primarily on the Job's requirements for these two stats.
+
+== Wages ==
+
+When a player is hired for a new Job, their [[Wage]] is set to the value listed at the [[Employment Office]].
+
+The amount of money a player earns for a full 6 [[Hour]]s of [[#Working|Work]] is equal to exactly '''8 times their current [[Wage]]'''.
+
+Working when there are fewer than 6 hours left on the clock reduces the earnings proportionally:
+
+<math>Money \ Earned = {Current \ Wage \times 8 \times Hours \ Remaining \over 6}</math>
+
+Different Jobs have a different "Base Wage". This value determines which jobs are more lucrative than others. However, the actual Wage for each Job is influenced by the [[Economy]], and will fluctuate up and down during the game.
+
+The player normally keeps their original wage. Only specific player actions (like changing Jobs or [[Employment Office#Asking for a Raise|Asking for a Raise]]) or major [[Market Crash]]es can causes it to change.
+
+== Losing a Job ==
+
+There are two cases in which players can lose their current Job:
+
+[[File:Notice_Fired.png|thumb|right|Notice received when fired due to a [[Market Crash]].]]
+# '''Insufficient [[Dependibility]].''' This occurs if the player's Dependibility drops 5 points below the [[Required Dependibility]] for their current Job. This happens if the player has not gone to work for a while, since Dependibility increases when Working but decreases constantly every [[Week]]. Earning [[Degrees|University Degrees]] helps decrease the minimum required Dependibility for this calculation.
+# '''A severe [[Market Crash]] event'''. This may occur at random at the start of any player's [[Turn]]. If this occurs, each player has a chance to lose their Job instantly (even if it happens on another player's turn). The worse the Crash, the higher the chance (up to 100% chance in the worst type of Crash).
+
+In both cases, the player is allowed to get another Job immediately. Depending on various conditions, they may or may not be able to get the same Job they'd just lost. The only penalty for losing a Job is a loss of [[Happiness]]; Getting fired does not negatively affect future job applications.
+
+== Unemployment ==
+
+Players are allowed to remain unemployed if they don't currently need a job - e.g. when they have plenty of [[Cash]] and just want to spend more time [[Relaxation|Relaxing]] or [[Studying]].
+
+However, in order to fulfill one's [[Career Goal]], no matter how high it is, the player must have a job. This is because progress on the Career Goal is set to 0 while the player is unemployed, even if their [[Dependibility]] is currently sky-high. In such a case, the player may simply take the [[Cook]] job if they don't want to bother looking for an actual job.
+
+Being unemployed also prevents the player from getting a Bank Loan.
+
+Note that there is no unemployment insurance in the game. The only ways to make money other than working a Job are to play the Stock Market or the Lottery, both of which are very risky.
+
+## 15. Pawn Shop
+
+The **Pawn Shop** is a Location where players can pawn their Durables, redeem them, and buy other players' pawned items that have been put up for sale.
+
+Pawning an item gives the player a small amount of money - around 40% of the item's original purchase price.
+
+For the next few Weeks, the player who pawned the item may Redeem it for 1/2 of its original purchase price.
+
+If the item is left at the Pawn Shop for more than a few Weeks, it goes up for sale and can now be bought by any player for 1/2 of its original price.
+
+### Opening Hours
+
+The **Pawn Shop** is open every Week. You may pawn, redeem, and purchase items even if the turn has ended while you're in the store.
+
+### Pawning
+
+"Pawning" is the act of putting an item up as collateral in exchange for a small loan. If the loan is not paid back in time, the Pawn Broker becomes the permanent owner of the item. This is a way to exchange Durables for some emergency money, and gives the player the opportunity to get their item back if they can return the money quickly enough.
+
+When selecting the "Pawn" option at the **Pawn Shop**, the game displays a list of each Durable in the player's inventory. Select a Durable from this list to offer it to the Pawn Shop.
+
+After selecting the item, the game displays the size of the loan that would be received in exchange for it. At this point the player can still refuse the offer, keeping their item.
+
+The base payment for any item is equal to **40% of its original purchase price**, adjusted for the current Economy.
+
+If the player agrees to the offer, they receive the stated amount of money in Cash. The item is removed from their inventory and passed to the Pawn Shop as collateral.
+
+Each time a player pawns an item, they receive **-1 Happiness**.
+
+#### Item Limits
+
+If any player has pawned an item, the Pawn Shop will refuse to accept any additional items of the same type. Even other players may not pawn the same type of item again. This persists until the item is Redeemed or sold.
+
+For example, if a player pawns a Microwave, no player may pawn another Microwave until that first Microwave is Redeemed or sold.
+
+Furthermore, the **Pawn Shop** can only hold 6 different items at a time, no matter who they belong to. Any attempt to pawn another item will be rejected. Pawning can only resume once at least one item has been Redeemed or sold.
+
+### Redeeming
+
+"Redeeming" is the act of returning the money accepted for a pawned item -- with interest -- in exchange for the pawned item.
+
+The Pawn Shop holds a pawned item in reserve for 3 Weeks, *including* the week on which it was pawned. Only the player who pawned the item may Redeem it during those three weeks.
+
+The cost to redeem an item is equal to **1/2 its original Purchase Price**, ***not* adjusted** by the Economy. This can occasionally be *less* than the money received for the item, if the Economy was worse when the item was purchased than when it was Pawned.
+
+At the end of the player's Turn on the third Week after Pawning an item, the item becomes the property of the Pawn Shop. It is put up for sale, and can now be purchased by any player.
+
+### Buying
+
+Once an item has become property of the Pawn Shop (see above), the shop immediately puts it up for sale. Any player may now purchase the item for **1/2 of its original purchase price**. This is typically a real bargain, easily rivaling prices for similar items at the Z-Mart.
+
+Buying items from the Pawn Shop does not give the player any Happiness points.
+
+Buying an Appliance from the Pawn Shop flags it as a "second hand Appliance", giving it a 1/36 chance to break down each turn - the same as Appliances purchased from Z-Mart. The item is flagged even if it was pawned just a few weeks earlier right after being purchased from Socket City.
+
+### Quotes (Pawn Broker NPC)
+
+#### Greetings
+* *Welcome to the Pawn Shop. Nothing is too hot for us to handle.*
+* *Welcome to the Pawn Shop. Down on your luck? Save the story for someone who hasn't heard it.*
+* *Welcome to the Pawn Shop. I may look mean on the outside, but I've got a heart of stone.*
+* *Welcome to the Pawn Shop. Why crawl to anybody else?*
+* *Welcome to the Pawn Shop, where we pardon your beg!*
+* *Welcome to the Pawn Shop. Your first stop on the way down the corporate ladder!*
+* *Welcome to the Pawn Shop. Where 'pawn' is just another word for nothing left to lose!*
+* *Welcome to the Pawn Shop. Please don't beg, it scuffs the carpet.*
+
+## Z-Mart
+The '''Z-Mart''' (or '''Discount Store''') is a [[Location]] where players can buy various [[Items]] at discount prices. It is also a [[Workplace]].
+
+At the start of each player's turn, 6 items are chosen at random to be put up for sale at the Z-Mart. The items are randomized again at the start of the next player's turn. Some of these items can be purchased at other stores, but will ''usually'' (not always!) be cheaper at the Z-Mart. Other items can only be purchased here.
+
+[[Appliances]] bought at Z-Mart have a higher likelyhood of requiring [[Repair]].
+
+Jobs at the Z-Mart are relatively easy to get, but the higher-paying jobs require proportionally better [[Uniform]]s.
+
+---
+
+## Monolith Burgers
+
+Monolith Burgers is a Location where players can buy Fast Food and Soft Drinks. It is also a Workplace.
+
+Fast Food is the only way to avoid Starvation until you can buy a Refrigerator, but must be bought every single Week. Soft Drinks only increase Happiness for money.
+
+Jobs at Monolith Burgers are very easy to get, especially the Cook job which will *never* reject an application. Only the highest-paying job here requires more than Casual Clothes as a Uniform.
+
+### Opening Hours
+Open every Week. You may purchase items even if your turn has ended while you're in the store.
+
+### Items
+
+Purchasing at least one Fast Food item prevents Starvation at the start of the player's next Turn. The more expensive Fast Food items also provide a small bonus to Happiness; Fast Food can only give one Happiness bonus per turn, no matter how many are purchased and from what types. All purchased Fast Food items disappear from the player's inventory at the start of their next Turn.
+
+The first Soft Drink purchased during the player's Turn provides a Happiness bonus. Additional purchases that same turn do nothing. Soft Drinks do not prevent Starvation.
+
+| Item | Type | Base Price | Happiness |
+|------|------|-----------|-----------|
+| Hamburgers | Fast Food | $79 | -- |
+| Cheeseburger | Fast Food | $89 | +1 |
+| Astro Chicken | Fast Food | $124 | +2 |
+| Fries | Fast Food | $65 | -- |
+| Shakes | Soft Drink | $102 | +2 |
+| Colas | Soft Drink | $69 | +1 |
+
+Actual prices are affected by the Economy.
+
+### Jobs
+
+| Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
+|-----|-----------|----------------|-------------------|--------------|---------|
+| Cook | $5 | 0 | 10 | -- | Casual Clothes |
+| Clerk | $6 | 10 | 20 | -- | Casual Clothes |
+| Assistant Manager | $7 | 20 | 30 | -- | Casual Clothes |
+| Manager | $8 | 30 | 40 | Junior College | Dress Clothes |
+
+Note: Cook is the only job in the game that *never* rejects an application.
+
+### Trivia
+The "Monolith Burgers" franchise was first featured in Sierra On-Line's *Space Quest III*, where it was a space diner serving bizarre alien meals. "Astro Chicken" was the name of an arcade game at that diner, central to that game's plot.
+
+---
+
+## Rent Office
+
+The **Rent Office** is a Location where players can go to pay their Rent and to switch Apartments. It is also a Workplace.
+
+Unless the player has a Job at the Rent Office, or has a Rent Extension, the Rent Office will only be open on the last Week of each Month.
+
+Jobs at the Rent Office pay fairly well, are relatively easy to get, and do not require a Uniform, making this a good workplace in the early game.
+
+### Opening Hours
+
+Unlike other Locations, the Rent Office will only be open if any of these three conditions is met:
+
+* The player has a Job at the Rent Office, in which case it will be open every Week.
+* The player has a Rent Extension at the Rent Office, in which case it will be open that week.
+* It is the last Week of the Month, in which case the Rent Office is open to everyone.
+
+If none of these conditions are met, the Rent Office will be closed and inaccessible.
+
+### Services
+
+**NOTE:** Rent Office services are only available on the last Week of the Month; or while on Rent Extension. If the *only* reason the Rent Office is open to you this Week is because you work there, no services will be available here.
+
+#### Pay Rent
+
+You may pay your Rent here. Doing so will erase your entire Rent Debt until the end of the current Month.
+
+If you have a standing Rent Debt, you can pay it all off by choosing this option.
+
+Clicking this option again will buy you an additional rent-free month. In other words, you will not have to visit the Rent Office for one additional month. You may do this as many times as you can afford.
+
+#### Ask for Rent Extension
+
+You may ask the Rent Officer for a Rent Extension. This gives you one extra Week to get the necessary money to pay your Rent.
+
+You may apply for a Rent Extension once a Turn. You may even do so on consecutive turns if you want, potentially extending your Rent payment by a whole month or more. However, the chance of your extension request being approved decreases each time you apply for one -- consecutively or otherwise.
+
+Failure to pay the Rent by the end of the Extension results in Rent Debt, the same as if you'd never asked for an Extension at all.
+
+If you ever have your Wages Garnished due to Rent Debt, any further attempts to get a Rent Extension **will automatically fail** until the end of the game.
+
+#### Pay Garnishment
+
+If you are in Rent Debt, but have managed to acquire the entire sum in Cash, you may pay off your entire debt instantly at the Rent Office.
+
+Generally speaking, there are two reasons to do this:
+* To avoid the interest fees you would otherwise pay during Garnishment.
+* To immediately stop your Rent Debt from negatively affecting your Liquid Assets. This is important when you are very close to your Wealth Goal, and are trying to reach it as soon as possible.
+
+#### Switch Apartments
+
+You may pay to rent an Apartment of a different type than the one you own. If you live at Low-Cost Apartments, you may switch to Le Security Apartments, and vice versa.
+
+Switching Apartments requires you to pay one month's worth of Rent for the new apartment.
+
+Any Rent money you've already down-paid for your current Apartment is forfeited.
+
+You will still need to pay off any Rent Debt you owe for your previous apartment, as normal.
+
+#### Reduce Rent
+
+If the Rent Office is currently offering the same type of Apartment you own for a lower Rent, you may reduce your rent by switching over to the other type of apartment, and then immediately switching back. This is costly in the short term, but can save a lot of money in the long term.
+
+### Jobs
+
+| Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
+|-----|-----------|----------------|-------------------|--------------|---------| 
+| Groundskeeper | $7 | 10 | 20 | -- | Casual Clothes |
+| Apartment Manager | $9 | 30 | 30 | Junior College | Casual Clothes |
+
+### Quotes (Rent Officer NPC)
+
+#### Greetings
+* *Welcome to the Rent Office. Don't snivel. Just pay your rent and leave.*
+* *Welcome to the Rent Office. The rent is high, but where else can you get so little for so much.*
+* *Welcome to the Rent Office. We don't charge any extra rent for the cockroaches.*
+* *Welcome to the Rental Office. No waterbeds, pets or velvet toreador paintings, please.*
+* *Welcome to the Rental Office. Where Sunday is Double Rent Increase Day!*
+* *Welcome to the Rental Office. Our closets are so roomy, you'll never want to come out!*
+* *Welcome to the Rental Office. Our security apartments feature 24-hour eunuch guards!*
+* *Welcome to the Rental Office. Come in and meet your slumlo...I mean, your landlord!*
+
+#### Pay Rent
+* *Thank you. See you soon.*
+* *Come back again soon.*
+* *I'm here for all of your renting needs.*
+* *Please tell all your rich friends about m... I mean us.*
+* *Thank You, but please don't call me at 4 in the morning again.*
+
+#### Extension Approved
+* *Sure, you can pay your rent next week.*
+* *I already told you Yes!*
+
+#### Extension Rejected
+* *Sorry, your rent must be paid now.*
+* *I'll say it again. NO!*
+* *WhaddoI look like? A bank?. Get outa here!*
+* *If I told you once, I've told you a thousand times. NO!!!!!*
+* *Click on that button one more time and I'll break your finger.*
+
+#### Renting Low-Cost Housing
+* *Ah. Well, I expect you'll find the neighborhood quite challenging.*
+* *Oh. Well, hopefully you'll still be around at rent time.*
+* *Of course, that comes furnished with a disgusting old chair. Enjoy!*
+* *You'll be happy to know that we just put a fresh battery in the smoke detector.*
+* *Just remember, the cockroaches are more frightened of you than you are of them.*
+
+#### Renting Security Apartment
+* *Just a few rules: no pets, no children, no smoking, no parties, and no jogging in the halls.*
+* *You'll love it! 24-hour security, spa, exercise room and free parking for BMWs.*
+* *A wise choice. Our other building has just been condemned.*
+* *Oh, good! You'll fit right in...EVERYBODY there has an attitude.*
+* *We've just put in a sun deck for your slow-roasting pleasure.*
+
+---
+
+## Black's Market
+
+**Black's Market** is a Location where players can buy Fresh Food, Lottery Tickets, and read the Newspaper. It is also a Workplace.
+
+Fresh Food can only be stored in a Refrigerator, otherwise it will Spoil and make the player sick. However it can be bought in larger quantities than Fast Food, and remains in your inventory from Week to Week.
+
+The Lottery is a way to gamble for a Cash prize. The Newspaper allows tracking events, and may reveal tips about Stock Market investments.
+
+Jobs at Black's Market are generally very desirable. Most are easy to get, and they pay well. A Job here also allows a player to purchase Fresh Food right after Work, and Black's Market is very near to important late-game locations like the Bank and Le Security Apartments.
+
+### Opening Hours
+
+Black's Market is open every Week. You may purchase items even if the turn has ended while you're in the store.
+
+### Items
+
+Black's Market's primary sale item is Fresh Food, which can be bought in groups of 1, 2, or 4 units. So long as the player owns a Refrigerator, Fresh Food is consumed at a rate of 1 unit per Week, preventing Starvation until it runs out. A Refrigerator can store up to 6 units without Spoiling, while a Refrigerator + Freezer can store up to 12 units. Buying Fresh Food awards **+1 Happiness** per every unit purchased.
+
+Lottery Tickets are bought in packs of 10, and make the player eligible to win the Lottery at the start of their next turn. The first pack bought during a player's turn awards **+2 Happiness**.
+
+Reading the Newspaper is the only purchase action that requires at least 1 Hour left on the clock. Each purchase of a Newspaper advances time by 1 Hour. It has no direct benefit, though it may reveal important information about the Economy and the Stock Market.
+
+| Item | Type | Base Price | Notes |
+|------|------|-----------|-------|
+| Food for 1 Week | Fresh Food | $55 | +1 Happiness, only on the first purchase of Fresh Food each Turn. |
+| Food for 2 Weeks | Fresh Food | $100 | +2 Happiness, only on the first purchase of Fresh Food each Turn. |
+| Food for 4 Weeks | Fresh Food | $190 | +4 Happiness, only on the first purchase of Fresh Food each Turn. |
+| 10 Lottery Tickets | Tickets | $10 * | +2 Happiness, only on the first purchase each Turn. |
+| Newspaper | Junk | $1 * | Displays the last headline that appeared this turn. Requires at least 1 Hour left on the clock, advances time by 1 Hour each purchase. |
+
+Actual prices of Fresh Food at Black's Market are affected by the Economy. Prices for Lottery Tickets and Newspaper are fixed and will never change.
+
+### Jobs
+
+| Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
+|-----|-----------|----------------|-------------------|--------------|---------| 
+| Janitor | $5 | 10 | 10 | -- | Casual Clothes |
+| Checker | $8 | 20 | 20 | -- | Casual Clothes |
+| Butcher | $12 | 30 | 30 | Trade School | Casual Clothes |
+| Assistant Manager | $15 | 40 | 40 | Junior College | Dress Clothes |
+| Manager | $18 | 50 | 50 | Business Admin. | Business Suit |
+
+### Quotes (Checker NPC)
+
+#### Greetings
+* *Welcome to Black's Market. Where quality and service are unheard of and you will stand in line forever.*
+* *Welcome to Black's Market, where you can grow old in our checkout lines.*
+* *Welcome to Black's Market. Our meats are a cut above!*
+* *Welcome to Black's Market. You can't beat our eggs!*
+* *Welcome to Black's Market, where every day is Double Coupon Day!*
+* *Welcome to Black's Market. Look for our special on day-old sushi!*
+* *Welcome to Black's Market. Open all day and night for your binging pleasure!*
+* *Welcome to Black's Market. Lowest prices in town on pickled octopus!*
+* *Welcome to Black's Market. Hey, check out those melons!*
+* *Welcome to Black's Market. Our butcher loves to stop and chew the fat!*
+* *Welcome to Black's Market. Don't bypass our artichoke hearts!*
+* *Welcome to Black's Market. This time, please don't take home the shopping cart.*
+* *Welcome to Black's Market, the grosser grocer!*
+* *Welcome to Black's Market. Our Swiss Cheese is made from Hole Milk!*
+
+#### Bought an Item
+* *Would you like fries with that? Oops, sorry, I usedta work at Monolith Burger.*
+* *Just so you know, we saw you eating those grapes in the produce section.*
+* *Cookies, ice cream and soda? Any REAL food in that shopping cart?*
+* *If you wanna write a check, I need 8 forms of ID and a blood sample.*
+* *You had eleven items, not ten. Next time, use the right aisle.*
+* *One of your eggs is broken. Better use it quickly.*
+* *Price check, please...a 5-pound box of Quintuple-Stuff Sandwich Cookies!*
+* *Have you tried the Deli Department's Cheezy Sweet 'n Saurkraut Salad?*
+* *Thank You. See you next time*
+* *Will that be paper or plastic?*
+* *Have a Good day.*
+* *We appreciate your business.*
+* *It's clear that you are a person who knows how to shop.*
+* *I'm happy to see that you're well today.*
+* *Thank you for shopping at Black's Market.*
+* *Next time, give peas a chance!*
+* *No tipping, please!*
+* *Can we help you out to your marble?*
+* *Come back for all your grocery needs!*
+* *Say, two more trips and you'll have enough stamps!*
+* *Hope you didn't buy any of those recalled mushrooms last week!*
+* *Next time, don't dent the cans and expect a discount.*
+* *Your selection of food indicates you're compensating for a lack of affection.*
+* *Please be more careful with the mayonnaise in Aisle 7 next time.*
+* *Arugla, Raddichio and Belgian Endive? What a yuppie!*
+* *I'm sorry we were out of those little corns this week.*
+* *Would you like to be a checker? OK. YOU'RE A RED ONE.*
+* *Look in our Italian Pet Food section for Dog Ciao!*
+* *If you can find lower prices on groceries, you're playing a different game.*
+* *Check out our corn...you'll love to nibble our ears.*
+* *Our celery stalks at midnight.*
+* *Meet our dairy department managers, Sam 'n Ella!*
+
+---
+
+## QT Clothing
+
+**QT Clothing** is a Location where players can buy new Clothes. It is also a Workplace.
+
+Clothes are required in order to Work anywhere. Certain jobs - especially high-paying jobs - require specific minimum Uniforms beyond the basic Casual Clothes. Clothes deteriorate over time, and therefore must be purchased regularly every few Months. Clothes purchased at QT Clothing cost more than those purchased at Z-Mart, but also last longer. QT Clothing is the only place to purchase a Business Suit.
+
+Low-level Jobs at QT Clothing are generally desirable, but mid/high-level jobs are not; They pay less and require more expensive Uniforms than similar-level jobs elsewhere.
+
+### Opening Hours
+
+QT Clothing is open every Week. You may purchase items even if the turn has ended while you're in the store.
+
+### Items
+
+QT Clothing offers all manners of Clothes. All items are available every Week.
+
+Clothes purchased at QT Clothing last longer before having to be replaced than those purchased at Z-Mart.
+
+The more expensive types of Clothes provide a small bonus to Happiness when purchased.
+
+| Item | Base Price | Lasts for... | Happiness |
+|------|------------|--------------|-----------|
+| Business Suit | $295 | 13 Weeks | +2 |
+| Dress Clothes | $125 | 13 Weeks | +1 |
+| Casual Clothes | $73 | 11 Weeks | -- |
+
+Actual prices at QT Clothing are affected by the Economy.
+
+### Work
+
+If you have a Job at QT Clothing, you can Work here to get money.
+
+### Jobs
+
+| Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
+|-----|-----------|----------------|-------------------|--------------|---------| 
+| Janitor * | $6 | 10 | 20 | -- | Casual Clothes |
+| Salesperson | $8 | 30 | 30 | -- | Dress Clothes |
+| Assistant Manager | $9 | 40 | 40 | Junior College | Business Suit |
+| Manager | $12 | 50 | 50 | Business Administration | Business Suit |
+
+**NOTE:** The Janitor Job at QT Clothing is only available in the CD-ROM version of the game.
+
+### Quotes (Salesperson NPC)
+
+#### Greetings
+* *Welcome to QT Clothing. We will sell you anything, no matter how bad it looks.*
+* *Welcome to QT Clothing. Meet our tailor, Howie Fitzhugh!*
+* *Welcome to QT Clothing. Our ties don't bind and our belts are a cinch.*
+* *Welcome to QT Clothing. We have legal briefs and law suits.*
+* *Welcome to QT Clothing, open 24 hours...we never clothes!*
+* *Welcome to QT Clothing. Thursday is Double Shoulder Pad Day!*
+* *Welcome to QT Clothing. Wear our clothes and you'll be a QT, too!*
+* *Welcome to QT Clothing. The only place in the world where you can buy just 1 pant!*
+* *Welcome to QT Clothing. Try on our soothing new Medicated Tux!*
+
+#### Bought an Item
+* *My! Don't WE look nice today!*
+* *It's the real you.*
+* *Spiffy.*
+* *Faaabulous!!!*
+* *Our clothes are of the highest quality.*
+* *Have a wonderful day!*
+* *Lookin' good!*
+* *You can't go wong at QT.*
+* *Perhaps you should stock up now while the prices are so reasonable.*
+* *With your figure, perhaps you should consider going to a tent maker.*
+* *Oooh, you look good enough to eat!*
+* *Don't you just love the new spring fashions? Tres magnifique!*
+* *It's nice like that, just a tad tight around the bottom.*
+* *Good choice...rayon is back in this year!*
+* *Now what are you going to do about your HAIR?*
+* *Don't forget to accessorize!*
+* *Nice! It really accentuates those pectorals.*
+* *You know, a little tummy tuck would take care of that slight pucker in back.*
+* *Stop slouching and it won't crease across the torso.*
+* *With a physique like yours, you could wear ANYthing!*
+* *Let me mention just two little words. Lipo. Suction.*
+
+---
+
+## Socket City
+
+**Socket City** is a Location where players can buy Appliances.
+
+Appliances are Durable items, most of which give bonuses to any player who owns them. Players may also receive a Happiness bonus for purchasing an Appliance they do not own yet.
+
+Socket City sells its Appliances at full price (compared to the discount prices at Z-Mart), but the relevant Happiness bonuses are higher. Some high-end Appliances are only available here. Appliances bought at Socket City have a lower chance to require Repair each turn.
+
+Low-paying Jobs at Socket City are *somewhat* easy to get, but the higher-paying jobs require a Degree in Electronics. They are typically seen as a possible stepping-stone towards a cushy job at the Factory.
+
+### Opening Hours
+
+Socket City is open every Week. You may purchase items even if the turn has ended while you're in the store.
+
+### Items
+
+Socket City sells every type of Appliance except the Black & White TV. All items are available every Week.
+
+A Happiness bonus is given for the purchase of a new Appliance, but only if the player currently owns zero of that specific Appliance. If the player purchases an Appliance but loses it (e.g. due to Wild Willy apartment robbery or Pawn Shop/Pawning), purchasing that same Appliance again *will* award Happiness.
+
+Prices at Socket City are higher than those at Z-Mart (except for the Stereo, which is cheaper here). However, Appliances purchased here are less likely to require Repairs, and generally provide a larger Happiness bonus.
+
+| Item | Base Price | Happiness | Notes |
+|------|------------|-----------|-------|
+| Refrigerator | $876 | +1 | Prevents 6 units of Fresh Food from Spoiling. Can't be stolen by Wild Willy. |
+| Freezer | $513 | +2 | Together with a Refrigerator, prevents 12 units of Fresh Food from Spoiling. Can't be stolen by Wild Willy. |
+| Stove | $570 | +1 | Gives **+1 Happiness** at the beginning of each turn (*not* cumulative with the Microwave). Can't be stolen by Wild Willy. |
+| Color TV | $525 | +2 | Displayed at the Security Apartment. |
+| VCR | $333 | +2 | Displayed at the Security Apartment. |
+| Stereo | $412 | +2 | Displayed at the Security Apartment. |
+| Microwave | $330 | +2 | Gives **+1 Happiness** at the beginning of each turn (*not* cumulative with the Stove). |
+| Hot Tub | $1255 | +3 | Prevents the Relaxation stat from decreasing each turn. |
+| Computer | $1599 | +3 | Reduces the number of Courses required to complete a Degree by -1. 1-in-7 chance each turn to make $20-$100 and receive **+3 Happiness**. |
+
+Actual prices at Socket City are affected by the Economy.
+
+### Actions
+
+### Work
+
+If you have a Job at Socket City, you can Work here to get money.
+
+### Jobs
+
+| Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
+|-----|-----------|----------------|-------------------|--------------|---------| 
+| Clerk * | $6 | 10 | 20 | -- | Casual Clothes |
+| Salesperson | $7 | 20 | 30 | -- | Dress Clothes |
+| Electronics Repairman | $11 | 40 | 40 | Electronics | Casual Clothes |
+| Manager | $14 | 40 | 40 | Electronics, Junior College | Business Suit |
+
+**NOTE:** The Clerk Job at Socket City is only available in the CD-ROM version of the game.
+
+### Quotes (Salesperson NPC)
+
+#### Greetings
+* *Welcome to Socket City. If you paid full price, you must've bought it here!*
+* *Welcome to Socket City. You're just in time for our Pre-Arbor Day Value Fest!*
+* *Welcome to Socket City. Apply for our Revolving Algorithmic Usury Credit Line!*
+* *Welcome to Socket City. Our salespeople are here to help you...spend!*
+* *Welcome to Socket City. Special today on useless Yuppie electronic gadgets!*
+* *Welcome to Socket City. We only charge 10% over list price!*
+* *Welcome to Socket City. Go ahead and TRY to talk us down.*
+* *Welcome to Socket City. Next Friday is Double Commission Day!*
+* *Welcome to Socket City. Come to our Moonlight Madness sale. 20% off if you wear your pajamas!*
+* *Welcome to Socket City. Values direct from the factory to the jobber to the wholesaler to us to YOU!*
+* *Welcome to Socket City, Home of High Pressure Sales!*
+* *Welcome to Socket City, where Quality meets its match!*
+* *Welcome to Socket City, where you get less for more!*
+* *Welcome to Socket City, where our Service Department never sleeps, eats or bathes!*
+* *Welcome to Socket City, where the customer is always ripe!*
+* *Welcome to Socket City. Where everything quits working the day after the warranty expires.*
+
+#### Bought an Item
+* *Thank You very much.*
+* *I'm sure that you will be very happy with your purchase.*
+* *Thanks. You will have many years of trouble free service.*
+* *Thank you for visiting Socket City.*
+* *You sure know a deal when you see one.*
+* *Come and see us again, anytime.*
+* *Thank You. Let me know how you enjoy it.*
+* *Perhaps I can interest you in something else.*
+* *Have you seen our vacuum cleaners? They really suck!*
+* *Would you like the $200 Extended Service Contract with that?*
+* *You'll want the $150 Factory Extension Warranty with that, right?*
+* *Can we interest you in the $300 1-Year Lifetime Replacement Guarantee?*
+* *How about a $250 Extended Factory Service Warranty Replacement Guarantee Contract Agreement Deal with that?*
+* *If you ever require service, you know where to go!*
+* *Of course, for another $75, you could have gotten the next model up.*
+* *Our free installation is only $45 today!*
+* *Sorry, we only had a floor sample left, but trust me, it's in perfect condition.*
+* *Remember, we offer free delivery anywhere within the game!*
+* *Do you smell something burning? Oh, it's that cash in your pocket!*
+* *Now that didn't hurt a bit, did it?*
+* *Notice how we ignore anybody who's browsing the under-$200 items?*
+* *Since you're spending, how about replacing your car stereo with an $800 Kerplunkett?*
+* *Should we call the paramedics to treat your wallet for shock?*
+* *Care to go double-or-nothing for that 92 inch Projection TV?*
+* *Now, if I can steer you towards some of our higher-margin products...*
+* *Didn't you have your eye on that complete Home Videotape Production Studio?*
+* *If you're not completely satisfied, we'll be glad to give you partial credit.*
+* *We're members of the Bait 'n Switch(TM) Retailer's Association!*
+* *We finance 90 Days, Same as Bankruptcy!*
+* *With every purchase over $5200, we're giving away free Chapter 11 Auto-Filers!*
+* *Please be aware that our Extended Service Contract excludes parts and labor.*
+
+---
+
+## Hi-Tech U
+
+**Hi-Tech U** (or **Hi-Tech University**) is a Location where players can Enroll and study Degrees, advancing towards their Education Goal and qualifying themselves for certain high-end Jobs. It is also a Workplace.
+
+Getting a Degree requires players to pay a small Enrollment Fee, and then spend up to 60 Hours studying the course (not necessarily all at once). As each Degree is acquired, more Degrees become available for study. Players may enroll in up to 4 courses simultaneously, and may complete them whenever they desire.
+
+Jobs at the University generally require players to hold certain Degrees, but they pay relatively well and give the player a good opportunity to study often. These jobs require no more than Dress Clothes as a Uniform.
+
+### Opening Hours
+
+Hi-Tech U is open every Week. Studying or Working at the University require at least 1 Hour remaining on the clock, but you may pay Enrollment Fees even if the turn has already ended.
+
+### Enrolling
+
+Before a player is allowed to study for a Degree, they must first pay their Enrollment Fees. This is done by clicking the "Enroll" button and accepting the fee. Enrollment has a base cost of **$50 per course**, adjusted to the current state of the Economy. 
+
+Enrolling allows the player to take one course. A player may enroll multiple times in a row without choosing any course to study; The "Enroll" action simply purchases the *ability* to take one course. For example, a player may pay 5 Enrollment Fees, and only later decide which 5 courses to actually take.
+
+Once enrolled, the player may select any of the courses available to them in the University menu. This turns the course "active", and causes the player to take their first lesson in that course. A number then appears next to the name of the course, showing how many additional Study sessions are required to complete the course and acquire the Degree.
+
+Though Enrollment takes no time off the clock (and can be done even if the player's Turn is over), it is not possible to choose a course (and take your first lesson in it) unless you have at least 1 Hour left on the clock.
+
+### Studying
+
+Selecting a new course from the University menu immediately expends one "enrollment fee" paid by the player, and causes them to take the first lesson in that course. Any additional click on the same course causes the player to take another lesson.
+
+Each time a player takes a lesson in a course, the number on the right side of the course "book" decreases by 1. When this number reaches 0, the player Graduates from the course and acquires the relevant Degree.
+
+By default, each course takes 10 lessons to complete. This number may be reduced by owning certain Durables (see Extra Credit, below), down to a minimum of 8 lessons per course.
+
+To take a lesson, the player must have at least 1 Hour left on the clock. Each lesson advances the clock by 6 Hours. If there are fewer than 6 hours remaining on the clock, the player still takes the entire lesson without any penalty.
+
+If the player has multiple courses "active" at the same time, they may take lessons in any of these courses as they see fit. There is no imperative to Graduate from one course before continuing with another. There is also no time limit on completing a course - you may study and complete it whenever it's suitable for you.
+
+#### Extra Credit
+
+Certain Durables can decrease the number of lessons required to Graduate from any course:
+
+* If the player owns a Computer, they require **1 fewer lesson** to Graduate.
+* If the player owns an Encyclopedia, Dictionary *and* Atlas, they require **1 fewer lesson** to Graduate. This only applies if all three items are owned.
+
+Owning all four of these Durables reduces the number of lessons required to Graduate to 8 - saving 20% of the time required to complete each course. This can be of extreme importance for players with a high Education Goal.
+
+### Graduating
+
+Once 10 lessons (minus Extra Credit) of a specific course have been completed, the player receives the corresponding Degree. The game signifies this by showing the player's new diploma. It then refreshes the available courses list, removing the completed course and adding any new courses unlocked by completing it.
+
+Beyond the benefits of the Degree itself, there are several important benefits bestowed on a player **each time they Graduate**:
+
+* The player receives **+5 Happiness**.
+* The player receives **+5 Dependibility**. This bonus may push Dependibility beyond its normal maximum cap. However, Dependibility will continue to degrade each turn as normal from that point. This bonus somewhat offsets any Dependibility losses incurred by Studying instead of Working.
+* The player receives a permanent **+5 Maximum Dependibility** and **+5 Maximum Experience**. They still need to Work to reach these maximums, but once that is achieved the player might be able to qualify for a better job than they could otherwise reach. Graduating from multiple courses may enable a player to go straight from a low-paying job to a high-paying job.
+
+### Work
+
+If you have a Job at the University, you can Work here to get money.
+
+### Jobs
+
+| Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
+|-----|-----------|----------------|-------------------|--------------|---------| 
+| Janitor | $5 | 10 | 10 | -- | Casual Clothes |
+| Teacher | $11 | 40 | 50 | Academic | Dress Clothes |
+| Professor | $20 | 50 | 60 | Research | Dress Clothes |
+
+### Quotes (Professor NPC)
+
+#### Greetings
+* *Welcome to Hi-Tech U. We will learn you for the future.*
+* *Welcome to Hi-Tech U. We'll learn you to talk English good!*
+* *Welcome to Hi-Tech U. Our Geology classes will put rocks in your head!*
+* *Welcome to Hi-Tech U, where you'll never be bored of education!*
+* *Welcome to Hi-Tech U. Enroll now for the third trimester!*
+* *Welcome to Hi-Tech U. All our professors have tweed jackets with elbow patches!*
+* *Welcome to Hi-Tech U. Our diplomas are genuine cheepskin!*
+* *Welcome to Hi-Tech U. Our alumni haven't complained yet!*
+* *Welcome to Hi-Tech U. Next semester is Double Credits Semester!*
+* *Welcome to Hi-Tech U. When it comes to education, we will NOT be undersold!*
+* *Welcome to Hi-Tech U. Already got your BA and MBA? We'll give you the third degree!*
+* *Welcome to Hi-Tech U. No matriculating in the dormitories, please!*
+* *Welcome to Hi-Tech U. Enroll now for our fifth quarter!*
+* *Welcome to Hi-Tech U. You come in with a skull full of mush and you leave thinking like a shyster.*
+* *Welcome to Hi-Tech U. Draw Kenny and YOU could win an art scholarship!*
+* *Welcome to Hi-Tech U. Check out our Job Displacement Service!*
+* *Welcome to Hi-Tech U. Need financial assistance? What do we look like, a bank?*
+* *Welcome to Hi-Tech U, where one good term deserves another!*
+* *Welcome to Hi-Tech U. The CIA recruitment center's right here on campus!*
+* *Welcome to Hi-Tech U. Meet Ed Fiz, our Phys Ed instructor!*
+* *Welcome to Hi-Tech U. CPA degrees or 65% x 1.2146/5ths of your money back!*
+* *Welcome to Hi-Tech U. Where our campus ROTC stands for Really Obnoxious Teenage Civilians!*
+
+---
+
+## Employment Office
+
+The **Employment Office** (or **ACNE Employment**) is a Location where players can apply for a new Job, or ask for a Raise in their current Job.
+
+A player may apply for any Job in the game, but will be refused if they don't qualify for the Job they requested. Qualification requires a certain amount of Experience and Dependibility, and some Jobs also require specific University Degrees. Additionally, there is a chance for players to randomly be refused a job that they do qualify for.
+
+If the player's current Job is listed at a higher Wage than they're already being paid, they may ask for a Raise to match the listed Wage. Qualifying for a Raise requires only sufficient Dependibility.
+
+### Opening Hours
+
+The **Employment Office** is open every Week. Asking for a Job or a Raise requires at least 1 Hour remaining on the clock.
+
+### Applying for a Job
+
+The **Employment Office** shows a list of all Workplaces in the game. Selecting a Workplace from the list displays all Jobs at that Workplace (including Jobs that the player could not possibly get with their current stats). The current Wage is displayed next to each Job.
+
+To apply for a Job, simply select it from the list. Applying for a job advances the clock by **4 Hours**. A player may apply for multiple Jobs each turn, so long as there is still time left on the clock.
+
+Once a player has applied for a job, the game calculates whether they qualify for that Job, based on their current Stats.
+
+If the player has the necessary stats for the job, they receive the new Job immediately, at the listed hourly Wage. They also receive **+3 Happiness**.
+
+If the player has insufficient Stats, the Employment Officer will reject the application and explain which stats are lacking (Experience, Dependibility, and/or Education).
+
+Occasionally, the Employment Officer may reject the application due to "No openings". This signifies that the player does have the required stats, but has failed a random roll. If this occurs, the player will not be able to get that *particular* job if they try again during the same turn. The Job may become available during the player's next turn.
+
+If the player is refused a job for any reason, they receive **-1 Happiness**.
+
+**NOTE:** An application for the Cook job at Monolith Burgers will *always* be approved.
+
+For more information about qualifying for jobs, see the articles on Jobs.
+
+### No Openings
+
+Whenever qualifying for a new Job (asking for a raise at your current one is different), a random number is rolled between 1 and 100 and it is compared to the player's luck score, which is derived from their Dependability and Experience and number of Degrees:
+
+Luck = 30 + (10 + Dependability + Experience + 8 * DegreeCount) / 3
+
+Your luck starts at 43 and can be immediately increased to 44 by taking the free job as the Monolith Cook, at the cost of 4 hours. 
+
+If this check is the **only** reason that you did not get a job, that job gets marked *turned down* and future attempts to get the same job on the same turn will fail. This will display the dreaded prompt, "No openings." You can still try for other jobs at the same location.
+
+However, you **can** get No Openings without getting Turned Down, because No Openings is a default response and during the first 4 weeks, the "Poor Work History" response is suppressed in the game: so if you had the experience and education but not the dependability, in the early weeks you can get a No Openings that is secretly a Poor Work History. For instance, if you do not work in the first week (e.g. you study all that week) you will only have 17 Dependability on Week 2, beneath what is needed for the Monolith Clerk job. Similarly if you job hop Cook -> Clerk -> Cook -> Z-Mart Clerk -> Cook on week 1, you will have 20 Experience but the Monolith Assistant Manager role will always deny you with No Openings because you don't have 30 Dependability.
+
+### Asking for a Raise
+
+If the player's current Job is listed at a higher hourly Wage than what they are currently making, the player may select that Job to ask for a Raise. Asking for a Raise advances the clock by **4 Hours**.
+
+Qualifying for a Raise is much simpler than qualifying for a new Job, requiring only that the player's Dependibility be higher than the Required Dependibility for their current job.
+
+If the Raise is approved, the player's Wage is immediately increased to the listed amount, and they receive **+3 Happiness**.
+
+The Dependibility requirement for receiving a raise increases by +5 points each time the player receives a Raise, making it more difficult to get additional raises. This counter resets each time the player switches to a different Job.
+
+**NOTE:** Applying for your current job at the same Wage you're already getting (or less) achieves nothing - but will still waste 4 Hours!
+
+### Quotes (Employment Officer NPC)
+
+#### Greetings
+* *Welcome to ACNE Employment. Why work for the best when you can work like the rest.*
+* *Welcome to ACNE Employment. We'll either find you a job, or we won't.*
+* *Welcome to ACNE Employment, where your skills and our expertise add up to disappointment!*
+* *Welcome to ACNE Employment, where every lost job is a blemish on your resume!*
+* *Welcome to ACNE Employment. We'll get you a job no matter what it costs you!*
+* *Welcome to ACNE Employment, where your resume zits in our files!*
+* *Welcome to ACNE Employment. No matter how bad your skills are, we have a job to match!*
+
+---
+
+## Bank
+
+The **Bank** (full name: **Pacific International Grand Gratuity Yield Bank**) is a Location where players can store their Cash, apply for a Loan, or invest in the Stock Market. It is also a Workplace.
+
+Depositing money in the Bank is a safe way to protect your Liquid Assets against Wild Willy, though savings could get wiped out during a Market Crash.
+
+Loans can serve as a good way to get a lot of money very quickly (e.g. for buying an expensive Appliance or paying Rent), though a good Job is necessary to get a loan of any substance. Payments must be made at the Bank itself every Month to avoid defaulting.
+
+The Stock Market is an interesting way to accumulate money, but requires time and attention to the Economy. Sudden Market Crashes can destroy investments as well.
+
+Jobs at the Bank pay well, and are some of the best-paying jobs in the game - but most require a substantial Education and expensive Uniform.
+
+The Bank is one of two Locations where Wild Willy can rob the player's Cash as they leave. The other is Black's Market.
+
+### Opening Hours
+
+The **Bank** is open every Week, but most of its functions (with the exception of depositing/withdrawing money) require at least 1 Hour remaining on the clock.
+
+### Bank Account
+
+Whenever a player is at the Bank, they may deposit Cash into their Bank Account, or withdraw cash from it. This is possible even if the clock has run out of time.
+
+Cash is deposited into one's Account in $100 portions, and is withdrawn in the same manner. There is no limit to the amount of money a Bank Account can store.
+
+Money in the Bank Account counts towards a player's Liquid Assets, and thus counts towards the Wealth Goal. However it cannot be spent directly from the account.
+
+There is no extra fee to deposit or withdraw money, nor to keep money in the Account for any period of time. Similarly, there is no interest accrued for money kept in a Bank Account.
+
+Money in the Account cannot be stolen by Wild Willy. However, withdrawing a large amount of money in Cash is very risky because Wild Willy often strikes right outside the Bank itself.
+
+Money in the Bank Account is not 100% safe. A particularly severe Market Crash can wipe out all money in the account instantly (setting it to $0). This sort of event is typically much rarer than a Wild Willy robbery, but it has a non-zero chance of happening each turn. The weaker the Economy, the riskier it is to keep money in a Bank Account.
+
+### Loans
+
+A Loan is an amount of money given to a player by the **Bank**, with the promise of paying it back (plus interest) over time.
+
+Players may apply for a Loan at the Bank if there is at least 1 Hour left on the clock. Applying for a loan advances the clock by 2 Hours.
+
+A Loan Application can be rejected by the Bank if the player's current Wage and Liquid Assets are very low. The amount of money loaned to the player also depends on these two values; The more money a player makes and the more money they have, the larger the loan they can receive.
+
+Once a loan has been approved and the money received, the player is reminded to pay it off on the last Week of every Month, until the entire debt is cleared. Players may pay back part (or all) of the loan whenever they want, but making at least one payment before the end of the Month will avoid Defaulting on the loan. Additional payments in the same Month will delay the next payment deadline by a whole Month.
+
+Each payment is equal to $45, but incurs an additional $5 interest fee that is paid to the Bank instead of decreasing the debt.
+
+Each time a player Defaults on a loan, their chance to get any future Loans (and the amount of money they would get if approved) decreases permanently. However, if the player does not intend to ever get another loan, they may completely avoid paying back their current loan -- though they will lose a little bit of Happiness every Month.
+
+The amount of money owed to the Bank counts *against* a player's Liquid Assets.
+
+### Stock Market
+
+The Stock Market can be accessed from the **Bank** menu by clicking the "See the Broker" option.
+
+The Stock Market allows a player to purchase and sell Stocks. Stock prices rise and drop with some correlation to trends in the Economy, though they do not match it like Item prices and Wages. This allows players to essentially gamble on Stock prices, buying low and selling high.
+
+Stock investments count towards a player's Liquid Assets, and cannot be completely wiped out by a Market Crash (though they can easily lose a lot of their value). This makes Stocks one the most secure way to keep *some* amount of liquid assets from disappearing instantly, especially if the stocks are bought when their price is already extremely low.
+
+### Wild Willy
+
+Each time a player leaves the **Bank**, there is a 1/31 chance that they will be mugged by Wild Willy.
+
+This event cannot happen before Week #4, and will only occur if the player is carrying any amount of Cash.
+
+Once robbed by Willy, the player's Cash is set to $0, and they lose **-3 Happiness**.
+
+### Work
+
+If you have a Job at the Bank, you can Work here to get money.
+
+### Jobs
+
+| Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
+|-----|-----------|----------------|-------------------|--------------|---------| 
+| Janitor | $6 | 10 | 20 | -- | Casual Clothes |
+| Teller | $10 | 40 | 40 | Junior College | Dress Clothes |
+| Assistant Manager | $14 | 50 | 50 | Business Admin. | Business Suit |
+| Manager | $19 | 60 | 60 | Business Admin. | Business Suit |
+| Broker | $22 | 70 | 70 | Business Admin., Academic | Business Suit |
+
+### Quotes (Teller NPC)
+
+#### Greetings
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. We take very little interest in you.*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. You'll always find yourself a loan here!*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. No charge for deposits!*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. Tuesdays are Double Dollar Days!*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. Have you gotten your free Toast Point Tongs?*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. Our fixed-rate CDs spin at 1500 RPM!*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. This little P.I.G.G.Y. plays the market!*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. Where we do Savings and Loans without a crisis!*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. Our loan officers are real Yes-men!*
+* *Welcome to the Pacific International Grand Gratuity Yield -P.I.G.G.Y.- Bank. Our San Andreas branch is in default!*
+
+* *There is always a penalty for early withdrawal.*
+
+---
+
+## Factory
+
+The **Factory** is a Location that serves only as a Workplace. It has no other functions.
+
+Most Factory Jobs require at least some Education, particularly in Trade School and subsequent courses, Junior College, and/or Business Administration. Many of these jobs also require a Business Suit as the Uniform. However, the top jobs at the factory are the highest-paying jobs in the game.
+
+### Opening Hours
+
+The **Factory** is open every Week.
+
+### Actions
+
+### Work
+
+If you have a Job at the Factory, you can Work here to get money.
+
+### Jobs
+
+| Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
+|-----|-----------|----------------|-------------------|--------------|---------| 
+| Janitor | $7 | 10 | 20 | -- | Casual Clothes |
+| Assembly Worker | $8 | 30 | 30 | Trade School | Casual Clothes |
+| Secretary | $9 | 40 | 40 | Junior College | Dress Clothes |
+| Machinist's Helper | $10 | 40 | 40 | Pre-Engineering | Casual Clothes |
+| Executive Secretary | $18 | 50 | 50 | Business Admin. | Business Suit |
+| Machinist | $19 | 50 | 50 | Engineering | Casual Clothes |
+| Department Manager | $22 | 60 | 60 | Junior College + Engineering | Business Suit |
+| Engineer | $23 | 60 | 60 | Junior College + Engineering | Business Suit |
+| General Manager | $25 | 70 | 70 | Business Admin. + Engineering | Business Suit |
+
+### Quotes (Receptionist NPC)
+
+#### Greetings
+* *Welcome to the Factory. We will overwork you, under pay you, and expect you to take it with a smile.*
+* *Welcome to the Factory. Where else can you have this much fun and get paid for it too.*
+* *Welcome to the Factory. Where the work is hard, the pay is low, and the conditions are miserable.*
+* *Welcome to the Factory. Thursday is Double Workman's Compensation Day!*
+* *Welcome to the Factory. We pay Top Dollar for Blue Collar!*
+* *Welcome to the Factory. No sweat...no paycheck!*
+* *Welcome to the Factory. Where money is our most important product.*
+* *Welcome to the Factory. Please wear your safety helmet during scheduled inspections.*
+
+
+
+
+
+
