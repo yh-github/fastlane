@@ -146,7 +146,7 @@ export function useGameEngine(
           
           if (player.money < preRobberyMoney) {
             addLog(t('log.robbery'));
-            triggerAnim('text', '-$$$', 'stat-money'); 
+            triggerAnim('emoji', '💸', 'stat-money'); 
             player.newspaperHeadline = "WILD WILLY HAS LIFTED ANOTHER WALLET";
           }
           // Save the RNG state back since we used it!
@@ -260,6 +260,7 @@ export function useGameEngine(
         
         if (moneyDiff !== 0) {
           diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
+          if (moneyDiff < 0) triggerAnim('emoji', '💸', 'stat-money');
         }
         if (hapDiff !== 0) {
           diffStr.push(`${hapDiff > 0 ? '+' : ''}${hapDiff} Happiness`);
