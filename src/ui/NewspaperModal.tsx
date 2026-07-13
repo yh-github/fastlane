@@ -1,15 +1,16 @@
-
+import { useTranslation } from 'react-i18next';
 interface NewspaperModalProps {
   headline: string | null;
   onClose: () => void;
 }
 
 export function NewspaperModal({ headline, onClose }: NewspaperModalProps) {
+  const { t } = useTranslation();
   if (!headline) return null;
 
   return (
     <div className="modal-overlay" style={{
-      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+      position: 'fixed', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
       backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
     }}>
       <style>
@@ -36,7 +37,7 @@ export function NewspaperModal({ headline, onClose }: NewspaperModalProps) {
         animation: 'newspaperSpinZoom 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards'
       }}>
         <div style={{ borderBottom: '2px solid #000', paddingBottom: '10px', marginBottom: '20px' }}>
-          <h1 style={{ margin: 0, fontSize: '36px', letterSpacing: '2px' }}>THE DAILY NEWS</h1>
+          <h1 style={{ margin: 0, fontSize: '36px', letterSpacing: '2px' }}>{t('newspaper.title', 'THE DAILY NEWS')}</h1>
         </div>
         
         <h2 style={{ fontSize: '28px', margin: '20px 0', textTransform: 'uppercase' }}>
@@ -47,7 +48,7 @@ export function NewspaperModal({ headline, onClose }: NewspaperModalProps) {
           <button onClick={onClose} style={{
             padding: '8px 16px', backgroundColor: '#333', color: '#fff', border: 'none',
             borderRadius: '4px', cursor: 'pointer', fontFamily: 'sans-serif'
-          }}>Close Newspaper</button>
+          }}>{t('newspaper.close', 'Close Newspaper')}</button>
         </div>
       </div>
     </div>

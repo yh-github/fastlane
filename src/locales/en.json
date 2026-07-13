@@ -1,0 +1,142 @@
+{
+  "titleScreen": {
+    "subtitle": "Modernized",
+    "startGame": "New Game",
+    "language": "Language"
+  },
+  "setupScreen": {
+    "title": "Game Setup",
+    "playerX": "Player {{count}}",
+    "name": "Name: ",
+    "isAi": "Is AI (Jones)?",
+    "wealth": "Wealth",
+    "happiness": "Happiness",
+    "education": "Education",
+    "career": "Career",
+    "addPlayer": "Add Player",
+    "startLife": "Start Life"
+  },
+  "dashboard": {
+    "loading": "Loading...",
+    "aiBadge": "AI (Jones)",
+    "turn": "Week {{turn}}",
+    "economy": "Economy Index: {{index}}",
+    "inventory": "Inventory",
+    "left": "Left",
+    "hrs": "hrs",
+    "money": "Money",
+    "happiness": "Happiness",
+    "relaxation": "Relaxation",
+    "education": "Education",
+    "career": "Career",
+    "wealth": "Wealth"
+  },
+  "log": {
+    "robbery": "Wild Willy robbed you in the street!",
+    "outOfTime": "{{name}} is out of time for the week!"
+  },
+  "weekendScreen": {
+    "title": "Weekend!",
+    "summary": "Week {{turn}} Summary for {{name}}",
+    "activities": "Your Weekend Activities",
+    "whatYouDid": "What you did this weekend:",
+    "cost": "Cost",
+    "happiness": "Happiness",
+    "nothingSpecial": "Nothing special happened this weekend.",
+    "otherEvents": "Other Events",
+    "startWeek": "Start Week {{turn}}"
+  },
+  "gameOver": {
+    "congrats": "Congratulations!",
+    "hasWon": "has won the game!",
+    "totalTime": "Total time: {{turn}} weeks",
+    "playAgain": "Play Again"
+  },
+  "building": {
+    "monolith_burgers": "Monolith Burgers",
+    "z_mart": "Z-Mart",
+    "socket_city": "Socket City",
+    "rent_office": "Rent Office",
+    "employment_office": "Employment Office",
+    "university": "University",
+    "bank": "Bank",
+    "factory": "Factory",
+    "joy_luck": "Joy Luck",
+    "clothing_store": "Clothing Store",
+    "pawn_shop": "Pawn Shop",
+    "black_market": "Black Market"
+  },
+  "jobBoard": {
+    "title": "Job Board: Select Location",
+    "positions": "{{count}} position(s) available",
+    "back": "← Back",
+    "jobsAt": "Jobs at {{location}}",
+    "base": "Base",
+    "exp": "Exp",
+    "dep": "Dep",
+    "degrees": "Degrees",
+    "missingReq": "You do not meet the minimum requirements for this position.",
+    "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
+    "currentJob": "Current Job (${{wage}}/hr)",
+    "apply": "Apply ({{cost}}h)"
+  },
+  "workStation": {
+    "title": "Your Job: {{jobTitle}}",
+    "workShift": "Work Shift (up to {{cost}}h)"
+  },
+  "storeFront": {
+    "title": "Storefront"
+  },
+  "homeRelax": {
+    "title": "Home Sweet Home",
+    "desc": "Relax to restore happiness. Costs {{cost}} hours.",
+    "button": "Relax ({{cost}}h)"
+  },
+  "rentOffice": {
+    "title": "Rent Office",
+    "current": "Current Residence",
+    "homeless": "Homeless",
+    "closed": "The Rent Office is closed. Come back during Week 4 to pay your rent or move to a new apartment.",
+    "rentDue": "Rent Due: ${{amount}}",
+    "payRentDebt": "Pay Rent Debt",
+    "paidUntil": "Rent Paid Until: Week {{week}}",
+    "weeksPaid": "(You have {{count}} weeks of rent paid)",
+    "payAdvance": "Pay Rent Advance (${{cost}} / mo)",
+    "rentIsDue": "Rent is Due!",
+    "canAskExtension": "You can ask for a 1-week extension.",
+    "askExtension": "Ask for Extension",
+    "extensionGranted": "Extension Granted",
+    "dueByEnd": "Rent is due by the end of this week.",
+    "extensionDenied": "Extension Denied",
+    "mustPay": "The Rent Officer denied your request. You must pay by the end of the week.",
+    "permanentlyDenied": "Extensions Permanently Denied",
+    "neverAnother": "Due to past debts, you can never receive another rent extension.",
+    "availableApts": "Available Apartments",
+    "moveIn": "Move In"
+  },
+  "inventoryModal": {
+    "title": "Your Inventory",
+    "food": "Food",
+    "freshFood": "Fresh Food",
+    "fastFood": "Fast Food",
+    "units": "units",
+    "meals": "meals",
+    "clothes": "Clothes",
+    "wearing": "Wearing:",
+    "none": "None",
+    "casual": "Casual",
+    "dress": "Dress",
+    "business": "Business",
+    "casualClothes": "Casual Clothes",
+    "dressClothes": "Dress Clothes",
+    "businessSuit": "Business Suit",
+    "weeksLeft": "{{count}} weeks left",
+    "appliances": "Appliances",
+    "books": "Books",
+    "entertainment": "Entertainment",
+    "baseballTickets": "Baseball Tickets",
+    "theatreTickets": "Theatre Tickets",
+    "concertTickets": "Concert Tickets",
+    "lotteryTickets": "Lottery Tickets"
+  }
+}

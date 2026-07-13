@@ -7,6 +7,7 @@
 
 import { type PlayerState } from '../engine/gameState';
 import { calcEducationProgress, calcCareerProgress, calcWealthProgress } from '../engine/statMath';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardProps {
   player: PlayerState | null;
@@ -17,7 +18,8 @@ interface DashboardProps {
 }
 
 export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInventory }: DashboardProps) {
-  if (!player) return <header className="dashboard">Loading...</header>;
+  const { t } = useTranslation();
+  if (!player) return <header className="dashboard">{t('dashboard.loading')}</header>;
 
   const education = calcEducationProgress(player.degrees.length);
   const career = calcCareerProgress(player.dependability);
@@ -27,10 +29,10 @@ export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInv
     <header className="dashboard">
       <div className="dashboard-top-row">
         <div className="dashboard-player-info">
-          <h2>{player ? player.name : ''} - Week {turn}</h2>
-          {player?.isAi && <span className="ai-badge">AI (Jones)</span>}
+          <h2>{player ? player.name : ''} - {t('dashboard.turn', { turn })}</h2>
+          {player?.isAi && <span className="ai-badge">{t('dashboard.aiBadge')}</span>}
           <div className="dashboard-stat economy">
-            <span>Economy Index: {economicIndex}</span>
+            <span>{t('dashboard.economy', { index: economicIndex })}</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -43,8 +45,8 @@ export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInv
             boxShadow: 'inset 0 0 4px rgba(0,0,0,0.4)',
             marginRight: '10px'
           }} />
-          <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff' }}>
-            ⏳ {Number(player.hoursRemaining).toFixed(1)} / {hoursPerTurn}h Left
+          <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff', whiteSpace: 'nowrap' }}>
+            ⏳ {Number(player.hoursRemaining).toFixed(1)} / {hoursPerTurn}{t('dashboard.hrs')} {t('dashboard.left')}
           </div>
         </div>
         <button 
@@ -56,16 +58,16 @@ export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInv
             fontWeight: 'bold', cursor: 'pointer'
           }}
         >
-          📦 Inventory
+          📦 {t('dashboard.inventory')}
         </button>
       </div>
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <StatBadge label="Money" value={`$${player.money}`} icon="💰" id="stat-money" />
-        <StatBadge label="Happiness" value={player.happiness} icon="😊" id="stat-happiness" />
-        <StatBadge label="Relaxation" value={player.relaxation} icon="🧘" id="stat-relaxation" />
-        <StatBadge label="Education" value={education} icon="🎓" />
-        <StatBadge label="Career" value={career} icon="💼" />
-        <StatBadge label="Wealth" value={wealth} icon="🏦" />
+        <StatBadge label={t('dashboard.money')} value={`$${player.money}`} icon="💰" id="stat-money" />
+        <StatBadge label={t('dashboard.happiness')} value={player.happiness} icon="😊" id="stat-happiness" />
+        <StatBadge label={t('dashboard.relaxation')} value={player.relaxation} icon="🧘" id="stat-relaxation" />
+        <StatBadge label={t('dashboard.education')} value={education} icon="🎓" />
+        <StatBadge label={t('dashboard.career')} value={career} icon="💼" />
+        <StatBadge label={t('dashboard.wealth')} value={wealth} icon="🏦" />
       </div>
     </header>
   );

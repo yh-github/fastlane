@@ -8,12 +8,14 @@ interface InteractionProps {
 }
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * JobBoard — Shown at the Employment Office.
  * Lists ALL jobs across the game for applying, grouped by building.
  */
 export function JobBoard({ player, onAction, availableJobs, buildings, economicIndex = 0, campaign }: InteractionProps & { availableJobs: JobDef[], buildings: BuildingDef[], economicIndex?: number, campaign: CampaignBundle }) {
+  const { t } = useTranslation();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   // Group jobs by locationId
@@ -22,13 +24,13 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   if (!selectedLocation) {
     return (
       <div className="interaction-panel">
-        <h3>Job Board: Select Location</h3>
+        <h3>{t('jobBoard.title')}</h3>
         {locations.map(loc => {
           const jobCount = availableJobs.filter(j => j.locationId === loc).length;
           return (
             <div key={loc} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444', cursor: 'pointer' }} onClick={() => setSelectedLocation(loc)}>
-              <strong>{buildings.find(b => b.id === loc)?.name || loc}</strong>
-              <div style={{ fontSize: '12px' }}>{jobCount} position(s) available</div>
+              <strong>{t(`building.${loc}`, { defaultValue: buildings.find(b => b.id === loc)?.name || loc })}</strong>
+              <div style={{ fontSize: '12px' }}>{t('jobBoard.positions', { count: jobCount })}</div>
             </div>
           );
         })}
@@ -41,8 +43,8 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   return (
     <div className="interaction-panel">
       <h3>
-        <button onClick={() => setSelectedLocation(null)} style={{ marginRight: '10px', padding: '2px 5px' }}>← Back</button>
-        Jobs at {buildings.find(b => b.id === selectedLocation)?.name || selectedLocation}
+        <button onClick={() => setSelectedLocation(null)} style={{ marginInlineEnd: '10px', padding: '2px 5px' }}>{t('jobBoard.back')}</button>
+        {t('jobBoard.jobsAt', { location: t(`building.${selectedLocation}`, { defaultValue: buildings.find(b => b.id === selectedLocation)?.name || selectedLocation }) })}
       </h3>
       {jobsAtLocation.map(job => {
         const isCurrentJob = player.currentJobId === job.id;
@@ -53,33 +55,33 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
         
         return (
           <div key={job.id} className="interaction-item" style={{ marginBottom: '10px', padding: '10px', border: '1px solid #444', borderRadius: '4px' }}>
-            <strong>{job.title}</strong> — ${offeredWage}/hr (Base: ${job.baseWage})
+            <strong>{t(`job.${job.id}`, { defaultValue: job.title })}</strong> — ${offeredWage}/hr ({t('jobBoard.base')}: ${job.baseWage})
             <div style={{ fontSize: '12px', marginTop: '5px' }}>
-              <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>Exp: {job.requirements.experience}</span> | 
-              <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginLeft: '5px' }}>Dep: {job.requirements.dependability}</span>
+              <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>{t('jobBoard.exp')}: {job.requirements.experience}</span> | 
+              <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>{t('jobBoard.dep')}: {job.requirements.dependability}</span>
               {job.requirements.degrees.length > 0 && (
-                <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginLeft: '5px' }}>
-                  | Degrees: {job.requirements.degrees.join(', ')}
+                <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
+                  | {t('jobBoard.degrees')}: {job.requirements.degrees.map(d => t(`education.${d}`, { defaultValue: d })).join(', ')}
                 </span>
               )}
             </div>
             {(missingExp || missingDep || missingDegrees.length > 0) && (
               <div style={{ fontSize: '11px', color: '#e74c3c', fontStyle: 'italic', marginTop: '2px' }}>
-                You do not meet the minimum requirements for this position.
+                {t('jobBoard.missingReq')}
               </div>
             )}
             <div style={{ marginTop: '10px' }}>
               {isCurrentJob ? (
                 offeredWage > player.currentWage ? (
                   <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                    Ask for Raise to ${offeredWage}/hr ({campaign.config.timeRules?.jobApplicationCost ?? 4}h)
+                    {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
                   </button>
                 ) : (
-                  <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Current Job (${player.currentWage}/hr)</span>
+                  <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ {t('jobBoard.currentJob', { wage: player.currentWage })}</span>
                 )
               ) : (
                 <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                  Apply ({campaign.config.timeRules?.jobApplicationCost ?? 4}h)
+                  {t('jobBoard.apply', { cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
                 </button>
               )}
             </div>
@@ -95,21 +97,23 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
  * Allows the player to work a shift.
  */
 export function WorkStation({ onAction, job, campaign }: InteractionProps & { job: JobDef, campaign: CampaignBundle }) {
+  const { t } = useTranslation();
   return (
     <div className="interaction-panel">
-      <h3>Your Job: {job.title}</h3>
+      <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
       <p style={{ fontSize: '12px', marginBottom: '10px' }}>${job.baseWage}/hr</p>
       <button onClick={() => onAction({ type: 'work', jobId: job.id })}>
-        Work Shift (up to {campaign.config.timeRules?.workSessionCost ?? 6}h)
+        {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
       </button>
     </div>
   );
 }
 
 export function StoreFront({ player, onAction, availableItems }: InteractionProps & { availableItems: ItemDef[] }) {
+  const { t } = useTranslation();
   return (
     <div className="interaction-panel">
-      <h3>Storefront</h3>
+      <h3>{t('storeFront.title')}</h3>
       {availableItems.map(item => {
         const canAfford = player.money >= item.basePrice;
         return (
@@ -121,7 +125,7 @@ export function StoreFront({ player, onAction, availableItems }: InteractionProp
               if (canAfford) onAction({ type: 'buy', itemId: item.id });
             }}
           >
-            <span>{item.name}</span>
+            <span>{t(`item.${item.id}`, { defaultValue: item.name })}</span>
             <span>${item.basePrice}</span>
           </div>
         );
@@ -131,13 +135,14 @@ export function StoreFront({ player, onAction, availableItems }: InteractionProp
 }
 
 export function HomeRelax({ onAction, campaign }: InteractionProps & { campaign?: CampaignBundle }) {
+  const { t } = useTranslation();
   const relaxCost = campaign?.config.timeRules?.relaxCost ?? 6;
   return (
     <div className="interaction-panel">
-      <h3>Home Sweet Home</h3>
-      <p style={{ fontSize: '12px', marginBottom: '10px' }}>Relax to restore happiness. Costs {relaxCost} hours.</p>
+      <h3>{t('homeRelax.title')}</h3>
+      <p style={{ fontSize: '12px', marginBottom: '10px' }}>{t('homeRelax.desc', { cost: relaxCost })}</p>
       <button onClick={() => onAction({ type: 'relax' })}>
-        Relax ({relaxCost}h)
+        {t('homeRelax.button', { cost: relaxCost })}
       </button>
     </div>
   );
@@ -149,6 +154,7 @@ import { calcRequiredLessons } from '../engine/educationEngine';
 import type { GameRules } from '../engine/gameState';
 
 export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
+  const { t } = useTranslation();
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
   const lowCostHousing = campaign?.housing.find(h => h.id === 'low_cost');
   const securityHousing = campaign?.housing.find(h => h.id === 'security');
@@ -170,97 +176,97 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
 
   return (
     <div className="interaction-panel">
-      <h3>Rent Office</h3>
-      <p style={{ fontSize: '12px', marginBottom: '10px' }}>Current Residence: {currentHousing ? currentHousing.name : 'Homeless'}</p>
+      <h3>{t('rentOffice.title')}</h3>
+      <p style={{ fontSize: '12px', marginBottom: '10px' }}>{t('rentOffice.current')}: {currentHousing ? t(`housing.${currentHousing.id}`, { defaultValue: currentHousing.name }) : t('rentOffice.homeless')}</p>
       
       {!isOpen ? (
         <div style={{ padding: '10px', backgroundColor: '#555', borderRadius: '4px', fontStyle: 'italic' }}>
-          The Rent Office is closed. Come back during Week 4 to pay your rent or move to a new apartment.
+          {t('rentOffice.closed')}
         </div>
       ) : (
         <>
           {rentOwed > 0 && (
             <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#e74c3c', borderRadius: '4px' }}>
-              <strong>Rent Due: ${rentOwed}</strong>
+              <strong>{t('rentOffice.rentDue', { amount: rentOwed })}</strong>
               <br/>
               <button 
                 onClick={() => onAction({ type: 'rent_transaction', amount: rentOwed })}
                 style={{ marginTop: '10px', backgroundColor: '#c0392b' }}
                 disabled={player.money < rentOwed}
               >
-                Pay Rent Debt
+                {t('rentOffice.payRentDebt')}
               </button>
             </div>
           )}
 
           {currentHousing && (
             <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #4aa' }}>
-              <strong>Rent Paid Until: Week {player.rentPaidUntilWeek}</strong>
-              <p style={{ fontSize: '12px' }}>(You have {player.rentPaidUntilWeek - turn} weeks of rent paid)</p>
+              <strong>{t('rentOffice.paidUntil', { week: player.rentPaidUntilWeek })}</strong>
+              <p style={{ fontSize: '12px' }}>{t('rentOffice.weeksPaid', { count: player.rentPaidUntilWeek - turn })}</p>
               
               <button 
                 onClick={() => onAction({ type: 'pay_rent_advance', amount: rentAdvanceCost })}
                 style={{ marginTop: '5px' }}
                 disabled={player.money < rentAdvanceCost}
               >
-                Pay Rent Advance (${rentAdvanceCost} / mo)
+                {t('rentOffice.payAdvance', { cost: rentAdvanceCost })}
               </button>
             </div>
           )}
 
           {rentDue && !player.rentExtensionActive && !player.turnFlags.askedForExtension && !player.rentExtensionsDeniedPermanently && (
             <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #c93' }}>
-              <strong>Rent is Due!</strong>
-              <p style={{ fontSize: '12px' }}>You can ask for a 1-week extension.</p>
+              <strong>{t('rentOffice.rentIsDue')}</strong>
+              <p style={{ fontSize: '12px' }}>{t('rentOffice.canAskExtension')}</p>
               <button 
                 onClick={() => onAction({ type: 'ask_rent_extension' })}
                 style={{ marginTop: '5px', backgroundColor: '#e67e22' }}
               >
-                Ask for Extension
+                {t('rentOffice.askExtension')}
               </button>
             </div>
           )}
           {player.rentExtensionActive && (
             <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #27ae60', color: '#27ae60' }}>
-              <strong>Extension Granted</strong>
-              <p style={{ fontSize: '12px', margin: 0 }}>Rent is due by the end of this week.</p>
+              <strong>{t('rentOffice.extensionGranted')}</strong>
+              <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.dueByEnd')}</p>
             </div>
           )}
           {player.turnFlags.askedForExtension && !player.rentExtensionActive && (
             <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #e74c3c', color: '#e74c3c' }}>
-              <strong>Extension Denied</strong>
-              <p style={{ fontSize: '12px', margin: 0 }}>The Rent Officer denied your request. You must pay by the end of the week.</p>
+              <strong>{t('rentOffice.extensionDenied')}</strong>
+              <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.mustPay')}</p>
             </div>
           )}
           {player.rentExtensionsDeniedPermanently && (
             <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #e74c3c', color: '#e74c3c' }}>
-              <strong>Extensions Permanently Denied</strong>
-              <p style={{ fontSize: '12px', margin: 0 }}>Due to past debts, you can never receive another rent extension.</p>
+              <strong>{t('rentOffice.permanentlyDenied')}</strong>
+              <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.neverAnother')}</p>
             </div>
           )}
 
-          <h4>Available Apartments:</h4>
+          <h4>{t('rentOffice.availableApts')}:</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
             {lowCostHousing && player.currentHousingId !== lowCostHousing.id && (
               <div className="store-item">
-                <span>{lowCostHousing.name} - ${lowCostMovePrice}/mo</span>
+                <span>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })} - ${lowCostMovePrice}/mo</span>
                 <button 
                   onClick={() => onAction({ type: 'move_apartment', housingId: lowCostHousing.id, cost: lowCostMovePrice })}
                   disabled={player.money < lowCostMovePrice}
                 >
-                  Move In
+                  {t('rentOffice.moveIn')}
                 </button>
               </div>
             )}
             
             {securityHousing && player.currentHousingId !== securityHousing.id && (
               <div className="store-item">
-                <span>{securityHousing.name} - ${securityMovePrice}/mo</span>
+                <span>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })} - ${securityMovePrice}/mo</span>
                 <button 
                   onClick={() => onAction({ type: 'move_apartment', housingId: securityHousing.id, cost: securityMovePrice })}
                   disabled={player.money < securityMovePrice}
                 >
-                  Move In
+                  {t('rentOffice.moveIn')}
                 </button>
               </div>
             )}
@@ -561,7 +567,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
         return (
           <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #4aa' }}>
             <strong>{deg.name}</strong> {isEnrolled ? '' : `- Tuition: $${tuitionFee}`}
-            {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginLeft: '5px', fontWeight: 'bold' }}>★ Bonus</span>}
+            {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginInlineStart: '5px', fontWeight: 'bold' }}>★ Bonus</span>}
             
             {isEnrolled ? (
               <>
