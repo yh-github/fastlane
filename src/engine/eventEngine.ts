@@ -5,10 +5,12 @@
  * and map-based triggers.
  */
 
-import { type PlayerState } from './gameState';
+import { type PlayerState, type GameState } from './gameState';
 import { spendHours } from './timeManager';
-import { calcRobberyChance } from './statMath';
+import { calcRobberyChance, calcNetWorth, calcFloppyDurableValue } from './statMath';
+import { calcEconomyPrice } from './economyEngine';
 import type { Random } from '../utils/rng';
+import type { CampaignBundle } from './dataLoader';
 
 /**
  * Attempt a Wild Willy street robbery when leaving Bank or Black's Market.
@@ -89,7 +91,7 @@ export function processApartmentRobbery(player: PlayerState, rng: Random): { upd
   const chance = calcRobberyChance(player.relaxation);
   
   if (rng.next() < chance) {
-    let updated = { ...player, inventory: { ...player.inventory }, turnEvents: [...player.turnEvents, "Wild Willy broke into your apartment!"] };
+    let updated = { ...player, inventory: { ...player.inventory }, turnEvents: [...player.turnEvents, { key: 'events.robbery.willy' }] };
     // -4 Happiness penalty
     updated.happiness = Math.max(10, updated.happiness - 4);
     
@@ -109,4 +111,64 @@ export function processApartmentRobbery(player: PlayerState, rng: Random): { upd
   }
 
   return { updated: player, robbed: false };
+}
+
+/**
+ * Process Donation event at start of turn.
+ * @param player - Current player state
+ * @param state - The global GameState to check variant and economy
+ * @param campaign - To fetch item and job definitions
+ * @param rng - For calculating the random amount
+ * @returns Updated player state (donated or untouched)
+ */
+export function processDonations(
+  player: PlayerState,
+  state: GameState,
+  campaign: CampaignBundle,
+  rng: Random
+): PlayerState {
+  if (player.nakedTurns < 2) return player;
+
+  let isEligible = false;
+
+  if (state.variant === 'cdrom') {
+    const netWorth = calcNetWorth(player);
+    if (player.money < 300 && netWorth < 300) {
+      isEligible = true;
+    }
+  } else {
+    // floppy
+    const durableValue = calcFloppyDurableValue(player);
+    if (player.money === 0 && durableValue < 200) {
+      isEligible = true;
+    }
+  }
+
+  if (!isEligible) return player;
+
+  // Calculate amount
+  let uniformPrice = 50;
+  
+  if (player.currentJobId) {
+    const jobDef = campaign.jobs.find(j => j.id === player.currentJobId);
+    if (jobDef) {
+      const uniformSubcategory = jobDef.requirements.uniform;
+      const qtItem = campaign.items.find(i => i.subcategory === uniformSubcategory && i.store === 'qt_clothing');
+      if (qtItem) {
+        uniformPrice = calcEconomyPrice(qtItem.basePrice, state.economicIndex);
+      }
+    }
+  }
+
+  const extraCash = Math.floor(rng.next() * 100) + 1; // 1 to 100
+  const totalDonation = uniformPrice + extraCash;
+
+  const updated = {
+    ...player,
+    money: player.money + totalDonation,
+    nakedTurns: 0,
+    turnEvents: [...player.turnEvents, { key: 'events.donation', params: { amount: totalDonation } }]
+  };
+
+  return updated;
 }

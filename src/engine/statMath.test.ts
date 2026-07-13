@@ -50,8 +50,9 @@ describe('statMath', () => {
   });
 
   it('calcCareerProgress', () => {
-    expect(calcCareerProgress(80)).toBe(100);
-    expect(calcCareerProgress(40)).toBe(50);
+    expect(calcCareerProgress(80, true)).toBe(100);
+    expect(calcCareerProgress(40, true)).toBe(50);
+    expect(calcCareerProgress(80, false)).toBe(0);
   });
 
   it('calcWealthProgress', () => {

@@ -1,5 +1,6 @@
 import type { WeekendDef } from './dataLoader';
 import type { Random } from '../utils/rng';
+import type { PlayerState, GameEvent } from './gameState';
 
 // Helper to determine cost based on price range
 function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number, rng: Random): number {
@@ -30,21 +31,21 @@ export function processWeekend(
 ): PlayerState {
   const newPlayer = { ...player, inventory: { ...player.inventory, tickets: { ...player.inventory.tickets } } };
   
-  let weekendText = '';
+  let weekendEvent: GameEvent | null = null;
   let priceType: 'cheap' | 'medium' | 'expensive' = 'cheap';
   let happinessBonus: number | undefined = undefined;
 
   // 1. Tickets
   if (player.inventory.tickets.baseball > 0 && weekendData.ticketWeekends.baseball) {
-    weekendText = weekendData.ticketWeekends.baseball.text;
+    weekendEvent = { key: 'events.weekend.ticket_baseball' };
     newPlayer.inventory.tickets.baseball--;
     priceType = 'medium';
   } else if (player.inventory.tickets.theatre > 0 && weekendData.ticketWeekends.theatre) {
-    weekendText = weekendData.ticketWeekends.theatre.text;
+    weekendEvent = { key: 'events.weekend.ticket_theatre' };
     newPlayer.inventory.tickets.theatre--;
     priceType = 'medium';
   } else if (player.inventory.tickets.concert > 0 && weekendData.ticketWeekends.concert) {
-    weekendText = weekendData.ticketWeekends.concert.text;
+    weekendEvent = { key: 'events.weekend.ticket_concert' };
     newPlayer.inventory.tickets.concert--;
     priceType = 'medium';
   } 
@@ -58,9 +59,9 @@ export function processWeekend(
       if (weekendData.durableWeekends[app.id]) {
         // 20% chance to trigger
         if (rng.next() < 0.20) {
-          const candidateText = weekendData.durableWeekends[app.id].text;
-          if (!previousPlayerWeekends.includes(candidateText)) {
-            weekendText = candidateText;
+          const candidateEvent = { key: `events.weekend.durable_${app.id}` };
+          if (!previousPlayerWeekends.includes(candidateEvent.key)) {
+            weekendEvent = candidateEvent;
             priceType = 'cheap';
             triggeredDurableWeekend = true;
             break;
@@ -73,10 +74,10 @@ export function processWeekend(
     if (!triggeredDurableWeekend) {
       if (newPlayer.money < 5) {
         // Player is too broke to afford even the cheapest random weekend.
-        weekendText = "You were too broke to do anything this weekend.";
+        weekendEvent = { key: 'events.weekend.too_broke' };
         
         newPlayer.weekendResult = {
-          text: weekendText,
+          event: weekendEvent,
           cost: 0
         };
         return newPlayer;
@@ -86,14 +87,14 @@ export function processWeekend(
       let attempts = 0;
       while (attempts < 100) {
         chosenIndex = Math.floor(rng.next() * weekendData.randomWeekends.length);
-        const candidateText = weekendData.randomWeekends[chosenIndex];
-        if (!previousPlayerWeekends.includes(candidateText)) {
+        const candidateKey = `events.weekend.random_${chosenIndex}`;
+        if (!previousPlayerWeekends.includes(candidateKey)) {
           break;
         }
         attempts++;
       }
       
-      weekendText = weekendData.randomWeekends[chosenIndex];
+      weekendEvent = { key: `events.weekend.random_${chosenIndex}` };
       
       // Determine price of random weekend
       // 0-27 (1-28): Cheap
@@ -122,7 +123,7 @@ export function processWeekend(
   }
 
   newPlayer.weekendResult = {
-    text: weekendText,
+    event: weekendEvent!,
     cost,
     happinessBonus
   };

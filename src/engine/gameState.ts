@@ -15,11 +15,18 @@ import { type CampaignBundle } from './dataLoader';
 
 // ─── Core Game State ────────────────────────────────────────────
 
+export interface GameEvent {
+  key: string;
+  params?: Record<string, string | number>;
+}
+
 export interface GameState {
   /** Current turn (week) number, 1-indexed */
   turn: number;
   /** Global economic index: -30 (depression) to +90 (boom) */
   economicIndex: number;
+  /** Items that have expired and are for sale globally */
+  pawnShopItemsForSale: PawnedItem[];
   /** All player states */
   players: PlayerState[];
   /** Current game phase */
@@ -44,6 +51,7 @@ export interface GameRules {
   classicStockMarket: boolean;
   allowPartialHours: boolean;
   enableRelaxationDoctor: boolean;
+  requireJobForLoan: boolean;
 }
 
 export type GamePhase =
@@ -125,6 +133,8 @@ export interface PlayerState {
 
   // ── Inventory ──
   inventory: InventoryState;
+  /** Number of consecutive turns the player has had no clothes to wear */
+  nakedTurns: number;
 
   // ── Position ──
   /** Current map node ID */
@@ -133,14 +143,16 @@ export interface PlayerState {
   // ── Win Conditions ──
   /** Player's allotted goal targets (classic: distribute 100 points) */
   goalAllotment: GoalAllotment;
+  /** Whether the player has won the game */
+  hasWon?: boolean;
 
   // ── Per-Turn Flags ──
   /** Flags that reset each turn for tracking one-time-per-turn effects */
   turnFlags: TurnFlags;
   /** Notifications or events that occurred over the weekend */
-  turnEvents: string[];
+  turnEvents: GameEvent[];
   /** The newspaper headline for this turn */
-  newspaperHeadline: string | null;
+  newspaperHeadline: GameEvent | null;
   /** The result of the weekend activity processing */
   weekendResult?: WeekendResult;
   
@@ -150,7 +162,7 @@ export interface PlayerState {
 }
 
 export interface WeekendResult {
-  text: string;
+  event: GameEvent;
   cost: number;
   happinessBonus?: number;
 }
@@ -234,6 +246,8 @@ export interface GoalAllotment {
 // ─── Turn Flags ─────────────────────────────────────────────────
 
 export interface TurnFlags {
+  relaxedThisTurn?: boolean;
+  rentExtensionRefusedThisTurn?: boolean;
   /** Whether the player has eaten this turn (prevents starvation) */
   hasEaten: boolean;
   /** Whether the player has worked this turn (for dep/exp gain) */
@@ -254,10 +268,10 @@ export interface TurnFlags {
   freeNewspaper: boolean;
   /** Whether the player has viewed their weekend summary this turn */
   hasSeenWeekend: boolean;
-  /** Notice flag for loan payable (week 4 of month) */
-  loanPayableWarning?: boolean;
-  /** Notice flag for loan default/delinquency */
+  /** Loan default warning flag */
   loanDefaultWarning?: boolean;
+  /** Loan payable warning flag */
+  loanPayableWarning?: boolean;
 }
 
 // ─── Stat Constants ─────────────────────────────────────────────
@@ -286,6 +300,8 @@ export function createDefaultTurnFlags(): TurnFlags {
     rentPaidThisTurn: false,
     freeNewspaper: false,
     hasSeenWeekend: false,
+    relaxedThisTurn: false,
+    rentExtensionRefusedThisTurn: false,
   };
 }
 
@@ -346,6 +362,7 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
     degrees: [],
     enrolledClasses: {},
     inventory: createDefaultInventory(),
+    nakedTurns: 0,
     position: startNode,
     goalAllotment: goals,
     turnFlags: createDefaultTurnFlags(),
@@ -360,13 +377,14 @@ export function createInitialGameState(
   playersConfig: PlayerConfig[],
   startNode: string,
   variant: GameVariant = 'cdrom',
-  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, allowPartialHours: true, enableRelaxationDoctor: true },
+  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, allowPartialHours: true, enableRelaxationDoctor: true, requireJobForLoan: true },
   seed: number = 12345
 ): GameState {
   return {
     turn: 0,
     economicIndex: 0,
     rngState: seed,
+    pawnShopItemsForSale: [],
     players: playersConfig.map((cfg, i) =>
       createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config)
     ),

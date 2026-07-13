@@ -11,6 +11,7 @@ import {
   MIN_HAPPINESS,
   MAX_HAPPINESS,
   DEPENDABILITY_WEEKLY_DECAY,
+  type PlayerState
 } from './gameState';
 
 // ─── Stat Math ──────────────────────────────────────────────────
@@ -112,8 +113,10 @@ export function calcRaiseThreshold(jobRequiredDep: number, raisesReceived: numbe
 /**
  * Calculate current Career stat (0-100) based on Dependability.
  * 80 Dependability = 100 Career.
+ * Must have a job to have a Career stat > 0.
  */
-export function calcCareerProgress(dependability: number): number {
+export function calcCareerProgress(dependability: number, hasJob: boolean): number {
+  if (!hasJob) return 0;
   return Math.min(100, Math.floor(1.25 * dependability));
 }
 
@@ -131,4 +134,60 @@ export function calcWealthProgress(liquidAssets: number): number {
  */
 export function calcEducationProgress(numDegrees: number): number {
   return Math.min(100, 1 + 9 * numDegrees);
+}
+
+/**
+ * Calculate the durable value for the Floppy Disk version of donations.
+ * "The value of each type of Durable is calculated by the price the player paid for the last instance of that Durable they had purchased."
+ * Pawned items are NOT included in this specific calculation.
+ */
+export function calcFloppyDurableValue(player: PlayerState): number {
+  const lastPrices = new Map<string, number>();
+  const counts = new Map<string, number>();
+
+  for (const app of player.inventory.appliances) {
+    counts.set(app.id, (counts.get(app.id) || 0) + 1);
+    // Assuming appliances are appended in chronological order of purchase
+    lastPrices.set(app.id, app.purchasePrice);
+  }
+
+  let totalValue = 0;
+  for (const [id, count] of counts.entries()) {
+    const lastPrice = lastPrices.get(id) || 0;
+    totalValue += count * lastPrice;
+  }
+
+  return totalValue;
+}
+
+/**
+ * Calculate total Net Worth.
+ * Net Worth = Cash + Bank Savings + Value of all Durables (including pawned).
+ * Uses the exact same durable valuation math as the Floppy check.
+ */
+export function calcNetWorth(player: PlayerState): number {
+  const liquid = player.money + player.bankSavings;
+  
+  const lastPrices = new Map<string, number>();
+  const counts = new Map<string, number>();
+
+  // Regular appliances
+  for (const app of player.inventory.appliances) {
+    counts.set(app.id, (counts.get(app.id) || 0) + 1);
+    lastPrices.set(app.id, app.purchasePrice);
+  }
+  
+  // Pawned appliances
+  for (const pawned of player.inventory.pawnedItems) {
+    counts.set(pawned.itemId, (counts.get(pawned.itemId) || 0) + 1);
+    lastPrices.set(pawned.itemId, pawned.originalPrice);
+  }
+
+  let durableValue = 0;
+  for (const [id, count] of counts.entries()) {
+    const lastPrice = lastPrices.get(id) || 0;
+    durableValue += count * lastPrice;
+  }
+
+  return liquid + durableValue;
 }

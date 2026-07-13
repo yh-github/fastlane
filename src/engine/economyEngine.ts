@@ -7,6 +7,45 @@
 
 import type { PlayerState } from './gameState';
 import type { Random } from '../utils/rng';
+import type { CampaignBundle } from './dataLoader';
+
+/**
+ * Calculates a player's true Liquid Assets, including cash, bank savings, and stocks.
+ * 
+ * @param player The player state
+ * @param campaign The current campaign bundle (to resolve stock prices)
+ * @param economicIndex The current economic index
+ * @param turn The current turn
+ * @returns Total liquid assets in dollars
+ */
+export function calcLiquidAssets(
+  player: PlayerState,
+  campaign: CampaignBundle | undefined,
+  economicIndex: number,
+  turn: number
+): number {
+  let assets = player.money + player.bankSavings;
+
+  assets += (player.inventory.stocks.tBills || 0) * 100;
+
+  if (campaign && campaign.stocks) {
+    for (const stock of campaign.stocks) {
+      if (stock.id === 'tbills') continue; // handled above
+
+      const owned = player.inventory.stocks.holdings[stock.id] || 0;
+      if (owned > 0) {
+        let price = stock.basePrice;
+        if (stock.type === 'fluctuating') {
+          const seed = turn * 997 + stock.id.charCodeAt(0) * 31;
+          price = calcStockPrice(stock.basePrice, economicIndex, seed);
+        }
+        assets += owned * price;
+      }
+    }
+  }
+
+  return assets;
+}
 
 /**
  * Calculate an economy-adjusted price.
@@ -107,7 +146,7 @@ export function applyMarketCrash(
  * Applies an Economic Boom to a player.
  * Gives +5 Happiness if the player has significant stock investments.
  */
-export function applyEconomicBoom(player: PlayerState, campaign: any): PlayerState {
+export function applyEconomicBoom(player: PlayerState): PlayerState {
   let updated = { ...player };
 
   const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;

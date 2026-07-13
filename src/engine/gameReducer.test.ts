@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { Random } from '../utils/rng';
 import { gameReducer, type ReducerContext } from './gameReducer';
 import { createInitialGameState, type PlayerState, type GameRules } from './gameState';
 import type { CampaignBundle } from './dataLoader';
@@ -45,7 +46,10 @@ describe('gameReducer', () => {
     context = {
       campaign: mockCampaign,
       rules: { classicStockMarket: true } as GameRules,
-      turn: 1
+      turn: 1,
+      economicIndex: 0,
+      rng: new Random(1),
+      state
     };
   });
 
@@ -60,7 +64,7 @@ describe('gameReducer', () => {
       expect(result.updatedPlayer.currentJobId).toBe('burger_cook');
       expect(result.updatedPlayer.currentWage).toBe(5);
       expect(result.updatedPlayer.hoursRemaining).toBe(40 - 4); // COST_JOB_APPLICATION is 4
-      expect(result.actionLog).toContain('You got the job');
+      expect(result.actionLog?.key).toBe('action.job.gotJob');
     });
 
     it('fails to apply if not enough time', () => {
@@ -68,7 +72,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'apply', jobId: 'burger_cook' }, context);
       expect(result.updatedPlayer.currentJobId).toBeNull();
       expect(result.updatedPlayer.hoursRemaining).toBe(2);
-      expect(result.actionLog).toContain('Not enough time');
+      expect(result.actionLog?.key).toBe('action.error.notEnoughTime');
     });
   });
 
@@ -81,7 +85,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'work', jobId: 'burger_cook' }, context);
       expect(result.updatedPlayer.hoursRemaining).toBe(20 - 6); // COST_WORK_SESSION is 6
       expect(result.updatedPlayer.money).toBe(500 + (5 * 8)); // 500 initial + 40
-      expect(result.actionLog).toContain('Earned $40');
+      expect(result.actionLog?.key).toBe('action.job.worked');
     });
   });
 
@@ -92,7 +96,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'buy', itemId: 'newspaper' }, context);
       expect(result.updatedPlayer.money).toBe(499);
       expect(result.updatedPlayer.hoursRemaining).toBe(9);
-      expect(result.actionLog).toBe('Purchased Newspaper');
+      expect(result.actionLog?.key).toBe('action.buy');
     });
 
     it('fails to buy newspaper if broke', () => {
@@ -101,7 +105,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'buy', itemId: 'newspaper' }, context);
       expect(result.updatedPlayer.money).toBe(0);
       expect(result.updatedPlayer.hoursRemaining).toBe(10);
-      expect(result.actionLog).toContain('Not enough money');
+      expect(result.actionLog?.key).toBe('action.error.notEnoughMoney');
     });
 
     it('buys a general item at 0 hours remaining (zero-cost action)', () => {
@@ -110,7 +114,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'buy', itemId: 'refrigerator' }, context);
       expect(result.updatedPlayer.money).toBe(100); // 500 - 400
       expect(result.updatedPlayer.hoursRemaining).toBe(0);
-      expect(result.actionLog).toBe('Purchased Refrigerator');
+      expect(result.actionLog?.key).toBe('action.buy');
     });
 
     it('fails to buy newspaper if 0 hours remaining (costs time)', () => {
@@ -119,7 +123,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'buy', itemId: 'newspaper' }, context);
       expect(result.updatedPlayer.money).toBe(500);
       expect(result.updatedPlayer.hoursRemaining).toBe(0);
-      expect(result.actionLog).toContain('Not enough time to buy Newspaper');
+      expect(result.actionLog?.key).toBe('action.error.notEnoughTimeBuy');
     });
   });
 
@@ -161,7 +165,7 @@ describe('gameReducer', () => {
       player.money = 10;
       const result = gameReducer(player, { type: 'bank_transaction', amount: 50 }, context);
       expect(result.updatedPlayer.money).toBe(10);
-      expect(result.actionLog).toContain('Not enough cash');
+      expect(result.actionLog?.key).toBe('action.error.notEnoughMoneyDeposit');
     });
   });
 
@@ -201,7 +205,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'pay_loan' }, context);
       expect(result.updatedPlayer.money).toBe(50);
       expect(result.updatedPlayer.loanDebt).toBe(155); // 45 principal, 5 interest
-      expect(result.actionLog).toContain('Made a $50 loan payment');
+      expect(result.actionLog?.key).toBe('action.loan.paidInstallment');
     });
 
     it('pays off a loan completely', () => {
@@ -210,7 +214,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'pay_loan' }, context);
       expect(result.updatedPlayer.money).toBe(60);
       expect(result.updatedPlayer.loanDebt).toBe(0);
-      expect(result.actionLog).toContain('Paid off the remaining loan');
+      expect(result.actionLog?.key).toBe('action.loan.paidOff');
     });
   });
 

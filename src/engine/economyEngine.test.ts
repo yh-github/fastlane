@@ -50,7 +50,7 @@ describe('Economy Engine', () => {
 
     it('applies moderate crash correctly', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); // Trigger fired
-      const player = { money: 1000, bankSavings: 1000, happiness: 50, currentJobId: 'some_job', currentWage: 50, inventory: { stocks: { tBills: 5, holdings: { 'XYZ': 10 } } } } as PlayerState;
+      const player = { money: 1000, bankSavings: 1000, happiness: 50, currentJobId: 'some_job', currentWage: 50, inventory: { stocks: { tBills: 5, holdings: { 'XYZ': 10 } } } } as unknown as PlayerState;
       const updated = applyMarketCrash(player, 'moderate', new Random(1));
       // moderate crash drops happiness by 4 (has stocks) + 7 (fired) = 11.
       expect(updated.happiness).toBe(39);

@@ -1,13 +1,13 @@
-import { type PlayerState } from './gameState';
+import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import { spendHours } from './timeManager';
 import { processRentDebt } from './economyEngine';
 import type { JobDef } from './dataLoader';
-import type { Random } from './rng';
+import type { Random } from '../utils/rng';
 
 export interface JobApplicationResult {
   updated: PlayerState;
   success: boolean;
-  message: string;
+  message: GameEvent;
 }
 
 export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules): JobApplicationResult {
@@ -19,7 +19,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
 
   if (player.hoursRemaining < timeCost) {
     if (!rules?.allowPartialHours) {
-      return { updated: player, success: false, message: msg('job_apply_not_enough_time', 'Not enough time to apply.') };
+      return { updated: player, success: false, message: { key: 'action.error.notEnoughTime' } };
     }
   }
 
@@ -33,7 +33,13 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     updated.currentJobId = job.id;
     updated.currentWage = offeredWage ?? job.baseWage;
     updated.raisesAtCurrentJob = 0;
-    return { updated, success: true, message: msg('job_apply_success', `You got the job as ${job.title}!`, { title: job.title }) };
+    
+    if (updated.dependability < 10) {
+      updated.dependability = 10;
+    }
+    updated.experience += 2;
+    
+    return { updated, success: true, message: { key: 'action.job.gotJob', params: { title: job.title } } };
   }
 
   if (isRaise) {
@@ -45,12 +51,12 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
         updated.currentWage = newWage;
         updated.raisesAtCurrentJob += 1;
         updated.happiness = Math.min(100, updated.happiness + 3);
-        return { updated, success: true, message: msg('job_apply_raise_success', 'You got the raise!') };
+        return { updated, success: true, message: { key: 'action.job.raiseSuccess' } };
       } else {
-        return { updated, success: false, message: 'You applied for a wage less than or equal to your current wage. Waste of time!' };
+        return { updated, success: false, message: { key: 'action.job.raiseWaste' } };
       }
     } else {
-      return { updated, success: false, message: msg('job_apply_raise_denied', 'They denied your raise request. You need to be more dependable.') };
+      return { updated, success: false, message: { key: 'action.job.raiseDenied' } };
     }
   }
 
@@ -75,7 +81,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   // The workplace checks clothes during workShift.
 
   if (rejectionReasons.length > 0) {
-    return { updated, success: false, message: rejectionReasons.join(' ') };
+    return { updated, success: false, message: { key: 'action.job.rejected', params: { reasons: rejectionReasons.join(' ') } } };
   }
 
   // RNG Luck check for new jobs
@@ -83,27 +89,42 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   const roll = Math.floor((rng ? rng.next() : Math.random()) * 100) + 1;
 
   if (roll > luck) {
-    return { updated, success: false, message: msg('job_apply_no_openings', 'They decided to hire someone else (bad luck).') };
+    return { updated, success: false, message: { key: 'action.job.noOpenings' } };
   }
 
   // Success
   updated.currentJobId = job.id;
   updated.currentWage = offeredWage ?? job.baseWage; // Lock in the wage
   updated.raisesAtCurrentJob = 0;
+  
+  // Anti-frustration feature: reset dependability to 10 when getting a new job if it's too low
+  if (updated.dependability < 10) {
+    updated.dependability = 10;
+  }
+  
+  // Bonus experience for getting a new job
+  updated.experience += 2;
 
-  return { updated, success: true, message: msg('job_apply_success', `You got the job as ${job.title}!`, { title: job.title }) };
+  return { updated, success: true, message: { key: 'action.job.gotJob', params: { title: job.title } } };
 }
 
 export interface WorkResult {
   updated: PlayerState;
   wagesEarned: number;
   success: boolean;
-  message?: string;
+  message?: GameEvent;
 }
 
 export function workShift(player: PlayerState, job: JobDef, shiftCost: number): WorkResult {
   if (player.hoursRemaining <= 0 || player.currentJobId !== job.id) {
-    return { updated: player, wagesEarned: 0, success: false, message: "Cannot work right now." };
+    return { updated: player, wagesEarned: 0, success: false, message: { key: 'action.error.cannotWork' } };
+  }
+  
+  // Dependability firing & warning checks
+  if (player.dependability <= job.requirements.dependability - 5) {
+    const updated = { ...player, currentJobId: null, currentWage: 0, raisesAtCurrentJob: 0 };
+    updated.happiness = Math.max(10, updated.happiness - 7);
+    return { updated, wagesEarned: 0, success: false, message: { key: 'action.job.fired' } };
   }
 
   const req = job.requirements.uniform;
@@ -120,14 +141,14 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number): 
   if (activeClothes === 'casual' && !hasCasual) activeClothes = hasDress ? 'dress' : (hasBusiness ? 'business' : 'none');
 
   if (activeClothes === 'none') {
-    return { updated: player, wagesEarned: 0, success: false, message: `You need ${req} clothes.` };
+    return { updated: player, wagesEarned: 0, success: false, message: { key: 'action.job.needClothes', params: { req } } };
   }
 
   const clothesScore = activeClothes === 'business' ? 3 : (activeClothes === 'dress' ? 2 : 1);
   const reqScore = req === 'business' ? 3 : (req === 'dress' ? 2 : 1);
 
   if (clothesScore < reqScore) {
-    return { updated: player, wagesEarned: 0, success: false, message: `You need ${req} clothes.` };
+    return { updated: player, wagesEarned: 0, success: false, message: { key: 'action.job.needClothes', params: { req } } };
   }
 
   const hoursToWork = Math.min(player.hoursRemaining, shiftCost);
@@ -165,5 +186,12 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number): 
   // Deduct fractional?
   // We'll let the turnProcessor handle clothes wear unconditionally per turn as per the classic rules.
 
-  return { updated, wagesEarned, success: true, message: garnishMessage };
+  let finalMessage: GameEvent | undefined = undefined;
+  if (player.dependability <= job.requirements.dependability - 3) {
+    finalMessage = { key: 'action.job.warning', params: { garnished: garnishMessage } };
+  } else if (garnishMessage) {
+    finalMessage = { key: 'action.job.garnished', params: { garnished: garnishMessage } };
+  }
+
+  return { updated, wagesEarned, success: true, message: finalMessage };
 }

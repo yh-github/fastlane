@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { Random } from '../utils/rng';
 import { processTurnStart } from './turnProcessor';
 import { createInitialGameState, recalculatePlayerEffects } from './gameState';
 import type { CampaignBundle } from './dataLoader';
@@ -33,7 +34,7 @@ describe('Robbery and Synergy Sync Bug', () => {
     // relaxation = 0 means 100% chance of robbery.
     player.relaxation = 0;
     // Mock random so robbery succeeds (chance is 1.0) and steal appliance (random < 0.25).
-    vi.spyOn(Math, 'random').mockReturnValue(0.1); 
+    vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); 
 
     state.turn = 1;
 

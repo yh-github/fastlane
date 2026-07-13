@@ -1,7 +1,7 @@
 import { Random } from '../utils/rng';
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { processApartmentRobbery, processDoctorVisit, processStreetRobbery, processStarvation } from './eventEngine';
+import { processApartmentRobbery, processDoctorVisit, processStreetRobbery, processStarvation, processDonations } from './eventEngine';
 import type { PlayerState } from './gameState';
 
 describe('Event Engine', () => {
@@ -22,7 +22,7 @@ describe('Event Engine', () => {
           { id: 'tv', purchasePrice: 500, purchaseSource: 'socket_city' }, // Stealable
           { id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' } // Immune
         ] } 
-      } as PlayerState;
+      } as unknown as PlayerState;
       
       const { updated, robbed } = processApartmentRobbery(player, new Random(1));
       expect(robbed).toBe(true);
@@ -67,6 +67,77 @@ describe('Event Engine', () => {
       expect(updated.happiness).toBe(48); // 50 - 2
       expect(updated.hoursRemaining).toBeLessThan(60);
       expect(doctorTriggered).toBe(true);
+    });
+  });
+  describe('processDonations', () => {
+    it('does nothing if nakedTurns < 2', () => {
+      const player = { nakedTurns: 1, money: 0, turnEvents: [], inventory: { appliances: [], pawnedItems: [] } } as any;
+      const state = { variant: 'floppy' } as any;
+      const campaign = { jobs: [], items: [] } as any;
+      
+      const updated = processDonations(player, state, campaign, new Random(1));
+      
+      expect(updated).toBe(player);
+    });
+
+    it('triggers in CD-ROM if money and net worth < 300', () => {
+      const player = { 
+        nakedTurns: 2, 
+        money: 100, 
+        bankSavings: 50, 
+        turnEvents: [], 
+        inventory: { appliances: [], pawnedItems: [] } 
+      } as any;
+      const state = { variant: 'cdrom', economicIndex: 0 } as any;
+      const campaign = { jobs: [], items: [] } as any;
+      
+      const updated = processDonations(player, state, campaign, new Random(1));
+      
+      expect(updated.money).toBeGreaterThan(100);
+      expect(updated.nakedTurns).toBe(0);
+      expect(updated.turnEvents.length).toBe(1);
+    });
+
+    it('triggers in Floppy if money == 0 and durableValue < 200', () => {
+      const player = { 
+        nakedTurns: 2, 
+        money: 0, 
+        bankSavings: 500, // Bank savings do not matter for floppy check 
+        turnEvents: [], 
+        inventory: { appliances: [{ id: 'tv', purchasePrice: 150 }], pawnedItems: [] } 
+      } as any;
+      const state = { variant: 'floppy', economicIndex: 0 } as any;
+      const campaign = { jobs: [], items: [] } as any;
+      
+      const updated = processDonations(player, state, campaign, new Random(1));
+      
+      expect(updated.money).toBeGreaterThan(0);
+      expect(updated.nakedTurns).toBe(0);
+    });
+
+    it('calculates durable value properly for floppy', () => {
+      // 2 TVs, last purchased at 500. Total durable value = 1000.
+      const player = { 
+        nakedTurns: 2, 
+        money: 0, 
+        bankSavings: 0, 
+        turnEvents: [], 
+        inventory: { 
+          appliances: [
+            { id: 'tv', purchasePrice: 400 },
+            { id: 'tv', purchasePrice: 500 }
+          ], 
+          pawnedItems: [] 
+        } 
+      } as any;
+      const state = { variant: 'floppy', economicIndex: 0 } as any;
+      const campaign = { jobs: [], items: [] } as any;
+      
+      const updated = processDonations(player, state, campaign, new Random(1));
+      
+      // 1000 >= 200, so NO donation should be triggered!
+      expect(updated).toBe(player);
+      expect(updated.money).toBe(0);
     });
   });
 });
