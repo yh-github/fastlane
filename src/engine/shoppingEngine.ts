@@ -1,20 +1,20 @@
-import { type PlayerState, type GameRules } from './gameState';
+import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import type { ItemDef } from './dataLoader';
 
 export interface ShoppingResult {
   updated: PlayerState;
   success: boolean;
-  message: string;
+  message: GameEvent;
 }
 
 export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): ShoppingResult {
   if (player.money < item.basePrice) {
-    return { updated: player, success: false, message: 'Not enough money.' };
+    return { updated: player, success: false, message: { key: 'action.error.notEnoughMoney' } };
   }
 
   let happinessBonus = item.happinessBonus || 0;
   if (item.id === 'computer' && player.inventory.appliances.some(a => a.id === 'computer')) {
-    return { updated: player, success: false, message: 'You already own a computer.' };
+    return { updated: player, success: false, message: { key: 'action.error.alreadyOwnComputer' } };
   }
 
   let updated = { 
@@ -75,5 +75,5 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
       break;
   }
 
-  return { updated, success: true, message: `Purchased ${item.name}` };
+  return { updated, success: true, message: { key: 'action.buy', params: { itemName: item.name, itemId: item.id } } };
 }

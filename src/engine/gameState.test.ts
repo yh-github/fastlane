@@ -4,13 +4,15 @@ import { type CampaignBundle } from './dataLoader';
 
 describe('createInitialGameState', () => {
   it('initializes players with starting relaxation of 10', () => {
-    const mockCampaign: CampaignBundle = {
+    const mockCampaign = {
       config: { name: 'test', startingMoney: 200, timeRules: { hoursPerTurn: 60, starvationPenalty: 20, doctorPenalty: 10 }, economyRules: { repairCostMin: 0.05, repairCostMax: 0.25 } } as any,
-      locations: [],
+
       items: [],
       jobs: [],
-      degrees: []
-    };
+      buildings: [],
+      housing: [],
+      events: []
+    } as unknown as CampaignBundle;
 
     const state = createInitialGameState(
       mockCampaign,

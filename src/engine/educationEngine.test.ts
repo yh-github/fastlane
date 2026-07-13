@@ -32,14 +32,14 @@ describe('Education Engine', () => {
       const player = { degrees: [], money: 100, enrolledClasses: {} } as PlayerState;
       const result = enrollInDegree(player, mockAdvancedDegree);
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Prerequisite required');
+      expect(result.message?.key).toBe('action.error.missingPrereq');
     });
 
     it('fails if insufficient funds', () => {
       const player = { degrees: [], money: 40, enrolledClasses: {} } as PlayerState;
       const result = enrollInDegree(player, mockDegree);
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Not enough money');
+      expect(result.message?.key).toBe('action.error.notEnoughMoneyTuition');
     });
 
     it('succeeds and deducts tuition', () => {

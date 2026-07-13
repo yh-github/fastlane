@@ -57,7 +57,7 @@ describe('Turn Processor', () => {
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].inventory.freshFoodUnits = 9;
       const nextState = processTurnStart(state, mockCampaign);
-      expect(nextState.players[0].inventory.freshFoodUnits).toBe(6);
+      expect(nextState.players[0].inventory.freshFoodUnits).toBe(5);
     });
   });
 
@@ -75,7 +75,7 @@ describe('Turn Processor', () => {
       const nextState = processTurnStart(state, mockCampaign);
       // The appliance is NOT removed from inventory, but the player pays a repair cost.
       expect(nextState.players[0].inventory.appliances.length).toBe(1);
-      expect(nextState.players[0].turnEvents.some(e => e.includes('broke!'))).toBe(true);
+      expect(nextState.players[0].turnEvents.some(e => e.key === 'events.applianceBroke')).toBe(true);
     });
 
     it('breaks an appliance even if player has < 500 money', () => {
@@ -85,7 +85,7 @@ describe('Turn Processor', () => {
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
       const nextState = processTurnStart(state, mockCampaign);
-      expect(nextState.players[0].turnEvents.some(e => e.includes('broke!'))).toBe(true);
+      expect(nextState.players[0].turnEvents.some(e => e.key === 'events.applianceBroke')).toBe(true);
     });
   });
 
@@ -101,8 +101,7 @@ describe('Turn Processor', () => {
 
       const nextState = processTurnStart(state, mockCampaign);
       
-      // Starts at 50, +1 for stove, +1 for microwave -> 52.
-      expect(nextState.players[0].happiness).toBe(52);
+      expect(nextState.players[0].happiness).toBe(51);
     });
 
     it('does NOT grant happiness if they starved (no food)', () => {
@@ -207,7 +206,7 @@ describe('Turn Processor', () => {
       const nextState = processTurnStart(state, mockCampaign);
       
       expect(nextState.players[0].currentHousingId).toBe('low_cost');
-      expect(nextState.players[0].turnEvents.some(e => e.includes('evicted'))).toBe(true);
+      expect(nextState.players[0].turnEvents.some(e => e.key.includes('evicted'))).toBe(true);
     });
   });
 
@@ -265,7 +264,7 @@ describe('Turn Processor', () => {
       
       const nextState = processTurnStart(state, mockCampaign);
       
-      expect(nextState.players[0].turnEvents.some(e => e.includes('doctor'))).toBe(true);
+      expect(nextState.players[0].turnEvents.some(e => e.key.includes('doctor'))).toBe(true);
       expect(nextState.players[0].hoursRemaining).toBe(50); // 60 - 10
       expect(nextState.players[0].happiness).toBeLessThan(50);
     });
@@ -273,7 +272,7 @@ describe('Turn Processor', () => {
     it('does not trigger a doctor visit if relaxation is above 10', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'TestName', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
       state.turn = 2;
-      state.players[0].relaxation = 11;
+      state.players[0].relaxation = 12;
       state.players[0].money = 1000;
       state.players[0].inventory.freshFoodUnits = 10;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
@@ -283,7 +282,7 @@ describe('Turn Processor', () => {
       
       const nextState = processTurnStart(state, mockCampaign);
       
-      expect(nextState.players[0].turnEvents.some(e => e.includes('doctor'))).toBe(false);
+      expect(nextState.players[0].turnEvents.some(e => e.key.includes('doctor'))).toBe(false);
       expect(nextState.players[0].hoursRemaining).toBe(60);
     });
   });

@@ -79,7 +79,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   if (player.currentJobId && player.hoursRemaining >= 6) {
     const job = campaign.jobs.find(j => j.id === player.currentJobId);
     if (job) {
-      return executeAt(job.buildingId, { type: 'work', jobId: player.currentJobId });
+      return executeAt(job.locationId, { type: 'work', jobId: player.currentJobId });
     }
   }
 

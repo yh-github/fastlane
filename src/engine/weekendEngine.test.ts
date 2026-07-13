@@ -34,7 +34,7 @@ describe('Weekend Engine', () => {
     } as unknown as PlayerState;
     
     const nextPlayer = processWeekend(player, 1, [], mockWeekendData, new Random(1));
-    expect(nextPlayer.weekendResult?.text).toBeDefined();
+    expect(nextPlayer.weekendResult?.event.key).toBeDefined();
     expect(nextPlayer.money).toBeLessThan(1000); // Spent money
   });
 
@@ -49,7 +49,7 @@ describe('Weekend Engine', () => {
     
     const nextPlayer = processWeekend(player, 1, [], mockWeekendData, new Random(1));
     expect(nextPlayer.money).toBe(2); // Should not drain their last 2 dollars
-    expect(nextPlayer.weekendResult?.text).toContain('too broke');
+    expect(nextPlayer.weekendResult?.event.key).toBe('events.weekend.too_broke');
   });
 
   it('consumes exactly 1 ticket, not all of them', () => {
@@ -62,6 +62,6 @@ describe('Weekend Engine', () => {
     
     const nextPlayer = processWeekend(player, 1, [], mockWeekendData, new Random(1));
     expect(nextPlayer.inventory.tickets.baseball).toBe(2);
-    expect(nextPlayer.weekendResult?.text).toBe("Went to a baseball game.");
+    expect(nextPlayer.weekendResult?.event.key).toBe('events.weekend.ticket_baseball');
   });
 });
