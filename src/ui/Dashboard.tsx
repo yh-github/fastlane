@@ -7,23 +7,26 @@
 
 import { type PlayerState } from '../engine/gameState';
 import { calcEducationProgress, calcCareerProgress, calcWealthProgress } from '../engine/statMath';
+import { calcLiquidAssets } from '../engine/economyEngine';
 import { useTranslation } from 'react-i18next';
+import type { CampaignBundle } from '../engine/dataLoader';
 
 interface DashboardProps {
   player: PlayerState | null;
   turn: number;
   economicIndex: number;
   hoursPerTurn: number;
+  campaign?: CampaignBundle;
   onOpenInventory: () => void;
 }
 
-export function Dashboard({ player, turn, economicIndex, hoursPerTurn, onOpenInventory }: DashboardProps) {
+export function Dashboard({ player, turn, economicIndex, hoursPerTurn, campaign, onOpenInventory }: DashboardProps) {
   const { t } = useTranslation();
   if (!player) return <header className="dashboard">{t('dashboard.loading')}</header>;
 
   const education = calcEducationProgress(player.degrees.length);
-  const career = calcCareerProgress(player.dependability);
-  const wealth = calcWealthProgress(player.money + player.bankSavings);
+  const career = calcCareerProgress(player.dependability, player.currentJobId !== null);
+  const wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn));
 
   return (
     <header className="dashboard">

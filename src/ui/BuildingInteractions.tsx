@@ -276,7 +276,8 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
     </div>
   );
 }
-function StockTradeRow({ stock, price, owned, playerMoney, onAction }: any) {
+export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { stock: import('../engine/dataLoader').StockDef, price: number, owned: number, playerMoney: number, onAction: (payload: any) => void }) {
+  const { t } = useTranslation();
   const [tradeMode, setTradeMode] = useState<'shares' | 'cash'>('shares');
   const [inputValue, setInputValue] = useState<number | ''>('');
 
@@ -296,10 +297,10 @@ function StockTradeRow({ stock, price, owned, playerMoney, onAction }: any) {
   return (
     <div style={{ padding: '10px', border: '1px solid #4aa', borderRadius: '4px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-        <strong>{stock.name}</strong>
-        <span>Price: ${price}</span>
+        <strong>{t(`stock.${stock.id}`, { defaultValue: stock.name })}</strong>
+        <span>{t('stocks.price', { price, defaultValue: `Price: $${price}/share` })}</span>
       </div>
-      <div style={{ fontSize: '12px', marginBottom: '10px', color: '#ccc' }}>Owned: {owned} shares</div>
+      <div style={{ fontSize: '12px', marginBottom: '10px', color: '#ccc' }}>{t('stocks.owned', { count: owned, defaultValue: `Owned: ${owned} shares` })}</div>
       
       <div style={{ display: 'flex', gap: '5px', marginBottom: '10px', alignItems: 'center' }}>
         <button 
@@ -323,7 +324,7 @@ function StockTradeRow({ stock, price, owned, playerMoney, onAction }: any) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value ? parseInt(e.target.value) : '')}
           style={{ width: '80px', padding: '4px', background: '#222', color: 'white', border: '1px solid #555' }}
-          placeholder={tradeMode === 'shares' ? '0 shares' : '$0'}
+          placeholder={tradeMode === 'shares' ? t('stocks.sharesPlaceholder', { defaultValue: '0 shares' }) : '$0'}
         />
         {tradeMode === 'cash' && typeof inputValue === 'number' && (
           <span style={{ fontSize: '12px', color: '#aaa' }}>
@@ -338,66 +339,66 @@ function StockTradeRow({ stock, price, owned, playerMoney, onAction }: any) {
           disabled={!canBuy}
           style={{ flex: 1, background: canBuy ? '#2ecc71' : '#555', color: canBuy ? '#000' : '#888' }}
         >
-          Buy (-${totalCost})
+          {t('stocks.buyBtn', { cost: totalCost, defaultValue: `Buy (-$${totalCost})` })}
         </button>
         <button 
           onClick={() => onAction({ type: 'sell_stock', stockId: stock.id, quantity: numShares, revenue: totalRevenue })} 
           disabled={!canSell}
           style={{ flex: 1, background: canSell ? '#e74c3c' : '#555', color: canSell ? '#000' : '#888' }}
         >
-          Sell (+${totalRevenue})
+          {t('stocks.sellBtn', { revenue: totalRevenue, defaultValue: `Sell (+$${totalRevenue})` })}
         </button>
       </div>
-      {stock.sellFeePercent > 0 && canSell && (
+      {stock.sellFeePercent !== undefined && stock.sellFeePercent > 0 && canSell && (
         <div style={{ fontSize: '11px', color: '#e74c3c', marginTop: '4px' }}>
-          *{stock.sellFeePercent}% transaction fee applied to sale.
+          {t('stocks.fee', { fee: stock.sellFeePercent, defaultValue: `*${stock.sellFeePercent}% transaction fee applied to sale.` })}
         </div>
       )}
     </div>
   );
 }
 
-export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number }) {
+export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'banking'|'stocks'|'loans'>('banking');
   const [customBankAmount, setCustomBankAmount] = useState<number | ''>('');
-  const rules = campaign?.config?.rules;
   const bankDepositSmall = campaign?.config.economyRules?.bankTransactionIncrementSmall ?? 50;
   const bankDepositLarge = campaign?.config.economyRules?.bankTransactionIncrementLarge ?? 100;
   const loanPaymentAmount = campaign?.config.economyRules?.loanPaymentAmount ?? 50;
   
   return (
     <div className="interaction-panel">
-      <h3>Bank of Jones</h3>
+      <h3>{t('bank.title', { defaultValue: 'Bank of Jones' })}</h3>
       <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-        <button onClick={() => setTab('banking')} style={{ fontWeight: tab === 'banking' ? 'bold' : 'normal' }}>Bank</button>
+        <button onClick={() => setTab('banking')} style={{ fontWeight: tab === 'banking' ? 'bold' : 'normal' }}>{t('bank.tabBanking', { defaultValue: 'Bank' })}</button>
         {(!rules || rules.classicStockMarket) && (
           <button onClick={() => {
             if (tab !== 'stocks') {
               onAction({ type: 'open_broker' });
             }
             setTab('stocks');
-          }} style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}>Stocks</button>
+          }} style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}>{t('bank.tabStocks', { defaultValue: 'Stocks' })}</button>
         )}
-        <button onClick={() => setTab('loans')} style={{ fontWeight: tab === 'loans' ? 'bold' : 'normal' }}>Loans</button>
+        <button onClick={() => setTab('loans')} style={{ fontWeight: tab === 'loans' ? 'bold' : 'normal' }}>{t('bank.tabLoans', { defaultValue: 'Loans' })}</button>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <strong>Cash:</strong> ${player.money}
+          <strong>{t('bank.cash', { defaultValue: 'Cash:' })}</strong> ${player.money}
         </div>
-        {tab === 'bank' && (
+        {tab === 'banking' && (
           <div>
-            <strong>Savings:</strong> ${player.bankSavings}
+            <strong>{t('bank.savings', { defaultValue: 'Savings:' })}</strong> ${player.bankSavings}
           </div>
         )}
         {tab === 'loans' && (
           <div>
-            <strong>Debt:</strong> ${player.loanDebt || 0}
+            <strong>{t('bank.debt', { defaultValue: 'Debt:' })}</strong> ${player.loanDebt || 0}
           </div>
         )}
       </div>
       
-      {tab === 'bank' && (
+      {tab === 'banking' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <input 
@@ -406,7 +407,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
               value={customBankAmount}
               onChange={(e) => setCustomBankAmount(e.target.value ? parseInt(e.target.value) : '')}
               style={{ flex: 1, padding: '8px', background: '#222', color: 'white', border: '1px solid #555' }}
-              placeholder="Custom amount..."
+              placeholder={t('bank.customPlaceholder', { defaultValue: 'Custom amount...' })}
             />
             <button 
               onClick={() => {
@@ -418,7 +419,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
               disabled={player.money <= 0 || !customBankAmount || customBankAmount <= 0}
               style={{ background: player.money > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#2ecc71' : '#555', color: player.money > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#000' : '#888' }}
             >
-              Deposit
+              {t('bank.depositBtn', { defaultValue: 'Deposit' })}
             </button>
             <button 
               onClick={() => {
@@ -430,7 +431,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
               disabled={player.bankSavings <= 0 || !customBankAmount || customBankAmount <= 0}
               style={{ background: player.bankSavings > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#e74c3c' : '#555', color: player.bankSavings > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#000' : '#888' }}
             >
-              Withdraw
+              {t('bank.withdrawBtn', { defaultValue: 'Withdraw' })}
             </button>
           </div>
           <hr style={{ borderColor: '#444', margin: '5px 0' }} />
@@ -438,25 +439,25 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
             onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(bankDepositSmall, player.money) })} 
             disabled={player.money <= 0}
           >
-            Deposit ${bankDepositSmall} (or remainder)
+            {t('bank.depositAmount', { amount: bankDepositSmall, defaultValue: `Deposit $${bankDepositSmall} (or remainder)` })}
           </button>
           <button 
             onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(bankDepositLarge, player.money) })} 
             disabled={player.money <= 0}
           >
-            Deposit ${bankDepositLarge} (or remainder)
+            {t('bank.depositAmount', { amount: bankDepositLarge, defaultValue: `Deposit $${bankDepositLarge} (or remainder)` })}
           </button>
           <button 
             onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(bankDepositSmall, player.bankSavings) })} 
             disabled={player.bankSavings <= 0}
           >
-            Withdraw ${bankDepositSmall} (or remainder)
+            {t('bank.withdrawAmount', { amount: bankDepositSmall, defaultValue: `Withdraw $${bankDepositSmall} (or remainder)` })}
           </button>
           <button 
             onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(bankDepositLarge, player.bankSavings) })} 
             disabled={player.bankSavings <= 0}
           >
-            Withdraw ${bankDepositLarge} (or remainder)
+            {t('bank.withdrawAmount', { amount: bankDepositLarge, defaultValue: `Withdraw $${bankDepositLarge} (or remainder)` })}
           </button>
         </div>
       )}
@@ -481,13 +482,13 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       {tab === 'loans' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button onClick={() => onAction({ type: 'take_loan' })}>
-            Apply for Loan (Costs {campaign?.config.timeRules?.loanCost ?? 2} Hours)
+            {t('bank.applyLoan', { cost: campaign?.config.timeRules?.loanCost ?? 2, defaultValue: `Apply for Loan (Costs ${campaign?.config.timeRules?.loanCost ?? 2} Hours)` })}
           </button>
           <button 
             onClick={() => onAction({ type: 'pay_loan' })} 
             disabled={player.money < Math.min(loanPaymentAmount, player.loanDebt || 0) || (player.loanDebt || 0) === 0}
           >
-            Make Loan Payment (${loanPaymentAmount} or remainder)
+            {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanPaymentAmount} or remainder)` })}
           </button>
         </div>
       )}
@@ -495,24 +496,25 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
   );
 }
 
-export function PawnShop({ player, onAction, economicIndex = 0 }: InteractionProps & { economicIndex?: number }) {
+export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsForSale = [] }: InteractionProps & { economicIndex?: number, pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[] }) {
+  const { t } = useTranslation();
   const pawnableAppliances = player.inventory.appliances;
   const redeemableItems = player.inventory.pawnedItems || [];
 
   return (
     <div className="interaction-panel">
-      <h3>Pawn Shop</h3>
+      <h3>{t('pawnShop.title', { defaultValue: 'Pawn Shop' })}</h3>
       
-      <h4>Sell Items (40% Value)</h4>
+      <h4>{t('pawnShop.sellTitle', { defaultValue: 'Sell Items (40% Value)' })}</h4>
       {pawnableAppliances.length === 0 ? (
-        <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>You have no appliances to pawn.</p>
+        <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('pawnShop.noSell', { defaultValue: 'You have no appliances to pawn.' })}</p>
       ) : (
         <ul className="store-list">
           {pawnableAppliances.map((app, idx) => {
             const pawnValue = Math.floor(calcEconomyPrice(app.purchasePrice, economicIndex) * 0.4);
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item: app, value: pawnValue })}>
-                <span>{app.id.replaceAll('_', ' ')}</span>
+                <span>{t(`item.${app.id}`, { defaultValue: app.id.replaceAll('_', ' ') })}</span>
                 <span style={{ color: '#2ecc71' }}>+${pawnValue}</span>
               </li>
             );
@@ -520,40 +522,58 @@ export function PawnShop({ player, onAction, economicIndex = 0 }: InteractionPro
         </ul>
       )}
 
-      <h4 style={{ marginTop: '20px' }}>Buy Back (50% Value)</h4>
+      <h4 style={{ marginTop: '20px' }}>{t('pawnShop.buyTitle', { defaultValue: 'Buy Back (50% Value)' })}</h4>
       {redeemableItems.length === 0 ? (
-        <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>You have no items pawned.</p>
+        <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('pawnShop.noBuy', { defaultValue: 'You have no items pawned.' })}</p>
       ) : (
         <ul className="store-list">
           {redeemableItems.map((app, idx) => {
             const redeemCost = app.redeemCost;
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'redeem_item', item: app, cost: redeemCost })}>
-                <span>{app.itemId.replaceAll('_', ' ')}</span>
+                <span>{t(`item.${app.itemId}`, { defaultValue: app.itemId.replaceAll('_', ' ') })}</span>
                 <span style={{ color: '#e74c3c' }}>-${redeemCost}</span>
               </li>
             );
           })}
         </ul>
       )}
+
+      {pawnShopItemsForSale.length > 0 && (
+        <>
+          <h4 style={{ marginTop: '20px' }}>{t('pawnShop.secondHandTitle', { defaultValue: 'Second Hand Items (50% Value)' })}</h4>
+          <ul className="store-list">
+            {pawnShopItemsForSale.map((app, idx) => {
+              const buyCost = Math.floor(app.originalPrice * 0.5);
+              return (
+                <li key={idx} className="store-item" onClick={() => onAction({ type: 'buy_pawn_item', item: app, cost: buyCost })}>
+                  <span>{t(`item.${app.itemId}`, { defaultValue: app.itemId.replaceAll('_', ' ') })}</span>
+                  <span style={{ color: '#e74c3c' }}>-${buyCost}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
 
 export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees: EducationDef[], rules?: import('../engine/gameState').GameRules, campaign: CampaignBundle, economicIndex?: number }) {
+  const { t } = useTranslation();
   return (
     <div className="interaction-panel">
-      <h3>University Registry</h3>
+      <h3>{t('university.title', { defaultValue: 'University Registry' })}</h3>
 
-      <h4>Available Degrees</h4>
+      <h4>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
       {availableDegrees
         .filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)))
         .map(deg => {
         const hasDegree = player.degrees.includes(deg.id);
         if (hasDegree) return (
           <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444' }}>
-            <strong>{deg.name}</strong>
-            <div style={{ color: '#2ecc71', fontWeight: 'bold' }}>Completed ✓</div>
+            <strong>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong>
+            <div style={{ color: '#2ecc71', fontWeight: 'bold' }}>{t('university.completed', { defaultValue: 'Completed ✓' })}</div>
           </div>
         );
 
@@ -566,18 +586,18 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
 
         return (
           <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #4aa' }}>
-            <strong>{deg.name}</strong> {isEnrolled ? '' : `- Tuition: $${tuitionFee}`}
-            {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginInlineStart: '5px', fontWeight: 'bold' }}>★ Bonus</span>}
+            <strong>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong> {isEnrolled ? '' : t('university.tuition', { fee: tuitionFee, defaultValue: `- Tuition: $${tuitionFee}` })}
+            {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginInlineStart: '5px', fontWeight: 'bold' }}>{t('university.bonus', { defaultValue: '★ Bonus' })}</span>}
             
             {isEnrolled ? (
               <>
-                <div style={{ fontSize: '12px', marginTop: '4px' }}>Lessons: {lessonsCompleted} / {required}</div>
+                <div style={{ fontSize: '12px', marginTop: '4px' }}>{t('university.lessons', { completed: lessonsCompleted, required, defaultValue: `Lessons: ${lessonsCompleted} / ${required}` })}</div>
                 <button 
                   style={{ marginTop: '5px' }} 
                   onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
-                  disabled={player.hoursRemaining < (rules?.studyWithPartialHours ? 1 : campaign.config.timeRules.studySessionCost)}
+                  disabled={player.hoursRemaining < (rules?.allowPartialHours ? 1 : campaign.config.timeRules.studySessionCost)}
                 >
-                  Study ({campaign.config.timeRules.studySessionCost}h)
+                  {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
                 </button>
               </>
             ) : (
@@ -586,7 +606,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                 onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
                 disabled={player.money < tuitionFee}
               >
-                Enroll
+                {t('university.enrollBtn', { defaultValue: 'Enroll' })}
               </button>
             )}
           </div>

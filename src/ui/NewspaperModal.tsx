@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
+import type { GameEvent } from '../engine/gameState';
+
 interface NewspaperModalProps {
-  headline: string | null;
+  headline: GameEvent | null;
   onClose: () => void;
 }
 
@@ -41,7 +43,7 @@ export function NewspaperModal({ headline, onClose }: NewspaperModalProps) {
         </div>
         
         <h2 style={{ fontSize: '28px', margin: '20px 0', textTransform: 'uppercase' }}>
-          {headline}
+          {t(headline.key, headline.params as any) as string}
         </h2>
         
         <div style={{ marginTop: '30px' }}>

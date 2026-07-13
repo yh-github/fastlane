@@ -8,9 +8,9 @@ import { animatePlayerPath, type PlayerPosition } from '../graphics/mapRenderer'
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
 import { gameReducer, type GameAction } from '../engine/gameReducer';
-import { Random } from '../utils/rng';
 import type { LogEntry } from '../ui/GameLog';
-import { useTranslation } from 'react-i18next';
+import type { GameEvent } from '../engine/gameState';
+import { Random } from '../utils/rng';
 
 export type AppStatus = 'loading' | 'ready' | 'error';
 
@@ -28,7 +28,7 @@ export function useGameEngine(
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
-  const { t } = useTranslation();
+
 
   const setGameState = useCallback((updater: GameState | null | ((prev: GameState | null) => GameState | null)) => {
     if (typeof updater === 'function') {
@@ -62,8 +62,8 @@ export function useGameEngine(
     return buildAdjacencyMap(campaign.map.nodes);
   }, [campaign]);
 
-  const addLog = useCallback((msg: string, weekOverride?: number) => {
-    setLogs(prev => [...prev.slice(-19), { week: weekOverride ?? gameStateRef.current?.turn ?? 1, message: msg }]);
+  const addLog = useCallback((event: GameEvent, weekOverride?: number) => {
+    setLogs(prev => [...prev.slice(-19), { week: weekOverride ?? gameStateRef.current?.turn ?? 1, event }]);
   }, []);
 
   const endTurnSequence = async (updatedPlayers: PlayerState[]) => {
@@ -145,9 +145,9 @@ export function useGameEngine(
           player = processStreetRobbery(player, currentBuilding, currentState.turn, rng);
           
           if (player.money < preRobberyMoney) {
-            addLog(t('log.robbery'));
+            addLog({ key: 'log.robbery' });
             triggerAnim('emoji', '💸', 'stat-money'); 
-            player.newspaperHeadline = "WILD WILLY HAS LIFTED ANOTHER WALLET";
+            player.newspaperHeadline = { key: 'newspaper.robbery' };
           }
           // Save the RNG state back since we used it!
           setGameState(prev => prev ? { ...prev, rngState: rng.getState() } : prev);
@@ -196,7 +196,7 @@ export function useGameEngine(
           updatedPlayers[activePlayerIndex] = player;
           
           if (player.hoursRemaining <= 0) {
-            addLog(t('log.outOfTime', { name: player.name }));
+            addLog({ key: 'log.outOfTime', params: { name: player.name } });
             await endTurnSequence(updatedPlayers);
           } else {
             // If we reached the destination and it has a building, apply entry cost
@@ -215,7 +215,7 @@ export function useGameEngine(
           }
         } else {
           // If they have no hours left to move
-          addLog(t('log.outOfTime', { name: player.name }));
+          addLog({ key: 'log.outOfTime', params: { name: player.name } });
           await endTurnSequence(updatedPlayers);
         }
         setIsAnimating(false);
@@ -230,7 +230,7 @@ export function useGameEngine(
       let oldPlayer = { ...updatedPlayers[activePlayerIndex] };
       const rng = new Random(prevState.rngState);
       
-      const { updatedPlayer: player, actionLog } = gameReducer(
+      const { updatedPlayer: player, actionLog, updatedPawnShopItemsForSale } = gameReducer(
         oldPlayer,
         payload as GameAction,
         {
@@ -238,7 +238,8 @@ export function useGameEngine(
           rules: prevState.rules,
           turn: prevState.turn,
           economicIndex: prevState.economicIndex,
-          rng
+          rng,
+          state: prevState
         }
       );
 
@@ -253,7 +254,7 @@ export function useGameEngine(
 
       // Process explicit diffs and attach to log
       if (actionLog) {
-        let finalActionLog = actionLog;
+        let finalActionLog: GameEvent = { ...actionLog, params: { ...actionLog.params } };
         let diffStr = [];
         const moneyDiff = player.money - oldPlayer.money;
         const hapDiff = player.happiness - oldPlayer.happiness;
@@ -268,14 +269,18 @@ export function useGameEngine(
         }
         
         if (diffStr.length > 0) {
-          finalActionLog += ` (${diffStr.join(', ')})`;
+          finalActionLog.params!.diff = ` (${diffStr.join(', ')})`;
         }
         addLog(finalActionLog, prevState.turn);
       }
 
       updatedPlayers[activePlayerIndex] = player;
       
-      return { ...prevState, players: updatedPlayers, rngState: rng.getState() };
+      const newState = { ...prevState, players: updatedPlayers, rngState: rng.getState() };
+      if (updatedPawnShopItemsForSale) {
+        newState.pawnShopItemsForSale = updatedPawnShopItemsForSale;
+      }
+      return newState;
     });
 
     // We intentionally do NOT auto-end the turn when hours drop to 0.

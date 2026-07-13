@@ -58,7 +58,7 @@ export default function App() {
         const initialState = createInitialGameState(campaign!, playersConfig, 'node_low_cost', 'cdrom');
         const firstTurnState = processTurnStart({ ...initialState, phase: 'playing' }, campaign!);
         setGameState(firstTurnState);
-        addLog('Game started. Good luck!', firstTurnState.turn);
+        addLog({ key: 'Game started. Good luck!' }, firstTurnState.turn);
       }} />
     );
   }
@@ -97,7 +97,7 @@ export default function App() {
             turnFlags: { ...activePlayer.turnFlags, hasSeenWeekend: true }
           };
           setGameState({ ...gameState, players: newPlayers });
-          addLog(`Week ${gameState.turn} begins for ${activePlayer.name}.`, gameState.turn);
+          addLog({ key: `Week ${gameState.turn} begins for ${activePlayer.name}.` }, gameState.turn);
         }}
       />
     );
@@ -110,6 +110,7 @@ export default function App() {
         turn={gameState.turn}
         economicIndex={gameState.economicIndex}
         hoursPerTurn={campaign!.config.timeRules.hoursPerTurn}
+        campaign={campaign!}
         onOpenInventory={() => setIsInventoryOpen(true)}
       />
       <main className="game-viewport">
@@ -125,12 +126,13 @@ export default function App() {
         <GameLog entries={logs} />
         {isBuildingModalOpen && currentBuildingId && (
           <BuildingModal
-            player={activePlayer}
+            player={gameState.players[activePlayerIndex]}
             campaign={campaign!}
             currentBuildingId={currentBuildingId}
             turn={gameState.turn}
             economicIndex={gameState.economicIndex}
             rules={gameState.rules}
+            pawnShopItemsForSale={gameState.pawnShopItemsForSale}
             onAction={handleAction}
             onClose={() => {
               setIsBuildingModalOpen(false);
@@ -143,7 +145,7 @@ export default function App() {
 
         {isNewspaperModalOpen && (
           <NewspaperModal 
-            headline={activePlayer?.newspaperHeadline || ""} 
+            headline={activePlayer?.newspaperHeadline || null} 
             onClose={() => setIsNewspaperModalOpen(false)} 
           />
         )}

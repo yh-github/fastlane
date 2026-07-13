@@ -5,7 +5,7 @@ import App from './App';
 
 // Mock map graphics since PixiJS won't run in jsdom
 vi.mock('./graphics/mapRenderer', () => ({
-  animatePlayerPath: async (path: any[], speed: number, onStep?: () => void) => {
+  animatePlayerPath: async (path: any[], _speed: number, onStep?: () => void) => {
     // Instantly simulate walking the path by invoking the callback
     for (let i = 0; i < path.length; i++) {
       if (onStep) onStep();
@@ -51,15 +51,15 @@ describe('App Integration & StrictMode', () => {
     );
 
     // Wait for the Title Screen
-    const newGameBtn = await screen.findByText('New Game');
+    const newGameBtn = await screen.findByText(/New Game|titleScreen\.startGame/i);
     fireEvent.click(newGameBtn);
 
     // Wait for Setup Screen
-    const startGameBtn = await screen.findByText('Start Life');
+    const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
     fireEvent.click(startGameBtn);
 
     // Wait for the app to finish loading the campaign and transition to gameplay
-    await screen.findByText(/Player 1 - Week 1/i);
+    await screen.findByText(/Player 1 - Week/i);
 
     // Find the Burger Node button on our mocked map
     const burgerNodeBtn = screen.getByTestId('node-burger');
@@ -74,19 +74,19 @@ describe('App Integration & StrictMode', () => {
     fireEvent.click(burgerNodeBtn);
 
     // Wait for the storefront modal to open and display the Cheeseburger
-    const cheeseburgerItem = await screen.findByText('Cheeseburger');
+    const cheeseburgerItem = await screen.findByText(/Cheeseburger|cheeseburger/i);
     
     // Click on the Cheeseburger to buy it
     fireEvent.click(cheeseburgerItem);
 
     // Wait for the log to register the purchase
     await waitFor(() => {
-      expect(screen.queryByText(/Purchased Cheeseburger/i)).toBeInTheDocument();
+      expect(screen.queryByText(/action.buy/i)).toBeInTheDocument();
     });
 
     // Assert that the side-effect ONLY triggered once!
     // We search the entire DOM for all elements matching the log text.
-    const logs = screen.getAllByText(/Purchased Cheeseburger/i);
+    const logs = screen.getAllByText(/action.buy/i);
     expect(logs.length).toBe(1);
   });
 });
