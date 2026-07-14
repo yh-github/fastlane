@@ -52,6 +52,7 @@ export interface GameRules {
   allowPartialHours: boolean;
   enableRelaxationDoctor: boolean;
   requireJobForLoan: boolean;
+  transparentGUI: boolean;
 }
 
 export type GamePhase =
@@ -380,7 +381,7 @@ export function createInitialGameState(
   playersConfig: PlayerConfig[],
   startNode: string,
   variant: GameVariant = 'cdrom',
-  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, allowPartialHours: true, enableRelaxationDoctor: true, requireJobForLoan: true },
+  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, allowPartialHours: true, enableRelaxationDoctor: true, requireJobForLoan: true, transparentGUI: true },
   seed: number = 12345
 ): GameState {
   return {

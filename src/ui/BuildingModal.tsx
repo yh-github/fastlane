@@ -156,9 +156,13 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             nextMsg = t('action.job.raiseDenied');
           } else if (actionLog.key === 'action.job.raiseWaste') {
             nextMsg = t('action.job.raiseWaste');
+          } else if (actionLog.key === 'action.job.raiseSame') {
+            nextMsg = "Why are you asking for the same wage?";
           }
         } else if (payload.type === 'ask_rent_extension') {
-          if (actionLog.key === 'action.rent.extensionApproved') {
+          if (actionLog.key === 'action.rent.alreadyGranted') {
+            nextMsg = "I already told you yes!";
+          } else if (actionLog.key === 'action.rent.extensionApproved') {
             nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionApproved`, 'Sure, you can pay next week.');
           } else {
             nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionDenied`, 'Sorry, your rent must be paid now.');

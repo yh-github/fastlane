@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
  * JobBoard — Shown at the Employment Office.
  * Lists ALL jobs across the game for applying, grouped by building.
  */
-export function JobBoard({ player, onAction, availableJobs, buildings, economicIndex = 0, campaign }: InteractionProps & { availableJobs: JobDef[], buildings: BuildingDef[], economicIndex?: number, campaign: CampaignBundle }) {
+export function JobBoard({ player, onAction, availableJobs, buildings, economicIndex = 0, campaign, rules }: InteractionProps & { availableJobs: JobDef[], buildings: BuildingDef[], economicIndex?: number, campaign: CampaignBundle, rules?: import('../engine/gameState').GameRules }) {
   const { t } = useTranslation();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
@@ -72,7 +72,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
             )}
             <div style={{ marginTop: '10px' }}>
               {isCurrentJob ? (
-                offeredWage > player.currentWage ? (
+                (!rules?.transparentGUI || offeredWage > player.currentWage) ? (
                   <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
                     {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
                   </button>
@@ -214,7 +214,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
             </div>
           )}
 
-          {rentDue && !player.rentExtensionActive && !player.turnFlags.askedForExtension && !player.rentExtensionsDeniedPermanently && (
+          {rentDue && !player.rentExtensionsDeniedPermanently && (!rules?.transparentGUI || (!player.rentExtensionActive && !player.turnFlags.askedForExtension)) && (
             <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #c93' }}>
               <strong>{t('rentOffice.rentIsDue')}</strong>
               <p style={{ fontSize: '12px' }}>{t('rentOffice.canAskExtension')}</p>
