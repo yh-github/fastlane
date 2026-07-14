@@ -24,9 +24,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
   
   if (state.turn >= 8) {
     if (newEconomy > -30) {
-      const crashChance = state.variant === 'cdrom' 
-        ? 1 / (1 + (30 * state.players.length)) 
-        : 1 / (1 + (20 * state.players.length));
+      const crashDivisor = campaign.config.eventRules?.marketCrashDivisor ?? 30;
+      const crashChance = 1 / (1 + (crashDivisor * state.players.length));
       
       if (rng.next() < crashChance) {
         const roll = rng.next();

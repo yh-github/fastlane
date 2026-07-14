@@ -40,7 +40,7 @@ describe('Job Engine', () => {
 
   describe('applyForJob', () => {
     it('burger cook is always accepted', () => {
-      const player = { hoursRemaining: 20, experience: 0, dependability: 0, degrees: [] } as unknown as PlayerState;
+      const player = { hoursRemaining: 20, experience: 0, dependability: 0, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
       const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(true);
       expect(result.updated.currentJobId).toBe('burger_cook');
@@ -48,22 +48,22 @@ describe('Job Engine', () => {
     });
 
     it('rejects if missing hard requirements (experience)', () => {
-      const player = { hoursRemaining: 20, experience: 10, dependability: 60, degrees: ['business_admin'] } as unknown as PlayerState;
-      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1));
+      const player = { hoursRemaining: 20, experience: 10, dependability: 60, degrees: ['business_admin'], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.job.rejected');
     });
 
     it('rejects if missing degree', () => {
-      const player = { hoursRemaining: 20, experience: 60, dependability: 60, degrees: [] } as unknown as PlayerState;
-      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1));
+      const player = { hoursRemaining: 20, experience: 60, dependability: 60, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.job.rejected');
     });
 
     it('rejects due to bad luck roll', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99); // Force high roll (99)
-      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [] } as unknown as PlayerState;
+      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
       const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1)); // Luck = 40 + 10 + 10 = 60. 99 > 60 = rejected.
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.job.noOpenings');
@@ -71,14 +71,14 @@ describe('Job Engine', () => {
 
     it('grants +2 experience when getting a new job', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); 
-      const player = { hoursRemaining: 20, experience: 10, dependability: 20, degrees: [] } as unknown as PlayerState;
+      const player = { hoursRemaining: 20, experience: 10, dependability: 20, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
       const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(true);
       expect(result.updated.experience).toBe(12);
     });
 
     it('resets dependability to 10 if it is below 10 when getting a new job', () => {
-      const player = { hoursRemaining: 20, experience: 10, dependability: 5, degrees: [] } as unknown as PlayerState;
+      const player = { hoursRemaining: 20, experience: 10, dependability: 5, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
       // burgerCook requires 0 dep, so player won't be rejected upfront
       const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(true);
@@ -108,7 +108,7 @@ describe('Job Engine', () => {
         experience: 50,
         maxExperience: 100,
         dependability: 50,
-        maxDependability: 100,
+        maxDependability: 20,
         turnFlags: { hasWorked: false },
         inventory: { casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 10, selectedClothes: 'business' }
       } as unknown as PlayerState;
@@ -146,7 +146,7 @@ describe('Job Engine', () => {
         experience: 50,
         maxExperience: 100,
         dependability: 47, // requirement is 50
-        maxDependability: 100,
+        maxDependability: 20,
         turnFlags: { hasWorked: false },
         inventory: { casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 10, selectedClothes: 'business' }
       } as unknown as PlayerState;

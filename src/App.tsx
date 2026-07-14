@@ -11,6 +11,7 @@ import { processTurnStart } from './engine/turnProcessor';
 import { WeekendScreen } from './ui/WeekendScreen';
 import { InventoryModal } from './ui/InventoryModal';
 import { NewspaperModal } from './ui/NewspaperModal';
+import { SettingsModal } from './ui/SettingsModal';
 import { AnimationLayer } from './ui/AnimationLayer';
 import { useGameAnimations } from './hooks/useGameAnimations';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -20,6 +21,7 @@ export default function App() {
   const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [isNewspaperModalOpen, setIsNewspaperModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const { floatingAnims, triggerAnim, removeAnim, isAnimating, setIsAnimating } = useGameAnimations();
@@ -59,7 +61,8 @@ export default function App() {
   if (gameState.phase === 'setup') {
     return (
       <SetupScreen onConfirm={(playersConfig) => {
-        const initialState = createInitialGameState(campaign!, playersConfig, 'node_low_cost', 'cdrom');
+        const randomSeed = Math.floor(Math.random() * 2147483647);
+        const initialState = createInitialGameState(campaign!, playersConfig, 'node_low_cost', undefined, randomSeed);
         const firstTurnState = processTurnStart({ ...initialState, phase: 'playing' }, campaign!);
         setGameState(firstTurnState);
         addLog({ key: 'Game started. Good luck!' }, firstTurnState.turn);
@@ -75,7 +78,8 @@ export default function App() {
         playerName={gameState.winnerId || 'Player 1'} 
         turn={gameState.turn}
         onPlayAgain={() => {
-          setGameState(createInitialGameState(campaign!, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom'));
+          const randomSeed = Math.floor(Math.random() * 2147483647);
+          setGameState(createInitialGameState(campaign!, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', undefined, randomSeed));
           setShowTitle(true);
           setLogs([]);
           setActivePlayerIndex(0);
@@ -110,12 +114,14 @@ export default function App() {
   return (
     <div className="app-container">
       <Dashboard
+        gameState={gameState}
         player={activePlayer}
         turn={gameState.turn}
         economicIndex={gameState.economicIndex}
         hoursPerTurn={campaign!.config.timeRules.hoursPerTurn}
         campaign={campaign!}
         onOpenInventory={() => setIsInventoryOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
       <main className="game-viewport">
         <AnimationLayer 
@@ -159,6 +165,14 @@ export default function App() {
             player={activePlayer}
             onAction={handleAction}
             onClose={() => setIsInventoryOpen(false)}
+          />
+        )}
+
+        {isSettingsOpen && (
+          <SettingsModal 
+            gameState={gameState} 
+            setGameState={setGameState} 
+            onClose={() => setIsSettingsOpen(false)} 
           />
         )}
       </main>

@@ -17,9 +17,8 @@ describe('createInitialGameState', () => {
     const state = createInitialGameState(
       mockCampaign,
       [{ name: 'TestPlayer', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }],
-      'low_cost',
-      'cdrom'
-    );
+      'low_cost'
+);
 
     expect(state.players[0].relaxation).toBe(10);
   });

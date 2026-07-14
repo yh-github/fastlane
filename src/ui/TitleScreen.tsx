@@ -9,7 +9,10 @@ interface TitleScreenProps {
 export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
   const { t, i18n } = useTranslation();
   const campaigns = getAvailableCampaigns();
-  const [selectedCampaign, setSelectedCampaign] = useState(campaigns[0]);
+  const defaultCampaign = campaigns.find(c => c.id === 'qol_improved') || campaigns[0];
+  const [selectedCampaignId, setSelectedCampaignId] = useState(defaultCampaign.id);
+
+  const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId) || campaigns[0];
 
   return (
     <div className="fullscreen-overlay">
@@ -28,17 +31,23 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
       
       <div style={{ marginBottom: '20px' }}>
         <select 
-          value={selectedCampaign} 
-          onChange={(e) => setSelectedCampaign(e.target.value)}
-          style={{ padding: '10px', fontSize: '16px', borderRadius: '4px', background: '#333', color: 'white', border: '2px solid white' }}
+          value={selectedCampaignId} 
+          onChange={(e) => setSelectedCampaignId(e.target.value)}
+          style={{ padding: '10px', fontSize: '16px', borderRadius: '4px', background: '#333', color: 'white', border: '2px solid white', width: '300px' }}
         >
           {campaigns.map(c => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
       </div>
 
-      <button className="title-screen__btn" onClick={() => onStartGame(selectedCampaign)}>
+      <div style={{ marginBottom: '30px', maxWidth: '600px', textAlign: 'center', minHeight: '60px' }}>
+        <p style={{ fontSize: '18px', color: '#ccc', fontStyle: 'italic' }}>
+          {selectedCampaign.description}
+        </p>
+      </div>
+
+      <button className="title-screen__btn" onClick={() => onStartGame(selectedCampaignId)}>
         {t('titleScreen.startGame')}
       </button>
     </div>

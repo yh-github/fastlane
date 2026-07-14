@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import App from './App';
 
@@ -68,7 +68,9 @@ describe('App Integration & StrictMode', () => {
     fireEvent.click(burgerNodeBtn);
 
     // Wait a tick for the pathfinding and mock animation to complete and React to re-render
-    await new Promise(r => setTimeout(r, 100));
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 100));
+    });
 
     // Click again to open the building modal
     fireEvent.click(burgerNodeBtn);
@@ -88,5 +90,10 @@ describe('App Integration & StrictMode', () => {
     // We search the entire DOM for all elements matching the log text.
     const logs = screen.getAllByText(/action.buy/i);
     expect(logs.length).toBe(1);
+
+    // Flush any pending async state updates (like SpeechBubble timeouts) before unmounting
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 100));
+    });
   });
 });

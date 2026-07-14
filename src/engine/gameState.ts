@@ -35,8 +35,6 @@ export interface GameState {
   campaignId: string;
   /** Seed/State for the deterministic random number generator */
   rngState: number;
-  /** Game variant flags */
-  variant: GameVariant;
   /** Game rules configuration */
   rules: GameRules;
   /** Winner ID */
@@ -53,6 +51,8 @@ export interface GameRules {
   enableRelaxationDoctor: boolean;
   requireJobForLoan: boolean;
   helpfulUI: boolean;
+  enableAnimations: boolean;
+  allowOverAchievingGoals: boolean;
 }
 
 export type GamePhase =
@@ -63,7 +63,6 @@ export type GamePhase =
   | 'weekend'       // Displaying the end-of-turn summary
   | 'game-over';    // A player has won
 
-export type GameVariant = 'floppy' | 'cdrom';
 
 // ─── Player State ───────────────────────────────────────────────
 
@@ -348,7 +347,7 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
     loanDebt: 0,
     timesDefaulted: 0,
     loanPaymentDeadline: 0,
-    happiness: STARTING_HAPPINESS,
+    happiness: config.statRules?.startingHappiness ?? STARTING_HAPPINESS,
     experience: STARTING_EXPERIENCE,
     dependability: STARTING_DEPENDABILITY,
     maxExperience: STARTING_EXPERIENCE + 10,
@@ -380,10 +379,29 @@ export function createInitialGameState(
   campaign: CampaignBundle,
   playersConfig: PlayerConfig[],
   startNode: string,
-  variant: GameVariant = 'cdrom',
-  rules: GameRules = { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: true, autoEquipBestClothes: true, classicStockMarket: true, allowPartialHours: true, enableRelaxationDoctor: true, requireJobForLoan: true, helpfulUI: true },
+  rules?: Partial<GameRules>,
   seed: number = 12345
 ): GameState {
+  const defaultRules: GameRules = {
+    strictEviction: false,
+    fluctuatingRent: false,
+    clothingDecaysAll: true,
+    autoEquipBestClothes: true,
+    classicStockMarket: true,
+    allowPartialHours: true,
+    enableRelaxationDoctor: true,
+    requireJobForLoan: true,
+    helpfulUI: false,
+    enableAnimations: false,
+    allowOverAchievingGoals: false
+  };
+
+  const finalRules = {
+    ...defaultRules,
+    ...(campaign.config.gameRules || {}),
+    ...rules
+  };
+
   return {
     turn: 0,
     economicIndex: 0,
@@ -395,8 +413,7 @@ export function createInitialGameState(
     phase: 'setup',
     winnerId: null,
     campaignId: campaign.config.name,
-    variant,
-    rules,
+    rules: finalRules,
   };
 }
 

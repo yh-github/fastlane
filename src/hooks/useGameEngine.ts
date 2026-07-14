@@ -16,7 +16,7 @@ export type AppStatus = 'loading' | 'ready' | 'error';
 
 export function useGameEngine(
   campaignId: string | null,
-  triggerAnim: (type: 'item' | 'emoji' | 'text', content: string, targetId: string) => void,
+  triggerAnim: (type: 'item' | 'emoji' | 'text', content: string, options?: any) => void,
   setIsAnimating: (val: boolean) => void,
   isAnimating: boolean,
   setIsBuildingModalOpen: (val: boolean) => void,
@@ -47,7 +47,7 @@ export function useGameEngine(
       .then((bundle) => {
         setCampaign(bundle);
         const randomSeed = Math.floor(Math.random() * 2147483647);
-        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom', undefined, randomSeed);
+        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', undefined, randomSeed);
         setGameState(initialState);
         setStatus('ready');
       if (initialState && initialState.players[0].turnFlags.freeNewspaper) {
@@ -146,11 +146,14 @@ export function useGameEngine(
         if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
           const preRobberyMoney = player.money;
           const rng = new Random(currentState.rngState);
-          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng);
+          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign);
           
           if (player.money < preRobberyMoney) {
             addLog({ key: 'log.robbery' });
-            triggerAnim('emoji', '💸', 'stat-money'); 
+            if (currentState.rules.enableAnimations) {
+              const diff = player.money - preRobberyMoney;
+              triggerAnim('text', `${diff} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
+            }
             player.newspaperHeadline = { key: 'newspaper.robbery' };
           }
           // Save the RNG state back since we used it!
@@ -257,7 +260,9 @@ export function useGameEngine(
           setIsNewspaperModalOpen(true);
         }
       } else if (payload.type === 'buy' && player.inventory.appliances.length > oldPlayer.inventory.appliances.length) {
-        triggerAnim('item', '📦', 'btn-inventory');
+        if (prevState.rules.enableAnimations) {
+          triggerAnim('item', '📦', { targetId: 'btn-inventory' });
+        }
       }
 
       // Process explicit diffs and attach to log
@@ -269,11 +274,23 @@ export function useGameEngine(
         
         if (moneyDiff !== 0) {
           diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
-          if (moneyDiff < 0) triggerAnim('emoji', '💸', 'stat-money');
+          if (prevState.rules.enableAnimations) {
+            if (moneyDiff < 0) {
+              triggerAnim('text', `-$${Math.abs(moneyDiff)}`, { sourceId: 'stat-money', customClass: 'anim-negative' });
+            } else {
+              triggerAnim('text', `+$${moneyDiff}`, { targetId: 'stat-money', customClass: 'anim-positive' });
+            }
+          }
         }
         if (hapDiff !== 0) {
           diffStr.push(`${hapDiff > 0 ? '+' : ''}${hapDiff} Happiness`);
-          if (hapDiff > 0) triggerAnim('emoji', '😍', 'stat-happiness');
+          if (prevState.rules.enableAnimations) {
+            if (hapDiff > 0) {
+              triggerAnim('emoji', '😍', { targetId: 'stat-happiness' });
+            } else {
+              triggerAnim('emoji', '😟', { sourceId: 'stat-happiness' });
+            }
+          }
         }
         
         if (diffStr.length > 0) {
