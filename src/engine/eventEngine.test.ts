@@ -53,7 +53,8 @@ describe('Event Engine', () => {
     it('steals money and lowers happiness', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.001); 
       const player = { money: 100, happiness: 50 } as PlayerState;
-      const updated = processStreetRobbery(player, 'bank', 5, new Random(1));
+      const dummyCampaign = { config: { eventRules: { willyRobberyStartWeek: 1 } } } as any;
+      const updated = processStreetRobbery(player, 'bank', 5, new Random(1), dummyCampaign);
       expect(updated.money).toBe(0);
       expect(updated.happiness).toBe(47); // 50 - 3
     });
@@ -72,7 +73,7 @@ describe('Event Engine', () => {
   describe('processDonations', () => {
     it('does nothing if nakedTurns < 2', () => {
       const player = { nakedTurns: 1, money: 0, turnEvents: [], inventory: { appliances: [], pawnedItems: [] } } as any;
-      const state = { variant: 'floppy' } as any;
+      const state = { economicIndex: 0 } as any;
       const campaign = { jobs: [], items: [] } as any;
       
       const updated = processDonations(player, state, campaign, new Random(1));
@@ -88,8 +89,8 @@ describe('Event Engine', () => {
         turnEvents: [], 
         inventory: { appliances: [], pawnedItems: [] } 
       } as any;
-      const state = { variant: 'cdrom', economicIndex: 0 } as any;
-      const campaign = { jobs: [], items: [] } as any;
+      const state = { economicIndex: 0 } as any;
+      const campaign = { config: { eventRules: { charity: { maxCash: 299, maxWealth: 299, wealthMetric: 'netWorth' } } }, jobs: [], items: [] } as any;
       
       const updated = processDonations(player, state, campaign, new Random(1));
       
@@ -106,8 +107,8 @@ describe('Event Engine', () => {
         turnEvents: [], 
         inventory: { appliances: [{ id: 'tv', purchasePrice: 150 }], pawnedItems: [] } 
       } as any;
-      const state = { variant: 'floppy', economicIndex: 0 } as any;
-      const campaign = { jobs: [], items: [] } as any;
+      const state = { economicIndex: 0 } as any;
+      const campaign = { config: { eventRules: { charity: { maxCash: 0, maxWealth: 199, wealthMetric: 'durableValue' } } }, jobs: [], items: [] } as any;
       
       const updated = processDonations(player, state, campaign, new Random(1));
       
@@ -130,8 +131,11 @@ describe('Event Engine', () => {
           pawnedItems: [] 
         } 
       } as any;
-      const state = { variant: 'floppy', economicIndex: 0 } as any;
-      const campaign = { jobs: [], items: [] } as any;
+      const state = { economicIndex: 0 } as any;
+      const campaign = {
+        config: { eventRules: { charity: { maxCash: 0, maxWealth: 199, wealthMetric: 'durableValue' } } },
+        jobs: [], items: []
+      } as any;
       
       const updated = processDonations(player, state, campaign, new Random(1));
       

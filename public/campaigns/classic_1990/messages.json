@@ -1,9 +1,0 @@
-{
-  "job_apply_success": "You got the job as {title}!",
-  "job_apply_not_enough_time": "Not enough time to apply.",
-  "job_apply_no_openings": "No openings.",
-  "job_apply_missing_experience": "Not enough experience.",
-  "job_apply_missing_dependability": "Not dependable enough.",
-  "job_apply_missing_degree": "Missing required degree: {degree}",
-  "job_apply_rejected": "They decided to hire someone else."
-}

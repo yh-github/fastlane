@@ -16,10 +16,36 @@ export interface CampaignConfig {
   economyRules: EconomyRules;
   mapRules: Record<string, unknown>;
   statRules?: StatRules;
+  eventRules?: EventRules;
+  gameRules?: Partial<GameRules>;
   baseCampaign?: string;
 }
 
+export interface GameRules {
+  strictEviction: boolean;
+  fluctuatingRent: boolean;
+  clothingDecaysAll: boolean;
+  autoEquipBestClothes: boolean;
+  classicStockMarket: boolean;
+  allowPartialHours: boolean;
+  enableRelaxationDoctor: boolean;
+  requireJobForLoan: boolean;
+  helpfulUI: boolean;
+  enableAnimations: boolean;
+}
+
+export interface EventRules {
+  marketCrashDivisor: number;
+  willyRobberyStartWeek: number;
+  charity: {
+    maxCash: number;
+    maxWealth: number;
+    wealthMetric: 'durableValue' | 'netWorth';
+  };
+}
+
 export interface StatRules {
+  startingHappiness?: number;
   startingRelaxation: number;
   relaxationDecayRate: number;
   relaxationDoctorThreshold: number;
@@ -239,6 +265,7 @@ function deepMerge<T>(base: any, delta: any): T {
 async function loadJSON<T>(campaignId: string, filename: string, optional: boolean = false): Promise<T | null> {
   const url = `/campaigns/${campaignId}/${filename}`;
   const response = await fetch(url);
+  
   if (!response.ok) {
     if (optional && response.status === 404) {
       return null;
@@ -247,6 +274,17 @@ async function loadJSON<T>(campaignId: string, filename: string, optional: boole
       `Failed to load campaign data: ${url} (${response.status} ${response.statusText})`
     );
   }
+
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('text/html')) {
+    if (optional) {
+      return null;
+    }
+    throw new Error(
+      `Failed to load campaign data: ${url} (Expected JSON, got HTML)`
+    );
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -330,9 +368,31 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
   return finalBundle;
 }
 
+export interface CampaignInfo {
+  id: string;
+  name: string;
+  description: string;
+}
+
 /**
- * List available campaign IDs.
+ * List available campaigns (hardcoded for now, as there's no backend to list folders).
  */
-export function getAvailableCampaigns(): string[] {
-  return ['classic_1990', 'modern_v2'];
+export function getAvailableCampaigns(): CampaignInfo[] {
+  return [
+    {
+      id: '1990_classic_floppy',
+      name: 'Classic 1990 (Floppy)',
+      description: 'The original harsh rules: early robberies, low charity threshold, tough entry-level jobs.'
+    },
+    {
+      id: '1990_classic_cdrom',
+      name: 'Classic 1990 (CD-ROM)',
+      description: 'More forgiving rules with entry-level jobs, delayed robberies, and higher charity bounds.'
+    },
+    {
+      id: 'qol_improved',
+      name: 'QoL Improved (Recommended)',
+      description: 'Based on CD-ROM but adds helpful UI elements and strict eviction logic.'
+    }
+  ];
 }

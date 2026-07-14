@@ -40,7 +40,7 @@ describe('gameReducer', () => {
       }
     } as unknown as CampaignBundle;
 
-    const state = createInitialGameState(mockCampaign, [{ name: 'TestPlayer', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'low_cost', 'cdrom');
+    const state = createInitialGameState(mockCampaign, [{ name: 'TestPlayer', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'low_cost');
     player = state.players[0];
     
     context = {

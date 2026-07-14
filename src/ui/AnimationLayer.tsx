@@ -9,6 +9,7 @@ export interface FloatingAnimation {
   endX: number;
   endY: number;
   duration?: number;
+  customClass?: string;
 }
 
 interface AnimationLayerProps {
@@ -69,7 +70,7 @@ function AnimatedElement({ anim, onComplete }: { anim: FloatingAnimation; onComp
   }, []);
 
   return (
-    <div className={`animated-element animated-element--${anim.type}`} style={style}>
+    <div className={`animated-element animated-element--${anim.type} ${anim.customClass || ''}`} style={style}>
       {anim.content}
     </div>
   );

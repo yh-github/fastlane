@@ -24,10 +24,11 @@ export function processStreetRobbery(
   player: PlayerState,
   buildingType: 'bank' | 'blacks_market',
   week: number,
-  rng: Random
+  rng: Random,
+  campaign: CampaignBundle
 ): PlayerState {
-  // Happens only from Week 4 onwards (CD-ROM rule), and only if carrying cash
-  if (week < 4 || player.money <= 0) return player;
+  const startWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
+  if (week < startWeek || player.money <= 0) return player;
 
   const chance = buildingType === 'bank' ? 1 / 31 : 1 / 51;
   
@@ -116,7 +117,7 @@ export function processApartmentRobbery(player: PlayerState, rng: Random): { upd
 /**
  * Process Donation event at start of turn.
  * @param player - Current player state
- * @param state - The global GameState to check variant and economy
+ * @param state - The global GameState to check economy
  * @param campaign - To fetch item and job definitions
  * @param rng - For calculating the random amount
  * @returns Updated player state (donated or untouched)
@@ -131,15 +132,17 @@ export function processDonations(
 
   let isEligible = false;
 
-  if (state.variant === 'cdrom') {
+  const rules = campaign.config.eventRules?.charity;
+  if (!rules) return player;
+
+  if (rules.wealthMetric === 'netWorth') {
     const netWorth = calcNetWorth(player);
-    if (player.money < 300 && netWorth < 300) {
+    if (player.money <= rules.maxCash && netWorth <= rules.maxWealth) {
       isEligible = true;
     }
   } else {
-    // floppy
     const durableValue = calcFloppyDurableValue(player);
-    if (player.money === 0 && durableValue < 200) {
+    if (player.money <= rules.maxCash && durableValue <= rules.maxWealth) {
       isEligible = true;
     }
   }

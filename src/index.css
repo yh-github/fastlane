@@ -429,10 +429,17 @@ button:disabled {
 .animated-element--text {
   font-size: 1.2rem;
   font-weight: bold;
-  color: #2ecc71;
   background: rgba(0,0,0,0.7);
   padding: 4px 8px;
   border-radius: 4px;
+}
+
+.anim-positive {
+  color: #2ecc71;
+}
+
+.anim-negative {
+  color: #ff3333;
 }
 
 
