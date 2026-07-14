@@ -255,10 +255,21 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     }
   };
 
+  const housing = campaign.housing.find(h => h.id === player.currentHousingId);
+  const homeNode = campaign.map.nodes.find(n => n.id === housing?.homeNodeId);
+  const livesHere = homeNode?.buildingId === building.id;
+
   const isWeek4 = turn % 4 === 0;
   const rentDue = player.rentPaidUntilWeek <= turn + 1;
   const isRentOfficeOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn;
   const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
+
+  let currentFace = getFace(building.id, building.archetype);
+  if (building.archetype === 'home' && !livesHere) {
+    currentFace = '🚫';
+  } else if (building.id === 'apartment_complex' && !isRentOfficeOpen) {
+    currentFace = '🚫';
+  }
 
   return (
     <div className="building-modal">
@@ -266,7 +277,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       
       <div className="building-modal__header">
         <div className="building-modal__face" style={{ position: 'relative' }}>
-          {getFace(building.id, building.archetype)}
+          {currentFace}
           {clerkMessage && shouldShowSpeechBubble && <SpeechBubble message={clerkMessage} />}
         </div>
         <div className="building-modal__title-group">
@@ -351,12 +362,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             pawnShopItemsForSale={pawnShopItemsForSale}
           />
         )}
-        {building.archetype === 'home' && (() => {
-          const housing = campaign.housing.find(h => h.id === player.currentHousingId);
-          const homeNode = campaign.map.nodes.find(n => n.id === housing?.homeNodeId);
-          const livesHere = homeNode?.buildingId === building.id;
-
-          return livesHere ? (
+        {building.archetype === 'home' && (
+          livesHere ? (
             <HomeRelax 
               player={player}
               campaign={campaign}
@@ -367,8 +374,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
               <h3>{t(`building.${building.id}`, { defaultValue: building.name })}</h3>
               <p style={{ fontSize: '12px' }}>{t('buildingModal.dontLiveHere', "You don't live here.")}</p>
             </div>
-          );
-        })()}
+          )
+        )}
       </div>
     </div>
   );
