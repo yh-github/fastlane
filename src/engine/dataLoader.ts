@@ -16,6 +16,7 @@ export interface CampaignConfig {
   economyRules: EconomyRules;
   mapRules: Record<string, unknown>;
   statRules?: StatRules;
+  baseCampaign?: string;
 }
 
 export interface StatRules {
@@ -192,12 +193,56 @@ export interface CampaignBundle {
 // ─── Loader Functions ───────────────────────────────────────────
 
 /**
+ * Deep merge utility for merging delta configs on top of a base.
+ */
+function deepMerge<T>(base: any, delta: any): T {
+  if (base === undefined || base === null) return delta as T;
+  if (delta === undefined || delta === null) return base as T;
+
+  if (Array.isArray(base) && Array.isArray(delta)) {
+    if (delta.length > 0 && typeof delta[0] === 'object' && delta[0] !== null && 'id' in delta[0]) {
+      const merged = [...base];
+      for (const dItem of delta) {
+        if (typeof dItem === 'object' && dItem !== null && 'id' in dItem) {
+          const bIndex = merged.findIndex((bItem: any) => typeof bItem === 'object' && bItem !== null && bItem.id === dItem.id);
+          if (bIndex !== -1) {
+            merged[bIndex] = deepMerge(merged[bIndex], dItem);
+          } else {
+            merged.push(dItem);
+          }
+        } else {
+          merged.push(dItem);
+        }
+      }
+      return merged as unknown as T;
+    } else {
+      return delta as unknown as T;
+    }
+  }
+
+  if (typeof base === 'object' && typeof delta === 'object') {
+    const merged = { ...base };
+    for (const key in delta) {
+      if (Object.prototype.hasOwnProperty.call(delta, key)) {
+        merged[key] = deepMerge(base[key], delta[key]);
+      }
+    }
+    return merged as T;
+  }
+
+  return delta as T;
+}
+
+/**
  * Load a single JSON file from a campaign directory.
  */
-async function loadJSON<T>(campaignId: string, filename: string): Promise<T> {
+async function loadJSON<T>(campaignId: string, filename: string, optional: boolean = false): Promise<T | null> {
   const url = `/campaigns/${campaignId}/${filename}`;
   const response = await fetch(url);
   if (!response.ok) {
+    if (optional && response.status === 404) {
+      return null;
+    }
     throw new Error(
       `Failed to load campaign data: ${url} (${response.status} ${response.statusText})`
     );
@@ -222,31 +267,72 @@ function validateConfig(config: unknown): asserts config is CampaignConfig {
  * @returns            Fully typed and validated campaign data
  */
 export async function loadCampaign(campaignId: string): Promise<CampaignBundle> {
-  const [config, buildings, jobs, items, education, housing, events, stocks, map, messages, weekends, synergies] =
+  const config = await loadJSON<CampaignConfig>(campaignId, 'config.json', false);
+  if (!config) throw new Error('config.json missing');
+
+  let baseBundle: CampaignBundle | null = null;
+  if (config.baseCampaign) {
+    baseBundle = await loadCampaign(config.baseCampaign);
+  }
+
+  const isDelta = !!baseBundle;
+
+  const [buildings, jobs, items, education, housing, events, stocks, map, messages, weekends, synergies] =
     await Promise.all([
-      loadJSON<CampaignConfig>(campaignId, 'config.json'),
-      loadJSON<BuildingDef[]>(campaignId, 'buildings.json'),
-      loadJSON<JobDef[]>(campaignId, 'jobs.json'),
-      loadJSON<ItemDef[]>(campaignId, 'items.json'),
-      loadJSON<EducationDef[]>(campaignId, 'education.json'),
-      loadJSON<HousingDef[]>(campaignId, 'housing.json'),
-      loadJSON<EventDef[]>(campaignId, 'events.json'),
-      loadJSON<StockDef[]>(campaignId, 'stocks.json'),
-      loadJSON<MapData>(campaignId, 'map.json'),
-      loadJSON<Record<string, string>>(campaignId, 'messages.json').catch(() => ({})),
-      loadJSON<WeekendDef>(campaignId, 'weekends.json'),
-      loadJSON<SynergyDef[]>(campaignId, 'synergies.json').catch(() => [])
+      loadJSON<BuildingDef[]>(campaignId, 'buildings.json', isDelta),
+      loadJSON<JobDef[]>(campaignId, 'jobs.json', isDelta),
+      loadJSON<ItemDef[]>(campaignId, 'items.json', isDelta),
+      loadJSON<EducationDef[]>(campaignId, 'education.json', isDelta),
+      loadJSON<HousingDef[]>(campaignId, 'housing.json', isDelta),
+      loadJSON<EventDef[]>(campaignId, 'events.json', isDelta),
+      loadJSON<StockDef[]>(campaignId, 'stocks.json', isDelta),
+      loadJSON<MapData>(campaignId, 'map.json', isDelta),
+      loadJSON<Record<string, string>>(campaignId, 'messages.json', true).catch(() => null),
+      loadJSON<WeekendDef>(campaignId, 'weekends.json', isDelta),
+      loadJSON<SynergyDef[]>(campaignId, 'synergies.json', true).catch(() => null)
     ]);
 
-  // Validate critical files
-  validateConfig(config);
+  const partialBundle: Partial<CampaignBundle> = { config };
+  if (buildings) partialBundle.buildings = buildings;
+  if (jobs) partialBundle.jobs = jobs;
+  if (items) partialBundle.items = items;
+  if (education) partialBundle.education = education;
+  if (housing) partialBundle.housing = housing;
+  if (events) partialBundle.events = events;
+  if (stocks) partialBundle.stocks = stocks;
+  if (map) partialBundle.map = map;
+  if (messages) partialBundle.messages = messages;
+  if (weekends) partialBundle.weekends = weekends;
+  if (synergies) partialBundle.synergies = synergies;
 
-  return { config, buildings, jobs, items, education, housing, events, stocks, map, messages, weekends, synergies };
+  let finalBundle: CampaignBundle;
+  if (baseBundle) {
+    finalBundle = deepMerge<CampaignBundle>(baseBundle, partialBundle);
+  } else {
+    finalBundle = {
+      config,
+      buildings: buildings || [],
+      jobs: jobs || [],
+      items: items || [],
+      education: education || [],
+      housing: housing || [],
+      events: events || [],
+      stocks: stocks || [],
+      map: map || { width: 0, height: 0, nodes: [] },
+      messages: messages || {},
+      weekends: weekends || { ticketWeekends: {}, durableWeekends: {}, randomWeekends: [] },
+      synergies: synergies || []
+    };
+  }
+
+  validateConfig(finalBundle.config);
+
+  return finalBundle;
 }
 
 /**
  * List available campaign IDs.
  */
 export function getAvailableCampaigns(): string[] {
-  return ['classic_1990'];
+  return ['classic_1990', 'modern_v2'];
 }
