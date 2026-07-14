@@ -52,9 +52,13 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
 
   if (isRaise) {
     // Raise logic
+    const newWage = offeredWage ?? job.baseWage;
+    if (newWage === player.currentWage) {
+      return { updated, success: false, message: { key: 'action.job.raiseSame' } };
+    }
+
     const reqDep = job.requirements.dependability + (updated.raisesAtCurrentJob * 5);
     if (updated.dependability >= reqDep) {
-      const newWage = offeredWage ?? job.baseWage;
       if (newWage > player.currentWage) {
         updated.currentWage = newWage;
         updated.raisesAtCurrentJob += 1;

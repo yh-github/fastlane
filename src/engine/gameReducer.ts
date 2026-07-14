@@ -385,6 +385,10 @@ export function gameReducer(
       break;
     }
     case 'ask_rent_extension': {
+      if (nextPlayer.rentExtensionActive || nextPlayer.turnFlags.askedForExtension) {
+        actionLog = { key: 'action.rent.alreadyGranted' };
+        break;
+      }
       nextPlayer.turnFlags.askedForExtension = true;
       let approved = false;
       if (nextPlayer.rentExtensionsReceived === 0) {
