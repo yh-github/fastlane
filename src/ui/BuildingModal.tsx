@@ -228,17 +228,17 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
 
   const getFace = (archetype: string) => {
     switch (archetype) {
-      case 'employment': return '👨‍💼';
-      case 'workplace': return '👷';
-      case 'restaurant': return '👨‍🍳';
-      case 'education': return '👨‍🏫';
+      case 'employment': return '🧑‍💼';
+      case 'workplace': return '👨‍🏭';
+      case 'restaurant': return '🧑‍🍳';
+      case 'education': return '🤓';
       case 'shop':
       case 'grocery':
-      case 'pawnshop': return '🧑‍🌾';
+      case 'pawnshop': return '💁‍♂️';
       case 'home':
-      case 'housing': return '🛌';
-      case 'bank': return '🏦';
-      default: return '😐';
+      case 'housing': return '🤵';
+      case 'bank': return '🤑';
+      default: return '🤔';
     }
   };
 
