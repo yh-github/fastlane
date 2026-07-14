@@ -72,7 +72,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
             )}
             <div style={{ marginTop: '10px' }}>
               {isCurrentJob ? (
-                (!rules?.transparentGUI || offeredWage > player.currentWage) ? (
+                (!rules?.helpfulUI || offeredWage > player.currentWage) ? (
                   <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
                     {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
                   </button>
@@ -214,7 +214,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
             </div>
           )}
 
-          {rentDue && !player.rentExtensionsDeniedPermanently && (!rules?.transparentGUI || (!player.rentExtensionActive && !player.turnFlags.askedForExtension)) && (
+          {rentDue && !player.rentExtensionsDeniedPermanently && (!rules?.helpfulUI || (!player.rentExtensionActive && !player.turnFlags.askedForExtension)) && (
             <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #c93' }}>
               <strong>{t('rentOffice.rentIsDue')}</strong>
               <p style={{ fontSize: '12px' }}>{t('rentOffice.canAskExtension')}</p>
@@ -247,24 +247,24 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
 
           <h4>{t('rentOffice.availableApts')}:</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-            {lowCostHousing && (!rules?.transparentGUI || player.currentHousingId !== lowCostHousing.id) && (
+            {lowCostHousing && (!rules?.helpfulUI || player.currentHousingId !== lowCostHousing.id) && (
               <div className="store-item">
                 <span>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })} - ${lowCostMovePrice}/mo</span>
                 <button 
                   onClick={() => onAction({ type: 'move_apartment', housingId: lowCostHousing.id, cost: lowCostMovePrice })}
-                  disabled={player.money < lowCostMovePrice || (rules?.transparentGUI && player.currentHousingId === lowCostHousing.id)}
+                  disabled={player.money < lowCostMovePrice || (rules?.helpfulUI && player.currentHousingId === lowCostHousing.id)}
                 >
                   {player.currentHousingId === lowCostHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
                 </button>
               </div>
             )}
             
-            {securityHousing && (!rules?.transparentGUI || player.currentHousingId !== securityHousing.id) && (
+            {securityHousing && (!rules?.helpfulUI || player.currentHousingId !== securityHousing.id) && (
               <div className="store-item">
                 <span>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })} - ${securityMovePrice}/mo</span>
                 <button 
                   onClick={() => onAction({ type: 'move_apartment', housingId: securityHousing.id, cost: securityMovePrice })}
-                  disabled={player.money < securityMovePrice || (rules?.transparentGUI && player.currentHousingId === securityHousing.id)}
+                  disabled={player.money < securityMovePrice || (rules?.helpfulUI && player.currentHousingId === securityHousing.id)}
                 >
                   {player.currentHousingId === securityHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
                 </button>
