@@ -286,7 +286,9 @@ export function gameReducer(
     case 'move_apartment': {
       const housingDef = context.campaign.housing.find(h => h.id === action.housingId);
       if (housingDef) {
-        if (nextPlayer.money >= action.cost) {
+        if (nextPlayer.currentHousingId === housingDef.id) {
+          actionLog = { key: 'action.rent.alreadyLiveHere', params: { name: housingDef.name } };
+        } else if (nextPlayer.money >= action.cost) {
           nextPlayer.money -= action.cost;
           nextPlayer.currentHousingId = housingDef.id;
           nextPlayer.currentRentPrice = action.cost;

@@ -168,7 +168,12 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionDenied`, 'Sorry, your rent must be paid now.');
           }
         } else if (payload.type === 'move_apartment') {
-          if (success) {
+          if (actionLog.key === 'action.rent.alreadyLiveHere') {
+            const aptName = actionLog.params?.name || 'apartment';
+            nextMsg = `You already live at the ${aptName}!`;
+          } else if (actionLog.key === 'action.rent.moved') {
+            nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.moved`, 'Here are your new keys. Enjoy your stay.');
+          } else if (success) {
             const isLowCost = payload.housingId === 'low_cost' || payload.housingId === 'low_cost_housing';
             const moveKey = isLowCost ? 'moveInLowCost' : 'moveInSecurity';
             nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.${moveKey}`, 'Welcome.');

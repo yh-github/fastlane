@@ -247,26 +247,26 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
 
           <h4>{t('rentOffice.availableApts')}:</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-            {lowCostHousing && player.currentHousingId !== lowCostHousing.id && (
+            {lowCostHousing && (!rules?.transparentGUI || player.currentHousingId !== lowCostHousing.id) && (
               <div className="store-item">
                 <span>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })} - ${lowCostMovePrice}/mo</span>
                 <button 
                   onClick={() => onAction({ type: 'move_apartment', housingId: lowCostHousing.id, cost: lowCostMovePrice })}
-                  disabled={player.money < lowCostMovePrice}
+                  disabled={player.money < lowCostMovePrice || (rules?.transparentGUI && player.currentHousingId === lowCostHousing.id)}
                 >
-                  {t('rentOffice.moveIn')}
+                  {player.currentHousingId === lowCostHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
                 </button>
               </div>
             )}
             
-            {securityHousing && player.currentHousingId !== securityHousing.id && (
+            {securityHousing && (!rules?.transparentGUI || player.currentHousingId !== securityHousing.id) && (
               <div className="store-item">
                 <span>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })} - ${securityMovePrice}/mo</span>
                 <button 
                   onClick={() => onAction({ type: 'move_apartment', housingId: securityHousing.id, cost: securityMovePrice })}
-                  disabled={player.money < securityMovePrice}
+                  disabled={player.money < securityMovePrice || (rules?.transparentGUI && player.currentHousingId === securityHousing.id)}
                 >
-                  {t('rentOffice.moveIn')}
+                  {player.currentHousingId === securityHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
                 </button>
               </div>
             )}
