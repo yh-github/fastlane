@@ -1263,8 +1263,62 @@ If you have a Job at the Factory, you can Work here to get money.
 * *Welcome to the Factory. Where money is our most important product.*
 * *Welcome to the Factory. Please wear your safety helmet during scheduled inspections.*
 
+## 15. Happiness Goal
 
+The **Happiness Goal** is one of four Goals a player must meet in order to win a game of Jones in the Fast Lane.
 
+The precise goal to fulfill is determined at the beginning of the game, separately for each player. Its range is between 10 and 100. (Note: The "10" is the minimum possible *goal* setting, not the starting stat).
 
+Fulfilling a player's Happiness Goal requires them to accumulate an amount of points into their Happiness Stat that is equal to or greater than their Goal.
 
+Happiness can be acquired in multiple ways, including from purchases, Relaxation, and several other actions. It can also decrease due to a variety of events, such as being robbed by Wild Willy, being refused for a Loan, or being fired from a Job.
 
+### Happiness Stat
+
+The player's current **Happiness Stat** is tracked for them individually using a single number. This number is increased or decreased during the game according to various events and actions.
+
+**Important Note on Starting Values:** The Happiness *Stat* itself starts at exactly 50 at the beginning of the game. This means if you set your Happiness *Goal* to 50, you begin the game having already reached that goal! However, since Happiness is volatile and drops from things like starvation, illness, and robberies, you must maintain or increase it throughout the game to ensure it remains at or above your goal threshold by the time you achieve your other goals.
+
+This Stat is directly compared to the Happiness Goal to determine whether the player has accomplished that goal. For example, if the player has a Happiness Goal of 50, they need exactly 50 Happiness to meet that goal.
+
+### Increasing Happiness
+
+**Events & Actions:**
+* **Relax at your Apartment**: +2 (Only once per Turn. Additional Relaxation does not award Happiness, but increases the Relaxation Stat).
+* **Get a new Job / Get a Raise**: +3
+* **Get a Bank Loan**: +5
+* **Get a Rent Extension**: +1
+* **Get a new Degree**: +5
+* **Owning a Microwave or Stove**: +1 at the start of a new Turn (not cumulative if you own both).
+* **Economic Boom**: +5 (Only if the player has at least $1000 invested in the Stock Market).
+* **Make money using the Computer**: +3 (1/7 chance each Turn).
+* **Win the Lottery**: +5 (small/medium) or +10 ($5000 prize).
+
+**Purchases:**
+* **Appliances (Socket City)**: +1 to +3 (Only if the player does not currently own the item being purchased. Generally gives higher bonuses than Z-Mart).
+* **Appliances (Z-Mart)**: +1 (Only if the player does not currently own the item being purchased).
+* **Tickets (Baseball/Theatre/Concert)**: +2 (First ticket of each type purchased that Turn).
+* **Fresh Food (Black's Market)**: +1 to +4 (First purchase of any Fresh Food this Turn).
+* **Lottery Tickets (Black's Market)**: +2 (First purchase this Turn).
+* **Clothes (QT Clothing)**: +1 (Dress Clothes), +2 (Business Suit) (Each and every purchase).
+* **Fast Food & Soft Drinks (Monolith Burgers)**: +1 to +2 (First purchase of food or drink this Turn).
+
+### Decreasing Happiness
+
+**Events & Actions:**
+* **Starvation**: -2 (When the player did not buy Fast Food and does not own any Fresh Food).
+* **Doctor Visit**: -4
+* **Appliance broken**: -1
+* **Food Spoiled**: -2 (All spoiled), -1 (Some spoiled).
+* **Market Crash**: -1 to -3 (Only to the player whose turn it is when the crash occurs).
+* **Lost Job / Wage reduction due to Market Crash**: -7 / -3
+* **Mugged by Wild Willy / Apartment Robbed**: -3 / -4
+* **Defaulted on a Loan**: -1
+* **Refused a new Job / Denied a Loan / Refused Rent Extension**: -1 to -2
+* **Pawned any Item**: -1
+* **Pawned a Refrigerator while owning Fresh Food**: -1 (On top of normal penalty).
+
+**Purchases:**
+* **Dog Food**: -1
+* **8-Track Player**: -1
+* **Works of Capote**: -2
