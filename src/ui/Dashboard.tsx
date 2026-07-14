@@ -62,7 +62,7 @@ export function Dashboard({ player, turn, economicIndex, hoursPerTurn, campaign,
             fontWeight: 'bold', cursor: 'pointer'
           }}
         >
-          📦 {t('dashboard.inventory', { defaultValue: 'Inventory' })}
+          📊 {t('dashboard.status', { defaultValue: 'Status' })}
         </button>
       </div>
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

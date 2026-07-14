@@ -561,57 +561,137 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
 
 export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees: EducationDef[], rules?: import('../engine/gameState').GameRules, campaign: CampaignBundle, economicIndex?: number }) {
   const { t } = useTranslation();
+  const [tab, setTab] = useState<'available'|'tree'>('available');
+
+  const rootDegrees = availableDegrees.filter(d => d.prerequisites.length === 0);
+
   return (
     <div className="interaction-panel">
       <h3>{t('university.title', { defaultValue: 'University Registry' })}</h3>
 
-      <h4>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
-      {availableDegrees
-        .filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)))
-        .map(deg => {
-        const hasDegree = player.degrees.includes(deg.id);
-        if (hasDegree) return (
-          <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444' }}>
-            <strong>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong>
-            <div style={{ color: '#2ecc71', fontWeight: 'bold' }}>{t('university.completed', { defaultValue: 'Completed ✓' })}</div>
-          </div>
-        );
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+        <button onClick={() => setTab('available')} style={{ fontWeight: tab === 'available' ? 'bold' : 'normal', background: tab === 'available' ? '#4aa' : '#333' }}>
+          {t('university.tabAvailable', { defaultValue: 'Available Classes' })}
+        </button>
+        <button onClick={() => setTab('tree')} style={{ fontWeight: tab === 'tree' ? 'bold' : 'normal', background: tab === 'tree' ? '#4aa' : '#333' }}>
+          {t('university.tabTree', { defaultValue: 'Class Tree' })}
+        </button>
+      </div>
 
-        const required = calcRequiredLessons(player, deg);
-        const hasBonus = required < deg.lessonsRequired;
-        const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
-        const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
+      {tab === 'available' && (
+        <>
+          <h4>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
+          {availableDegrees
+            .filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)))
+            .filter(deg => !player.degrees.includes(deg.id))
+            .map(deg => {
+              const required = calcRequiredLessons(player, deg);
+              const hasBonus = required < deg.lessonsRequired;
+              const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
+              const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
 
-        const tuitionFee = calcEconomyPrice(deg.baseTuitionFee, economicIndex);
+              const tuitionFee = calcEconomyPrice(deg.baseTuitionFee, economicIndex);
 
-        return (
-          <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #4aa' }}>
-            <strong>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong> {isEnrolled ? '' : t('university.tuition', { fee: tuitionFee, defaultValue: `- Tuition: $${tuitionFee}` })}
-            {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginInlineStart: '5px', fontWeight: 'bold' }}>{t('university.bonus', { defaultValue: '★ Bonus' })}</span>}
-            
-            {isEnrolled ? (
-              <>
-                <div style={{ fontSize: '12px', marginTop: '4px' }}>{t('university.lessons', { completed: lessonsCompleted, required, defaultValue: `Lessons: ${lessonsCompleted} / ${required}` })}</div>
-                <button 
-                  style={{ marginTop: '5px' }} 
-                  onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
-                  disabled={player.hoursRemaining < (rules?.allowPartialHours ? 1 : campaign.config.timeRules.studySessionCost)}
-                >
-                  {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
-                </button>
-              </>
-            ) : (
-              <button 
-                style={{ marginTop: '5px' }} 
-                onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
-                disabled={player.money < tuitionFee}
-              >
-                {t('university.enrollBtn', { defaultValue: 'Enroll' })}
-              </button>
-            )}
-          </div>
-        );
-      })}
+              return (
+                <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '10px', border: '1px solid #4aa', borderRadius: '4px' }}>
+                  <strong>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong> {isEnrolled ? '' : t('university.tuition', { fee: tuitionFee, defaultValue: `- Tuition: $${tuitionFee}` })}
+                  {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginInlineStart: '5px', fontWeight: 'bold' }}>{t('university.bonus', { defaultValue: '★ Bonus' })}</span>}
+                  
+                  {isEnrolled ? (
+                    <>
+                      <div style={{ fontSize: '12px', marginTop: '4px' }}>{t('university.lessons', { completed: lessonsCompleted, required, defaultValue: `Lessons: ${lessonsCompleted} / ${required}` })}</div>
+                      <button 
+                        style={{ marginTop: '5px', background: '#3498db' }} 
+                        onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
+                        disabled={player.hoursRemaining < (rules?.allowPartialHours ? 1 : campaign.config.timeRules.studySessionCost)}
+                      >
+                        {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      style={{ marginTop: '5px', background: '#2ecc71', color: '#000' }} 
+                      onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
+                      disabled={player.money < tuitionFee}
+                    >
+                      {t('university.enrollBtn', { defaultValue: 'Enroll' })}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          {availableDegrees.filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)) && !player.degrees.includes(deg.id)).length === 0 && (
+            <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('university.noClasses', { defaultValue: 'No classes available to take right now.' })}</p>
+          )}
+        </>
+      )}
+
+      {tab === 'tree' && (
+        <div style={{ marginTop: '10px', padding: '10px', background: '#222', borderRadius: '4px', overflowX: 'auto' }}>
+          {rootDegrees.map(root => (
+            <ClassTreeNode key={root.id} degreeId={root.id} availableDegrees={availableDegrees} player={player} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClassTreeNode({ degreeId, availableDegrees, player, depth = 0 }: { degreeId: string, availableDegrees: EducationDef[], player: PlayerState, depth?: number }) {
+  const { t } = useTranslation();
+  const degree = availableDegrees.find(d => d.id === degreeId);
+  if (!degree) return null;
+
+  const children = availableDegrees.filter(d => d.prerequisites.includes(degreeId));
+  const isCompleted = player.degrees.includes(degreeId);
+  const isEnrolled = player.enrolledClasses?.[degreeId] !== undefined;
+  const canTake = degree.prerequisites.every(p => player.degrees.includes(p));
+
+  let statusColor = '#666';
+  let statusText = 'Locked';
+  let bgColor = '#333';
+  if (isCompleted) { statusColor = '#2ecc71'; statusText = 'Completed ✓'; bgColor = 'rgba(46, 204, 113, 0.1)'; }
+  else if (isEnrolled) { statusColor = '#f39c12'; statusText = 'Enrolled'; bgColor = 'rgba(243, 156, 18, 0.1)'; }
+  else if (canTake) { statusColor = '#3498db'; statusText = 'Available'; bgColor = 'rgba(52, 152, 219, 0.1)'; }
+
+  return (
+    <div style={{ marginLeft: depth > 0 ? '20px' : '0', position: 'relative', marginTop: '10px' }}>
+      <div style={{ 
+        padding: '8px 12px', 
+        border: `1px solid ${statusColor}`, 
+        borderRadius: '6px',
+        display: 'inline-block',
+        backgroundColor: bgColor,
+        boxShadow: `0 0 5px ${bgColor}`
+      }}>
+        <strong>{t(`education.${degree.id}`, { defaultValue: degree.name })}</strong>
+        <span style={{ fontSize: '11px', color: statusColor, marginLeft: '10px', fontWeight: 'bold' }}>{statusText}</span>
+      </div>
+      
+      {children.length > 0 && (
+        <div style={{ 
+          borderLeft: `2px solid #555`, 
+          marginLeft: '20px', 
+          paddingTop: '5px',
+          paddingBottom: '5px' 
+        }}>
+          {children.map(child => (
+            <div key={child.id} style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                left: '0',
+                top: '25px',
+                width: '15px',
+                height: '2px',
+                backgroundColor: '#555'
+              }} />
+              <div style={{ marginLeft: '15px' }}>
+                <ClassTreeNode degreeId={child.id} availableDegrees={availableDegrees} player={player} depth={depth + 1} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
