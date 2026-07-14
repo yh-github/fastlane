@@ -81,6 +81,7 @@ export interface JobDef {
   baseWage: number;
   requirements: JobRequirements;
   perks: string[];
+  tags?: string[];
 }
 
 export interface ItemDef {

@@ -43,7 +43,8 @@ export function useGameEngine(
     loadCampaign('classic_1990')
       .then((bundle) => {
         setCampaign(bundle);
-        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom');
+        const randomSeed = Math.floor(Math.random() * 2147483647);
+        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', 'cdrom', undefined, randomSeed);
         setGameState(initialState);
         setStatus('ready');
       if (initialState && initialState.players[0].turnFlags.freeNewspaper) {

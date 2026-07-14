@@ -272,6 +272,8 @@ export interface TurnFlags {
   loanDefaultWarning?: boolean;
   /** Loan payable warning flag */
   loanPayableWarning?: boolean;
+  /** Jobs the player was rejected from this turn */
+  jobsRejectedThisTurn?: string[];
 }
 
 // ─── Stat Constants ─────────────────────────────────────────────
@@ -302,6 +304,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     hasSeenWeekend: false,
     relaxedThisTurn: false,
     rentExtensionRefusedThisTurn: false,
+    jobsRejectedThisTurn: [],
   };
 }
 
