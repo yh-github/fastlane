@@ -12,7 +12,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
     {
       name: 'Player 1',
       isAi: false,
-      goals: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      goals: { wealth: 50, happiness: 50, education: 50, career: 50 },
     }
   ]);
 
@@ -23,7 +23,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
         {
           name: `Player ${players.length + 1}`,
           isAi: false,
-          goals: { wealth: 25, happiness: 25, education: 25, career: 25 },
+          goals: { wealth: 50, happiness: 50, education: 50, career: 50 },
         }
       ]);
     }
