@@ -114,7 +114,11 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       if (actionLog.key === 'action.error.cannotWork') {
         nextMsg = "No time is left to work.";
       } else if (actionLog.key.startsWith('action.error.notEnoughTime')) {
-        nextMsg = "Sorry. We're closing. You'll have to come back next week.";
+        if (payload.type === 'enroll' || payload.type === 'study') {
+          nextMsg = "No time is left to go to class.";
+        } else {
+          nextMsg = "Sorry. We're closing. You'll have to come back next week.";
+        }
       } else {
         const success = !actionLog.key.includes('.error') && 
                         actionLog.key !== 'action.loan.refused' && 

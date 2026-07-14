@@ -33,7 +33,19 @@ export function InventoryModal({ player, onAction, onClose }: InventoryModalProp
           ✖
         </button>
         
-        <h2 style={{ marginTop: 0, borderBottom: '1px solid #555', paddingBottom: '10px' }}>{t('inventoryModal.title', 'Your Inventory')}</h2>
+        <h2 style={{ marginTop: 0, borderBottom: '1px solid #555', paddingBottom: '10px' }}>{t('statusModal.title', 'Your Status')}</h2>
+
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('statusModal.education', 'Education')}</h3>
+          <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
+            <li>{t('statusModal.degrees', 'Degrees')}: {player.degrees.length > 0 ? player.degrees.map(d => t(`education.${d}`, { defaultValue: d.replaceAll('_', ' ') })).join(', ') : t('statusModal.none', 'None')}</li>
+            <li>{t('statusModal.enrolled', 'Currently Enrolled')}: {
+              Object.keys(player.enrolledClasses || {}).length > 0 
+                ? Object.keys(player.enrolledClasses).map(d => t(`education.${d}`, { defaultValue: d.replaceAll('_', ' ') })).join(', ')
+                : t('statusModal.none', 'None')
+            }</li>
+          </ul>
+        </div>
 
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.food', 'Food')}</h3>
