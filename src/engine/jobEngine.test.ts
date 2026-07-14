@@ -12,7 +12,8 @@ describe('Job Engine', () => {
     locationId: 'burger_palace',
     baseWage: 5,
     perks: [],
-    requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' }
+    requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+    tags: ['auto_accept']
   };
 
   const salesManager: JobDef = {
@@ -124,6 +125,7 @@ describe('Job Engine', () => {
         hoursRemaining: 20, 
         currentJobId: 'sales_manager',
         dependability: 45, // requirement is 50
+        maxDependability: 20,
         turnFlags: { hasWorked: false },
         inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
       } as unknown as PlayerState;

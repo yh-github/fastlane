@@ -3,7 +3,7 @@
   { "id": "zmart_asst_mgr", "title": "Assistant Manager", "locationId": "z_mart", "baseWage": 7, "requirements": { "experience": 20, "dependability": 20, "degrees": [], "uniform": "dress" }, "perks": [] },
   { "id": "zmart_mgr", "title": "Manager", "locationId": "z_mart", "baseWage": 8, "requirements": { "experience": 30, "dependability": 30, "degrees": ["junior_college"], "uniform": "business" }, "perks": [] },
 
-  { "id": "burger_cook", "title": "Cook", "locationId": "burger_palace", "baseWage": 5, "requirements": { "experience": 0, "dependability": 10, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "burger_cook", "title": "Cook", "locationId": "burger_palace", "baseWage": 5, "requirements": { "experience": 0, "dependability": 10, "degrees": [], "uniform": "casual" }, "perks": [], "tags": ["auto_accept"] },
   { "id": "burger_clerk", "title": "Clerk", "locationId": "burger_palace", "baseWage": 6, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] },
   { "id": "burger_asst_mgr", "title": "Assistant Manager", "locationId": "burger_palace", "baseWage": 7, "requirements": { "experience": 20, "dependability": 30, "degrees": [], "uniform": "casual" }, "perks": [] },
   { "id": "burger_mgr", "title": "Manager", "locationId": "burger_palace", "baseWage": 8, "requirements": { "experience": 30, "dependability": 40, "degrees": ["junior_college"], "uniform": "dress" }, "perks": [] },

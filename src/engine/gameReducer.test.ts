@@ -15,7 +15,7 @@ describe('gameReducer', () => {
 
     mockCampaign = {
       jobs: [
-        { id: 'burger_cook', title: 'Burger Cook', baseWage: 5, requirements: { experience: 0, dependability: 0, degrees: [] }, locationId: 'monolith' },
+        { id: 'burger_cook', title: 'Burger Cook', baseWage: 5, requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' }, locationId: 'monolith', perks: [], tags: ['auto_accept'] },
         { id: 'office_clerk', title: 'Office Clerk', baseWage: 12, requirements: { experience: 10, dependability: 50, degrees: [] }, locationId: 'office' }
       ],
       items: [

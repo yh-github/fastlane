@@ -10,7 +10,11 @@ export interface JobApplicationResult {
   message: GameEvent;
 }
 
-export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules): JobApplicationResult {
+export function calculateJobLuck(player: PlayerState): number {
+  return Math.floor(30 + (10 + player.dependability + player.experience + (8 * player.degrees.length)) / 3);
+}
+
+export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules, turn: number = 1): JobApplicationResult {
   const msg = (key: string, defaultMsg: string, vars: Record<string, string> = {}) => {
     let m = messages[key] || defaultMsg;
     for (const [k, v] of Object.entries(vars)) m = m.replaceAll(`{${k}}`, v as string);
@@ -23,13 +27,17 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     }
   }
 
+  if (player.turnFlags.jobsRejectedThisTurn?.includes(job.id)) {
+    return { updated: player, success: false, message: { key: 'action.job.noOpenings' } };
+  }
+
   // Cost to apply
   let updated = spendHours(player, timeCost);
   
   const isRaise = player.currentJobId === job.id;
 
-  // The Cook job at Monolith Burgers is always available
-  if (job.id === 'burger_cook' && !isRaise) {
+  // Some jobs are automatically granted regardless of luck or exact stat checks
+  if (job.tags?.includes('auto_accept') && !isRaise) {
     updated.currentJobId = job.id;
     updated.currentWage = offeredWage ?? job.baseWage;
     updated.raisesAtCurrentJob = 0;
@@ -81,14 +89,19 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   // The workplace checks clothes during workShift.
 
   if (rejectionReasons.length > 0) {
+    if (turn <= 4) {
+      return { updated, success: false, message: { key: 'action.job.noOpenings' } };
+    }
     return { updated, success: false, message: { key: 'action.job.rejected', params: { reasons: rejectionReasons.join(' ') } } };
   }
 
   // RNG Luck check for new jobs
-  const luck = 40 + updated.dependability + updated.experience + (8 * updated.degrees.length);
+  const luck = calculateJobLuck(updated);
   const roll = Math.floor((rng ? rng.next() : Math.random()) * 100) + 1;
 
   if (roll > luck) {
+    if (!updated.turnFlags.jobsRejectedThisTurn) updated.turnFlags.jobsRejectedThisTurn = [];
+    updated.turnFlags.jobsRejectedThisTurn.push(job.id);
     return { updated, success: false, message: { key: 'action.job.noOpenings' } };
   }
 
@@ -121,7 +134,8 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number): 
   }
   
   // Dependability firing & warning checks
-  if (player.dependability <= job.requirements.dependability - 5) {
+  const degreeBoost = Math.max(0, player.maxDependability - 20);
+  if (player.dependability <= job.requirements.dependability - 5 - degreeBoost) {
     const updated = { ...player, currentJobId: null, currentWage: 0, raisesAtCurrentJob: 0 };
     updated.happiness = Math.max(10, updated.happiness - 7);
     return { updated, wagesEarned: 0, success: false, message: { key: 'action.job.fired' } };
@@ -187,7 +201,7 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number): 
   // We'll let the turnProcessor handle clothes wear unconditionally per turn as per the classic rules.
 
   let finalMessage: GameEvent | undefined = undefined;
-  if (player.dependability <= job.requirements.dependability - 3) {
+  if (player.dependability <= job.requirements.dependability - 3 - degreeBoost) {
     finalMessage = { key: 'action.job.warning', params: { garnished: garnishMessage } };
   } else if (garnishMessage) {
     finalMessage = { key: 'action.job.garnished', params: { garnished: garnishMessage } };

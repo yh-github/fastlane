@@ -58,7 +58,7 @@ export function gameReducer(
     case 'apply': {
       const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
       if (jobDef) {
-        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules);
+        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules, context.turn);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
