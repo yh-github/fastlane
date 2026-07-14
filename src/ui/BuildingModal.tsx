@@ -111,91 +111,98 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     let nextMsg = '';
 
     if (actionLog) {
-      const success = !actionLog.key.includes('.error') && 
-                      actionLog.key !== 'action.loan.refused' && 
-                      actionLog.key !== 'action.rent.extensionDenied';
+      if (actionLog.key === 'action.error.cannotWork') {
+        nextMsg = "No time is left to work.";
+      } else if (actionLog.key.startsWith('action.error.notEnoughTime')) {
+        nextMsg = "Sorry. We're closing. You'll have to come back next week.";
+      } else {
+        const success = !actionLog.key.includes('.error') && 
+                        actionLog.key !== 'action.loan.refused' && 
+                        actionLog.key !== 'action.rent.extensionDenied';
 
-      if (payload.type === 'buy') {
-        if (success) {
-          nextMsg = getRandomMessage(`clerkDialogs.${building.id}.buySuccess`, t('clerkDialogs.default.buySuccess'));
-        } else {
-          nextMsg = getRandomMessage(`clerkDialogs.${building.id}.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
-        }
-      } else if (payload.type === 'pawn_item') {
-        if (success) {
-          nextMsg = getRandomMessage(`clerkDialogs.${building.id}.pawnSuccess`, t('clerkDialogs.default.buySuccess'));
-        } else {
-          nextMsg = t(actionLog.key, { defaultValue: 'Pawn failed.' });
-        }
-      } else if (payload.type === 'redeem_item' || payload.type === 'buy_pawn_item') {
-        if (success) {
-          nextMsg = getRandomMessage(`clerkDialogs.${building.id}.redeemSuccess`, t('clerkDialogs.default.buySuccess'));
-        } else {
-          nextMsg = getRandomMessage(`clerkDialogs.${building.id}.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
-        }
-      } else if (payload.type === 'apply') {
-        if (actionLog.key === 'action.job.gotJob') {
-          nextMsg = getRandomMessage(`clerkDialogs.employment_office.buySuccess`, t('clerkDialogs.employment_office.buySuccess'));
-        } else if (actionLog.key === 'action.job.rejected') {
-          nextMsg = actionLog.params?.reasons || t('jobBoard.missingReq');
-        } else if (actionLog.key === 'action.job.noOpenings') {
-          nextMsg = t('action.job.noOpenings', { defaultValue: 'No openings.' });
-        } else if (actionLog.key === 'action.job.raiseSuccess') {
-          nextMsg = t('action.job.raiseSuccess');
-        } else if (actionLog.key === 'action.job.raiseDenied') {
-          nextMsg = t('action.job.raiseDenied');
-        } else if (actionLog.key === 'action.job.raiseWaste') {
-          nextMsg = t('action.job.raiseWaste');
-        }
-      } else if (payload.type === 'ask_rent_extension') {
-        if (actionLog.key === 'action.rent.extensionApproved') {
-          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionApproved`, 'Sure, you can pay next week.');
-        } else {
-          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionDenied`, 'Sorry, your rent must be paid now.');
-        }
-      } else if (payload.type === 'move_apartment') {
-        if (success) {
-          const isLowCost = payload.housingId === 'low_cost' || payload.housingId === 'low_cost_housing';
-          const moveKey = isLowCost ? 'moveInLowCost' : 'moveInSecurity';
-          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.${moveKey}`, 'Welcome.');
-        } else {
-          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
-        }
-      } else if (payload.type === 'bank_transaction') {
-        if (success) {
-          if (actionLog.key === 'action.bank.withdraw') {
-            nextMsg = getRandomMessage(`clerkDialogs.bank.withdrawSuccess`, 'There is always a penalty for early withdrawal.');
+        if (payload.type === 'buy') {
+          if (success) {
+            nextMsg = getRandomMessage(`clerkDialogs.${building.id}.buySuccess`, t('clerkDialogs.default.buySuccess'));
           } else {
-            nextMsg = getRandomMessage(`clerkDialogs.bank.buySuccess`, 'Transaction complete.');
+            nextMsg = "You do not have enough cash.";
           }
-        } else {
-          nextMsg = getRandomMessage(`clerkDialogs.bank.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
-        }
-      } else if (payload.type === 'take_loan') {
-        if (actionLog.key === 'action.loan.approved') {
-          nextMsg = t('action.loan.approved', { loanSize: actionLog.params?.loanSize });
-        } else {
-          nextMsg = t('action.loan.refused');
-        }
-      } else if (payload.type === 'pay_loan') {
-        if (actionLog.key === 'action.loan.paidOff') {
-          nextMsg = t('action.loan.paidOff', { amount: actionLog.params?.amount });
-        } else if (actionLog.key === 'action.loan.paidInstallment') {
-          nextMsg = t('action.loan.paidInstallment', { payment: actionLog.params?.payment });
-        } else {
-          nextMsg = getRandomMessage(`clerkDialogs.bank.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
-        }
-      } else if (payload.type === 'rent_transaction' || payload.type === 'pay_rent_advance') {
-        if (success) {
-          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.buySuccess`, t('clerkDialogs.default.buySuccess'));
-        } else {
-          nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
-        }
-      } else if (payload.type === 'enroll') {
-        if (success) {
-          nextMsg = getRandomMessage(`clerkDialogs.university.buySuccess`, 'You are now enrolled.');
-        } else {
-          nextMsg = getRandomMessage(`clerkDialogs.university.insufficientFunds`, t('clerkDialogs.default.insufficientFunds'));
+        } else if (payload.type === 'pawn_item') {
+          if (success) {
+            nextMsg = getRandomMessage(`clerkDialogs.${building.id}.pawnSuccess`, t('clerkDialogs.default.buySuccess'));
+          } else {
+            nextMsg = t(actionLog.key, { defaultValue: 'Pawn failed.' });
+          }
+        } else if (payload.type === 'redeem_item' || payload.type === 'buy_pawn_item') {
+          if (success) {
+            nextMsg = getRandomMessage(`clerkDialogs.${building.id}.redeemSuccess`, t('clerkDialogs.default.buySuccess'));
+          } else {
+            nextMsg = "You do not have enough cash.";
+          }
+        } else if (payload.type === 'apply') {
+          if (actionLog.key === 'action.job.gotJob') {
+            nextMsg = getRandomMessage(`clerkDialogs.employment_office.buySuccess`, t('clerkDialogs.employment_office.buySuccess'));
+          } else if (actionLog.key === 'action.job.rejected') {
+            const reasons = actionLog.params?.reasons || t('jobBoard.missingReq');
+            nextMsg = `Sorry. You didn't get the job for the following reasons:\n\n${reasons}`;
+          } else if (actionLog.key === 'action.job.noOpenings') {
+            nextMsg = `Sorry. You didn't get the job for the following reasons:\n\nNo openings.`;
+          } else if (actionLog.key === 'action.job.raiseSuccess') {
+            nextMsg = t('action.job.raiseSuccess');
+          } else if (actionLog.key === 'action.job.raiseDenied') {
+            nextMsg = t('action.job.raiseDenied');
+          } else if (actionLog.key === 'action.job.raiseWaste') {
+            nextMsg = t('action.job.raiseWaste');
+          }
+        } else if (payload.type === 'ask_rent_extension') {
+          if (actionLog.key === 'action.rent.extensionApproved') {
+            nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionApproved`, 'Sure, you can pay next week.');
+          } else {
+            nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.extensionDenied`, 'Sorry, your rent must be paid now.');
+          }
+        } else if (payload.type === 'move_apartment') {
+          if (success) {
+            const isLowCost = payload.housingId === 'low_cost' || payload.housingId === 'low_cost_housing';
+            const moveKey = isLowCost ? 'moveInLowCost' : 'moveInSecurity';
+            nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.${moveKey}`, 'Welcome.');
+          } else {
+            nextMsg = "You do not have enough cash.";
+          }
+        } else if (payload.type === 'bank_transaction') {
+          if (success) {
+            if (actionLog.key === 'action.bank.withdraw') {
+              nextMsg = getRandomMessage(`clerkDialogs.bank.withdrawSuccess`, 'There is always a penalty for early withdrawal.');
+            } else {
+              nextMsg = getRandomMessage(`clerkDialogs.bank.buySuccess`, 'Transaction complete.');
+            }
+          } else {
+            nextMsg = "You do not have enough cash.";
+          }
+        } else if (payload.type === 'take_loan') {
+          if (actionLog.key === 'action.loan.approved') {
+            nextMsg = t('action.loan.approved', { loanSize: actionLog.params?.loanSize });
+          } else {
+            nextMsg = t('action.loan.refused');
+          }
+        } else if (payload.type === 'pay_loan') {
+          if (actionLog.key === 'action.loan.paidOff') {
+            nextMsg = t('action.loan.paidOff', { amount: actionLog.params?.amount });
+          } else if (actionLog.key === 'action.loan.paidInstallment') {
+            nextMsg = t('action.loan.paidInstallment', { payment: actionLog.params?.payment });
+          } else {
+            nextMsg = "You do not have enough cash.";
+          }
+        } else if (payload.type === 'rent_transaction' || payload.type === 'pay_rent_advance') {
+          if (success) {
+            nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.buySuccess`, t('clerkDialogs.default.buySuccess'));
+          } else {
+            nextMsg = "You do not have enough cash.";
+          }
+        } else if (payload.type === 'enroll') {
+          if (success) {
+            nextMsg = getRandomMessage(`clerkDialogs.university.buySuccess`, 'You are now enrolled.');
+          } else {
+            nextMsg = "You do not have enough cash.";
+          }
         }
       }
     }
