@@ -326,7 +326,7 @@ export function createDefaultInventory(): InventoryState {
 }
 
 export function createDefaultGoalAllotment(): GoalAllotment {
-  return { wealth: 25, happiness: 25, education: 25, career: 25 };
+  return { wealth: 50, happiness: 50, education: 50, career: 50 };
 }
 
 export interface PlayerConfig {
