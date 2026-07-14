@@ -226,10 +226,23 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     }
   };
 
-  const getFace = (archetype: string) => {
+  const getFace = (buildingId: string, archetype: string) => {
+    // Specific building overrides
+    switch (buildingId) {
+      case 'apartment_complex': return '👩‍💼'; // Rent Office: Woman office worker
+      case 'factory': return '👩‍🏭'; // Factory: Woman factory worker
+      case 'qt_clothing': return '💁‍♂️'; // QT Clothing: Male clerk (often pink shirt)
+      case 'bank': return '👩‍💼'; // Bank: Female in a suit
+      case 'z_mart': return '🤷‍♂️'; // Z-Mart: Man shrugging
+      case 'socket_city': return '👨‍💻'; // Socket City: Technologist
+      case 'blacks_market': return '👨‍🌾'; // Black's Market: Farmer
+      case 'pawn_shop': return '🕵️‍♂️'; // Pawn Shop: Detective
+    }
+
+    // Fallbacks by archetype
     switch (archetype) {
       case 'employment': return '🧑‍💼';
-      case 'workplace': return '👨‍🏭';
+      case 'workplace': return '👩‍🏭';
       case 'restaurant': return '🧑‍🍳';
       case 'education': return '🤓';
       case 'shop':
@@ -237,7 +250,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       case 'pawnshop': return '💁‍♂️';
       case 'home':
       case 'housing': return '🤵';
-      case 'bank': return '🤑';
+      case 'bank': return '👩‍💼';
       default: return '🤔';
     }
   };
@@ -253,7 +266,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       
       <div className="building-modal__header">
         <div className="building-modal__face" style={{ position: 'relative' }}>
-          {getFace(building.archetype)}
+          {getFace(building.id, building.archetype)}
           {clerkMessage && shouldShowSpeechBubble && <SpeechBubble message={clerkMessage} />}
         </div>
         <div className="building-modal__title-group">
