@@ -15,6 +15,7 @@ import { Random } from '../utils/rng';
 export type AppStatus = 'loading' | 'ready' | 'error';
 
 export function useGameEngine(
+  campaignId: string | null,
   triggerAnim: (type: 'item' | 'emoji' | 'text', content: string, targetId: string) => void,
   setIsAnimating: (val: boolean) => void,
   isAnimating: boolean,
@@ -40,7 +41,9 @@ export function useGameEngine(
   }, []);
 
   useEffect(() => {
-    loadCampaign('classic_1990')
+    if (!campaignId) return;
+    setStatus('loading');
+    loadCampaign(campaignId)
       .then((bundle) => {
         setCampaign(bundle);
         const randomSeed = Math.floor(Math.random() * 2147483647);
@@ -56,7 +59,7 @@ export function useGameEngine(
         setErrorMsg(err.message);
         setStatus('error');
       });
-  }, [setGameState, setIsNewspaperModalOpen]);
+  }, [campaignId, setGameState, setIsNewspaperModalOpen]);
 
   const adjacencyMap = useMemo(() => {
     if (!campaign) return new Map<string, string[]>();

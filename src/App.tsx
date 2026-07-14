@@ -20,6 +20,7 @@ export default function App() {
   const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [isNewspaperModalOpen, setIsNewspaperModalOpen] = useState(false);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const { floatingAnims, triggerAnim, removeAnim, isAnimating, setIsAnimating } = useGameAnimations();
 
@@ -36,7 +37,14 @@ export default function App() {
     handleAction,
     handleNodeClick,
     addLog
-  } = useGameEngine(triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen);
+  } = useGameEngine(selectedCampaignId, triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen);
+
+  if (showTitle) {
+    return <TitleScreen onStartGame={(campaignId) => {
+      setSelectedCampaignId(campaignId);
+      setShowTitle(false);
+    }} />;
+  }
 
   if (status === 'loading') {
     return <div className="loading-screen">Loading campaign data…</div>;
@@ -44,10 +52,6 @@ export default function App() {
 
   if (status === 'error') {
     return <div className="error-screen">Error: {errorMsg}</div>;
-  }
-
-  if (showTitle) {
-    return <TitleScreen onStartGame={() => setShowTitle(false)} />;
   }
 
   if (!gameState) return null;
