@@ -235,21 +235,21 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       case 'bank': return '👩‍💼'; // Bank: Female in a suit
       case 'z_mart': return '🧔🏽‍♂️'; // Z-Mart: Brown man with beard
       case 'socket_city': return '👨‍💻'; // Socket City: Technologist
-      case 'blacks_market': return '👨‍🌾'; // Black's Market: Farmer
+      case 'blacks_market': return '👨‍🦰'; // Black's Market: Red haired man
       case 'pawn_shop': return '👳🏽‍♂️'; // Pawn Shop: Brown man with turban
     }
 
     // Fallbacks by archetype
     switch (archetype) {
-      case 'employment': return '🧑‍💼';
+      case 'employment': return '👨‍💼';
       case 'workplace': return '👩‍🏭';
       case 'restaurant': return '🧑‍🍳';
-      case 'education': return '🤓';
+      case 'education': return '👨‍🏫';
       case 'shop':
       case 'grocery':
       case 'pawnshop': return '💁‍♂️';
       case 'home':
-      case 'housing': return '🤵';
+      case 'housing': return '🛌';
       case 'bank': return '👩‍💼';
       default: return '🤔';
     }
