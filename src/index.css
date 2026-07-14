@@ -451,6 +451,7 @@ button:disabled {
   font-family: var(--font-main);
   font-size: 14px;
   line-height: 1.4;
+  white-space: pre-wrap;
   color: var(--text-color);
   box-shadow: 0 8px 24px rgba(0, 229, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.4);
   z-index: 10;
