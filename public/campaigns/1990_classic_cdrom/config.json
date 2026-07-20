@@ -1,0 +1,16 @@
+{
+  "name": "The Fast Lane — Classic 1990 (CD-ROM)",
+  "version": "1.0.0",
+  "description": "Original game campaign based on Jones in the Fast Lane (CD-ROM Version) featuring entry-level jobs and CD-ROM specific rules.",
+  "startingMoney": 200,
+  "baseCampaign": "1990_classic_floppy",
+  "eventRules": {
+    "marketCrashDivisor": 30,
+    "willyRobberyStartWeek": 4,
+    "charity": {
+      "maxCash": 299,
+      "maxWealth": 299,
+      "wealthMetric": "netWorth"
+    }
+  }
+}

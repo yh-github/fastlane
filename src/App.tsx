@@ -15,6 +15,7 @@ import { SettingsModal } from './ui/SettingsModal';
 import { AnimationLayer } from './ui/AnimationLayer';
 import { useGameAnimations } from './hooks/useGameAnimations';
 import { useGameEngine } from './hooks/useGameEngine';
+import { TurnEventsQueue } from './ui/TurnEventsQueue';
 
 export default function App() {
   const [showTitle, setShowTitle] = useState(true);
@@ -93,6 +94,22 @@ export default function App() {
     ? (campaign.map.nodes.find(n => n.id === activePlayer.position)?.buildingId || null)
     : null;
 
+  if (activePlayer && !activePlayer.turnFlags.hasSeenEvents && activePlayer.turnEvents && activePlayer.turnEvents.length > 0 && gameState.turn > 1) {
+    return (
+      <TurnEventsQueue 
+        events={activePlayer.turnEvents}
+        onComplete={() => {
+          const newPlayers = [...gameState.players];
+          newPlayers[activePlayerIndex] = {
+            ...activePlayer,
+            turnFlags: { ...activePlayer.turnFlags, hasSeenEvents: true }
+          };
+          setGameState({ ...gameState, players: newPlayers });
+        }}
+      />
+    );
+  }
+
   if (activePlayer && !activePlayer.turnFlags.hasSeenWeekend && gameState.turn > 1) {
     return (
       <WeekendScreen
@@ -105,11 +122,13 @@ export default function App() {
             turnFlags: { ...activePlayer.turnFlags, hasSeenWeekend: true }
           };
           setGameState({ ...gameState, players: newPlayers });
-          addLog({ key: `Week ${gameState.turn} begins for ${activePlayer.name}.` }, gameState.turn);
+          addLog({ key: `Week ${gameState.turn} begins for ${activePlayer.name}.` }, gameState.turn, activePlayer.id);
         }}
       />
     );
   }
+
+  const isAiTurn = activePlayer?.isAi || false;
 
   return (
     <div className="app-container">
@@ -128,12 +147,15 @@ export default function App() {
           animations={floatingAnims} 
           onAnimationComplete={removeAnim} 
         />
+        <div className={`map-container flex-grow relative overflow-hidden bg-black ${isAiTurn ? 'pointer-events-none' : ''}`}>
         <GameMap 
           campaign={campaign!} 
-          player={activePlayer} 
-          onNodeClick={handleNodeClick} 
+          players={gameState.players} 
+          activePlayerIndex={activePlayerIndex}
+          onNodeClick={isAiTurn ? () => {} : handleNodeClick} 
         />
-        <GameLog entries={logs} />
+        </div>
+        <GameLog entries={logs} players={gameState.players} />
         {isBuildingModalOpen && currentBuildingId && (
           <BuildingModal
             player={gameState.players[activePlayerIndex]}
@@ -163,6 +185,8 @@ export default function App() {
         {isInventoryOpen && activePlayer && (
           <InventoryModal
             player={activePlayer}
+            campaign={campaign!}
+            turn={gameState.turn}
             onAction={handleAction}
             onClose={() => setIsInventoryOpen(false)}
           />

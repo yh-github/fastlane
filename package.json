@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "npm run test:types && vitest run",
     "test:types": "tsc --noEmit",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "play:cli": "vite-node src/cli/index.ts"
   },
   "dependencies": {
     "i18next": "^26.3.6",

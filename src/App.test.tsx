@@ -5,7 +5,7 @@ import App from './App';
 
 // Mock map graphics since PixiJS won't run in jsdom
 vi.mock('./graphics/mapRenderer', () => ({
-  animatePlayerPath: async (path: any[], _speed: number, onStep?: () => void) => {
+  animatePlayerPath: async (path: any[], _playerIndex: number, _speed: number, onStep?: () => void) => {
     // Instantly simulate walking the path by invoking the callback
     for (let i = 0; i < path.length; i++) {
       if (onStep) onStep();

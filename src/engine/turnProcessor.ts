@@ -74,6 +74,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       askedForExtension: false,
       rentPaidThisTurn: false,
       freeNewspaper: false,
+      hasSeenEvents: state.turn === 0,
       hasSeenWeekend: state.turn === 0,
       loanDefaultWarning: false,
       loanPayableWarning: false
@@ -136,21 +137,19 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       const preventRelaxationDecay = p.activeEffects['prevent_relaxation_decay'] || 0;
       if (!preventRelaxationDecay) {
         const decay = campaign.config.statRules?.relaxationDecayRate ?? 1;
-        const threshold = campaign.config.statRules?.relaxationDoctorThreshold ?? 10;
+        const threshold = state.rules.relaxationDoctorThreshold ?? 10;
         p.relaxation = Math.max(threshold, p.relaxation - decay);
       }
       p.dependability = calcDependabilityDecay(p.dependability); 
 
       // 8. Apartment Robbery
-      const robberyResult = processApartmentRobbery(p, rng);
+      const robberyResult = processApartmentRobbery(p, rng, state.rules.protectBuiltInAppliances);
       p = robberyResult.updated;
-      if (robberyResult.robbed) {
-        p.turnEvents.push({ key: 'events.robbery.willy' });
-      }
 
       // 9. Spoiled Food
       const maxStorage = p.activeEffects['set_food_storage'] || 0;
       let doctorNeeded = false;
+      let doctorReasons: string[] = [];
       if (maxStorage === 0 && p.inventory.freshFoodUnits > 0) {
         const lostFood = p.inventory.freshFoodUnits;
         p.inventory.freshFoodUnits = 0;
@@ -158,6 +157,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
         p.turnEvents.push({ key: 'events.foodSpoiled.noFridge', params: { amount: lostFood } });
         if (p.money > 0 && rng.next() < 0.5) {
           doctorNeeded = true;
+          doctorReasons.push('Spoiled food');
           p.turnEvents.push({ key: 'events.foodSpoiled.sick' });
         }
       } else if (maxStorage > 0) {
@@ -181,21 +181,34 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
         const { updated, doctorTriggered } = processStarvation(p, campaign.config.timeRules.starvationPenalty, rng);
         p = updated;
         p.turnEvents.push({ key: 'events.starvation' });
-        if (doctorTriggered) doctorNeeded = true;
+        if (doctorTriggered) {
+          doctorNeeded = true;
+          doctorReasons.push('Starvation');
+        }
       }
 
       // 11. Doctor Visit
       if (state.rules.enableRelaxationDoctor) {
-        const threshold = campaign.config.statRules?.relaxationDoctorThreshold ?? 10;
+        const threshold = state.rules.relaxationDoctorThreshold ?? 10;
         const chance = campaign.config.statRules?.relaxationDoctorChance ?? 0.20;
         if (p.relaxation <= threshold && rng.next() < chance) {
           doctorNeeded = true;
+          doctorReasons.push('Relaxation critically low');
         }
       }
 
       if (doctorNeeded) {
-        p = processDoctorVisit(p, campaign.config.timeRules.doctorPenalty, rng);
-        p.turnEvents.push({ key: 'events.doctorVisit' });
+        const moneyBefore = p.money;
+        p = processDoctorVisit(p, campaign.config.timeRules.doctorPenalty, rng, state.rules.bypassDoctorIfBroke);
+        if (moneyBefore > p.money || !state.rules.bypassDoctorIfBroke) {
+          const evtParams: any = { cost: moneyBefore - p.money };
+          let key = 'events.doctorVisit';
+          if (state.rules.helpfulUI && doctorReasons.length > 0) {
+            evtParams.reasons = doctorReasons.join(', ');
+            key = 'events.doctorVisit_reasons';
+          }
+          p.turnEvents.push({ key, params: evtParams });
+        }
       }
 
       // 12. Rent Notice
@@ -205,17 +218,24 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
           p.turnEvents.push({ key: 'events.rent.extensionExpired' });
         } else {
           p.rentExtensionsDeniedPermanently = true; 
-          if (p.currentHousingId === 'security' && state.rules.strictEviction) {
-            p.currentHousingId = 'low_cost';
-            p.currentRentPrice = 325; 
-            p.rentPaidUntilWeek = state.turn + 1; 
-            p.turnEvents.push({ key: 'events.rent.evicted' });
-          } else {
-            const baseRent = p.currentHousingId === 'security' ? 475 : 325;
-            const debtAmount = state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice;
-            p.rentDebt += debtAmount;
-            p.rentPaidUntilWeek = state.turn + 4; 
-            p.turnEvents.push({ key: 'events.rent.charged', params: { amount: debtAmount } });
+          const baseRent = p.currentHousingId === 'security' ? 475 : 325;
+          const debtAmount = state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice;
+          p.rentDebt += debtAmount;
+          p.rentPaidUntilWeek = state.turn + 4; 
+          p.turnEvents.push({ key: 'events.rent.charged', params: { amount: debtAmount } });
+
+          // Strict eviction: warning if debt > 1 month rent, eviction to low_cost if debt > 2 months rent
+          if (state.rules.strictEviction) {
+            const monthRent = debtAmount;
+            if (p.rentDebt > 2 * monthRent) {
+              if (p.currentHousingId !== 'low_cost') {
+                p.currentHousingId = 'low_cost';
+                p.currentRentPrice = 325;
+                p.turnEvents.push({ key: 'events.rent.evicted' });
+              }
+            } else if (p.rentDebt > monthRent) {
+              p.turnEvents.push({ key: 'events.rent.warning' });
+            }
           }
         }
       } else if (p.rentPaidUntilWeek <= state.turn + 1) { 
@@ -229,27 +249,27 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
       // 13. Buy New Clothes
       if (state.rules.clothingDecaysAll) {
         if (p.inventory.casualClothesWeeks > 0) {
-          if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
           p.inventory.casualClothesWeeks--;
+          if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
         }
         if (p.inventory.dressClothesWeeks > 0) {
-          if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
           p.inventory.dressClothesWeeks--;
+          if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
         }
         if (p.inventory.businessClothesWeeks > 0) {
-          if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
           p.inventory.businessClothesWeeks--;
+          if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
         }
       } else {
         if (p.inventory.selectedClothes === 'casual' && p.inventory.casualClothesWeeks > 0) {
-          if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
           p.inventory.casualClothesWeeks--;
+          if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
         } else if (p.inventory.selectedClothes === 'dress' && p.inventory.dressClothesWeeks > 0) {
-          if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
           p.inventory.dressClothesWeeks--;
+          if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
         } else if (p.inventory.selectedClothes === 'business' && p.inventory.businessClothesWeeks > 0) {
-          if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
           p.inventory.businessClothesWeeks--;
+          if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
         }
       }
 
@@ -340,7 +360,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle): Ga
         "newspaper.random.3",
         "newspaper.random.4"
       ];
-      p.newspaperHeadline = { key: randomHeadlines[Math.floor(Math.random() * randomHeadlines.length)] };
+      p.newspaperHeadline = { key: randomHeadlines[Math.floor(rng.next() * randomHeadlines.length)] };
     }
 
     p.position = p.currentHousingId === 'security' ? 'node_security' : 'node_low_cost';

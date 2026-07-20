@@ -12,16 +12,28 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
     return { updated: player, success: false, message: { key: 'action.error.notEnoughMoney' } };
   }
 
-  let happinessBonus = item.happinessBonus || 0;
   if (item.id === 'computer' && player.inventory.appliances.some(a => a.id === 'computer')) {
     return { updated: player, success: false, message: { key: 'action.error.alreadyOwnComputer' } };
   }
 
-  let updated = { 
+  let happinessBonus = item.happinessBonus || 0;
+  let newTurnFlags = { ...player.turnFlags };
+
+  // Lottery tickets grant happiness ONLY for the first purchase each turn
+  if (item.id === 'lottery_tickets') {
+    if (!player.turnFlags?.lotteryHappinessGranted) {
+      newTurnFlags.lotteryHappinessGranted = true;
+    } else {
+      happinessBonus = 0;
+    }
+  }
+
+  let updated: PlayerState = { 
     ...player, 
     money: player.money - item.basePrice,
     happiness: Math.max(0, Math.min(100, player.happiness + happinessBonus)),
-    inventory: { ...player.inventory }
+    inventory: { ...player.inventory },
+    turnFlags: newTurnFlags
   };
 
   switch (item.category) {
@@ -55,8 +67,17 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
       }];
       break;
     case 'book':
+      const hadAllBooksBefore = player.inventory.books?.includes('dictionary') &&
+                                player.inventory.books?.includes('encyclopedia') &&
+                                player.inventory.books?.includes('atlas');
       if (!updated.inventory.books.includes(item.id)) {
         updated.inventory.books = [...updated.inventory.books, item.id];
+      }
+      const hasAllBooksNow = updated.inventory.books.includes('dictionary') &&
+                             updated.inventory.books.includes('encyclopedia') &&
+                             updated.inventory.books.includes('atlas');
+      if (!hadAllBooksBefore && hasAllBooksNow) {
+        updated.turnFlags = { ...updated.turnFlags, bookSetCompletedThisTurn: true };
       }
       break;
     case 'ticket':

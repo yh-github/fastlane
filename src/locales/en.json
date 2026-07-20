@@ -115,7 +115,8 @@
     "donation": "You were feeling generous and donated ${{amount}} to charity.",
     "lottery": "You won ${{amount}} in the lottery!",
     "starvation": "You collapsed from starvation! Lost time.",
-    "doctorVisit": "You had to visit the doctor.",
+    "doctorVisit": "You had to visit the doctor. It cost you ${{cost}}.",
+    "doctorVisit_reasons": "You had to visit the doctor ({{reasons}}). It cost you ${{cost}}.",
     "foodSpoiled": {
       "noFridge": "Food spoiled because you have no refrigerator. Lost {{amount}} units.",
       "sick": "You got sick from spoiled food.",
@@ -126,7 +127,8 @@
       "due": "Rent is due.",
       "due_nodenied": "Rent is due (extensions denied).",
       "evicted": "You were evicted!",
-      "extensionExpired": "Rent extension expired."
+      "extensionExpired": "Rent extension expired.",
+      "warning": "Warning: Your rent debt is accumulating! If debt exceeds 2 months' rent, you will be evicted."
     },
     "clothes": {
       "casual": "Your casual clothes are wearing out.",

@@ -65,6 +65,7 @@ describe('Turn Processor', () => {
     it('breaks an appliance if random < breakChance', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 2;
+      state.rules.protectBuiltInAppliances = true;
       state.players[0].money = 1000; // Must have > 500 for breakage to occur
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       
@@ -81,6 +82,7 @@ describe('Turn Processor', () => {
     it('breaks an appliance even if player has < 500 money', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 2;
+      state.rules.protectBuiltInAppliances = true;
       state.players[0].money = 100; // < 500
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
@@ -143,6 +145,7 @@ describe('Turn Processor', () => {
     it('processes lottery tickets and can win', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 2;
+      state.rules.protectBuiltInAppliances = true;
       state.players[0].inventory.freshFoodUnits = 10;
       state.players[0].relaxation = 50; // Prevent doctor visit
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
@@ -193,13 +196,14 @@ describe('Turn Processor', () => {
       expect(nextState.players[0].currentHousingId).toBe('low_cost');
     });
 
-    it('evicts player if rent debt > 4 weeks', () => {
+    it('evicts player if rent debt > 2 months worth of rent', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 5;
       state.rules.strictEviction = true;
       state.players[0].inventory.freshFoodUnits = 10;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].rentPaidUntilWeek = 0; 
+      state.players[0].rentDebt = 600; // Prior debt + 500 new debt > 1000 (2 months)
       state.players[0].currentHousingId = 'security';
       state.players[0].currentRentPrice = 500;
       

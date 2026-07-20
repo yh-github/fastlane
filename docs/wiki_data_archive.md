@@ -88,14 +88,14 @@ Classes are taken at Hi-Tech U.
 
 ## 4. Housing and Rent Mechanics
 - **Housing Tiers**:
-  - **Low-Cost Housing**: Default starter housing. Rent is $325 base (adjusted by Economic Index). Subject to Wild Willy robberies. Robbery chance each turn is `1 / (Relaxation + 1)`. Each stealable Durable (B&W TV, TV, VCR, Stereo) has a 25% chance of being stolen.
+  - **Low-Cost Housing**: Default starter housing. Rent is $325 base (adjusted by Economic Index). Subject to Wild Willy robberies. Robbery chance each turn is `1 / (Relaxation + 1)`. In the base game version, all appliances in inventory have a 25% chance of being stolen. Protecting heavy built-in appliances (Refrigerator, Freezer, Stove) is available via an optional rule (`protectBuiltInAppliances`).
   - **Security Apartments**: Rent is $475 base (adjusted by Economic Index). Completely immune to robberies. Closer to Black's Market, Bank, and Factory.
 - **Rent Office Rules**:
-  - Rent is due on Week 4 of each month. Paid at Rent Office (only open during Week 4).
+  - Rent is due on Week 4 of each month. Paid at Rent Office (open during Week 4, when rent is due, or when employed there).
   - Rent Advance: Can pay future months (adds 4 weeks to lease). Lost if switching apartments.
   - Rent Extension: A player whose Rent is due can ask the Rent Officer for a 1-Week Extension. The first request is always approved. The chance of further approvals drops by 25% each time, down to a minimum of 25%. A player can only ask once per Turn, but there is no limit on consecutive extensions if approved. If a player ever goes into Rent Debt, future extensions are automatically denied for the rest of the game.
-  - Eviction/Rent Debt: If a player fails to pay rent by the end of the month (and does not have an active extension), they enter Rent Debt. In the classic rules, players are never evicted from their apartment, even from Security Apartments. They may remain in Rent Debt indefinitely.
-  - Optional Rule: Fast Lane Modernized adds an optional "Strict Eviction" rule where Security Apartment tenants are evicted and downgraded to Low-Cost Housing if they fail to pay rent.
+  - Eviction/Rent Debt: If a player fails to pay rent by the end of the month (and does not have an active extension), they enter Rent Debt. In the classic rules, players are never evicted from their apartment.
+  - Optional Rule: Fast Lane Modernized adds an optional "Strict Eviction" rule where rent debt garnishes salary as usual, but if rent debt exceeds 1 month's rent a warning is given, and if rent debt exceeds 2 months' rent, Security Apartment tenants are evicted and downgraded to Low-Cost Housing.
   - Rent Debt Mechanics: 1/2 of wages garnished during work sessions to pay off debt + a $2 interest fee per garnish. Final garnish has no interest fee.
 
 ## 5. Economy
@@ -110,7 +110,7 @@ Classes are taken at Hi-Tech U.
     - If successful, the wage increases immediately and the player gets +3 Happiness. If the wage offered is equal or less, the player just wastes 4 hours.
 
 ## 6. Relaxation Stat
-- Each player has a "Relaxation" Stat that is set to 10 at the start of the game.
+- Each player has a "Relaxation" Stat that is set to 16 at the start of the game.
 - The Relaxation stat can only be increased by Relaxing at the player's current Apartment, to a maximum of 50.
 - The Relaxation Stat decreases by -1 point at the start of each Turn, unless the player own a Hot Tub (in which case the stat will not decrease at all). Relaxation can never drop below 10.
 
@@ -696,7 +696,29 @@ Black's Market is open every Week. You may purchase items even if the turn has e
 
 Black's Market's primary sale item is Fresh Food, which can be bought in groups of 1, 2, or 4 units. So long as the player owns a Refrigerator, Fresh Food is consumed at a rate of 1 unit per Week, preventing Starvation until it runs out. A Refrigerator can store up to 6 units without Spoiling, while a Refrigerator + Freezer can store up to 12 units. Buying Fresh Food awards **+1 Happiness** per every unit purchased.
 
-Lottery Tickets are bought in packs of 10, and make the player eligible to win the Lottery at the start of their next turn. The first pack bought during a player's turn awards **+2 Happiness**.
+```
+{{Item Infobox Template
+   | image1 = [[File:Item_LotteryTickets.png]]
+   | type = [[Ticket]]
+   | where_to_buy = [[Black's Market]]
+   | base_price = $10 (fixed price)
+   | effect = The player participates in the [[Lottery]] at the start of the next [[Turn]]. More tickets equal a better chance to win, and a better chance to win higher prizes.
+   | happiness = +2 for first purchase each [[Turn]]
+}}
+'''Lottery Tickets''' are a type of [[Ticket]].
+
+Lottery Tickets can be purchased at [[Black's Market]] for exactly $10. This price is fixed, and does not change with the [[Economy]]. Each $10 purchase gives the player 10 Lottery Tickets.
+
+The player receives '''+2 Happiness''' for the first batch of Lottery Tickets they buy each [[Turn]]. Additional Lottery Tickets purchased during the same turn do not provide any extra Happiness.
+
+At the start of a player's Turn, if that player has any number of Lottery Tickets in their inventory, they get to participate in the [[Lottery]]. The number of tickets they purchased in the previous turn affects both their chance to win ''any'' prize, as well as their chance to win the larger prizes.
+
+500 Lottery Tickets (costing $500 in total) are required to ''guarantee'' a win. However, this only guarantees a prize of $200, which is a net loss. 500 tickets give only a 20% chance of winning back the whole $500 ("breaking even"). They do however also grant a 5% chance of winning the grand prize of $5,000.
+
+All Lottery Tickets are removed from the player's inventory at the start of each turn (after the Lottery is finished processing them). They do not carry over to subsequent turns.
+
+[[Category:Tickets]]
+```
 
 Reading the Newspaper is the only purchase action that requires at least 1 Hour left on the clock. Each purchase of a Newspaper advances time by 1 Hour. It has no direct benefit, though it may reveal important information about the Economy and the Stock Market.
 

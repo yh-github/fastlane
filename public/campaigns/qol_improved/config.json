@@ -1,0 +1,14 @@
+{
+  "name": "The Fast Lane — Improved Version (QoL)",
+  "version": "2.0.0",
+  "description": "An improved experience with helpful UI, strict eviction turned on, and other modern quality of life changes.",
+  "baseCampaign": "1990_classic_cdrom",
+  "gameRules": {
+    "helpfulUI": true,
+    "strictEviction": true,
+    "enableAnimations": true,
+    "allowOverAchievingGoals": true,
+    "bypassDoctorIfBroke": false,
+    "delayBookSetCredit": false
+  }
+}

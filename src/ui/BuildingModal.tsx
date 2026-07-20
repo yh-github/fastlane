@@ -46,7 +46,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     if (!building) return;
     const isWeek4 = turn % 4 === 0;
     const rentDue = player?.rentPaidUntilWeek !== undefined && player.rentPaidUntilWeek <= turn + 1;
-    const isRentOfficeOpen = isWeek4 || rentDue || !!player?.turnFlags?.rentPaidThisTurn;
+    const hasJobAtRentOffice = !!(player?.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
+    const isRentOfficeOpen = isWeek4 || rentDue || !!player?.turnFlags?.rentPaidThisTurn || hasJobAtRentOffice;
     const shouldShow = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
 
     if (shouldShow) {
@@ -54,7 +55,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     } else {
       setClerkMessage('');
     }
-  }, [building, t, getRandomMessage, turn, player?.rentPaidUntilWeek, player?.turnFlags?.rentPaidThisTurn]);
+  }, [building, t, getRandomMessage, turn, player?.rentPaidUntilWeek, player?.turnFlags?.rentPaidThisTurn, player?.currentJobId, campaign?.jobs]);
 
   // Handle global click to close speech bubble
   useEffect(() => {
@@ -261,7 +262,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
 
   const isWeek4 = turn % 4 === 0;
   const rentDue = player.rentPaidUntilWeek <= turn + 1;
-  const isRentOfficeOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn;
+  const isRentOfficeOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || !!playerJobHere;
   const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
 
   let currentFace = getFace(building.id, building.archetype);

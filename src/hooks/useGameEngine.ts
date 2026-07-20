@@ -7,6 +7,7 @@ import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { animatePlayerPath, type PlayerPosition } from '../graphics/mapRenderer';
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
+import { simulateActionVisuals } from '../engine/aiTranslator';
 import { gameReducer, type GameAction } from '../engine/gameReducer';
 import type { LogEntry } from '../ui/GameLog';
 import type { GameEvent } from '../engine/gameState';
@@ -66,8 +67,8 @@ export function useGameEngine(
     return buildAdjacencyMap(campaign.map.nodes);
   }, [campaign]);
 
-  const addLog = useCallback((event: GameEvent, weekOverride?: number) => {
-    setLogs(prev => [...prev.slice(-19), { week: weekOverride ?? gameStateRef.current?.turn ?? 1, event }]);
+  const addLog = useCallback((event: GameEvent, weekOverride?: number, playerId?: string) => {
+    setLogs(prev => [...prev.slice(-9999), { week: weekOverride ?? gameStateRef.current?.turn ?? 1, event, playerId }]);
   }, []);
 
   const endTurnSequence = async (updatedPlayers: PlayerState[]) => {
@@ -85,7 +86,7 @@ export function useGameEngine(
           const node = campaign!.map.nodes.find(n => n.id === id);
           return { nodeId: id, x: node!.x, y: node!.y };
         });
-        await animatePlayerPath(pathCoords.slice(1), 150); // Double speed (150ms) when running home
+        await animatePlayerPath(pathCoords.slice(1), activePlayerIndex, 150); // Double speed (150ms) when running home
       }
       setIsAnimating(false);
       // BUG FIX: Clone the array properly to prevent mutability leaks
@@ -127,12 +128,17 @@ export function useGameEngine(
 
     if (payload.type === 'move') {
       const nodeId = payload.nodeId;
+      const node = campaign.map.nodes.find(n => n.id === nodeId);
       let updatedPlayers = [...currentState.players];
       let player = { ...updatedPlayers[activePlayerIndex] };
+      const activePlayer = updatedPlayers[activePlayerIndex];
 
       // If we are already there, just open the modal if it's a building
       if (player.position === nodeId) {
-        setIsBuildingModalOpen(true);
+        // Only open the building modal if this is a HUMAN player moving to a building
+        if (!activePlayer.isAi && campaign!.buildings.some(b => b.id === node?.buildingId)) {
+          setIsBuildingModalOpen(true);
+        }
         return;
       }
 
@@ -149,7 +155,7 @@ export function useGameEngine(
           player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign);
           
           if (player.money < preRobberyMoney) {
-            addLog({ key: 'log.robbery' });
+            addLog({ key: 'log.robbery' }, undefined, player.id);
             if (currentState.rules.enableAnimations) {
               const diff = player.money - preRobberyMoney;
               triggerAnim('text', `${diff} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
@@ -174,7 +180,7 @@ export function useGameEngine(
 
           // Animate the path we can take
           let pRef = { ...player };
-          await animatePlayerPath(pathCoords.slice(1), 300, () => {
+          await animatePlayerPath(pathCoords.slice(1), activePlayerIndex, 300, () => {
             pRef = spendHours(pRef, movementCost);
             setGameState(prev => {
               if (!prev) return prev;
@@ -203,7 +209,7 @@ export function useGameEngine(
           updatedPlayers[activePlayerIndex] = player;
           
           if (player.hoursRemaining <= 0) {
-            addLog({ key: 'log.outOfTime', params: { name: player.name } });
+            addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
             await endTurnSequence(updatedPlayers);
           } else {
             // If we reached the destination and it has a building, apply entry cost
@@ -218,11 +224,14 @@ export function useGameEngine(
                if (!prev) return prev;
                return { ...prev, players: updatedPlayers };
             });
-            setIsBuildingModalOpen(true);
+            
+            if (!activePlayer.isAi) {
+              setIsBuildingModalOpen(true);
+            }
           }
         } else {
           // If they have no hours left to move
-          addLog({ key: 'log.outOfTime', params: { name: player.name } });
+          addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
           await endTurnSequence(updatedPlayers);
         }
         setIsAnimating(false);
@@ -296,7 +305,7 @@ export function useGameEngine(
         if (diffStr.length > 0) {
           finalActionLog.params!.diff = ` (${diffStr.join(', ')})`;
         }
-        addLog(finalActionLog, prevState.turn);
+        addLog(finalActionLog, prevState.turn, player.id);
       }
 
       updatedPlayers[activePlayerIndex] = player;
@@ -325,9 +334,15 @@ export function useGameEngine(
       const runAi = async () => {
         setIsAnimating(true);
         let maxLoops = 20;
+        const initialTurn = gameStateRef.current!.turn;
+        const aiPlayerId = gameStateRef.current!.players[activePlayerIndex]?.id;
         
         while (maxLoops > 0) {
           let stateSnapshot = gameStateRef.current!;
+          
+          if (stateSnapshot.turn !== initialTurn) break; // Turn advanced, break out
+          if (stateSnapshot.players[activePlayerIndex]?.id !== aiPlayerId) break; // Player changed
+          
           let player = stateSnapshot.players[activePlayerIndex];
           
           if (player.hoursRemaining <= 0) {
@@ -340,6 +355,9 @@ export function useGameEngine(
             await handleAction({ type: 'end-turn' });
             break;
           }
+
+          // Pre-action visual pacing
+          await simulateActionVisuals(actions[0], { setIsBuildingModalOpen });
 
           await handleAction(actions[0]);
           await new Promise(r => setTimeout(r, 600)); // slightly longer delay for visual pathfinding feedback

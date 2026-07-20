@@ -32,6 +32,12 @@ export interface GameRules {
   requireJobForLoan: boolean;
   helpfulUI: boolean;
   enableAnimations: boolean;
+  allowOverAchievingGoals: boolean;
+  bypassDoctorIfBroke: boolean;
+  relaxationDoctorThreshold: number;
+  protectBuiltInAppliances?: boolean;
+  allowEmployedRentPayment?: boolean;
+  delayBookSetCredit?: boolean;
 }
 
 export interface EventRules {
@@ -48,7 +54,6 @@ export interface StatRules {
   startingHappiness?: number;
   startingRelaxation: number;
   relaxationDecayRate: number;
-  relaxationDoctorThreshold: number;
   relaxationDoctorChance: number;
 }
 
@@ -65,6 +70,7 @@ export interface TimeRules {
   studySessionCost: number;
   jobApplicationCost: number;
   relaxCost: number;
+  relaxGain?: number;
   newspaperCost: number;
   starvationPenalty: number;
   doctorPenalty: number;

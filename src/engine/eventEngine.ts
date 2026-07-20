@@ -65,9 +65,9 @@ export function processStarvation(player: PlayerState, timePenalty: number, rng:
  * @param player — Current player state
  * @returns        Updated player state
  */
-export function processDoctorVisit(player: PlayerState, timePenalty: number, rng: Random): PlayerState {
-  // Bypassed entirely if carrying $0 cash
-  if (player.money <= 0) return player;
+export function processDoctorVisit(player: PlayerState, timePenalty: number, rng: Random, bypassDoctorIfBroke: boolean = true): PlayerState {
+  // Bypassed entirely if carrying $0 cash (if rule is enabled)
+  if (player.money <= 0 && bypassDoctorIfBroke) return player;
 
   let updated = spendHours(player, timePenalty);
   updated.happiness = Math.max(10, updated.happiness - 4);
@@ -85,7 +85,11 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number, rng
  * @param player — Current player state
  * @returns        Updated player state (stolen items removed)
  */
-export function processApartmentRobbery(player: PlayerState, rng: Random): { updated: PlayerState; robbed: boolean } {
+export function processApartmentRobbery(
+  player: PlayerState,
+  rng: Random,
+  protectBuiltInAppliances: boolean = false
+): { updated: PlayerState; robbed: boolean } {
   // Security Apartments are immune (assuming currentHousingId 'security' signifies this)
   if (player.currentHousingId === 'security') return { updated: player, robbed: false };
 
@@ -97,10 +101,10 @@ export function processApartmentRobbery(player: PlayerState, rng: Random): { upd
     updated.happiness = Math.max(10, updated.happiness - 4);
     
     // Filter appliances. Each stealable durable has 25% chance to be stolen.
-    // Fridge, Freezer, Stove can't be stolen.
+    // Refrigerator, Freezer, Stove can't be stolen ONLY if protectBuiltInAppliances is enabled.
     updated.inventory.appliances = updated.inventory.appliances.filter((app) => {
-      if (['refrigerator', 'freezer', 'stove'].includes(app.id)) {
-        return true; // Keep
+      if (protectBuiltInAppliances && ['refrigerator', 'freezer', 'stove'].includes(app.id)) {
+        return true; // Keep protected heavy appliances
       }
       if (rng.next() < 0.25) {
         return false; // Stolen

@@ -53,6 +53,11 @@ export interface GameRules {
   helpfulUI: boolean;
   enableAnimations: boolean;
   allowOverAchievingGoals: boolean;
+  bypassDoctorIfBroke: boolean;
+  relaxationDoctorThreshold: number;
+  protectBuiltInAppliances?: boolean;
+  allowEmployedRentPayment?: boolean;
+  delayBookSetCredit?: boolean;
 }
 
 export type GamePhase =
@@ -266,7 +271,10 @@ export interface TurnFlags {
   rentPaidThisTurn: boolean;
   /** Whether the player receives a free newspaper this turn due to an event */
   freeNewspaper: boolean;
+  /** Whether the player has read the newspaper this turn */
+  readNewspaper?: boolean;
   /** Whether the player has viewed their weekend summary this turn */
+  hasSeenEvents: boolean;
   hasSeenWeekend: boolean;
   /** Loan default warning flag */
   loanDefaultWarning?: boolean;
@@ -274,6 +282,10 @@ export interface TurnFlags {
   loanPayableWarning?: boolean;
   /** Jobs the player was rejected from this turn */
   jobsRejectedThisTurn?: string[];
+  /** Whether the book set was completed this turn (for delayBookSetCredit rule) */
+  bookSetCompletedThisTurn?: boolean;
+  /** Whether lottery tickets happiness bonus (+2) was already granted this turn */
+  lotteryHappinessGranted?: boolean;
 }
 
 // ─── Stat Constants ─────────────────────────────────────────────
@@ -281,7 +293,7 @@ export interface TurnFlags {
 export const STARTING_EXPERIENCE = 10;
 export const STARTING_DEPENDABILITY = 20;
 export const STARTING_HAPPINESS = 50;
-export const STARTING_RELAXATION = 10;
+export const STARTING_RELAXATION = 16;
 export const STARTING_CASUAL_CLOTHES_WEEKS = 6;
 
 export const MIN_HAPPINESS = 10;
@@ -301,10 +313,13 @@ export function createDefaultTurnFlags(): TurnFlags {
     askedForExtension: false,
     rentPaidThisTurn: false,
     freeNewspaper: false,
+    hasSeenEvents: false,
     hasSeenWeekend: false,
     relaxedThisTurn: false,
     rentExtensionRefusedThisTurn: false,
     jobsRejectedThisTurn: [],
+    bookSetCompletedThisTurn: false,
+    lotteryHappinessGranted: false,
   };
 }
 
@@ -393,7 +408,12 @@ export function createInitialGameState(
     requireJobForLoan: true,
     helpfulUI: false,
     enableAnimations: false,
-    allowOverAchievingGoals: false
+    allowOverAchievingGoals: false,
+    bypassDoctorIfBroke: true,
+    relaxationDoctorThreshold: 10,
+    protectBuiltInAppliances: false,
+    allowEmployedRentPayment: false,
+    delayBookSetCredit: true,
   };
 
   const finalRules = {

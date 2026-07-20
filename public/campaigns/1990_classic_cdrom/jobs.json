@@ -1,0 +1,4 @@
+[
+  { "id": "qt_janitor", "title": "Janitor", "locationId": "qt_clothing", "baseWage": 6, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "socket_clerk", "title": "Clerk", "locationId": "socket_city", "baseWage": 6, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] }
+]

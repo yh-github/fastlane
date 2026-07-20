@@ -32,7 +32,7 @@ export interface PlayerPosition {
 
 // Keep references to movable sprites/graphics
 let app: Application | null = null;
-let playerToken: Graphics | null = null;
+let playerTokens: Graphics[] = [];
 let testMarker: HTMLDivElement | null = null;
 let activeInstanceId = 0;
 
@@ -151,17 +151,7 @@ export async function initMapRenderer(
     mapContainer.addChild(nodeGraphic);
   }
 
-  // Create player token (magenta neon)
-  const localPlayerToken = new Graphics();
-  playerToken = localPlayerToken;
-  localPlayerToken.circle(0, 0, 12);
-  playerToken.fill({ color: 0xff4081 });
-  playerToken.setStrokeStyle({ width: 3, color: 0xffffff });
-  playerToken.stroke();
-  
-  // Hide initially until movePlayerTo is called
-  playerToken.visible = false;
-  mapContainer.addChild(playerToken);
+  // We will create player tokens dynamically in updatePlayers
 
   // Sync with a DOM element for testability
   if (testMarker) {
@@ -180,7 +170,7 @@ export async function initMapRenderer(
       if (app) {
         app.destroy(true, { children: true, texture: true });
         app = null;
-        playerToken = null;
+        playerTokens = [];
       }
       if (testMarker) {
         testMarker.remove();
@@ -192,20 +182,66 @@ export async function initMapRenderer(
 }
 
 /**
- * Update the player token position on the map.
+ * Update the player tokens on the map.
  */
-export function movePlayerTo(position: PlayerPosition): void {
-  if (playerToken) {
-    playerToken.x = position.x;
-    playerToken.y = position.y;
-    playerToken.visible = true;
+export function updatePlayers(players: { position: PlayerPosition, index: number, isActive: boolean }[]): void {
+  if (!app) return;
+  const mapContainer = app.stage.children[0] as Container;
+  
+  // Create missing tokens
+  while (playerTokens.length < players.length) {
+    const token = new Graphics();
+    mapContainer.addChild(token);
+    playerTokens.push(token);
+  }
 
-    if (testMarker) {
-      testMarker.dataset.x = position.x.toString();
-      testMarker.dataset.y = position.y.toString();
+  // Hide all tokens first
+  playerTokens.forEach(t => t.visible = false);
+
+  const colors = [0xff4081, 0x00e5ff, 0x76ff03, 0xffeb3b]; // Magenta, Cyan, Light Green, Yellow
+
+  players.forEach((p, i) => {
+    const token = playerTokens[p.index];
+    if (!token) return;
+    
+    token.clear();
+    const color = colors[p.index % colors.length];
+    
+    // Different shapes for color blindness
+    if (p.index === 0) {
+      token.circle(0, 0, p.isActive ? 14 : 10); // Player 1: Circle
+    } else if (p.index === 1) {
+      token.drawRect(p.isActive ? -12 : -8, p.isActive ? -12 : -8, p.isActive ? 24 : 16, p.isActive ? 24 : 16); // Player 2: Square
+    } else if (p.index === 2) {
+      token.drawPolygon([-14, 12, 14, 12, 0, -14]); // Player 3: Triangle
+    } else {
+      token.circle(0, 0, p.isActive ? 14 : 10);
+    }
+    
+    token.fill({ color });
+    token.setStrokeStyle({ width: 3, color: p.isActive ? 0xffffff : 0x555555 });
+    token.stroke();
+
+    // Prevent overriding position if this token is currently animating
+    if (!(token as any).isAnimating) {
+      token.x = p.position.x;
+      token.y = p.position.y;
+    }
+    
+    token.visible = true; // Show all players now that jitter bug is fixed
+    
+    // To prevent overlapping tokens from perfectly hiding each other, offset slightly based on index
+    if (p.isActive && players.filter(other => other.position.nodeId === p.position.nodeId && other.isActive).length > 1) {
+       token.x += (p.index - (players.length / 2)) * 6;
+       token.y += (p.index - (players.length / 2)) * 6;
+    }
+
+    if (p.isActive && testMarker) {
+      testMarker.dataset.x = p.position.x.toString();
+      testMarker.dataset.y = p.position.y.toString();
       testMarker.dataset.visible = 'true';
     }
-  }
+  });
 }
 
 /**
@@ -221,14 +257,15 @@ export function highlightReachableNodes(nodeIds: string[]): void {
  * @param path - Array of positions to visit in order
  * @param speedMs - Time in milliseconds per step
  */
-export async function animatePlayerPath(path: PlayerPosition[], speedMs: number = 300, onStep?: () => void): Promise<void> {
-  if (!playerToken || path.length === 0) return;
-  playerToken.visible = true;
+export async function animatePlayerPath(path: PlayerPosition[], playerIndex: number, speedMs: number = 300, onStep?: () => void): Promise<void> {
+  if (path.length === 0 || !playerTokens[playerIndex]) return;
+  const token = playerTokens[playerIndex];
+  token.visible = true;
 
   for (const pos of path) {
     await new Promise<void>((resolve) => {
-      const startX = playerToken!.x;
-      const startY = playerToken!.y;
+      const startX = token.x;
+      const startY = token.y;
       const targetX = pos.x;
       const targetY = pos.y;
       
@@ -238,21 +275,23 @@ export async function animatePlayerPath(path: PlayerPosition[], speedMs: number 
         const elapsed = now - startTime;
         const progress = Math.min(elapsed / speedMs, 1);
         
-        playerToken!.x = startX + (targetX - startX) * progress;
-        playerToken!.y = startY + (targetY - startY) * progress;
+        token.x = startX + (targetX - startX) * progress;
+        token.y = startY + (targetY - startY) * progress;
         
         if (testMarker) {
-          testMarker.dataset.x = playerToken!.x.toString();
-          testMarker.dataset.y = playerToken!.y.toString();
+          testMarker.dataset.x = token.x.toString();
+          testMarker.dataset.y = token.y.toString();
         }
 
         if (progress < 1) {
           requestAnimationFrame(step);
         } else {
           if (onStep) onStep();
+          (token as any).isAnimating = false;
           resolve();
         }
       }
+      (token as any).isAnimating = true;
       requestAnimationFrame(step);
     });
   }
