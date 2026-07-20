@@ -27,6 +27,9 @@
     "money": "כסף",
     "happiness": "אושר",
     "relaxation": "מנוחה",
+    "dependability": "אמינות",
+    "experience": "ניסיון",
+    "luck": "מזל",
     "education": "השכלה",
     "career": "קריירה",
     "wealth": "עושר"
@@ -243,7 +246,9 @@
     "missingReq": "אינך עומד בדרישות המינימום למשרה זו.",
     "askRaise": "בקש העלאה ל-{{wage}}$/שעה ({{cost}} שעות)",
     "currentJob": "עבודה נוכחית ({{wage}}$/שעה)",
-    "apply": "הגש מועמדות ({{cost}} שעות)"
+    "apply": "הגש מועמדות ({{cost}} שעות)",
+    "luckScoreInfo": "🍀 מדד המזל שלך הוא {{score}}/100. (בעת הגשת מועמדות, נדרשת הטלת קוביה של 1-100 הקטנה או שווה ל-{{score}} כדי שתוצע משרה).",
+    "filterLuckLog": "🔍 הצג יומן מזל ועבודות"
   },
   "workStation": {
     "title": "העבודה שלך: {{jobTitle}}",
@@ -460,5 +465,25 @@
     "pork_bellies": "בטני חזיר",
     "blue_chip": "מניות מובחרות",
     "penny_stocks": "מניות פני"
+  },
+  "statusModal": {
+    "title": "הסטטוס שלך",
+    "education": "השכלה",
+    "degrees": "תארים",
+    "enrolled": "רשום כעת",
+    "none": "ללא",
+    "attributesTitle": "תכונות ונוסחאות מוסתרות",
+    "luckScore": "מדד מזל (סף קבלה לעבודה):",
+    "robberyRisk": "סיכון שוד בבית:",
+    "dependabilityCap": "תקרת אמינות:",
+    "experienceCap": "תקרת ניסיון:",
+    "nextRaiseReq": "אמינות נדרשת להעלאה הבאה:",
+    "notEmployed": "לא מועסק"
+  },
+  "gameLog": {
+    "filterBy": "סינון יומן:",
+    "filterAll": "הכל",
+    "showingCount": "מציג {{count}} רשומות עבור {{filter}}",
+    "clearFilter": "נקה סינון"
   }
 }

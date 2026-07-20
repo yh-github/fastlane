@@ -120,4 +120,43 @@ describe('Dashboard Component', () => {
     // Should NOT have red color
     expect(relaxationBadge).not.toHaveStyle('color: red');
   });
+
+  it('renders Luck badge and calls onSelectLogFilter when clicked', () => {
+    const mockPlayer = {
+      name: 'Player 1',
+      relaxation: 20,
+      dependability: 20,
+      experience: 10,
+      degrees: ['degree_1'],
+      money: 100,
+      goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      inventory: { selectedClothes: 'casual', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = { rules: {} } as any;
+    const onSelectLogFilter = vi.fn();
+
+    render(
+      <Dashboard 
+        player={mockPlayer} 
+        gameState={mockGameState} 
+        turn={1} 
+        economicIndex={0} 
+        hoursPerTurn={50} 
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+        onSelectLogFilter={onSelectLogFilter}
+      />
+    );
+
+    // Luck score = 30 + Math.floor((10 + 20 + 10 + 8) / 3) = 46
+    const luckBadge = screen.getByTitle('Luck');
+    expect(luckBadge).toBeInTheDocument();
+    expect(luckBadge.textContent).toContain('46');
+
+    // Click luck badge to trigger filter
+    luckBadge.click();
+    expect(onSelectLogFilter).toHaveBeenCalledWith('luck');
+  });
 });

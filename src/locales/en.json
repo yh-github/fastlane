@@ -27,6 +27,9 @@
     "money": "Money",
     "happiness": "Happiness",
     "relaxation": "Relaxation",
+    "dependability": "Dependability",
+    "experience": "Experience",
+    "luck": "Luck",
     "education": "Education",
     "career": "Career",
     "wealth": "Wealth"
@@ -641,7 +644,9 @@
     "missingReq": "You do not meet the minimum requirements for this position.",
     "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
     "currentJob": "Current Job (${{wage}}/hr)",
-    "apply": "Apply ({{cost}}h)"
+    "apply": "Apply ({{cost}}h)",
+    "luckScoreInfo": "🍀 Your Luck Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
+    "filterLuckLog": "🔍 View Luck & Job Logs"
   },
   "workStation": {
     "title": "Your Job: {{jobTitle}}",
@@ -701,5 +706,25 @@
     "theatreTickets": "Theatre Tickets",
     "concertTickets": "Concert Tickets",
     "lotteryTickets": "Lottery Tickets"
+  },
+  "statusModal": {
+    "title": "Your Status",
+    "education": "Education",
+    "degrees": "Degrees",
+    "enrolled": "Currently Enrolled",
+    "none": "None",
+    "attributesTitle": "Formula Attributes & Caps",
+    "luckScore": "Luck Score (Hiring Roll Threshold):",
+    "robberyRisk": "Home Robbery Risk:",
+    "dependabilityCap": "Dependability Cap:",
+    "experienceCap": "Experience Cap:",
+    "nextRaiseReq": "Dependability for Next Raise:",
+    "notEmployed": "N/A (Unemployed)"
+  },
+  "gameLog": {
+    "filterBy": "Filter Log:",
+    "filterAll": "All",
+    "showingCount": "Showing {{count}} log(s) for {{filter}}",
+    "clearFilter": "Clear Filter"
   }
 }

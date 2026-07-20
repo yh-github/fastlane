@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { GoalFilter } from './utils/logCategorizer';
 import { Dashboard } from './ui/Dashboard';
 import { BuildingModal } from './ui/BuildingModal';
 import { GameMap } from './ui/GameMap';
@@ -24,6 +25,7 @@ export default function App() {
   const [isNewspaperModalOpen, setIsNewspaperModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [activeLogFilter, setActiveLogFilter] = useState<GoalFilter | null>(null);
 
   const { floatingAnims, triggerAnim, removeAnim, isAnimating, setIsAnimating } = useGameAnimations();
 
@@ -139,6 +141,8 @@ export default function App() {
         economicIndex={gameState.economicIndex}
         hoursPerTurn={campaign!.config.timeRules.hoursPerTurn}
         campaign={campaign!}
+        activeLogFilter={activeLogFilter}
+        onSelectLogFilter={setActiveLogFilter}
         onOpenInventory={() => setIsInventoryOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
@@ -155,7 +159,7 @@ export default function App() {
           onNodeClick={isAiTurn ? () => {} : handleNodeClick} 
         />
         </div>
-        <GameLog entries={logs} players={gameState.players} />
+        <GameLog entries={logs} players={gameState.players} activeFilter={activeLogFilter} onSelectFilter={setActiveLogFilter} />
         {isBuildingModalOpen && currentBuildingId && (
           <BuildingModal
             player={gameState.players[activePlayerIndex]}
