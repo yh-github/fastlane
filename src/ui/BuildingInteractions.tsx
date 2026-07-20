@@ -96,12 +96,12 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
  * WorkStation — Shown at workplace buildings where the player is employed.
  * Allows the player to work a shift.
  */
-export function WorkStation({ onAction, job, campaign }: InteractionProps & { job: JobDef, campaign: CampaignBundle }) {
+export function WorkStation({ player, onAction, job, campaign }: InteractionProps & { job: JobDef, campaign: CampaignBundle }) {
   const { t } = useTranslation();
   return (
     <div className="interaction-panel">
       <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
-      <p style={{ fontSize: '12px', marginBottom: '10px' }}>${job.baseWage}/hr</p>
+      <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
       <button onClick={() => onAction({ type: 'work', jobId: job.id })}>
         {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
       </button>
@@ -163,7 +163,8 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const isWeek4 = turn % 4 === 0;
   // Rent is due if the paid-until week is the start of next week or earlier.
   const rentDue = player.rentPaidUntilWeek <= turn + 1;
-  const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn;
+  const isJobHere = !!(player.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
+  const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || (isJobHere && !!rules?.allowEmployedRentPayment);
 
   // The cost to move is always market rate (economy adjusted)
   const lowCostMovePrice = lowCostHousing ? calcEconomyPrice(lowCostHousing.baseRent, economicIndex) : 0;

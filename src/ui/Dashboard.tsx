@@ -102,7 +102,7 @@ export function Dashboard({ player, gameState, turn, economicIndex, hoursPerTurn
       </div>
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <StatBadge label={t('dashboard.money', { defaultValue: 'Money' })} value={`$${player.money}`} icon="💰" id="stat-money" />
-        <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" />
+        <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" danger={gameState.rules.enableRelaxationDoctor && player.relaxation <= (gameState.rules.relaxationDoctorThreshold ?? 10)} />
         <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={player.dependability} icon="🤝" id="stat-dependability" />
         <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={player.experience} icon="👌" id="stat-experience" />
         <StatBadge label={t('dashboard.happiness', { defaultValue: 'Happiness' })} value={`${displayHappiness}/${player.goalAllotment.happiness}`} icon="😊" id="stat-happiness" />
@@ -119,14 +119,15 @@ interface StatBadgeProps {
   value: string | number;
   icon: string;
   id?: string;
+  danger?: boolean;
 }
 
-function StatBadge({ label, value, icon, id }: StatBadgeProps) {
+function StatBadge({ label, value, icon, id, danger }: StatBadgeProps) {
   return (
     <div className="stat-badge" title={label} id={id}>
       <span className="stat-badge__icon">{icon}</span>
-      <span className="stat-badge__value">{value}</span>
-      <span className="stat-badge__label">{label}</span>
+      <span className="stat-badge__value" style={danger ? { color: '#ff3333', fontWeight: 'bold', textShadow: '0 0 8px rgba(255,51,51,0.6)' } : {}}>{value}</span>
+      <span className="stat-badge__label" style={danger ? { color: '#ff3333' } : {}}>{label}</span>
     </div>
   );
 }

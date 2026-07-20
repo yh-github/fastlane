@@ -1,0 +1,47 @@
+[
+  { "id": "zmart_clerk", "title": "Clerk", "locationId": "z_mart", "baseWage": 5, "requirements": { "experience": 10, "dependability": 10, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "zmart_asst_mgr", "title": "Assistant Manager", "locationId": "z_mart", "baseWage": 7, "requirements": { "experience": 20, "dependability": 20, "degrees": [], "uniform": "dress" }, "perks": [] },
+  { "id": "zmart_mgr", "title": "Manager", "locationId": "z_mart", "baseWage": 8, "requirements": { "experience": 30, "dependability": 30, "degrees": ["junior_college"], "uniform": "business" }, "perks": [] },
+
+  { "id": "burger_cook", "title": "Cook", "locationId": "burger_palace", "baseWage": 5, "requirements": { "experience": 0, "dependability": 10, "degrees": [], "uniform": "casual" }, "perks": [], "tags": ["auto_accept"] },
+  { "id": "burger_clerk", "title": "Clerk", "locationId": "burger_palace", "baseWage": 6, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "burger_asst_mgr", "title": "Assistant Manager", "locationId": "burger_palace", "baseWage": 7, "requirements": { "experience": 20, "dependability": 30, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "burger_mgr", "title": "Manager", "locationId": "burger_palace", "baseWage": 8, "requirements": { "experience": 30, "dependability": 40, "degrees": ["junior_college"], "uniform": "dress" }, "perks": [] },
+
+  { "id": "qt_salesperson", "title": "Salesperson", "locationId": "qt_clothing", "baseWage": 8, "requirements": { "experience": 30, "dependability": 30, "degrees": [], "uniform": "dress" }, "perks": [] },
+  { "id": "qt_asst_mgr", "title": "Assistant Manager", "locationId": "qt_clothing", "baseWage": 9, "requirements": { "experience": 40, "dependability": 40, "degrees": ["junior_college"], "uniform": "business" }, "perks": [] },
+  { "id": "qt_mgr", "title": "Manager", "locationId": "qt_clothing", "baseWage": 12, "requirements": { "experience": 50, "dependability": 50, "degrees": ["business_admin"], "uniform": "business" }, "perks": [] },
+
+  { "id": "socket_salesperson", "title": "Salesperson", "locationId": "socket_city", "baseWage": 7, "requirements": { "experience": 30, "dependability": 30, "degrees": [], "uniform": "dress" }, "perks": [] },
+  { "id": "socket_repairman", "title": "Electronics Repairman", "locationId": "socket_city", "baseWage": 11, "requirements": { "experience": 40, "dependability": 40, "degrees": ["electronics"], "uniform": "casual" }, "perks": [] },
+  { "id": "socket_mgr", "title": "Manager", "locationId": "socket_city", "baseWage": 14, "requirements": { "experience": 40, "dependability": 40, "degrees": ["electronics", "junior_college"], "uniform": "business" }, "perks": [] },
+
+  { "id": "uni_janitor", "title": "Janitor", "locationId": "university", "baseWage": 5, "requirements": { "experience": 10, "dependability": 10, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "uni_teacher", "title": "Teacher", "locationId": "university", "baseWage": 11, "requirements": { "experience": 40, "dependability": 50, "degrees": ["academic"], "uniform": "dress" }, "perks": [] },
+  { "id": "uni_professor", "title": "Professor", "locationId": "university", "baseWage": 20, "requirements": { "experience": 50, "dependability": 60, "degrees": ["research"], "uniform": "dress" }, "perks": [] },
+
+  { "id": "factory_janitor", "title": "Janitor", "locationId": "factory", "baseWage": 7, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "factory_assembly", "title": "Assembly Worker", "locationId": "factory", "baseWage": 8, "requirements": { "experience": 30, "dependability": 30, "degrees": ["trade_school"], "uniform": "casual" }, "perks": [] },
+  { "id": "factory_secretary", "title": "Secretary", "locationId": "factory", "baseWage": 9, "requirements": { "experience": 40, "dependability": 40, "degrees": ["junior_college"], "uniform": "dress" }, "perks": [] },
+  { "id": "factory_machinist_helper", "title": "Machinist's Helper", "locationId": "factory", "baseWage": 10, "requirements": { "experience": 40, "dependability": 40, "degrees": ["pre_engineering"], "uniform": "casual" }, "perks": [] },
+  { "id": "factory_exec_secretary", "title": "Executive Secretary", "locationId": "factory", "baseWage": 18, "requirements": { "experience": 50, "dependability": 50, "degrees": ["business_admin"], "uniform": "business" }, "perks": [] },
+  { "id": "factory_machinist", "title": "Machinist", "locationId": "factory", "baseWage": 19, "requirements": { "experience": 50, "dependability": 50, "degrees": ["engineering"], "uniform": "casual" }, "perks": [] },
+  { "id": "factory_dept_mgr", "title": "Department Manager", "locationId": "factory", "baseWage": 22, "requirements": { "experience": 60, "dependability": 60, "degrees": ["junior_college", "engineering"], "uniform": "business" }, "perks": [] },
+  { "id": "factory_engineer", "title": "Engineer", "locationId": "factory", "baseWage": 23, "requirements": { "experience": 60, "dependability": 60, "degrees": ["junior_college", "engineering"], "uniform": "business" }, "perks": [] },
+  { "id": "factory_gen_mgr", "title": "General Manager", "locationId": "factory", "baseWage": 25, "requirements": { "experience": 70, "dependability": 70, "degrees": ["business_admin", "engineering"], "uniform": "business" }, "perks": [] },
+
+  { "id": "bank_janitor", "title": "Janitor", "locationId": "bank", "baseWage": 6, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "bank_teller", "title": "Teller", "locationId": "bank", "baseWage": 10, "requirements": { "experience": 40, "dependability": 40, "degrees": ["junior_college"], "uniform": "dress" }, "perks": [] },
+  { "id": "bank_asst_mgr", "title": "Assistant Manager", "locationId": "bank", "baseWage": 14, "requirements": { "experience": 50, "dependability": 50, "degrees": ["business_admin"], "uniform": "business" }, "perks": [] },
+  { "id": "bank_mgr", "title": "Manager", "locationId": "bank", "baseWage": 19, "requirements": { "experience": 60, "dependability": 60, "degrees": ["business_admin"], "uniform": "business" }, "perks": [] },
+  { "id": "bank_broker", "title": "Broker", "locationId": "bank", "baseWage": 22, "requirements": { "experience": 70, "dependability": 70, "degrees": ["business_admin", "academic"], "uniform": "business" }, "perks": [] },
+
+  { "id": "blacks_janitor", "title": "Janitor", "locationId": "blacks_market", "baseWage": 6, "requirements": { "experience": 10, "dependability": 10, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "blacks_checker", "title": "Checker", "locationId": "blacks_market", "baseWage": 8, "requirements": { "experience": 20, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "blacks_butcher", "title": "Butcher", "locationId": "blacks_market", "baseWage": 12, "requirements": { "experience": 30, "dependability": 30, "degrees": ["trade_school"], "uniform": "casual" }, "perks": [] },
+  { "id": "blacks_asst_mgr", "title": "Assistant Manager", "locationId": "blacks_market", "baseWage": 15, "requirements": { "experience": 40, "dependability": 40, "degrees": ["junior_college"], "uniform": "dress" }, "perks": [] },
+  { "id": "blacks_mgr", "title": "Manager", "locationId": "blacks_market", "baseWage": 18, "requirements": { "experience": 50, "dependability": 50, "degrees": ["business_admin"], "uniform": "business" }, "perks": [] },
+
+  { "id": "rent_groundskeeper", "title": "Groundskeeper", "locationId": "apartment_complex", "baseWage": 7, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] },
+  { "id": "rent_mgr", "title": "Apartment Manager", "locationId": "apartment_complex", "baseWage": 9, "requirements": { "experience": 30, "dependability": 30, "degrees": ["junior_college"], "uniform": "casual" }, "perks": [] }
+]

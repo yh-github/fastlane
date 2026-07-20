@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { initMapRenderer, movePlayerTo } from '../graphics/mapRenderer';
+import { initMapRenderer, updatePlayers } from '../graphics/mapRenderer';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { PlayerState } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
 
 interface GameMapProps {
   campaign: CampaignBundle | null;
-  player: PlayerState | null;
+  players: PlayerState[];
+  activePlayerIndex: number;
   onNodeClick: (nodeId: string) => void;
 }
 
-export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick }) => {
+export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlayerIndex, onNodeClick }) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -58,17 +59,18 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, player, onNodeClick 
   }, [campaign, i18n.language]);
 
   useEffect(() => {
-    if (isMapReady && player && campaign) {
-      const node = campaign.map.nodes.find(n => n.id === player.position);
-      if (node) {
-        movePlayerTo({
-          nodeId: node.id,
-          x: node.x,
-          y: node.y
-        });
-      }
+    if (isMapReady && players.length > 0 && campaign) {
+      const renderPlayers = players.map((p, index) => {
+        const node = campaign.map.nodes.find(n => n.id === p.position);
+        return {
+          position: { nodeId: node?.id || '', x: node?.x || 0, y: node?.y || 0 },
+          index,
+          isActive: index === activePlayerIndex
+        };
+      });
+      updatePlayers(renderPlayers);
     }
-  }, [player?.position, campaign, isMapReady]);
+  }, [players, activePlayerIndex, campaign, isMapReady]);
 
   return (
     <div

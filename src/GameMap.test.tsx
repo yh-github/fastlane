@@ -6,10 +6,12 @@ import { GameMap } from './ui/GameMap';
 vi.mock('pixi.js', () => {
   class Graphics {
     x = 0; y = 0; visible = true; scale = { set: vi.fn() };
+    clear() {} drawRect() {} drawPolygon() {}
     circle() {} fill() {} setStrokeStyle() {} stroke() {} addChild() {} on() {} moveTo() {} lineTo() {}
   }
   class Container {
     x = 0; y = 0;
+    children: any[] = [ { addChild: vi.fn() } ];
     addChild() {}
   }
   class Application {
@@ -48,7 +50,8 @@ describe('GameMap Character GUI Tests', () => {
     const { rerender } = render(
       <GameMap 
         campaign={mockCampaign} 
-        player={mockPlayer} 
+        players={[mockPlayer]} 
+        activePlayerIndex={0}
         onNodeClick={() => {}} 
       />
     );
@@ -66,7 +69,8 @@ describe('GameMap Character GUI Tests', () => {
     rerender(
       <GameMap 
         campaign={mockCampaign} 
-        player={mockPlayer} 
+        players={[mockPlayer]} 
+        activePlayerIndex={0}
         onNodeClick={() => {}} 
       />
     );

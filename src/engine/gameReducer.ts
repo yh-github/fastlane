@@ -6,6 +6,8 @@ import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study } from './educationEngine';
 import { spendHours } from './timeManager';
 import { recalculatePlayerEffects } from './gameState';
+import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
+import { processStreetRobbery } from './eventEngine';
 
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
@@ -78,7 +80,9 @@ export function gameReducer(
       break;
     }
     case 'buy': {
-      const itemDef = context.campaign.items.find(i => i.id === action.itemId);
+      const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
+      const itemDef = context.campaign.items.find(i => i.id === action.itemId && i.store === currentBuilding) || context.campaign.items.find(i => i.id === action.itemId);
+      console.log(`[DEBUG-GAMEREDUCER-BUY] itemId=${action.itemId}, currentBuilding=${currentBuilding}, itemDefFound=${!!itemDef}, itemStore=${itemDef?.store}`);
       if (itemDef) {
         const timeCost = itemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
         if (timeCost > 0 && nextPlayer.hoursRemaining < timeCost) {
@@ -88,8 +92,12 @@ export function gameReducer(
           }
         }
         const result = buyItem(nextPlayer, itemDef, context.rules);
+        console.log(`[DEBUG-GAMEREDUCER-BUY] buyItem success=${result.success}, newMoney=${result.updated.money}, newClothes=${result.updated.inventory.casualClothesWeeks}`);
         if (result.success) {
           nextPlayer = spendHours(result.updated, timeCost);
+          if (itemDef.id === 'newspaper') {
+            nextPlayer.turnFlags.readNewspaper = true;
+          }
           actionLog = result.message;
         } else {
           actionLog = result.message;
@@ -117,6 +125,7 @@ export function gameReducer(
     }
     case 'relax': {
       const relaxCost = context.campaign.config.timeRules.relaxCost || 6;
+      const relaxGain = context.campaign.config.timeRules.relaxGain ?? 3;
       if (nextPlayer.hoursRemaining < relaxCost) {
         if (!context.rules.allowPartialHours || nextPlayer.hoursRemaining <= 0) {
           actionLog = { key: 'action.error.notEnoughTimeRelax' };
@@ -127,12 +136,53 @@ export function gameReducer(
       // As per the rules, fractional hours don't penalize outcome except for working, 
       // so we always grant full relaxation amount regardless of partial hours spent.
       nextPlayer = spendHours(nextPlayer, relaxCost);
-      nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + relaxCost);
+      nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + relaxGain);
       if (!nextPlayer.turnFlags.relaxedThisTurn) {
         nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
         nextPlayer.turnFlags.relaxedThisTurn = true;
       }
       actionLog = { key: 'action.relax' };
+      break;
+    }
+    case 'move': {
+      const nodeId = action.nodeId;
+      if (nextPlayer.position === nodeId) {
+        break;
+      }
+
+      const adjacencyMap = context.campaign.map?.nodes ? buildAdjacencyMap(context.campaign.map.nodes) : {};
+      const pathResult = context.campaign.map?.nodes ? findShortestPath(adjacencyMap, nextPlayer.position, nodeId) : { found: true, steps: 1, path: [] };
+      console.log(`[DEBUG-GAMEREDUCER-MOVE] from ${nextPlayer.position} to ${nodeId}: path found=${pathResult.found}, steps=${pathResult.steps}, hoursRemaining=${nextPlayer.hoursRemaining}`);
+
+      if (pathResult.found) {
+        const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
+        if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
+          const preRobberyMoney = nextPlayer.money;
+          nextPlayer = processStreetRobbery(nextPlayer, currentBuilding, context.turn, context.rng, context.campaign);
+          if (nextPlayer.money < preRobberyMoney) {
+            actionLog = { key: 'log.robbery' };
+          }
+        }
+
+        const movementCost = (context.campaign.config.mapRules as any)?.movementCostPerNode ?? 1;
+        let requiredHours = pathResult.steps * movementCost;
+        
+        const destNode = context.campaign.map?.nodes?.find(n => n.id === nodeId);
+        if (destNode && destNode.buildingId) {
+            requiredHours += (context.campaign.config.timeRules.buildingEntryCost || 2);
+        }
+
+        if (nextPlayer.hoursRemaining >= requiredHours || context.rules.allowPartialHours) {
+          nextPlayer.position = nodeId;
+          nextPlayer = spendHours(nextPlayer, requiredHours);
+          console.log(`[DEBUG-GAMEREDUCER-MOVE-SUCCESS] new position: ${nextPlayer.position}, hoursRemaining: ${nextPlayer.hoursRemaining}`);
+        } else {
+          actionLog = { key: 'action.error.notEnoughTime' };
+          console.log(`[DEBUG-GAMEREDUCER-MOVE-FAIL] not enough time`);
+        }
+      } else {
+         console.log(`[DEBUG-GAMEREDUCER-MOVE-FAIL] path not found`);
+      }
       break;
     }
     case 'bank_transaction': {

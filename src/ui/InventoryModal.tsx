@@ -1,15 +1,22 @@
 import type { PlayerState } from '../engine/gameState';
+import type { CampaignBundle } from '../engine/dataLoader';
 import { useTranslation } from 'react-i18next';
 
 interface InventoryModalProps {
   player: PlayerState;
+  campaign?: CampaignBundle;
+  turn?: number;
   onAction?: (payload: any) => void;
   onClose: () => void;
 }
 
-export function InventoryModal({ player, onAction, onClose }: InventoryModalProps) {
+export function InventoryModal({ player, campaign, turn, onAction, onClose }: InventoryModalProps) {
   const { t } = useTranslation();
   const { inventory } = player;
+
+  const currentJob = campaign?.jobs.find(j => j.id === player.currentJobId);
+  const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
+  const totalStocks = Object.values(inventory.stocks.holdings).reduce((a, b) => a + b, 0);
 
   return (
     <div className="building-modal-overlay" style={{
@@ -34,6 +41,36 @@ export function InventoryModal({ player, onAction, onClose }: InventoryModalProp
         </button>
         
         <h2 style={{ marginTop: 0, borderBottom: '1px solid #555', paddingBottom: '10px' }}>{t('statusModal.title', 'Your Status')}</h2>
+
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>Overview</h3>
+          <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
+            <li><strong>Job:</strong> {currentJob ? `${currentJob.title} @ ${t(`building.${currentJob.locationId}`, { defaultValue: currentJob.locationId })}` : 'Unemployed'} {currentJob ? `($${player.currentWage}/hr)` : ''}</li>
+            <li><strong>Finances:</strong> Cash: ${player.money} | Savings: ${player.bankSavings} | T-Bills: {inventory.stocks.tBills} | Stocks: {totalStocks} shares</li>
+            <li><strong>Debt:</strong> Loans: ${player.loanDebt} | Rent Arrears: ${player.rentDebt}</li>
+            <li><strong>Housing:</strong> {currentHousing ? t(`building.${currentHousing.id}`, { defaultValue: currentHousing.name }) : 'Homeless'} | Rent Paid Until Week {player.rentPaidUntilWeek} (Next due: Week {Math.max(turn || 1, player.rentPaidUntilWeek - 1)})</li>
+          </ul>
+        </div>
+
+        {(player.turnFlags.freeNewspaper || player.turnFlags.readNewspaper) && player.newspaperHeadline && (
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>Newspaper Headline</h3>
+            <p style={{ margin: 0, fontStyle: 'italic', paddingInlineStart: '20px' }}>
+              {t(player.newspaperHeadline.key, player.newspaperHeadline.params as any) as string}
+            </p>
+          </div>
+        )}
+
+        {player.turnEvents && player.turnEvents.length > 0 && (
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>Notices (This Turn)</h3>
+            <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
+              {player.turnEvents.map((evt, i) => (
+                <li key={i}>{t(evt.key, evt.params as any) as string}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('statusModal.education', 'Education')}</h3>

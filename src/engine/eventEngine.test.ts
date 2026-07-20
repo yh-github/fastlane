@@ -24,7 +24,7 @@ describe('Event Engine', () => {
         ] } 
       } as unknown as PlayerState;
       
-      const { updated, robbed } = processApartmentRobbery(player, new Random(1));
+      const { updated, robbed } = processApartmentRobbery(player, new Random(1), true);
       expect(robbed).toBe(true);
       expect(updated.money).toBe(1000); // Money untouched
       expect(updated.happiness).toBe(46); // 50 - 4
@@ -43,9 +43,27 @@ describe('Event Engine', () => {
 
   describe('processDoctorVisit', () => {
     it('charges money and handles debt correctly', () => {
-      const player = { money: 1000, bankSavings: 1000 } as PlayerState;
+      const player = { money: 1000, bankSavings: 1000, happiness: 50, hoursRemaining: 60 } as PlayerState;
       const updated = processDoctorVisit(player, 10, new Random(1));
-      expect(updated.money + updated.bankSavings).toBeLessThan(2000); // Charged some money
+      expect(updated.money).toBeLessThan(1000); // Charged some money
+      expect(updated.happiness).toBe(46);
+      expect(updated.hoursRemaining).toBe(50);
+    });
+
+    it('bypasses completely if money is 0 and bypassDoctorIfBroke is true', () => {
+      const player = { money: 0, happiness: 50, hoursRemaining: 60 } as PlayerState;
+      const updated = processDoctorVisit(player, 10, new Random(1), true);
+      expect(updated.money).toBe(0);
+      expect(updated.happiness).toBe(50); // Unchanged
+      expect(updated.hoursRemaining).toBe(60); // Unchanged
+    });
+
+    it('does not bypass if money is 0 and bypassDoctorIfBroke is false', () => {
+      const player = { money: 0, happiness: 50, hoursRemaining: 60 } as PlayerState;
+      const updated = processDoctorVisit(player, 10, new Random(1), false);
+      expect(updated.money).toBe(0);
+      expect(updated.happiness).toBe(46); // Penalized
+      expect(updated.hoursRemaining).toBe(50); // Penalized
     });
   });
 

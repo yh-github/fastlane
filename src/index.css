@@ -386,9 +386,29 @@ button:disabled {
   border-radius: 8px;
   padding: 10px;
   overflow-y: auto;
-  pointer-events: none;
+  pointer-events: auto;
   display: flex;
   flex-direction: column-reverse;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 229, 255, 0.4) rgba(0, 0, 0, 0.2);
+}
+
+.game-log::-webkit-scrollbar {
+  width: 4px;
+}
+
+.game-log::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
+.game-log::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.4);
+  border-radius: 2px;
+}
+
+.game-log::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan);
 }
 
 .game-log__entry {
@@ -401,6 +421,11 @@ button:disabled {
   color: var(--accent-amber);
   font-weight: bold;
   margin-inline-end: 5px;
+}
+
+.game-log__player {
+  font-weight: 700;
+  /* inherits the player color from the parent div */
 }
 
 /* Animation Layer */

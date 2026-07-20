@@ -48,16 +48,7 @@ export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps)
               </p>
             )}
 
-            {player.turnEvents && player.turnEvents.length > 0 && (
-              <div style={{ marginTop: '15px', borderTop: '1px solid #555', paddingTop: '15px' }}>
-                <h5 style={{ margin: '0 0 10px 0', color: '#ccc' }}>{t('weekendScreen.otherEvents')}:</h5>
-                <ul style={{ paddingInlineStart: '20px', textAlign: 'start', margin: 0, fontSize: '0.9em' }}>
-                  {player.turnEvents.map((event, idx) => (
-                    <li key={idx} style={{ marginBottom: '5px' }}>{t(event.key, event.params as any) as string}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+
           </div>
       </div>
 

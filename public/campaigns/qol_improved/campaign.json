@@ -1,0 +1,11 @@
+{
+  "id": "qol_improved",
+  "name": "QoL Improved",
+  "description": "Based on the classic CD-ROM version, this campaign features a helpful UI and balanced gameplay improvements.",
+  "baseCampaign": "1990_classic_cdrom",
+  "config": {
+    "rules": {
+      "helpfulUI": true
+    }
+  }
+}

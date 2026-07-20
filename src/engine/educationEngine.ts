@@ -38,7 +38,7 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef, econom
   return { updated, success: true, message: { key: 'action.education.enrolled', params: { name: degree.name } } };
 }
 
-export function calcRequiredLessons(player: PlayerState, degree: EducationDef): number {
+export function calcRequiredLessons(player: PlayerState, degree: EducationDef, rules?: GameRules): number {
   let required = degree.lessonsRequired;
   let reduction = 0;
   
@@ -47,7 +47,12 @@ export function calcRequiredLessons(player: PlayerState, degree: EducationDef): 
   const hasAllBooks = player.inventory.books?.includes('dictionary') && 
                       player.inventory.books?.includes('encyclopedia') && 
                       player.inventory.books?.includes('atlas');
-  if (hasAllBooks) reduction += 1;
+  if (hasAllBooks) {
+    const isCompletedThisTurn = !!player.turnFlags?.bookSetCompletedThisTurn;
+    if (!rules?.delayBookSetCredit || !isCompletedThisTurn) {
+      reduction += 1;
+    }
+  }
   
   // Cumulative up to -2 lessons
   reduction = Math.min(2, reduction);
@@ -79,7 +84,7 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
   updated.enrolledClasses[degree.id] += 1;
 
   // Calculate dynamic lessons required
-  const required = calcRequiredLessons(player, degree);
+  const required = calcRequiredLessons(player, degree, rules);
 
   let message: GameEvent = { key: 'action.education.studied', params: { name: degree.name, current: updated.enrolledClasses[degree.id], required } };
 
