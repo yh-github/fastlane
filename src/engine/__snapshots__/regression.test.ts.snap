@@ -9,6 +9,7 @@ exports[`Engine Integration Regression > runs a deterministic full game sequence
       "itemId": "refrigerator",
       "originalPrice": 400,
       "ownerId": "player_1",
+      "purchaseSource": "socket_city",
       "redeemCost": 200,
       "weekPawned": 2,
     },

@@ -76,7 +76,8 @@
     },
     "pawn": {
       "pawned": "מישכנת {{itemName}} תמורת {{value}}$",
-      "redeemed": "פדית {{itemName}} תמורת {{cost}}$"
+      "redeemed": "פדית {{itemName}} תמורת {{cost}}$",
+      "bought": "קנית {{itemName}} מחנות המשכונות תמורת {{cost}}$"
     },
     "rent": {
       "paid": "שילמת {{amount}}$ שכר דירה",
@@ -94,6 +95,9 @@
       "alreadyHaveDegree": "כבר יש לך תואר זה.",
       "cannotStudy": "לא ניתן ללמוד זאת.",
       "notEnoughMoneyBuyBack": "אין מספיק כסף לקנות בחזרה.",
+      "notEnoughMoneyBuyPawn": "אין מספיק כסף לקנות פריט ממושכן.",
+      "pawnShopFull": "חנות המשכונות מלאה (מקסימום 6 פריטים).",
+      "pawnShopHasDuplicate": "בחנות המשכונות כבר קיים פריט מסוג זה.",
       "notEnoughMoneyDeposit": "אין מספיק מזומן להפקיד.",
       "notEnoughMoneyMove": "אין מספיק כסף כדי לעבור ל{{name}}.",
       "notEnoughMoneyPayment": "אין מספיק כסף לתשלום.",

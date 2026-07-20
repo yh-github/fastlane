@@ -198,9 +198,9 @@ Classes are taken at Hi-Tech U.
 | Works of Capote | Z-Mart | $100 | -2 |
 
 ## 8. Pawn Shop Mechanics
-- **Pawning**: Items can be pawned for a loan. Base payout is 40% of the item's original purchase price (adjusted for Economy). Pawning an item gives -1 Happiness.
-| Redeeming | Cost to redeem is 1/2 of the original purchase price (NOT affected by Economy). Item is held for 3 Weeks. Only the player who pawned the item can redeem it. |
-| Buying | After 3 weeks, any player can buy the pawned item for 1/2 of the original purchase price. Appliances are flagged as "second hand", giving them a 1/36 chance to break down each turn (same as Z-Mart). |
+- **Pawning**: Items can be pawned for a loan. Base payout is 40% of the item's original purchase price (adjusted for Economy). Pawning an item gives -1 Happiness. The shop holds max 6 items total across all players, and duplicate item types cannot be pawned until redeemed or sold.
+- **Redeeming**: Cost to redeem is 1/2 of the original purchase price (NOT affected by Economy). Item is held in reserve for 3 Weeks (including the week it was pawned). Only the player who pawned the item can redeem it. Redeeming restores the item in its original condition (retaining its original purchase source, e.g. Socket City).
+- **Buying**: After 3 weeks of being unredeemed, an item becomes property of the Pawn Shop and goes up for sale. Any player can buy it for 1/2 of its original purchase price. Buying items gives no Happiness points. Buying an Appliance from the Pawn Shop flags it as a "second hand Appliance", giving it a 1/36 chance to break down each turn (same as Z-Mart), even if it was originally purchased at Socket City.
 
 ## 9. Multiplayer Mechanics
 - **Turn Structure:** The game supports up to four players in local "hot-seat" multiplayer. Each turn in the game represents one week. Players take turns sequentially to spend their hours for that week.

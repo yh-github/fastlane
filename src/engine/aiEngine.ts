@@ -1,6 +1,7 @@
 import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 import type { GameAction } from './gameReducer';
+import { calcEconomyPrice } from './economyEngine';
 
 function getBuildingNodeByArchetype(campaign: CampaignBundle, archetype: string): string | null {
   const building = campaign.buildings.find(b => b.archetype === archetype);
@@ -72,7 +73,7 @@ interface GoapAction {
   createGameAction: (state: GoapState, campaign: CampaignBundle) => GameAction | null;
 }
 
-function buildActions(campaign: CampaignBundle): GoapAction[] {
+function buildActions(campaign: CampaignBundle, economicIndex: number): GoapAction[] {
   const actions: GoapAction[] = [];
 
   // Movement actions to all key buildings
@@ -103,14 +104,14 @@ function buildActions(campaign: CampaignBundle): GoapAction[] {
   const allFoodItems = campaign.items.filter(i => i.category === 'food');
   allFoodItems.forEach(item => {
     const storeNode = getBuildingNodeById(campaign, item.store);
+    const adjustedPrice = calcEconomyPrice(item.basePrice, economicIndex);
     actions.push({
       name: `BuyFood_${item.id}`,
-      cost: 1,
-      precondition: (s) => s.nodeId === storeNode && s.hours >= 2 && s.money >= item.basePrice,
+      cost: 0,
+      precondition: (s) => s.nodeId === storeNode && s.money >= adjustedPrice,
       effect: (s) => ({
         ...s,
-        hours: s.hours - 2,
-        money: s.money - item.basePrice,
+        money: s.money - adjustedPrice,
         food: item.subcategory === 'fast_food' ? s.food : s.food + (item.units || 1),
         hasFastFood: item.subcategory === 'fast_food' ? true : s.hasFastFood
       }),
@@ -119,14 +120,15 @@ function buildActions(campaign: CampaignBundle): GoapAction[] {
   });
 
   // Action: Buy Fridge
-  const fridgeItem = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'z_mart') || campaign.items.find(i => i.id === 'refrigerator');
+  const fridgeItem = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'socket_city') || campaign.items.find(i => i.id === 'refrigerator');
   if (fridgeItem) {
     const storeNode = getBuildingNodeById(campaign, fridgeItem.store);
+    const adjustedPrice = calcEconomyPrice(fridgeItem.basePrice, economicIndex);
     actions.push({
       name: 'BuyFridge',
-      cost: 2,
-      precondition: (s) => s.nodeId === storeNode && s.hours >= 2 && s.money >= fridgeItem.basePrice && !s.hasFridge,
-      effect: (s) => ({ ...s, money: s.money - fridgeItem.basePrice, hours: s.hours - 2, hasFridge: true }),
+      cost: 0,
+      precondition: (s) => s.nodeId === storeNode && s.money >= adjustedPrice && !s.hasFridge,
+      effect: (s) => ({ ...s, money: s.money - adjustedPrice, hasFridge: true }),
       createGameAction: () => ({ type: 'buy', itemId: fridgeItem.id })
     });
   }
@@ -142,10 +144,10 @@ function buildActions(campaign: CampaignBundle): GoapAction[] {
   });
 
   // Action: Buy Clothes (for each item)
-  const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => a.basePrice - b.basePrice);
+  const clothesItems = campaign.items.filter(i => i.category === 'clothes');
   clothesItems.forEach(item => {
     const storeNode = getBuildingNodeById(campaign, item.store);
-    const cost = item.basePrice;
+    const cost = calcEconomyPrice(item.basePrice, economicIndex);
     actions.push({
       name: `BuyClothes_${item.id}_${item.store}`,
       cost: 0,
@@ -225,7 +227,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   if (player.hoursRemaining <= 0) return [];
 
   const s = extractState(player, gameState.turn);
-  const actions = buildActions(campaign);
+  const actions = buildActions(campaign, gameState.economicIndex);
 
   function tryAction(name: string): GameAction | null {
     const a = actions.find(x => x.name === name);
@@ -250,29 +252,58 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   const targetEducation = Math.ceil(Math.max(0, player.goalAllotment.education - 1) / 9);
   const targetHappiness = player.goalAllotment.happiness;
 
-  const rentBuffer = ((s.week % 4 === 3) || !s.rentPaid) ? 150 : 0;
+  // Always keep a rent payment in reserve so we don't go bankrupt and get garnished
+  const rentBuffer = s.rentPrice;
   const affordableFoodItemsPre = campaign.items
     .filter(i => i.category === 'food' && (s.hasFridge || i.subcategory === 'fast_food'))
-    .sort((a, b) => a.basePrice - b.basePrice);
-  const minFoodCost = affordableFoodItemsPre.length > 0 ? affordableFoodItemsPre[0].basePrice : 70;
+    .sort((a, b) => calcEconomyPrice(a.basePrice, gameState.economicIndex) - calcEconomyPrice(b.basePrice, gameState.economicIndex));
+  const minFoodCost = affordableFoodItemsPre.length > 0 ? calcEconomyPrice(affordableFoodItemsPre[0].basePrice, gameState.economicIndex) : 70;
+  
+  const allClothes = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => calcEconomyPrice(a.basePrice, gameState.economicIndex) - calcEconomyPrice(b.basePrice, gameState.economicIndex));
+  const minClothesCost = allClothes.length > 0 ? calcEconomyPrice(allClothes[0].basePrice, gameState.economicIndex) : 50;
 
   // 0. Clothes (Desperate - if naked we cannot work and will permanently deadlock)
-  const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => b.basePrice - a.basePrice);
+  const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => calcEconomyPrice(b.basePrice, gameState.economicIndex) - calcEconomyPrice(a.basePrice, gameState.economicIndex));
   let targetClothes = clothesItems[clothesItems.length - 1]; // cheapest casual
+  
+  // Determine minimum required uniform for current job
+  let requiredUniform = 'casual';
+  if (s.jobId) {
+     const currentJobDef = campaign.jobs.find(j => j.id === s.jobId);
+     if (currentJobDef?.requirements?.uniform) {
+        requiredUniform = currentJobDef.requirements.uniform;
+     }
+  }
+
   if (clothesItems.length > 0) {
-    if (s.money > 1000 || (targetCareer >= 25 && s.money > rentBuffer + 200)) {
+    if (s.money > 1000 || (targetCareer >= 25 && s.money > rentBuffer + 200) || requiredUniform === 'dress' || requiredUniform === 'business') {
        targetClothes = clothesItems.find(i => i.id === 'dress_clothes') || targetClothes;
     }
-    if (s.money > 2000 || (targetCareer >= 45 && s.money > rentBuffer + 500)) {
-       targetClothes = clothesItems.find(i => i.id === 'business_clothes') || targetClothes;
+    if (s.money > 2000 || (targetCareer >= 45 && s.money > rentBuffer + 500) || requiredUniform === 'business') {
+       targetClothes = clothesItems.find(i => i.id === 'business_suit' || i.id === 'business_clothes') || targetClothes;
     }
-    const isDesperateForClothes = s.clothes <= 1;
-    if (isDesperateForClothes && s.money >= targetClothes.basePrice) {
-      const storeNode = targetClothes.store;
-      const buyClothes = tryAction(`BuyClothes_${targetClothes.id}_${targetClothes.store}`);
-      if (buyClothes) return [buyClothes];
-      const move = moveTo(storeNode);
-      if (move) return [move];
+    
+    const currentClothesType = player.inventory.selectedClothes;
+    let wrongUniform = false;
+    if (requiredUniform === 'business' && currentClothesType !== 'business') wrongUniform = true;
+    if (requiredUniform === 'dress' && currentClothesType !== 'business' && currentClothesType !== 'dress') wrongUniform = true;
+
+    const isDesperateForClothes = s.clothes <= 4 || wrongUniform;
+    if (isDesperateForClothes) {
+      let affordableClothes = targetClothes;
+      if (s.money < calcEconomyPrice(targetClothes.basePrice, gameState.economicIndex)) {
+         const cheapOptions = clothesItems.filter(i => s.money >= calcEconomyPrice(i.basePrice, gameState.economicIndex));
+         if (cheapOptions.length > 0) {
+            affordableClothes = cheapOptions[cheapOptions.length - 1];
+         }
+      }
+      if (s.money >= calcEconomyPrice(affordableClothes.basePrice, gameState.economicIndex)) {
+         const storeNode = affordableClothes.store;
+         const buyClothes = tryAction(`BuyClothes_${affordableClothes.id}_${affordableClothes.store}`);
+         if (buyClothes) return [buyClothes];
+         const move = moveTo(storeNode);
+         if (move) return [move];
+      }
     }
   }
 
@@ -280,11 +311,11 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   // If we don't have a fridge, fresh food spoils immediately! So only buy fast food if no fridge.
   const affordableFoodItems = campaign.items
     .filter(i => i.category === 'food' && (s.hasFridge || i.subcategory === 'fast_food'))
-    .sort((a, b) => a.basePrice - b.basePrice);
+    .sort((a, b) => calcEconomyPrice(a.basePrice, gameState.economicIndex) - calcEconomyPrice(b.basePrice, gameState.economicIndex));
     
   const needsFood = s.hasFridge ? s.food <= 2 : !s.hasFastFood;
-  if (needsFood && affordableFoodItems.length > 0 && s.money >= affordableFoodItems[0].basePrice) {
-    const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= i.basePrice).pop() || affordableFoodItems[0];
+  if (needsFood && affordableFoodItems.length > 0 && s.money >= calcEconomyPrice(affordableFoodItems[0].basePrice, gameState.economicIndex)) {
+    const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= calcEconomyPrice(i.basePrice, gameState.economicIndex)).pop() || affordableFoodItems[0];
     const buyFood = tryAction(`BuyFood_${bestFoodToBuy.id}`);
     if (buyFood) return [buyFood];
     const move = moveTo(bestFoodToBuy.store);
@@ -303,7 +334,8 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
 
   // 4. Critical Work
   // If rent is not paid and we DON'T have money, we MUST WORK! Or if we critically need money for food.
-  const minimumComfortableMoney = rentBuffer + minFoodCost;
+  const clothesBuffer = s.clothes <= 3 ? minClothesCost : 0;
+  const minimumComfortableMoney = rentBuffer + minFoodCost + clothesBuffer;
   const criticallyNeedsMoney = s.money < minimumComfortableMoney;
   if (criticallyNeedsMoney) {
      if (s.jobId && s.hours >= 6) {
@@ -318,13 +350,15 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   }
 
   // 5. Buy Needed Items (Refrigerator)
-  const fridgeItemRef = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'z_mart') || campaign.items.find(i => i.id === 'refrigerator');
-  const fridgeCost = fridgeItemRef ? fridgeItemRef.basePrice : 650;
+  const fridgeItemRef = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'socket_city') || campaign.items.find(i => i.id === 'refrigerator');
+  const fridgeCost = fridgeItemRef ? calcEconomyPrice(fridgeItemRef.basePrice, gameState.economicIndex) : 650;
   if (!s.hasFridge && s.money >= fridgeCost + minimumComfortableMoney) {
     const buyFridge = tryAction('BuyFridge');
     if (buyFridge) return [buyFridge];
-    const move = moveTo('department_store');
-    if (move) return [move];
+    if (fridgeItemRef) {
+       const move = moveTo(fridgeItemRef.store);
+       if (move) return [move];
+    }
   }
 
   // 6. Education (Prioritize education to advance career)
@@ -364,8 +398,12 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     
     for (const job of campaign.jobs) {
       const depMet = s.dep >= job.requirements.dependability || (job.tags?.includes('auto_accept') ?? false);
+      let uniformAffordable = true;
+      if (job.requirements.uniform === 'dress' && s.money < 100 && player.inventory.selectedClothes !== 'dress' && player.inventory.selectedClothes !== 'business') uniformAffordable = false;
+      if (job.requirements.uniform === 'business' && s.money < 300 && player.inventory.selectedClothes !== 'business') uniformAffordable = false;
+      
       if (s.exp >= job.requirements.experience &&
-          depMet &&
+          depMet && uniformAffordable &&
           job.requirements.degrees.every(d => s.degrees.includes(d))) {
           
           let score = job.baseWage * 10;
@@ -415,7 +453,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     const targetScore = targetClothes.id.includes('business') ? 3 : (targetClothes.id.includes('dress') ? 2 : 1);
     
     const hasTargetClothes = currentScore >= targetScore && s.clothes > 1;
-    const requiredMoney = targetClothes.basePrice + minimumComfortableMoney;
+    const requiredMoney = calcEconomyPrice(targetClothes.basePrice, gameState.economicIndex) + minimumComfortableMoney;
     
     if (!hasTargetClothes && s.money >= requiredMoney) {
       const storeNode = targetClothes.store;
@@ -443,10 +481,13 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
 
   // 11. Stockpile Food if rich
   if (s.money > 200 + rentBuffer && s.food < 10) {
-    const buyFood = tryAction('BuyFood');
-    if (buyFood) return [buyFood];
-    const move = moveTo('grocery');
-    if (move) return [move];
+    if (affordableFoodItems.length > 0) {
+        const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= calcEconomyPrice(i.basePrice, gameState.economicIndex)).pop() || affordableFoodItems[0];
+        const buyFood = tryAction(`BuyFood_${bestFoodToBuy.id}`);
+        if (buyFood) return [buyFood];
+        const move = moveTo(bestFoodToBuy.store);
+        if (move) return [move];
+    }
   }
 
   // 12. Fallback Relax

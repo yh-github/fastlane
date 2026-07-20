@@ -4,7 +4,7 @@ import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
 import { loadCampaign, type CampaignBundle } from '../engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
-import { animatePlayerPath, pulsePlayer, type PlayerPosition } from '../graphics/mapRenderer';
+import { animatePlayerPath, pulsePlayer, showMapClick, type PlayerPosition } from '../graphics/mapRenderer';
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
 import { simulateActionVisuals } from '../engine/aiTranslator';
@@ -361,6 +361,12 @@ export function useGameEngine(
           }
 
           // Pre-action visual pacing
+          if (actions[0].type === 'move') {
+            const targetNode = campaign!.map.nodes.find(n => n.id === actions[0].nodeId);
+            if (targetNode) {
+              showMapClick(targetNode.x, targetNode.y);
+            }
+          }
           await simulateActionVisuals(actions[0], { setIsBuildingModalOpen });
 
           await handleAction(actions[0]);

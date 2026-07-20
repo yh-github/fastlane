@@ -17,7 +17,7 @@ describe('Full-Game AI Integration Regression', () => {
     vi.restoreAllMocks();
   });
 
-  it('runs a deterministic 2-player game for 100 turns using standard AI without crashing', async () => {
+  it('runs a deterministic 2-player game for 200 turns using standard AI without crashing', async () => {
     // 1. Load the real campaign data directly (vitest setup handles this via happy-dom or node fetch polyfill)
     const campaign = await loadCampaign('qol_improved');
 
@@ -33,7 +33,7 @@ describe('Full-Game AI Integration Regression', () => {
     currentState = { ...currentState, phase: 'playing' };
 
     let turnsPassed = 0;
-    const MAX_TURNS = 100;
+    const MAX_TURNS = 200;
 
     while (turnsPassed < MAX_TURNS && currentState.phase !== 'game-over') {
       // Each player acts until their hours are 0

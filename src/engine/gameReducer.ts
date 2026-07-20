@@ -5,6 +5,7 @@ import { applyForJob, workShift } from './jobEngine';
 import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study } from './educationEngine';
 import { spendHours } from './timeManager';
+import { calcEconomyPrice } from './economyEngine';
 import { recalculatePlayerEffects } from './gameState';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
@@ -91,7 +92,12 @@ export function gameReducer(
             break;
           }
         }
-        const result = buyItem(nextPlayer, itemDef, context.rules);
+        
+        // Ensure price is adjusted for economy, except newspaper which is fixed
+        const adjustedPrice = itemDef.id === 'newspaper' ? itemDef.basePrice : calcEconomyPrice(itemDef.basePrice, context.economicIndex);
+        const itemWithPrice = { ...itemDef, basePrice: adjustedPrice };
+        
+        const result = buyItem(nextPlayer, itemWithPrice, context.rules);
         console.log(`[DEBUG-GAMEREDUCER-BUY] buyItem success=${result.success}, newMoney=${result.updated.money}, newClothes=${result.updated.inventory.casualClothesWeeks}`);
         if (result.success) {
           nextPlayer = spendHours(result.updated, timeCost);
@@ -387,7 +393,8 @@ export function gameReducer(
         originalPrice: action.item.purchasePrice,
         redeemCost: Math.floor(action.item.purchasePrice * 0.5),
         weekPawned: context.turn,
-        ownerId: nextPlayer.id
+        ownerId: nextPlayer.id,
+        purchaseSource: action.item.purchaseSource || 'socket_city'
       };
       nextPlayer.inventory.pawnedItems.push(pawnedItem);
       nextPlayer.money += action.value;
@@ -406,7 +413,7 @@ export function gameReducer(
         nextPlayer.inventory.appliances.push({
           id: action.item.itemId,
           purchasePrice: action.item.originalPrice,
-          purchaseSource: 'pawnshop'
+          purchaseSource: action.item.purchaseSource || 'socket_city'
         });
         const itemName = action.item.itemId.replaceAll('_', ' ');
         actionLog = { key: 'action.pawn.redeemed', params: { itemName, cost: action.cost } };

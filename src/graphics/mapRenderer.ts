@@ -61,12 +61,12 @@ export async function initMapRenderer(
   }
 
   if (instanceId !== activeInstanceId) {
-    localApp.destroy(true, { children: true, texture: true });
+    localApp.destroy(true, { children: true });
     return () => {};
   }
 
   if (app) {
-    app.destroy(true, { children: true, texture: true });
+    app.destroy(true, { children: true });
   }
 
   app = localApp;
@@ -168,7 +168,7 @@ export async function initMapRenderer(
   return () => {
     if (instanceId === activeInstanceId) {
       if (app) {
-        app.destroy(true, { children: true, texture: true });
+        app.destroy(true, { children: true });
         app = null;
         playerTokens = [];
       }
@@ -325,4 +325,40 @@ export async function pulsePlayer(playerIndex: number): Promise<void> {
     }
     requestAnimationFrame(step);
   });
+}
+
+/**
+ * Show a visual ping/click indication on the map at the given coordinates.
+ */
+export function showMapClick(x: number, y: number): void {
+  if (!app) return;
+  const mapContainer = app.stage.children[0] as Container;
+  
+  const ping = new Graphics();
+  ping.circle(0, 0, 10);
+  ping.fill({ color: 0xffffff, alpha: 0.8 });
+  ping.setStrokeStyle({ width: 2, color: 0x00e5ff });
+  ping.stroke();
+  ping.x = x;
+  ping.y = y;
+  mapContainer.addChild(ping);
+
+  const startTime = performance.now();
+  const duration = 500;
+  
+  function step(now: number) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    
+    const scale = 1 + progress * 4;
+    ping.scale.set(scale, scale);
+    ping.alpha = 1 - (progress * progress); // non-linear fade
+    
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      ping.destroy();
+    }
+  }
+  requestAnimationFrame(step);
 }

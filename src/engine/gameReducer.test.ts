@@ -258,8 +258,8 @@ describe('gameReducer', () => {
       expect(result.updatedPlayer.money).toBe(160);
     });
 
-    it('redeems a pawned item', () => {
-      const pawnedItem = { itemId: 'refrigerator', originalPrice: 400, redeemCost: 200, weekPawned: 1, ownerId: player.id };
+    it('redeems a pawned item preserving its original purchaseSource', () => {
+      const pawnedItem = { itemId: 'refrigerator', originalPrice: 400, redeemCost: 200, weekPawned: 1, ownerId: player.id, purchaseSource: 'socket_city' as const };
       player.inventory.pawnedItems = [pawnedItem];
       player.inventory.appliances = [];
       player.money = 500;
@@ -269,6 +269,45 @@ describe('gameReducer', () => {
       expect(result.updatedPlayer.inventory.pawnedItems.length).toBe(0);
       expect(result.updatedPlayer.inventory.appliances.length).toBe(1);
       expect(result.updatedPlayer.inventory.appliances[0].id).toBe('refrigerator');
+      expect(result.updatedPlayer.inventory.appliances[0].purchaseSource).toBe('socket_city');
+    });
+
+    it('buys a second-hand pawned item from pawnShopItemsForSale and flags purchaseSource as pawnshop', () => {
+      const forSaleItem = { itemId: 'color_tv', originalPrice: 500, redeemCost: 250, weekPawned: 1, ownerId: 'other_player', purchaseSource: 'socket_city' as const };
+      context.state.pawnShopItemsForSale = [forSaleItem];
+      player.inventory.appliances = [];
+      player.money = 300;
+
+      const result = gameReducer(player, { type: 'buy_pawn_item', item: forSaleItem, cost: 250 }, context);
+      expect(result.updatedPlayer.money).toBe(50);
+      expect(result.updatedPlayer.inventory.appliances.length).toBe(1);
+      expect(result.updatedPlayer.inventory.appliances[0].id).toBe('color_tv');
+      expect(result.updatedPlayer.inventory.appliances[0].purchaseSource).toBe('pawnshop');
+      expect(result.updatedPawnShopItemsForSale?.length).toBe(0);
+    });
+
+    it('prevents pawning if pawn shop is full (6 items)', () => {
+      const itemToPawn = { id: 'microwave', purchasePrice: 300, purchaseSource: 'socket_city' as const };
+      player.inventory.appliances = [itemToPawn];
+      context.state.pawnShopItemsForSale = Array(6).fill(null).map((_, i) => ({
+        itemId: `item_${i}`, originalPrice: 100, redeemCost: 50, weekPawned: 1, ownerId: 'p2'
+      }));
+
+      const result = gameReducer(player, { type: 'pawn_item', item: itemToPawn, value: 120 }, context);
+      expect(result.actionLog?.key).toBe('action.error.pawnShopFull');
+      expect(result.updatedPlayer.inventory.appliances.length).toBe(1);
+    });
+
+    it('prevents pawning duplicate item types already in pawn shop', () => {
+      const itemToPawn = { id: 'refrigerator', purchasePrice: 400, purchaseSource: 'socket_city' as const };
+      player.inventory.appliances = [itemToPawn];
+      context.state.pawnShopItemsForSale = [{
+        itemId: 'refrigerator', originalPrice: 400, redeemCost: 200, weekPawned: 1, ownerId: 'p2'
+      }];
+
+      const result = gameReducer(player, { type: 'pawn_item', item: itemToPawn, value: 160 }, context);
+      expect(result.actionLog?.key).toBe('action.error.pawnShopHasDuplicate');
+      expect(result.updatedPlayer.inventory.appliances.length).toBe(1);
     });
   });
 });

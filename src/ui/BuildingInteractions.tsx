@@ -28,16 +28,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
     return (
       <div className="interaction-panel">
         <h3>{t('jobBoard.title')}</h3>
-        <div style={{
-          marginBottom: '15px',
-          padding: '10px 12px',
-          backgroundColor: 'rgba(46, 204, 113, 0.15)',
-          border: '1px solid #2ecc71',
-          borderRadius: '6px',
-          fontSize: '12px'
-        }}>
-          <strong>🍀 {t('jobBoard.luckScoreInfo', { score: luckScore, defaultValue: `Your Luck Score is ${luckScore}/100. (When applying, a roll of 1-100 ≤ ${luckScore} is required for an opening).` })}</strong>
-        </div>
+
         {locations.map(loc => {
           const jobCount = availableJobs.filter(j => j.locationId === loc).length;
           return (
@@ -122,25 +113,25 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   );
 }
 
-export function StoreFront({ player, onAction, availableItems }: InteractionProps & { availableItems: ItemDef[] }) {
+export function StoreFront({ player, onAction, availableItems, economicIndex = 0 }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number }) {
   const { t } = useTranslation();
   return (
     <div className="interaction-panel">
       <h3>{t('storeFront.title')}</h3>
       {availableItems.map(item => {
-        const canAfford = player.money >= item.basePrice;
+        const adjustedPrice = calcEconomyPrice(item.basePrice, economicIndex);
         return (
           <div 
             key={item.id} 
-            className={`interaction-item ${canAfford ? 'interaction-item--clickable' : 'interaction-item--disabled'}`} 
+            className="interaction-item interaction-item--clickable"
             style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}
             onClick={() => {
-              if (canAfford) onAction({ type: 'buy', itemId: item.id });
+              onAction({ type: 'buy', itemId: item.id });
             }}
             data-action-target={`buy-${item.id}`}
           >
             <span>{t(`item.${item.id}`, { defaultValue: item.name })}</span>
-            <span>${item.basePrice}</span>
+            <span>${adjustedPrice}</span>
           </div>
         );
       })}
@@ -207,7 +198,6 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
               <button 
                 onClick={() => onAction({ type: 'rent_transaction', amount: rentOwed })}
                 style={{ marginTop: '10px', backgroundColor: '#c0392b' }}
-                disabled={player.money < rentOwed}
               >
                 {t('rentOffice.payRentDebt')}
               </button>
@@ -222,7 +212,6 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
               <button 
                 onClick={() => onAction({ type: 'pay_rent_advance', amount: rentAdvanceCost })}
                 style={{ marginTop: '5px' }}
-                disabled={player.money < rentAdvanceCost}
               >
                 {t('rentOffice.payAdvance', { cost: rentAdvanceCost })}
               </button>
@@ -267,7 +256,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                 <span>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })} - ${lowCostMovePrice}/mo</span>
                 <button 
                   onClick={() => onAction({ type: 'move_apartment', housingId: lowCostHousing.id, cost: lowCostMovePrice })}
-                  disabled={player.money < lowCostMovePrice || (rules?.helpfulUI && player.currentHousingId === lowCostHousing.id)}
+                  disabled={rules?.helpfulUI && player.currentHousingId === lowCostHousing.id}
                 >
                   {player.currentHousingId === lowCostHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
                 </button>
@@ -279,7 +268,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                 <span>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })} - ${securityMovePrice}/mo</span>
                 <button 
                   onClick={() => onAction({ type: 'move_apartment', housingId: securityHousing.id, cost: securityMovePrice })}
-                  disabled={player.money < securityMovePrice || (rules?.helpfulUI && player.currentHousingId === securityHousing.id)}
+                  disabled={rules?.helpfulUI && player.currentHousingId === securityHousing.id}
                 >
                   {player.currentHousingId === securityHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
                 </button>
@@ -351,15 +340,15 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
       <div style={{ display: 'flex', gap: '5px' }}>
         <button 
           onClick={() => onAction({ type: 'buy_stock', stockId: stock.id, quantity: numShares, cost: totalCost })} 
-          disabled={!canBuy}
-          style={{ flex: 1, background: canBuy ? '#2ecc71' : '#555', color: canBuy ? '#000' : '#888' }}
+          disabled={numShares <= 0}
+          style={{ flex: 1, background: numShares > 0 ? '#2ecc71' : '#555', color: numShares > 0 ? '#000' : '#888' }}
         >
           {t('stocks.buyBtn', { cost: totalCost, defaultValue: `Buy (-$${totalCost})` })}
         </button>
         <button 
           onClick={() => onAction({ type: 'sell_stock', stockId: stock.id, quantity: numShares, revenue: totalRevenue })} 
-          disabled={!canSell}
-          style={{ flex: 1, background: canSell ? '#e74c3c' : '#555', color: canSell ? '#000' : '#888' }}
+          disabled={numShares <= 0}
+          style={{ flex: 1, background: numShares > 0 ? '#e74c3c' : '#555', color: numShares > 0 ? '#000' : '#888' }}
         >
           {t('stocks.sellBtn', { revenue: totalRevenue, defaultValue: `Sell (+$${totalRevenue})` })}
         </button>
@@ -427,50 +416,46 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
             <button 
               onClick={() => {
                 if (typeof customBankAmount === 'number' && customBankAmount > 0) {
-                  onAction({ type: 'bank_transaction', amount: Math.min(customBankAmount, player.money) });
+                  onAction({ type: 'bank_transaction', amount: customBankAmount });
                   setCustomBankAmount('');
                 }
               }} 
-              disabled={player.money <= 0 || !customBankAmount || customBankAmount <= 0}
-              style={{ background: player.money > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#2ecc71' : '#555', color: player.money > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#000' : '#888' }}
+              disabled={!customBankAmount || customBankAmount <= 0}
+              style={{ background: typeof customBankAmount === 'number' && customBankAmount > 0 ? '#2ecc71' : '#555', color: typeof customBankAmount === 'number' && customBankAmount > 0 ? '#000' : '#888' }}
             >
               {t('bank.depositBtn', { defaultValue: 'Deposit' })}
             </button>
             <button 
               onClick={() => {
                 if (typeof customBankAmount === 'number' && customBankAmount > 0) {
-                  onAction({ type: 'bank_transaction', amount: -Math.min(customBankAmount, player.bankSavings) });
+                  onAction({ type: 'bank_transaction', amount: -customBankAmount });
                   setCustomBankAmount('');
                 }
               }} 
-              disabled={player.bankSavings <= 0 || !customBankAmount || customBankAmount <= 0}
-              style={{ background: player.bankSavings > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#e74c3c' : '#555', color: player.bankSavings > 0 && typeof customBankAmount === 'number' && customBankAmount > 0 ? '#000' : '#888' }}
+              disabled={!customBankAmount || customBankAmount <= 0}
+              style={{ background: typeof customBankAmount === 'number' && customBankAmount > 0 ? '#e74c3c' : '#555', color: typeof customBankAmount === 'number' && customBankAmount > 0 ? '#000' : '#888' }}
             >
               {t('bank.withdrawBtn', { defaultValue: 'Withdraw' })}
             </button>
           </div>
           <hr style={{ borderColor: '#444', margin: '5px 0' }} />
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(bankDepositSmall, player.money) })} 
-            disabled={player.money <= 0}
+            onClick={() => onAction({ type: 'bank_transaction', amount: bankDepositSmall })} 
           >
             {t('bank.depositAmount', { amount: bankDepositSmall, defaultValue: `Deposit $${bankDepositSmall} (or remainder)` })}
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: Math.min(bankDepositLarge, player.money) })} 
-            disabled={player.money <= 0}
+            onClick={() => onAction({ type: 'bank_transaction', amount: bankDepositLarge })} 
           >
             {t('bank.depositAmount', { amount: bankDepositLarge, defaultValue: `Deposit $${bankDepositLarge} (or remainder)` })}
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(bankDepositSmall, player.bankSavings) })} 
-            disabled={player.bankSavings <= 0}
+            onClick={() => onAction({ type: 'bank_transaction', amount: -bankDepositSmall })} 
           >
             {t('bank.withdrawAmount', { amount: bankDepositSmall, defaultValue: `Withdraw $${bankDepositSmall} (or remainder)` })}
           </button>
           <button 
-            onClick={() => onAction({ type: 'bank_transaction', amount: -Math.min(bankDepositLarge, player.bankSavings) })} 
-            disabled={player.bankSavings <= 0}
+            onClick={() => onAction({ type: 'bank_transaction', amount: -bankDepositLarge })} 
           >
             {t('bank.withdrawAmount', { amount: bankDepositLarge, defaultValue: `Withdraw $${bankDepositLarge} (or remainder)` })}
           </button>
@@ -501,7 +486,6 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
           </button>
           <button 
             onClick={() => onAction({ type: 'pay_loan' })} 
-            disabled={player.money < Math.min(loanPaymentAmount, player.loanDebt || 0) || (player.loanDebt || 0) === 0}
           >
             {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanPaymentAmount} or remainder)` })}
           </button>
@@ -628,7 +612,6 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                     <button 
                       style={{ marginTop: '5px', background: '#2ecc71', color: '#000' }} 
                       onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
-                      disabled={player.money < tuitionFee}
                       data-action-target={`enroll-${deg.id}`}
                     >
                       {t('university.enrollBtn', { defaultValue: 'Enroll' })}
