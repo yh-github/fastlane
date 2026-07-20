@@ -45,7 +45,7 @@ export function calcLuckScore(
   experience: number,
   numDegrees: number
 ): number {
-  return 40 + dependability + experience + 8 * numDegrees;
+  return Math.floor(30 + (10 + dependability + experience + 8 * numDegrees) / 3);
 }
 
 /**

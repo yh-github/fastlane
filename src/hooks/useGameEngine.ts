@@ -4,7 +4,7 @@ import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
 import { loadCampaign, type CampaignBundle } from '../engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
-import { animatePlayerPath, type PlayerPosition } from '../graphics/mapRenderer';
+import { animatePlayerPath, pulsePlayer, type PlayerPosition } from '../graphics/mapRenderer';
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
 import { simulateActionVisuals } from '../engine/aiTranslator';
@@ -333,6 +333,10 @@ export function useGameEngine(
     if (gameState?.phase === 'playing' && gameState.players[activePlayerIndex]?.isAi && gameState.players[activePlayerIndex]?.turnFlags?.hasSeenWeekend) {
       const runAi = async () => {
         setIsAnimating(true);
+        
+        // Pulse the AI character to draw attention before they start moving
+        await pulsePlayer(activePlayerIndex);
+        
         let maxLoops = 20;
         const initialTurn = gameStateRef.current!.turn;
         const aiPlayerId = gameStateRef.current!.players[activePlayerIndex]?.id;

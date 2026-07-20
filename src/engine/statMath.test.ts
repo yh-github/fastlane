@@ -14,8 +14,9 @@ import {
 
 describe('statMath', () => {
   it('calcLuckScore', () => {
-    expect(calcLuckScore(10, 10, 0)).toBe(60); // 40 + 10 + 10 + 0
-    expect(calcLuckScore(20, 20, 1)).toBe(88); // 40 + 20 + 20 + 8
+    expect(calcLuckScore(10, 10, 0)).toBe(40); // 30 + Math.floor((10 + 10 + 10 + 0) / 3) = 40
+    expect(calcLuckScore(20, 20, 1)).toBe(49); // 30 + Math.floor((10 + 20 + 20 + 8) / 3) = 49
+    expect(calcLuckScore(20, 10, 0)).toBe(43); // 30 + Math.floor((10 + 20 + 10 + 0) / 3) = 43 (Starting Luck)
   });
 
   it('calcDependabilityDecay decays by 3, min 0', () => {
