@@ -9,6 +9,7 @@ interface InteractionProps {
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { calcLuckScore } from '../engine/statMath';
 
 /**
  * JobBoard — Shown at the Employment Office.
@@ -18,6 +19,8 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   const { t } = useTranslation();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
+  const luckScore = calcLuckScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
+
   // Group jobs by locationId
   const locations = Array.from(new Set(availableJobs.map(j => j.locationId)));
 
@@ -25,6 +28,16 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
     return (
       <div className="interaction-panel">
         <h3>{t('jobBoard.title')}</h3>
+        <div style={{
+          marginBottom: '15px',
+          padding: '10px 12px',
+          backgroundColor: 'rgba(46, 204, 113, 0.15)',
+          border: '1px solid #2ecc71',
+          borderRadius: '6px',
+          fontSize: '12px'
+        }}>
+          <strong>🍀 {t('jobBoard.luckScoreInfo', { score: luckScore, defaultValue: `Your Luck Score is ${luckScore}/100. (When applying, a roll of 1-100 ≤ ${luckScore} is required for an opening).` })}</strong>
+        </div>
         {locations.map(loc => {
           const jobCount = availableJobs.filter(j => j.locationId === loc).length;
           return (
@@ -73,14 +86,14 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
             <div style={{ marginTop: '10px' }}>
               {isCurrentJob ? (
                 (!rules?.helpfulUI || offeredWage > player.currentWage) ? (
-                  <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
+                  <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
                     {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
                   </button>
                 ) : (
                   <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ {t('jobBoard.currentJob', { wage: player.currentWage })}</span>
                 )
               ) : (
-                <button onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
+                <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
                   {t('jobBoard.apply', { cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
                 </button>
               )}
@@ -102,7 +115,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     <div className="interaction-panel">
       <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
       <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
-      <button onClick={() => onAction({ type: 'work', jobId: job.id })}>
+      <button data-action-target={`work-${job.id}`} onClick={() => onAction({ type: 'work', jobId: job.id })}>
         {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
       </button>
     </div>
@@ -124,6 +137,7 @@ export function StoreFront({ player, onAction, availableItems }: InteractionProp
             onClick={() => {
               if (canAfford) onAction({ type: 'buy', itemId: item.id });
             }}
+            data-action-target={`buy-${item.id}`}
           >
             <span>{t(`item.${item.id}`, { defaultValue: item.name })}</span>
             <span>${item.basePrice}</span>
@@ -141,7 +155,7 @@ export function HomeRelax({ onAction, campaign }: InteractionProps & { campaign?
     <div className="interaction-panel">
       <h3>{t('homeRelax.title')}</h3>
       <p style={{ fontSize: '12px', marginBottom: '10px' }}>{t('homeRelax.desc', { cost: relaxCost })}</p>
-      <button onClick={() => onAction({ type: 'relax' })}>
+      <button data-action-target="relax" onClick={() => onAction({ type: 'relax' })}>
         {t('homeRelax.button', { cost: relaxCost })}
       </button>
     </div>
@@ -605,6 +619,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                         style={{ marginTop: '5px', background: '#3498db' }} 
                         onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
                         disabled={player.hoursRemaining < (rules?.allowPartialHours ? 1 : campaign.config.timeRules.studySessionCost)}
+                        data-action-target={`study-${deg.id}`}
                       >
                         {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
                       </button>
@@ -614,6 +629,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                       style={{ marginTop: '5px', background: '#2ecc71', color: '#000' }} 
                       onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
                       disabled={player.money < tuitionFee}
+                      data-action-target={`enroll-${deg.id}`}
                     >
                       {t('university.enrollBtn', { defaultValue: 'Enroll' })}
                     </button>

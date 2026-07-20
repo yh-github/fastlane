@@ -1,6 +1,13 @@
 import type { PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
 import { useTranslation } from 'react-i18next';
+import {
+  calcLuckScore,
+  calcRobberyChance,
+  calcMaxDependability,
+  calcMaxExperience,
+  calcRaiseThreshold
+} from '../engine/statMath';
 
 interface InventoryModalProps {
   player: PlayerState;
@@ -17,6 +24,14 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose }: In
   const currentJob = campaign?.jobs.find(j => j.id === player.currentJobId);
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
   const totalStocks = Object.values(inventory.stocks.holdings).reduce((a, b) => a + b, 0);
+
+  const luckScore = calcLuckScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
+  const robberyRisk = (calcRobberyChance(player.relaxation || 0) * 100).toFixed(1);
+  const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
+  const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
+  const maxDep = calcMaxDependability(jobReqDep, player.degrees.length);
+  const maxExp = calcMaxExperience(jobReqExp, player.degrees.length);
+  const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0) : null;
 
   return (
     <div className="building-modal-overlay" style={{
@@ -49,6 +64,17 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose }: In
             <li><strong>Finances:</strong> Cash: ${player.money} | Savings: ${player.bankSavings} | T-Bills: {inventory.stocks.tBills} | Stocks: {totalStocks} shares</li>
             <li><strong>Debt:</strong> Loans: ${player.loanDebt} | Rent Arrears: ${player.rentDebt}</li>
             <li><strong>Housing:</strong> {currentHousing ? t(`building.${currentHousing.id}`, { defaultValue: currentHousing.name }) : 'Homeless'} | Rent Paid Until Week {player.rentPaidUntilWeek} (Next due: Week {Math.max(turn || 1, player.rentPaidUntilWeek - 1)})</li>
+          </ul>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('statusModal.attributesTitle', 'Formula Attributes & Caps')}</h3>
+          <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
+            <li><strong>{t('statusModal.luckScore', 'Luck Score (Hiring Roll Threshold):')}</strong> {luckScore} / 100</li>
+            <li><strong>{t('statusModal.robberyRisk', 'Home Robbery Risk:')}</strong> {robberyRisk}%</li>
+            <li><strong>{t('statusModal.dependabilityCap', 'Dependability Cap:')}</strong> {player.dependability} / {maxDep} (Current / Max Cap)</li>
+            <li><strong>{t('statusModal.experienceCap', 'Experience Cap:')}</strong> {player.experience} / {maxExp} (Current / Max Cap)</li>
+            <li><strong>{t('statusModal.nextRaiseReq', 'Dependability for Next Raise:')}</strong> {raiseThreshold !== null ? `${player.dependability} / ${raiseThreshold}` : t('statusModal.notEmployed', 'N/A (Unemployed)')}</li>
           </ul>
         </div>
 

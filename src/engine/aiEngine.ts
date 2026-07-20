@@ -34,6 +34,8 @@ export type GoapState = {
   rejectedJobs: string[];
   enrolledClasses: Record<string, number>;
   week: number;
+  rentPrice: number;
+  relaxation: number;
 };
 
 function extractState(player: PlayerState, turn: number): GoapState {
@@ -57,7 +59,8 @@ function extractState(player: PlayerState, turn: number): GoapState {
     rejectedJobs: [...(player.turnFlags?.jobsRejectedThisTurn || [])],
     enrolledClasses: { ...(player.enrolledClasses || {}) },
     week: turn,
-    rentPrice: player.currentRentPrice || 150
+    rentPrice: player.currentRentPrice || 150,
+    relaxation: player.relaxation || 0
   };
 }
 
@@ -247,8 +250,11 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   const targetEducation = Math.ceil(Math.max(0, player.goalAllotment.education - 1) / 9);
   const targetHappiness = player.goalAllotment.happiness;
 
-  // Helper to safely determine buffer
   const rentBuffer = ((s.week % 4 === 3) || !s.rentPaid) ? 150 : 0;
+  const affordableFoodItemsPre = campaign.items
+    .filter(i => i.category === 'food' && (s.hasFridge || i.subcategory === 'fast_food'))
+    .sort((a, b) => a.basePrice - b.basePrice);
+  const minFoodCost = affordableFoodItemsPre.length > 0 ? affordableFoodItemsPre[0].basePrice : 70;
 
   // 0. Clothes (Desperate - if naked we cannot work and will permanently deadlock)
   const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => b.basePrice - a.basePrice);
@@ -285,17 +291,6 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     if (move) return [move];
   }
 
-  // 4. Buy Needed Items (Refrigerator)
-  const fridgeItemRef = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'z_mart') || campaign.items.find(i => i.id === 'refrigerator');
-  const fridgeCost = fridgeItemRef ? fridgeItemRef.basePrice : 650;
-  const minFoodCost = affordableFoodItems.length > 0 ? affordableFoodItems[0].basePrice : 70;
-  if (!s.hasFridge && s.money >= fridgeCost + minFoodCost + rentBuffer) {
-    const buyFridge = tryAction('BuyFridge');
-    if (buyFridge) return [buyFridge];
-    const move = moveTo('department_store');
-    if (move) return [move];
-  }
-
   // 2. Rent (If due and we have money)
   if (!s.rentPaid && s.money >= s.rentPrice) {
     const payRent = tryAction('PayRent');
@@ -304,11 +299,66 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     if (move) return [move];
   }
 
-  // 3. Career Upgrade & Job Search
+
+
+  // 4. Critical Work
+  // If rent is not paid and we DON'T have money, we MUST WORK! Or if we critically need money for food.
+  const minimumComfortableMoney = rentBuffer + minFoodCost;
+  const criticallyNeedsMoney = s.money < minimumComfortableMoney;
+  if (criticallyNeedsMoney) {
+     if (s.jobId && s.hours >= 6) {
+        const work = tryAction(`Work_${s.jobId}`);
+        if (work) return [work];
+        const jobDef = campaign.jobs.find(j => j.id === s.jobId);
+        if (jobDef) {
+           const move = moveTo(jobDef.locationId);
+           if (move) return [move];
+        }
+     }
+  }
+
+  // 5. Buy Needed Items (Refrigerator)
+  const fridgeItemRef = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'z_mart') || campaign.items.find(i => i.id === 'refrigerator');
+  const fridgeCost = fridgeItemRef ? fridgeItemRef.basePrice : 650;
+  if (!s.hasFridge && s.money >= fridgeCost + minimumComfortableMoney) {
+    const buyFridge = tryAction('BuyFridge');
+    if (buyFridge) return [buyFridge];
+    const move = moveTo('department_store');
+    if (move) return [move];
+  }
+
+  // 6. Education (Prioritize education to advance career)
+  if (targetEducation > s.degrees.length) { 
+    const enrolledDegree = Object.keys(s.enrolledClasses)[0];
+    const nextDegree = campaign.education.find(deg => !s.degrees.includes(deg.id) && s.enrolledClasses[deg.id] === undefined && s.money >= deg.baseTuitionFee + minimumComfortableMoney && deg.prerequisites.every(p => s.degrees.includes(p)));
+    
+    if (enrolledDegree) {
+       if (s.hours >= 4) {
+           const studyAction = tryAction(`Study_${enrolledDegree}`);
+           if (studyAction) return [studyAction];
+           const move = moveTo('education');
+           if (move) return [move];
+       }
+    } else if (nextDegree && s.hours >= 2) {
+       const enrollAction = tryAction(`Enroll_${nextDegree.id}`);
+       if (enrollAction) return [enrollAction];
+       const move = moveTo('education');
+       if (move) return [move];
+    }
+  }
+
+  // 7. Relax (if relaxation is dangerously low, or if happiness is getting low)
+  const dangerouslyLowRelaxation = s.relaxation <= 12; 
+  if (!player.turnFlags.relaxedThisTurn && (dangerouslyLowRelaxation || s.happiness < Math.max(15, targetHappiness - 10))) {
+    const relaxAction = tryAction('Relax');
+    if (relaxAction) return [relaxAction];
+  }
+
+  // 8. Career Upgrade & Job Search
   const targetDependability = targetCareer > 0 ? targetCareer : 0; // targetCareer is ALREADY in Dependability units
   const targetCareerProgress = player.goalAllotment.career;
 
-  if (targetDependability > 0 || targetWealth > 0) {
+  if (targetDependability > 0 || targetWealth > 0 || !s.jobId) {
     let bestJob = null;
     let bestScore = -1;
     
@@ -358,28 +408,12 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     }
   }
 
-  // If rent is not paid and we DON'T have money, we MUST WORK!
-  if (!s.rentPaid && s.money < s.rentPrice) {
-     if (s.jobId && s.hours >= 6) {
-        const work = tryAction(`Work_${s.jobId}`);
-        if (work) return [work];
-        const jobDef = campaign.jobs.find(j => j.id === s.jobId);
-        if (jobDef) {
-           const move = moveTo(jobDef.locationId);
-           if (move) return [move];
-        }
-     }
-  }
-
-  const minimumComfortableMoney = rentBuffer + minFoodCost;
-
-  // 4. Clothes
+  // 9. Clothes Upgrades (if we have comfortable money and want a career)
   if (clothesItems.length > 0) {
     const currentClothesType = player.inventory.selectedClothes;
     const currentScore = s.clothes > 0 ? (currentClothesType === 'business' ? 3 : (currentClothesType === 'dress' ? 2 : 1)) : 0;
     const targetScore = targetClothes.id.includes('business') ? 3 : (targetClothes.id.includes('dress') ? 2 : 1);
     
-    // We have adequate clothes if our current clothes are at least as good as the target, and they aren't about to wear out (weeks > 1)
     const hasTargetClothes = currentScore >= targetScore && s.clothes > 1;
     const requiredMoney = targetClothes.basePrice + minimumComfortableMoney;
     
@@ -392,8 +426,10 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     }
   }
 
-  // 5. Work (Aggressive Wealth & Career Trajectory)
+  // 10. Work (Aggressive Wealth & Career Trajectory)
+  // Work less if we met our goals and don't need money.
   const needsMoney = s.money < targetWealth + rentBuffer;
+  // Work is needed for dependability and career progress
   const needsCareer = s.dep < targetCareer;
   if ((needsMoney || needsCareer) && s.jobId && s.hours >= 6) {
      const work = tryAction(`Work_${s.jobId}`);
@@ -405,33 +441,19 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
      }
   }
 
-  // 6. Education
-  if (targetEducation > s.degrees.length) { 
-    const enrolledDegree = Object.keys(s.enrolledClasses)[0];
-    const nextDegree = campaign.education.find(deg => !s.degrees.includes(deg.id) && s.enrolledClasses[deg.id] === undefined && s.money >= deg.baseTuitionFee + minimumComfortableMoney && deg.prerequisites.every(p => s.degrees.includes(p)));
-    
-    if (enrolledDegree) {
-       if (s.hours >= 4) {
-           const studyAction = tryAction(`Study_${enrolledDegree}`);
-           if (studyAction) return [studyAction];
-           const move = moveTo('education');
-           if (move) return [move];
-       }
-    } else if (nextDegree && s.hours >= 2) {
-       const enrollAction = tryAction(`Enroll_${nextDegree.id}`);
-       if (enrollAction) return [enrollAction];
-       const move = moveTo('education');
-       if (move) return [move];
-    }
+  // 11. Stockpile Food if rich
+  if (s.money > 200 + rentBuffer && s.food < 10) {
+    const buyFood = tryAction('BuyFood');
+    if (buyFood) return [buyFood];
+    const move = moveTo('grocery');
+    if (move) return [move];
   }
 
-  // 7. Happiness vs Work
-  if (!player.turnFlags.relaxedThisTurn && (s.happiness < 15 || (!needsMoney && !needsCareer && s.happiness < targetHappiness))) {
-    const relaxAction = tryAction('Relax');
-    if (relaxAction) return [relaxAction];
-  }
+  // 12. Fallback Relax
+  const relaxAction = tryAction('Relax');
+  if (relaxAction) return [relaxAction];
 
-  // 8. Fallback Work
+  // 13. Fallback Work
   if (s.jobId && s.hours >= 6) {
     const work = tryAction(`Work_${s.jobId}`);
     if (work) return [work];
@@ -442,17 +464,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     }
   }
 
-  // 9. Stockpile Food if rich
-  if (s.money > 200 + rentBuffer && s.food < 10) {
-    const buyFood = tryAction('BuyFood');
-    if (buyFood) return [buyFood];
-    const move = moveTo('grocery');
-    if (move) return [move];
-  }
 
-  // 10. Fallback Relax
-  const relaxAction = tryAction('Relax');
-  if (relaxAction) return [relaxAction];
 
   console.log(`[DEBUG-AI-NO-ACTION] s.hours=${s.hours}, s.money=${s.money}, s.jobId=${s.jobId}, s.clothes=${s.clothes}, s.food=${s.food}, targetCareerProgress=${targetCareerProgress}`);
   return [];

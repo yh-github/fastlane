@@ -20,16 +20,18 @@ export async function simulateActionVisuals(action: GameAction, ui: TranslatorUI
       break;
 
     case 'buy':
-    case 'apply_job':
+    case 'apply':
     case 'work':
-    case 'bank_deposit':
-    case 'bank_withdraw':
-    case 'bank_loan':
-    case 'bank_repay':
-    case 'charity':
-    case 'rent_pay':
-    case 'doctor_heal':
+    case 'bank_transaction':
+    case 'take_loan':
+    case 'pay_loan':
+    case 'rent_transaction':
+    case 'pay_rent_advance':
+    case 'enroll':
     case 'study':
+    case 'pawn_item':
+    case 'redeem_item':
+    case 'buy_pawn_item':
       // These actions happen inside buildings. 
       // Open the building modal visually so the human sees the AI at the location.
       ui.setIsBuildingModalOpen(true);
@@ -37,18 +39,40 @@ export async function simulateActionVisuals(action: GameAction, ui: TranslatorUI
       // Pause to let the human process that the AI is looking at the store/office
       await new Promise(r => setTimeout(r, PACING_DELAY_MS));
       
-      // Optionally in the future: we could dispatch a temporary "highlight" state 
-      // to the specific button (e.g. highlight the specific item being bought)
-      // before waiting another few MS and returning.
-      
+      // Dispatch visual highlight
+      let selector = '';
+      if (action.type === 'apply') selector = `[data-action-target="apply-${action.jobId}"]`;
+      else if (action.type === 'work') selector = `[data-action-target="work-${action.jobId}"]`;
+      else if (action.type === 'buy') selector = `[data-action-target="buy-${action.itemId}"]`;
+      else if (action.type === 'study') selector = `[data-action-target="study-${action.degreeId}"]`;
+      else if (action.type === 'enroll') selector = `[data-action-target="enroll-${action.degreeId}"]`;
+
+      if (selector) {
+        const el = document.querySelector(selector);
+        if (el) {
+          el.classList.add('ai-simulated-click');
+          await new Promise(r => setTimeout(r, 400));
+          el.classList.remove('ai-simulated-click');
+        }
+      }
       break;
 
     case 'eat':
     case 'relax':
     case 'change_clothes':
       // Inventory actions
-      // Could open inventory modal here in the future.
-      await new Promise(r => setTimeout(r, PACING_DELAY_MS));
+      if (action.type === 'relax') {
+        ui.setIsBuildingModalOpen(true);
+        await new Promise(r => setTimeout(r, PACING_DELAY_MS));
+        const el = document.querySelector('[data-action-target="relax"]');
+        if (el) {
+          el.classList.add('ai-simulated-click');
+          await new Promise(r => setTimeout(r, 400));
+          el.classList.remove('ai-simulated-click');
+        }
+      } else {
+        await new Promise(r => setTimeout(r, PACING_DELAY_MS));
+      }
       break;
 
     case 'end-turn':

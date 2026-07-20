@@ -1,6 +1,7 @@
 import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import { spendHours } from './timeManager';
 import { processRentDebt } from './economyEngine';
+import { calcLuckScore } from './statMath';
 import type { JobDef } from './dataLoader';
 import type { Random } from '../utils/rng';
 
@@ -11,7 +12,7 @@ export interface JobApplicationResult {
 }
 
 export function calculateJobLuck(player: PlayerState): number {
-  return Math.floor(30 + (10 + player.dependability + player.experience + (8 * player.degrees.length)) / 3);
+  return calcLuckScore(player.dependability, player.experience, player.degrees.length);
 }
 
 export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules, turn: number = 1): JobApplicationResult {

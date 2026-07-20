@@ -296,3 +296,33 @@ export async function animatePlayerPath(path: PlayerPosition[], playerIndex: num
     });
   }
 }
+
+/**
+ * Pulse a specific player token to draw attention to it.
+ */
+export async function pulsePlayer(playerIndex: number): Promise<void> {
+  if (!playerTokens[playerIndex]) return;
+  const token = playerTokens[playerIndex];
+  
+  return new Promise<void>((resolve) => {
+    const startTime = performance.now();
+    const duration = 600; // 600ms pulse
+    const originalScale = 1;
+    
+    function step(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      const scale = originalScale + Math.sin(progress * Math.PI) * 0.8;
+      token.scale.set(scale, scale);
+      
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        token.scale.set(originalScale, originalScale);
+        resolve();
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}

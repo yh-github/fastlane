@@ -524,3 +524,14 @@ button:disabled {
     opacity: 1;
   }
 }
+
+.ai-simulated-click {
+  box-shadow: 0 0 15px 5px rgba(255, 255, 0, 0.8) !important;
+  transform: scale(1.05);
+  transition: all 0.2s ease-in-out;
+  background-color: #ffeb3b !important;
+  color: #000 !important;
+  z-index: 100;
+  position: relative;
+}
+
