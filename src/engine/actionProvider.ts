@@ -2,6 +2,7 @@ import { GameAction } from './gameReducer';
 import { GameState, PlayerState } from './gameState';
 import { CampaignBundle } from './dataLoader';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
+import { calcEconomyPrice } from './economyEngine';
 
 export interface ActionChoice {
   label: string;
@@ -71,7 +72,7 @@ export function getAvailableActions(
     // Pawn Shop
     if (bDef?.archetype === 'pawnshop') {
       player.inventory.appliances.forEach(app => {
-        const value = Math.floor(app.purchasePrice * campaign.config.economyRules.pawnPayoutRate);
+        const value = Math.floor(calcEconomyPrice(app.purchasePrice, state.economicIndex) * campaign.config.economyRules.pawnPayoutRate);
         const pawnLabel = helpful ? `Pawn ${app.id} (+$${value})` : `Pawn ${app.id}`;
         options.push({ label: pawnLabel, action: { type: 'pawn_item', item: app, value } });
       });
@@ -79,6 +80,12 @@ export function getAvailableActions(
       player.inventory.pawnedItems?.forEach(pawned => {
         const redeemLabel = helpful ? `Redeem ${pawned.itemId} (-$${pawned.redeemCost})` : `Redeem ${pawned.itemId}`;
         options.push({ label: redeemLabel, action: { type: 'redeem_item', item: pawned, cost: pawned.redeemCost } });
+      });
+
+      state.pawnShopItemsForSale?.forEach(pawned => {
+        const cost = Math.floor(pawned.originalPrice * 0.5);
+        const buyLabel = helpful ? `Buy ${pawned.itemId} from Pawn Shop (-$${cost})` : `Buy ${pawned.itemId}`;
+        options.push({ label: buyLabel, action: { type: 'buy_pawn_item', item: pawned, cost } });
       });
     }
 

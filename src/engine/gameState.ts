@@ -233,6 +233,7 @@ export interface PawnedItem {
   redeemCost: number;
   weekPawned: number;
   ownerId: string;
+  purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop';
 }
 
 // ─── Goals ──────────────────────────────────────────────────────

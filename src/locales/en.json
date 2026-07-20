@@ -76,7 +76,8 @@
     },
     "pawn": {
       "pawned": "Pawned {{itemName}} for ${{value}}",
-      "redeemed": "Redeemed {{itemName}} for ${{cost}}"
+      "redeemed": "Redeemed {{itemName}} for ${{cost}}",
+      "bought": "Bought {{itemName}} from Pawn Shop for ${{cost}}"
     },
     "rent": {
       "paid": "Paid ${{amount}} towards rent",
@@ -94,6 +95,9 @@
       "alreadyHaveDegree": "You already have this degree.",
       "cannotStudy": "Cannot study this.",
       "notEnoughMoneyBuyBack": "Not enough money to buy back.",
+      "notEnoughMoneyBuyPawn": "Not enough money to buy pawned item.",
+      "pawnShopFull": "The Pawn Shop is full (max 6 items).",
+      "pawnShopHasDuplicate": "The Pawn Shop already has an item of this type.",
       "notEnoughMoneyDeposit": "Not enough cash to deposit.",
       "notEnoughMoneyMove": "Not enough money to move into {{name}}.",
       "notEnoughMoneyPayment": "Not enough money for payment.",
