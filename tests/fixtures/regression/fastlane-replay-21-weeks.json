@@ -1,0 +1,3322 @@
+{
+  "version": "1.0.0",
+  "commitHash": "ae632f2",
+  "rules": {
+    "strictEviction": true,
+    "fluctuatingRent": false,
+    "clothingDecaysAll": true,
+    "autoEquipBestClothes": true,
+    "classicStockMarket": true,
+    "allowPartialHours": true,
+    "enableRelaxationDoctor": true,
+    "requireJobForLoan": true,
+    "helpfulUI": true,
+    "enableAnimations": true,
+    "allowOverAchievingGoals": true,
+    "bypassDoctorIfBroke": false,
+    "relaxationDoctorThreshold": 10,
+    "protectBuiltInAppliances": false,
+    "allowEmployedRentPayment": false,
+    "delayBookSetCredit": false,
+    "allowEatingSpoiledFood": true
+  },
+  "startingState": {
+    "turn": 0,
+    "economicIndex": 0,
+    "rngState": 1498185444,
+    "pawnShopItemsForSale": [],
+    "players": [
+      {
+        "id": "player_1",
+        "name": "Player 1",
+        "isAi": false,
+        "hoursRemaining": 60,
+        "money": 200,
+        "bankSavings": 0,
+        "rentDebt": 0,
+        "loanDebt": 0,
+        "timesDefaulted": 0,
+        "loanPaymentDeadline": 0,
+        "happiness": 10,
+        "experience": 10,
+        "dependability": 20,
+        "maxExperience": 20,
+        "maxDependability": 40,
+        "relaxation": 16,
+        "currentJobId": null,
+        "currentWage": 0,
+        "raisesAtCurrentJob": 0,
+        "currentHousingId": "low_cost",
+        "currentRentPrice": 325,
+        "rentPaidUntilWeek": 4,
+        "rentExtensionActive": false,
+        "rentExtensionsReceived": 0,
+        "rentExtensionsDeniedPermanently": false,
+        "degrees": [],
+        "enrolledClasses": {},
+        "inventory": {
+          "selectedClothes": "casual",
+          "casualClothesWeeks": 6,
+          "dressClothesWeeks": 0,
+          "businessClothesWeeks": 0,
+          "freshFoodUnits": 0,
+          "fastFoodItems": [],
+          "appliances": [],
+          "books": [],
+          "tickets": {
+            "baseball": 0,
+            "theatre": 0,
+            "concert": 0
+          },
+          "lotteryTickets": 0,
+          "stocks": {
+            "tBills": 0,
+            "holdings": {}
+          },
+          "pawnedItems": []
+        },
+        "nakedTurns": 0,
+        "position": "node_low_cost",
+        "goalAllotment": {
+          "wealth": 25,
+          "happiness": 25,
+          "education": 25,
+          "career": 25
+        },
+        "turnFlags": {
+          "hasEaten": false,
+          "hasWorked": false,
+          "drinkHappinessGranted": false,
+          "fastFoodHappinessGranted": false,
+          "freshFoodHappinessGranted": false,
+          "caffeineDebt": 0,
+          "askedForExtension": false,
+          "rentPaidThisTurn": false,
+          "freeNewspaper": false,
+          "hasSeenEvents": false,
+          "hasSeenWeekend": false,
+          "relaxedThisTurn": false,
+          "rentExtensionRefusedThisTurn": false,
+          "jobsRejectedThisTurn": [],
+          "bookSetCompletedThisTurn": false,
+          "lotteryHappinessGranted": false
+        },
+        "turnEvents": [],
+        "newspaperHeadline": null,
+        "activeEffects": {}
+      }
+    ],
+    "phase": "setup",
+    "winnerId": null,
+    "campaignId": "The Fast Lane — Improved Version (QoL)",
+    "rules": {
+      "strictEviction": true,
+      "fluctuatingRent": false,
+      "clothingDecaysAll": true,
+      "autoEquipBestClothes": true,
+      "classicStockMarket": true,
+      "allowPartialHours": true,
+      "enableRelaxationDoctor": true,
+      "requireJobForLoan": true,
+      "helpfulUI": true,
+      "enableAnimations": true,
+      "allowOverAchievingGoals": true,
+      "bypassDoctorIfBroke": false,
+      "relaxationDoctorThreshold": 10,
+      "protectBuiltInAppliances": false,
+      "allowEmployedRentPayment": false,
+      "delayBookSetCredit": false,
+      "allowEatingSpoiledFood": true
+    }
+  },
+  "steps": [
+    {
+      "turn": 1,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "apply",
+        "jobId": "burger_clerk",
+        "offeredWage": 6
+      },
+      "engineDecisions": [
+        {
+          "type": "job_apply_luck",
+          "result": 87
+        }
+      ]
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "apply",
+        "jobId": "burger_cook",
+        "offeredWage": 5
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "apply",
+        "jobId": "factory_janitor",
+        "offeredWage": 7
+      },
+      "engineDecisions": [
+        {
+          "type": "job_apply_luck",
+          "result": 4
+        }
+      ]
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "work",
+        "jobId": "factory_janitor"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "work",
+        "jobId": "factory_janitor"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "work",
+        "jobId": "factory_janitor"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "work",
+        "jobId": "factory_janitor"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "work",
+        "jobId": "factory_janitor"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "move",
+        "nodeId": "node_burger"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "buy",
+        "itemId": "fries"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "move",
+        "nodeId": "node_z_mart"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "buy",
+        "itemId": "refrigerator"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "move",
+        "nodeId": "node_low_cost"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "relax"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -7
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 0
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "move",
+        "nodeId": "node_z_mart"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "buy",
+        "itemId": "atlas"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "move",
+        "nodeId": "node_burger"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "buy",
+        "itemId": "fries"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "enroll",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -7
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 0
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "move",
+        "nodeId": "node_z_mart"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "buy",
+        "itemId": "dictionary"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "move",
+        "nodeId": "node_burger"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "buy",
+        "itemId": "fries"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "study",
+        "degreeId": "trade_school"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "work",
+        "jobId": "factory_janitor"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "work",
+        "jobId": "factory_janitor"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "apply",
+        "jobId": "blacks_checker",
+        "offeredWage": 7
+      },
+      "engineDecisions": [
+        {
+          "type": "job_apply_luck",
+          "result": 19
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_checker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_checker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_checker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_checker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_checker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 1
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 0
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "move",
+        "nodeId": "node_rent"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "pay_rent_advance",
+        "amount": 325
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_checker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_checker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_checker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": [
+        {
+          "type": "street_robbery",
+          "result": false
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "apply",
+        "jobId": "blacks_butcher",
+        "offeredWage": 11
+      },
+      "engineDecisions": [
+        {
+          "type": "job_apply_luck",
+          "result": 14
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "move",
+        "nodeId": "node_burger"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "buy",
+        "itemId": "fries"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "move",
+        "nodeId": "node_z_mart"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -3
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 0
+        }
+      ]
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "move",
+        "nodeId": "node_z_mart"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "move",
+        "nodeId": "node_burger"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "buy",
+        "itemId": "fries"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 5,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -3
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 0
+        }
+      ]
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "move",
+        "nodeId": "node_z_mart"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "buy",
+        "itemId": "casual_clothes"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "move",
+        "nodeId": "node_socket"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "buy",
+        "itemId": "refrigerator"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "buy",
+        "itemId": "food_4weeks"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "buy",
+        "itemId": "food_2weeks"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 6,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -3
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "move",
+        "nodeId": "node_z_mart"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "buy",
+        "itemId": "encyclopedia"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "enroll",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "study",
+        "degreeId": "junior_college"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 7,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -3
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "move",
+        "nodeId": "node_rent"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "move_apartment",
+        "housingId": "security",
+        "cost": 340
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "move",
+        "nodeId": "node_security"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "relax"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": [
+        {
+          "type": "street_robbery",
+          "result": false
+        }
+      ]
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "enroll",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 8,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -9
+        },
+        {
+          "type": "market_crash_trigger",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 0
+        }
+      ]
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 9,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -9
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "move",
+        "nodeId": "node_socket"
+      },
+      "engineDecisions": [
+        {
+          "type": "street_robbery",
+          "result": false
+        }
+      ]
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "buy",
+        "itemId": "computer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "buy",
+        "itemId": "hot_tub"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "buy",
+        "itemId": "freezer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "buy",
+        "itemId": "microwave"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 10,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -7
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 1
+        }
+      ]
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "pre_engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "enroll",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "study",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 11,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -7
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 1
+        }
+      ]
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "buy",
+        "itemId": "food_1week"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "move",
+        "nodeId": "node_rent"
+      },
+      "engineDecisions": [
+        {
+          "type": "street_robbery",
+          "result": false
+        }
+      ]
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "move_apartment",
+        "housingId": "low_cost",
+        "cost": 162
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "move_apartment",
+        "housingId": "security",
+        "cost": 237
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "pay_rent_advance",
+        "amount": 237
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "work",
+        "jobId": "blacks_butcher"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "buy",
+        "itemId": "food_4weeks"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 12,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 6
+        },
+        {
+          "type": "market_crash_trigger",
+          "result": false
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 1
+        }
+      ]
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "study",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "study",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "study",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "study",
+        "degreeId": "engineering"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "apply",
+        "jobId": "factory_machinist",
+        "offeredWage": 11
+      },
+      "engineDecisions": [
+        {
+          "type": "job_apply_luck",
+          "result": 81
+        }
+      ]
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "work",
+        "jobId": "factory_machinist"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "work",
+        "jobId": "factory_machinist"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "work",
+        "jobId": "factory_machinist"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "work",
+        "jobId": "factory_machinist"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "work",
+        "jobId": "factory_machinist"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "work",
+        "jobId": "factory_machinist"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "work",
+        "jobId": "factory_machinist"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "work",
+        "jobId": "factory_machinist"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 13,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -7
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 1
+        }
+      ]
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "apply",
+        "jobId": "factory_engineer",
+        "offeredWage": 11
+      },
+      "engineDecisions": [
+        {
+          "type": "job_apply_luck",
+          "result": 19
+        }
+      ]
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "enroll",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "enroll",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "study",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 14,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 5
+        },
+        {
+          "type": "market_crash_trigger",
+          "result": false
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "move",
+        "nodeId": "node_qt"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "buy",
+        "itemId": "business_suit"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "move",
+        "nodeId": "node_university"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "study",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "study",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "study",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "study",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "study",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "study",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "study",
+        "degreeId": "academic"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "apply",
+        "jobId": "factory_engineer",
+        "offeredWage": 13
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 15,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 5
+        },
+        {
+          "type": "market_crash_trigger",
+          "result": false
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "work",
+        "jobId": "factory_engineer"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "apply",
+        "jobId": "factory_gen_mgr",
+        "offeredWage": 16
+      },
+      "engineDecisions": [
+        {
+          "type": "job_apply_luck",
+          "result": 76
+        }
+      ]
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 16,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 7
+        },
+        {
+          "type": "market_crash_trigger",
+          "result": false
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "move",
+        "nodeId": "node_blacks_market"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "buy",
+        "itemId": "food_4weeks"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "buy",
+        "itemId": "food_4weeks"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "buy",
+        "itemId": "food_4weeks"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "buy",
+        "itemId": "lottery_tickets"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": [
+        {
+          "type": "street_robbery",
+          "result": false
+        }
+      ]
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 17,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -6
+        },
+        {
+          "type": "market_crash_trigger",
+          "result": false
+        },
+        {
+          "type": "lottery_roll_player_1",
+          "result": 169
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 2
+        }
+      ]
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "move",
+        "nodeId": "node_employment"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "apply",
+        "jobId": "factory_gen_mgr",
+        "offeredWage": 17
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 18,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -6
+        },
+        {
+          "type": "market_crash_trigger",
+          "result": false
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 19,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -6
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "move",
+        "nodeId": "node_factory"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "work",
+        "jobId": "factory_gen_mgr"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 20,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": -6
+        },
+        {
+          "type": "computer_profit_trigger_player_1",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_computer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_hot_tub",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_freezer",
+          "result": false
+        },
+        {
+          "type": "appliance_break_player_1_microwave",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 3
+        }
+      ]
+    }
+  ],
+  "endStateHash": ""
+}

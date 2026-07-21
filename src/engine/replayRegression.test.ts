@@ -110,4 +110,47 @@ describe('Deterministic Replay Regression', () => {
     // Verify it matches snapshot
     expect(currentState).toMatchSnapshot();
   });
+
+  it('replays a real game using fastlane-replay-21-weeks.json', async () => {
+    const { loadCampaign } = await import('./dataLoader');
+    const replayPath = path.resolve('tests/fixtures/regression/fastlane-replay-21-weeks.json');
+    if (!fs.existsSync(replayPath)) {
+      console.warn('Skipping replay test: fastlane-replay-21-weeks.json not found');
+      return;
+    }
+
+    const replayData: ReplayData = JSON.parse(fs.readFileSync(replayPath, 'utf8'));
+    let currentState = replayData.startingState;
+    const realCampaign = await loadCampaign('qol_improved');
+
+    for (const step of replayData.steps) {
+      if (step.action.type === 'end_turn') {
+        const replayCtx: ReplayContext = { inDecisions: step.engineDecisions || [], outDecisions: [] };
+        currentState = processTurnStart(currentState, realCampaign, replayCtx);
+      } else {
+        const player = currentState.players[0];
+        const replayCtx: ReplayContext = { inDecisions: step.engineDecisions || [], outDecisions: [] };
+        const context = {
+          campaign: realCampaign,
+          rules: currentState.rules,
+          turn: currentState.turn,
+          economicIndex: currentState.economicIndex,
+          rng: new Random(currentState.rngState),
+          state: currentState,
+          replayContext: replayCtx
+        };
+        const { updatedPlayer, updatedPawnShopItemsForSale } = gameReducer(player, step.action as any, context);
+        
+        currentState = {
+          ...currentState,
+          rngState: context.rng.getState(),
+          pawnShopItemsForSale: updatedPawnShopItemsForSale ?? currentState.pawnShopItemsForSale,
+          players: [updatedPlayer]
+        };
+      }
+    }
+
+    // Verify it matches snapshot
+    expect(currentState).toMatchSnapshot();
+  });
 });
