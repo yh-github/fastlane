@@ -66,6 +66,7 @@ export interface ItemDef {
   weeks?: number;
   units?: number;
   tags?: string[];
+  isFixedPrice?: boolean;
 }
 
 export interface EducationDef {

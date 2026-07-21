@@ -26,6 +26,7 @@ export function calcLiquidAssets(
   turn: number
 ): number {
   let assets = player.money + player.bankSavings;
+  assets -= (player.loanDebt || 0);
 
   assets += (player.inventory.stocks.tBills || 0) * 100;
 
@@ -54,9 +55,18 @@ export function calcLiquidAssets(
  *
  * @param basePrice     — The base price of the item
  * @param economicIndex — Current index (-30 to +90)
+ * @param isFixedPrice  — If true, returns basePrice without economic adjustment
  */
-export function calcEconomyPrice(basePrice: number, economicIndex: number): number {
+export function calcEconomyPrice(basePrice: number, economicIndex: number, isFixedPrice?: boolean): number {
+  if (isFixedPrice) return basePrice;
   return Math.floor(basePrice + (basePrice * economicIndex) / 60);
+}
+
+/**
+ * Calculate price for an item definition or item-like object.
+ */
+export function calcItemPrice(item: { basePrice: number; isFixedPrice?: boolean }, economicIndex: number): number {
+  return calcEconomyPrice(item.basePrice, economicIndex, item.isFixedPrice);
 }
 
 /**
@@ -151,17 +161,31 @@ export function applyMarketCrash(
 
 /**
  * Applies an Economic Boom to a player.
- * Gives +5 Happiness if the player has significant stock investments.
+ * Gives +5 Happiness if the player has >$1000 in fluctuating stocks.
  */
-export function applyEconomicBoom(player: PlayerState): PlayerState {
+export function applyEconomicBoom(
+  player: PlayerState,
+  campaign: CampaignBundle,
+  economicIndex: number,
+  turn: number
+): PlayerState {
   let updated = { ...player };
 
-  const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
+  let stockValue = 0;
+  if (campaign && campaign.stocks) {
+    for (const stock of campaign.stocks) {
+      if (stock.id === 'tbills') continue;
+      const owned = player.inventory.stocks.holdings[stock.id] || 0;
+      if (owned > 0) {
+        const seed = turn * 997 + stock.id.charCodeAt(0) * 31;
+        stockValue += owned * calcStockPrice(stock.basePrice, economicIndex, seed);
+      }
+    }
+  }
   
-  if (hasSignificantStocks) {
+  if (stockValue > 1000) {
     updated.happiness = Math.min(100, updated.happiness + 5);
   }
-
 
   return updated;
 }

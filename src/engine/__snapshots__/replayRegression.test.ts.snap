@@ -43,7 +43,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "happiness": 25,
         "wealth": 25,
       },
-      "happiness": 74,
+      "happiness": 68,
       "hoursRemaining": 40,
       "id": "player_1",
       "inventory": {
@@ -102,7 +102,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 70,
       "maxExperience": 50,
-      "money": 2,
+      "money": 0,
       "nakedTurns": 5,
       "name": "Player 1",
       "newspaperHeadline": {

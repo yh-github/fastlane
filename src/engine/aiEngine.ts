@@ -1,7 +1,7 @@
 import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 import type { GameAction } from './gameReducer';
-import { calcEconomyPrice } from './economyEngine';
+import { calcEconomyPrice, calcItemPrice } from './economyEngine';
 
 function getBuildingNodeByArchetype(campaign: CampaignBundle, archetype: string): string | null {
   const building = campaign.buildings.find(b => b.archetype === archetype);
@@ -104,7 +104,7 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
   const allFoodItems = campaign.items.filter(i => i.category === 'food');
   allFoodItems.forEach(item => {
     const storeNode = getBuildingNodeById(campaign, item.store);
-    const adjustedPrice = calcEconomyPrice(item.basePrice, economicIndex);
+    const adjustedPrice = calcItemPrice(item, economicIndex);
     actions.push({
       name: `BuyFood_${item.id}`,
       cost: 0,
@@ -123,7 +123,7 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
   const fridgeItem = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'socket_city') || campaign.items.find(i => i.id === 'refrigerator');
   if (fridgeItem) {
     const storeNode = getBuildingNodeById(campaign, fridgeItem.store);
-    const adjustedPrice = calcEconomyPrice(fridgeItem.basePrice, economicIndex);
+    const adjustedPrice = calcItemPrice(fridgeItem, economicIndex);
     actions.push({
       name: 'BuyFridge',
       cost: 0,
@@ -147,7 +147,7 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
   const clothesItems = campaign.items.filter(i => i.category === 'clothes');
   clothesItems.forEach(item => {
     const storeNode = getBuildingNodeById(campaign, item.store);
-    const cost = calcEconomyPrice(item.basePrice, economicIndex);
+    const cost = calcItemPrice(item, economicIndex);
     actions.push({
       name: `BuyClothes_${item.id}_${item.store}`,
       cost: 0,
@@ -256,14 +256,14 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   const rentBuffer = s.rentPrice;
   const affordableFoodItemsPre = campaign.items
     .filter(i => i.category === 'food' && (s.hasFridge || i.subcategory === 'fast_food'))
-    .sort((a, b) => calcEconomyPrice(a.basePrice, gameState.economicIndex) - calcEconomyPrice(b.basePrice, gameState.economicIndex));
-  const minFoodCost = affordableFoodItemsPre.length > 0 ? calcEconomyPrice(affordableFoodItemsPre[0].basePrice, gameState.economicIndex) : 70;
+    .sort((a, b) => calcItemPrice(a, gameState.economicIndex) - calcItemPrice(b, gameState.economicIndex));
+  const minFoodCost = affordableFoodItemsPre.length > 0 ? calcItemPrice(affordableFoodItemsPre[0], gameState.economicIndex) : 70;
   
-  const allClothes = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => calcEconomyPrice(a.basePrice, gameState.economicIndex) - calcEconomyPrice(b.basePrice, gameState.economicIndex));
-  const minClothesCost = allClothes.length > 0 ? calcEconomyPrice(allClothes[0].basePrice, gameState.economicIndex) : 50;
+  const allClothes = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => calcItemPrice(a, gameState.economicIndex) - calcItemPrice(b, gameState.economicIndex));
+  const minClothesCost = allClothes.length > 0 ? calcItemPrice(allClothes[0], gameState.economicIndex) : 50;
 
   // 0. Clothes (Desperate - if naked we cannot work and will permanently deadlock)
-  const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => calcEconomyPrice(b.basePrice, gameState.economicIndex) - calcEconomyPrice(a.basePrice, gameState.economicIndex));
+  const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => calcItemPrice(b, gameState.economicIndex) - calcItemPrice(a, gameState.economicIndex));
   let targetClothes = clothesItems[clothesItems.length - 1]; // cheapest casual
   
   // Determine minimum required uniform for current job
@@ -291,13 +291,13 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     const isDesperateForClothes = s.clothes <= 4 || wrongUniform;
     if (isDesperateForClothes) {
       let affordableClothes = targetClothes;
-      if (s.money < calcEconomyPrice(targetClothes.basePrice, gameState.economicIndex)) {
-         const cheapOptions = clothesItems.filter(i => s.money >= calcEconomyPrice(i.basePrice, gameState.economicIndex));
+      if (s.money < calcItemPrice(targetClothes, gameState.economicIndex)) {
+         const cheapOptions = clothesItems.filter(i => s.money >= calcItemPrice(i, gameState.economicIndex));
          if (cheapOptions.length > 0) {
             affordableClothes = cheapOptions[cheapOptions.length - 1];
          }
       }
-      if (s.money >= calcEconomyPrice(affordableClothes.basePrice, gameState.economicIndex)) {
+      if (s.money >= calcItemPrice(affordableClothes, gameState.economicIndex)) {
          const storeNode = affordableClothes.store;
          const buyClothes = tryAction(`BuyClothes_${affordableClothes.id}_${affordableClothes.store}`);
          if (buyClothes) return [buyClothes];
@@ -311,11 +311,11 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   // If we don't have a fridge, fresh food spoils immediately! So only buy fast food if no fridge.
   const affordableFoodItems = campaign.items
     .filter(i => i.category === 'food' && (s.hasFridge || i.subcategory === 'fast_food'))
-    .sort((a, b) => calcEconomyPrice(a.basePrice, gameState.economicIndex) - calcEconomyPrice(b.basePrice, gameState.economicIndex));
+    .sort((a, b) => calcItemPrice(a, gameState.economicIndex) - calcItemPrice(b, gameState.economicIndex));
     
   const needsFood = s.hasFridge ? s.food <= 2 : !s.hasFastFood;
-  if (needsFood && affordableFoodItems.length > 0 && s.money >= calcEconomyPrice(affordableFoodItems[0].basePrice, gameState.economicIndex)) {
-    const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= calcEconomyPrice(i.basePrice, gameState.economicIndex)).pop() || affordableFoodItems[0];
+  if (needsFood && affordableFoodItems.length > 0 && s.money >= calcItemPrice(affordableFoodItems[0], gameState.economicIndex)) {
+    const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= calcItemPrice(i, gameState.economicIndex)).pop() || affordableFoodItems[0];
     const buyFood = tryAction(`BuyFood_${bestFoodToBuy.id}`);
     if (buyFood) return [buyFood];
     const move = moveTo(bestFoodToBuy.store);
@@ -351,7 +351,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
 
   // 5. Buy Needed Items (Refrigerator)
   const fridgeItemRef = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'socket_city') || campaign.items.find(i => i.id === 'refrigerator');
-  const fridgeCost = fridgeItemRef ? calcEconomyPrice(fridgeItemRef.basePrice, gameState.economicIndex) : 650;
+  const fridgeCost = fridgeItemRef ? calcItemPrice(fridgeItemRef, gameState.economicIndex) : 650;
   if (!s.hasFridge && s.money >= fridgeCost + minimumComfortableMoney) {
     const buyFridge = tryAction('BuyFridge');
     if (buyFridge) return [buyFridge];
@@ -453,7 +453,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     const targetScore = targetClothes.id.includes('business') ? 3 : (targetClothes.id.includes('dress') ? 2 : 1);
     
     const hasTargetClothes = currentScore >= targetScore && s.clothes > 1;
-    const requiredMoney = calcEconomyPrice(targetClothes.basePrice, gameState.economicIndex) + minimumComfortableMoney;
+    const requiredMoney = calcItemPrice(targetClothes, gameState.economicIndex) + minimumComfortableMoney;
     
     if (!hasTargetClothes && s.money >= requiredMoney) {
       const storeNode = targetClothes.store;
@@ -482,7 +482,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   // 11. Stockpile Food if rich
   if (s.money > 200 + rentBuffer && s.food < 10) {
     if (affordableFoodItems.length > 0) {
-        const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= calcEconomyPrice(i.basePrice, gameState.economicIndex)).pop() || affordableFoodItems[0];
+        const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= calcItemPrice(i, gameState.economicIndex)).pop() || affordableFoodItems[0];
         const buyFood = tryAction(`BuyFood_${bestFoodToBuy.id}`);
         if (buyFood) return [buyFood];
         const move = moveTo(bestFoodToBuy.store);
