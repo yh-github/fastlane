@@ -47,8 +47,9 @@ export function getAvailableActions(
       
       campaign.housing.forEach(h => {
         if (h.id !== player.currentHousingId) {
-          const moveLabel = helpful ? `Move to ${h.name} (-$${h.baseRent})` : `Move to ${h.name}`;
-          options.push({ label: moveLabel, action: { type: 'move_apartment', housingId: h.id, cost: h.baseRent } });
+          const adjustedRent = calcEconomyPrice(h.baseRent, state.economicIndex);
+          const moveLabel = helpful ? `Move to ${h.name} (-$${adjustedRent})` : `Move to ${h.name}`;
+          options.push({ label: moveLabel, action: { type: 'move_apartment', housingId: h.id, cost: adjustedRent } });
         }
       });
     }
@@ -103,8 +104,9 @@ export function getAvailableActions(
           const jobLocationDef = campaign.buildings.find(b => b.id === job.locationId);
           const locationName = jobLocationDef ? jobLocationDef.name : job.locationId;
           
+          const offeredWage = calcEconomyPrice(job.baseWage, state.economicIndex);
           const applyLabel = helpful 
-            ? `Apply for ${job.title} @ ${locationName} (-${appCost}h, Wage: $${job.baseWage}/h, Min Exp: ${job.requirements.experience}, Min Dep: ${job.requirements.dependability})` 
+            ? `Apply for ${job.title} @ ${locationName} (-${appCost}h, Wage: $${offeredWage}/h, Min Exp: ${job.requirements.experience}, Min Dep: ${job.requirements.dependability})` 
             : `Apply for ${job.title} @ ${locationName}`;
           options.push({ label: applyLabel, action: { type: 'apply', jobId: job.id } });
         }
@@ -116,7 +118,8 @@ export function getAvailableActions(
       const studyCost = campaign.config.timeRules.studySessionCost;
       campaign.education.forEach(deg => {
         if (!player.degrees.includes(deg.id) && player.enrolledClasses[deg.id] === undefined) {
-          const enrollLabel = helpful ? `Enroll in ${deg.name} (-$${deg.baseTuitionFee})` : `Enroll in ${deg.name}`;
+          const adjustedTuition = calcEconomyPrice(deg.baseTuitionFee, state.economicIndex);
+          const enrollLabel = helpful ? `Enroll in ${deg.name} (-$${adjustedTuition})` : `Enroll in ${deg.name}`;
           options.push({ label: enrollLabel, action: { type: 'enroll', degreeId: deg.id } });
         } else if (player.enrolledClasses[deg.id] !== undefined) {
           const studyLabel = helpful ? `Study ${deg.name} (-${studyCost}h)` : `Study ${deg.name}`;
@@ -130,7 +133,8 @@ export function getAvailableActions(
     itemsAtStore.forEach(item => {
       const timeCost = item.id === 'newspaper' ? campaign.config.timeRules.newspaperCost : 0;
       const timeString = timeCost > 0 ? `, -${timeCost}h` : '';
-      const buyLabel = helpful ? `Buy ${item.name} (-$${item.basePrice}${timeString})` : `Buy ${item.name}`;
+      const adjustedPrice = item.id === 'newspaper' ? item.basePrice : calcEconomyPrice(item.basePrice, state.economicIndex);
+      const buyLabel = helpful ? `Buy ${item.name} (-$${adjustedPrice}${timeString})` : `Buy ${item.name}`;
       options.push({ label: buyLabel, action: { type: 'buy', itemId: item.id } });
     });
 
@@ -139,7 +143,7 @@ export function getAvailableActions(
       const myJob = campaign.jobs.find(j => j.id === player.currentJobId);
       if (myJob && myJob.locationId === bId) {
         const workCost = campaign.config.timeRules.workSessionCost;
-        const wage = myJob.baseWage * workCost;
+        const wage = player.currentWage * workCost;
         const workLabel = helpful ? `Work Shift: ${myJob.title} (-${workCost}h, +$${wage})` : `Work Shift: ${myJob.title}`;
         options.push({ label: workLabel, action: { type: 'work', jobId: myJob.id } });
       }
