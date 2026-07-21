@@ -9,6 +9,7 @@ import { calcEconomyPrice } from './economyEngine';
 import { recalculatePlayerEffects } from './gameState';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
+import { resolveDecision, type EngineDecision, type ReplayContext } from './replayTypes';
 
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
@@ -40,12 +41,14 @@ export interface ReducerContext {
   economicIndex: number;
   rng: Random;
   state: import('./gameState').GameState;
+  engineDecisions?: EngineDecision[]; // Incoming decisions for replay
 }
 
 export interface ReducerResult {
   updatedPlayer: PlayerState;
   actionLog?: GameEvent;
   updatedPawnShopItemsForSale?: PawnedItem[];
+  outEngineDecisions?: EngineDecision[];
 }
 
 export function gameReducer(
@@ -56,12 +59,17 @@ export function gameReducer(
   let nextPlayer = structuredClone(player);
   let actionLog: GameEvent | undefined = undefined;
   let updatedPawnShopItemsForSale: PawnedItem[] | undefined = undefined;
+  let outEngineDecisions: EngineDecision[] = [];
+  const replayContext: ReplayContext = {
+    inDecisions: context.engineDecisions,
+    outDecisions: outEngineDecisions
+  };
 
   switch (action.type) {
     case 'apply': {
       const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
       if (jobDef) {
-        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules, context.turn);
+        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules, context.turn, replayContext);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
@@ -164,7 +172,7 @@ export function gameReducer(
         const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
         if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
           const preRobberyMoney = nextPlayer.money;
-          nextPlayer = processStreetRobbery(nextPlayer, currentBuilding, context.turn, context.rng, context.campaign);
+          nextPlayer = processStreetRobbery(nextPlayer, currentBuilding, context.turn, context.rng, context.campaign, replayContext);
           if (nextPlayer.money < preRobberyMoney) {
             actionLog = { key: 'log.robbery' };
           }
@@ -349,7 +357,6 @@ export function gameReducer(
           nextPlayer.currentHousingId = housingDef.id;
           nextPlayer.currentRentPrice = action.cost;
           nextPlayer.rentPaidUntilWeek = context.turn + 4; // Pay for a month
-          nextPlayer.rentDebt = 0;
           nextPlayer.rentExtensionActive = false;
           nextPlayer.turnFlags.rentPaidThisTurn = true;
           actionLog = { key: 'action.rent.moved', params: { name: housingDef.name, cost: action.cost } };
@@ -444,6 +451,10 @@ export function gameReducer(
       break;
     }
     case 'ask_rent_extension': {
+      if (nextPlayer.rentPaidUntilWeek > context.turn + 1) {
+        actionLog = { key: 'rentOffice.notNeeded' };
+        break;
+      }
       if (nextPlayer.rentExtensionActive || nextPlayer.turnFlags.askedForExtension) {
         actionLog = { key: 'action.rent.alreadyGranted' };
         break;
@@ -454,7 +465,7 @@ export function gameReducer(
         approved = true;
       } else {
         const chance = Math.max(25, 100 - (nextPlayer.rentExtensionsReceived * 25));
-        const roll = Math.floor(context.rng.next() * 100);
+        const roll = resolveDecision(replayContext, `rent_extension_roll`, () => Math.floor(context.rng.next() * 100));
         if (roll < chance) {
           approved = true;
         }
@@ -482,6 +493,7 @@ export function gameReducer(
   return {
     updatedPlayer: nextPlayer,
     actionLog,
-    updatedPawnShopItemsForSale
+    updatedPawnShopItemsForSale,
+    outEngineDecisions
   };
 }

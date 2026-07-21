@@ -113,24 +113,38 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   );
 }
 
-export function StoreFront({ player, onAction, availableItems, economicIndex = 0 }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number }) {
+export function StoreFront({ player, onAction, availableItems, economicIndex = 0, rules }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number, rules?: import('../engine/gameState').GameRules }) {
   const { t } = useTranslation();
   return (
     <div className="interaction-panel">
       <h3>{t('storeFront.title')}</h3>
       {availableItems.map(item => {
         const adjustedPrice = calcEconomyPrice(item.basePrice, economicIndex);
+        const canAfford = player.money >= adjustedPrice;
+        let alreadyOwned = false;
+        if (item.category === 'book') alreadyOwned = player.inventory.books.includes(item.id);
+        else if (item.category === 'appliance') alreadyOwned = player.inventory.appliances.some(a => a.id === item.id);
+        
         return (
           <div 
             key={item.id} 
-            className="interaction-item interaction-item--clickable"
-            style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}
+            className={`interaction-item interaction-item--clickable ${!canAfford ? 'interaction-item--disabled' : ''}`}
+            style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginBottom: '5px',
+              opacity: canAfford ? 1 : 0.5,
+              cursor: 'pointer' 
+            }}
             onClick={() => {
               onAction({ type: 'buy', itemId: item.id });
             }}
             data-action-target={`buy-${item.id}`}
           >
-            <span>{t(`item.${item.id}`, { defaultValue: item.name })}</span>
+            <span>
+              {t(`item.${item.id}`, { defaultValue: item.name })}
+              {rules?.helpfulUI && alreadyOwned && <span style={{ color: '#4caf50', marginLeft: '8px', fontWeight: 'bold' }}>✓ {t('storeFront.owned', { defaultValue: 'Owned' })}</span>}
+            </span>
             <span>${adjustedPrice}</span>
           </div>
         );
@@ -160,6 +174,7 @@ import type { GameRules } from '../engine/gameState';
 
 export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
   const { t } = useTranslation();
+  const [confirmMove, setConfirmMove] = useState<{housingId: string, cost: number, weeksPrepaid: number, newAptName: string} | null>(null);
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
   const lowCostHousing = campaign?.housing.find(h => h.id === 'low_cost');
   const securityHousing = campaign?.housing.find(h => h.id === 'security');
@@ -218,10 +233,10 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
             </div>
           )}
 
-          {rentDue && !player.rentExtensionsDeniedPermanently && (!rules?.helpfulUI || (!player.rentExtensionActive && !player.turnFlags.askedForExtension)) && (
+          {(!rules?.helpfulUI || (rentDue && !player.rentExtensionActive && !player.turnFlags.askedForExtension)) && !player.rentExtensionsDeniedPermanently && (
             <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #c93' }}>
-              <strong>{t('rentOffice.rentIsDue')}</strong>
-              <p style={{ fontSize: '12px' }}>{t('rentOffice.canAskExtension')}</p>
+              {rules?.helpfulUI && <strong>{t('rentOffice.rentIsDue')}</strong>}
+              {rules?.helpfulUI && <p style={{ fontSize: '12px' }}>{t('rentOffice.canAskExtension')}</p>}
               <button 
                 onClick={() => onAction({ type: 'ask_rent_extension' })}
                 style={{ marginTop: '5px', backgroundColor: '#e67e22' }}
@@ -255,7 +270,14 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
               <div className="store-item">
                 <span>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })} - ${lowCostMovePrice}/mo</span>
                 <button 
-                  onClick={() => onAction({ type: 'move_apartment', housingId: lowCostHousing.id, cost: lowCostMovePrice })}
+                  onClick={() => {
+                    const weeksPrepaid = player.rentPaidUntilWeek - turn;
+                    if (weeksPrepaid > 0 && player.currentHousingId && player.currentHousingId !== lowCostHousing.id) {
+                      setConfirmMove({ housingId: lowCostHousing.id, cost: lowCostMovePrice, weeksPrepaid, newAptName: t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name }) });
+                    } else {
+                      onAction({ type: 'move_apartment', housingId: lowCostHousing.id, cost: lowCostMovePrice });
+                    }
+                  }}
                   disabled={rules?.helpfulUI && player.currentHousingId === lowCostHousing.id}
                 >
                   {player.currentHousingId === lowCostHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
@@ -267,7 +289,14 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
               <div className="store-item">
                 <span>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })} - ${securityMovePrice}/mo</span>
                 <button 
-                  onClick={() => onAction({ type: 'move_apartment', housingId: securityHousing.id, cost: securityMovePrice })}
+                  onClick={() => {
+                    const weeksPrepaid = player.rentPaidUntilWeek - turn;
+                    if (weeksPrepaid > 0 && player.currentHousingId && player.currentHousingId !== securityHousing.id) {
+                      setConfirmMove({ housingId: securityHousing.id, cost: securityMovePrice, weeksPrepaid, newAptName: t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name }) });
+                    } else {
+                      onAction({ type: 'move_apartment', housingId: securityHousing.id, cost: securityMovePrice });
+                    }
+                  }}
                   disabled={rules?.helpfulUI && player.currentHousingId === securityHousing.id}
                 >
                   {player.currentHousingId === securityHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
@@ -275,6 +304,35 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
               </div>
             )}
           </div>
+
+          {confirmMove && (
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#e0e0e0', color: '#000', padding: '20px', border: '2px solid #000', borderRadius: '8px', zIndex: 1000, maxWidth: '400px', textAlign: 'center', fontFamily: 'monospace' }}>
+              <p style={{ whiteSpace: 'pre-wrap', marginBottom: '20px' }}>
+                {t('rentOffice.confirmRefund', { 
+                  weeks: confirmMove.weeksPrepaid, 
+                  current: currentHousing ? t(`housing.${currentHousing.id}`, { defaultValue: currentHousing.name }) : 'Apartment', 
+                  newApt: confirmMove.newAptName
+                })}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                <button 
+                  onClick={() => {
+                    onAction({ type: 'move_apartment', housingId: confirmMove.housingId, cost: confirmMove.cost });
+                    setConfirmMove(null);
+                  }}
+                  style={{ minWidth: '60px', padding: '5px 10px', background: '#fff', color: '#000', border: '2px solid #000', fontWeight: 'bold' }}
+                >
+                  {t('common.yes', { defaultValue: 'YES' })}
+                </button>
+                <button 
+                  onClick={() => setConfirmMove(null)}
+                  style={{ minWidth: '60px', padding: '5px 10px', background: '#fff', color: '#000', border: '2px solid #000', fontWeight: 'bold' }}
+                >
+                  {t('common.no', { defaultValue: 'NO' })}
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

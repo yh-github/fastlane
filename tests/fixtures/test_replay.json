@@ -1,0 +1,496 @@
+{
+  "version": "1.0.0",
+  "commitHash": "test-commit",
+  "campaignId": "test_regression",
+  "rules": {
+    "strictEviction": true,
+    "fluctuatingRent": false,
+    "clothingDecaysAll": true,
+    "autoEquipBestClothes": true,
+    "classicStockMarket": true,
+    "allowPartialHours": true,
+    "enableRelaxationDoctor": true,
+    "requireJobForLoan": true,
+    "helpfulUI": false,
+    "enableAnimations": false,
+    "allowOverAchievingGoals": false,
+    "bypassDoctorIfBroke": true,
+    "relaxationDoctorThreshold": 10,
+    "protectBuiltInAppliances": false,
+    "allowEmployedRentPayment": false,
+    "delayBookSetCredit": true,
+    "allowEatingSpoiledFood": true
+  },
+  "startingState": {
+    "turn": 0,
+    "economicIndex": 0,
+    "rngState": 42,
+    "pawnShopItemsForSale": [],
+    "players": [
+      {
+        "id": "player_1",
+        "name": "TestPlayer",
+        "isAi": false,
+        "hoursRemaining": 60,
+        "money": 200,
+        "bankSavings": 0,
+        "rentDebt": 0,
+        "loanDebt": 0,
+        "timesDefaulted": 0,
+        "loanPaymentDeadline": 0,
+        "happiness": 50,
+        "experience": 10,
+        "dependability": 20,
+        "maxExperience": 20,
+        "maxDependability": 40,
+        "relaxation": 16,
+        "currentJobId": null,
+        "currentWage": 0,
+        "raisesAtCurrentJob": 0,
+        "currentHousingId": "low_cost",
+        "currentRentPrice": 325,
+        "rentPaidUntilWeek": 4,
+        "rentExtensionActive": false,
+        "rentExtensionsReceived": 0,
+        "rentExtensionsDeniedPermanently": false,
+        "degrees": [],
+        "enrolledClasses": {},
+        "inventory": {
+          "selectedClothes": "casual",
+          "casualClothesWeeks": 6,
+          "dressClothesWeeks": 0,
+          "businessClothesWeeks": 0,
+          "freshFoodUnits": 0,
+          "fastFoodItems": [],
+          "appliances": [],
+          "books": [],
+          "tickets": {
+            "baseball": 0,
+            "theatre": 0,
+            "concert": 0
+          },
+          "lotteryTickets": 0,
+          "stocks": {
+            "tBills": 0,
+            "holdings": {}
+          },
+          "pawnedItems": []
+        },
+        "nakedTurns": 0,
+        "position": "low_cost",
+        "goalAllotment": {
+          "wealth": 50,
+          "happiness": 50,
+          "education": 50,
+          "career": 50
+        },
+        "turnFlags": {
+          "hasEaten": false,
+          "hasWorked": false,
+          "drinkHappinessGranted": false,
+          "fastFoodHappinessGranted": false,
+          "freshFoodHappinessGranted": false,
+          "caffeineDebt": 0,
+          "askedForExtension": false,
+          "rentPaidThisTurn": false,
+          "freeNewspaper": false,
+          "hasSeenEvents": false,
+          "hasSeenWeekend": false,
+          "relaxedThisTurn": false,
+          "rentExtensionRefusedThisTurn": false,
+          "jobsRejectedThisTurn": [],
+          "bookSetCompletedThisTurn": false,
+          "lotteryHappinessGranted": false
+        },
+        "turnEvents": [],
+        "newspaperHeadline": null,
+        "activeEffects": {}
+      }
+    ],
+    "phase": "playing",
+    "winnerId": null,
+    "campaignId": "test_regression",
+    "rules": {
+      "strictEviction": true,
+      "fluctuatingRent": false,
+      "clothingDecaysAll": true,
+      "autoEquipBestClothes": true,
+      "classicStockMarket": true,
+      "allowPartialHours": true,
+      "enableRelaxationDoctor": true,
+      "requireJobForLoan": true,
+      "helpfulUI": false,
+      "enableAnimations": false,
+      "allowOverAchievingGoals": false,
+      "bypassDoctorIfBroke": true,
+      "relaxationDoctorThreshold": 10,
+      "protectBuiltInAppliances": false,
+      "allowEmployedRentPayment": false,
+      "delayBookSetCredit": true,
+      "allowEatingSpoiledFood": true
+    }
+  },
+  "steps": [
+    {
+      "turn": 0,
+      "action": {
+        "type": "apply",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 0,
+      "action": {
+        "type": "work",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 0,
+      "action": {
+        "type": "work",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 0,
+      "action": {
+        "type": "buy",
+        "itemId": "burger"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 0,
+      "action": {
+        "type": "buy",
+        "itemId": "newspaper"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 0,
+      "action": {
+        "type": "relax"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 0,
+      "action": {
+        "type": "bank_transaction",
+        "amount": 50
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 0,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 2
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 1
+        }
+      ]
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "work",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "work",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "take_loan"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "open_broker"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "buy_stock",
+        "stockId": "tbills",
+        "quantity": 2,
+        "cost": 100
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "buy",
+        "itemId": "refrigerator"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 1,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 2
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 0
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "buy",
+        "itemId": "groceries"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "work",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "work",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "pawn_item",
+        "item": {
+          "id": "refrigerator",
+          "purchasePrice": 400,
+          "purchaseSource": "socket_city"
+        },
+        "value": 200
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "pay_loan"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "buy",
+        "itemId": "casual_clothes"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 2,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 2
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "spoiled_food_sick_2_player_1",
+          "result": true
+        },
+        {
+          "type": "doctor_cost",
+          "result": 120
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 1
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "rent_transaction",
+        "amount": 300
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "enroll",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "study",
+        "degreeId": "business_admin"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "sell_stock",
+        "stockId": "tbills",
+        "quantity": 1,
+        "revenue": 50
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "work",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 3,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 2
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "spoiled_food_sick_2_player_1",
+          "result": true
+        },
+        {
+          "type": "doctor_cost",
+          "result": 120
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 1
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "ask_rent_extension"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "move_apartment",
+        "housingId": "security",
+        "cost": 800
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "redeem_item",
+        "item": {
+          "itemId": "refrigerator",
+          "originalPrice": 400,
+          "redeemCost": 200,
+          "weekPawned": 3,
+          "ownerId": "player_1"
+        },
+        "cost": 200
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "work",
+        "jobId": "burger_cook"
+      },
+      "engineDecisions": []
+    },
+    {
+      "turn": 4,
+      "action": {
+        "type": "end_turn"
+      },
+      "engineDecisions": [
+        {
+          "type": "fluctuate_economy",
+          "result": 2
+        },
+        {
+          "type": "apartment_robbery",
+          "result": false
+        },
+        {
+          "type": "spoiled_food_sick_2_player_1",
+          "result": true
+        },
+        {
+          "type": "doctor_cost",
+          "result": 120
+        },
+        {
+          "type": "appliance_break_player_1_refrigerator",
+          "result": false
+        },
+        {
+          "type": "newspaper_headline_player_1",
+          "result": 2
+        }
+      ]
+    }
+  ],
+  "endStateHash": ""
+}

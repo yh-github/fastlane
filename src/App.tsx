@@ -41,7 +41,8 @@ export default function App() {
     setActivePlayerIndex,
     handleAction,
     handleNodeClick,
-    addLog
+    addLog,
+    replayData
   } = useGameEngine(selectedCampaignId, triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen);
 
   if (showTitle) {
@@ -80,6 +81,7 @@ export default function App() {
       <GameOverScreen 
         playerName={gameState.winnerId || 'Player 1'} 
         turn={gameState.turn}
+        replayData={replayData}
         onPlayAgain={() => {
           const randomSeed = Math.floor(Math.random() * 2147483647);
           setGameState(createInitialGameState(campaign!, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', undefined, randomSeed));
@@ -200,6 +202,7 @@ export default function App() {
           <SettingsModal 
             gameState={gameState} 
             setGameState={setGameState} 
+            replayData={replayData}
             onClose={() => setIsSettingsOpen(false)} 
           />
         )}

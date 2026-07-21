@@ -91,6 +91,7 @@ exports[`Manual Action Regression Tests > processes a predefined sequence of act
   ],
   "rngState": 1831578158,
   "rules": {
+    "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
     "allowOverAchievingGoals": true,
     "allowPartialHours": true,

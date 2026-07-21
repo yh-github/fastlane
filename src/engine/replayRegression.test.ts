@@ -1,18 +1,27 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { Random } from '../utils/rng';
-import { gameReducer, type GameAction } from './gameReducer';
-import { createInitialGameState, type PlayerState, type GameState } from './gameState';
+import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+import { gameReducer } from './gameReducer';
 import { processTurnStart } from './turnProcessor';
+import { type ReplayData, type ReplayContext } from './replayTypes';
+import { Random } from '../utils/rng';
 import type { CampaignBundle } from './dataLoader';
 
-describe('Engine Integration Regression', () => {
-  let mockCampaign: CampaignBundle;
+describe('Deterministic Replay Regression', () => {
+  it('replays a recorded game exactly using test_replay.json', () => {
+    const replayPath = path.resolve('tests/fixtures/test_replay.json');
+    if (!fs.existsSync(replayPath)) {
+      console.warn('Skipping replay test: test_replay.json not found');
+      return;
+    }
 
-  beforeEach(() => {
-    // We do NOT mock Math.random here because we want to test the deterministic Random class
-    // in its natural habitat based on the rngState seed.
+    const replayData: ReplayData = JSON.parse(fs.readFileSync(replayPath, 'utf8'));
+    let currentState = replayData.startingState;
 
-    mockCampaign = {
+    // Use the same mock campaign we used to generate it
+    // Alternatively, we could save/load the full campaign.
+    // For this test, we construct the mockCampaign as used in generate_replay.ts
+    const mockCampaign: CampaignBundle = {
       jobs: [
         { id: 'burger_cook', title: 'Burger Cook', baseWage: 5, requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' }, locationId: 'monolith', perks: [], tags: ['auto_accept'] },
         { id: 'office_clerk', title: 'Office Clerk', baseWage: 12, requirements: { experience: 10, dependability: 50, degrees: [], uniform: 'business' }, locationId: 'office', perks: [] }
@@ -70,88 +79,25 @@ describe('Engine Integration Regression', () => {
       buildings: [],
       map: { width: 100, height: 100, nodes: [] }
     } as unknown as CampaignBundle;
-  });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('runs a deterministic full game sequence without mutating or diverging', () => {
-    // 1. Setup deterministic state
-    // Seed 42 for RNG
-    const initialState = createInitialGameState(mockCampaign, [{ name: 'TestPlayer', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }], 'low_cost', {}, 42);
-    
-    // We will build a sequence of actions that touches various systems:
-    // working, buying food, pawning, rent, moving, taking a loan, stocks, education, etc.
-    type Step = GameAction | 'END_TURN';
-
-    const sequence: Step[] = [
-      // Turn 1
-      { type: 'apply', jobId: 'burger_cook' },
-      { type: 'work', jobId: 'burger_cook' },
-      { type: 'work', jobId: 'burger_cook' },
-      { type: 'buy', itemId: 'burger' },
-      { type: 'buy', itemId: 'newspaper' },
-      { type: 'relax' },
-      { type: 'bank_transaction', amount: 50 },
-      'END_TURN',
-      
-      // Turn 2
-      { type: 'work', jobId: 'burger_cook' },
-      { type: 'work', jobId: 'burger_cook' },
-      { type: 'take_loan' },
-      { type: 'open_broker' },
-      { type: 'buy_stock', stockId: 'tbills', quantity: 2, cost: 100 },
-      { type: 'buy', itemId: 'refrigerator' },
-      'END_TURN',
-      
-      // Turn 3
-      { type: 'buy', itemId: 'groceries' }, // Needs fridge, we bought one!
-      { type: 'work', jobId: 'burger_cook' },
-      { type: 'work', jobId: 'burger_cook' },
-      { type: 'pawn_item', item: { id: 'refrigerator', purchasePrice: 400, purchaseSource: 'socket_city' }, value: 200 },
-      { type: 'pay_loan' },
-      { type: 'buy', itemId: 'casual_clothes' },
-      'END_TURN',
-      
-      // Turn 4
-      { type: 'rent_transaction', amount: 300 }, // Pay rent
-      { type: 'enroll', degreeId: 'business_admin' },
-      { type: 'study', degreeId: 'business_admin' },
-      { type: 'sell_stock', stockId: 'tbills', quantity: 1, revenue: 50 },
-      { type: 'work', jobId: 'burger_cook' },
-      'END_TURN',
-      
-      // Turn 5
-      { type: 'ask_rent_extension' },
-      { type: 'move_apartment', housingId: 'security', cost: 800 }, // Will fail if poor, which is fine (testing error paths)
-      { type: 'redeem_item', item: { itemId: 'refrigerator', originalPrice: 400, redeemCost: 200, weekPawned: 3, ownerId: 'player_1' }, cost: 200 },
-      { type: 'work', jobId: 'burger_cook' },
-      'END_TURN',
-    ];
-
-    let currentState = initialState;
-
-    // Fast-forward phase to 'playing'
-    currentState = { ...currentState, phase: 'playing' };
-
-    // Execute sequence
-    for (const step of sequence) {
-      if (step === 'END_TURN') {
-        currentState = processTurnStart(currentState, mockCampaign);
+    for (const step of replayData.steps) {
+      if (step.action.type === 'end_turn') {
+        const replayCtx: ReplayContext = { inDecisions: step.engineDecisions || [], outDecisions: [] };
+        currentState = processTurnStart(currentState, mockCampaign, replayCtx);
       } else {
         const player = currentState.players[0];
+        const replayCtx: ReplayContext = { inDecisions: step.engineDecisions || [], outDecisions: [] };
         const context = {
           campaign: mockCampaign,
           rules: currentState.rules,
           turn: currentState.turn,
           economicIndex: currentState.economicIndex,
           rng: new Random(currentState.rngState),
-          state: currentState
+          state: currentState,
+          replayContext: replayCtx
         };
-        const { updatedPlayer, updatedPawnShopItemsForSale } = gameReducer(player, step, context);
+        const { updatedPlayer, updatedPawnShopItemsForSale } = gameReducer(player, step.action as any, context);
         
-        // Advance RNG state mimicking useGameEngine
         currentState = {
           ...currentState,
           rngState: context.rng.getState(),
@@ -161,7 +107,7 @@ describe('Engine Integration Regression', () => {
       }
     }
 
-    // Final Snapshot Verification
+    // Verify it matches snapshot
     expect(currentState).toMatchSnapshot();
   });
 });

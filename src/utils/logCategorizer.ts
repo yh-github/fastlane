@@ -42,7 +42,6 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
   if (key.includes('buy') || key.includes('store') || key.includes('purchase')) {
     categories.add('wealth');
     categories.add('money');
-    categories.add('happiness');
   }
 
   if (key.includes('robbery') || key.includes('willy')) {

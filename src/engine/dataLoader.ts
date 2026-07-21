@@ -21,76 +21,14 @@ export interface CampaignConfig {
   baseCampaign?: string;
 }
 
-export interface GameRules {
-  strictEviction: boolean;
-  fluctuatingRent: boolean;
-  clothingDecaysAll: boolean;
-  autoEquipBestClothes: boolean;
-  classicStockMarket: boolean;
-  allowPartialHours: boolean;
-  enableRelaxationDoctor: boolean;
-  requireJobForLoan: boolean;
-  helpfulUI: boolean;
-  enableAnimations: boolean;
-  allowOverAchievingGoals: boolean;
-  bypassDoctorIfBroke: boolean;
-  relaxationDoctorThreshold: number;
-  protectBuiltInAppliances?: boolean;
-  allowEmployedRentPayment?: boolean;
-  delayBookSetCredit?: boolean;
-}
-
-export interface EventRules {
-  marketCrashDivisor: number;
-  willyRobberyStartWeek: number;
-  charity: {
-    maxCash: number;
-    maxWealth: number;
-    wealthMetric: 'durableValue' | 'netWorth';
-  };
-}
-
-export interface StatRules {
-  startingHappiness?: number;
-  startingRelaxation: number;
-  relaxationDecayRate: number;
-  relaxationDoctorChance: number;
-}
-
-export interface WinCondition {
-  stat: string;
-  target: number;
-  label: string;
-}
-
-export interface TimeRules {
-  hoursPerTurn: number;
-  buildingEntryCost: number;
-  workSessionCost: number;
-  studySessionCost: number;
-  jobApplicationCost: number;
-  relaxCost: number;
-  relaxGain?: number;
-  newspaperCost: number;
-  starvationPenalty: number;
-  doctorPenalty: number;
-  loanCost: number;
-  brokerCost: number;
-}
-
-export interface EconomyRules {
-  rentGarnishRate: number;
-  rentFee: number;
-  repairCostMin: number;
-  repairCostMax: number;
-  pawnPayoutRate: number;
-  pawnRedeemRate: number;
-  bankTransactionIncrementSmall?: number;
-  bankTransactionIncrementLarge?: number;
-  loanPaymentAmount?: number;
-  loanInterestAmount?: number;
-  loanPrincipalAmount?: number;
-}
+export type {
+  GameRules,
+  EventRules,
+  StatRules,
+  WinCondition,
+  TimeRules,
+  EconomyRules,
+} from './rules';
 
 export interface BuildingDef {
   id: string;

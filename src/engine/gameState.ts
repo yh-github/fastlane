@@ -41,24 +41,8 @@ export interface GameState {
   winnerId: string | null;
 }
 
-export interface GameRules {
-  strictEviction: boolean;
-  fluctuatingRent: boolean;
-  clothingDecaysAll: boolean;
-  autoEquipBestClothes: boolean;
-  classicStockMarket: boolean;
-  allowPartialHours: boolean;
-  enableRelaxationDoctor: boolean;
-  requireJobForLoan: boolean;
-  helpfulUI: boolean;
-  enableAnimations: boolean;
-  allowOverAchievingGoals: boolean;
-  bypassDoctorIfBroke: boolean;
-  relaxationDoctorThreshold: number;
-  protectBuiltInAppliances?: boolean;
-  allowEmployedRentPayment?: boolean;
-  delayBookSetCredit?: boolean;
-}
+export type { GameRules } from './rules';
+import { type GameRules, DEFAULT_GAME_RULES } from './rules';
 
 export type GamePhase =
   | 'setup'         // Pre-game: win condition allocation
@@ -398,24 +382,7 @@ export function createInitialGameState(
   rules?: Partial<GameRules>,
   seed: number = 12345
 ): GameState {
-  const defaultRules: GameRules = {
-    strictEviction: false,
-    fluctuatingRent: false,
-    clothingDecaysAll: true,
-    autoEquipBestClothes: true,
-    classicStockMarket: true,
-    allowPartialHours: true,
-    enableRelaxationDoctor: true,
-    requireJobForLoan: true,
-    helpfulUI: false,
-    enableAnimations: false,
-    allowOverAchievingGoals: false,
-    bypassDoctorIfBroke: true,
-    relaxationDoctorThreshold: 10,
-    protectBuiltInAppliances: false,
-    allowEmployedRentPayment: false,
-    delayBookSetCredit: true,
-  };
+  const defaultRules = DEFAULT_GAME_RULES;
 
   const finalRules = {
     ...defaultRules,

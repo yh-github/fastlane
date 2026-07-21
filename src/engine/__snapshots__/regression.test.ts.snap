@@ -4,16 +4,7 @@ exports[`Engine Integration Regression > runs a deterministic full game sequence
 {
   "campaignId": "test_regression",
   "economicIndex": 10,
-  "pawnShopItemsForSale": [
-    {
-      "itemId": "refrigerator",
-      "originalPrice": 400,
-      "ownerId": "player_1",
-      "purchaseSource": "socket_city",
-      "redeemCost": 200,
-      "weekPawned": 2,
-    },
-  ],
+  "pawnShopItemsForSale": [],
   "phase": "playing",
   "players": [
     {
@@ -33,17 +24,23 @@ exports[`Engine Integration Regression > runs a deterministic full game sequence
         "happiness": 50,
         "wealth": 50,
       },
-      "happiness": 37,
-      "hoursRemaining": 30,
+      "happiness": 39,
+      "hoursRemaining": 50,
       "id": "player_1",
       "inventory": {
-        "appliances": [],
+        "appliances": [
+          {
+            "id": "refrigerator",
+            "purchasePrice": 400,
+            "purchaseSource": "socket_city",
+          },
+        ],
         "books": [],
         "businessClothesWeeks": 0,
         "casualClothesWeeks": 14,
         "dressClothesWeeks": 0,
         "fastFoodItems": [],
-        "freshFoodUnits": 0,
+        "freshFoodUnits": 1,
         "lotteryTickets": 0,
         "pawnedItems": [],
         "selectedClothes": "casual",
@@ -66,29 +63,32 @@ exports[`Engine Integration Regression > runs a deterministic full game sequence
       "nakedTurns": 0,
       "name": "TestPlayer",
       "newspaperHeadline": {
-        "key": "newspaper.random.2",
+        "key": "newspaper.random.3",
       },
       "position": "node_low_cost",
       "raisesAtCurrentJob": 0,
       "relaxation": 15,
       "rentDebt": 0,
-      "rentExtensionActive": true,
+      "rentExtensionActive": false,
       "rentExtensionsDeniedPermanently": false,
       "rentExtensionsReceived": 1,
-      "rentPaidUntilWeek": 8,
+      "rentPaidUntilWeek": 4,
       "timesDefaulted": 0,
       "turnEvents": [
         {
-          "key": "events.starvation",
+          "key": "events.foodSpoiled.ateSpoiled",
+        },
+        {
+          "key": "events.foodSpoiled.sick",
         },
         {
           "key": "events.doctorVisit",
           "params": {
-            "cost": 22,
+            "cost": 39,
           },
         },
         {
-          "key": "events.pawnExpired",
+          "key": "events.rent.extensionExpired",
         },
       ],
       "turnFlags": {
@@ -98,7 +98,7 @@ exports[`Engine Integration Regression > runs a deterministic full game sequence
         "fastFoodHappinessGranted": false,
         "freeNewspaper": false,
         "freshFoodHappinessGranted": false,
-        "hasEaten": false,
+        "hasEaten": true,
         "hasSeenEvents": false,
         "hasSeenWeekend": false,
         "hasWorked": false,
@@ -117,6 +117,7 @@ exports[`Engine Integration Regression > runs a deterministic full game sequence
   ],
   "rngState": 42,
   "rules": {
+    "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
     "allowOverAchievingGoals": false,
     "allowPartialHours": true,

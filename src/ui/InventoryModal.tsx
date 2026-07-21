@@ -60,7 +60,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose }: In
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>Overview</h3>
           <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
-            <li><strong>Job:</strong> {currentJob ? `${currentJob.title} @ ${t(`building.${currentJob.locationId}`, { defaultValue: currentJob.locationId })}` : 'Unemployed'} {currentJob ? `($${player.currentWage}/hr)` : ''}</li>
+            <li><strong>Job:</strong> {currentJob ? `${currentJob.title} at ${t(`building.${currentJob.locationId}`, { defaultValue: currentJob.locationId })}` : 'Unemployed'} {currentJob ? `($${player.currentWage}/hr)` : ''}</li>
             <li><strong>Finances:</strong> Cash: ${player.money} | Savings: ${player.bankSavings} | T-Bills: {inventory.stocks.tBills} | Stocks: {totalStocks} shares</li>
             <li><strong>Debt:</strong> Loans: ${player.loanDebt} | Rent Arrears: ${player.rentDebt}</li>
             <li><strong>Housing:</strong> {currentHousing ? t(`building.${currentHousing.id}`, { defaultValue: currentHousing.name }) : 'Homeless'} | Rent Paid Until Week {player.rentPaidUntilWeek} (Next due: Week {Math.max(turn || 1, player.rentPaidUntilWeek - 1)})</li>

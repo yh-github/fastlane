@@ -29,7 +29,7 @@
     "relaxation": "Relaxation",
     "dependability": "Dependability",
     "experience": "Experience",
-    "luck": "Luck",
+    "luck": "Employability",
     "education": "Education",
     "career": "Career",
     "wealth": "Wealth"
@@ -127,7 +127,8 @@
     "foodSpoiled": {
       "noFridge": "Food spoiled because you have no refrigerator. Lost {{amount}} units.",
       "sick": "You got sick from spoiled food.",
-      "tooMuch": "Some food spoiled."
+      "tooMuch": "Some food spoiled.",
+      "ateSpoiled": "You ate spoiled food."
     },
     "rent": {
       "charged": "Charged ${{amount}} for rent debt.",
@@ -649,8 +650,8 @@
     "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
     "currentJob": "Current Job (${{wage}}/hr)",
     "apply": "Apply ({{cost}}h)",
-    "luckScoreInfo": "🍀 Your Luck Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
-    "filterLuckLog": "🔍 View Luck & Job Logs"
+    "luckScoreInfo": "🍀 Your Employability Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
+    "filterLuckLog": "🔍 View Employability & Job Logs"
   },
   "workStation": {
     "title": "Your Job: {{jobTitle}}",
@@ -670,21 +671,24 @@
     "homeless": "Homeless",
     "closed": "The Rent Office is closed. Come back during Week 4 to pay your rent or move to a new apartment.",
     "rentDue": "Rent Due: ${{amount}}",
-    "payRentDebt": "Pay Rent Debt",
+    "payRentDebt": "Pay Garnishment Balance",
     "paidUntil": "Rent Paid Until: Week {{week}}",
     "weeksPaid": "(You have {{count}} weeks of rent paid)",
     "payAdvance": "Pay Rent Advance (${{cost}} / mo)",
     "rentIsDue": "Rent is Due!",
     "canAskExtension": "You can ask for a 1-week extension.",
-    "askExtension": "Ask for Extension",
-    "extensionGranted": "Extension Granted",
-    "dueByEnd": "Rent is due by the end of this week.",
-    "extensionDenied": "Extension Denied",
+    "askExtension": "Ask For More Time",
+    "extensionGranted": "Extension Granted!",
+    "dueByEnd": "Rent is now due by the end of this week.",
+    "extensionDenied": "Extension Denied!",
     "mustPay": "The Rent Officer denied your request. You must pay by the end of the week.",
     "permanentlyDenied": "Extensions Permanently Denied",
-    "neverAnother": "Due to past debts, you can never receive another rent extension.",
+    "neverAnother": "Because your wages were garnished for rent debt, you can never get another rent extension.",
     "availableApts": "Available Apartments",
-    "moveIn": "Move In"
+    "currentApt": "Current",
+    "moveIn": "Move In",
+    "notNeeded": "You don't need an extension",
+    "confirmRefund": "Your {{weeks}} weeks of prepaid rent on your {{current}}\nApartment are non-refundable.\n\nAre you sure that you want\nto rent a {{newApt}}\nat this time?"
   },
   "inventoryModal": {
     "title": "Your Inventory",
@@ -718,7 +722,7 @@
     "enrolled": "Currently Enrolled",
     "none": "None",
     "attributesTitle": "Formula Attributes & Caps",
-    "luckScore": "Luck Score (Hiring Roll Threshold):",
+    "luckScore": "Employability Score (Hiring Roll Threshold):",
     "robberyRisk": "Home Robbery Risk:",
     "dependabilityCap": "Dependability Cap:",
     "experienceCap": "Experience Cap:",

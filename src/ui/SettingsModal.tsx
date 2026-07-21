@@ -1,13 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { type GameState } from '../engine/gameState';
+import type { ReplayData } from '../engine/replayTypes';
 
 interface SettingsModalProps {
   gameState: GameState;
   setGameState: (updater: GameState | ((prev: GameState | null) => GameState | null)) => void;
+  replayData?: ReplayData | null;
   onClose: () => void;
 }
 
-export function SettingsModal({ gameState, setGameState, onClose }: SettingsModalProps) {
+export function SettingsModal({ gameState, setGameState, replayData, onClose }: SettingsModalProps) {
   const { t } = useTranslation();
 
   const handleToggleAnimations = () => {
@@ -75,6 +77,17 @@ export function SettingsModal({ gameState, setGameState, onClose }: SettingsModa
         }
       };
     });
+  };
+
+  const handleExportReplay = () => {
+    if (!replayData) return;
+    const blob = new Blob([JSON.stringify(replayData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fastlane-replay-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -162,9 +175,16 @@ export function SettingsModal({ gameState, setGameState, onClose }: SettingsModa
           )}
         </div>
 
-        <button className="action-panel__btn" onClick={onClose} style={{ marginTop: 'auto' }}>
-          {t('settings.close', { defaultValue: 'Close' })}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+          {replayData && (
+            <button className="action-panel__btn" onClick={handleExportReplay}>
+              Export Replay
+            </button>
+          )}
+          <button className="action-panel__btn" onClick={onClose}>
+            {t('settings.close', { defaultValue: 'Close' })}
+          </button>
+        </div>
       </div>
     </div>
   );

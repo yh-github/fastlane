@@ -11,6 +11,7 @@ import { calcRobberyChance, calcNetWorth, calcFloppyDurableValue } from './statM
 import { calcEconomyPrice } from './economyEngine';
 import type { Random } from '../utils/rng';
 import type { CampaignBundle } from './dataLoader';
+import { resolveDecision, type ReplayContext } from './replayTypes';
 
 /**
  * Attempt a Wild Willy street robbery when leaving Bank or Black's Market.
@@ -25,14 +26,17 @@ export function processStreetRobbery(
   buildingType: 'bank' | 'blacks_market',
   week: number,
   rng: Random,
-  campaign: CampaignBundle
+  campaign: CampaignBundle,
+  replay?: ReplayContext
 ): PlayerState {
   const startWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
   if (week < startWeek || player.money <= 0) return player;
 
   const chance = buildingType === 'bank' ? 1 / 31 : 1 / 51;
   
-  if (rng.next() < chance) {
+  const robbed = resolveDecision(replay, `street_robbery`, () => rng.next() < chance);
+
+  if (robbed) {
     return {
       ...player,
       money: 0,
@@ -49,12 +53,12 @@ export function processStreetRobbery(
  * @param player — Current player state
  * @returns        Updated player state and boolean indicating if doctor visit triggered
  */
-export function processStarvation(player: PlayerState, timePenalty: number, rng: Random): { updated: PlayerState; doctorTriggered: boolean } {
+export function processStarvation(player: PlayerState, timePenalty: number, rng: Random, replay?: ReplayContext): { updated: PlayerState; doctorTriggered: boolean } {
   let updated = spendHours(player, timePenalty);
   updated.happiness = Math.max(10, updated.happiness - 2);
   
   // 25% chance of Doctor Visit
-  const doctorTriggered = rng.next() < 0.25;
+  const doctorTriggered = resolveDecision(replay, `starvation_doctor`, () => rng.next() < 0.25);
   
   return { updated, doctorTriggered };
 }
@@ -65,7 +69,7 @@ export function processStarvation(player: PlayerState, timePenalty: number, rng:
  * @param player — Current player state
  * @returns        Updated player state
  */
-export function processDoctorVisit(player: PlayerState, timePenalty: number, rng: Random, bypassDoctorIfBroke: boolean = true): PlayerState {
+export function processDoctorVisit(player: PlayerState, timePenalty: number, rng: Random, bypassDoctorIfBroke: boolean = true, replay?: ReplayContext): PlayerState {
   // Bypassed entirely if carrying $0 cash (if rule is enabled)
   if (player.money <= 0 && bypassDoctorIfBroke) return player;
 
@@ -73,7 +77,7 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number, rng
   updated.happiness = Math.max(10, updated.happiness - 4);
   
   // Cost: random between $30 and $200
-  const cost = Math.floor(rng.next() * 171) + 30;
+  const cost = resolveDecision(replay, `doctor_cost`, () => Math.floor(rng.next() * 171) + 30);
   updated.money = Math.max(0, updated.money - cost);
 
   return updated;
@@ -88,14 +92,17 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number, rng
 export function processApartmentRobbery(
   player: PlayerState,
   rng: Random,
-  protectBuiltInAppliances: boolean = false
+  protectBuiltInAppliances: boolean = false,
+  replay?: ReplayContext
 ): { updated: PlayerState; robbed: boolean } {
   // Security Apartments are immune (assuming currentHousingId 'security' signifies this)
   if (player.currentHousingId === 'security') return { updated: player, robbed: false };
 
   const chance = calcRobberyChance(player.relaxation);
   
-  if (rng.next() < chance) {
+  const robbed = resolveDecision(replay, `apartment_robbery`, () => rng.next() < chance);
+
+  if (robbed) {
     let updated = { ...player, inventory: { ...player.inventory }, turnEvents: [...player.turnEvents, { key: 'events.robbery.willy' }] };
     // -4 Happiness penalty
     updated.happiness = Math.max(10, updated.happiness - 4);
@@ -106,7 +113,8 @@ export function processApartmentRobbery(
       if (protectBuiltInAppliances && ['refrigerator', 'freezer', 'stove'].includes(app.id)) {
         return true; // Keep protected heavy appliances
       }
-      if (rng.next() < 0.25) {
+      const itemStolen = resolveDecision(replay, `apartment_robbery_item_${app.id}`, () => rng.next() < 0.25);
+      if (itemStolen) {
         return false; // Stolen
       }
       return true; // Keep
@@ -130,7 +138,8 @@ export function processDonations(
   player: PlayerState,
   state: GameState,
   campaign: CampaignBundle,
-  rng: Random
+  rng: Random,
+  replay?: ReplayContext
 ): PlayerState {
   if (player.nakedTurns < 2) return player;
 
@@ -167,7 +176,7 @@ export function processDonations(
     }
   }
 
-  const extraCash = Math.floor(rng.next() * 100) + 1; // 1 to 100
+  const extraCash = resolveDecision(replay, `donation_extra_cash`, () => Math.floor(rng.next() * 100) + 1); // 1 to 100
   const totalDonation = uniformPrice + extraCash;
 
   const updated = {

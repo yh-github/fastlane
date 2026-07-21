@@ -32,7 +32,9 @@ export default defineConfig({
   // @ts-ignore
   test: {
     globals: true,
-    environment: 'jsdom',
+    environmentMatchGlobs: [
+      ['**/*.test.tsx', 'jsdom']
+    ],
     setupFiles: ['./src/setupTests.ts']
   }
 })
