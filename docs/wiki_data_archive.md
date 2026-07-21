@@ -1344,3 +1344,145 @@ This Stat is directly compared to the Happiness Goal to determine whether the pl
 * **Dog Food**: -1
 * **8-Track Player**: -1
 * **Works of Capote**: -2
+
+== Market Crash ==
+
+A '''Market Crash''' or '''Economic Crash''' is a random event that can occur at the start of any [[Turn]], if certain conditions are met. It causes damage to the [[Economy]] and can do direct damage to all players' finances as well.
+
+A Market Crash can only occur if the economy is better than its worst possible state, and only on or after [[Week]] #8. The more players there are, the lower the chance of a Market Crash each turn.
+
+There are three different severities of Market Crashes (Minor, Moderate, Major). Each causes a different level of impact. Each Market Crash has an equal chance to be of any severity.
+
+All Market Crashes bias the current Economic trend downwards, and typically cause prices and [[Wage]]s to drop immediately.
+
+In a Moderate or Major Market Crash, each player has a chance to receive a Pay Cut to their current Wage.
+
+In a Major Market Crash only, each player has a chance to be fired from their [[Job]] immediately. A Major Crash also erases all money in the [[Bank]] deposits of ''all'' players.
+
+On triggering a Market Crash, the player whose turn it is suffers a loss of [[Happiness]] relative to the severity of the Crash. They lose even more Happiness if they have over $1,000 in [[Stock Market]] investments. Any players who get a pay cut or lose their jobs suffer additional loss of Happiness.
+
+== Triggering a Crash ==
+
+[[File:Newspaper MarketCrash2.png|thumb|right|300px|This [[Newspaper]] headline indicates that a Moderate Market Crash has occurred.]]
+In order for the game to trigger any '''Market Crash''', the following conditions must be true:
+
+* It is [[Week]] #8 or greater.
+* The current [[Economy|Economic Reading]] is at least 80.
+
+If both conditions are met at the start of a player's [[Turn]], the game rolls a random number to determine whether an Economic Crash should take place. 
+
+In the '''Floppy Disk version''', the chance to trigger a Crash is calculated by this formula:
+
+<math>Chance \ of \ Market \ Crash = {1 \over 1 + ({20 \times Number \ of \ Players})}</math>
+
+In the '''CD-ROM version''', the chance to trigger a Crash is calculated by this formula:
+
+<math>Chance \ of \ Market \ Crash = {1 \over 1 + ({30 \times Number \ of \ Players})}</math>
+
+Once a Crash is triggered, the game immediately displays the [[Newspaper]] showing a headline indicating the severity of the Crash.
+
+== Crash Severity ==
+
+Once a '''Market Crash''' has been triggered, the game selects the severity of the Crash completely at random.
+
+* A Minor Market Crash affects only the economy.
+* A Moderate Crash affects the economy and possibly players' [[Job]]s, resulting in firings and/or pay cuts.
+* A Major Crash affects the economy but also gets all players fired. It also wipes out all [[Bank]] accounts.
+
+Each severity of Market Crash triggers a different [[Newspaper]] headline, which appears immediately on the screen.
+
+{| class="wikitable"
+|-
+! rowspan=2 | Severity
+! colspan=4 | Effects
+! rowspan=2 | Headline
+|-
+! Price Drop
+! Chance to be Fired
+! Pay Cuts
+! Bank Wipe
+|-
+! Minor
+| -5%
+| --
+| [[File:Cross.png]]
+| [[File:Cross.png]]
+| ''MORE S & L'S FAIL! ECONOMY SUFFERS''
+|-
+! Moderate
+| -10%
+| 50%
+| [[File:Tick.png]]
+| [[File:Cross.png]]
+| ''SCANDAL ON WALL ST. ECONOMY DROPS! UNEMPLOYMENT RISES''
+|-
+! Major
+| -15%
+| 100%
+| [[File:Cross.png]]
+| [[File:Tick.png]]
+| ''BANKS FALTER! SAVINGS LOST! JOBS LOST!''
+|}
+
+== Economic Effect ==
+
+When a '''Market Crash''' of any severity strikes, it has two sudden effects on the [[Economy]].
+
+First, the Crash causes the Economic Index (a general market trend) to sharply decline. This means that the economy suddenly becomes more likely to keep going down on subsequent turns. A Crash will cause a very strong economy to neutralize (it could go either way from here), or a neutral economy to reach the worst possible decline (staying low potentially for a long time).
+
+Furthermore, the Crash instantly reduces all prices by a certain percentage. The size of the penalty depends on the severity of the crash:
+
+* Minor Crash: '''-5%'''
+* Moderate Crash: '''-10%'''
+* Major Crash: '''-15%'''
+
+Note that this penalty is applied after the Economic Index plunges, which means that the final price drop could be far more serious than these numbers imply.
+
+A price drop affects the prices of all '''[[Item]]s''' at stores, the '''[[Wage]]s''' on offer at the [[Employment Office]], the '''[[Rent]]''' for available Apartments at the [[Rent Office]], the cost of '''[[Enrolling]]''' in new courses at [[Hi-Tech U]], and indirectly the value of all '''[[Stocks]]'''.
+
+Each player's current Wage and Rent are not affected; However a severe Crash can separately reduce player Wages as described below.
+
+== Firings and Pay Cuts ==
+[[File:Notice_PayCut.png|thumb|right|This notice indicates that a player's [[Wage]] has been cut to the listed rate.]]
+When a Moderate or Major Crash occurs, each player has a chance to lose their job immediately. This includes all players, not just the one whose [[Turn]] it currently is.
+
+In a Moderate crash, the chance to be fired is 50% for each player. However any player who does not get fired will instead get a pay cut; Their hourly [[Wage]] is reduced to 80% of its current value.
+
+[[File:Notice_Fired.png|thumb|right|This notice indicates that a player has lost their [[Job]].]]
+In a Major crash, all players are fired from their jobs. There is no chance to avoid this.
+
+The game immediately displays the "Pay Cut" / "You're Fired" notice (as applicable) for each player, rather than notifying players on their own turns.
+
+== Bank Wipe ==
+
+A Major '''Market Crash''' immediately erases all money in each player's [[Bank]] account.
+
+Only money in the account is affected. Money invested in [[Stocks]] or held in [[Cash]] is not affected at all.
+
+== Happiness Penalty ==
+
+If a '''Market Crash''' occurs during a player's turn, that player (and only that player) loses [[Happiness]] according to the severity of the Crash, and an extra penalty if they also possess more than $1,000 in [[Stock Market]] investments.
+
+{| class="wikitable"
+|-
+! rowspan=2 | Crash Severity
+! colspan=2 | [[Happiness]] lost
+|-
+! Base
+! Extra for >$1,000 in [[Stocks]]
+|-
+! Minor
+| -1
+| -1
+|-
+! Moderate
+| -2
+| -2
+|-
+! Major
+| -3
+| -5
+|}
+
+[[Category:Economy]]
+[[Category:Events]]
