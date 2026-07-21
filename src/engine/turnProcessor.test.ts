@@ -46,6 +46,7 @@ describe('Turn Processor', () => {
     it('spoils all food if no refrigerator', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 1; 
+      state.rules.allowEatingSpoiledFood = false;
       state.players[0].inventory.freshFoodUnits = 5; 
       const nextState = processTurnStart(state, mockCampaign);
       expect(nextState.players[0].inventory.freshFoodUnits).toBe(0);
@@ -233,6 +234,7 @@ describe('Turn Processor', () => {
     it('deep clones player objects to prevent mutating previous state', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 2;
+      state.rules.allowEatingSpoiledFood = false;
       state.players[0].inventory.freshFoodUnits = 5;
       
       const nextState = processTurnStart(state, mockCampaign);

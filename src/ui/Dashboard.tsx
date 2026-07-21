@@ -6,7 +6,7 @@
  */
 
 import { type PlayerState, type GameState } from '../engine/gameState';
-import { calcEducationProgress, calcCareerProgress, calcWealthProgress, calcLuckScore } from '../engine/statMath';
+import { calcEducationProgress, calcCareerProgress, calcWealthProgress, calcLuckScore, calcMaxDependability, calcMaxExperience } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../engine/dataLoader';
@@ -64,6 +64,12 @@ export function Dashboard({
     : player.happiness;
 
   const luckScore = calcLuckScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
+
+  const currentJob = player.currentJobId ? campaign?.jobs.find(j => j.id === player.currentJobId) : null;
+  const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
+  const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
+  const maxDep = calcMaxDependability(jobReqDep, player.degrees?.length || 0);
+  const maxExp = calcMaxExperience(jobReqExp, player.degrees?.length || 0);
 
   const handleFilterToggle = (filter: GoalFilter) => {
     if (!onSelectLogFilter) return;
@@ -128,9 +134,9 @@ export function Dashboard({
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <StatBadge label={t('dashboard.money', { defaultValue: 'Money' })} value={`$${player.money}`} icon="💰" id="stat-money" isActive={activeLogFilter === 'money'} onClick={() => handleFilterToggle('money')} />
         <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" danger={gameState.rules.enableRelaxationDoctor && player.relaxation <= (gameState.rules.relaxationDoctorThreshold ?? 10)} isActive={activeLogFilter === 'relaxation'} onClick={() => handleFilterToggle('relaxation')} />
-        <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={player.dependability} icon="🤝" id="stat-dependability" isActive={activeLogFilter === 'dependability'} onClick={() => handleFilterToggle('dependability')} />
-        <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={player.experience} icon="👌" id="stat-experience" isActive={activeLogFilter === 'experience'} onClick={() => handleFilterToggle('experience')} />
-        <StatBadge label={t('dashboard.luck', { defaultValue: 'Luck' })} value={luckScore} icon="🍀" id="stat-luck" isActive={activeLogFilter === 'luck'} onClick={() => handleFilterToggle('luck')} />
+        <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={`${player.dependability}/${maxDep}`} icon="🤝" id="stat-dependability" isActive={activeLogFilter === 'dependability'} onClick={() => handleFilterToggle('dependability')} />
+        <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={`${player.experience}/${maxExp}`} icon="👌" id="stat-experience" isActive={activeLogFilter === 'experience'} onClick={() => handleFilterToggle('experience')} />
+        <StatBadge label={t('dashboard.luck', { defaultValue: 'Luck' })} value={`${luckScore}%`} icon="🍀" id="stat-luck" isActive={activeLogFilter === 'luck'} onClick={() => handleFilterToggle('luck')} />
         <StatBadge label={t('dashboard.happiness', { defaultValue: 'Happiness' })} value={`${displayHappiness}/${player.goalAllotment.happiness}`} icon="😊" id="stat-happiness" isActive={activeLogFilter === 'happiness'} onClick={() => handleFilterToggle('happiness')} />
         <StatBadge label={t('dashboard.education', { defaultValue: 'Education' })} value={`${education}/${player.goalAllotment.education}`} icon="🎓" id="stat-education" isActive={activeLogFilter === 'education'} onClick={() => handleFilterToggle('education')} />
         <StatBadge label={t('dashboard.career', { defaultValue: 'Career' })} value={`${career}/${player.goalAllotment.career}`} icon="💼" id="stat-career" isActive={activeLogFilter === 'career'} onClick={() => handleFilterToggle('career')} />

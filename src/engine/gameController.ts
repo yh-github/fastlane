@@ -14,9 +14,10 @@
  */
 
 import { GameState, PlayerState, GameEvent, recalculatePlayerEffects } from './gameState'
-import { gameReducer, GameAction, ReducerContext } from './gameReducer'
+import { gameReducer, type GameAction, type ReducerContext } from './gameReducer'
 import { processTurnStart } from './turnProcessor'
-import { getAvailableActions, ActionChoice } from './actionProvider'
+import { getAvailableActions, type ActionChoice } from './actionProvider'
+import { resolveDecision, type EngineDecision, type ReplayContext } from './replayTypes'
 import { Random } from '../utils/rng'
 import { CampaignBundle } from './dataLoader'
 import { calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath'
@@ -39,6 +40,7 @@ export interface ActionResult {
   insideBuilding: boolean
   actionLog?: GameEvent
   turnAdvanced: boolean
+  outEngineDecisions?: EngineDecision[]
 }
 
 /** Structured game state summary for display (by any view) */
@@ -106,7 +108,8 @@ export function processControllerAction(
   campaign: CampaignBundle,
   playerIndex: number,
   insideBuilding: boolean,
-  action: ControllerAction
+  action: ControllerAction,
+  inEngineDecisions?: EngineDecision[]
 ): ActionResult {
   const player = state.players[playerIndex]
 
@@ -131,11 +134,14 @@ export function processControllerAction(
     }
 
     case 'end_turn': {
-      const newState = processTurnStart(state, campaign)
+      let outDecisions: EngineDecision[] = []
+      const replayContext: ReplayContext = { inDecisions: inEngineDecisions, outDecisions }
+      const newState = processTurnStart(state, campaign, replayContext)
       return {
         state: newState,
         insideBuilding: false,
         turnAdvanced: true,
+        outEngineDecisions: outDecisions
       }
     }
 
@@ -148,6 +154,7 @@ export function processControllerAction(
         economicIndex: state.economicIndex,
         rng,
         state,
+        engineDecisions: inEngineDecisions
       }
       const result = gameReducer(player, action, context)
       let newState = updatePlayerInState(state, playerIndex, result.updatedPlayer)
@@ -160,6 +167,7 @@ export function processControllerAction(
         insideBuilding: true,
         actionLog: result.actionLog,
         turnAdvanced: false,
+        outEngineDecisions: result.outEngineDecisions
       }
     }
 
@@ -173,6 +181,7 @@ export function processControllerAction(
         economicIndex: state.economicIndex,
         rng,
         state,
+        engineDecisions: inEngineDecisions
       }
       const result = gameReducer(player, action as GameAction, context)
       let newState = updatePlayerInState(state, playerIndex, result.updatedPlayer)
@@ -185,6 +194,7 @@ export function processControllerAction(
         insideBuilding,
         actionLog: result.actionLog,
         turnAdvanced: false,
+        outEngineDecisions: result.outEngineDecisions
       }
     }
   }

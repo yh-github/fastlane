@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Engine Integration Regression > runs a deterministic full game sequence without mutating or diverging 1`] = `
+exports[`Deterministic Replay Regression > replays a recorded game exactly using test_replay.json 1`] = `
 {
   "campaignId": "test_regression",
   "economicIndex": 10,
@@ -84,7 +84,7 @@ exports[`Engine Integration Regression > runs a deterministic full game sequence
         {
           "key": "events.doctorVisit",
           "params": {
-            "cost": 39,
+            "cost": 63,
           },
         },
         {
@@ -107,7 +107,7 @@ exports[`Engine Integration Regression > runs a deterministic full game sequence
         "rentPaidThisTurn": false,
       },
       "weekendResult": {
-        "cost": 18,
+        "cost": 12,
         "event": {
           "key": "events.weekend.random_1",
         },

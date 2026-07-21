@@ -9,9 +9,9 @@ import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
 import { simulateActionVisuals } from '../engine/aiTranslator';
 import { gameReducer, type GameAction } from '../engine/gameReducer';
-import type { LogEntry } from '../ui/GameLog';
 import type { GameEvent } from '../engine/gameState';
 import { Random } from '../utils/rng';
+import type { ReplayData, ReplayStep, EngineDecision, ReplayContext } from '../engine/replayTypes';
 
 export type AppStatus = 'loading' | 'ready' | 'error';
 
@@ -30,7 +30,8 @@ export function useGameEngine(
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
-
+  const lastPulsedRef = useRef({ turn: -1, playerIndex: -1 });
+  const replayDataRef = useRef<ReplayData | null>(null);
 
   const setGameState = useCallback((updater: GameState | null | ((prev: GameState | null) => GameState | null)) => {
     if (typeof updater === 'function') {
@@ -50,6 +51,15 @@ export function useGameEngine(
         const randomSeed = Math.floor(Math.random() * 2147483647);
         const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', undefined, randomSeed);
         setGameState(initialState);
+        replayDataRef.current = {
+          version: '1.0.0', // Can be dynamically injected from package.json in future
+          commitHash: 'unknown', 
+          campaignId: bundle.id,
+          rules: initialState.rules,
+          startingState: initialState,
+          steps: [],
+          endStateHash: ''
+        };
         setStatus('ready');
       if (initialState && initialState.players[0].turnFlags.freeNewspaper) {
         setIsNewspaperModalOpen(true);
@@ -100,7 +110,18 @@ export function useGameEngine(
       setGameState({ ...gameStateRef.current!, players: updatedPlayers });
       setActivePlayerIndex(activePlayerIndex + 1);
     } else {
-      const nextState = processTurnStart({ ...gameStateRef.current!, players: updatedPlayers }, campaign!);
+      const outDecisions: EngineDecision[] = [];
+      const replayCtx: ReplayContext = { outDecisions };
+      const nextState = processTurnStart({ ...gameStateRef.current!, players: updatedPlayers }, campaign!, replayCtx);
+      
+      if (replayDataRef.current) {
+        replayDataRef.current.steps.push({
+          turn: gameStateRef.current!.turn,
+          action: { type: 'end_turn' },
+          engineDecisions: outDecisions
+        });
+      }
+
       setGameState(nextState);
       setActivePlayerIndex(0);
       if (nextState.players[0].turnFlags.freeNewspaper) {
@@ -152,8 +173,18 @@ export function useGameEngine(
         if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
           const preRobberyMoney = player.money;
           const rng = new Random(currentState.rngState);
-          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign);
+          const outDecisions: EngineDecision[] = [];
+          const replayCtx: ReplayContext = { outDecisions };
+          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx);
           
+          if (replayDataRef.current) {
+            replayDataRef.current.steps.push({
+              turn: currentState.turn,
+              action: { type: 'move', nodeId },
+              engineDecisions: outDecisions
+            });
+          }
+
           if (player.money < preRobberyMoney) {
             addLog({ key: 'log.robbery' }, undefined, player.id);
             if (currentState.rules.enableAnimations) {
@@ -170,6 +201,16 @@ export function useGameEngine(
         const requestedSteps = pathResult.steps;
         const maxAffordableSteps = Math.floor(player.hoursRemaining / movementCost);
         const actualSteps = Math.min(requestedSteps, maxAffordableSteps);
+
+        if (actualSteps > 0 && !['bank', 'blacks_market'].includes(currentBuilding || '')) {
+          if (replayDataRef.current) {
+            replayDataRef.current.steps.push({
+              turn: currentState.turn,
+              action: { type: 'move', nodeId },
+              engineDecisions: [] // Empty for normal moves, since robbery was handled above
+            });
+          }
+        }
 
         if (actualSteps > 0) {
           // Build the physical path for animation, up to the actual steps we can take
@@ -248,7 +289,7 @@ export function useGameEngine(
       let oldPlayer = { ...updatedPlayers[activePlayerIndex] };
       const rng = new Random(prevState.rngState);
       
-      const { updatedPlayer: player, actionLog, updatedPawnShopItemsForSale } = gameReducer(
+      const { updatedPlayer: player, actionLog, updatedPawnShopItemsForSale, outEngineDecisions } = gameReducer(
         oldPlayer,
         payload as GameAction,
         {
@@ -260,6 +301,14 @@ export function useGameEngine(
           state: prevState
         }
       );
+
+      if (replayDataRef.current) {
+        replayDataRef.current.steps.push({
+          turn: prevState.turn,
+          action: payload,
+          engineDecisions: outEngineDecisions || []
+        });
+      }
 
       resultActionLog = actionLog;
 
@@ -325,10 +374,24 @@ export function useGameEngine(
 
   const handleNodeClick = async (nodeId: string) => {
     if (!gameStateRef.current || !campaign || isAnimating) return;
+    const node = campaign.map.nodes.find(n => n.id === nodeId);
+    if (node) {
+      showMapClick(node.x, node.y);
+    }
     await handleAction({ type: 'move', nodeId });
   };
 
   useEffect(() => {
+    // Human player pulse at start of turn
+    const currentTurn = gameState?.turn;
+    const playerFlags = gameState?.players[activePlayerIndex]?.turnFlags;
+    if (gameState?.phase === 'playing' && !gameState.players[activePlayerIndex]?.isAi && playerFlags?.hasSeenWeekend) {
+      if (lastPulsedRef.current.turn !== currentTurn || lastPulsedRef.current.playerIndex !== activePlayerIndex) {
+        lastPulsedRef.current = { turn: currentTurn!, playerIndex: activePlayerIndex };
+        pulsePlayer(activePlayerIndex);
+      }
+    }
+
     // Only run AI if it's playing phase, it's an AI, AND they haven't just started their turn looking at the weekend screen
     if (gameState?.phase === 'playing' && gameState.players[activePlayerIndex]?.isAi && gameState.players[activePlayerIndex]?.turnFlags?.hasSeenWeekend) {
       const runAi = async () => {
@@ -400,6 +463,7 @@ export function useGameEngine(
     setActivePlayerIndex,
     handleAction,
     handleNodeClick,
-    addLog
+    addLog,
+    replayData: replayDataRef.current
   };
 }

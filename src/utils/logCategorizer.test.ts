@@ -50,4 +50,18 @@ describe('logCategorizer', () => {
     };
     expect(isLogMatchingFilter(entry, 'all')).toBe(true);
   });
+
+  it('categorizes buy logs with happinessBonus under happiness, but not standard ones', () => {
+    const happinessBuy: LogEntry = {
+      week: 1,
+      event: { key: 'action.buy', params: { itemName: 'Cheeseburger', itemId: 'cheeseburger', happinessBonus: 1 } }
+    };
+    const standardBuy: LogEntry = {
+      week: 1,
+      event: { key: 'action.buy', params: { itemName: 'Fries', itemId: 'fries' } }
+    };
+
+    expect(isLogMatchingFilter(happinessBuy, 'happiness')).toBe(true);
+    expect(isLogMatchingFilter(standardBuy, 'happiness')).toBe(false);
+  });
 });

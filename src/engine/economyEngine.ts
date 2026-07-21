@@ -8,6 +8,7 @@
 import type { PlayerState } from './gameState';
 import type { Random } from '../utils/rng';
 import type { CampaignBundle } from './dataLoader';
+import { resolveDecision, type ReplayContext } from './replayTypes';
 
 /**
  * Calculates a player's true Liquid Assets, including cash, bank savings, and stocks.
@@ -65,10 +66,10 @@ export function calcEconomyPrice(basePrice: number, economicIndex: number): numb
  * @param currentIndex — Current economic index
  * @returns              New economic index
  */
-export function fluctuateEconomy(currentIndex: number, rng: Random): number {
+export function fluctuateEconomy(currentIndex: number, rng: Random, replay?: ReplayContext): number {
   // Simplified random walk for the economic index
   // A real implementation would likely have momentum or trend mechanics
-  const change = Math.floor(rng.next() * 21) - 10; // -10 to +10
+  const change = resolveDecision(replay, `fluctuate_economy`, () => Math.floor(rng.next() * 21) - 10); // -10 to +10
   return Math.max(-30, Math.min(90, currentIndex + change));
 }
 
@@ -102,7 +103,8 @@ export function calcStockPrice(basePrice: number, economicIndex: number, seed: n
 export function applyMarketCrash(
   player: PlayerState,
   severity: 'minor' | 'moderate' | 'major',
-  rng: Random
+  rng: Random,
+  replay?: ReplayContext
 ): PlayerState {
   let updated = { ...player };
 
@@ -116,11 +118,16 @@ export function applyMarketCrash(
   } else if (severity === 'moderate') {
     updated.happiness -= hasSignificantStocks ? 4 : 2;
     // 50% chance to be fired, or wage cut
-    if (updated.currentJobId && rng.next() < 0.5) {
-      updated.currentJobId = null; // Fired
-      updated.currentWage = 0;
-      updated.raisesAtCurrentJob = 0;
-      updated.happiness -= 7; // Penalty for lost job
+    if (updated.currentJobId) {
+      const fired = resolveDecision(replay, `crash_fired`, () => rng.next() < 0.5);
+      if (fired) {
+        updated.currentJobId = null; // Fired
+        updated.currentWage = 0;
+        updated.raisesAtCurrentJob = 0;
+        updated.happiness -= 7; // Penalty for lost job
+      } else if (updated.currentWage > 0) {
+        updated.currentWage = Math.floor(updated.currentWage * 0.8); // 80% wage cut
+      }
     } else if (updated.currentWage > 0) {
       updated.currentWage = Math.floor(updated.currentWage * 0.8); // 80% wage cut
     }

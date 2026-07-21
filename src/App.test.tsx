@@ -13,6 +13,8 @@ vi.mock('./graphics/mapRenderer', () => ({
   },
   initMapRenderer: vi.fn().mockResolvedValue(() => {}),
   movePlayerTo: vi.fn(),
+  pulsePlayer: vi.fn(),
+  showMapClick: vi.fn(),
 }));
 
 // Mock the GameMap component to provide simple clickable buttons for nodes

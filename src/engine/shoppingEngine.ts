@@ -96,5 +96,9 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
       break;
   }
 
-  return { updated, success: true, message: { key: 'action.buy', params: { itemName: item.name, itemId: item.id } } };
+  const messageParams: Record<string, any> = { itemName: item.name, itemId: item.id };
+  if (happinessBonus !== 0) {
+    messageParams.happinessBonus = happinessBonus;
+  }
+  return { updated, success: true, message: { key: 'action.buy', params: messageParams } };
 }

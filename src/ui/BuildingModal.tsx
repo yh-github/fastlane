@@ -319,6 +319,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             onAction={handleActionIntercept} 
             availableItems={itemsHere} 
             economicIndex={economicIndex}
+            rules={rules}
           />
         )}
 

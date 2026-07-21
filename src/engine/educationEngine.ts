@@ -10,7 +10,7 @@ export interface EducationResult {
 
 import { calcEconomyPrice } from './economyEngine';
 
-export function enrollInDegree(player: PlayerState, degree: EducationDef, economicIndex: number = 0): EducationResult {
+export function enrollInDegree(player: PlayerState, degree: EducationDef, economicIndex: number = 0, rules?: GameRules): EducationResult {
   // Check if they already have it
   if (player.degrees.includes(degree.id)) {
     return { updated: player, success: false, message: { key: 'action.error.alreadyHaveDegree' } };
@@ -32,21 +32,29 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef, econom
   let updated = { 
     ...player, 
     money: player.money - tuitionFee,
-    enrolledClasses: { ...(player.enrolledClasses || {}), [degree.id]: 0 }
+    enrolledClasses: { 
+      ...(player.enrolledClasses || {}), 
+      [degree.id]: 0,
+      [`${degree.id}_req`]: calcRequiredLessons(player, degree, rules)
+    }
   };
 
   return { updated, success: true, message: { key: 'action.education.enrolled', params: { name: degree.name } } };
 }
 
 export function calcRequiredLessons(player: PlayerState, degree: EducationDef, rules?: GameRules): number {
+  if (player.enrolledClasses && player.enrolledClasses[`${degree.id}_req`] !== undefined) {
+    return player.enrolledClasses[`${degree.id}_req`];
+  }
+
   let required = degree.lessonsRequired;
   let reduction = 0;
   
-  if (player.inventory.appliances.some(a => a.id === 'computer')) reduction += 1;
+  if (player.inventory?.appliances?.some(a => a.id === 'computer')) reduction += 1;
   
-  const hasAllBooks = player.inventory.books?.includes('dictionary') && 
-                      player.inventory.books?.includes('encyclopedia') && 
-                      player.inventory.books?.includes('atlas');
+  const hasAllBooks = player.inventory?.books?.includes('dictionary') && 
+                      player.inventory?.books?.includes('encyclopedia') && 
+                      player.inventory?.books?.includes('atlas');
   if (hasAllBooks) {
     const isCompletedThisTurn = !!player.turnFlags?.bookSetCompletedThisTurn;
     if (!rules?.delayBookSetCredit || !isCompletedThisTurn) {

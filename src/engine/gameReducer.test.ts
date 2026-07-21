@@ -239,6 +239,7 @@ describe('gameReducer', () => {
     });
 
     it('asks for rent extension successfully on first try', () => {
+      player.rentPaidUntilWeek = 1;
       player.rentExtensionsReceived = 0;
       const result = gameReducer(player, { type: 'ask_rent_extension' }, context);
       expect(result.updatedPlayer.rentExtensionActive).toBe(true);
