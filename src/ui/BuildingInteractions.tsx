@@ -119,7 +119,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
     <div className="interaction-panel">
       <h3>{t('storeFront.title')}</h3>
       {availableItems.map(item => {
-        const adjustedPrice = calcEconomyPrice(item.basePrice, economicIndex);
+        const adjustedPrice = calcItemPrice(item, economicIndex);
         const canAfford = player.money >= adjustedPrice;
         let alreadyOwned = false;
         if (item.category === 'book') alreadyOwned = player.inventory.books.includes(item.id);
@@ -167,7 +167,7 @@ export function HomeRelax({ onAction, campaign }: InteractionProps & { campaign?
   );
 }
 
-import { calcEconomyPrice, calcStockPrice } from '../engine/economyEngine';
+import { calcEconomyPrice, calcItemPrice, calcStockPrice } from '../engine/economyEngine';
 import { calcRequiredLessons } from '../engine/educationEngine';
 
 import type { GameRules } from '../engine/gameState';

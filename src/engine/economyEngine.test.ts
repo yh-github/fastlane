@@ -1,12 +1,33 @@
 import { Random } from '../utils/rng';
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fluctuateEconomy, applyMarketCrash } from './economyEngine';
+import { fluctuateEconomy, applyMarketCrash, calcEconomyPrice, calcItemPrice } from './economyEngine';
 import type { PlayerState } from './gameState';
 
 describe('Economy Engine', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  describe('calcItemPrice and calcEconomyPrice', () => {
+    it('scales normal item prices based on economic index', () => {
+      // Base price 60, economicIndex 30 => 60 + (60 * 30 / 60) = 90
+      expect(calcEconomyPrice(60, 30)).toBe(90);
+      expect(calcItemPrice({ basePrice: 60 }, 30)).toBe(90);
+    });
+
+    it('keeps fixed-price items fixed regardless of economic index', () => {
+      const fixedNewspaper = { basePrice: 1, isFixedPrice: true };
+      const fixedLottery = { basePrice: 10, isFixedPrice: true };
+
+      expect(calcItemPrice(fixedNewspaper, 90)).toBe(1);
+      expect(calcItemPrice(fixedNewspaper, -30)).toBe(1);
+      expect(calcItemPrice(fixedLottery, 90)).toBe(10);
+      expect(calcItemPrice(fixedLottery, -30)).toBe(10);
+
+      expect(calcEconomyPrice(10, 90, true)).toBe(10);
+      expect(calcEconomyPrice(10, -30, true)).toBe(10);
+    });
   });
 
   describe('fluctuateEconomy', () => {

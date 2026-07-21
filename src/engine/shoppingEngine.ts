@@ -19,10 +19,33 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
   let happinessBonus = item.happinessBonus || 0;
   let newTurnFlags = { ...player.turnFlags };
 
-  // Lottery tickets grant happiness ONLY for the first purchase each turn
   if (item.id === 'lottery_tickets') {
     if (!player.turnFlags?.lotteryHappinessGranted) {
       newTurnFlags.lotteryHappinessGranted = true;
+    } else {
+      happinessBonus = 0;
+    }
+  } else if (item.subcategory === 'fast_food') {
+    if (!player.turnFlags?.fastFoodHappinessGranted) {
+      newTurnFlags.fastFoodHappinessGranted = true;
+    } else {
+      happinessBonus = 0;
+    }
+  } else if (item.category === 'food' && item.subcategory !== 'fast_food') {
+    if (!player.turnFlags?.freshFoodHappinessGranted) {
+      newTurnFlags.freshFoodHappinessGranted = true;
+    } else {
+      happinessBonus = 0;
+    }
+  } else if (item.category === 'junk' && (item.id === 'colas' || item.id === 'shakes')) {
+    if (!player.turnFlags?.drinkHappinessGranted) {
+      newTurnFlags.drinkHappinessGranted = true;
+    } else {
+      happinessBonus = 0;
+    }
+  } else if (item.category === 'ticket' && item.id !== 'lottery_tickets') {
+    if (!player.turnFlags?.ticketHappinessGranted) {
+      newTurnFlags.ticketHappinessGranted = true;
     } else {
       happinessBonus = 0;
     }

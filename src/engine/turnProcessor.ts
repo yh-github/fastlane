@@ -326,9 +326,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
           if (p.loanPaymentDeadline < state.turn) {
             p.timesDefaulted += 1;
             p.turnFlags.loanDefaultWarning = true;
-            if (p.loanPaymentDeadline < state.turn - 4) {
-              p.happiness = Math.max(10, p.happiness - 1);
-            }
+            p.happiness = Math.max(10, p.happiness - 1);
           }
         } else if (state.turn % 4 === 0) { 
           if (p.loanPaymentDeadline <= state.turn) {
@@ -354,7 +352,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       if (crashSeverity !== 'none') {
         p = applyMarketCrash(p, crashSeverity, rng, replay);
       } else if (economicBoom) {
-        p = applyEconomicBoom(p);
+        p = applyEconomicBoom(p, campaign, newEconomy, state.turn);
       }
 
       if (currentHeadline) {

@@ -35,14 +35,14 @@
   { "id": "food_2weeks", "name": "Food for 2 Weeks", "category": "food", "subcategory": "groceries", "store": "blacks_market", "basePrice": 100, "happinessBonus": 2, "units": 2 },
   { "id": "food_4weeks", "name": "Food for 4 Weeks", "category": "food", "subcategory": "groceries", "store": "blacks_market", "basePrice": 190, "happinessBonus": 4, "units": 4 },
 
-  { "id": "lottery_tickets", "name": "10 Lottery Tickets", "category": "ticket", "store": "blacks_market", "basePrice": 10, "happinessBonus": 2 },
+  { "id": "lottery_tickets", "name": "10 Lottery Tickets", "category": "ticket", "store": "blacks_market", "basePrice": 10, "happinessBonus": 2, "isFixedPrice": true },
   { "id": "baseball_tickets", "name": "Baseball Tickets", "category": "ticket", "store": "z_mart", "basePrice": 45, "happinessBonus": 2 },
   { "id": "theatre_tickets", "name": "Theatre Tickets", "category": "ticket", "store": "z_mart", "basePrice": 30, "happinessBonus": 2 },
   { "id": "concert_tickets", "name": "Concert Tickets", "category": "ticket", "store": "z_mart", "basePrice": 40, "happinessBonus": 2 },
 
   { "id": "cola", "name": "Colas", "category": "junk", "store": "burger_palace", "basePrice": 69, "happinessBonus": 1 },
   { "id": "shake", "name": "Shakes", "category": "junk", "store": "burger_palace", "basePrice": 102, "happinessBonus": 2 },
-  { "id": "newspaper", "name": "Newspaper", "category": "junk", "store": "blacks_market", "basePrice": 1, "happinessBonus": 0 },
+  { "id": "newspaper", "name": "Newspaper", "category": "junk", "store": "blacks_market", "basePrice": 1, "happinessBonus": 0, "isFixedPrice": true },
   { "id": "dog_food", "name": "Dog Food", "category": "junk", "store": "z_mart", "basePrice": 18, "happinessBonus": -1 },
   { "id": "8track", "name": "8-Track Player", "category": "junk", "store": "z_mart", "basePrice": 75, "happinessBonus": -1 },
   { "id": "capote", "name": "Works of Capote", "category": "junk", "store": "z_mart", "basePrice": 100, "happinessBonus": -2 }

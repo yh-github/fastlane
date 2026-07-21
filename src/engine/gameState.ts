@@ -271,6 +271,8 @@ export interface TurnFlags {
   bookSetCompletedThisTurn?: boolean;
   /** Whether lottery tickets happiness bonus (+2) was already granted this turn */
   lotteryHappinessGranted?: boolean;
+  /** Whether ticket happiness bonus (+2) was already granted this turn */
+  ticketHappinessGranted?: boolean;
 }
 
 // ─── Stat Constants ─────────────────────────────────────────────
@@ -305,6 +307,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     jobsRejectedThisTurn: [],
     bookSetCompletedThisTurn: false,
     lotteryHappinessGranted: false,
+    ticketHappinessGranted: false,
   };
 }
 

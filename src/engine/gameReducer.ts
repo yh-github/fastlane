@@ -5,7 +5,7 @@ import { applyForJob, workShift } from './jobEngine';
 import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study } from './educationEngine';
 import { spendHours } from './timeManager';
-import { calcEconomyPrice } from './economyEngine';
+import { calcEconomyPrice, calcItemPrice } from './economyEngine';
 import { recalculatePlayerEffects } from './gameState';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
@@ -101,8 +101,8 @@ export function gameReducer(
           }
         }
         
-        // Ensure price is adjusted for economy, except newspaper which is fixed
-        const adjustedPrice = itemDef.id === 'newspaper' ? itemDef.basePrice : calcEconomyPrice(itemDef.basePrice, context.economicIndex);
+        // Ensure price is adjusted for economy, respecting fixed-price items (like newspaper, lottery tickets)
+        const adjustedPrice = calcItemPrice(itemDef, context.economicIndex);
         const itemWithPrice = { ...itemDef, basePrice: adjustedPrice };
         
         const result = buyItem(nextPlayer, itemWithPrice, context.rules);
@@ -270,7 +270,7 @@ export function gameReducer(
       }
       nextPlayer = spendHours(nextPlayer, timeCost);
       
-      const liquidAssets = nextPlayer.money + nextPlayer.bankSavings;
+      const liquidAssets = nextPlayer.money + nextPlayer.bankSavings - (nextPlayer.loanDebt || 0);
       const liquidity = nextPlayer.currentWage + (liquidAssets / 1000);
       let risk = 5;
       if (nextPlayer.timesDefaulted > 0 || (nextPlayer.loanDebt || 0) > 0) {
@@ -281,8 +281,7 @@ export function gameReducer(
 
       if (isDefaulted || liquidity <= risk || (context.rules.requireJobForLoan && nextPlayer.currentJobId === null)) {
         actionLog = { key: 'action.loan.refused' };
-        const penalty = (nextPlayer.loanDebt || 0) > 0 ? 1 : 2;
-        nextPlayer.happiness = Math.max(10, nextPlayer.happiness - penalty);
+        nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
       } else {
         const loanSize = Math.floor(maxLoan);
         if (loanSize > 0) {
@@ -295,8 +294,7 @@ export function gameReducer(
           actionLog = { key: 'action.loan.approved', params: { loanSize } };
         } else {
           actionLog = { key: 'action.loan.refused' };
-          const penalty = (nextPlayer.loanDebt || 0) > 0 ? 1 : 2;
-          nextPlayer.happiness = Math.max(10, nextPlayer.happiness - penalty);
+          nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
         }
       }
       break;
@@ -457,6 +455,10 @@ export function gameReducer(
       }
       if (nextPlayer.rentExtensionActive || nextPlayer.turnFlags.askedForExtension) {
         actionLog = { key: 'action.rent.alreadyGranted' };
+        break;
+      }
+      if (nextPlayer.rentExtensionsDeniedPermanently) {
+        actionLog = { key: 'action.rent.extensionDenied' };
         break;
       }
       nextPlayer.turnFlags.askedForExtension = true;

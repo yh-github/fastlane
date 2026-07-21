@@ -2,7 +2,7 @@ import { GameAction } from './gameReducer';
 import { GameState, PlayerState } from './gameState';
 import { CampaignBundle } from './dataLoader';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
-import { calcEconomyPrice } from './economyEngine';
+import { calcEconomyPrice, calcItemPrice } from './economyEngine';
 
 export interface ActionChoice {
   label: string;
@@ -133,7 +133,7 @@ export function getAvailableActions(
     itemsAtStore.forEach(item => {
       const timeCost = item.id === 'newspaper' ? campaign.config.timeRules.newspaperCost : 0;
       const timeString = timeCost > 0 ? `, -${timeCost}h` : '';
-      const adjustedPrice = item.id === 'newspaper' ? item.basePrice : calcEconomyPrice(item.basePrice, state.economicIndex);
+      const adjustedPrice = calcItemPrice(item, state.economicIndex);
       const buyLabel = helpful ? `Buy ${item.name} (-$${adjustedPrice}${timeString})` : `Buy ${item.name}`;
       options.push({ label: buyLabel, action: { type: 'buy', itemId: item.id } });
     });

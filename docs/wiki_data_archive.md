@@ -736,7 +736,7 @@ Actual prices of Fresh Food at Black's Market are affected by the Economy. Price
 
 | Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
 |-----|-----------|----------------|-------------------|--------------|---------| 
-| Janitor | $5 | 10 | 10 | -- | Casual Clothes |
+| Janitor | $6 | 10 | 10 | -- | Casual Clothes |
 | Checker | $8 | 20 | 20 | -- | Casual Clothes |
 | Butcher | $12 | 30 | 30 | Trade School | Casual Clothes |
 | Assistant Manager | $15 | 40 | 40 | Junior College | Dress Clothes |
@@ -924,7 +924,7 @@ If you have a Job at Socket City, you can Work here to get money.
 | Job | Base Wage | Req. Experience | Req. Dependability | Req. Degrees | Uniform |
 |-----|-----------|----------------|-------------------|--------------|---------| 
 | Clerk * | $6 | 10 | 20 | -- | Casual Clothes |
-| Salesperson | $7 | 20 | 30 | -- | Dress Clothes |
+| Salesperson | $7 | 30 | 30 | -- | Dress Clothes |
 | Electronics Repairman | $11 | 40 | 40 | Electronics | Casual Clothes |
 | Manager | $14 | 40 | 40 | Electronics, Junior College | Business Suit |
 
@@ -1417,7 +1417,7 @@ Each severity of Market Crash triggers a different [[Newspaper]] headline, which
 | ''SCANDAL ON WALL ST. ECONOMY DROPS! UNEMPLOYMENT RISES''
 |-
 ! Major
-| -15%
+| -20%
 | 100%
 | [[File:Cross.png]]
 | [[File:Tick.png]]
@@ -1434,7 +1434,7 @@ Furthermore, the Crash instantly reduces all prices by a certain percentage. The
 
 * Minor Crash: '''-5%'''
 * Moderate Crash: '''-10%'''
-* Major Crash: '''-15%'''
+* Major Crash: '''-20%'''
 
 Note that this penalty is applied after the Economic Index plunges, which means that the final price drop could be far more serious than these numbers imply.
 
