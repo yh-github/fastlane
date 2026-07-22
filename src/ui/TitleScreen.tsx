@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAvailableCampaigns } from '../engine/dataLoader';
+import { RulesScreen } from './RulesScreen';
 
 interface TitleScreenProps {
   onStartGame: (campaignId: string) => void;
@@ -11,8 +12,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
   const campaigns = getAvailableCampaigns();
   const defaultCampaign = campaigns.find(c => c.id === 'qol_improved') || campaigns[0];
   const [selectedCampaignId, setSelectedCampaignId] = useState(defaultCampaign.id);
+  const [showRules, setShowRules] = useState(false);
 
   const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId) || campaigns[0];
+
+  if (showRules) {
+    return <RulesScreen onClose={() => setShowRules(false)} />;
+  }
 
   return (
     <div className="fullscreen-overlay">
@@ -47,9 +53,14 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
         </p>
       </div>
 
-      <button className="title-screen__btn" onClick={() => onStartGame(selectedCampaignId)}>
-        {t('titleScreen.startGame')}
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+        <button className="title-screen__btn" onClick={() => onStartGame(selectedCampaignId)}>
+          {t('titleScreen.startGame')}
+        </button>
+        <button className="title-screen__btn" onClick={() => setShowRules(true)} style={{ background: '#4b5563', fontSize: '1.2rem', padding: '0.75rem 1.5rem', marginTop: '0' }}>
+          View Rules Comparison
+        </button>
+      </div>
     </div>
   );
 };
