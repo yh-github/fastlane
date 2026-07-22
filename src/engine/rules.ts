@@ -182,3 +182,33 @@ export const DEFAULT_GAME_RULES: GameRules = {
   delayBookSetCredit: true,
   allowEatingSpoiledFood: true,
 };
+
+/**
+ * Human-readable descriptions for each rule (concise and without "If true," intros).
+ */
+export const RULE_DESCRIPTIONS: Record<string, string> = {
+  strictEviction: 'Warns at 1 month rent debt and evicts from apartment at >2 months debt',
+  fluctuatingRent: 'Rent rates adjust dynamically with economic index changes',
+  clothingDecaysAll: 'All clothing in inventory decays by 1 week every turn (vs only worn clothing)',
+  autoEquipBestClothes: 'Automatically equips best available clothes for current job',
+  classicStockMarket: 'Uses original stock market price calculations',
+  allowPartialHours: 'Allows studying/working for remaining hours even if less than full session',
+  enableRelaxationDoctor: 'Triggers mandatory doctor visit if relaxation drops below threshold',
+  requireJobForLoan: 'Requires holding a job to qualify for bank loan',
+  helpfulUI: 'Displays exact prices, transaction fees, and loan costs in UI',
+  enableAnimations: 'Enables money transaction popups and UI animations',
+  allowOverAchievingGoals: 'Allows progression metrics to exceed 100%',
+  bypassDoctorIfBroke: 'Bypasses mandatory doctor visit without penalty if player has no money',
+  relaxationDoctorThreshold: 'Relaxation level threshold that triggers mandatory doctor event',
+  protectBuiltInAppliances: 'Protects built-in appliances from theft during apartment burglaries',
+  allowEmployedRentPayment: 'Allows paying rent manually at any time if employed at Rent Office',
+  delayBookSetCredit: 'Requires waiting until next turn for 3-book set lesson discount',
+  allowEatingSpoiledFood: 'Allows eating spoiled or expired food',
+
+  marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
+  willyRobberyStartWeek: 'Game turn/week when Willy robbery events begin',
+  'charity.maxCash': 'Maximum cash limit to remain eligible for charity payout',
+  'charity.maxWealth': 'Maximum wealth limit to remain eligible for charity payout',
+  'charity.wealthMetric': 'Wealth calculation metric for charity (durableValue vs netWorth)',
+};
+
