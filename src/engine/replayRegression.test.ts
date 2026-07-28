@@ -153,4 +153,53 @@ describe('Deterministic Replay Regression', () => {
     // Verify it matches snapshot
     expect(currentState).toMatchSnapshot();
   });
+  it('replays bug 1785246627881 (apartment robbery without appliances)', async () => {
+    const { loadCampaign } = await import('./dataLoader');
+    const replayPath = path.resolve('tests/fixtures/regression/fastlane-replay-1785246627881.json');
+    if (!fs.existsSync(replayPath)) {
+      console.warn('Skipping replay test: fastlane-replay-1785246627881.json not found');
+      return;
+    }
+
+    const replayData: ReplayData = JSON.parse(fs.readFileSync(replayPath, 'utf8'));
+    let currentState = replayData.startingState;
+    const realCampaign = await loadCampaign('qol_improved');
+
+    for (const step of replayData.steps) {
+      if (step.action.type === 'end_turn') {
+        const replayCtx: ReplayContext = { inDecisions: step.engineDecisions || [], outDecisions: [] };
+        currentState = processTurnStart(currentState, realCampaign, replayCtx);
+      } else {
+        const player = currentState.players[0];
+        const replayCtx: ReplayContext = { inDecisions: step.engineDecisions || [], outDecisions: [] };
+        const context = {
+          campaign: realCampaign,
+          rules: currentState.rules,
+          turn: currentState.turn,
+          economicIndex: currentState.economicIndex,
+          rng: new Random(currentState.rngState),
+          state: currentState,
+          replayContext: replayCtx
+        };
+        const { updatedPlayer, updatedPawnShopItemsForSale } = gameReducer(player, step.action as any, context);
+        
+        currentState = {
+          ...currentState,
+          rngState: context.rng.getState(),
+          pawnShopItemsForSale: updatedPawnShopItemsForSale ?? currentState.pawnShopItemsForSale,
+          players: [updatedPlayer]
+        };
+      }
+    }
+
+    // After turn 1 ends (going into turn 2), the player should NOT have been robbed
+    // because they had no appliances, despite the engineDecision 'apartment_robbery: true'.
+    const player = currentState.players[0];
+    const hasRobberyEvent = player.turnEvents.some(e => e.key === 'events.robbery.apartment' || e.key === 'events.robbery.willy');
+    expect(hasRobberyEvent).toBe(false);
+    expect(player.happiness).toBeGreaterThanOrEqual(10); // Specifically, should not have -4 penalty for a robbery that didn't happen
+
+    // Verify it matches snapshot
+    expect(currentState).toMatchSnapshot();
+  });
 });
