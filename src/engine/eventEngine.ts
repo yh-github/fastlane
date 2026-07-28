@@ -103,23 +103,31 @@ export function processApartmentRobbery(
   const robbed = resolveDecision(replay, `apartment_robbery`, () => rng.next() < chance);
 
   if (robbed) {
-    let updated = { ...player, inventory: { ...player.inventory }, turnEvents: [...player.turnEvents, { key: 'events.robbery.willy' }] };
-    // -4 Happiness penalty
-    updated.happiness = Math.max(10, updated.happiness - 4);
-    
-    // Filter appliances. Each stealable durable has 25% chance to be stolen.
-    // Refrigerator, Freezer, Stove can't be stolen ONLY if protectBuiltInAppliances is enabled.
-    updated.inventory.appliances = updated.inventory.appliances.filter((app) => {
+    let stolenCount = 0;
+    const newAppliances = player.inventory.appliances.filter((app) => {
       if (protectBuiltInAppliances && ['refrigerator', 'freezer', 'stove'].includes(app.id)) {
         return true; // Keep protected heavy appliances
       }
       const itemStolen = resolveDecision(replay, `apartment_robbery_item_${app.id}`, () => rng.next() < 0.25);
       if (itemStolen) {
+        stolenCount++;
         return false; // Stolen
       }
       return true; // Keep
     });
 
+    if (stolenCount === 0) {
+      return { updated: player, robbed: false };
+    }
+
+    let updated = { 
+      ...player, 
+      inventory: { ...player.inventory, appliances: newAppliances }, 
+      turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment' }] 
+    };
+    // -4 Happiness penalty
+    updated.happiness = Math.max(10, updated.happiness - 4);
+    
     return { updated, robbed: true };
   }
 

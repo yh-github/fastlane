@@ -39,6 +39,35 @@ describe('Event Engine', () => {
       expect(robbed).toBe(false);
       expect(updated.money).toBe(1000);
     });
+
+    it('no robbery if player has no appliances', () => {
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.001); // Trigger robbery
+      const player = { currentHousingId: 'low_cost', inventory: { appliances: [] } } as unknown as PlayerState;
+      const { updated, robbed } = processApartmentRobbery(player, new Random(1));
+      expect(robbed).toBe(false);
+    });
+
+    it('no robbery if chance triggers but no items are actually stolen', () => {
+      // First call (trigger robbery): 0.001
+      // Second call (steal item chance): 0.99 (fails, not stolen)
+      vi.spyOn(Random.prototype, 'next')
+        .mockReturnValueOnce(0.001)
+        .mockReturnValueOnce(0.99);
+
+      const player = { 
+        currentHousingId: 'low_cost', 
+        inventory: { appliances: [
+          { id: 'tv', purchasePrice: 500, purchaseSource: 'socket_city' }
+        ] },
+        turnEvents: [],
+        happiness: 50
+      } as unknown as PlayerState;
+
+      const { updated, robbed } = processApartmentRobbery(player, new Random(1));
+      expect(robbed).toBe(false);
+      expect(updated.happiness).toBe(50); // Happiness shouldn't drop
+      expect(updated.turnEvents.length).toBe(0);
+    });
   });
 
   describe('processDoctorVisit', () => {

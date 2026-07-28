@@ -117,7 +117,8 @@
   },
   "events": {
     "robbery": {
-      "willy": "Wild Willy robbed you in the street!"
+      "willy": "Wild Willy robbed you in the street!",
+      "apartment": "Your apartment was robbed!"
     },
     "donation": "You were feeling generous and donated ${{amount}} to charity.",
     "lottery": "You won ${{amount}} in the lottery!",
