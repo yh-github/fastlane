@@ -1,7 +1,7 @@
 import { Random } from '../utils/rng';
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fluctuateEconomy, applyMarketCrash, calcEconomyPrice, calcItemPrice } from './economyEngine';
+import { fluctuateEconomy, applyMarketCrash, calcEconomyPrice, calcItemPrice, processRentDebt } from './economyEngine';
 import type { PlayerState } from './gameState';
 
 describe('Economy Engine', () => {
@@ -87,6 +87,35 @@ describe('Economy Engine', () => {
       expect(updated.currentJobId).toBeNull();
       expect(updated.bankSavings).toBe(0); // Bank savings wiped!
       expect(updated.money).toBe(1000); // Cash is safe
+    });
+  });
+
+  describe('processRentDebt (Garnishment)', () => {
+    it('handles partial garnishment with $2 interest fee correctly ($100 earned, $100 debt)', () => {
+      const player = { rentDebt: 100 } as PlayerState;
+      const [updated, netWage, totalGarnished] = processRentDebt(player, 100);
+
+      expect(updated.rentDebt).toBe(50); // $50 deducted from debt
+      expect(netWage).toBe(48); // $100 - $50 - $2 fee = $48
+      expect(totalGarnished).toBe(52); // $50 debt + $2 fee = $52
+    });
+
+    it('matches the original Monolith Burgers screenshot example ($40 earned, $325 debt)', () => {
+      const player = { rentDebt: 325 } as PlayerState;
+      const [updated, netWage, totalGarnished] = processRentDebt(player, 40);
+
+      expect(updated.rentDebt).toBe(305); // $20 deducted from debt
+      expect(netWage).toBe(18); // $40 - $20 - $2 fee = $18
+      expect(totalGarnished).toBe(22); // $20 debt + $2 fee = $22 garnished!
+    });
+
+    it('clears rent debt without interest fee when debt < 50% of earnings ($100 earned, $30 debt)', () => {
+      const player = { rentDebt: 30 } as PlayerState;
+      const [updated, netWage, totalGarnished] = processRentDebt(player, 100);
+
+      expect(updated.rentDebt).toBe(0); // Debt fully cleared
+      expect(netWage).toBe(70); // $100 - $30 = $70
+      expect(totalGarnished).toBe(30); // No interest fee collected
     });
   });
 });

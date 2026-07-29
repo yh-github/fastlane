@@ -94,7 +94,7 @@ describe('Education Engine', () => {
       const player = { 
         hoursRemaining: 10, 
         enrolledClasses: { 'junior_college': 7 },
-        happiness: 50, dependability: 50, maxDependability: 50, maxExperience: 50,
+        happiness: 50, dependability: 50, degreeDepBoost: 50, degreeExpBoost: 50,
         degrees: [],
         inventory: { appliances: [{id: 'computer'}], books: ['dictionary', 'encyclopedia', 'atlas'] }
       } as PlayerState; // computer (-1), all books (-1) = 8 required
@@ -105,7 +105,28 @@ describe('Education Engine', () => {
       expect(result.updated.enrolledClasses['junior_college']).toBeUndefined();
       // Rewards: +5 happ, +5 dep, +5 maxDep, +5 maxExp
       expect(result.updated.happiness).toBe(55);
-      expect(result.updated.maxDependability).toBe(55);
+      expect(result.updated.degreeDepBoost).toBe(55);
+      expect(result.updated.degreeExpBoost).toBe(55);
+    });
+
+    it('reduces degree rewards if reducedDegreeStatBonus rule is enabled', () => {
+      const player = { 
+        hoursRemaining: 10, 
+        enrolledClasses: { 'junior_college': 7 },
+        happiness: 50, dependability: 50, degreeDepBoost: 50, degreeExpBoost: 50,
+        degrees: [],
+        inventory: { appliances: [{id: 'computer'}], books: ['dictionary', 'encyclopedia', 'atlas'] },
+        rules: { reducedDegreeStatBonus: true }
+      } as PlayerState;
+      
+      const result = study(player, mockDegree, 6);
+      expect(result.success).toBe(true);
+      expect(result.updated.degrees).toContain('junior_college');
+      // Rewards should be +5 happ, +2 dep, +2 maxDep, +2 maxExp because of the rule
+      expect(result.updated.happiness).toBe(55); // happiness is unchanged by this rule
+      expect(result.updated.dependability).toBe(52);
+      expect(result.updated.degreeDepBoost).toBe(52);
+      expect(result.updated.degreeExpBoost).toBe(52);
     });
   });
 });

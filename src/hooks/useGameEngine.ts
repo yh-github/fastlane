@@ -280,7 +280,7 @@ export function useGameEngine(
       return;
     }
 
-    let resultActionLog: GameEvent | undefined = undefined;
+    let resultActionLog: GameEvent | GameEvent[] | undefined = undefined;
 
     setGameState(prevState => {
       if (!prevState) return prevState;
@@ -325,36 +325,45 @@ export function useGameEngine(
 
       // Process explicit diffs and attach to log
       if (actionLog) {
-        let finalActionLog: GameEvent = { ...actionLog, params: { ...actionLog.params } };
-        let diffStr = [];
-        const moneyDiff = player.money - oldPlayer.money;
-        const hapDiff = player.happiness - oldPlayer.happiness;
+        const logsArray = Array.isArray(actionLog) ? actionLog : [actionLog];
         
-        if (moneyDiff !== 0) {
-          diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
-          if (prevState.rules.enableAnimations) {
-            if (moneyDiff < 0) {
-              triggerAnim('text', `-$${Math.abs(moneyDiff)}`, { sourceId: 'stat-money', customClass: 'anim-negative' });
-            } else {
-              triggerAnim('text', `+$${moneyDiff}`, { targetId: 'stat-money', customClass: 'anim-positive' });
+        logsArray.forEach((log, index) => {
+          let finalActionLog: GameEvent = { ...log, params: { ...log.params } };
+          
+          // Only attach diff to the FIRST log in the array to avoid duplication
+          if (index === 0) {
+            let diffStr = [];
+            const moneyDiff = player.money - oldPlayer.money;
+            const hapDiff = player.happiness - oldPlayer.happiness;
+            
+            if (moneyDiff !== 0) {
+              diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
+              if (prevState.rules.enableAnimations) {
+                if (moneyDiff < 0) {
+                  triggerAnim('text', `-$${Math.abs(moneyDiff)}`, { sourceId: 'stat-money', customClass: 'anim-negative' });
+                } else {
+                  triggerAnim('text', `+$${moneyDiff}`, { targetId: 'stat-money', customClass: 'anim-positive' });
+                }
+              }
+            }
+            if (hapDiff !== 0) {
+              diffStr.push(`${hapDiff > 0 ? '+' : ''}${hapDiff} Happiness`);
+              if (prevState.rules.enableAnimations) {
+                if (hapDiff > 0) {
+                  triggerAnim('emoji', '😍', { targetId: 'stat-happiness' });
+                } else {
+                  triggerAnim('emoji', '😟', { sourceId: 'stat-happiness' });
+                }
+              }
+            }
+            
+            if (diffStr.length > 0) {
+              finalActionLog.params = { ...finalActionLog.params, diff: ` (${diffStr.join(', ')})` };
             }
           }
-        }
-        if (hapDiff !== 0) {
-          diffStr.push(`${hapDiff > 0 ? '+' : ''}${hapDiff} Happiness`);
-          if (prevState.rules.enableAnimations) {
-            if (hapDiff > 0) {
-              triggerAnim('emoji', '😍', { targetId: 'stat-happiness' });
-            } else {
-              triggerAnim('emoji', '😟', { sourceId: 'stat-happiness' });
-            }
-          }
-        }
-        
-        if (diffStr.length > 0) {
-          finalActionLog.params!.diff = ` (${diffStr.join(', ')})`;
-        }
-        addLog(finalActionLog, prevState.turn, player.id);
+          
+          addLog(finalActionLog, prevState.turn, player.id);
+        });
       }
 
       updatedPlayers[activePlayerIndex] = player;

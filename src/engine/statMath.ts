@@ -61,10 +61,10 @@ export function calcDependabilityDecay(current: number): number {
  * Capped by the job's requirement plus degree bonuses.
  *
  * @param jobRequiredDep — The dependability required by the current job (0 if unemployed)
- * @param numDegrees     — Number of degrees completed
+ * @param degreeDepBoost — Cumulative dependability boost from all completed degrees
  */
-export function calcMaxDependability(jobRequiredDep: number, numDegrees: number): number {
-  return 20 + jobRequiredDep + numDegrees * 5;
+export function calcMaxDependability(jobRequiredDep: number, degreeDepBoost: number): number {
+  return 20 + jobRequiredDep + degreeDepBoost;
 }
 
 /**
@@ -72,10 +72,10 @@ export function calcMaxDependability(jobRequiredDep: number, numDegrees: number)
  * Capped by the job's requirement plus degree bonuses.
  *
  * @param jobRequiredExp — The experience required by the current job (0 if unemployed)
- * @param numDegrees     — Number of degrees completed
+ * @param degreeExpBoost — Cumulative experience boost from all completed degrees
  */
-export function calcMaxExperience(jobRequiredExp: number, numDegrees: number): number {
-  return 10 + jobRequiredExp + numDegrees * 5;
+export function calcMaxExperience(jobRequiredExp: number, degreeExpBoost: number): number {
+  return 10 + jobRequiredExp + degreeExpBoost;
 }
 
 /**

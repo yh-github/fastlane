@@ -46,7 +46,7 @@ export interface ReducerContext {
 
 export interface ReducerResult {
   updatedPlayer: PlayerState;
-  actionLog?: GameEvent;
+  actionLog?: GameEvent | GameEvent[];
   updatedPawnShopItemsForSale?: PawnedItem[];
   outEngineDecisions?: EngineDecision[];
 }
@@ -57,7 +57,7 @@ export function gameReducer(
   context: ReducerContext
 ): ReducerResult {
   let nextPlayer = structuredClone(player);
-  let actionLog: GameEvent | undefined = undefined;
+  let actionLog: GameEvent | GameEvent[] | undefined = undefined;
   let updatedPawnShopItemsForSale: PawnedItem[] | undefined = undefined;
   let outEngineDecisions: EngineDecision[] = [];
   const replayContext: ReplayContext = {
@@ -81,9 +81,14 @@ export function gameReducer(
         const result = workShift(nextPlayer, jobDef, context.campaign.config.timeRules.workSessionCost);
         nextPlayer = result.updated;
         if (result.success) {
-          actionLog = { key: 'action.job.worked', params: { title: jobDef.title, wagesEarned: result.wagesEarned } };
+          const workedEvent = { key: 'action.job.worked', params: { title: jobDef.title, wagesEarned: result.wagesEarned } };
+          if (result.messages && result.messages.length > 0) {
+             actionLog = [workedEvent, ...result.messages];
+          } else {
+             actionLog = workedEvent;
+          }
         } else {
-          actionLog = result.message || { key: 'action.error.cannotWork' };
+          actionLog = (result.messages && result.messages.length > 0) ? result.messages : { key: 'action.error.cannotWork' };
         }
       }
       break;

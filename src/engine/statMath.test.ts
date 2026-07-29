@@ -26,12 +26,12 @@ describe('statMath', () => {
 
   it('calcMaxDependability', () => {
     expect(calcMaxDependability(0, 0)).toBe(20);
-    expect(calcMaxDependability(10, 1)).toBe(35); // 20 + 10 + 5
+    expect(calcMaxDependability(10, 5)).toBe(35); // 20 + 10 + 5
   });
 
   it('calcMaxExperience', () => {
     expect(calcMaxExperience(0, 0)).toBe(10);
-    expect(calcMaxExperience(10, 1)).toBe(25); // 10 + 10 + 5
+    expect(calcMaxExperience(10, 5)).toBe(25); // 10 + 10 + 5
   });
 
   it('calcProratedWage', () => {

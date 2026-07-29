@@ -95,7 +95,7 @@ describe('Job Engine', () => {
       } as unknown as PlayerState;
       const result = workShift(player, salesManager, 6);
       expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.needClothes');
+      expect(result.messages?.[0]?.key).toBe('action.job.needClothes');
     });
 
     it('succeeds with correct clothes and pays wage', () => {
@@ -106,9 +106,9 @@ describe('Job Engine', () => {
         money: 0,
         rentDebt: 0,
         experience: 50,
-        maxExperience: 100,
+        degreeExpBoost: 100,
         dependability: 50,
-        maxDependability: 20,
+        degreeDepBoost: 20,
         turnFlags: { hasWorked: false },
         inventory: { casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 10, selectedClothes: 'business' }
       } as unknown as PlayerState;
@@ -125,14 +125,14 @@ describe('Job Engine', () => {
         hoursRemaining: 20, 
         currentJobId: 'sales_manager',
         dependability: 45, // requirement is 50
-        maxDependability: 20,
+        degreeDepBoost: 20,
         turnFlags: { hasWorked: false },
         inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
       } as unknown as PlayerState;
       
       const result = workShift(player, salesManager, 6);
       expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.fired');
+      expect(result.messages?.[0]?.key).toBe('action.job.fired');
       expect(result.updated.currentJobId).toBeNull();
     });
 
@@ -144,16 +144,16 @@ describe('Job Engine', () => {
         money: 0,
         rentDebt: 0,
         experience: 50,
-        maxExperience: 100,
+        degreeExpBoost: 100,
         dependability: 47, // requirement is 50
-        maxDependability: 20,
+        degreeDepBoost: 20,
         turnFlags: { hasWorked: false },
         inventory: { casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 10, selectedClothes: 'business' }
       } as unknown as PlayerState;
       
       const result = workShift(player, salesManager, 6);
       expect(result.success).toBe(true);
-      expect(result.message?.key).toBe('action.job.warning');
+      expect(result.messages?.[0]?.key).toBe('action.job.warning');
     });
   });
 });

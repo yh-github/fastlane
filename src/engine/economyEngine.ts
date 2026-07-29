@@ -192,30 +192,39 @@ export function applyEconomicBoom(
 
 /**
  * Process rent debt garnishment during a work session.
- * Garnishes 50% of the wage + $2 fee, applied to rent debt.
+ *
+ * Rules:
+ * - 50% of work session earnings go toward reducing rent debt.
+ * - An additional $2 interest fee is deducted from the player's paycheck (cash), NOT added to rent debt.
+ * - Total deduction announced by employer = debt deducted + $2 interest fee.
+ * - If rent debt < 50% of earnings, only the exact rent debt amount is deducted, with NO interest fee.
  *
  * @param player     — Current player state
  * @param wageEarned — Total wage earned this session
- * @returns          Tuple of [UpdatedPlayerState, NetWageToPlayer]
+ * @returns          Tuple of [UpdatedPlayerState, NetWageToPlayer, TotalGarnishedDeduction]
  */
 export function processRentDebt(
   player: PlayerState,
   wageEarned: number
-): [PlayerState, number] {
-  if (player.rentDebt <= 0) return [player, wageEarned];
+): [PlayerState, number, number] {
+  if (player.rentDebt <= 0 || wageEarned <= 0) return [player, wageEarned, 0];
 
   const updated = { ...player };
-  const garnished = Math.floor(wageEarned * 0.5);
-  
-  if (garnished >= updated.rentDebt) {
+  const halfEarned = Math.floor(wageEarned * 0.5);
+
+  if (updated.rentDebt <= halfEarned) {
     // Paid off entirely. Final garnish has no interest fee.
-    const actualGarnish = updated.rentDebt;
+    const debtDeducted = updated.rentDebt;
     updated.rentDebt = 0;
-    return [updated, wageEarned - actualGarnish];
+    const netWage = wageEarned - debtDeducted;
+    return [updated, netWage, debtDeducted];
   } else {
-    // Partial payment + $2 fee
-    updated.rentDebt -= garnished;
-    updated.rentDebt += 2; // Interest fee added back to debt
-    return [updated, wageEarned - garnished];
+    // Partial payment: 50% to debt + $2 interest fee from paycheck
+    const debtDeducted = halfEarned;
+    updated.rentDebt -= debtDeducted;
+    const interestFee = 2;
+    const netWage = Math.max(0, wageEarned - debtDeducted - interestFee);
+    const totalGarnished = debtDeducted + interestFee;
+    return [updated, netWage, totalGarnished];
   }
 }
