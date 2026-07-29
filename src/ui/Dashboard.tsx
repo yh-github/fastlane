@@ -68,8 +68,8 @@ export function Dashboard({
   const currentJob = player.currentJobId ? campaign?.jobs.find(j => j.id === player.currentJobId) : null;
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
-  const maxDep = calcMaxDependability(jobReqDep, player.degrees?.length || 0);
-  const maxExp = calcMaxExperience(jobReqExp, player.degrees?.length || 0);
+  const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0);
+  const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0);
 
   const handleFilterToggle = (filter: GoalFilter) => {
     if (!onSelectLogFilter) return;

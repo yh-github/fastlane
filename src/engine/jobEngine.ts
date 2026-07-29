@@ -58,6 +58,9 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     if (newWage === player.currentWage) {
       return { updated, success: false, message: { key: 'action.job.raiseSame' } };
     }
+    if (newWage < player.currentWage) {
+      return { updated, success: false, message: { key: 'action.job.raiseLess' } };
+    }
 
     const reqDep = job.requirements.dependability + (updated.raisesAtCurrentJob * 5);
     if (updated.dependability >= reqDep) {
@@ -131,20 +134,19 @@ export interface WorkResult {
   updated: PlayerState;
   wagesEarned: number;
   success: boolean;
-  message?: GameEvent;
+  messages?: GameEvent[];
 }
 
 export function workShift(player: PlayerState, job: JobDef, shiftCost: number): WorkResult {
   if (player.hoursRemaining <= 0 || player.currentJobId !== job.id) {
-    return { updated: player, wagesEarned: 0, success: false, message: { key: 'action.error.cannotWork' } };
+    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.cannotWork' }] };
   }
   
   // Dependability firing & warning checks
-  const degreeBoost = Math.max(0, player.maxDependability - 20);
-  if (player.dependability <= job.requirements.dependability - 5 - degreeBoost) {
+  if (player.dependability <= job.requirements.dependability - 5) {
     const updated = { ...player, currentJobId: null, currentWage: 0, raisesAtCurrentJob: 0 };
     updated.happiness = Math.max(10, updated.happiness - 7);
-    return { updated, wagesEarned: 0, success: false, message: { key: 'action.job.fired' } };
+    return { updated, wagesEarned: 0, success: false, messages: [{ key: 'action.job.fired' }] };
   }
 
   const req = job.requirements.uniform;
@@ -161,14 +163,14 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number): 
   if (activeClothes === 'casual' && !hasCasual) activeClothes = hasDress ? 'dress' : (hasBusiness ? 'business' : 'none');
 
   if (activeClothes === 'none') {
-    return { updated: player, wagesEarned: 0, success: false, message: { key: 'action.job.needClothes', params: { req } } };
+    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.needClothes', params: { req } }] };
   }
 
   const clothesScore = activeClothes === 'business' ? 3 : (activeClothes === 'dress' ? 2 : 1);
   const reqScore = req === 'business' ? 3 : (req === 'dress' ? 2 : 1);
 
   if (clothesScore < reqScore) {
-    return { updated: player, wagesEarned: 0, success: false, message: { key: 'action.job.needClothes', params: { req } } };
+    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.needClothes', params: { req } }] };
   }
 
   const hoursToWork = Math.min(player.hoursRemaining, shiftCost);
@@ -179,39 +181,32 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number): 
   const rawWagesEarned = Math.floor(fullShiftWage * (hoursToWork / shiftCost));
 
   let wagesEarned = rawWagesEarned;
-  let garnishMessage = '';
+  let totalGarnished = 0;
   
   if (updated.rentDebt > 0) {
-    const [afterDebtState, netWage] = processRentDebt(updated, rawWagesEarned);
+    const [afterDebtState, netWage, garnishedAmount] = processRentDebt(updated, rawWagesEarned);
     updated = afterDebtState;
     wagesEarned = netWage;
-    const garnished = rawWagesEarned - netWage;
-    if (garnished > 0) {
-      garnishMessage = ` ($${garnished} garnished for rent debt)`;
-    }
+    totalGarnished = garnishedAmount;
   }
 
   updated.money += wagesEarned;
   updated.turnFlags.hasWorked = true;
 
   // Stat growth is capped by the current job's requirements plus any degree boosts
-  // updated.maxExperience inherently stores (STARTING_EXPERIENCE + 10 + degreeBoosts)
-  // We want the cap to be (10 + degreeBoosts + current job requirement)
-  const effectiveMaxExp = updated.maxExperience - 10 + job.requirements.experience;
-  const effectiveMaxDep = updated.maxDependability - 20 + job.requirements.dependability;
+  const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0);
+  const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0);
 
   updated.experience = Math.min(updated.experience + 1, effectiveMaxExp);
   updated.dependability = Math.min(updated.dependability + 1, effectiveMaxDep);
 
-  // Deduct fractional?
-  // We'll let the turnProcessor handle clothes wear unconditionally per turn as per the classic rules.
-
-  let finalMessage: GameEvent | undefined = undefined;
-  if (player.dependability <= job.requirements.dependability - 3 - degreeBoost) {
-    finalMessage = { key: 'action.job.warning', params: { garnished: garnishMessage } };
-  } else if (garnishMessage) {
-    finalMessage = { key: 'action.job.garnished', params: { garnished: garnishMessage } };
+  const messages: GameEvent[] = [];
+  if (player.dependability <= job.requirements.dependability - 3) {
+    messages.push({ key: 'action.job.warning' });
+  }
+  if (totalGarnished > 0) {
+    messages.push({ key: 'action.job.garnished', params: { amount: totalGarnished } });
   }
 
-  return { updated, wagesEarned, success: true, message: finalMessage };
+  return { updated, wagesEarned, success: true, messages };
 }

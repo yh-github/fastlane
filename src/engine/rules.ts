@@ -106,6 +106,11 @@ export interface GameRules {
    * If true, allows eating spoiled/expired food (potentially with happiness penalties).
    */
   allowEatingSpoiledFood?: boolean;
+
+  /**
+   * Reduces the stat padding given by degrees from +5 to +2 for current and max Dep/Exp.
+   */
+  reducedDegreeStatBonus?: boolean;
 }
 
 export interface EventRules {
@@ -181,6 +186,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   allowEmployedRentPayment: false,
   delayBookSetCredit: true,
   allowEatingSpoiledFood: true,
+  reducedDegreeStatBonus: false,
 };
 
 /**
@@ -204,6 +210,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   allowEmployedRentPayment: 'Allows paying rent manually at any time if employed at Rent Office',
   delayBookSetCredit: 'Requires waiting until next turn for 3-book set lesson discount',
   allowEatingSpoiledFood: 'Allows eating spoiled or expired food',
+  reducedDegreeStatBonus: 'Reduces the Dependability and Experience boost from degrees from +5 to +2',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
   willyRobberyStartWeek: 'Game turn/week when Willy robbery events begin',

@@ -24,7 +24,7 @@ describe('Game Variant mechanics', () => {
   const getDummyPlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
     id: 'p1', name: 'Player 1', position: 'node_low_cost', hoursRemaining: 60, money: 0, bankSavings: 0,
     rentDebt: 0, loanDebt: 0, timesDefaulted: 0, loanPaymentDeadline: 0, rentPaidUntilWeek: 0,
-    happiness: 50, experience: 10, dependability: 20, maxExperience: 100, maxDependability: 100, currentWage: 0,
+    happiness: 50, experience: 10, dependability: 20, degreeExpBoost: 100, degreeDepBoost: 100, currentWage: 0,
     degrees: [], enrolledClasses: {}, relaxation: 10, currentJobId: 'job_1', raisesAtCurrentJob: 0,
     currentHousingId: 'low_cost', turnEvents: [], nakedTurns: 2, currentRentPrice: 0, rentExtensionActive: false, rentExtensionsReceived: 0, rentExtensionsDeniedPermanently: false,
     inventory: {

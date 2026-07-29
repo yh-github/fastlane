@@ -160,7 +160,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
           const lostFood = p.inventory.freshFoodUnits;
           p.inventory.freshFoodUnits = 0;
           p.happiness = Math.max(10, p.happiness - 2);
-          p.turnEvents.push({ key: 'events.foodSpoiled.noFridge', params: { amount: lostFood } });
+          const key = state.rules.helpfulUI ? 'events.foodSpoiled.noFridge_qol' : 'events.foodSpoiled.noFridge';
+          p.turnEvents.push({ key, params: { amount: lostFood } });
           if (p.money > 0) {
             const sickTrigger = resolveDecision(replay, `spoiled_food_sick_1_${p.id}`, () => rng.next() < 0.5);
             if (sickTrigger) {
@@ -171,7 +172,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
           }
         } else {
           p.happiness = Math.max(10, p.happiness - 2);
-          p.turnEvents.push({ key: 'events.foodSpoiled.ateSpoiled' });
+          const key = state.rules.helpfulUI ? 'events.foodSpoiled.ateSpoiled_qol' : 'events.foodSpoiled.ateSpoiled';
+          p.turnEvents.push({ key });
           if (p.money > 0) {
             const sickTrigger = resolveDecision(replay, `spoiled_food_sick_2_${p.id}`, () => rng.next() < 0.5);
             if (sickTrigger) {
@@ -183,7 +185,13 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         }
       } else if (maxStorage > 0) {
         if (p.inventory.freshFoodUnits > maxStorage) {
-          p.turnEvents.push({ key: 'events.foodSpoiled.tooMuch' });
+          const lostFood = p.inventory.freshFoodUnits - maxStorage;
+          const hasFreezer = p.inventory.appliances.some(a => a.id === 'freezer');
+          let key = 'events.foodSpoiled.tooMuch';
+          if (state.rules.helpfulUI) {
+            key = hasFreezer ? 'events.foodSpoiled.tooMuch_freezer_qol' : 'events.foodSpoiled.tooMuch_qol';
+          }
+          p.turnEvents.push({ key, params: { amount: lostFood, capacity: maxStorage } });
           p.inventory.freshFoodUnits = maxStorage;
           p.happiness = Math.max(10, p.happiness - 1);
         }

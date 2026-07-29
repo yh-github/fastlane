@@ -611,6 +611,32 @@ Generally speaking, there are two reasons to do this:
 * To avoid the interest fees you would otherwise pay during Garnishment.
 * To immediately stop your Rent Debt from negatively affecting your Liquid Assets. This is important when you are very close to your Wealth Goal, and are trying to reach it as soon as possible.
 
+### Garnishment
+
+'''Garnishment''' is the game's way of enforcing [[Rent]] payment. Whenever the player is in [[Rent Debt]], the game removes part of the player's earnings each time they [[Work]], using most of the removed money to cover their Rent Debt. This continues until all Rent Debt is paid off.
+
+Garnishment can be seen as an alternative way to pay Rent without having to run to the [[Rent Office]] once a month. However, it costs extra money due to a small Interest Fee paid each time the player Works. These small payments can amount to a much larger sum of money than the player would earn by spending their time Working instead of going to the Rent Office.
+
+#### Forced Payments
+
+If the player fails to pay their [[Rent]] on the fourth (last) [[Week]] of the [[Month]], and does not receive a [[Rent Extension]] (or receives one but then fails to pay), their [[Rent Debt]] is increased by an amount equal to the current price of their Rent.
+
+While the Rent Debt is greater than $0, the game '''Garnishes''' the player's earnings each time they [[Work]] at their [[Job]].
+
+Each time the player works, only 50% of their earnings are acquired in [[Cash]]. The remaining 50% is automatically deducted from their Rent Debt.
+
+Additionally, the player loses another $2 which is not used to reduce their Rent Debt. This is an Interest Fee paid to the Rent Office for being late on payments.
+
+For example, if a Work session would earn the player $100, the player's Rent Debt is reduced by $50, and they earn only $50 - $2 = '''$48''' in Cash.
+
+Each time this happens, the player is informed of the total deduction by their employer. The reported amount includes the money that went to covering the debt plus the Interest Fee.
+
+If the player attempts to Work when their Rent Debt is lower than 50% of their earnings for this Work Session, the game only deducts whatever amount is necessary to cover the entire Rent Debt from their paycheck. No Interest Fee is collected in this case.
+
+For example, if a Work session would earn the player $100, but they owe only $30 in Rent Debt, the Rent Debt is completely cleared and the player earns $100 - $30 = '''$70''' in Cash.
+
+'''Note:''' The calculation is run when attempting to work. If the player's [[Wage]] changes, the amount Garnished from their paycheck adjusts accordingly.
+
 #### Switch Apartments
 
 You may pay to rent an Apartment of a different type than the one you own. If you live at Low-Cost Apartments, you may switch to Le Security Apartments, and vice versa.

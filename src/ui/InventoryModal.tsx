@@ -29,8 +29,8 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose }: In
   const robberyRisk = (calcRobberyChance(player.relaxation || 0) * 100).toFixed(1);
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
-  const maxDep = calcMaxDependability(jobReqDep, player.degrees.length);
-  const maxExp = calcMaxExperience(jobReqExp, player.degrees.length);
+  const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0);
+  const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0);
   const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0) : null;
 
   return (

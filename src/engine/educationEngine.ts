@@ -102,11 +102,17 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
     delete updated.enrolledClasses[degree.id];
 
     // Apply rewards
-    updated.happiness = Math.min(100, updated.happiness + degree.rewards.happiness);
-    updated.maxDependability += degree.rewards.maxDepBoost;
-    updated.dependability = updated.dependability + degree.rewards.dependability;
+    const qolReduced = player.rules?.reducedDegreeStatBonus;
     
-    updated.maxExperience += degree.rewards.maxExpBoost;
+    const depReward = qolReduced ? Math.min(2, degree.rewards.dependability) : degree.rewards.dependability;
+    const maxDepReward = qolReduced ? Math.min(2, degree.rewards.maxDepBoost) : degree.rewards.maxDepBoost;
+    const maxExpReward = qolReduced ? Math.min(2, degree.rewards.maxExpBoost) : degree.rewards.maxExpBoost;
+
+    updated.happiness = Math.min(100, updated.happiness + degree.rewards.happiness);
+    updated.degreeDepBoost += maxDepReward;
+    updated.dependability = updated.dependability + depReward;
+    
+    updated.degreeExpBoost += maxExpReward;
 
     message = { key: 'action.education.graduated', params: { name: degree.name } };
   }

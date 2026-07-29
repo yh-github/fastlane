@@ -85,10 +85,10 @@ export interface PlayerState {
   experience: number;
   /** Dependability: starts at 20. Decays −3/turn. Required for jobs. */
   dependability: number;
-  /** Max experience cap (limited by current job + degrees) */
-  maxExperience: number;
-  /** Max dependability cap (limited by current job + degrees) */
-  maxDependability: number;
+  /** Cumulative max experience boost from degrees */
+  degreeExpBoost: number;
+  /** Cumulative max dependability boost from degrees */
+  degreeDepBoost: number;
   /** Relaxation: hidden stat. Affects robbery chance at home. */
   relaxation: number;
 
@@ -353,8 +353,8 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
     happiness: config.statRules?.startingHappiness ?? STARTING_HAPPINESS,
     experience: STARTING_EXPERIENCE,
     dependability: STARTING_DEPENDABILITY,
-    maxExperience: STARTING_EXPERIENCE + 10,
-    maxDependability: STARTING_DEPENDABILITY + 20,
+    degreeExpBoost: 0,
+    degreeDepBoost: 0,
     relaxation: config.statRules?.startingRelaxation ?? STARTING_RELAXATION,
     currentJobId: null,
     currentWage: 0,
