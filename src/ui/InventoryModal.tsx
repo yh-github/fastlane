@@ -15,9 +15,10 @@ interface InventoryModalProps {
   turn?: number;
   onAction?: (payload: any) => void;
   onClose: () => void;
+  rules?: import('../engine/gameState').GameRules;
 }
 
-export function InventoryModal({ player, campaign, turn, onAction, onClose }: InventoryModalProps) {
+export function InventoryModal({ player, campaign, turn, onAction, onClose, rules }: InventoryModalProps) {
   const { t } = useTranslation();
   const { inventory } = player;
 
@@ -144,7 +145,21 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose }: In
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.appliances', 'Appliances')}</h3>
           {inventory.appliances.length > 0 ? (
             <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
-              {inventory.appliances.map((a, i) => <li key={`${a.id}-${i}`}>{t(`item.${a.id}`, { defaultValue: a.id.replaceAll('_', ' ') })}</li>)}
+              {inventory.appliances.map((a, i) => (
+                <li key={`${a.id}-${i}`} style={{ marginBottom: rules?.showItemImages ? '10px' : '0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {rules?.showItemImages && (
+                      <img 
+                        src={`/assets/raw_images/${a.id}.png`} 
+                        alt={a.id} 
+                        style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <span>{t(`item.${a.id}`, { defaultValue: a.id.replaceAll('_', ' ') })}</span>
+                  </div>
+                </li>
+              ))}
             </ul>
           ) : <p style={{ margin: 0, fontStyle: 'italic', color: '#888' }}>{t('inventoryModal.none')}</p>}
         </div>
@@ -153,7 +168,21 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose }: In
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.books', 'Books')}</h3>
           {inventory.books.length > 0 ? (
             <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
-              {inventory.books.map((b, i) => <li key={`${b}-${i}`}>{t(`item.${b}`, { defaultValue: b.replaceAll('_', ' ') })}</li>)}
+              {inventory.books.map((b, i) => (
+                <li key={`${b}-${i}`} style={{ marginBottom: rules?.showItemImages ? '10px' : '0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {rules?.showItemImages && (
+                      <img 
+                        src={`/assets/raw_images/${b}.png`} 
+                        alt={b} 
+                        style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <span>{t(`item.${b}`, { defaultValue: b.replaceAll('_', ' ') })}</span>
+                  </div>
+                </li>
+              ))}
             </ul>
           ) : <p style={{ margin: 0, fontStyle: 'italic', color: '#888' }}>{t('inventoryModal.none')}</p>}
         </div>

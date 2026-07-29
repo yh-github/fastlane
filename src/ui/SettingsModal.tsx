@@ -25,6 +25,19 @@ export function SettingsModal({ gameState, setGameState, replayData, onClose }: 
     });
   };
 
+  const handleToggleShowItemImages = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          showItemImages: !prev.rules.showItemImages
+        }
+      };
+    });
+  };
+
   const handleToggleOverAchieve = () => {
     setGameState(prev => {
       if (!prev) return prev;
@@ -102,6 +115,20 @@ export function SettingsModal({ gameState, setGameState, replayData, onClose }: 
         </div>
 
         <div className="interaction-panel">
+          <div 
+            className="interaction-item interaction-item--clickable"
+            onClick={handleToggleShowItemImages}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{t('settings.showItemImages', { defaultValue: 'Show Item Graphics' })}</span>
+              <input 
+                type="checkbox" 
+                checked={gameState.rules.showItemImages} 
+                readOnly
+                style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
+              />
+            </div>
+          </div>
           <div 
             className="interaction-item interaction-item--clickable"
             onClick={handleToggleAnimations}

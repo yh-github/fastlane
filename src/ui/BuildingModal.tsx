@@ -372,11 +372,12 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           />
         )}
         {building.archetype === 'pawnshop' && (
-          <PawnShop 
+          <PawnShop
             player={player}
             onAction={handleActionIntercept}
-            economicIndex={economicIndex}
-            pawnShopItemsForSale={pawnShopItemsForSale}
+            economicIndex={gameState.economy.economicIndex}
+            pawnShopItemsForSale={gameState.pawnShopItemsForSale}
+            rules={gameState.rules}
           />
         )}
         {building.archetype === 'home' && (

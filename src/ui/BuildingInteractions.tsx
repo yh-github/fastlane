@@ -132,6 +132,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
             style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
+              alignItems: 'center',
               marginBottom: '5px',
               opacity: canAfford ? 1 : 0.5,
               cursor: 'pointer' 
@@ -141,10 +142,20 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
             }}
             data-action-target={`buy-${item.id}`}
           >
-            <span>
-              {t(`item.${item.id}`, { defaultValue: item.name })}
-              {rules?.helpfulUI && alreadyOwned && <span style={{ color: '#4caf50', marginLeft: '8px', fontWeight: 'bold' }}>✓ {t('storeFront.owned', { defaultValue: 'Owned' })}</span>}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {rules?.showItemImages && (
+                <img 
+                  src={`/assets/raw_images/${item.id}.png`} 
+                  alt={item.name} 
+                  style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
+              <span>
+                {t(`item.${item.id}`, { defaultValue: item.name })}
+                {rules?.helpfulUI && alreadyOwned && <span style={{ color: '#4caf50', marginLeft: '8px', fontWeight: 'bold' }}>✓ {t('storeFront.owned', { defaultValue: 'Owned' })}</span>}
+              </span>
+            </div>
             <span>${adjustedPrice}</span>
           </div>
         );
@@ -553,7 +564,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
   );
 }
 
-export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsForSale = [] }: InteractionProps & { economicIndex?: number, pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[] }) {
+export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsForSale = [], rules }: InteractionProps & { economicIndex?: number, pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[], rules?: GameRules }) {
   const { t } = useTranslation();
   const pawnableAppliances = player.inventory.appliances;
   const redeemableItems = player.inventory.pawnedItems || [];
@@ -571,7 +582,17 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
             const pawnValue = Math.floor(calcEconomyPrice(app.purchasePrice, economicIndex) * 0.4);
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item: app, value: pawnValue })}>
-                <span>{t(`item.${app.id}`, { defaultValue: app.id.replaceAll('_', ' ') })}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {rules?.showItemImages && (
+                    <img 
+                      src={`/assets/raw_images/${app.id}.png`} 
+                      alt={app.id} 
+                      style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span>{t(`item.${app.id}`, { defaultValue: app.id.replaceAll('_', ' ') })}</span>
+                </div>
                 <span style={{ color: '#2ecc71' }}>+${pawnValue}</span>
               </li>
             );
@@ -588,7 +609,17 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
             const redeemCost = app.redeemCost;
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'redeem_item', item: app, cost: redeemCost })}>
-                <span>{t(`item.${app.itemId}`, { defaultValue: app.itemId.replaceAll('_', ' ') })}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {rules?.showItemImages && (
+                    <img 
+                      src={`/assets/raw_images/${app.itemId}.png`} 
+                      alt={app.itemId} 
+                      style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span>{t(`item.${app.itemId}`, { defaultValue: app.itemId.replaceAll('_', ' ') })}</span>
+                </div>
                 <span style={{ color: '#e74c3c' }}>-${redeemCost}</span>
               </li>
             );
@@ -604,7 +635,17 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
               const buyCost = Math.floor(app.originalPrice * 0.5);
               return (
                 <li key={idx} className="store-item" onClick={() => onAction({ type: 'buy_pawn_item', item: app, cost: buyCost })}>
-                  <span>{t(`item.${app.itemId}`, { defaultValue: app.itemId.replaceAll('_', ' ') })}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {rules?.showItemImages && (
+                      <img 
+                        src={`/assets/raw_images/${app.itemId}.png`} 
+                        alt={app.itemId} 
+                        style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <span>{t(`item.${app.itemId}`, { defaultValue: app.itemId.replaceAll('_', ' ') })}</span>
+                  </div>
                   <span style={{ color: '#e74c3c' }}>-${buyCost}</span>
                 </li>
               );

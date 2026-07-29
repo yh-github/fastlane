@@ -111,6 +111,11 @@ export interface GameRules {
    * Reduces the stat padding given by degrees from +5 to +2 for current and max Dep/Exp.
    */
   reducedDegreeStatBonus?: boolean;
+
+  /**
+   * If true, displays item graphics next to items in menus and inventory.
+   */
+  showItemImages?: boolean;
 }
 
 export interface EventRules {
@@ -187,6 +192,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   delayBookSetCredit: true,
   allowEatingSpoiledFood: true,
   reducedDegreeStatBonus: false,
+  showItemImages: false,
 };
 
 /**
@@ -211,6 +217,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   delayBookSetCredit: 'Requires waiting until next turn for 3-book set lesson discount',
   allowEatingSpoiledFood: 'Allows eating spoiled or expired food',
   reducedDegreeStatBonus: 'Reduces the Dependability and Experience boost from degrees from +5 to +2',
+  showItemImages: 'Displays graphical icons for items in menus and inventory',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
   willyRobberyStartWeek: 'Game turn/week when Willy robbery events begin',
