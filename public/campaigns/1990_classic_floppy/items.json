@@ -21,9 +21,9 @@
   { "id": "dictionary", "name": "Dictionary", "category": "book", "store": "z_mart", "basePrice": 70, "happinessBonus": 1 },
   { "id": "atlas", "name": "Atlas", "category": "book", "store": "z_mart", "basePrice": 55, "happinessBonus": 1 },
 
-  { "id": "casual_clothes", "name": "Casual Clothes", "category": "clothes", "subcategory": "casual", "store": "qt_clothing", "basePrice": 73, "happinessBonus": 0, "weeks": 11 },
-  { "id": "dress_clothes", "name": "Dress Clothes", "category": "clothes", "subcategory": "dress", "store": "qt_clothing", "basePrice": 125, "happinessBonus": 1, "weeks": 13 },
   { "id": "business_suit", "name": "Business Suit", "category": "clothes", "subcategory": "business", "store": "qt_clothing", "basePrice": 295, "happinessBonus": 2, "weeks": 13 },
+  { "id": "dress_clothes", "name": "Dress Clothes", "category": "clothes", "subcategory": "dress", "store": "qt_clothing", "basePrice": 125, "happinessBonus": 1, "weeks": 13 },
+  { "id": "casual_clothes", "name": "Casual Clothes", "category": "clothes", "subcategory": "casual", "store": "qt_clothing", "basePrice": 73, "happinessBonus": 0, "weeks": 11 },
   { "id": "casual_clothes", "name": "Casual Clothes", "category": "clothes", "subcategory": "casual", "store": "z_mart", "basePrice": 35, "happinessBonus": 0, "weeks": 9 },
   { "id": "dress_clothes", "name": "Dress Clothes", "category": "clothes", "subcategory": "dress", "store": "z_mart", "basePrice": 90, "happinessBonus": 0, "weeks": 9 },
 
