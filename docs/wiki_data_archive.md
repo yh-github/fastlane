@@ -122,7 +122,9 @@ Classes are taken at Hi-Tech U.
   - Triggers from Starvation (25%), Spoiled Food (50%), or Relaxation at 10 (20%).
   - Effect: Clock advances 10 Hours, -4 Happiness, cash loss $30 to $200. Bypassed entirely if carrying $0 cash.
 - **Starvation**:
-  - Triggers at turn start if no food eaten. Clock advances 20 Hours, -2 Happiness, 25% chance of Doctor Visit.
+  - Triggers at turn start if neither condition is met: (1) player purchased at least 1 Fast Food item during previous turn, OR (2) player has at least 1 Week's worth of Fresh Food in inventory.
+  - Effect: Clock advances 20 Hours, -2 Happiness, 25% chance of Doctor Visit.
+  - *Note*: Purchasing any amount of Fresh Food without owning a Refrigerator keeps a player fed for exactly 1 Week. At the start of the next turn, all Fresh Food spoils (preventing Starvation that turn, but giving a 50% chance of a Doctor Visit).
 - **Lottery**:
   - Rolls a random number `R` between 0 and 500. Won if `R < Tickets`.
   - Prizes: `R <= Tickets / 20` ($5000), `R <= Tickets / 5` ($500), else $200. Tickets are consumed.
@@ -196,6 +198,16 @@ Classes are taken at Hi-Tech U.
 | Dog Food | Z-Mart | $18 | -1 |
 | 8-Track Player | Z-Mart | $75 | -1 |
 | Works of Capote | Z-Mart | $100 | -2 |
+
+#### Tickets Mechanics
+Tickets are consumable items that trigger an effect at the start of the player's next Turn / weekend processing, after which they are consumed and removed from inventory.
+- **Happiness Bonus**: The first purchase of a specific type of Ticket during a given Turn provides **+2 Happiness**. Subsequent purchases of the same ticket type during the same turn provide no additional Happiness.
+- **Lottery Tickets**: Purchased from Black's Market in batches of 10 for $10 (fixed price). Owning any number of Lottery Tickets at turn start triggers participation in the Lottery for cash prizes. All Lottery Tickets are removed after processing.
+- **Event Tickets**: Purchased from Z-Mart (Baseball: $45, Theatre: $30, Concert: $40). Owning Event Tickets forces a weekend event for that activity with a Medium price range ($15 to $55).
+- **Event Ticket Priority**: If a player owns multiple types of Event Tickets, priority for consumption is:
+  1. **Baseball Tickets** (highest priority)
+  2. **Theatre Tickets**
+  3. **Concert Tickets** (lowest priority)
 
 ## 8. Pawn Shop Mechanics
 - **Pawning**: Items can be pawned for a loan. Base payout is 40% of the item's original purchase price (adjusted for Economy). Pawning an item gives -1 Happiness. The shop holds max 6 items total across all players, and duplicate item types cannot be pawned until redeemed or sold.
@@ -721,6 +733,8 @@ Black's Market is open every Week. You may purchase items even if the turn has e
 ### Items
 
 Black's Market's primary sale item is Fresh Food, which can be bought in groups of 1, 2, or 4 units. So long as the player owns a Refrigerator, Fresh Food is consumed at a rate of 1 unit per Week, preventing Starvation until it runs out. A Refrigerator can store up to 6 units without Spoiling, while a Refrigerator + Freezer can store up to 12 units. Buying Fresh Food awards **+1 Happiness** per every unit purchased.
+
+*Note on Fresh Food without Refrigerator:* Purchasing any amount of Fresh Food without owning a Refrigerator will keep a player fed for exactly 1 Week. At the start of the player's next turn, all remaining Fresh Food will spoil. The player will not Starve that turn, but has a 50% chance of visiting the Doctor due to spoiled food.
 
 ```
 {{Item Infobox Template
@@ -1512,3 +1526,22 @@ If a '''Market Crash''' occurs during a player's turn, that player (and only tha
 
 [[Category:Economy]]
 [[Category:Events]]
+
+---
+
+## 16. Time, Weeks, and Months
+
+- **Turn vs Week**: A Turn measures the active play duration for a single player. A **Week** consists of 1 Turn per player in the game ($X$ Turns, where $X$ = number of players).
+- **Months**: Every 4 Weeks constitutes 1 Month (Week #4, #8, #12, #16, etc.).
+- **End-of-Month Mechanics (Week 4 of each Month)**:
+  - **Rent Office**: Open to all players on Week 4 of each Month (otherwise closed unless on Rent Extension or working there).
+  - **Rent Due**: Rent is due on Week 4. Failure to pay creates Rent Debt (garnishing 50% of wages + $2 fee per work session).
+  - **Loans Due**: Loan payments are due on Week 4 of each Month. Failure to pay causes Default (increasing Risk Factor for future loans).
+- **Delayed Events & Milestones**:
+  - **Week 4+**:
+    - *Wild Willy Street Robbery (CD-ROM)*: Only triggers starting on Week #4 when leaving Bank or Black's Market.
+    - *Market Crash (Floppy Disk)*: Can only occur starting on Week #4.
+  - **Week 8+**:
+    - *Expensive Weekend Events (CD-ROM)*: Until Week #8, maximum weekend cost is capped at $55 (Medium price range). Starting Week #8, Expensive weekends ($50 to $100) become active.
+    - *Market Crashes & Economic Booms (CD-ROM)*: Can only occur starting on Week #8.
+- **Consumables Depletion Rate**: Consumable items deplete at a rate of 1 per week (clothing decay, fresh food 1 unit/week with refrigerator, tickets consumed at turn start).

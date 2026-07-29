@@ -195,6 +195,7 @@ export default function App() {
             turn={gameState.turn}
             onAction={handleAction}
             onClose={() => setIsInventoryOpen(false)}
+            rules={gameState.rules}
           />
         )}
 
