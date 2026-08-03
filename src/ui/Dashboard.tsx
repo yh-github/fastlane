@@ -87,12 +87,11 @@ export function Dashboard({
           <h2>{player ? player.name : ''} - {t('dashboard.turn', { turn, defaultValue: 'Week {{turn}}' })}</h2>
           {player?.isAi && <span className="ai-badge">{t('dashboard.aiBadge', { defaultValue: 'AI' })}</span>}
           {player?.inventory?.selectedClothes === 'none' && <span style={{ background: 'red', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '8px', fontWeight: 'bold' }}>⚠️ NAKED</span>}
-          <div className="dashboard-stat economy">
-            <span>{t('dashboard.economy', { index: economicIndex, defaultValue: 'Economy: {{index}}' })}</span>
-          </div>
-          <div className="dashboard-stat victory-percent" style={{ marginLeft: '12px', padding: '2px 8px', background: '#333', borderRadius: '4px', border: '1px solid #555' }}>
-            <span style={{ fontWeight: 'bold', color: 'var(--accent-green)' }}>🏆 {victoryPercent}%</span>
-          </div>
+          {gameState.rules.helpfulUI && (
+            <div className="dashboard-stat economy">
+              <span>{t('dashboard.economy', { index: economicIndex, defaultValue: 'Economy: {{index}}' })}</span>
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{
@@ -133,10 +132,15 @@ export function Dashboard({
       </div>
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <StatBadge label={t('dashboard.money', { defaultValue: 'Money' })} value={`$${player.money}`} icon="💰" id="stat-money" isActive={activeLogFilter === 'money'} onClick={() => handleFilterToggle('money')} />
-        <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" danger={gameState.rules.enableRelaxationDoctor && player.relaxation <= (gameState.rules.relaxationDoctorThreshold ?? 10)} isActive={activeLogFilter === 'relaxation'} onClick={() => handleFilterToggle('relaxation')} />
-        <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={`${player.dependability}/${maxDep}`} icon="🤝" id="stat-dependability" isActive={activeLogFilter === 'dependability'} onClick={() => handleFilterToggle('dependability')} />
-        <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={`${player.experience}/${maxExp}`} icon="👌" id="stat-experience" isActive={activeLogFilter === 'experience'} onClick={() => handleFilterToggle('experience')} />
-        <StatBadge label={t('dashboard.luck', { defaultValue: 'Luck' })} value={`${luckScore}%`} icon="🍀" id="stat-luck" isActive={activeLogFilter === 'luck'} onClick={() => handleFilterToggle('luck')} />
+        {gameState.rules.helpfulUI && (
+          <>
+            <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" danger={gameState.rules.enableRelaxationDoctor && player.relaxation <= (gameState.rules.relaxationDoctorThreshold ?? 10)} isActive={activeLogFilter === 'relaxation'} onClick={() => handleFilterToggle('relaxation')} />
+            <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={`${player.dependability}/${maxDep}`} icon="🤝" id="stat-dependability" isActive={activeLogFilter === 'dependability'} onClick={() => handleFilterToggle('dependability')} />
+            <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={`${player.experience}/${maxExp}`} icon="👌" id="stat-experience" isActive={activeLogFilter === 'experience'} onClick={() => handleFilterToggle('experience')} />
+            <StatBadge label={t('dashboard.luck', { defaultValue: 'Luck' })} value={`${luckScore}%`} icon="🍀" id="stat-luck" isActive={activeLogFilter === 'luck'} onClick={() => handleFilterToggle('luck')} />
+          </>
+        )}
+        <StatBadge label={t('dashboard.victory', { defaultValue: 'Victory' })} value={`${victoryPercent}%`} icon="🏆" id="stat-victory" />
         <StatBadge label={t('dashboard.happiness', { defaultValue: 'Happiness' })} value={`${displayHappiness}/${player.goalAllotment.happiness}`} icon="😊" id="stat-happiness" isActive={activeLogFilter === 'happiness'} onClick={() => handleFilterToggle('happiness')} />
         <StatBadge label={t('dashboard.education', { defaultValue: 'Education' })} value={`${education}/${player.goalAllotment.education}`} icon="🎓" id="stat-education" isActive={activeLogFilter === 'education'} onClick={() => handleFilterToggle('education')} />
         <StatBadge label={t('dashboard.career', { defaultValue: 'Career' })} value={`${career}/${player.goalAllotment.career}`} icon="💼" id="stat-career" isActive={activeLogFilter === 'career'} onClick={() => handleFilterToggle('career')} />

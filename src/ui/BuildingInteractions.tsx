@@ -60,19 +60,23 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
         return (
           <div key={job.id} className="interaction-item" style={{ marginBottom: '10px', padding: '10px', border: '1px solid #444', borderRadius: '4px' }}>
             <strong>{t(`job.${job.id}`, { defaultValue: job.title })}</strong> — ${offeredWage}/hr ({t('jobBoard.base')}: ${job.baseWage})
-            <div style={{ fontSize: '12px', marginTop: '5px' }}>
-              <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>{t('jobBoard.exp')}: {job.requirements.experience}</span> | 
-              <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>{t('jobBoard.dep')}: {job.requirements.dependability}</span>
-              {job.requirements.degrees.length > 0 && (
-                <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
-                  | {t('jobBoard.degrees')}: {job.requirements.degrees.map(d => t(`education.${d}`, { defaultValue: d })).join(', ')}
-                </span>
-              )}
-            </div>
-            {(missingExp || missingDep || missingDegrees.length > 0) && (
-              <div style={{ fontSize: '11px', color: '#e74c3c', fontStyle: 'italic', marginTop: '2px' }}>
-                {t('jobBoard.missingReq')}
-              </div>
+            {rules?.helpfulUI && (
+              <>
+                <div style={{ fontSize: '12px', marginTop: '5px' }}>
+                  <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>{t('jobBoard.exp')}: {job.requirements.experience}</span> | 
+                  <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>{t('jobBoard.dep')}: {job.requirements.dependability}</span>
+                  {job.requirements.degrees.length > 0 && (
+                    <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
+                      | {t('jobBoard.degrees')}: {job.requirements.degrees.map(d => t(`education.${d}`, { defaultValue: d })).join(', ')}
+                    </span>
+                  )}
+                </div>
+                {(missingExp || missingDep || missingDegrees.length > 0) && (
+                  <div style={{ fontSize: '11px', color: '#e74c3c', fontStyle: 'italic', marginTop: '2px' }}>
+                    {t('jobBoard.missingReq')}
+                  </div>
+                )}
+              </>
             )}
             <div style={{ marginTop: '10px' }}>
               {isCurrentJob ? (

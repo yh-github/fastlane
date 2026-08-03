@@ -161,7 +161,9 @@ export default function App() {
           onNodeClick={isAiTurn ? () => {} : handleNodeClick} 
         />
         </div>
-        <GameLog entries={logs} players={gameState.players} activeFilter={activeLogFilter} onSelectFilter={setActiveLogFilter} />
+        {gameState.rules.helpfulUI && (
+          <GameLog entries={logs} players={gameState.players} activeFilter={activeLogFilter} onSelectFilter={setActiveLogFilter} />
+        )}
         {isBuildingModalOpen && currentBuildingId && (
           <BuildingModal
             player={gameState.players[activePlayerIndex]}
