@@ -49,6 +49,7 @@ describe('Dashboard Component', () => {
 
     const mockGameState = {
       rules: {
+        helpfulUI: true,
         enableRelaxationDoctor: true,
         // specifically leaving relaxationDoctorThreshold undefined to test the fallback!
       }
@@ -98,6 +99,7 @@ describe('Dashboard Component', () => {
 
     const mockGameState = {
       rules: {
+        helpfulUI: true,
         enableRelaxationDoctor: true
       }
     } as any;
@@ -134,7 +136,7 @@ describe('Dashboard Component', () => {
       hoursRemaining: 50
     } as unknown as PlayerState;
 
-    const mockGameState = { rules: {} } as any;
+    const mockGameState = { rules: { helpfulUI: true } } as any;
     const onSelectLogFilter = vi.fn();
 
     render(
@@ -158,5 +160,49 @@ describe('Dashboard Component', () => {
     // Click luck badge to trigger filter
     luckBadge.click();
     expect(onSelectLogFilter).toHaveBeenCalledWith('luck');
+  });
+
+  it('hides non-core goal badges (money, relaxation, dependability, experience, luck) when helpfulUI is false', () => {
+    const mockPlayer = {
+      name: 'Player 1',
+      relaxation: 20,
+      dependability: 20,
+      experience: 10,
+      happiness: 50,
+      money: 100,
+      degrees: [],
+      goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      inventory: { selectedClothes: 'casual', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = { rules: { helpfulUI: false } } as any;
+
+    render(
+      <Dashboard 
+        player={mockPlayer} 
+        gameState={mockGameState} 
+        turn={1} 
+        economicIndex={0} 
+        hoursPerTurn={50} 
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    // Non-core formula/hidden stats (relaxation, dependability, experience, luck, economy index) must NOT be rendered
+    expect(screen.queryByTitle('Relaxation')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Dependability')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Experience')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Luck')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Economy:/i)).not.toBeInTheDocument();
+
+    // Money, 4 Core goal badges, and Victory badge MUST be rendered
+    expect(screen.getByTitle('Money')).toBeInTheDocument();
+    expect(screen.getByTitle('Victory')).toBeInTheDocument();
+    expect(screen.getByTitle('Happiness')).toBeInTheDocument();
+    expect(screen.getByTitle('Education')).toBeInTheDocument();
+    expect(screen.getByTitle('Career')).toBeInTheDocument();
+    expect(screen.getByTitle('Wealth')).toBeInTheDocument();
   });
 });

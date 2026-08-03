@@ -68,16 +68,18 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('statusModal.attributesTitle', 'Formula Attributes & Caps')}</h3>
-          <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
-            <li><strong>{t('statusModal.luckScore', 'Luck Score (Hiring Roll Threshold):')}</strong> {luckScore} / 100</li>
-            <li><strong>{t('statusModal.robberyRisk', 'Home Robbery Risk:')}</strong> {robberyRisk}%</li>
-            <li><strong>{t('statusModal.dependabilityCap', 'Dependability Cap:')}</strong> {player.dependability} / {maxDep} (Current / Max Cap)</li>
-            <li><strong>{t('statusModal.experienceCap', 'Experience Cap:')}</strong> {player.experience} / {maxExp} (Current / Max Cap)</li>
-            <li><strong>{t('statusModal.nextRaiseReq', 'Dependability for Next Raise:')}</strong> {raiseThreshold !== null ? `${player.dependability} / ${raiseThreshold}` : t('statusModal.notEmployed', 'N/A (Unemployed)')}</li>
-          </ul>
-        </div>
+        {rules?.helpfulUI && (
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('statusModal.attributesTitle', 'Formula Attributes & Caps')}</h3>
+            <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
+              <li><strong>{t('statusModal.luckScore', 'Luck Score (Hiring Roll Threshold):')}</strong> {luckScore} / 100</li>
+              <li><strong>{t('statusModal.robberyRisk', 'Home Robbery Risk:')}</strong> {robberyRisk}%</li>
+              <li><strong>{t('statusModal.dependabilityCap', 'Dependability Cap:')}</strong> {player.dependability} / {maxDep} (Current / Max Cap)</li>
+              <li><strong>{t('statusModal.experienceCap', 'Experience Cap:')}</strong> {player.experience} / {maxExp} (Current / Max Cap)</li>
+              <li><strong>{t('statusModal.nextRaiseReq', 'Dependability for Next Raise:')}</strong> {raiseThreshold !== null ? `${player.dependability} / ${raiseThreshold}` : t('statusModal.notEmployed', 'N/A (Unemployed)')}</li>
+            </ul>
+          </div>
+        )}
 
         {(player.turnFlags.freeNewspaper || player.turnFlags.readNewspaper) && player.newspaperHeadline && (
           <div style={{ marginBottom: '20px' }}>

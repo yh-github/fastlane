@@ -1,0 +1,10 @@
+{
+  "name": "The Fast Lane — Advanced Edition",
+  "version": "3.0.0",
+  "description": "Experimental campaign for testing new sub-systems and modular game mechanics.",
+  "baseCampaign": "qol_improved",
+  "gameRules": {
+    "helpfulUI": true,
+    "enableAnimations": true
+  }
+}

@@ -323,6 +323,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             buildings={campaign.buildings}
             economicIndex={economicIndex}
             campaign={campaign}
+            rules={rules}
           />
         )}
 
@@ -375,9 +376,9 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           <PawnShop
             player={player}
             onAction={handleActionIntercept}
-            economicIndex={gameState.economy.economicIndex}
-            pawnShopItemsForSale={gameState.pawnShopItemsForSale}
-            rules={gameState.rules}
+            economicIndex={economicIndex}
+            pawnShopItemsForSale={pawnShopItemsForSale}
+            rules={rules}
           />
         )}
         {building.archetype === 'home' && (
