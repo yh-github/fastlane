@@ -1,0 +1,8 @@
+{
+  "skills": [
+    "modern-web-guidance-plugin/skills/modern-web-guidance",
+    "chrome-devtools-plugin/skills/chrome-devtools",
+    "chrome-devtools-plugin/skills/memory-leak-debugging",
+    "chrome-devtools-plugin/skills/a11y-debugging"
+  ]
+}
