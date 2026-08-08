@@ -171,6 +171,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
 export function HomeRelax({ player, onAction, campaign, rules }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules }) {
   const { t } = useTranslation();
   const relaxCost = campaign?.config.timeRules?.relaxCost ?? 6;
+  const isMessClean = (player.mess || 0) <= 0;
   return (
     <div className="interaction-panel">
       <h3>{t('homeRelax.title')}</h3>
@@ -188,9 +189,19 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
           <button 
             data-action-target="clean" 
             onClick={() => onAction({ type: 'clean' })}
-            style={{ backgroundColor: '#3498db', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            disabled={isMessClean}
+            style={{ 
+              backgroundColor: isMessClean ? '#555' : '#3498db', 
+              color: isMessClean ? '#888' : '#fff', 
+              border: 'none', 
+              padding: '8px 12px', 
+              borderRadius: '4px', 
+              cursor: isMessClean ? 'not-allowed' : 'pointer', 
+              fontWeight: 'bold',
+              opacity: isMessClean ? 0.6 : 1
+            }}
           >
-            🧹 Clean Apartment (3 hrs)
+            🧹 Clean Apartment (3 hrs) {isMessClean ? '(Already Clean)' : ''}
           </button>
         )}
       </div>
