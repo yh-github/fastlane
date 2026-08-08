@@ -189,7 +189,7 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
     actions.push({
       name: `Enroll_${deg.id}`,
       cost: 0,
-      precondition: (s) => s.nodeId === uniNode && s.money >= deg.baseTuitionFee && !s.degrees.includes(deg.id) && s.enrolledClasses[deg.id] === undefined,
+      precondition: (s) => s.nodeId === uniNode && s.money >= deg.baseTuitionFee && !s.degrees.includes(deg.id) && s.enrolledClasses[deg.id] === undefined && Object.keys(s.enrolledClasses).filter(k => !k.endsWith('_req')).length < 4,
       effect: (s) => ({ ...s, money: s.money - deg.baseTuitionFee, enrolledClasses: { ...s.enrolledClasses, [deg.id]: 0 } }),
       createGameAction: () => ({ type: 'enroll', degreeId: deg.id })
     });

@@ -113,9 +113,35 @@ export interface GameRules {
   reducedDegreeStatBonus?: boolean;
 
   /**
+   * Maximum number of courses a player can be concurrently enrolled in.
+   * Classic Floppy/CD-ROM: 4.
+   */
+  maxEnrolledClasses?: number;
+
+  /**
    * If true, displays item graphics next to items in menus and inventory.
    */
   showItemImages?: boolean;
+
+  /**
+   * ADVANCED: If true, apartment robberies are based on a 4-week moving average of time spent at home.
+   */
+  useHomeTimeRobbery?: boolean;
+
+  /**
+   * ADVANCED: If true, the game tracks Physical and Mental Condition separately instead of a single Relaxation stat.
+   */
+  usePhysicalMentalConditions?: boolean;
+
+  /**
+   * ADVANCED: If true, the player starts their turn at their home node.
+   */
+  turnStartAtHome?: boolean;
+
+  /**
+   * ADVANCED: If true, tracks 'Mess' at home, allowing cleaning.
+   */
+  trackMess?: boolean;
 }
 
 export interface EventRules {
@@ -193,6 +219,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   allowEatingSpoiledFood: true,
   reducedDegreeStatBonus: false,
   showItemImages: false,
+  maxEnrolledClasses: 4,
 };
 
 /**
@@ -224,5 +251,10 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   'charity.maxCash': 'Maximum cash limit to remain eligible for charity payout',
   'charity.maxWealth': 'Maximum wealth limit to remain eligible for charity payout',
   'charity.wealthMetric': 'Wealth calculation metric for charity (durableValue vs netWorth)',
+  
+  useHomeTimeRobbery: 'Uses a moving average of time spent at home for robbery chances instead of relaxation',
+  usePhysicalMentalConditions: 'Splits relaxation into detailed Physical and Mental conditions',
+  turnStartAtHome: 'Forces the player to start their turn inside their apartment',
+  trackMess: 'Enables tracking and cleaning of apartment mess',
 };
 

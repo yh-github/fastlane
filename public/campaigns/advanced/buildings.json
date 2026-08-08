@@ -1,0 +1,18 @@
+[
+  {
+    "id": "z_mart",
+    "_remove": true
+  },
+  {
+    "id": "pawn_shop",
+    "_remove": true
+  },
+  {
+    "id": "discount_and_pawn",
+    "name": "Discount & Pawn Shop",
+    "description": "Your one-stop shop for groceries, appliances, and pawn services.",
+    "archetype": "discount_and_pawn",
+    "cost": 1,
+    "entryCost": true
+  }
+]

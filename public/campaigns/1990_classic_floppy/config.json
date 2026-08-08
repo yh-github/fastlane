@@ -64,6 +64,7 @@
     "protectBuiltInAppliances": false,
     "allowEmployedRentPayment": false,
     "delayBookSetCredit": true,
-    "strictEviction": false
+    "strictEviction": false,
+    "maxEnrolledClasses": 4
   }
 }

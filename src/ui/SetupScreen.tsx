@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlayerConfig, GoalAllotment } from '../engine/gameState';
+import type { WinCondition } from '../engine/rules';
 
 interface SetupScreenProps {
+  winConditions: WinCondition[];
   onConfirm: (playersConfig: PlayerConfig[]) => void;
 }
 
-export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
+export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfirm }) => {
   const { t } = useTranslation();
+  
+  const generateDefaultGoals = () => {
+    const goals: GoalAllotment = {};
+    winConditions.forEach(c => goals[c.stat] = 50);
+    return goals;
+  };
+
   const [players, setPlayers] = useState<PlayerConfig[]>([
     {
       name: 'Player 1',
       isAi: false,
-      goals: { wealth: 50, happiness: 50, education: 50, career: 50 },
+      goals: generateDefaultGoals(),
     }
   ]);
 
@@ -23,7 +32,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
         {
           name: `Player ${players.length + 1}`,
           isAi: false,
-          goals: { wealth: 50, happiness: 50, education: 50, career: 50 },
+          goals: generateDefaultGoals(),
         }
       ]);
     }
@@ -90,25 +99,12 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onConfirm }) => {
                   </label>
                 </div>
 
-                <div className="setup-screen__slider-group" style={{ marginTop: '10px' }}>
-                  <label><span>{t('setupScreen.wealth')}</span> <span>{player.goals.wealth}%</span></label>
-                  <input type="range" min="0" max="100" value={player.goals.wealth} onChange={(e) => updateGoal(index, 'wealth', parseInt(e.target.value))} />
-                </div>
-                
-                <div className="setup-screen__slider-group">
-                  <label><span>{t('setupScreen.happiness')}</span> <span>{player.goals.happiness}%</span></label>
-                  <input type="range" min="0" max="100" value={player.goals.happiness} onChange={(e) => updateGoal(index, 'happiness', parseInt(e.target.value))} />
-                </div>
-                
-                <div className="setup-screen__slider-group">
-                  <label><span>{t('setupScreen.education')}</span> <span>{player.goals.education}%</span></label>
-                  <input type="range" min="0" max="100" value={player.goals.education} onChange={(e) => updateGoal(index, 'education', parseInt(e.target.value))} />
-                </div>
-                
-                <div className="setup-screen__slider-group">
-                  <label><span>{t('setupScreen.career')}</span> <span>{player.goals.career}%</span></label>
-                  <input type="range" min="0" max="100" value={player.goals.career} onChange={(e) => updateGoal(index, 'career', parseInt(e.target.value))} />
-                </div>
+                {winConditions.map((cond) => (
+                  <div key={`${index}-${cond.stat}`} className="setup-screen__slider-group" style={{ marginTop: '10px' }}>
+                    <label><span>{t(`setupScreen.${cond.stat}`, { defaultValue: cond.label })}</span> <span>{player.goals[cond.stat] || 0}%</span></label>
+                    <input type="range" min="0" max="100" value={player.goals[cond.stat] || 0} onChange={(e) => updateGoal(index, cond.stat, parseInt(e.target.value))} />
+                  </div>
+                ))}
               </div>
             );
           })}

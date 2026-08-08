@@ -98,6 +98,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "hasWorked": false,
         "loanDefaultWarning": false,
         "loanPayableWarning": false,
+        "mentalDropsThisTurn": 0,
         "rentPaidThisTurn": false,
       },
       "weekendResult": {
@@ -107,6 +108,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         },
         "happinessBonus": undefined,
       },
+      "workActionsThisTurn": 0,
     },
   ],
   "rngState": 6992882883,
@@ -139,7 +141,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
   "campaignId": "test_regression",
   "economicIndex": 10,
   "pawnShopItemsForSale": [],
-  "phase": "playing",
+  "phase": "game-over",
   "players": [
     {
       "activeEffects": {},
@@ -159,6 +161,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "wealth": 50,
       },
       "happiness": 39,
+      "hasWon": true,
       "hoursRemaining": 50,
       "id": "player_1",
       "inventory": {
@@ -238,6 +241,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "hasWorked": false,
         "loanDefaultWarning": false,
         "loanPayableWarning": false,
+        "mentalDropsThisTurn": 0,
         "rentPaidThisTurn": false,
       },
       "weekendResult": {
@@ -247,6 +251,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         },
         "happinessBonus": undefined,
       },
+      "workActionsThisTurn": 0,
     },
   ],
   "rngState": 42,
@@ -270,7 +275,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
     "strictEviction": true,
   },
   "turn": 5,
-  "winnerId": null,
+  "winnerId": "player_1",
 }
 `;
 
@@ -361,8 +366,10 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
         "hasWorked": false,
         "loanDefaultWarning": false,
         "loanPayableWarning": false,
+        "mentalDropsThisTurn": 0,
         "rentPaidThisTurn": false,
       },
+      "workActionsThisTurn": 0,
     },
   ],
   "rngState": 3962340102,

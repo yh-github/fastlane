@@ -10,7 +10,8 @@ import {
   HomeRelax,
   RentOffice,
   BankInterface,
-  PawnShop 
+  PawnShop,
+  DiscountAndPawnShop
 } from './BuildingInteractions';
 import { SpeechBubble } from './SpeechBubble';
 
@@ -376,6 +377,16 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           <PawnShop
             player={player}
             onAction={handleActionIntercept}
+            economicIndex={economicIndex}
+            pawnShopItemsForSale={pawnShopItemsForSale}
+            rules={rules}
+          />
+        )}
+        {building.archetype === 'discount_and_pawn' && (
+          <DiscountAndPawnShop
+            player={player}
+            onAction={handleActionIntercept}
+            availableItems={itemsHere}
             economicIndex={economicIndex}
             pawnShopItemsForSale={pawnShopItemsForSale}
             rules={rules}

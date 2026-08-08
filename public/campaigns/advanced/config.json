@@ -3,8 +3,18 @@
   "version": "3.0.0",
   "description": "Experimental campaign for testing new sub-systems and modular game mechanics.",
   "baseCampaign": "qol_improved",
+  "winConditions": [
+    { "stat": "wealth", "target": 100, "label": "Wealth" },
+    { "stat": "lifestyle", "target": 100, "label": "Lifestyle" },
+    { "stat": "education", "target": 100, "label": "Education" },
+    { "stat": "career", "target": 100, "label": "Career" }
+  ],
   "gameRules": {
     "helpfulUI": true,
-    "enableAnimations": true
+    "enableAnimations": true,
+    "useHomeTimeRobbery": true,
+    "usePhysicalMentalConditions": true,
+    "turnStartAtHome": true,
+    "trackMess": true
   }
 }

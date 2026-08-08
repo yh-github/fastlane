@@ -114,7 +114,8 @@
       "notEnoughTimeRelax": "Not enough time to relax.",
       "noLoan": "You don't have a loan.",
       "notEnoughMoney": "Not enough money.",
-      "alreadyOwnComputer": "You already own a computer."
+      "alreadyOwnComputer": "You already own a computer.",
+      "maxEnrolledClasses": "You cannot enroll in more than {{max}} classes at once."
     }
   },
   "events": {
@@ -251,7 +252,7 @@
     "socket_city": "Socket City",
     "apartment_complex": "Rent Office",
     "employment_office": "Employment Office",
-    "university": "University",
+    "university": "Hi-Tech U",
     "bank": "Bank",
     "factory": "Factory",
     "joy_luck": "Joy Luck",

@@ -176,7 +176,12 @@ function deepMerge<T>(base: any, delta: any): T {
       for (const dItem of delta) {
         if (typeof dItem === 'object' && dItem !== null && 'id' in dItem) {
           const bIndex = merged.findIndex((bItem: any) => typeof bItem === 'object' && bItem !== null && bItem.id === dItem.id);
-          if (bIndex !== -1) {
+          
+          if ('_remove' in dItem && dItem._remove === true) {
+            if (bIndex !== -1) {
+              merged.splice(bIndex, 1);
+            }
+          } else if (bIndex !== -1) {
             merged[bIndex] = deepMerge(merged[bIndex], dItem);
           } else {
             merged.push(dItem);

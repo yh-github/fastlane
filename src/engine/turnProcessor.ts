@@ -80,12 +80,32 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       hasSeenEvents: state.turn === 0,
       hasSeenWeekend: state.turn === 0,
       loanDefaultWarning: false,
-      loanPayableWarning: false
+      loanPayableWarning: false,
+      mentalDropsThisTurn: 0
     };
     p.turnEvents = [];
     p.newspaperHeadline = null;
+    p.workActionsThisTurn = 0;
+
+    if (state.rules.turnStartAtHome) {
+      const housing = campaign.housing.find(h => h.id === p.currentHousingId);
+      if (housing && housing.homeNodeId) {
+        p.position = housing.homeNodeId;
+      }
+    }
 
     if (state.turn > 0) {
+      if (state.rules.trackMess) {
+        p.mess = Math.min(20, (p.mess || 0) + 3);
+      }
+      if (state.rules.useHomeTimeRobbery) {
+        if (!p.homeTimeHistory) p.homeTimeHistory = [];
+        p.homeTimeHistory.push(p.homeTimeThisTurn || 0);
+        if (p.homeTimeHistory.length > 4) {
+          p.homeTimeHistory.shift();
+        }
+        p.homeTimeThisTurn = 0;
+      }
       // 2. Cooking Bonus
       const hasStoveOrMicrowave = p.inventory.appliances.some(a => a.id === 'stove' || a.id === 'microwave');
       if (hasStoveOrMicrowave) {
@@ -93,16 +113,30 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // 3. Winner Check
-      const wealth = calcWealthProgress(calcLiquidAssets(p, campaign, state.economicIndex, state.turn));
-      const education = calcEducationProgress(p.degrees.length);
-      const career = calcCareerProgress(p.dependability, p.currentJobId !== null);
+      let allGoalsMet = true;
+      const winConditions = campaign.config.winConditions || [
+        { stat: 'wealth', target: 100, label: 'Wealth' },
+        { stat: 'happiness', target: 100, label: 'Happiness' },
+        { stat: 'education', target: 100, label: 'Education' },
+        { stat: 'career', target: 100, label: 'Career' }
+      ];
+      for (const cond of winConditions) {
+        const target = p.goalAllotment[cond.stat] || 0;
+        let progress = 0;
+        if (cond.stat === 'wealth') progress = calcWealthProgress(calcLiquidAssets(p, campaign, state.economicIndex, state.turn));
+        else if (cond.stat === 'education') progress = calcEducationProgress(p.degrees.length);
+        else if (cond.stat === 'career') progress = calcCareerProgress(p.dependability, p.currentJobId !== null);
+        else if (cond.stat === 'happiness') progress = p.happiness;
+        else if (cond.stat === 'lifestyle') progress = p.lifestyle || 0;
+        else progress = (p as any)[cond.stat] || 0;
+        
+        if (progress < target) {
+          allGoalsMet = false;
+          break;
+        }
+      }
 
-      if (
-        wealth >= p.goalAllotment.wealth &&
-        p.happiness >= p.goalAllotment.happiness &&
-        education >= p.goalAllotment.education &&
-        career >= p.goalAllotment.career
-      ) {
+      if (allGoalsMet) {
         p.hasWon = true;
       }
 
@@ -147,7 +181,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       p.dependability = calcDependabilityDecay(p.dependability); 
 
       // 8. Apartment Robbery
-      const robberyResult = processApartmentRobbery(p, rng, state.rules.protectBuiltInAppliances, replay);
+      const robberyStartWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
+      const robberyResult = processApartmentRobbery(p, rng, state.rules.protectBuiltInAppliances, state.rules, state.turn, robberyStartWeek, replay);
       p = robberyResult.updated;
 
       // 9. Spoiled Food
@@ -207,7 +242,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         p.inventory.freshFoodUnits--;
         p.turnFlags.hasEaten = true;
       } else {
-        const { updated, doctorTriggered } = processStarvation(p, campaign.config.timeRules.starvationPenalty, rng, replay);
+        const { updated, doctorTriggered } = processStarvation(p, campaign.config.timeRules.starvationPenalty, rng, state.rules, replay);
         p = updated;
         p.turnEvents.push({ key: 'events.starvation' });
         if (doctorTriggered) {
@@ -231,7 +266,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
 
       if (doctorNeeded) {
         const moneyBefore = p.money;
-        p = processDoctorVisit(p, campaign.config.timeRules.doctorPenalty, rng, state.rules.bypassDoctorIfBroke, replay);
+        p = processDoctorVisit(p, campaign.config.timeRules.doctorPenalty, rng, state.rules.bypassDoctorIfBroke, state.rules, replay);
         if (moneyBefore > p.money || !state.rules.bypassDoctorIfBroke) {
           const evtParams: any = { cost: moneyBefore - p.money };
           let key = 'events.doctorVisit';
