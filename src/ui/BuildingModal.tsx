@@ -52,7 +52,11 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     const shouldShow = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
 
     if (shouldShow) {
-      setClerkMessage(getRandomMessage(`clerkDialogs.${building.id}.greeting`, t('clerkDialogs.default.greeting')));
+      let greetingKey = `clerkDialogs.${building.id}.greeting`;
+      if (building.id === 'discount_and_pawn' || building.archetype === 'discount_and_pawn') {
+        greetingKey = 'clerkDialogs.z_mart.greeting';
+      }
+      setClerkMessage(getRandomMessage(greetingKey, t('clerkDialogs.default.greeting')));
     } else {
       setClerkMessage('');
     }
@@ -129,19 +133,31 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
 
         if (payload.type === 'buy') {
           if (success) {
-            nextMsg = getRandomMessage(`clerkDialogs.${building.id}.buySuccess`, t('clerkDialogs.default.buySuccess'));
+            let key = `clerkDialogs.${building.id}.buySuccess`;
+            if (building.id === 'discount_and_pawn' || building.archetype === 'discount_and_pawn') {
+              key = 'clerkDialogs.z_mart.buySuccess';
+            }
+            nextMsg = getRandomMessage(key, t('clerkDialogs.default.buySuccess'));
           } else {
             nextMsg = "You do not have enough cash.";
           }
         } else if (payload.type === 'pawn_item') {
           if (success) {
-            nextMsg = getRandomMessage(`clerkDialogs.${building.id}.pawnSuccess`, t('clerkDialogs.default.buySuccess'));
+            let key = `clerkDialogs.${building.id}.pawnSuccess`;
+            if (building.id === 'discount_and_pawn' || building.archetype === 'discount_and_pawn') {
+              key = 'clerkDialogs.pawn_shop.pawnSuccess';
+            }
+            nextMsg = getRandomMessage(key, t('clerkDialogs.default.buySuccess'));
           } else {
             nextMsg = t(mainLog.key, { defaultValue: 'Pawn failed.' });
           }
         } else if (payload.type === 'redeem_item' || payload.type === 'buy_pawn_item') {
           if (success) {
-            nextMsg = getRandomMessage(`clerkDialogs.${building.id}.redeemSuccess`, t('clerkDialogs.default.buySuccess'));
+            let key = `clerkDialogs.${building.id}.redeemSuccess`;
+            if (building.id === 'discount_and_pawn' || building.archetype === 'discount_and_pawn') {
+              key = 'clerkDialogs.pawn_shop.redeemSuccess';
+            }
+            nextMsg = getRandomMessage(key, t('clerkDialogs.default.buySuccess'));
           } else {
             nextMsg = "You do not have enough cash.";
           }
