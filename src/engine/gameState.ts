@@ -148,6 +148,18 @@ export interface PlayerState {
   // ── Active Effects ──
   /** Calculated effects from synergies and items */
   activeEffects: Record<string, number>;
+
+  // --- Advanced Variation Fields ---
+  lifestyle?: number;
+  physicalCondition?: number;
+  physicalConditionMax?: number;
+  mentalCondition?: number;
+  mentalConditionMax?: number;
+  mentalConditionMin?: number;
+  mess?: number;
+  homeTimeHistory?: number[];
+  homeTimeThisTurn?: number;
+  workActionsThisTurn?: number;
 }
 
 export interface WeekendResult {
@@ -198,6 +210,8 @@ export interface OwnedAppliance {
   purchaseSource: 'socket_city' | 'z_mart' | 'pawnshop';
 }
 
+export type GoalAllotment = Record<string, number>;
+
 export interface TicketInventory {
   baseball: number;
   theatre: number;
@@ -220,18 +234,7 @@ export interface PawnedItem {
   purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop';
 }
 
-// ─── Goals ──────────────────────────────────────────────────────
 
-export interface GoalAllotment {
-  /** Points allocated to Wealth goal (out of 100 total) */
-  wealth: number;
-  /** Points allocated to Happiness goal */
-  happiness: number;
-  /** Points allocated to Education goal */
-  education: number;
-  /** Points allocated to Career goal */
-  career: number;
-}
 
 // ─── Turn Flags ─────────────────────────────────────────────────
 
@@ -273,6 +276,8 @@ export interface TurnFlags {
   lotteryHappinessGranted?: boolean;
   /** Whether ticket happiness bonus (+2) was already granted this turn */
   ticketHappinessGranted?: boolean;
+  /** Total mental condition drops this turn */
+  mentalDropsThisTurn?: number;
 }
 
 // ─── Stat Constants ─────────────────────────────────────────────
@@ -308,6 +313,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     bookSetCompletedThisTurn: false,
     lotteryHappinessGranted: false,
     ticketHappinessGranted: false,
+    mentalDropsThisTurn: 0,
   };
 }
 
@@ -375,6 +381,14 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
     turnEvents: [],
     newspaperHeadline: null,
     activeEffects: {},
+    ...(config.gameRules?.usePhysicalMentalConditions ? {
+      physicalCondition: 15,
+      physicalConditionMax: 30,
+      mentalCondition: 15,
+      mentalConditionMax: 25,
+      lifestyle: 50
+    } : {}),
+    ...(config.gameRules?.trackMess ? { mess: 0 } : {}),
   };
 }
 

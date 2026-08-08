@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    {
+      "id": "node_z_mart",
+      "buildingId": "discount_and_pawn"
+    },
+    {
+      "id": "node_pawn_shop",
+      "buildingId": null
+    }
+  ]
+}

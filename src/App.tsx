@@ -64,7 +64,7 @@ export default function App() {
 
   if (gameState.phase === 'setup') {
     return (
-      <SetupScreen onConfirm={(playersConfig) => {
+      <SetupScreen winConditions={campaign!.config.winConditions} onConfirm={(playersConfig) => {
         const randomSeed = Math.floor(Math.random() * 2147483647);
         const initialState = createInitialGameState(campaign!, playersConfig, 'node_low_cost', undefined, randomSeed);
         const firstTurnState = processTurnStart({ ...initialState, phase: 'playing' }, campaign!);

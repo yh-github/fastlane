@@ -140,11 +140,50 @@ export function Dashboard({
             <StatBadge label={t('dashboard.luck', { defaultValue: 'Luck' })} value={`${luckScore}%`} icon="🍀" id="stat-luck" isActive={activeLogFilter === 'luck'} onClick={() => handleFilterToggle('luck')} />
           </>
         )}
+        {gameState.rules.usePhysicalMentalConditions && (
+          <>
+            <StatBadge label={t('dashboard.physical', { defaultValue: 'Physical' })} value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 30}`} icon="💪" id="stat-physical" />
+            <StatBadge label={t('dashboard.mental', { defaultValue: 'Mental' })} value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 25}`} icon="🧠" id="stat-mental" />
+          </>
+        )}
+        {gameState.rules.trackMess && (
+          <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess || 0}/20`} icon="🗑️" id="stat-mess" />
+        )}
         <StatBadge label={t('dashboard.victory', { defaultValue: 'Victory' })} value={`${victoryPercent}%`} icon="🏆" id="stat-victory" />
-        <StatBadge label={t('dashboard.happiness', { defaultValue: 'Happiness' })} value={`${displayHappiness}/${player.goalAllotment.happiness}`} icon="😊" id="stat-happiness" isActive={activeLogFilter === 'happiness'} onClick={() => handleFilterToggle('happiness')} />
-        <StatBadge label={t('dashboard.education', { defaultValue: 'Education' })} value={`${education}/${player.goalAllotment.education}`} icon="🎓" id="stat-education" isActive={activeLogFilter === 'education'} onClick={() => handleFilterToggle('education')} />
-        <StatBadge label={t('dashboard.career', { defaultValue: 'Career' })} value={`${career}/${player.goalAllotment.career}`} icon="💼" id="stat-career" isActive={activeLogFilter === 'career'} onClick={() => handleFilterToggle('career')} />
-        <StatBadge label={t('dashboard.wealth', { defaultValue: 'Wealth' })} value={`${wealth}/${player.goalAllotment.wealth}`} icon="🤑" id="stat-wealth" isActive={activeLogFilter === 'wealth'} onClick={() => handleFilterToggle('wealth')} />
+        {(campaign?.config.winConditions || [
+          { stat: 'happiness', label: 'Happiness' },
+          { stat: 'education', label: 'Education' },
+          { stat: 'career', label: 'Career' },
+          { stat: 'wealth', label: 'Wealth' }
+        ]).map(cond => {
+          let current = 0;
+          if (cond.stat === 'wealth') current = wealth;
+          else if (cond.stat === 'education') current = education;
+          else if (cond.stat === 'career') current = career;
+          else if (cond.stat === 'happiness') current = displayHappiness as number;
+          else if (cond.stat === 'lifestyle') current = player.lifestyle || 0;
+          else current = (player as any)[cond.stat] || 0;
+
+          const target = player.goalAllotment[cond.stat] || 0;
+          let icon = '🎯';
+          if (cond.stat === 'wealth') icon = '🤑';
+          else if (cond.stat === 'education') icon = '🎓';
+          else if (cond.stat === 'career') icon = '💼';
+          else if (cond.stat === 'happiness') icon = '😊';
+          else if (cond.stat === 'lifestyle') icon = '🏖️';
+
+          return (
+            <StatBadge 
+              key={cond.stat}
+              label={t(`dashboard.${cond.stat}`, { defaultValue: cond.label })} 
+              value={`${current}/${target}`} 
+              icon={icon} 
+              id={`stat-${cond.stat}`} 
+              isActive={activeLogFilter === cond.stat as any} 
+              onClick={() => handleFilterToggle(cond.stat as GoalFilter)} 
+            />
+          );
+        })}
       </div>
     </header>
   );

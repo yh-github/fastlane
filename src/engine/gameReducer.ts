@@ -32,7 +32,8 @@ export type GameAction =
   | { type: 'redeem_item'; item: PawnedItem; cost: number }
   | { type: 'buy_pawn_item'; item: PawnedItem; cost: number }
   | { type: 'change_clothes'; clothes: 'casual' | 'dress' | 'business' | 'none' }
-  | { type: 'ask_rent_extension' };
+  | { type: 'ask_rent_extension' }
+  | { type: 'clean' };
 
 export interface ReducerContext {
   campaign: CampaignBundle;
@@ -82,6 +83,20 @@ export function gameReducer(
         nextPlayer = result.updated;
         if (result.success) {
           const workedEvent = { key: 'action.job.worked', params: { title: jobDef.title, wagesEarned: result.wagesEarned } };
+          if (context.rules.usePhysicalMentalConditions) {
+            nextPlayer.physicalCondition = Math.max(0, (nextPlayer.physicalCondition || 15) - 1);
+            nextPlayer.workActionsThisTurn = (nextPlayer.workActionsThisTurn || 0) + 1;
+            if (nextPlayer.workActionsThisTurn >= 3) {
+              const oldMental = nextPlayer.mentalCondition || 15;
+              const newMental = Math.max(0, oldMental - 1);
+              nextPlayer.mentalCondition = newMental;
+              nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
+              if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
+                nextPlayer.mentalConditionMax = Math.min(99, (nextPlayer.mentalConditionMax || 25) + 1);
+                nextPlayer.turnFlags.mentalDropsThisTurn = 0; // reset after triggering
+              }
+            }
+          }
           if (result.messages && result.messages.length > 0) {
              actionLog = [workedEvent, ...result.messages];
           } else {
@@ -117,6 +132,9 @@ export function gameReducer(
           if (itemDef.id === 'newspaper') {
             nextPlayer.turnFlags.readNewspaper = true;
           }
+          if (context.rules.usePhysicalMentalConditions && (itemDef.category === 'appliance' || itemDef.category === 'clothes')) {
+             nextPlayer.lifestyle = Math.min(100, (nextPlayer.lifestyle || 50) + 1);
+          }
           actionLog = result.message;
         } else {
           actionLog = result.message;
@@ -138,6 +156,16 @@ export function gameReducer(
       if (degDef) {
         const result = study(nextPlayer, degDef, context.campaign.config.timeRules.studySessionCost, context.rules);
         nextPlayer = result.updated;
+        if (result.success && context.rules.usePhysicalMentalConditions) {
+          const oldMental = nextPlayer.mentalCondition || 15;
+          const newMental = Math.max(0, oldMental - 1);
+          nextPlayer.mentalCondition = newMental;
+          nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
+          if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
+            nextPlayer.mentalConditionMax = Math.min(99, (nextPlayer.mentalConditionMax || 25) + 1);
+            nextPlayer.turnFlags.mentalDropsThisTurn = 0;
+          }
+        }
         actionLog = result.message;
       }
       break;
@@ -152,15 +180,45 @@ export function gameReducer(
         }
       }
       
-      // As per the rules, fractional hours don't penalize outcome except for working, 
-      // so we always grant full relaxation amount regardless of partial hours spent.
-      nextPlayer = spendHours(nextPlayer, relaxCost);
-      nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + relaxGain);
-      if (!nextPlayer.turnFlags.relaxedThisTurn) {
-        nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
-        nextPlayer.turnFlags.relaxedThisTurn = true;
+      const actualHours = Math.min(relaxCost, nextPlayer.hoursRemaining);
+      nextPlayer = spendHours(nextPlayer, actualHours);
+      
+      if (context.rules.usePhysicalMentalConditions) {
+        nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax || 30, (nextPlayer.physicalCondition || 15) + 1);
+        const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
+        const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
+        const mentalGain = firstBonus + 3 - messPenalty;
+        nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax || 25, (nextPlayer.mentalCondition || 15) + mentalGain);
+        nextPlayer.mess = Math.min(20, (nextPlayer.mess || 0) + 1);
+        nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
+      } else {
+        nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + relaxGain);
+        if (!nextPlayer.turnFlags.relaxedThisTurn) {
+          nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
+        }
       }
+      
+      nextPlayer.turnFlags.relaxedThisTurn = true;
       actionLog = { key: 'action.relax' };
+      break;
+    }
+    case 'clean': {
+      if (nextPlayer.hoursRemaining < 3) {
+        if (!context.rules.allowPartialHours || nextPlayer.hoursRemaining <= 0) {
+          actionLog = { key: 'action.error.notEnoughTimeClean' };
+          break;
+        }
+      }
+      nextPlayer = spendHours(nextPlayer, 3);
+      if (context.rules.usePhysicalMentalConditions) {
+        nextPlayer.physicalCondition = Math.max(0, (nextPlayer.physicalCondition || 15) - 1);
+        nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
+        const d4_1 = Math.floor(context.rng.random() * 4) + 1;
+        const d4_2 = Math.floor(context.rng.random() * 4) + 1;
+        const reduction = d4_1 + d4_2;
+        nextPlayer.mess = Math.max(0, (nextPlayer.mess || 0) - reduction);
+      }
+      actionLog = { key: 'action.clean' };
       break;
     }
     case 'move': {

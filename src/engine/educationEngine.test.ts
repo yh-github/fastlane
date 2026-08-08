@@ -49,6 +49,13 @@ describe('Education Engine', () => {
       expect(result.updated.money).toBe(50);
       expect(result.updated.enrolledClasses['junior_college']).toBe(0);
     });
+
+    it('fails if max enrolled classes limit is reached', () => {
+      const player = { degrees: [], money: 500, enrolledClasses: { 'c1': 0, 'c2': 0, 'c3': 0, 'c4': 0 } } as PlayerState;
+      const result = enrollInDegree(player, mockDegree);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.error.maxEnrolledClasses');
+    });
   });
 
   describe('study', () => {

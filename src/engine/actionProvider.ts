@@ -116,8 +116,10 @@ export function getAvailableActions(
     // Education
     if (bDef?.archetype === 'education') {
       const studyCost = campaign.config.timeRules.studySessionCost;
+      const activeEnrolledCount = Object.keys(player.enrolledClasses || {}).filter(k => !k.endsWith('_req')).length;
+      const maxAllowed = state.rules?.maxEnrolledClasses ?? 4;
       campaign.education.forEach(deg => {
-        if (!player.degrees.includes(deg.id) && player.enrolledClasses[deg.id] === undefined) {
+        if (!player.degrees.includes(deg.id) && player.enrolledClasses[deg.id] === undefined && activeEnrolledCount < maxAllowed) {
           const adjustedTuition = calcEconomyPrice(deg.baseTuitionFee, state.economicIndex);
           const enrollLabel = helpful ? `Enroll in ${deg.name} (-$${adjustedTuition})` : `Enroll in ${deg.name}`;
           options.push({ label: enrollLabel, action: { type: 'enroll', degreeId: deg.id } });

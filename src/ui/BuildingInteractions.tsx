@@ -661,6 +661,51 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
   );
 }
 
+export function DiscountAndPawnShop({ player, onAction, availableItems, economicIndex = 0, pawnShopItemsForSale = [], rules }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number, pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[], rules?: GameRules }) {
+  const [activeTab, setActiveTab] = useState<'store' | 'pawn'>('store');
+
+  return (
+    <div className="interaction-panel discount-pawn-shop">
+      <div className="tabs" style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+        <button 
+          className={`tab-btn ${activeTab === 'store' ? 'active' : ''}`}
+          onClick={() => setActiveTab('store')}
+          style={{ flex: 1, padding: '10px', background: activeTab === 'store' ? '#4CAF50' : '#333', color: 'white', border: 'none', borderRadius: '4px' }}
+        >
+          Retail Store
+        </button>
+        <button 
+          className={`tab-btn ${activeTab === 'pawn' ? 'active' : ''}`}
+          onClick={() => setActiveTab('pawn')}
+          style={{ flex: 1, padding: '10px', background: activeTab === 'pawn' ? '#4CAF50' : '#333', color: 'white', border: 'none', borderRadius: '4px' }}
+        >
+          Pawn & Trade
+        </button>
+      </div>
+
+      {activeTab === 'store' && (
+        <StoreFront 
+          player={player}
+          onAction={onAction}
+          availableItems={availableItems}
+          economicIndex={economicIndex}
+          rules={rules}
+        />
+      )}
+      
+      {activeTab === 'pawn' && (
+        <PawnShop 
+          player={player}
+          onAction={onAction}
+          economicIndex={economicIndex}
+          pawnShopItemsForSale={pawnShopItemsForSale}
+          rules={rules}
+        />
+      )}
+    </div>
+  );
+}
+
 export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees: EducationDef[], rules?: import('../engine/gameState').GameRules, campaign: CampaignBundle, economicIndex?: number }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<'available'|'tree'>('available');

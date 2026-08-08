@@ -1,0 +1,20 @@
+[
+  { "id": "refrigerator", "store": "discount_and_pawn" },
+  { "id": "stove", "store": "discount_and_pawn" },
+  { "id": "stereo", "store": "discount_and_pawn" },
+  { "id": "color_tv", "store": "discount_and_pawn" },
+  { "id": "bw_tv", "store": "discount_and_pawn" },
+  { "id": "microwave", "store": "discount_and_pawn" },
+  { "id": "vcr", "store": "discount_and_pawn" },
+  { "id": "encyclopedia", "store": "discount_and_pawn" },
+  { "id": "dictionary", "store": "discount_and_pawn" },
+  { "id": "atlas", "store": "discount_and_pawn" },
+  { "id": "casual_clothes", "store": "discount_and_pawn" },
+  { "id": "dress_clothes", "store": "discount_and_pawn" },
+  { "id": "baseball_tickets", "store": "discount_and_pawn" },
+  { "id": "theatre_tickets", "store": "discount_and_pawn" },
+  { "id": "concert_tickets", "store": "discount_and_pawn" },
+  { "id": "dog_food", "_remove": true },
+  { "id": "8track", "_remove": true },
+  { "id": "capote", "_remove": true }
+]

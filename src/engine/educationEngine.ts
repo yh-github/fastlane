@@ -23,6 +23,13 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef, econom
     }
   }
 
+  // Check max concurrent enrolled classes limit
+  const activeEnrolledCount = Object.keys(player.enrolledClasses || {}).filter(k => !k.endsWith('_req')).length;
+  const maxAllowed = rules?.maxEnrolledClasses ?? 4;
+  if (activeEnrolledCount >= maxAllowed) {
+    return { updated: player, success: false, message: { key: 'action.error.maxEnrolledClasses', params: { max: maxAllowed } } };
+  }
+
   const tuitionFee = calcEconomyPrice(degree.baseTuitionFee, economicIndex);
 
   if (player.money < tuitionFee) {

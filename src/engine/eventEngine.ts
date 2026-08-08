@@ -53,9 +53,14 @@ export function processStreetRobbery(
  * @param player — Current player state
  * @returns        Updated player state and boolean indicating if doctor visit triggered
  */
-export function processStarvation(player: PlayerState, timePenalty: number, rng: Random, replay?: ReplayContext): { updated: PlayerState; doctorTriggered: boolean } {
+export function processStarvation(player: PlayerState, timePenalty: number, rng: Random, rules?: import('./gameState').GameRules, replay?: ReplayContext): { updated: PlayerState; doctorTriggered: boolean } {
   let updated = spendHours(player, timePenalty);
-  updated.happiness = Math.max(10, updated.happiness - 2);
+  
+  if (rules?.usePhysicalMentalConditions) {
+    updated.physicalCondition = Math.max(0, (updated.physicalCondition || 15) - 2);
+  } else {
+    updated.happiness = Math.max(10, updated.happiness - 2);
+  }
   
   // 25% chance of Doctor Visit
   const doctorTriggered = resolveDecision(replay, `starvation_doctor`, () => rng.next() < 0.25);
@@ -69,12 +74,17 @@ export function processStarvation(player: PlayerState, timePenalty: number, rng:
  * @param player — Current player state
  * @returns        Updated player state
  */
-export function processDoctorVisit(player: PlayerState, timePenalty: number, rng: Random, bypassDoctorIfBroke: boolean = true, replay?: ReplayContext): PlayerState {
+export function processDoctorVisit(player: PlayerState, timePenalty: number, rng: Random, bypassDoctorIfBroke: boolean = true, rules?: import('./gameState').GameRules, replay?: ReplayContext): PlayerState {
   // Bypassed entirely if carrying $0 cash (if rule is enabled)
   if (player.money <= 0 && bypassDoctorIfBroke) return player;
 
   let updated = spendHours(player, timePenalty);
-  updated.happiness = Math.max(10, updated.happiness - 4);
+  
+  if (rules?.usePhysicalMentalConditions) {
+    updated.physicalCondition = Math.max(0, (updated.physicalCondition || 15) - 2);
+  } else {
+    updated.happiness = Math.max(10, updated.happiness - 4);
+  }
   
   // Cost: random between $30 and $200
   const cost = resolveDecision(replay, `doctor_cost`, () => Math.floor(rng.next() * 171) + 30);
@@ -93,13 +103,26 @@ export function processApartmentRobbery(
   player: PlayerState,
   rng: Random,
   protectBuiltInAppliances: boolean = false,
+  rules?: import('./gameState').GameRules,
+  turn: number = 1,
+  startWeek: number = 4,
   replay?: ReplayContext
 ): { updated: PlayerState; robbed: boolean } {
-  // Security Apartments are immune (assuming currentHousingId 'security' signifies this)
   if (player.currentHousingId === 'security') return { updated: player, robbed: false };
 
-  const chance = calcRobberyChance(player.relaxation);
-  
+  let chance = calcRobberyChance(player.relaxation);
+
+  if (rules?.useHomeTimeRobbery) {
+    if (turn < startWeek) {
+      chance = 0;
+    } else {
+      const history = player.homeTimeHistory || [];
+      const sum = history.reduce((acc, val) => acc + val, 0);
+      const mean = history.length > 0 ? sum / history.length : 0;
+      chance = 1 / (11 + mean);
+    }
+  }
+
   const robbed = resolveDecision(replay, `apartment_robbery`, () => rng.next() < chance);
 
   if (robbed) {
