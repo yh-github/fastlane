@@ -386,7 +386,7 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
       physicalConditionMax: 30,
       mentalCondition: 15,
       mentalConditionMax: 25,
-      lifestyle: 50
+      lifestyle: 0
     } : {}),
     ...(config.gameRules?.trackMess ? { mess: 0 } : {}),
   };

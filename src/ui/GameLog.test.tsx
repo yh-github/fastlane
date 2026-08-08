@@ -33,12 +33,12 @@ describe('GameLog Component', () => {
     expect(screen.getByText(/action\.education\.studied/)).toBeInTheDocument();
   });
 
-  it('triggers onSelectFilter when filter pill is clicked', () => {
+  it('triggers onSelectFilter when clear filter button is clicked', () => {
     const onSelectFilter = vi.fn();
-    render(<GameLog entries={mockEntries} onSelectFilter={onSelectFilter} />);
+    render(<GameLog entries={mockEntries} activeFilter="luck" onSelectFilter={onSelectFilter} />);
 
-    const luckFilterBtn = screen.getByRole('button', { name: /Luck/i });
-    fireEvent.click(luckFilterBtn);
-    expect(onSelectFilter).toHaveBeenCalledWith('luck');
+    const clearFilterBtn = screen.getByRole('button', { name: /Clear Filter/i });
+    fireEvent.click(clearFilterBtn);
+    expect(onSelectFilter).toHaveBeenCalledWith(null);
   });
 });

@@ -39,7 +39,7 @@ describe('Advanced Variation Mechanics', () => {
     expect(player.mentalCondition).toBe(15);
     expect(player.mentalConditionMax).toBe(25);
     expect(player.mess).toBe(0);
-    expect(player.lifestyle).toBe(50);
+    expect(player.lifestyle).toBe(0);
   });
 
   it('should increase mess and track homeTimeHistory at turn start', () => {

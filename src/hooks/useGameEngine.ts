@@ -61,9 +61,12 @@ export function useGameEngine(
           endStateHash: ''
         };
         setStatus('ready');
-      if (initialState && initialState.players[0].turnFlags.freeNewspaper) {
-        setIsNewspaperModalOpen(true);
-      }
+        if (initialState && initialState.rules.turnStartAtHome && !initialState.players[0].isAi) {
+          setIsBuildingModalOpen(true);
+        }
+        if (initialState && initialState.players[0].turnFlags.freeNewspaper) {
+          setIsNewspaperModalOpen(true);
+        }
     })
       .catch((err) => {
         console.error('[App] Campaign load failed:', err);
@@ -124,6 +127,9 @@ export function useGameEngine(
 
       setGameState(nextState);
       setActivePlayerIndex(0);
+      if (nextState.rules.turnStartAtHome && !nextState.players[0].isAi) {
+        setIsBuildingModalOpen(true);
+      }
       if (nextState.players[0].turnFlags.freeNewspaper) {
         setIsNewspaperModalOpen(true);
       }

@@ -45,39 +45,25 @@ export const GameLog: React.FC<GameLogProps> = ({
 
   return (
     <div className="game-log-container" style={{ width: '100%' }}>
-      <div className="game-log-filters" style={{
-        display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto',
-        padding: '6px 10px', backgroundColor: '#1a1a2e', borderBottom: '1px solid #333'
-      }}>
-        <span style={{ fontSize: '11px', color: '#aaa', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-          🔍 {t('gameLog.filterBy', { defaultValue: 'Filter Log:' })}
-        </span>
-        {filterButtons.map(btn => {
-          const isActive = currentFilter === btn.id;
-          return (
-            <button
-              key={btn.id}
-              onClick={() => onSelectFilter?.(btn.id === 'all' ? null : btn.id)}
-              style={{
-                padding: '2px 8px', fontSize: '11px', borderRadius: '12px', border: '1px solid',
-                borderColor: isActive ? '#00e5ff' : '#444',
-                backgroundColor: isActive ? 'rgba(0, 229, 255, 0.2)' : '#222',
-                color: isActive ? '#00e5ff' : '#ccc',
-                fontWeight: isActive ? 'bold' : 'normal',
-                cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px'
-              }}
-            >
-              <span>{btn.icon}</span>
-              <span>{btn.label}</span>
-            </button>
-          );
-        })}
-        {currentFilter !== 'all' && (
-          <span style={{ fontSize: '11px', color: '#00e5ff', marginLeft: 'auto', whiteSpace: 'nowrap', paddingInlineStart: '8px' }}>
-            {t('gameLog.showingCount', { count: filteredEntries.length, filter: currentFilter, defaultValue: `Showing ${filteredEntries.length} entries for ${currentFilter}` })}
+      {activeFilter && (
+        <div className="game-log-filters" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '4px 10px', backgroundColor: '#1a1a2e', borderBottom: '1px solid #333', fontSize: '11px'
+        }}>
+          <span style={{ color: '#00e5ff' }}>
+            🔍 {t('gameLog.showingCount', { count: filteredEntries.length, filter: activeFilter, defaultValue: `Filtered by ${activeFilter} (${filteredEntries.length} entries)` })}
           </span>
-        )}
-      </div>
+          <button
+            onClick={() => onSelectFilter?.(null)}
+            style={{
+              padding: '2px 8px', fontSize: '10px', borderRadius: '4px', border: '1px solid #555',
+              backgroundColor: '#333', color: '#fff', cursor: 'pointer'
+            }}
+          >
+            ❌ {t('gameLog.clearFilter', { defaultValue: 'Clear Filter' })}
+          </button>
+        </div>
+      )}
 
       <div className="game-log">
         {filteredEntries.length === 0 ? (
