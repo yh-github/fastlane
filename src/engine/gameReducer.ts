@@ -213,8 +213,10 @@ export function gameReducer(
       if (context.rules.usePhysicalMentalConditions) {
         nextPlayer.physicalCondition = Math.max(0, (nextPlayer.physicalCondition || 15) - 1);
         nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
-        const d4_1 = Math.floor(context.rng.random() * 4) + 1;
-        const d4_2 = Math.floor(context.rng.random() * 4) + 1;
+      }
+      if (context.rules.trackMess || context.rules.usePhysicalMentalConditions) {
+        const d4_1 = context.rng.nextInt(1, 4);
+        const d4_2 = context.rng.nextInt(1, 4);
         const reduction = d4_1 + d4_2;
         nextPlayer.mess = Math.max(0, (nextPlayer.mess || 0) - reduction);
       }
