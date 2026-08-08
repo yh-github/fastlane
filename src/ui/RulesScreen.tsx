@@ -81,18 +81,23 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({ onClose }) => {
     }
   };
 
-  // Render a cell based on key and campaign
-  const renderCell = (key: string, campaign: LoadedCampaignData) => {
+  // Render a primitive value cell (booleans, strings, numbers)
+  const renderValueCell = (value: any) => {
+    if (typeof value === 'boolean') {
+      return value ? <span style={{ color: '#4ade80', fontWeight: 'bold' }}>ON</span> : <span style={{ color: '#f87171', fontWeight: 'bold' }}>OFF</span>;
+    }
+    return String(value ?? '-');
+  };
+
+  // Render a game rule cell with special N/A formatting for relaxationDoctorThreshold
+  const renderGameRuleCell = (key: string, campaign: LoadedCampaignData) => {
     const value = campaign.gameRules[key as keyof GameRules];
     if (key === 'relaxationDoctorThreshold') {
       if (!campaign.gameRules.enableRelaxationDoctor || campaign.gameRules.usePhysicalMentalConditions) {
         return <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>N/A</span>;
       }
     }
-    if (typeof value === 'boolean') {
-      return value ? <span style={{ color: '#4ade80', fontWeight: 'bold' }}>ON</span> : <span style={{ color: '#f87171', fontWeight: 'bold' }}>OFF</span>;
-    }
-    return String(value ?? '-');
+    return renderValueCell(value);
   };
 
   const renderSortIndicator = (col: string, activeCol: string, activeDir: SortDirection) => {
@@ -209,7 +214,7 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({ onClose }) => {
                 <td style={{ padding: '0.75rem 1rem', color: '#d1d5db', fontSize: '0.95rem' }}>{RULE_DESCRIPTIONS[key] || '-'}</td>
                 {campaignData.map(c => (
                   <td key={c.info.id} style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
-                    {renderCell(key, c)}
+                    {renderGameRuleCell(key, c)}
                   </td>
                 ))}
               </tr>
@@ -242,7 +247,7 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({ onClose }) => {
                 <td style={{ padding: '0.75rem 1rem', color: '#d1d5db', fontSize: '0.95rem' }}>{RULE_DESCRIPTIONS[key] || '-'}</td>
                 {campaignData.map(c => (
                   <td key={c.info.id} style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
-                    {renderCell(valGetter(c) ?? 'Default')}
+                    {renderValueCell(valGetter(c) ?? 'Default')}
                   </td>
                 ))}
               </tr>
