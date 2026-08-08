@@ -134,7 +134,9 @@ export function Dashboard({
         <StatBadge label={t('dashboard.money', { defaultValue: 'Money' })} value={`$${player.money}`} icon="💰" id="stat-money" isActive={activeLogFilter === 'money'} onClick={() => handleFilterToggle('money')} />
         {gameState.rules.helpfulUI && (
           <>
-            <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" danger={gameState.rules.enableRelaxationDoctor && player.relaxation <= (gameState.rules.relaxationDoctorThreshold ?? 10)} isActive={activeLogFilter === 'relaxation'} onClick={() => handleFilterToggle('relaxation')} />
+            {!gameState.rules.usePhysicalMentalConditions && (
+              <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" danger={gameState.rules.enableRelaxationDoctor && player.relaxation <= (gameState.rules.relaxationDoctorThreshold ?? 10)} isActive={activeLogFilter === 'relaxation'} onClick={() => handleFilterToggle('relaxation')} />
+            )}
             <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={`${player.dependability}/${maxDep}`} icon="🤝" id="stat-dependability" isActive={activeLogFilter === 'dependability'} onClick={() => handleFilterToggle('dependability')} />
             <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={`${player.experience}/${maxExp}`} icon="👌" id="stat-experience" isActive={activeLogFilter === 'experience'} onClick={() => handleFilterToggle('experience')} />
             <StatBadge label={t('dashboard.luck', { defaultValue: 'Luck' })} value={`${luckScore}%`} icon="🍀" id="stat-luck" isActive={activeLogFilter === 'luck'} onClick={() => handleFilterToggle('luck')} />
@@ -145,9 +147,6 @@ export function Dashboard({
             <StatBadge label={t('dashboard.physical', { defaultValue: 'Physical' })} value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 30}`} icon="💪" id="stat-physical" />
             <StatBadge label={t('dashboard.mental', { defaultValue: 'Mental' })} value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 25}`} icon="🧠" id="stat-mental" />
           </>
-        )}
-        {gameState.rules.trackMess && (
-          <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess || 0}/20`} icon="🗑️" id="stat-mess" />
         )}
         <StatBadge label={t('dashboard.victory', { defaultValue: 'Victory' })} value={`${victoryPercent}%`} icon="🏆" id="stat-victory" />
         {(campaign?.config.winConditions || [

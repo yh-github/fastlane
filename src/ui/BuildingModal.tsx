@@ -91,8 +91,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
   // Items available at this building
   let itemsHere = campaign.items.filter(i => i.store === building.id);
 
-  // Z-Mart randomization (show 6 items consistently per week per player)
-  if (building.id === 'z_mart' && itemsHere.length > 6) {
+  // Z-Mart & Discount Store randomization (show 6 items consistently per week per player)
+  if ((building.id === 'z_mart' || building.id === 'discount_and_pawn' || building.archetype === 'discount_and_pawn') && itemsHere.length > 6) {
     let seed = turn * 1337 + (player.id.charCodeAt(player.id.length - 1) || 0) * 12345;
     const random = () => {
       seed = (seed * 9301 + 49297) % 233280;
@@ -249,7 +249,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       case 'factory': return '👩‍🏭'; // Factory: Woman factory worker
       case 'qt_clothing': return '💁‍♂️'; // QT Clothing: Male clerk (often pink shirt)
       case 'bank': return '👩‍💼'; // Bank: Female in a suit
-      case 'z_mart': return '🧔🏽‍♂️'; // Z-Mart: Brown man with beard
+      case 'z_mart':
+      case 'discount_and_pawn': return '🧔🏽‍♂️'; // Z-Mart / Discount & Pawn: Brown man with beard
       case 'socket_city': return '👨‍💻'; // Socket City: Technologist
       case 'blacks_market': return '👨‍🦰'; // Black's Market: Red haired man
       case 'pawn_shop': return '👳🏽‍♂️'; // Pawn Shop: Brown man with turban
@@ -261,6 +262,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       case 'workplace': return '👩‍🏭';
       case 'restaurant': return '🧑‍🍳';
       case 'education': return '👨‍🏫';
+      case 'discount_and_pawn': return '🧔🏽‍♂️';
       case 'shop':
       case 'grocery':
       case 'pawnshop': return '💁‍♂️';
@@ -329,7 +331,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
         )}
 
         {/* Any building with items for sale: shops, restaurant, grocery */}
-        {itemsHere.length > 0 && (
+        {itemsHere.length > 0 && building.archetype !== 'discount_and_pawn' && (
           <StoreFront 
             player={player} 
             onAction={handleActionIntercept} 
@@ -397,6 +399,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             <HomeRelax 
               player={player}
               campaign={campaign}
+              rules={rules}
               onAction={handleActionIntercept}
             />
           ) : (

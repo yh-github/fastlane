@@ -2,11 +2,16 @@
   "nodes": [
     {
       "id": "node_z_mart",
-      "buildingId": "discount_and_pawn"
+      "buildingId": "discount_and_pawn",
+      "connections": ["node_low_cost", "node_burger"]
+    },
+    {
+      "id": "node_low_cost",
+      "connections": ["node_rent", "node_z_mart"]
     },
     {
       "id": "node_pawn_shop",
-      "buildingId": null
+      "_remove": true
     }
   ]
 }

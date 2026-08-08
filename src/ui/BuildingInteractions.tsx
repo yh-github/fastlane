@@ -168,16 +168,32 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
   );
 }
 
-export function HomeRelax({ onAction, campaign }: InteractionProps & { campaign?: CampaignBundle }) {
+export function HomeRelax({ player, onAction, campaign, rules }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules }) {
   const { t } = useTranslation();
   const relaxCost = campaign?.config.timeRules?.relaxCost ?? 6;
   return (
     <div className="interaction-panel">
       <h3>{t('homeRelax.title')}</h3>
+      {rules?.trackMess && (
+        <div style={{ marginBottom: '10px', padding: '8px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
+          <strong>🗑️ Apartment Mess: {player.mess || 0} / 20</strong>
+        </div>
+      )}
       <p style={{ fontSize: '12px', marginBottom: '10px' }}>{t('homeRelax.desc', { cost: relaxCost })}</p>
-      <button data-action-target="relax" onClick={() => onAction({ type: 'relax' })}>
-        {t('homeRelax.button', { cost: relaxCost })}
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <button data-action-target="relax" onClick={() => onAction({ type: 'relax' })}>
+          {t('homeRelax.button', { cost: relaxCost })}
+        </button>
+        {rules?.trackMess && (
+          <button 
+            data-action-target="clean" 
+            onClick={() => onAction({ type: 'clean' })}
+            style={{ backgroundColor: '#3498db', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            🧹 Clean Apartment (3 hrs)
+          </button>
+        )}
+      </div>
     </div>
   );
 }

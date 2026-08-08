@@ -65,6 +65,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
             <li><strong>Finances:</strong> Cash: ${player.money} | Savings: ${player.bankSavings} | T-Bills: {inventory.stocks.tBills} | Stocks: {totalStocks} shares</li>
             <li><strong>Debt:</strong> Loans: ${player.loanDebt} | Rent Arrears: ${player.rentDebt}</li>
             <li><strong>Housing:</strong> {currentHousing ? t(`building.${currentHousing.id}`, { defaultValue: currentHousing.name }) : 'Homeless'} | Rent Paid Until Week {player.rentPaidUntilWeek} (Next due: Week {Math.max(turn || 1, player.rentPaidUntilWeek - 1)})</li>
+            {rules?.trackMess && <li><strong>Mess Level:</strong> {player.mess || 0} / 20</li>}
           </ul>
         </div>
 
