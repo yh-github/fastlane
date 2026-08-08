@@ -21,17 +21,27 @@ describe('dataLoader', () => {
     expect(cdrom.config.gameRules?.enableAnimations).toBe(false);
   });
 
-  it('loads qol_improved campaign with helpfulUI true and enableAnimations true', async () => {
+  it('loads qol_improved campaign with expected rule overrides', async () => {
     const qol = await loadCampaign('qol_improved');
     expect(qol.config.gameRules?.helpfulUI).toBe(true);
     expect(qol.config.gameRules?.enableAnimations).toBe(true);
+    expect(qol.config.gameRules?.strictEviction).toBe(false);
+    expect(qol.config.gameRules?.showItemImages).toBe(true);
+    expect(qol.config.gameRules?.bypassDoctorIfBroke).toBe(true);
   });
 
-  it('loads advanced campaign inheriting qol_improved base settings', async () => {
+  it('loads advanced campaign inheriting qol_improved base settings with advanced rule overrides', async () => {
     const advanced = await loadCampaign('advanced');
     expect(advanced.config.baseCampaign).toBe('qol_improved');
     expect(advanced.config.gameRules?.helpfulUI).toBe(true);
     expect(advanced.config.gameRules?.enableAnimations).toBe(true);
+    expect(advanced.config.gameRules?.showItemImages).toBe(true);
+    expect(advanced.config.gameRules?.strictEviction).toBe(true);
+    expect(advanced.config.gameRules?.clothingDecaysAll).toBe(false);
+    expect(advanced.config.gameRules?.bypassDoctorIfBroke).toBe(false);
+    expect(advanced.config.gameRules?.enableRelaxationDoctor).toBe(false);
+    expect(advanced.config.gameRules?.physicalDoctorThreshold).toBe(5);
+    expect(advanced.config.gameRules?.mentalDoctorThreshold).toBe(5);
     // Verify base items from floppy/cdrom/qol are inherited
     expect(advanced.items.length).toBeGreaterThan(0);
     expect(advanced.jobs.length).toBeGreaterThan(0);
