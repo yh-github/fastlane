@@ -12,6 +12,13 @@
   "gameRules": {
     "helpfulUI": true,
     "enableAnimations": true,
+    "showItemImages": true,
+    "strictEviction": true,
+    "clothingDecaysAll": false,
+    "bypassDoctorIfBroke": false,
+    "enableRelaxationDoctor": false,
+    "physicalDoctorThreshold": 5,
+    "mentalDoctorThreshold": 5,
     "useHomeTimeRobbery": true,
     "usePhysicalMentalConditions": true,
     "turnStartAtHome": true,

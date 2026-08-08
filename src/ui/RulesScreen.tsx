@@ -81,8 +81,14 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({ onClose }) => {
     }
   };
 
-  // Render a cell based on value
-  const renderCell = (value: any) => {
+  // Render a cell based on key and campaign
+  const renderCell = (key: string, campaign: LoadedCampaignData) => {
+    const value = campaign.gameRules[key as keyof GameRules];
+    if (key === 'relaxationDoctorThreshold') {
+      if (!campaign.gameRules.enableRelaxationDoctor || campaign.gameRules.usePhysicalMentalConditions) {
+        return <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>N/A</span>;
+      }
+    }
     if (typeof value === 'boolean') {
       return value ? <span style={{ color: '#4ade80', fontWeight: 'bold' }}>ON</span> : <span style={{ color: '#f87171', fontWeight: 'bold' }}>OFF</span>;
     }
@@ -107,8 +113,16 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({ onClose }) => {
     return dir === 'asc' ? res : -res;
   };
 
+  // Collect all unique game rule keys from defaults and loaded campaigns
+  const allGameRuleKeys = Array.from(
+    new Set([
+      ...Object.keys(DEFAULT_GAME_RULES),
+      ...campaignData.flatMap(c => Object.keys(c.gameRules))
+    ])
+  ) as Array<keyof GameRules>;
+
   // Sort Game Rules
-  const sortedGameRuleKeys = (Object.keys(DEFAULT_GAME_RULES) as Array<keyof GameRules>).sort((keyA, keyB) => {
+  const sortedGameRuleKeys = allGameRuleKeys.sort((keyA, keyB) => {
     if (gameSortCol === 'key') {
       return compareValues(keyA, keyB, gameSortDir);
     }
@@ -195,7 +209,7 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({ onClose }) => {
                 <td style={{ padding: '0.75rem 1rem', color: '#d1d5db', fontSize: '0.95rem' }}>{RULE_DESCRIPTIONS[key] || '-'}</td>
                 {campaignData.map(c => (
                   <td key={c.info.id} style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
-                    {renderCell(c.gameRules[key])}
+                    {renderCell(key, c)}
                   </td>
                 ))}
               </tr>

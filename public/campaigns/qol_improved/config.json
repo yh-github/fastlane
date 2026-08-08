@@ -5,10 +5,11 @@
   "baseCampaign": "1990_classic_cdrom",
   "gameRules": {
     "helpfulUI": true,
-    "strictEviction": true,
+    "strictEviction": false,
     "enableAnimations": true,
+    "showItemImages": true,
     "allowOverAchievingGoals": true,
-    "bypassDoctorIfBroke": false,
+    "bypassDoctorIfBroke": true,
     "delayBookSetCredit": false
   }
 }

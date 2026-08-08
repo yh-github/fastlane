@@ -51,47 +51,6 @@ export function SettingsModal({ gameState, setGameState, replayData, onClose }: 
     });
   };
 
-  const handleToggleBypassDoctor = () => {
-    setGameState(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        rules: {
-          ...prev.rules,
-          bypassDoctorIfBroke: !prev.rules.bypassDoctorIfBroke
-        }
-      };
-    });
-  };
-
-  const handleToggleRelaxationDoctor = () => {
-    setGameState(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        rules: {
-          ...prev.rules,
-          enableRelaxationDoctor: !prev.rules.enableRelaxationDoctor
-        }
-      };
-    });
-  };
-
-  const handleChangeRelaxationThreshold = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    if (isNaN(val) || val < 0 || val > 100) return;
-    setGameState(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        rules: {
-          ...prev.rules,
-          relaxationDoctorThreshold: val
-        }
-      };
-    });
-  };
-
   const handleExportReplay = () => {
     if (!replayData) return;
     const blob = new Blob([JSON.stringify(replayData, null, 2)], { type: 'application/json' });
@@ -157,49 +116,6 @@ export function SettingsModal({ gameState, setGameState, replayData, onClose }: 
               />
             </div>
           </div>
-          <div 
-            className="interaction-item interaction-item--clickable"
-            onClick={handleToggleBypassDoctor}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{t('settings.bypassDoctorIfBroke', { defaultValue: 'Bypass Doctor Visit if Cash is $0' })}</span>
-              <input 
-                type="checkbox" 
-                checked={gameState.rules.bypassDoctorIfBroke} 
-                readOnly
-                style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-              />
-            </div>
-          </div>
-          <div 
-            className="interaction-item interaction-item--clickable"
-            onClick={handleToggleRelaxationDoctor}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{t('settings.enableRelaxationDoctor', { defaultValue: 'Enable Doctor Visit from Low Relaxation' })}</span>
-              <input 
-                type="checkbox" 
-                checked={gameState.rules.enableRelaxationDoctor} 
-                readOnly
-                style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-              />
-            </div>
-          </div>
-          {gameState.rules.enableRelaxationDoctor && (
-            <div className="interaction-item">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{t('settings.relaxationDoctorThreshold', { defaultValue: 'Low Relaxation Threshold' })}</span>
-                <input 
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={gameState.rules.relaxationDoctorThreshold} 
-                  onChange={handleChangeRelaxationThreshold}
-                  style={{ width: '60px', padding: '4px', backgroundColor: '#111', color: '#fff', border: '1px solid #333' }}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
