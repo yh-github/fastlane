@@ -670,7 +670,7 @@
   },
   "homeRelax": {
     "title": "Home Sweet Home",
-    "desc": "Relax to restore happiness. Costs {{cost}} hours.",
+    "desc": "Home sweet home!",
     "button": "Relax ({{cost}}h)"
   },
   "rentOffice": {
