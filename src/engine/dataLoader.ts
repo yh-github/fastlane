@@ -63,6 +63,8 @@ export interface ItemDef {
   store: string;
   basePrice: number;
   happinessBonus: number;
+  lifestyleValue?: number;
+  mentalBonus?: number;
   weeks?: number;
   units?: number;
   tags?: string[];
@@ -88,8 +90,9 @@ export interface HousingDef {
   name: string;
   baseRent: number;
   isRobberyImmune: boolean;
-  description: string;
   homeNodeId: string;
+  description: string;
+  lifestyleValue?: number;
 }
 
 export interface EventDef {

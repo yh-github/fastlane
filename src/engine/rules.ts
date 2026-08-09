@@ -84,8 +84,6 @@ export interface GameRules {
    */
   relaxationDoctorThreshold?: number;
 
-
-
   /**
    * If true, prevents built-in appliances (like refrigerators) from being stolen during apartment robberies.
    * Classic Floppy/CD-ROM: false. QoL Improved: false.
@@ -154,6 +152,16 @@ export interface EventRules {
     maxWealth: number;
     wealthMetric: 'durableValue' | 'netWorth';
   };
+}
+
+/**
+ * Ensures a required configuration property is defined. Throws an explicit error if missing.
+ */
+export function requireConfig<T>(value: T | undefined | null, name: string): T {
+  if (value === undefined || value === null) {
+    throw new Error(`Missing required configuration: ${name}`);
+  }
+  return value;
 }
 
 export interface StatRules {
@@ -277,5 +285,56 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   usePhysicalMentalConditions: 'Splits relaxation into detailed Physical and Mental conditions',
   turnStartAtHome: 'Forces the player to start their turn inside their apartment',
   trackMess: 'Enables tracking and cleaning of apartment mess',
+
+  maxEnrolledClasses: 'Maximum number of courses a player can be concurrently enrolled in (set to 999 or high number for unlimited)',
+
+  // TimeRules
+  hoursPerTurn: 'Total number of hours available to the player per week (turn)',
+  buildingEntryCost: 'Hours required to travel to and enter a location',
+  workSessionCost: 'Hours required to complete a single work shift',
+  studySessionCost: 'Hours required to complete a single study session',
+  jobApplicationCost: 'Hours required to submit a job application',
+  relaxCost: 'Hours required to perform a relaxation action',
+  relaxGain: 'Amount of relaxation (or physical condition) gained per relax action',
+  newspaperCost: 'Hours required to read the newspaper (look for jobs)',
+  starvationPenalty: 'Time penalty (in hours) deducted next turn if the player fails to eat',
+  doctorPenalty: 'Time penalty (in hours) deducted if a mandatory doctor visit is triggered',
+  loanCost: 'Hours required to negotiate or process a bank loan',
+  brokerCost: 'Hours required to visit the stock broker',
+
+  // EconomyRules
+  rentGarnishRate: 'Percentage of wages garnished if evicted with outstanding rent debt',
+  rentFee: 'Percentage penalty applied when rent is overdue',
+  repairCostMin: 'Minimum percentage cost (of purchase price) to repair a broken appliance',
+  repairCostMax: 'Maximum percentage cost (of purchase price) to repair a broken appliance',
+  pawnPayoutRate: 'Percentage of an item\'s value received when pawning it',
+  pawnRedeemRate: 'Percentage of an item\'s value required to redeem it from the pawn shop',
+  bankTransactionIncrementSmall: 'Small transaction increment for banking UI',
+  bankTransactionIncrementLarge: 'Large transaction increment for banking UI',
+  loanPaymentAmount: 'Fixed payment amount for bank loans',
+  loanInterestAmount: 'Interest charged per turn on active loans',
+  loanPrincipalAmount: 'Principal deducted per turn on active loans',
+
+  // StatRules
+  startingHappiness: 'Initial happiness score at the start of a campaign',
+  startingRelaxation: 'Initial relaxation score at the start of a campaign',
+  relaxationDecayRate: 'Amount of relaxation lost naturally per turn',
+  relaxationDoctorChance: 'Probability of a doctor visit if relaxation is critically low',
+  startingPhysicalCondition: 'Initial physical condition (if Advanced Stats enabled)',
+  startingMentalCondition: 'Initial mental condition (if Advanced Stats enabled)',
+  minPhysicalCondition: 'Absolute minimum physical condition',
+  maxPhysicalCondition: 'Absolute maximum physical condition',
+  minMentalCondition: 'Absolute minimum mental condition',
+  maxMentalCondition: 'Default maximum mental condition (can be expanded by degrees)',
+  globalMaxMentalCondition: 'Absolute maximum mental condition (hard cap)',
+  physicalDoctorThreshold: 'Physical condition level that triggers potential doctor visits',
+  physicalDoctorChancePerPoint: 'Probability of doctor visit per point below the physical threshold',
+  lowSpiritsThreshold: 'Mental condition level that triggers Low Spirits penalty',
+  lowSpiritsChancePerPoint: 'Probability of Low Spirits per point below the mental threshold',
+  workGrindThreshold: 'Number of work shifts taken in a turn before Grind penalties apply (e.g. 4 means 4th shift and beyond)',
+  workGrindMentalCost: 'Mental condition lost per work shift during Grind (overtime)',
+  workPhysicalCost: 'Physical condition lost per standard work shift',
+  studyMentalCost: 'Mental condition lost per study session',
+  cleanPhysicalCost: 'Physical condition lost per cleaning action'
 };
 

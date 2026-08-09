@@ -1,5 +1,6 @@
 import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import type { ItemDef } from './dataLoader';
+import { applyMentalChange } from './statEffects';
 
 export interface ShoppingResult {
   updated: PlayerState;
@@ -17,6 +18,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
   }
 
   let happinessBonus = item.happinessBonus || 0;
+  let mentalBonus = item.mentalBonus || 0;
   let newTurnFlags = { ...player.turnFlags };
 
   if (item.id === 'lottery_tickets') {
@@ -24,30 +26,35 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
       newTurnFlags.lotteryHappinessGranted = true;
     } else {
       happinessBonus = 0;
+      mentalBonus = 0;
     }
   } else if (item.subcategory === 'fast_food') {
     if (!player.turnFlags?.fastFoodHappinessGranted) {
       newTurnFlags.fastFoodHappinessGranted = true;
     } else {
       happinessBonus = 0;
+      mentalBonus = 0;
     }
   } else if (item.category === 'food' && item.subcategory !== 'fast_food') {
     if (!player.turnFlags?.freshFoodHappinessGranted) {
       newTurnFlags.freshFoodHappinessGranted = true;
     } else {
       happinessBonus = 0;
+      mentalBonus = 0;
     }
   } else if (item.category === 'junk' && (item.id === 'colas' || item.id === 'shakes')) {
     if (!player.turnFlags?.drinkHappinessGranted) {
       newTurnFlags.drinkHappinessGranted = true;
     } else {
       happinessBonus = 0;
+      mentalBonus = 0;
     }
   } else if (item.category === 'ticket' && item.id !== 'lottery_tickets') {
     if (!player.turnFlags?.ticketHappinessGranted) {
       newTurnFlags.ticketHappinessGranted = true;
     } else {
       happinessBonus = 0;
+      mentalBonus = 0;
     }
   }
 
@@ -58,6 +65,10 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
     inventory: { ...player.inventory },
     turnFlags: newTurnFlags
   };
+
+  if (rules?.usePhysicalMentalConditions && mentalBonus !== 0) {
+    updated = applyMentalChange(updated, mentalBonus);
+  }
 
   switch (item.category) {
     case 'food':
@@ -122,6 +133,9 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
   const messageParams: Record<string, any> = { itemName: item.name, itemId: item.id };
   if (happinessBonus !== 0) {
     messageParams.happinessBonus = happinessBonus;
+  }
+  if (mentalBonus !== 0) {
+    messageParams.mentalBonus = mentalBonus;
   }
   return { updated, success: true, message: { key: 'action.buy', params: messageParams } };
 }

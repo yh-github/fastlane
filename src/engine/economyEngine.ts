@@ -5,8 +5,9 @@
  * and rent debt garnishment.
  */
 
-import type { PlayerState } from './gameState';
+import { type PlayerState, type GameRules, type StatRules } from './gameState';
 import type { Random } from '../utils/rng';
+import { applyHappinessChange } from './statEffects';
 import type { CampaignBundle } from './dataLoader';
 import { resolveDecision, type ReplayContext } from './replayTypes';
 
@@ -114,9 +115,12 @@ export function applyMarketCrash(
   player: PlayerState,
   severity: 'minor' | 'moderate' | 'major',
   rng: Random,
-  replay?: ReplayContext
+  replay?: ReplayContext,
+  rules?: GameRules,
+  statRules?: StatRules
 ): PlayerState {
   let updated = { ...player };
+  updated.turnEvents = updated.turnEvents ? [...updated.turnEvents] : [];
 
   // Calculate total stock value (simplified check > $1000)
   // We don't have current stock prices here, so we assume if holdings exist, we penalize.
@@ -124,38 +128,36 @@ export function applyMarketCrash(
   const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
 
   if (severity === 'minor') {
-    updated.happiness -= hasSignificantStocks ? 2 : 1;
+    updated = applyHappinessChange(updated, hasSignificantStocks ? -2 : -1, 'market_crash', rules || ({} as any), statRules);
   } else if (severity === 'moderate') {
-    updated.happiness -= hasSignificantStocks ? 4 : 2;
-    // 50% chance to be fired, or wage cut
-    if (updated.currentJobId) {
-      const fired = resolveDecision(replay, `crash_fired`, () => rng.next() < 0.5);
-      if (fired) {
-        updated.currentJobId = null; // Fired
-        updated.currentWage = 0;
-        updated.raisesAtCurrentJob = 0;
-        updated.happiness -= 7; // Penalty for lost job
-      } else if (updated.currentWage > 0) {
-        updated.currentWage = Math.floor(updated.currentWage * 0.8); // 80% wage cut
-      }
-    } else if (updated.currentWage > 0) {
-      updated.currentWage = Math.floor(updated.currentWage * 0.8); // 80% wage cut
-    }
-  } else if (severity === 'major') {
-    updated.happiness -= hasSignificantStocks ? 8 : 3;
-    // 100% fired
-    if (updated.currentJobId) {
+    updated = applyHappinessChange(updated, hasSignificantStocks ? -4 : -2, 'market_crash', rules || ({} as any), statRules);
+    
+    // 50% chance to lose job
+    if (updated.currentJobId !== null && rng.next() < 0.5) {
+      updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
       updated.currentJobId = null;
       updated.currentWage = 0;
       updated.raisesAtCurrentJob = 0;
-      updated.happiness -= 7;
+      updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
     }
-    // Wipe bank savings ONLY
-    updated.bankSavings = 0;
+  } else if (severity === 'major') {
+    // Lose all bank savings
+    if (updated.bankSavings > 0) {
+      updated.turnEvents.push({ key: 'events.marketCrash.bankSavingsLost', params: { amount: updated.bankSavings } });
+      updated.bankSavings = 0;
+    }
+    updated = applyHappinessChange(updated, hasSignificantStocks ? -8 : -3, 'market_crash', rules || ({} as any), statRules);
+    
+    // 100% chance to lose job
+    if (updated.currentJobId !== null) {
+      updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
+      updated.currentJobId = null;
+      updated.currentWage = 0;
+      updated.raisesAtCurrentJob = 0;
+      updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
+    }
   }
 
-  // Ensure happiness doesn't drop below 10
-  updated.happiness = Math.max(10, updated.happiness);
   return updated;
 }
 
@@ -167,11 +169,15 @@ export function applyEconomicBoom(
   player: PlayerState,
   campaign: CampaignBundle,
   economicIndex: number,
-  turn: number
+  turn: number,
+  rules?: GameRules,
+  statRules?: StatRules
 ): PlayerState {
   let updated = { ...player };
+  updated.turnEvents = updated.turnEvents ? [...updated.turnEvents] : [];
 
   let stockValue = 0;
+  const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
   if (campaign && campaign.stocks) {
     for (const stock of campaign.stocks) {
       if (stock.id === 'tbills') continue;
@@ -184,7 +190,8 @@ export function applyEconomicBoom(
   }
   
   if (stockValue > 1000) {
-    updated.happiness = Math.min(100, updated.happiness + 5);
+    updated.turnEvents.push({ key: 'events.economicBoom.investorBonus' });
+    updated = applyHappinessChange(updated, 5, 'economic_boom', rules || ({} as any), statRules);
   }
 
   return updated;

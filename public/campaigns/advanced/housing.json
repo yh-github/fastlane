@@ -1,0 +1,19 @@
+[
+  {
+    "id": "street",
+    "name": "The Streets",
+    "baseRent": 0,
+    "isRobberyImmune": false,
+    "homeNodeId": "node_park",
+    "description": "Living on the streets. It's free, but very dangerous.",
+    "lifestyleValue": 0
+  },
+  {
+    "id": "low_cost",
+    "lifestyleValue": 10
+  },
+  {
+    "id": "security",
+    "lifestyleValue": 30
+  }
+]

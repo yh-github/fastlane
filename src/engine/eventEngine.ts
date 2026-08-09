@@ -12,6 +12,7 @@ import { calcEconomyPrice } from './economyEngine';
 import type { Random } from '../utils/rng';
 import type { CampaignBundle } from './dataLoader';
 import { resolveDecision, type ReplayContext } from './replayTypes';
+import { applyHappinessChange } from './statEffects';
 
 /**
  * Attempt a Wild Willy street robbery when leaving Bank or Black's Market.
@@ -37,11 +38,10 @@ export function processStreetRobbery(
   const robbed = resolveDecision(replay, `street_robbery`, () => rng.next() < chance);
 
   if (robbed) {
-    return {
-      ...player,
-      money: 0,
-      happiness: Math.max(10, player.happiness - 3),
-    };
+    let updated = { ...player, money: 0 };
+    // Fallback to empty object if rules aren't explicitly passed, but gameRules should be on campaign
+    const rules = (campaign.config.gameRules || {}) as any;
+    return applyHappinessChange(updated, -3, 'street_robbery', rules, campaign.config.statRules);
   }
 
   return player;
@@ -149,7 +149,7 @@ export function processApartmentRobbery(
       turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment' }] 
     };
     // -4 Happiness penalty
-    updated.happiness = Math.max(10, updated.happiness - 4);
+    updated = applyHappinessChange(updated, -4, 'apartment_robbery', (rules || {}) as any);
     
     return { updated, robbed: true };
   }
