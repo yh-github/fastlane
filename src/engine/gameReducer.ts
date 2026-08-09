@@ -82,19 +82,29 @@ export function gameReducer(
         const result = workShift(nextPlayer, jobDef, context.campaign.config.timeRules.workSessionCost);
         nextPlayer = result.updated;
         if (result.success) {
-          const workedEvent = { key: 'action.job.worked', params: { title: jobDef.title, wagesEarned: result.wagesEarned } };
+          const workedEvent: any = { key: 'action.job.worked', params: { title: jobDef.title, wagesEarned: result.wagesEarned, stats: '' } };
           if (context.rules.usePhysicalMentalConditions) {
-            nextPlayer.physicalCondition = Math.max(0, (nextPlayer.physicalCondition || 15) - 1);
+            const statRules = context.campaign.config.statRules;
+            const minPhysical = statRules?.minPhysicalCondition ?? 5;
+            const minMental = statRules?.minMentalCondition ?? 5;
+            const physicalCost = statRules?.workPhysicalCost ?? 1;
+            const grindThreshold = statRules?.workGrindThreshold ?? 4;
+            const grindMentalCost = statRules?.workGrindMentalCost ?? 1;
+
+            nextPlayer.physicalCondition = Math.max(minPhysical, (nextPlayer.physicalCondition || (statRules?.startingPhysicalCondition ?? 15)) - physicalCost);
             nextPlayer.workActionsThisTurn = (nextPlayer.workActionsThisTurn || 0) + 1;
-            if (nextPlayer.workActionsThisTurn >= 3) {
-              const oldMental = nextPlayer.mentalCondition || 15;
-              const newMental = Math.max(0, oldMental - 1);
+            if (nextPlayer.workActionsThisTurn >= grindThreshold) {
+              const oldMental = nextPlayer.mentalCondition || (statRules?.startingMentalCondition ?? 15);
+              const newMental = Math.max(minMental, oldMental - grindMentalCost);
               nextPlayer.mentalCondition = newMental;
               nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
               if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
-                nextPlayer.mentalConditionMax = Math.min(99, (nextPlayer.mentalConditionMax || 25) + 1);
+                nextPlayer.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25)) + 1);
                 nextPlayer.turnFlags.mentalDropsThisTurn = 0; // reset after triggering
               }
+              workedEvent.params.stats = ` (-${physicalCost} Physical, -${grindMentalCost} Mental)`;
+            } else {
+              workedEvent.params.stats = ` (-${physicalCost} Physical)`;
             }
           }
           if (result.messages && result.messages.length > 0) {
@@ -157,16 +167,22 @@ export function gameReducer(
         const result = study(nextPlayer, degDef, context.campaign.config.timeRules.studySessionCost, context.rules);
         nextPlayer = result.updated;
         if (result.success && context.rules.usePhysicalMentalConditions) {
-          const oldMental = nextPlayer.mentalCondition || 15;
-          const newMental = Math.max(0, oldMental - 1);
+          const statRules = context.campaign.config.statRules;
+          const minMental = statRules?.minMentalCondition ?? 5;
+          const studyCost = statRules?.studyMentalCost ?? 1;
+
+          const oldMental = nextPlayer.mentalCondition || (statRules?.startingMentalCondition ?? 15);
+          const newMental = Math.max(minMental, oldMental - studyCost);
           nextPlayer.mentalCondition = newMental;
           nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
           if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
-            nextPlayer.mentalConditionMax = Math.min(99, (nextPlayer.mentalConditionMax || 25) + 1);
+            nextPlayer.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25)) + 1);
             nextPlayer.turnFlags.mentalDropsThisTurn = 0;
           }
+          actionLog = { key: 'action.education.studied', params: { name: degDef.name, current: nextPlayer.enrolledClasses![degDef.id], required: result.messages?.[0]?.params?.required || 0, stats: ` (-${studyCost} Mental)` } };
+        } else {
+          actionLog = result.message;
         }
-        actionLog = result.message;
       }
       break;
     }
@@ -183,14 +199,22 @@ export function gameReducer(
       const actualHours = Math.min(relaxCost, nextPlayer.hoursRemaining);
       nextPlayer = spendHours(nextPlayer, actualHours);
       
+      let statsStr = '';
       if (context.rules.usePhysicalMentalConditions) {
-        nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax || 30, (nextPlayer.physicalCondition || 15) + 1);
+        const statRules = context.campaign.config.statRules;
+        const maxPhysical = statRules?.maxPhysicalCondition ?? 30;
+        const maxMental = nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25);
+        const startingPhysical = statRules?.startingPhysicalCondition ?? 15;
+        const startingMental = statRules?.startingMentalCondition ?? 15;
+
+        nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition || startingPhysical) + 1);
         const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
         const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
-        const mentalGain = firstBonus + 3 - messPenalty;
-        nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax || 25, (nextPlayer.mentalCondition || 15) + mentalGain);
+        const mentalGain = Math.max(0, firstBonus + 3 - messPenalty);
+        nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition || startingMental) + mentalGain);
         nextPlayer.mess = Math.min(20, (nextPlayer.mess || 0) + 1);
         nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
+        statsStr = ` (+1 Physical, +${mentalGain} Mental)`;
       } else {
         nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + relaxGain);
         if (!nextPlayer.turnFlags.relaxedThisTurn) {
@@ -199,7 +223,7 @@ export function gameReducer(
       }
       
       nextPlayer.turnFlags.relaxedThisTurn = true;
-      actionLog = { key: 'action.relax' };
+      actionLog = { key: 'action.relax', params: { stats: statsStr } };
       break;
     }
     case 'clean': {
@@ -210,9 +234,16 @@ export function gameReducer(
         }
       }
       nextPlayer = spendHours(nextPlayer, 3);
+      let cleanStatsStr = '';
       if (context.rules.usePhysicalMentalConditions) {
-        nextPlayer.physicalCondition = Math.max(0, (nextPlayer.physicalCondition || 15) - 1);
+        const statRules = context.campaign.config.statRules;
+        const minPhysical = statRules?.minPhysicalCondition ?? 5;
+        const startingPhysical = statRules?.startingPhysicalCondition ?? 15;
+        const cleanCost = statRules?.cleanPhysicalCost ?? 1;
+
+        nextPlayer.physicalCondition = Math.max(minPhysical, (nextPlayer.physicalCondition || startingPhysical) - cleanCost);
         nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
+        cleanStatsStr = ` (-${cleanCost} Physical)`;
       }
       if (context.rules.trackMess || context.rules.usePhysicalMentalConditions) {
         const d4_1 = context.rng.nextInt(1, 4);
@@ -220,7 +251,7 @@ export function gameReducer(
         const reduction = d4_1 + d4_2;
         nextPlayer.mess = Math.max(0, (nextPlayer.mess || 0) - reduction);
       }
-      actionLog = { key: 'action.clean' };
+      actionLog = { key: 'action.clean', params: { stats: cleanStatsStr } };
       break;
     }
     case 'move': {

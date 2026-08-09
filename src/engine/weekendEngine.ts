@@ -27,7 +27,9 @@ export function processWeekend(
   turnNumber: number, 
   previousPlayerWeekends: string[],
   weekendData: WeekendDef,
-  rng: Random
+  rng: Random,
+  rules?: import('./gameState').GameRules,
+  campaign?: import('./dataLoader').CampaignBundle
 ): PlayerState {
   const newPlayer = { ...player, inventory: { ...player.inventory, tickets: { ...player.inventory.tickets } } };
   
@@ -120,6 +122,17 @@ export function processWeekend(
   
   if (happinessBonus !== undefined) {
     newPlayer.happiness = Math.min(100, newPlayer.happiness + happinessBonus);
+  }
+
+  if (rules?.usePhysicalMentalConditions) {
+    const statRules = campaign?.config.statRules;
+    const maxPhysical = statRules?.maxPhysicalCondition ?? 30;
+    const maxMental = newPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25);
+    const startingPhysical = statRules?.startingPhysicalCondition ?? 15;
+    const startingMental = statRules?.startingMentalCondition ?? 15;
+
+    newPlayer.physicalCondition = Math.min(maxPhysical, (newPlayer.physicalCondition || startingPhysical) + 5);
+    newPlayer.mentalCondition = Math.min(maxMental, (newPlayer.mentalCondition || startingMental) + 5);
   }
 
   newPlayer.weekendResult = {

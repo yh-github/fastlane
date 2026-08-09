@@ -112,6 +112,11 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
       <button data-action-target={`work-${job.id}`} onClick={() => onAction({ type: 'work', jobId: job.id })}>
         {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
+        {campaign.config.gameRules?.usePhysicalMentalConditions && (
+          <span style={{ fontSize: '11px', marginLeft: '5px' }}>
+            (-{campaign.config.statRules?.workPhysicalCost ?? 1} Physical)
+          </span>
+        )}
       </button>
     </div>
   );
@@ -184,6 +189,11 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <button data-action-target="relax" onClick={() => onAction({ type: 'relax' })}>
           {t('homeRelax.button', { cost: relaxCost })}
+          {rules?.usePhysicalMentalConditions && (
+            <span style={{ fontSize: '11px', marginLeft: '5px', color: '#2ecc71' }}>
+              (+1 Physical, +Mental)
+            </span>
+          )}
         </button>
         {rules?.trackMess && (
           <button 
@@ -201,7 +211,9 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
               opacity: isMessClean ? 0.6 : 1
             }}
           >
-            🧹 Clean Apartment (3 hrs) {isMessClean ? '(Already Clean)' : ''}
+            🧹 Clean Apartment (3 hrs) 
+            {rules?.usePhysicalMentalConditions && <span style={{ fontSize: '11px', marginLeft: '5px' }}>(-{campaign?.config.statRules?.cleanPhysicalCost ?? 1} Physical)</span>}
+            {isMessClean ? ' (Already Clean)' : ''}
           </button>
         )}
       </div>
@@ -781,6 +793,11 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                         data-action-target={`study-${deg.id}`}
                       >
                         {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
+                        {rules?.usePhysicalMentalConditions && (
+                          <span style={{ fontSize: '11px', marginLeft: '5px' }}>
+                            (-{campaign.config.statRules?.studyMentalCost ?? 1} Mental)
+                          </span>
+                        )}
                       </button>
                     </>
                   ) : (

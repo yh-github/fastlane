@@ -37,7 +37,8 @@
   "action": {
     "buy": "נרכש {{itemName}}",
     "buyBack": "קנית בחזרה {{itemName}} תמורת {{cost}}$",
-    "relax": "נחת בבית",
+    "relax": "נחת בבית{{stats}}",
+    "clean": "ניקית את הדירה{{stats}}",
     "bank": {
       "deposit": "הופקדו {{amount}}$ לחסכונות",
       "withdraw": "נמשכו {{amount}}$ מהחסכונות"
@@ -53,10 +54,10 @@
     "education": {
       "enrolled": "נרשמת ל{{name}}",
       "graduated": "סיימת בהצטיינות {{name}}!",
-      "studied": "למדת עבור {{name}} ({{current}}/{{required}})"
+      "studied": "למדת עבור {{name}} ({{current}}/{{required}}){{stats}}"
     },
     "job": {
-      "worked": "עבדת ב{{title}} והרווחת {{wagesEarned}}$",
+      "worked": "עבדת ב{{title}} והרווחת {{wagesEarned}}${{stats}}",
       "gotJob": "קיבלת את העבודה בתור {{title}}!",
       "rejected": "בקשתך לעבודה נדחתה: {{reasons}}",
       "noOpenings": "אין משרות פנויות לתפקיד זה.",
