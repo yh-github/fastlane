@@ -11,6 +11,7 @@
     "allowOverAchievingGoals": true,
     "bypassDoctorIfBroke": true,
     "delayBookSetCredit": false,
-    "reducedDegreeStatBonus": true
+    "reducedDegreeStatBonus": true,
+    "turnStartAtHome": false
   }
 }

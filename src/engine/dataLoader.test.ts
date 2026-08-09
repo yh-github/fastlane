@@ -13,12 +13,14 @@ describe('dataLoader', () => {
     const floppy = await loadCampaign('1990_classic_floppy');
     expect(floppy.config.gameRules?.helpfulUI).toBe(false);
     expect(floppy.config.gameRules?.enableAnimations).toBe(false);
+    expect(floppy.config.gameRules?.turnStartAtHome).toBe(false);
   });
 
   it('loads cdrom campaign inheriting floppy settings', async () => {
     const cdrom = await loadCampaign('1990_classic_cdrom');
     expect(cdrom.config.gameRules?.helpfulUI).toBe(false);
     expect(cdrom.config.gameRules?.enableAnimations).toBe(false);
+    expect(cdrom.config.gameRules?.turnStartAtHome).toBe(false);
   });
 
   it('loads qol_improved campaign with expected rule overrides', async () => {
@@ -29,6 +31,7 @@ describe('dataLoader', () => {
     expect(qol.config.gameRules?.showItemImages).toBe(true);
     expect(qol.config.gameRules?.bypassDoctorIfBroke).toBe(true);
     expect(qol.config.gameRules?.reducedDegreeStatBonus).toBe(true);
+    expect(qol.config.gameRules?.turnStartAtHome).toBe(false);
   });
 
   it('loads advanced campaign inheriting qol_improved base settings with advanced rule overrides', async () => {
@@ -41,9 +44,10 @@ describe('dataLoader', () => {
     expect(advanced.config.gameRules?.clothingDecaysAll).toBe(false);
     expect(advanced.config.gameRules?.bypassDoctorIfBroke).toBe(false);
     expect(advanced.config.gameRules?.enableRelaxationDoctor).toBe(false);
-    expect(advanced.config.gameRules?.physicalDoctorThreshold).toBe(5);
-    expect(advanced.config.gameRules?.mentalDoctorThreshold).toBe(5);
+    expect(advanced.config.statRules?.physicalDoctorThreshold).toBe(10);
+    expect(advanced.config.statRules?.lowSpiritsThreshold).toBe(10);
     expect(advanced.config.gameRules?.reducedDegreeStatBonus).toBe(true);
+    expect(advanced.config.gameRules?.turnStartAtHome).toBe(true);
     // Verify base items from floppy/cdrom/qol are inherited
     expect(advanced.items.length).toBeGreaterThan(0);
     expect(advanced.jobs.length).toBeGreaterThan(0);
