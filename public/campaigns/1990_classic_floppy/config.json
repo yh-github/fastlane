@@ -65,6 +65,7 @@
     "allowEmployedRentPayment": false,
     "delayBookSetCredit": true,
     "strictEviction": false,
-    "maxEnrolledClasses": 4
+    "maxEnrolledClasses": 4,
+    "turnStartAtHome": false
   }
 }

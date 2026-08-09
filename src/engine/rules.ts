@@ -84,15 +84,7 @@ export interface GameRules {
    */
   relaxationDoctorThreshold?: number;
 
-  /**
-   * ADVANCED: Physical condition level threshold below which doctor visits trigger.
-   */
-  physicalDoctorThreshold?: number;
 
-  /**
-   * ADVANCED: Mental condition level threshold below which low-spirit events trigger.
-   */
-  mentalDoctorThreshold?: number;
 
   /**
    * If true, prevents built-in appliances (like refrigerators) from being stolen during apartment robberies.
@@ -169,6 +161,24 @@ export interface StatRules {
   startingRelaxation: number;
   relaxationDecayRate: number;
   relaxationDoctorChance: number;
+  
+  // Advanced mechanics
+  startingPhysicalCondition?: number;
+  startingMentalCondition?: number;
+  minPhysicalCondition?: number;
+  maxPhysicalCondition?: number;
+  minMentalCondition?: number;
+  maxMentalCondition?: number;
+  globalMaxMentalCondition?: number;
+  physicalDoctorThreshold?: number;
+  physicalDoctorChancePerPoint?: number;
+  lowSpiritsThreshold?: number;
+  lowSpiritsChancePerPoint?: number;
+  workGrindThreshold?: number;
+  workGrindMentalCost?: number;
+  workPhysicalCost?: number;
+  studyMentalCost?: number;
+  cleanPhysicalCost?: number;
 }
 
 export interface WinCondition {
@@ -230,6 +240,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   reducedDegreeStatBonus: false,
   showItemImages: false,
   maxEnrolledClasses: 4,
+  turnStartAtHome: false,
 };
 
 /**
@@ -264,8 +275,6 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   
   useHomeTimeRobbery: 'Uses a moving average of time spent at home for robbery chances instead of relaxation',
   usePhysicalMentalConditions: 'Splits relaxation into detailed Physical and Mental conditions',
-  physicalDoctorThreshold: 'Physical condition threshold that triggers doctor events in Advanced mode',
-  mentalDoctorThreshold: 'Mental condition threshold that triggers low-spirit events in Advanced mode',
   turnStartAtHome: 'Forces the player to start their turn inside their apartment',
   trackMess: 'Enables tracking and cleaning of apartment mess',
 };
