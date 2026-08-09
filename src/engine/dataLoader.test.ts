@@ -28,6 +28,7 @@ describe('dataLoader', () => {
     expect(qol.config.gameRules?.strictEviction).toBe(false);
     expect(qol.config.gameRules?.showItemImages).toBe(true);
     expect(qol.config.gameRules?.bypassDoctorIfBroke).toBe(true);
+    expect(qol.config.gameRules?.reducedDegreeStatBonus).toBe(true);
   });
 
   it('loads advanced campaign inheriting qol_improved base settings with advanced rule overrides', async () => {
@@ -42,6 +43,7 @@ describe('dataLoader', () => {
     expect(advanced.config.gameRules?.enableRelaxationDoctor).toBe(false);
     expect(advanced.config.gameRules?.physicalDoctorThreshold).toBe(5);
     expect(advanced.config.gameRules?.mentalDoctorThreshold).toBe(5);
+    expect(advanced.config.gameRules?.reducedDegreeStatBonus).toBe(true);
     // Verify base items from floppy/cdrom/qol are inherited
     expect(advanced.items.length).toBeGreaterThan(0);
     expect(advanced.jobs.length).toBeGreaterThan(0);
