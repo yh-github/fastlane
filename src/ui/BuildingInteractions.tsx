@@ -106,15 +106,24 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
  */
 export function WorkStation({ player, onAction, job, campaign }: InteractionProps & { job: JobDef, campaign: CampaignBundle }) {
   const { t } = useTranslation();
+
+  const rules = campaign.config.gameRules;
+  const statRules = campaign.config.statRules;
+  const workPhysicalCost = statRules?.workPhysicalCost ?? 1;
+  const grindThreshold = statRules?.workGrindThreshold ?? 4;
+  const grindMentalCost = statRules?.workGrindMentalCost ?? 1;
+  
+  const willGrind = (player.workActionsThisTurn || 0) >= (grindThreshold - 1);
+
   return (
     <div className="interaction-panel">
       <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
       <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
       <button data-action-target={`work-${job.id}`} onClick={() => onAction({ type: 'work', jobId: job.id })}>
         {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
-        {campaign.config.gameRules?.usePhysicalMentalConditions && (
+        {rules?.usePhysicalMentalConditions && (
           <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-            (-{campaign.config.statRules?.workPhysicalCost ?? 1} Physical)
+            (-{workPhysicalCost} Physical{willGrind ? `, -${grindMentalCost} Mental` : ''})
           </span>
         )}
       </button>

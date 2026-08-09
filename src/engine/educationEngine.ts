@@ -1,6 +1,7 @@
 import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import { spendHours } from './timeManager';
 import type { EducationDef } from './dataLoader';
+import { applyHappinessChange } from './statEffects';
 
 export interface EducationResult {
   updated: PlayerState;
@@ -115,9 +116,9 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
     const maxDepReward = qolReduced ? Math.min(2, degree.rewards.maxDepBoost) : degree.rewards.maxDepBoost;
     const maxExpReward = qolReduced ? Math.min(2, degree.rewards.maxExpBoost) : degree.rewards.maxExpBoost;
 
-    updated.happiness = Math.min(100, updated.happiness + degree.rewards.happiness);
+    updated = applyHappinessChange(updated, degree.rewards.happiness, 'graduation', rules || ({} as any));
     updated.degreeDepBoost += maxDepReward;
-    updated.dependability = updated.dependability + depReward;
+    updated.dependability = Math.min(100, updated.dependability + depReward);
     
     updated.degreeExpBoost += maxExpReward;
 

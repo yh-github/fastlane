@@ -5,7 +5,7 @@
  * luck score, and the current week/economy indicator.
  */
 
-import { type PlayerState, type GameState } from '../engine/gameState';
+import { type PlayerState, type GameState, calcMaxLifestyle } from '../engine/gameState';
 import { calcEducationProgress, calcCareerProgress, calcWealthProgress, calcLuckScore, calcMaxDependability, calcMaxExperience } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import { useTranslation } from 'react-i18next';
@@ -43,24 +43,46 @@ export function Dashboard({
   let education = calcEducationProgress(player.degrees.length);
   let career = calcCareerProgress(player.dependability, player.currentJobId !== null);
   let wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn));
+  let lifestyle = 0;
+  if (campaign) {
+    const maxLife = calcMaxLifestyle(campaign);
+    lifestyle = maxLife > 0 ? Math.floor(((player.lifestyle || 0) / maxLife) * 100) : 0;
+  }
 
-  const cappedWealth = Math.min(wealth, player.goalAllotment.wealth);
-  const cappedHappiness = Math.min(player.happiness, player.goalAllotment.happiness);
-  const cappedEducation = Math.min(education, player.goalAllotment.education);
-  const cappedCareer = Math.min(career, player.goalAllotment.career);
+  const statValues: Record<string, number> = {
+    wealth,
+    happiness: player.happiness,
+    education,
+    career,
+    lifestyle,
+  };
 
-  const totalPoints = cappedWealth + cappedHappiness + cappedEducation + cappedCareer;
-  const totalGoals = player.goalAllotment.wealth + player.goalAllotment.happiness + player.goalAllotment.education + player.goalAllotment.career;
+  let totalPoints = 0;
+  let totalGoals = 0;
+
+  const winConditions = campaign?.config.winConditions || [
+    { stat: 'wealth', label: 'Wealth' },
+    { stat: 'happiness', label: 'Happiness' },
+    { stat: 'education', label: 'Education' },
+    { stat: 'career', label: 'Career' }
+  ];
+
+  for (const cond of winConditions) {
+    const target = player.goalAllotment[cond.stat] || 0;
+    let current = statValues[cond.stat] || 0;
+    
+    if (!gameState.rules.allowOverAchievingGoals) {
+      current = Math.min(current, target);
+    }
+    
+    totalGoals += target;
+    totalPoints += current;
+  }
+
   const victoryPercent = totalGoals > 0 ? Math.floor((totalPoints / totalGoals) * 100) : 0;
 
-  if (!gameState.rules.allowOverAchievingGoals) {
-    education = cappedEducation;
-    career = cappedCareer;
-    wealth = cappedWealth;
-  }
-  
   const displayHappiness = !gameState.rules.allowOverAchievingGoals 
-    ? cappedHappiness 
+    ? Math.min(player.happiness, player.goalAllotment.happiness || 0)
     : player.happiness;
 
   const luckScore = calcLuckScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
@@ -156,11 +178,11 @@ export function Dashboard({
           { stat: 'wealth', label: 'Wealth' }
         ]).map(cond => {
           let current = 0;
-          if (cond.stat === 'wealth') current = wealth;
-          else if (cond.stat === 'education') current = education;
-          else if (cond.stat === 'career') current = career;
+          if (cond.stat === 'wealth') current = !gameState.rules.allowOverAchievingGoals ? Math.min(wealth, player.goalAllotment.wealth) : wealth;
+          else if (cond.stat === 'education') current = !gameState.rules.allowOverAchievingGoals ? Math.min(education, player.goalAllotment.education) : education;
+          else if (cond.stat === 'career') current = !gameState.rules.allowOverAchievingGoals ? Math.min(career, player.goalAllotment.career) : career;
           else if (cond.stat === 'happiness') current = displayHappiness as number;
-          else if (cond.stat === 'lifestyle') current = player.lifestyle || 0;
+          else if (cond.stat === 'lifestyle') current = !gameState.rules.allowOverAchievingGoals ? Math.min(lifestyle, player.goalAllotment.lifestyle || 0) : lifestyle;
           else current = (player as any)[cond.stat] || 0;
 
           const target = player.goalAllotment[cond.stat] || 0;

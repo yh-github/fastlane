@@ -10,6 +10,8 @@ import { recalculatePlayerEffects } from './gameState';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
 import { resolveDecision, type EngineDecision, type ReplayContext } from './replayTypes';
+import { requireConfig } from './rules';
+import { applyHappinessChange } from './statEffects';
 
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
@@ -70,7 +72,8 @@ export function gameReducer(
     case 'apply': {
       const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
       if (jobDef) {
-        const result = applyForJob(nextPlayer, jobDef, context.campaign.config.timeRules.jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules, context.turn, replayContext);
+        const jobApplicationCost = requireConfig(context.campaign.config.timeRules?.jobApplicationCost, 'timeRules.jobApplicationCost');
+        const result = applyForJob(nextPlayer, jobDef, jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules, context.turn, replayContext);
         nextPlayer = result.updated;
         actionLog = result.message;
       }
@@ -79,7 +82,8 @@ export function gameReducer(
     case 'work': {
       const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
       if (jobDef) {
-        const result = workShift(nextPlayer, jobDef, context.campaign.config.timeRules.workSessionCost);
+        const workSessionCost = requireConfig(context.campaign.config.timeRules?.workSessionCost, 'timeRules.workSessionCost');
+        const result = workShift(nextPlayer, jobDef, workSessionCost, context.rules, context.campaign.config.statRules);
         nextPlayer = result.updated;
         if (result.success) {
           const workedEvent: any = { key: 'action.job.worked', params: { title: jobDef.title, wagesEarned: result.wagesEarned, stats: '' } };
@@ -164,7 +168,8 @@ export function gameReducer(
     case 'study': {
       const degDef = context.campaign.education.find(d => d.id === action.degreeId);
       if (degDef) {
-        const result = study(nextPlayer, degDef, context.campaign.config.timeRules.studySessionCost, context.rules);
+        const studySessionCost = requireConfig(context.campaign.config.timeRules?.studySessionCost, 'timeRules.studySessionCost');
+        const result = study(nextPlayer, degDef, studySessionCost, context.rules);
         nextPlayer = result.updated;
         if (result.success && context.rules.usePhysicalMentalConditions) {
           const statRules = context.campaign.config.statRules;
@@ -187,7 +192,7 @@ export function gameReducer(
       break;
     }
     case 'relax': {
-      const relaxCost = context.campaign.config.timeRules.relaxCost || 6;
+      const relaxCost = requireConfig(context.campaign.config.timeRules?.relaxCost, 'timeRules.relaxCost');
       const relaxGain = context.campaign.config.timeRules.relaxGain ?? 3;
       if (nextPlayer.hoursRemaining < relaxCost) {
         if (!context.rules.allowPartialHours || nextPlayer.hoursRemaining <= 0) {
@@ -279,7 +284,8 @@ export function gameReducer(
         
         const destNode = context.campaign.map?.nodes?.find(n => n.id === nodeId);
         if (destNode && destNode.buildingId) {
-            requiredHours += (context.campaign.config.timeRules.buildingEntryCost || 2);
+            const buildingEntryCost = requireConfig(context.campaign.config.timeRules?.buildingEntryCost, 'timeRules.buildingEntryCost');
+            requiredHours += buildingEntryCost;
         }
 
         if (nextPlayer.hoursRemaining >= requiredHours || context.rules.allowPartialHours) {
@@ -317,7 +323,7 @@ export function gameReducer(
       break;
     }
     case 'open_broker': {
-      const timeCost = context.campaign.config.timeRules.brokerCost || 2;
+      const timeCost = requireConfig(context.campaign.config.timeRules?.brokerCost, 'timeRules.brokerCost');
       if (nextPlayer.hoursRemaining < timeCost && !context.rules.allowPartialHours) {
         actionLog = { key: 'action.error.notEnoughTimeBroker' };
         break;
@@ -359,7 +365,7 @@ export function gameReducer(
       break;
     }
     case 'take_loan': {
-      const timeCost = context.campaign.config.timeRules.loanCost || 2;
+      const timeCost = requireConfig(context.campaign.config.timeRules?.loanCost, 'timeRules.loanCost');
       if (nextPlayer.hoursRemaining < timeCost && !context.rules.allowPartialHours) {
         actionLog = { key: 'action.error.notEnoughTimeLoan' };
         break;
@@ -377,7 +383,7 @@ export function gameReducer(
 
       if (isDefaulted || liquidity <= risk || (context.rules.requireJobForLoan && nextPlayer.currentJobId === null)) {
         actionLog = { key: 'action.loan.refused' };
-        nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
+        nextPlayer = applyHappinessChange(nextPlayer, -1, 'loan_refused', context.rules, context.campaign.config.statRules);
       } else {
         const loanSize = Math.floor(maxLoan);
         if (loanSize > 0) {
@@ -386,11 +392,11 @@ export function gameReducer(
           }
           nextPlayer.money += loanSize;
           nextPlayer.loanDebt = (nextPlayer.loanDebt || 0) + loanSize;
-          nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 5);
+          nextPlayer = applyHappinessChange(nextPlayer, 5, 'loan_approved', context.rules, context.campaign.config.statRules);
           actionLog = { key: 'action.loan.approved', params: { loanSize } };
         } else {
           actionLog = { key: 'action.loan.refused' };
-          nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
+          nextPlayer = applyHappinessChange(nextPlayer, -1, 'loan_refused', context.rules, context.campaign.config.statRules);
         }
       }
       break;
@@ -499,9 +505,9 @@ export function gameReducer(
       };
       nextPlayer.inventory.pawnedItems.push(pawnedItem);
       nextPlayer.money += action.value;
-      nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
+      nextPlayer = applyHappinessChange(nextPlayer, -1, 'pawn_item', context.rules, context.campaign.config.statRules);
       if (action.item.id === 'refrigerator' && nextPlayer.inventory.freshFoodUnits > 0) {
-        nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
+        nextPlayer = applyHappinessChange(nextPlayer, -1, 'pawn_item', context.rules, context.campaign.config.statRules);
       }
       const itemName = action.item.id.replaceAll('_', ' ');
       actionLog = { key: 'action.pawn.pawned', params: { itemName, value: action.value } };
@@ -572,11 +578,11 @@ export function gameReducer(
       if (approved) {
         nextPlayer.rentExtensionsReceived += 1;
         nextPlayer.rentExtensionActive = true;
-        nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 1);
+        nextPlayer = applyHappinessChange(nextPlayer, 1, 'rent_extension_approved', context.rules, context.campaign.config.statRules);
         actionLog = { key: 'action.rent.extensionApproved' };
       } else {
         if (!nextPlayer.turnFlags.rentExtensionRefusedThisTurn) {
-          nextPlayer.happiness = Math.max(10, nextPlayer.happiness - 1);
+          nextPlayer = applyHappinessChange(nextPlayer, -1, 'rent_extension_denied', context.rules, context.campaign.config.statRules);
           nextPlayer.turnFlags.rentExtensionRefusedThisTurn = true;
         }
         actionLog = { key: 'action.rent.extensionDenied' };

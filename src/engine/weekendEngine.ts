@@ -1,5 +1,6 @@
 import type { WeekendDef } from './dataLoader';
 import type { Random } from '../utils/rng';
+import { applyHappinessChange } from './statEffects';
 import type { PlayerState, GameEvent } from './gameState';
 
 // Helper to determine cost based on price range
@@ -121,7 +122,7 @@ export function processWeekend(
   newPlayer.money -= cost;
   
   if (happinessBonus !== undefined) {
-    newPlayer.happiness = Math.min(100, newPlayer.happiness + happinessBonus);
+    newPlayer = applyHappinessChange(newPlayer, happinessBonus, 'weekend_bonus', rules || ({} as any), campaign?.config.statRules);
   }
 
   if (rules?.usePhysicalMentalConditions) {

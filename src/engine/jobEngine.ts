@@ -5,6 +5,8 @@ import { calcLuckScore } from './statMath';
 import type { JobDef } from './dataLoader';
 import type { Random } from '../utils/rng';
 import { resolveDecision, type ReplayContext } from './replayTypes';
+import { applyHappinessChange } from './statEffects';
+import { type StatRules } from './rules';
 
 export interface JobApplicationResult {
   updated: PlayerState;
@@ -67,7 +69,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
       if (newWage > player.currentWage) {
         updated.currentWage = newWage;
         updated.raisesAtCurrentJob += 1;
-        updated.happiness = Math.min(100, updated.happiness + 3);
+        updated = applyHappinessChange(updated, 3, 'raise_approved', rules || ({} as any));
         return { updated, success: true, message: { key: 'action.job.raiseSuccess' } };
       } else {
         return { updated, success: false, message: { key: 'action.job.raiseWaste' } };
@@ -137,15 +139,15 @@ export interface WorkResult {
   messages?: GameEvent[];
 }
 
-export function workShift(player: PlayerState, job: JobDef, shiftCost: number): WorkResult {
+export function workShift(player: PlayerState, job: JobDef, shiftCost: number, rules?: GameRules, statRules?: StatRules): WorkResult {
   if (player.hoursRemaining <= 0 || player.currentJobId !== job.id) {
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.cannotWork' }] };
   }
   
   // Dependability firing & warning checks
   if (player.dependability <= job.requirements.dependability - 5) {
-    const updated = { ...player, currentJobId: null, currentWage: 0, raisesAtCurrentJob: 0 };
-    updated.happiness = Math.max(10, updated.happiness - 7);
+    let updated = { ...player, currentJobId: null, currentWage: 0, raisesAtCurrentJob: 0 };
+    updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
     return { updated, wagesEarned: 0, success: false, messages: [{ key: 'action.job.fired' }] };
   }
 

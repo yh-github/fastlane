@@ -467,8 +467,76 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
     }
   }
 
-  return {
+  let updatedPlayer = {
     ...player,
     activeEffects
   };
+
+  if (updatedPlayer.lifestyle !== undefined) {
+    updatedPlayer.lifestyle = recalculateLifestyle(updatedPlayer, campaign);
+  }
+
+  return updatedPlayer;
+}
+
+export function recalculateLifestyle(player: PlayerState, campaign: CampaignBundle): number {
+  let lifestyle = 0;
+
+  const housingDef = campaign.housing.find(h => h.id === player.currentHousingId);
+  if (housingDef && housingDef.lifestyleValue !== undefined) {
+    lifestyle += housingDef.lifestyleValue;
+  }
+
+  const itemCounts: Record<string, number> = {};
+
+  for (const app of player.inventory.appliances) {
+    itemCounts[app.id] = (itemCounts[app.id] || 0) + 1;
+  }
+  for (const book of player.inventory.books) {
+    itemCounts[book] = (itemCounts[book] || 0) + 1;
+  }
+  if (player.inventory.casualClothesWeeks > 0) itemCounts['casual_clothes'] = 1;
+  if (player.inventory.dressClothesWeeks > 0) itemCounts['dress_clothes'] = 1;
+  if (player.inventory.businessClothesWeeks > 0) itemCounts['business_suit'] = 1;
+
+  for (const [itemId, count] of Object.entries(itemCounts)) {
+    const itemDef = campaign.items.find(i => i.id === itemId);
+    if (itemDef && itemDef.lifestyleValue) {
+      const val = itemDef.lifestyleValue;
+      if (count === 1) {
+        lifestyle += val;
+      } else if (count >= 2) {
+        lifestyle += val + Math.floor(val * 0.5);
+      }
+    }
+  }
+
+  return Math.min(100, lifestyle);
+}
+
+export function calcMaxLifestyle(campaign: CampaignBundle): number {
+  let maxLifestyle = 0;
+
+  // Max housing
+  let maxHousing = 0;
+  for (const h of campaign.housing) {
+    if (h.lifestyleValue !== undefined && h.lifestyleValue > maxHousing) {
+      maxHousing = h.lifestyleValue;
+    }
+  }
+  maxLifestyle += maxHousing;
+
+  // Max items (assuming optimal diminishing returns: 2 appliances, 2 books, 1 clothing)
+  for (const item of campaign.items) {
+    if (item.lifestyleValue) {
+      if (item.category === 'appliance' || item.category === 'book') {
+        maxLifestyle += item.lifestyleValue + Math.floor(item.lifestyleValue * 0.5); // 2 copies
+      } else if (item.category === 'clothing') {
+        // Technically player can hold one of each clothing type
+        maxLifestyle += item.lifestyleValue;
+      }
+    }
+  }
+
+  return maxLifestyle;
 }

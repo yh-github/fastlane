@@ -341,6 +341,9 @@ export function useGameEngine(
             let diffStr = [];
             const moneyDiff = player.money - oldPlayer.money;
             const hapDiff = player.happiness - oldPlayer.happiness;
+            const physDiff = (player.physicalCondition || 0) - (oldPlayer.physicalCondition || 0);
+            const mentalDiff = (player.mentalCondition || 0) - (oldPlayer.mentalCondition || 0);
+            const lifeDiff = (player.lifestyle || 0) - (oldPlayer.lifestyle || 0);
             
             if (moneyDiff !== 0) {
               diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
@@ -360,6 +363,27 @@ export function useGameEngine(
                 } else {
                   triggerAnim('emoji', '😟', { sourceId: 'stat-happiness' });
                 }
+              }
+            }
+            if (physDiff !== 0) {
+              diffStr.push(`${physDiff > 0 ? '+' : ''}${physDiff} Physical`);
+              if (prevState.rules.enableAnimations) {
+                if (physDiff > 0) triggerAnim('emoji', '💪', { targetId: 'stat-physical' });
+                else triggerAnim('emoji', '😫', { sourceId: 'stat-physical' });
+              }
+            }
+            if (mentalDiff !== 0) {
+              diffStr.push(`${mentalDiff > 0 ? '+' : ''}${mentalDiff} Mental`);
+              if (prevState.rules.enableAnimations) {
+                if (mentalDiff > 0) triggerAnim('emoji', '🧠', { targetId: 'stat-mental' });
+                else triggerAnim('emoji', '🤯', { sourceId: 'stat-mental' });
+              }
+            }
+            if (lifeDiff !== 0) {
+              diffStr.push(`${lifeDiff > 0 ? '+' : ''}${lifeDiff} Lifestyle`);
+              if (prevState.rules.enableAnimations) {
+                if (lifeDiff > 0) triggerAnim('emoji', '🏖️', { targetId: 'stat-lifestyle' });
+                else triggerAnim('emoji', '📉', { sourceId: 'stat-lifestyle' });
               }
             }
             
