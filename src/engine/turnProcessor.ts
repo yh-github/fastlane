@@ -141,7 +141,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // 4. Weekend
-      const weekendResult = processWeekend(p, state.turn, previousPlayerWeekends, campaign.weekends, rng);
+      const weekendResult = processWeekend(p, state.turn, previousPlayerWeekends, campaign.weekends, rng, state.rules, campaign);
       p = weekendResult;
       if (p.weekendResult) {
         previousPlayerWeekends.push(p.weekendResult.event.key);
@@ -252,7 +252,33 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // 11. Doctor Visit
-      if (state.rules.enableRelaxationDoctor) {
+      if (state.rules.usePhysicalMentalConditions) {
+        const statRules = campaign.config.statRules;
+        const physThreshold = statRules?.physicalDoctorThreshold ?? 10;
+        const physChance = statRules?.physicalDoctorChancePerPoint ?? 0.05;
+        const mentalThreshold = statRules?.lowSpiritsThreshold ?? 10;
+        const mentalChance = statRules?.lowSpiritsChancePerPoint ?? 0.05;
+
+        // Physical Doctor
+        if (p.physicalCondition !== undefined && p.physicalCondition < physThreshold) {
+          const chance = (physThreshold - p.physicalCondition) * physChance;
+          const physSickTrigger = resolveDecision(replay, `phys_sick_${p.id}`, () => rng.next() < chance);
+          if (physSickTrigger) {
+            doctorNeeded = true;
+            doctorReasons.push('Physical condition critically low');
+          }
+        }
+        
+        // Low Spirits (Mental Doctor)
+        if (p.mentalCondition !== undefined && p.mentalCondition < mentalThreshold) {
+          const chance = (mentalThreshold - p.mentalCondition) * mentalChance;
+          const mentalSickTrigger = resolveDecision(replay, `mental_sick_${p.id}`, () => rng.next() < chance);
+          if (mentalSickTrigger) {
+            doctorNeeded = true;
+            doctorReasons.push('Low spirits / Mental exhaustion');
+          }
+        }
+      } else if (state.rules.enableRelaxationDoctor) {
         const threshold = state.rules.relaxationDoctorThreshold ?? 10;
         const chance = campaign.config.statRules?.relaxationDoctorChance ?? 0.20;
         if (p.relaxation <= threshold) {

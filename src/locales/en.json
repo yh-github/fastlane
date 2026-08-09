@@ -37,7 +37,8 @@
   "action": {
     "buy": "Purchased {{itemName}}",
     "buyBack": "Bought back {{itemName}} for ${{cost}}",
-    "relax": "Relaxed at home",
+    "relax": "Relaxed at home{{stats}}",
+    "clean": "Cleaned the apartment{{stats}}",
     "bank": {
       "deposit": "Deposited ${{amount}} into savings",
       "withdraw": "Withdrew ${{amount}} from savings"
@@ -53,10 +54,10 @@
     "education": {
       "enrolled": "Enrolled in {{name}}",
       "graduated": "Graduated with {{name}}!",
-      "studied": "Studied for {{name}} ({{current}}/{{required}})"
+      "studied": "Studied for {{name}} ({{current}}/{{required}}){{stats}}"
     },
     "job": {
-      "worked": "Worked at {{title}} and earned ${{wagesEarned}}",
+      "worked": "Worked at {{title}} and earned ${{wagesEarned}}{{stats}}",
       "gotJob": "You got the job as {{title}}!",
       "rejected": "Your application was rejected: {{reasons}}",
       "noOpenings": "No openings for this position.",

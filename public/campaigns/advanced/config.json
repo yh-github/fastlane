@@ -17,11 +17,27 @@
     "clothingDecaysAll": false,
     "bypassDoctorIfBroke": false,
     "enableRelaxationDoctor": false,
-    "physicalDoctorThreshold": 5,
-    "mentalDoctorThreshold": 5,
     "useHomeTimeRobbery": true,
     "usePhysicalMentalConditions": true,
     "turnStartAtHome": true,
     "trackMess": true
+  },
+  "statRules": {
+    "startingPhysicalCondition": 15,
+    "startingMentalCondition": 15,
+    "minPhysicalCondition": 5,
+    "maxPhysicalCondition": 30,
+    "minMentalCondition": 5,
+    "maxMentalCondition": 25,
+    "globalMaxMentalCondition": 99,
+    "physicalDoctorThreshold": 10,
+    "physicalDoctorChancePerPoint": 0.05,
+    "lowSpiritsThreshold": 10,
+    "lowSpiritsChancePerPoint": 0.05,
+    "workGrindThreshold": 4,
+    "workGrindMentalCost": 1,
+    "workPhysicalCost": 1,
+    "studyMentalCost": 1,
+    "cleanPhysicalCost": 1
   }
 }
