@@ -10,7 +10,7 @@ interface TitleScreenProps {
 export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
   const { t, i18n } = useTranslation();
   const campaigns = getAvailableCampaigns();
-  const defaultCampaign = campaigns.find(c => c.id === 'qol_improved') || campaigns[0];
+  const defaultCampaign = campaigns.find(c => c.id === 'advanced') || campaigns[0];
   const [selectedCampaignId, setSelectedCampaignId] = useState(defaultCampaign.id);
   const [showRules, setShowRules] = useState(false);
 
