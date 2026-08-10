@@ -352,12 +352,12 @@ export function getAvailableCampaigns(): CampaignInfo[] {
     },
     {
       id: 'qol_improved',
-      name: 'QoL Improved (Recommended)',
+      name: 'QoL Improved',
       description: 'Based on CD-ROM but adds helpful UI elements and strict eviction logic.'
     },
     {
       id: 'advanced',
-      name: 'Advanced Edition',
+      name: 'Advanced Edition (Recommended)',
       description: 'Testing hub for new sub-systems and advanced modular game mechanics.'
     }
   ];
