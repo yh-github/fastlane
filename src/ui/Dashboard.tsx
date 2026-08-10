@@ -253,6 +253,14 @@ export function Dashboard({
             <StatBadge label={t('dashboard.mental', { defaultValue: 'Mental' })} value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 25}`} icon="🧠" id="stat-mental" isActive={activeLogFilter === 'mental'} onClick={() => handleFilterToggle('mental')} />
           </>
         )}
+        {(gameState.rules.useHomeTimeRobbery || gameState.rules.helpfulUI) && (
+          <StatBadge 
+            label={t('dashboard.homeRisk', { defaultValue: 'Home Risk' })} 
+            value={`${homeTimeAvg.toFixed(1)}h | ${!isWillyActive && theoreticalRobbery > 0 ? `${(theoreticalRobbery * 100).toFixed(1)}%*` : `${(effectiveRobbery * 100).toFixed(1)}%`}`} 
+            icon="🏠" 
+            id="stat-home-risk" 
+          />
+        )}
         <StatBadge label={t('dashboard.victory', { defaultValue: 'Victory' })} value={`${victoryPercent}%`} icon="🏆" id="stat-victory" />
         {(campaign?.config.winConditions || [
           { stat: 'happiness', label: 'Happiness' },
