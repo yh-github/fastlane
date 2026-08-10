@@ -19,7 +19,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   const { t } = useTranslation();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
-  const luckScore = calcLuckScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
+  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
 
   // Group jobs by locationId
   const locations = Array.from(new Set(availableJobs.map(j => j.locationId)));
@@ -230,7 +230,7 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
 }
 
 import { calcEconomyPrice, calcItemPrice, calcStockPrice } from '../engine/economyEngine';
-import { calcRequiredLessons } from '../engine/educationEngine';
+import { calcEmployabilityScore } from '../engine/statMath';
 
 import type { GameRules } from '../engine/gameState';
 

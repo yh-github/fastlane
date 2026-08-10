@@ -35,7 +35,7 @@ describe('GameLog Component', () => {
 
   it('triggers onSelectFilter when clear filter button is clicked', () => {
     const onSelectFilter = vi.fn();
-    render(<GameLog entries={mockEntries} activeFilter="luck" onSelectFilter={onSelectFilter} />);
+    render(<GameLog entries={mockEntries} activeFilter="employability" onSelectFilter={onSelectFilter} />);
 
     const clearFilterBtn = screen.getByRole('button', { name: /Clear Filter/i });
     fireEvent.click(clearFilterBtn);

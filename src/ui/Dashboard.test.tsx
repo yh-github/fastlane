@@ -153,16 +153,16 @@ describe('Dashboard Component', () => {
     );
 
     // Luck score = 30 + Math.floor((10 + 20 + 10 + 8) / 3) = 46
-    const luckBadge = screen.getByTitle('Luck');
-    expect(luckBadge).toBeInTheDocument();
-    expect(luckBadge.textContent).toContain('46');
+    const employabilityBadge = screen.getByTitle('Employability');
+    expect(employabilityBadge).toBeInTheDocument();
+    expect(employabilityBadge.textContent).toContain('46');
 
-    // Click luck badge to trigger filter
-    luckBadge.click();
-    expect(onSelectLogFilter).toHaveBeenCalledWith('luck');
+    // Click employability badge to trigger filter
+    employabilityBadge.click();
+    expect(onSelectLogFilter).toHaveBeenCalledWith('employability');
   });
 
-  it('hides non-core goal badges (money, relaxation, dependability, experience, luck) when helpfulUI is false', () => {
+  it('hides non-core goal badges (money, relaxation, dependability, experience, employability) when helpfulUI is false', () => {
     const mockPlayer = {
       name: 'Player 1',
       relaxation: 20,

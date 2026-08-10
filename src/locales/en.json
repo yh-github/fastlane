@@ -29,7 +29,7 @@
     "relaxation": "Relaxation",
     "dependability": "Dependability",
     "experience": "Experience",
-    "luck": "Employability",
+    "employability": "Employability",
     "education": "Education",
     "career": "Career",
     "wealth": "Wealth"
@@ -659,8 +659,8 @@
     "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
     "currentJob": "Current Job (${{wage}}/hr)",
     "apply": "Apply ({{cost}}h)",
-    "luckScoreInfo": "👨‍💼 Your Employability Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
-    "filterLuckLog": "🔍 View Employability & Job Logs"
+    "employabilityScoreInfo": "👨‍💼 Your Employability Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
+    "filterEmployabilityLog": "🔍 View Employability & Job Logs"
   },
   "workStation": {
     "title": "Your Job: {{jobTitle}}",
@@ -730,7 +730,7 @@
     "enrolled": "Currently Enrolled",
     "none": "None",
     "attributesTitle": "Formula Attributes & Caps",
-    "luckScore": "Employability Score (Hiring Roll Threshold):",
+    "employabilityScore": "Employability Score (Hiring Roll Threshold):",
     "robberyRisk": "Home Robbery Risk:",
     "dependabilityCap": "Dependability Cap:",
     "experienceCap": "Experience Cap:",

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  calcLuckScore,
+  calcEmployabilityScore,
   calcDependabilityDecay,
   calcMaxDependability,
   calcMaxExperience,
@@ -13,10 +13,10 @@ import {
 } from './statMath';
 
 describe('statMath', () => {
-  it('calcLuckScore', () => {
-    expect(calcLuckScore(10, 10, 0)).toBe(40); // 30 + Math.floor((10 + 10 + 10 + 0) / 3) = 40
-    expect(calcLuckScore(20, 20, 1)).toBe(49); // 30 + Math.floor((10 + 20 + 20 + 8) / 3) = 49
-    expect(calcLuckScore(20, 10, 0)).toBe(43); // 30 + Math.floor((10 + 20 + 10 + 0) / 3) = 43 (Starting Luck)
+  it('calcEmployabilityScore', () => {
+    expect(calcEmployabilityScore(10, 10, 0)).toBe(40); // 30 + Math.floor((10 + 10 + 10 + 0) / 3) = 40
+    expect(calcEmployabilityScore(20, 20, 1)).toBe(49); // 30 + Math.floor((10 + 20 + 20 + 8) / 3) = 49
+    expect(calcEmployabilityScore(20, 10, 0)).toBe(43); // 30 + Math.floor((10 + 20 + 10 + 0) / 3) = 43 (Starting Employability)
   });
 
   it('calcDependabilityDecay decays by 3, min 0', () => {
