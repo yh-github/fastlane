@@ -10,6 +10,8 @@ import {
   calcCareerProgress,
   calcWealthProgress,
   calcEducationProgress,
+  STAT_REGISTRY,
+  getStatFilterCategories
 } from './statMath';
 
 describe('statMath', () => {
@@ -64,5 +66,20 @@ describe('statMath', () => {
   it('calcEducationProgress', () => {
     expect(calcEducationProgress(0)).toBe(1);
     expect(calcEducationProgress(11)).toBe(100);
+  });
+
+  it('STAT_REGISTRY and getStatFilterCategories', () => {
+    expect(STAT_REGISTRY.employability.isDerived).toBe(true);
+    expect(STAT_REGISTRY.employability.dependencies).toContain('dependability');
+    expect(STAT_REGISTRY.employability.dependencies).toContain('experience');
+
+    const employabilityCategories = getStatFilterCategories('employability');
+    expect(employabilityCategories.has('dependability')).toBe(true);
+    expect(employabilityCategories.has('experience')).toBe(true);
+    expect(employabilityCategories.has('education')).toBe(true);
+
+    const wealthCategories = getStatFilterCategories('wealth');
+    expect(wealthCategories.has('money')).toBe(true);
+    expect(wealthCategories.has('wealth')).toBe(true);
   });
 });
