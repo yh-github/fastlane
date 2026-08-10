@@ -194,7 +194,6 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
           <strong>🗑️ Apartment Mess: {player.mess || 0} / 20</strong>
         </div>
       )}
-      <p style={{ fontSize: '12px', marginBottom: '10px' }}>{t('homeRelax.desc')}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <button data-action-target="relax" onClick={() => onAction({ type: 'relax' })}>
           {t('homeRelax.button', { cost: relaxCost })}

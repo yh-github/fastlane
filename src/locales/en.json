@@ -671,7 +671,6 @@
   },
   "homeRelax": {
     "title": "Home Sweet Home",
-    "desc": "Home sweet home!",
     "button": "Relax ({{cost}}h)"
   },
   "rentOffice": {
