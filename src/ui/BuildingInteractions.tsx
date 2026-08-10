@@ -9,7 +9,7 @@ interface InteractionProps {
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { calcLuckScore } from '../engine/statMath';
+import { calcEmployabilityScore } from '../engine/statMath';
 
 /**
  * JobBoard — Shown at the Employment Office.
