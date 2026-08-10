@@ -255,19 +255,19 @@ export function Dashboard({
         )}
         {(gameState.rules.useHomeTimeRobbery || gameState.rules.helpfulUI) && (
           <StatBadge 
-            label={t('dashboard.homeTimeBreakIn', { defaultValue: 'Home Time | Break-in' })} 
+            label={t('dashboard.home', { defaultValue: 'HOME' })} 
             value={
-              <span style={{ fontSize: '0.85em' }}>
-                {Math.round(homeTimeAvg)}h | {
+              <>
+                {Math.round(homeTimeAvg)}h {
                   !isWillyActive && theoreticalRobbery > 0 ? (
-                    <span style={{ color: '#aaa', fontStyle: 'italic' }} title={`Theoretical risk (Inactive until Week ${willyStartWeek})`}>
-                      {(theoreticalRobbery * 100).toFixed(1)}%
+                    <span style={{ color: '#aaa', fontStyle: 'italic' }} title={`Theoretical risk based on home time (Inactive until Week ${willyStartWeek})`}>
+                      ({(theoreticalRobbery * 100).toFixed(1)}%)
                     </span>
                   ) : (
-                    `${(effectiveRobbery * 100).toFixed(1)}%`
+                    `(${(effectiveRobbery * 100).toFixed(1)}%)`
                   )
                 }
-              </span>
+              </>
             } 
             icon="🏠" 
             id="stat-home-risk" 
