@@ -31,21 +31,21 @@ export function clampZero(value: number): number {
 }
 
 /**
- * The Luck/Rejection Formula.
- * Used when applying for a job. The player rolls 1-100.
- * If the roll is > Luck Score, the application fails.
+ * Calculate the Employability / Hiring Roll Threshold Score (30-100).
  *
- * @param dependability — Current dependability stat
- * @param experience    — Current experience stat
- * @param numDegrees    — Total number of degrees completed
- * @returns               The threshold for a successful application roll (40-100+)
+ * The Employability / Rejection Formula.
+ * If the roll is > Employability Score, the application fails.
+ *
+ * @param dependability — Player dependability
+ * @param experience    — Player experience
+ * @param degreesCount  — Number of degrees completed
  */
-export function calcLuckScore(
+export function calcEmployabilityScore(
   dependability: number,
   experience: number,
-  numDegrees: number
+  degreesCount: number
 ): number {
-  return Math.floor(30 + (10 + dependability + experience + 8 * numDegrees) / 3);
+  return Math.floor(30 + (10 + dependability + experience + 8 * degreesCount) / 3);
 }
 
 /**

@@ -1,7 +1,7 @@
 import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import { spendHours } from './timeManager';
 import { processRentDebt } from './economyEngine';
-import { calcLuckScore } from './statMath';
+import { calcEmployabilityScore } from './statMath';
 import type { JobDef } from './dataLoader';
 import type { Random } from '../utils/rng';
 import { resolveDecision, type ReplayContext } from './replayTypes';
@@ -14,8 +14,8 @@ export interface JobApplicationResult {
   message: GameEvent;
 }
 
-export function calculateJobLuck(player: PlayerState): number {
-  return calcLuckScore(player.dependability, player.experience, player.degrees.length);
+export function calculateJobEmployability(player: PlayerState): number {
+  return calcEmployabilityScore(player.dependability, player.experience, player.degrees.length);
 }
 
 export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules, turn: number = 1, replay?: ReplayContext): JobApplicationResult {
@@ -106,11 +106,11 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     return { updated, success: false, message: { key: 'action.job.rejected', params: { reasons: rejectionReasons.join(' ') } } };
   }
 
-  // RNG Luck check for new jobs
-  const luck = calculateJobLuck(updated);
+  // Hiring threshold check for new jobs
+  const employability = calculateJobEmployability(updated);
   const roll = resolveDecision(replay, `job_apply_luck`, () => Math.floor((rng ? rng.next() : Math.random()) * 100) + 1);
 
-  if (roll > luck) {
+  if (roll > employability) {
     if (!updated.turnFlags.jobsRejectedThisTurn) updated.turnFlags.jobsRejectedThisTurn = [];
     updated.turnFlags.jobsRejectedThisTurn.push(job.id);
     return { updated, success: false, message: { key: 'action.job.noOpenings' } };

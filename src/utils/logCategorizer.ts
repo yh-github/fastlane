@@ -6,7 +6,7 @@ export type GoalFilter =
   | 'happiness'
   | 'education'
   | 'career'
-  | 'luck'
+  | 'employability'
   | 'dependability'
   | 'experience'
   | 'relaxation'
@@ -62,7 +62,6 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
   }
 
   if (key.includes('lottery')) {
-    categories.add('luck');
     categories.add('money');
     categories.add('wealth');
     categories.add('happiness');
@@ -100,7 +99,7 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
     case 'action.job.rejected':
     case 'action.job.noOpenings':
       categories.add('career');
-      categories.add('luck');
+      categories.add('employability');
       categories.add('dependability');
       categories.add('experience');
       break;
@@ -112,7 +111,7 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
       break;
     case 'action.education.graduated':
       categories.add('education');
-      categories.add('luck');
+      categories.add('employability');
       break;
   }
 
@@ -128,8 +127,8 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
     categories.add('experience');
     categories.add('career');
   }
-  if (paramStr.includes('luck') || keyLower.includes('luck')) {
-    categories.add('luck');
+  if (paramStr.includes('employability') || keyLower.includes('employability')) {
+    categories.add('employability');
   }
   if (paramStr.includes('relaxation') || keyLower.includes('relaxation')) {
     categories.add('relaxation');

@@ -2,7 +2,7 @@ import type { PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
 import { useTranslation } from 'react-i18next';
 import {
-  calcLuckScore,
+  calcEmployabilityScore,
   calcEffectiveRobberyChance,
   calcMaxDependability,
   calcMaxExperience,
@@ -28,7 +28,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
 
   const formatItemName = (id: string) => campaign?.items.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-  const luckScore = calcLuckScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
+  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
   const robberyRisk = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
@@ -75,7 +75,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
           <div style={{ marginBottom: '20px' }}>
             <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('statusModal.attributesTitle', 'Formula Attributes & Caps')}</h3>
             <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
-              <li><strong>{t('statusModal.luckScore', 'Luck Score (Hiring Roll Threshold):')}</strong> {luckScore} / 100</li>
+              <li><strong>{t('statusModal.employabilityScore', 'Employability Score (Hiring Roll Threshold):')}</strong> {employabilityScore} / 100</li>
               <li><strong>{t('statusModal.robberyRisk', 'Home Robbery Risk:')}</strong> {robberyRisk}%</li>
               <li><strong>{t('statusModal.dependabilityCap', 'Dependability Cap:')}</strong> {player.dependability} / {maxDep} (Current / Max Cap)</li>
               <li><strong>{t('statusModal.experienceCap', 'Experience Cap:')}</strong> {player.experience} / {maxExp} (Current / Max Cap)</li>

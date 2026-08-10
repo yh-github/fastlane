@@ -16,12 +16,12 @@ describe('logCategorizer', () => {
     expect(categories.has('experience')).toBe(true);
   });
 
-  it('correctly categorizes job application logs under luck and career', () => {
-    const entry: LogEntry = {
-      week: 1,
-      event: { key: 'action.job.gotJob', params: { title: 'Manager' } }
-    };
-    expect(isLogMatchingFilter(entry, 'luck')).toBe(true);
+  it('correctly categorizes job application logs under employability and career', () => {
+    const entry = {
+      id: '1', turn: 1, type: 'action',
+      event: { key: 'action.job.gotJob' }, message: 'Got job'
+    } as any;
+    expect(isLogMatchingFilter(entry, 'employability')).toBe(true);
     expect(isLogMatchingFilter(entry, 'career')).toBe(true);
   });
 

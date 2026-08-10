@@ -61,10 +61,10 @@ describe('Job Engine', () => {
       expect(result.message?.key).toBe('action.job.rejected');
     });
 
-    it('rejects due to bad luck roll', () => {
+    it('rejects due to insufficient employability roll', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99); // Force high roll (99)
       const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1)); // Luck = 40 + 10 + 10 = 60. 99 > 60 = rejected.
+      const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1)); // Employability = 40 + 10 + 10 = 60. 99 > 60 = rejected.
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.job.noOpenings');
     });
