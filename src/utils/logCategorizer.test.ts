@@ -64,4 +64,22 @@ describe('logCategorizer', () => {
     expect(isLogMatchingFilter(happinessBuy, 'happiness')).toBe(true);
     expect(isLogMatchingFilter(standardBuy, 'happiness')).toBe(false);
   });
+
+  it('matches derived stats through dependency graph (e.g. work logs match employability via dependability)', () => {
+    const workEntry: LogEntry = {
+      week: 1,
+      event: { key: 'action.job.worked', params: { title: 'Cook', wagesEarned: 40 } }
+    };
+    // action.job.worked has categories ['career', 'money', 'wealth', 'dependability', 'experience']
+    // Employability filter has dependencies ['employability', 'dependability', 'experience', 'education']
+    expect(isLogMatchingFilter(workEntry, 'employability')).toBe(true);
+
+    const studyEntry: LogEntry = {
+      week: 2,
+      event: { key: 'action.education.studied', params: { name: 'Junior College' } }
+    };
+    // action.education.studied has category ['education']
+    // Employability filter includes 'education' dependency
+    expect(isLogMatchingFilter(studyEntry, 'employability')).toBe(true);
+  });
 });

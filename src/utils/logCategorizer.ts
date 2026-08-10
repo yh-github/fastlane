@@ -1,4 +1,5 @@
 import type { LogEntry } from '../ui/GameLog';
+import { getStatFilterCategories } from '../engine/statMath';
 
 export type GoalFilter =
   | 'all'
@@ -148,5 +149,9 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
 export function isLogMatchingFilter(entry: LogEntry, filter: GoalFilter): boolean {
   if (filter === 'all') return true;
   const categories = getLogCategories(entry);
-  return categories.has(filter);
+  const filterCategories = getStatFilterCategories(filter);
+  for (const cat of categories) {
+    if (filterCategories.has(cat)) return true;
+  }
+  return false;
 }
