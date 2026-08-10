@@ -108,10 +108,19 @@ export function calcEffectiveRobberyChance(
   turn: number = 1,
   campaign?: { config?: { eventRules?: { willyRobberyStartWeek?: number } } }
 ): number {
-  if (player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments') return 0;
-  
   const startWeek = campaign?.config?.eventRules?.willyRobberyStartWeek ?? 4;
   if (turn < startWeek) return 0;
+  return calcTheoreticalRobberyChance(player, rules);
+}
+
+/**
+ * Calculate theoretical robbery chance ignoring current turn start week restrictions.
+ */
+export function calcTheoreticalRobberyChance(
+  player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[] },
+  rules?: { useHomeTimeRobbery?: boolean }
+): number {
+  if (player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments') return 0;
 
   if (rules?.useHomeTimeRobbery) {
     const history = player.homeTimeHistory || [];
