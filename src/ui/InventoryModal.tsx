@@ -3,7 +3,7 @@ import type { CampaignBundle } from '../engine/dataLoader';
 import { useTranslation } from 'react-i18next';
 import {
   calcLuckScore,
-  calcRobberyChance,
+  calcEffectiveRobberyChance,
   calcMaxDependability,
   calcMaxExperience,
   calcRaiseThreshold
@@ -26,8 +26,10 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
   const totalStocks = Object.values(inventory.stocks.holdings).reduce((a, b) => a + b, 0);
 
+  const formatItemName = (id: string) => campaign?.items.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
   const luckScore = calcLuckScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
-  const robberyRisk = (calcRobberyChance(player.relaxation || 0) * 100).toFixed(1);
+  const robberyRisk = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0);
@@ -159,7 +161,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     )}
-                    <span>{t(`item.${a.id}`, { defaultValue: a.id.replaceAll('_', ' ') })}</span>
+                    <span>{t(`item.${a.id}`, { defaultValue: formatItemName(a.id) })}</span>
                   </div>
                 </li>
               ))}
@@ -182,7 +184,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     )}
-                    <span>{t(`item.${b}`, { defaultValue: b.replaceAll('_', ' ') })}</span>
+                    <span>{t(`item.${b}`, { defaultValue: formatItemName(b) })}</span>
                   </div>
                 </li>
               ))}

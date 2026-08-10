@@ -659,7 +659,7 @@
     "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
     "currentJob": "Current Job (${{wage}}/hr)",
     "apply": "Apply ({{cost}}h)",
-    "luckScoreInfo": "🍀 Your Employability Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
+    "luckScoreInfo": "👨‍💼 Your Employability Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
     "filterLuckLog": "🔍 View Employability & Job Logs"
   },
   "workStation": {

@@ -33,7 +33,7 @@ export const GameLog: React.FC<GameLogProps> = ({
     { id: 'relaxation', label: t('dashboard.relaxation', { defaultValue: 'Relaxation' }), icon: '🧘' },
     { id: 'dependability', label: t('dashboard.dependability', { defaultValue: 'Dependability' }), icon: '🤝' },
     { id: 'experience', label: t('dashboard.experience', { defaultValue: 'Experience' }), icon: '👌' },
-    { id: 'luck', label: t('dashboard.luck', { defaultValue: 'Luck' }), icon: '🍀' },
+    { id: 'luck', label: t('dashboard.luck', { defaultValue: 'Luck' }), icon: '👨‍💼' },
     { id: 'happiness', label: t('dashboard.happiness', { defaultValue: 'Happiness' }), icon: '😊' },
     { id: 'education', label: t('dashboard.education', { defaultValue: 'Education' }), icon: '🎓' },
     { id: 'career', label: t('dashboard.career', { defaultValue: 'Career' }), icon: '💼' },
