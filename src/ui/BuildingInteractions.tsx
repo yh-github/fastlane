@@ -230,7 +230,7 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
 }
 
 import { calcEconomyPrice, calcItemPrice, calcStockPrice } from '../engine/economyEngine';
-import { calcEmployabilityScore } from '../engine/statMath';
+import { calcRequiredLessons } from '../engine/educationEngine';
 
 import type { GameRules } from '../engine/gameState';
 
