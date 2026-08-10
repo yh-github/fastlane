@@ -103,7 +103,7 @@ export function calcRobberyChance(relaxation: number): number {
  * Willy robbery start week, and home-time rules.
  */
 export function calcEffectiveRobberyChance(
-  player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[] },
+  player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[]; homeTimeThisTurn?: number },
   rules?: { useHomeTimeRobbery?: boolean },
   turn: number = 1,
   campaign?: { config?: { eventRules?: { willyRobberyStartWeek?: number } } }
@@ -115,15 +115,16 @@ export function calcEffectiveRobberyChance(
 
 /**
  * Calculate theoretical robbery chance ignoring current turn start week restrictions.
+ * Includes homeTimeThisTurn for real-time feedback during turns.
  */
 export function calcTheoreticalRobberyChance(
-  player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[] },
+  player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[]; homeTimeThisTurn?: number },
   rules?: { useHomeTimeRobbery?: boolean }
 ): number {
   if (player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments') return 0;
 
   if (rules?.useHomeTimeRobbery) {
-    const history = player.homeTimeHistory || [];
+    const history = [...(player.homeTimeHistory || []), player.homeTimeThisTurn || 0];
     const sum = history.reduce((acc, val) => acc + val, 0);
     const mean = history.length > 0 ? sum / history.length : 0;
     return 1 / (11 + mean);

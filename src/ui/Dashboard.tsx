@@ -91,7 +91,7 @@ export function Dashboard({
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0);
   const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0);
 
-  const homeHistory = player.homeTimeHistory || [];
+  const homeHistory = [...(player.homeTimeHistory || []), player.homeTimeThisTurn || 0];
   const homeTimeAvg = homeHistory.length > 0 ? (homeHistory.reduce((a, b) => a + b, 0) / homeHistory.length) : 0;
   const willyStartWeek = campaign?.config?.eventRules?.willyRobberyStartWeek ?? 4;
   const isWillyActive = turn >= willyStartWeek;
@@ -190,14 +190,14 @@ export function Dashboard({
           </div>
           {gameState.rules.useHomeTimeRobbery && (
             <div>
-              <strong>🏠 {t('stat.homeTime', 'Home Time')}:</strong> {homeTimeAvg.toFixed(1)}h/wk
+              <strong>🏠 {t('stat.homeTime', 'Home Time')}:</strong> {Math.round(homeTimeAvg)}h/wk
             </div>
           )}
           <div>
             <strong>🏠 {t('stat.breakInChance', 'Break-in Risk')}:</strong> {
               !isWillyActive && theoreticalRobbery > 0 ? (
-                <span style={{ color: '#888' }} title={`Theoretical risk based on home time (Inactive until Week ${willyStartWeek})`}>
-                  {(theoreticalRobbery * 100).toFixed(1)}% (0% active)
+                <span style={{ color: '#888', fontStyle: 'italic' }} title={`Theoretical risk based on home time (Inactive until Week ${willyStartWeek})`}>
+                  {(theoreticalRobbery * 100).toFixed(1)}%
                 </span>
               ) : (
                 `${(effectiveRobbery * 100).toFixed(1)}%`
@@ -218,14 +218,14 @@ export function Dashboard({
           )}
           {gameState.rules.useHomeTimeRobbery && (
             <div>
-              <strong>🏠 {t('stat.homeTime', 'Home Time')}:</strong> {homeTimeAvg.toFixed(1)}h/wk
+              <strong>🏠 {t('stat.homeTime', 'Home Time')}:</strong> {Math.round(homeTimeAvg)}h/wk
             </div>
           )}
           <div>
             <strong>🏠 {t('stat.breakInChance', 'Break-in Risk')}:</strong> {
               !isWillyActive && theoreticalRobbery > 0 ? (
-                <span style={{ color: '#888' }} title={`Theoretical risk (Inactive until Week ${willyStartWeek})`}>
-                  {(theoreticalRobbery * 100).toFixed(1)}% (0% active)
+                <span style={{ color: '#888', fontStyle: 'italic' }} title={`Theoretical risk (Inactive until Week ${willyStartWeek})`}>
+                  {(theoreticalRobbery * 100).toFixed(1)}%
                 </span>
               ) : (
                 `${(effectiveRobbery * 100).toFixed(1)}%`
@@ -255,8 +255,20 @@ export function Dashboard({
         )}
         {(gameState.rules.useHomeTimeRobbery || gameState.rules.helpfulUI) && (
           <StatBadge 
-            label={t('dashboard.homeRisk', { defaultValue: 'Home Risk' })} 
-            value={`${homeTimeAvg.toFixed(1)}h | ${!isWillyActive && theoreticalRobbery > 0 ? `${(theoreticalRobbery * 100).toFixed(1)}%*` : `${(effectiveRobbery * 100).toFixed(1)}%`}`} 
+            label={t('dashboard.homeTimeBreakIn', { defaultValue: 'Home Time | Break-in' })} 
+            value={
+              <span style={{ fontSize: '0.85em' }}>
+                {Math.round(homeTimeAvg)}h | {
+                  !isWillyActive && theoreticalRobbery > 0 ? (
+                    <span style={{ color: '#aaa', fontStyle: 'italic' }} title={`Theoretical risk (Inactive until Week ${willyStartWeek})`}>
+                      {(theoreticalRobbery * 100).toFixed(1)}%
+                    </span>
+                  ) : (
+                    `${(effectiveRobbery * 100).toFixed(1)}%`
+                  )
+                }
+              </span>
+            } 
             icon="🏠" 
             id="stat-home-risk" 
           />
