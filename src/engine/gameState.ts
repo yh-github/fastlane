@@ -18,6 +18,7 @@ import { type CampaignBundle } from './dataLoader';
 export interface GameEvent {
   key: string;
   params?: Record<string, string | number>;
+  categories?: string[];
 }
 
 export interface GameState {

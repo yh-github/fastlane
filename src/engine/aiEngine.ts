@@ -1,5 +1,6 @@
 import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
+import { getStoreForItem } from './dataLoader';
 import type { GameAction } from './gameReducer';
 import { calcEconomyPrice, calcItemPrice } from './economyEngine';
 
@@ -103,7 +104,7 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
   // Action: Buy Food (for each item)
   const allFoodItems = campaign.items.filter(i => i.category === 'food');
   allFoodItems.forEach(item => {
-    const storeNode = getBuildingNodeById(campaign, item.store);
+    const storeNode = getBuildingNodeById(campaign, getStoreForItem(campaign, item.id) || '');
     const adjustedPrice = calcItemPrice(item, economicIndex);
     actions.push({
       name: `BuyFood_${item.id}`,
@@ -122,7 +123,7 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
   // Action: Buy Fridge
   const fridgeItem = campaign.items.find(i => i.id === 'refrigerator' && i.store === 'socket_city') || campaign.items.find(i => i.id === 'refrigerator');
   if (fridgeItem) {
-    const storeNode = getBuildingNodeById(campaign, fridgeItem.store);
+    const storeNode = getBuildingNodeById(campaign, getStoreForItem(campaign, fridgeItem.id) || '');
     const adjustedPrice = calcItemPrice(fridgeItem, economicIndex);
     actions.push({
       name: 'BuyFridge',
@@ -146,10 +147,10 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
   // Action: Buy Clothes (for each item)
   const clothesItems = campaign.items.filter(i => i.category === 'clothes');
   clothesItems.forEach(item => {
-    const storeNode = getBuildingNodeById(campaign, item.store);
+    const storeNode = getBuildingNodeById(campaign, getStoreForItem(campaign, item.id) || '');
     const cost = calcItemPrice(item, economicIndex);
     actions.push({
-      name: `BuyClothes_${item.id}_${item.store}`,
+      name: `BuyClothes_${item.id}`,
       cost: 0,
       precondition: (s) => s.nodeId === storeNode && s.money >= cost,
       effect: (s) => ({ ...s, money: s.money - cost, clothes: Math.max(s.clothes, 0) + 11 }),
@@ -298,8 +299,8 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
          }
       }
       if (s.money >= calcItemPrice(affordableClothes, gameState.economicIndex)) {
-         const storeNode = affordableClothes.store;
-         const buyClothes = tryAction(`BuyClothes_${affordableClothes.id}_${affordableClothes.store}`);
+         const storeNode = getStoreForItem(campaign, affordableClothes.id) || '';
+         const buyClothes = tryAction(`BuyClothes_${affordableClothes.id}`);
          if (buyClothes) return [buyClothes];
          const move = moveTo(storeNode);
          if (move) return [move];
@@ -318,7 +319,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= calcItemPrice(i, gameState.economicIndex)).pop() || affordableFoodItems[0];
     const buyFood = tryAction(`BuyFood_${bestFoodToBuy.id}`);
     if (buyFood) return [buyFood];
-    const move = moveTo(bestFoodToBuy.store);
+    const move = moveTo(getStoreForItem(campaign, bestFoodToBuy.id) || '');
     if (move) return [move];
   }
 
@@ -356,7 +357,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     const buyFridge = tryAction('BuyFridge');
     if (buyFridge) return [buyFridge];
     if (fridgeItemRef) {
-       const move = moveTo(fridgeItemRef.store);
+       const move = moveTo(getStoreForItem(campaign, fridgeItemRef.id) || '');
        if (move) return [move];
     }
   }
@@ -456,8 +457,8 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     const requiredMoney = calcItemPrice(targetClothes, gameState.economicIndex) + minimumComfortableMoney;
     
     if (!hasTargetClothes && s.money >= requiredMoney) {
-      const storeNode = targetClothes.store;
-      const buyClothes = tryAction(`BuyClothes_${targetClothes.id}_${targetClothes.store}`);
+      const storeNode = getStoreForItem(campaign, targetClothes.id) || '';
+      const buyClothes = tryAction(`BuyClothes_${targetClothes.id}`);
       if (buyClothes) return [buyClothes];
       const move = moveTo(storeNode);
       if (move) return [move];
@@ -485,7 +486,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
         const bestFoodToBuy = affordableFoodItems.filter(i => s.money >= calcItemPrice(i, gameState.economicIndex)).pop() || affordableFoodItems[0];
         const buyFood = tryAction(`BuyFood_${bestFoodToBuy.id}`);
         if (buyFood) return [buyFood];
-        const move = moveTo(bestFoodToBuy.store);
+        const move = moveTo(getStoreForItem(campaign, bestFoodToBuy.id) || '');
         if (move) return [move];
     }
   }

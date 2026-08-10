@@ -13,6 +13,53 @@
     "description": "Your one-stop shop for groceries, appliances, and pawn services.",
     "archetype": "discount_and_pawn",
     "cost": 1,
-    "entryCost": true
+    "entryCost": true,
+    "inventory": [
+      {
+        "itemId": "refrigerator"
+      },
+      {
+        "itemId": "stove"
+      },
+      {
+        "itemId": "stereo"
+      },
+      {
+        "itemId": "color_tv"
+      },
+      {
+        "itemId": "bw_tv"
+      },
+      {
+        "itemId": "microwave"
+      },
+      {
+        "itemId": "vcr"
+      },
+      {
+        "itemId": "encyclopedia"
+      },
+      {
+        "itemId": "dictionary"
+      },
+      {
+        "itemId": "atlas"
+      },
+      {
+        "itemId": "casual_clothes"
+      },
+      {
+        "itemId": "dress_clothes"
+      },
+      {
+        "itemId": "baseball_tickets"
+      },
+      {
+        "itemId": "theatre_tickets"
+      },
+      {
+        "itemId": "concert_tickets"
+      }
+    ]
   }
 ]

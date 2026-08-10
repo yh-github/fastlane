@@ -123,10 +123,10 @@ describe('Education Engine', () => {
         happiness: 50, dependability: 50, degreeDepBoost: 50, degreeExpBoost: 50,
         degrees: [],
         inventory: { appliances: [{id: 'computer'}], books: ['dictionary', 'encyclopedia', 'atlas'] },
-        rules: { reducedDegreeStatBonus: true }
-      } as PlayerState;
+      } as unknown as PlayerState;
+      const rules = { reducedDegreeStatBonus: true } as any;
       
-      const result = study(player, mockDegree, 6);
+      const result = study(player, mockDegree, 6, rules);
       expect(result.success).toBe(true);
       expect(result.updated.degrees).toContain('junior_college');
       // Rewards should be +5 happ, +2 dep, +2 maxDep, +2 maxExp because of the rule
