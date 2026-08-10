@@ -110,7 +110,7 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
     delete updated.enrolledClasses[degree.id];
 
     // Apply rewards
-    const qolReduced = player.rules?.reducedDegreeStatBonus;
+    const qolReduced = rules?.reducedDegreeStatBonus;
     
     const depReward = qolReduced ? Math.min(2, degree.rewards.dependability) : degree.rewards.dependability;
     const maxDepReward = qolReduced ? Math.min(2, degree.rewards.maxDepBoost) : degree.rewards.maxDepBoost;

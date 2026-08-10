@@ -25,6 +25,8 @@ interface DashboardProps {
   onOpenSettings: () => void;
 }
 
+import { calcRobberyChance } from '../engine/statMath';
+
 export function Dashboard({
   player,
   gameState,
@@ -43,11 +45,7 @@ export function Dashboard({
   let education = calcEducationProgress(player.degrees.length);
   let career = calcCareerProgress(player.dependability, player.currentJobId !== null);
   let wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn));
-  let lifestyle = 0;
-  if (campaign) {
-    const maxLife = calcMaxLifestyle(campaign);
-    lifestyle = maxLife > 0 ? Math.floor(((player.lifestyle || 0) / maxLife) * 100) : 0;
-  }
+  let lifestyle = player.lifestyle || 0;
 
   const statValues: Record<string, number> = {
     wealth,
@@ -152,6 +150,60 @@ export function Dashboard({
           ⚙️
         </button>
       </div>
+
+      {campaign?.config.statRules?.enableAdvancedStats && (
+        <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
+          <div><strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}</div>
+          <div style={{
+             fontWeight: (player.mentalCondition || 0) <= (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'bold' : 'normal',
+             color: (player.mentalCondition || 0) < (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'red' : ((player.mentalCondition || 0) === (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'orange' : 'inherit')
+          }}>
+             <strong>{t('stat.mentalCondition')}:</strong> {Math.floor(player.mentalCondition || 0)}
+          </div>
+          <div style={{
+             fontWeight: (player.physicalCondition || 0) <= (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'bold' : 'normal',
+             color: (player.physicalCondition || 0) < (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'red' : ((player.physicalCondition || 0) === (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'orange' : 'inherit')
+          }}>
+             <strong>{t('stat.physicalCondition')}:</strong> {Math.floor(player.physicalCondition || 0)}
+          </div>
+        </div>
+      )}
+
+      {gameState.rules.showDetailedStats && (
+        <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
+          <div><strong>{t('stat.dependability')}:</strong> {Math.floor(player.dependability)}</div>
+          <div><strong>{t('stat.experience')}:</strong> {Math.floor(player.experience)}</div>
+          {gameState.rules.useRelaxationStat && (
+            <div>
+              <strong>{t('stat.relaxation')}:</strong> {Math.floor(player.relaxation || 0)}
+            </div>
+          )}
+          {(() => {
+            let breakInChance = 0;
+            if (player.currentHousingId === 'security') {
+              breakInChance = 0;
+            } else if (gameState.rules.useHomeTimeRobbery) {
+              const startWeek = campaign?.config.eventRules?.willyRobberyStartWeek ?? 4;
+              if (turn < startWeek) {
+                breakInChance = 0;
+              } else {
+                const history = player.homeTimeHistory || [];
+                const sum = history.reduce((acc, val) => acc + val, 0);
+                const mean = history.length > 0 ? sum / history.length : 0;
+                breakInChance = 1 / (11 + mean);
+              }
+            } else {
+              breakInChance = calcRobberyChance(player.relaxation || 0);
+            }
+            return (
+              <div>
+                <strong>{t('stat.breakInChance', 'Break-in Chance')}:</strong> {(breakInChance * 100).toFixed(1)}%
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <StatBadge label={t('dashboard.money', { defaultValue: 'Money' })} value={`$${player.money}`} icon="💰" id="stat-money" isActive={activeLogFilter === 'money'} onClick={() => handleFilterToggle('money')} />
         {gameState.rules.helpfulUI && (

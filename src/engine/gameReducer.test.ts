@@ -37,7 +37,9 @@ describe('gameReducer', () => {
         name: 'test',
         startingMoney: 200,
         timeRules: { hoursPerTurn: 60, workSessionCost: 6, studySessionCost: 6, jobApplicationCost: 4, relaxCost: 6, newspaperCost: 1, starvationPenalty: 20, doctorPenalty: 10, buildingEntryCost: 2, loanCost: 2, brokerCost: 2 }
-      }
+      },
+      map: { nodes: [] },
+      buildings: []
     } as unknown as CampaignBundle;
 
     const state = createInitialGameState(mockCampaign, [{ name: 'TestPlayer', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }], 'low_cost');

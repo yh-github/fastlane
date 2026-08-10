@@ -10,7 +10,10 @@ export type GoalFilter =
   | 'dependability'
   | 'experience'
   | 'relaxation'
-  | 'money';
+  | 'money'
+  | 'lifestyle'
+  | 'mental'
+  | 'physical';
 
 /**
   * getLogCategories — Maps a log entry to applicable goals and attributes.
@@ -19,6 +22,13 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
   const categories = new Set<GoalFilter>();
   const key = entry.event.key || '';
   const params = entry.event.params || {};
+
+  // Dynamic explicit categories from the event itself
+  if (entry.event.categories) {
+    for (const cat of entry.event.categories) {
+      categories.add(cat as GoalFilter);
+    }
+  }
 
   // Key-based rules
   if (key.includes('job') || key.includes('work') || key.includes('fired') || key.includes('raise')) {

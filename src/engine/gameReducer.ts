@@ -123,30 +123,38 @@ export function gameReducer(
       break;
     }
     case 'buy': {
-      const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
-      const itemDef = context.campaign.items.find(i => i.id === action.itemId && i.store === currentBuilding) || context.campaign.items.find(i => i.id === action.itemId);
-      console.log(`[DEBUG-GAMEREDUCER-BUY] itemId=${action.itemId}, currentBuilding=${currentBuilding}, itemDefFound=${!!itemDef}, itemStore=${itemDef?.store}`);
-      if (itemDef) {
-        const timeCost = itemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
+      const currentBuildingId = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
+      const buildingDef = context.campaign.buildings.find(b => b.id === currentBuildingId);
+      const inventoryEntry = buildingDef?.inventory?.find(i => i.itemId === action.itemId);
+      const baseItemDef = context.campaign.items.find(i => i.id === action.itemId);
+      
+      console.log(`[DEBUG-GAMEREDUCER-BUY] itemId=${action.itemId}, currentBuilding=${currentBuildingId}, itemDefFound=${!!baseItemDef}`);
+      
+      if (baseItemDef) {
+        const timeCost = baseItemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
         if (timeCost > 0 && nextPlayer.hoursRemaining < timeCost) {
           if (!context.rules.allowPartialHours) {
-            actionLog = { key: 'action.error.notEnoughTimeBuy', params: { name: itemDef.name } };
+            actionLog = { key: 'action.error.notEnoughTimeBuy', params: { name: baseItemDef.name } };
             break;
           }
         }
         
-        // Ensure price is adjusted for economy, respecting fixed-price items (like newspaper, lottery tickets)
-        const adjustedPrice = calcItemPrice(itemDef, context.economicIndex);
-        const itemWithPrice = { ...itemDef, basePrice: adjustedPrice };
+        // Resolve price from inventory override or fallback to old basePrice, default to 0
+        const basePrice = inventoryEntry?.priceOverride ?? baseItemDef.basePrice ?? 0;
         
-        const result = buyItem(nextPlayer, itemWithPrice, context.rules);
-        console.log(`[DEBUG-GAMEREDUCER-BUY] buyItem success=${result.success}, newMoney=${result.updated.money}, newClothes=${result.updated.inventory.casualClothesWeeks}`);
+        // Ensure price is adjusted for economy, respecting fixed-price items
+        const itemForPricing = { ...baseItemDef, basePrice };
+        const adjustedPrice = calcItemPrice(itemForPricing, context.economicIndex);
+        const itemWithPriceAndStore = { ...baseItemDef, basePrice: adjustedPrice, store: currentBuildingId };
+        
+        const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules);
+        console.log(`[DEBUG-GAMEREDUCER-BUY] buyItem success=${result.success}, newMoney=${result.updated.money}`);
         if (result.success) {
           nextPlayer = spendHours(result.updated, timeCost);
-          if (itemDef.id === 'newspaper') {
-            nextPlayer.turnFlags.readNewspaper = true;
+          if (baseItemDef.id === 'newspaper') {
+            nextPlayer.turnFlags.readNewspaperThisTurn = true;
           }
-          if (context.rules.usePhysicalMentalConditions && (itemDef.category === 'appliance' || itemDef.category === 'clothes')) {
+          if (context.rules.usePhysicalMentalConditions && (baseItemDef.category === 'appliance' || baseItemDef.category === 'clothes')) {
              nextPlayer.lifestyle = Math.min(100, (nextPlayer.lifestyle || 50) + 1);
           }
           actionLog = result.message;
@@ -593,6 +601,26 @@ export function gameReducer(
 
   // Always sync active effects after an action
   nextPlayer = recalculatePlayerEffects(nextPlayer, context.campaign);
+
+  // Dynamically generate categories based on state diff
+  const categories = new Set<string>();
+  if (player.money !== nextPlayer.money || player.bankSavings !== nextPlayer.bankSavings) categories.add('money');
+  if (player.happiness !== nextPlayer.happiness) categories.add('happiness');
+  if (player.dependability !== nextPlayer.dependability) categories.add('dependability');
+  if (player.experience !== nextPlayer.experience) categories.add('experience');
+  if (player.relaxation !== nextPlayer.relaxation) categories.add('relaxation');
+  if (player.lifestyle !== nextPlayer.lifestyle) categories.add('lifestyle');
+  if (player.mentalCondition !== nextPlayer.mentalCondition) categories.add('mental');
+  if (player.physicalCondition !== nextPlayer.physicalCondition) categories.add('physical');
+
+  if (categories.size > 0 && actionLog) {
+    const catArray = Array.from(categories);
+    if (Array.isArray(actionLog)) {
+      actionLog = actionLog.map(e => ({ ...e, categories: e.categories ? Array.from(new Set([...e.categories, ...catArray])) : catArray }));
+    } else {
+      actionLog = { ...actionLog, categories: actionLog.categories ? Array.from(new Set([...actionLog.categories, ...catArray])) : catArray };
+    }
+  }
 
   return {
     updatedPlayer: nextPlayer,

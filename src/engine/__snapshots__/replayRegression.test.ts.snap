@@ -62,7 +62,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 172,
+      "money": 173,
       "nakedTurns": 1,
       "name": "Player 1",
       "newspaperHeadline": {

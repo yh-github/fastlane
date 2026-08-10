@@ -36,6 +36,7 @@ export interface BuildingDef {
   archetype: string;
   spritePath: string;
   description: string;
+  inventory?: { itemId: string; priceOverride?: number; tags?: string[] }[];
 }
 
 export interface JobRequirements {
@@ -60,8 +61,8 @@ export interface ItemDef {
   name: string;
   category: 'appliance' | 'clothes' | 'food' | 'book' | 'ticket' | 'junk';
   subcategory?: string;
-  store: string;
-  basePrice: number;
+  store?: string;
+  basePrice?: number;
   happinessBonus: number;
   lifestyleValue?: number;
   mentalBonus?: number;
@@ -138,6 +139,13 @@ export interface SynergyEffect {
   type: string;
   value: number;
   operation: 'MAX' | 'ADD' | 'SET';
+}
+
+export function getStoreForItem(campaign: { buildings: BuildingDef[] }, itemId: string): string | undefined {
+  for (const b of campaign.buildings) {
+    if (b.inventory?.some(i => i.itemId === itemId)) return b.id;
+  }
+  return undefined;
 }
 
 export interface SynergyDef {

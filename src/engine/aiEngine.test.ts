@@ -7,8 +7,8 @@ import type { CampaignBundle } from './dataLoader';
 describe('AI Engine', () => {
   const mockCampaign = {
     items: [
-      { id: 'food_1week', basePrice: 55, category: 'food', subcategory: 'fresh_food', store: 'blacks_market' },
-      { id: 'casual_clothes', basePrice: 35, category: 'clothes', subcategory: 'casual', store: 'department_store' }
+      { id: 'food_1week', basePrice: 55, category: 'food', subcategory: 'fresh_food' },
+      { id: 'casual_clothes', basePrice: 35, category: 'clothes', subcategory: 'casual' }
     ],
     education: [],
     jobs: [
@@ -34,9 +34,9 @@ describe('AI Engine', () => {
       { id: 'low_cost', homeNodeId: 'node1' }
     ],
     buildings: [
-      { id: 'blacks_market', archetype: 'grocery', name: 'Black Market' },
+      { id: 'blacks_market', archetype: 'grocery', name: 'Black Market', inventory: [{ itemId: 'food_1week' }] },
       { id: 'rent_office', archetype: 'housing', name: 'Rent' },
-      { id: 'department_store', archetype: 'shop', name: 'Dept' },
+      { id: 'department_store', archetype: 'shop', name: 'Dept', inventory: [{ itemId: 'casual_clothes' }] },
       { id: 'employment_office', archetype: 'employment', name: 'Emp' },
       { id: 'building_clerk', archetype: 'workplace', name: 'Work' }
     ]

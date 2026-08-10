@@ -1,4 +1,4 @@
-import { CampaignBundle } from '../dataLoader';
+import { CampaignBundle, getStoreForItem } from '../dataLoader';
 import { PlayerState, GameState } from '../gameState';
 
 function getBuildingNodeByArchetype(campaign: CampaignBundle, archetype: string): string | null {
@@ -82,7 +82,7 @@ export function generateDomain(campaign: CampaignBundle): string {
   const groceries = campaign.items.filter(i => i.category === 'food' && i.subcategory === 'groceries').sort((a, b) => a.basePrice - b.basePrice);
   if (groceries.length > 0) {
     const food = groceries[0];
-    const storeNode = getBuildingNodeById(campaign, food.store);
+    const storeNode = getBuildingNodeById(campaign, getStoreForItem(campaign, food.id) || '');
     if (storeNode) {
       pddl += `  (:action buy_food
     :parameters ()
@@ -111,7 +111,7 @@ export function generateDomain(campaign: CampaignBundle): string {
   // Buy Clothes
   const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => a.basePrice - b.basePrice);
   clothesItems.forEach(item => {
-    const storeNode = getBuildingNodeById(campaign, item.store);
+    const storeNode = getBuildingNodeById(campaign, getStoreForItem(campaign, item.id) || '');
     if (storeNode) {
       pddl += `  (:action buy_clothes_${item.id}
     :parameters ()
