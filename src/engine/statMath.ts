@@ -99,6 +99,31 @@ export function calcRobberyChance(relaxation: number): number {
 }
 
 /**
+ * Calculate the effective home robbery chance taking into account housing type,
+ * Willy robbery start week, and home-time rules.
+ */
+export function calcEffectiveRobberyChance(
+  player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[] },
+  rules?: { useHomeTimeRobbery?: boolean },
+  turn: number = 1,
+  campaign?: { config?: { eventRules?: { willyRobberyStartWeek?: number } } }
+): number {
+  if (player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments') return 0;
+  
+  const startWeek = campaign?.config?.eventRules?.willyRobberyStartWeek ?? 4;
+  if (turn < startWeek) return 0;
+
+  if (rules?.useHomeTimeRobbery) {
+    const history = player.homeTimeHistory || [];
+    const sum = history.reduce((acc, val) => acc + val, 0);
+    const mean = history.length > 0 ? sum / history.length : 0;
+    return 1 / (11 + mean);
+  }
+
+  return calcRobberyChance(player.relaxation || 0);
+}
+
+/**
  * Calculate the dependability required to get a raise at the current job.
  *
  * @param jobRequiredDep — Base dependability required for the job

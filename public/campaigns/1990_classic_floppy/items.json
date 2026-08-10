@@ -3,6 +3,7 @@
     "id": "refrigerator",
     "name": "Refrigerator",
     "category": "appliance",
+    "basePrice": 650,
     "happinessBonus": 1,
     "tags": [
       "refrigerator"
@@ -12,6 +13,7 @@
     "id": "freezer",
     "name": "Freezer",
     "category": "appliance",
+    "basePrice": 513,
     "happinessBonus": 2,
     "tags": [
       "freezer"
@@ -21,6 +23,7 @@
     "id": "stove",
     "name": "Stove",
     "category": "appliance",
+    "basePrice": 490,
     "happinessBonus": 1,
     "tags": [
       "stove"
@@ -30,24 +33,28 @@
     "id": "color_tv",
     "name": "Color TV",
     "category": "appliance",
+    "basePrice": 349,
     "happinessBonus": 1
   },
   {
     "id": "vcr",
     "name": "VCR",
     "category": "appliance",
+    "basePrice": 250,
     "happinessBonus": 1
   },
   {
     "id": "stereo",
     "name": "Stereo",
     "category": "appliance",
+    "basePrice": 450,
     "happinessBonus": 1
   },
   {
     "id": "microwave",
     "name": "Microwave",
     "category": "appliance",
+    "basePrice": 220,
     "happinessBonus": 1,
     "tags": [
       "microwave"
@@ -57,6 +64,7 @@
     "id": "hot_tub",
     "name": "Hot Tub",
     "category": "appliance",
+    "basePrice": 1255,
     "happinessBonus": 3,
     "tags": [
       "hot_tub"
@@ -66,6 +74,7 @@
     "id": "computer",
     "name": "Computer",
     "category": "appliance",
+    "basePrice": 1599,
     "happinessBonus": 3,
     "tags": [
       "computer"
@@ -75,24 +84,28 @@
     "id": "bw_tv",
     "name": "Black & White TV",
     "category": "appliance",
+    "basePrice": 110,
     "happinessBonus": 0
   },
   {
     "id": "encyclopedia",
     "name": "Encyclopedia",
     "category": "book",
+    "basePrice": 475,
     "happinessBonus": 1
   },
   {
     "id": "dictionary",
     "name": "Dictionary",
     "category": "book",
+    "basePrice": 70,
     "happinessBonus": 1
   },
   {
     "id": "atlas",
     "name": "Atlas",
     "category": "book",
+    "basePrice": 55,
     "happinessBonus": 1
   },
   {
@@ -100,6 +113,7 @@
     "name": "Business Suit",
     "category": "clothes",
     "subcategory": "business",
+    "basePrice": 295,
     "happinessBonus": 2,
     "weeks": 13
   },
@@ -108,6 +122,7 @@
     "name": "Dress Clothes",
     "category": "clothes",
     "subcategory": "dress",
+    "basePrice": 90,
     "happinessBonus": 0,
     "weeks": 9
   },
@@ -116,6 +131,7 @@
     "name": "Casual Clothes",
     "category": "clothes",
     "subcategory": "casual",
+    "basePrice": 35,
     "happinessBonus": 0,
     "weeks": 9
   },
@@ -124,6 +140,7 @@
     "name": "Hamburgers",
     "category": "food",
     "subcategory": "fast_food",
+    "basePrice": 79,
     "happinessBonus": 0
   },
   {
@@ -131,6 +148,7 @@
     "name": "Cheeseburger",
     "category": "food",
     "subcategory": "fast_food",
+    "basePrice": 89,
     "happinessBonus": 1
   },
   {
@@ -138,6 +156,7 @@
     "name": "Astro Chicken",
     "category": "food",
     "subcategory": "fast_food",
+    "basePrice": 124,
     "happinessBonus": 2
   },
   {
@@ -145,6 +164,7 @@
     "name": "Fries",
     "category": "food",
     "subcategory": "fast_food",
+    "basePrice": 65,
     "happinessBonus": 0
   },
   {
@@ -152,6 +172,7 @@
     "name": "Food for 1 Week",
     "category": "food",
     "subcategory": "groceries",
+    "basePrice": 55,
     "happinessBonus": 1,
     "units": 1
   },
@@ -160,6 +181,7 @@
     "name": "Food for 2 Weeks",
     "category": "food",
     "subcategory": "groceries",
+    "basePrice": 100,
     "happinessBonus": 2,
     "units": 2
   },
@@ -168,6 +190,7 @@
     "name": "Food for 4 Weeks",
     "category": "food",
     "subcategory": "groceries",
+    "basePrice": 190,
     "happinessBonus": 4,
     "units": 4
   },
@@ -175,6 +198,7 @@
     "id": "lottery_tickets",
     "name": "10 Lottery Tickets",
     "category": "ticket",
+    "basePrice": 10,
     "happinessBonus": 2,
     "isFixedPrice": true
   },
@@ -182,36 +206,42 @@
     "id": "baseball_tickets",
     "name": "Baseball Tickets",
     "category": "ticket",
+    "basePrice": 45,
     "happinessBonus": 2
   },
   {
     "id": "theatre_tickets",
     "name": "Theatre Tickets",
     "category": "ticket",
+    "basePrice": 30,
     "happinessBonus": 2
   },
   {
     "id": "concert_tickets",
     "name": "Concert Tickets",
     "category": "ticket",
+    "basePrice": 40,
     "happinessBonus": 2
   },
   {
     "id": "cola",
     "name": "Colas",
     "category": "junk",
+    "basePrice": 69,
     "happinessBonus": 1
   },
   {
     "id": "shake",
     "name": "Shakes",
     "category": "junk",
+    "basePrice": 102,
     "happinessBonus": 2
   },
   {
     "id": "newspaper",
     "name": "Newspaper",
     "category": "junk",
+    "basePrice": 1,
     "happinessBonus": 0,
     "isFixedPrice": true
   },
@@ -219,18 +249,21 @@
     "id": "dog_food",
     "name": "Dog Food",
     "category": "junk",
+    "basePrice": 18,
     "happinessBonus": -1
   },
   {
     "id": "8track",
     "name": "8-Track Player",
     "category": "junk",
+    "basePrice": 75,
     "happinessBonus": -1
   },
   {
     "id": "capote",
     "name": "Works of Capote",
     "category": "junk",
+    "basePrice": 100,
     "happinessBonus": -2
   }
 ]

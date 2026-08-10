@@ -615,10 +615,12 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
   );
 }
 
-export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsForSale = [], rules }: InteractionProps & { economicIndex?: number, pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[], rules?: GameRules }) {
+export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsForSale = [], rules, campaign }: InteractionProps & { economicIndex?: number, pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[], rules?: GameRules, campaign?: CampaignBundle }) {
   const { t } = useTranslation();
   const pawnableAppliances = player.inventory.appliances;
   const redeemableItems = player.inventory.pawnedItems || [];
+
+  const formatItemName = (id: string) => campaign?.items.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   return (
     <div className="interaction-panel">
@@ -642,7 +644,7 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
-                  <span>{t(`item.${app.id}`, { defaultValue: app.id.replaceAll('_', ' ') })}</span>
+                  <span>{t(`item.${app.id}`, { defaultValue: formatItemName(app.id) })}</span>
                 </div>
                 <span style={{ color: '#2ecc71' }}>+${pawnValue}</span>
               </li>
@@ -669,7 +671,7 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
-                  <span>{t(`item.${app.itemId}`, { defaultValue: app.itemId.replaceAll('_', ' ') })}</span>
+                  <span>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
                 </div>
                 <span style={{ color: '#e74c3c' }}>-${redeemCost}</span>
               </li>
@@ -695,7 +697,7 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     )}
-                    <span>{t(`item.${app.itemId}`, { defaultValue: app.itemId.replaceAll('_', ' ') })}</span>
+                    <span>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
                   </div>
                   <span style={{ color: '#e74c3c' }}>-${buyCost}</span>
                 </li>
@@ -708,7 +710,7 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
   );
 }
 
-export function DiscountAndPawnShop({ player, onAction, availableItems, economicIndex = 0, pawnShopItemsForSale = [], rules }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number, pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[], rules?: GameRules }) {
+export function DiscountAndPawnShop({ player, onAction, availableItems, economicIndex = 0, pawnShopItemsForSale = [], rules, campaign }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number, pawnShopItemsForSale?: import('../engine/gameState').PawnedItem[], rules?: GameRules, campaign?: CampaignBundle }) {
   const [activeTab, setActiveTab] = useState<'store' | 'pawn'>('store');
 
   return (
@@ -747,6 +749,7 @@ export function DiscountAndPawnShop({ player, onAction, availableItems, economic
           economicIndex={economicIndex}
           pawnShopItemsForSale={pawnShopItemsForSale}
           rules={rules}
+          campaign={campaign}
         />
       )}
     </div>

@@ -25,7 +25,7 @@ interface DashboardProps {
   onOpenSettings: () => void;
 }
 
-import { calcRobberyChance } from '../engine/statMath';
+import { calcRobberyChance, calcEffectiveRobberyChance } from '../engine/statMath';
 
 export function Dashboard({
   player,
@@ -153,23 +153,41 @@ export function Dashboard({
 
       {campaign?.config.statRules?.enableAdvancedStats && (
         <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
-          <div><strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}</div>
-          <div style={{
-             fontWeight: (player.mentalCondition || 0) <= (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'bold' : 'normal',
-             color: (player.mentalCondition || 0) < (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'red' : ((player.mentalCondition || 0) === (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'orange' : 'inherit')
-          }}>
+          <div 
+            style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
+            onClick={() => handleFilterToggle('lifestyle')}
+          >
+            <strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}
+          </div>
+          <div 
+            style={{
+               cursor: 'pointer',
+               opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
+               fontWeight: (player.mentalCondition || 0) <= (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'bold' : 'normal',
+               color: (player.mentalCondition || 0) < (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'red' : ((player.mentalCondition || 0) === (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'orange' : 'inherit')
+            }}
+            onClick={() => handleFilterToggle('mental')}
+          >
              <strong>{t('stat.mentalCondition')}:</strong> {Math.floor(player.mentalCondition || 0)}
           </div>
-          <div style={{
-             fontWeight: (player.physicalCondition || 0) <= (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'bold' : 'normal',
-             color: (player.physicalCondition || 0) < (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'red' : ((player.physicalCondition || 0) === (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'orange' : 'inherit')
-          }}>
+          <div 
+            style={{
+               cursor: 'pointer',
+               opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
+               fontWeight: (player.physicalCondition || 0) <= (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'bold' : 'normal',
+               color: (player.physicalCondition || 0) < (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'red' : ((player.physicalCondition || 0) === (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'orange' : 'inherit')
+            }}
+            onClick={() => handleFilterToggle('physical')}
+          >
              <strong>{t('stat.physicalCondition')}:</strong> {Math.floor(player.physicalCondition || 0)}
+          </div>
+          <div>
+            <strong>{t('stat.breakInChance', 'Break-in Chance')}:</strong> {(calcEffectiveRobberyChance(player, gameState.rules, turn, campaign) * 100).toFixed(1)}%
           </div>
         </div>
       )}
 
-      {gameState.rules.showDetailedStats && (
+      {gameState.rules.showDetailedStats && !campaign?.config.statRules?.enableAdvancedStats && (
         <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
           <div><strong>{t('stat.dependability')}:</strong> {Math.floor(player.dependability)}</div>
           <div><strong>{t('stat.experience')}:</strong> {Math.floor(player.experience)}</div>
@@ -178,29 +196,9 @@ export function Dashboard({
               <strong>{t('stat.relaxation')}:</strong> {Math.floor(player.relaxation || 0)}
             </div>
           )}
-          {(() => {
-            let breakInChance = 0;
-            if (player.currentHousingId === 'security') {
-              breakInChance = 0;
-            } else if (gameState.rules.useHomeTimeRobbery) {
-              const startWeek = campaign?.config.eventRules?.willyRobberyStartWeek ?? 4;
-              if (turn < startWeek) {
-                breakInChance = 0;
-              } else {
-                const history = player.homeTimeHistory || [];
-                const sum = history.reduce((acc, val) => acc + val, 0);
-                const mean = history.length > 0 ? sum / history.length : 0;
-                breakInChance = 1 / (11 + mean);
-              }
-            } else {
-              breakInChance = calcRobberyChance(player.relaxation || 0);
-            }
-            return (
-              <div>
-                <strong>{t('stat.breakInChance', 'Break-in Chance')}:</strong> {(breakInChance * 100).toFixed(1)}%
-              </div>
-            );
-          })()}
+          <div>
+            <strong>{t('stat.breakInChance', 'Break-in Chance')}:</strong> {(calcEffectiveRobberyChance(player, gameState.rules, turn, campaign) * 100).toFixed(1)}%
+          </div>
         </div>
       )}
 
@@ -213,13 +211,13 @@ export function Dashboard({
             )}
             <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={`${player.dependability}/${maxDep}`} icon="🤝" id="stat-dependability" isActive={activeLogFilter === 'dependability'} onClick={() => handleFilterToggle('dependability')} />
             <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={`${player.experience}/${maxExp}`} icon="👌" id="stat-experience" isActive={activeLogFilter === 'experience'} onClick={() => handleFilterToggle('experience')} />
-            <StatBadge label={t('dashboard.luck', { defaultValue: 'Luck' })} value={`${luckScore}%`} icon="🍀" id="stat-luck" isActive={activeLogFilter === 'luck'} onClick={() => handleFilterToggle('luck')} />
+            <StatBadge label={t('dashboard.luck', { defaultValue: 'Luck' })} value={`${luckScore}%`} icon="👨‍💼" id="stat-luck" isActive={activeLogFilter === 'luck'} onClick={() => handleFilterToggle('luck')} />
           </>
         )}
         {gameState.rules.usePhysicalMentalConditions && (
           <>
-            <StatBadge label={t('dashboard.physical', { defaultValue: 'Physical' })} value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 30}`} icon="💪" id="stat-physical" />
-            <StatBadge label={t('dashboard.mental', { defaultValue: 'Mental' })} value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 25}`} icon="🧠" id="stat-mental" />
+            <StatBadge label={t('dashboard.physical', { defaultValue: 'Physical' })} value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 30}`} icon="💪" id="stat-physical" isActive={activeLogFilter === 'physical'} onClick={() => handleFilterToggle('physical')} />
+            <StatBadge label={t('dashboard.mental', { defaultValue: 'Mental' })} value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 25}`} icon="🧠" id="stat-mental" isActive={activeLogFilter === 'mental'} onClick={() => handleFilterToggle('mental')} />
           </>
         )}
         <StatBadge label={t('dashboard.victory', { defaultValue: 'Victory' })} value={`${victoryPercent}%`} icon="🏆" id="stat-victory" />

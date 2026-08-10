@@ -16,49 +16,64 @@
     "entryCost": true,
     "inventory": [
       {
-        "itemId": "refrigerator"
+        "itemId": "refrigerator",
+        "priceOverride": 650
       },
       {
-        "itemId": "stove"
+        "itemId": "stove",
+        "priceOverride": 490
       },
       {
-        "itemId": "stereo"
+        "itemId": "stereo",
+        "priceOverride": 450
       },
       {
-        "itemId": "color_tv"
+        "itemId": "color_tv",
+        "priceOverride": 349
       },
       {
-        "itemId": "bw_tv"
+        "itemId": "bw_tv",
+        "priceOverride": 110
       },
       {
-        "itemId": "microwave"
+        "itemId": "microwave",
+        "priceOverride": 220
       },
       {
-        "itemId": "vcr"
+        "itemId": "vcr",
+        "priceOverride": 250
       },
       {
-        "itemId": "encyclopedia"
+        "itemId": "encyclopedia",
+        "priceOverride": 475
       },
       {
-        "itemId": "dictionary"
+        "itemId": "dictionary",
+        "priceOverride": 70
       },
       {
-        "itemId": "atlas"
+        "itemId": "atlas",
+        "priceOverride": 55
       },
       {
-        "itemId": "casual_clothes"
+        "itemId": "casual_clothes",
+        "priceOverride": 35
       },
       {
-        "itemId": "dress_clothes"
+        "itemId": "dress_clothes",
+        "priceOverride": 90
       },
       {
-        "itemId": "baseball_tickets"
+        "itemId": "baseball_tickets",
+        "priceOverride": 45
       },
       {
-        "itemId": "theatre_tickets"
+        "itemId": "theatre_tickets",
+        "priceOverride": 30
       },
       {
-        "itemId": "concert_tickets"
+        "itemId": "concert_tickets",
+        "priceOverride": 40
       }
     ]
   }

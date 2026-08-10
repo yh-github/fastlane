@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { loadCampaign } from '../src/engine/dataLoader';
 import { calcLiquidAssets } from '../src/engine/economyEngine';
-import { calcWealthProgress } from '../src/engine/statMath';
+import { calcWealthProgress, calcEffectiveRobberyChance } from '../src/engine/statMath';
 import { study } from '../src/engine/educationEngine';
 import { isLogMatchingFilter } from '../src/utils/logCategorizer';
 import type { PlayerState, GameRules } from '../src/engine/gameState';
@@ -80,9 +80,37 @@ describe('Advanced Variant Bugs (Integration & Regression)', () => {
     } as any;
     
     // We expect a food event to map to 'mental' (as food increases mentalCondition in Advanced)
-    // However, logCategorizer only knows 'happiness', 'wealth', etc.
     const result = isLogMatchingFilter(logEntry, 'mental' as any);
     expect(result).toBe(true);
+  });
+
+  it('NEW BUG FIX: All store items across all campaigns must have a price > 0', async () => {
+    const campaigns = ['1990_classic_floppy', 'qol_improved', 'advanced'];
+    for (const cId of campaigns) {
+      const campaign = await loadCampaign(cId);
+      for (const building of campaign.buildings) {
+        if (!building.inventory) continue;
+        for (const inv of building.inventory) {
+          const baseItem = campaign.items.find(i => i.id === inv.itemId);
+          const effectivePrice = inv.priceOverride ?? baseItem?.basePrice ?? 0;
+          expect(effectivePrice).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
+  it('NEW BUG FIX: calcEffectiveRobberyChance returns 0 for security housing or early weeks', () => {
+    
+    // 1. Security housing is 0%
+    const securityPlayer = { currentHousingId: 'security', relaxation: 0 };
+    expect(calcEffectiveRobberyChance(securityPlayer, {}, 5)).toBe(0);
+
+    // 2. Early turns before start week is 0%
+    const earlyPlayer = { currentHousingId: 'low_cost', relaxation: 0 };
+    expect(calcEffectiveRobberyChance(earlyPlayer, { useHomeTimeRobbery: true }, 1)).toBe(0);
+
+    // 3. Normal low cost housing on week 5 uses formula
+    expect(calcEffectiveRobberyChance(earlyPlayer, { useHomeTimeRobbery: true }, 5)).toBeGreaterThan(0);
   });
 
 });
