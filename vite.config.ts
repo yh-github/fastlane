@@ -32,6 +32,7 @@ export default defineConfig({
   // @ts-ignore
   test: {
     globals: true,
+    exclude: ['tests/e2e/**', 'node_modules/**'],
     environmentMatchGlobs: [
       ['**/*.test.tsx', 'jsdom']
     ],
