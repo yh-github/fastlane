@@ -27,19 +27,6 @@ export const GameLog: React.FC<GameLogProps> = ({
 
   const currentFilter: GoalFilter = activeFilter || 'all';
 
-  const filterButtons: Array<{ id: GoalFilter; label: string; icon: string }> = [
-    { id: 'all', label: t('gameLog.filterAll', { defaultValue: 'All' }), icon: '📑' },
-    { id: 'money', label: t('dashboard.money', { defaultValue: 'Money' }), icon: '💰' },
-    { id: 'relaxation', label: t('dashboard.relaxation', { defaultValue: 'Relaxation' }), icon: '🧘' },
-    { id: 'dependability', label: t('dashboard.dependability', { defaultValue: 'Dependability' }), icon: '🤝' },
-    { id: 'experience', label: t('dashboard.experience', { defaultValue: 'Experience' }), icon: '👌' },
-    { id: 'employability', label: t('dashboard.employability', { defaultValue: 'Employability' }), icon: '👨‍💼' },
-    { id: 'happiness', label: t('dashboard.happiness', { defaultValue: 'Happiness' }), icon: '😊' },
-    { id: 'education', label: t('dashboard.education', { defaultValue: 'Education' }), icon: '🎓' },
-    { id: 'career', label: t('dashboard.career', { defaultValue: 'Career' }), icon: '💼' },
-    { id: 'wealth', label: t('dashboard.wealth', { defaultValue: 'Wealth' }), icon: '🤑' },
-  ];
-
   const filteredEntries = entries.filter(e => isLogMatchingFilter(e, currentFilter));
   const colors = ['#ff4081', '#00e5ff', '#76ff03', '#ffeb3b']; // Magenta, Cyan, Light Green, Yellow
 

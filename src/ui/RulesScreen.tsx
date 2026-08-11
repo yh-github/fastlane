@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAvailableCampaigns, loadCampaign, type CampaignBundle, type CampaignInfo } from '../engine/dataLoader';
-import { DEFAULT_GAME_RULES, RULE_DESCRIPTIONS, type GameRules, type EventRules, type TimeRules, type EconomyRules, type StatRules } from '../engine/rules';
+import { DEFAULT_GAME_RULES, RULE_DESCRIPTIONS } from '../engine/rules';
 
 interface RulesScreenProps {
   onClose: () => void;

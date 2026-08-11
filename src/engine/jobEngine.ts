@@ -146,7 +146,7 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number, r
   
   // Dependability firing & warning checks
   if (player.dependability <= job.requirements.dependability - 5) {
-    let updated = { ...player, currentJobId: null, currentWage: 0, raisesAtCurrentJob: 0 };
+    let updated: PlayerState = { ...player, currentJobId: null, currentWage: 0, raisesAtCurrentJob: 0 };
     updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
     return { updated, wagesEarned: 0, success: false, messages: [{ key: 'action.job.fired' }] };
   }

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getAvailableActions } from './actionProvider';
 import { loadCampaign } from './dataLoader';
-import { createInitialGameState, GameState, PlayerState } from './gameState';
+import { createInitialGameState, type GameState, type PlayerState } from './gameState';
 
 describe('actionProvider', () => {
   let mockCampaign: any;

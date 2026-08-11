@@ -43,7 +43,7 @@ describe('Event Engine', () => {
     it('no robbery if player has no appliances', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.001); // Trigger robbery
       const player = { currentHousingId: 'low_cost', inventory: { appliances: [] } } as unknown as PlayerState;
-      const { updated, robbed } = processApartmentRobbery(player, new Random(1));
+      const { updated: _updated, robbed } = processApartmentRobbery(player, new Random(1));
       expect(robbed).toBe(false);
     });
 

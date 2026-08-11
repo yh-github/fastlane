@@ -2,9 +2,9 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
-import { CampaignBundle } from '../dataLoader';
-import { PlayerState, GameState } from '../gameState';
-import { GameAction } from '../gameReducer';
+import type { CampaignBundle } from '../dataLoader';
+import type { PlayerState, GameState } from '../gameState';
+import type { GameAction } from '../gameReducer';
 import { generateDomain, generateProblem } from './generatePDDL';
 
 const execAsync = promisify(exec);
@@ -26,7 +26,7 @@ export async function executeAITurnPDDL(
   const enhspJar = path.join(process.cwd(), '../../external/ENHSP-Public/enhsp-dist/enhsp.jar');
 
   try {
-    const { stdout, stderr } = await execAsync(`java -jar ${enhspJar} -o ${domainPath} -f ${probPath} -s gbfs`);
+    const { stdout } = await execAsync(`java -jar ${enhspJar} -o ${domainPath} -f ${probPath} -s gbfs`);
     const actions = parsePlan(stdout, campaign);
     if (actions.length === 0) {
       console.log("No actions parsed. Planner stdout:");

@@ -150,7 +150,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // Update Time
-      resetPlayerClock(p, state.rules);
+      resetPlayerClock(p, campaign.config.timeRules.hoursPerTurn);
 
       // 5. Check Lottery
       if (p.inventory.lotteryTickets > 0) {
@@ -199,8 +199,9 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         if (!allowSpoiled) {
           const lostFood = p.inventory.freshFoodUnits;
           p.inventory.freshFoodUnits = 0;
+          p.mess = Math.min(20, (p.mess || 0) + lostFood);
           p = applyHappinessChange(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
-          p.turnEvents.push({ key: 'events.food.ateSpoiled' });
+          p.turnEvents.push({ key: 'events.food.ateSpoiled', params: { amount: lostFood } });
           if (p.money > 0) {
             const sickTrigger = resolveDecision(replay, `spoiled_food_sick_1_${p.id}`, () => rng.next() < 0.5);
             if (sickTrigger) {

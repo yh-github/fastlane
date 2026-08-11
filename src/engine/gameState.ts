@@ -262,6 +262,7 @@ export interface TurnFlags {
   freeNewspaper: boolean;
   /** Whether the player has read the newspaper this turn */
   readNewspaper?: boolean;
+  readNewspaperThisTurn?: boolean;
   /** Whether the player has viewed their weekend summary this turn */
   hasSeenEvents: boolean;
   hasSeenWeekend: boolean;
@@ -532,7 +533,7 @@ export function calcMaxLifestyle(campaign: CampaignBundle): number {
     if (item.lifestyleValue) {
       if (item.category === 'appliance' || item.category === 'book') {
         maxLifestyle += item.lifestyleValue + Math.floor(item.lifestyleValue * 0.5); // 2 copies
-      } else if (item.category === 'clothing') {
+      } else if (item.category === 'clothes') {
         // Technically player can hold one of each clothing type
         maxLifestyle += item.lifestyleValue;
       }

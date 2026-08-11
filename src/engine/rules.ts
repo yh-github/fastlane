@@ -171,6 +171,9 @@ export interface StatRules {
   relaxationDoctorChance: number;
   
   // Advanced mechanics
+  enableAdvancedStats?: boolean;
+  mentalWarningThreshold?: number;
+  physicalWarningThreshold?: number;
   startingPhysicalCondition?: number;
   startingMentalCondition?: number;
   minPhysicalCondition?: number;

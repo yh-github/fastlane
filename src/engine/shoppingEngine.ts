@@ -9,7 +9,8 @@ export interface ShoppingResult {
 }
 
 export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): ShoppingResult {
-  if (player.money < item.basePrice) {
+  const price = item.basePrice ?? 0;
+  if (player.money < price) {
     return { updated: player, success: false, message: { key: 'action.error.notEnoughMoney' } };
   }
 
@@ -60,7 +61,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
 
   let updated: PlayerState = { 
     ...player, 
-    money: player.money - item.basePrice,
+    money: player.money - price,
     happiness: Math.max(0, Math.min(100, player.happiness + happinessBonus)),
     inventory: { ...player.inventory },
     turnFlags: newTurnFlags
@@ -96,8 +97,8 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
     case 'appliance':
       updated.inventory.appliances = [...updated.inventory.appliances, {
         id: item.id,
-        purchasePrice: item.basePrice,
-        purchaseSource: item.store as 'socket_city' | 'z_mart' | 'pawnshop'
+        purchasePrice: price,
+        purchaseSource: (item.store as 'socket_city' | 'z_mart' | 'pawnshop') || 'z_mart'
       }];
       break;
     case 'book':

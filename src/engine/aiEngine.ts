@@ -2,7 +2,7 @@ import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 import { getStoreForItem } from './dataLoader';
 import type { GameAction } from './gameReducer';
-import { calcEconomyPrice, calcItemPrice } from './economyEngine';
+import { calcItemPrice } from './economyEngine';
 
 function getBuildingNodeByArchetype(campaign: CampaignBundle, archetype: string): string | null {
   const building = campaign.buildings.find(b => b.archetype === archetype);
@@ -12,11 +12,6 @@ function getBuildingNodeByArchetype(campaign: CampaignBundle, archetype: string)
 
 function getBuildingNodeById(campaign: CampaignBundle, buildingId: string): string | null {
   return campaign.map.nodes.find(n => n.buildingId === buildingId)?.id || null;
-}
-
-function getHomeNode(campaign: CampaignBundle, player: PlayerState): string {
-  const housing = campaign.housing.find(h => h.id === player.currentHousingId);
-  return housing ? housing.homeNodeId : 'node_low_cost';
 }
 
 export type GoapState = {
@@ -41,7 +36,6 @@ export type GoapState = {
 };
 
 function extractState(player: PlayerState, turn: number): GoapState {
-  const neededClothes = player.currentJobId ? 'casual' : 'casual'; // Simplified for Goap
   const clothesWeeks = player.inventory.casualClothesWeeks + player.inventory.dressClothesWeeks + player.inventory.businessClothesWeeks;
   
   return {
@@ -50,7 +44,7 @@ function extractState(player: PlayerState, turn: number): GoapState {
     money: player.money,
     food: player.inventory.freshFoodUnits,
     hasFastFood: (player.inventory.fastFoodItems?.length ?? 0) > 0,
-    hasFridge: (player.inventory.appliances?.includes('refrigerator') ?? false),
+    hasFridge: (player.inventory.appliances?.some(a => a.id === 'refrigerator') ?? false),
     clothes: clothesWeeks,
     rentPaid: player.rentPaidUntilWeek > turn + 1,
     jobId: player.currentJobId || null,
@@ -76,20 +70,6 @@ interface GoapAction {
 
 function buildActions(campaign: CampaignBundle, economicIndex: number): GoapAction[] {
   const actions: GoapAction[] = [];
-
-  // Movement actions to all key buildings
-  const addMove = (archetype: string, name: string) => {
-    const bId = getBuildingNodeByArchetype(campaign, archetype);
-    if (bId) {
-      actions.push({
-        name: `MoveTo_${name}`,
-        cost: 2,
-        precondition: (s) => s.nodeId !== bId && s.hours >= 2,
-        effect: (s) => ({ ...s, nodeId: bId, hours: s.hours - 2 }),
-        createGameAction: () => ({ type: 'move', nodeId: bId })
-      });
-    }
-  };
   // Setup Move Actions for EVERY node in the map
   campaign.map.nodes.forEach(node => {
     actions.push({
@@ -181,7 +161,7 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
           return s.nodeId === empNode && s.hours >= 4 && s.exp >= job.requirements.experience && depMet && job.requirements.degrees.every(d => s.degrees.includes(d)) && s.jobId !== job.id && !s.rejectedJobs.includes(job.id);
         },
         effect: (s) => ({ ...s, hours: s.hours - 4, jobId: job.id, rejectedJobs: [...s.rejectedJobs, job.id] }), // Mark as rejected in state just in case it plans it again
-        createGameAction: (s) => ({ type: 'apply', jobId: job.id })
+        createGameAction: (_s) => ({ type: 'apply', jobId: job.id })
       });
     });
   // Action: Enroll and Study

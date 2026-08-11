@@ -46,7 +46,7 @@ describe('AI Engine', () => {
     let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 0;
-    aiPlayer.inventory.appliances = ['refrigerator'];
+    aiPlayer.inventory.appliances = [{ id: 'refrigerator', purchasePrice: 400, purchaseSource: 'z_mart' }];
     aiPlayer.money = 100;
     aiPlayer.hoursRemaining = 60;
 

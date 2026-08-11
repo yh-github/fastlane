@@ -22,7 +22,7 @@ export interface ReplayStep {
   turn: number;
   action: ControllerAction;
   engineDecisions: EngineDecision[];
-  validation: ReplayValidation;
+  validation?: ReplayValidation;
 }
 
 export interface ReplayData {

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-global.fetch = async (url: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+global.fetch = async (url: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
   const urlStr = url.toString();
   const filePath = path.join(process.cwd(), 'public', urlStr);
   try {

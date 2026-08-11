@@ -11,9 +11,15 @@ import { simulateActionVisuals } from '../engine/aiTranslator';
 import { gameReducer, type GameAction } from '../engine/gameReducer';
 import type { GameEvent } from '../engine/gameState';
 import { Random } from '../utils/rng';
-import type { ReplayData, ReplayStep, EngineDecision, ReplayContext } from '../engine/replayTypes';
+import type { ReplayData, EngineDecision, ReplayContext } from '../engine/replayTypes';
 
 export type AppStatus = 'loading' | 'ready' | 'error';
+
+export interface LogEntry {
+  week: number;
+  event: GameEvent;
+  playerId?: string;
+}
 
 export function useGameEngine(
   campaignId: string | null,
@@ -54,7 +60,7 @@ export function useGameEngine(
         replayDataRef.current = {
           version: '1.0.0', // Can be dynamically injected from package.json in future
           commitHash: 'unknown', 
-          campaignId: bundle.id,
+          campaignId: bundle.config.name,
           rules: initialState.rules,
           startingState: initialState,
           steps: [],
@@ -464,7 +470,8 @@ export function useGameEngine(
 
           // Pre-action visual pacing
           if (actions[0].type === 'move') {
-            const targetNode = campaign!.map.nodes.find(n => n.id === actions[0].nodeId);
+            const moveAct = actions[0] as { type: 'move'; nodeId: string };
+            const targetNode = campaign!.map.nodes.find(n => n.id === moveAct.nodeId);
             if (targetNode) {
               showMapClick(targetNode.x, targetNode.y);
             }

@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Dashboard } from './Dashboard';
-import { createInitialGameState } from '../engine/gameState';
 import type { PlayerState } from '../engine/gameState';
 
 vi.mock('react-i18next', () => ({

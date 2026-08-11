@@ -213,7 +213,7 @@ describe('Game Variant mechanics', () => {
     });
 
     it('lottery tickets: grants +2 happiness ONLY on first purchase per turn', () => {
-      const lotteryItem = { id: 'lottery_tickets', name: '10 Lottery Tickets', category: 'ticket', store: 'blacks_market', basePrice: 10, happinessBonus: 2 };
+      const lotteryItem = { id: 'lottery_tickets', name: '10 Lottery Tickets', category: 'ticket' as const, store: 'blacks_market', basePrice: 10, happinessBonus: 2 };
       const player = getDummyPlayer({ money: 100, happiness: 50 });
 
       // First purchase

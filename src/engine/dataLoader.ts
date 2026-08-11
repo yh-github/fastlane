@@ -4,6 +4,15 @@
  * Single gateway between raw campaign data files and the engine's typed models.
  */
 
+import type {
+  GameRules,
+  EventRules,
+  StatRules,
+  WinCondition,
+  TimeRules,
+  EconomyRules,
+} from './rules';
+
 // ─── Campaign Data Types ────────────────────────────────────────
 
 export interface CampaignConfig {

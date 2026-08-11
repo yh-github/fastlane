@@ -27,7 +27,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   if (!selectedLocation) {
     return (
       <div className="interaction-panel">
-        <h3>{t('jobBoard.title')}</h3>
+        <h3>{t('jobBoard.title')} <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 'normal' }}>({t('jobBoard.score', { defaultValue: 'Score' })}: {employabilityScore})</span></h3>
 
         {locations.map(loc => {
           const jobCount = availableJobs.filter(j => j.locationId === loc).length;
@@ -459,9 +459,13 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
 
       <div style={{ display: 'flex', gap: '5px' }}>
         <button 
-          onClick={() => onAction({ type: 'buy_stock', stockId: stock.id, quantity: numShares, cost: totalCost })} 
+          onClick={() => {
+            if (numShares > 0) {
+              onAction({ type: 'buy_stock', stockId: stock.id, quantity: numShares, cost: totalCost });
+            }
+          }} 
           disabled={numShares <= 0}
-          style={{ flex: 1, background: numShares > 0 ? '#2ecc71' : '#555', color: numShares > 0 ? '#000' : '#888' }}
+          style={{ flex: 1, background: canBuy ? '#2ecc71' : (numShares > 0 ? '#e67e22' : '#555'), color: numShares > 0 ? '#000' : '#888' }}
         >
           {t('stocks.buyBtn', { cost: totalCost, defaultValue: `Buy (-$${totalCost})` })}
         </button>
@@ -473,6 +477,11 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
           {t('stocks.sellBtn', { revenue: totalRevenue, defaultValue: `Sell (+$${totalRevenue})` })}
         </button>
       </div>
+      {numShares > 0 && !canBuy && (
+        <div style={{ fontSize: '11px', color: '#e74c3c', marginTop: '4px' }}>
+          {t('stocks.insufficientFunds', { defaultValue: `*Not enough cash (Costs $${totalCost}, you have $${playerMoney})` })}
+        </div>
+      )}
       {stock.sellFeePercent !== undefined && stock.sellFeePercent > 0 && canSell && (
         <div style={{ fontSize: '11px', color: '#e74c3c', marginTop: '4px' }}>
           {t('stocks.fee', { fee: stock.sellFeePercent, defaultValue: `*${stock.sellFeePercent}% transaction fee applied to sale.` })}
