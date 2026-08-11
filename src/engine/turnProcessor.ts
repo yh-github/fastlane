@@ -26,7 +26,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   let currentHeadline: GameEvent | null = null;
   
   if (state.turn >= 8) {
-    if (newEconomy > -30) {
+    if (newEconomy >= 80) {
       const crashDivisor = campaign.config.eventRules?.marketCrashDivisor ?? 30;
       const crashChance = 1 / (1 + (crashDivisor * state.players.length));
       
@@ -35,15 +35,15 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         const roll = resolveDecision(replay, `market_crash_roll`, () => rng.next());
         if (roll < 0.333) {
           crashSeverity = 'minor';
-          newEconomy = Math.max(-30, newEconomy - 3);
+          newEconomy = Math.max(-30, newEconomy - 15);
           currentHeadline = { key: 'newspaper.crash_minor' };
         } else if (roll < 0.666) {
           crashSeverity = 'moderate';
-          newEconomy = Math.max(-30, newEconomy - 6);
+          newEconomy = Math.max(-30, newEconomy - 30);
           currentHeadline = { key: 'newspaper.crash_moderate' };
         } else {
           crashSeverity = 'major';
-          newEconomy = Math.max(-30, newEconomy - 12);
+          newEconomy = Math.max(-30, newEconomy - 50);
           currentHeadline = { key: 'newspaper.crash_major' };
         }
       }
@@ -421,8 +421,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // 16. Economic Events
-      if (state.turn % 20 === 0 && Math.abs(state.economicIndex) > 5) {
-        const crashSeverity = state.economicIndex < -20 ? 'major' : (state.economicIndex < -10 ? 'moderate' : 'minor');
+      if (crashSeverity !== 'none') {
         p = applyMarketCrash(p, crashSeverity, rng, replay, state.rules, campaign.config.statRules);
       } else if (economicBoom) {
         p = applyEconomicBoom(p, campaign, newEconomy, state.turn, state.rules, campaign.config.statRules);

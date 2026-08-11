@@ -216,17 +216,45 @@ describe('Turn Processor', () => {
   });
 
   describe('Market Crash', () => {
-    it('triggers market crash if chance hits', () => {
+    it('does NOT trigger market crash if turn < 8 or economic index < 80', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
-      state.turn = 2;
-      state.players[0].inventory.freshFoodUnits = 10;
-      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
-      
-      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.0001);
+      state.turn = 7; // turn < 8
+      state.economicIndex = 85;
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.0001); // would trigger if eligible
+
+      const nextState = processTurnStart(state, mockCampaign);
+      expect(nextState.players[0].turnEvents.some(e => e.key.includes('marketCrash'))).toBe(false);
+
+      // Now turn = 8, but economic index = 50 (< 80)
+      state.turn = 8;
+      state.economicIndex = 50;
+      const nextState2 = processTurnStart(state, mockCampaign);
+      expect(nextState2.players[0].turnEvents.some(e => e.key.includes('marketCrash'))).toBe(false);
+    });
+
+    it('triggers market crash when turn >= 8 and economic index >= 80, applying penalties to player', () => {
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 8;
+      state.economicIndex = 85;
+      state.players[0].bankSavings = 1000;
+      state.players[0].currentJobId = 'job_clerk';
+      state.players[0].currentWage = 20;
+
+      // Mock random:
+      // 1. fluctuateEconomy step -> 0.5 (0 change) -> newEconomy stays 85
+      // 2. market_crash_trigger -> 0.0001 (< crashChance ~0.032) -> crash triggered!
+      // 3. market_crash_roll -> 0.99 (Major crash: roll >= 0.666)
+      const rngSpy = vi.spyOn(Random.prototype, 'next');
+      rngSpy.mockReturnValueOnce(0.5);   // fluctuateEconomy
+      rngSpy.mockReturnValueOnce(0.0001); // market_crash_trigger
+      rngSpy.mockReturnValueOnce(0.99);   // market_crash_roll (Major)
 
       const nextState = processTurnStart(state, mockCampaign);
 
-      expect(nextState.economicIndex).toBeLessThan(100);
+      expect(nextState.economicIndex).toBe(35); // 85 - 50 = 35
+      expect(nextState.players[0].bankSavings).toBe(0); // Major crash wipes savings!
+      expect(nextState.players[0].currentJobId).toBeNull(); // Major crash fires player!
+      expect(nextState.players[0].turnEvents.some(e => e.key === 'events.marketCrash.bankSavingsLost')).toBe(true);
     });
   });
 

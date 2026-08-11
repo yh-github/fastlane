@@ -121,11 +121,12 @@ describe('Game Variant mechanics', () => {
       const state = getDummyState();
       state.players = [getDummyPlayer()]; // 1 player -> 1/21
       state.turn = 10;
+      state.economicIndex = 85; // Crashes require economic index >= 80
       let crashCount = 0;
       for (let i = 0; i < 100; i++) {
         state.rngState = i;
         const nextState = processTurnStart(state, dummyCampaign);
-        if (nextState.economicIndex < -3) crashCount++;
+        if (nextState.economicIndex < 80) crashCount++;
       }
       expect(crashCount).toBeGreaterThan(0);
     });
@@ -134,12 +135,13 @@ describe('Game Variant mechanics', () => {
       const state = getDummyState();
       state.players = [getDummyPlayer()]; // 1 player -> 1/31
       state.turn = 10;
+      state.economicIndex = 85; // Crashes require economic index >= 80
       const cdromCampaign = { ...dummyCampaign, config: { ...dummyCampaign.config, eventRules: { marketCrashDivisor: 30 } } } as unknown as CampaignBundle;
       let crashCount = 0;
       for (let i = 0; i < 100; i++) {
         state.rngState = i;
         const nextState = processTurnStart(state, cdromCampaign);
-        if (nextState.economicIndex < -3) crashCount++;
+        if (nextState.economicIndex < 80) crashCount++;
       }
       expect(crashCount).toBeGreaterThan(0);
     });
