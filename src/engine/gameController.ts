@@ -13,13 +13,13 @@
  * matching the engine).
  */
 
-import { GameState, PlayerState, GameEvent, recalculatePlayerEffects } from './gameState'
+import type { GameState, PlayerState, GameEvent } from './gameState'
+import type { CampaignBundle } from './dataLoader'
 import { gameReducer, type GameAction, type ReducerContext } from './gameReducer'
 import { processTurnStart } from './turnProcessor'
 import { getAvailableActions, type ActionChoice } from './actionProvider'
-import { resolveDecision, type EngineDecision, type ReplayContext } from './replayTypes'
+import type { EngineDecision, ReplayContext } from './replayTypes'
 import { Random } from '../utils/rng'
-import { CampaignBundle } from './dataLoader'
 import { calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath'
 import { calcLiquidAssets } from './economyEngine'
 import { spendHours } from './timeManager'
@@ -38,7 +38,7 @@ export type ControllerAction =
 export interface ActionResult {
   state: GameState
   insideBuilding: boolean
-  actionLog?: GameEvent
+  actionLog?: GameEvent | GameEvent[]
   turnAdvanced: boolean
   outEngineDecisions?: EngineDecision[]
 }
@@ -315,7 +315,12 @@ export function getGameSummary(
           redeemCost: p.redeemCost,
         })),
       },
-      goalAllotment: { ...player.goalAllotment },
+      goalAllotment: {
+        wealth: player.goalAllotment.wealth,
+        happiness: player.goalAllotment.happiness,
+        education: player.goalAllotment.education,
+        career: player.goalAllotment.career,
+      },
       goalProgress: {
         wealth: wealthProgress,
         happiness: player.happiness,

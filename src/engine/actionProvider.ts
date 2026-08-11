@@ -1,6 +1,6 @@
-import { GameAction } from './gameReducer';
-import { GameState, PlayerState } from './gameState';
-import { CampaignBundle } from './dataLoader';
+import type { GameAction } from './gameReducer';
+import type { GameState, PlayerState } from './gameState';
+import type { CampaignBundle } from './dataLoader';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { calcEconomyPrice, calcItemPrice } from './economyEngine';
 

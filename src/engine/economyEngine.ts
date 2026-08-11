@@ -5,7 +5,8 @@
  * and rent debt garnishment.
  */
 
-import { type PlayerState, type GameRules, type StatRules } from './gameState';
+import { type PlayerState } from './gameState';
+import type { GameRules, StatRules } from './rules';
 import type { Random } from '../utils/rng';
 import { applyHappinessChange } from './statEffects';
 import type { CampaignBundle } from './dataLoader';
@@ -66,8 +67,8 @@ export function calcEconomyPrice(basePrice: number, economicIndex: number, isFix
 /**
  * Calculate price for an item definition or item-like object.
  */
-export function calcItemPrice(item: { basePrice: number; isFixedPrice?: boolean }, economicIndex: number): number {
-  return calcEconomyPrice(item.basePrice, economicIndex, item.isFixedPrice);
+export function calcItemPrice(item: { basePrice?: number; isFixedPrice?: boolean }, economicIndex: number): number {
+  return calcEconomyPrice(item.basePrice ?? 0, economicIndex, item.isFixedPrice);
 }
 
 /**
@@ -115,7 +116,7 @@ export function applyMarketCrash(
   player: PlayerState,
   severity: 'minor' | 'moderate' | 'major',
   rng: Random,
-  replay?: ReplayContext,
+  _replay?: ReplayContext,
   rules?: GameRules,
   statRules?: StatRules
 ): PlayerState {
@@ -178,7 +179,7 @@ export function applyEconomicBoom(
 
   let stockValue = 0;
   const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
-  if (campaign && campaign.stocks) {
+  if (hasSignificantStocks && campaign && campaign.stocks) {
     for (const stock of campaign.stocks) {
       if (stock.id === 'tbills') continue;
       const owned = player.inventory.stocks.holdings[stock.id] || 0;

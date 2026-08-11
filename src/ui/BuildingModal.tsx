@@ -193,12 +193,12 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           if (Array.isArray(actionLog)) {
             const speechParts = actionLog
               .filter(l => l.key !== 'action.job.worked')
-              .map(l => t(l.key, l.params as any));
+              .map(l => String(t(l.key, l.params as any)));
             if (speechParts.length > 0) {
               nextMsg = speechParts.join('\n\n');
             }
           } else if (mainLog.key !== 'action.job.worked') {
-            nextMsg = t(mainLog.key, mainLog.params as any);
+            nextMsg = String(t(mainLog.key, mainLog.params as any));
           }
         } else if (payload.type === 'ask_rent_extension') {
           if (mainLog.key === 'action.rent.alreadyGranted') {

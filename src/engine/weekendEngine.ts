@@ -32,7 +32,7 @@ export function processWeekend(
   rules?: import('./gameState').GameRules,
   campaign?: import('./dataLoader').CampaignBundle
 ): PlayerState {
-  let newPlayer = { ...player, inventory: { ...player.inventory, tickets: { ...player.inventory.tickets } } };
+  let newPlayer: PlayerState = { ...player, inventory: { ...player.inventory, tickets: { ...player.inventory.tickets } } };
   
   let weekendEvent: GameEvent | null = null;
   let priceType: 'cheap' | 'medium' | 'expensive' = 'cheap';

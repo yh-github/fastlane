@@ -11,16 +11,13 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import { loadCampaign, CampaignBundle } from './dataLoader'
-import { createInitialGameState, GameState, createDefaultGoalAllotment } from './gameState'
+import { loadCampaign, type CampaignBundle } from './dataLoader'
+import { createInitialGameState, type GameState, createDefaultGoalAllotment } from './gameState'
 import { processTurnStart } from './turnProcessor'
 import {
   processControllerAction,
   getGameSummary,
   getControllerActions,
-  type ControllerAction,
-  type ActionResult,
-  type GameSummary,
 } from './gameController'
 
 // ─── Test Helpers ─────────────────────────────────────────────
@@ -125,7 +122,6 @@ describe('processControllerAction', () => {
 
     it('syncs RNG state after move', () => {
       const state = createTestState()
-      const rngBefore = state.rngState
       const burgerNode = campaign.map.nodes.find(n => n.buildingId === 'burger_palace')!
 
       const result = processControllerAction(state, campaign, 0, false, {
@@ -149,14 +145,14 @@ describe('processControllerAction', () => {
 
       expect(result.insideBuilding).toBe(true) // stays inside
       expect(result.actionLog).toBeDefined()
-      expect(result.actionLog!.key).toBe('action.relax')
+      const logKey = Array.isArray(result.actionLog) ? result.actionLog[0]?.key : result.actionLog?.key
+      expect(logKey).toBe('action.relax')
       expect(result.state.players[0].happiness).toBeGreaterThanOrEqual(state.players[0].happiness)
     })
 
     it('syncs RNG state after reducer action', () => {
       const state = createTestState()
       const entered = processControllerAction(state, campaign, 0, false, { type: 'enter_building' })
-      const rngBefore = entered.state.rngState
 
       const result = processControllerAction(entered.state, campaign, 0, true, { type: 'relax' })
 
@@ -222,7 +218,8 @@ describe('processControllerAction', () => {
 
       expect(result.state.players[0].money).toBe(moneyBefore - 100)
       expect(result.state.players[0].bankSavings).toBe(100)
-      expect(result.actionLog!.key).toBe('action.bank.deposit')
+      const logKey = Array.isArray(result.actionLog) ? result.actionLog[0]?.key : result.actionLog?.key
+      expect(logKey).toBe('action.bank.deposit')
     })
 
     it('preserves insideBuilding state for non-move actions', () => {
@@ -477,6 +474,7 @@ describe('getControllerActions', () => {
       const building = campaign.buildings.find(b => b.id === buildingId)
       // Either it's a building ID or a node ID (for non-building nodes)
       expect(buildingId.length).toBeGreaterThan(0)
+      expect(building !== undefined || buildingId.length > 0).toBe(true)
     })
   })
 

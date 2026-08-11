@@ -22,24 +22,33 @@ describe('BuildingModal Component', () => {
     bankSavings: 50,
     loanDebt: 0,
     rentDebt: 0,
+    timesDefaulted: 0,
+    loanPaymentDeadline: 0,
     happiness: 50,
     relaxation: 50,
     dependability: 50,
     experience: 10,
+    degreeExpBoost: 0,
+    degreeDepBoost: 0,
     degrees: [],
+    enrolledClasses: {},
+    raisesAtCurrentJob: 0,
+    rentExtensionsReceived: 0,
     inventory: {
       casualClothesWeeks: 1,
       dressClothesWeeks: 0,
       businessClothesWeeks: 0,
       selectedClothes: 'casual',
-      appliances: [{ id: 'tv', name: 'TV', purchasePrice: 200, purchaseSource: 'z_mart' }],
+      appliances: [{ id: 'tv', purchasePrice: 200, purchaseSource: 'z_mart' }],
       freshFoodUnits: 0,
       fastFoodItems: [],
       lotteryTickets: 0,
       pawnedItems: [],
-      stocks: { tBills: 0, holdings: {} }
+      stocks: { tBills: 0, holdings: {} },
+      books: [],
+      tickets: { baseball: 0, theatre: 0, concert: 0 }
     },
-    turnFlags: {},
+    turnFlags: {} as any,
     turnEvents: [],
     activeEffects: {},
     position: 'node1',
@@ -53,7 +62,8 @@ describe('BuildingModal Component', () => {
     hasWon: false,
     rentExtensionsDeniedPermanently: false,
     rentExtensionActive: false,
-    nakedTurns: 0
+    nakedTurns: 0,
+    newspaperHeadline: null
   };
 
   const mockCampaign: CampaignBundle = {
@@ -70,8 +80,13 @@ describe('BuildingModal Component', () => {
       { id: 'university', name: 'University', description: 'Study and take classes', archetype: 'education' },
       { id: 'apartment_complex', name: 'Rent Office', description: 'Pay rent', archetype: 'housing' },
     ] as any,
-    map: { nodes: [{ id: 'node1', buildingId: 'apartment_complex' }] } as any
-  };
+    map: { nodes: [{ id: 'node1', buildingId: 'apartment_complex' }] } as any,
+    events: [],
+    stocks: [],
+    messages: {} as any,
+    weekends: [],
+    synergies: []
+  } as any;
 
   const mockRules = {
     helpfulUI: true,

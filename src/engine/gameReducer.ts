@@ -5,7 +5,7 @@ import { applyForJob, workShift } from './jobEngine';
 import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study } from './educationEngine';
 import { spendHours } from './timeManager';
-import { calcEconomyPrice, calcItemPrice } from './economyEngine';
+import { calcItemPrice } from './economyEngine';
 import { recalculatePlayerEffects } from './gameState';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
@@ -192,7 +192,7 @@ export function gameReducer(
             nextPlayer.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25)) + 1);
             nextPlayer.turnFlags.mentalDropsThisTurn = 0;
           }
-          actionLog = { key: 'action.education.studied', params: { name: degDef.name, current: nextPlayer.enrolledClasses![degDef.id], required: result.messages?.[0]?.params?.required || 0, stats: ` (-${studyCost} Mental)` } };
+          actionLog = { key: 'action.education.studied', params: { name: degDef.name, current: nextPlayer.enrolledClasses![degDef.id], required: result.message?.params?.required || 0, stats: ` (-${studyCost} Mental)` } };
         } else {
           actionLog = result.message;
         }
@@ -273,7 +273,7 @@ export function gameReducer(
         break;
       }
 
-      const adjacencyMap = context.campaign.map?.nodes ? buildAdjacencyMap(context.campaign.map.nodes) : {};
+      const adjacencyMap = context.campaign.map?.nodes ? buildAdjacencyMap(context.campaign.map.nodes) : new Map<string, string[]>();
       const pathResult = context.campaign.map?.nodes ? findShortestPath(adjacencyMap, nextPlayer.position, nodeId) : { found: true, steps: 1, path: [] };
       console.log(`[DEBUG-GAMEREDUCER-MOVE] from ${nextPlayer.position} to ${nodeId}: path found=${pathResult.found}, steps=${pathResult.steps}, hoursRemaining=${nextPlayer.hoursRemaining}`);
 

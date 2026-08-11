@@ -200,7 +200,7 @@ export function updatePlayers(players: { position: PlayerPosition, index: number
 
   const colors = [0xff4081, 0x00e5ff, 0x76ff03, 0xffeb3b]; // Magenta, Cyan, Light Green, Yellow
 
-  players.forEach((p, i) => {
+  players.forEach((p, _i) => {
     const token = playerTokens[p.index];
     if (!token) return;
     

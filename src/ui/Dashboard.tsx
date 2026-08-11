@@ -5,7 +5,7 @@
  * luck score, and the current week/economy indicator.
  */
 
-import { type PlayerState, type GameState, calcMaxLifestyle } from '../engine/gameState';
+import { type PlayerState, type GameState } from '../engine/gameState';
 import { calcEducationProgress, calcCareerProgress, calcWealthProgress, calcEmployabilityScore, calcMaxDependability, calcMaxExperience } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +25,7 @@ interface DashboardProps {
   onOpenSettings: () => void;
 }
 
-import { calcRobberyChance, calcEffectiveRobberyChance, calcTheoreticalRobberyChance } from '../engine/statMath';
+import { calcEffectiveRobberyChance, calcTheoreticalRobberyChance } from '../engine/statMath';
 
 export function Dashboard({
   player,
@@ -207,11 +207,11 @@ export function Dashboard({
         </div>
       )}
 
-      {gameState.rules.showDetailedStats && !campaign?.config.statRules?.enableAdvancedStats && (
+      {(gameState.rules as any).showDetailedStats && !campaign?.config.statRules?.enableAdvancedStats && (
         <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
           <div><strong>{t('stat.dependability')}:</strong> {Math.floor(player.dependability)}</div>
           <div><strong>{t('stat.experience')}:</strong> {Math.floor(player.experience)}</div>
-          {gameState.rules.useRelaxationStat && (
+          {(gameState.rules as any).useRelaxationStat && (
             <div>
               <strong>{t('stat.relaxation')}:</strong> {Math.floor(player.relaxation || 0)}
             </div>

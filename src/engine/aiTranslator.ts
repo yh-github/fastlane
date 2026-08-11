@@ -1,4 +1,4 @@
-import { type GameAction } from './gameReducer';
+import type { ControllerAction } from './gameController';
 
 export interface TranslatorUIHooks {
   setIsBuildingModalOpen: (val: boolean) => void;
@@ -10,7 +10,7 @@ export interface TranslatorUIHooks {
  * Allows the human observer to see the AI "thinking" and navigating the GUI
  * before the action is executed under the hood.
  */
-export async function simulateActionVisuals(action: GameAction, ui: TranslatorUIHooks): Promise<void> {
+export async function simulateActionVisuals(action: ControllerAction, ui: TranslatorUIHooks): Promise<void> {
   const PACING_DELAY_MS = 600;
 
   switch (action.type) {
@@ -57,7 +57,6 @@ export async function simulateActionVisuals(action: GameAction, ui: TranslatorUI
       }
       break;
 
-    case 'eat':
     case 'relax':
     case 'change_clothes':
       // Inventory actions
@@ -75,7 +74,7 @@ export async function simulateActionVisuals(action: GameAction, ui: TranslatorUI
       }
       break;
 
-    case 'end-turn':
+    case 'end_turn':
       ui.setIsBuildingModalOpen(false);
       break;
 

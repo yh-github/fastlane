@@ -1,5 +1,6 @@
-import { CampaignBundle, getStoreForItem } from '../dataLoader';
-import { PlayerState, GameState } from '../gameState';
+import type { CampaignBundle } from '../dataLoader';
+import { getStoreForItem } from '../dataLoader';
+import type { PlayerState, GameState } from '../gameState';
 
 function getBuildingNodeByArchetype(campaign: CampaignBundle, archetype: string): string | null {
   const building = campaign.buildings.find(b => b.archetype === archetype);
@@ -79,16 +80,16 @@ export function generateDomain(campaign: CampaignBundle): string {
   )\n\n`;
 
   // Buy Food
-  const groceries = campaign.items.filter(i => i.category === 'food' && i.subcategory === 'groceries').sort((a, b) => a.basePrice - b.basePrice);
+  const groceries = campaign.items.filter(i => i.category === 'food' && i.subcategory === 'groceries').sort((a, b) => (a.basePrice ?? 0) - (b.basePrice ?? 0));
   if (groceries.length > 0) {
     const food = groceries[0];
     const storeNode = getBuildingNodeById(campaign, getStoreForItem(campaign, food.id) || '');
     if (storeNode) {
       pddl += `  (:action buy_food
     :parameters ()
-    :precondition (and (at ${storeNode}) (>= (money) ${food.basePrice}))
+    :precondition (and (at ${storeNode}) (>= (money) ${food.basePrice ?? 0}))
     :effect (and
-      (decrease (money) ${food.basePrice})
+      (decrease (money) ${food.basePrice ?? 0})
       (increase (food) 14)
     )
   )\n\n`;
@@ -109,7 +110,7 @@ export function generateDomain(campaign: CampaignBundle): string {
   }
 
   // Buy Clothes
-  const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => a.basePrice - b.basePrice);
+  const clothesItems = campaign.items.filter(i => i.category === 'clothes').sort((a, b) => (a.basePrice ?? 0) - (b.basePrice ?? 0));
   clothesItems.forEach(item => {
     const storeNode = getBuildingNodeById(campaign, getStoreForItem(campaign, item.id) || '');
     if (storeNode) {

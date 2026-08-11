@@ -202,7 +202,7 @@ export function processDonations(
       const uniformSubcategory = jobDef.requirements.uniform;
       const qtItem = campaign.items.find(i => i.subcategory === uniformSubcategory && i.store === 'qt_clothing');
       if (qtItem) {
-        uniformPrice = calcEconomyPrice(qtItem.basePrice, state.economicIndex);
+        uniformPrice = calcEconomyPrice(qtItem.basePrice ?? 0, state.economicIndex);
       }
     }
   }

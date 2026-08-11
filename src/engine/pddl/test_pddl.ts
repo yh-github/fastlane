@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Mock fetch for local testing
-global.fetch = async (url: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+global.fetch = async (url: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
   const urlStr = url.toString();
   const filePath = path.join(process.cwd(), 'public', urlStr);
   try {
@@ -24,7 +24,7 @@ global.fetch = async (url: RequestInfo | URL, init?: RequestInit): Promise<Respo
 
 import { loadCampaign } from '../dataLoader';
 import { createInitialGameState } from '../gameState';
-import { gameReducer, ReducerContext } from '../gameReducer';
+import { gameReducer, type ReducerContext } from '../gameReducer';
 import { executeAITurnPDDL } from './runENHSP';
 import { processTurnStart } from '../turnProcessor';
 import { Random } from '../../utils/rng';
@@ -71,7 +71,7 @@ async function main() {
     }
     
     console.log("Ending turn...");
-    state = processTurnStart(state, campaign, new Random(123)); // For next turn
+    state = processTurnStart(state, campaign, { outDecisions: [] }); // For next turn
 
 
     const updatedPlayer = state.players[0];

@@ -34,14 +34,13 @@ global.fetch = async (url: string | URL | globalThis.Request, init?: RequestInit
   throw new Error(`fetch polyfill: unhandled URL ${urlStr}`);
 };
 
-import { loadCampaign, CampaignBundle } from '../engine/dataLoader'
-import { createInitialGameState, GameState, createDefaultGoalAllotment } from '../engine/gameState'
+import { loadCampaign, type CampaignBundle } from '../engine/dataLoader'
+import { createInitialGameState, type GameState, createDefaultGoalAllotment } from '../engine/gameState'
 import { processTurnStart } from '../engine/turnProcessor'
 import {
   processControllerAction,
   getGameSummary,
-  GameSummary,
-  ControllerAction,
+  type GameSummary,
 } from '../engine/gameController'
 
 const JSON_MODE = process.argv.includes('--json')
@@ -120,7 +119,7 @@ async function main() {
       // Check game over
       if (state.phase === 'game-over') {
         const summary = getGameSummary(state, campaign, 0, insideBuilding)
-        console.log(`\n🏆 GAME OVER! ${summary.hasWon ? 'YOU WIN!' : 'Game ended.'}`)
+        console.log(`\n🏆 GAME OVER! ${player.name} — ${summary.hasWon ? 'YOU WIN!' : 'Game ended.'}`)
         printFinalStats(summary)
         rl.close()
         break
@@ -172,8 +171,9 @@ async function main() {
         insideBuilding = result.insideBuilding
 
         if (result.actionLog) {
-          const msg = typeof result.actionLog.key === 'string' ? result.actionLog.key : JSON.stringify(result.actionLog)
-          console.log(`\n==> Action Result: ${msg} `, result.actionLog.params || "")
+          const firstLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog
+          const msg = firstLog?.key || JSON.stringify(result.actionLog)
+          console.log(`\n==> Action Result: ${msg} `, firstLog?.params || "")
         }
 
         if (result.turnAdvanced) {
@@ -326,7 +326,7 @@ async function main() {
     console.log(`======================================================`)
   }
 
-  function showTurnReport(state: GameState, campaign: CampaignBundle) {
+  function showTurnReport(state: GameState, _campaign: CampaignBundle) {
     const player = state.players[0]
 
     console.log(`\n*** WEEK ${state.turn} REPORT ***`)
