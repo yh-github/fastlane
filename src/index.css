@@ -121,16 +121,23 @@ body {
   box-shadow: 0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan);
   z-index: 50;
   max-height: 80vh;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .building-modal__header {
   display: flex;
   align-items: center;
   gap: 15px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   padding-bottom: 15px;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+
+.building-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding-inline-end: 4px;
 }
 
 .building-modal__face {

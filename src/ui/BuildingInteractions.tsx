@@ -42,7 +42,14 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
     );
   }
 
-  const jobsAtLocation = availableJobs.filter(j => j.locationId === selectedLocation);
+  const jobsAtLocation = availableJobs
+    .filter(j => j.locationId === selectedLocation)
+    .sort((a, b) => {
+      if (a.baseWage !== b.baseWage) return a.baseWage - b.baseWage;
+      if (a.requirements.experience !== b.requirements.experience) return a.requirements.experience - b.requirements.experience;
+      if (a.requirements.dependability !== b.requirements.dependability) return a.requirements.dependability - b.requirements.dependability;
+      return a.id.localeCompare(b.id);
+    });
 
   return (
     <div className="interaction-panel">
@@ -243,8 +250,8 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
 
   const rentOwed = player.rentDebt;
   const isWeek4 = turn % 4 === 0;
-  // Rent is due if the paid-until week is the start of next week or earlier.
-  const rentDue = player.rentPaidUntilWeek <= turn + 1;
+  // Rent is due if the paid-until week is current week or earlier.
+  const rentDue = player.rentPaidUntilWeek <= turn;
   const isJobHere = !!(player.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
   const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || (isJobHere && !!rules?.allowEmployedRentPayment);
 
@@ -368,27 +375,27 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
           </div>
 
           {confirmMove && (
-            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#e0e0e0', color: '#000', padding: '20px', border: '2px solid #000', borderRadius: '8px', zIndex: 1000, maxWidth: '400px', textAlign: 'center', fontFamily: 'monospace' }}>
-              <p style={{ whiteSpace: 'pre-wrap', marginBottom: '20px' }}>
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: '1px solid var(--accent-cyan, #00e5ff)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan, 0 0 10px rgba(0,229,255,0.5))', zIndex: 1000, maxWidth: '420px', width: '90%', textAlign: 'center' }}>
+              <p style={{ whiteSpace: 'pre-wrap', marginBottom: '20px', fontSize: '14px', lineHeight: '1.5', color: '#e0e0ff' }}>
                 {t('rentOffice.confirmRefund', { 
                   weeks: confirmMove.weeksPrepaid, 
                   current: currentHousing ? t(`housing.${currentHousing.id}`, { defaultValue: currentHousing.name }) : 'Apartment', 
                   newApt: confirmMove.newAptName
                 })}
               </p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
                 <button 
                   onClick={() => {
                     onAction({ type: 'move_apartment', housingId: confirmMove.housingId, cost: confirmMove.cost });
                     setConfirmMove(null);
                   }}
-                  style={{ minWidth: '60px', padding: '5px 10px', background: '#fff', color: '#000', border: '2px solid #000', fontWeight: 'bold' }}
+                  style={{ flex: 1, padding: '8px 16px', background: 'var(--accent-cyan, #00e5ff)', color: '#000', border: 'none', fontWeight: 'bold' }}
                 >
                   {t('common.yes', { defaultValue: 'YES' })}
                 </button>
                 <button 
                   onClick={() => setConfirmMove(null)}
-                  style={{ minWidth: '60px', padding: '5px 10px', background: '#fff', color: '#000', border: '2px solid #000', fontWeight: 'bold' }}
+                  style={{ flex: 1, padding: '8px 16px', background: 'transparent', color: '#fff', border: '1px solid #666', fontWeight: 'bold' }}
                 >
                   {t('common.no', { defaultValue: 'NO' })}
                 </button>

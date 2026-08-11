@@ -46,7 +46,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
   useEffect(() => {
     if (!building) return;
     const isWeek4 = turn % 4 === 0;
-    const rentDue = player?.rentPaidUntilWeek !== undefined && player.rentPaidUntilWeek <= turn + 1;
+    const rentDue = player?.rentPaidUntilWeek !== undefined && player.rentPaidUntilWeek <= turn;
     const hasJobAtRentOffice = !!(player?.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
     const isRentOfficeOpen = isWeek4 || rentDue || !!player?.turnFlags?.rentPaidThisTurn || hasJobAtRentOffice;
     const shouldShow = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);

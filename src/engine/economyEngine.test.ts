@@ -37,15 +37,15 @@ describe('Economy Engine', () => {
       const newEcon = fluctuateEconomy(50, new Random(1));
       expect(newEcon).toBe(50);
 
-      // Mock random to return 0.99 (+10)
+      // Mock random to return 0.99 (+3)
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99);
       const highEcon = fluctuateEconomy(50, new Random(1));
-      expect(highEcon).toBe(60);
+      expect(highEcon).toBe(53);
 
-      // Mock random to return 0.01 (-10)
+      // Mock random to return 0.01 (-3)
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
       const lowEcon = fluctuateEconomy(50, new Random(1));
-      expect(lowEcon).toBe(40);
+      expect(lowEcon).toBe(47);
     });
 
     it('keeps economy between -30 and 90', () => {

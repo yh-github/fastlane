@@ -79,9 +79,8 @@ export function calcItemPrice(item: { basePrice?: number; isFixedPrice?: boolean
  * @returns              New economic index
  */
 export function fluctuateEconomy(currentIndex: number, rng: Random, replay?: ReplayContext): number {
-  // Simplified random walk for the economic index
-  // A real implementation would likely have momentum or trend mechanics
-  const change = resolveDecision(replay, `fluctuate_economy`, () => Math.floor(rng.next() * 21) - 10); // -10 to +10
+  // Random walk for the economic index (-3 to +3 per turn)
+  const change = resolveDecision(replay, `fluctuate_economy`, () => Math.floor(rng.next() * 7) - 3); // -3 to +3
   return Math.max(-30, Math.min(90, currentIndex + change));
 }
 
