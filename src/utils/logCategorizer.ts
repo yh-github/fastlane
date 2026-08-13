@@ -138,7 +138,15 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
   if (paramStr.includes('happiness') || keyLower.includes('happiness')) {
     categories.add('happiness');
   }
-  if (paramStr.includes('money') || paramStr.includes('cash') || paramStr.includes('wages') || paramStr.includes('cost') || paramStr.includes('price') || paramStr.includes('amount') || paramStr.includes('diff')) {
+  // Check if money increased or decreased, or if event involves cash/money transaction
+  const p = params as any;
+  const hasMoneyParam = p.diff?.includes('$') || 
+    p.amount !== undefined || p.wagesEarned !== undefined || p.cost !== undefined || 
+    p.price !== undefined || p.value !== undefined || p.profit !== undefined || 
+    p.revenue !== undefined || p.repairCost !== undefined || p.loanSize !== undefined || 
+    p.payment !== undefined || p.fee !== undefined || p.tuitionFee !== undefined;
+
+  if (hasMoneyParam || categories.has('money') || key.includes('bank') || key.includes('rent') || key.includes('loan') || key.includes('pawn') || key.includes('buy') || key.includes('store') || key.includes('broker') || key.includes('robbery') || key.includes('lottery') || key.includes('doctor') || key.includes('donation') || key.includes('computerProfit') || key.includes('applianceBroke')) {
     categories.add('money');
     categories.add('wealth');
   }

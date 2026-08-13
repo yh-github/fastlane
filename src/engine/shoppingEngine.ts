@@ -132,7 +132,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
   }
 
   const messageParams: Record<string, any> = { itemName: item.name, itemId: item.id };
-  if (happinessBonus !== 0) {
+  if (!rules?.usePhysicalMentalConditions && happinessBonus !== 0) {
     messageParams.happinessBonus = happinessBonus;
   }
   if (mentalBonus !== 0) {

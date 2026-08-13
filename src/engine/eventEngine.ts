@@ -81,7 +81,9 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number, rng
   let updated = spendHours(player, timePenalty);
   
   if (rules?.usePhysicalMentalConditions) {
-    updated.physicalCondition = Math.max(0, (updated.physicalCondition || 15) - 2);
+    const maxPhys = updated.physicalConditionMax ?? 50;
+    const physBounce = (rules as any)?.doctorPhysicalBounceBack ?? 8;
+    updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 15) + physBounce);
   } else {
     updated.happiness = Math.max(10, updated.happiness - 4);
   }
@@ -127,6 +129,7 @@ export function processApartmentRobbery(
 
   if (robbed) {
     let stolenCount = 0;
+    const stolenItemNames: string[] = [];
     const newAppliances = player.inventory.appliances.filter((app) => {
       if (protectBuiltInAppliances && ['refrigerator', 'freezer', 'stove'].includes(app.id)) {
         return true; // Keep protected heavy appliances
@@ -134,6 +137,7 @@ export function processApartmentRobbery(
       const itemStolen = resolveDecision(replay, `apartment_robbery_item_${app.id}`, () => rng.next() < 0.25);
       if (itemStolen) {
         stolenCount++;
+        stolenItemNames.push(app.name || app.id.replaceAll('_', ' '));
         return false; // Stolen
       }
       return true; // Keep
@@ -143,10 +147,11 @@ export function processApartmentRobbery(
       return { updated: player, robbed: false };
     }
 
+    const itemsStr = stolenItemNames.join(', ');
     let updated = { 
       ...player, 
       inventory: { ...player.inventory, appliances: newAppliances }, 
-      turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment' }] 
+      turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }] 
     };
     // -4 Happiness penalty
     updated = applyHappinessChange(updated, -4, 'apartment_robbery', (rules || {}) as any);

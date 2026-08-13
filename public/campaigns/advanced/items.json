@@ -32,7 +32,8 @@
   },
   {
     "id": "hot_tub",
-    "lifestyleValue": 3
+    "lifestyleValue": 5,
+    "mentalBonus": 5
   },
   {
     "id": "computer",

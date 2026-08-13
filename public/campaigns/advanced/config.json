@@ -7,7 +7,8 @@
     { "stat": "wealth", "target": 100, "label": "Wealth" },
     { "stat": "lifestyle", "target": 100, "label": "Lifestyle" },
     { "stat": "education", "target": 100, "label": "Education" },
-    { "stat": "career", "target": 100, "label": "Career" }
+    { "stat": "career", "target": 100, "label": "Career" },
+    { "stat": "wellbeing", "target": 100, "label": "Well-being" }
   ],
   "gameRules": {
     "helpfulUI": true,

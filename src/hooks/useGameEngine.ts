@@ -350,12 +350,15 @@ export function useGameEngine(
             const physDiff = (player.physicalCondition || 0) - (oldPlayer.physicalCondition || 0);
             const mentalDiff = (player.mentalCondition || 0) - (oldPlayer.mentalCondition || 0);
             const lifeDiff = (player.lifestyle || 0) - (oldPlayer.lifestyle || 0);
+            const relaxDiff = (player.relaxation || 0) - (oldPlayer.relaxation || 0);
+            const depDiff = (player.dependability || 0) - (oldPlayer.dependability || 0);
+            const expDiff = (player.experience || 0) - (oldPlayer.experience || 0);
             
             if (moneyDiff !== 0) {
               diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
               if (prevState.rules.enableAnimations) {
                 if (moneyDiff < 0) {
-                  triggerAnim('text', `-$${Math.abs(moneyDiff)}`, { sourceId: 'stat-money', customClass: 'anim-negative' });
+                  triggerAnim('text', `-$${Math.abs(moneyDiff)}`, { targetId: 'stat-money', customClass: 'anim-negative' });
                 } else {
                   triggerAnim('text', `+$${moneyDiff}`, { targetId: 'stat-money', customClass: 'anim-positive' });
                 }
@@ -364,32 +367,44 @@ export function useGameEngine(
             if (hapDiff !== 0) {
               diffStr.push(`${hapDiff > 0 ? '+' : ''}${hapDiff} Happiness`);
               if (prevState.rules.enableAnimations) {
-                if (hapDiff > 0) {
-                  triggerAnim('emoji', '😍', { targetId: 'stat-happiness' });
-                } else {
-                  triggerAnim('emoji', '😟', { sourceId: 'stat-happiness' });
-                }
+                triggerAnim('text', `${hapDiff > 0 ? '+' : ''}${hapDiff} 😊`, { targetId: 'stat-happiness', customClass: hapDiff > 0 ? 'anim-positive' : 'anim-negative' });
               }
             }
             if (physDiff !== 0) {
               diffStr.push(`${physDiff > 0 ? '+' : ''}${physDiff} Physical`);
               if (prevState.rules.enableAnimations) {
-                if (physDiff > 0) triggerAnim('emoji', '💪', { targetId: 'stat-physical' });
-                else triggerAnim('emoji', '😫', { sourceId: 'stat-physical' });
+                triggerAnim('text', `${physDiff > 0 ? '+' : ''}${physDiff} 💪`, { targetId: 'stat-physical', customClass: physDiff > 0 ? 'anim-positive' : 'anim-negative' });
               }
             }
             if (mentalDiff !== 0) {
               diffStr.push(`${mentalDiff > 0 ? '+' : ''}${mentalDiff} Mental`);
               if (prevState.rules.enableAnimations) {
-                if (mentalDiff > 0) triggerAnim('emoji', '🧠', { targetId: 'stat-mental' });
-                else triggerAnim('emoji', '🤯', { sourceId: 'stat-mental' });
+                triggerAnim('text', `${mentalDiff > 0 ? '+' : ''}${mentalDiff} 🧠`, { targetId: 'stat-mental', customClass: mentalDiff > 0 ? 'anim-positive' : 'anim-negative' });
               }
             }
             if (lifeDiff !== 0) {
               diffStr.push(`${lifeDiff > 0 ? '+' : ''}${lifeDiff} Lifestyle`);
               if (prevState.rules.enableAnimations) {
-                if (lifeDiff > 0) triggerAnim('emoji', '🏖️', { targetId: 'stat-lifestyle' });
-                else triggerAnim('emoji', '📉', { sourceId: 'stat-lifestyle' });
+                const lifeIcon = (player.lifestyle || 0) > 50 ? '🧐' : '😎';
+                triggerAnim('text', `${lifeDiff > 0 ? '+' : ''}${lifeDiff} ${lifeIcon}`, { targetId: 'stat-lifestyle', customClass: lifeDiff > 0 ? 'anim-positive' : 'anim-negative' });
+              }
+            }
+            if (relaxDiff !== 0) {
+              diffStr.push(`${relaxDiff > 0 ? '+' : ''}${relaxDiff} Relaxation`);
+              if (prevState.rules.enableAnimations) {
+                triggerAnim('text', `${relaxDiff > 0 ? '+' : ''}${relaxDiff} 🧘`, { targetId: 'stat-relaxation', customClass: relaxDiff > 0 ? 'anim-positive' : 'anim-negative' });
+              }
+            }
+            if (depDiff !== 0) {
+              diffStr.push(`${depDiff > 0 ? '+' : ''}${depDiff} Dependability`);
+              if (prevState.rules.enableAnimations) {
+                triggerAnim('text', `${depDiff > 0 ? '+' : ''}${depDiff} 🤝`, { targetId: 'stat-dependability', customClass: depDiff > 0 ? 'anim-positive' : 'anim-negative' });
+              }
+            }
+            if (expDiff !== 0) {
+              diffStr.push(`${expDiff > 0 ? '+' : ''}${expDiff} Experience`);
+              if (prevState.rules.enableAnimations) {
+                triggerAnim('text', `${expDiff > 0 ? '+' : ''}${expDiff} 👌`, { targetId: 'stat-experience', customClass: expDiff > 0 ? 'anim-positive' : 'anim-negative' });
               }
             }
             

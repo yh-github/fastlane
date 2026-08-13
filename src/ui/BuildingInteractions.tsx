@@ -192,45 +192,192 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
 export function HomeRelax({ player, onAction, campaign, rules }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules }) {
   const { t } = useTranslation();
   const relaxCost = campaign?.config.timeRules?.relaxCost ?? 6;
-  const isMessClean = (player.mess || 0) <= 0;
+  const currentMess = player.mess || 0;
+  const maxMessHousing = calcMaxMess(player, campaign?.config.statRules);
+  const isMessClean = currentMess <= 0;
+  const isMessTooHighForSocial = currentMess > 25;
+  const cleaningServiceCost = campaign?.config.timeRules?.cleaningServiceCost ?? 1;
+
+  let messIcon = '🗑️';
+  let messLabel = 'Spotless';
+  let messBarColor = '#2ecc71';
+
+  if (currentMess > 60) {
+    messIcon = '🧹🧹🪰🪰🪳🪳 ☣️';
+    messLabel = 'Biohazard Emergency!';
+    messBarColor = '#e74c3c';
+  } else if (currentMess > 50) {
+    messIcon = '🧹🧹🪰🪰🪳🪳';
+    messLabel = 'Severe Cockroach Infestation!';
+    messBarColor = '#e74c3c';
+  } else if (currentMess > 40) {
+    messIcon = '🧹🧹🪰🪰🪳';
+    messLabel = 'Pest & Cockroach Swarm!';
+    messBarColor = '#e67e22';
+  } else if (currentMess > 30) {
+    messIcon = '🧹🧹🪰🪰';
+    messLabel = 'Fly Swarm Warning!';
+    messBarColor = '#e67e22';
+  } else if (currentMess > 20) {
+    messIcon = '🧹🧹🪰';
+    messLabel = 'Flies Appearing!';
+    messBarColor = '#f1c40f';
+  } else if (currentMess > 10) {
+    messIcon = '🧹🧹';
+    messLabel = 'Messy';
+    messBarColor = '#f1c40f';
+  } else if (currentMess > 3) {
+    messIcon = '🧹';
+    messLabel = 'Minor Mess';
+    messBarColor = '#2ecc71';
+  }
+
+  const messPercentage = Math.min(100, Math.round((currentMess / maxMessHousing) * 100));
+
   return (
-    <div className="interaction-panel">
-      <h3>{t('homeRelax.title')}</h3>
+    <div className="interaction-panel" style={{ width: '100%' }}>
+      <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        🏠 {t('homeRelax.title', { defaultValue: 'Home Management' })}
+      </h3>
+
       {rules?.trackMess && (
-        <div style={{ marginBottom: '10px', padding: '8px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
-          <strong>🗑️ Apartment Mess: {player.mess || 0} / 20</strong>
+        <div className="mess-visual-card" style={{ 
+          marginBottom: '16px', 
+          padding: '12px 14px', 
+          background: 'linear-gradient(135deg, rgba(20,20,35,0.85) 0%, rgba(35,35,55,0.85) 100%)', 
+          borderRadius: '8px',
+          border: `1px solid ${messBarColor}`,
+          boxShadow: `0 0 10px ${messBarColor}33`
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '0.95em' }}>
+              {messIcon} Apartment Mess: <span style={{ color: messBarColor }}>{messLabel}</span>
+            </span>
+            <span style={{ fontWeight: 'bold', fontSize: '0.9em', color: messBarColor }}>
+              {currentMess} / {maxMessHousing} mess
+            </span>
+          </div>
+
+          <div style={{ width: '100%', height: '10px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '5px', overflow: 'hidden' }}>
+            <div style={{
+              width: `${messPercentage}%`,
+              height: '100%',
+              backgroundColor: messBarColor,
+              transition: 'width 0.5s ease-in-out, background-color 0.5s ease'
+            }} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '0.75em', color: '#aaa' }}>
+            <span>0 (Spotless)</span>
+            <span>Social limit: 25</span>
+            <span>Max: {maxMessHousing}</span>
+          </div>
         </div>
       )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <button data-action-target="relax" onClick={() => onAction({ type: 'relax' })}>
-          {t('homeRelax.button', { cost: relaxCost })}
-          {rules?.usePhysicalMentalConditions && (
-            <span style={{ fontSize: '11px', marginLeft: '5px', color: '#2ecc71' }}>
-              (+1 Physical, +Mental)
-            </span>
-          )}
-        </button>
-        {rules?.trackMess && (
-          <button 
-            data-action-target="clean" 
-            onClick={() => onAction({ type: 'clean' })}
-            disabled={isMessClean}
-            style={{ 
-              backgroundColor: isMessClean ? '#555' : '#3498db', 
-              color: isMessClean ? '#888' : '#fff', 
-              border: 'none', 
-              padding: '8px 12px', 
-              borderRadius: '4px', 
-              cursor: isMessClean ? 'not-allowed' : 'pointer', 
-              fontWeight: 'bold',
-              opacity: isMessClean ? 0.6 : 1
-            }}
-          >
-            🧹 Clean Apartment (3 hrs) 
-            {rules?.usePhysicalMentalConditions && <span style={{ fontSize: '11px', marginLeft: '5px' }}>(-{campaign?.config.statRules?.cleanPhysicalCost ?? 1} Physical)</span>}
-            {isMessClean ? ' (Already Clean)' : ''}
-          </button>
-        )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+        {/* Left Side: Rest & Entertaining */}
+        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <h4 style={{ margin: '0 0 10px 0', color: '#00e5ff', fontSize: '0.9em' }}>🛋️ Rest & Entertaining</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button 
+              data-action-target="relax" 
+              onClick={() => onAction({ type: 'relax' })}
+              style={{
+                backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', textAlign: 'left'
+              }}
+            >
+              <div>🧘 {t('homeRelax.button', { cost: relaxCost })}</div>
+              {rules?.usePhysicalMentalConditions && (
+                <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: '#e8f8f5' }}>
+                  +1 Physical, +Mental condition {rules?.trackMess && '(+1 Mess)'}
+                </div>
+              )}
+            </button>
+
+            {rules?.usePhysicalMentalConditions && (
+              <button 
+                data-action-target="socialize" 
+                onClick={() => onAction({ type: 'socialize_guests' })}
+                disabled={isMessTooHighForSocial}
+                style={{ 
+                  backgroundColor: isMessTooHighForSocial ? '#444' : '#d35400', 
+                  color: isMessTooHighForSocial ? '#888' : '#fff', 
+                  border: 'none', 
+                  padding: '10px', 
+                  borderRadius: '4px', 
+                  cursor: isMessTooHighForSocial ? 'not-allowed' : 'pointer', 
+                  fontWeight: 'bold',
+                  textAlign: 'left',
+                  opacity: isMessTooHighForSocial ? 0.6 : 1
+                }}
+              >
+                <div>🎉 Socialize / Entertain Guests (6 hrs)</div>
+                <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
+                  -1 Phys, +Social stat {isMessTooHighForSocial ? '⚠️ Clean room first (Mess > 25!)' : '(Generates Mess)'}
+                </div>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Right Side: Cleaning & Maintenance */}
+        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <h4 style={{ margin: '0 0 10px 0', color: '#3498db', fontSize: '0.9em' }}>🧹 Cleaning & Maintenance</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {rules?.trackMess ? (
+              <>
+                <button 
+                  data-action-target="clean" 
+                  onClick={() => onAction({ type: 'clean' })}
+                  disabled={isMessClean}
+                  style={{ 
+                    backgroundColor: isMessClean ? '#444' : '#2980b9', 
+                    color: isMessClean ? '#888' : '#fff', 
+                    border: 'none', 
+                    padding: '10px', 
+                    borderRadius: '4px', 
+                    cursor: isMessClean ? 'not-allowed' : 'pointer', 
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    opacity: isMessClean ? 0.6 : 1
+                  }}
+                >
+                  <div>🧹 Clean Apartment (3 hrs)</div>
+                  <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
+                    Cleans 2d3 Mess {rules?.usePhysicalMentalConditions && `(-${campaign?.config.statRules?.cleanPhysicalCost ?? 1} Phys)`} {isMessClean ? '(Already Clean)' : ''}
+                  </div>
+                </button>
+
+                <button 
+                  data-action-target="call-cleaning-service" 
+                  onClick={() => onAction({ type: 'call_cleaning_service' })}
+                  disabled={isMessClean}
+                  style={{ 
+                    backgroundColor: isMessClean ? '#444' : '#8e44ad', 
+                    color: isMessClean ? '#888' : '#fff', 
+                    border: 'none', 
+                    padding: '10px', 
+                    borderRadius: '4px', 
+                    cursor: isMessClean ? 'not-allowed' : 'pointer', 
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    opacity: isMessClean ? 0.6 : 1
+                  }}
+                >
+                  <div>🧼 Call Cleaning Service ({cleaningServiceCost} hr, $100)</div>
+                  <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
+                    Professional cleaning (-10 Mess) {isMessClean ? '(Already Clean)' : ''}
+                  </div>
+                </button>
+              </>
+            ) : (
+              <div style={{ fontSize: '0.85em', color: '#aaa', fontStyle: 'italic' }}>
+                Mess tracking disabled in this campaign.
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -238,31 +385,35 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
 
 import { calcEconomyPrice, calcItemPrice, calcStockPrice } from '../engine/economyEngine';
 import { calcRequiredLessons } from '../engine/educationEngine';
+import { calcMovingFee, calcMaxMess } from '../engine/statMath';
 
 import type { GameRules } from '../engine/gameState';
 
 export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
   const { t } = useTranslation();
-  const [confirmMove, setConfirmMove] = useState<{housingId: string, cost: number, weeksPrepaid: number, newAptName: string} | null>(null);
+  const [confirmMove, setConfirmMove] = useState<{housingId: string, baseCost: number, movingFee: number, totalCost: number, newAptName: string} | null>(null);
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
   const lowCostHousing = campaign?.housing.find(h => h.id === 'low_cost');
   const securityHousing = campaign?.housing.find(h => h.id === 'security');
 
   const rentOwed = player.rentDebt;
   const isWeek4 = turn % 4 === 0;
-  // Rent is due if the paid-until week is current week or earlier.
   const rentDue = player.rentPaidUntilWeek <= turn;
   const isJobHere = !!(player.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
   const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || (isJobHere && !!rules?.allowEmployedRentPayment);
 
-  // The cost to move is always market rate (economy adjusted)
   const lowCostMovePrice = lowCostHousing ? calcEconomyPrice(lowCostHousing.baseRent, economicIndex) : 0;
   const securityMovePrice = securityHousing ? calcEconomyPrice(securityHousing.baseRent, economicIndex) : 0;
 
-  // The cost to pay advance rent depends on the rule
   const rentAdvanceCost = rules?.fluctuatingRent && currentHousing
     ? calcEconomyPrice(currentHousing.baseRent, economicIndex)
     : player.currentRentPrice;
+
+  const handleInitiateMove = (housingId: string, baseCost: number, newAptName: string) => {
+    const movingFee = rules?.trackMess ? calcMovingFee(player.mess || 0, player.inventory.appliances.length, campaign?.config.economyRules) : 0;
+    const totalCost = baseCost + movingFee;
+    setConfirmMove({ housingId, baseCost, movingFee, totalCost, newAptName });
+  };
 
   return (
     <div className="interaction-panel">
@@ -339,14 +490,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
               <div className="store-item">
                 <span>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })} - ${lowCostMovePrice}/mo</span>
                 <button 
-                  onClick={() => {
-                    const weeksPrepaid = player.rentPaidUntilWeek - turn;
-                    if (weeksPrepaid > 0 && player.currentHousingId && player.currentHousingId !== lowCostHousing.id) {
-                      setConfirmMove({ housingId: lowCostHousing.id, cost: lowCostMovePrice, weeksPrepaid, newAptName: t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name }) });
-                    } else {
-                      onAction({ type: 'move_apartment', housingId: lowCostHousing.id, cost: lowCostMovePrice });
-                    }
-                  }}
+                  onClick={() => handleInitiateMove(lowCostHousing.id, lowCostMovePrice, t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name }))}
                   disabled={rules?.helpfulUI && player.currentHousingId === lowCostHousing.id}
                 >
                   {player.currentHousingId === lowCostHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
@@ -358,14 +502,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
               <div className="store-item">
                 <span>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })} - ${securityMovePrice}/mo</span>
                 <button 
-                  onClick={() => {
-                    const weeksPrepaid = player.rentPaidUntilWeek - turn;
-                    if (weeksPrepaid > 0 && player.currentHousingId && player.currentHousingId !== securityHousing.id) {
-                      setConfirmMove({ housingId: securityHousing.id, cost: securityMovePrice, weeksPrepaid, newAptName: t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name }) });
-                    } else {
-                      onAction({ type: 'move_apartment', housingId: securityHousing.id, cost: securityMovePrice });
-                    }
-                  }}
+                  onClick={() => handleInitiateMove(securityHousing.id, securityMovePrice, t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name }))}
                   disabled={rules?.helpfulUI && player.currentHousingId === securityHousing.id}
                 >
                   {player.currentHousingId === securityHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
@@ -375,29 +512,35 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
           </div>
 
           {confirmMove && (
-            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: '1px solid var(--accent-cyan, #00e5ff)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan, 0 0 10px rgba(0,229,255,0.5))', zIndex: 1000, maxWidth: '420px', width: '90%', textAlign: 'center' }}>
-              <p style={{ whiteSpace: 'pre-wrap', marginBottom: '20px', fontSize: '14px', lineHeight: '1.5', color: '#e0e0ff' }}>
-                {t('rentOffice.confirmRefund', { 
-                  weeks: confirmMove.weeksPrepaid, 
-                  current: currentHousing ? t(`housing.${currentHousing.id}`, { defaultValue: currentHousing.name }) : 'Apartment', 
-                  newApt: confirmMove.newAptName
-                })}
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: '1px solid var(--accent-cyan, #00e5ff)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan, 0 0 10px rgba(0,229,255,0.5))', zIndex: 1000, maxWidth: '440px', width: '90%', textAlign: 'center' }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#00e5ff' }}>Confirm Apartment Move</h4>
+              <p style={{ whiteSpace: 'pre-wrap', marginBottom: '15px', fontSize: '13px', lineHeight: '1.5', color: '#e0e0ff' }}>
+                Are you sure you want to move to <strong>{confirmMove.newAptName}</strong>?
               </p>
+              <div style={{ textAlign: 'left', background: 'rgba(0,0,0,0.4)', padding: '10px 15px', borderRadius: '6px', marginBottom: '20px', fontSize: '12px', lineHeight: '1.6' }}>
+                <div>💵 <strong>First Month Rent:</strong> ${confirmMove.baseCost}</div>
+                {confirmMove.movingFee > 0 && (
+                  <div>📦 <strong>Moving Fee (Mess & Durables):</strong> ${confirmMove.movingFee}</div>
+                )}
+                <hr style={{ borderColor: '#444', margin: '6px 0' }} />
+                <div style={{ color: '#00e5ff', fontWeight: 'bold' }}>💰 <strong>Total Cost:</strong> ${confirmMove.totalCost}</div>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
                 <button 
                   onClick={() => {
-                    onAction({ type: 'move_apartment', housingId: confirmMove.housingId, cost: confirmMove.cost });
+                    onAction({ type: 'move_apartment', housingId: confirmMove.housingId, cost: confirmMove.baseCost });
                     setConfirmMove(null);
                   }}
-                  style={{ flex: 1, padding: '8px 16px', background: 'var(--accent-cyan, #00e5ff)', color: '#000', border: 'none', fontWeight: 'bold' }}
+                  disabled={player.money < confirmMove.totalCost}
+                  style={{ flex: 1, padding: '8px 16px', background: player.money >= confirmMove.totalCost ? 'var(--accent-cyan, #00e5ff)' : '#555', color: player.money >= confirmMove.totalCost ? '#000' : '#888', border: 'none', fontWeight: 'bold', cursor: player.money >= confirmMove.totalCost ? 'pointer' : 'not-allowed' }}
                 >
-                  {t('common.yes', { defaultValue: 'YES' })}
+                  {player.money >= confirmMove.totalCost ? t('common.yes', { defaultValue: 'CONFIRM MOVE' }) : 'NOT ENOUGH CASH'}
                 </button>
                 <button 
                   onClick={() => setConfirmMove(null)}
                   style={{ flex: 1, padding: '8px 16px', background: 'transparent', color: '#fff', border: '1px solid #666', fontWeight: 'bold' }}
                 >
-                  {t('common.no', { defaultValue: 'NO' })}
+                  {t('common.no', { defaultValue: 'CANCEL' })}
                 </button>
               </div>
             </div>
@@ -814,9 +957,8 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                     <>
                       <div style={{ fontSize: '12px', marginTop: '4px' }}>{t('university.lessons', { completed: lessonsCompleted, required, defaultValue: `Lessons: ${lessonsCompleted} / ${required}` })}</div>
                       <button 
-                        style={{ marginTop: '5px', background: '#3498db' }} 
+                        style={{ marginTop: '5px', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1 }} 
                         onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
-                        disabled={player.hoursRemaining < (rules?.allowPartialHours ? 1 : campaign.config.timeRules.studySessionCost)}
                         data-action-target={`study-${deg.id}`}
                       >
                         {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}

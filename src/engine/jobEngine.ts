@@ -25,10 +25,8 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     return m;
   };
 
-  if (player.hoursRemaining < timeCost) {
-    if (!rules?.allowPartialHours) {
-      return { updated: player, success: false, message: { key: 'action.error.notEnoughTime' } };
-    }
+  if (player.hoursRemaining <= 0 || (player.hoursRemaining < timeCost && !rules?.allowPartialHours)) {
+    return { updated: player, success: false, message: { key: 'action.error.notEnoughTime' } };
   }
 
   if (player.turnFlags.jobsRejectedThisTurn?.includes(job.id)) {

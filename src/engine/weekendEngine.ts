@@ -127,13 +127,11 @@ export function processWeekend(
 
   if (rules?.usePhysicalMentalConditions) {
     const statRules = campaign?.config.statRules;
-    const maxPhysical = statRules?.maxPhysicalCondition ?? 30;
-    const maxMental = newPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25);
-    const startingPhysical = statRules?.startingPhysicalCondition ?? 15;
-    const startingMental = statRules?.startingMentalCondition ?? 15;
+    const maxPhysical = newPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+    const maxMental = newPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
 
-    newPlayer.physicalCondition = Math.min(maxPhysical, (newPlayer.physicalCondition || startingPhysical) + 5);
-    newPlayer.mentalCondition = Math.min(maxMental, (newPlayer.mentalCondition || startingMental) + 5);
+    newPlayer.physicalCondition = Math.min(maxPhysical, newPlayer.physicalCondition ?? maxPhysical);
+    newPlayer.mentalCondition = Math.min(maxMental, newPlayer.mentalCondition ?? maxMental);
   }
 
   newPlayer.weekendResult = {

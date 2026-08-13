@@ -333,6 +333,12 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
     };
   }
 
+  if (finalBundle.config.gameRules?.usePhysicalMentalConditions) {
+    if (!finalBundle.config.winConditions.some(w => w.stat === 'wellbeing')) {
+      finalBundle.config.winConditions.push({ stat: 'wellbeing', target: 100, label: 'Well-being' });
+    }
+  }
+
   validateConfig(finalBundle.config);
 
   return finalBundle;

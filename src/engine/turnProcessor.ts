@@ -5,7 +5,7 @@ import { type GameState, type GameEvent, recalculatePlayerEffects } from './game
 import { type CampaignBundle } from './dataLoader';
 import { calcEconomyPrice, applyMarketCrash, applyEconomicBoom, calcLiquidAssets } from './economyEngine';
 import { applyHappinessChange } from './statEffects';
-import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath';
+import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress, messGrowth, calcMaxMental, calcWellbeingScore } from './statMath';
 import { resetPlayerClock } from './timeManager';
 import { processStarvation, processDoctorVisit, processApartmentRobbery, processDonations } from './eventEngine';
 import { fluctuateEconomy } from './economyEngine';
@@ -98,7 +98,17 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
 
     if (state.turn > 0) {
       if (state.rules.trackMess) {
-        p.mess = Math.min(20, (p.mess || 0) + 3);
+        const maxMess = p.currentHousingId === 'security' ? (campaign.config.statRules?.securityMessMax ?? 90) : (campaign.config.statRules?.lowCostMessMax ?? 50);
+        const growth = messGrowth(p.mess || 0);
+        p.mess = Math.min(maxMess, (p.mess || 0) + growth);
+      }
+      if (state.rules.usePhysicalMentalConditions) {
+        const minSocial = campaign.config.statRules?.minSocial ?? 1;
+        p.social = Math.max(minSocial, (p.social ?? 9) - 1);
+        p.mentalConditionMax = calcMaxMental(p.mess || 0, p.social || 9, p.resilienceBonus || 0);
+        if (p.mentalCondition !== undefined && p.mentalCondition > p.mentalConditionMax) {
+          p.mentalCondition = p.mentalConditionMax;
+        }
       }
       if (state.rules.useHomeTimeRobbery) {
         if (!p.homeTimeHistory) p.homeTimeHistory = [];
@@ -108,10 +118,35 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         }
         p.homeTimeThisTurn = 0;
       }
-      // 2. Cooking Bonus
-      const hasStoveOrMicrowave = p.inventory.appliances.some(a => a.id === 'stove' || a.id === 'microwave');
-      if (hasStoveOrMicrowave) {
-        p = applyHappinessChange(p, 1, 'cooking_bonus', state.rules, campaign.config.statRules);
+      // 2. Cooking Bonus (Stove & Microwave cumulative Physical bonus in Advanced Mode)
+      const hasStove = p.inventory.appliances.some(a => a.id === 'stove');
+      const hasMicrowave = p.inventory.appliances.some(a => a.id === 'microwave');
+
+      if (state.rules.usePhysicalMentalConditions) {
+        let physBonus = 0;
+        if (hasStove) physBonus += campaign.config.statRules?.stovePhysicalBonus ?? 1;
+        if (hasMicrowave) physBonus += campaign.config.statRules?.microwavePhysicalBonus ?? 1;
+        
+        if (physBonus > 0) {
+          const maxPhys = p.physicalConditionMax ?? 50;
+          p.physicalCondition = Math.min(maxPhys, (p.physicalCondition ?? 50) + physBonus);
+        }
+      } else {
+        if (hasStove || hasMicrowave) {
+          p = applyHappinessChange(p, 1, 'cooking_bonus', state.rules, campaign.config.statRules);
+        }
+      }
+
+      // Hot Tub Turn-Start Bonus (+1 Physical, +1 Mental condition)
+      const hasHotTub = p.inventory.appliances.some(a => a.id === 'hot_tub');
+      if (hasHotTub && state.rules.usePhysicalMentalConditions) {
+        const statRules = campaign.config.statRules;
+        const maxPhys = p.physicalConditionMax ?? 50;
+        const maxMental = p.mentalConditionMax ?? 50;
+        const physBonus = statRules?.hotTubTurnStartPhysicalBonus ?? 1;
+        const mentalBonus = statRules?.hotTubTurnStartMentalBonus ?? 1;
+        p.physicalCondition = Math.min(maxPhys, (p.physicalCondition ?? maxPhys) + physBonus);
+        p.mentalCondition = Math.min(maxMental, (p.mentalCondition ?? maxMental) + mentalBonus);
       }
 
       // 3. Winner Check
@@ -130,6 +165,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         else if (cond.stat === 'career') progress = calcCareerProgress(p.dependability, p.currentJobId !== null);
         else if (cond.stat === 'happiness') progress = p.happiness;
         else if (cond.stat === 'lifestyle') progress = p.lifestyle || 0;
+        else if (cond.stat === 'wellbeing') progress = calcWellbeingScore(p.physicalCondition ?? 50, p.mentalCondition ?? 25);
         else progress = (p as any)[cond.stat] || 0;
         
         if (progress < target) {
@@ -190,66 +226,126 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       const robberyResult = processApartmentRobbery(p, rng, state.rules.protectBuiltInAppliances, state.rules, state.turn, robberyStartWeek, replay);
       p = robberyResult.updated;
 
-      // 9. Spoiled Food
+      // 9. Spoiled Food & Starvation (Order of Operations)
+      let spoiledFoodSickMultiplier = 1;
       const maxStorage = p.activeEffects['set_food_storage'] || 0;
       let doctorNeeded = false;
       let doctorReasons: string[] = [];
-      if (maxStorage === 0 && p.inventory.freshFoodUnits > 0) {
-        const allowSpoiled = state.rules.allowEatingSpoiledFood ?? true;
-        if (!allowSpoiled) {
+
+      if (state.rules.usePhysicalMentalConditions) {
+        let ateSpoiledThisTurn = false;
+        if (maxStorage === 0 && p.inventory.freshFoodUnits > 0) {
+          ateSpoiledThisTurn = true;
           const lostFood = p.inventory.freshFoodUnits;
-          p.inventory.freshFoodUnits = 0;
-          p.mess = Math.min(20, (p.mess || 0) + lostFood);
-          p = applyHappinessChange(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
-          p.turnEvents.push({ key: 'events.food.ateSpoiled', params: { amount: lostFood } });
-          if (p.money > 0) {
-            const sickTrigger = resolveDecision(replay, `spoiled_food_sick_1_${p.id}`, () => rng.next() < 0.5);
-            if (sickTrigger) {
-              doctorNeeded = true;
-              doctorReasons.push('Spoiled food');
-              p.turnEvents.push({ key: 'events.foodSpoiled.sick' });
-            }
+          if (!state.rules.allowEatingSpoiledFood) {
+            p.inventory.freshFoodUnits = 0;
+            p.mess = Math.min(99, (p.mess || 0) + lostFood);
+            p = applyHappinessChange(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
+            p.turnEvents.push({ key: 'events.food.ateSpoiled', params: { amount: lostFood } });
+          } else {
+            p = applyHappinessChange(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
+            const key = state.rules.helpfulUI ? 'events.foodSpoiled.ateSpoiled_qol' : 'events.foodSpoiled.ateSpoiled';
+            p.turnEvents.push({ key });
           }
-        } else {
-          p = applyHappinessChange(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
-          const key = state.rules.helpfulUI ? 'events.foodSpoiled.ateSpoiled_qol' : 'events.foodSpoiled.ateSpoiled';
-          p.turnEvents.push({ key });
-          if (p.money > 0) {
-            const sickTrigger = resolveDecision(replay, `spoiled_food_sick_2_${p.id}`, () => rng.next() < 0.5);
-            if (sickTrigger) {
-              doctorNeeded = true;
-              doctorReasons.push('Spoiled food');
-              p.turnEvents.push({ key: 'events.foodSpoiled.sick' });
-            }
-          }
-        }
-      } else if (maxStorage > 0) {
-        if (p.inventory.freshFoodUnits > maxStorage) {
+        } else if (maxStorage > 0 && p.inventory.freshFoodUnits > maxStorage) {
           const lostFood = p.inventory.freshFoodUnits - maxStorage;
           p.inventory.freshFoodUnits = maxStorage;
           p = applyHappinessChange(p, -1, 'food_spoilage', state.rules, campaign.config.statRules);
-          p.mess = Math.min(20, (p.mess || 0) + lostFood);
+          p.mess = Math.min(99, (p.mess || 0) + lostFood);
           p.turnEvents.push({ key: 'events.food.capacitySpoiled', params: { amount: lostFood } });
         }
-      }
 
-      // 10. Starvation
-      let hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
-      p.inventory.fastFoodItems = [];
+        let hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
+        p.inventory.fastFoodItems = [];
 
-      if (hasEatenFastFood) {
-        p.turnFlags.hasEaten = true;
-      } else if (p.inventory.freshFoodUnits > 0) {
-        p.inventory.freshFoodUnits--;
-        p.turnFlags.hasEaten = true;
+        let starvedThisTurn = false;
+        if (hasEatenFastFood) {
+          p.turnFlags.hasEaten = true;
+        } else if (p.inventory.freshFoodUnits > 0) {
+          p.inventory.freshFoodUnits--;
+          p.turnFlags.hasEaten = true;
+        } else {
+          starvedThisTurn = true;
+        }
+
+        if (ateSpoiledThisTurn) {
+          p.minPhysicalCondition = Math.max(campaign.config.statRules?.globalPhysicalMin ?? 1, (p.minPhysicalCondition ?? 3) - 1);
+          p.physicalConditionMax = Math.max(campaign.config.statRules?.minMaxPhysical ?? 10, (p.physicalConditionMax ?? 50) - 1);
+          const currentPhys = p.physicalCondition ?? 50;
+          p.physicalCondition = Math.max(p.minPhysicalCondition, Math.min(currentPhys - 5, Math.floor(10 * currentPhys / (p.physicalConditionMax || 50))));
+          const mentalDrop = 5;
+          p.mentalCondition = Math.max(campaign.config.statRules?.minMentalCondition ?? 5, (p.mentalCondition ?? 50) - mentalDrop);
+          if (mentalDrop >= 3) p.resilienceBonus = (p.resilienceBonus || 0) + 1;
+          spoiledFoodSickMultiplier = 2;
+        }
+
+        if (starvedThisTurn) {
+          p.minPhysicalCondition = Math.max(campaign.config.statRules?.globalPhysicalMin ?? 1, (p.minPhysicalCondition ?? 3) - 1);
+          p.physicalConditionMax = Math.max(campaign.config.statRules?.minMaxPhysical ?? 10, (p.physicalConditionMax ?? 50) - 1);
+          p.physicalCondition = p.minPhysicalCondition;
+          const mentalDrop = 10;
+          p.mentalCondition = Math.max(campaign.config.statRules?.minMentalCondition ?? 5, (p.mentalCondition ?? 50) - mentalDrop);
+          if (mentalDrop >= 3) p.resilienceBonus = (p.resilienceBonus || 0) + 1;
+          p.turnEvents.push({ key: 'events.starvation' });
+        }
       } else {
-        const starvationPenalty = requireConfig(campaign.config.timeRules?.starvationPenalty, 'timeRules.starvationPenalty');
-        const { updated, doctorTriggered } = processStarvation(p, starvationPenalty, rng, state.rules, replay);
-        p = updated;
-        p.turnEvents.push({ key: 'events.starvation' });
-        if (doctorTriggered) {
-          doctorNeeded = true;
-          doctorReasons.push('Starvation');
+        if (maxStorage === 0 && p.inventory.freshFoodUnits > 0) {
+          const allowSpoiled = state.rules.allowEatingSpoiledFood ?? true;
+          if (!allowSpoiled) {
+            const lostFood = p.inventory.freshFoodUnits;
+            p.inventory.freshFoodUnits = 0;
+            p.mess = Math.min(20, (p.mess || 0) + lostFood);
+            p = applyHappinessChange(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
+            p.turnEvents.push({ key: 'events.food.ateSpoiled', params: { amount: lostFood } });
+            if (p.money > 0) {
+              const sickTrigger = resolveDecision(replay, `spoiled_food_sick_1_${p.id}`, () => rng.next() < 0.5);
+              if (sickTrigger) {
+                doctorNeeded = true;
+                doctorReasons.push('Spoiled food');
+                p.turnEvents.push({ key: 'events.foodSpoiled.sick' });
+              }
+            }
+          } else {
+            p = applyHappinessChange(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
+            const key = state.rules.helpfulUI ? 'events.foodSpoiled.ateSpoiled_qol' : 'events.foodSpoiled.ateSpoiled';
+            p.turnEvents.push({ key });
+            if (p.money > 0) {
+              const sickTrigger = resolveDecision(replay, `spoiled_food_sick_2_${p.id}`, () => rng.next() < 0.5);
+              if (sickTrigger) {
+                doctorNeeded = true;
+                doctorReasons.push('Spoiled food');
+                p.turnEvents.push({ key: 'events.foodSpoiled.sick' });
+              }
+            }
+          }
+        } else if (maxStorage > 0) {
+          if (p.inventory.freshFoodUnits > maxStorage) {
+            const lostFood = p.inventory.freshFoodUnits - maxStorage;
+            p.inventory.freshFoodUnits = maxStorage;
+            p = applyHappinessChange(p, -1, 'food_spoilage', state.rules, campaign.config.statRules);
+            p.mess = Math.min(20, (p.mess || 0) + lostFood);
+            p.turnEvents.push({ key: 'events.food.capacitySpoiled', params: { amount: lostFood } });
+          }
+        }
+
+        // 10. Starvation
+        let hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
+        p.inventory.fastFoodItems = [];
+
+        if (hasEatenFastFood) {
+          p.turnFlags.hasEaten = true;
+        } else if (p.inventory.freshFoodUnits > 0) {
+          p.inventory.freshFoodUnits--;
+          p.turnFlags.hasEaten = true;
+        } else {
+          const starvationPenalty = requireConfig(campaign.config.timeRules?.starvationPenalty, 'timeRules.starvationPenalty');
+          const { updated, doctorTriggered } = processStarvation(p, starvationPenalty, rng, state.rules, replay);
+          p = updated;
+          p.turnEvents.push({ key: 'events.starvation' });
+          if (doctorTriggered) {
+            doctorNeeded = true;
+            doctorReasons.push('Starvation');
+          }
         }
       }
 
@@ -257,13 +353,13 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       if (state.rules.usePhysicalMentalConditions) {
         const statRules = campaign.config.statRules;
         const physThreshold = statRules?.physicalDoctorThreshold ?? 10;
-        const physChance = statRules?.physicalDoctorChancePerPoint ?? 0.05;
+        const physChance = (statRules?.physicalDoctorChancePerPoint ?? 0.05) * spoiledFoodSickMultiplier;
         const mentalThreshold = statRules?.lowSpiritsThreshold ?? 10;
-        const mentalChance = statRules?.lowSpiritsChancePerPoint ?? 0.05;
+        const mentalChance = (statRules?.lowSpiritsChancePerPoint ?? 0.05) * spoiledFoodSickMultiplier;
 
         // Physical Doctor
         if (p.physicalCondition !== undefined && p.physicalCondition < physThreshold) {
-          const chance = (physThreshold - p.physicalCondition) * physChance;
+          const chance = Math.min(1.0, (physThreshold - p.physicalCondition) * physChance);
           const physSickTrigger = resolveDecision(replay, `phys_sick_${p.id}`, () => rng.next() < chance);
           if (physSickTrigger) {
             doctorNeeded = true;
@@ -271,13 +367,17 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
           }
         }
         
-        // Low Spirits (Mental Doctor)
+        // Low Spirits (Mental Doctor / Self Care)
         if (p.mentalCondition !== undefined && p.mentalCondition < mentalThreshold) {
-          const chance = (mentalThreshold - p.mentalCondition) * mentalChance;
+          const chance = Math.min(1.0, (mentalThreshold - p.mentalCondition) * mentalChance);
           const mentalSickTrigger = resolveDecision(replay, `mental_sick_${p.id}`, () => rng.next() < chance);
           if (mentalSickTrigger) {
             doctorNeeded = true;
             doctorReasons.push('Low spirits / Mental exhaustion');
+            const maxMental = p.mentalConditionMax ?? 50;
+            const mentalBounce = statRules?.lowSpiritsMentalBounceBack ?? 8;
+            p.mentalCondition = Math.min(maxMental, (p.mentalCondition ?? 50) + mentalBounce);
+            p.turnEvents.push({ key: 'events.lowSpiritsBounceBack', params: { amount: mentalBounce } });
           }
         }
       } else if (state.rules.enableRelaxationDoctor) {
