@@ -122,7 +122,7 @@
   "events": {
     "robbery": {
       "willy": "Wild Willy robbed you in the street!",
-      "apartment": "Your apartment was robbed!"
+      "apartment": "Your apartment was robbed! Stolen: {{items}}"
     },
     "donation": "You were feeling generous and donated ${{amount}} to charity.",
     "lottery": "You won ${{amount}} in the lottery!",
@@ -140,9 +140,9 @@
       "ateSpoiled_qol": "You ate spoiled food because you don't have a refrigerator!"
     },
     "rent": {
-      "charged": "Charged ${{amount}} for rent debt.",
+      "charged": "Rent overdue! ${{amount}} added to rent debt (wages will be garnished).",
       "due": "Rent is due.",
-      "due_nodenied": "Rent is due (extensions denied).",
+      "due_nodenied": "Rent is due! (Rent extensions no longer available due to past rent debt).",
       "evicted": "You were evicted!",
       "extensionExpired": "Rent extension expired.",
       "warning": "Warning: Your rent debt is accumulating! If debt exceeds 2 months' rent, you will be evicted."
@@ -696,7 +696,7 @@
     "currentApt": "Current",
     "moveIn": "Move In",
     "notNeeded": "You don't need an extension",
-    "confirmRefund": "Your {{weeks}} weeks of prepaid rent on your {{current}}\nApartment are non-refundable.\n\nAre you sure that you want\nto rent a {{newApt}}\nat this time?"
+    "confirmRefund": "Your {{weeks}} weeks of prepaid rent on your {{current}} Apartment are non-refundable.\n\nAre you sure that you want to rent a {{newApt}} at this time?"
   },
   "inventoryModal": {
     "title": "Your Inventory",

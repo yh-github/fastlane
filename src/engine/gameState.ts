@@ -12,6 +12,7 @@
  */
 
 import { type CampaignBundle } from './dataLoader';
+import { messGrowth, calcMaxMental } from './statMath';
 
 // ─── Core Game State ────────────────────────────────────────────
 
@@ -154,9 +155,12 @@ export interface PlayerState {
   lifestyle?: number;
   physicalCondition?: number;
   physicalConditionMax?: number;
+  minPhysicalCondition?: number;
   mentalCondition?: number;
   mentalConditionMax?: number;
   mentalConditionMin?: number;
+  resilienceBonus?: number;
+  social?: number;
   mess?: number;
   homeTimeHistory?: number[];
   homeTimeThisTurn?: number;
@@ -383,14 +387,23 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
     turnEvents: [],
     newspaperHeadline: null,
     activeEffects: {},
-    ...(config.gameRules?.usePhysicalMentalConditions ? {
-      physicalCondition: 15,
-      physicalConditionMax: 30,
-      mentalCondition: 15,
-      mentalConditionMax: 25,
-      lifestyle: 0
-    } : {}),
-    ...(config.gameRules?.trackMess ? { mess: 0 } : {}),
+    ...(config.gameRules?.usePhysicalMentalConditions ? (() => {
+      const startMess = config.gameRules?.trackMess ? 3 : 0;
+      const startSocial = config.statRules?.startingSocial ?? 9;
+      const initMaxMental = calcMaxMental(startMess, startSocial, 0);
+      const initMaxPhys = config.statRules?.initialPhysicalMax ?? 50;
+      return {
+        physicalConditionMax: initMaxPhys,
+        minPhysicalCondition: config.statRules?.initialMinPhysical ?? config.statRules?.minPhysicalCondition ?? 3,
+        physicalCondition: initMaxPhys,
+        mentalConditionMax: initMaxMental,
+        mentalCondition: initMaxMental,
+        social: startSocial,
+        resilienceBonus: 0,
+        lifestyle: 0
+      };
+    })() : {}),
+    ...(config.gameRules?.trackMess ? { mess: 3 } : {}),
   };
 }
 
@@ -513,7 +526,14 @@ export function recalculateLifestyle(player: PlayerState, campaign: CampaignBund
     }
   }
 
-  return Math.min(100, lifestyle);
+  if (player.mess !== undefined) {
+    lifestyle -= Math.floor(messGrowth(player.mess) / 2);
+  }
+  if (player.social !== undefined) {
+    lifestyle += Math.floor(player.social / 10);
+  }
+
+  return Math.max(0, Math.min(100, lifestyle));
 }
 
 export function calcMaxLifestyle(campaign: CampaignBundle): number {

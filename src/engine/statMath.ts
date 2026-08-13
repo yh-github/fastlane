@@ -101,8 +101,59 @@ export const STAT_REGISTRY: Record<string, StatDescriptor> = {
     labelKey: 'stat.physicalCondition',
     isDerived: false,
     dependencies: ['physical']
+  },
+  social: {
+    id: 'social',
+    labelKey: 'stat.social',
+    isDerived: false,
+    dependencies: ['social']
+  },
+  wellbeing: {
+    id: 'wellbeing',
+    labelKey: 'dashboard.wellbeing',
+    isDerived: true,
+    dependencies: ['physical', 'mental']
   }
 };
+
+/**
+ * Calculate mess growth based on current mess.
+ * Formula: mess_growth(current_mess) = Math.floor(0.2 * (current_mess + 1)) + 1
+ */
+export function messGrowth(currentMess: number): number {
+  return Math.floor(0.2 * (currentMess + 1)) + 1;
+}
+
+/**
+ * Calculate dynamic MAX_MENTAL for Advanced Mode.
+ * Formula: MAX_MENTAL = Math.max(10, 51 - mess_growth(current_mess) + Math.floor(social / 10) + resilience_bonuses)
+ */
+export function calcMaxMental(currentMess: number, social: number = 9, resilienceBonus: number = 0): number {
+  return Math.max(10, 51 - messGrowth(currentMess) + Math.floor(social / 10) + resilienceBonus);
+}
+
+/**
+ * Calculate Wellbeing score.
+ * Formula: Wellbeing_Score = Math.ceil((Physical + Mental) / 2)
+ */
+export function calcWellbeingScore(physical: number = 50, mental: number = 25): number {
+  return Math.ceil((physical + mental) / 2);
+}
+
+/**
+ * Calculate moving fee when changing housing.
+ * Formula: Moving_Fee = Math.max(0, current_mess - 10) * $50 + (num_of_durables_owned * $50)
+ */
+export function calcMovingFee(
+  currentMess: number,
+  numOfDurablesOwned: number,
+  economyRules?: { moveFeeMessThreshold?: number; moveFeeMessRate?: number; moveFeeDurableRate?: number }
+): number {
+  const threshold = economyRules?.moveFeeMessThreshold ?? 10;
+  const messRate = economyRules?.moveFeeMessRate ?? 50;
+  const durableRate = economyRules?.moveFeeDurableRate ?? 50;
+  return Math.max(0, currentMess - threshold) * messRate + (numOfDurablesOwned * durableRate);
+}
 
 /**
  * Get all category strings that satisfy a given filter (including underlying dependencies).
@@ -324,4 +375,36 @@ export function calcNetWorth(player: PlayerState): number {
   }
 
   return liquid + durableValue;
+}
+
+/**
+ * Safely decrement Physical Condition without boosting when current <= min.
+ */
+export function safeDecrementPhysical(current: number, cost: number, minPhysical: number): number {
+  if (current <= minPhysical) return current;
+  return Math.max(minPhysical, current - cost);
+}
+
+/**
+ * Safely decrement Mental Condition without boosting when current <= min.
+ */
+export function safeDecrementMental(current: number, cost: number, minMental: number): number {
+  if (current <= minMental) return current;
+  return Math.max(minMental, current - cost);
+}
+
+/**
+ * Calculate dynamic housing Mess limit considering Hot Tub (+5 MAX_MESS bonus).
+ */
+export function calcMaxMess(player: PlayerState, statRules?: import('./rules').StatRules): number {
+  let baseMax = player.currentHousingId === 'security'
+    ? (statRules?.securityMessMax ?? 90)
+    : (statRules?.lowCostMessMax ?? 50);
+
+  if (player.inventory?.appliances?.some(a => a.id === 'hot_tub')) {
+    baseMax += statRules?.hotTubMaxMessBonus ?? 5;
+  }
+
+  const globalMax = statRules?.globalMessMax ?? 99;
+  return Math.min(baseMax, globalMax);
 }

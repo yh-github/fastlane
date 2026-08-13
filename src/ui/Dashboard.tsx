@@ -6,7 +6,7 @@
  */
 
 import { type PlayerState, type GameState } from '../engine/gameState';
-import { calcEducationProgress, calcCareerProgress, calcWealthProgress, calcEmployabilityScore, calcMaxDependability, calcMaxExperience } from '../engine/statMath';
+import { calcEducationProgress, calcCareerProgress, calcWealthProgress, calcEmployabilityScore, calcMaxDependability, calcMaxExperience, calcWellbeingScore } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../engine/dataLoader';
@@ -46,6 +46,7 @@ export function Dashboard({
   let career = calcCareerProgress(player.dependability, player.currentJobId !== null);
   let wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn));
   let lifestyle = player.lifestyle || 0;
+  let wellbeing = calcWellbeingScore(player.physicalCondition ?? 50, player.mentalCondition ?? 25);
 
   const statValues: Record<string, number> = {
     wealth,
@@ -53,6 +54,7 @@ export function Dashboard({
     education,
     career,
     lifestyle,
+    wellbeing,
   };
 
   let totalPoints = 0;
@@ -69,12 +71,12 @@ export function Dashboard({
     const target = player.goalAllotment[cond.stat] || 0;
     let current = statValues[cond.stat] || 0;
     
-    if (!gameState.rules.allowOverAchievingGoals) {
-      current = Math.min(current, target);
-    }
+    // Always cap contribution towards overall victory progress at target so overachieved stats
+    // don't inflate overall progress past 100% while required goals remain incomplete
+    const cappedCurrent = Math.min(current, target);
     
     totalGoals += target;
-    totalPoints += current;
+    totalPoints += cappedCurrent;
   }
 
   const victoryPercent = totalGoals > 0 ? Math.floor((totalPoints / totalGoals) * 100) : 0;
@@ -249,8 +251,12 @@ export function Dashboard({
         )}
         {gameState.rules.usePhysicalMentalConditions && (
           <>
-            <StatBadge label={t('dashboard.physical', { defaultValue: 'Physical' })} value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 30}`} icon="💪" id="stat-physical" isActive={activeLogFilter === 'physical'} onClick={() => handleFilterToggle('physical')} />
-            <StatBadge label={t('dashboard.mental', { defaultValue: 'Mental' })} value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 25}`} icon="🧠" id="stat-mental" isActive={activeLogFilter === 'mental'} onClick={() => handleFilterToggle('mental')} />
+            <StatBadge label={t('dashboard.physical', { defaultValue: 'Physical' })} value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`} icon="💪" id="stat-physical" isActive={activeLogFilter === 'physical'} onClick={() => handleFilterToggle('physical')} />
+            <StatBadge label={t('dashboard.mental', { defaultValue: 'Mental' })} value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`} icon="🧠" id="stat-mental" isActive={activeLogFilter === 'mental'} onClick={() => handleFilterToggle('mental')} />
+            <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
+            {gameState.rules.trackMess && (
+              <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
+            )}
           </>
         )}
         {(gameState.rules.useHomeTimeRobbery || gameState.rules.helpfulUI) && (
@@ -286,6 +292,7 @@ export function Dashboard({
           else if (cond.stat === 'career') current = !gameState.rules.allowOverAchievingGoals ? Math.min(career, player.goalAllotment.career) : career;
           else if (cond.stat === 'happiness') current = displayHappiness as number;
           else if (cond.stat === 'lifestyle') current = !gameState.rules.allowOverAchievingGoals ? Math.min(lifestyle, player.goalAllotment.lifestyle || 0) : lifestyle;
+          else if (cond.stat === 'wellbeing') current = !gameState.rules.allowOverAchievingGoals ? Math.min(wellbeing, player.goalAllotment.wellbeing || 0) : wellbeing;
           else current = (player as any)[cond.stat] || 0;
 
           const target = player.goalAllotment[cond.stat] || 0;
@@ -294,7 +301,8 @@ export function Dashboard({
           else if (cond.stat === 'education') icon = '🎓';
           else if (cond.stat === 'career') icon = '💼';
           else if (cond.stat === 'happiness') icon = '😊';
-          else if (cond.stat === 'lifestyle') icon = '🏖️';
+          else if (cond.stat === 'lifestyle') icon = (player.lifestyle || 0) > 50 ? '🧐' : '😎';
+          else if (cond.stat === 'wellbeing') icon = '🧘';
 
           return (
             <StatBadge 

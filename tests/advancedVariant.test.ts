@@ -62,11 +62,11 @@ describe('Advanced Variation Mechanics', () => {
     mockCampaign.config.gameRules = rules;
     const player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
     
-    expect(player.physicalCondition).toBe(15);
-    expect(player.physicalConditionMax).toBe(30);
-    expect(player.mentalCondition).toBe(15);
-    expect(player.mentalConditionMax).toBe(25);
-    expect(player.mess).toBe(0);
+    expect(player.physicalCondition).toBe(50);
+    expect(player.physicalConditionMax).toBe(50);
+    expect(player.mentalCondition).toBe(50);
+    expect(player.mentalConditionMax).toBe(50);
+    expect(player.mess).toBe(3);
     expect(player.lifestyle).toBe(0);
   });
 
@@ -88,29 +88,30 @@ describe('Advanced Variation Mechanics', () => {
     let p = player;
     // Shift 1
     p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
-    expect(p.physicalCondition).toBe(14);
-    expect(p.mentalCondition).toBe(15);
+    expect(p.physicalCondition).toBe(49);
+    expect(p.mentalCondition).toBe(50);
 
     // Shift 2
     p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
-    expect(p.physicalCondition).toBe(13);
-    expect(p.mentalCondition).toBe(15);
+    expect(p.physicalCondition).toBe(48);
+    expect(p.mentalCondition).toBe(50);
 
     // Shift 3
     p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
-    expect(p.physicalCondition).toBe(12);
-    expect(p.mentalCondition).toBe(15);
+    expect(p.physicalCondition).toBe(47);
+    expect(p.mentalCondition).toBe(50);
 
     // Shift 4 (Grind Threshold triggers!)
     p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
-    expect(p.physicalCondition).toBe(11);
-    expect(p.mentalCondition).toBe(14); // Deducted!
+    expect(p.physicalCondition).toBe(46);
+    expect(p.mentalCondition).toBe(49); // Deducted!
   });
 
   it('should not drop physical/mental conditions below minimums', () => {
     const rules: GameRules = { usePhysicalMentalConditions: true };
     mockCampaign.config.gameRules = rules;
     const player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
+    player.minPhysicalCondition = 5;
     player.physicalCondition = 5; // Min
     player.mentalCondition = 5; // Min
     player.currentJobId = 'clerk';
@@ -153,26 +154,30 @@ describe('Advanced Variation Mechanics', () => {
         player = gameReducer(player, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
     }
 
-    expect(player.mentalCondition).toBe(12);
-    expect(player.mentalConditionMax).toBe(26); // Increased!
+    expect(player.mentalCondition).toBe(47);
+    expect(player.mentalConditionMax).toBe(51); // Increased!
     expect(player.turnFlags.mentalDropsThisTurn).toBe(0); // Reset after trigger
   });
 
-  it('should correctly restore stats on weekend and clamp to max', () => {
+  it('should preserve physical and mental stats on weekend without passive turn-start recovery', () => {
     const rules: GameRules = { usePhysicalMentalConditions: true };
     const player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
-    player.physicalCondition = 28; // Max 30
+    player.physicalConditionMax = 30;
+    player.physicalCondition = 28;
     player.mentalCondition = 10;
     
     const nextPlayer = processWeekend(player, 1, [], mockCampaign.weekends, new Random(1), rules, mockCampaign);
-    expect(nextPlayer.physicalCondition).toBe(30); // 28 + 5 = 33 -> clamped to 30
-    expect(nextPlayer.mentalCondition).toBe(15); // 10 + 5 = 15
+    expect(nextPlayer.physicalCondition).toBe(28); // 0 passive turn start gain
+    expect(nextPlayer.mentalCondition).toBe(10); // 0 passive turn start gain
   });
 
   it('relax action should reward physical and mental correctly based on mess', () => {
     const rules: GameRules = { usePhysicalMentalConditions: true };
     mockCampaign.config.gameRules = rules;
     let player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
+    player.physicalConditionMax = 50;
+    player.physicalCondition = 15;
+    player.mentalCondition = 15;
     player.mess = 20; // Max mess
     
     const context = {
@@ -196,11 +201,12 @@ describe('Advanced Variation Mechanics', () => {
   });
 
   it('turnProcessor should trigger low spirits event if mental condition is low', () => {
-    const rules: GameRules = { usePhysicalMentalConditions: true };
+    const rules: GameRules = { usePhysicalMentalConditions: true, bypassDoctorIfBroke: false };
     mockCampaign.config.gameRules = rules;
     mockCampaign.config.statRules.lowSpiritsChancePerPoint = 1.0;
     const player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
     player.mentalCondition = 0; // Way below 10
+    player.money = 200; // Has money to pay doctor penalty
     
     const state: GameState = {
       turn: 1,
@@ -217,8 +223,6 @@ describe('Advanced Variation Mechanics', () => {
     const nextState = processTurnStart(state, mockCampaign);
     const p = nextState.players[0];
 
-    // If a low spirits event occurs, time (4h) and money might be lost via processDoctorVisit equivalent
-    // Let's just check if it was triggered by checking hours remaining or turn events
     expect(p.hoursRemaining).toBeLessThan(48);
   });
 });

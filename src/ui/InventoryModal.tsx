@@ -109,9 +109,13 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
           <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
             <li>{t('statusModal.degrees', 'Degrees')}: {player.degrees.length > 0 ? player.degrees.map(d => t(`education.${d}`, { defaultValue: d.replaceAll('_', ' ') })).join(', ') : t('statusModal.none', 'None')}</li>
             <li>{t('statusModal.enrolled', 'Currently Enrolled')}: {
-              Object.keys(player.enrolledClasses || {}).length > 0 
-                ? Object.keys(player.enrolledClasses).map(d => t(`education.${d}`, { defaultValue: d.replaceAll('_', ' ') })).join(', ')
-                : t('statusModal.none', 'None')
+              (() => {
+                const activeEnrolled = Object.keys(player.enrolledClasses || {})
+                  .filter(d => !d.endsWith('_req') && !player.degrees.includes(d));
+                return activeEnrolled.length > 0
+                  ? activeEnrolled.map(d => t(`education.${d}`, { defaultValue: d.replaceAll('_', ' ') })).join(', ')
+                  : t('statusModal.none', 'None');
+              })()
             }</li>
           </ul>
         </div>

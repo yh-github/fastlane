@@ -22,16 +22,13 @@ export function applyHappinessChange(
 ): PlayerState {
   let nextPlayer = { ...player };
 
-  // 1. Classic Mode: Always apply to Happiness
-  nextPlayer.happiness = Math.max(10, Math.min(100, nextPlayer.happiness + amount));
-
-  // 2. Advanced Mode: Route to Mental Condition
-  // Since Lifestyle is derived from physical possessions, all one-off events map to Mental.
-  if (rules.usePhysicalMentalConditions) {
+  if (!rules.usePhysicalMentalConditions) {
+    nextPlayer.happiness = Math.max(10, Math.min(100, nextPlayer.happiness + amount));
+  } else {
     const minMental = statRules?.minMentalCondition ?? 5;
-    const maxMental = nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25);
+    const maxMental = nextPlayer.mentalConditionMax || 50;
     nextPlayer.mentalCondition = Math.max(minMental, Math.min(maxMental, 
-      (nextPlayer.mentalCondition || 15) + amount));
+      (nextPlayer.mentalCondition || 50) + amount));
   }
 
   return nextPlayer;

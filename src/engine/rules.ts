@@ -190,6 +190,30 @@ export interface StatRules {
   workPhysicalCost?: number;
   studyMentalCost?: number;
   cleanPhysicalCost?: number;
+  // Advanced feature bundle configuration
+  initialPhysicalMax?: number;
+  initialMinPhysical?: number;
+  globalPhysicalMin?: number;
+  minMaxPhysical?: number;
+  globalMessMax?: number;
+  lowCostMessMax?: number;
+  securityMessMax?: number;
+  initialMessMin?: number;
+  globalMessMin?: number;
+  startingSocial?: number;
+  minSocial?: number;
+  maxSocial?: number;
+  stovePhysicalBonus?: number;
+  microwavePhysicalBonus?: number;
+  relaxMessIncrease?: number;
+  hotTubMaxMessBonus?: number;
+  hotTubRelaxPhysicalBonus?: number;
+  hotTubRelaxMentalBonus?: number;
+  hotTubRelaxMessIncrease?: number;
+  hotTubTurnStartPhysicalBonus?: number;
+  hotTubTurnStartMentalBonus?: number;
+  doctorPhysicalBounceBack?: number;
+  lowSpiritsMentalBounceBack?: number;
 }
 
 export interface WinCondition {
@@ -211,6 +235,8 @@ export interface TimeRules {
   doctorPenalty: number;
   loanCost: number;
   brokerCost: number;
+  cleaningServiceCost?: number;
+  socializeCost?: number;
 }
 
 export interface EconomyRules {
@@ -225,6 +251,12 @@ export interface EconomyRules {
   loanPaymentAmount?: number;
   loanInterestAmount?: number;
   loanPrincipalAmount?: number;
+  cleaningServiceBasePrice?: number;
+  socializeLowCostCashCost?: number;
+  socializeSecurityCashCost?: number;
+  moveFeeMessThreshold?: number;
+  moveFeeMessRate?: number;
+  moveFeeDurableRate?: number;
 }
 
 /**

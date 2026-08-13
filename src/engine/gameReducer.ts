@@ -5,7 +5,8 @@ import { applyForJob, workShift } from './jobEngine';
 import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study } from './educationEngine';
 import { spendHours } from './timeManager';
-import { calcItemPrice } from './economyEngine';
+import { calcItemPrice, calcEconomyPrice } from './economyEngine';
+import { calcMovingFee, messGrowth, safeDecrementPhysical, safeDecrementMental, calcMaxMess } from './statMath';
 import { recalculatePlayerEffects } from './gameState';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
@@ -35,7 +36,9 @@ export type GameAction =
   | { type: 'buy_pawn_item'; item: PawnedItem; cost: number }
   | { type: 'change_clothes'; clothes: 'casual' | 'dress' | 'business' | 'none' }
   | { type: 'ask_rent_extension' }
-  | { type: 'clean' };
+  | { type: 'clean' }
+  | { type: 'call_cleaning_service' }
+  | { type: 'socialize_guests' };
 
 export interface ReducerContext {
   campaign: CampaignBundle;
@@ -95,11 +98,12 @@ export function gameReducer(
             const grindThreshold = statRules?.workGrindThreshold ?? 4;
             const grindMentalCost = statRules?.workGrindMentalCost ?? 1;
 
-            nextPlayer.physicalCondition = Math.max(minPhysical, (nextPlayer.physicalCondition || (statRules?.startingPhysicalCondition ?? 15)) - physicalCost);
+            const currentPhys = nextPlayer.physicalCondition ?? (statRules?.startingPhysicalCondition ?? 15);
+            nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, physicalCost, minPhysical);
             nextPlayer.workActionsThisTurn = (nextPlayer.workActionsThisTurn || 0) + 1;
             if (nextPlayer.workActionsThisTurn >= grindThreshold) {
-              const oldMental = nextPlayer.mentalCondition || (statRules?.startingMentalCondition ?? 15);
-              const newMental = Math.max(minMental, oldMental - grindMentalCost);
+              const oldMental = nextPlayer.mentalCondition ?? (statRules?.startingMentalCondition ?? 15);
+              const newMental = safeDecrementMental(oldMental, grindMentalCost, minMental);
               nextPlayer.mentalCondition = newMental;
               nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
               if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
@@ -154,8 +158,14 @@ export function gameReducer(
           if (baseItemDef.id === 'newspaper') {
             nextPlayer.turnFlags.readNewspaperThisTurn = true;
           }
-          if (context.rules.usePhysicalMentalConditions && (baseItemDef.category === 'appliance' || baseItemDef.category === 'clothes')) {
-             nextPlayer.lifestyle = Math.min(100, (nextPlayer.lifestyle || 50) + 1);
+          if (context.rules.usePhysicalMentalConditions) {
+            if (baseItemDef.category === 'appliance' || baseItemDef.category === 'clothes') {
+              nextPlayer.lifestyle = Math.min(100, (nextPlayer.lifestyle || 50) + 1);
+            }
+            if (baseItemDef.category === 'fast_food' || ['fries', 'shake', 'cola', 'astro_chicken'].includes(baseItemDef.id)) {
+              const minPhys = nextPlayer.minPhysicalCondition ?? 3;
+              nextPlayer.physicalCondition = safeDecrementPhysical(nextPlayer.physicalCondition ?? 50, 1, minPhys);
+            }
           }
           actionLog = result.message;
         } else {
@@ -184,8 +194,8 @@ export function gameReducer(
           const minMental = statRules?.minMentalCondition ?? 5;
           const studyCost = statRules?.studyMentalCost ?? 1;
 
-          const oldMental = nextPlayer.mentalCondition || (statRules?.startingMentalCondition ?? 15);
-          const newMental = Math.max(minMental, oldMental - studyCost);
+          const oldMental = nextPlayer.mentalCondition ?? (statRules?.startingMentalCondition ?? 15);
+          const newMental = safeDecrementMental(oldMental, studyCost, minMental);
           nextPlayer.mentalCondition = newMental;
           nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
           if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
@@ -215,19 +225,29 @@ export function gameReducer(
       let statsStr = '';
       if (context.rules.usePhysicalMentalConditions) {
         const statRules = context.campaign.config.statRules;
-        const maxPhysical = statRules?.maxPhysicalCondition ?? 30;
-        const maxMental = nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25);
-        const startingPhysical = statRules?.startingPhysicalCondition ?? 15;
-        const startingMental = statRules?.startingMentalCondition ?? 15;
+        const maxPhysical = nextPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+        const maxMental = nextPlayer.mentalConditionMax ?? 50;
 
-        nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition || startingPhysical) + 1);
+        const hasHotTub = nextPlayer.inventory.appliances.some(a => a.id === 'hot_tub');
+        const physGain = 1 + (hasHotTub ? (statRules?.hotTubRelaxPhysicalBonus ?? 1) : 0);
+        const hotTubMentalBonus = hasHotTub ? (statRules?.hotTubRelaxMentalBonus ?? 1) : 0;
+
+        nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
         const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
         const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
-        const mentalGain = Math.max(0, firstBonus + 3 - messPenalty);
-        nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition || startingMental) + mentalGain);
-        nextPlayer.mess = Math.min(20, (nextPlayer.mess || 0) + 1);
+        const mentalGain = Math.max(0, firstBonus + 3 - messPenalty) + hotTubMentalBonus;
+        nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
+
+        if (context.rules.trackMess) {
+          const baseRelaxMess = statRules?.relaxMessIncrease ?? 1;
+          const hotTubMess = hasHotTub ? (statRules?.hotTubRelaxMessIncrease ?? 1) : 0;
+          const relaxMess = baseRelaxMess + hotTubMess;
+          const maxCap = calcMaxMess(nextPlayer, statRules);
+          nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + relaxMess);
+        }
+
         nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
-        statsStr = ` (+1 Physical, +${mentalGain} Mental)`;
+        statsStr = ` (+${physGain} Physical, +${mentalGain} Mental)`;
       } else {
         nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + relaxGain);
         if (!nextPlayer.turnFlags.relaxedThisTurn) {
@@ -250,21 +270,90 @@ export function gameReducer(
       let cleanStatsStr = '';
       if (context.rules.usePhysicalMentalConditions) {
         const statRules = context.campaign.config.statRules;
-        const minPhysical = statRules?.minPhysicalCondition ?? 5;
-        const startingPhysical = statRules?.startingPhysicalCondition ?? 15;
+        const minPhysical = statRules?.minPhysicalCondition ?? 3;
         const cleanCost = statRules?.cleanPhysicalCost ?? 1;
 
-        nextPlayer.physicalCondition = Math.max(minPhysical, (nextPlayer.physicalCondition || startingPhysical) - cleanCost);
+        const currentPhys = nextPlayer.physicalCondition ?? (statRules?.initialPhysicalMax ?? 50);
+        nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, cleanCost, minPhysical);
         nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
         cleanStatsStr = ` (-${cleanCost} Physical)`;
       }
       if (context.rules.trackMess || context.rules.usePhysicalMentalConditions) {
-        const d4_1 = context.rng.nextInt(1, 4);
-        const d4_2 = context.rng.nextInt(1, 4);
-        const reduction = d4_1 + d4_2;
-        nextPlayer.mess = Math.max(0, (nextPlayer.mess || 0) - reduction);
+        const d3_1 = context.rng.nextInt(1, 3);
+        const d3_2 = context.rng.nextInt(1, 3);
+        const reduction = d3_1 + d3_2;
+        const minMess = context.campaign.config.statRules?.globalMessMin ?? 0;
+        nextPlayer.mess = Math.max(minMess, (nextPlayer.mess || 0) - reduction);
       }
       actionLog = { key: 'action.clean', params: { stats: cleanStatsStr } };
+      break;
+    }
+    case 'call_cleaning_service': {
+      const timeCost = context.campaign.config.timeRules?.cleaningServiceCost ?? 1;
+      if (nextPlayer.hoursRemaining < timeCost) {
+        actionLog = { key: 'action.error.notEnoughTimeClean' };
+        break;
+      }
+      const basePrice = context.campaign.config.economyRules?.cleaningServiceBasePrice ?? 100;
+      const price = calcEconomyPrice(basePrice, context.economicIndex);
+      if (nextPlayer.money < price) {
+        actionLog = { key: 'action.error.notEnoughMoneyCleanService' };
+        break;
+      }
+      nextPlayer = spendHours(nextPlayer, timeCost);
+      nextPlayer.money -= price;
+      const minMess = context.campaign.config.statRules?.globalMessMin ?? 0;
+      nextPlayer.mess = Math.max(minMess, (nextPlayer.mess || 0) - 10);
+      actionLog = { key: 'action.callCleaningService', params: { cost: price } };
+      break;
+    }
+    case 'socialize_guests': {
+      const timeCost = context.campaign.config.timeRules?.socializeCost ?? 6;
+      if (nextPlayer.hoursRemaining < timeCost) {
+        actionLog = { key: 'action.error.notEnoughTimeSocialize' };
+        break;
+      }
+      if ((nextPlayer.mess || 0) > 25) {
+        actionLog = { key: 'action.error.messTooHighSocialize' };
+        break;
+      }
+      nextPlayer = spendHours(nextPlayer, timeCost);
+
+      const minPhysical = nextPlayer.minPhysicalCondition ?? 3;
+      const currentPhys = nextPlayer.physicalCondition ?? 50;
+      nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, 1, minPhysical);
+
+      const X = context.rng.nextInt(1, 3);
+      const growth = messGrowth(nextPlayer.mess || 0);
+      const messGen = X * growth;
+      const maxMess = calcMaxMess(nextPlayer, context.campaign.config.statRules);
+      nextPlayer.mess = Math.min(maxMess, (nextPlayer.mess || 0) + messGen);
+
+      const mentalCost = X * growth;
+      const cashRate = nextPlayer.currentHousingId === 'security' ? (context.campaign.config.economyRules?.socializeSecurityCashCost ?? 50) : (context.campaign.config.economyRules?.socializeLowCostCashCost ?? 25);
+      const cashCost = X * cashRate;
+      const fullReward = nextPlayer.currentHousingId === 'security' ? X * 2 : X;
+
+      const currentMental = nextPlayer.mentalCondition ?? 25;
+      const minMental = context.campaign.config.statRules?.minMentalCondition ?? 5;
+      const hasFullCash = nextPlayer.money >= cashCost;
+      const hasFullMental = currentMental >= mentalCost;
+
+      let actualReward = fullReward;
+      if (hasFullCash && hasFullMental) {
+        nextPlayer.money -= cashCost;
+        nextPlayer.mentalCondition = safeDecrementMental(currentMental, mentalCost, minMental);
+        actualReward = fullReward;
+      } else {
+        nextPlayer.money = Math.max(0, nextPlayer.money - cashCost);
+        nextPlayer.mentalCondition = safeDecrementMental(currentMental, mentalCost, minMental);
+        actualReward = Math.floor(fullReward / 2);
+      }
+
+      const maxSocial = context.campaign.config.statRules?.maxSocial ?? 99;
+      nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? 9) + actualReward);
+
+      actionLog = { key: 'action.socialize', params: { reward: actualReward, guests: X } };
       break;
     }
     case 'move': {
@@ -460,16 +549,23 @@ export function gameReducer(
       if (housingDef) {
         if (nextPlayer.currentHousingId === housingDef.id) {
           actionLog = { key: 'action.rent.alreadyLiveHere', params: { name: housingDef.name } };
-        } else if (nextPlayer.money >= action.cost) {
-          nextPlayer.money -= action.cost;
-          nextPlayer.currentHousingId = housingDef.id;
-          nextPlayer.currentRentPrice = action.cost;
-          nextPlayer.rentPaidUntilWeek = context.turn + 4; // Pay for a month
-          nextPlayer.rentExtensionActive = false;
-          nextPlayer.turnFlags.rentPaidThisTurn = true;
-          actionLog = { key: 'action.rent.moved', params: { name: housingDef.name, cost: action.cost } };
         } else {
-          actionLog = { key: 'action.error.notEnoughMoneyMove', params: { name: housingDef.name } };
+          const movingFee = context.rules.trackMess ? calcMovingFee(nextPlayer.mess || 0, nextPlayer.inventory.appliances.length, context.campaign.config.economyRules) : 0;
+          const totalCost = action.cost + movingFee;
+          if (nextPlayer.money >= totalCost) {
+            nextPlayer.money -= totalCost;
+            nextPlayer.currentHousingId = housingDef.id;
+            nextPlayer.currentRentPrice = action.cost;
+            nextPlayer.rentPaidUntilWeek = context.turn + 4; // Pay for a month
+            nextPlayer.rentExtensionActive = false;
+            nextPlayer.turnFlags.rentPaidThisTurn = true;
+            if (context.rules.trackMess) {
+              nextPlayer.mess = 3 + nextPlayer.inventory.appliances.length;
+            }
+            actionLog = { key: 'action.rent.moved', params: { name: housingDef.name, cost: totalCost } };
+          } else {
+            actionLog = { key: 'action.error.notEnoughMoneyMove', params: { name: housingDef.name } };
+          }
         }
       }
       break;
@@ -576,7 +672,9 @@ export function gameReducer(
       if (nextPlayer.rentExtensionsReceived === 0) {
         approved = true;
       } else {
-        const chance = Math.max(25, 100 - (nextPlayer.rentExtensionsReceived * 25));
+        const baseChance = Math.max(25, 100 - (nextPlayer.rentExtensionsReceived * 25));
+        const messPenalty = context.rules.trackMess ? (nextPlayer.mess || 0) : 0;
+        const chance = Math.max(1, baseChance - messPenalty);
         const roll = resolveDecision(replayContext, `rent_extension_roll`, () => Math.floor(context.rng.next() * 100));
         if (roll < chance) {
           approved = true;

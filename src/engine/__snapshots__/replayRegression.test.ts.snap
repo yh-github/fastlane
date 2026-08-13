@@ -20,9 +20,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "trade_school",
       ],
       "dependability": 0,
-      "enrolledClasses": {
-        "trade_school_req": 10,
-      },
+      "enrolledClasses": {},
       "experience": 29,
       "goalAllotment": {
         "career": 25,

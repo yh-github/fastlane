@@ -79,15 +79,13 @@ export function calcRequiredLessons(player: PlayerState, degree: EducationDef, r
 }
 
 export function study(player: PlayerState, degree: EducationDef, timeCost: number, rules?: GameRules): EducationResult {
-  if (player.hoursRemaining < 1 || player.enrolledClasses?.[degree.id] === undefined) {
+  if (player.enrolledClasses?.[degree.id] === undefined) {
     return { updated: player, success: false, message: { key: 'action.error.cannotStudy' } };
   }
 
   // Time check
-  if (player.hoursRemaining < timeCost) {
-    if (!rules?.allowPartialHours) {
-      return { updated: player, success: false, message: { key: 'action.error.notEnoughTime' } };
-    }
+  if (player.hoursRemaining <= 0 || (player.hoursRemaining < timeCost && !rules?.allowPartialHours)) {
+    return { updated: player, success: false, message: { key: 'action.error.notEnoughTime' } };
   }
 
   // Cost to study (allow partial hours if rule is enabled)
@@ -108,6 +106,7 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
   if (updated.enrolledClasses[degree.id] >= required) {
     updated.degrees = [...updated.degrees, degree.id];
     delete updated.enrolledClasses[degree.id];
+    delete updated.enrolledClasses[`${degree.id}_req`];
 
     // Apply rewards
     const qolReduced = rules?.reducedDegreeStatBonus;
