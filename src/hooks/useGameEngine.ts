@@ -188,7 +188,15 @@ export function useGameEngine(
           const rng = new Random(currentState.rngState);
           const outDecisions: EngineDecision[] = [];
           const replayCtx: ReplayContext = { outDecisions };
-          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx);
+          const isForced = !!currentState.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId));
+          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced);
+          
+          if (isForced) {
+            setGameState(prev => prev ? {
+              ...prev,
+              debugQueue: (prev.debugQueue || []).filter(e => !(e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId)))
+            } : prev);
+          }
           
           if (replayDataRef.current) {
             replayDataRef.current.steps.push({
