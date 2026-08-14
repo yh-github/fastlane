@@ -241,7 +241,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           if (mainLog.key === 'action.loan.paidOff') {
             nextMsg = t('action.loan.paidOff', { amount: mainLog.params?.amount });
           } else if (mainLog.key === 'action.loan.paidInstallment') {
-            nextMsg = t('action.loan.paidInstallment', { payment: mainLog.params?.payment });
+            nextMsg = t('action.loan.paidInstallment', mainLog.params);
           } else {
             nextMsg = "You do not have enough cash.";
           }
