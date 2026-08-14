@@ -4,7 +4,7 @@ import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
 import { loadCampaign, type CampaignBundle } from '../engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
-import { animatePlayerPath, pulsePlayer, showMapClick, type PlayerPosition } from '../graphics/mapRenderer';
+import { animatePlayerPath, pulsePlayer, showMapClick, animateRobberInterception, type PlayerPosition } from '../graphics/mapRenderer';
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
 import { simulateActionVisuals } from '../engine/aiTranslator';
@@ -36,6 +36,7 @@ export function useGameEngine(
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
+  const [streetRobberyNotice, setStreetRobberyNotice] = useState<{ lostAmount: number; location: string } | null>(null);
   const lastPulsedRef = useRef({ turn: -1, playerIndex: -1 });
   const replayDataRef = useRef<ReplayData | null>(null);
 
@@ -198,12 +199,20 @@ export function useGameEngine(
           }
 
           if (player.money < preRobberyMoney) {
+            const lostAmount = preRobberyMoney - player.money;
             addLog({ key: 'log.robbery' }, undefined, player.id);
             if (currentState.rules.enableAnimations) {
               const diff = player.money - preRobberyMoney;
               triggerAnim('text', `${diff} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
             }
             player.newspaperHeadline = { key: 'newspaper.robbery' };
+
+            // Triggers map robbery interception animation
+            await animateRobberInterception(activePlayerIndex);
+
+            if (!player.isAi) {
+              setStreetRobberyNotice({ lostAmount, location: currentBuilding || '' });
+            }
           }
           // Save the RNG state back since we used it!
           setGameState(prev => prev ? { ...prev, rngState: rng.getState() } : prev);
@@ -525,6 +534,8 @@ export function useGameEngine(
     handleAction,
     handleNodeClick,
     addLog,
-    replayData: replayDataRef.current
+    replayData: replayDataRef.current,
+    streetRobberyNotice,
+    setStreetRobberyNotice
   };
 }

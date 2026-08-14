@@ -12,7 +12,7 @@ import { calcEconomyPrice } from './economyEngine';
 import type { Random } from '../utils/rng';
 import type { CampaignBundle } from './dataLoader';
 import { resolveDecision, type ReplayContext } from './replayTypes';
-import { applyHappinessChange } from './statEffects';
+import { applyMoraleEffect, applyHappinessChange } from './statEffects';
 
 /**
  * Attempt a Wild Willy street robbery when leaving Bank or Black's Market.
@@ -108,7 +108,8 @@ export function processApartmentRobbery(
   rules?: import('./gameState').GameRules,
   turn: number = 1,
   startWeek: number = 4,
-  replay?: ReplayContext
+  replay?: ReplayContext,
+  statRules?: import('./rules').StatRules
 ): { updated: PlayerState; robbed: boolean } {
   if (player.currentHousingId === 'security') return { updated: player, robbed: false };
 
@@ -153,8 +154,8 @@ export function processApartmentRobbery(
       inventory: { ...player.inventory, appliances: newAppliances }, 
       turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }] 
     };
-    // -4 Happiness penalty
-    updated = applyHappinessChange(updated, -4, 'apartment_robbery', (rules || {}) as any);
+    // -4 Happiness/Morale penalty
+    updated = applyMoraleEffect(updated, -4, 'apartment_robbery', (rules || {}) as any, statRules);
     
     return { updated, robbed: true };
   }

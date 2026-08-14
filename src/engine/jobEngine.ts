@@ -5,7 +5,7 @@ import { calcEmployabilityScore } from './statMath';
 import type { JobDef } from './dataLoader';
 import type { Random } from '../utils/rng';
 import { resolveDecision, type ReplayContext } from './replayTypes';
-import { applyHappinessChange } from './statEffects';
+import { applyMoraleEffect, applyHappinessChange } from './statEffects';
 import { type StatRules } from './rules';
 
 export interface JobApplicationResult {
@@ -18,7 +18,7 @@ export function calculateJobEmployability(player: PlayerState): number {
   return calcEmployabilityScore(player.dependability, player.experience, player.degrees.length);
 }
 
-export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules, turn: number = 1, replay?: ReplayContext): JobApplicationResult {
+export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules, turn: number = 1, replay?: ReplayContext, statRules?: StatRules): JobApplicationResult {
   const msg = (key: string, defaultMsg: string, vars: Record<string, string> = {}) => {
     let m = messages[key] || defaultMsg;
     for (const [k, v] of Object.entries(vars)) m = m.replaceAll(`{${k}}`, v as string);
@@ -67,7 +67,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
       if (newWage > player.currentWage) {
         updated.currentWage = newWage;
         updated.raisesAtCurrentJob += 1;
-        updated = applyHappinessChange(updated, 3, 'raise_approved', rules || ({} as any));
+        updated = applyMoraleEffect(updated, 3, 'raise_approved', rules || ({} as any), statRules);
         return { updated, success: true, message: { key: 'action.job.raiseSuccess' } };
       } else {
         return { updated, success: false, message: { key: 'action.job.raiseWaste' } };

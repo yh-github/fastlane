@@ -11,8 +11,10 @@ import {
   MIN_HAPPINESS,
   MAX_HAPPINESS,
   DEPENDABILITY_WEEKLY_DECAY,
-  type PlayerState
+  type PlayerState,
+  collectItemEffects
 } from './gameState';
+import type { CampaignBundle } from './dataLoader';
 
 // ─── Stat Definitions & Dependency Graph ───────────────────────
 
@@ -124,12 +126,40 @@ export function messGrowth(currentMess: number): number {
   return Math.floor(0.2 * (currentMess + 1)) + 1;
 }
 
-/**
- * Calculate dynamic MAX_MENTAL for Advanced Mode.
- * Formula: MAX_MENTAL = Math.max(10, 51 - mess_growth(current_mess) + Math.floor(social / 10) + resilience_bonuses)
- */
-export function calcMaxMental(currentMess: number, social: number = 9, resilienceBonus: number = 0): number {
-  return Math.max(10, 51 - messGrowth(currentMess) + Math.floor(social / 10) + resilienceBonus);
+export function calcMaxMental(
+  currentMess: number,
+  social: number = 9,
+  resilienceBonus: number = 0,
+  player?: PlayerState,
+  statRules?: any,
+  campaign?: CampaignBundle
+): number {
+  const baseVal = statRules?.mentalMaxBaseValue ?? 51;
+  const globalMax = statRules?.globalMaxMentalCondition ?? 99;
+  
+  let bonus = resilienceBonus;
+  
+  if (player) {
+    if (campaign) {
+      const continuousEffects = collectItemEffects(player, campaign, 'continuous');
+      bonus += continuousEffects.get('mental_max') || 0;
+    } else {
+      const numBooks = player.inventory?.books?.length || 0;
+      const maxBookBonus = statRules?.mentalMaxBookLimit ?? 3;
+      const bookBonusVal = statRules?.mentalMaxBookBonus ?? 1;
+      bonus += Math.min(maxBookBonus, numBooks * bookBonusVal);
+      
+      if (player.inventory?.appliances?.some(a => a.id === 'computer')) {
+        bonus += statRules?.mentalMaxComputerBonus ?? 3;
+      }
+    }
+    
+    const numDegrees = player.degrees?.length || 0;
+    const degreeBonusVal = statRules?.mentalMaxDegreeBonus ?? 1;
+    bonus += numDegrees * degreeBonusVal;
+  }
+  
+  return Math.max(10, Math.min(globalMax, baseVal - messGrowth(currentMess) + Math.floor(social / 10) + bonus));
 }
 
 /**
@@ -396,12 +426,15 @@ export function safeDecrementMental(current: number, cost: number, minMental: nu
 /**
  * Calculate dynamic housing Mess limit considering Hot Tub (+5 MAX_MESS bonus).
  */
-export function calcMaxMess(player: PlayerState, statRules?: import('./rules').StatRules): number {
+export function calcMaxMess(player: PlayerState, statRules?: import('./rules').StatRules, campaign?: CampaignBundle): number {
   let baseMax = player.currentHousingId === 'security'
     ? (statRules?.securityMessMax ?? 90)
     : (statRules?.lowCostMessMax ?? 50);
 
-  if (player.inventory?.appliances?.some(a => a.id === 'hot_tub')) {
+  if (campaign) {
+    const continuousEffects = collectItemEffects(player, campaign, 'continuous');
+    baseMax += continuousEffects.get('mess_max') || 0;
+  } else if (player.inventory?.appliances?.some(a => a.id === 'hot_tub')) {
     baseMax += statRules?.hotTubMaxMessBonus ?? 5;
   }
 

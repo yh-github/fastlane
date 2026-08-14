@@ -1,0 +1,18 @@
+[
+  {
+    "id": "vcr_tv_social",
+    "name": "VCR TV Socializing",
+    "requires": ["item:vcr", "item:bw_tv"],
+    "effects": [
+      { "type": "vcr_social_bonus", "value": 1, "operation": "MAX" }
+    ]
+  },
+  {
+    "id": "vcr_color_tv_social",
+    "name": "VCR Color TV Socializing",
+    "requires": ["item:vcr", "item:color_tv"],
+    "effects": [
+      { "type": "vcr_social_bonus", "value": 1, "operation": "MAX" }
+    ]
+  }
+]

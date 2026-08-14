@@ -11,7 +11,7 @@
  * state objects rather than mutating in place.
  */
 
-import { type CampaignBundle } from './dataLoader';
+import { type CampaignBundle, type EffectTrigger, type StatTarget } from './dataLoader';
 import { messGrowth, calcMaxMental } from './statMath';
 
 // ─── Core Game State ────────────────────────────────────────────
@@ -390,14 +390,14 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
     ...(config.gameRules?.usePhysicalMentalConditions ? (() => {
       const startMess = config.gameRules?.trackMess ? 3 : 0;
       const startSocial = config.statRules?.startingSocial ?? 9;
-      const initMaxMental = calcMaxMental(startMess, startSocial, 0);
+      const initMaxMental = calcMaxMental(startMess, startSocial, 0, undefined, config.statRules);
       const initMaxPhys = config.statRules?.initialPhysicalMax ?? 50;
       return {
         physicalConditionMax: initMaxPhys,
         minPhysicalCondition: config.statRules?.initialMinPhysical ?? config.statRules?.minPhysicalCondition ?? 3,
-        physicalCondition: initMaxPhys,
+        physicalCondition: config.statRules?.startingPhysicalCondition ?? initMaxPhys,
         mentalConditionMax: initMaxMental,
-        mentalCondition: initMaxMental,
+        mentalCondition: config.statRules?.startingMentalCondition ?? initMaxMental,
         social: startSocial,
         resilienceBonus: 0,
         lifestyle: 0
@@ -487,6 +487,29 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
     activeEffects
   };
 
+  if (campaign.config.gameRules?.usePhysicalMentalConditions) {
+    const statRules = campaign.config.statRules;
+    updatedPlayer.mentalConditionMax = calcMaxMental(
+      updatedPlayer.mess || 0,
+      updatedPlayer.social || 9,
+      updatedPlayer.resilienceBonus || 0,
+      updatedPlayer,
+      statRules,
+      campaign
+    );
+    if (updatedPlayer.mentalCondition !== undefined) {
+      updatedPlayer.mentalCondition = Math.min(updatedPlayer.mentalConditionMax, updatedPlayer.mentalCondition);
+    }
+
+    const globalMaxPhys = statRules?.globalMaxPhysicalCondition ?? 100;
+    if (updatedPlayer.physicalConditionMax !== undefined) {
+      updatedPlayer.physicalConditionMax = Math.min(globalMaxPhys, updatedPlayer.physicalConditionMax);
+    }
+    if (updatedPlayer.physicalCondition !== undefined && updatedPlayer.physicalConditionMax !== undefined) {
+      updatedPlayer.physicalCondition = Math.min(updatedPlayer.physicalConditionMax, updatedPlayer.physicalCondition);
+    }
+  }
+
   if (updatedPlayer.lifestyle !== undefined) {
     updatedPlayer.lifestyle = recalculateLifestyle(updatedPlayer, campaign);
   }
@@ -561,4 +584,43 @@ export function calcMaxLifestyle(campaign: CampaignBundle): number {
   }
 
   return maxLifestyle;
+}
+
+export function collectItemEffects(
+  player: PlayerState,
+  campaign?: CampaignBundle,
+  trigger?: EffectTrigger
+): Map<StatTarget, number> {
+  const totals = new Map<StatTarget, number>();
+  if (!campaign || !trigger) return totals;
+
+  const seenItemIds = new Set<string>();
+
+  // Process appliances
+  for (const app of player.inventory?.appliances || []) {
+    if (seenItemIds.has(app.id)) continue;
+    seenItemIds.add(app.id);
+
+    const itemDef = campaign.items.find(i => i.id === app.id);
+    for (const effect of itemDef?.effects || []) {
+      if (effect.trigger === trigger) {
+        totals.set(effect.stat, (totals.get(effect.stat) || 0) + effect.value);
+      }
+    }
+  }
+
+  // Process books
+  for (const bookId of player.inventory?.books || []) {
+    if (seenItemIds.has(bookId)) continue;
+    seenItemIds.add(bookId);
+
+    const itemDef = campaign.items.find(i => i.id === bookId);
+    for (const effect of itemDef?.effects || []) {
+      if (effect.trigger === trigger) {
+        totals.set(effect.stat, (totals.get(effect.stat) || 0) + effect.value);
+      }
+    }
+  }
+
+  return totals;
 }
