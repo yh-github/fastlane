@@ -260,20 +260,81 @@ describe('Turn Processor', () => {
       state.players[0].currentWage = 20;
 
       // Mock random:
-      // 1. fluctuateEconomy step -> 0.5 (0 change) -> newEconomy stays 85
-      // 2. market_crash_trigger -> 0.0001 (< crashChance ~0.032) -> crash triggered!
-      // 3. market_crash_roll -> 0.99 (Major crash: roll >= 0.666)
+      // 1. fluctuateEconomy trendChange -> 0.5 (change 0)
+      // 2. fluctuateEconomy readingMult -> 0.5 (mult 2) -> newEconomy stays 85
+      // 3. market_crash_trigger -> 0.0001 (< crashChance ~0.032) -> crash triggered!
+      // 4. market_crash_roll -> 0.99 (Major crash: roll >= 0.666)
+      // 5. market_crash_trend -> 0.5
       const rngSpy = vi.spyOn(Random.prototype, 'next');
-      rngSpy.mockReturnValueOnce(0.5);   // fluctuateEconomy
+      rngSpy.mockReturnValueOnce(0.5);   // trendChange
+      rngSpy.mockReturnValueOnce(0.5);   // readingMult
       rngSpy.mockReturnValueOnce(0.0001); // market_crash_trigger
       rngSpy.mockReturnValueOnce(0.99);   // market_crash_roll (Major)
+      rngSpy.mockReturnValueOnce(0.5);    // market_crash_trend
 
       const nextState = processTurnStart(state, mockCampaign);
 
-      expect(nextState.economicIndex).toBe(35); // 85 - 50 = 35
+      expect(nextState.economicIndex).toBe(76); // 85 - 9 = 76
       expect(nextState.players[0].bankSavings).toBe(0); // Major crash wipes savings!
       expect(nextState.players[0].currentJobId).toBeNull(); // Major crash fires player!
       expect(nextState.players[0].turnEvents.some(e => e.key === 'events.marketCrash.bankSavingsLost')).toBe(true);
+      expect(nextState.players[0].newspaperHeadline?.key).toBe('newspaper.crash_major');
+    });
+
+    it('triggers minor crash (-3 reading, negative trend plunge)', () => {
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 8;
+      state.economicIndex = 82;
+
+      const rngSpy = vi.spyOn(Random.prototype, 'next');
+      rngSpy.mockReturnValueOnce(0.5);    // trendChange -> 0
+      rngSpy.mockReturnValueOnce(0.5);    // readingMult -> 2
+      rngSpy.mockReturnValueOnce(0.0001); // crash trigger
+      rngSpy.mockReturnValueOnce(0.1);    // roll < 0.333 (Minor)
+      rngSpy.mockReturnValueOnce(0.01);   // crash trend -> Math.floor(0.01 * 3) - 3 = -3
+
+      const nextState = processTurnStart(state, mockCampaign);
+      expect(nextState.economicIndex).toBe(79); // 82 - 3 = 79
+      expect(nextState.economicTrend).toBe(-3);
+      expect(nextState.players[0].newspaperHeadline?.key).toBe('newspaper.crash_minor');
+    });
+
+    it('triggers moderate crash (-6 reading, negative trend plunge)', () => {
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 8;
+      state.economicIndex = 84;
+
+      const rngSpy = vi.spyOn(Random.prototype, 'next');
+      rngSpy.mockReturnValueOnce(0.5);    // trendChange -> 0
+      rngSpy.mockReturnValueOnce(0.5);    // readingMult -> 2
+      rngSpy.mockReturnValueOnce(0.0001); // crash trigger
+      rngSpy.mockReturnValueOnce(0.5);    // roll 0.333..0.666 (Moderate)
+      rngSpy.mockReturnValueOnce(0.5);    // crash trend -> Math.floor(0.5 * 3) - 3 = -2
+
+      const nextState = processTurnStart(state, mockCampaign);
+      expect(nextState.economicIndex).toBe(78); // 84 - 6 = 78
+      expect(nextState.economicTrend).toBe(-2);
+      expect(nextState.players[0].newspaperHeadline?.key).toBe('newspaper.crash_moderate');
+    });
+  });
+
+  describe('Economic Boom', () => {
+    it('triggers economic boom when reading <= 120 and turn >= 8', () => {
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 8;
+      state.economicIndex = 20;
+
+      const rngSpy = vi.spyOn(Random.prototype, 'next');
+      rngSpy.mockReturnValueOnce(0.5);    // trendChange -> 0
+      rngSpy.mockReturnValueOnce(0.5);    // readingMult -> 2
+      // crash check not reached (index 20 < 80)
+      rngSpy.mockReturnValueOnce(0.0001); // boom trigger (< 1/31)
+      rngSpy.mockReturnValueOnce(0.99);   // boom trend -> Math.floor(0.99 * 3) + 1 = 3
+
+      const nextState = processTurnStart(state, mockCampaign);
+      expect(nextState.economicIndex).toBe(26); // 20 + 6 = 26
+      expect(nextState.economicTrend).toBe(3);
+      expect(nextState.players[0].newspaperHeadline?.key).toBe('newspaper.boom');
     });
   });
 

@@ -1457,7 +1457,7 @@ Each severity of Market Crash triggers a different [[Newspaper]] headline, which
 | ''SCANDAL ON WALL ST. ECONOMY DROPS! UNEMPLOYMENT RISES''
 |-
 ! Major
-| -20%
+| -15%
 | 100%
 | [[File:Cross.png]]
 | [[File:Tick.png]]
@@ -1474,7 +1474,7 @@ Furthermore, the Crash instantly reduces all prices by a certain percentage. The
 
 * Minor Crash: '''-5%'''
 * Moderate Crash: '''-10%'''
-* Major Crash: '''-20%'''
+* Major Crash: '''-15%'''
 
 Note that this penalty is applied after the Economic Index plunges, which means that the final price drop could be far more serious than these numbers imply.
 
@@ -1545,3 +1545,117 @@ If a '''Market Crash''' occurs during a player's turn, that player (and only tha
     - *Expensive Weekend Events (CD-ROM)*: Until Week #8, maximum weekend cost is capped at $55 (Medium price range). Starting Week #8, Expensive weekends ($50 to $100) become active.
     - *Market Crashes & Economic Booms (CD-ROM)*: Can only occur starting on Week #8.
 - **Consumables Depletion Rate**: Consumable items deplete at a rate of 1 per week (clothing decay, fresh food 1 unit/week with refrigerator, tickets consumed at turn start).
+
+
+## Wiki Page: Economy
+
+The game keeps track of an '''Economy''' that fluctuates each and every [[Turn]], but generally follows a certain trend that shifts slowly over time.
+
+The way the game calculates the Economy is quite complex. It is a formula that is executed at the start of every Turn, using parameters derived from the state of the Economy in the previous turn. The calculation results in two values: The "Index" (a market trend) and the "Reading" (a percentage applied to prices throughout the game).
+
+The current state of the Economy directly determines all [[Item]] prices in the game (with two minor exceptions).
+
+A player's current [[Rent]] is not affected by the Economy, but the Rent offered for other [[Apartments]] is.
+
+A player's current [[Wage]] is not affected by the Economy except in cases of [[Market Crash]]es causing a pay cut. The Wages for other [[Job]]s on offer at the [[Employment Office]] do fluctuate with the Economy.
+
+The price of [[Stocks]] also fluctuates, but it is not directly clamped to the Economy. Instead, each Stock can fluctuate up or down independently, around a certain baseline dictated by the Economy.
+
+At the start of each Turn (except on the first 3 [[Week]]s of the game), the Economy can experience either a [[Market Crash]] or an [[Economic Boom]], which is announced with a [[Newspaper]] headline. This has a sudden impact on the Economy, and can also cause players to be fired from their Jobs or to get a Wage cut.
+
+== Economic Index and Reading ==
+
+At the start of each [[Turn]], the game runs a formula that calculates both the current state of the '''Economy''' and where it is generally heading.
+
+This formula is quite complex, and involves processing the same parameters multiple times, and applying multiple random factors to them. 
+
+The result of the formula are two important values:
+
+* The '''Index''': A number between -3 and +3 indicating the current general state of the Economy, as well as the direction in which it is heading. A higher Index pulls prices upwards, while also increasing the chance for another economic improvement at the start of the following turn.
+* The '''Reading''': A number between -30 and +90 (-90 and +90 in the Floppy Disk version) indicating the precise state of the Economy. This directly influences prices where applicable. The Economic Reading also determines whether a [[Market Crash]] or [[Economic Boom]] can occur at the start of the turn (though random chance also has a say).
+
+Neither of these values is visible in-game, though the Reading can be determined by comparing an item's current purchase price to its Base Price.
+
+In general a strong economy is likely to get stronger, while a weaker economy is likely to get weaker. However, a stronger economy is liable to [[Market Crash|Crash]], while a weaker one is liable to [[Economic Boom|Boom]].
+
+In the Floppy Disk version of the game, it was easy for the Economy to get out of hand and plunge into a never-ending slump (with extremely low prices and [[Wage]]s). This was somewhat rectified in the CD-ROM version of the game, where the Economy is much more likely to recover.
+
+For purposes of gameplay, only the '''Reading''' is important, as it is directly proportional to prices (except the [[Stock Market]], which gets its own separate Reading for each Stock, influenced by the main Economic Index).
+
+== Item Prices ==
+
+The most pronounced effect of the '''Economy''' is on the purchase price of [[Item]]s at stores. With very few exceptions, all Item prices are clamped to the current Market Reading.
+
+Each item in the game has a Base Price, which is how much that item would cost if the Reading was exactly 0. However this is exceptionally rare; The Reading will most likely be somewhere above or below 0 at all times.
+
+The actual price of an item is determined by the following formula:
+
+<math>Item \ Price = Base \ Price + {Base \ Price 	imes Reading \ over 60}</math>
+
+Given the possible values of the Reading (-30 to 90), this means that an item can cost anywhere between 50% and 250% of its Base Price.
+
+The [[Lottery Tickets]] and [[Newspaper]] avoid this formula, having a fixed price that never changes. Additionally, the prices of items at the [[Pawn Shop]] never fluctuate once the item is put up for sale.
+
+== University Enrollment ==
+
+[[Enrolling]] for a course at [[Hi-Tech U]] has a Base Price of $50, and is directly affected by the Economy the same way that Item Prices are affected (see above).
+
+== Wages ==
+
+A player's [[Wage]] does not normally react to the Economy; It stays static so long as the player doesn't change [[Jobs]] (and doesn't ask for and receive a [[Raise]]).
+
+However, a [[Market Crash]] event of moderate severity can randomly cause the player to receive a pay cut, reducing their Wage to 80% of their current Wage.
+
+Wages offered at the [[Employment Office]] do change, the same as Item Prices (and using the same formula); A Job can be offered for anywhere between 50% and 250% of its Base Wage. If the player's current Job is being offered at a higher Wage than the player currently makes at that Job, they may select it again to ask for a [[Raise]].
+
+== Rent ==
+
+The [[Rent]] for a player's [[Apartment]] does not change as long as the player keeps the same Apartment.
+
+However when switching to a new Apartment, the new Rent is based on the type of Apartment and is affected by the Reading (see [[#Item Prices|above]]). This new price is listed at the [[Rent Office]] next to the option to switch to a new Apartment.
+
+Once the new Apartment is acquired, its Rent remains completely static until the player switches Apartments again (if at all).
+
+
+## Wiki Page: Economic Boom
+
+An '''Economic Boom''' or '''Market Boom''' is a random event that can occur at the start of any [[Turn]], if certain conditions are met. It improves the [[Economy]], raising prices across the board.
+
+An Economic Boom can only occur if the economy is neutral or slightly better than neutral - and only on or after [[Week]] #8. The more players there are, the lower the chance of an Economic Boom each turn.
+
+Unlike [[Market Crash]]es, there is only one intensity of Economic Boom.
+
+An Economic Boom biases the current Economic trend upwards, and typically causes prices and [[Wage]]s to increase immediately.
+
+On triggering an Economic Boom, the player whose turn it is enjoys a large bonus to [[Happiness]] if they have over $1,000 in [[Stock Market]] investments.
+
+== Triggering a Boom ==
+
+In order for the game to trigger any '''Economic Boom''', the following conditions must be true:
+
+* It is [[Week]] #8 or greater. (This condition only applies in the '''CD-ROM version''')
+* The current [[Economy|Economic Reading]] is no more than 120.
+
+If both conditions are met at the start of a player's [[Turn]], the game rolls a random number to determine whether an Economic Boom should take place. 
+
+In all versions of the game, the chance to trigger a Boom is calculated by this formula:
+
+<math>Chance \ of \ Economic \ Boom = {1 \over 1 + ({30 	imes Number \ of \ Players})}</math>
+
+== Economic Effect ==
+
+When an '''Economic Boom''' occurs, it has two sudden effects on the [[Economy]].
+
+First, the Boom causes the Economic Index (a general market trend) to sharply improve. This means that the economy suddenly becomes more likely to keep going up on subsequent turns. A Boom will cause a very weak economy to neutralize (it could go either way from here), or a neutral economy to reach the best possible upwards trend (staying high potentially for a long time).
+
+Furthermore, the Boom instantly increases all prices by 10%.
+
+Note that this bonus is applied after the Economic Index jumps up, which means that the final price increase could be far more substantial than this number implies.
+
+A price increase affects the prices of all '''[[Item]]s''' at stores, the '''[[Wage]]s''' on offer at the [[Employment Office]], the '''[[Rent]]''' for available Apartments at the [[Rent Office]], the cost of '''[[Enrolling]]''' in new courses at [[Hi-Tech U]], and indirectly the value of all '''[[Stocks]]'''.
+
+Each player's current Wage and Rent are not affected.
+
+== Happiness ==
+
+When an Economic Boom occurs during a player's turn, if they have over $1,000 in [[Stock Market]] investments that player (and only that player) receives '''+5 Happiness'''.

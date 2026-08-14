@@ -27,6 +27,8 @@ export interface GameState {
   turn: number;
   /** Global economic index: -30 (depression) to +90 (boom) */
   economicIndex: number;
+  /** Global economic trend/momentum: -3 to +3 */
+  economicTrend: number;
   /** Items that have expired and are for sale globally */
   pawnShopItemsForSale: PawnedItem[];
   /** All player states */
@@ -425,6 +427,7 @@ export function createInitialGameState(
   return {
     turn: 0,
     economicIndex: 0,
+    economicTrend: 0,
     rngState: seed,
     pawnShopItemsForSale: [],
     players: playersConfig.map((cfg, i) =>

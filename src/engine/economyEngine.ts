@@ -73,15 +73,30 @@ export function calcItemPrice(item: { basePrice?: number; isFixedPrice?: boolean
 
 /**
  * Fluctuates the economic index for the next turn.
- * Random walk within the bounds of -30 (depression) to +90 (boom).
+ * Uses a two-variable model (Trend and Reading).
  *
- * @param currentIndex — Current economic index
- * @returns              New economic index
+ * @param currentIndex — Current economic reading (-30 to +90)
+ * @param currentTrend - Current economic trend/momentum (-3 to +3)
+ * @param minReading   - Minimum allowed reading
+ * @returns              Tuple of [newReading, newTrend]
  */
-export function fluctuateEconomy(currentIndex: number, rng: Random, replay?: ReplayContext): number {
-  // Random walk for the economic index (-3 to +3 per turn)
-  const change = resolveDecision(replay, `fluctuate_economy`, () => Math.floor(rng.next() * 7) - 3); // -3 to +3
-  return Math.max(-30, Math.min(90, currentIndex + change));
+export function fluctuateEconomy(currentIndex: number, currentTrend: number, minReading: number, rng: Random, replay?: ReplayContext): [number, number] {
+  // Update Trend: random step of -1, 0, +1
+  const trendChange = resolveDecision(replay, `fluctuate_trend`, () => {
+    let change = Math.floor(rng.next() * 3) - 1;
+    // Apply slight positive feedback bias
+    if (currentTrend > 0 && rng.next() < 0.2) change += 1;
+    if (currentTrend < 0 && rng.next() < 0.2) change -= 1;
+    return change;
+  });
+  const newTrend = Math.max(-3, Math.min(3, currentTrend + trendChange));
+
+  // Update Reading: changes by Trend * [1..3]
+  const readingMult = resolveDecision(replay, `fluctuate_reading_mult`, () => Math.floor(rng.next() * 3) + 1);
+  const readingChange = newTrend * readingMult;
+  const newReading = Math.max(minReading, Math.min(90, currentIndex + readingChange));
+
+  return [newReading, newTrend];
 }
 
 /**
@@ -132,13 +147,19 @@ export function applyMarketCrash(
   } else if (severity === 'moderate') {
     updated = applyHappinessChange(updated, hasSignificantStocks ? -4 : -2, 'market_crash', rules || ({} as any), statRules);
     
-    // 50% chance to lose job
-    if (updated.currentJobId !== null && rng.next() < 0.5) {
-      updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
-      updated.currentJobId = null;
-      updated.currentWage = 0;
-      updated.raisesAtCurrentJob = 0;
-      updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
+    // 50% chance to lose job, otherwise wage cut
+    if (updated.currentJobId !== null) {
+      if (rng.next() < 0.5) {
+        updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
+        updated.currentJobId = null;
+        updated.currentWage = 0;
+        updated.raisesAtCurrentJob = 0;
+        updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
+      } else {
+        // Pay cut to 80%
+        updated.turnEvents.push({ key: 'events.marketCrash.wageCut' });
+        updated.currentWage = Math.floor(updated.currentWage * 0.8);
+      }
     }
   } else if (severity === 'major') {
     // Lose all bank savings

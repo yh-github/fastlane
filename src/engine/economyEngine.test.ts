@@ -1,7 +1,7 @@
 import { Random } from '../utils/rng';
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fluctuateEconomy, applyMarketCrash, calcEconomyPrice, calcItemPrice, processRentDebt } from './economyEngine';
+import { fluctuateEconomy, applyMarketCrash, applyEconomicBoom, calcEconomyPrice, calcItemPrice, processRentDebt } from './economyEngine';
 import type { PlayerState } from './gameState';
 
 describe('Economy Engine', () => {
@@ -32,30 +32,50 @@ describe('Economy Engine', () => {
 
   describe('fluctuateEconomy', () => {
     it('fluctuates economy within bounds', () => {
-      // Mock math.random to return 0.5 (no change)
+      // Mock math.random to return 0.5 (change 0, mult 2)
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.5);
-      const newEcon = fluctuateEconomy(50, new Random(1));
-      expect(newEcon).toBe(50);
+      const newEcon = fluctuateEconomy(50, 0, -30, new Random(1));
+      expect(newEcon[0]).toBe(50);
 
-      // Mock random to return 0.99 (+3)
+      // Mock random to return 0.99 (+1 trend, 3 mult => +3)
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99);
-      const highEcon = fluctuateEconomy(50, new Random(1));
-      expect(highEcon).toBe(53);
+      const highEcon = fluctuateEconomy(50, 0, -30, new Random(1));
+      expect(highEcon[0]).toBe(53);
 
-      // Mock random to return 0.01 (-3)
+      // Mock random to return 0.01 (-1 trend, 1 mult => -1)
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
-      const lowEcon = fluctuateEconomy(50, new Random(1));
-      expect(lowEcon).toBe(47);
+      const lowEcon = fluctuateEconomy(50, 0, -30, new Random(1));
+      expect(lowEcon[0]).toBe(49);
     });
 
-    it('keeps economy between -30 and 90', () => {
+    it('keeps economy between minReading and 90', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
-      const lowEcon = fluctuateEconomy(-25, new Random(1));
-      expect(lowEcon).toBeGreaterThanOrEqual(-30);
+      const lowEcon = fluctuateEconomy(-25, -3, -30, new Random(1));
+      expect(lowEcon[0]).toBeGreaterThanOrEqual(-30);
 
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99);
-      const highEcon = fluctuateEconomy(85, new Random(1));
-      expect(highEcon).toBeLessThanOrEqual(90);
+      const highEcon = fluctuateEconomy(85, 3, -30, new Random(1));
+      expect(highEcon[0]).toBeLessThanOrEqual(90);
+    });
+
+    it('allows floppy edition to drop down to -90', () => {
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
+      const [newReading, newTrend] = fluctuateEconomy(-85, -3, -90, new Random(1));
+      expect(newReading).toBe(-88);
+      expect(newTrend).toBe(-3);
+
+      const [clampedReading] = fluctuateEconomy(-89, -3, -90, new Random(1));
+      expect(clampedReading).toBe(-90);
+    });
+
+    it('clamps trend between -3 and +3', () => {
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99);
+      const [, maxTrend] = fluctuateEconomy(0, 3, -30, new Random(1));
+      expect(maxTrend).toBe(3);
+
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
+      const [, minTrend] = fluctuateEconomy(0, -3, -30, new Random(1));
+      expect(minTrend).toBe(-3);
     });
   });
 
@@ -69,7 +89,7 @@ describe('Economy Engine', () => {
       expect(updated.bankSavings).toBe(1000);
     });
 
-    it('applies moderate crash correctly', () => {
+    it('applies moderate crash correctly and fires player when rng < 0.5', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); // Trigger fired
       const player = { money: 1000, bankSavings: 1000, happiness: 50, currentJobId: 'some_job', currentWage: 50, inventory: { stocks: { tBills: 5, holdings: { 'XYZ': 10 } } } } as unknown as PlayerState;
       const updated = applyMarketCrash(player, 'moderate', new Random(1));
@@ -79,7 +99,18 @@ describe('Economy Engine', () => {
       expect(updated.currentWage).toBe(0);
     });
 
-    it('applies major crash correctly and loses job', () => {
+    it('applies moderate crash 20% wage cut when player is NOT fired (rng >= 0.5)', () => {
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.75); // Not fired!
+      const player = { money: 1000, bankSavings: 1000, happiness: 50, currentJobId: 'some_job', currentWage: 50, inventory: { stocks: { tBills: 5, holdings: {} } } } as unknown as PlayerState;
+      const updated = applyMarketCrash(player, 'moderate', new Random(1));
+      // moderate crash drops happiness by 2 (no stocks), wage cut by 20% (50 * 0.8 = 40)
+      expect(updated.happiness).toBe(48);
+      expect(updated.currentJobId).toBe('some_job');
+      expect(updated.currentWage).toBe(40);
+      expect(updated.turnEvents.some(e => e.key === 'events.marketCrash.wageCut')).toBe(true);
+    });
+
+    it('applies major crash correctly and loses job and wipes savings', () => {
       const player = { money: 1000, bankSavings: 1000, happiness: 50, currentJobId: 'some_job', currentWage: 50, inventory: { stocks: { tBills: 5, holdings: {} } } } as PlayerState;
       const updated = applyMarketCrash(player, 'major', new Random(1));
       // major crash drops happiness by 3 (no stocks) + 7 (fired) = 10.
@@ -87,6 +118,47 @@ describe('Economy Engine', () => {
       expect(updated.currentJobId).toBeNull();
       expect(updated.bankSavings).toBe(0); // Bank savings wiped!
       expect(updated.money).toBe(1000); // Cash is safe
+      expect(updated.turnEvents.some(e => e.key === 'events.marketCrash.bankSavingsLost')).toBe(true);
+    });
+  });
+
+  describe('applyEconomicBoom', () => {
+    const mockCampaign = {
+      stocks: [
+        { id: 'macrosoft', basePrice: 100, type: 'fluctuating' }
+      ]
+    } as any;
+
+    it('grants +5 happiness to player with >$1000 in fluctuating stocks', () => {
+      const player = {
+        happiness: 50,
+        inventory: {
+          stocks: {
+            tBills: 0,
+            holdings: { macrosoft: 20 } // 20 * ~100 = ~2000 > 1000
+          }
+        }
+      } as unknown as PlayerState;
+
+      const updated = applyEconomicBoom(player, mockCampaign, 0, 8);
+      expect(updated.happiness).toBe(55);
+      expect(updated.turnEvents.some(e => e.key === 'events.economicBoom.investorBonus')).toBe(true);
+    });
+
+    it('does not grant happiness if stock holdings <= $1000', () => {
+      const player = {
+        happiness: 50,
+        inventory: {
+          stocks: {
+            tBills: 10, // TBills don't count toward fluctuating stocks bonus
+            holdings: {}
+          }
+        }
+      } as unknown as PlayerState;
+
+      const updated = applyEconomicBoom(player, mockCampaign, 0, 8);
+      expect(updated.happiness).toBe(50);
+      expect(updated.turnEvents.some(e => e.key === 'events.economicBoom.investorBonus')).toBe(false);
     });
   });
 

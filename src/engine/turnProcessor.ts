@@ -18,7 +18,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   const rng = new Random(state.rngState);
 
   // 1. Economic Changes
-  let newEconomy = fluctuateEconomy(state.economicIndex, rng, replay);
+  const minReading = state.rules.minEconomicReading ?? -30;
+  let [newEconomy, newTrend] = fluctuateEconomy(state.economicIndex, state.economicTrend || 0, minReading, rng, replay);
 
   // 16. Market Crash & Economic Boom Roll (Determined here, applied later)
   let crashSeverity: 'none' | 'minor' | 'moderate' | 'major' = 'none';
@@ -33,28 +34,34 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       const crashTriggered = resolveDecision(replay, `market_crash_trigger`, () => rng.next() < crashChance);
       if (crashTriggered) {
         const roll = resolveDecision(replay, `market_crash_roll`, () => rng.next());
+        const trendDrop = resolveDecision(replay, `market_crash_trend`, () => Math.floor(rng.next() * 3) - 3); // -3 to -1
+        
         if (roll < 0.333) {
           crashSeverity = 'minor';
-          newEconomy = Math.max(-30, newEconomy - 15);
+          newEconomy = Math.max(minReading, newEconomy - 3); // -5% (3 points)
+          newTrend = trendDrop;
           currentHeadline = { key: 'newspaper.crash_minor' };
         } else if (roll < 0.666) {
           crashSeverity = 'moderate';
-          newEconomy = Math.max(-30, newEconomy - 30);
+          newEconomy = Math.max(minReading, newEconomy - 6); // -10% (6 points)
+          newTrend = trendDrop;
           currentHeadline = { key: 'newspaper.crash_moderate' };
         } else {
           crashSeverity = 'major';
-          newEconomy = Math.max(-30, newEconomy - 50);
+          newEconomy = Math.max(minReading, newEconomy - 9); // -15% (9 points)
+          newTrend = trendDrop;
           currentHeadline = { key: 'newspaper.crash_major' };
         }
       }
     }
 
-    if (crashSeverity === 'none' && newEconomy >= 0) {
+    if (crashSeverity === 'none' && newEconomy <= 120) {
       const boomChance = 1 / (1 + (30 * state.players.length));
       const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
       if (boomTriggered) {
         economicBoom = true;
-        newEconomy = Math.min(90, newEconomy + 6);
+        newEconomy = Math.min(90, newEconomy + 6); // +10% (6 points)
+        newTrend = resolveDecision(replay, `market_boom_trend`, () => Math.floor(rng.next() * 3) + 1); // +1 to +3
         currentHeadline = { key: 'newspaper.boom' };
       }
     }
@@ -568,6 +575,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   return {
     ...state,
     economicIndex: newEconomy,
+    economicTrend: newTrend,
     pawnShopItemsForSale: newPawnShopItemsForSale,
     players: updatedPlayers,
     turn: state.turn + 1,

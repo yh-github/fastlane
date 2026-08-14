@@ -134,6 +134,11 @@ export interface GameRules {
   usePhysicalMentalConditions?: boolean;
 
   /**
+   * The lowest possible value the economic index (reading) can reach.
+   */
+  minEconomicReading?: number;
+
+  /**
    * ADVANCED: If true, the player starts their turn at their home node.
    */
   turnStartAtHome?: boolean;
@@ -279,6 +284,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   showItemImages: false,
   maxEnrolledClasses: 4,
   turnStartAtHome: false,
+  minEconomicReading: -30,
 };
 
 /**
@@ -306,6 +312,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   showItemImages: 'Displays graphical icons for items in menus and inventory',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
+  minEconomicReading: 'The lowest possible value the economic index (reading) can reach (-90 for Floppy, -30 for CD-ROM)',
   willyRobberyStartWeek: 'Game turn/week when Willy robbery events begin',
   'charity.maxCash': 'Maximum cash limit to remain eligible for charity payout',
   'charity.maxWealth': 'Maximum wealth limit to remain eligible for charity payout',
