@@ -60,6 +60,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
+      "mess": 4,
       "money": 173,
       "nakedTurns": 1,
       "name": "Player 1",
@@ -138,7 +139,16 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
 {
   "campaignId": "test_regression",
   "economicIndex": 10,
-  "pawnShopItemsForSale": [],
+  "pawnShopItemsForSale": [
+    {
+      "itemId": "refrigerator",
+      "originalPrice": 400,
+      "ownerId": "player_1",
+      "purchaseSource": "socket_city",
+      "redeemCost": 200,
+      "weekPawned": 2,
+    },
+  ],
   "phase": "game-over",
   "players": [
     {
@@ -158,24 +168,18 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "happiness": 50,
         "wealth": 50,
       },
-      "happiness": 39,
+      "happiness": 50,
       "hasWon": true,
-      "hoursRemaining": 50,
+      "hoursRemaining": 40,
       "id": "player_1",
       "inventory": {
-        "appliances": [
-          {
-            "id": "refrigerator",
-            "purchasePrice": 400,
-            "purchaseSource": "socket_city",
-          },
-        ],
+        "appliances": [],
         "books": [],
         "businessClothesWeeks": 0,
         "casualClothesWeeks": 14,
         "dressClothesWeeks": 0,
         "fastFoodItems": [],
-        "freshFoodUnits": 1,
+        "freshFoodUnits": 0,
         "lotteryTickets": 0,
         "pawnedItems": [],
         "selectedClothes": "casual",
@@ -194,7 +198,8 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 0,
+      "mess": 4,
+      "money": 203,
       "nakedTurns": 0,
       "name": "TestPlayer",
       "newspaperHeadline": {
@@ -206,24 +211,15 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "rentDebt": 0,
       "rentExtensionActive": false,
       "rentExtensionsDeniedPermanently": false,
-      "rentExtensionsReceived": 1,
-      "rentPaidUntilWeek": 4,
+      "rentExtensionsReceived": 0,
+      "rentPaidUntilWeek": 8,
       "timesDefaulted": 0,
       "turnEvents": [
         {
-          "key": "events.foodSpoiled.ateSpoiled",
+          "key": "events.starvation",
         },
         {
-          "key": "events.foodSpoiled.sick",
-        },
-        {
-          "key": "events.doctorVisit",
-          "params": {
-            "cost": 63,
-          },
-        },
-        {
-          "key": "events.rent.extensionExpired",
+          "key": "events.pawnExpired",
         },
       ],
       "turnFlags": {
@@ -233,7 +229,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "fastFoodHappinessGranted": false,
         "freeNewspaper": false,
         "freshFoodHappinessGranted": false,
-        "hasEaten": true,
+        "hasEaten": false,
         "hasSeenEvents": false,
         "hasSeenWeekend": false,
         "hasWorked": false,

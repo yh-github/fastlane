@@ -362,3 +362,72 @@ export function showMapClick(x: number, y: number): void {
   }
   requestAnimationFrame(step);
 }
+
+/**
+ * Animate a robber intercepting the player at their current location on the map.
+ */
+export async function animateRobberInterception(playerIndex: number, speedMs: number = 600): Promise<void> {
+  if (!app || !playerTokens[playerIndex]) return;
+  const mapContainer = app.stage.children[0] as Container;
+  const pToken = playerTokens[playerIndex];
+  
+  const robber = new Graphics();
+  robber.circle(0, 0, 12);
+  robber.fill({ color: 0x000000 });
+  robber.setStrokeStyle({ width: 3, color: 0xe74c3c });
+  robber.stroke();
+  
+  const label = new Text({
+    text: '👤',
+    style: { fill: 0xe74c3c, fontSize: 16 }
+  });
+  label.anchor.set(0.5, 0.5);
+  robber.addChild(label);
+  
+  robber.x = pToken.x + 80;
+  robber.y = pToken.y - 40;
+  mapContainer.addChild(robber);
+  
+  await new Promise<void>((resolve) => {
+    const startX = robber.x;
+    const startY = robber.y;
+    const targetX = pToken.x;
+    const targetY = pToken.y;
+    const startTime = performance.now();
+    
+    function step(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / speedMs, 1);
+      
+      robber.x = startX + (targetX - startX) * progress;
+      robber.y = startY + (targetY - startY) * progress;
+      
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        const flashGraphic = new Graphics();
+        flashGraphic.circle(0, 0, 30);
+        flashGraphic.fill({ color: 0xe74c3c, alpha: 0.5 });
+        flashGraphic.x = targetX;
+        flashGraphic.y = targetY;
+        mapContainer.addChild(flashGraphic);
+        
+        let flashStartTime = performance.now();
+        function fadeFlash(fNow: number) {
+          const fElapsed = fNow - flashStartTime;
+          const fProgress = Math.min(fElapsed / 300, 1);
+          flashGraphic.alpha = 0.5 * (1 - fProgress);
+          if (fProgress < 1) {
+            requestAnimationFrame(fadeFlash);
+          } else {
+            flashGraphic.destroy();
+            robber.destroy();
+            resolve();
+          }
+        }
+        requestAnimationFrame(fadeFlash);
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}

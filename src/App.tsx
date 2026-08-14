@@ -17,6 +17,7 @@ import { AnimationLayer } from './ui/AnimationLayer';
 import { useGameAnimations } from './hooks/useGameAnimations';
 import { useGameEngine } from './hooks/useGameEngine';
 import { TurnEventsQueue } from './ui/TurnEventsQueue';
+import { StreetRobberyModal } from './ui/StreetRobberyModal';
 
 export default function App() {
   const [showTitle, setShowTitle] = useState(true);
@@ -42,7 +43,9 @@ export default function App() {
     handleAction,
     handleNodeClick,
     addLog,
-    replayData
+    replayData,
+    streetRobberyNotice,
+    setStreetRobberyNotice
   } = useGameEngine(selectedCampaignId, triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen);
 
   if (showTitle) {
@@ -207,6 +210,14 @@ export default function App() {
             setGameState={setGameState} 
             replayData={replayData}
             onClose={() => setIsSettingsOpen(false)} 
+          />
+        )}
+
+        {streetRobberyNotice && (
+          <StreetRobberyModal
+            lostAmount={streetRobberyNotice.lostAmount}
+            location={streetRobberyNotice.location}
+            onClose={() => setStreetRobberyNotice(null)}
           />
         )}
       </main>

@@ -1,6 +1,6 @@
 import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import type { ItemDef } from './dataLoader';
-import { applyMentalChange } from './statEffects';
+import { applyMentalChange, applyMoraleEffect } from './statEffects';
 
 export interface ShoppingResult {
   updated: PlayerState;
@@ -62,10 +62,17 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
   let updated: PlayerState = { 
     ...player, 
     money: player.money - price,
-    happiness: Math.max(0, Math.min(100, player.happiness + happinessBonus)),
     inventory: { ...player.inventory },
     turnFlags: newTurnFlags
   };
+
+  if (happinessBonus !== 0) {
+    if (rules) {
+      updated = applyMoraleEffect(updated, happinessBonus, 'shopping_bonus', rules);
+    } else {
+      updated.happiness = Math.max(0, Math.min(100, updated.happiness + happinessBonus));
+    }
+  }
 
   if (rules?.usePhysicalMentalConditions && mentalBonus !== 0) {
     updated = applyMentalChange(updated, mentalBonus);

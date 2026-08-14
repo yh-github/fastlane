@@ -1,5 +1,5 @@
 import { messGrowth, calcMaxMental, calcWellbeingScore, calcMovingFee, calcMaxMess, safeDecrementPhysical, safeDecrementMental } from './statMath';
-import { createPlayerState, recalculateLifestyle } from './gameState';
+import { createPlayerState, recalculateLifestyle, recalculatePlayerEffects } from './gameState';
 import { gameReducer } from './gameReducer';
 import { processTurnStart } from './turnProcessor';
 import { processDoctorVisit } from './eventEngine';
@@ -55,7 +55,19 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       { id: 'shake', category: 'fast_food' },
       { id: 'cola', category: 'fast_food' },
       { id: 'astro_chicken', category: 'fast_food' },
-      { id: 'fresh_food', category: 'food' }
+      { id: 'fresh_food', category: 'food' },
+      {
+        id: 'hot_tub',
+        effects: [
+          { trigger: 'turn_start', stat: 'physical', value: 1 },
+          { trigger: 'turn_start', stat: 'mental', value: 1 },
+          { trigger: 'on_relax', stat: 'physical', value: 1 },
+          { trigger: 'on_relax', stat: 'mental', value: 1 },
+          { trigger: 'on_relax', stat: 'mess', value: 1 },
+          { trigger: 'on_socialize', stat: 'social', value: 3 },
+          { trigger: 'continuous', stat: 'mess_max', value: 5 }
+        ]
+      }
     ]
   };
 
@@ -421,6 +433,107 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       expect(player.degrees).includes(degreeDef.id);
       expect(player.enrolledClasses[degreeDef.id]).toBeUndefined();
       expect(player.enrolledClasses[`${degreeDef.id}_req`]).toBeUndefined();
+    });
+  });
+
+  describe('8. Socialize Appliance Bonuses & Dynamic Mental Max', () => {
+    it('applies socialization appliance bonuses and reduces mental cost', () => {
+      const rules = { usePhysicalMentalConditions: true, trackMess: true };
+      const config = {
+        ...mockCampaign.config,
+        gameRules: rules,
+        statRules: {
+          ...mockCampaign.config.statRules,
+          mentalMaxBaseValue: 91,
+          globalMaxMentalCondition: 100,
+          socialBwTvBonus: 1,
+          socialColorTvBonus: 2,
+          socialMicrowaveBonus: 1,
+          socialVcrBonus: 1,
+          socialStereoBonus: 1,
+          socialHotTubBonus: 3
+        }
+      };
+
+      const customCampaign = {
+        ...mockCampaign,
+        config,
+        items: [
+          ...mockCampaign.items,
+          { id: 'bw_tv', effects: [{ trigger: 'on_socialize', stat: 'social', value: 1 }] },
+          { id: 'microwave', effects: [{ trigger: 'on_socialize', stat: 'social', value: 1 }] }
+        ]
+      };
+      let player = createPlayerState('p1', 'P1', false, {}, 'node_low_cost', config);
+      
+      player.money = 500;
+      player.hoursRemaining = 48;
+      player.mess = 0; 
+      player.social = 10;
+      player.mentalCondition = 80;
+      player.mentalConditionMax = 90;
+
+      player.inventory.appliances.push({ id: 'bw_tv', purchasePrice: 100, purchaseSource: 'socket_city' });
+      player.inventory.appliances.push({ id: 'microwave', purchasePrice: 150, purchaseSource: 'socket_city' });
+
+      const context = {
+        campaign: customCampaign,
+        rules,
+        turn: 1,
+        economicIndex: 0,
+        rng: { next: () => 0.5, nextInt: (min: number, max: number) => 1 } as any,
+        state: { players: [player], rules } as any
+      };
+
+      const res = gameReducer(player, { type: 'socialize_guests' }, context);
+      player = res.updatedPlayer;
+
+      expect(player.mentalCondition).toBe(81);
+      expect(player.social).toBe(13);
+    });
+
+    it('calculates dynamic Mental_Max with books, computer, and degrees', () => {
+      const rules = { usePhysicalMentalConditions: true };
+      const config = {
+        ...mockCampaign.config,
+        gameRules: rules,
+        statRules: {
+          ...mockCampaign.config.statRules,
+          mentalMaxBaseValue: 91,
+          globalMaxMentalCondition: 100,
+          mentalMaxBookLimit: 3,
+          mentalMaxBookBonus: 1,
+          mentalMaxComputerBonus: 3,
+          mentalMaxDegreeBonus: 1
+        }
+      };
+
+      const customCampaign = {
+        ...mockCampaign,
+        config,
+        items: [
+          ...mockCampaign.items,
+          { id: 'book1', effects: [{ trigger: 'continuous', stat: 'mental_max', value: 1 }] },
+          { id: 'book2', effects: [{ trigger: 'continuous', stat: 'mental_max', value: 1 }] },
+          { id: 'computer', effects: [{ trigger: 'continuous', stat: 'mental_max', value: 3 }] }
+        ]
+      };
+      let player = createPlayerState('p1', 'P1', false, {}, 'node_low_cost', config);
+
+      player = recalculatePlayerEffects(player, customCampaign);
+      expect(player.mentalConditionMax).toBe(90);
+
+      player.inventory.books = ['book1', 'book2'];
+      player = recalculatePlayerEffects(player, customCampaign);
+      expect(player.mentalConditionMax).toBe(92);
+
+      player.inventory.appliances.push({ id: 'computer', purchasePrice: 800, purchaseSource: 'socket_city' });
+      player = recalculatePlayerEffects(player, customCampaign);
+      expect(player.mentalConditionMax).toBe(95);
+
+      player.degrees = ['degree1'];
+      player = recalculatePlayerEffects(player, customCampaign);
+      expect(player.mentalConditionMax).toBe(96);
     });
   });
 });

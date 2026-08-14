@@ -11,6 +11,7 @@ vi.mock('./graphics/mapRenderer', () => ({
       if (onStep) onStep();
     }
   },
+  animateRobberInterception: vi.fn().mockResolvedValue(undefined),
   initMapRenderer: vi.fn().mockResolvedValue(() => {}),
   movePlayerTo: vi.fn(),
   pulsePlayer: vi.fn(),

@@ -1,4 +1,4 @@
-import { type PlayerState, type GameRules, type OwnedAppliance, type PawnedItem, type GameEvent } from './gameState';
+import { type PlayerState, type GameRules, type OwnedAppliance, type PawnedItem, type GameEvent, recalculatePlayerEffects, collectItemEffects } from './gameState';
 import { type CampaignBundle } from './dataLoader';
 import { type Random } from '../utils/rng';
 import { applyForJob, workShift } from './jobEngine';
@@ -7,12 +7,11 @@ import { enrollInDegree, study } from './educationEngine';
 import { spendHours } from './timeManager';
 import { calcItemPrice, calcEconomyPrice } from './economyEngine';
 import { calcMovingFee, messGrowth, safeDecrementPhysical, safeDecrementMental, calcMaxMess } from './statMath';
-import { recalculatePlayerEffects } from './gameState';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
 import { resolveDecision, type EngineDecision, type ReplayContext } from './replayTypes';
 import { requireConfig } from './rules';
-import { applyHappinessChange } from './statEffects';
+import { applyMoraleEffect, applyHappinessChange } from './statEffects';
 
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
@@ -107,6 +106,7 @@ export function gameReducer(
               nextPlayer.mentalCondition = newMental;
               nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
               if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
+                nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) + 1;
                 nextPlayer.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25)) + 1);
                 nextPlayer.turnFlags.mentalDropsThisTurn = 0; // reset after triggering
               }
@@ -199,6 +199,7 @@ export function gameReducer(
           nextPlayer.mentalCondition = newMental;
           nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
           if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
+            nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) + 1;
             nextPlayer.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25)) + 1);
             nextPlayer.turnFlags.mentalDropsThisTurn = 0;
           }
@@ -228,9 +229,13 @@ export function gameReducer(
         const maxPhysical = nextPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
         const maxMental = nextPlayer.mentalConditionMax ?? 50;
 
-        const hasHotTub = nextPlayer.inventory.appliances.some(a => a.id === 'hot_tub');
-        const physGain = 1 + (hasHotTub ? (statRules?.hotTubRelaxPhysicalBonus ?? 1) : 0);
-        const hotTubMentalBonus = hasHotTub ? (statRules?.hotTubRelaxMentalBonus ?? 1) : 0;
+        const relaxEffects = collectItemEffects(nextPlayer, context.campaign, 'on_relax');
+        const physBonus = relaxEffects.get('physical') || 0;
+        const mentalBonus = relaxEffects.get('mental') || 0;
+        const extraMess = relaxEffects.get('mess') || 0;
+
+        const physGain = 1 + physBonus;
+        const hotTubMentalBonus = mentalBonus;
 
         nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
         const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
@@ -240,9 +245,8 @@ export function gameReducer(
 
         if (context.rules.trackMess) {
           const baseRelaxMess = statRules?.relaxMessIncrease ?? 1;
-          const hotTubMess = hasHotTub ? (statRules?.hotTubRelaxMessIncrease ?? 1) : 0;
-          const relaxMess = baseRelaxMess + hotTubMess;
-          const maxCap = calcMaxMess(nextPlayer, statRules);
+          const relaxMess = baseRelaxMess + extraMess;
+          const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
           nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + relaxMess);
         }
 
@@ -323,34 +327,52 @@ export function gameReducer(
       const currentPhys = nextPlayer.physicalCondition ?? 50;
       nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, 1, minPhysical);
 
+      const statRules = context.campaign.config.statRules;
+
+      let appBonus = 0;
+      if (context.rules.usePhysicalMentalConditions) {
+        const socializeEffects = collectItemEffects(nextPlayer, context.campaign, 'on_socialize');
+        appBonus += socializeEffects.get('social') || 0;
+        appBonus += nextPlayer.activeEffects?.['vcr_social_bonus'] || 0;
+      }
+
       const X = context.rng.nextInt(1, 3);
       const growth = messGrowth(nextPlayer.mess || 0);
       const messGen = X * growth;
-      const maxMess = calcMaxMess(nextPlayer, context.campaign.config.statRules);
+      const maxMess = calcMaxMess(nextPlayer, statRules, context.campaign);
       nextPlayer.mess = Math.min(maxMess, (nextPlayer.mess || 0) + messGen);
 
       const mentalCost = X * growth;
+      const finalMentalCost = mentalCost - appBonus;
       const cashRate = nextPlayer.currentHousingId === 'security' ? (context.campaign.config.economyRules?.socializeSecurityCashCost ?? 50) : (context.campaign.config.economyRules?.socializeLowCostCashCost ?? 25);
       const cashCost = X * cashRate;
       const fullReward = nextPlayer.currentHousingId === 'security' ? X * 2 : X;
 
       const currentMental = nextPlayer.mentalCondition ?? 25;
-      const minMental = context.campaign.config.statRules?.minMentalCondition ?? 5;
+      const minMental = statRules?.minMentalCondition ?? 5;
+      const maxMental = nextPlayer.mentalConditionMax ?? 90;
       const hasFullCash = nextPlayer.money >= cashCost;
-      const hasFullMental = currentMental >= mentalCost;
+      const hasFullMental = finalMentalCost <= 0 || currentMental >= finalMentalCost;
 
-      let actualReward = fullReward;
+      let actualReward = fullReward + appBonus;
       if (hasFullCash && hasFullMental) {
         nextPlayer.money -= cashCost;
-        nextPlayer.mentalCondition = safeDecrementMental(currentMental, mentalCost, minMental);
-        actualReward = fullReward;
+        if (finalMentalCost >= 0) {
+          nextPlayer.mentalCondition = safeDecrementMental(currentMental, finalMentalCost, minMental);
+        } else {
+          nextPlayer.mentalCondition = Math.min(maxMental, currentMental - finalMentalCost);
+        }
       } else {
         nextPlayer.money = Math.max(0, nextPlayer.money - cashCost);
-        nextPlayer.mentalCondition = safeDecrementMental(currentMental, mentalCost, minMental);
-        actualReward = Math.floor(fullReward / 2);
+        if (finalMentalCost >= 0) {
+          nextPlayer.mentalCondition = safeDecrementMental(currentMental, finalMentalCost, minMental);
+        } else {
+          nextPlayer.mentalCondition = Math.min(maxMental, currentMental - finalMentalCost);
+        }
+        actualReward = Math.floor(fullReward / 2) + appBonus;
       }
 
-      const maxSocial = context.campaign.config.statRules?.maxSocial ?? 99;
+      const maxSocial = statRules?.maxSocial ?? 99;
       nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? 9) + actualReward);
 
       actionLog = { key: 'action.socialize', params: { reward: actualReward, guests: X } };

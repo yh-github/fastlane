@@ -65,6 +65,17 @@ export interface JobDef {
   tags?: string[];
 }
 
+export type EffectTrigger = 'turn_start' | 'on_relax' | 'on_socialize' | 'continuous';
+export type StatTarget = 'physical' | 'mental' | 'mental_max' | 'mess' | 'mess_max' | 'social' | 'happiness';
+export type EffectOperation = 'ADD' | 'MAX' | 'SET';
+
+export interface ItemEffect {
+  trigger: EffectTrigger;
+  stat: StatTarget;
+  value: number;
+  operation?: EffectOperation;
+}
+
 export interface ItemDef {
   id: string;
   name: string;
@@ -79,6 +90,7 @@ export interface ItemDef {
   units?: number;
   tags?: string[];
   isFixedPrice?: boolean;
+  effects?: ItemEffect[];
 }
 
 export interface EducationDef {

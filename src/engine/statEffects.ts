@@ -1,22 +1,24 @@
 import { type PlayerState, type GameRules } from './gameState';
 import { type StatRules } from './rules';
 
-export type HappinessReason = 
+export type MoraleReason = 
   | 'loan_refused' | 'loan_approved' | 'rent_extension_approved' 
   | 'rent_extension_denied' | 'street_robbery' | 'apartment_robbery' 
   | 'weekend_bonus' | 'raise_approved' | 'fired' | 'market_crash' 
   | 'economic_boom' | 'graduation' | 'lottery_win' | 'computer_profit'
   | 'food_spoilage' | 'loan_default' | 'appliance_break' | 'appliance_breakage' | 'starvation' 
-  | 'doctor_visit' | 'eat_consumable' | 'cooking_bonus' | 'pawn_item';
+  | 'doctor_visit' | 'eat_consumable' | 'cooking_bonus' | 'pawn_item' | 'shopping_bonus';
+
+export type HappinessReason = MoraleReason;
 
 /**
- * Applies a happiness change to the player, updating both Classic Happiness
+ * Applies a morale change to the player, updating both Classic Happiness
  * and (in Advanced Mode) Mental Condition.
  */
-export function applyHappinessChange(
+export function applyMoraleEffect(
   player: PlayerState, 
   amount: number, 
-  _reason: HappinessReason,
+  _reason: MoraleReason,
   rules: GameRules,
   statRules?: StatRules
 ): PlayerState {
@@ -33,6 +35,8 @@ export function applyHappinessChange(
 
   return nextPlayer;
 }
+
+export const applyHappinessChange = applyMoraleEffect;
 
 export function applyMentalChange(
   player: PlayerState,

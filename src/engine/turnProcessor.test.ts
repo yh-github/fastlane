@@ -27,8 +27,8 @@ describe('Turn Processor', () => {
       ],
       synergies: [
         { id: 'base_ref', name: 'Base', requires: ['tag:refrigerator'], effects: [{ type: 'set_food_storage', value: 6, operation: 'MAX' }] },
-        { id: 'stove_hap', name: 'Stove', requires: ['tag:stove'], effects: [{ type: 'add_turn_happiness', value: 1, operation: 'ADD' }] },
-        { id: 'micro_hap', name: 'Micro', requires: ['tag:microwave'], effects: [{ type: 'add_turn_happiness', value: 1, operation: 'ADD' }] },
+        { id: 'stove_hap', name: 'Stove', requires: ['tag:stove'], effects: [{ type: 'add_turn_happiness', value: 1, operation: 'MAX' }] },
+        { id: 'micro_hap', name: 'Micro', requires: ['tag:microwave'], effects: [{ type: 'add_turn_happiness', value: 1, operation: 'MAX' }] },
         { id: 'comp_inc', name: 'Comp', requires: ['tag:computer'], effects: [{ type: 'computer_income_chance', value: 1, operation: 'MAX' }] }
       ],
       calendar: [
@@ -59,6 +59,25 @@ describe('Turn Processor', () => {
       state.players[0].inventory.freshFoodUnits = 9;
       const nextState = processTurnStart(state, mockCampaign);
       expect(nextState.players[0].inventory.freshFoodUnits).toBe(5);
+    });
+
+    it('eats fast food and does not get sick from spoiled fresh food when fast food is available', () => {
+      let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 1;
+      state.rules.usePhysicalMentalConditions = true;
+      state.players[0].inventory.freshFoodUnits = 5;
+      state.players[0].inventory.fastFoodItems = [{ itemId: 'burger', happinessBonus: 1 }];
+      state.players[0].physicalCondition = 50;
+
+      const nextState = processTurnStart(state, mockCampaign);
+      const p = nextState.players[0];
+
+      // Fresh food removed (spoiled)
+      expect(p.inventory.freshFoodUnits).toBe(0);
+      // Fast food eaten
+      expect(p.turnFlags.hasEaten).toBe(true);
+      // Physical condition did NOT suffer severe ate-spoiled-food drop (50 - 5 = 45)
+      expect(p.physicalCondition).toBe(50);
     });
   });
 

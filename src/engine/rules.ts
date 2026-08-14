@@ -203,17 +203,12 @@ export interface StatRules {
   startingSocial?: number;
   minSocial?: number;
   maxSocial?: number;
-  stovePhysicalBonus?: number;
-  microwavePhysicalBonus?: number;
   relaxMessIncrease?: number;
-  hotTubMaxMessBonus?: number;
-  hotTubRelaxPhysicalBonus?: number;
-  hotTubRelaxMentalBonus?: number;
-  hotTubRelaxMessIncrease?: number;
-  hotTubTurnStartPhysicalBonus?: number;
-  hotTubTurnStartMentalBonus?: number;
   doctorPhysicalBounceBack?: number;
   lowSpiritsMentalBounceBack?: number;
+  globalMaxPhysicalCondition?: number;
+  mentalMaxBaseValue?: number;
+  mentalMaxDegreeBonus?: number;
 }
 
 export interface WinCondition {
