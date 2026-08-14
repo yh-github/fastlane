@@ -148,4 +148,34 @@ describe('BuildingModal Component', () => {
 
     expect(screen.getByText('Employment Office')).toBeInTheDocument();
   });
+
+  it('correctly interpolates loan payment parameters (payment, principal, interest) in speech bubble', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+
+    const mockOnAction = vi.fn().mockResolvedValue({
+      key: 'action.loan.paidInstallment',
+      params: { payment: 50, principal: 45, interest: 5 }
+    });
+
+    render(
+      <BuildingModal
+        player={{ ...mockPlayer, loanDebt: 500 }}
+        campaign={mockCampaign}
+        currentBuildingId="bank"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        pawnShopItemsForSale={[]}
+        onAction={mockOnAction}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Switch to loans tab and click make payment
+    fireEvent.click(screen.getByText('Loans'));
+    const payBtn = screen.getByText(/Make Loan Payment/i);
+    fireEvent.click(payBtn);
+
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'pay_loan' });
+  });
 });

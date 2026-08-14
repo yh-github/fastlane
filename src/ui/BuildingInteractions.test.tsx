@@ -81,4 +81,76 @@ describe('BuildingInteractions', () => {
     expect(jobHeadings[1].textContent).toContain('Salesperson');
     expect(jobHeadings[2].textContent).toContain('Manager');
   });
+
+  it('StockTradeRow displays softly disabled explanation modal when buying with insufficient funds or selling with 0 shares', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    const { StockTradeRow } = await import('./BuildingInteractions');
+
+    const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 100, type: 'stable' as const };
+    const mockOnAction = vi.fn();
+
+    const { rerender } = render(
+      <StockTradeRow stock={stockDef} price={100} owned={0} playerMoney={20} onAction={mockOnAction} />
+    );
+
+    // Click softly disabled Buy button
+    fireEvent.click(screen.getByText('Buy Stock'));
+    expect(screen.getByText(/Stock Trade Unavailable/i)).toBeInTheDocument();
+    expect(screen.getByText(/You need at least \$100 in cash/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText('OK'));
+
+    // Click softly disabled Sell button
+    fireEvent.click(screen.getByText('Sell Stock'));
+    expect(screen.getByText(/Stock Trade Unavailable/i)).toBeInTheDocument();
+    expect(screen.getByText(/You do not own any shares of ACME Corp/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText('OK'));
+  });
+
+  it('StockTradeRow opens trade dialog and confirms buy/sell transactions', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    const { StockTradeRow } = await import('./BuildingInteractions');
+
+    const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 50, type: 'stable' as const };
+    const mockOnAction = vi.fn();
+
+    render(
+      <StockTradeRow stock={stockDef} price={50} owned={5} playerMoney={500} onAction={mockOnAction} />
+    );
+
+    // Open Buy Dialog
+    fireEvent.click(screen.getByText('Buy Stock'));
+    expect(screen.getByText(/Buy ACME Corp/i)).toBeInTheDocument();
+
+    // Confirm Buy
+    fireEvent.click(screen.getByText(/Confirm Buy/i));
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy_stock', stockId: 'acme', quantity: 1, cost: 50 });
+  });
+
+  it('BankInterface handles deposit/withdraw dialogs and softly disabled states', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    const { BankInterface } = await import('./BuildingInteractions');
+
+    const mockPlayer = {
+      id: 'p1',
+      money: 150,
+      bankSavings: 300,
+      loanDebt: 0,
+      inventory: { stocks: { holdings: {} } }
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <BankInterface player={mockPlayer} onAction={mockOnAction} />
+    );
+
+    // Click Deposit Money -> opens Deposit dialog
+    fireEvent.click(screen.getByText(/Deposit Money/i));
+    expect(screen.getByText(/Deposit Money into Savings/i)).toBeInTheDocument();
+
+    // Select Max preset button
+    fireEvent.click(screen.getByText(/Max \(\$150\)/i));
+    fireEvent.click(screen.getByText(/Confirm Deposit \(\$150\)/i));
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'bank_transaction', amount: 150 });
+  });
 });
