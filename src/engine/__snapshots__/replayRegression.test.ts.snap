@@ -4,6 +4,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
 {
   "campaignId": "The Fast Lane — Improved Version (QoL)",
   "economicIndex": -30,
+  "economicTrend": -3,
   "pawnShopItemsForSale": [],
   "phase": "setup",
   "players": [
@@ -29,7 +30,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "wealth": 25,
       },
       "happiness": 10,
-      "hoursRemaining": 40,
+      "hoursRemaining": 30,
       "id": "player_1",
       "inventory": {
         "appliances": [],
@@ -60,8 +61,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "mess": 4,
-      "money": 173,
+      "money": 0,
       "nakedTurns": 1,
       "name": "Player 1",
       "newspaperHeadline": {
@@ -79,6 +79,13 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "turnEvents": [
         {
           "key": "events.starvation",
+        },
+        {
+          "key": "events.doctorVisit_reasons",
+          "params": {
+            "cost": 16,
+            "reasons": "Starvation",
+          },
         },
         {
           "key": "events.rent.due_nodenied",
@@ -101,9 +108,9 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "rentPaidThisTurn": false,
       },
       "weekendResult": {
-        "cost": 11,
+        "cost": 87,
         "event": {
-          "key": "events.weekend.random_6",
+          "key": "events.weekend.random_35",
         },
         "happinessBonus": undefined,
       },
@@ -138,17 +145,9 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
 exports[`Deterministic Replay Regression > replays a recorded game exactly using test_replay.json 1`] = `
 {
   "campaignId": "test_regression",
-  "economicIndex": 10,
-  "pawnShopItemsForSale": [
-    {
-      "itemId": "refrigerator",
-      "originalPrice": 400,
-      "ownerId": "player_1",
-      "purchaseSource": "socket_city",
-      "redeemCost": 200,
-      "weekPawned": 2,
-    },
-  ],
+  "economicIndex": 0,
+  "economicTrend": 0,
+  "pawnShopItemsForSale": [],
   "phase": "game-over",
   "players": [
     {
@@ -168,12 +167,18 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "happiness": 50,
         "wealth": 50,
       },
-      "happiness": 50,
+      "happiness": 39,
       "hasWon": true,
-      "hoursRemaining": 40,
+      "hoursRemaining": 30,
       "id": "player_1",
       "inventory": {
-        "appliances": [],
+        "appliances": [
+          {
+            "id": "refrigerator",
+            "purchasePrice": 400,
+            "purchaseSource": "socket_city",
+          },
+        ],
         "books": [],
         "businessClothesWeeks": 0,
         "casualClothesWeeks": 14,
@@ -199,7 +204,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "maxDependability": 40,
       "maxExperience": 20,
       "mess": 4,
-      "money": 203,
+      "money": 0,
       "nakedTurns": 0,
       "name": "TestPlayer",
       "newspaperHeadline": {
@@ -211,15 +216,21 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "rentDebt": 0,
       "rentExtensionActive": false,
       "rentExtensionsDeniedPermanently": false,
-      "rentExtensionsReceived": 0,
-      "rentPaidUntilWeek": 8,
+      "rentExtensionsReceived": 1,
+      "rentPaidUntilWeek": 4,
       "timesDefaulted": 0,
       "turnEvents": [
         {
           "key": "events.starvation",
         },
         {
-          "key": "events.pawnExpired",
+          "key": "events.doctorVisit",
+          "params": {
+            "cost": 54,
+          },
+        },
+        {
+          "key": "events.rent.extensionExpired",
         },
       ],
       "turnFlags": {
@@ -239,9 +250,9 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "rentPaidThisTurn": false,
       },
       "weekendResult": {
-        "cost": 12,
+        "cost": 15,
         "event": {
-          "key": "events.weekend.random_1",
+          "key": "events.weekend.random_2",
         },
         "happinessBonus": undefined,
       },
@@ -276,7 +287,8 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
 exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment robbery without appliances) 1`] = `
 {
   "campaignId": "The Fast Lane — Improved Version (QoL)",
-  "economicIndex": 7,
+  "economicIndex": -1,
+  "economicTrend": -1,
   "pawnShopItemsForSale": [],
   "phase": "setup",
   "players": [

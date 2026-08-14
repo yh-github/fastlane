@@ -4,6 +4,9 @@
   "description": "Original game campaign based on Jones in the Fast Lane (CD-ROM Version) featuring entry-level jobs and CD-ROM specific rules.",
   "startingMoney": 200,
   "baseCampaign": "1990_classic_floppy",
+  "gameRules": {
+    "minEconomicReading": -30
+  },
   "eventRules": {
     "marketCrashDivisor": 30,
     "willyRobberyStartWeek": 4,
