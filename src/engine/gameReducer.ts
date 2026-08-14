@@ -392,7 +392,11 @@ export function gameReducer(
         const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
         if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
           const preRobberyMoney = nextPlayer.money;
-          nextPlayer = processStreetRobbery(nextPlayer, currentBuilding, context.turn, context.rng, context.campaign, replayContext);
+          const isForced = !!context.state.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === nextPlayer.id || !e.playerId));
+          nextPlayer = processStreetRobbery(nextPlayer, currentBuilding, context.turn, context.rng, context.campaign, replayContext, isForced);
+          if (isForced && context.state.debugQueue) {
+            context.state.debugQueue = context.state.debugQueue.filter(e => !(e.type === 'street_robbery' && (e.playerId === nextPlayer.id || !e.playerId)));
+          }
           if (nextPlayer.money < preRobberyMoney) {
             actionLog = { key: 'log.robbery' };
           }

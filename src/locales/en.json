@@ -742,5 +742,55 @@
     "filterAll": "All",
     "showingCount": "Showing {{count}} log(s) for {{filter}}",
     "clearFilter": "Clear Filter"
+  },
+  "settings": {
+    "title": "Settings",
+    "showItemImages": "Show Item Graphics",
+    "animations": "Enable Animations",
+    "overachieve": "Allow Over-Achieving Goals",
+    "debugEvents": "Debug Events & Economy",
+    "close": "Close"
+  },
+  "debug": {
+    "modalTitle": "Debug Events & Economy",
+    "modalSubtitle": "Playtest rare events by bypassing RNG. Normal preconditions still apply.",
+    "economyTitle": "Global Economy Controls",
+    "economicIndex": "Economic Index (Reading)",
+    "economicTrend": "Economic Trend (Momentum)",
+    "event_cancelled": "Debug event '{{event}}' was cancelled: {{reason}}",
+    "events": {
+      "market_crash": {
+        "title": "Market Crash",
+        "desc": "Triggers a market crash at next turn start (minor, moderate, or major severity)."
+      },
+      "market_boom": {
+        "title": "Economic Boom",
+        "desc": "Triggers an economic boom at next turn start."
+      },
+      "apartment_robbery": {
+        "title": "Apartment Robbery",
+        "desc": "Wild Willy breaks into the apartment and steals appliances at next turn start."
+      },
+      "street_robbery": {
+        "title": "Street Robbery",
+        "desc": "Wild Willy robs the player the next time they leave the Bank or Black's Market."
+      },
+      "doctor_visit": {
+        "title": "Doctor Visit",
+        "desc": "Forces a doctor visit at next turn start (preconditions must hold)."
+      },
+      "lottery_win": {
+        "title": "Lottery Win",
+        "desc": "Guarantees a winning lottery roll at next turn start (requires tickets)."
+      },
+      "computer_profit": {
+        "title": "Computer Profit",
+        "desc": "Guarantees computer investment income at next turn start (requires computer)."
+      },
+      "appliance_break": {
+        "title": "Appliance Breakdown",
+        "desc": "Forces an owned appliance to break down and require repair at next turn start."
+      }
+    }
   }
 }

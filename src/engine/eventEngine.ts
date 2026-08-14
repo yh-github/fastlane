@@ -28,14 +28,15 @@ export function processStreetRobbery(
   week: number,
   rng: Random,
   campaign: CampaignBundle,
-  replay?: ReplayContext
+  replay?: ReplayContext,
+  forceRobbed?: boolean
 ): PlayerState {
   const startWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
   if (week < startWeek || player.money <= 0) return player;
 
   const chance = buildingType === 'bank' ? 1 / 31 : 1 / 51;
   
-  const robbed = resolveDecision(replay, `street_robbery`, () => rng.next() < chance);
+  const robbed = forceRobbed ? true : resolveDecision(replay, `street_robbery`, () => rng.next() < chance);
 
   if (robbed) {
     let updated = { ...player, money: 0 };
@@ -109,7 +110,9 @@ export function processApartmentRobbery(
   turn: number = 1,
   startWeek: number = 4,
   replay?: ReplayContext,
-  statRules?: import('./rules').StatRules
+  statRules?: import('./rules').StatRules,
+  forceRobbed?: boolean,
+  forcedStolenItemIds?: string[]
 ): { updated: PlayerState; robbed: boolean } {
   if (player.currentHousingId === 'security') return { updated: player, robbed: false };
 
@@ -126,7 +129,7 @@ export function processApartmentRobbery(
     }
   }
 
-  const robbed = resolveDecision(replay, `apartment_robbery`, () => rng.next() < chance);
+  const robbed = forceRobbed ? true : resolveDecision(replay, `apartment_robbery`, () => rng.next() < chance);
 
   if (robbed) {
     let stolenCount = 0;
@@ -135,7 +138,12 @@ export function processApartmentRobbery(
       if (protectBuiltInAppliances && ['refrigerator', 'freezer', 'stove'].includes(app.id)) {
         return true; // Keep protected heavy appliances
       }
-      const itemStolen = resolveDecision(replay, `apartment_robbery_item_${app.id}`, () => rng.next() < 0.25);
+      let itemStolen = false;
+      if (forcedStolenItemIds && forcedStolenItemIds.length > 0) {
+        itemStolen = forcedStolenItemIds.includes(app.id);
+      } else {
+        itemStolen = resolveDecision(replay, `apartment_robbery_item_${app.id}`, () => rng.next() < 0.25);
+      }
       if (itemStolen) {
         stolenCount++;
         stolenItemNames.push(app.name || app.id.replaceAll('_', ' '));
@@ -145,6 +153,22 @@ export function processApartmentRobbery(
     });
 
     if (stolenCount === 0) {
+      if (forceRobbed) {
+        const unprotected = player.inventory.appliances.find(
+          app => !(protectBuiltInAppliances && ['refrigerator', 'freezer', 'stove'].includes(app.id))
+        );
+        if (unprotected) {
+          const remAppliances = player.inventory.appliances.filter(a => a !== unprotected);
+          const itemsStr = unprotected.name || unprotected.id.replaceAll('_', ' ');
+          let updated = {
+            ...player,
+            inventory: { ...player.inventory, appliances: remAppliances },
+            turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }]
+          };
+          updated = applyMoraleEffect(updated, -4, 'apartment_robbery', (rules || {}) as any, statRules);
+          return { updated, robbed: true };
+        }
+      }
       return { updated: player, robbed: false };
     }
 

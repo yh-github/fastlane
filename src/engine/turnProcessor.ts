@@ -25,8 +25,39 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   let crashSeverity: 'none' | 'minor' | 'moderate' | 'major' = 'none';
   let economicBoom = false;
   let currentHeadline: GameEvent | null = null;
-  
-  if (state.turn >= 8) {
+  const cancelledGlobalEvents: GameEvent[] = [];
+
+  const debugCrash = state.debugQueue?.find(e => e.type === 'market_crash');
+  const debugBoom = state.debugQueue?.find(e => e.type === 'market_boom');
+
+  if (debugCrash) {
+    if (state.turn >= 8 && newEconomy >= 80) {
+      const forcedSeverity = debugCrash.crashSeverity || 'moderate';
+      crashSeverity = forcedSeverity;
+      const trendDrop = -3;
+      if (forcedSeverity === 'minor') {
+        newEconomy = Math.max(minReading, newEconomy - 3);
+        newTrend = trendDrop;
+        currentHeadline = { key: 'newspaper.crash_minor' };
+      } else if (forcedSeverity === 'moderate') {
+        newEconomy = Math.max(minReading, newEconomy - 6);
+        newTrend = trendDrop;
+        currentHeadline = { key: 'newspaper.crash_moderate' };
+      } else {
+        newEconomy = Math.max(minReading, newEconomy - 9);
+        newTrend = trendDrop;
+        currentHeadline = { key: 'newspaper.crash_major' };
+      }
+    } else {
+      cancelledGlobalEvents.push({
+        key: 'debug.event_cancelled',
+        params: {
+          event: 'Market Crash',
+          reason: state.turn < 8 ? 'Requires Turn 8+' : `Economy must be ≥ 80 (Current: ${newEconomy})`,
+        },
+      });
+    }
+  } else if (state.turn >= 8) {
     if (newEconomy >= 80) {
       const crashDivisor = campaign.config.eventRules?.marketCrashDivisor ?? 30;
       const crashChance = 1 / (1 + (crashDivisor * state.players.length));
@@ -54,16 +85,31 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         }
       }
     }
+  }
 
-    if (crashSeverity === 'none' && newEconomy <= 120) {
-      const boomChance = 1 / (1 + (30 * state.players.length));
-      const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
-      if (boomTriggered) {
-        economicBoom = true;
-        newEconomy = Math.min(90, newEconomy + 6); // +10% (6 points)
-        newTrend = resolveDecision(replay, `market_boom_trend`, () => Math.floor(rng.next() * 3) + 1); // +1 to +3
-        currentHeadline = { key: 'newspaper.boom' };
-      }
+  if (debugBoom && crashSeverity === 'none') {
+    if (state.turn >= 8 && newEconomy >= 0) {
+      economicBoom = true;
+      newEconomy = Math.min(90, newEconomy + 6);
+      newTrend = 2;
+      currentHeadline = { key: 'newspaper.boom' };
+    } else {
+      cancelledGlobalEvents.push({
+        key: 'debug.event_cancelled',
+        params: {
+          event: 'Economic Boom',
+          reason: state.turn < 8 ? 'Requires Turn 8+' : `Economy must be ≥ 0 (Current: ${newEconomy})`,
+        },
+      });
+    }
+  } else if (crashSeverity === 'none' && newEconomy <= 120 && state.turn >= 8) {
+    const boomChance = 1 / (1 + (30 * state.players.length));
+    const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
+    if (boomTriggered) {
+      economicBoom = true;
+      newEconomy = Math.min(90, newEconomy + 6); // +10% (6 points)
+      newTrend = resolveDecision(replay, `market_boom_trend`, () => Math.floor(rng.next() * 3) + 1); // +1 to +3
+      currentHeadline = { key: 'newspaper.boom' };
     }
   }
 
@@ -186,7 +232,22 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       resetPlayerClock(p, campaign.config.timeRules.hoursPerTurn);
 
       // 5. Check Lottery
-      if (p.inventory.lotteryTickets > 0) {
+      const queuedLottery = state.debugQueue?.find(e => e.type === 'lottery_win' && (e.playerId === p.id || !e.playerId));
+      if (queuedLottery) {
+        if (p.inventory.lotteryTickets > 0) {
+          const tier = queuedLottery.lotteryTier || 'large';
+          let amount = 5000;
+          let happiness = 10;
+          if (tier === 'small') { amount = 200; happiness = 5; }
+          else if (tier === 'medium') { amount = 500; happiness = 5; }
+          p.money += amount;
+          p = applyHappinessChange(p, happiness, 'lottery_win', state.rules, campaign.config.statRules);
+          p.turnEvents.push({ key: 'events.lottery', params: { amount } });
+          p.inventory.lotteryTickets = 0;
+        } else {
+          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Lottery Win', reason: 'Player owns 0 lottery tickets' } });
+        }
+      } else if (p.inventory.lotteryTickets > 0) {
         const r = resolveDecision(replay, `lottery_roll_${p.id}`, () => Math.floor(rng.next() * 501));
         const t = p.inventory.lotteryTickets;
         if (r < t) {
@@ -198,8 +259,18 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // 6. Computer Profits
+      const queuedCompProfit = state.debugQueue?.find(e => e.type === 'computer_profit' && (e.playerId === p.id || !e.playerId));
       const computerIncomeChance = p.activeEffects['computer_income_chance'] || 0;
-      if (computerIncomeChance > 0) {
+      if (queuedCompProfit) {
+        if (computerIncomeChance > 0) {
+          const profit = resolveDecision(replay, `computer_profit_amount_${p.id}`, () => Math.floor(rng.next() * 81) + 20);
+          p.money += profit; 
+          p = applyHappinessChange(p, 3, 'computer_profit', state.rules, campaign.config.statRules);
+          p.turnEvents.push({ key: 'events.computerProfit', params: { profit } });
+        } else {
+          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Computer Profit', reason: 'No active computer synergy' } });
+        }
+      } else if (computerIncomeChance > 0) {
         const compProfitTrigger = resolveDecision(replay, `computer_profit_trigger_${p.id}`, () => rng.next() < (1/7));
         if (compProfitTrigger) {
           const profit = resolveDecision(replay, `computer_profit_amount_${p.id}`, () => Math.floor(rng.next() * 81) + 20);
@@ -219,9 +290,32 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       p.dependability = calcDependabilityDecay(p.dependability); 
 
       // 8. Apartment Robbery
+      const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === p.id || !e.playerId));
       const robberyStartWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
-      const robberyResult = processApartmentRobbery(p, rng, state.rules.protectBuiltInAppliances, state.rules, state.turn, robberyStartWeek, replay, campaign.config.statRules);
-      p = robberyResult.updated;
+      if (queuedAptRobbery) {
+        if (p.currentHousingId === 'security') {
+          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Apartment Robbery', reason: 'Living in La Security' } });
+        } else if (p.inventory.appliances.length === 0) {
+          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Apartment Robbery', reason: 'Player owns 0 appliances' } });
+        } else {
+          const robberyResult = processApartmentRobbery(
+            p,
+            rng,
+            state.rules.protectBuiltInAppliances,
+            state.rules,
+            state.turn,
+            robberyStartWeek,
+            replay,
+            campaign.config.statRules,
+            true,
+            queuedAptRobbery.stolenItemIds
+          );
+          p = robberyResult.updated;
+        }
+      } else {
+        const robberyResult = processApartmentRobbery(p, rng, state.rules.protectBuiltInAppliances, state.rules, state.turn, robberyStartWeek, replay, campaign.config.statRules);
+        p = robberyResult.updated;
+      }
 
       // 9. Spoiled Food & Starvation (Order of Operations)
       let spoiledFoodSickMultiplier = 1;
@@ -348,6 +442,42 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // 11. Doctor Visit
+      const queuedDoctor = state.debugQueue?.find(e => e.type === 'doctor_visit' && (e.playerId === p.id || !e.playerId));
+      if (queuedDoctor) {
+        const canVisit = !state.rules.bypassDoctorIfBroke || p.money > 0;
+        let isEligible = false;
+        if (canVisit) {
+          if (state.rules.usePhysicalMentalConditions) {
+            const statRules = campaign.config.statRules;
+            const physThreshold = statRules?.physicalDoctorThreshold ?? 10;
+            const mentalThreshold = statRules?.lowSpiritsThreshold ?? 10;
+            if (
+              (p.physicalCondition !== undefined && p.physicalCondition < physThreshold) ||
+              (p.mentalCondition !== undefined && p.mentalCondition < mentalThreshold)
+            ) {
+              isEligible = true;
+            }
+          } else if (state.rules.enableRelaxationDoctor) {
+            const threshold = state.rules.relaxationDoctorThreshold ?? 10;
+            if (p.relaxation <= threshold) {
+              isEligible = true;
+            }
+          }
+        }
+        if (isEligible) {
+          doctorNeeded = true;
+          doctorReasons.push('Doctor Visit (Forced)');
+        } else {
+          p.turnEvents.push({
+            key: 'debug.event_cancelled',
+            params: {
+              event: 'Doctor Visit',
+              reason: canVisit ? 'Health / relaxation above thresholds' : 'Player carries $0 and bypass rule is active',
+            },
+          });
+        }
+      }
+
       if (state.rules.usePhysicalMentalConditions) {
         const statRules = campaign.config.statRules;
         const physThreshold = statRules?.physicalDoctorThreshold ?? 10;
@@ -507,15 +637,44 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // 15. Appliance Repair
-      for (const app of p.inventory.appliances) {
-        const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
-        const breakTrigger = resolveDecision(replay, `appliance_break_${p.id}_${app.id}`, () => rng.next() < breakChance);
-        if (breakTrigger) {
-          const repairCost = resolveDecision(replay, `appliance_repair_${p.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
+      const queuedAppBreak = state.debugQueue?.find(e => e.type === 'appliance_break' && (e.playerId === p.id || !e.playerId));
+      if (queuedAppBreak) {
+        if (p.inventory.appliances.length > 0) {
+          const targetApp = p.inventory.appliances.find(a => a.id === queuedAppBreak.applianceId) || p.inventory.appliances[0];
+          const repairCost = Math.floor(targetApp.purchasePrice * (0.05 + rng.next() * 0.2));
           p.money = Math.max(0, p.money - repairCost);
           p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-          p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: app.id, repairCost } });
+          p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: targetApp.id, repairCost } });
+
+          for (const app of p.inventory.appliances.filter(a => a !== targetApp)) {
+            const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
+            const breakTrigger = resolveDecision(replay, `appliance_break_${p.id}_${app.id}`, () => rng.next() < breakChance);
+            if (breakTrigger) {
+              const rCost = resolveDecision(replay, `appliance_repair_${p.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
+              p.money = Math.max(0, p.money - rCost);
+              p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
+              p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: app.id, repairCost: rCost } });
+            }
+          }
+        } else {
+          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Appliance Break', reason: 'Player owns 0 appliances' } });
         }
+      } else {
+        for (const app of p.inventory.appliances) {
+          const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
+          const breakTrigger = resolveDecision(replay, `appliance_break_${p.id}_${app.id}`, () => rng.next() < breakChance);
+          if (breakTrigger) {
+            const repairCost = resolveDecision(replay, `appliance_repair_${p.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
+            p.money = Math.max(0, p.money - repairCost);
+            p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
+            p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: app.id, repairCost } });
+          }
+        }
+      }
+
+      // Prepend any cancelled global events
+      if (cancelledGlobalEvents.length > 0) {
+        p.turnEvents = [...cancelledGlobalEvents, ...p.turnEvents];
       }
 
       // 16. Economic Events
@@ -572,7 +731,9 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
     winnerId = winner.id;
   }
 
-  return {
+  const survivingDebugQueue = (state.debugQueue || []).filter(e => e.type === 'street_robbery');
+
+  const resultState: GameState = {
     ...state,
     economicIndex: newEconomy,
     economicTrend: newTrend,
@@ -582,4 +743,12 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
     phase,
     winnerId,
   };
+
+  if (survivingDebugQueue.length > 0) {
+    resultState.debugQueue = survivingDebugQueue;
+  } else {
+    delete resultState.debugQueue;
+  }
+
+  return resultState;
 }

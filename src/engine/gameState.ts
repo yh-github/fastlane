@@ -43,8 +43,11 @@ export interface GameState {
   rules: GameRules;
   /** Winner ID */
   winnerId: string | null;
+  /** Active debug queue for playtesting forced events */
+  debugQueue?: DebugQueuedEvent[];
 }
 
+export type { DebugEventType, DebugQueuedEvent } from './debugEvents';
 export type { GameRules } from './rules';
 import { type GameRules, DEFAULT_GAME_RULES } from './rules';
 

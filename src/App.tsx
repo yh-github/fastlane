@@ -208,6 +208,7 @@ export default function App() {
           <SettingsModal 
             gameState={gameState} 
             setGameState={setGameState} 
+            campaign={campaign!}
             replayData={replayData}
             onClose={() => setIsSettingsOpen(false)} 
           />
