@@ -38,7 +38,9 @@ export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps)
                 </p>
                 {player.weekendResult.happinessBonus && (
                   <p style={{ color: '#2ecc71', fontWeight: 'bold', margin: '5px 0' }}>
-                    {t('weekendScreen.happiness')} +{player.weekendResult.happinessBonus}
+                    {player.mentalCondition !== undefined
+                      ? t('weekendScreen.mental', { defaultValue: 'Mental Condition:' })
+                      : t('weekendScreen.happiness')} +{player.weekendResult.happinessBonus}
                   </p>
                 )}
               </>

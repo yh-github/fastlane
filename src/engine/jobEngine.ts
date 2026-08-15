@@ -98,7 +98,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   // The workplace checks clothes during workShift.
 
   if (rejectionReasons.length > 0) {
-    if (turn <= 4) {
+    if (turn <= 4 && !rules?.helpfulUI) {
       return { updated, success: false, message: { key: 'action.job.noOpenings' } };
     }
     return { updated, success: false, message: { key: 'action.job.rejected', params: { reasons: rejectionReasons.join(' ') } } };

@@ -80,12 +80,16 @@
       "redeemed": "פדית {{itemName}} תמורת {{cost}}$",
       "bought": "קנית {{itemName}} מחנות המשכונות תמורת {{cost}}$"
     },
+    "callCleaningService": "הזמנת שירותי ניקיון מקצועיים (עלות: {{cost}}$)",
+    "socialize": "אירחת חברים ונפגשתם (+{{reward}} מצב נפשי, {{guests}} אורחים הגיעו)",
     "rent": {
       "paid": "שילמת {{amount}}$ שכר דירה",
       "advancePaid": "שילמת מראש {{amount}}$ על שכר דירה",
       "moved": "עברת ל{{name}} (עלות: {{cost}}$)",
+      "alreadyLiveHere": "אתה כבר גר ב-{{name}}.",
       "extensionApproved": "ארכת שכר דירה אושרה.",
-      "extensionDenied": "ארכת שכר דירה נדחתה."
+      "extensionDenied": "ארכת שכר דירה נדחתה.",
+      "alreadyGranted": "הארכת שכר דירה כבר פעילה לתקופה זו."
     },
     "error": {
       "cannotApply": "לא ניתן להגיש מועמדות לעבודה.",
@@ -111,6 +115,10 @@
       "notEnoughTimeBuy": "אין מספיק זמן לקנות {{name}}.",
       "notEnoughTimeLoan": "אין מספיק זמן להלוואה.",
       "notEnoughTimeRelax": "אין מספיק זמן לנוח.",
+      "notEnoughTimeClean": "אין מספיק זמן לנקות.",
+      "notEnoughTimeSocialize": "אין מספיק זמן לאירוח חברים.",
+      "notEnoughMoneyCleanService": "אין מספיק כסף להזמנת שירותי ניקיון.",
+      "messTooHighSocialize": "הדירה שלך מבולגנת מדי לאירוח חברים (נקה מתחת ל-25 בלגן תחילה).",
       "noLoan": "אין לך הלוואה.",
       "notEnoughMoney": "אין מספיק כסף.",
       "alreadyOwnComputer": "כבר יש בבעלותך מחשב."
@@ -126,11 +134,25 @@
     "starvation": "התמוטטת מרעב! איבדת זמן.",
     "doctorVisit": "נאלצת לבקר אצל הרופא. זה עלה לך ${{cost}}.",
     "doctorVisit_reasons": "נאלצת לבקר אצל הרופא ({{reasons}}). זה עלה לך ${{cost}}.",
+    "burnout": "נשחקת! לקחת חופשת בריאות הנפש (-{{hours}} שעות, +{{amount}} מצב נפשי).",
+    "lowSpiritsBounceBack": "נשחקת! לקחת חופשת בריאות הנפש (+{{amount}} מצב נפשי).",
+    "marketCrash": {
+      "jobLost": "הבורסה קרסה! איבדת את מקום עבודתך עקב קיצוצים.",
+      "wageCut": "הבורסה קרסה! השכר שלך קוצץ ב-20% עקב צמצומים.",
+      "bankSavingsLost": "הבורסה קרסה! המערכת הבנקאית נפגעה ואיבדת את כל החסכונות שלך בסך ${{amount}}!"
+    },
+    "economicBoom": {
+      "investorBonus": "שגשוג כלכלי! ההשקעות שלך במניות הניבו רווחים נאים."
+    },
     "foodSpoiled": {
       "noFridge": "אוכל התקלקל בגלל שאין לך מקרר. הפסדת {{amount}} יחידות.",
+      "noFridge_qol": "כל האוכל שלך ({{amount}} יחידות) התקלקל כי אין לך מקרר! 🪰🪰🪰",
       "sick": "חלית ממאכל מקולקל.",
       "tooMuch": "חלק מהאוכל התקלקל.",
-      "ateSpoiled": "אכלת אוכל מקולקל."
+      "tooMuch_qol": "חלק מהאוכל שלך ({{amount}} יחידות) התקלקל כי חרגת מקיבולת המקרר של {{capacity}} יחידות! 🪰",
+      "tooMuch_freezer_qol": "חלק מהאוכל שלך ({{amount}} יחידות) התקלקל כי חרגת מקיבולת המקרר והמקפיא של {{capacity}} יחידות! 🪰",
+      "ateSpoiled": "אכלת אוכל מקולקל.",
+      "ateSpoiled_qol": "אכלת אוכל מקולקל כי אין לך מקרר!"
     },
     "rent": {
       "charged": "איחור בתשלום! {{amount}}$ נוספו לחוב שכר הדירה (משכורות יעוקלו).",
@@ -215,6 +237,7 @@
     "whatYouDid": "מה עשית בסוף השבוע:",
     "cost": "עלות",
     "happiness": "אושר",
+    "mental": "מצב נפשי",
     "nothingSpecial": "שום דבר מיוחד לא קרה בסוף השבוע הזה.",
     "otherEvents": "אירועים אחרים",
     "startWeek": "התחל שבוע {{turn}}"

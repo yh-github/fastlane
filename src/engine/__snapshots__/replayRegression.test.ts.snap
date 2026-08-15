@@ -83,7 +83,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         {
           "key": "events.doctorVisit_reasons",
           "params": {
-            "cost": 16,
+            "cost": 34,
             "reasons": "Starvation",
           },
         },
@@ -108,9 +108,9 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "rentPaidThisTurn": false,
       },
       "weekendResult": {
-        "cost": 87,
+        "cost": 18,
         "event": {
-          "key": "events.weekend.random_35",
+          "key": "events.weekend.random_13",
         },
         "happinessBonus": undefined,
       },

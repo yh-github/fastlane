@@ -24,8 +24,8 @@
     "trackMess": true
   },
   "statRules": {
-    "startingPhysicalCondition": 51,
-    "startingMentalCondition": 50,
+    "startingPhysicalCondition": 50,
+    "startingMentalCondition": 51,
     "minPhysicalCondition": 5,
     "maxPhysicalCondition": 100,
     "minMentalCondition": 5,
@@ -33,8 +33,10 @@
     "globalMaxMentalCondition": 100,
     "physicalDoctorThreshold": 10,
     "physicalDoctorChancePerPoint": 0.05,
+    "doctorPhysicalBounceBack": 8,
     "lowSpiritsThreshold": 10,
     "lowSpiritsChancePerPoint": 0.05,
+    "lowSpiritsMentalBounceBack": 8,
     "workGrindThreshold": 4,
     "workGrindMentalCost": 1,
     "workPhysicalCost": 1,

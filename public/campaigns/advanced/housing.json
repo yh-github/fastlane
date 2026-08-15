@@ -4,7 +4,7 @@
     "name": "The Streets",
     "baseRent": 0,
     "isRobberyImmune": false,
-    "homeNodeId": "node_park",
+    "homeNodeId": "node_low_cost",
     "description": "Living on the streets. It's free, but very dangerous.",
     "lifestyleValue": 0
   },

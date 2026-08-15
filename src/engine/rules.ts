@@ -147,6 +147,11 @@ export interface GameRules {
    * ADVANCED: If true, tracks 'Mess' at home, allowing cleaning.
    */
   trackMess?: boolean;
+
+  /**
+   * If true, stolen refrigerators/freezers don't cause immediate food rot on the turn of theft (1-week grace period).
+   */
+  delayRobberyFoodSpoilage?: boolean;
 }
 
 export interface EventRules {
@@ -233,6 +238,7 @@ export interface TimeRules {
   newspaperCost: number;
   starvationPenalty: number;
   doctorPenalty: number;
+  burnoutPenalty?: number;
   loanCost: number;
   brokerCost: number;
   cleaningServiceCost?: number;
@@ -263,28 +269,28 @@ export interface EconomyRules {
  * Default rules fallback used when a campaign does not explicitly specify a rule.
  */
 export const DEFAULT_GAME_RULES: GameRules = {
-  strictEviction: false,
+  strictEviction: true,
   fluctuatingRent: false,
   clothingDecaysAll: true,
-  autoEquipBestClothes: true,
-  classicStockMarket: true,
+  autoEquipBestClothes: false,
+  classicStockMarket: false,
   allowPartialHours: true,
   enableRelaxationDoctor: true,
   requireJobForLoan: true,
-  helpfulUI: false,
-  enableAnimations: false,
-  allowOverAchievingGoals: false,
+  helpfulUI: true,
+  enableAnimations: true,
+  allowOverAchievingGoals: true,
   bypassDoctorIfBroke: true,
   relaxationDoctorThreshold: 10,
   protectBuiltInAppliances: false,
   allowEmployedRentPayment: false,
-  delayBookSetCredit: true,
+  delayBookSetCredit: false,
   allowEatingSpoiledFood: true,
   reducedDegreeStatBonus: false,
-  showItemImages: false,
-  maxEnrolledClasses: 4,
+  showItemImages: true,
+  maxEnrolledClasses: 999,
   turnStartAtHome: false,
-  minEconomicReading: -30,
+  delayRobberyFoodSpoilage: false,
 };
 
 /**
@@ -310,6 +316,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   allowEatingSpoiledFood: 'Allows eating spoiled or expired food',
   reducedDegreeStatBonus: 'Reduces the Dependability and Experience boost from degrees from +5 to +2',
   showItemImages: 'Displays graphical icons for items in menus and inventory',
+  delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
   minEconomicReading: 'The lowest possible value the economic index (reading) can reach (-90 for Floppy, -30 for CD-ROM)',
@@ -336,6 +343,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   newspaperCost: 'Hours required to read the newspaper (look for jobs)',
   starvationPenalty: 'Time penalty (in hours) deducted next turn if the player fails to eat',
   doctorPenalty: 'Time penalty (in hours) deducted if a mandatory doctor visit is triggered',
+  burnoutPenalty: 'Time penalty (in hours) deducted if mental health leave is taken for burnout',
   loanCost: 'Hours required to negotiate or process a bank loan',
   brokerCost: 'Hours required to visit the stock broker',
 

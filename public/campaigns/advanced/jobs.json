@@ -1,0 +1,14 @@
+[
+  {
+    "id": "zmart_clerk",
+    "locationId": "discount_and_pawn"
+  },
+  {
+    "id": "zmart_asst_mgr",
+    "locationId": "discount_and_pawn"
+  },
+  {
+    "id": "zmart_mgr",
+    "locationId": "discount_and_pawn"
+  }
+]

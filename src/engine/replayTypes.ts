@@ -50,12 +50,14 @@ export function resolveDecision<T>(
     if (forcedIndex !== -1) {
       const forced = replay.inDecisions[forcedIndex];
       replay.inDecisions.splice(forcedIndex, 1);
-      replay.outDecisions.push(forced);
+      if (replay.outDecisions) {
+        replay.outDecisions.push(forced);
+      }
       return forced.result as T;
     }
   }
   const result = generator();
-  if (replay) {
+  if (replay && replay.outDecisions) {
     replay.outDecisions.push({ type, result });
   }
   return result;

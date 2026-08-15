@@ -31,20 +31,20 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   const debugBoom = state.debugQueue?.find(e => e.type === 'market_boom');
 
   if (debugCrash) {
-    if (state.turn >= 8 && newEconomy >= 80) {
-      const forcedSeverity = debugCrash.crashSeverity || 'moderate';
+    if (state.turn >= 8 && newEconomy >= 60) {
+      const forcedSeverity = debugCrash.crashSeverity || (debugCrash as any).crashType || 'moderate';
       crashSeverity = forcedSeverity;
       const trendDrop = -3;
       if (forcedSeverity === 'minor') {
-        newEconomy = Math.max(minReading, newEconomy - 3);
-        newTrend = trendDrop;
+        newEconomy = Math.max(minReading, newEconomy - 15);
+        newTrend = -2;
         currentHeadline = { key: 'newspaper.crash_minor' };
       } else if (forcedSeverity === 'moderate') {
-        newEconomy = Math.max(minReading, newEconomy - 6);
+        newEconomy = Math.max(minReading, newEconomy - 30);
         newTrend = trendDrop;
         currentHeadline = { key: 'newspaper.crash_moderate' };
       } else {
-        newEconomy = Math.max(minReading, newEconomy - 9);
+        newEconomy = Math.max(minReading, newEconomy - 50);
         newTrend = trendDrop;
         currentHeadline = { key: 'newspaper.crash_major' };
       }
@@ -53,12 +53,12 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         key: 'debug.event_cancelled',
         params: {
           event: 'Market Crash',
-          reason: state.turn < 8 ? 'Requires Turn 8+' : `Economy must be ≥ 80 (Current: ${newEconomy})`,
+          reason: state.turn < 8 ? 'Requires Turn 8+' : `Economy must be ≥ 60 (Current: ${newEconomy})`,
         },
       });
     }
   } else if (state.turn >= 8) {
-    if (newEconomy >= 80) {
+    if (newEconomy >= 65) {
       const crashDivisor = campaign.config.eventRules?.marketCrashDivisor ?? 30;
       const crashChance = 1 / (1 + (crashDivisor * state.players.length));
       
@@ -69,17 +69,17 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         
         if (roll < 0.333) {
           crashSeverity = 'minor';
-          newEconomy = Math.max(minReading, newEconomy - 3); // -5% (3 points)
-          newTrend = trendDrop;
+          newEconomy = Math.max(minReading, newEconomy - 15);
+          newTrend = -2;
           currentHeadline = { key: 'newspaper.crash_minor' };
         } else if (roll < 0.666) {
           crashSeverity = 'moderate';
-          newEconomy = Math.max(minReading, newEconomy - 6); // -10% (6 points)
+          newEconomy = Math.max(minReading, newEconomy - 30);
           newTrend = trendDrop;
           currentHeadline = { key: 'newspaper.crash_moderate' };
         } else {
           crashSeverity = 'major';
-          newEconomy = Math.max(minReading, newEconomy - 9); // -15% (9 points)
+          newEconomy = Math.max(minReading, newEconomy - 50);
           newTrend = trendDrop;
           currentHeadline = { key: 'newspaper.crash_major' };
         }
@@ -292,6 +292,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       // 8. Apartment Robbery
       const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === p.id || !e.playerId));
       const robberyStartWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
+      const preRobberyStorage = p.activeEffects['set_food_storage'] || 0;
       if (queuedAptRobbery) {
         if (p.currentHousingId === 'security') {
           p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Apartment Robbery', reason: 'Living in La Security' } });
@@ -317,9 +318,12 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         p = robberyResult.updated;
       }
 
+      // Recalculate active effects immediately after robbery so loss of appliances affects stats
+      p = recalculatePlayerEffects(p, campaign);
+
       // 9. Spoiled Food & Starvation (Order of Operations)
       let spoiledFoodSickMultiplier = 1;
-      const maxStorage = p.activeEffects['set_food_storage'] || 0;
+      const maxStorage = state.rules.delayRobberyFoodSpoilage ? preRobberyStorage : (p.activeEffects['set_food_storage'] || 0);
       let doctorNeeded = false;
       let doctorReasons: string[] = [];
 
@@ -495,17 +499,17 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
           }
         }
         
-        // Low Spirits (Mental Doctor / Self Care)
+        // Low Spirits (Burnout / Mental Health Leave)
         if (p.mentalCondition !== undefined && p.mentalCondition < mentalThreshold) {
           const chance = Math.min(1.0, (mentalThreshold - p.mentalCondition) * mentalChance);
           const mentalSickTrigger = resolveDecision(replay, `mental_sick_${p.id}`, () => rng.next() < chance);
           if (mentalSickTrigger) {
-            doctorNeeded = true;
-            doctorReasons.push('Low spirits / Mental exhaustion');
             const maxMental = p.mentalConditionMax ?? 50;
             const mentalBounce = statRules?.lowSpiritsMentalBounceBack ?? 8;
             p.mentalCondition = Math.min(maxMental, (p.mentalCondition ?? 50) + mentalBounce);
-            p.turnEvents.push({ key: 'events.lowSpiritsBounceBack', params: { amount: mentalBounce } });
+            const burnoutPenalty = campaign.config.timeRules?.burnoutPenalty ?? campaign.config.timeRules?.doctorPenalty ?? 10;
+            p.hoursRemaining = Math.max(0, p.hoursRemaining - burnoutPenalty);
+            p.turnEvents.push({ key: 'events.burnout', params: { amount: mentalBounce, hours: burnoutPenalty } });
           }
         }
       } else if (state.rules.enableRelaxationDoctor) {
