@@ -12,8 +12,10 @@ dist
 dist-ssr
 *.local
 /local/
+scratch
 
 # Editor directories and files
+/coverage/
 .vscode/*
 !.vscode/extensions.json
 .idea
