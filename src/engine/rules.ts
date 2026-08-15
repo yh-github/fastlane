@@ -156,6 +156,8 @@ export interface GameRules {
 
 export interface EventRules {
   marketCrashDivisor: number;
+  marketCrashThreshold?: number;
+  economicBoomDivisor?: number;
   willyRobberyStartWeek: number;
   charity: {
     maxCash: number;
@@ -319,6 +321,8 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
+  marketCrashThreshold: 'Minimum economic reading required for a market crash to trigger (default 60)',
+  economicBoomDivisor: 'Divisor determining the frequency of economic boom events (default 50)',
   minEconomicReading: 'The lowest possible value the economic index (reading) can reach (-90 for Floppy, -30 for CD-ROM)',
   willyRobberyStartWeek: 'Game turn/week when Willy robbery events begin',
   'charity.maxCash': 'Maximum cash limit to remain eligible for charity payout',

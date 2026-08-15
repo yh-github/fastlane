@@ -31,7 +31,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   const debugBoom = state.debugQueue?.find(e => e.type === 'market_boom');
 
   if (debugCrash) {
-    if (state.turn >= 8 && newEconomy >= 60) {
+    const crashThreshold = campaign.config.eventRules?.marketCrashThreshold ?? 60;
+    if (state.turn >= 8 && newEconomy >= crashThreshold) {
       const forcedSeverity = debugCrash.crashSeverity || (debugCrash as any).crashType || 'moderate';
       crashSeverity = forcedSeverity;
       const trendDrop = -3;
@@ -49,17 +50,19 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         currentHeadline = { key: 'newspaper.crash_major' };
       }
     } else {
+      const crashThreshold = campaign.config.eventRules?.marketCrashThreshold ?? 60;
       cancelledGlobalEvents.push({
         key: 'debug.event_cancelled',
         params: {
           event: 'Market Crash',
-          reason: state.turn < 8 ? 'Requires Turn 8+' : `Economy must be ≥ 60 (Current: ${newEconomy})`,
+          reason: state.turn < 8 ? 'Requires Turn 8+' : `Economy must be ≥ ${crashThreshold} (Current: ${newEconomy})`,
         },
       });
     }
   } else if (state.turn >= 8) {
-    if (newEconomy >= 65) {
-      const crashDivisor = campaign.config.eventRules?.marketCrashDivisor ?? 30;
+    const crashThreshold = campaign.config.eventRules?.marketCrashThreshold ?? 60;
+    if (newEconomy >= crashThreshold) {
+      const crashDivisor = campaign.config.eventRules?.marketCrashDivisor ?? 20;
       const crashChance = 1 / (1 + (crashDivisor * state.players.length));
       
       const crashTriggered = resolveDecision(replay, `market_crash_trigger`, () => rng.next() < crashChance);
@@ -103,7 +106,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       });
     }
   } else if (crashSeverity === 'none' && newEconomy <= 120 && state.turn >= 8) {
-    const boomChance = 1 / (1 + (30 * state.players.length));
+    const boomDivisor = campaign.config.eventRules?.economicBoomDivisor ?? 50;
+    const boomChance = 1 / (1 + (boomDivisor * state.players.length));
     const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
     if (boomTriggered) {
       economicBoom = true;

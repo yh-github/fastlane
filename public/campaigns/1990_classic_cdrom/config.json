@@ -8,7 +8,9 @@
     "minEconomicReading": -30
   },
   "eventRules": {
-    "marketCrashDivisor": 30,
+    "marketCrashDivisor": 20,
+    "economicBoomDivisor": 50,
+    "marketCrashThreshold": 60,
     "willyRobberyStartWeek": 4,
     "charity": {
       "maxCash": 299,
