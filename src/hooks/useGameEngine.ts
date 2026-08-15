@@ -125,6 +125,7 @@ export function useGameEngine(
       const nextState = processTurnStart({ ...gameStateRef.current!, players: updatedPlayers }, campaign!, replayCtx);
       
       if (replayDataRef.current) {
+        if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
         replayDataRef.current.steps.push({
           turn: gameStateRef.current!.turn,
           action: { type: 'end_turn' },
@@ -199,6 +200,7 @@ export function useGameEngine(
           }
           
           if (replayDataRef.current) {
+            if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
             replayDataRef.current.steps.push({
               turn: currentState.turn,
               action: { type: 'move', nodeId },
@@ -233,6 +235,7 @@ export function useGameEngine(
 
         if (actualSteps > 0 && !['bank', 'blacks_market'].includes(currentBuilding || '')) {
           if (replayDataRef.current) {
+            if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
             replayDataRef.current.steps.push({
               turn: currentState.turn,
               action: { type: 'move', nodeId },
@@ -332,6 +335,7 @@ export function useGameEngine(
       );
 
       if (replayDataRef.current) {
+        if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
         replayDataRef.current.steps.push({
           turn: prevState.turn,
           action: payload,

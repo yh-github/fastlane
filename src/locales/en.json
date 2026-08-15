@@ -82,12 +82,16 @@
       "redeemed": "Redeemed {{itemName}} for ${{cost}}",
       "bought": "Bought {{itemName}} from Pawn Shop for ${{cost}}"
     },
+    "callCleaningService": "Called professional cleaning service (Cost: ${{cost}})",
+    "socialize": "Hosted friends and socialized (+{{reward}} Mental Condition, {{guests}} guests attended)",
     "rent": {
       "paid": "Paid ${{amount}} towards rent",
       "advancePaid": "Paid ${{amount}} rent advance",
       "moved": "Moved into {{name}} (Cost: ${{cost}})",
+      "alreadyLiveHere": "You already live at {{name}}.",
       "extensionApproved": "Rent extension approved.",
-      "extensionDenied": "Rent extension denied."
+      "extensionDenied": "Rent extension denied.",
+      "alreadyGranted": "Rent extension already active for this period."
     },
     "error": {
       "cannotApply": "Could not apply for job.",
@@ -113,6 +117,10 @@
       "notEnoughTimeBuy": "Not enough time to buy {{name}}.",
       "notEnoughTimeLoan": "Not enough time for loan.",
       "notEnoughTimeRelax": "Not enough time to relax.",
+      "notEnoughTimeClean": "Not enough time to clean.",
+      "notEnoughTimeSocialize": "Not enough time to socialize.",
+      "notEnoughMoneyCleanService": "Not enough money to call cleaning service.",
+      "messTooHighSocialize": "Your apartment is too messy to invite guests over (Clean below 25 Mess first).",
       "noLoan": "You don't have a loan.",
       "notEnoughMoney": "Not enough money.",
       "alreadyOwnComputer": "You already own a computer.",
@@ -129,6 +137,16 @@
     "starvation": "Less time! ⏰ Due to hunger",
     "doctorVisit": "You had to visit the doctor. It cost you ${{cost}}.",
     "doctorVisit_reasons": "You had to visit the doctor ({{reasons}}). It cost you ${{cost}}.",
+    "burnout": "You are burnt out! You took a mental health leave (-{{hours}} hrs, +{{amount}} Mental Condition).",
+    "lowSpiritsBounceBack": "You are burnt out! You took a mental health leave (+{{amount}} Mental Condition).",
+    "marketCrash": {
+      "jobLost": "The stock market crashed! You lost your job due to company cutbacks.",
+      "wageCut": "Market crash! Your wage was cut by 20% due to company downsizing.",
+      "bankSavingsLost": "Market crash! The banking system collapsed and you lost all ${{amount}} of your bank savings!"
+    },
+    "economicBoom": {
+      "investorBonus": "Economic boom! Your stock investments paid off handsomely."
+    },
     "foodSpoiled": {
       "noFridge": "All of your food has spoiled! 🪰🪰🪰",
       "noFridge_qol": "All of your food ({{amount}} units) has spoiled because you don't have a refrigerator! 🪰🪰🪰",
@@ -237,6 +255,7 @@
     "whatYouDid": "What you did this weekend:",
     "cost": "Cost",
     "happiness": "Happiness",
+    "mental": "Mental Condition",
     "nothingSpecial": "Nothing special happened this weekend.",
     "otherEvents": "Other Events",
     "startWeek": "Start Week {{turn}}"

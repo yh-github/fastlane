@@ -153,4 +153,63 @@ describe('BuildingInteractions', () => {
     fireEvent.click(screen.getByText(/Confirm Deposit \(\$150\)/i));
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'bank_transaction', amount: 150 });
   });
+
+  it('HomeRelax displays dynamic economy price for Cleaning Service and disables when broke or clean', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    const { HomeRelax } = await import('./BuildingInteractions');
+
+    const mockPlayer = {
+      id: 'p1',
+      money: 50, // Less than $100 price
+      hoursRemaining: 30,
+      mess: 20,
+      currentHousingId: 'low_cost'
+    } as any;
+
+    const mockCampaign = {
+      housing: [{ id: 'low_cost', name: 'Low Cost' }],
+      config: {
+        timeRules: { relaxCost: 6, cleaningServiceCost: 1 },
+        economyRules: { cleaningServiceBasePrice: 100 },
+        statRules: {}
+      }
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    // Render with broke player ($50 vs $100 cost)
+    const { rerender } = render(
+      <HomeRelax
+        player={mockPlayer}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+        rules={{ trackMess: true } as any}
+        economicIndex={0}
+      />
+    );
+
+    const cleanServiceBtn = screen.getByRole('button', { name: /Call Cleaning Service/i });
+    expect(cleanServiceBtn).toBeDisabled();
+    expect(cleanServiceBtn.textContent).toContain('$100');
+    expect(screen.getByText(/Needs \$100/i)).toBeInTheDocument();
+
+    // Rerender with wealthy player ($500) and economic boom (+50 -> $150)
+    const wealthyPlayer = { ...mockPlayer, money: 500 };
+    rerender(
+      <HomeRelax
+        player={wealthyPlayer}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+        rules={{ trackMess: true } as any}
+        economicIndex={50}
+      />
+    );
+
+    const updatedBtn = screen.getByRole('button', { name: /Call Cleaning Service/i });
+    expect(updatedBtn).not.toBeDisabled();
+    expect(updatedBtn.textContent).toContain('$183');
+
+    fireEvent.click(updatedBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'call_cleaning_service' });
+  });
 });

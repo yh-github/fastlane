@@ -189,7 +189,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
   );
 }
 
-export function HomeRelax({ player, onAction, campaign, rules }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules }) {
+export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules, economicIndex?: number }) {
   const { t } = useTranslation();
   const relaxCost = campaign?.config.timeRules?.relaxCost ?? 6;
   const currentMess = player.mess || 0;
@@ -197,6 +197,9 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
   const isMessClean = currentMess <= 0;
   const isMessTooHighForSocial = currentMess > 25;
   const cleaningServiceCost = campaign?.config.timeRules?.cleaningServiceCost ?? 1;
+  const cleaningServiceBasePrice = campaign?.config.economyRules?.cleaningServiceBasePrice ?? 100;
+  const cleaningServicePrice = calcEconomyPrice(cleaningServiceBasePrice, economicIndex);
+  const canAffordCleaning = player.money >= cleaningServicePrice;
 
   let messIcon = '🗑️';
   let messLabel = 'Spotless';
@@ -352,22 +355,22 @@ export function HomeRelax({ player, onAction, campaign, rules }: InteractionProp
                 <button 
                   data-action-target="call-cleaning-service" 
                   onClick={() => onAction({ type: 'call_cleaning_service' })}
-                  disabled={isMessClean}
+                  disabled={isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost}
                   style={{ 
-                    backgroundColor: isMessClean ? '#444' : '#8e44ad', 
-                    color: isMessClean ? '#888' : '#fff', 
+                    backgroundColor: (isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost) ? '#444' : '#8e44ad', 
+                    color: (isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost) ? '#888' : '#fff', 
                     border: 'none', 
                     padding: '10px', 
                     borderRadius: '4px', 
-                    cursor: isMessClean ? 'not-allowed' : 'pointer', 
+                    cursor: (isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost) ? 'not-allowed' : 'pointer', 
                     fontWeight: 'bold',
                     textAlign: 'left',
-                    opacity: isMessClean ? 0.6 : 1
+                    opacity: (isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost) ? 0.6 : 1
                   }}
                 >
-                  <div>🧼 Call Cleaning Service ({cleaningServiceCost} hr, $100)</div>
+                  <div>🧼 Call Cleaning Service ({cleaningServiceCost} hr, ${cleaningServicePrice})</div>
                   <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
-                    Professional cleaning (-10 Mess) {isMessClean ? '(Already Clean)' : ''}
+                    Professional cleaning (-10 Mess) {isMessClean ? '(Already Clean)' : (!canAffordCleaning ? `(Needs $${cleaningServicePrice})` : '')}
                   </div>
                 </button>
               </>

@@ -274,14 +274,14 @@ describe('Turn Processor', () => {
 
       const nextState = processTurnStart(state, mockCampaign);
 
-      expect(nextState.economicIndex).toBe(76); // 85 - 9 = 76
+      expect(nextState.economicIndex).toBe(35); // 85 - 50 = 35
       expect(nextState.players[0].bankSavings).toBe(0); // Major crash wipes savings!
       expect(nextState.players[0].currentJobId).toBeNull(); // Major crash fires player!
       expect(nextState.players[0].turnEvents.some(e => e.key === 'events.marketCrash.bankSavingsLost')).toBe(true);
       expect(nextState.players[0].newspaperHeadline?.key).toBe('newspaper.crash_major');
     });
 
-    it('triggers minor crash (-3 reading, negative trend plunge)', () => {
+    it('triggers minor crash (-15 reading, negative trend plunge)', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 8;
       state.economicIndex = 82;
@@ -294,12 +294,12 @@ describe('Turn Processor', () => {
       rngSpy.mockReturnValueOnce(0.01);   // crash trend -> Math.floor(0.01 * 3) - 3 = -3
 
       const nextState = processTurnStart(state, mockCampaign);
-      expect(nextState.economicIndex).toBe(79); // 82 - 3 = 79
-      expect(nextState.economicTrend).toBe(-3);
+      expect(nextState.economicIndex).toBe(67); // 82 - 15 = 67
+      expect(nextState.economicTrend).toBe(-2);
       expect(nextState.players[0].newspaperHeadline?.key).toBe('newspaper.crash_minor');
     });
 
-    it('triggers moderate crash (-6 reading, negative trend plunge)', () => {
+    it('triggers moderate crash (-30 reading, negative trend plunge)', () => {
       let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 8;
       state.economicIndex = 84;
@@ -312,7 +312,7 @@ describe('Turn Processor', () => {
       rngSpy.mockReturnValueOnce(0.5);    // crash trend -> Math.floor(0.5 * 3) - 3 = -2
 
       const nextState = processTurnStart(state, mockCampaign);
-      expect(nextState.economicIndex).toBe(78); // 84 - 6 = 78
+      expect(nextState.economicIndex).toBe(54); // 84 - 30 = 54
       expect(nextState.economicTrend).toBe(-2);
       expect(nextState.players[0].newspaperHeadline?.key).toBe('newspaper.crash_moderate');
     });
