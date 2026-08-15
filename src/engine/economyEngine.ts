@@ -85,7 +85,7 @@ export function fluctuateEconomy(currentIndex: number, currentTrend: number, min
   const trendChange = resolveDecision(replay, `fluctuate_trend`, () => {
     let change = Math.floor(rng.next() * 3) - 1;
     // Mean reversion when economy is very high or very low
-    if (currentIndex > 50 && currentTrend > 0) {
+    if (currentIndex > 55 && currentTrend > 0) {
       change -= 1;
     } else if (currentIndex < -10 && currentTrend < 0) {
       change += 1;

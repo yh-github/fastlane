@@ -48,6 +48,8 @@
   },
   "eventRules": {
     "marketCrashDivisor": 20,
+    "economicBoomDivisor": 50,
+    "marketCrashThreshold": 60,
     "willyRobberyStartWeek": 1,
     "charity": {
       "maxCash": 0,
