@@ -233,12 +233,12 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       openings: 1
     };
 
-    it('masks missing qualifications as "no openings" on turns 1-4 when helpfulUI is false (Classic behavior)', () => {
+    it('masks missing qualifications as "no openings" on turns 1-4 when maskEarlyJobRejections is true (Classic Floppy / CD-ROM)', () => {
       const rng = new Random(1);
       const player = createInitialGameState(baseCampaign, [{ name: 'P1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost').players[0];
       player.experience = 10; // Fails reqExperience (30)
 
-      const classicRules = { ...baseCampaign.config.gameRules, helpfulUI: false };
+      const classicRules = { ...baseCampaign.config.gameRules, maskEarlyJobRejections: true };
 
       // On turn 2 (< 5), unqualified player gets "no openings"
       const resultEarly = applyForJob(player, mockJob as any, 4, {}, undefined, rng, classicRules, 2);
@@ -252,14 +252,14 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       expect((resultLate.message?.params as any)?.reasons).toContain('experience');
     });
 
-    it('shows exact missing requirement on turns 1-4 when helpfulUI is true (QoL / Advanced behavior)', () => {
+    it('shows exact missing requirement on turns 1-4 when maskEarlyJobRejections is false (QoL / Advanced)', () => {
       const rng = new Random(1);
       const player = createInitialGameState(baseCampaign, [{ name: 'P1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost').players[0];
       player.experience = 10;
 
-      const qolRules = { ...baseCampaign.config.gameRules, helpfulUI: true };
+      const qolRules = { ...baseCampaign.config.gameRules, maskEarlyJobRejections: false };
 
-      // On turn 2 with helpfulUI, player gets explicit reasons immediately
+      // On turn 2 with maskEarlyJobRejections false, player gets explicit reasons immediately
       const result = applyForJob(player, mockJob as any, 4, {}, undefined, rng, qolRules, 2);
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.job.rejected');

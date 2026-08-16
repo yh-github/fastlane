@@ -21,7 +21,8 @@
     "useHomeTimeRobbery": true,
     "usePhysicalMentalConditions": true,
     "turnStartAtHome": true,
-    "trackMess": true
+    "trackMess": true,
+    "maskEarlyJobRejections": false
   },
   "statRules": {
     "startingPhysicalCondition": 50,

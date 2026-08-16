@@ -152,6 +152,12 @@ export interface GameRules {
    * If true, stolen refrigerators/freezers don't cause immediate food rot on the turn of theft (1-week grace period).
    */
   delayRobberyFoodSpoilage?: boolean;
+
+  /**
+   * If true, unqualified job applications in early weeks (turns 1-4) return 'No openings' instead of explicit missing requirements.
+   * Classic Floppy/CD-ROM: true. QoL / Advanced: false.
+   */
+  maskEarlyJobRejections?: boolean;
 }
 
 export interface EventRules {
@@ -293,6 +299,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   maxEnrolledClasses: 999,
   turnStartAtHome: false,
   delayRobberyFoodSpoilage: false,
+  maskEarlyJobRejections: false,
 };
 
 /**
@@ -319,6 +326,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   reducedDegreeStatBonus: 'Reduces the Dependability and Experience boost from degrees from +5 to +2',
   showItemImages: 'Displays graphical icons for items in menus and inventory',
   delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',
+  maskEarlyJobRejections: 'Masks unqualified job applications as "No openings" during turns 1-4 (Original Floppy/CD-ROM behavior)',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
   marketCrashThreshold: 'Minimum economic reading required for a market crash to trigger (default 60)',

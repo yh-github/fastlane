@@ -5,7 +5,8 @@
   "startingMoney": 200,
   "baseCampaign": "1990_classic_floppy",
   "gameRules": {
-    "minEconomicReading": -30
+    "minEconomicReading": -30,
+    "maskEarlyJobRejections": true
   },
   "eventRules": {
     "marketCrashDivisor": 20,
