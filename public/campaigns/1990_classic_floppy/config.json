@@ -69,6 +69,7 @@
     "minEconomicReading": -90,
     "strictEviction": false,
     "maxEnrolledClasses": 4,
-    "turnStartAtHome": false
+    "turnStartAtHome": false,
+    "maskEarlyJobRejections": true
   }
 }
