@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
-  test('executes multi-turn game setup, dashboard HUD verification, and turn progression', async ({ page }) => {
+  test('executes multi-turn game setup, exhausts turn 1 hours, exits location to advance to turn 2 and resets clock', async ({ page }) => {
     const pageErrors: Error[] = [];
     page.on('pageerror', (err) => pageErrors.push(err));
 
@@ -19,13 +19,14 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
     await expect(startLifeBtn).toBeVisible({ timeout: 5000 });
     await startLifeBtn.click();
 
-    // 4. Verify HUD Dashboard badges loaded
+    // 4. Verify HUD Dashboard badges loaded and Turn 1 indicator
     const moneyBadge = page.locator('#stat-money');
     await expect(moneyBadge).toBeVisible({ timeout: 5000 });
 
-    // Verify turn indicator displays Week 1
     const dashboard = page.locator('.dashboard');
     await expect(dashboard).toBeVisible();
+    await expect(dashboard).toContainText(/Week 1|שבוע 1/i);
+    await expect(dashboard).toContainText(/60(\.0)?\s*\/\s*60/);
 
     // 5. Open and verify Settings modal
     const settingsBtn = page.locator('#btn-settings');
@@ -52,14 +53,96 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
     await closeInvBtn.click();
     await expect(inventoryModal).toBeHidden();
 
-    // 7. If BuildingModal is currently open (e.g. turnStartAtHome), interact or close
-    const buildingModal = page.locator('.building-modal-overlay');
-    if (await buildingModal.isVisible()) {
-      const closeBuildingBtn = page.locator('.building-modal-content button').first();
-      await closeBuildingBtn.click();
+    // 7. Verify Home Building Modal is open on turn start
+    const buildingModal = page.locator('.building-modal');
+    await expect(buildingModal).toBeVisible({ timeout: 5000 });
+
+    // 8. Spend all 60 hours in Turn 1 (Relax takes 6 hrs each, click 10 times)
+    const relaxBtn = page.locator('[data-action-target="relax"]');
+    await expect(relaxBtn).toBeVisible();
+
+    for (let i = 0; i < 10; i++) {
+      await relaxBtn.click();
     }
 
-    // 8. Verify no uncaught runtime exceptions occurred throughout gameplay
+    // Verify hours dropped to 0.0
+    await expect(dashboard).toContainText(/0\.0\s*\/\s*60/);
+
+    // 9. Exit the location (close building modal) with 0.0 hours left -> ends turn & runs home
+    const closeBuildingBtn = page.locator('.building-modal__close');
+    await closeBuildingBtn.click();
+
+    // Dismiss any turn event modals (e.g. starvation / turn start events)
+    const eventNextBtn = page.locator('button').filter({ hasText: /Next|Continue|OK|הבא|המשך/i }).first();
+    try {
+      await eventNextBtn.waitFor({ state: 'visible', timeout: 2000 });
+      while (await eventNextBtn.isVisible()) {
+        await eventNextBtn.click();
+        await page.waitForTimeout(100);
+      }
+    } catch {
+      // No event modal displayed, continue
+    }
+
+    // 10. Verify Weekend Screen appears for Turn 2
+    const weekendScreen = page.locator('.weekend-screen');
+    await expect(weekendScreen).toBeVisible({ timeout: 5000 });
+    await expect(weekendScreen).toContainText(/Weekend|סוף שבוע/i);
+
+    // 11. Click Start Week 2 on Weekend Screen
+    const startWeek2Btn = page.locator('.weekend-screen button').filter({ hasText: /Start Week|התחל שבוע/i }).first();
+    await expect(startWeek2Btn).toBeVisible();
+    await startWeek2Btn.click();
+
+    // 12. Verify Week 2 begins: Dashboard displays Week 2 and hours reset to 60.0
+    await expect(weekendScreen).toBeHidden();
+    await expect(dashboard).toContainText(/Week 2|שבוע 2/i);
+    await expect(dashboard).toContainText(/60(\.0)?\s*\/\s*60/);
+
+    // 13. In Week 2, open Home modal if not open and spend hours
+    const homeNode = page.locator('[data-action-target="relax"]');
+    if (!await homeNode.isVisible()) {
+      // Open home building modal
+      const firstNode = page.locator('.building-modal');
+      if (!await firstNode.isVisible()) {
+        const homeBtn = page.locator('#btn-home');
+        if (await homeBtn.isVisible()) await homeBtn.click();
+      }
+    }
+
+    const week2RelaxBtn = page.locator('[data-action-target="relax"]');
+    if (await week2RelaxBtn.isVisible()) {
+      for (let i = 0; i < 10; i++) {
+        await week2RelaxBtn.click();
+      }
+      await expect(dashboard).toContainText(/0\.0\s*\/\s*60/);
+
+      // Exit location at 0.0 hours -> advances to Week 3 Weekend
+      if (await closeBuildingBtn.isVisible()) {
+        await closeBuildingBtn.click();
+      }
+
+      try {
+        await eventNextBtn.waitFor({ state: 'visible', timeout: 2000 });
+        while (await eventNextBtn.isVisible()) {
+          await eventNextBtn.click();
+          await page.waitForTimeout(100);
+        }
+      } catch {
+        // No event modal
+      }
+
+      await expect(weekendScreen).toBeVisible({ timeout: 5000 });
+      const startWeek3Btn = page.locator('.weekend-screen button').filter({ hasText: /Start Week|התחל שבוע/i }).first();
+      await expect(startWeek3Btn).toBeVisible();
+      await startWeek3Btn.click();
+
+      // 14. Verify Week 3 begins
+      await expect(dashboard).toContainText(/Week 3|שבוע 3/i);
+      await expect(dashboard).toContainText(/60(\.0)?\s*\/\s*60/);
+    }
+
+    // Verify zero uncaught runtime exceptions occurred throughout gameplay
     expect(pageErrors, `Uncaught page errors: ${pageErrors.map((e) => e.message).join('; ')}`).toHaveLength(0);
   });
 });

@@ -82,7 +82,11 @@ describe('BuildingModal Component', () => {
     ] as any,
     map: { nodes: [{ id: 'node1', buildingId: 'apartment_complex' }] } as any,
     events: [],
-    stocks: [],
+    stocks: [
+      { id: 'tbills', name: 'Treasury Bills', type: 'fixed', basePrice: 100 },
+      { id: 'blue_chip', name: 'Blue Chip Stocks', type: 'fluctuating', basePrice: 50 },
+      { id: 'penny_stocks', name: 'Penny Stocks', type: 'fluctuating', basePrice: 10 }
+    ],
     messages: {} as any,
     weekends: [],
     synergies: []
@@ -113,7 +117,10 @@ describe('BuildingModal Component', () => {
     expect(screen.getByText('Buy Back (50% Value)')).toBeInTheDocument();
   });
 
-  it('renders Bank building modal without crashing', () => {
+  it('renders Bank building modal with Banking, Stocks, and Loans tabs', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    const mockOnAction = vi.fn().mockResolvedValue([]);
+
     render(
       <BuildingModal
         player={mockPlayer}
@@ -123,12 +130,25 @@ describe('BuildingModal Component', () => {
         economicIndex={0}
         rules={mockRules}
         pawnShopItemsForSale={[]}
-        onAction={vi.fn().mockResolvedValue([])}
+        onAction={mockOnAction}
         onClose={vi.fn()}
       />
     );
 
     expect(screen.getAllByText('Bank of Jones').length).toBeGreaterThan(0);
+    
+    // Verify all 3 tabs are present
+    expect(screen.getByText(/^Bank$|bank\.tabBanking/i)).toBeInTheDocument();
+    const stocksTab = screen.getByText(/^Stocks$|bank\.tabStocks/i);
+    expect(stocksTab).toBeInTheDocument();
+    expect(screen.getByText(/^Loans$|bank\.tabLoans/i)).toBeInTheDocument();
+
+    // Click Stocks tab and verify stocks are displayed
+    fireEvent.click(stocksTab);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'open_broker' });
+    expect(screen.getByText(/Treasury Bills/i)).toBeInTheDocument();
+    expect(screen.getByText(/Blue Chip Stocks/i)).toBeInTheDocument();
+    expect(screen.getByText(/Penny Stocks/i)).toBeInTheDocument();
   });
 
   it('renders Employment Office building modal without crashing', () => {

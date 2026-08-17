@@ -126,12 +126,12 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     let nextMsg = '';
 
     if (actionLog) {
-      const isErrorLog = (log: any) => log.key.includes('.error') || log.key === 'action.loan.refused' || log.key === 'action.rent.extensionDenied';
+      const isErrorLog = (log: any) => log?.key?.includes?.('.error') || log?.key === 'action.loan.refused' || log?.key === 'action.rent.extensionDenied';
       const mainLog = Array.isArray(actionLog) ? actionLog[0] : actionLog;
 
-      if (mainLog.key === 'action.error.cannotWork') {
+      if (mainLog?.key === 'action.error.cannotWork') {
         nextMsg = "No time is left to work.";
-      } else if (mainLog.key.startsWith('action.error.notEnoughTime')) {
+      } else if (mainLog?.key?.startsWith?.('action.error.notEnoughTime')) {
         if (payload.type === 'enroll' || payload.type === 'study') {
           nextMsg = "No time is left to go to class.";
         } else {

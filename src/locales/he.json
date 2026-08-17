@@ -372,8 +372,8 @@
   "stocks": {
     "owned": "בבעלותך: {{count}} מניות",
     "price": "מחיר: {{price}}$ למניה",
-    "buyBtn": "קנה (-{{cost}}$)",
-    "sellBtn": "מכור (+{{revenue}}$)",
+    "buyBtn": "קנה",
+    "sellBtn": "מכור",
     "fee": "*עמלת עסקה של {{fee}}% חלה על מכירה.",
     "sharesPlaceholder": "0 מניות"
   },

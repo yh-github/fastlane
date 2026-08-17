@@ -692,6 +692,29 @@
     "title": "Home Sweet Home",
     "button": "Relax ({{cost}}h)"
   },
+  "bank": {
+    "title": "Bank of Jones",
+    "tabBanking": "Banking",
+    "tabStocks": "Stocks",
+    "tabLoans": "Loans",
+    "cash": "Cash:",
+    "savings": "Savings:",
+    "debt": "Debt:",
+    "customPlaceholder": "Custom amount...",
+    "depositBtn": "Deposit",
+    "withdrawBtn": "Withdraw",
+    "depositAmount": "Deposit ${{amount}} (or remainder)",
+    "withdrawAmount": "Withdraw ${{amount}} (or remainder)",
+    "applyLoan": "Apply for Loan (Costs {{cost}}h)",
+    "makePayment": "Make Loan Payment (${{amount}} or remainder)"
+  },
+  "stocks": {
+    "owned": "Owned: {{count}} shares",
+    "price": "Price: ${{price}} / share",
+    "buyBtn": "Buy",
+    "sellBtn": "Sell",
+    "marketStatus": "Stock Market Offerings"
+  },
   "rentOffice": {
     "title": "Rent Office",
     "current": "Current Residence",
@@ -741,6 +764,14 @@
     "theatreTickets": "Theatre Tickets",
     "concertTickets": "Concert Tickets",
     "lotteryTickets": "Lottery Tickets"
+  },
+  "stock": {
+    "tbills": "Treasury Bills",
+    "gold": "Gold",
+    "silver": "Silver",
+    "pork_bellies": "Pork Bellies",
+    "blue_chip": "Blue Chip",
+    "penny_stocks": "Penny Stocks"
   },
   "statusModal": {
     "title": "Your Status",

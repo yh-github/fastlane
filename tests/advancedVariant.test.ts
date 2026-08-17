@@ -22,9 +22,23 @@ const mockStatRules: StatRules = {
   lowSpiritsThreshold: 10,
   lowSpiritsChancePerPoint: 0.05,
   workGrindThreshold: 4,
+  workGrindPhysicalCost: 1,
   workGrindMentalCost: 1,
   workPhysicalCost: 1,
+  workNormalMentalCost: 0,
+  workOvertimeThreshold: 8,
+  workOvertimePhysicalCost: 2,
+  workOvertimeMentalCost: 2,
   studyMentalCost: 1,
+  studyNormalMentalCost: 1,
+  studyNormalPhysicalCost: 0,
+  studyGrindThreshold: 4,
+  studyGrindMentalCost: 2,
+  studyGrindPhysicalCost: 0,
+  studyOvertimeThreshold: 8,
+  studyOvertimeMentalCost: 2,
+  studyOvertimePhysicalCost: 1,
+  resilienceDropThreshold: 3,
   cleanPhysicalCost: 1
 };
 
@@ -46,7 +60,7 @@ const mockCampaign = {
     { id: 'stereo', name: 'Stereo', store: 'discount_and_pawn', basePrice: 450, category: 'appliance' }
   ],
   education: [
-    { id: 'degree1', name: 'Degree 1', baseTuitionFee: 100, lessonsRequired: 5, prerequisites: [] }
+    { id: 'degree1', name: 'Degree 1', baseTuitionFee: 100, lessonsRequired: 20, rewards: { dependability: 5, maxDependability: 5, maxExperience: 5 }, prerequisites: [] }
   ],
   map: { nodes: [{ id: 'node_low_cost' }] }
 } as any;
@@ -70,11 +84,12 @@ describe('Advanced Variation Mechanics', () => {
     expect(player.lifestyle).toBe(0);
   });
 
-  it('should deduct physical condition when working and mental condition on 4th shift (Grind)', () => {
+  it('should apply 3 work action tiers: Normal (1-3), Grind (4-7), and Overtime (8+)', () => {
     const rules: GameRules = { usePhysicalMentalConditions: true };
     mockCampaign.config.gameRules = rules;
     const player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
     player.currentJobId = 'clerk';
+    player.hoursRemaining = 60;
     
     const context = {
       campaign: mockCampaign,
@@ -86,25 +101,117 @@ describe('Advanced Variation Mechanics', () => {
     };
 
     let p = player;
-    // Shift 1
-    p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
-    expect(p.physicalCondition).toBe(49);
-    expect(p.mentalCondition).toBe(50);
-
-    // Shift 2
-    p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
-    expect(p.physicalCondition).toBe(48);
-    expect(p.mentalCondition).toBe(50);
-
-    // Shift 3
-    p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
+    // Actions 1-3 (Normal: -1 Phys, 0 Mental)
+    for (let i = 1; i <= 3; i++) {
+      p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
+      expect(p.physicalCondition).toBe(50 - i);
+      expect(p.mentalCondition).toBe(50);
+    }
     expect(p.physicalCondition).toBe(47);
     expect(p.mentalCondition).toBe(50);
 
-    // Shift 4 (Grind Threshold triggers!)
+    // Actions 4-7 (Grind: -1 Phys, -1 Mental)
+    for (let i = 4; i <= 7; i++) {
+      p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
+      expect(p.physicalCondition).toBe(47 - (i - 3) * 1);
+      expect(p.mentalCondition).toBe(50 - (i - 3) * 1);
+    }
+    expect(p.physicalCondition).toBe(43);
+    expect(p.mentalCondition).toBe(46);
+
+    // Action 8 (Overtime: -2 Phys, -2 Mental)
     p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
-    expect(p.physicalCondition).toBe(46);
-    expect(p.mentalCondition).toBe(49); // Deducted!
+    expect(p.physicalCondition).toBe(41);
+    expect(p.mentalCondition).toBe(44);
+
+    // Action 9 (Overtime: -2 Phys, -2 Mental)
+    p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
+    expect(p.physicalCondition).toBe(39);
+    expect(p.mentalCondition).toBe(42);
+  });
+
+  it('should apply 3 study action tiers: Normal (1-3), Academic Grind (4-7), and Hyper-Accelerating (8+)', () => {
+    const rules: GameRules = { usePhysicalMentalConditions: true };
+    mockCampaign.config.gameRules = rules;
+    let player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
+    player.enrolledClasses = { 'degree1': 0 };
+    player.hoursRemaining = 60;
+    
+    const context = {
+      campaign: mockCampaign,
+      rules,
+      turn: 1,
+      economicIndex: 0,
+      rng: { next: () => 0.5, nextInt: (min: number, max: number) => 1 } as any,
+      state: { players: [player], rules } as any
+    };
+
+    let p = player;
+    // Lessons 1-3 (Normal: 0 Phys, -1 Mental)
+    for (let i = 1; i <= 3; i++) {
+      p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+      expect(p.physicalCondition).toBe(50);
+      expect(p.mentalCondition).toBe(50 - i);
+    }
+    expect(p.physicalCondition).toBe(50);
+    expect(p.mentalCondition).toBe(47);
+
+    // Lessons 4-7 (Academic Grind: 0 Phys, -2 Mental)
+    for (let i = 4; i <= 7; i++) {
+      p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+      expect(p.physicalCondition).toBe(50);
+      expect(p.mentalCondition).toBe(47 - (i - 3) * 2);
+    }
+    expect(p.physicalCondition).toBe(50);
+    expect(p.mentalCondition).toBe(39);
+
+    // Lesson 8 (Hyper-Accelerating: -1 Phys, -2 Mental)
+    p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+    expect(p.physicalCondition).toBe(49);
+    expect(p.mentalCondition).toBe(37);
+
+    // Lesson 9 (Hyper-Accelerating: -1 Phys, -2 Mental)
+    p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+    expect(p.physicalCondition).toBe(48);
+    expect(p.mentalCondition).toBe(35);
+  });
+
+  it('should NOT award resilience for incremental small drops, but award for single-event drop >= 3', () => {
+    const rules: GameRules = { usePhysicalMentalConditions: true };
+    mockCampaign.config.gameRules = rules;
+    let player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
+    player.enrolledClasses = { 'degree1': 0 };
+    player.hoursRemaining = 60;
+    
+    const context = {
+      campaign: mockCampaign,
+      rules,
+      turn: 1,
+      economicIndex: 0,
+      rng: { next: () => 0.5, nextInt: (min: number, max: number) => 1 } as any,
+      state: { players: [player], rules } as any
+    };
+
+    // Study 3 times = -1 Mental each (incremental -3 total)
+    for (let i = 0; i < 3; i++) {
+      player = gameReducer(player, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+    }
+    expect(player.mentalCondition).toBe(47);
+    expect(player.resilienceBonus || 0).toBe(0); // NO resilience bonus from incremental drops!
+    expect(player.mentalConditionMax).toBe(50);
+
+    // Now simulate a single event with drop >= 3 (e.g. customized action with drop >= 3)
+    const customRules = {
+      ...mockStatRules,
+      studyGrindMentalCost: 4 // 4th action is in Grind tier, drops 4 Mental in one single action
+    };
+    const customCampaign = { ...mockCampaign, config: { ...mockCampaign.config, statRules: customRules } };
+    const shockContext = { ...context, campaign: customCampaign };
+
+    player = gameReducer(player, { type: 'study', degreeId: 'degree1' }, shockContext).updatedPlayer;
+    expect(player.mentalCondition).toBe(43);
+    expect(player.resilienceBonus).toBe(1); // Single event shock >= 3 awards resilience!
+    expect(player.mentalConditionMax).toBe(51);
   });
 
   it('should not drop physical/mental conditions below minimums', () => {
@@ -131,32 +238,6 @@ describe('Advanced Variation Mechanics', () => {
     }
     expect(p.physicalCondition).toBe(5);
     expect(p.mentalCondition).toBe(5);
-  });
-
-  it('should increase max mental capacity if mental drops by 3+ in a single turn', () => {
-    const rules: GameRules = { usePhysicalMentalConditions: true };
-    mockCampaign.config.gameRules = rules;
-    let player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
-    player.enrolledClasses = { 'degree1': 0 };
-    player.hoursRemaining = 48;
-    
-    const context = {
-      campaign: mockCampaign,
-      rules,
-      turn: 1,
-      economicIndex: 0,
-      rng: { next: () => 0.5, nextInt: (min: number, max: number) => 1 } as any,
-      state: { players: [player], rules } as any
-    };
-
-    // Study 3 times = -3 Mental
-    for(let i = 0; i < 3; i++) {
-        player = gameReducer(player, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
-    }
-
-    expect(player.mentalCondition).toBe(47);
-    expect(player.mentalConditionMax).toBe(51); // Increased!
-    expect(player.turnFlags.mentalDropsThisTurn).toBe(0); // Reset after trigger
   });
 
   it('should preserve physical and mental stats on weekend without passive turn-start recovery', () => {
