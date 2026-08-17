@@ -72,6 +72,9 @@ export default function App() {
         const initialState = createInitialGameState(campaign!, playersConfig, 'node_low_cost', undefined, randomSeed);
         const firstTurnState = processTurnStart({ ...initialState, phase: 'playing' }, campaign!);
         setGameState(firstTurnState);
+        if (firstTurnState.rules.turnStartAtHome && !firstTurnState.players[0].isAi) {
+          setIsBuildingModalOpen(true);
+        }
         addLog({ key: 'Game started. Good luck!' }, firstTurnState.turn);
       }} />
     );
@@ -179,7 +182,8 @@ export default function App() {
             onAction={handleAction}
             onClose={() => {
               setIsBuildingModalOpen(false);
-              if (activePlayer.hoursRemaining <= 0) {
+              const p = gameState.players[activePlayerIndex];
+              if (p && p.hoursRemaining <= 0) {
                 handleAction({ type: 'end-turn' });
               }
             }}

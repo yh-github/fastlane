@@ -93,14 +93,20 @@ describe('BuildingInteractions', () => {
       <StockTradeRow stock={stockDef} price={100} owned={0} playerMoney={20} onAction={mockOnAction} />
     );
 
-    // Click softly disabled Buy button
-    fireEvent.click(screen.getByText('Buy Stock'));
+    // Click softly disabled Buy button - ensure no raw {{cost}} template string!
+    const buyBtn = screen.getByRole('button', { name: /^Buy$/i });
+    expect(buyBtn.textContent).toBe('Buy');
+    expect(buyBtn.textContent).not.toContain('{{');
+    fireEvent.click(buyBtn);
     expect(screen.getByText(/Stock Trade Unavailable/i)).toBeInTheDocument();
     expect(screen.getByText(/You need at least \$100 in cash/i)).toBeInTheDocument();
     fireEvent.click(screen.getByText('OK'));
 
-    // Click softly disabled Sell button
-    fireEvent.click(screen.getByText('Sell Stock'));
+    // Click softly disabled Sell button - ensure no raw {{cost}} template string!
+    const sellBtn = screen.getByRole('button', { name: /^Sell$/i });
+    expect(sellBtn.textContent).toBe('Sell');
+    expect(sellBtn.textContent).not.toContain('{{');
+    fireEvent.click(sellBtn);
     expect(screen.getByText(/Stock Trade Unavailable/i)).toBeInTheDocument();
     expect(screen.getByText(/You do not own any shares of ACME Corp/i)).toBeInTheDocument();
     fireEvent.click(screen.getByText('OK'));
@@ -118,7 +124,9 @@ describe('BuildingInteractions', () => {
     );
 
     // Open Buy Dialog
-    fireEvent.click(screen.getByText('Buy Stock'));
+    const buyBtn = screen.getByRole('button', { name: /^Buy$/i });
+    expect(buyBtn.textContent).toBe('Buy');
+    fireEvent.click(buyBtn);
     expect(screen.getByText(/Buy ACME Corp/i)).toBeInTheDocument();
 
     // Confirm Buy
@@ -152,6 +160,63 @@ describe('BuildingInteractions', () => {
     fireEvent.click(screen.getByText(/Max \(\$150\)/i));
     fireEvent.click(screen.getByText(/Confirm Deposit \(\$150\)/i));
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'bank_transaction', amount: 150 });
+  });
+
+  it('BankInterface renders Stocks tab even when rules are passed and allows switching to Stocks tab', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    const { BankInterface } = await import('./BuildingInteractions');
+
+    const mockPlayer = {
+      id: 'p1',
+      money: 500,
+      bankSavings: 100,
+      loanDebt: 0,
+      inventory: { stocks: { tBills: 2, holdings: { 'blue_chip': 5, 'penny_stocks': 10 } } }
+    } as any;
+
+    const mockCampaign = {
+      stocks: [
+        { id: 'tbills', name: 'Treasury Bills', type: 'fixed', basePrice: 100 },
+        { id: 'blue_chip', name: 'Blue Chip Stocks', type: 'fluctuating', basePrice: 50 },
+        { id: 'penny_stocks', name: 'Penny Stocks', type: 'fluctuating', basePrice: 10 }
+      ]
+    } as any;
+
+    const mockRules = {
+      classicStockMarket: true,
+      helpfulUI: true
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <BankInterface 
+        player={mockPlayer} 
+        campaign={mockCampaign} 
+        rules={mockRules} 
+        onAction={mockOnAction} 
+      />
+    );
+
+    // Verify Stocks tab button is present
+    const stocksTabBtn = screen.getByText(/^Stocks$|bank\.tabStocks/i);
+    expect(stocksTabBtn).toBeInTheDocument();
+
+    // Click Stocks tab
+    fireEvent.click(stocksTabBtn);
+
+    // Verify open_broker action was dispatched
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'open_broker' });
+
+    // Verify stock rows are rendered
+    expect(screen.getByText(/Treasury Bills/i)).toBeInTheDocument();
+    expect(screen.getByText(/Blue Chip Stocks/i)).toBeInTheDocument();
+    expect(screen.getByText(/Penny Stocks/i)).toBeInTheDocument();
+
+    // Verify owned counts
+    expect(screen.getByText(/Owned:\s*2/i)).toBeInTheDocument();
+    expect(screen.getByText(/Owned:\s*5/i)).toBeInTheDocument();
+    expect(screen.getByText(/Owned:\s*10/i)).toBeInTheDocument();
   });
 
   it('HomeRelax displays dynamic economy price for Cleaning Service and disables when broke or clean', async () => {

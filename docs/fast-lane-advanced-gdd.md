@@ -19,7 +19,8 @@
 | **Wellbeing / Health** | Single abstract `Relaxation` stat | Distinct `Physical Condition` & `Mental Condition` |
 | **Victory Goals** | 4 Goals: Wealth, Happiness, Education, Career | 5 Goals: Wealth, Lifestyle, Education, Career, **Wellbeing** |
 | **Turn Start Regen** | Passive recovery / relaxation decay | No passive auto-regen; stats persist exactly as managed |
-| **Overtime / Work** | Flat wage payout | Normal work costs Physical; 4th+ shift ("Grind") drains Mental |
+| **Overtime / Work** | Flat wage payout | 3 Tiers: Normal (1–3), Grind (4–7), Overtime (8+) |
+| **Academic Study** | 1 lesson per session | 3 Tiers: Normal (1–3), Academic Grind (4–7), Hyper-Accelerating (8+) |
 | **Fast Food** | Neutral consumable | Fast food drains Physical condition (-1 per item) |
 | **Home Environment** | Static location | Dynamic **Mess** system; requires cleaning & services |
 | **Social / Entertaining**| Non-existent | **Social** stat (1–99) & "Socialize / Entertain Guests" action |
@@ -40,8 +41,14 @@ Represents the player's bodily stamina, nutrition, and physical health.
 - **Initial Min Floor**: `3` (`minPhysicalCondition = 3`, `globalPhysicalMin = 1`)
 - **Starting Behavior**: Does **not** start at max value (`50 < 100`).
 - **Safe Decrements**: Stat reductions cannot drop the stat below its minimum floor, nor can depleted stats be artificially boosted by draining actions.
-- **Costs & Drains**:
-  - Standard Work Session: `-1` Physical condition.
+- **Action Tiers (Work & Study)**:
+  - **Work Actions 1–3 (Normal)**: `-1` Physical condition, `0` Mental.
+  - **Work Actions 4–7 (Grind)**: `-1` Physical condition, `-1` Mental condition.
+  - **Work Actions 8+ (Overtime)**: `-2` Physical condition, `-2` Mental condition.
+  - **Study Actions 1–3 (Normal)**: `0` Physical condition, `-1` Mental condition.
+  - **Study Actions 4–7 (Academic Grind)**: `0` Physical condition, `-2` Mental condition.
+  - **Study Actions 8+ (Hyper-Accelerating)**: `-1` Physical condition, `-2` Mental condition.
+- **Other Costs & Drains**:
   - Cleaning Apartment: `-1` Physical condition.
   - Socializing / Hosting Guests: `-1` Physical condition.
   - Fast Food Consumption (Fries, Shake, Cola, Astro Chicken): `-1` Physical condition per item.
@@ -55,8 +62,11 @@ Represents psychological resilience, cognitive energy, and stress tolerance.
 - **Initial Min Floor**: `5` (`minMentalCondition = 5`, `globalMentalMin = 1`)
 - **Starting Behavior**: Does **not** start at max value (`51 < 85`).
 - **Costs & Drains**:
-  - Study Session: `-1` Mental condition.
-  - Work Grind (4th+ shift in a single turn): `-1` Mental condition per shift.
+  - Normal Study (Actions 1–3): `-1` Mental condition.
+  - Academic Grind (Actions 4–7): `-2` Mental condition.
+  - Hyper-Accelerating (Actions 8+): `-2` Mental condition, `-1` Physical condition.
+  - Work Grind (Actions 4–7): `-1` Mental condition.
+  - Work Overtime (Actions 8+): `-2` Mental condition, `-2` Physical condition.
   - Socialize (Entertaining Guests): Base cost $= X \times \text{mess\_growth}$, reduced by appliance bonuses.
 
 ### 3.3. Dynamic MAX_MENTAL Capacity Formula
@@ -68,7 +78,7 @@ Where **bonuses** include:
 1. **Books in Inventory**: $+1$ Max Mental per book owned (up to $+3$ max).
 2. **Computer Owned**: $+3$ Max Mental.
 3. **Completed Degrees**: $+1$ Max Mental per completed degree.
-4. **Resilience Bonus**: $+1$ permanent bonus awarded whenever Mental condition suffers a major drop ($\ge 3$ points in a single turn).
+4. **Resilience Bonus**: $+1$ permanent bonus awarded whenever Mental condition suffers an acute, single-event shock ($\ge 3$ points dropped in a single action/event, i.e. $\Delta \le -3$). Incremental small drops do not accumulate toward resilience.
 
 ### 3.4. Social Stat (1–99)
 - **Range**: `1` to `99` (Starts at `9`).

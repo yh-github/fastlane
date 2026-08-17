@@ -93,24 +93,42 @@ export function gameReducer(
             const statRules = context.campaign.config.statRules;
             const minPhysical = statRules?.minPhysicalCondition ?? 5;
             const minMental = statRules?.minMentalCondition ?? 5;
-            const physicalCost = statRules?.workPhysicalCost ?? 1;
+            
+            const actionCount = (nextPlayer.workActionsThisTurn || 0) + 1;
+            nextPlayer.workActionsThisTurn = actionCount;
+
+            const overtimeThreshold = statRules?.workOvertimeThreshold ?? 8;
             const grindThreshold = statRules?.workGrindThreshold ?? 4;
-            const grindMentalCost = statRules?.workGrindMentalCost ?? 1;
+
+            let physicalCost: number;
+            let mentalCost: number;
+
+            if (actionCount >= overtimeThreshold) {
+              physicalCost = statRules?.workOvertimePhysicalCost ?? 2;
+              mentalCost = statRules?.workOvertimeMentalCost ?? 2;
+            } else if (actionCount >= grindThreshold) {
+              physicalCost = statRules?.workGrindPhysicalCost ?? 1;
+              mentalCost = statRules?.workGrindMentalCost ?? 1;
+            } else {
+              physicalCost = statRules?.workPhysicalCost ?? 1;
+              mentalCost = statRules?.workNormalMentalCost ?? 0;
+            }
 
             const currentPhys = nextPlayer.physicalCondition ?? (statRules?.startingPhysicalCondition ?? 15);
             nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, physicalCost, minPhysical);
-            nextPlayer.workActionsThisTurn = (nextPlayer.workActionsThisTurn || 0) + 1;
-            if (nextPlayer.workActionsThisTurn >= grindThreshold) {
+
+            if (mentalCost > 0) {
               const oldMental = nextPlayer.mentalCondition ?? (statRules?.startingMentalCondition ?? 15);
-              const newMental = safeDecrementMental(oldMental, grindMentalCost, minMental);
+              const newMental = safeDecrementMental(oldMental, mentalCost, minMental);
               nextPlayer.mentalCondition = newMental;
-              nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
-              if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
+
+              const mentalDrop = oldMental - newMental;
+              const resThreshold = statRules?.resilienceDropThreshold ?? 3;
+              if (mentalDrop >= resThreshold) {
                 nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) + 1;
                 nextPlayer.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25)) + 1);
-                nextPlayer.turnFlags.mentalDropsThisTurn = 0; // reset after triggering
               }
-              workedEvent.params.stats = ` (-${physicalCost} Physical, -${grindMentalCost} Mental)`;
+              workedEvent.params.stats = ` (-${physicalCost} Physical, -${mentalCost} Mental)`;
             } else {
               workedEvent.params.stats = ` (-${physicalCost} Physical)`;
             }
@@ -192,18 +210,49 @@ export function gameReducer(
         if (result.success && context.rules.usePhysicalMentalConditions) {
           const statRules = context.campaign.config.statRules;
           const minMental = statRules?.minMentalCondition ?? 5;
-          const studyCost = statRules?.studyMentalCost ?? 1;
+          const minPhysical = statRules?.minPhysicalCondition ?? 5;
+
+          const actionCount = (nextPlayer.studyActionsThisTurn || 0) + 1;
+          nextPlayer.studyActionsThisTurn = actionCount;
+
+          const overtimeThreshold = statRules?.studyOvertimeThreshold ?? 8;
+          const grindThreshold = statRules?.studyGrindThreshold ?? 4;
+
+          let mentalCost: number;
+          let physicalCost: number;
+
+          if (actionCount >= overtimeThreshold) {
+            mentalCost = statRules?.studyOvertimeMentalCost ?? 2;
+            physicalCost = statRules?.studyOvertimePhysicalCost ?? 1;
+          } else if (actionCount >= grindThreshold) {
+            mentalCost = statRules?.studyGrindMentalCost ?? 2;
+            physicalCost = statRules?.studyGrindPhysicalCost ?? 0;
+          } else {
+            mentalCost = statRules?.studyMentalCost ?? statRules?.studyNormalMentalCost ?? 1;
+            physicalCost = statRules?.studyNormalPhysicalCost ?? 0;
+          }
 
           const oldMental = nextPlayer.mentalCondition ?? (statRules?.startingMentalCondition ?? 15);
-          const newMental = safeDecrementMental(oldMental, studyCost, minMental);
+          const newMental = safeDecrementMental(oldMental, mentalCost, minMental);
           nextPlayer.mentalCondition = newMental;
-          nextPlayer.turnFlags.mentalDropsThisTurn = (nextPlayer.turnFlags.mentalDropsThisTurn || 0) + (oldMental - newMental);
-          if (nextPlayer.turnFlags.mentalDropsThisTurn >= 3) {
+
+          const mentalDrop = oldMental - newMental;
+          const resThreshold = statRules?.resilienceDropThreshold ?? 3;
+          if (mentalDrop >= resThreshold) {
             nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) + 1;
             nextPlayer.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25)) + 1);
-            nextPlayer.turnFlags.mentalDropsThisTurn = 0;
           }
-          actionLog = { key: 'action.education.studied', params: { name: degDef.name, current: nextPlayer.enrolledClasses![degDef.id], required: result.message?.params?.required || 0, stats: ` (-${studyCost} Mental)` } };
+
+          if (physicalCost > 0) {
+            const currentPhys = nextPlayer.physicalCondition ?? (statRules?.startingPhysicalCondition ?? 15);
+            nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, physicalCost, minPhysical);
+          }
+
+          const statsStr = physicalCost > 0 
+            ? ` (-${mentalCost} Mental, -${physicalCost} Physical)` 
+            : ` (-${mentalCost} Mental)`;
+
+          actionLog = { key: 'action.education.studied', params: { name: degDef.name, current: nextPlayer.enrolledClasses![degDef.id], required: result.message?.params?.required || 0, stats: statsStr } };
         } else {
           actionLog = result.message;
         }

@@ -168,6 +168,13 @@ export function useGameEngine(
       let player = { ...updatedPlayers[activePlayerIndex] };
       const activePlayer = updatedPlayers[activePlayerIndex];
 
+      // If out of hours, attempting to exit/move anywhere immediately ends the turn and runs home
+      if (!activePlayer.isAi && player.hoursRemaining <= 0) {
+        addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
+        await endTurnSequence(updatedPlayers);
+        return;
+      }
+
       // If we are already there, just open the modal if it's a building
       if (player.position === nodeId) {
         // Only open the building modal if this is a HUMAN player moving to a building

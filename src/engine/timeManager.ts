@@ -52,7 +52,8 @@ export function spendHours(player: PlayerState, cost: number): PlayerState {
  * Applies any caffeine debt carried over from the previous turn.
  */
 export function resetPlayerClock(player: PlayerState, hoursPerTurn: number): PlayerState {
-  const startingHours = Math.max(0, hoursPerTurn - player.turnFlags.caffeineDebt);
+  const debt = player.turnFlags?.caffeineDebt || 0;
+  const startingHours = Math.max(0, hoursPerTurn - debt);
   
   return {
     ...player,

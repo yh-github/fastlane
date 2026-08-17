@@ -205,8 +205,22 @@ export interface StatRules {
   lowSpiritsChancePerPoint?: number;
   workGrindThreshold?: number;
   workGrindMentalCost?: number;
+  workGrindPhysicalCost?: number;
   workPhysicalCost?: number;
+  workNormalMentalCost?: number;
+  workOvertimeThreshold?: number;
+  workOvertimePhysicalCost?: number;
+  workOvertimeMentalCost?: number;
   studyMentalCost?: number;
+  studyNormalMentalCost?: number;
+  studyNormalPhysicalCost?: number;
+  studyGrindThreshold?: number;
+  studyGrindMentalCost?: number;
+  studyGrindPhysicalCost?: number;
+  studyOvertimeThreshold?: number;
+  studyOvertimeMentalCost?: number;
+  studyOvertimePhysicalCost?: number;
+  resilienceDropThreshold?: number;
   cleanPhysicalCost?: number;
   // Advanced feature bundle configuration
   initialPhysicalMax?: number;
@@ -277,29 +291,29 @@ export interface EconomyRules {
  * Default rules fallback used when a campaign does not explicitly specify a rule.
  */
 export const DEFAULT_GAME_RULES: GameRules = {
-  strictEviction: true,
+  strictEviction: false,
   fluctuatingRent: false,
   clothingDecaysAll: true,
   autoEquipBestClothes: false,
-  classicStockMarket: false,
+  classicStockMarket: true,
   allowPartialHours: true,
   enableRelaxationDoctor: true,
   requireJobForLoan: true,
-  helpfulUI: true,
-  enableAnimations: true,
+  helpfulUI: false,
+  enableAnimations: false,
   allowOverAchievingGoals: true,
   bypassDoctorIfBroke: true,
   relaxationDoctorThreshold: 10,
   protectBuiltInAppliances: false,
   allowEmployedRentPayment: false,
-  delayBookSetCredit: false,
+  delayBookSetCredit: true,
   allowEatingSpoiledFood: true,
   reducedDegreeStatBonus: false,
   showItemImages: true,
-  maxEnrolledClasses: 999,
+  maxEnrolledClasses: 4,
   turnStartAtHome: false,
   delayRobberyFoodSpoilage: false,
-  maskEarlyJobRejections: false,
+  maskEarlyJobRejections: true,
 };
 
 /**
@@ -388,10 +402,24 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   physicalDoctorChancePerPoint: 'Probability of doctor visit per point below the physical threshold',
   lowSpiritsThreshold: 'Mental condition level that triggers Low Spirits penalty',
   lowSpiritsChancePerPoint: 'Probability of Low Spirits per point below the mental threshold',
-  workGrindThreshold: 'Number of work shifts taken in a turn before Grind penalties apply (e.g. 4 means 4th shift and beyond)',
-  workGrindMentalCost: 'Mental condition lost per work shift during Grind (overtime)',
-  workPhysicalCost: 'Physical condition lost per standard work shift',
-  studyMentalCost: 'Mental condition lost per study session',
+  workGrindThreshold: 'Number of work shifts taken in a turn before Grind penalties apply (e.g. 4 means actions 4-7)',
+  workGrindMentalCost: 'Mental condition lost per work shift during Grind',
+  workGrindPhysicalCost: 'Physical condition lost per work shift during Grind',
+  workPhysicalCost: 'Physical condition lost per standard work shift (actions 1-3)',
+  workNormalMentalCost: 'Mental condition lost per standard work shift (actions 1-3)',
+  workOvertimeThreshold: 'Number of work shifts taken in a turn before Overtime penalties apply (e.g. 8 means action 8+)',
+  workOvertimePhysicalCost: 'Physical condition lost per work shift during Overtime (action 8+)',
+  workOvertimeMentalCost: 'Mental condition lost per work shift during Overtime (action 8+)',
+  studyMentalCost: 'Mental condition lost per standard study session (actions 1-3)',
+  studyNormalMentalCost: 'Mental condition lost per standard study session (actions 1-3)',
+  studyNormalPhysicalCost: 'Physical condition lost per standard study session (actions 1-3)',
+  studyGrindThreshold: 'Number of study sessions taken in a turn before Academic Grind penalties apply (e.g. 4 means actions 4-7)',
+  studyGrindMentalCost: 'Mental condition lost per study session during Academic Grind (actions 4-7)',
+  studyGrindPhysicalCost: 'Physical condition lost per study session during Academic Grind (actions 4-7)',
+  studyOvertimeThreshold: 'Number of study sessions taken in a turn before Hyper-Accelerating penalties apply (e.g. 8 means action 8+)',
+  studyOvertimeMentalCost: 'Mental condition lost per study session during Hyper-Accelerating (action 8+)',
+  studyOvertimePhysicalCost: 'Physical condition lost per study session during Hyper-Accelerating (action 8+)',
+  resilienceDropThreshold: 'Single-event mental drop threshold required to award a permanent resilience bonus (e.g. 3)',
   cleanPhysicalCost: 'Physical condition lost per cleaning action'
 };
 

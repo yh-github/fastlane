@@ -145,6 +145,9 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
     p.turnEvents = [];
     p.newspaperHeadline = null;
     p.workActionsThisTurn = 0;
+    if (state.rules.usePhysicalMentalConditions || p.studyActionsThisTurn !== undefined) {
+      p.studyActionsThisTurn = 0;
+    }
 
     if (state.rules.turnStartAtHome) {
       const housing = campaign.housing.find(h => h.id === p.currentHousingId);

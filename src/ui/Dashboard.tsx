@@ -113,7 +113,7 @@ export function Dashboard({
     <header className="dashboard">
       <div className="dashboard-top-row">
         <div className="dashboard-player-info">
-          <h2>{player ? player.name : ''} - {t('dashboard.turn', { turn, defaultValue: 'Week {{turn}}' })}</h2>
+          <h2>{player ? player.name : ''} - {t('dashboard.turn', { turn, defaultValue: `Week ${turn}` })}</h2>
           {player?.isAi && <span className="ai-badge">{t('dashboard.aiBadge', { defaultValue: 'AI' })}</span>}
           {player?.inventory?.selectedClothes === 'none' && <span style={{ background: 'red', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '8px', fontWeight: 'bold' }}>⚠️ NAKED</span>}
           {gameState.rules.helpfulUI && (

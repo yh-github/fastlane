@@ -170,6 +170,7 @@ export interface PlayerState {
   homeTimeHistory?: number[];
   homeTimeThisTurn?: number;
   workActionsThisTurn?: number;
+  studyActionsThisTurn?: number;
 }
 
 export interface WeekendResult {

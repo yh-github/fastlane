@@ -116,11 +116,23 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
 
   const rules = campaign.config.gameRules;
   const statRules = campaign.config.statRules;
-  const workPhysicalCost = statRules?.workPhysicalCost ?? 1;
+  const nextAction = (player.workActionsThisTurn || 0) + 1;
+  const overtimeThreshold = statRules?.workOvertimeThreshold ?? 8;
   const grindThreshold = statRules?.workGrindThreshold ?? 4;
-  const grindMentalCost = statRules?.workGrindMentalCost ?? 1;
-  
-  const willGrind = (player.workActionsThisTurn || 0) >= (grindThreshold - 1);
+
+  let nextPhysicalCost = statRules?.workPhysicalCost ?? 1;
+  let nextMentalCost = statRules?.workNormalMentalCost ?? 0;
+  let tierLabel = '';
+
+  if (nextAction >= overtimeThreshold) {
+    nextPhysicalCost = statRules?.workOvertimePhysicalCost ?? 2;
+    nextMentalCost = statRules?.workOvertimeMentalCost ?? 2;
+    tierLabel = ' [Overtime]';
+  } else if (nextAction >= grindThreshold) {
+    nextPhysicalCost = statRules?.workGrindPhysicalCost ?? 1;
+    nextMentalCost = statRules?.workGrindMentalCost ?? 1;
+    tierLabel = ' [Grind]';
+  }
 
   return (
     <div className="interaction-panel">
@@ -130,7 +142,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
         {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
         {rules?.usePhysicalMentalConditions && (
           <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-            (-{workPhysicalCost} Physical{willGrind ? `, -${grindMentalCost} Mental` : ''})
+            (-{nextPhysicalCost} Physical{nextMentalCost > 0 ? `, -${nextMentalCost} Mental` : ''}{tierLabel})
           </span>
         )}
       </button>
@@ -284,6 +296,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           <h4 style={{ margin: '0 0 10px 0', color: '#00e5ff', fontSize: '0.9em' }}>🛋️ Rest & Entertaining</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button 
+              data-testid="btn-relax"
               data-action-target="relax" 
               onClick={() => onAction({ type: 'relax' })}
               style={{
@@ -892,7 +905,7 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
             opacity: canBuy ? 1 : 0.6
           }}
         >
-          {t('stocks.buyBtn', { defaultValue: 'Buy Stock' })}
+          {t('stocks.buyBtn', { defaultValue: 'Buy' })}
         </button>
         <button 
           onClick={handleSellClick}
@@ -908,7 +921,7 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
             opacity: canSell ? 1 : 0.6
           }}
         >
-          {t('stocks.sellBtn', { defaultValue: 'Sell Stock' })}
+          {t('stocks.sellBtn', { defaultValue: 'Sell' })}
         </button>
       </div>
 
@@ -948,7 +961,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
   const [bankDialogMode, setBankDialogMode] = useState<'deposit' | 'withdraw' | null>(null);
   const [reasonMsg, setReasonMsg] = useState<string | null>(null);
 
-  const loanPaymentAmount = campaign?.config.economyRules?.loanPaymentAmount ?? 50;
+  const loanPaymentAmount = campaign?.config?.economyRules?.loanPaymentAmount ?? 50;
 
   const canDeposit = player.money > 0;
   const canWithdraw = player.bankSavings > 0;
@@ -974,13 +987,19 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       <h3>{t('bank.title', { defaultValue: 'Bank of Jones' })}</h3>
       <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
         <button onClick={() => setTab('banking')} style={{ fontWeight: tab === 'banking' ? 'bold' : 'normal' }}>{t('bank.tabBanking', { defaultValue: 'Bank' })}</button>
-        {(!rules || rules.classicStockMarket) && (
-          <button onClick={() => {
-            if (tab !== 'stocks') {
-              onAction({ type: 'open_broker' });
-            }
-            setTab('stocks');
-          }} style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}>{t('bank.tabStocks', { defaultValue: 'Stocks' })}</button>
+        {(!campaign || !campaign.stocks || campaign.stocks.length > 0) && (
+          <button 
+            data-testid="tab-stocks"
+            onClick={() => {
+              if (tab !== 'stocks') {
+                onAction({ type: 'open_broker' });
+              }
+              setTab('stocks');
+            }} 
+            style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}
+          >
+            {t('bank.tabStocks', { defaultValue: 'Stocks' })}
+          </button>
         )}
         <button onClick={() => setTab('loans')} style={{ fontWeight: tab === 'loans' ? 'bold' : 'normal' }}>{t('bank.tabLoans', { defaultValue: 'Loans' })}</button>
       </div>
@@ -1064,19 +1083,23 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
         />
       )}
 
-      {tab === 'stocks' && campaign?.stocks && (!rules || rules.classicStockMarket) && (
+      {tab === 'stocks' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {campaign.stocks.map(stock => {
+          {(campaign?.stocks || [
+            { id: 'tbills', name: 'Treasury Bills', type: 'fixed', basePrice: 100 },
+            { id: 'blue_chip', name: 'Blue Chip Stocks', type: 'fluctuating', basePrice: 49 },
+            { id: 'penny_stocks', name: 'Penny Stocks', type: 'fluctuating', basePrice: 7 }
+          ]).map(stock => {
             let price = stock.basePrice;
             if (stock.type === 'fluctuating') {
               const seed = turn * 997 + stock.id.charCodeAt(0) * 31;
               price = calcStockPrice(stock.basePrice, economicIndex, seed);
             }
             const owned = stock.id === 'tbills' 
-              ? player.inventory.stocks.tBills 
-              : (player.inventory.stocks.holdings[stock.id] || 0);
+              ? (player.inventory?.stocks?.tBills || 0)
+              : (player.inventory?.stocks?.holdings?.[stock.id] || 0);
 
-            return <StockTradeRow key={stock.id} stock={stock} price={price} owned={owned} playerMoney={player.money} onAction={onAction} />;
+            return <StockTradeRow key={stock.id} stock={stock as any} price={price} owned={owned} playerMoney={player.money} onAction={onAction} />;
           })}
         </div>
       )}
@@ -1285,11 +1308,32 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                         data-action-target={`study-${deg.id}`}
                       >
                         {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
-                        {rules?.usePhysicalMentalConditions && (
-                          <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-                            (-{campaign.config.statRules?.studyMentalCost ?? 1} Mental)
-                          </span>
-                        )}
+                        {rules?.usePhysicalMentalConditions && (() => {
+                          const sRules = campaign.config.statRules;
+                          const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
+                          const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;
+                          const studyGrindThresh = sRules?.studyGrindThreshold ?? 4;
+
+                          let mCost = sRules?.studyMentalCost ?? sRules?.studyNormalMentalCost ?? 1;
+                          let pCost = sRules?.studyNormalPhysicalCost ?? 0;
+                          let studyTierLabel = '';
+
+                          if (nextStudyAction >= studyOvertimeThresh) {
+                            mCost = sRules?.studyOvertimeMentalCost ?? 2;
+                            pCost = sRules?.studyOvertimePhysicalCost ?? 1;
+                            studyTierLabel = ' [Hyper]';
+                          } else if (nextStudyAction >= studyGrindThresh) {
+                            mCost = sRules?.studyGrindMentalCost ?? 2;
+                            pCost = sRules?.studyGrindPhysicalCost ?? 0;
+                            studyTierLabel = ' [Grind]';
+                          }
+
+                          return (
+                            <span style={{ fontSize: '11px', marginLeft: '5px' }}>
+                              (-{mCost} Mental{pCost > 0 ? `, -${pCost} Physical` : ''}{studyTierLabel})
+                            </span>
+                          );
+                        })()}
                       </button>
                     </>
                   ) : (
