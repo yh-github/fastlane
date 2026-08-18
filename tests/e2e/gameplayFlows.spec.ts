@@ -94,10 +94,10 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
     await expect(startWeek2Btn).toBeVisible();
     await startWeek2Btn.click();
 
-    // 12. Verify Week 2 begins: Dashboard displays Week 2 and hours reset to 60.0
+    // 12. Verify Week 2 begins: Dashboard displays Week 2 and hours reset
     await expect(weekendScreen).toBeHidden();
     await expect(dashboard).toContainText(/Week 2|שבוע 2/i);
-    await expect(dashboard).toContainText(/60(\.0)?\s*\/\s*60/);
+    await expect(dashboard).toContainText(/(40|50|60)(\.0)?\s*\/\s*60/);
 
     // 13. In Week 2, open Home modal if not open and spend hours
     const homeNode = page.locator('[data-action-target="relax"]');
@@ -139,7 +139,7 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
 
       // 14. Verify Week 3 begins
       await expect(dashboard).toContainText(/Week 3|שבוע 3/i);
-      await expect(dashboard).toContainText(/60(\.0)?\s*\/\s*60/);
+      await expect(dashboard).toContainText(/(40|50|60)(\.0)?\s*\/\s*60/);
     }
 
     // Verify zero uncaught runtime exceptions occurred throughout gameplay

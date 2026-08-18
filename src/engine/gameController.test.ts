@@ -633,6 +633,29 @@ describe('Integration: multi-step game sequences', () => {
     expect(rngStates.every(s => typeof s === 'number')).toBe(true)
   })
 
+  it('end_turn via processControllerAction advances rngState across consecutive deterministic turns', () => {
+    let state = createTestState()
+    state.players[0].currentJobId = 'cook'
+    state.players[0].currentWage = 5
+
+    const rngSeeds: number[] = [state.rngState]
+
+    for (let week = 1; week <= 5; week++) {
+      // Player only works and moves (no player-side RNG)
+      const workRes = processControllerAction(state, campaign, 0, true, { type: 'work', jobId: 'cook' })
+      state = workRes.state
+
+      // End turn
+      const endRes = processControllerAction(state, campaign, 0, false, { type: 'end_turn' })
+      state = endRes.state
+      rngSeeds.push(state.rngState)
+    }
+
+    // Every turn progression must have generated a unique seed
+    const uniqueSeeds = new Set(rngSeeds)
+    expect(uniqueSeeds.size).toBe(rngSeeds.length)
+  })
+
   it('game summary actions are playable by the controller', () => {
     // Verify that every action returned by getGameSummary can be passed to processControllerAction
     const state = createTestState()
