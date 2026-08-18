@@ -417,8 +417,8 @@ export function createInitialGameState(
   campaign: CampaignBundle,
   playersConfig: PlayerConfig[],
   startNode: string,
-  rules?: Partial<GameRules>,
-  seed: number = 12345
+  rules: Partial<GameRules> | undefined,
+  seed: number
 ): GameState {
   const defaultRules = DEFAULT_GAME_RULES;
 

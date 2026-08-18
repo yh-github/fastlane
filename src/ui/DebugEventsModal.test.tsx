@@ -1,7 +1,8 @@
+import { createTestGameState } from '../engine/testFactories';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DebugEventsModal } from './DebugEventsModal';
-import { createInitialGameState } from '../engine/gameState';
+import {  } from '../engine/gameState';
 import { type CampaignBundle } from '../engine/dataLoader';
 
 const mockCampaign: CampaignBundle = {
@@ -30,7 +31,7 @@ const mockCampaign: CampaignBundle = {
 
 describe('DebugEventsModal UI', () => {
   it('renders global economy controls and updates state', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'Player 1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'Player 1', isAi: false, goals: {} }], 'node_low_cost');
     const setGameState = vi.fn();
     const onClose = vi.fn();
 
@@ -56,7 +57,7 @@ describe('DebugEventsModal UI', () => {
   });
 
   it('allows queuing and dequeuing events for a player', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'Player 1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'Player 1', isAi: false, goals: {} }], 'node_low_cost');
     state.players[0].inventory.lotteryTickets = 3;
     let currentState = state;
     const setGameState = vi.fn((updater) => {

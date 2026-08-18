@@ -1,7 +1,8 @@
+import { createTestGameState } from './testFactories';
 // @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { executeAITurn } from './aiEngine';
-import { createInitialGameState } from './gameState';
+import {  } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 
 describe('AI Engine', () => {
@@ -43,7 +44,7 @@ describe('AI Engine', () => {
   } as unknown as CampaignBundle;
 
   it('should buy food if starving and has money', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createTestGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 0;
     aiPlayer.inventory.appliances = [{ id: 'refrigerator', purchasePrice: 400, purchaseSource: 'z_mart' }];
@@ -57,7 +58,7 @@ describe('AI Engine', () => {
   });
 
   it('should pay rent if due and has money', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createTestGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 10; // Not starving
     aiPlayer.rentPaidUntilWeek = 0; // Due
@@ -72,7 +73,7 @@ describe('AI Engine', () => {
   });
 
   it('should buy clothes if out of clothes', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createTestGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 10; 
     aiPlayer.rentPaidUntilWeek = 10; // Not due
@@ -86,7 +87,7 @@ describe('AI Engine', () => {
   });
 
   it('should apply for a better job if possible', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 25, happiness: 25, education: 25, career: 25}}], 'node1', 'bundle');
+    let state = createTestGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 25, happiness: 25, education: 25, career: 25}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 10; 
     aiPlayer.rentPaidUntilWeek = 10; 
@@ -104,7 +105,7 @@ describe('AI Engine', () => {
   });
 
   it('should just relax if not enough time for anything else', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+    let state = createTestGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
     let aiPlayer = state.players[0];
     aiPlayer.inventory.freshFoodUnits = 10; 
     aiPlayer.rentPaidUntilWeek = 10; 

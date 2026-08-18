@@ -1,6 +1,7 @@
+import { createTestGameState } from './testFactories';
 import { describe, it, expect } from 'vitest';
 import { checkEventPreconditions, type DebugQueuedEvent } from './debugEvents';
-import { createInitialGameState } from './gameState';
+import {  } from './gameState';
 import { processTurnStart } from './turnProcessor';
 import { type CampaignBundle } from './dataLoader';
 
@@ -61,7 +62,7 @@ const mockCampaign: CampaignBundle = {
 
 describe('Debug Events Precondition Logic', () => {
   it('market_crash requires turn >= 8 and economicIndex >= 80', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
     state.turn = 5;
     state.economicIndex = 85;
     expect(checkEventPreconditions('market_crash', state, mockCampaign).allowed).toBe(false);
@@ -76,7 +77,7 @@ describe('Debug Events Precondition Logic', () => {
   });
 
   it('market_boom requires turn >= 8 and economicIndex >= 0', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
     state.turn = 8;
     state.economicIndex = -10;
     expect(checkEventPreconditions('market_boom', state, mockCampaign).allowed).toBe(false);
@@ -86,7 +87,7 @@ describe('Debug Events Precondition Logic', () => {
   });
 
   it('apartment_robbery forbids La Security and requires owned appliances', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
     const p = state.players[0];
 
     // No appliances
@@ -102,7 +103,7 @@ describe('Debug Events Precondition Logic', () => {
   });
 
   it('lottery_win requires lottery tickets', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
     const p = state.players[0];
     expect(checkEventPreconditions('lottery_win', state, mockCampaign, p).allowed).toBe(false);
 
@@ -111,7 +112,7 @@ describe('Debug Events Precondition Logic', () => {
   });
 
   it('appliance_break requires appliances', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
     const p = state.players[0];
     expect(checkEventPreconditions('appliance_break', state, mockCampaign, p).allowed).toBe(false);
 
@@ -122,7 +123,7 @@ describe('Debug Events Precondition Logic', () => {
 
 describe('Turn Processor consuming debugQueue', () => {
   it('guarantees lottery win when queued', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
     state.turn = 1;
     state.players[0].inventory.lotteryTickets = 1;
     state.players[0].money = 100;
@@ -143,7 +144,7 @@ describe('Turn Processor consuming debugQueue', () => {
   });
 
   it('notifies cancellation if queued event preconditions are not met at turn start', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
     state.turn = 1;
     state.players[0].inventory.lotteryTickets = 0; // Precondition broken
     state.debugQueue = [
@@ -159,7 +160,7 @@ describe('Turn Processor consuming debugQueue', () => {
   });
 
   it('triggers market crash with chosen severity when queued', () => {
-    const state = createInitialGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
     state.turn = 8;
     state.economicIndex = 85;
     state.debugQueue = [

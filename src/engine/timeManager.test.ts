@@ -1,12 +1,13 @@
+import { createTestGameState } from './testFactories';
 import { describe, it, expect } from 'vitest';
 import { canAffordAction, spendHours, resetPlayerClock, isGameOver } from './timeManager';
-import { createInitialGameState } from './gameState';
+import {  } from './gameState';
 
 describe('timeManager', () => {
   const mockCampaign = { config: { name: 'test', startingMoney: 200, timeRules: { hoursPerTurn: 60 } } } as any;
 
   it('canAffordAction non-strict', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+    let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
     let player = state.players[0];
     
     player.hoursRemaining = 2;
@@ -18,7 +19,7 @@ describe('timeManager', () => {
   });
 
   it('canAffordAction strict', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+    let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
     let player = state.players[0];
     
     player.hoursRemaining = 2;
@@ -29,7 +30,7 @@ describe('timeManager', () => {
   });
 
   it('spendHours drops minimum to 0', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+    let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
     let player = state.players[0];
     
     player.hoursRemaining = 2;
@@ -38,7 +39,7 @@ describe('timeManager', () => {
   });
 
   it('spendHours does not spend if already 0', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+    let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
     let player = state.players[0];
     
     player.hoursRemaining = 0;
@@ -51,7 +52,7 @@ describe('timeManager', () => {
   });
 
   it('resetPlayerClock applies caffeine debt', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+    let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
     let player = state.players[0];
     
     player.turnFlags.caffeineDebt = 5;
@@ -61,7 +62,7 @@ describe('timeManager', () => {
   });
 
   it('isGameOver', () => {
-    let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+    let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
     
     state.turn = 10;
     expect(isGameOver(state, 0)).toBe(false); // 0 means no limit

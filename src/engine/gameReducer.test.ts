@@ -1,7 +1,8 @@
+import { createTestGameState } from './testFactories';
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Random } from '../utils/rng';
 import { gameReducer, type ReducerContext } from './gameReducer';
-import { createInitialGameState, type PlayerState, type GameRules } from './gameState';
+import { type PlayerState, type GameRules } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 
 describe('gameReducer', () => {
@@ -42,7 +43,7 @@ describe('gameReducer', () => {
       buildings: []
     } as unknown as CampaignBundle;
 
-    const state = createInitialGameState(mockCampaign, [{ name: 'TestPlayer', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }], 'low_cost');
+    const state = createTestGameState(mockCampaign, [{ name: 'TestPlayer', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }], 'low_cost');
     player = state.players[0];
     
     context = {
