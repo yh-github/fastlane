@@ -746,6 +746,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
 
   const resultState: GameState = {
     ...state,
+    rngState: rng.getState(),
     economicIndex: newEconomy,
     economicTrend: newTrend,
     pawnShopItemsForSale: newPawnShopItemsForSale,
