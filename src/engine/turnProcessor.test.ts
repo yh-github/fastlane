@@ -400,4 +400,56 @@ describe('Turn Processor', () => {
       expect(nextState.players[0].hoursRemaining).toBe(60);
     });
   });
+
+  describe('PRNG State Progression & Anti-Freezing', () => {
+    it('advances rngState in processTurnStart so consecutive turns do not reuse identical seed', () => {
+      vi.restoreAllMocks(); // Use real Random PRNG
+      let state = createInitialGameState(mockCampaign, [{ name: 'Player1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      state.turn = 1;
+      const initialSeed = state.rngState;
+
+      const nextState = processTurnStart(state, mockCampaign);
+
+      expect(nextState.rngState).toBeDefined();
+      expect(nextState.rngState).not.toBe(initialSeed);
+    });
+
+    it('produces unique RNG states across multiple consecutive turns with no intermediary player RNG use', () => {
+      vi.restoreAllMocks();
+      let state = createInitialGameState(mockCampaign, [{ name: 'Player1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+      state.players[0].inventory.freshFoodUnits = 20;
+
+      const seeds: number[] = [state.rngState];
+
+      for (let turn = 1; turn <= 10; turn++) {
+        state = processTurnStart(state, mockCampaign);
+        seeds.push(state.rngState);
+      }
+
+      // Every single turn must have generated a unique rngState
+      const uniqueSeeds = new Set(seeds);
+      expect(uniqueSeeds.size).toBe(seeds.length);
+    });
+
+    it('does not get stuck at -30 floor across 20 turns due to frozen RNG (Groundhog Day regression)', () => {
+      vi.restoreAllMocks();
+      let state = createInitialGameState(mockCampaign, [{ name: 'Player1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      state.economicIndex = -30;
+      state.economicTrend = 0;
+      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+      state.players[0].inventory.freshFoodUnits = 50;
+
+      const readings: number[] = [state.economicIndex];
+
+      for (let turn = 1; turn <= 20; turn++) {
+        state = processTurnStart(state, mockCampaign);
+        readings.push(state.economicIndex);
+      }
+
+      // The economy must have moved off -30 at least once in 20 turns due to advancing PRNG & mean reversion
+      const hasRecovered = readings.some(r => r > -30);
+      expect(hasRecovered).toBe(true);
+    });
+  });
 });
