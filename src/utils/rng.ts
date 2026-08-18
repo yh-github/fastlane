@@ -41,3 +41,16 @@ export class Random {
     return this.state;
   }
 }
+
+/**
+ * Generates a high-entropy non-negative 31-bit random seed integer.
+ * Uses Web Crypto API if available, falling back to Math.random().
+ */
+export function generateRandomSeed(): number {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    return buf[0] & 0x7FFFFFFF;
+  }
+  return Math.floor(Math.random() * 0x7FFFFFFF);
+}

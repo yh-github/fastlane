@@ -273,3 +273,17 @@ export function createTestGame(
 
   return state;
 }
+
+/**
+ * Test wrapper for createInitialGameState that supplies a default deterministic seed (12345)
+ * for test assertions.
+ */
+export function createTestGameState(
+  campaign: CampaignBundle,
+  playersConfig: Array<{ name: string; isAi: boolean; goals?: Record<string, number> }>,
+  startNode: string = 'node_low_cost',
+  rules?: Partial<GameRules>,
+  seed: number = 12345
+): GameState {
+  return createInitialGameState(campaign, playersConfig, startNode, rules, seed);
+}

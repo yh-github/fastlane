@@ -8,6 +8,7 @@ import { SetupScreen } from './ui/SetupScreen';
 import { GameOverScreen } from './ui/GameOverScreen';
 import { GameLog } from './ui/GameLog';
 import { createInitialGameState } from './engine/gameState';
+import { generateRandomSeed } from './utils/rng';
 import { processTurnStart } from './engine/turnProcessor';
 import { WeekendScreen } from './ui/WeekendScreen';
 import { InventoryModal } from './ui/InventoryModal';
@@ -68,7 +69,7 @@ export default function App() {
   if (gameState.phase === 'setup') {
     return (
       <SetupScreen winConditions={campaign!.config.winConditions} onConfirm={(playersConfig) => {
-        const randomSeed = Math.floor(Math.random() * 2147483647);
+        const randomSeed = generateRandomSeed();
         const initialState = createInitialGameState(campaign!, playersConfig, 'node_low_cost', undefined, randomSeed);
         const firstTurnState = processTurnStart({ ...initialState, phase: 'playing' }, campaign!);
         setGameState(firstTurnState);
@@ -89,7 +90,7 @@ export default function App() {
         turn={gameState.turn}
         replayData={replayData}
         onPlayAgain={() => {
-          const randomSeed = Math.floor(Math.random() * 2147483647);
+          const randomSeed = generateRandomSeed();
           setGameState(createInitialGameState(campaign!, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', undefined, randomSeed));
           setShowTitle(true);
           setLogs([]);

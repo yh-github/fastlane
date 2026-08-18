@@ -1,5 +1,6 @@
+import { createTestGameState } from './src/engine/testFactories.ts';
 import { executeAITurn } from './src/engine/aiEngine.ts';
-import { createInitialGameState } from './src/engine/gameState.ts';
+import {  } from './src/engine/gameState.ts';
 
 const mockCampaign = {
     items: [
@@ -37,7 +38,7 @@ const mockCampaign = {
     ]
   };
 
-  let state = createInitialGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
+  let state = createTestGameState(mockCampaign, [{name: 'AI', isAi: true, goals: {wealth: 0, happiness: 0, education: 0, career: 0}}], 'node1', 'bundle');
   let aiPlayer = state.players[0];
   aiPlayer.inventory.freshFoodUnits = 10; 
   aiPlayer.rentPaidUntilWeek = 0; 

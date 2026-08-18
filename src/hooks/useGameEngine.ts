@@ -10,7 +10,7 @@ import { executeAITurn } from '../engine/aiEngine';
 import { simulateActionVisuals } from '../engine/aiTranslator';
 import { gameReducer, type GameAction } from '../engine/gameReducer';
 import type { GameEvent } from '../engine/gameState';
-import { Random } from '../utils/rng';
+import { Random, generateRandomSeed } from '../utils/rng';
 import type { ReplayData, EngineDecision, ReplayContext } from '../engine/replayTypes';
 
 export type AppStatus = 'loading' | 'ready' | 'error';
@@ -55,7 +55,7 @@ export function useGameEngine(
     loadCampaign(campaignId)
       .then((bundle) => {
         setCampaign(bundle);
-        const randomSeed = Math.floor(Math.random() * 2147483647);
+        const randomSeed = generateRandomSeed();
         const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', undefined, randomSeed);
         setGameState(initialState);
         replayDataRef.current = {

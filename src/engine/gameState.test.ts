@@ -1,8 +1,9 @@
+import { createTestGameState } from './testFactories';
 import { describe, it, expect } from 'vitest';
-import { createInitialGameState, collectItemEffects, type PlayerState } from './gameState';
+import { collectItemEffects, type PlayerState } from './gameState';
 import { type CampaignBundle } from './dataLoader';
 
-describe('createInitialGameState', () => {
+describe('createTestGameState', () => {
   it('initializes players with starting relaxation of 16', () => {
     const mockCampaign = {
       config: { name: 'test', startingMoney: 200, timeRules: { hoursPerTurn: 60, starvationPenalty: 20, doctorPenalty: 10 }, economyRules: { repairCostMin: 0.05, repairCostMax: 0.25 } } as any,
@@ -14,7 +15,7 @@ describe('createInitialGameState', () => {
       events: []
     } as unknown as CampaignBundle;
 
-    const state = createInitialGameState(
+    const state = createTestGameState(
       mockCampaign,
       [{ name: 'TestPlayer', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
       'low_cost'

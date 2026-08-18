@@ -36,6 +36,7 @@ global.fetch = async (url: string | URL | globalThis.Request, init?: RequestInit
 
 import { loadCampaign, type CampaignBundle } from '../engine/dataLoader'
 import { createInitialGameState, type GameState, createDefaultGoalAllotment } from '../engine/gameState'
+import { generateRandomSeed } from '../utils/rng'
 import { processTurnStart } from '../engine/turnProcessor'
 import {
   processControllerAction,
@@ -52,7 +53,7 @@ async function main() {
   const goals = createDefaultGoalAllotment()
   const housingNode = campaign.housing[0]?.homeNodeId || campaign.map.nodes[0].id
 
-  let state = createInitialGameState(campaign, [{ name: 'Player 1', isAi: false, goals }], housingNode, {}, 12345)
+  let state = createInitialGameState(campaign, [{ name: 'Player 1', isAi: false, goals }], housingNode, {}, generateRandomSeed())
   state.phase = 'playing'
 
   let insideBuilding = false

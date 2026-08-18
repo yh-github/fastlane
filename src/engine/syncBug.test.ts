@@ -1,7 +1,8 @@
+import { createTestGameState } from './testFactories';
 import { describe, it, expect, vi } from 'vitest';
 import { Random } from '../utils/rng';
 import { processTurnStart } from './turnProcessor';
-import { createInitialGameState, recalculatePlayerEffects } from './gameState';
+import { recalculatePlayerEffects } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 
 describe('Robbery and Synergy Sync Bug', () => {
@@ -19,7 +20,7 @@ describe('Robbery and Synergy Sync Bug', () => {
       config: { name: 'test', startingMoney: 200, timeRules: { hoursPerTurn: 60, starvationPenalty: 20, doctorPenalty: 10 } }
     } as unknown as CampaignBundle;
 
-    let state = createInitialGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+    let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
 
     let player = state.players[0];
     

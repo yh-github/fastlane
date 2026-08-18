@@ -1,3 +1,4 @@
+import { createTestGameState } from '../testFactories';
 import fs from 'fs';
 import path from 'path';
 
@@ -22,12 +23,12 @@ global.fetch = async (url: RequestInfo | URL, _init?: RequestInit): Promise<Resp
 };
 
 import { loadCampaign } from '../dataLoader';
-import { createInitialGameState } from '../gameState';
+import {  } from '../gameState';
 import { generateDomain, generateProblem } from './generatePDDL';
 
 async function main() {
   const campaign = await loadCampaign('1990_classic_cdrom');
-  const state = createInitialGameState(
+  const state = createTestGameState(
     campaign, 
     [{ name: 'AI', isAi: true, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
     'node_low_cost'

@@ -1,6 +1,7 @@
+import { createTestGameState } from '../src/engine/testFactories';
 import { describe, it, expect } from 'vitest';
 import { processTurnStart } from '../src/engine/turnProcessor';
-import { createInitialGameState } from '../src/engine/gameState';
+import {  } from '../src/engine/gameState';
 import { fluctuateEconomy, calcEconomyPrice } from '../src/engine/economyEngine';
 import { applyForJob } from '../src/engine/jobEngine';
 import { Random } from '../src/utils/rng';
@@ -121,7 +122,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       const campaign = structuredClone(baseCampaign);
       campaign.config.statRules.lowSpiritsChancePerPoint = 1.0; // Guaranteed trigger
 
-      let state = createInitialGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      let state = createTestGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
       state.turn = 2;
       state.players[0].mentalCondition = 6; // Below threshold of 10
       state.players[0].physicalCondition = 50; // Healthy physical condition
@@ -151,7 +152,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       const campaign = structuredClone(baseCampaign);
       campaign.config.gameRules.delayRobberyFoodSpoilage = false;
 
-      let state = createInitialGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      let state = createTestGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
       state.turn = 4;
       state.players[0].inventory.appliances = [{ id: 'refrigerator', name: 'Refrigerator', weekBought: 1 }];
       state.players[0].inventory.freshFoodUnits = 4;
@@ -177,7 +178,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       const campaign = structuredClone(baseCampaign);
       campaign.config.gameRules.delayRobberyFoodSpoilage = true;
 
-      let state = createInitialGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      let state = createTestGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
       state.turn = 4;
       state.players[0].inventory.appliances = [{ id: 'refrigerator', name: 'Refrigerator', weekBought: 1 }];
       state.players[0].inventory.freshFoodUnits = 4;
@@ -235,7 +236,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
 
     it('masks missing qualifications as "no openings" on turns 1-4 when maskEarlyJobRejections is true (Classic Floppy / CD-ROM)', () => {
       const rng = new Random(1);
-      const player = createInitialGameState(baseCampaign, [{ name: 'P1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost').players[0];
+      const player = createTestGameState(baseCampaign, [{ name: 'P1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost').players[0];
       player.experience = 10; // Fails reqExperience (30)
 
       const classicRules = { ...baseCampaign.config.gameRules, maskEarlyJobRejections: true };
@@ -254,7 +255,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
 
     it('shows exact missing requirement on turns 1-4 when maskEarlyJobRejections is false (QoL / Advanced)', () => {
       const rng = new Random(1);
-      const player = createInitialGameState(baseCampaign, [{ name: 'P1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost').players[0];
+      const player = createTestGameState(baseCampaign, [{ name: 'P1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost').players[0];
       player.experience = 10;
 
       const qolRules = { ...baseCampaign.config.gameRules, maskEarlyJobRejections: false };
@@ -272,7 +273,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       const campaign = structuredClone(baseCampaign);
       campaign.config.statRules.physicalDoctorChancePerPoint = 1.0; // Guaranteed trigger
 
-      let state = createInitialGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      let state = createTestGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
       state.turn = 2;
       state.players[0].physicalCondition = 5; // Below threshold of 10
       state.players[0].mentalCondition = 50; // Healthy mental condition
@@ -299,7 +300,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       const campaign = structuredClone(baseCampaign);
       campaign.jobs = [{ id: 'job_bank_teller', title: 'Teller', locationId: 'bank', baseWage: 12, requirements: { experience: 0, dependability: 0, degrees: [] }, openings: 1 } as any];
 
-      let state = createInitialGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      let state = createTestGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
       state.turn = 8;
       state.economicIndex = 85;
       state.players[0].currentJobId = 'job_bank_teller';

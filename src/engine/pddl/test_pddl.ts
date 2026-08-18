@@ -1,3 +1,4 @@
+import { createTestGameState } from '../testFactories';
 import fs from 'fs';
 import path from 'path';
 
@@ -23,7 +24,7 @@ global.fetch = async (url: RequestInfo | URL, _init?: RequestInit): Promise<Resp
 };
 
 import { loadCampaign } from '../dataLoader';
-import { createInitialGameState } from '../gameState';
+import {  } from '../gameState';
 import { gameReducer, type ReducerContext } from '../gameReducer';
 import { executeAITurnPDDL } from './runENHSP';
 import { processTurnStart } from '../turnProcessor';
@@ -33,7 +34,7 @@ async function main() {
   console.log("Loading campaign...");
   const campaign = await loadCampaign('1990_classic_cdrom');
   
-  let state = createInitialGameState(
+  let state = createTestGameState(
     campaign, 
     [{ name: 'AI', isAi: true, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
     'node_low_cost'
