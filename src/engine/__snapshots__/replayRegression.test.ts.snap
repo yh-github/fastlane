@@ -3,8 +3,8 @@
 exports[`Deterministic Replay Regression > replays a real game using fastlane-replay-21-weeks.json 1`] = `
 {
   "campaignId": "The Fast Lane — Improved Version (QoL)",
-  "economicIndex": -30,
-  "economicTrend": -3,
+  "economicIndex": -17,
+  "economicTrend": 1,
   "pawnShopItemsForSale": [],
   "phase": "setup",
   "players": [
@@ -12,7 +12,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "activeEffects": {},
       "bankSavings": 0,
       "currentHousingId": "low_cost",
-      "currentJobId": "blacks_checker",
+      "currentJobId": "factory_janitor",
       "currentRentPrice": 325,
       "currentWage": 7,
       "degreeDepBoost": NaN,
@@ -22,7 +22,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       ],
       "dependability": 0,
       "enrolledClasses": {},
-      "experience": 29,
+      "experience": 20,
       "goalAllotment": {
         "career": 25,
         "education": 25,
@@ -30,7 +30,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "wealth": 25,
       },
       "happiness": 10,
-      "hoursRemaining": 30,
+      "hoursRemaining": 40,
       "id": "player_1",
       "inventory": {
         "appliances": [],
@@ -61,7 +61,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 0,
+      "money": 98,
       "nakedTurns": 1,
       "name": "Player 1",
       "newspaperHeadline": {
@@ -70,7 +70,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "position": "node_low_cost",
       "raisesAtCurrentJob": 0,
       "relaxation": 10,
-      "rentDebt": 975,
+      "rentDebt": 1300,
       "rentExtensionActive": false,
       "rentExtensionsDeniedPermanently": true,
       "rentExtensionsReceived": 0,
@@ -79,13 +79,6 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "turnEvents": [
         {
           "key": "events.starvation",
-        },
-        {
-          "key": "events.doctorVisit_reasons",
-          "params": {
-            "cost": 34,
-            "reasons": "Starvation",
-          },
         },
         {
           "key": "events.rent.due_nodenied",
@@ -108,16 +101,16 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "rentPaidThisTurn": false,
       },
       "weekendResult": {
-        "cost": 18,
+        "cost": 6,
         "event": {
-          "key": "events.weekend.random_13",
+          "key": "events.weekend.random_15",
         },
         "happinessBonus": undefined,
       },
       "workActionsThisTurn": 0,
     },
   ],
-  "rngState": 6992882883,
+  "rngState": 221286083004,
   "rules": {
     "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
@@ -145,9 +138,18 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
 exports[`Deterministic Replay Regression > replays a recorded game exactly using test_replay.json 1`] = `
 {
   "campaignId": "test_regression",
-  "economicIndex": 0,
-  "economicTrend": 0,
-  "pawnShopItemsForSale": [],
+  "economicIndex": 8,
+  "economicTrend": 2,
+  "pawnShopItemsForSale": [
+    {
+      "itemId": "refrigerator",
+      "originalPrice": 400,
+      "ownerId": "player_1",
+      "purchaseSource": "socket_city",
+      "redeemCost": 200,
+      "weekPawned": 2,
+    },
+  ],
   "phase": "game-over",
   "players": [
     {
@@ -167,18 +169,12 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "happiness": 50,
         "wealth": 50,
       },
-      "happiness": 39,
+      "happiness": 50,
       "hasWon": true,
-      "hoursRemaining": 30,
+      "hoursRemaining": 40,
       "id": "player_1",
       "inventory": {
-        "appliances": [
-          {
-            "id": "refrigerator",
-            "purchasePrice": 400,
-            "purchaseSource": "socket_city",
-          },
-        ],
+        "appliances": [],
         "books": [],
         "businessClothesWeeks": 0,
         "casualClothesWeeks": 14,
@@ -204,7 +200,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "maxDependability": 40,
       "maxExperience": 20,
       "mess": 4,
-      "money": 0,
+      "money": 212,
       "nakedTurns": 0,
       "name": "TestPlayer",
       "newspaperHeadline": {
@@ -216,21 +212,15 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "rentDebt": 0,
       "rentExtensionActive": false,
       "rentExtensionsDeniedPermanently": false,
-      "rentExtensionsReceived": 1,
-      "rentPaidUntilWeek": 4,
+      "rentExtensionsReceived": 0,
+      "rentPaidUntilWeek": 8,
       "timesDefaulted": 0,
       "turnEvents": [
         {
           "key": "events.starvation",
         },
         {
-          "key": "events.doctorVisit",
-          "params": {
-            "cost": 54,
-          },
-        },
-        {
-          "key": "events.rent.extensionExpired",
+          "key": "events.pawnExpired",
         },
       ],
       "turnFlags": {
@@ -250,7 +240,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "rentPaidThisTurn": false,
       },
       "weekendResult": {
-        "cost": 15,
+        "cost": 5,
         "event": {
           "key": "events.weekend.random_2",
         },
@@ -259,7 +249,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "workActionsThisTurn": 0,
     },
   ],
-  "rngState": 42,
+  "rngState": 42126013741,
   "rules": {
     "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
@@ -378,7 +368,7 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
       "workActionsThisTurn": 0,
     },
   ],
-  "rngState": 3962340102,
+  "rngState": 7625471728,
   "rules": {
     "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
