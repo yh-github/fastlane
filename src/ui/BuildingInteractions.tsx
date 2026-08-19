@@ -212,13 +212,16 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       {showWorkModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+          backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          padding: '16px', boxSizing: 'border-box'
         }}>
           <div style={{
-            background: '#1e1e2f', padding: '24px', borderRadius: '10px', maxWidth: '520px', width: '90%', border: '1px solid #444', color: '#fff'
+            background: '#1e1e2f', padding: '20px 24px', borderRadius: '10px', maxWidth: '540px', width: '100%', maxHeight: '90vh',
+            display: 'flex', flexDirection: 'column', boxSizing: 'border-box', border: '1px solid #444', color: '#fff',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.6)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0', borderBottom: '1px solid #333', paddingBottom: '8px' }}>
-              <h3 style={{ margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 14px 0', borderBottom: '1px solid #333', paddingBottom: '8px', flexShrink: 0 }}>
+              <h3 style={{ margin: 0, fontSize: '1.2em' }}>
                 💼 {t('action.workModal.title', { defaultValue: 'Choose Work Strategy' })}
               </h3>
               <button
@@ -228,9 +231,9 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                   background: 'transparent',
                   border: 'none',
                   color: '#aaa',
-                  fontSize: '18px',
+                  fontSize: '20px',
                   cursor: 'pointer',
-                  padding: '2px 6px',
+                  padding: '2px 8px',
                   lineHeight: '1'
                 }}
                 title="Close"
@@ -238,7 +241,15 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                 ✕
               </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              overflowY: 'auto',
+              flex: '1 1 auto',
+              minHeight: 0,
+              paddingRight: '6px'
+            }}>
               {modes.map(m => {
                 const canAfford = (curPhys - m.physCost >= 1.0) && ((player.mentalCondition ?? 50) - m.mentalCost >= 1.0);
                 const isWorkWork = m.id === 'work_work';
@@ -266,7 +277,8 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      position: 'relative'
+                      position: 'relative',
+                      flexShrink: 0
                     }}
                   >
                     <div>
@@ -287,7 +299,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                 );
               })}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', borderTop: '1px solid #333', paddingTop: '12px', flexShrink: 0 }}>
               <span style={{ fontSize: '0.85em', color: '#aaa' }}>
                 ⏳ {player.hoursRemaining} hrs remaining
               </span>
@@ -483,10 +495,12 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
             {showUnfedWarning && (
               <div style={{
                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                padding: '16px', boxSizing: 'border-box'
               }}>
                 <div style={{
-                  background: '#2c1e1e', padding: '24px', borderRadius: '10px', maxWidth: '450px', width: '90%', border: '1px solid #e74c3c', color: '#fff'
+                  background: '#2c1e1e', padding: '24px', borderRadius: '10px', maxWidth: '450px', width: '100%', maxHeight: '90vh',
+                  overflowY: 'auto', boxSizing: 'border-box', border: '1px solid #e74c3c', color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,0.6)'
                 }}>
                   <h3 style={{ margin: '0 0 12px 0', color: '#e74c3c' }}>
                     ⚠️ {t('action.unfedRelaxModal.title', { defaultValue: 'Relax Without Food?' })}
