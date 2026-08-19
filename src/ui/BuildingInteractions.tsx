@@ -8,6 +8,7 @@ interface InteractionProps {
 }
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { calcEmployabilityScore } from '../engine/statMath';
 
@@ -209,10 +210,10 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
         💼 {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
       </button>
 
-      {showWorkModal && (
+      {showWorkModal && typeof document !== 'undefined' && createPortal(
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000,
           padding: '16px', boxSizing: 'border-box'
         }}>
           <div style={{
@@ -312,7 +313,8 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -492,10 +494,10 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
               )}
             </button>
 
-            {showUnfedWarning && (
+            {showUnfedWarning && typeof document !== 'undefined' && createPortal(
               <div style={{
                 position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+                backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000,
                 padding: '16px', boxSizing: 'border-box'
               }}>
                 <div style={{
@@ -528,7 +530,8 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                     </button>
                   </div>
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
 
             {rules?.usePhysicalMentalConditions && (
@@ -747,8 +750,8 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
             )}
           </div>
 
-          {confirmMove && (
-            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: '1px solid var(--accent-cyan, #00e5ff)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan, 0 0 10px rgba(0,229,255,0.5))', zIndex: 1000, maxWidth: '440px', width: '90%', textAlign: 'center' }}>
+          {confirmMove && typeof document !== 'undefined' && createPortal(
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: '1px solid var(--accent-cyan, #00e5ff)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan, 0 0 10px rgba(0,229,255,0.5))', zIndex: 10000, maxWidth: '440px', width: '90%', textAlign: 'center' }}>
               <h4 style={{ margin: '0 0 10px 0', color: '#00e5ff' }}>Confirm Apartment Move</h4>
               <p style={{ whiteSpace: 'pre-wrap', marginBottom: '15px', fontSize: '13px', lineHeight: '1.5', color: '#e0e0ff' }}>
                 Are you sure you want to move to <strong>{confirmMove.newAptName}</strong>?
@@ -779,7 +782,8 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                   {t('common.no', { defaultValue: 'CANCEL' })}
                 </button>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </>
       )}
@@ -787,8 +791,9 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   );
 }
 export function ActionReasonModal({ title = "Action Unavailable", reason, onClose }: { title?: string, reason: string, onClose: () => void }) {
-  return (
-    <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: '1px solid #e74c3c', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 10px rgba(231,76,60,0.5)', zIndex: 1050, maxWidth: '400px', width: '90%', textAlign: 'center' }}>
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: '1px solid #e74c3c', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 10px rgba(231,76,60,0.5)', zIndex: 10000, maxWidth: '400px', width: '90%', textAlign: 'center' }}>
       <h4 style={{ margin: '0 0 10px 0', color: '#e74c3c' }}>⚠️ {title}</h4>
       <p style={{ whiteSpace: 'pre-wrap', marginBottom: '20px', fontSize: '13px', lineHeight: '1.5', color: '#e0e0ff' }}>
         {reason}
@@ -799,7 +804,8 @@ export function ActionReasonModal({ title = "Action Unavailable", reason, onClos
       >
         OK
       </button>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -872,8 +878,9 @@ export function StockTradeDialog({
     validationError = `You cannot sell more shares than you own (You have ${owned} shares).`;
   }
 
-  return (
-    <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: `1px solid ${isBuy ? '#2ecc71' : '#e74c3c'}`, borderRadius: '12px', boxShadow: `0 10px 30px rgba(0,0,0,0.8), 0 0 10px ${isBuy ? 'rgba(46,204,113,0.5)' : 'rgba(231,76,60,0.5)'}`, zIndex: 1050, maxWidth: '440px', width: '90%', textAlign: 'center' }}>
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: `1px solid ${isBuy ? '#2ecc71' : '#e74c3c'}`, borderRadius: '12px', boxShadow: `0 10px 30px rgba(0,0,0,0.8), 0 0 10px ${isBuy ? 'rgba(46,204,113,0.5)' : 'rgba(231,76,60,0.5)'}`, zIndex: 10000, maxWidth: '440px', width: '90%', textAlign: 'center' }}>
       <h3 style={{ margin: '0 0 10px 0', color: isBuy ? '#2ecc71' : '#e74c3c' }}>
         {isBuy ? `📈 Buy ${t(`stock.${stock.id}`, { defaultValue: stock.name })}` : `📉 Sell ${t(`stock.${stock.id}`, { defaultValue: stock.name })}`}
       </h3>
@@ -952,7 +959,8 @@ export function StockTradeDialog({
           Cancel
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -990,8 +998,9 @@ export function BankTransactionDialog({
   const updatedCash = isDeposit ? playerCash - amount : playerCash + amount;
   const updatedSavings = isDeposit ? playerSavings + amount : playerSavings - amount;
 
-  return (
-    <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: `1px solid ${isDeposit ? '#2ecc71' : '#3498db'}`, borderRadius: '12px', boxShadow: `0 10px 30px rgba(0,0,0,0.8), 0 0 10px ${isDeposit ? 'rgba(46,204,113,0.5)' : 'rgba(52,152,219,0.5)'}`, zIndex: 1050, maxWidth: '420px', width: '90%', textAlign: 'center' }}>
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: `1px solid ${isDeposit ? '#2ecc71' : '#3498db'}`, borderRadius: '12px', boxShadow: `0 10px 30px rgba(0,0,0,0.8), 0 0 10px ${isDeposit ? 'rgba(46,204,113,0.5)' : 'rgba(52,152,219,0.5)'}`, zIndex: 10000, maxWidth: '420px', width: '90%', textAlign: 'center' }}>
       <h3 style={{ margin: '0 0 10px 0', color: isDeposit ? '#2ecc71' : '#3498db' }}>
         {isDeposit ? '🏦 Deposit Money into Savings' : '🏧 Withdraw Savings to Cash'}
       </h3>
@@ -1070,7 +1079,8 @@ export function BankTransactionDialog({
           Cancel
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
