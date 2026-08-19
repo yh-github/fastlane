@@ -39,6 +39,10 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
   } else if (item.category === 'food' && item.subcategory !== 'fast_food') {
     if (!player.turnFlags?.freshFoodHappinessGranted) {
       newTurnFlags.freshFoodHappinessGranted = true;
+      if (rules?.usePhysicalMentalConditions) {
+        happinessBonus = 1;
+        mentalBonus = 0;
+      }
     } else {
       happinessBonus = 0;
       mentalBonus = 0;
@@ -76,6 +80,11 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
 
   if (rules?.usePhysicalMentalConditions && mentalBonus !== 0) {
     updated = applyMentalChange(updated, mentalBonus);
+  }
+
+  if (rules?.usePhysicalMentalConditions && item.category === 'food' && item.subcategory !== 'fast_food' && !player.turnFlags?.freshFoodHappinessGranted) {
+    const maxPhys = updated.physicalConditionMax ?? 50;
+    updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 50) + 1);
   }
 
   switch (item.category) {

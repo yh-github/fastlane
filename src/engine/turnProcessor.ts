@@ -294,7 +294,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         const threshold = state.rules.relaxationDoctorThreshold ?? 10;
         p.relaxation = Math.max(threshold, p.relaxation - decay);
       }
-      p.dependability = calcDependabilityDecay(p.dependability); 
+      const curJob = p.currentJobId && campaign?.jobs ? campaign.jobs.find(j => j.id === p.currentJobId) : undefined;
+      p.dependability = calcDependabilityDecay(p.dependability, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions); 
 
       // 8. Apartment Robbery
       const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === p.id || !e.playerId));
@@ -491,10 +492,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
 
       if (state.rules.usePhysicalMentalConditions) {
         const statRules = campaign.config.statRules;
-        const physThreshold = statRules?.physicalDoctorThreshold ?? 10;
-        const physChance = (statRules?.physicalDoctorChancePerPoint ?? 0.05) * spoiledFoodSickMultiplier;
-        const mentalThreshold = statRules?.lowSpiritsThreshold ?? 10;
-        const mentalChance = (statRules?.lowSpiritsChancePerPoint ?? 0.05) * spoiledFoodSickMultiplier;
+        const physThreshold = statRules?.physicalDoctorThreshold ?? statRules?.doctorVisitPhysicalThreshold ?? 10;
+        const physChance = (statRules?.physicalDoctorChancePerPoint ?? statRules?.doctorVisitPhysicalChancePerPoint ?? 0.05) * spoiledFoodSickMultiplier;
 
         // Physical Doctor
         if (p.physicalCondition !== undefined && p.physicalCondition < physThreshold) {
@@ -503,20 +502,6 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
           if (physSickTrigger) {
             doctorNeeded = true;
             doctorReasons.push('Physical condition critically low');
-          }
-        }
-        
-        // Low Spirits (Burnout / Mental Health Leave)
-        if (p.mentalCondition !== undefined && p.mentalCondition < mentalThreshold) {
-          const chance = Math.min(1.0, (mentalThreshold - p.mentalCondition) * mentalChance);
-          const mentalSickTrigger = resolveDecision(replay, `mental_sick_${p.id}`, () => rng.next() < chance);
-          if (mentalSickTrigger) {
-            const maxMental = p.mentalConditionMax ?? 50;
-            const mentalBounce = statRules?.lowSpiritsMentalBounceBack ?? 8;
-            p.mentalCondition = Math.min(maxMental, (p.mentalCondition ?? 50) + mentalBounce);
-            const burnoutPenalty = campaign.config.timeRules?.burnoutPenalty ?? campaign.config.timeRules?.doctorPenalty ?? 10;
-            p.hoursRemaining = Math.max(0, p.hoursRemaining - burnoutPenalty);
-            p.turnEvents.push({ key: 'events.burnout', params: { amount: mentalBounce, hours: burnoutPenalty } });
           }
         }
       } else if (state.rules.enableRelaxationDoctor) {
@@ -533,10 +518,12 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
 
       if (doctorNeeded) {
         const moneyBefore = p.money;
+        const loanBefore = p.loanDebt || 0;
         const doctorPenalty = requireConfig(campaign.config.timeRules?.doctorPenalty, 'timeRules.doctorPenalty');
         p = processDoctorVisit(p, doctorPenalty, rng, state.rules.bypassDoctorIfBroke, state.rules, replay);
-        if (moneyBefore > p.money || !state.rules.bypassDoctorIfBroke) {
-          const evtParams: any = { cost: moneyBefore - p.money };
+        const totalPaid = (moneyBefore - p.money) + ((p.loanDebt || 0) - loanBefore);
+        if (totalPaid > 0 || !state.rules.bypassDoctorIfBroke) {
+          const evtParams: any = { cost: totalPaid };
           let key = 'events.doctorVisit';
           if (state.rules.helpfulUI && doctorReasons.length > 0) {
             evtParams.reasons = doctorReasons.join(', ');

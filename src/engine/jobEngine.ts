@@ -108,7 +108,8 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   }
 
   // Hiring threshold check for new jobs
-  const employability = calculateJobEmployability(updated);
+  const locMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
+  const employability = calcEmployabilityScore(updated.dependability, updated.experience, updated.degrees.length, locMistakes);
   const roll = resolveDecision(replay, `job_apply_luck`, () => Math.floor((rng ? rng.next() : Math.random()) * 100) + 1);
 
   if (roll > employability) {
@@ -140,7 +141,18 @@ export interface WorkResult {
   messages?: GameEvent[];
 }
 
-export function workShift(player: PlayerState, job: JobDef, shiftCost: number, rules?: GameRules, statRules?: StatRules): WorkResult {
+export type WorkMode = 'look_busy' | 'work_work' | 'face_time' | 'innovate';
+
+export function workShift(
+  player: PlayerState,
+  job: JobDef,
+  shiftCost: number,
+  rules?: GameRules,
+  statRules?: StatRules,
+  mode: WorkMode = 'work_work',
+  rng?: Random,
+  replay?: ReplayContext
+): WorkResult {
   if (player.hoursRemaining <= 0 || player.currentJobId !== job.id) {
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.cannotWork' }] };
   }
@@ -176,11 +188,83 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number, r
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.needClothes', params: { req } }] };
   }
 
+  const isAdvanced = !!rules?.usePhysicalMentalConditions;
+  let physicalCost = 0;
+  let mentalCost = 0;
+  let wageMultiplier = 1.0;
+  let baseDepGain = 1;
+  let innovateDepRoll = 0;
+
+  if (isAdvanced) {
+    const actionCount = (player.workActionsThisTurn || 0) + 1;
+    const overtimeThreshold = statRules?.workOvertimeThreshold ?? 8;
+    const grindThreshold = statRules?.workGrindThreshold ?? 4;
+
+    let basePhys: number;
+    let baseMental: number;
+
+    if (actionCount >= overtimeThreshold) {
+      basePhys = statRules?.workOvertimePhysicalCost ?? 2;
+      baseMental = statRules?.workOvertimeMentalCost ?? 2;
+    } else if (actionCount >= grindThreshold) {
+      basePhys = statRules?.workGrindPhysicalCost ?? 1;
+      baseMental = statRules?.workGrindMentalCost ?? 1;
+    } else {
+      basePhys = statRules?.workPhysicalCost ?? 1;
+      baseMental = statRules?.workNormalMentalCost ?? 0;
+    }
+
+    if (mode === 'look_busy') {
+      physicalCost = basePhys * 0.5;
+      mentalCost = baseMental * 0.5;
+      wageMultiplier = 1.0;
+      baseDepGain = 0;
+    } else if (mode === 'face_time') {
+      physicalCost = basePhys * 0.5;
+      mentalCost = baseMental * 0.5;
+      wageMultiplier = 0.5;
+      baseDepGain = 2;
+    } else if (mode === 'innovate') {
+      physicalCost = basePhys + 1;
+      mentalCost = baseMental + 5;
+      wageMultiplier = 1.0;
+      // 5d2 - 5: roll five 2-sided dice (each 1 or 2, sum 5..10) minus 5 -> 0..5
+      const roll5d2 = resolveDecision(replay, `innovate_roll_${player.id}_${actionCount}`, () => {
+        let sum = 0;
+        for (let i = 0; i < 5; i++) {
+          sum += (rng ? (rng.next() < 0.5 ? 1 : 2) : (Math.random() < 0.5 ? 1 : 2));
+        }
+        return sum;
+      });
+      innovateDepRoll = roll5d2 - 5;
+      baseDepGain = innovateDepRoll;
+    } else {
+      // work_work
+      physicalCost = basePhys * 1.0;
+      mentalCost = baseMental * 1.0;
+      wageMultiplier = 1.0;
+      baseDepGain = 1;
+    }
+
+    // Fatigue: when Physical < 10, +1 Mental cost (or 0.5 if halved)
+    const curPhys = player.physicalCondition ?? 50;
+    if (curPhys < 10) {
+      const fatigueCost = (mode === 'look_busy' || mode === 'face_time') ? 0.5 : 1.0;
+      mentalCost += fatigueCost;
+    }
+
+    // Strict stat floor check: currentStat - cost >= 1.0
+    const curMental = player.mentalCondition ?? 50;
+    if ((curPhys - physicalCost < 1.0) || (curMental - mentalCost < 1.0)) {
+      return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.tooExhausted' }] };
+    }
+  }
+
   const hoursToWork = Math.min(player.hoursRemaining, shiftCost);
   let updated = spendHours(player, hoursToWork);
 
   // Prorate wage: shiftCost hours = 8 hours of base wage (full shift)
-  const fullShiftWage = updated.currentWage * 8;
+  const fullShiftWage = Math.floor(updated.currentWage * 8 * wageMultiplier);
   const rawWagesEarned = Math.floor(fullShiftWage * (hoursToWork / shiftCost));
 
   let wagesEarned = rawWagesEarned;
@@ -196,16 +280,106 @@ export function workShift(player: PlayerState, job: JobDef, shiftCost: number, r
   updated.money += wagesEarned;
   updated.turnFlags.hasWorked = true;
 
-  // Stat growth is capped by the current job's requirements plus any degree boosts
-  const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0);
-  const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0);
-
-  updated.experience = Math.min(updated.experience + 1, effectiveMaxExp);
-  updated.dependability = Math.min(updated.dependability + 1, effectiveMaxDep);
-
   const messages: GameEvent[] = [];
+
+  if (isAdvanced) {
+    const actionCount = (player.workActionsThisTurn || 0) + 1;
+    updated.workActionsThisTurn = actionCount;
+
+    const oldPhys = updated.physicalCondition ?? 50;
+    const oldMental = updated.mentalCondition ?? 50;
+
+    updated.physicalCondition = oldPhys - physicalCost;
+    updated.mentalCondition = oldMental - mentalCost;
+
+    if (mentalCost >= (statRules?.resilienceDropThreshold ?? 3)) {
+      updated.resilienceBonus = (updated.resilienceBonus || 0) + 1;
+      updated.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (updated.mentalConditionMax || 50) + 1);
+    }
+
+    // Mistake resolution
+    let physMistake = false;
+    let mentalMistake = false;
+
+    if (physicalCost > 0 && oldPhys < 10) {
+      const physChance = (10 - oldPhys) * 0.025;
+      physMistake = resolveDecision(replay, `work_phys_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < physChance);
+    }
+
+    if (mentalCost > 0) {
+      if (mode === 'innovate') {
+        const mentalThresh = 20;
+        if (innovateDepRoll <= 0) {
+          mentalMistake = true;
+        } else if (oldMental < mentalThresh) {
+          const mentalChance = (mentalThresh - oldMental) * 0.025;
+          mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
+        }
+      } else {
+        const mentalThresh = 10;
+        if (oldMental < mentalThresh) {
+          const mentalChance = (mentalThresh - oldMental) * 0.025;
+          mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
+        }
+      }
+    }
+
+    if (physMistake || mentalMistake) {
+      const curMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
+      let mistakesAdded = 0;
+      if (physMistake) {
+        mistakesAdded++;
+        updated.physicalConditionMax = Math.max(1, (updated.physicalConditionMax ?? 50) - 1);
+        updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition);
+      }
+      if (mentalMistake) {
+        mistakesAdded++;
+        updated.resilienceBonus = (updated.resilienceBonus || 0) - 1;
+        updated.mentalConditionMax = Math.max(1, (updated.mentalConditionMax ?? 50) - 1);
+        updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition);
+      }
+
+      // Penalty = NUM_OF_MISTAKES (current counter before adding this turn's mistakes)
+      updated.dependability = Math.max(0, updated.dependability - curMistakes);
+      updated.mistakesByLocation = {
+        ...(updated.mistakesByLocation || {}),
+        [job.locationId]: curMistakes + mistakesAdded
+      };
+
+      if (mode === 'innovate' && mentalMistake) {
+        updated.depMaxBonus = (updated.depMaxBonus || 0) + 1;
+        updated.xpMaxBonus = (updated.xpMaxBonus || 0) + 1;
+        updated.experience += 1;
+      }
+
+      const mistakeTypes = [physMistake ? 'Physical' : null, mentalMistake ? 'Mental' : null].filter(Boolean).join(' & ');
+      messages.push({ key: 'action.job.mistake', params: { type: mistakeTypes, penalty: curMistakes, total: curMistakes + mistakesAdded } });
+    } else {
+      // Normal stat growth
+      const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0) + (updated.depMaxBonus || 0);
+      updated.dependability = Math.min(effectiveMaxDep, updated.dependability + baseDepGain);
+    }
+
+    const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
+    updated.experience = Math.min(effectiveMaxExp, updated.experience + 1);
+
+    const statsStr = mentalCost > 0
+      ? ` (-${physicalCost} Physical, -${mentalCost} Mental)`
+      : ` (-${physicalCost} Physical)`;
+    messages.unshift({ key: 'action.job.worked', params: { title: job.title, wagesEarned, stats: statsStr } });
+
+  } else {
+    // Classic Mode
+    const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0);
+    const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0);
+
+    updated.experience = Math.min(effectiveMaxExp, updated.experience + 1);
+    updated.dependability = Math.min(effectiveMaxDep, updated.dependability + 1);
+    messages.unshift({ key: 'action.job.worked', params: { title: job.title, wagesEarned, stats: '' } });
+  }
+
   if (player.dependability <= job.requirements.dependability - 3) {
-    messages.push({ key: 'action.job.warning' });
+    messages.unshift({ key: 'action.job.warning' });
   }
   if (totalGarnished > 0) {
     messages.push({ key: 'action.job.garnished', params: { amount: totalGarnished } });

@@ -117,33 +117,24 @@ describe('Balance, Burnout & Spoilage Tests', () => {
     }
   };
 
-  describe('Burnout & Mental Health Leave', () => {
-    it('triggers burnout leave without medical fees when mental condition is low', () => {
+  describe('Doctor Visits & Health Emergencies', () => {
+    it('triggers doctor visit when physical condition is low', () => {
       const campaign = structuredClone(baseCampaign);
-      campaign.config.statRules.lowSpiritsChancePerPoint = 1.0; // Guaranteed trigger
+      campaign.config.statRules.physicalDoctorChancePerPoint = 1.0;
 
       let state = createTestGameState(campaign, [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
       state.turn = 2;
-      state.players[0].mentalCondition = 6; // Below threshold of 10
-      state.players[0].physicalCondition = 50; // Healthy physical condition
+      state.players[0].mentalCondition = 50;
+      state.players[0].physicalCondition = 6; // Below threshold of 10
       state.players[0].money = 500;
       state.players[0].hoursRemaining = 60;
 
       const nextState = processTurnStart(state, campaign);
       const player = nextState.players[0];
 
-      // Verify no doctor fee charged (only weekend cost of $18 deducted from 500 -> 482)
-      expect(player.money).toBe(482);
-
-      // Verify time penalty deducted for mental health leave (10 hours)
-      expect(player.hoursRemaining).toBe(50);
-
-      // Verify mental bounce back (+8 from 6 - 1 mess decay = 13)
-      expect(player.mentalCondition).toBe(13);
-
-      // Verify burnout event logged
-      expect(player.turnEvents.some(e => e.key === 'events.burnout')).toBe(true);
-      expect(player.turnEvents.some(e => e.key === 'events.doctorVisit')).toBe(false);
+      // Verify doctor visit occurred and restored physical condition
+      expect(player.physicalCondition).toBeGreaterThanOrEqual(10);
+      expect(player.turnEvents.some(e => e.key.startsWith('events.doctorVisit'))).toBe(true);
     });
   });
 

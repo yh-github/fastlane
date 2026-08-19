@@ -27,9 +27,9 @@
   "statRules": {
     "startingPhysicalCondition": 50,
     "startingMentalCondition": 51,
-    "minPhysicalCondition": 5,
+    "minPhysicalCondition": 1,
     "maxPhysicalCondition": 100,
-    "minMentalCondition": 5,
+    "minMentalCondition": 1,
     "maxMentalCondition": 85,
     "globalMaxMentalCondition": 100,
     "physicalDoctorThreshold": 10,

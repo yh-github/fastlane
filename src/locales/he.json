@@ -38,6 +38,7 @@
     "buy": "נרכש {{itemName}}",
     "buyBack": "קנית בחזרה {{itemName}} תמורת {{cost}}$",
     "relax": "נחת בבית{{stats}}",
+    "relax_unfed": "נחת ללא אוכל במזווה!{{stats}}",
     "clean": "ניקית את הדירה{{stats}}",
     "bank": {
       "deposit": "הופקדו {{amount}}$ לחסכונות",
@@ -53,8 +54,9 @@
     },
     "education": {
       "enrolled": "נרשמת ל{{name}}",
-      "graduated": "סיימת בהצטיינות {{name}}!",
-      "studied": "למדת עבור {{name}} ({{current}}/{{required}}){{stats}}"
+      "graduated": "סיימת בהצטיינות {{name}}!{{stats}}",
+      "studied": "למדת עבור {{name}} ({{current}}/{{required}}){{stats}}",
+      "mistake": "שגית במהלך הלימודים ב-{{name}} ({{type}})! ההתקדמות נמחקה{{stats}}"
     },
     "job": {
       "worked": "עבדת ב{{title}} והרווחת {{wagesEarned}}${{stats}}",
@@ -67,7 +69,26 @@
       "garnished": "עוקלו משכורות! {{garnished}}",
       "raiseSuccess": "קיבלת העלאה במשכורת!",
       "raiseDenied": "בקשת העלאה נדחתה.",
-      "raiseWaste": "כבר יש לך את השכר המקסימלי כאן."
+      "raiseWaste": "כבר יש לך את השכר המקסימלי כאן.",
+      "mistake": "עשית טעות בעבודה ({{type}})! איבדת {{penalty}} אמינות (סה״כ עונשי מוניטין במיקום זה: {{total}})"
+    },
+    "workModal": {
+      "title": "בחר אסטרטגיית עבודה",
+      "lookBusy": "להראות עסוק",
+      "lookBusyDesc": "0.5x עלות גופנית/נפשית, 1.0x שכר, 0+ אמינות.",
+      "workWork": "לעבוד רגיל",
+      "workWorkDesc": "משמרת רגילה: עלויות רגילות, 1.0x שכר, 1+ אמינות.",
+      "faceTime": "נוכחות בולטת (Face Time)",
+      "faceTimeDesc": "0.5x עלויות, 0.5x שכר, 2+ אמינות (חיזוק מוניטין).",
+      "innovate": "לחדש (Innovate)",
+      "innovateDesc": "1+ גופני, 5+ נפשי, 0-5 אמינות. סיכון מוגבר לטעויות עם פיצוי יצירתי בכישלון (1+ מקס אמינות, 1+ מקס ניסיון, 1+ ניסיון).",
+      "close": "ביטול"
+    },
+    "unfedRelaxModal": {
+      "title": "לנוח ללא אוכל?",
+      "warning": "אין לך אוכל במלאי! מנוחה ברעב תפחית לצמיתות את כושר הגוף והנפש המקסימלי שלך ב-1.",
+      "confirm": "לנוח בכל זאת",
+      "cancel": "ביטול"
     },
     "loan": {
       "approved": "ההלוואה אושרה על סך {{loanSize}}$",
@@ -95,6 +116,7 @@
       "cannotApply": "לא ניתן להגיש מועמדות לעבודה.",
       "notEnoughTime": "אין מספיק זמן כדי להגיש מועמדות.",
       "cannotWork": "לא ניתן לעבוד.",
+      "tooExhausted": "אתה מותש מדי גופנית או נפשית מכדי לבצע פעולה זו! נוח או התאושש קודם.",
       "missingPrereq": "דרישות קדם חסרות: {{prereq}}",
       "notEnoughMoneyTuition": "אין מספיק כסף לשכר לימוד.",
       "alreadyHaveDegree": "כבר יש לך תואר זה.",

@@ -223,16 +223,25 @@ export function clampZero(value: number): number {
 export function calcEmployabilityScore(
   dependability: number,
   experience: number,
-  degreesCount: number
+  degreesCount: number,
+  mistakesAtLocation: number = 0
 ): number {
-  return Math.floor(30 + (10 + dependability + experience + 8 * degreesCount) / 3);
+  const baseScore = Math.floor(30 + (10 + dependability + experience + 8 * degreesCount) / 3);
+  return Math.max(0, baseScore - mistakesAtLocation);
 }
 
 /**
  * Calculate dependability decay for the start of a turn.
- * Always flat -3 per turn.
+ * Always flat -3 per turn in classic.
+ * In advanced (usePhysicalMentalConditions): dep_loss = Math.ceil(D_REQ / 10), where D_REQ is current job requirement or 3 for unemployed.
  */
-export function calcDependabilityDecay(current: number): number {
+export function calcDependabilityDecay(current: number, jobRequiredDep?: number, isAdvanced?: boolean): number {
+  if (isAdvanced) {
+    const depLoss = (jobRequiredDep !== undefined && jobRequiredDep > 0)
+      ? Math.ceil(jobRequiredDep / 10)
+      : 3;
+    return clampZero(current - depLoss);
+  }
   return clampZero(current - DEPENDABILITY_WEEKLY_DECAY);
 }
 

@@ -90,8 +90,18 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number, rng
   }
   
   // Cost: random between $30 and $200
-  const cost = resolveDecision(replay, `doctor_cost`, () => Math.floor(rng.next() * 171) + 30);
-  updated.money = Math.max(0, updated.money - cost);
+  const cost = resolveDecision(replay, `doctor_cost`, () => (rng ? Math.floor(rng.next() * 171) + 30 : Math.floor(Math.random() * 171) + 30));
+  if (rules?.usePhysicalMentalConditions) {
+    if (updated.money < cost) {
+      const unpaid = cost - updated.money;
+      updated.money = 0;
+      updated.loanDebt = (updated.loanDebt || 0) + unpaid;
+    } else {
+      updated.money -= cost;
+    }
+  } else {
+    updated.money = Math.max(0, updated.money - cost);
+  }
 
   return updated;
 }

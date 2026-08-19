@@ -11,7 +11,7 @@
     "id": "stove",
     "lifestyleValue": 1,
     "effects": [
-      { "trigger": "turn_start", "stat": "physical", "value": 1 }
+      { "trigger": "on_relax", "stat": "physical", "value": 1 }
     ]
   },
   {
@@ -38,7 +38,7 @@
     "id": "microwave",
     "lifestyleValue": 2,
     "effects": [
-      { "trigger": "turn_start", "stat": "physical", "value": 1 },
+      { "trigger": "on_relax", "stat": "physical", "value": 1 },
       { "trigger": "on_socialize", "stat": "social", "value": 1 }
     ]
   },

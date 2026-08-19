@@ -171,6 +171,9 @@ export interface PlayerState {
   homeTimeThisTurn?: number;
   workActionsThisTurn?: number;
   studyActionsThisTurn?: number;
+  mistakesByLocation?: Record<string, number>;
+  depMaxBonus?: number;
+  xpMaxBonus?: number;
 }
 
 export interface WeekendResult {
@@ -406,7 +409,10 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
         mentalCondition: config.statRules?.startingMentalCondition ?? initMaxMental,
         social: startSocial,
         resilienceBonus: 0,
-        lifestyle: 0
+        lifestyle: 0,
+        mistakesByLocation: {},
+        depMaxBonus: 0,
+        xpMaxBonus: 0
       };
     })() : {}),
     ...(config.gameRules?.trackMess ? { mess: 3 } : {}),
@@ -496,7 +502,7 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
 
   if (campaign.config.gameRules?.usePhysicalMentalConditions) {
     const statRules = campaign.config.statRules;
-    updatedPlayer.mentalConditionMax = calcMaxMental(
+    const calculatedMaxMental = calcMaxMental(
       updatedPlayer.mess || 0,
       updatedPlayer.social || 9,
       updatedPlayer.resilienceBonus || 0,
@@ -504,6 +510,7 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
       statRules,
       campaign
     );
+    updatedPlayer.mentalConditionMax = calculatedMaxMental;
     if (updatedPlayer.mentalCondition !== undefined) {
       updatedPlayer.mentalCondition = Math.min(updatedPlayer.mentalConditionMax, updatedPlayer.mentalCondition);
     }
