@@ -63,6 +63,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
         { id: 'stove', name: 'Stove', category: 'appliance', basePrice: 200, effects: [{ trigger: 'on_relax', stat: 'physical', value: 1 }] },
         { id: 'microwave', name: 'Microwave', category: 'appliance', basePrice: 100, effects: [{ trigger: 'on_relax', stat: 'physical', value: 1 }] },
         { id: 'fries', name: 'Fries', category: 'fast_food', basePrice: 5 },
+        { id: 'hamburger', name: 'Hamburgers', category: 'food', subcategory: 'fast_food', basePrice: 10 },
         { id: 'fresh_groceries', name: 'Fresh Food', category: 'food', subcategory: 'fresh', basePrice: 20 }
       ],
       jobs: [
@@ -96,7 +97,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
           id: 'diner',
           name: 'Diner',
           type: 'commercial',
-          inventory: [{ itemId: 'fries', priceOverride: 5 }]
+          inventory: [{ itemId: 'fries', priceOverride: 5 }, { itemId: 'hamburger', priceOverride: 10 }]
         },
         {
           id: 'grocery_store',
@@ -223,7 +224,17 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
   });
 
   describe('Food Purchases', () => {
-    it('fast food reduces physical condition and max physical condition by 1', () => {
+    it('hamburger does not reduce physical condition or max physical condition (stays at 0 physical change)', () => {
+      player.position = 'node_diner';
+      player.physicalCondition = 40;
+      player.physicalConditionMax = 50;
+
+      const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'buy', itemId: 'hamburger' }, context);
+      expect(nextPlayer.physicalCondition).toBe(40);
+      expect(nextPlayer.physicalConditionMax).toBe(50);
+    });
+
+    it('fast food (fries/shakes/colas) reduces physical condition and max physical condition by 1', () => {
       player.position = 'node_diner';
       player.physicalCondition = 40;
       player.physicalConditionMax = 50;

@@ -140,7 +140,13 @@ export function gameReducer(
             if (baseItemDef.category === 'appliance' || baseItemDef.category === 'clothes') {
               nextPlayer.lifestyle = Math.min(100, (nextPlayer.lifestyle || 50) + 1);
             }
-            if (baseItemDef.category === 'fast_food' || baseItemDef.subcategory === 'fast_food' || ['fries', 'shake', 'cola', 'astro_chicken'].includes(baseItemDef.id)) {
+            const isBurger = ['hamburger', 'cheeseburger', 'burger'].includes(baseItemDef.id);
+            const isJunkOrBadFastFood = !isBurger && (
+              baseItemDef.category === 'fast_food' ||
+              baseItemDef.category === 'junk' ||
+              ['fries', 'shake', 'cola', 'colas', 'shakes', 'astro_chicken'].includes(baseItemDef.id)
+            );
+            if (isJunkOrBadFastFood) {
               const minPhys = nextPlayer.minPhysicalCondition ?? 1;
               nextPlayer.physicalCondition = safeDecrementPhysical(nextPlayer.physicalCondition ?? 50, 1, minPhys);
               nextPlayer.physicalConditionMax = Math.max(minPhys, (nextPlayer.physicalConditionMax ?? 50) - 1);

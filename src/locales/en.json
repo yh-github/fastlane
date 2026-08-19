@@ -84,7 +84,9 @@
       "faceTimeDesc": "0.5x costs, 0.5x wage, +2 Dependability (boost career reliability).",
       "innovate": "Innovate",
       "innovateDesc": "+1 Physical, +5 Mental cost, 0-5 Dependability. Higher mistake risk (threshold 20) with creative upside on failure (+1 Max Dep, +1 Max Exp, +1 Exp).",
-      "close": "Cancel"
+      "close": "Cancel",
+      "done": "Done",
+      "defaultBadge": "Default"
     },
     "unfedRelaxModal": {
       "title": "Relax Without Food?",

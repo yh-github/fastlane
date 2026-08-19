@@ -277,4 +277,73 @@ describe('BuildingInteractions', () => {
     fireEvent.click(updatedBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'call_cleaning_service' });
   });
+
+  it('WorkStation renders prominent Work Work default option and keeps modal open across clicks until Done is clicked', async () => {
+    const { WorkStation } = await import('./BuildingInteractions');
+    const { fireEvent } = await import('@testing-library/react');
+
+    const mockPlayer = {
+      name: 'Tester',
+      currentWage: 20,
+      hoursRemaining: 40,
+      physicalCondition: 30,
+      mentalCondition: 30,
+      workActionsThisTurn: 0,
+      inventory: {}
+    } as any;
+
+    const mockJob = {
+      id: 'job_dev',
+      title: 'Developer',
+      baseWage: 20,
+      locationId: 'tech_office',
+      requirements: { dependability: 10, experience: 10, degrees: [] }
+    } as any;
+
+    const mockCampaign = {
+      config: {
+        gameRules: { usePhysicalMentalConditions: true },
+        timeRules: { workSessionCost: 6 },
+        statRules: { workPhysicalCost: 1, workNormalMentalCost: 0 }
+      }
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <WorkStation
+        player={mockPlayer}
+        job={mockJob}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+      />
+    );
+
+    // Open work strategy modal
+    const workShiftBtn = screen.getByRole('button', { name: /workShift|Work Shift/i });
+    fireEvent.click(workShiftBtn);
+
+    // Modal title & prominent Work Work option with Default badge
+    expect(screen.getByText(/Choose Work Strategy/i)).toBeInTheDocument();
+    expect(screen.getByText(/DEFAULT/i)).toBeInTheDocument();
+
+    const workWorkBtn = screen.getByTestId('work-mode-work_work');
+    expect(workWorkBtn).toBeInTheDocument();
+
+    // Click Work Work - modal should REMAIN open
+    fireEvent.click(workWorkBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'work_work' });
+    expect(screen.getByText(/Choose Work Strategy/i)).toBeInTheDocument();
+
+    // Click Look Busy - modal still remains open
+    const lookBusyBtn = screen.getByTestId('work-mode-look_busy');
+    fireEvent.click(lookBusyBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'look_busy' });
+    expect(screen.getByText(/Choose Work Strategy/i)).toBeInTheDocument();
+
+    // Click Done - modal closes
+    const doneBtn = screen.getByTestId('done-work-modal');
+    fireEvent.click(doneBtn);
+    expect(screen.queryByText(/Choose Work Strategy/i)).not.toBeInTheDocument();
+  });
 });

@@ -217,36 +217,67 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
           <div style={{
             background: '#1e1e2f', padding: '24px', borderRadius: '10px', maxWidth: '520px', width: '90%', border: '1px solid #444', color: '#fff'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', borderBottom: '1px solid #333', paddingBottom: '8px' }}>
-              💼 {t('action.workModal.title', { defaultValue: 'Choose Work Strategy' })}
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 16px 0', borderBottom: '1px solid #333', paddingBottom: '8px' }}>
+              <h3 style={{ margin: 0 }}>
+                💼 {t('action.workModal.title', { defaultValue: 'Choose Work Strategy' })}
+              </h3>
+              <button
+                data-testid="close-work-modal"
+                onClick={() => setShowWorkModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#aaa',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  padding: '2px 6px',
+                  lineHeight: '1'
+                }}
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
               {modes.map(m => {
                 const canAfford = (curPhys - m.physCost >= 1.0) && ((player.mentalCondition ?? 50) - m.mentalCost >= 1.0);
+                const isWorkWork = m.id === 'work_work';
                 return (
                   <button
                     key={m.id}
                     data-testid={`work-mode-${m.id}`}
                     disabled={!canAfford}
                     onClick={() => {
-                      setShowWorkModal(false);
                       onAction({ type: 'work', jobId: job.id, mode: m.id });
                     }}
                     style={{
-                      padding: '12px',
+                      padding: isWorkWork ? '14px 16px' : '12px',
                       borderRadius: '6px',
-                      backgroundColor: canAfford ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
-                      border: `1px solid ${canAfford ? m.color : '#444'}`,
+                      backgroundColor: isWorkWork && canAfford
+                        ? 'rgba(46, 204, 113, 0.15)'
+                        : (canAfford ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'),
+                      border: isWorkWork && canAfford
+                        ? '2px solid #2ecc71'
+                        : `1px solid ${canAfford ? m.color : '#444'}`,
+                      boxShadow: isWorkWork && canAfford ? '0 0 12px rgba(46, 204, 113, 0.25)' : undefined,
                       color: canAfford ? '#fff' : '#666',
                       cursor: canAfford ? 'pointer' : 'not-allowed',
                       textAlign: 'left',
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      position: 'relative'
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 'bold', color: canAfford ? m.color : '#666', fontSize: '1.05em' }}>{m.label}</div>
+                      <div style={{ fontWeight: 'bold', color: canAfford ? (isWorkWork ? '#2ecc71' : m.color) : '#666', fontSize: isWorkWork ? '1.12em' : '1.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{m.label}</span>
+                        {isWorkWork && (
+                          <span style={{ fontSize: '0.68em', padding: '2px 6px', background: '#2ecc71', color: '#111', borderRadius: '3px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {t('action.workModal.defaultBadge', { defaultValue: 'Default' })}
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: '0.8em', opacity: 0.8, marginTop: '2px' }}>{m.desc}</div>
                       <div style={{ fontSize: '0.8em', marginTop: '4px', color: '#aaa' }}>
                         Cost: -{m.physCost} Phys, -{m.mentalCost} Mental | Pay: ${m.wage} | {m.dep}
@@ -256,12 +287,16 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                 );
               })}
             </div>
-            <div style={{ textAlign: 'right' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+              <span style={{ fontSize: '0.85em', color: '#aaa' }}>
+                ⏳ {player.hoursRemaining} hrs remaining
+              </span>
               <button
+                data-testid="done-work-modal"
                 onClick={() => setShowWorkModal(false)}
-                style={{ padding: '8px 16px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                style={{ padding: '8px 20px', background: '#34495e', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
               >
-                {t('action.workModal.close', { defaultValue: 'Cancel' })}
+                {t('action.workModal.done', { defaultValue: 'Done' })}
               </button>
             </div>
           </div>
