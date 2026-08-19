@@ -140,6 +140,10 @@ describe('App Integration & StrictMode', () => {
 
     for (let i = 0; i < 10; i++) {
       fireEvent.click(relaxBtn);
+      const confirmBtn = screen.queryByTestId('confirm-unfed-relax');
+      if (confirmBtn) {
+        fireEvent.click(confirmBtn);
+      }
       await act(async () => {
         await new Promise(r => setTimeout(r, 20));
       });

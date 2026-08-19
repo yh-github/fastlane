@@ -374,6 +374,7 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       player.physicalConditionMax = 50;
       player.mess = 10;
       player.hoursRemaining = 60;
+      player.inventory.freshFoodUnits = 2;
 
       const resRelax = gameReducer(player, { type: 'relax' }, {
         campaign: mockCampaign,
@@ -384,7 +385,7 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
         state: {} as any
       });
 
-      expect(resRelax.updatedPlayer.physicalCondition).toBe(42); // +2 Phys with Hot Tub
+      expect(resRelax.updatedPlayer.physicalCondition).toBe(44); // +4 Phys with Hot Tub (1 + floor(50/25) + 1 = 4)
       expect(resRelax.updatedPlayer.mess).toBe(12); // +2 Mess with Hot Tub
     });
 

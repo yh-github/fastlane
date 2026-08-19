@@ -113,39 +113,160 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
  */
 export function WorkStation({ player, onAction, job, campaign }: InteractionProps & { job: JobDef, campaign: CampaignBundle }) {
   const { t } = useTranslation();
+  const [showWorkModal, setShowWorkModal] = useState(false);
 
   const rules = campaign.config.gameRules;
   const statRules = campaign.config.statRules;
-  const nextAction = (player.workActionsThisTurn || 0) + 1;
+  const isAdvanced = !!rules?.usePhysicalMentalConditions;
+
+  if (!isAdvanced) {
+    return (
+      <div className="interaction-panel">
+        <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
+        <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
+        <button data-action-target={`work-${job.id}`} onClick={() => onAction({ type: 'work', jobId: job.id })}>
+          {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
+        </button>
+      </div>
+    );
+  }
+
+  const actionCount = (player.workActionsThisTurn || 0) + 1;
   const overtimeThreshold = statRules?.workOvertimeThreshold ?? 8;
   const grindThreshold = statRules?.workGrindThreshold ?? 4;
 
-  let nextPhysicalCost = statRules?.workPhysicalCost ?? 1;
-  let nextMentalCost = statRules?.workNormalMentalCost ?? 0;
+  let basePhys = 1;
+  let baseMental = 0;
   let tierLabel = '';
 
-  if (nextAction >= overtimeThreshold) {
-    nextPhysicalCost = statRules?.workOvertimePhysicalCost ?? 2;
-    nextMentalCost = statRules?.workOvertimeMentalCost ?? 2;
+  if (actionCount >= overtimeThreshold) {
+    basePhys = statRules?.workOvertimePhysicalCost ?? 2;
+    baseMental = statRules?.workOvertimeMentalCost ?? 2;
     tierLabel = ' [Overtime]';
-  } else if (nextAction >= grindThreshold) {
-    nextPhysicalCost = statRules?.workGrindPhysicalCost ?? 1;
-    nextMentalCost = statRules?.workGrindMentalCost ?? 1;
+  } else if (actionCount >= grindThreshold) {
+    basePhys = statRules?.workGrindPhysicalCost ?? 1;
+    baseMental = statRules?.workGrindMentalCost ?? 1;
     tierLabel = ' [Grind]';
   }
+
+  const curPhys = player.physicalCondition ?? 50;
+  const fatigueMental = curPhys < 10 ? 1 : 0;
+  const halfFatigueMental = curPhys < 10 ? 0.5 : 0;
+
+  const modes = [
+    {
+      id: 'look_busy',
+      label: t('action.workModal.lookBusy', { defaultValue: 'Look Busy' }),
+      desc: t('action.workModal.lookBusyDesc', { defaultValue: '0.5x Physical/Mental costs, 1.0x wage, +0 Dependability.' }),
+      physCost: basePhys * 0.5,
+      mentalCost: baseMental * 0.5 + halfFatigueMental,
+      wage: player.currentWage * 8,
+      dep: '+0 Dep',
+      color: '#3498db'
+    },
+    {
+      id: 'work_work',
+      label: t('action.workModal.workWork', { defaultValue: 'Work Work' }),
+      desc: t('action.workModal.workWorkDesc', { defaultValue: 'Standard shift: 1.0x costs, 1.0x wage, +1 Dependability.' }),
+      physCost: basePhys * 1.0,
+      mentalCost: baseMental * 1.0 + fatigueMental,
+      wage: player.currentWage * 8,
+      dep: '+1 Dep',
+      color: '#2ecc71'
+    },
+    {
+      id: 'face_time',
+      label: t('action.workModal.faceTime', { defaultValue: 'Face Time' }),
+      desc: t('action.workModal.faceTimeDesc', { defaultValue: '0.5x costs, 0.5x wage, +2 Dependability (boost career reliability).' }),
+      physCost: basePhys * 0.5,
+      mentalCost: baseMental * 0.5 + halfFatigueMental,
+      wage: Math.floor(player.currentWage * 8 * 0.5),
+      dep: '+2 Dep',
+      color: '#9b59b6'
+    },
+    {
+      id: 'innovate',
+      label: t('action.workModal.innovate', { defaultValue: 'Innovate' }),
+      desc: t('action.workModal.innovateDesc', { defaultValue: '+1 Physical, +5 Mental cost, 0-5 Dependability. Higher risk with fail-forward bonuses.' }),
+      physCost: basePhys + 1,
+      mentalCost: baseMental + 5 + fatigueMental,
+      wage: player.currentWage * 8,
+      dep: '0-5 Dep (5d2-5)',
+      color: '#e67e22'
+    }
+  ];
 
   return (
     <div className="interaction-panel">
       <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
-      <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
-      <button data-action-target={`work-${job.id}`} onClick={() => onAction({ type: 'work', jobId: job.id })}>
-        {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
-        {rules?.usePhysicalMentalConditions && (
-          <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-            (-{nextPhysicalCost} Physical{nextMentalCost > 0 ? `, -${nextMentalCost} Mental` : ''}{tierLabel})
-          </span>
-        )}
+      <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr {tierLabel}</p>
+      
+      <button 
+        data-action-target={`work-${job.id}`} 
+        onClick={() => setShowWorkModal(true)}
+        style={{ padding: '10px 16px', fontWeight: 'bold', backgroundColor: '#2980b9', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+      >
+        💼 {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
       </button>
+
+      {showWorkModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            background: '#1e1e2f', padding: '24px', borderRadius: '10px', maxWidth: '520px', width: '90%', border: '1px solid #444', color: '#fff'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', borderBottom: '1px solid #333', paddingBottom: '8px' }}>
+              💼 {t('action.workModal.title', { defaultValue: 'Choose Work Strategy' })}
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+              {modes.map(m => {
+                const canAfford = (curPhys - m.physCost >= 1.0) && ((player.mentalCondition ?? 50) - m.mentalCost >= 1.0);
+                return (
+                  <button
+                    key={m.id}
+                    data-testid={`work-mode-${m.id}`}
+                    disabled={!canAfford}
+                    onClick={() => {
+                      setShowWorkModal(false);
+                      onAction({ type: 'work', jobId: job.id, mode: m.id });
+                    }}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '6px',
+                      backgroundColor: canAfford ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
+                      border: `1px solid ${canAfford ? m.color : '#444'}`,
+                      color: canAfford ? '#fff' : '#666',
+                      cursor: canAfford ? 'pointer' : 'not-allowed',
+                      textAlign: 'left',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: canAfford ? m.color : '#666', fontSize: '1.05em' }}>{m.label}</div>
+                      <div style={{ fontSize: '0.8em', opacity: 0.8, marginTop: '2px' }}>{m.desc}</div>
+                      <div style={{ fontSize: '0.8em', marginTop: '4px', color: '#aaa' }}>
+                        Cost: -{m.physCost} Phys, -{m.mentalCost} Mental | Pay: ${m.wage} | {m.dep}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <button
+                onClick={() => setShowWorkModal(false)}
+                style={{ padding: '8px 16px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                {t('action.workModal.close', { defaultValue: 'Cancel' })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -203,6 +324,9 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
 
 export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules, economicIndex?: number }) {
   const { t } = useTranslation();
+  const [showUnfedWarning, setShowUnfedWarning] = useState(false);
+  const [warnedThisVisit, setWarnedThisVisit] = useState(false);
+
   const relaxCost = campaign?.config.timeRules?.relaxCost ?? 6;
   const currentMess = player.mess || 0;
   const maxMessHousing = calcMaxMess(player, campaign?.config.statRules);
@@ -212,6 +336,16 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const cleaningServiceBasePrice = campaign?.config.economyRules?.cleaningServiceBasePrice ?? 100;
   const cleaningServicePrice = calcEconomyPrice(cleaningServiceBasePrice, economicIndex);
   const canAffordCleaning = player.money >= cleaningServicePrice;
+
+  const hasFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0;
+
+  const handleRelaxClick = () => {
+    if (rules?.usePhysicalMentalConditions && !hasFood && !warnedThisVisit) {
+      setShowUnfedWarning(true);
+    } else {
+      onAction({ type: 'relax' });
+    }
+  };
 
   let messIcon = '🗑️';
   let messLabel = 'Spotless';
@@ -298,7 +432,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
             <button 
               data-testid="btn-relax"
               data-action-target="relax" 
-              onClick={() => onAction({ type: 'relax' })}
+              onClick={handleRelaxClick}
               style={{
                 backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', textAlign: 'left'
               }}
@@ -306,10 +440,47 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
               <div>🧘 {t('homeRelax.button', { cost: relaxCost })}</div>
               {rules?.usePhysicalMentalConditions && (
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: '#e8f8f5' }}>
-                  +1 Physical, +Mental condition {rules?.trackMess && '(+1 Mess)'}
+                  {hasFood ? '+Physical, +Mental condition' : '⚠️ No food: +1/+1 (-1 Max Phys & Mental)'} {rules?.trackMess && '(+1 Mess)'}
                 </div>
               )}
             </button>
+
+            {showUnfedWarning && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+              }}>
+                <div style={{
+                  background: '#2c1e1e', padding: '24px', borderRadius: '10px', maxWidth: '450px', width: '90%', border: '1px solid #e74c3c', color: '#fff'
+                }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#e74c3c' }}>
+                    ⚠️ {t('action.unfedRelaxModal.title', { defaultValue: 'Relax Without Food?' })}
+                  </h3>
+                  <p style={{ fontSize: '0.95em', lineHeight: '1.5', marginBottom: '20px' }}>
+                    {t('action.unfedRelaxModal.warning', { defaultValue: 'You have no food in your inventory! Relaxing while starving will permanently reduce your Max Physical and Max Mental capacity by 1.' })}
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                    <button
+                      onClick={() => setShowUnfedWarning(false)}
+                      style={{ padding: '8px 16px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      {t('action.unfedRelaxModal.cancel', { defaultValue: 'Cancel' })}
+                    </button>
+                    <button
+                      data-testid="confirm-unfed-relax"
+                      onClick={() => {
+                        setWarnedThisVisit(true);
+                        setShowUnfedWarning(false);
+                        onAction({ type: 'relax' });
+                      }}
+                      style={{ padding: '8px 16px', background: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      {t('action.unfedRelaxModal.confirm', { defaultValue: 'Relax Anyway' })}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {rules?.usePhysicalMentalConditions && (
               <button 

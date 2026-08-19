@@ -251,8 +251,24 @@ export function Dashboard({
         )}
         {gameState.rules.usePhysicalMentalConditions && (
           <>
-            <StatBadge label={t('dashboard.physical', { defaultValue: 'Physical' })} value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`} icon="💪" id="stat-physical" isActive={activeLogFilter === 'physical'} onClick={() => handleFilterToggle('physical')} />
-            <StatBadge label={t('dashboard.mental', { defaultValue: 'Mental' })} value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`} icon="🧠" id="stat-mental" isActive={activeLogFilter === 'mental'} onClick={() => handleFilterToggle('mental')} />
+            <StatBadge 
+              label={t('dashboard.physical', { defaultValue: 'Physical' })} 
+              value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`} 
+              icon="💪" 
+              id="stat-physical" 
+              badge={(player.physicalConditionMax !== undefined && player.physicalConditionMax < 50) ? `Max ${player.physicalConditionMax} ↓` : undefined}
+              isActive={activeLogFilter === 'physical'} 
+              onClick={() => handleFilterToggle('physical')} 
+            />
+            <StatBadge 
+              label={t('dashboard.mental', { defaultValue: 'Mental' })} 
+              value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`} 
+              icon="🧠" 
+              id="stat-mental" 
+              badge={(player.mentalConditionMax !== undefined && player.mentalConditionMax < 50) ? `Max ${player.mentalConditionMax} ↓` : undefined}
+              isActive={activeLogFilter === 'mental'} 
+              onClick={() => handleFilterToggle('mental')} 
+            />
             <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
             {gameState.rules.trackMess && (
               <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
@@ -327,11 +343,12 @@ interface StatBadgeProps {
   icon: string;
   id?: string;
   danger?: boolean;
+  badge?: string;
   isActive?: boolean;
   onClick?: () => void;
 }
 
-function StatBadge({ label, value, icon, id, danger, isActive, onClick }: StatBadgeProps) {
+function StatBadge({ label, value, icon, id, danger, badge, isActive, onClick }: StatBadgeProps) {
   const activeStyle: React.CSSProperties = isActive ? {
     border: '2px solid #00e5ff',
     boxShadow: '0 0 10px rgba(0, 229, 255, 0.7)',
@@ -349,12 +366,29 @@ function StatBadge({ label, value, icon, id, danger, isActive, onClick }: StatBa
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease',
         userSelect: 'none',
+        position: 'relative',
         ...activeStyle
       }}
     >
       <span className="stat-badge__icon">{icon}</span>
       <span className="stat-badge__value" style={danger ? { color: '#ff3333', fontWeight: 'bold', textShadow: '0 0 8px rgba(255,51,51,0.6)' } : {}}>{value}</span>
       <span className="stat-badge__label" style={danger ? { color: '#ff3333' } : {}}>{label}</span>
+      {badge && (
+        <span style={{
+          position: 'absolute',
+          top: '-6px',
+          right: '-6px',
+          backgroundColor: '#e74c3c',
+          color: '#fff',
+          fontSize: '0.65em',
+          padding: '1px 4px',
+          borderRadius: '3px',
+          fontWeight: 'bold',
+          boxShadow: '0 0 4px rgba(0,0,0,0.5)'
+        }}>
+          {badge}
+        </span>
+      )}
     </div>
   );
 }

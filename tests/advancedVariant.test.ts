@@ -218,9 +218,8 @@ describe('Advanced Variation Mechanics', () => {
     const rules: GameRules = { usePhysicalMentalConditions: true };
     mockCampaign.config.gameRules = rules;
     const player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
-    player.minPhysicalCondition = 5;
-    player.physicalCondition = 5; // Min
-    player.mentalCondition = 5; // Min
+    player.physicalCondition = 1; // Min
+    player.mentalCondition = 1; // Min
     player.currentJobId = 'clerk';
     
     const context = {
@@ -236,8 +235,8 @@ describe('Advanced Variation Mechanics', () => {
     for (let i = 0; i < 4; i++) {
       p = gameReducer(p, { type: 'work', jobId: 'clerk' }, context).updatedPlayer;
     }
-    expect(p.physicalCondition).toBe(5);
-    expect(p.mentalCondition).toBe(5);
+    expect(p.physicalCondition).toBe(1);
+    expect(p.mentalCondition).toBe(1);
   });
 
   it('should preserve physical and mental stats on weekend without passive turn-start recovery', () => {
@@ -260,6 +259,7 @@ describe('Advanced Variation Mechanics', () => {
     player.physicalCondition = 15;
     player.mentalCondition = 15;
     player.mess = 20; // Max mess
+    player.inventory.freshFoodUnits = 2;
     
     const context = {
       campaign: mockCampaign,
@@ -281,12 +281,13 @@ describe('Advanced Variation Mechanics', () => {
     expect(player.mentalCondition).toBe(16);
   });
 
-  it('turnProcessor should trigger low spirits event if mental condition is low', () => {
+  it('turnProcessor should trigger doctor visit event if physical condition is low', () => {
     const rules: GameRules = { usePhysicalMentalConditions: true, bypassDoctorIfBroke: false };
     mockCampaign.config.gameRules = rules;
-    mockCampaign.config.statRules.lowSpiritsChancePerPoint = 1.0;
+    if (!mockCampaign.config.statRules) mockCampaign.config.statRules = {} as any;
+    mockCampaign.config.statRules.physicalDoctorChancePerPoint = 1.0;
     const player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, mockCampaign.config);
-    player.mentalCondition = 0; // Way below 10
+    player.physicalCondition = 5; // Below 10 -> doctor visit
     player.money = 200; // Has money to pay doctor penalty
     
     const state: GameState = {

@@ -38,6 +38,7 @@
     "buy": "Purchased {{itemName}}",
     "buyBack": "Bought back {{itemName}} for ${{cost}}",
     "relax": "Relaxed at home{{stats}}",
+    "relax_unfed": "Relaxed without food in your inventory!{{stats}}",
     "clean": "Cleaned the apartment{{stats}}",
     "bank": {
       "deposit": "Deposited ${{amount}} into savings",
@@ -53,8 +54,9 @@
     },
     "education": {
       "enrolled": "Enrolled in {{name}}",
-      "graduated": "Graduated with {{name}}!",
-      "studied": "Studied for {{name}} ({{current}}/{{required}}){{stats}}"
+      "graduated": "Graduated with {{name}}!{{stats}}",
+      "studied": "Studied for {{name}} ({{current}}/{{required}}){{stats}}",
+      "mistake": "Made a mistake studying {{name}} ({{type}})! Lost lesson progress{{stats}}"
     },
     "job": {
       "worked": "Worked at {{title}} and earned ${{wagesEarned}}{{stats}}",
@@ -69,7 +71,26 @@
       "raiseDenied": "Raise denied.",
       "raiseWaste": "You already have the max wage here.",
       "raiseSame": "Why are you asking for the same wage?",
-      "raiseLess": "Why are you asking for less money?"
+      "raiseLess": "Why are you asking for less money?",
+      "mistake": "Made a mistake at work ({{type}})! Lost {{penalty}} Dependability (Total reputation penalties at this location: {{total}})"
+    },
+    "workModal": {
+      "title": "Choose Work Strategy",
+      "lookBusy": "Look Busy",
+      "lookBusyDesc": "0.5x Physical/Mental costs, 1.0x wage, +0 Dependability.",
+      "workWork": "Work Work",
+      "workWorkDesc": "Standard shift: 1.0x costs, 1.0x wage, +1 Dependability.",
+      "faceTime": "Face Time",
+      "faceTimeDesc": "0.5x costs, 0.5x wage, +2 Dependability (boost career reliability).",
+      "innovate": "Innovate",
+      "innovateDesc": "+1 Physical, +5 Mental cost, 0-5 Dependability. Higher mistake risk (threshold 20) with creative upside on failure (+1 Max Dep, +1 Max Exp, +1 Exp).",
+      "close": "Cancel"
+    },
+    "unfedRelaxModal": {
+      "title": "Relax Without Food?",
+      "warning": "You have no food in your inventory! Relaxing while starving will permanently reduce your Max Physical and Max Mental capacity by 1.",
+      "confirm": "Relax Anyway",
+      "cancel": "Cancel"
     },
     "loan": {
       "approved": "Loan approved for ${{loanSize}}",
@@ -97,6 +118,7 @@
       "cannotApply": "Could not apply for job.",
       "notEnoughTime": "Not enough time to apply.",
       "cannotWork": "Could not work.",
+      "tooExhausted": "You are too physically or mentally exhausted to perform this action! Rest or recover first.",
       "missingPrereq": "Prerequisite required: {{prereq}}",
       "notEnoughMoneyTuition": "Not enough money for tuition.",
       "alreadyHaveDegree": "You already have this degree.",
