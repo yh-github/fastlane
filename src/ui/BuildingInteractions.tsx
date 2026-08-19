@@ -158,41 +158,37 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     {
       id: 'look_busy',
       label: t('action.workModal.lookBusy', { defaultValue: 'Look Busy' }),
-      desc: t('action.workModal.lookBusyDesc', { defaultValue: '0.5x Physical/Mental costs, 1.0x wage, +0 Dependability.' }),
       physCost: basePhys * 0.5,
       mentalCost: baseMental * 0.5 + halfFatigueMental,
       wage: player.currentWage * 8,
-      dep: '+0 Dep',
+      rewardText: '+0 Dep',
       color: '#3498db'
     },
     {
       id: 'work_work',
       label: t('action.workModal.workWork', { defaultValue: 'Work Work' }),
-      desc: t('action.workModal.workWorkDesc', { defaultValue: 'Standard shift: 1.0x costs, 1.0x wage, +1 Dependability.' }),
       physCost: basePhys * 1.0,
       mentalCost: baseMental * 1.0 + fatigueMental,
       wage: player.currentWage * 8,
-      dep: '+1 Dep',
+      rewardText: '+1 Dep',
       color: '#2ecc71'
     },
     {
       id: 'face_time',
       label: t('action.workModal.faceTime', { defaultValue: 'Face Time' }),
-      desc: t('action.workModal.faceTimeDesc', { defaultValue: '0.5x costs, 0.5x wage, +2 Dependability (boost career reliability).' }),
       physCost: basePhys * 0.5,
       mentalCost: baseMental * 0.5 + halfFatigueMental,
       wage: Math.floor(player.currentWage * 8 * 0.5),
-      dep: '+2 Dep',
+      rewardText: '+2 Dep',
       color: '#9b59b6'
     },
     {
       id: 'innovate',
       label: t('action.workModal.innovate', { defaultValue: 'Innovate' }),
-      desc: t('action.workModal.innovateDesc', { defaultValue: '+1 Physical, +5 Mental cost, 0-5 Dependability. Higher risk with fail-forward bonuses.' }),
       physCost: basePhys + 1,
       mentalCost: baseMental + 5 + fatigueMental,
       wage: player.currentWage * 8,
-      dep: '0-5 Dep (5d2-5)',
+      rewardText: '0-5 Dep (Fail: +Max Dep/XP)',
       color: '#e67e22'
     }
   ];
@@ -213,16 +209,27 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       {showWorkModal && typeof document !== 'undefined' && createPortal(
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000,
-          padding: '16px', boxSizing: 'border-box'
+          background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000,
+          padding: '12px', boxSizing: 'border-box', pointerEvents: 'none'
         }}>
           <div style={{
-            background: '#1e1e2f', padding: '20px 24px', borderRadius: '10px', maxWidth: '540px', width: '100%', maxHeight: '90vh',
-            display: 'flex', flexDirection: 'column', boxSizing: 'border-box', border: '1px solid #444', color: '#fff',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.6)'
+            background: 'rgba(20, 20, 40, 0.95)',
+            backdropFilter: 'blur(12px)',
+            padding: '16px 20px',
+            borderRadius: '12px',
+            maxWidth: '420px',
+            width: '100%',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxSizing: 'border-box',
+            border: '1px solid var(--accent-cyan, #00e5ff)',
+            color: '#fff',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan, 0 0 10px rgba(0,229,255,0.5))',
+            pointerEvents: 'auto'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 14px 0', borderBottom: '1px solid #333', paddingBottom: '8px', flexShrink: 0 }}>
-              <h3 style={{ margin: 0, fontSize: '1.2em' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 12px 0', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', flexShrink: 0 }}>
+              <h3 style={{ margin: 0, fontSize: '1.1em', color: 'var(--accent-cyan, #00e5ff)' }}>
                 💼 {t('action.workModal.title', { defaultValue: 'Choose Work Strategy' })}
               </h3>
               <button
@@ -232,9 +239,9 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                   background: 'transparent',
                   border: 'none',
                   color: '#aaa',
-                  fontSize: '20px',
+                  fontSize: '18px',
                   cursor: 'pointer',
-                  padding: '2px 8px',
+                  padding: '2px 6px',
                   lineHeight: '1'
                 }}
                 title="Close"
@@ -245,15 +252,18 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: '8px',
               overflowY: 'auto',
               flex: '1 1 auto',
               minHeight: 0,
-              paddingRight: '6px'
+              paddingRight: '4px'
             }}>
               {modes.map(m => {
                 const canAfford = (curPhys - m.physCost >= 1.0) && ((player.mentalCondition ?? 50) - m.mentalCost >= 1.0);
                 const isWorkWork = m.id === 'work_work';
+                const costStr = m.mentalCost > 0
+                  ? `-${m.physCost} Phys, -${m.mentalCost} Mental`
+                  : `-${m.physCost} Phys`;
                 return (
                   <button
                     key={m.id}
@@ -263,7 +273,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                       onAction({ type: 'work', jobId: job.id, mode: m.id });
                     }}
                     style={{
-                      padding: isWorkWork ? '14px 16px' : '12px',
+                      padding: isWorkWork ? '10px 14px' : '8px 12px',
                       borderRadius: '6px',
                       backgroundColor: isWorkWork && canAfford
                         ? 'rgba(46, 204, 113, 0.15)'
@@ -271,43 +281,39 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                       border: isWorkWork && canAfford
                         ? '2px solid #2ecc71'
                         : `1px solid ${canAfford ? m.color : '#444'}`,
-                      boxShadow: isWorkWork && canAfford ? '0 0 12px rgba(46, 204, 113, 0.25)' : undefined,
+                      boxShadow: isWorkWork && canAfford ? '0 0 10px rgba(46, 204, 113, 0.25)' : undefined,
                       color: canAfford ? '#fff' : '#666',
                       cursor: canAfford ? 'pointer' : 'not-allowed',
                       textAlign: 'left',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
                       position: 'relative',
                       flexShrink: 0
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: 'bold', color: canAfford ? (isWorkWork ? '#2ecc71' : m.color) : '#666', fontSize: isWorkWork ? '1.12em' : '1.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{m.label}</span>
-                        {isWorkWork && (
-                          <span style={{ fontSize: '0.68em', padding: '2px 6px', background: '#2ecc71', color: '#111', borderRadius: '3px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {t('action.workModal.defaultBadge', { defaultValue: 'Default' })}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '0.8em', opacity: 0.8, marginTop: '2px' }}>{m.desc}</div>
-                      <div style={{ fontSize: '0.8em', marginTop: '4px', color: '#aaa' }}>
-                        Cost: -{m.physCost} Phys, -{m.mentalCost} Mental | Pay: ${m.wage} | {m.dep}
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontWeight: 'bold', color: canAfford ? (isWorkWork ? '#2ecc71' : m.color) : '#666', fontSize: isWorkWork ? '1.05em' : '0.98em' }}>
+                        {m.label}
+                      </span>
+                      {isWorkWork && (
+                        <span style={{ fontSize: '0.65em', padding: '1px 5px', background: '#2ecc71', color: '#111', borderRadius: '3px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {t('action.workModal.defaultBadge', { defaultValue: 'Default' })}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.78em', marginTop: '3px', color: canAfford ? '#bbb' : '#666' }}>
+                      {costStr} | ${m.wage} | {m.rewardText}
                     </div>
                   </button>
                 );
               })}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', borderTop: '1px solid #333', paddingTop: '12px', flexShrink: 0 }}>
-              <span style={{ fontSize: '0.85em', color: '#aaa' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.82em', color: '#aaa' }}>
                 ⏳ {player.hoursRemaining} hrs remaining
               </span>
               <button
                 data-testid="done-work-modal"
                 onClick={() => setShowWorkModal(false)}
-                style={{ padding: '8px 20px', background: '#34495e', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                style={{ padding: '6px 18px', background: '#34495e', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85em' }}
               >
                 {t('action.workModal.done', { defaultValue: 'Done' })}
               </button>
