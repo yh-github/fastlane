@@ -36,7 +36,7 @@ export function useGameEngine(
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
-  const [streetRobberyNotice, setStreetRobberyNotice] = useState<{ lostAmount: number; location: string } | null>(null);
+  const [streetRobberyNotice, setStreetRobberyNotice] = useState<{ lostAmount: number; location: string; onConfirm?: () => void } | null>(null);
   const lastPulsedRef = useRef({ turn: -1, playerIndex: -1 });
   const replayDataRef = useRef<ReplayData | null>(null);
 
@@ -228,7 +228,16 @@ export function useGameEngine(
             await animateRobberInterception(activePlayerIndex);
 
             if (!player.isAi) {
-              setStreetRobberyNotice({ lostAmount, location: currentBuilding || '' });
+              await new Promise<void>(resolve => {
+                setStreetRobberyNotice({
+                  lostAmount,
+                  location: currentBuilding || '',
+                  onConfirm: () => {
+                    setStreetRobberyNotice(null);
+                    resolve();
+                  }
+                });
+              });
             }
           }
           // Save the RNG state back since we used it!

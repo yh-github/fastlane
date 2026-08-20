@@ -237,7 +237,7 @@ export function Dashboard({
         </div>
       )}
 
-      <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+      <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', minHeight: '44px' }}>
         <StatBadge label={t('dashboard.money', { defaultValue: 'Money' })} value={`$${player.money}`} icon="💰" id="stat-money" isActive={activeLogFilter === 'money'} onClick={() => handleFilterToggle('money')} />
         {gameState.rules.helpfulUI && (
           <>
@@ -350,10 +350,9 @@ interface StatBadgeProps {
 
 function StatBadge({ label, value, icon, id, danger, badge, isActive, onClick }: StatBadgeProps) {
   const activeStyle: React.CSSProperties = isActive ? {
-    border: '2px solid #00e5ff',
+    borderColor: '#00e5ff',
     boxShadow: '0 0 10px rgba(0, 229, 255, 0.7)',
-    backgroundColor: 'rgba(0, 229, 255, 0.15)',
-    transform: 'scale(1.05)'
+    backgroundColor: 'rgba(0, 229, 255, 0.15)'
   } : {};
 
   return (
@@ -364,9 +363,10 @@ function StatBadge({ label, value, icon, id, danger, badge, isActive, onClick }:
       onClick={onClick}
       style={{
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.2s ease',
+        transition: 'background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
         userSelect: 'none',
         position: 'relative',
+        boxSizing: 'border-box',
         ...activeStyle
       }}
     >

@@ -29,7 +29,7 @@ interface BuildingModalProps {
 export function BuildingModal({ player, campaign, currentBuildingId, turn, economicIndex, rules, pawnShopItemsForSale, onAction, onClose }: BuildingModalProps) {
   const { t } = useTranslation();
   const [clerkMessage, setClerkMessage] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'work' | 'services'>('services');
+  const [activeTab, setActiveTab] = useState<string>('services');
   const justUpdatedMessageRef = useRef(false);
 
   // Helper to pick random string if translation is an array
@@ -42,11 +42,6 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
   }, [t]);
 
   const building = campaign?.buildings.find(b => b.id === currentBuildingId) || null;
-
-  // Reset tab and initialize greeting on building change
-  useEffect(() => {
-    setActiveTab('services');
-  }, [currentBuildingId]);
 
   // Initialize greeting
   useEffect(() => {
@@ -325,7 +320,13 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
   const isWeek4 = turn % 4 === 0;
   const rentDue = player.rentPaidUntilWeek <= turn + 1;
   const isRentOfficeOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || !!playerJobHere;
+  const isDiscountAndPawn = building.archetype === 'discount_and_pawn';
   const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
+
+  // Reset tab on building change
+  useEffect(() => {
+    setActiveTab(isDiscountAndPawn ? 'shop' : 'services');
+  }, [building.id, isDiscountAndPawn]);
 
   let currentFace = getFace(building.id, building.archetype);
   if (building.archetype === 'home' && !livesHere) {
@@ -350,8 +351,64 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       </div>
 
       <div className="building-modal__content">
-        {/* If employed here AND building has other activities, show Tab Bar */}
-        {playerJobHere && hasOtherServices && (
+        {/* Discount & Pawn Shop: Flat tabs for Shop, Pawn, and optional Work */}
+        {isDiscountAndPawn && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+            <button
+              data-testid="tab-shop"
+              onClick={() => setActiveTab('shop')}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                background: activeTab === 'shop' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
+                color: activeTab === 'shop' ? '#000' : '#fff',
+                border: activeTab === 'shop' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
+                cursor: 'pointer'
+              }}
+            >
+              🛒 {t('buildingModal.tabShop', { defaultValue: 'Shop' })}
+            </button>
+            <button
+              data-testid="tab-pawn"
+              onClick={() => setActiveTab('pawn')}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                background: activeTab === 'pawn' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
+                color: activeTab === 'pawn' ? '#000' : '#fff',
+                border: activeTab === 'pawn' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
+                cursor: 'pointer'
+              }}
+            >
+              ⚖️ {t('buildingModal.tabPawn', { defaultValue: 'Pawn' })}
+            </button>
+            {playerJobHere && (
+              <button
+                data-testid="tab-work"
+                onClick={() => setActiveTab('work')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  background: activeTab === 'work' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
+                  color: activeTab === 'work' ? '#000' : '#fff',
+                  border: activeTab === 'work' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
+                  cursor: 'pointer'
+                }}
+              >
+                💼 {t('buildingModal.tabWork', { defaultValue: 'Work' })}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Other buildings: Tab Bar when employed here AND building has other services */}
+        {!isDiscountAndPawn && playerJobHere && hasOtherServices && (
           <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
             <button
               data-testid="tab-services"
@@ -389,7 +446,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
         )}
 
         {/* Work Station: active when on work tab or when work is the only activity */}
-        {playerJobHere && (!hasOtherServices || activeTab === 'work') && (
+        {playerJobHere && (activeTab === 'work' || (!hasOtherServices && !isDiscountAndPawn)) && (
           <WorkStation
             player={player}
             onAction={handleActionIntercept}
@@ -398,8 +455,29 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           />
         )}
 
+        {/* Discount & Pawn Shop contents */}
+        {isDiscountAndPawn && activeTab === 'shop' && (
+          <StoreFront 
+            player={player} 
+            onAction={handleActionIntercept} 
+            availableItems={itemsHere} 
+            economicIndex={economicIndex}
+            rules={rules}
+          />
+        )}
+        {isDiscountAndPawn && activeTab === 'pawn' && (
+          <PawnShop 
+            player={player}
+            onAction={handleActionIntercept}
+            economicIndex={economicIndex}
+            pawnShopItemsForSale={pawnShopItemsForSale}
+            rules={rules}
+            campaign={campaign}
+          />
+        )}
+
         {/* Building Services: active when not employed here OR on services tab */}
-        {(!playerJobHere || (hasOtherServices && activeTab === 'services')) && (
+        {!isDiscountAndPawn && (!playerJobHere || (hasOtherServices && activeTab === 'services')) && (
           <>
             {/* Employment Office: show ALL jobs for applying */}
             {building.archetype === 'employment' && (
@@ -415,7 +493,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             )}
 
             {/* Any building with items for sale: shops, restaurant, grocery */}
-            {itemsHere.length > 0 && building.archetype !== 'discount_and_pawn' && (
+            {itemsHere.length > 0 && (
               <StoreFront 
                 player={player} 
                 onAction={handleActionIntercept} 
@@ -437,7 +515,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
               />
             )}
 
-            {/* Home: relax to end turn */}
+            {/* Housing: rent */}
             {building.archetype === 'housing' && (
               <RentOffice 
                 player={player}
@@ -462,17 +540,6 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
               <PawnShop 
                 player={player}
                 onAction={handleActionIntercept}
-                economicIndex={economicIndex}
-                pawnShopItemsForSale={pawnShopItemsForSale}
-                rules={rules}
-                campaign={campaign}
-              />
-            )}
-            {building.archetype === 'discount_and_pawn' && (
-              <DiscountAndPawnShop
-                player={player}
-                onAction={handleActionIntercept}
-                availableItems={itemsHere}
                 economicIndex={economicIndex}
                 pawnShopItemsForSale={pawnShopItemsForSale}
                 rules={rules}

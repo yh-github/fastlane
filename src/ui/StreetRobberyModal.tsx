@@ -12,12 +12,19 @@ export function StreetRobberyModal({ lostAmount, location, onClose }: StreetRobb
   const locationName = t(`building.${location}`, { defaultValue: location });
 
   return (
-    <div className="building-modal-overlay" style={{
-      position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000,
-      display: 'flex', justifyContent: 'center', alignItems: 'center'
-    }}>
-      <div className="building-modal-content" style={{
+    <div 
+      className="building-modal-overlay" 
+      onClick={e => e.stopPropagation()}
+      style={{
+        position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000,
+        display: 'flex', justifyContent: 'center', alignItems: 'center'
+      }}
+    >
+      <div 
+        className="building-modal-content" 
+        onClick={e => e.stopPropagation()}
+        style={{
         background: 'linear-gradient(135deg, #2c3e50 0%, #1a252f 100%)',
         padding: '24px',
         borderRadius: '12px',
