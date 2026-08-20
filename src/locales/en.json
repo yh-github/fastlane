@@ -873,6 +873,7 @@
   "buildingModal": {
     "tabWork": "Work",
     "tabShop": "Shop",
+    "tabPawn": "Pawn",
     "tabServices": "Services",
     "dontLiveHere": "You don't live here."
   }

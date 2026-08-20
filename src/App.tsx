@@ -223,7 +223,13 @@ export default function App() {
           <StreetRobberyModal
             lostAmount={streetRobberyNotice.lostAmount}
             location={streetRobberyNotice.location}
-            onClose={() => setStreetRobberyNotice(null)}
+            onClose={() => {
+              if (streetRobberyNotice.onConfirm) {
+                streetRobberyNotice.onConfirm();
+              } else {
+                setStreetRobberyNotice(null);
+              }
+            }}
           />
         )}
       </main>

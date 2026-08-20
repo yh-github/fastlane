@@ -545,6 +545,7 @@
   "buildingModal": {
     "tabWork": "עבודה",
     "tabShop": "חנות",
+    "tabPawn": "משכון",
     "tabServices": "שירותים",
     "dontLiveHere": "אינך מתגורר כאן."
   }
