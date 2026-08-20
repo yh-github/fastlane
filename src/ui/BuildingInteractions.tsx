@@ -132,7 +132,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   const workSessionCost = campaign?.config?.timeRules?.workSessionCost ?? 6;
 
   if (!isAdvanced) {
-    const canWork = player.hoursRemaining >= workSessionCost;
+    const canWork = player.hoursRemaining > 0;
     return (
       <div className="interaction-panel">
         <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
@@ -231,7 +231,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
         {modes.map(m => {
-          const hasEnoughTime = player.hoursRemaining >= workSessionCost || !!rules?.allowPartialHours;
+          const hasEnoughTime = player.hoursRemaining > 0;
           const hasEnoughPhys = curPhys - m.physCost >= 1.0;
           const hasEnoughMental = (player.mentalCondition ?? 50) - m.mentalCost >= 1.0;
           const canAfford = hasEnoughTime && hasEnoughPhys && hasEnoughMental;
