@@ -29,7 +29,7 @@ interface BuildingModalProps {
 export function BuildingModal({ player, campaign, currentBuildingId, turn, economicIndex, rules, pawnShopItemsForSale, onAction, onClose }: BuildingModalProps) {
   const { t } = useTranslation();
   const [clerkMessage, setClerkMessage] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'work' | 'services'>('work');
+  const [activeTab, setActiveTab] = useState<'work' | 'services'>('services');
   const justUpdatedMessageRef = useRef(false);
 
   // Helper to pick random string if translation is an array
@@ -45,7 +45,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
 
   // Reset tab and initialize greeting on building change
   useEffect(() => {
-    setActiveTab('work');
+    setActiveTab('services');
   }, [currentBuildingId]);
 
   // Initialize greeting
@@ -354,22 +354,6 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
         {playerJobHere && hasOtherServices && (
           <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
             <button
-              data-testid="tab-work"
-              onClick={() => setActiveTab('work')}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                background: activeTab === 'work' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
-                color: activeTab === 'work' ? '#000' : '#fff',
-                border: activeTab === 'work' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
-                cursor: 'pointer'
-              }}
-            >
-              💼 {t('buildingModal.tabWork', { defaultValue: 'Work' })}
-            </button>
-            <button
               data-testid="tab-services"
               onClick={() => setActiveTab('services')}
               style={{
@@ -384,6 +368,22 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
               }}
             >
               {itemsHere.length > 0 ? `🛒 ${t('buildingModal.tabShop', { defaultValue: 'Shop' })}` : `🏛️ ${t('buildingModal.tabServices', { defaultValue: 'Services' })}`}
+            </button>
+            <button
+              data-testid="tab-work"
+              onClick={() => setActiveTab('work')}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                background: activeTab === 'work' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
+                color: activeTab === 'work' ? '#000' : '#fff',
+                border: activeTab === 'work' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
+                cursor: 'pointer'
+              }}
+            >
+              💼 {t('buildingModal.tabWork', { defaultValue: 'Work' })}
             </button>
           </div>
         )}

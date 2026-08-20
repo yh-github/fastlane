@@ -153,10 +153,7 @@ export function workShift(
   rng?: Random,
   replay?: ReplayContext
 ): WorkResult {
-  if (player.hoursRemaining <= 0 || (player.hoursRemaining < shiftCost && !rules?.allowPartialHours)) {
-    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.notEnoughTimeWork', params: { cost: shiftCost, remaining: player.hoursRemaining } }] };
-  }
-  if (player.currentJobId !== job.id) {
+  if (player.hoursRemaining <= 0 || (player.hoursRemaining < shiftCost && !rules?.allowPartialHours) || player.currentJobId !== job.id) {
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.cannotWork' }] };
   }
   
