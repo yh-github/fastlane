@@ -30,15 +30,17 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
       <div className="interaction-panel">
         <h3>{t('jobBoard.title')} <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 'normal' }}>({t('jobBoard.score', { defaultValue: 'Score' })}: {employabilityScore})</span></h3>
 
-        {locations.map(loc => {
-          const jobCount = availableJobs.filter(j => j.locationId === loc).length;
-          return (
-            <div key={loc} className="interaction-item" style={{ marginBottom: '10px', padding: '5px', border: '1px solid #444', cursor: 'pointer' }} onClick={() => setSelectedLocation(loc)}>
-              <strong>{t(`building.${loc}`, { defaultValue: buildings.find(b => b.id === loc)?.name || loc })}</strong>
-              <div style={{ fontSize: '12px' }}>{t('jobBoard.positions', { count: jobCount })}</div>
-            </div>
-          );
-        })}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+          {locations.map(loc => {
+            const jobCount = availableJobs.filter(j => j.locationId === loc).length;
+            return (
+              <div key={loc} className="interaction-item interaction-item--clickable" style={{ margin: 0, padding: '10px 14px', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setSelectedLocation(loc)}>
+                <strong style={{ color: 'var(--accent-cyan)' }}>{t(`building.${loc}`, { defaultValue: buildings.find(b => b.id === loc)?.name || loc })}</strong>
+                <div style={{ fontSize: '12px', marginTop: '4px', color: '#bbb' }}>{t('jobBoard.positions', { count: jobCount })}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -54,56 +56,66 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
 
   return (
     <div className="interaction-panel">
-      <h3>
-        <button onClick={() => setSelectedLocation(null)} style={{ marginInlineEnd: '10px', padding: '2px 5px' }}>{t('jobBoard.back')}</button>
-        {t('jobBoard.jobsAt', { location: t(`building.${selectedLocation}`, { defaultValue: buildings.find(b => b.id === selectedLocation)?.name || selectedLocation }) })}
+      <h3 style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+        <button onClick={() => setSelectedLocation(null)} style={{ marginInlineEnd: '10px', padding: '4px 10px', fontSize: '12px' }}>{t('jobBoard.back')}</button>
+        <span>{t('jobBoard.jobsAt', { location: t(`building.${selectedLocation}`, { defaultValue: buildings.find(b => b.id === selectedLocation)?.name || selectedLocation }) })}</span>
       </h3>
-      {jobsAtLocation.map(job => {
-        const isCurrentJob = player.currentJobId === job.id;
-        const missingExp = player.experience < job.requirements.experience;
-        const missingDep = player.dependability < job.requirements.dependability;
-        const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
-        const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
-        
-        return (
-          <div key={job.id} className="interaction-item" style={{ marginBottom: '10px', padding: '10px', border: '1px solid #444', borderRadius: '4px' }}>
-            <strong>{t(`job.${job.id}`, { defaultValue: job.title })}</strong> — ${offeredWage}/hr ({t('jobBoard.base')}: ${job.baseWage})
-            {rules?.helpfulUI && (
-              <>
-                <div style={{ fontSize: '12px', marginTop: '5px' }}>
-                  <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>{t('jobBoard.exp')}: {job.requirements.experience}</span> | 
-                  <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>{t('jobBoard.dep')}: {job.requirements.dependability}</span>
-                  {job.requirements.degrees.length > 0 && (
-                    <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
-                      | {t('jobBoard.degrees')}: {job.requirements.degrees.map(d => t(`education.${d}`, { defaultValue: d })).join(', ')}
-                    </span>
-                  )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px' }}>
+        {jobsAtLocation.map(job => {
+          const isCurrentJob = player.currentJobId === job.id;
+          const missingExp = player.experience < job.requirements.experience;
+          const missingDep = player.dependability < job.requirements.dependability;
+          const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
+          const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
+          
+          return (
+            <div key={job.id} className="interaction-item" style={{ margin: 0, padding: '12px', border: '1px solid #444', borderRadius: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
+                  <strong>{t(`job.${job.id}`, { defaultValue: job.title })}</strong>
+                  <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${offeredWage}/hr</span>
                 </div>
-                {(missingExp || missingDep || missingDegrees.length > 0) && (
-                  <div style={{ fontSize: '11px', color: '#e74c3c', fontStyle: 'italic', marginTop: '2px' }}>
-                    {t('jobBoard.missingReq')}
-                  </div>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px' }}>
+                  {t('jobBoard.base')}: ${job.baseWage}/hr
+                </div>
+                {rules?.helpfulUI && (
+                  <>
+                    <div style={{ fontSize: '12px', marginTop: '5px' }}>
+                      <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>{t('jobBoard.exp')}: {job.requirements.experience}</span> | 
+                      <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>{t('jobBoard.dep')}: {job.requirements.dependability}</span>
+                      {job.requirements.degrees.length > 0 && (
+                        <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
+                          | {t('jobBoard.degrees')}: {job.requirements.degrees.map(d => t(`education.${d}`, { defaultValue: d })).join(', ')}
+                        </span>
+                      )}
+                    </div>
+                    {(missingExp || missingDep || missingDegrees.length > 0) && (
+                      <div style={{ fontSize: '11px', color: '#e74c3c', fontStyle: 'italic', marginTop: '2px' }}>
+                        {t('jobBoard.missingReq')}
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-            <div style={{ marginTop: '10px' }}>
-              {isCurrentJob ? (
-                (!rules?.helpfulUI || offeredWage > player.currentWage) ? (
-                  <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                    {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
-                  </button>
+              </div>
+              <div style={{ marginTop: '10px' }}>
+                {isCurrentJob ? (
+                  (!rules?.helpfulUI || offeredWage > player.currentWage) ? (
+                    <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
+                      {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
+                    </button>
+                  ) : (
+                    <span style={{ color: '#4caf50', fontWeight: 'bold', display: 'block', textAlign: 'center', padding: '6px' }}>✓ {t('jobBoard.currentJob', { wage: player.currentWage })}</span>
+                  )
                 ) : (
-                  <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ {t('jobBoard.currentJob', { wage: player.currentWage })}</span>
-                )
-              ) : (
-                <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                  {t('jobBoard.apply', { cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
-                </button>
-              )}
+                  <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
+                    {t('jobBoard.apply', { cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -112,21 +124,34 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
  * WorkStation — Shown at workplace buildings where the player is employed.
  * Allows the player to work a shift.
  */
-export function WorkStation({ player, onAction, job, campaign }: InteractionProps & { job: JobDef, campaign: CampaignBundle }) {
+export function WorkStation({ player, onAction, job, campaign }: InteractionProps & { job: JobDef, campaign?: CampaignBundle }) {
   const { t } = useTranslation();
-  const [showWorkModal, setShowWorkModal] = useState(false);
-
-  const rules = campaign.config.gameRules;
-  const statRules = campaign.config.statRules;
+  const rules = campaign?.rules || campaign?.config?.gameRules;
+  const statRules = campaign?.config?.statRules;
   const isAdvanced = !!rules?.usePhysicalMentalConditions;
+  const workSessionCost = campaign?.config?.timeRules?.workSessionCost ?? 6;
 
   if (!isAdvanced) {
+    const canWork = player.hoursRemaining >= workSessionCost;
     return (
       <div className="interaction-panel">
         <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
         <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
-        <button data-action-target={`work-${job.id}`} onClick={() => onAction({ type: 'work', jobId: job.id })}>
-          {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
+        <button
+          data-action-target={`work-${job.id}`}
+          onClick={() => onAction({ type: 'work', jobId: job.id })}
+          style={{
+            padding: '10px 16px',
+            fontWeight: 'bold',
+            backgroundColor: canWork ? '#2980b9' : '#444',
+            color: canWork ? '#fff' : '#888',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            opacity: canWork ? 1 : 0.55
+          }}
+        >
+          💼 {t('workStation.workShift', { cost: workSessionCost })}
         </button>
       </div>
     );
@@ -156,22 +181,24 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
 
   const modes = [
     {
-      id: 'look_busy',
-      label: t('action.workModal.lookBusy', { defaultValue: 'Look Busy' }),
-      physCost: basePhys * 0.5,
-      mentalCost: baseMental * 0.5 + halfFatigueMental,
-      wage: player.currentWage * 8,
-      rewardText: '+0 Dep',
-      color: '#3498db'
-    },
-    {
       id: 'work_work',
       label: t('action.workModal.workWork', { defaultValue: 'Work Work' }),
       physCost: basePhys * 1.0,
       mentalCost: baseMental * 1.0 + fatigueMental,
       wage: player.currentWage * 8,
       rewardText: '+1 Dep',
-      color: '#2ecc71'
+      color: '#2ecc71',
+      isDefault: true
+    },
+    {
+      id: 'look_busy',
+      label: t('action.workModal.lookBusy', { defaultValue: 'Look Busy' }),
+      physCost: basePhys * 0.5,
+      mentalCost: baseMental * 0.5 + halfFatigueMental,
+      wage: player.currentWage * 8,
+      rewardText: '+0 Dep',
+      color: '#3498db',
+      isDefault: false
     },
     {
       id: 'face_time',
@@ -180,7 +207,8 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       mentalCost: baseMental * 0.5 + halfFatigueMental,
       wage: Math.floor(player.currentWage * 8 * 0.5),
       rewardText: '+2 Dep',
-      color: '#9b59b6'
+      color: '#9b59b6',
+      isDefault: false
     },
     {
       id: 'innovate',
@@ -189,139 +217,71 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       mentalCost: baseMental + 5 + fatigueMental,
       wage: player.currentWage * 8,
       rewardText: '0-5 Dep (Fail: +Max Dep/XP)',
-      color: '#e67e22'
+      color: '#e67e22',
+      isDefault: false
     }
   ];
 
   return (
     <div className="interaction-panel">
-      <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
-      <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr {tierLabel}</p>
-      
-      <button 
-        data-action-target={`work-${job.id}`} 
-        onClick={() => setShowWorkModal(true)}
-        style={{ padding: '10px 16px', fontWeight: 'bold', backgroundColor: '#2980b9', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-      >
-        💼 {t('workStation.workShift', { cost: campaign.config.timeRules?.workSessionCost ?? 6 })}
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
+        <h3 style={{ margin: 0 }}>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
+        <span style={{ fontSize: '12px', color: '#00e5ff', fontWeight: 'bold' }}>${player.currentWage}/hr {tierLabel}</span>
+      </div>
 
-      {showWorkModal && typeof document !== 'undefined' && createPortal(
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000,
-          padding: '12px', boxSizing: 'border-box', pointerEvents: 'none'
-        }}>
-          <div style={{
-            background: 'rgba(20, 20, 40, 0.95)',
-            backdropFilter: 'blur(12px)',
-            padding: '16px 20px',
-            borderRadius: '12px',
-            maxWidth: '420px',
-            width: '100%',
-            maxHeight: '85vh',
-            display: 'flex',
-            flexDirection: 'column',
-            boxSizing: 'border-box',
-            border: '1px solid var(--accent-cyan, #00e5ff)',
-            color: '#fff',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan, 0 0 10px rgba(0,229,255,0.5))',
-            pointerEvents: 'auto'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 12px 0', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', flexShrink: 0 }}>
-              <h3 style={{ margin: 0, fontSize: '1.1em', color: 'var(--accent-cyan, #00e5ff)' }}>
-                💼 {t('action.workModal.title', { defaultValue: 'Choose Work Strategy' })}
-              </h3>
-              <button
-                data-testid="close-work-modal"
-                onClick={() => setShowWorkModal(false)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#aaa',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  padding: '2px 6px',
-                  lineHeight: '1'
-                }}
-                title="Close"
-              >
-                ✕
-              </button>
-            </div>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              overflowY: 'auto',
-              flex: '1 1 auto',
-              minHeight: 0,
-              paddingRight: '4px'
-            }}>
-              {modes.map(m => {
-                const canAfford = (curPhys - m.physCost >= 1.0) && ((player.mentalCondition ?? 50) - m.mentalCost >= 1.0);
-                const isWorkWork = m.id === 'work_work';
-                const costStr = m.mentalCost > 0
-                  ? `-${m.physCost} Phys, -${m.mentalCost} Mental`
-                  : `-${m.physCost} Phys`;
-                return (
-                  <button
-                    key={m.id}
-                    data-testid={`work-mode-${m.id}`}
-                    disabled={!canAfford}
-                    onClick={() => {
-                      onAction({ type: 'work', jobId: job.id, mode: m.id });
-                    }}
-                    style={{
-                      padding: isWorkWork ? '10px 14px' : '8px 12px',
-                      borderRadius: '6px',
-                      backgroundColor: isWorkWork && canAfford
-                        ? 'rgba(46, 204, 113, 0.15)'
-                        : (canAfford ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'),
-                      border: isWorkWork && canAfford
-                        ? '2px solid #2ecc71'
-                        : `1px solid ${canAfford ? m.color : '#444'}`,
-                      boxShadow: isWorkWork && canAfford ? '0 0 10px rgba(46, 204, 113, 0.25)' : undefined,
-                      color: canAfford ? '#fff' : '#666',
-                      cursor: canAfford ? 'pointer' : 'not-allowed',
-                      textAlign: 'left',
-                      position: 'relative',
-                      flexShrink: 0
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontWeight: 'bold', color: canAfford ? (isWorkWork ? '#2ecc71' : m.color) : '#666', fontSize: isWorkWork ? '1.05em' : '0.98em' }}>
-                        {m.label}
-                      </span>
-                      {isWorkWork && (
-                        <span style={{ fontSize: '0.65em', padding: '1px 5px', background: '#2ecc71', color: '#111', borderRadius: '3px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          {t('action.workModal.defaultBadge', { defaultValue: 'Default' })}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '0.78em', marginTop: '3px', color: canAfford ? '#bbb' : '#666' }}>
-                      {costStr} | ${m.wage} | {m.rewardText}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', flexShrink: 0 }}>
-              <span style={{ fontSize: '0.82em', color: '#aaa' }}>
-                ⏳ {player.hoursRemaining} hrs remaining
-              </span>
-              <button
-                data-testid="done-work-modal"
-                onClick={() => setShowWorkModal(false)}
-                style={{ padding: '6px 18px', background: '#34495e', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85em' }}
-              >
-                {t('action.workModal.done', { defaultValue: 'Done' })}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+        {modes.map(m => {
+          const hasEnoughTime = player.hoursRemaining >= workSessionCost || !!rules?.allowPartialHours;
+          const hasEnoughPhys = curPhys - m.physCost >= 1.0;
+          const hasEnoughMental = (player.mentalCondition ?? 50) - m.mentalCost >= 1.0;
+          const canAfford = hasEnoughTime && hasEnoughPhys && hasEnoughMental;
+          const isWorkWork = m.id === 'work_work';
+          const costStr = m.mentalCost > 0
+            ? `-${m.physCost} Phys, -${m.mentalCost} Mental`
+            : `-${m.physCost} Phys`;
+
+          return (
+            <button
+              key={m.id}
+              data-testid={`work-mode-${m.id}`}
+              data-action-target={isWorkWork ? `work-${job.id}` : undefined}
+              onClick={() => {
+                onAction({ type: 'work', jobId: job.id, mode: m.id });
+              }}
+              style={{
+                padding: isWorkWork ? '10px 14px' : '8px 12px',
+                borderRadius: '6px',
+                backgroundColor: isWorkWork && canAfford
+                  ? 'rgba(46, 204, 113, 0.15)'
+                  : (canAfford ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'),
+                border: isWorkWork && canAfford
+                  ? '2px solid #2ecc71'
+                  : `1px solid ${canAfford ? m.color : '#444'}`,
+                boxShadow: isWorkWork && canAfford ? '0 0 10px rgba(46, 204, 113, 0.25)' : undefined,
+                color: canAfford ? '#fff' : '#777',
+                cursor: 'pointer',
+                opacity: canAfford ? 1 : 0.55,
+                textAlign: 'left',
+                position: 'relative'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 'bold', color: canAfford ? (isWorkWork ? '#2ecc71' : m.color) : '#888', fontSize: isWorkWork ? '1.05em' : '0.98em' }}>
+                  {m.label}
+                </span>
+                {isWorkWork && (
+                  <span style={{ fontSize: '0.65em', padding: '1px 5px', background: canAfford ? '#2ecc71' : '#555', color: '#111', borderRadius: '3px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {t('action.workModal.defaultBadge', { defaultValue: 'Default' })}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '0.78em', marginTop: '3px', color: canAfford ? '#bbb' : '#777' }}>
+                {costStr} | ${m.wage} | {m.rewardText}
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -330,49 +290,53 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
   const { t } = useTranslation();
   return (
     <div className="interaction-panel">
-      <h3>{t('storeFront.title')}</h3>
-      {availableItems.map(item => {
-        const adjustedPrice = calcItemPrice(item, economicIndex);
-        const canAfford = player.money >= adjustedPrice;
-        let alreadyOwned = false;
-        if (item.category === 'book') alreadyOwned = player.inventory.books.includes(item.id);
-        else if (item.category === 'appliance') alreadyOwned = player.inventory.appliances.some(a => a.id === item.id);
-        
-        return (
-          <div 
-            key={item.id} 
-            className={`interaction-item interaction-item--clickable ${!canAfford ? 'interaction-item--disabled' : ''}`}
-            style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginBottom: '5px',
-              opacity: canAfford ? 1 : 0.5,
-              cursor: 'pointer' 
-            }}
-            onClick={() => {
-              onAction({ type: 'buy', itemId: item.id });
-            }}
-            data-action-target={`buy-${item.id}`}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {rules?.showItemImages && (
-                <img 
-                  src={`/assets/raw_images/${item.id}.png`} 
-                  alt={item.name} 
-                  style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              )}
-              <span>
-                {t(`item.${item.id}`, { defaultValue: item.name })}
-                {rules?.helpfulUI && alreadyOwned && <span style={{ color: '#4caf50', marginLeft: '8px', fontWeight: 'bold' }}>✓ {t('storeFront.owned', { defaultValue: 'Owned' })}</span>}
-              </span>
+      <h3 style={{ marginBottom: '12px' }}>{t('storeFront.title')}</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
+        {availableItems.map(item => {
+          const adjustedPrice = calcItemPrice(item, economicIndex);
+          const canAfford = player.money >= adjustedPrice;
+          let alreadyOwned = false;
+          if (item.category === 'book') alreadyOwned = player.inventory.books.includes(item.id);
+          else if (item.category === 'appliance') alreadyOwned = player.inventory.appliances.some(a => a.id === item.id);
+          
+          return (
+            <div 
+              key={item.id} 
+              className={`interaction-item interaction-item--clickable ${!canAfford ? 'interaction-item--disabled' : ''}`}
+              style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                margin: 0,
+                padding: '8px 12px',
+                opacity: canAfford ? 1 : 0.5,
+                cursor: canAfford ? 'pointer' : 'not-allowed',
+                borderRadius: '6px'
+              }}
+              onClick={() => {
+                onAction({ type: 'buy', itemId: item.id });
+              }}
+              data-action-target={`buy-${item.id}`}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                {rules?.showItemImages && (
+                  <img 
+                    src={`/assets/raw_images/${item.id}.png`} 
+                    alt={item.name} 
+                    style={{ width: '28px', height: '28px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px', flexShrink: 0 }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+                <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {t(`item.${item.id}`, { defaultValue: item.name })}
+                  {rules?.helpfulUI && alreadyOwned && <span style={{ color: '#4caf50', marginLeft: '6px', fontWeight: 'bold' }}>✓ {t('storeFront.owned', { defaultValue: 'Owned' })}</span>}
+                </span>
+              </div>
+              <span style={{ fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>${adjustedPrice}</span>
             </div>
-            <span>${adjustedPrice}</span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -663,7 +627,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   return (
     <div className="interaction-panel">
       <h3>{t('rentOffice.title')}</h3>
-      <p style={{ fontSize: '12px', marginBottom: '10px' }}>{t('rentOffice.current')}: {currentHousing ? t(`housing.${currentHousing.id}`, { defaultValue: currentHousing.name }) : t('rentOffice.homeless')}</p>
+      <p style={{ fontSize: '12px', marginBottom: '12px' }}>{t('rentOffice.current')}: {currentHousing ? t(`housing.${currentHousing.id}`, { defaultValue: currentHousing.name }) : t('rentOffice.homeless')}</p>
       
       {!isOpen ? (
         <div style={{ padding: '10px', backgroundColor: '#555', borderRadius: '4px', fontStyle: 'italic' }}>
@@ -671,92 +635,110 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
         </div>
       ) : (
         <>
-          {rentOwed > 0 && (
-            <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#e74c3c', borderRadius: '4px' }}>
-              <strong>{t('rentOffice.rentDue', { amount: rentOwed })}</strong>
-              <br/>
-              <button 
-                onClick={() => onAction({ type: 'rent_transaction', amount: rentOwed })}
-                style={{ marginTop: '10px', backgroundColor: '#c0392b' }}
-              >
-                {t('rentOffice.payRentDebt')}
-              </button>
-            </div>
-          )}
-
-          {currentHousing && (
-            <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #4aa' }}>
-              <strong>{t('rentOffice.paidUntil', { week: player.rentPaidUntilWeek })}</strong>
-              <p style={{ fontSize: '12px' }}>{t('rentOffice.weeksPaid', { count: player.rentPaidUntilWeek - turn })}</p>
-              
-              <button 
-                onClick={() => onAction({ type: 'pay_rent_advance', amount: rentAdvanceCost })}
-                style={{ marginTop: '5px' }}
-              >
-                {t('rentOffice.payAdvance', { cost: rentAdvanceCost })}
-              </button>
-            </div>
-          )}
-
-          {(!rules?.helpfulUI || (rentDue && !player.rentExtensionActive && !player.turnFlags.askedForExtension)) && !player.rentExtensionsDeniedPermanently && (
-            <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #c93' }}>
-              {rules?.helpfulUI && <strong>{t('rentOffice.rentIsDue')}</strong>}
-              {rules?.helpfulUI && <p style={{ fontSize: '12px' }}>{t('rentOffice.canAskExtension')}</p>}
-              <button 
-                onClick={() => onAction({ type: 'ask_rent_extension' })}
-                style={{ marginTop: '5px', backgroundColor: '#e67e22' }}
-              >
-                {t('rentOffice.askExtension')}
-              </button>
-            </div>
-          )}
-          {player.rentExtensionActive && (
-            <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #27ae60', color: '#27ae60' }}>
-              <strong>{t('rentOffice.extensionGranted')}</strong>
-              <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.dueByEnd')}</p>
-            </div>
-          )}
-          {player.turnFlags.askedForExtension && !player.rentExtensionActive && (
-            <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #e74c3c', color: '#e74c3c' }}>
-              <strong>{t('rentOffice.extensionDenied')}</strong>
-              <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.mustPay')}</p>
-            </div>
-          )}
-          {player.rentExtensionsDeniedPermanently && (
-            <div style={{ marginBottom: '15px', padding: '10px', border: '1px solid #e74c3c', color: '#e74c3c' }}>
-              <strong>{t('rentOffice.permanentlyDenied')}</strong>
-              <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.neverAnother')}</p>
-            </div>
-          )}
-
-          <h4>{t('rentOffice.availableApts')}:</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-            {lowCostHousing && (!rules?.helpfulUI || player.currentHousingId !== lowCostHousing.id) && (
-              <div className="store-item">
-                <span>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })} - ${lowCostMovePrice}/mo</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {/* Left Column: Current Lease, Debt, Advance, Extension */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <h4 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '0.95em' }}>Lease & Payments</h4>
+            
+            {rentOwed > 0 && (
+              <div style={{ padding: '10px', backgroundColor: '#e74c3c', borderRadius: '6px' }}>
+                <strong>{t('rentOffice.rentDue', { amount: rentOwed })}</strong>
+                <br/>
                 <button 
-                  onClick={() => handleInitiateMove(lowCostHousing.id, lowCostMovePrice, t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name }))}
-                  disabled={rules?.helpfulUI && player.currentHousingId === lowCostHousing.id}
+                  onClick={() => onAction({ type: 'rent_transaction', amount: rentOwed })}
+                  style={{ marginTop: '10px', backgroundColor: '#c0392b' }}
                 >
-                  {player.currentHousingId === lowCostHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
+                  {t('rentOffice.payRentDebt')}
                 </button>
               </div>
             )}
-            
-            {securityHousing && (!rules?.helpfulUI || player.currentHousingId !== securityHousing.id) && (
-              <div className="store-item">
-                <span>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })} - ${securityMovePrice}/mo</span>
+
+            {currentHousing && (
+              <div style={{ padding: '10px', border: '1px solid #4aa', borderRadius: '6px', background: 'rgba(0,0,0,0.2)' }}>
+                <strong>{t('rentOffice.paidUntil', { week: player.rentPaidUntilWeek })}</strong>
+                <p style={{ fontSize: '12px', margin: '4px 0 8px 0', color: '#ccc' }}>{t('rentOffice.weeksPaid', { count: player.rentPaidUntilWeek - turn })}</p>
+                
                 <button 
-                  onClick={() => handleInitiateMove(securityHousing.id, securityMovePrice, t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name }))}
-                  disabled={rules?.helpfulUI && player.currentHousingId === securityHousing.id}
+                  onClick={() => onAction({ type: 'pay_rent_advance', amount: rentAdvanceCost })}
+                  style={{ width: '100%' }}
                 >
-                  {player.currentHousingId === securityHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
+                  {t('rentOffice.payAdvance', { cost: rentAdvanceCost })}
                 </button>
+              </div>
+            )}
+
+            {(!rules?.helpfulUI || (rentDue && !player.rentExtensionActive && !player.turnFlags.askedForExtension)) && !player.rentExtensionsDeniedPermanently && (
+              <div style={{ padding: '10px', border: '1px solid #c93', borderRadius: '6px', background: 'rgba(0,0,0,0.2)' }}>
+                {rules?.helpfulUI && <strong>{t('rentOffice.rentIsDue')}</strong>}
+                {rules?.helpfulUI && <p style={{ fontSize: '12px', margin: '4px 0 8px 0', color: '#ccc' }}>{t('rentOffice.canAskExtension')}</p>}
+                <button 
+                  onClick={() => onAction({ type: 'ask_rent_extension' })}
+                  style={{ backgroundColor: '#e67e22', width: '100%' }}
+                >
+                  {t('rentOffice.askExtension')}
+                </button>
+              </div>
+            )}
+            {player.rentExtensionActive && (
+              <div style={{ padding: '10px', border: '1px solid #27ae60', borderRadius: '6px', color: '#2ecc71', background: 'rgba(0,0,0,0.2)' }}>
+                <strong>{t('rentOffice.extensionGranted')}</strong>
+                <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.dueByEnd')}</p>
+              </div>
+            )}
+            {player.turnFlags.askedForExtension && !player.rentExtensionActive && (
+              <div style={{ padding: '10px', border: '1px solid #e74c3c', borderRadius: '6px', color: '#e74c3c', background: 'rgba(0,0,0,0.2)' }}>
+                <strong>{t('rentOffice.extensionDenied')}</strong>
+                <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.mustPay')}</p>
+              </div>
+            )}
+            {player.rentExtensionsDeniedPermanently && (
+              <div style={{ padding: '10px', border: '1px solid #e74c3c', borderRadius: '6px', color: '#e74c3c', background: 'rgba(0,0,0,0.2)' }}>
+                <strong>{t('rentOffice.permanentlyDenied')}</strong>
+                <p style={{ fontSize: '12px', margin: 0 }}>{t('rentOffice.neverAnother')}</p>
               </div>
             )}
           </div>
 
-          {confirmMove && typeof document !== 'undefined' && createPortal(
+          {/* Right Column: Available Apartments / Moving */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <h4 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '0.95em' }}>{t('rentOffice.availableApts')}:</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {lowCostHousing && (!rules?.helpfulUI || player.currentHousingId !== lowCostHousing.id) && (
+                <div className="store-item" style={{ padding: '12px', borderRadius: '6px', border: '1px solid #444', background: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <strong>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })}</strong>
+                    <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${lowCostMovePrice}/mo</span>
+                  </div>
+                  <button 
+                    onClick={() => handleInitiateMove(lowCostHousing.id, lowCostMovePrice, t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name }))}
+                    disabled={rules?.helpfulUI && player.currentHousingId === lowCostHousing.id}
+                    style={{ width: '100%' }}
+                  >
+                    {player.currentHousingId === lowCostHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
+                  </button>
+                </div>
+              )}
+              
+              {securityHousing && (!rules?.helpfulUI || player.currentHousingId !== securityHousing.id) && (
+                <div className="store-item" style={{ padding: '12px', borderRadius: '6px', border: '1px solid #444', background: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <strong>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })}</strong>
+                    <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${securityMovePrice}/mo</span>
+                  </div>
+                  <button 
+                    onClick={() => handleInitiateMove(securityHousing.id, securityMovePrice, t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name }))}
+                    disabled={rules?.helpfulUI && player.currentHousingId === securityHousing.id}
+                    style={{ width: '100%' }}
+                  >
+                    {player.currentHousingId === securityHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {confirmMove && typeof document !== 'undefined' && createPortal(
             <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'var(--panel-bg, #13132c)', backdropFilter: 'blur(15px)', color: '#fff', padding: '24px', border: '1px solid var(--accent-cyan, #00e5ff)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan, 0 0 10px rgba(0,229,255,0.5))', zIndex: 10000, maxWidth: '440px', width: '90%', textAlign: 'center' }}>
               <h4 style={{ margin: '0 0 10px 0', color: '#00e5ff' }}>Confirm Apartment Move</h4>
               <p style={{ whiteSpace: 'pre-wrap', marginBottom: '15px', fontSize: '13px', lineHeight: '1.5', color: '#e0e0ff' }}>
@@ -983,7 +965,6 @@ export function BankTransactionDialog({
   onConfirm: (amount: number) => void;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
   const [amountInput, setAmountInput] = useState<string>('50');
 
   const isDeposit = mode === 'deposit';
@@ -1191,7 +1172,7 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
   );
 }
 
-export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
+export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules: _rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<'banking'|'stocks'|'loans'>('banking');
   const [bankDialogMode, setBankDialogMode] = useState<'deposit' | 'withdraw' | null>(null);
@@ -1257,43 +1238,51 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       </div>
       
       {tab === 'banking' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
-              onClick={handleDepositClick}
-              style={{
-                flex: 1,
-                padding: '12px',
-                background: canDeposit ? '#2ecc71' : '#555',
-                color: canDeposit ? '#000' : '#aaa',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                fontSize: '14px',
-                cursor: 'pointer',
-                opacity: canDeposit ? 1 : 0.6
-              }}
-            >
-              📥 {t('bank.depositBtn', { defaultValue: 'Deposit Money' })}
-            </button>
-            <button 
-              onClick={handleWithdrawClick}
-              style={{
-                flex: 1,
-                padding: '12px',
-                background: canWithdraw ? '#3498db' : '#555',
-                color: canWithdraw ? '#fff' : '#aaa',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                fontSize: '14px',
-                cursor: 'pointer',
-                opacity: canWithdraw ? 1 : 0.6
-              }}
-            >
-              📤 {t('bank.withdrawBtn', { defaultValue: 'Withdraw Money' })}
-            </button>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '10px' }}>
+          <button 
+            onClick={handleDepositClick}
+            style={{
+              padding: '16px',
+              background: canDeposit ? '#2ecc71' : '#555',
+              color: canDeposit ? '#000' : '#aaa',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              fontSize: '15px',
+              cursor: canDeposit ? 'pointer' : 'not-allowed',
+              opacity: canDeposit ? 1 : 0.6,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            <span style={{ fontSize: '1.8rem' }}>📥</span>
+            <span>{t('bank.depositBtn', { defaultValue: 'Deposit Money' })}</span>
+          </button>
+          <button 
+            onClick={handleWithdrawClick}
+            style={{
+              padding: '16px',
+              background: canWithdraw ? '#3498db' : '#555',
+              color: canWithdraw ? '#fff' : '#aaa',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              fontSize: '15px',
+              cursor: canWithdraw ? 'pointer' : 'not-allowed',
+              opacity: canWithdraw ? 1 : 0.6,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            <span style={{ fontSize: '1.8rem' }}>📤</span>
+            <span>{t('bank.withdrawBtn', { defaultValue: 'Withdraw Money' })}</span>
+          </button>
         </div>
       )}
 
@@ -1320,7 +1309,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       )}
 
       {tab === 'stocks' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
           {(campaign?.stocks || [
             { id: 'tbills', name: 'Treasury Bills', type: 'fixed', basePrice: 100 },
             { id: 'blue_chip', name: 'Blue Chip Stocks', type: 'fluctuating', basePrice: 49 },
@@ -1341,12 +1330,16 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
       )}
 
       {tab === 'loans' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button onClick={() => onAction({ type: 'take_loan' })}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '10px' }}>
+          <button 
+            onClick={() => onAction({ type: 'take_loan' })}
+            style={{ padding: '14px', borderRadius: '8px' }}
+          >
             {t('bank.applyLoan', { cost: campaign?.config.timeRules?.loanCost ?? 2, defaultValue: `Apply for Loan (Costs ${campaign?.config.timeRules?.loanCost ?? 2} Hours)` })}
           </button>
           <button 
             onClick={() => onAction({ type: 'pay_loan' })} 
+            style={{ padding: '14px', borderRadius: '8px' }}
           >
             {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanPaymentAmount} or remainder)` })}
           </button>
@@ -1367,54 +1360,54 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
     <div className="interaction-panel">
       <h3>{t('pawnShop.title', { defaultValue: 'Pawn Shop' })}</h3>
       
-      <h4>{t('pawnShop.sellTitle', { defaultValue: 'Sell Items (40% Value)' })}</h4>
+      <h4 style={{ color: 'var(--accent-cyan)', margin: '12px 0 8px 0', fontSize: '0.95em' }}>{t('pawnShop.sellTitle', { defaultValue: 'Sell Items (40% Value)' })}</h4>
       {pawnableAppliances.length === 0 ? (
         <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('pawnShop.noSell', { defaultValue: 'You have no appliances to pawn.' })}</p>
       ) : (
-        <ul className="store-list">
+        <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
           {pawnableAppliances.map((app, idx) => {
             const pawnValue = Math.floor(calcEconomyPrice(app.purchasePrice, economicIndex) * 0.4);
             return (
-              <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item: app, value: pawnValue })}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item: app, value: pawnValue })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                   {rules?.showItemImages && (
                     <img 
                       src={`/assets/raw_images/${app.id}.png`} 
                       alt={app.id} 
-                      style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                      style={{ width: '28px', height: '28px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px', flexShrink: 0 }}
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
-                  <span>{t(`item.${app.id}`, { defaultValue: formatItemName(app.id) })}</span>
+                  <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.id}`, { defaultValue: formatItemName(app.id) })}</span>
                 </div>
-                <span style={{ color: '#2ecc71' }}>+${pawnValue}</span>
+                <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>+${pawnValue}</span>
               </li>
             );
           })}
         </ul>
       )}
 
-      <h4 style={{ marginTop: '20px' }}>{t('pawnShop.buyTitle', { defaultValue: 'Buy Back (50% Value)' })}</h4>
+      <h4 style={{ color: 'var(--accent-cyan)', margin: '16px 0 8px 0', fontSize: '0.95em' }}>{t('pawnShop.buyTitle', { defaultValue: 'Buy Back (50% Value)' })}</h4>
       {redeemableItems.length === 0 ? (
         <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('pawnShop.noBuy', { defaultValue: 'You have no items pawned.' })}</p>
       ) : (
-        <ul className="store-list">
+        <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
           {redeemableItems.map((app, idx) => {
             const redeemCost = app.redeemCost;
             return (
-              <li key={idx} className="store-item" onClick={() => onAction({ type: 'redeem_item', item: app, cost: redeemCost })}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <li key={idx} className="store-item" onClick={() => onAction({ type: 'redeem_item', item: app, cost: redeemCost })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                   {rules?.showItemImages && (
                     <img 
                       src={`/assets/raw_images/${app.itemId}.png`} 
                       alt={app.itemId} 
-                      style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                      style={{ width: '28px', height: '28px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px', flexShrink: 0 }}
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
-                  <span>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
+                  <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
                 </div>
-                <span style={{ color: '#e74c3c' }}>-${redeemCost}</span>
+                <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-${redeemCost}</span>
               </li>
             );
           })}
@@ -1423,24 +1416,24 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
 
       {pawnShopItemsForSale.length > 0 && (
         <>
-          <h4 style={{ marginTop: '20px' }}>{t('pawnShop.secondHandTitle', { defaultValue: 'Second Hand Items (50% Value)' })}</h4>
-          <ul className="store-list">
+          <h4 style={{ color: 'var(--accent-cyan)', margin: '16px 0 8px 0', fontSize: '0.95em' }}>{t('pawnShop.secondHandTitle', { defaultValue: 'Second Hand Items (50% Value)' })}</h4>
+          <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
             {pawnShopItemsForSale.map((app, idx) => {
               const buyCost = Math.floor(app.originalPrice * 0.5);
               return (
-                <li key={idx} className="store-item" onClick={() => onAction({ type: 'buy_pawn_item', item: app, cost: buyCost })}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <li key={idx} className="store-item" onClick={() => onAction({ type: 'buy_pawn_item', item: app, cost: buyCost })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                     {rules?.showItemImages && (
                       <img 
                         src={`/assets/raw_images/${app.itemId}.png`} 
                         alt={app.itemId} 
-                        style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                        style={{ width: '28px', height: '28px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px', flexShrink: 0 }}
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     )}
-                    <span>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
+                    <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
                   </div>
-                  <span style={{ color: '#e74c3c' }}>-${buyCost}</span>
+                  <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-${buyCost}</span>
                 </li>
               );
             })}
@@ -1518,72 +1511,88 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
 
       {tab === 'available' && (
         <>
-          <h4>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
-          {availableDegrees
-            .filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)))
-            .filter(deg => !player.degrees.includes(deg.id))
-            .map(deg => {
-              const required = calcRequiredLessons(player, deg);
-              const hasBonus = required < deg.lessonsRequired;
-              const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
-              const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
+          <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 10px 0', fontSize: '0.95em' }}>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+            {availableDegrees
+              .filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)))
+              .filter(deg => !player.degrees.includes(deg.id))
+              .map(deg => {
+                const required = calcRequiredLessons(player, deg);
+                const hasBonus = required < deg.lessonsRequired;
+                const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
+                const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
 
-              const tuitionFee = calcEconomyPrice(deg.baseTuitionFee, economicIndex);
+                const tuitionFee = calcEconomyPrice(deg.baseTuitionFee, economicIndex);
 
-              return (
-                <div key={deg.id} className="interaction-item" style={{ marginBottom: '10px', padding: '10px', border: '1px solid #4aa', borderRadius: '4px' }}>
-                  <strong>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong> {isEnrolled ? '' : t('university.tuition', { fee: tuitionFee, defaultValue: `- Tuition: $${tuitionFee}` })}
-                  {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', marginInlineStart: '5px', fontWeight: 'bold' }}>{t('university.bonus', { defaultValue: '★ Bonus' })}</span>}
-                  
-                  {isEnrolled ? (
-                    <>
-                      <div style={{ fontSize: '12px', marginTop: '4px' }}>{t('university.lessons', { completed: lessonsCompleted, required, defaultValue: `Lessons: ${lessonsCompleted} / ${required}` })}</div>
-                      <button 
-                        style={{ marginTop: '5px', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1 }} 
-                        onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
-                        data-action-target={`study-${deg.id}`}
-                      >
-                        {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
-                        {rules?.usePhysicalMentalConditions && (() => {
-                          const sRules = campaign.config.statRules;
-                          const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
-                          const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;
-                          const studyGrindThresh = sRules?.studyGrindThreshold ?? 4;
+                return (
+                  <div key={deg.id} className="interaction-item" style={{ margin: 0, padding: '12px', border: '1px solid #4aa', borderRadius: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                        <strong>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong>
+                        {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', fontWeight: 'bold' }}>{t('university.bonus', { defaultValue: '★ Bonus' })}</span>}
+                      </div>
+                      {!isEnrolled && (
+                        <div style={{ fontSize: '12px', color: '#ccc', marginBottom: '6px' }}>
+                          {t('university.tuition', { fee: tuitionFee, defaultValue: `Tuition: $${tuitionFee}` })}
+                        </div>
+                      )}
+                      
+                      {isEnrolled && (
+                        <div style={{ fontSize: '12px', marginTop: '4px', color: 'var(--accent-cyan)' }}>
+                          {t('university.lessons', { completed: lessonsCompleted, required, defaultValue: `Lessons: ${lessonsCompleted} / ${required}` })}
+                        </div>
+                      )}
+                    </div>
 
-                          let mCost = sRules?.studyMentalCost ?? sRules?.studyNormalMentalCost ?? 1;
-                          let pCost = sRules?.studyNormalPhysicalCost ?? 0;
-                          let studyTierLabel = '';
+                    <div style={{ marginTop: '10px' }}>
+                      {isEnrolled ? (
+                        <button 
+                          style={{ width: '100%', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1 }} 
+                          onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
+                          data-action-target={`study-${deg.id}`}
+                        >
+                          {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
+                          {rules?.usePhysicalMentalConditions && (() => {
+                            const sRules = campaign.config.statRules;
+                            const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
+                            const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;
+                            const studyGrindThresh = sRules?.studyGrindThreshold ?? 4;
 
-                          if (nextStudyAction >= studyOvertimeThresh) {
-                            mCost = sRules?.studyOvertimeMentalCost ?? 2;
-                            pCost = sRules?.studyOvertimePhysicalCost ?? 1;
-                            studyTierLabel = ' [Hyper]';
-                          } else if (nextStudyAction >= studyGrindThresh) {
-                            mCost = sRules?.studyGrindMentalCost ?? 2;
-                            pCost = sRules?.studyGrindPhysicalCost ?? 0;
-                            studyTierLabel = ' [Grind]';
-                          }
+                            let mCost = sRules?.studyMentalCost ?? sRules?.studyNormalMentalCost ?? 1;
+                            let pCost = sRules?.studyNormalPhysicalCost ?? 0;
+                            let studyTierLabel = '';
 
-                          return (
-                            <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-                              (-{mCost} Mental{pCost > 0 ? `, -${pCost} Physical` : ''}{studyTierLabel})
-                            </span>
-                          );
-                        })()}
-                      </button>
-                    </>
-                  ) : (
-                    <button 
-                      style={{ marginTop: '5px', background: '#2ecc71', color: '#000' }} 
-                      onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
-                      data-action-target={`enroll-${deg.id}`}
-                    >
-                      {t('university.enrollBtn', { defaultValue: 'Enroll' })}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                            if (nextStudyAction >= studyOvertimeThresh) {
+                              mCost = sRules?.studyOvertimeMentalCost ?? 2;
+                              pCost = sRules?.studyOvertimePhysicalCost ?? 1;
+                              studyTierLabel = ' [Hyper]';
+                            } else if (nextStudyAction >= studyGrindThresh) {
+                              mCost = sRules?.studyGrindMentalCost ?? 2;
+                              pCost = sRules?.studyGrindPhysicalCost ?? 0;
+                              studyTierLabel = ' [Grind]';
+                            }
+
+                            return (
+                              <span style={{ fontSize: '11px', marginLeft: '5px' }}>
+                                (-{mCost} Mental{pCost > 0 ? `, -${pCost} Phys` : ''}{studyTierLabel})
+                              </span>
+                            );
+                          })()}
+                        </button>
+                      ) : (
+                        <button 
+                          style={{ width: '100%', background: '#2ecc71', color: '#000' }} 
+                          onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
+                          data-action-target={`enroll-${deg.id}`}
+                        >
+                          {t('university.enrollBtn', { defaultValue: 'Enroll' })}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
           {availableDegrees.filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)) && !player.degrees.includes(deg.id)).length === 0 && (
             <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('university.noClasses', { defaultValue: 'No classes available to take right now.' })}</p>
           )}

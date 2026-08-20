@@ -153,7 +153,10 @@ export function workShift(
   rng?: Random,
   replay?: ReplayContext
 ): WorkResult {
-  if (player.hoursRemaining <= 0 || player.currentJobId !== job.id) {
+  if (player.hoursRemaining <= 0 || (player.hoursRemaining < shiftCost && !rules?.allowPartialHours)) {
+    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.notEnoughTimeWork', params: { cost: shiftCost, remaining: player.hoursRemaining } }] };
+  }
+  if (player.currentJobId !== job.id) {
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.cannotWork' }] };
   }
   
@@ -255,8 +258,17 @@ export function workShift(
 
     // Strict stat floor check: currentStat - cost >= 1.0
     const curMental = player.mentalCondition ?? 50;
-    if ((curPhys - physicalCost < 1.0) || (curMental - mentalCost < 1.0)) {
+    const physLow = curPhys - physicalCost < 1.0;
+    const mentalLow = curMental - mentalCost < 1.0;
+
+    if (physLow && mentalLow) {
       return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.tooExhausted' }] };
+    }
+    if (physLow) {
+      return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.tooPhysicallyExhausted' }] };
+    }
+    if (mentalLow) {
+      return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.tooMentallyExhausted' }] };
     }
   }
 

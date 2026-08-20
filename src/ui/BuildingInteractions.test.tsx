@@ -319,31 +319,24 @@ describe('BuildingInteractions', () => {
       />
     );
 
-    // Open work strategy modal
-    const workShiftBtn = screen.getByRole('button', { name: /workShift|Work Shift/i });
-    fireEvent.click(workShiftBtn);
-
-    // Modal title & prominent Work Work option with Default badge
-    expect(screen.getByText(/Choose Work Strategy/i)).toBeInTheDocument();
+    // Inline strategy options are displayed directly without a modal
     expect(screen.getByText(/DEFAULT/i)).toBeInTheDocument();
 
     const workWorkBtn = screen.getByTestId('work-mode-work_work');
     expect(workWorkBtn).toBeInTheDocument();
 
-    // Click Work Work - modal should REMAIN open
+    // Click Work Work
     fireEvent.click(workWorkBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'work_work' });
-    expect(screen.getByText(/Choose Work Strategy/i)).toBeInTheDocument();
 
-    // Click Look Busy - modal still remains open
+    // Click Look Busy
     const lookBusyBtn = screen.getByTestId('work-mode-look_busy');
     fireEvent.click(lookBusyBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'look_busy' });
-    expect(screen.getByText(/Choose Work Strategy/i)).toBeInTheDocument();
 
-    // Click Done - modal closes
-    const doneBtn = screen.getByTestId('done-work-modal');
-    fireEvent.click(doneBtn);
-    expect(screen.queryByText(/Choose Work Strategy/i)).not.toBeInTheDocument();
+    // Click Innovate
+    const innovateBtn = screen.getByTestId('work-mode-innovate');
+    fireEvent.click(innovateBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'innovate' });
   });
 });
