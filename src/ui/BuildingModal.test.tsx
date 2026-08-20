@@ -256,16 +256,16 @@ describe('BuildingModal Component', () => {
     expect(screen.getByTestId('tab-work')).toBeInTheDocument();
     expect(screen.getByTestId('tab-services')).toBeInTheDocument();
 
-    // Default tab is Work, showing strategy buttons
+    // Default tab is Shop, showing items
+    expect(screen.getByText('Burger')).toBeInTheDocument();
+
+    // Switch to Work tab
+    fireEvent.click(screen.getByTestId('tab-work'));
     const workWorkBtn = screen.getByTestId('work-mode-work_work');
     expect(workWorkBtn).toBeInTheDocument();
 
     // Clicking softly-disabled Work Work calls onAction
     fireEvent.click(workWorkBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_burger_cook', mode: 'work_work' });
-
-    // Switch to Shop tab
-    fireEvent.click(screen.getByTestId('tab-services'));
-    expect(screen.getByText('Burger')).toBeInTheDocument();
   });
 });
