@@ -198,4 +198,74 @@ describe('BuildingModal Component', () => {
 
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'pay_loan' });
   });
+
+  it('renders Work and Shop tabs when employed at a shop and speaks error in speech bubble on click', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+
+    const jobBurger = {
+      id: 'job_burger_cook',
+      title: 'Burger Cook',
+      baseWage: 12,
+      locationId: 'z_mart',
+      requirements: { dependability: 10, experience: 0, degrees: [] }
+    };
+
+    const campaignWithJob: CampaignBundle = {
+      ...mockCampaign,
+      config: {
+        ...mockCampaign.config,
+        gameRules: { usePhysicalMentalConditions: true } as any
+      },
+      jobs: [jobBurger as any],
+      items: [{ id: 'burger', name: 'Burger', basePrice: 5, category: 'food' } as any],
+      buildings: [
+        {
+          id: 'z_mart',
+          name: 'Z-Mart',
+          description: 'Buy items',
+          archetype: 'shop',
+          inventory: [{ itemId: 'burger', priceOverride: 5 }]
+        } as any
+      ]
+    };
+
+    const mockOnAction = vi.fn().mockResolvedValue({
+      key: 'action.error.tooPhysicallyExhausted'
+    });
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'job_burger_cook',
+          currentWage: 12,
+          physicalCondition: 1,
+          mentalCondition: 50
+        }}
+        campaign={campaignWithJob}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        onAction={mockOnAction}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Both tabs should be present
+    expect(screen.getByTestId('tab-work')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-services')).toBeInTheDocument();
+
+    // Default tab is Work, showing strategy buttons
+    const workWorkBtn = screen.getByTestId('work-mode-work_work');
+    expect(workWorkBtn).toBeInTheDocument();
+
+    // Clicking softly-disabled Work Work calls onAction
+    fireEvent.click(workWorkBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_burger_cook', mode: 'work_work' });
+
+    // Switch to Shop tab
+    fireEvent.click(screen.getByTestId('tab-services'));
+    expect(screen.getByText('Burger')).toBeInTheDocument();
+  });
 });

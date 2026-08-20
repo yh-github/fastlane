@@ -120,7 +120,10 @@
       "cannotApply": "Could not apply for job.",
       "notEnoughTime": "Not enough time to apply.",
       "cannotWork": "Could not work.",
-      "tooExhausted": "You are too physically or mentally exhausted to perform this action! Rest or recover first.",
+      "tooExhausted": "You are completely exhausted in both body and mind! Rest or recover before working.",
+      "tooPhysicallyExhausted": "You are too physically exhausted to work this shift! Take a rest and eat some food first.",
+      "tooMentallyExhausted": "Your brain is fried! You don't have the mental focus to work this shift right now.",
+      "notEnoughTimeWork": "There aren't enough hours left this turn for a work shift (Needs {{cost}} hrs, you have {{remaining}} hrs).",
       "missingPrereq": "Prerequisite required: {{prereq}}",
       "notEnoughMoneyTuition": "Not enough money for tuition.",
       "alreadyHaveDegree": "You already have this degree.",
@@ -866,5 +869,11 @@
         "desc": "Forces an owned appliance to break down and require repair at next turn start."
       }
     }
+  },
+  "buildingModal": {
+    "tabWork": "Work",
+    "tabShop": "Shop",
+    "tabServices": "Services",
+    "dontLiveHere": "You don't live here."
   }
 }

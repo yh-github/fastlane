@@ -118,7 +118,10 @@
       "cannotApply": "לא ניתן להגיש מועמדות לעבודה.",
       "notEnoughTime": "אין מספיק זמן כדי להגיש מועמדות.",
       "cannotWork": "לא ניתן לעבוד.",
-      "tooExhausted": "אתה מותש מדי גופנית או נפשית מכדי לבצע פעולה זו! נוח או התאושש קודם.",
+      "tooExhausted": "אתה מותש לחלוטין גם בגוף וגם בנפש! נוח או התאושש לפני שתעבוד.",
+      "tooPhysicallyExhausted": "אתה מותש מדי גופנית מכדי לעבוד במשמרת זו! נוח ואכול משהו קודם.",
+      "tooMentallyExhausted": "המוח שלך מרוקן! אין לך את הריכוז הנפשי הנדרש כדי לעבוד במשמרת זו כרגע.",
+      "notEnoughTimeWork": "אין מספיק שעות שנותרו בתור זה למשמרת עבודה (דרושות {{cost}} שעות, נותרו לך {{remaining}} שעות).",
       "missingPrereq": "דרישות קדם חסרות: {{prereq}}",
       "notEnoughMoneyTuition": "אין מספיק כסף לשכר לימוד.",
       "alreadyHaveDegree": "כבר יש לך תואר זה.",
@@ -538,5 +541,11 @@
     "filterAll": "הכל",
     "showingCount": "מציג {{count}} רשומות עבור {{filter}}",
     "clearFilter": "נקה סינון"
+  },
+  "buildingModal": {
+    "tabWork": "עבודה",
+    "tabShop": "חנות",
+    "tabServices": "שירותים",
+    "dontLiveHere": "אינך מתגורר כאן."
   }
 }

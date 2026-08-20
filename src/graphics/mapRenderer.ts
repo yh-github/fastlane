@@ -70,15 +70,53 @@ export async function initMapRenderer(
   }
 
   app = localApp;
+  localApp.canvas.style.position = 'absolute';
+  localApp.canvas.style.top = '0';
+  localApp.canvas.style.left = '0';
+  localApp.canvas.style.width = '100%';
+  localApp.canvas.style.height = '100%';
+  localApp.canvas.style.display = 'block';
   config.container.appendChild(localApp.canvas);
 
   const mapContainer = new Container();
-  
-  // Center map in container if container is larger
-  mapContainer.x = (config.container.clientWidth - config.mapData.width) / 2;
-  mapContainer.y = (config.container.clientHeight - config.mapData.height) / 2;
-
   localApp.stage.addChild(mapContainer);
+
+  const updateBoardTransform = () => {
+    if (!config.container || !localApp.renderer) return;
+    const containerW = config.container.clientWidth;
+    const containerH = config.container.clientHeight;
+    if (containerW === 0 || containerH === 0) return;
+
+    // Uniformly scale map to fit container if smaller, or center at 1:1 if larger
+    const scale = Math.min(1, Math.min(containerW / config.mapData.width, containerH / config.mapData.height));
+    const boardW = config.mapData.width * scale;
+    const boardH = config.mapData.height * scale;
+    const boardX = (containerW - boardW) / 2;
+    const boardY = (containerH - boardH) / 2;
+
+    mapContainer.scale.set(scale);
+    mapContainer.x = boardX;
+    mapContainer.y = boardY;
+
+    // Expose exact board bounds and scale via CSS custom properties on viewport
+    const viewport = (config.container.closest('.game-viewport') as HTMLElement) || config.container;
+    viewport.style.setProperty('--board-scale', `${scale}`);
+    viewport.style.setProperty('--board-x', `${boardX}px`);
+    viewport.style.setProperty('--board-y', `${boardY}px`);
+    viewport.style.setProperty('--board-width', `${boardW}px`);
+    viewport.style.setProperty('--board-height', `${boardH}px`);
+  };
+
+  updateBoardTransform();
+
+  let resizeObserver: ResizeObserver | null = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      updateBoardTransform();
+    });
+    resizeObserver.observe(config.container);
+  }
+  window.addEventListener('resize', updateBoardTransform);
 
   const edgesLayer = new Graphics();
   mapContainer.addChild(edgesLayer);
@@ -166,6 +204,10 @@ export async function initMapRenderer(
   console.log('[MapRenderer] Initialized');
 
   return () => {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
+    window.removeEventListener('resize', updateBoardTransform);
     if (instanceId === activeInstanceId) {
       if (app) {
         app.destroy(true, { children: true });

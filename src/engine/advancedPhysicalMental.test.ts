@@ -166,7 +166,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       const { updatedPlayer: nextPlayer, actionLog: log } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'work_work' }, context);
       expect(nextPlayer.physicalCondition).toBe(1.0);
       expect(nextPlayer.hoursRemaining).toBe(60);
-      expect(log).toEqual({ key: 'action.error.tooExhausted' });
+      expect(log).toEqual({ key: 'action.error.tooPhysicallyExhausted' });
     });
 
     it('blocks study when mental condition would fall below 1.0', () => {
