@@ -452,5 +452,17 @@ describe('Turn Processor', () => {
       const hasRecovered = readings.some(r => r > -30);
       expect(hasRecovered).toBe(true);
     });
+
+    it('applies social offset to dependability decay at turn start in advanced mode', () => {
+      let state = createTestGameState(mockCampaign, [{ name: 'Player1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      state.rules.usePhysicalMentalConditions = true;
+      state.players[0].dependability = 50;
+      state.players[0].social = 50; // Offset = floor(50/25) = 2
+      state.players[0].currentJobId = 'sales_manager'; // mockCampaign or dev_job
+
+      state = processTurnStart(state, mockCampaign);
+      // Dep decay for unemployed/no matching job req is 3 base. With offset 2, decay is max(1, 3 - 2) = 1.
+      expect(state.players[0].dependability).toBe(49);
+    });
   });
 });

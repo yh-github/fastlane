@@ -85,7 +85,7 @@ export function Dashboard({
     ? Math.min(player.happiness, player.goalAllotment.happiness || 0)
     : player.happiness;
 
-  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
+  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, 0, player.social || 0);
 
   const currentJob = player.currentJobId ? campaign?.jobs.find(j => j.id === player.currentJobId) : null;
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;

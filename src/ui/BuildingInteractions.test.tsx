@@ -289,6 +289,7 @@ describe('BuildingInteractions', () => {
       physicalCondition: 30,
       mentalCondition: 30,
       workActionsThisTurn: 0,
+      degrees: ['cs_degree'],
       inventory: {}
     } as any;
 

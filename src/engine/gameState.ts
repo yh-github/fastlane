@@ -174,6 +174,9 @@ export interface PlayerState {
   mistakesByLocation?: Record<string, number>;
   depMaxBonus?: number;
   xpMaxBonus?: number;
+  innovateChance?: number;
+  innovateEscrow?: number;
+  innovateProjectsCompleted?: number;
 }
 
 export interface WeekendResult {
@@ -412,7 +415,10 @@ export function createPlayerState(id: string, name: string, isAi: boolean, goals
         lifestyle: 0,
         mistakesByLocation: {},
         depMaxBonus: 0,
-        xpMaxBonus: 0
+        xpMaxBonus: 0,
+        innovateChance: 0,
+        innovateEscrow: 0,
+        innovateProjectsCompleted: 0
       };
     })() : {}),
     ...(config.gameRules?.trackMess ? { mess: 3 } : {}),

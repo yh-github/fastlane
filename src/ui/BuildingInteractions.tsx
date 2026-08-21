@@ -20,7 +20,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   const { t } = useTranslation();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
-  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
+  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, 0, player.social || 0);
 
   // Group jobs by locationId
   const locations = Array.from(new Set(availableJobs.map(j => j.locationId)));
@@ -146,8 +146,8 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
             backgroundColor: canWork ? '#2980b9' : '#444',
             color: canWork ? '#fff' : '#888',
             border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
+            borderRadius: '6px',
+            cursor: canWork ? 'pointer' : 'not-allowed',
             opacity: canWork ? 1 : 0.55
           }}
         >
@@ -178,6 +178,9 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   const curPhys = player.physicalCondition ?? 50;
   const fatigueMental = curPhys < 10 ? 1 : 0;
   const halfFatigueMental = curPhys < 10 ? 0.5 : 0;
+  const hasDegrees = player.degrees && player.degrees.length > 0;
+  const innovChance = Math.round(player.innovateChance || 0);
+  const innovEscrow = player.innovateEscrow || 0;
 
   const modes = [
     {
@@ -186,9 +189,10 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       physCost: basePhys * 1.0,
       mentalCost: baseMental * 1.0 + fatigueMental,
       wage: player.currentWage * 8,
-      rewardText: '+1 Dep',
+      rewardText: '+1 Dep, +1 XP',
       color: '#2ecc71',
-      isDefault: true
+      isDefault: true,
+      disabled: false
     },
     {
       id: 'look_busy',
@@ -196,29 +200,32 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       physCost: basePhys * 0.5,
       mentalCost: baseMental * 0.5 + halfFatigueMental,
       wage: player.currentWage * 8,
-      rewardText: '+0 Dep',
+      rewardText: '+0 Dep, 0 XP',
       color: '#3498db',
-      isDefault: false
+      isDefault: false,
+      disabled: false
     },
     {
       id: 'face_time',
       label: t('action.workModal.faceTime', { defaultValue: 'Face Time' }),
       physCost: basePhys * 0.5,
-      mentalCost: baseMental * 0.5 + halfFatigueMental,
+      mentalCost: baseMental * 0.5 + 1.0 + halfFatigueMental,
       wage: Math.floor(player.currentWage * 8 * 0.5),
-      rewardText: '+2 Dep',
+      rewardText: '+2 Dep, 0 XP',
       color: '#9b59b6',
-      isDefault: false
+      isDefault: false,
+      disabled: false
     },
     {
       id: 'innovate',
       label: t('action.workModal.innovate', { defaultValue: 'Innovate' }),
-      physCost: basePhys + 1,
-      mentalCost: baseMental + 5 + fatigueMental,
-      wage: player.currentWage * 8,
-      rewardText: '0-5 Dep (Fail: +Max Dep/XP)',
+      physCost: basePhys * 1.0,
+      mentalCost: baseMental + 4.0 + fatigueMental,
+      wage: 0,
+      rewardText: hasDegrees ? `${innovChance}% Odds ($${innovEscrow} Escrow)` : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree' }),
       color: '#e67e22',
-      isDefault: false
+      isDefault: false,
+      disabled: !hasDegrees
     }
   ];
 
@@ -229,12 +236,12 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
         <span style={{ fontSize: '12px', color: '#00e5ff', fontWeight: 'bold' }}>${player.currentWage}/hr {tierLabel}</span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
         {modes.map(m => {
           const hasEnoughTime = player.hoursRemaining > 0;
           const hasEnoughPhys = curPhys - m.physCost >= 1.0;
           const hasEnoughMental = (player.mentalCondition ?? 50) - m.mentalCost >= 1.0;
-          const canAfford = hasEnoughTime && hasEnoughPhys && hasEnoughMental;
+          const canAfford = hasEnoughTime && hasEnoughPhys && hasEnoughMental && !m.disabled;
           const isWorkWork = m.id === 'work_work';
           const costStr = m.mentalCost > 0
             ? `-${m.physCost} Phys, -${m.mentalCost} Mental`
@@ -246,7 +253,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
               data-testid={`work-mode-${m.id}`}
               data-action-target={isWorkWork ? `work-${job.id}` : undefined}
               onClick={() => {
-                onAction({ type: 'work', jobId: job.id, mode: m.id });
+                onAction({ type: 'work', jobId: job.id, mode: m.id as any });
               }}
               style={{
                 padding: isWorkWork ? '10px 14px' : '8px 12px',
@@ -259,7 +266,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                   : `1px solid ${canAfford ? m.color : '#444'}`,
                 boxShadow: isWorkWork && canAfford ? '0 0 10px rgba(46, 204, 113, 0.25)' : undefined,
                 color: canAfford ? '#fff' : '#777',
-                cursor: 'pointer',
+                cursor: canAfford ? 'pointer' : 'not-allowed',
                 opacity: canAfford ? 1 : 0.55,
                 textAlign: 'left',
                 position: 'relative'

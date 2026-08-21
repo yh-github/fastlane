@@ -252,15 +252,11 @@ describe('BuildingModal Component', () => {
       />
     );
 
-    // Both tabs should be present
+    // Both Work section toggle and Shop items should be present on the same window
     expect(screen.getByTestId('tab-work')).toBeInTheDocument();
-    expect(screen.getByTestId('tab-services')).toBeInTheDocument();
-
-    // Default tab is Shop, showing items
     expect(screen.getByText('Burger')).toBeInTheDocument();
 
-    // Switch to Work tab
-    fireEvent.click(screen.getByTestId('tab-work'));
+    // Work Station is open by default, showing work modes
     const workWorkBtn = screen.getByTestId('work-mode-work_work');
     expect(workWorkBtn).toBeInTheDocument();
 

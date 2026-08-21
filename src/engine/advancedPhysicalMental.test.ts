@@ -206,6 +206,19 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(nextPlayer.mentalCondition).toBe(49);
     });
 
+    it('grants additional mental recovery based on floor(social / 15)', () => {
+      player.mentalCondition = 30;
+      player.mentalConditionMax = 50;
+      player.physicalCondition = 30;
+      player.social = 30; // +2 bonus
+      player.mess = 0;
+      player.inventory.freshFoodUnits = 2;
+
+      const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'relax' }, context);
+      // Mental gain: 2 (first bonus) + 3 (base) - 0 (mess) + 0 (appliance) + 2 (social) = 7
+      expect(nextPlayer.mentalCondition).toBe(37);
+    });
+
     it('applies unfed penalty (+1/+1, -1 Max Phys, -1 Max Mental) when relaxing without food', () => {
       player.physicalCondition = 20;
       player.physicalConditionMax = 50;
@@ -291,25 +304,41 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(nextPlayer.dependability).toBe(51);
     });
 
-    it('Face Time: 0.5x Phys/Mental cost, 0.5x wage, +2 Dep', () => {
+    it('Face Time: 0.5x Phys cost, +1 Mental cost, 0.5x wage, +2 Dep (+floor(Social/25)), +1d3 Social, 0 XP', () => {
       player.physicalCondition = 40;
       player.mentalCondition = 40;
+      player.social = 9;
+      const initialExp = player.experience;
 
       const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'face_time' }, context);
       expect(nextPlayer.physicalCondition).toBe(39.5);
-      expect(nextPlayer.mentalCondition).toBe(40);
+      expect(nextPlayer.mentalCondition).toBe(39);
       expect(nextPlayer.money).toBe(1000 + 10 * 8);
-      expect(nextPlayer.dependability).toBe(52);
+      expect(nextPlayer.dependability).toBe(52); // 50 + 2 + floor(9/25)=0
+      expect(nextPlayer.social).toBeGreaterThanOrEqual(10); // 9 + 1d3
+      expect(nextPlayer.experience).toBe(initialExp); // No XP gain for Face Time
+
+      // High social gives +floor(Social/25) extra Dep
+      player.social = 50;
+      player.dependability = 50;
+      const { updatedPlayer: highSocialPlayer } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'face_time' }, context);
+      expect(highSocialPlayer.dependability).toBe(54); // 50 + 2 + floor(50/25)=2 => 54
+      expect(highSocialPlayer.social).toBeGreaterThanOrEqual(51);
     });
 
-    it('Innovate: +1 Phys, +5 Mental cost', () => {
+    it('Innovate: 1.0x Phys, +4 Mental cost, $0 upfront wage, requires degree', () => {
+      player.degrees = ['cs_degree'];
       player.physicalCondition = 40;
       player.mentalCondition = 40;
+      const initialExp = player.experience;
 
       const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'innovate' }, context);
-      expect(nextPlayer.physicalCondition).toBe(38); // 1 base + 1 innovate = 2
-      expect(nextPlayer.mentalCondition).toBe(35); // 0 base + 5 innovate = 5
-      expect(nextPlayer.money).toBe(1000 + 20 * 8);
+      expect(nextPlayer.physicalCondition).toBe(39); // 1 base
+      expect(nextPlayer.mentalCondition).toBe(36); // 0 base + 4 innovate = 4
+      expect(nextPlayer.money).toBe(1000); // $0 upfront wage
+      expect(nextPlayer.innovateChance).toBeGreaterThan(0); // accumulates chance
+      expect(nextPlayer.innovateEscrow).toBe(20 * 8); // 160 in escrow
+      expect(nextPlayer.experience).toBe(initialExp); // No regular shift XP
     });
   });
 
@@ -360,7 +389,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(scoreWithMistakes).toBe(scoreNormal - 2);
     });
 
-    it('innovate mistake triggers fail-forward bonuses (+1 Max Dep, +1 Max Exp, +1 Exp)', () => {
+    it('innovate reckless mistake halts chance gain and escrow, reducing max mental stat', () => {
       const job = campaign.jobs[0];
       player.currentJobId = job.id;
       player.currentWage = job.baseWage;
@@ -368,20 +397,23 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       player.mentalCondition = 15; // below 20 -> mistake risk
       player.dependability = 50;
       player.experience = 10;
+      player.degrees = ['cs_degree'];
+      player.innovateChance = 20;
+      player.innovateEscrow = 160;
 
       // Force innovate mental mistake
       const replay = {
         inDecisions: [
-          { type: `work_mental_mistake_${player.id}_1`, result: true },
-          { type: `innovate_dep_roll_${player.id}_1`, result: 2 }
+          { type: `work_mental_mistake_${player.id}_1`, result: true }
         ],
         outDecisions: []
       };
 
       const result = workShift(player, job, 6, rules, campaign.config.statRules, 'innovate', new Random(1), replay);
-      expect(result.updated.depMaxBonus).toBe(1);
-      expect(result.updated.xpMaxBonus).toBe(1);
-      expect(result.updated.experience).toBe(12); // +1 shift XP + 1 fail-forward XP
+      expect(result.updated.innovateChance).toBe(20); // 0 chance added on mistake
+      expect(result.updated.innovateEscrow).toBe(160); // 0 escrow added on mistake
+      expect(result.updated.mentalConditionMax).toBe(50); // net 50 (+1 from high mental exertion, -1 from mistake penalty)
+      expect(result.updated.experience).toBe(10); // no XP gain on mistake
     });
 
     it('study mistake halts lesson progress and reduces max stat', () => {
