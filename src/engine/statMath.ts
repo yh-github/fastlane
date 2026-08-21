@@ -30,7 +30,7 @@ export const STAT_REGISTRY: Record<string, StatDescriptor> = {
     id: 'employability',
     labelKey: 'dashboard.employability',
     isDerived: true,
-    dependencies: ['employability', 'dependability', 'experience', 'education']
+    dependencies: ['employability', 'dependability', 'experience', 'education', 'social']
   },
   wealth: {
     id: 'wealth',
@@ -224,22 +224,27 @@ export function calcEmployabilityScore(
   dependability: number,
   experience: number,
   degreesCount: number,
-  mistakesAtLocation: number = 0
+  mistakesAtLocation: number = 0,
+  social: number = 0
 ): number {
-  const baseScore = Math.floor(30 + (10 + dependability + experience + 8 * degreesCount) / 3);
+  const socialBonus = Math.floor((social || 0) / 15);
+  const baseScore = Math.floor(30 + (10 + dependability + experience + 8 * degreesCount) / 3) + socialBonus;
   return Math.max(0, baseScore - mistakesAtLocation);
 }
 
 /**
  * Calculate dependability decay for the start of a turn.
  * Always flat -3 per turn in classic.
- * In advanced (usePhysicalMentalConditions): dep_loss = Math.ceil(D_REQ / 10), where D_REQ is current job requirement or 3 for unemployed.
+ * In advanced (usePhysicalMentalConditions): dep_loss = Math.max(1, Math.ceil(D_REQ / 10) - Math.floor(social / 25)),
+ * where D_REQ is current job requirement or 3 for unemployed.
  */
-export function calcDependabilityDecay(current: number, jobRequiredDep?: number, isAdvanced?: boolean): number {
+export function calcDependabilityDecay(current: number, jobRequiredDep?: number, isAdvanced?: boolean, social: number = 0): number {
   if (isAdvanced) {
-    const depLoss = (jobRequiredDep !== undefined && jobRequiredDep > 0)
+    const baseDepLoss = (jobRequiredDep !== undefined && jobRequiredDep > 0)
       ? Math.ceil(jobRequiredDep / 10)
       : 3;
+    const socialOffset = Math.floor((social || 0) / 25);
+    const depLoss = Math.max(1, baseDepLoss - socialOffset);
     return clampZero(current - depLoss);
   }
   return clampZero(current - DEPENDABILITY_WEEKLY_DECAY);
@@ -324,12 +329,14 @@ export function calcTheoreticalRobberyChance(
 
 /**
  * Calculate the dependability required to get a raise at the current job.
+ * Completed innovation projects discount previous raises.
  *
  * @param jobRequiredDep — Base dependability required for the job
  * @param raisesReceived — Number of raises already received at this job
+ * @param projectsCompleted — Number of innovation projects completed at this job
  */
-export function calcRaiseThreshold(jobRequiredDep: number, raisesReceived: number): number {
-  return jobRequiredDep + 5 * raisesReceived;
+export function calcRaiseThreshold(jobRequiredDep: number, raisesReceived: number, projectsCompleted: number = 0): number {
+  return jobRequiredDep + 5 * Math.max(0, raisesReceived - projectsCompleted);
 }
 
 // ─── Goal Progress ──────────────────────────────────────────────

@@ -321,7 +321,8 @@ export function gameReducer(
 
           const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
           const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
-          const mentalGain = Math.max(0, firstBonus + 3 - messPenalty) + mentalBonus;
+          const socialMentalBonus = Math.floor((nextPlayer.social || 0) / 15);
+          const mentalGain = Math.max(0, firstBonus + 3 - messPenalty) + mentalBonus + socialMentalBonus;
           nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
 
           if (context.rules.trackMess) {

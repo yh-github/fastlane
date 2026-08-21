@@ -28,13 +28,13 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
 
   const formatItemName = (id: string) => campaign?.items.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0);
+  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, 0, player.social || 0);
   const robberyRisk = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0);
   const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0);
-  const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0) : null;
+  const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0, player.innovateProjectsCompleted || 0) : null;
 
   return (
     <div className="building-modal-overlay" style={{

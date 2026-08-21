@@ -295,7 +295,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         p.relaxation = Math.max(threshold, p.relaxation - decay);
       }
       const curJob = p.currentJobId && campaign?.jobs ? campaign.jobs.find(j => j.id === p.currentJobId) : undefined;
-      p.dependability = calcDependabilityDecay(p.dependability, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions); 
+      p.dependability = calcDependabilityDecay(p.dependability, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, p.social); 
 
       // 8. Apartment Robbery
       const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === p.id || !e.playerId));

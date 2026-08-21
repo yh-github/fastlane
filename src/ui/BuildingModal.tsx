@@ -29,7 +29,8 @@ interface BuildingModalProps {
 export function BuildingModal({ player, campaign, currentBuildingId, turn, economicIndex, rules, pawnShopItemsForSale, onAction, onClose }: BuildingModalProps) {
   const { t } = useTranslation();
   const [clerkMessage, setClerkMessage] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<string>('services');
+  const [activeTab, setActiveTab] = useState<'shop' | 'pawn'>('shop');
+  const [isWorkOpen, setIsWorkOpen] = useState<boolean>(true);
   const justUpdatedMessageRef = useRef(false);
 
   // Helper to pick random string if translation is an array
@@ -121,17 +122,6 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     itemsHere = shuffled.slice(0, 6);
   }
 
-  const hasOtherServices = (
-    building.archetype === 'employment' ||
-    (itemsHere.length > 0 && building.archetype !== 'discount_and_pawn') ||
-    building.archetype === 'education' ||
-    building.archetype === 'housing' ||
-    building.archetype === 'bank' ||
-    building.archetype === 'pawnshop' ||
-    building.archetype === 'discount_and_pawn' ||
-    building.archetype === 'home'
-  );
-
   const handleActionIntercept = async (payload: any) => {
     const actionLog = await onAction(payload);
     let nextMsg = '';
@@ -185,24 +175,32 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           } else {
             nextMsg = "You do not have enough cash.";
           }
+        } else if (payload.type === 'study') {
+          if (success) {
+            nextMsg = getRandomMessage(`clerkDialogs.university.studySuccess`, 'Good job studying!');
+          }
+        } else if (payload.type === 'enroll') {
+          if (success) {
+            nextMsg = getRandomMessage(`clerkDialogs.university.enrollSuccess`, 'Welcome to the class!');
+          } else {
+            nextMsg = "You do not have enough cash.";
+          }
         } else if (payload.type === 'apply') {
-          if (mainLog.key === 'action.job.gotJob') {
-            nextMsg = getRandomMessage(`clerkDialogs.employment_office.buySuccess`, t('clerkDialogs.employment_office.buySuccess'));
-          } else if (mainLog.key === 'action.job.rejected') {
-            const reasons = mainLog.params?.reasons || t('jobBoard.missingReq');
-            nextMsg = `Sorry. You didn't get the job for the following reasons:\n\n${reasons}`;
-          } else if (mainLog.key === 'action.job.noOpenings') {
-            nextMsg = `Sorry. You didn't get the job for the following reasons:\n\nNo openings.`;
-          } else if (mainLog.key === 'action.job.raiseSuccess') {
-            nextMsg = t('action.job.raiseSuccess');
-          } else if (mainLog.key === 'action.job.raiseDenied') {
-            nextMsg = t('action.job.raiseDenied');
+          if (mainLog.key === 'action.job.raiseSuccess') {
+            nextMsg = t('action.job.raiseSuccess', mainLog.params);
+          } else if (mainLog.key === 'action.job.hired') {
+            nextMsg = t('action.job.hired', mainLog.params);
           } else if (mainLog.key === 'action.job.raiseWaste') {
             nextMsg = t('action.job.raiseWaste');
           } else if (mainLog.key === 'action.job.raiseSame') {
             nextMsg = t('action.job.raiseSame');
           } else if (mainLog.key === 'action.job.raiseLess') {
             nextMsg = t('action.job.raiseLess');
+          } else if (mainLog.key === 'action.job.rejected') {
+            const reasons = mainLog.params?.reasons || t('jobBoard.missingReq');
+            nextMsg = `Sorry. You didn't get the job for the following reasons:\n\n${reasons}`;
+          } else if (mainLog.key === 'action.job.noOpenings') {
+            nextMsg = `Sorry. You didn't get the job for the following reasons:\n\nNo openings.`;
           }
         } else if (payload.type === 'work') {
           if (Array.isArray(actionLog)) {
@@ -238,37 +236,45 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           }
         } else if (payload.type === 'bank_transaction') {
           if (success) {
-            if (mainLog.key === 'action.bank.withdraw') {
-              nextMsg = getRandomMessage(`clerkDialogs.bank.withdrawSuccess`, 'There is always a penalty for early withdrawal.');
+            if (payload.amount > 0) {
+              nextMsg = getRandomMessage(`clerkDialogs.bank.depositSuccess`, 'Deposit accepted.');
             } else {
-              nextMsg = getRandomMessage(`clerkDialogs.bank.buySuccess`, 'Transaction complete.');
+              nextMsg = getRandomMessage(`clerkDialogs.bank.withdrawSuccess`, 'Here is your cash.');
             }
           } else {
-            nextMsg = "You do not have enough cash.";
+            nextMsg = "Transaction could not be completed.";
+          }
+        } else if (payload.type === 'stock_transaction') {
+          if (success) {
+            if (payload.shares > 0) {
+              nextMsg = getRandomMessage(`clerkDialogs.bank.stockBuySuccess`, 'Shares purchased.');
+            } else {
+              nextMsg = getRandomMessage(`clerkDialogs.bank.stockSellSuccess`, 'Shares sold.');
+            }
+          } else {
+            nextMsg = "You do not have enough funds or shares.";
           }
         } else if (payload.type === 'take_loan') {
-          if (mainLog.key === 'action.loan.approved') {
-            nextMsg = t('action.loan.approved', { loanSize: mainLog.params?.loanSize });
+          if (success) {
+            nextMsg = getRandomMessage(`clerkDialogs.bank.loanApproved`, 'Loan approved.');
           } else {
-            nextMsg = t('action.loan.refused');
+            nextMsg = getRandomMessage(`clerkDialogs.bank.loanDenied`, 'Loan application denied.');
           }
         } else if (payload.type === 'pay_loan') {
-          if (mainLog.key === 'action.loan.paidOff') {
-            nextMsg = t('action.loan.paidOff', { amount: mainLog.params?.amount });
-          } else if (mainLog.key === 'action.loan.paidInstallment') {
-            nextMsg = t('action.loan.paidInstallment', mainLog.params);
+          if (success) {
+            nextMsg = t('action.loan.paidInstallment', mainLog.params) as string;
           } else {
             nextMsg = "You do not have enough cash.";
           }
-        } else if (payload.type === 'rent_transaction' || payload.type === 'pay_rent_advance') {
+        } else if (payload.type === 'pay_rent_advance') {
           if (success) {
-            nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.buySuccess`, t('clerkDialogs.default.buySuccess'));
+            nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.rentPaidAdvance`, 'Thank you for paying your rent in advance.');
           } else {
-            nextMsg = "You do not have enough cash.";
+            nextMsg = "You do not have enough cash to pay rent in advance.";
           }
-        } else if (payload.type === 'enroll') {
+        } else if (payload.type === 'rent_transaction') {
           if (success) {
-            nextMsg = getRandomMessage(`clerkDialogs.university.buySuccess`, 'You are now enrolled.');
+            nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.rentPaid`, 'Thank you for paying your rent.');
           } else {
             nextMsg = "You do not have enough cash.";
           }
@@ -277,16 +283,15 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     }
 
     if (nextMsg) {
-      justUpdatedMessageRef.current = true;
       setClerkMessage(nextMsg);
+      justUpdatedMessageRef.current = true;
     }
+    return actionLog;
   };
 
-  const getFace = (buildingId: string, archetype: string) => {
-    // Specific building overrides
-    switch (buildingId) {
-      case 'apartment_complex': return '👩‍💼'; // Rent Office: Woman office worker
-      case 'factory': return '👩‍🏭'; // Factory: Woman factory worker
+  const getFace = (id: string, archetype: string) => {
+    switch (id) {
+      case 'burger_palace': return '🍔'; // Burger Palace: Burger clerk
       case 'qt_clothing': return '💁‍♂️'; // QT Clothing: Male clerk (often pink shirt)
       case 'bank': return '👩‍💼'; // Bank: Female in a suit
       case 'z_mart':
@@ -325,8 +330,9 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
 
   // Reset tab on building change
   useEffect(() => {
-    setActiveTab(isDiscountAndPawn ? 'shop' : 'services');
-  }, [building.id, isDiscountAndPawn]);
+    setActiveTab('shop');
+    setIsWorkOpen(true);
+  }, [building.id]);
 
   let currentFace = getFace(building.id, building.archetype);
   if (building.archetype === 'home' && !livesHere) {
@@ -351,149 +357,236 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
       </div>
 
       <div className="building-modal__content">
-        {/* Discount & Pawn Shop: Flat tabs for Shop, Pawn, and optional Work */}
-        {isDiscountAndPawn && (
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-            <button
-              data-testid="tab-shop"
-              onClick={() => setActiveTab('shop')}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                background: activeTab === 'shop' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
-                color: activeTab === 'shop' ? '#000' : '#fff',
-                border: activeTab === 'shop' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
-                cursor: 'pointer'
-              }}
-            >
-              🛒 {t('buildingModal.tabShop', { defaultValue: 'Shop' })}
-            </button>
-            <button
-              data-testid="tab-pawn"
-              onClick={() => setActiveTab('pawn')}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                background: activeTab === 'pawn' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
-                color: activeTab === 'pawn' ? '#000' : '#fff',
-                border: activeTab === 'pawn' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
-                cursor: 'pointer'
-              }}
-            >
-              ⚖️ {t('buildingModal.tabPawn', { defaultValue: 'Pawn' })}
-            </button>
-            {playerJobHere && (
-              <button
-                data-testid="tab-work"
-                onClick={() => setActiveTab('work')}
-                style={{
-                  flex: 1,
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  fontWeight: 'bold',
-                  background: activeTab === 'work' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
-                  color: activeTab === 'work' ? '#000' : '#fff',
-                  border: activeTab === 'work' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
-                  cursor: 'pointer'
-                }}
-              >
-                💼 {t('buildingModal.tabWork', { defaultValue: 'Work' })}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Other buildings: Tab Bar when employed here AND building has other services */}
-        {!isDiscountAndPawn && playerJobHere && hasOtherServices && (
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-            <button
-              data-testid="tab-services"
-              onClick={() => setActiveTab('services')}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                background: activeTab === 'services' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
-                color: activeTab === 'services' ? '#000' : '#fff',
-                border: activeTab === 'services' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
-                cursor: 'pointer'
-              }}
-            >
-              {itemsHere.length > 0 ? `🛒 ${t('buildingModal.tabShop', { defaultValue: 'Shop' })}` : `🏛️ ${t('buildingModal.tabServices', { defaultValue: 'Services' })}`}
-            </button>
-            <button
+        {playerJobHere ? (
+          <div 
+            className="building-modal__columns"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(280px, 320px) 1fr',
+              gap: '16px',
+              alignItems: 'start'
+            }}
+          >
+            {/* Left Column: Work Station */}
+            <div 
               data-testid="tab-work"
-              onClick={() => setActiveTab('work')}
               style={{
-                flex: 1,
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                background: activeTab === 'work' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
-                color: activeTab === 'work' ? '#000' : '#fff',
-                border: activeTab === 'work' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
-                cursor: 'pointer'
+                background: 'rgba(41, 128, 185, 0.12)',
+                border: '1px solid rgba(52, 152, 219, 0.35)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
               }}
             >
-              💼 {t('buildingModal.tabWork', { defaultValue: 'Work' })}
-            </button>
-          </div>
-        )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2em' }}>💼</span>
+                <div>
+                  <strong style={{ color: 'var(--accent-cyan)', display: 'block', fontSize: '1.0em' }}>
+                    {t('workStation.title', { jobTitle: t(`job.${playerJobHere.id}`, { defaultValue: playerJobHere.title }) })}
+                  </strong>
+                  <span style={{ fontSize: '0.85em', color: '#bbb' }}>
+                    ${player.currentWage}/hr
+                  </span>
+                </div>
+              </div>
 
-        {/* Work Station: active when on work tab or when work is the only activity */}
-        {playerJobHere && (activeTab === 'work' || (!hasOtherServices && !isDiscountAndPawn)) && (
-          <WorkStation
-            player={player}
-            onAction={handleActionIntercept}
-            job={playerJobHere}
-            campaign={campaign}
-          />
-        )}
-
-        {/* Discount & Pawn Shop contents */}
-        {isDiscountAndPawn && activeTab === 'shop' && (
-          <StoreFront 
-            player={player} 
-            onAction={handleActionIntercept} 
-            availableItems={itemsHere} 
-            economicIndex={economicIndex}
-            rules={rules}
-          />
-        )}
-        {isDiscountAndPawn && activeTab === 'pawn' && (
-          <PawnShop 
-            player={player}
-            onAction={handleActionIntercept}
-            economicIndex={economicIndex}
-            pawnShopItemsForSale={pawnShopItemsForSale}
-            rules={rules}
-            campaign={campaign}
-          />
-        )}
-
-        {/* Building Services: active when not employed here OR on services tab */}
-        {!isDiscountAndPawn && (!playerJobHere || (hasOtherServices && activeTab === 'services')) && (
-          <>
-            {/* Employment Office: show ALL jobs for applying */}
-            {building.archetype === 'employment' && (
-              <JobBoard 
-                player={player} 
-                onAction={handleActionIntercept} 
-                availableJobs={campaign.jobs} 
-                buildings={campaign.buildings}
-                economicIndex={economicIndex}
+              <WorkStation
+                player={player}
+                onAction={handleActionIntercept}
+                job={playerJobHere}
                 campaign={campaign}
-                rules={rules}
               />
+            </div>
+
+            {/* Right Column: Shop & Building Services */}
+            <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Discount & Pawn Shop: Tabs for Shop and Pawn */}
+              {isDiscountAndPawn && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    data-testid="tab-shop"
+                    onClick={() => setActiveTab('shop')}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      background: activeTab === 'shop' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
+                      color: activeTab === 'shop' ? '#000' : '#fff',
+                      border: activeTab === 'shop' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🛒 {t('buildingModal.tabShop', { defaultValue: 'Shop' })}
+                  </button>
+                  <button
+                    data-testid="tab-pawn"
+                    onClick={() => setActiveTab('pawn')}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      background: activeTab === 'pawn' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
+                      color: activeTab === 'pawn' ? '#000' : '#fff',
+                      border: activeTab === 'pawn' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ⚖️ {t('buildingModal.tabPawn', { defaultValue: 'Pawn' })}
+                  </button>
+                </div>
+              )}
+
+              {/* Discount & Pawn Shop contents */}
+              {isDiscountAndPawn && activeTab === 'shop' && (
+                <StoreFront 
+                  player={player} 
+                  onAction={handleActionIntercept} 
+                  availableItems={itemsHere} 
+                  economicIndex={economicIndex}
+                  rules={rules}
+                />
+              )}
+              {isDiscountAndPawn && activeTab === 'pawn' && (
+                <PawnShop 
+                  player={player}
+                  onAction={handleActionIntercept}
+                  economicIndex={economicIndex}
+                  pawnShopItemsForSale={pawnShopItemsForSale}
+                  rules={rules}
+                  campaign={campaign}
+                />
+              )}
+
+              {/* Other Services */}
+              {!isDiscountAndPawn && (
+                <>
+                  {building.archetype === 'employment' && (
+                    <JobBoard 
+                      player={player} 
+                      onAction={handleActionIntercept} 
+                      availableJobs={campaign.jobs} 
+                      buildings={campaign.buildings}
+                      economicIndex={economicIndex}
+                      campaign={campaign}
+                      rules={rules}
+                    />
+                  )}
+                  {itemsHere.length > 0 && (
+                    <StoreFront 
+                      player={player} 
+                      onAction={handleActionIntercept} 
+                      availableItems={itemsHere} 
+                      economicIndex={economicIndex}
+                      rules={rules}
+                    />
+                  )}
+                  {building.archetype === 'education' && (
+                    <UniversityRegistry 
+                      player={player} 
+                      onAction={handleActionIntercept} 
+                      availableDegrees={campaign.education} 
+                      rules={rules}
+                      campaign={campaign}
+                      economicIndex={economicIndex}
+                    />
+                  )}
+                  {building.archetype === 'housing' && (
+                    <RentOffice 
+                      player={player}
+                      campaign={campaign}
+                      turn={turn}
+                      economicIndex={economicIndex}
+                      rules={rules}
+                      onAction={handleActionIntercept}
+                    />
+                  )}
+                  {building.archetype === 'bank' && (
+                    <BankInterface 
+                      player={player}
+                      campaign={campaign}
+                      turn={turn}
+                      economicIndex={economicIndex}
+                      rules={rules}
+                      onAction={handleActionIntercept}
+                    />
+                  )}
+                  {building.archetype === 'pawnshop' && (
+                    <PawnShop 
+                      player={player}
+                      onAction={handleActionIntercept}
+                      economicIndex={economicIndex}
+                      pawnShopItemsForSale={pawnShopItemsForSale}
+                      rules={rules}
+                      campaign={campaign}
+                    />
+                  )}
+                  {building.archetype === 'home' && (
+                    livesHere ? (
+                      <HomeRelax 
+                        player={player}
+                        campaign={campaign}
+                        rules={rules}
+                        economicIndex={economicIndex}
+                        onAction={handleActionIntercept}
+                      />
+                    ) : (
+                      <div className="interaction-panel">
+                        <h3>{t(`building.${building.id}`, { defaultValue: building.name })}</h3>
+                        <p style={{ fontSize: '12px' }}>{t('buildingModal.dontLiveHere', "You don't live here.")}</p>
+                      </div>
+                    )
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Single Column: When not employed here */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* Discount & Pawn Shop: Tabs for Shop and Pawn */}
+            {isDiscountAndPawn && (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  data-testid="tab-shop"
+                  onClick={() => setActiveTab('shop')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    background: activeTab === 'shop' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
+                    color: activeTab === 'shop' ? '#000' : '#fff',
+                    border: activeTab === 'shop' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🛒 {t('buildingModal.tabShop', { defaultValue: 'Shop' })}
+                </button>
+                <button
+                  data-testid="tab-pawn"
+                  onClick={() => setActiveTab('pawn')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    background: activeTab === 'pawn' ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255,255,255,0.05)',
+                    color: activeTab === 'pawn' ? '#000' : '#fff',
+                    border: activeTab === 'pawn' ? '1px solid var(--accent-cyan, #00e5ff)' : '1px solid #444',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚖️ {t('buildingModal.tabPawn', { defaultValue: 'Pawn' })}
+                </button>
+              </div>
             )}
 
-            {/* Any building with items for sale: shops, restaurant, grocery */}
-            {itemsHere.length > 0 && (
+            {/* Discount & Pawn Shop contents */}
+            {isDiscountAndPawn && activeTab === 'shop' && (
               <StoreFront 
                 player={player} 
                 onAction={handleActionIntercept} 
@@ -502,41 +595,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
                 rules={rules}
               />
             )}
-
-            {/* University: enrollment and study */}
-            {building.archetype === 'education' && (
-              <UniversityRegistry 
-                player={player} 
-                onAction={handleActionIntercept} 
-                availableDegrees={campaign.education} 
-                rules={rules}
-                campaign={campaign}
-                economicIndex={economicIndex}
-              />
-            )}
-
-            {/* Housing: rent */}
-            {building.archetype === 'housing' && (
-              <RentOffice 
-                player={player}
-                campaign={campaign}
-                turn={turn}
-                economicIndex={economicIndex}
-                rules={rules}
-                onAction={handleActionIntercept}
-              />
-            )}
-            {building.archetype === 'bank' && (
-              <BankInterface 
-                player={player}
-                campaign={campaign}
-                turn={turn}
-                economicIndex={economicIndex}
-                rules={rules}
-                onAction={handleActionIntercept}
-              />
-            )}
-            {building.archetype === 'pawnshop' && (
+            {isDiscountAndPawn && activeTab === 'pawn' && (
               <PawnShop 
                 player={player}
                 onAction={handleActionIntercept}
@@ -546,23 +605,89 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
                 campaign={campaign}
               />
             )}
-            {building.archetype === 'home' && (
-              livesHere ? (
-                <HomeRelax 
-                  player={player}
-                  campaign={campaign}
-                  rules={rules}
-                  economicIndex={economicIndex}
-                  onAction={handleActionIntercept}
-                />
-              ) : (
-                <div className="interaction-panel">
-                  <h3>{t(`building.${building.id}`, { defaultValue: building.name })}</h3>
-                  <p style={{ fontSize: '12px' }}>{t('buildingModal.dontLiveHere', "You don't live here.")}</p>
-                </div>
-              )
+
+            {/* Other Buildings: Primary service/shop menu */}
+            {!isDiscountAndPawn && (
+              <>
+                {building.archetype === 'employment' && (
+                  <JobBoard 
+                    player={player} 
+                    onAction={handleActionIntercept} 
+                    availableJobs={campaign.jobs} 
+                    buildings={campaign.buildings}
+                    economicIndex={economicIndex}
+                    campaign={campaign}
+                    rules={rules}
+                  />
+                )}
+                {itemsHere.length > 0 && (
+                  <StoreFront 
+                    player={player} 
+                    onAction={handleActionIntercept} 
+                    availableItems={itemsHere} 
+                    economicIndex={economicIndex}
+                    rules={rules}
+                  />
+                )}
+                {building.archetype === 'education' && (
+                  <UniversityRegistry 
+                    player={player} 
+                    onAction={handleActionIntercept} 
+                    availableDegrees={campaign.education} 
+                    rules={rules}
+                    campaign={campaign}
+                    economicIndex={economicIndex}
+                  />
+                )}
+                {building.archetype === 'housing' && (
+                  <RentOffice 
+                    player={player}
+                    campaign={campaign}
+                    turn={turn}
+                    economicIndex={economicIndex}
+                    rules={rules}
+                    onAction={handleActionIntercept}
+                  />
+                )}
+                {building.archetype === 'bank' && (
+                  <BankInterface 
+                    player={player}
+                    campaign={campaign}
+                    turn={turn}
+                    economicIndex={economicIndex}
+                    rules={rules}
+                    onAction={handleActionIntercept}
+                  />
+                )}
+                {building.archetype === 'pawnshop' && (
+                  <PawnShop 
+                    player={player}
+                    onAction={handleActionIntercept}
+                    economicIndex={economicIndex}
+                    pawnShopItemsForSale={pawnShopItemsForSale}
+                    rules={rules}
+                    campaign={campaign}
+                  />
+                )}
+                {building.archetype === 'home' && (
+                  livesHere ? (
+                    <HomeRelax 
+                      player={player}
+                      campaign={campaign}
+                      rules={rules}
+                      economicIndex={economicIndex}
+                      onAction={handleActionIntercept}
+                    />
+                  ) : (
+                    <div className="interaction-panel">
+                      <h3>{t(`building.${building.id}`, { defaultValue: building.name })}</h3>
+                      <p style={{ fontSize: '12px' }}>{t('buildingModal.dontLiveHere', "You don't live here.")}</p>
+                    </div>
+                  )
+                )}
+              </>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

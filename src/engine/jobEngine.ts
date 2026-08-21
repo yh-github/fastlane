@@ -15,7 +15,7 @@ export interface JobApplicationResult {
 }
 
 export function calculateJobEmployability(player: PlayerState): number {
-  return calcEmployabilityScore(player.dependability, player.experience, player.degrees.length);
+  return calcEmployabilityScore(player.dependability, player.experience, player.degrees.length, 0, player.social);
 }
 
 export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules, turn: number = 1, replay?: ReplayContext, statRules?: StatRules): JobApplicationResult {
@@ -43,6 +43,9 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     updated.currentJobId = job.id;
     updated.currentWage = offeredWage ?? job.baseWage;
     updated.raisesAtCurrentJob = 0;
+    updated.innovateChance = 0;
+    updated.innovateEscrow = 0;
+    updated.innovateProjectsCompleted = 0;
     
     if (updated.dependability < 10) {
       updated.dependability = 10;
@@ -62,7 +65,8 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
       return { updated, success: false, message: { key: 'action.job.raiseLess' } };
     }
 
-    const reqDep = job.requirements.dependability + (updated.raisesAtCurrentJob * 5);
+    const effectiveRaises = Math.max(0, updated.raisesAtCurrentJob - (updated.innovateProjectsCompleted || 0));
+    const reqDep = job.requirements.dependability + (effectiveRaises * 5);
     if (updated.dependability >= reqDep) {
       if (newWage > player.currentWage) {
         updated.currentWage = newWage;
@@ -109,7 +113,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
 
   // Hiring threshold check for new jobs
   const locMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
-  const employability = calcEmployabilityScore(updated.dependability, updated.experience, updated.degrees.length, locMistakes);
+  const employability = calcEmployabilityScore(updated.dependability, updated.experience, updated.degrees.length, locMistakes, updated.social);
   const roll = resolveDecision(replay, `job_apply_luck`, () => Math.floor((rng ? rng.next() : Math.random()) * 100) + 1);
 
   if (roll > employability) {
@@ -122,6 +126,9 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   updated.currentJobId = job.id;
   updated.currentWage = offeredWage ?? job.baseWage; // Lock in the wage
   updated.raisesAtCurrentJob = 0;
+  updated.innovateChance = 0;
+  updated.innovateEscrow = 0;
+  updated.innovateProjectsCompleted = 0;
   
   // Anti-frustration feature: reset dependability to 10 when getting a new job if it's too low
   if (updated.dependability < 10) {
@@ -158,8 +165,17 @@ export function workShift(
   }
   
   // Dependability firing & warning checks
-  if (player.dependability <= job.requirements.dependability - 5) {
-    let updated: PlayerState = { ...player, currentJobId: null, currentWage: 0, raisesAtCurrentJob: 0 };
+  const fireBuffer = 5 + (player.innovateProjectsCompleted || 0) * 2;
+  if (player.dependability <= job.requirements.dependability - fireBuffer) {
+    let updated: PlayerState = {
+      ...player,
+      currentJobId: null,
+      currentWage: 0,
+      raisesAtCurrentJob: 0,
+      innovateChance: 0,
+      innovateEscrow: 0,
+      innovateProjectsCompleted: 0
+    };
     updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
     return { updated, wagesEarned: 0, success: false, messages: [{ key: 'action.job.fired' }] };
   }
@@ -188,12 +204,15 @@ export function workShift(
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.needClothes', params: { req } }] };
   }
 
+  if (mode === 'innovate' && (!player.degrees || player.degrees.length === 0)) {
+    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.innovateNeedDegree' }] };
+  }
+
   const isAdvanced = !!rules?.usePhysicalMentalConditions;
   let physicalCost = 0;
   let mentalCost = 0;
   let wageMultiplier = 1.0;
   let baseDepGain = 1;
-  let innovateDepRoll = 0;
 
   if (isAdvanced) {
     const actionCount = (player.workActionsThisTurn || 0) + 1;
@@ -221,23 +240,15 @@ export function workShift(
       baseDepGain = 0;
     } else if (mode === 'face_time') {
       physicalCost = basePhys * 0.5;
-      mentalCost = baseMental * 0.5;
+      mentalCost = baseMental * 0.5 + 1.0;
       wageMultiplier = 0.5;
-      baseDepGain = 2;
+      const socialDepBonus = Math.floor((player.social || 0) / 25);
+      baseDepGain = 2 + socialDepBonus;
     } else if (mode === 'innovate') {
-      physicalCost = basePhys + 1;
-      mentalCost = baseMental + 5;
-      wageMultiplier = 1.0;
-      // 5d2 - 5: roll five 2-sided dice (each 1 or 2, sum 5..10) minus 5 -> 0..5
-      const roll5d2 = resolveDecision(replay, `innovate_roll_${player.id}_${actionCount}`, () => {
-        let sum = 0;
-        for (let i = 0; i < 5; i++) {
-          sum += (rng ? (rng.next() < 0.5 ? 1 : 2) : (Math.random() < 0.5 ? 1 : 2));
-        }
-        return sum;
-      });
-      innovateDepRoll = roll5d2 - 5;
-      baseDepGain = innovateDepRoll;
+      physicalCost = basePhys * 1.0;
+      mentalCost = baseMental + 4.0;
+      wageMultiplier = 0.0;
+      baseDepGain = 0;
     } else {
       // work_work
       physicalCost = basePhys * 1.0;
@@ -279,7 +290,7 @@ export function workShift(
   let wagesEarned = rawWagesEarned;
   let totalGarnished = 0;
   
-  if (updated.rentDebt > 0) {
+  if (updated.rentDebt > 0 && rawWagesEarned > 0) {
     const [afterDebtState, netWage, garnishedAmount] = processRentDebt(updated, rawWagesEarned);
     updated = afterDebtState;
     wagesEarned = netWage;
@@ -318,9 +329,7 @@ export function workShift(
     if (mentalCost > 0) {
       if (mode === 'innovate') {
         const mentalThresh = 20;
-        if (innovateDepRoll <= 0) {
-          mentalMistake = true;
-        } else if (oldMental < mentalThresh) {
+        if (oldMental < mentalThresh) {
           const mentalChance = (mentalThresh - oldMental) * 0.025;
           mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
         }
@@ -355,26 +364,101 @@ export function workShift(
         [job.locationId]: curMistakes + mistakesAdded
       };
 
-      if (mode === 'innovate' && mentalMistake) {
-        updated.depMaxBonus = (updated.depMaxBonus || 0) + 1;
-        updated.xpMaxBonus = (updated.xpMaxBonus || 0) + 1;
-        updated.experience += 1;
-      }
-
       const mistakeTypes = [physMistake ? 'Physical' : null, mentalMistake ? 'Mental' : null].filter(Boolean).join(' & ');
       messages.push({ key: 'action.job.mistake', params: { type: mistakeTypes, penalty: curMistakes, total: curMistakes + mistakesAdded } });
     } else {
-      // Normal stat growth
-      const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0) + (updated.depMaxBonus || 0);
-      updated.dependability = Math.min(effectiveMaxDep, updated.dependability + baseDepGain);
+      if (mode === 'innovate') {
+        const fraction = hoursToWork / shiftCost;
+        const baseRate = 10;
+        const surplusXp = Math.max(0, updated.experience - job.requirements.experience);
+        const surplusXpBonus = Math.min(5, Math.floor(surplusXp / 5));
+        const mentalBonus = Math.ceil(oldMental / 25);
+        const hasComputer = !!updated.inventory?.appliances?.some(a => a.id === 'computer');
+        const computerBonus = hasComputer ? 3 : 0;
+        const completedProjects = updated.innovateProjectsCompleted || 0;
+        const divisor = 1 + completedProjects * 0.5;
+
+        const gain = ((baseRate + surplusXpBonus + mentalBonus + computerBonus) * fraction) / divisor;
+        const oldChance = updated.innovateChance || 0;
+        const newChance = Math.min(85, Math.round((oldChance + gain) * 10) / 10);
+
+        const shiftEscrow = Math.floor(updated.currentWage * 8 * fraction);
+        const newEscrow = (updated.innovateEscrow || 0) + shiftEscrow;
+
+        // Serendipity check (~15% when healthy: Mental >= 20 and Phys >= 10)
+        if (oldMental >= 20 && oldPhys >= 10) {
+          const isSerendipity = resolveDecision(replay, `innovate_serendipity_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < 0.15);
+          if (isSerendipity) {
+            const rollSerenType = resolveDecision(replay, `innovate_serendipity_type_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < 0.5 ? 1 : 2);
+            if (rollSerenType === 1) {
+              updated.depMaxBonus = (updated.depMaxBonus || 0) + 1;
+              messages.push({ key: 'action.job.innovateSerendipityDep' });
+            } else {
+              const maxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
+              updated.experience = Math.min(maxExp, updated.experience + 1);
+              messages.push({ key: 'action.job.innovateSerendipityExp' });
+            }
+          }
+        }
+
+        // Breakthrough roll
+        const roll100 = resolveDecision(replay, `innovate_roll_${player.id}_${actionCount}`, () => Math.floor((rng ? rng.next() : Math.random()) * 100) + 1);
+        const isBreakthrough = roll100 <= newChance;
+
+        if (isBreakthrough) {
+          let netGrant = newEscrow;
+          if (updated.rentDebt > 0 && newEscrow > 0) {
+            const [afterDebtState, netAmount, garnished] = processRentDebt(updated, newEscrow);
+            updated = afterDebtState;
+            netGrant = netAmount;
+            if (garnished > 0) {
+              messages.push({ key: 'action.job.garnished', params: { amount: garnished } });
+            }
+          }
+          updated.money += netGrant;
+
+          updated.depMaxBonus = (updated.depMaxBonus || 0) + 3;
+          updated.xpMaxBonus = (updated.xpMaxBonus || 0) + 3;
+
+          const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0) + (updated.depMaxBonus || 0);
+          updated.dependability = Math.min(effectiveMaxDep, updated.dependability + 5);
+
+          const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
+          updated.experience = Math.min(effectiveMaxExp, updated.experience + 3);
+
+          updated.innovateChance = 0;
+          updated.innovateEscrow = 0;
+          updated.innovateProjectsCompleted = completedProjects + 1;
+
+          messages.push({ key: 'action.job.innovateBreakthrough', params: { grant: newEscrow, projectNum: completedProjects + 1 } });
+        } else {
+          updated.innovateChance = newChance;
+          updated.innovateEscrow = newEscrow;
+          messages.push({ key: 'action.job.innovateProgress', params: { chance: Math.round(newChance), escrow: newEscrow } });
+        }
+      } else {
+        // Normal stat growth for other modes
+        const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0) + (updated.depMaxBonus || 0);
+        updated.dependability = Math.min(effectiveMaxDep, updated.dependability + baseDepGain);
+      }
     }
 
-    const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
-    updated.experience = Math.min(effectiveMaxExp, updated.experience + 1);
+    if (mode === 'work_work') {
+      const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
+      updated.experience = Math.min(effectiveMaxExp, updated.experience + 1);
+    }
 
-    const statsStr = mentalCost > 0
-      ? ` (-${physicalCost} Physical, -${mentalCost} Mental)`
-      : ` (-${physicalCost} Physical)`;
+    let socialGain = 0;
+    if (mode === 'face_time') {
+      socialGain = resolveDecision(replay, `work_facetime_social_${player.id}_${actionCount}`, () => Math.floor((rng ? rng.next() : Math.random()) * 3) + 1);
+      updated.social = Math.min(99, (updated.social || 1) + socialGain);
+    }
+
+    const statCosts: string[] = [];
+    if (physicalCost > 0) statCosts.push(`-${physicalCost} Physical`);
+    if (mentalCost > 0) statCosts.push(`-${mentalCost} Mental`);
+    if (socialGain > 0) statCosts.push(`+${socialGain} Social`);
+    const statsStr = statCosts.length > 0 ? ` (${statCosts.join(', ')})` : '';
     messages.unshift({ key: 'action.job.worked', params: { title: job.title, wagesEarned, stats: statsStr } });
 
   } else {
@@ -387,7 +471,8 @@ export function workShift(
     messages.unshift({ key: 'action.job.worked', params: { title: job.title, wagesEarned, stats: '' } });
   }
 
-  if (player.dependability <= job.requirements.dependability - 3) {
+  const warnBuffer = 3 + (player.innovateProjectsCompleted || 0) * 2;
+  if (player.dependability <= job.requirements.dependability - warnBuffer) {
     messages.unshift({ key: 'action.job.warning' });
   }
   if (totalGarnished > 0) {
