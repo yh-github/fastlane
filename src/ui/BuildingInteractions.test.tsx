@@ -219,7 +219,7 @@ describe('BuildingInteractions', () => {
     expect(screen.getByText(/Owned:\s*10/i)).toBeInTheDocument();
   });
 
-  it('HomeRelax displays dynamic economy price for Cleaning Service and disables when broke or clean', async () => {
+  it('HomeRelax displays dynamic economy price for Cleaning Service and softly disables with reason when broke or clean', async () => {
     const { fireEvent } = await import('@testing-library/react');
     const { HomeRelax } = await import('./BuildingInteractions');
 
@@ -240,7 +240,7 @@ describe('BuildingInteractions', () => {
       }
     } as any;
 
-    const mockOnAction = vi.fn();
+    const mockOnAction = vi.fn().mockResolvedValue({ key: 'action.error.notEnoughMoneyCleanService' });
 
     // Render with broke player ($50 vs $100 cost)
     const { rerender } = render(
@@ -254,9 +254,13 @@ describe('BuildingInteractions', () => {
     );
 
     const cleanServiceBtn = screen.getByRole('button', { name: /Call Cleaning Service/i });
-    expect(cleanServiceBtn).toBeDisabled();
+    expect(cleanServiceBtn).not.toBeDisabled();
     expect(cleanServiceBtn.textContent).toContain('$100');
     expect(screen.getByText(/Needs \$100/i)).toBeInTheDocument();
+
+    // Clicking softly-disabled button calls onAction and receives feedback
+    fireEvent.click(cleanServiceBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'call_cleaning_service' });
 
     // Rerender with wealthy player ($500) and economic boom (+50 -> $150)
     const wealthyPlayer = { ...mockPlayer, money: 500 };
@@ -276,6 +280,48 @@ describe('BuildingInteractions', () => {
 
     fireEvent.click(updatedBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'call_cleaning_service' });
+  });
+
+  it('HomeRelax softly disables Socialize button with reason when messy, exhausted, or low on time', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    const { HomeRelax } = await import('./BuildingInteractions');
+
+    const messyPlayer = {
+      id: 'p1',
+      money: 500,
+      hoursRemaining: 30,
+      mess: 30, // Mess > 25
+      physicalCondition: 20,
+      currentHousingId: 'low_cost'
+    } as any;
+
+    const mockCampaign = {
+      housing: [{ id: 'low_cost', name: 'Low Cost' }],
+      config: {
+        timeRules: { relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6 },
+        economyRules: { cleaningServiceBasePrice: 100 },
+        statRules: {}
+      }
+    } as any;
+
+    const mockOnAction = vi.fn().mockResolvedValue({ key: 'action.error.messTooHighSocialize' });
+
+    render(
+      <HomeRelax
+        player={messyPlayer}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, usePhysicalMentalConditions: true } as any}
+        economicIndex={0}
+      />
+    );
+
+    const socializeBtn = screen.getByRole('button', { name: /Socialize \/ Entertain Guests/i });
+    expect(socializeBtn).not.toBeDisabled();
+    expect(socializeBtn.textContent).toContain('Clean room first (Mess > 25!)');
+
+    fireEvent.click(socializeBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'socialize_guests' });
   });
 
   it('WorkStation renders prominent Work Work default option and keeps modal open across clicks until Done is clicked', async () => {

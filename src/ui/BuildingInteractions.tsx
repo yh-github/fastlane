@@ -352,6 +352,19 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const { t } = useTranslation();
   const [showUnfedWarning, setShowUnfedWarning] = useState(false);
   const [warnedThisVisit, setWarnedThisVisit] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<{ message: string; isError: boolean } | null>(null);
+
+  const handleHomeAction = async (payload: any) => {
+    setActionFeedback(null);
+    const result = await onAction(payload);
+    if (result) {
+      const log = Array.isArray(result) ? result[0] : result;
+      if (log?.key?.includes?.('error')) {
+        setActionFeedback({ message: String(t(log.key, log.params || { defaultValue: log.key })), isError: true });
+      }
+    }
+    return result;
+  };
 
   const relaxCost = campaign?.config.timeRules?.relaxCost ?? 6;
   const currentMess = player.mess || 0;
@@ -363,13 +376,56 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const cleaningServicePrice = calcEconomyPrice(cleaningServiceBasePrice, economicIndex);
   const canAffordCleaning = player.money >= cleaningServicePrice;
 
+  const socializeCost = campaign?.config.timeRules?.socializeCost ?? 6;
+  const isTooExhaustedForSocial = !!rules?.usePhysicalMentalConditions && ((player.physicalCondition ?? 50) - 1 < 1.0);
+  const isNotEnoughTimeForSocial = player.hoursRemaining < socializeCost;
+  const isSocialDisabled = isMessTooHighForSocial || isNotEnoughTimeForSocial || isTooExhaustedForSocial;
+
+  let socialSubtext = '-1 Phys, +Social stat (Generates Mess)';
+  if (isMessTooHighForSocial) {
+    socialSubtext = '⚠️ Clean room first (Mess > 25!)';
+  } else if (isNotEnoughTimeForSocial) {
+    socialSubtext = `⚠️ Not enough time (Needs ${socializeCost} hrs)`;
+  } else if (isTooExhaustedForSocial) {
+    socialSubtext = '⚠️ Too exhausted (-1 Phys required)';
+  }
+
+  const cleanPhysicalCost = campaign?.config.statRules?.cleanPhysicalCost ?? 1;
+  const isTooExhaustedForClean = !!rules?.usePhysicalMentalConditions && ((player.physicalCondition ?? 50) - cleanPhysicalCost < 1.0);
+  const isNotEnoughTimeForClean = player.hoursRemaining < 3;
+  const isCleanDisabled = isMessClean || isNotEnoughTimeForClean || isTooExhaustedForClean;
+
+  let cleanSubtext = `Cleans 2d3 Mess ${rules?.usePhysicalMentalConditions ? `(-${cleanPhysicalCost} Phys)` : ''}`;
+  if (isMessClean) {
+    cleanSubtext += ' (Already Clean)';
+  } else if (isNotEnoughTimeForClean) {
+    cleanSubtext = `⚠️ Not enough time (Needs 3 hrs)`;
+  } else if (isTooExhaustedForClean) {
+    cleanSubtext = `⚠️ Too exhausted (-${cleanPhysicalCost} Phys required)`;
+  }
+
+  const isNotEnoughTimeForService = player.hoursRemaining < cleaningServiceCost;
+  const isCannotAffordService = !canAffordCleaning;
+  const isServiceDisabled = isMessClean || isCannotAffordService || isNotEnoughTimeForService;
+
+  let serviceSubtext = 'Professional cleaning (-10 Mess)';
+  if (isMessClean) {
+    serviceSubtext += ' (Already Clean)';
+  } else if (isCannotAffordService && isNotEnoughTimeForService) {
+    serviceSubtext += ` (Needs $${cleaningServicePrice}, Needs ${cleaningServiceCost} hr)`;
+  } else if (isCannotAffordService) {
+    serviceSubtext += ` (Needs $${cleaningServicePrice})`;
+  } else if (isNotEnoughTimeForService) {
+    serviceSubtext += ` (Needs ${cleaningServiceCost} hr)`;
+  }
+
   const hasFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0;
 
   const handleRelaxClick = () => {
     if (rules?.usePhysicalMentalConditions && !hasFood && !warnedThisVisit) {
       setShowUnfedWarning(true);
     } else {
-      onAction({ type: 'relax' });
+      handleHomeAction({ type: 'relax' });
     }
   };
 
@@ -414,6 +470,24 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
       <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
         🏠 {t('homeRelax.title', { defaultValue: 'Home Management' })}
       </h3>
+
+      {actionFeedback && (
+        <div style={{
+          padding: '10px 14px',
+          marginBottom: '12px',
+          borderRadius: '6px',
+          backgroundColor: actionFeedback.isError ? 'rgba(231, 76, 60, 0.2)' : 'rgba(46, 204, 113, 0.2)',
+          border: `1px solid ${actionFeedback.isError ? '#e74c3c' : '#2ecc71'}`,
+          color: actionFeedback.isError ? '#ff8585' : '#85ffb5',
+          fontSize: '13px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span>{actionFeedback.isError ? '⚠️' : '✓'}</span>
+          <span>{actionFeedback.message}</span>
+        </div>
+      )}
 
       {rules?.trackMess && (
         <div className="mess-visual-card" style={{ 
@@ -460,14 +534,28 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
               data-action-target="relax" 
               onClick={handleRelaxClick}
               style={{
-                backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', textAlign: 'left'
+                backgroundColor: player.hoursRemaining < relaxCost ? '#444' : '#27ae60',
+                color: player.hoursRemaining < relaxCost ? '#bbb' : '#fff',
+                border: 'none',
+                padding: '10px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                textAlign: 'left',
+                opacity: player.hoursRemaining < relaxCost ? 0.65 : 1
               }}
             >
               <div>🧘 {t('homeRelax.button', { cost: relaxCost })}</div>
-              {rules?.usePhysicalMentalConditions && (
+              {rules?.usePhysicalMentalConditions ? (
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: '#e8f8f5' }}>
-                  {hasFood ? '+Physical, +Mental condition' : '⚠️ No food: +1/+1 (-1 Max Phys & Mental)'} {rules?.trackMess && '(+1 Mess)'}
+                  {player.hoursRemaining < relaxCost ? `⚠️ Not enough time (Needs ${relaxCost} hrs)` : `${hasFood ? '+Physical, +Mental condition' : '⚠️ No food: +1/+1 (-1 Max Phys & Mental)'} ${rules?.trackMess ? '(+1 Mess)' : ''}`}
                 </div>
+              ) : (
+                player.hoursRemaining < relaxCost && (
+                  <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: '#ffb3b3' }}>
+                    ⚠️ Not enough time (Needs {relaxCost} hrs)
+                  </div>
+                )
               )}
             </button>
 
@@ -499,7 +587,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                       onClick={() => {
                         setWarnedThisVisit(true);
                         setShowUnfedWarning(false);
-                        onAction({ type: 'relax' });
+                        handleHomeAction({ type: 'relax' });
                       }}
                       style={{ padding: '8px 16px', background: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                     >
@@ -514,23 +602,22 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
             {rules?.usePhysicalMentalConditions && (
               <button 
                 data-action-target="socialize" 
-                onClick={() => onAction({ type: 'socialize_guests' })}
-                disabled={isMessTooHighForSocial}
+                onClick={() => handleHomeAction({ type: 'socialize_guests' })}
                 style={{ 
-                  backgroundColor: isMessTooHighForSocial ? '#444' : '#d35400', 
-                  color: isMessTooHighForSocial ? '#888' : '#fff', 
+                  backgroundColor: isSocialDisabled ? '#444' : '#d35400', 
+                  color: isSocialDisabled ? '#bbb' : '#fff', 
                   border: 'none', 
                   padding: '10px', 
                   borderRadius: '4px', 
-                  cursor: isMessTooHighForSocial ? 'not-allowed' : 'pointer', 
+                  cursor: 'pointer', 
                   fontWeight: 'bold',
                   textAlign: 'left',
-                  opacity: isMessTooHighForSocial ? 0.6 : 1
+                  opacity: isSocialDisabled ? 0.65 : 1
                 }}
               >
                 <div>🎉 Socialize / Entertain Guests (6 hrs)</div>
-                <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
-                  -1 Phys, +Social stat {isMessTooHighForSocial ? '⚠️ Clean room first (Mess > 25!)' : '(Generates Mess)'}
+                <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: isSocialDisabled ? '#ffb3b3' : 'inherit' }}>
+                  {socialSubtext}
                 </div>
               </button>
             )}
@@ -545,45 +632,43 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
               <>
                 <button 
                   data-action-target="clean" 
-                  onClick={() => onAction({ type: 'clean' })}
-                  disabled={isMessClean}
+                  onClick={() => handleHomeAction({ type: 'clean' })}
                   style={{ 
-                    backgroundColor: isMessClean ? '#444' : '#2980b9', 
-                    color: isMessClean ? '#888' : '#fff', 
+                    backgroundColor: isCleanDisabled ? '#444' : '#2980b9', 
+                    color: isCleanDisabled ? '#bbb' : '#fff', 
                     border: 'none', 
                     padding: '10px', 
                     borderRadius: '4px', 
-                    cursor: isMessClean ? 'not-allowed' : 'pointer', 
+                    cursor: 'pointer', 
                     fontWeight: 'bold',
                     textAlign: 'left',
-                    opacity: isMessClean ? 0.6 : 1
+                    opacity: isCleanDisabled ? 0.65 : 1
                   }}
                 >
                   <div>🧹 Clean Apartment (3 hrs)</div>
-                  <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
-                    Cleans 2d3 Mess {rules?.usePhysicalMentalConditions && `(-${campaign?.config.statRules?.cleanPhysicalCost ?? 1} Phys)`} {isMessClean ? '(Already Clean)' : ''}
+                  <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: isCleanDisabled ? '#ffb3b3' : 'inherit' }}>
+                    {cleanSubtext}
                   </div>
                 </button>
 
                 <button 
                   data-action-target="call-cleaning-service" 
-                  onClick={() => onAction({ type: 'call_cleaning_service' })}
-                  disabled={isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost}
+                  onClick={() => handleHomeAction({ type: 'call_cleaning_service' })}
                   style={{ 
-                    backgroundColor: (isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost) ? '#444' : '#8e44ad', 
-                    color: (isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost) ? '#888' : '#fff', 
+                    backgroundColor: isServiceDisabled ? '#444' : '#8e44ad', 
+                    color: isServiceDisabled ? '#bbb' : '#fff', 
                     border: 'none', 
                     padding: '10px', 
                     borderRadius: '4px', 
-                    cursor: (isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost) ? 'not-allowed' : 'pointer', 
+                    cursor: 'pointer', 
                     fontWeight: 'bold',
                     textAlign: 'left',
-                    opacity: (isMessClean || !canAffordCleaning || player.hoursRemaining < cleaningServiceCost) ? 0.6 : 1
+                    opacity: isServiceDisabled ? 0.65 : 1
                   }}
                 >
                   <div>🧼 Call Cleaning Service ({cleaningServiceCost} hr, ${cleaningServicePrice})</div>
-                  <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px' }}>
-                    Professional cleaning (-10 Mess) {isMessClean ? '(Already Clean)' : (!canAffordCleaning ? `(Needs $${cleaningServicePrice})` : '')}
+                  <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: isServiceDisabled ? '#ffb3b3' : 'inherit' }}>
+                    {serviceSubtext}
                   </div>
                 </button>
               </>
