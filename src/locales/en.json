@@ -153,6 +153,7 @@
       "notEnoughTimeClean": "Not enough time to clean.",
       "notEnoughTimeSocialize": "Not enough time to socialize.",
       "notEnoughMoneyCleanService": "Not enough money to call cleaning service.",
+      "alreadyClean": "Your apartment is already spotless.",
       "messTooHighSocialize": "Your apartment is too messy to invite guests over (Clean below 25 Mess first).",
       "noLoan": "You don't have a loan.",
       "notEnoughMoney": "Not enough money.",

@@ -372,6 +372,10 @@ export function gameReducer(
       break;
     }
     case 'clean': {
+      if ((nextPlayer.mess || 0) <= 0) {
+        actionLog = { key: 'action.error.alreadyClean' };
+        break;
+      }
       if (nextPlayer.hoursRemaining < 3) {
         if (!context.rules.allowPartialHours || nextPlayer.hoursRemaining <= 0) {
           actionLog = { key: 'action.error.notEnoughTimeClean' };
@@ -410,6 +414,10 @@ export function gameReducer(
       break;
     }
     case 'call_cleaning_service': {
+      if ((nextPlayer.mess || 0) <= 0) {
+        actionLog = { key: 'action.error.alreadyClean' };
+        break;
+      }
       const timeCost = context.campaign.config.timeRules?.cleaningServiceCost ?? 1;
       if (nextPlayer.hoursRemaining < timeCost) {
         actionLog = { key: 'action.error.notEnoughTimeClean' };
