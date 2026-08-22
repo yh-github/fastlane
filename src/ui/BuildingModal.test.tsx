@@ -264,4 +264,63 @@ describe('BuildingModal Component', () => {
     fireEvent.click(workWorkBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_burger_cook', mode: 'work_work' });
   });
+
+  it('displays speech bubble when a raise is denied', async () => {
+    const { fireEvent, waitFor } = await import('@testing-library/react');
+
+    const jobBurger = {
+      id: 'job_burger_cook',
+      title: 'Burger Cook',
+      baseWage: 12,
+      locationId: 'employment_office',
+      requirements: { dependability: 10, experience: 0, degrees: [] }
+    };
+
+    const campaignWithJob: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [jobBurger as any],
+      buildings: [
+        {
+          id: 'employment_office',
+          name: 'Employment Office',
+          description: 'Find a job',
+          archetype: 'employment'
+        } as any
+      ]
+    };
+
+    const mockOnAction = vi.fn().mockResolvedValue({
+      key: 'action.job.raiseDenied'
+    });
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'job_burger_cook',
+          currentWage: 10
+        }}
+        campaign={campaignWithJob}
+        currentBuildingId="employment_office"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        onAction={mockOnAction}
+        onClose={vi.fn()}
+      />
+    );
+
+    const locationCard = screen.getByText('Employment Office', { selector: 'strong' });
+    fireEvent.click(locationCard);
+
+    const raiseBtn = screen.getByRole('button', { name: 'jobBoard.askRaise' });
+    expect(raiseBtn).toBeInTheDocument();
+
+    fireEvent.click(raiseBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'apply', jobId: 'job_burger_cook', offeredWage: 12 });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Raise denied/i)).toBeInTheDocument();
+    }, { timeout: 2000 });
+  });
 });

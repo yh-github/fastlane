@@ -39,6 +39,8 @@ export function useGameEngine(
   const [streetRobberyNotice, setStreetRobberyNotice] = useState<{ lostAmount: number; location: string; onConfirm?: () => void } | null>(null);
   const lastPulsedRef = useRef({ turn: -1, playerIndex: -1 });
   const replayDataRef = useRef<ReplayData | null>(null);
+  const pendingDestinationRef = useRef<string | null>(null);
+  const isMovingRef = useRef<boolean>(false);
 
   const setGameState = useCallback((updater: GameState | null | ((prev: GameState | null) => GameState | null)) => {
     if (typeof updater === 'function') {
@@ -162,8 +164,7 @@ export function useGameEngine(
     }
 
     if (payload.type === 'move') {
-      const nodeId = payload.nodeId;
-      const node = campaign.map.nodes.find(n => n.id === nodeId);
+      let targetNodeId = payload.nodeId;
       let updatedPlayers = [...currentState.players];
       let player = { ...updatedPlayers[activePlayerIndex] };
       const activePlayer = updatedPlayers[activePlayerIndex];
@@ -176,20 +177,20 @@ export function useGameEngine(
       }
 
       // If we are already there, just open the modal if it's a building
-      if (player.position === nodeId) {
-        // Only open the building modal if this is a HUMAN player moving to a building
-        if (!activePlayer.isAi && campaign!.buildings.some(b => b.id === node?.buildingId)) {
+      if (player.position === targetNodeId) {
+        const destNode = campaign.map.nodes.find(n => n.id === targetNodeId);
+        if (!activePlayer.isAi && campaign!.buildings.some(b => b.id === destNode?.buildingId)) {
           setIsBuildingModalOpen(true);
         }
         return;
       }
 
-      const pathResult = findShortestPath(adjacencyMap, player.position, nodeId);
-      
-      if (pathResult.found) {
-        setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
-        setIsAnimating(true);
+      setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
+      setIsAnimating(true);
+      isMovingRef.current = true;
+      pendingDestinationRef.current = null;
 
+      try {
         const currentBuilding = campaign.map.nodes.find(n => n.id === player.position)?.buildingId;
         if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
           const preRobberyMoney = player.money;
@@ -210,7 +211,7 @@ export function useGameEngine(
             if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
             replayDataRef.current.steps.push({
               turn: currentState.turn,
-              action: { type: 'move', nodeId },
+              action: { type: 'move', nodeId: targetNodeId },
               engineDecisions: outDecisions
             });
           }
@@ -245,84 +246,97 @@ export function useGameEngine(
         }
         
         const movementCost = (campaign.config.mapRules as any)?.movementCostPerNode || 1;
-        const requestedSteps = pathResult.steps;
-        const maxAffordableSteps = Math.floor(player.hoursRemaining / movementCost);
-        const actualSteps = Math.min(requestedSteps, maxAffordableSteps);
+        let pRef = { ...player };
+        let stepsTaken = 0;
 
-        if (actualSteps > 0 && !['bank', 'blacks_market'].includes(currentBuilding || '')) {
+        while (pRef.hoursRemaining >= movementCost) {
+          // Check if destination was redirected while moving
+          if (pendingDestinationRef.current && pendingDestinationRef.current !== targetNodeId) {
+            targetNodeId = pendingDestinationRef.current;
+            pendingDestinationRef.current = null;
+          }
+
+          if (pRef.position === targetNodeId) {
+            break;
+          }
+
+          const pathResult = findShortestPath(adjacencyMap, pRef.position, targetNodeId);
+          if (!pathResult.found || pathResult.path.length < 2) {
+            break;
+          }
+
+          const nextNodeId = pathResult.path[1];
+          const nextNode = campaign.map.nodes.find(n => n.id === nextNodeId);
+          if (!nextNode) break;
+
+          await animatePlayerPath([{ nodeId: nextNodeId, x: nextNode.x, y: nextNode.y }], activePlayerIndex, 300);
+
+          pRef = spendHours(pRef, movementCost);
+          pRef.position = nextNodeId;
+          stepsTaken++;
+
+          setGameState(prev => {
+            if (!prev) return prev;
+            const newPlayers = [...prev.players];
+            newPlayers[activePlayerIndex] = { ...pRef };
+            return { ...prev, players: newPlayers };
+          });
+        }
+
+        player = { ...pRef };
+
+        if (currentState.rules.autoEquipBestClothes) {
+          const hasCasual = player.inventory.casualClothesWeeks > 0;
+          const hasDress = player.inventory.dressClothesWeeks > 0;
+          const hasBusiness = player.inventory.businessClothesWeeks > 0;
+          
+          if (hasBusiness) player.inventory.selectedClothes = 'business';
+          else if (hasDress) player.inventory.selectedClothes = 'dress';
+          else if (hasCasual) player.inventory.selectedClothes = 'casual';
+          else player.inventory.selectedClothes = 'none';
+        }
+        
+        player = recalculatePlayerEffects(player, campaign);
+        updatedPlayers[activePlayerIndex] = player;
+
+        if (stepsTaken > 0 && !['bank', 'blacks_market'].includes(currentBuilding || '')) {
           if (replayDataRef.current) {
             if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
             replayDataRef.current.steps.push({
               turn: currentState.turn,
-              action: { type: 'move', nodeId },
-              engineDecisions: [] // Empty for normal moves, since robbery was handled above
+              action: { type: 'move', nodeId: targetNodeId },
+              engineDecisions: []
             });
           }
         }
 
-        if (actualSteps > 0) {
-          // Build the physical path for animation, up to the actual steps we can take
-          const pathCoords: PlayerPosition[] = pathResult.path.slice(0, actualSteps + 1).map(id => {
-            const node = campaign.map.nodes.find(n => n.id === id);
-            return { nodeId: id, x: node!.x, y: node!.y };
-          });
-
-          // Animate the path we can take
-          let pRef = { ...player };
-          await animatePlayerPath(pathCoords.slice(1), activePlayerIndex, 300, () => {
-            pRef = spendHours(pRef, movementCost);
-            setGameState(prev => {
-              if (!prev) return prev;
-              const newPlayers = [...prev.players];
-              newPlayers[activePlayerIndex] = pRef;
-              return { ...prev, players: newPlayers };
-            });
-          });
-
-          // Ensure local player object matches the reference
-          player = { ...pRef };
-          player.position = pathResult.path[actualSteps];
-          
-          if (currentState.rules.autoEquipBestClothes) {
-            const hasCasual = player.inventory.casualClothesWeeks > 0;
-            const hasDress = player.inventory.dressClothesWeeks > 0;
-            const hasBusiness = player.inventory.businessClothesWeeks > 0;
-            
-            if (hasBusiness) player.inventory.selectedClothes = 'business';
-            else if (hasDress) player.inventory.selectedClothes = 'dress';
-            else if (hasCasual) player.inventory.selectedClothes = 'casual';
-            else player.inventory.selectedClothes = 'none';
+        if (player.hoursRemaining <= 0) {
+          addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
+          await endTurnSequence(updatedPlayers);
+        } else {
+          // If we reached the target destination and it has a building, apply entry cost
+          const destNode = campaign.map.nodes.find(n => n.id === player.position);
+          if (destNode && destNode.buildingId && player.position === targetNodeId) {
+            const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
+            player = spendHours(player, entryCost);
+            updatedPlayers[activePlayerIndex] = player;
           }
-          
-          player = recalculatePlayerEffects(player, campaign);
-          updatedPlayers[activePlayerIndex] = player;
-          
-          if (player.hoursRemaining <= 0) {
-            addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
-            await endTurnSequence(updatedPlayers);
-          } else {
-            // If we reached the destination and it has a building, apply entry cost
-            const destNode = campaign.map.nodes.find(n => n.id === player.position);
-            if (destNode && destNode.buildingId && actualSteps === requestedSteps) {
-              const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
-              player = spendHours(player, entryCost);
-              updatedPlayers[activePlayerIndex] = player;
-            }
 
-            setGameState(prev => {
-               if (!prev) return prev;
-               return { ...prev, players: updatedPlayers };
-            });
-            
-            if (!activePlayer.isAi) {
+          setGameState(prev => {
+            if (!prev) return prev;
+            return { ...prev, players: updatedPlayers };
+          });
+          
+          if (!activePlayer.isAi && player.position === targetNodeId) {
+            const destNode = campaign.map.nodes.find(n => n.id === player.position);
+            if (destNode && campaign.buildings.some(b => b.id === destNode.buildingId)) {
               setIsBuildingModalOpen(true);
             }
           }
-        } else {
-          // If they have no hours left to move
-          addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
-          await endTurnSequence(updatedPlayers);
         }
+      } finally {
+        isMovingRef.current = false;
+        pendingDestinationRef.current = null;
         setIsAnimating(false);
       }
       return;
@@ -390,6 +404,7 @@ export function useGameEngine(
             const relaxDiff = (player.relaxation || 0) - (oldPlayer.relaxation || 0);
             const depDiff = (player.dependability || 0) - (oldPlayer.dependability || 0);
             const expDiff = (player.experience || 0) - (oldPlayer.experience || 0);
+            const socDiff = (player.social !== undefined && oldPlayer.social !== undefined) ? player.social - oldPlayer.social : 0;
             
             if (moneyDiff !== 0) {
               diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
@@ -444,6 +459,12 @@ export function useGameEngine(
                 triggerAnim('text', `${expDiff > 0 ? '+' : ''}${expDiff} 👌`, { targetId: 'stat-experience', customClass: expDiff > 0 ? 'anim-positive' : 'anim-negative' });
               }
             }
+            if (socDiff !== 0) {
+              diffStr.push(`${socDiff > 0 ? '+' : ''}${socDiff} Social`);
+              if (prevState.rules.enableAnimations) {
+                triggerAnim('text', `${socDiff > 0 ? '+' : ''}${socDiff} 👥`, { targetId: 'stat-social', customClass: socDiff > 0 ? 'anim-positive' : 'anim-negative' });
+              }
+            }
             
             if (diffStr.length > 0) {
               finalActionLog.params = { ...finalActionLog.params, diff: ` (${diffStr.join(', ')})` };
@@ -470,11 +491,22 @@ export function useGameEngine(
   };
 
   const handleNodeClick = async (nodeId: string) => {
-    if (!gameStateRef.current || !campaign || isAnimating) return;
+    if (!gameStateRef.current || !campaign) return;
+    const activePlayer = gameStateRef.current.players[activePlayerIndex];
+    if (activePlayer?.isAi) return;
+
     const node = campaign.map.nodes.find(n => n.id === nodeId);
     if (node) {
       showMapClick(node.x, node.y);
     }
+
+    if (isMovingRef.current) {
+      pendingDestinationRef.current = nodeId;
+      return;
+    }
+
+    if (isAnimating) return;
+
     await handleAction({ type: 'move', nodeId });
   };
 

@@ -142,6 +142,7 @@ export function processApartmentRobbery(
   const robbed = forceRobbed ? true : resolveDecision(replay, `apartment_robbery`, () => rng.next() < chance);
 
   if (robbed) {
+    const formatItem = (id: string) => id.split('_').map(w => (w.toLowerCase() === 'tv' || w.toLowerCase() === 'vcr' ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
     let stolenCount = 0;
     const stolenItemNames: string[] = [];
     const newAppliances = player.inventory.appliances.filter((app) => {
@@ -156,7 +157,7 @@ export function processApartmentRobbery(
       }
       if (itemStolen) {
         stolenCount++;
-        stolenItemNames.push(app.name || app.id.replaceAll('_', ' '));
+        stolenItemNames.push((app as any).name || formatItem(app.id));
         return false; // Stolen
       }
       return true; // Keep
@@ -169,7 +170,7 @@ export function processApartmentRobbery(
         );
         if (unprotected) {
           const remAppliances = player.inventory.appliances.filter(a => a !== unprotected);
-          const itemsStr = unprotected.name || unprotected.id.replaceAll('_', ' ');
+          const itemsStr = (unprotected as any).name || formatItem(unprotected.id);
           let updated = {
             ...player,
             inventory: { ...player.inventory, appliances: remAppliances },

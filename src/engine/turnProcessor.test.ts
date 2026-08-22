@@ -110,6 +110,19 @@ describe('Turn Processor', () => {
       const nextState = processTurnStart(state, mockCampaign);
       expect(nextState.players[0].turnEvents.some(e => e.key === 'events.applianceBroke')).toBe(true);
     });
+
+    it('formats color_tv breakdown message with proper display name Color TV', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 2;
+      state.players[0].currentHousingId = 'security';
+      state.players[0].money = 500;
+      state.players[0].inventory.appliances.push({ id: 'color_tv', purchasePrice: 349, purchaseSource: 'socket_city' });
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.001);
+      const nextState = processTurnStart(state, mockCampaign);
+      const brokeEvent = nextState.players[0].turnEvents.find(e => e.key === 'events.applianceBroke');
+      expect(brokeEvent).toBeDefined();
+      expect(brokeEvent?.params?.appliance).toBe('Color TV');
+    });
   });
 
   describe('Happiness Bonuses', () => {
@@ -455,14 +468,16 @@ describe('Turn Processor', () => {
 
     it('applies social offset to dependability decay at turn start in advanced mode', () => {
       let state = createTestGameState(mockCampaign, [{ name: 'Player1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
+      state.turn = 1;
       state.rules.usePhysicalMentalConditions = true;
       state.players[0].dependability = 50;
-      state.players[0].social = 50; // Offset = floor(50/25) = 2
-      state.players[0].currentJobId = 'sales_manager'; // mockCampaign or dev_job
+      state.players[0].social = 51; // Decays by -1 at turn start to 50 -> Offset = floor(50/25) = 2
+      state.players[0].currentJobId = 'sales_manager';
 
       state = processTurnStart(state, mockCampaign);
       // Dep decay for unemployed/no matching job req is 3 base. With offset 2, decay is max(1, 3 - 2) = 1.
       expect(state.players[0].dependability).toBe(49);
+      expect(state.players[0].social).toBe(50);
     });
   });
 });

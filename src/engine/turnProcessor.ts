@@ -635,6 +635,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
 
       // 15. Appliance Repair
+      const formatAppName = (id: string) => campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => (w.toLowerCase() === 'tv' || w.toLowerCase() === 'vcr' ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
       const queuedAppBreak = state.debugQueue?.find(e => e.type === 'appliance_break' && (e.playerId === p.id || !e.playerId));
       if (queuedAppBreak) {
         if (p.inventory.appliances.length > 0) {
@@ -642,7 +643,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
           const repairCost = Math.floor(targetApp.purchasePrice * (0.05 + rng.next() * 0.2));
           p.money = Math.max(0, p.money - repairCost);
           p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-          p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: targetApp.id, repairCost } });
+          p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(targetApp.id), repairCost } });
 
           for (const app of p.inventory.appliances.filter(a => a !== targetApp)) {
             const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
@@ -651,7 +652,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
               const rCost = resolveDecision(replay, `appliance_repair_${p.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
               p.money = Math.max(0, p.money - rCost);
               p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-              p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: app.id, repairCost: rCost } });
+              p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost: rCost } });
             }
           }
         } else {
@@ -665,7 +666,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
             const repairCost = resolveDecision(replay, `appliance_repair_${p.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
             p.money = Math.max(0, p.money - repairCost);
             p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-            p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: app.id, repairCost } });
+            p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost } });
           }
         }
       }
