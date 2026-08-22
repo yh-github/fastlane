@@ -16,6 +16,8 @@ scratch
 
 # Editor directories and files
 /coverage/
+/test-results/
+/playwright-report/
 .vscode/*
 !.vscode/extensions.json
 .idea

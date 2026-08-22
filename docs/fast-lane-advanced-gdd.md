@@ -83,7 +83,12 @@ Where **bonuses** include:
 ### 3.4. Social Stat (1–99)
 - **Range**: `1` to `99` (Starts at `9`).
 - **Decay**: Degrades by `-1` at Turn Start (down to minimum `1`).
-- **Synergy**: Every 10 full points of Social grants $+1$ to `MAX_MENTAL` and $+1$ to `Lifestyle`.
+- **Synergies & Formulas**:
+  - **Dynamic Max Mental & Lifestyle**: Every 10 full points grants $+1$ to `MAX_MENTAL` and $+1$ to `Lifestyle` ($\lfloor\text{social}/10\rfloor$).
+  - **Mental Relaxation Recovery**: Grants $+\lfloor\text{social}/15\rfloor$ extra Mental condition recovery when relaxing at home.
+  - **Employability Bonus**: Grants $+\lfloor\text{social}/15\rfloor$ flat bonus to hiring roll threshold (`calcEmployabilityScore`).
+  - **Dependability Decay Buffer**: Reduces turn-start Dependability decay by $\lfloor\text{social}/25\rfloor$ (clamped so weekly reduction is never less than 1 point: $\text{dep\_loss} = \max(1, \text{baseLoss} - \lfloor\text{social}/25\rfloor)$).
+  - **Face Time Synergy**: Grants $+\lfloor\text{social}/25\rfloor$ extra Dependability gain and $+1d3$ Social points when working in Face Time mode.
 
 ### 3.5. Lifestyle Stat Formula
 Lifestyle evaluates the player's standard of living:

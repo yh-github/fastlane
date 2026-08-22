@@ -763,7 +763,8 @@ export function gameReducer(
       if (action.item.id === 'refrigerator' && nextPlayer.inventory.freshFoodUnits > 0) {
         nextPlayer = applyHappinessChange(nextPlayer, -1, 'pawn_item', context.rules, context.campaign.config.statRules);
       }
-      const itemName = action.item.id.replaceAll('_', ' ');
+      const formatItem = (id: string) => context.campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      const itemName = formatItem(action.item.id);
       actionLog = { key: 'action.pawn.pawned', params: { itemName, value: action.value } };
       break;
     }
@@ -776,7 +777,8 @@ export function gameReducer(
           purchasePrice: action.item.originalPrice,
           purchaseSource: action.item.purchaseSource || 'socket_city'
         });
-        const itemName = action.item.itemId.replaceAll('_', ' ');
+        const formatItem = (id: string) => context.campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const itemName = formatItem(action.item.itemId);
         actionLog = { key: 'action.pawn.redeemed', params: { itemName, cost: action.cost } };
       } else {
         actionLog = { key: 'action.error.notEnoughMoneyBuyBack' };
@@ -792,7 +794,8 @@ export function gameReducer(
           purchasePrice: action.item.originalPrice,
           purchaseSource: 'pawnshop'
         });
-        const itemName = action.item.itemId.replaceAll('_', ' ');
+        const formatItem = (id: string) => context.campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const itemName = formatItem(action.item.itemId);
         actionLog = { key: 'action.pawn.bought', params: { itemName, cost: action.cost } };
       } else {
         actionLog = { key: 'action.error.notEnoughMoneyBuyPawn' };

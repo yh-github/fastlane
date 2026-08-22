@@ -88,7 +88,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     rejectionReasons.push(msg('job_apply_missing_experience', 'Not enough experience.'));
   }
   if (updated.dependability < job.requirements.dependability) {
-    rejectionReasons.push(msg('job_apply_missing_dependability', 'Not dependable enough.'));
+    rejectionReasons.push(msg('job_apply_missing_dependability', 'Poor Work History.'));
   }
   
   // Check degrees

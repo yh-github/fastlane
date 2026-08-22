@@ -52,6 +52,15 @@ describe('Job Engine', () => {
       const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.job.rejected');
+      expect(result.message?.params?.reasons).toContain('Not enough experience.');
+    });
+
+    it('rejects if missing hard requirements (dependability - Poor Work History)', () => {
+      const player = { hoursRemaining: 20, experience: 60, dependability: 10, degrees: ['business_admin'], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.job.rejected');
+      expect(result.message?.params?.reasons).toContain('Poor Work History.');
     });
 
     it('rejects if missing degree', () => {

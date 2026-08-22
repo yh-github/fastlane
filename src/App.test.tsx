@@ -245,4 +245,37 @@ describe('App Integration & StrictMode', () => {
       await new Promise(r => setTimeout(r, 100));
     });
   });
+
+  it('changes destination when clicking another node while currently moving', async () => {
+    render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+
+    // Title screen -> Start game
+    const newGameBtn = await screen.findByText(/New Game|titleScreen\.startGame/i);
+    fireEvent.click(newGameBtn);
+
+    // Setup screen -> Start life
+    const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
+    fireEvent.click(startGameBtn);
+
+    await screen.findByText(/Player 1 - Week/i);
+
+    // Start moving towards burger
+    const burgerNodeBtn = screen.getByTestId('node-burger');
+    const bankNodeBtn = screen.getByTestId('node-bank');
+
+    fireEvent.click(burgerNodeBtn);
+    // Click bank while in motion
+    fireEvent.click(bankNodeBtn);
+
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 150));
+    });
+
+    // The player should reach bank destination
+    expect(screen.getByTestId('node-bank')).toBeInTheDocument();
+  });
 });

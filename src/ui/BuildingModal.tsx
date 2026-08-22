@@ -44,7 +44,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
 
   const building = campaign?.buildings.find(b => b.id === currentBuildingId) || null;
 
-  // Initialize greeting
+  // Initialize greeting on entering building
   useEffect(() => {
     if (!building) return;
     const isWeek4 = turn % 4 === 0;
@@ -62,7 +62,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     } else {
       setClerkMessage('');
     }
-  }, [building, t, getRandomMessage, turn, player?.rentPaidUntilWeek, player?.turnFlags?.rentPaidThisTurn, player?.currentJobId, campaign?.jobs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentBuildingId]);
 
   // Handle global click to close speech bubble
   useEffect(() => {
@@ -187,15 +188,17 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
           }
         } else if (payload.type === 'apply') {
           if (mainLog.key === 'action.job.raiseSuccess') {
-            nextMsg = t('action.job.raiseSuccess', mainLog.params);
-          } else if (mainLog.key === 'action.job.hired') {
-            nextMsg = t('action.job.hired', mainLog.params);
+            nextMsg = String(t('action.job.raiseSuccess', mainLog.params));
+          } else if (mainLog.key === 'action.job.raiseDenied') {
+            nextMsg = String(t('action.job.raiseDenied', { defaultValue: 'Raise denied.' }));
+          } else if (mainLog.key === 'action.job.hired' || mainLog.key === 'action.job.gotJob') {
+            nextMsg = String(t(mainLog.key, mainLog.params));
           } else if (mainLog.key === 'action.job.raiseWaste') {
-            nextMsg = t('action.job.raiseWaste');
+            nextMsg = String(t('action.job.raiseWaste'));
           } else if (mainLog.key === 'action.job.raiseSame') {
-            nextMsg = t('action.job.raiseSame');
+            nextMsg = String(t('action.job.raiseSame'));
           } else if (mainLog.key === 'action.job.raiseLess') {
-            nextMsg = t('action.job.raiseLess');
+            nextMsg = String(t('action.job.raiseLess'));
           } else if (mainLog.key === 'action.job.rejected') {
             const reasons = mainLog.params?.reasons || t('jobBoard.missingReq');
             nextMsg = `Sorry. You didn't get the job for the following reasons:\n\n${reasons}`;
@@ -291,7 +294,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
 
   const getFace = (id: string, archetype: string) => {
     switch (id) {
-      case 'burger_palace': return '🍔'; // Burger Palace: Burger clerk
+      case 'burger_palace': return '🧑‍🍳'; // Burger Palace: Cook / Chef
       case 'qt_clothing': return '💁‍♂️'; // QT Clothing: Male clerk (often pink shirt)
       case 'bank': return '👩‍💼'; // Bank: Female in a suit
       case 'z_mart':
