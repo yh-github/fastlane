@@ -223,11 +223,11 @@ describe('Job Engine', () => {
           hoursRemaining: 20,
           currentJobId: 'sales_manager',
           currentWage: 12,
-          experience: 60, // req is 50 -> +10 surplus -> +2% bonus
+          experience: 60, // req is 50 -> +10 surplus -> +0.5 pp bonus
           dependability: 50,
           degrees: ['business_admin'],
           physicalCondition: 50,
-          mentalCondition: 60, // ceil(60/25) = 3% bonus
+          mentalCondition: 60, // > 50 -> +0.5 pp bonus
           innovateChance: 0,
           innovateEscrow: 0,
           innovateProjectsCompleted: 0,
@@ -235,12 +235,12 @@ describe('Job Engine', () => {
           inventory: {
             businessClothesWeeks: 10,
             selectedClothes: 'business',
-            appliances: [{ id: 'computer' }] // Computer -> +3% bonus
+            appliances: [{ id: 'computer' }] // Computer -> +1.0 pp bonus
           }
         } as unknown as PlayerState;
 
-        // Base 10 + surplus XP 2 + mental 3 + computer 3 = 18%
-        // Force breakthrough roll to miss (roll 99 > 18)
+        // Base 1.8 + surplus XP 0.5 + mental 0.5 + computer 1.0 = 3.8 pp
+        // Force breakthrough roll to miss (roll 99 > 3.8)
         const replay = {
           inDecisions: [
             { type: `innovate_serendipity_${player.id}_1`, result: false },
@@ -252,11 +252,11 @@ describe('Job Engine', () => {
         const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
         expect(result.success).toBe(true);
         expect(result.wagesEarned).toBe(0); // 0 upfront wage
-        expect(result.updated.innovateChance).toBe(18); // 18% accumulated
-        expect(result.updated.innovateEscrow).toBe(96); // 12 * 8 = 96 in escrow
+        expect(result.updated.innovateChance).toBe(3.8); // 3.8 pp accumulated
+        expect(result.updated.innovateEscrow).toBe(48); // 12 * 4 = 48 in escrow (0.5x rate)
       });
 
-      it('innovate triggers breakthrough when roll <= chance, paying out pure escrow and boosting stats', () => {
+      it('innovate triggers breakthrough when roll <= chance, paying out randomized escrow and boosting stats', () => {
         const player = {
           id: 'p1',
           hoursRemaining: 20,
@@ -267,7 +267,7 @@ describe('Job Engine', () => {
           physicalCondition: 50,
           mentalCondition: 50,
           innovateChance: 40,
-          innovateEscrow: 240, // accumulated 3 previous shifts of $80
+          innovateEscrow: 120, // accumulated 3 previous shifts of $40
           innovateProjectsCompleted: 0,
           dependability: 50,
           depMaxBonus: 0,
@@ -277,12 +277,13 @@ describe('Job Engine', () => {
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
         } as unknown as PlayerState;
 
-        // This shift adds $80 to escrow (total 320) and increases chance to ~52%.
-        // Force breakthrough roll to succeed (roll 10 <= 52)
+        // This shift adds $40 to escrow (total 160).
+        // Force breakthrough roll to succeed (roll 10 <= 41.8) and variance to be 1.0
         const replay = {
           inDecisions: [
             { type: `innovate_serendipity_${player.id}_1`, result: false },
-            { type: `innovate_roll_${player.id}_1`, result: 10 }
+            { type: `innovate_roll_${player.id}_1`, result: 10 },
+            { type: `innovate_grant_variance_${player.id}_1`, result: 1.0 }
           ],
           outDecisions: []
         };
@@ -292,7 +293,7 @@ describe('Job Engine', () => {
         expect(result.updated.innovateChance).toBe(0); // reset after breakthrough
         expect(result.updated.innovateEscrow).toBe(0); // reset after payout
         expect(result.updated.innovateProjectsCompleted).toBe(1); // 1 project completed
-        expect(result.updated.money).toBe(500 + 320); // 500 + 320 full escrow payout = 820
+        expect(result.updated.money).toBe(500 + 160); // 500 + 160 grant payout = 660
         expect(result.updated.depMaxBonus).toBe(3); // +3 Max Dep
         expect(result.updated.xpMaxBonus).toBe(3); // +3 Max Exp
         expect(result.updated.dependability).toBe(55); // +5 Dep
@@ -338,7 +339,7 @@ describe('Job Engine', () => {
           dependability: 50,
           degrees: ['business_admin'],
           physicalCondition: 50,
-          mentalCondition: 50, // mental bonus = ceil(50/25) = 2
+          mentalCondition: 50,
           innovateChance: 0,
           innovateEscrow: 0,
           innovateProjectsCompleted: 0,
@@ -346,8 +347,8 @@ describe('Job Engine', () => {
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
         } as unknown as PlayerState;
 
-        // Base 10 + mental 2 = 12. Fraction = 3/6 = 0.5. Gain = 12 * 0.5 = 6%.
-        // Escrow = 10 * 8 * 0.5 = $40.
+        // Base 1.8. Fraction = 3/6 = 0.5. Gain = 1.8 * 0.5 = 0.9 pp.
+        // Escrow = 10 * 4 * 0.5 = $20.
         const replay = {
           inDecisions: [
             { type: `innovate_serendipity_${player.id}_1`, result: false },
@@ -359,8 +360,8 @@ describe('Job Engine', () => {
         const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
         expect(result.success).toBe(true);
         expect(result.updated.hoursRemaining).toBe(0);
-        expect(result.updated.innovateChance).toBe(6);
-        expect(result.updated.innovateEscrow).toBe(40);
+        expect(result.updated.innovateChance).toBe(0.9);
+        expect(result.updated.innovateEscrow).toBe(20);
       });
 
       it('innovate hard-caps banked chance at 85%', () => {
@@ -374,7 +375,7 @@ describe('Job Engine', () => {
           degrees: ['business_admin'],
           physicalCondition: 50,
           mentalCondition: 75,
-          innovateChance: 80, // already at 80%
+          innovateChance: 84, // already at 84%
           innovateEscrow: 500,
           innovateProjectsCompleted: 0,
           turnFlags: {},
@@ -404,15 +405,15 @@ describe('Job Engine', () => {
           dependability: 50,
           degrees: ['business_admin'],
           physicalCondition: 50,
-          mentalCondition: 50, // mental bonus = 2
+          mentalCondition: 50,
           innovateChance: 0,
           innovateEscrow: 0,
-          innovateProjectsCompleted: 2, // 2 completed projects -> divisor = 1 + 2 * 0.5 = 2.0
+          innovateProjectsCompleted: 2, // 2 completed projects -> divisor = 4.5
           turnFlags: {},
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
         } as unknown as PlayerState;
 
-        // Base 10 + mental 2 = 12. Divisor 2.0 -> gain = 6.0%.
+        // Base 1.8. Divisor 4.5 -> gain = 0.4 pp.
         const replay = {
           inDecisions: [
             { type: `innovate_serendipity_${player.id}_1`, result: false },
@@ -423,7 +424,7 @@ describe('Job Engine', () => {
 
         const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
         expect(result.success).toBe(true);
-        expect(result.updated.innovateChance).toBe(6);
+        expect(result.updated.innovateChance).toBe(0.4);
       });
 
       it('innovate serendipity triggers grant bonus max dependability or experience', () => {
@@ -492,12 +493,13 @@ describe('Job Engine', () => {
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
         } as unknown as PlayerState;
 
-        // This shift adds $80 to escrow (total 280).
-        // Debt is $100. Payout pays off $100 debt -> leaves $180 money and $0 debt.
+        // This shift adds $40 to escrow (total 240).
+        // Debt is $100. Payout pays off $100 debt -> leaves $140 money and $0 debt.
         const replay = {
           inDecisions: [
             { type: `innovate_serendipity_${player.id}_1`, result: false },
-            { type: `innovate_roll_${player.id}_1`, result: 1 } // breakthrough!
+            { type: `innovate_roll_${player.id}_1`, result: 1 }, // breakthrough!
+            { type: `innovate_grant_variance_${player.id}_1`, result: 1.0 }
           ],
           outDecisions: []
         };
@@ -505,7 +507,7 @@ describe('Job Engine', () => {
         const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
         expect(result.success).toBe(true);
         expect(result.updated.rentDebt).toBe(0);
-        expect(result.updated.money).toBe(180);
+        expect(result.updated.money).toBe(140);
       });
 
       it('switching jobs resets innovation progress, chance, escrow, and completed projects', () => {
