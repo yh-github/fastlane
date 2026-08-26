@@ -176,11 +176,17 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   }
 
   const curPhys = player.physicalCondition ?? 50;
+  const curMental = player.mentalCondition ?? 50;
   const fatigueMental = curPhys < 10 ? 1 : 0;
   const halfFatigueMental = curPhys < 10 ? 0.5 : 0;
   const hasDegrees = player.degrees && player.degrees.length > 0;
   const innovChance = Math.round(player.innovateChance || 0);
   const innovEscrow = player.innovateEscrow || 0;
+
+  const physMistakeRisk = curPhys < 10 ? Math.round((10 - curPhys) * 2.5) : 0;
+  const mentalMistakeRisk = curMental < 25 ? Math.round((25 - curMental) * 4.0) : 0;
+  const blunderRiskPct = Math.min(100, Math.round((1 - (1 - physMistakeRisk / 100) * (1 - mentalMistakeRisk / 100)) * 100));
+  const blunderTag = blunderRiskPct > 0 ? ` (⚠️ ${blunderRiskPct}% Blunder Risk)` : '';
 
   const modes = [
     {
@@ -222,7 +228,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       physCost: basePhys * 1.0,
       mentalCost: baseMental + 4.0 + fatigueMental,
       wage: 0,
-      rewardText: hasDegrees ? `${innovChance}% Odds ($${innovEscrow} Escrow)` : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree' }),
+      rewardText: hasDegrees ? `${innovChance}% Odds (~$${innovEscrow} Grant)${blunderTag}` : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree' }),
       color: '#e67e22',
       isDefault: false,
       disabled: !hasDegrees

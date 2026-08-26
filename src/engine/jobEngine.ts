@@ -328,9 +328,9 @@ export function workShift(
 
     if (mentalCost > 0) {
       if (mode === 'innovate') {
-        const mentalThresh = 20;
+        const mentalThresh = 25;
         if (oldMental < mentalThresh) {
-          const mentalChance = (mentalThresh - oldMental) * 0.025;
+          const mentalChance = (mentalThresh - oldMental) * 0.04;
           mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
         }
       } else {
@@ -352,9 +352,15 @@ export function workShift(
       }
       if (mentalMistake) {
         mistakesAdded++;
-        updated.resilienceBonus = (updated.resilienceBonus || 0) - 1;
-        updated.mentalConditionMax = Math.max(1, (updated.mentalConditionMax ?? 50) - 1);
-        updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition);
+        if (mode === 'innovate') {
+          // Research blunders cause direct mental drain and lost research odds without degrading max capacity/resilience
+          updated.mentalCondition = Math.max(1, (updated.mentalCondition ?? 50) - 5);
+          updated.innovateChance = Math.max(0, Math.round(((updated.innovateChance || 0) - 2.0) * 10) / 10);
+        } else {
+          updated.resilienceBonus = (updated.resilienceBonus || 0) - 1;
+          updated.mentalConditionMax = Math.max(1, (updated.mentalConditionMax ?? 50) - 1);
+          updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition);
+        }
       }
 
       // Penalty = NUM_OF_MISTAKES (current counter before adding this turn's mistakes)
@@ -369,24 +375,25 @@ export function workShift(
     } else {
       if (mode === 'innovate') {
         const fraction = hoursToWork / shiftCost;
-        const baseRate = 10;
+        const baseRate = 1.8; // 1.8 pp base
         const surplusXp = Math.max(0, updated.experience - job.requirements.experience);
-        const surplusXpBonus = Math.min(5, Math.floor(surplusXp / 5));
-        const mentalBonus = Math.ceil(oldMental / 25);
+        const surplusXpBonus = Math.min(1.0, Math.floor(surplusXp / 10) * 0.5); // up to +1.0 pp
+        const mentalBonus = oldMental > 75 ? 1.0 : (oldMental > 50 ? 0.5 : 0.0); // up to +1.0 pp
         const hasComputer = !!updated.inventory?.appliances?.some(a => a.id === 'computer');
-        const computerBonus = hasComputer ? 3 : 0;
+        const computerBonus = hasComputer ? 1.0 : 0.0; // +1.0 pp
         const completedProjects = updated.innovateProjectsCompleted || 0;
-        const divisor = 1 + completedProjects * 0.5;
+        const divisor = completedProjects === 0 ? 1.0 : (completedProjects === 1 ? 2.5 : (completedProjects === 2 ? 4.5 : 7.0));
 
         const gain = ((baseRate + surplusXpBonus + mentalBonus + computerBonus) * fraction) / divisor;
         const oldChance = updated.innovateChance || 0;
         const newChance = Math.min(85, Math.round((oldChance + gain) * 10) / 10);
 
-        const shiftEscrow = Math.floor(updated.currentWage * 8 * fraction);
+        // Halved escrow accumulation (0.5x wage rate)
+        const shiftEscrow = Math.floor(updated.currentWage * 4 * fraction);
         const newEscrow = (updated.innovateEscrow || 0) + shiftEscrow;
 
-        // Serendipity check (~15% when healthy: Mental >= 20 and Phys >= 10)
-        if (oldMental >= 20 && oldPhys >= 10) {
+        // Serendipity check (~15% when healthy: Mental >= 25 and Phys >= 10)
+        if (oldMental >= 25 && oldPhys >= 10) {
           const isSerendipity = resolveDecision(replay, `innovate_serendipity_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < 0.15);
           if (isSerendipity) {
             const rollSerenType = resolveDecision(replay, `innovate_serendipity_type_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < 0.5 ? 1 : 2);
@@ -406,9 +413,11 @@ export function workShift(
         const isBreakthrough = roll100 <= newChance;
 
         if (isBreakthrough) {
-          let netGrant = newEscrow;
-          if (updated.rentDebt > 0 && newEscrow > 0) {
-            const [afterDebtState, netAmount, garnished] = processRentDebt(updated, newEscrow);
+          const varianceMultiplier = resolveDecision(replay, `innovate_grant_variance_${player.id}_${actionCount}`, () => 0.75 + (rng ? rng.next() : Math.random()) * 0.5);
+          const finalGrant = Math.floor(newEscrow * varianceMultiplier);
+          let netGrant = finalGrant;
+          if (updated.rentDebt > 0 && finalGrant > 0) {
+            const [afterDebtState, netAmount, garnished] = processRentDebt(updated, finalGrant);
             updated = afterDebtState;
             netGrant = netAmount;
             if (garnished > 0) {
@@ -430,7 +439,7 @@ export function workShift(
           updated.innovateEscrow = 0;
           updated.innovateProjectsCompleted = completedProjects + 1;
 
-          messages.push({ key: 'action.job.innovateBreakthrough', params: { grant: newEscrow, projectNum: completedProjects + 1 } });
+          messages.push({ key: 'action.job.innovateBreakthrough', params: { grant: finalGrant, projectNum: completedProjects + 1 } });
         } else {
           updated.innovateChance = newChance;
           updated.innovateEscrow = newEscrow;

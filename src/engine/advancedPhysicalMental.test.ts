@@ -337,7 +337,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(nextPlayer.mentalCondition).toBe(36); // 0 base + 4 innovate = 4
       expect(nextPlayer.money).toBe(1000); // $0 upfront wage
       expect(nextPlayer.innovateChance).toBeGreaterThan(0); // accumulates chance
-      expect(nextPlayer.innovateEscrow).toBe(20 * 8); // 160 in escrow
+      expect(nextPlayer.innovateEscrow).toBe(20 * 4); // 80 in escrow (0.5x wage rate)
       expect(nextPlayer.experience).toBe(initialExp); // No regular shift XP
     });
   });
@@ -389,12 +389,12 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(scoreWithMistakes).toBe(scoreNormal - 2);
     });
 
-    it('innovate reckless mistake halts chance gain and escrow, reducing max mental stat', () => {
+    it('innovate research blunder drains mental and deducts banked chance while preserving max mental', () => {
       const job = campaign.jobs[0];
       player.currentJobId = job.id;
       player.currentWage = job.baseWage;
       player.physicalCondition = 50;
-      player.mentalCondition = 15; // below 20 -> mistake risk
+      player.mentalCondition = 20; // below 25 -> blunder risk
       player.dependability = 50;
       player.experience = 10;
       player.degrees = ['cs_degree'];
@@ -410,9 +410,10 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       };
 
       const result = workShift(player, job, 6, rules, campaign.config.statRules, 'innovate', new Random(1), replay);
-      expect(result.updated.innovateChance).toBe(20); // 0 chance added on mistake
+      expect(result.updated.innovateChance).toBe(18); // loses 2.0 pp banked chance
       expect(result.updated.innovateEscrow).toBe(160); // 0 escrow added on mistake
-      expect(result.updated.mentalConditionMax).toBe(50); // net 50 (+1 from high mental exertion, -1 from mistake penalty)
+      expect(result.updated.mentalCondition).toBe(20 - 4 - 5); // 11
+      expect(result.updated.mentalConditionMax).toBe(51); // 50 + 1 (high exertion bonus), preserved from reduction
       expect(result.updated.experience).toBe(10); // no XP gain on mistake
     });
 
