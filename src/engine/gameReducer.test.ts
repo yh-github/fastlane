@@ -77,7 +77,7 @@ describe('gameReducer', () => {
       const result = gameReducer(player, { type: 'apply', jobId: 'burger_cook' }, context);
       expect(result.updatedPlayer.currentJobId).toBeNull();
       expect(result.updatedPlayer.hoursRemaining).toBe(2);
-      expect(getLogKey(result.actionLog)).toBe('action.error.notEnoughTime');
+      expect(getLogKey(result.actionLog)).toBe('action.error.notEnoughTimeInterview');
     });
   });
 
@@ -316,4 +316,94 @@ describe('gameReducer', () => {
       expect(result.updatedPlayer.inventory.appliances.length).toBe(1);
     });
   });
+
+  describe('divisible and atomic actions', () => {
+    it('prorates relax gains and stamina when proportionalDivisibleActions is enabled and hours are partial', () => {
+      const advContext = {
+        ...context,
+        rules: {
+          ...context.rules,
+          usePhysicalMentalConditions: true,
+          proportionalDivisibleActions: true,
+          conditionResolution: 0.5,
+          trackMess: true
+        }
+      };
+
+      const testPlayer = {
+        ...player,
+        hoursRemaining: 3, // 3 hours out of 6 (ratio = 0.5)
+        physicalCondition: 20,
+        mentalCondition: 20,
+        physicalConditionMax: 50,
+        mentalConditionMax: 50,
+        mess: 5,
+        inventory: { ...player.inventory, freshFoodUnits: 2 }
+      };
+
+      const result = gameReducer(testPlayer, { type: 'relax' }, advContext);
+      expect(result.updatedPlayer.hoursRemaining).toBe(0);
+      expect(result.updatedPlayer.physicalCondition).toBeGreaterThan(20);
+      expect(result.updatedPlayer.mentalCondition).toBeGreaterThan(20);
+      expect(getLogKey(result.actionLog)).toBe('action.relax');
+    });
+
+    it('prorates clean mess reduction and stamina cost with partial hours', () => {
+      const advContext = {
+        ...context,
+        rules: {
+          ...context.rules,
+          usePhysicalMentalConditions: true,
+          proportionalDivisibleActions: true,
+          conditionResolution: 0.5,
+          trackMess: true
+        }
+      };
+
+      const testPlayer = {
+        ...player,
+        hoursRemaining: 1.5, // 1.5 hours out of 3 (ratio = 0.5)
+        physicalCondition: 20,
+        physicalConditionMax: 50,
+        mess: 15
+      };
+
+      const result = gameReducer(testPlayer, { type: 'clean' }, advContext);
+      expect(result.updatedPlayer.hoursRemaining).toBe(0);
+      expect(result.updatedPlayer.mess).toBeLessThan(15);
+      expect(result.updatedPlayer.physicalCondition).toBeLessThan(20);
+      expect(getLogKey(result.actionLog)).toBe('action.clean');
+    });
+
+    it('rejects atomic actions when hours are insufficient regardless of allowPartialHours', () => {
+      const advContext = {
+        ...context,
+        rules: {
+          ...context.rules,
+          allowPartialHours: true,
+          usePhysicalMentalConditions: true
+        }
+      };
+
+      // Socialize requires 6 hours
+      const lowHourPlayer = { ...player, hoursRemaining: 3, mess: 0, physicalCondition: 30 };
+      const socialRes = gameReducer(lowHourPlayer, { type: 'socialize_guests' }, advContext);
+      expect(getLogKey(socialRes.actionLog)).toBe('action.error.notEnoughTimeSocialize');
+
+      // Cleaning service requires 1 hour
+      const zeroHourPlayer = { ...player, hoursRemaining: 0, money: 500, mess: 10 };
+      const cleanServiceRes = gameReducer(zeroHourPlayer, { type: 'call_cleaning_service' }, advContext);
+      expect(getLogKey(cleanServiceRes.actionLog)).toBe('action.error.notEnoughTimeClean');
+
+      // Loan requires 2 hours
+      const oneHourPlayer = { ...player, hoursRemaining: 1, money: 500, currentWage: 10 };
+      const loanRes = gameReducer(oneHourPlayer, { type: 'take_loan' }, advContext);
+      expect(getLogKey(loanRes.actionLog)).toBe('action.error.notEnoughTimeLoan');
+
+      // Broker requires 2 hours
+      const brokerRes = gameReducer(oneHourPlayer, { type: 'open_broker' }, advContext);
+      expect(getLogKey(brokerRes.actionLog)).toBe('action.error.notEnoughTimeBroker');
+    });
+  });
 });
+

@@ -365,6 +365,84 @@ describe('Job Engine', () => {
         expect(result.updated.depMaxBonus).toBe(0);
         expect(result.updated.xpMaxBonus).toBe(0);
       });
+
+      it('applyForJob strictly enforces full 4 hours (atomic action)', () => {
+        const player = {
+          hoursRemaining: 3, // Less than 4 hours
+          experience: 0,
+          dependability: 0,
+          degrees: [],
+          turnFlags: { jobsRejectedThisTurn: [] }
+        } as unknown as PlayerState;
+
+        const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), advRules);
+        expect(result.success).toBe(false);
+        expect(result.message?.key).toBe('action.error.notEnoughTimeInterview');
+      });
+
+      it('proportionalDivisibleActions prorates wages, fatigue, and rewards across all 4 modes for partial shifts', () => {
+        const propRules = {
+          ...advRules,
+          proportionalDivisibleActions: true,
+          conditionResolution: 0.5
+        };
+
+        const basePlayer = {
+          id: 'p_part',
+          hoursRemaining: 3, // 3 hours out of 6 (ratio = 0.5)
+          currentJobId: 'sales_manager',
+          currentWage: 10,
+          degrees: ['business_admin'],
+          physicalCondition: 30,
+          mentalCondition: 30,
+          dependability: 50,
+          experience: 50,
+          social: 20,
+          turnFlags: {},
+          inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
+        } as unknown as PlayerState;
+
+        // 1. work_work mode: half wages ($40 vs $80), half physical/mental cost, +0.5 Dep, +0.5 Exp
+        const resWorkWork = workShift(basePlayer, salesManager, 6, propRules, undefined, 'work_work', new Random(1));
+        expect(resWorkWork.success).toBe(true);
+        expect(resWorkWork.wagesEarned).toBe(40); // 10 * 8 * 0.5 = 40
+        expect(resWorkWork.updated.dependability).toBe(50.5);
+        expect(resWorkWork.updated.experience).toBe(50.5);
+        expect(resWorkWork.updated.hoursRemaining).toBe(0);
+
+        // 2. look_busy mode: half wages ($40), +0 Dep, 0 Exp
+        const resLookBusy = workShift(basePlayer, salesManager, 6, propRules, undefined, 'look_busy', new Random(1));
+        expect(resLookBusy.success).toBe(true);
+        expect(resLookBusy.wagesEarned).toBe(40);
+        expect(resLookBusy.updated.dependability).toBe(50);
+        expect(resLookBusy.updated.experience).toBe(50);
+
+        // 3. face_time mode: $0 wages, half Dep (+0.5 Dep)
+        const replayFaceTime = {
+          inDecisions: [{ type: `work_facetime_social_${basePlayer.id}_1`, result: true }],
+          outDecisions: []
+        };
+        const resFaceTime = workShift(basePlayer, salesManager, 6, propRules, undefined, 'face_time', new Random(1), replayFaceTime);
+        expect(resFaceTime.success).toBe(true);
+        expect(resFaceTime.wagesEarned).toBe(0);
+        expect(resFaceTime.updated.dependability).toBeGreaterThan(50);
+        expect(resFaceTime.updated.social).toBe(21);
+
+        // 4. innovate mode: half wages ($20), scaled breakthrough rewards
+        const replayInnovate = {
+          inDecisions: [
+            { type: `work_innovate_die1_${basePlayer.id}_1`, result: 1 },
+            { type: `work_innovate_die2_${basePlayer.id}_1`, result: 2 }
+          ],
+          outDecisions: []
+        };
+        const resInnovate = workShift(basePlayer, salesManager, 6, propRules, undefined, 'innovate', new Random(1), replayInnovate);
+        expect(resInnovate.success).toBe(true);
+        expect(resInnovate.wagesEarned).toBe(20); // 10 * 8 * 0.5 * 0.5 = 20
+        expect(resInnovate.updated.dependability).toBe(50.5);
+        expect(resInnovate.updated.experience).toBe(50.5);
+      });
     });
   });
 });
+

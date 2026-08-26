@@ -316,7 +316,7 @@ export function gameReducer(
     case 'relax': {
       const relaxCost = requireConfig(context.campaign.config.timeRules?.relaxCost, 'timeRules.relaxCost');
       const relaxGain = context.campaign.config.timeRules.relaxGain ?? 3;
-      if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < relaxCost && !context.rules.allowPartialHours)) {
+      if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < relaxCost && !context.rules.allowPartialHours && !context.rules.proportionalDivisibleActions)) {
         actionLog = { key: 'action.error.notEnoughTimeRelax' };
         break;
       }
@@ -419,7 +419,7 @@ export function gameReducer(
         actionLog = { key: 'action.error.alreadyClean' };
         break;
       }
-      if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < 3 && !context.rules.allowPartialHours)) {
+      if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < 3 && !context.rules.allowPartialHours && !context.rules.proportionalDivisibleActions)) {
         actionLog = { key: 'action.error.notEnoughTimeClean' };
         break;
       }
