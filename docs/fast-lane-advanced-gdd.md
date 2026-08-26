@@ -28,6 +28,7 @@
 | **Moving Penalties** | Flat deposit | Moving fee scaled by current mess and durable goods owned |
 | **Doctor Visits** | Random RNG event | Triggered dynamically by low physical condition; yields $+8$ bounce-back |
 | **Street Robbery** | Silent text log entry | Visual board piece interception animation + modal popup |
+| **Work Modalities** | Single uniform work shift | 4 Strategic Modes: Work Work, Look Busy, Face Time, Cap-Busting Innovate |
 
 ---
 
@@ -88,7 +89,7 @@ Where **bonuses** include:
   - **Mental Relaxation Recovery**: Grants $+\lfloor\text{social}/15\rfloor$ extra Mental condition recovery when relaxing at home.
   - **Employability Bonus**: Grants $+\lfloor\text{social}/15\rfloor$ flat bonus to hiring roll threshold (`calcEmployabilityScore`).
   - **Dependability Decay Buffer**: Reduces turn-start Dependability decay by $\lfloor\text{social}/25\rfloor$ (clamped so weekly reduction is never less than 1 point: $\text{dep\_loss} = \max(1, \text{baseLoss} - \lfloor\text{social}/25\rfloor)$).
-  - **Face Time Synergy**: Grants $+\lfloor\text{social}/25\rfloor$ extra Dependability gain and $+1d3$ Social points when working in Face Time mode.
+  - **Face Time Synergy**: Scaled Dependability gains ($\text{Dep Gain} = 1 + \frac{\lceil\text{Social}/25\rceil}{2}$, yielding $+1.5\text{--}3.0\text{ Dep}$) and smoothly diminishing networking probability ($\text{Chance} = \max(0, \frac{100 - \text{Social}}{100})$ for $+1\text{ Social}$).
 
 ### 3.5. Lifestyle Stat Formula
 Lifestyle evaluates the player's standard of living:
@@ -241,7 +242,71 @@ When exiting high-cash locations (Bank or Black's Market), a street robbery chec
 
 ---
 
-## 10. Configuration Reference (`config.json`)
+## 10. Workplace Dynamics & The 4 Work Modalities
+
+In Advanced Edition, the workplace is no longer a simple button-clicking grind. Players choose between 4 distinct shift strategies based on their current stamina, career goals, financial needs, and corporate standing.
+
+### 10.1. Work Work (Standard Shift)
+- **Role**: Maximum cash flow and steady baseline career progression.
+- **Wage**: $1.0\times\text{ BaseWage}$ (full pay).
+- **Stamina Costs**: $1.0\times\text{ BasePhys}$, $1.0\times\text{ BaseMental}$ (subject to Grind/Overtime action tier scaling).
+- **Stat Yield**: $+1.0\text{ Dependability}$, $+1.0\text{ Experience}$ (up to standard job caps).
+- **Best For**: Wealth goals, paying rent, and steady career growth.
+
+### 10.2. Look Busy (Conservation Shift)
+- **Role**: Stamina conservation and avoiding exhaustion/burnout.
+- **Wage**: $1.0\times\text{ BaseWage}$ (full pay).
+- **Stamina Costs**: $0.5\times\text{ BasePhys}$, $0.5\times\text{ BaseMental}$ ($0.5\times$ fatigue penalty if Physical $< 10$).
+- **Stat Yield**: $+0\text{ Dependability}$, $+0\text{ Experience}$.
+- **Best For**: Surviving long work weeks when physical or mental condition is depleted without forfeiting income.
+
+### 10.3. Face Time (Networking & Reputation Repair)
+- **Role**: Corporate schmoozing, emergency dependability repair, and social networking.
+- **Wage**: $\$0$ ($0.0\times\text{ BaseWage}$ — unpaid office politics).
+- **Stamina Costs**: $0.5\times\text{ BasePhys}$, $\text{BaseMental} \times 1.0 + 2.0$ (office politics is mentally draining).
+- **Dependability Gain**:
+  $$\text{Dep Gain} = 1 + \frac{\lceil\text{Social}/25\rceil}{2}$$
+  - Social 1–25: $+1.5\text{ Dep}$
+  - Social 26–50: $+2.0\text{ Dep}$
+  - Social 51–75: $+2.5\text{ Dep}$
+  - Social 76–99: $+3.0\text{ Dep}$
+- **Social Networking Gain**:
+  $$\text{Chance to gain } +1\text{ Social} = \max\left(0, \frac{100 - \text{CurrentSocial}}{100}\right)$$
+- **Best For**: Rapidly repairing low Dependability to avoid firing or qualifying for raises without spending time socializing outside work.
+
+### 10.4. Innovate (High-Skill Cap-Busting $2\text{d}2 - 2$)
+- **Role**: Technical research, breakthrough discoveries, and career goal acceleration.
+- **Prerequisite**: Requires at least 1 completed University Degree.
+- **Wage**: $0.5\times\text{ BaseWage}$ earned immediately per shift.
+- **Stamina Costs**:
+  - Physical: $1.0\times\text{ BasePhys}$.
+  - Mental: $\mathbf{\text{BaseMental} + 2.0 + \text{innovationCount}}$. *(Escalates dynamically per breakthrough, creating an organic stamina ceiling that naturally bounds over-farming).*
+- **Shift Outcome Roll ($2\text{d}2 - 2$)**:
+  - **$25\%$ Chance ($X=0$): $+0\text{ Dep}, +2\text{ Exp}$**
+    - *If $\text{Exp} \ge \text{MaxExp}$*: Expands $\text{xpMaxBonus} \mathrel{+}= 1$ and increments `innovationCount += 1`. Current Exp remains unchanged.
+    - *Else*: $\text{Exp} = \min(\text{MaxExp}, \text{Exp} + 2)$.
+  - **$50\%$ Chance ($X=1$): $+1\text{ Dep}, +1\text{ Exp}$**
+    - Balanced standard progression up to caps.
+  - **$25\%$ Chance ($X=2$): $+2\text{ Dep}, +0\text{ Exp}$**
+    - *If $\text{Dep} \ge \text{MaxDep}$*: Expands $\text{depMaxBonus} \mathrel{+}= 1$ and increments `innovationCount += 1`. Current Dep remains unchanged.
+    - *Else*: $\text{Dep} = \min(\text{MaxDep}, \text{Dep} + 2)$.
+- **Corporate Clout & Perks**:
+  - **Raise Requirement Discount**: $\text{EffectiveRaises} = \max(0, \text{RaisesReceived} - \text{innovationCount})$.
+  - **Firing Safety Buffer**: $5 + \text{innovationCount}$ (cushions low dependability before termination).
+  - **Reset on Employer Change**: `innovationCount`, `depMaxBonus`, and `xpMaxBonus` reset upon changing jobs or being fired.
+
+### 10.5. Summary Comparison Matrix
+
+| Work Mode | Wage Rate | Phys Cost | Mental Cost | Dep Gain | Exp Gain | Social Gain | Unique Niche |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Work Work** | $1.0\times$ | $1.0\times$ | $1.0\times$ | $+1.0$ | $+1.0$ | $0$ | Maximum steady cash & baseline progression |
+| **Look Busy** | $1.0\times$ | $0.5\times$ | $0.5\times$ | $0$ | $0$ | $0$ | Stamina conservation / avoiding exhaustion |
+| **Face Time** | **$0.0\times$** | $0.5\times$ | $\text{Base} + 2$ | $+1.5\text{--}3.0$ | $0$ | $(100-\text{Soc})\%$ | Zero-wage reputation repair & networking |
+| **Innovate** | **$0.5\times$** | $1.0\times$ | $\text{Base} + 2 + \text{Count}$ | $2\text{d}2 - 2$ | $2 - X$ | $0$ | **Cap-busting stat growth & career acceleration** |
+
+---
+
+## 11. Configuration Reference (`config.json`)
 
 All Advanced Edition mechanics are governed by the campaign configuration file [public/campaigns/advanced/config.json](file:///home/yoavh/code/antigravity/fastlane/public/campaigns/advanced/config.json):
 
