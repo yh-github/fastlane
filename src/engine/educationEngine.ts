@@ -83,7 +83,8 @@ import { roundToResolution } from './statMath';
 export function formatDegreeProgress(progress: number, isPercentage?: boolean): string {
   if (isPercentage) {
     const rounded = Math.min(100, Math.max(0, roundToResolution(progress, 0.1)));
-    return `${rounded.toFixed(1)}%`;
+    const formatted = rounded % 1 === 0 ? String(rounded) : rounded.toFixed(1);
+    return `${formatted}%`;
   }
   return String(Math.floor(progress));
 }

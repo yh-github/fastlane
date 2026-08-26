@@ -26,7 +26,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   };
 
   if (player.hoursRemaining < timeCost) {
-    return { updated: player, success: false, message: { key: 'action.error.notEnoughTime' } };
+    return { updated: player, success: false, message: { key: 'action.error.notEnoughTimeInterview' } };
   }
 
   if (player.turnFlags.jobsRejectedThisTurn?.includes(job.id)) {

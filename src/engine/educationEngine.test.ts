@@ -135,5 +135,48 @@ describe('Education Engine', () => {
       expect(result.updated.degreeDepBoost).toBe(52);
       expect(result.updated.degreeExpBoost).toBe(52);
     });
+
+    it('percentageEducation tracks continuous 0-100% progress and prorates partial sessions', async () => {
+      const { formatDegreeProgress } = await import('./educationEngine');
+      
+      const rules = {
+        percentageEducation: true,
+        proportionalDivisibleActions: true,
+        allowPartialHours: true,
+        educationResolution: 0.1
+      } as any;
+
+      const player = {
+        hoursRemaining: 3, // Partial session (3 hours out of standard 6)
+        enrolledClasses: { 'junior_college': 40.0 },
+        inventory: { appliances: [], books: [] }
+      } as unknown as PlayerState;
+
+      // 10 lessons required * 6h = 60h total. 3 hours = 3/60 * 100 = 5.0%
+      const result = study(player, mockDegree, 6, rules);
+      expect(result.success).toBe(true);
+      expect(result.updated.enrolledClasses['junior_college']).toBe(45.0);
+      expect(result.updated.hoursRemaining).toBe(0);
+
+      // Verify graduation on reaching >= 99.95%
+      const graduatingPlayer = {
+        hoursRemaining: 6,
+        enrolledClasses: { 'junior_college': 95.0 },
+        happiness: 50, dependability: 50, degreeDepBoost: 50, degreeExpBoost: 50,
+        degrees: [],
+        inventory: { appliances: [], books: [] }
+      } as unknown as PlayerState;
+
+      const gradResult = study(graduatingPlayer, mockDegree, 6, rules);
+      expect(gradResult.success).toBe(true);
+      expect(gradResult.updated.degrees).toContain('junior_college');
+      expect(gradResult.updated.enrolledClasses['junior_college']).toBeUndefined();
+
+      // Format degree progress tests
+      expect(formatDegreeProgress(45.5, true)).toBe('45.5%');
+      expect(formatDegreeProgress(50.0, true)).toBe('50%');
+      expect(formatDegreeProgress(4, false)).toBe('4');
+    });
   });
 });
+
