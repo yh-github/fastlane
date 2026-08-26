@@ -34,7 +34,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0);
   const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0);
-  const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0, player.innovateProjectsCompleted || 0) : null;
+  const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0, player.innovationCount || 0) : null;
 
   return (
     <div className="building-modal-overlay" style={{

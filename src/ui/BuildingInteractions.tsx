@@ -176,17 +176,10 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   }
 
   const curPhys = player.physicalCondition ?? 50;
-  const curMental = player.mentalCondition ?? 50;
   const fatigueMental = curPhys < 10 ? 1 : 0;
   const halfFatigueMental = curPhys < 10 ? 0.5 : 0;
   const hasDegrees = player.degrees && player.degrees.length > 0;
-  const innovChance = Math.round(player.innovateChance || 0);
-  const innovEscrow = player.innovateEscrow || 0;
-
-  const physMistakeRisk = curPhys < 10 ? Math.round((10 - curPhys) * 2.5) : 0;
-  const mentalMistakeRisk = curMental < 25 ? Math.round((25 - curMental) * 4.0) : 0;
-  const blunderRiskPct = Math.min(100, Math.round((1 - (1 - physMistakeRisk / 100) * (1 - mentalMistakeRisk / 100)) * 100));
-  const blunderTag = blunderRiskPct > 0 ? ` (⚠️ ${blunderRiskPct}% Blunder Risk)` : '';
+  const faceTimeDep = 1 + Math.ceil((player.social || 1) / 25) / 2;
 
   const modes = [
     {
@@ -215,9 +208,9 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       id: 'face_time',
       label: t('action.workModal.faceTime', { defaultValue: 'Face Time' }),
       physCost: basePhys * 0.5,
-      mentalCost: baseMental * 0.5 + 1.0 + halfFatigueMental,
-      wage: Math.floor(player.currentWage * 8 * 0.5),
-      rewardText: '+2 Dep, 0 XP',
+      mentalCost: baseMental * 1.0 + 2.0 + halfFatigueMental,
+      wage: 0,
+      rewardText: `+${faceTimeDep.toFixed(1)} Dep, +Social`,
       color: '#9b59b6',
       isDefault: false,
       disabled: false
@@ -226,9 +219,9 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       id: 'innovate',
       label: t('action.workModal.innovate', { defaultValue: 'Innovate' }),
       physCost: basePhys * 1.0,
-      mentalCost: baseMental + 4.0 + fatigueMental,
-      wage: 0,
-      rewardText: hasDegrees ? `${innovChance}% Odds (~$${innovEscrow} Grant)${blunderTag}` : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree' }),
+      mentalCost: baseMental + 2.0 + (player.innovationCount || 0) + fatigueMental,
+      wage: Math.floor(player.currentWage * 8 * 0.5),
+      rewardText: hasDegrees ? t('action.workModal.innovateReward', { defaultValue: '2d2-2 Dep & Exp (Cap Buster)' }) : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree' }),
       color: '#e67e22',
       isDefault: false,
       disabled: !hasDegrees

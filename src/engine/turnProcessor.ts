@@ -297,11 +297,6 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       const curJob = p.currentJobId && campaign?.jobs ? campaign.jobs.find(j => j.id === p.currentJobId) : undefined;
       p.dependability = calcDependabilityDecay(p.dependability, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, p.social); 
 
-      // Innovate research momentum decay (-3.0 percentage points per turn)
-      if ((p.innovateChance || 0) > 0) {
-        p.innovateChance = Math.max(0, Math.round(((p.innovateChance || 0) - 3.0) * 10) / 10);
-      }
-
       // 8. Apartment Robbery
       const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === p.id || !e.playerId));
       const robberyStartWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;

@@ -168,8 +168,9 @@ describe('Job Engine', () => {
     describe('Advanced Work Modes & Innovate Progression', () => {
       const advRules = { usePhysicalMentalConditions: true } as any;
 
-      it('only work_work gains standard shift experience; look_busy and face_time do not', () => {
+      it('only work_work gains standard shift experience; face_time gives $0 wage, scaled dep, and smooth social chance', () => {
         const basePlayer = {
+          id: 'p1',
           hoursRemaining: 20,
           currentJobId: 'sales_manager',
           currentWage: 12,
@@ -178,26 +179,36 @@ describe('Job Engine', () => {
           dependability: 50,
           physicalCondition: 50,
           mentalCondition: 50,
+          social: 1, // ceil(1/25)/2 = 0.5 -> 1 + 0.5 = +1.5 Dep
           turnFlags: {},
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         } as unknown as PlayerState;
 
         const resWork = workShift(basePlayer, salesManager, 6, advRules, undefined, 'work_work');
         expect(resWork.updated.experience).toBe(51);
+        expect(resWork.wagesEarned).toBe(96); // 12 * 8 = 96
 
         const resLookBusy = workShift(basePlayer, salesManager, 6, advRules, undefined, 'look_busy');
         expect(resLookBusy.updated.experience).toBe(50);
+        expect(resLookBusy.wagesEarned).toBe(96);
 
-        const resFaceTime = workShift(basePlayer, salesManager, 6, advRules, undefined, 'face_time');
+        // Face Time with Social 1: +1.5 Dep, 0 wage, and smooth social roll success
+        const replayFaceTime = {
+          inDecisions: [
+            { type: `work_facetime_social_${basePlayer.id}_1`, result: true }
+          ],
+          outDecisions: []
+        };
+        const resFaceTime = workShift(basePlayer, salesManager, 6, advRules, undefined, 'face_time', new Random(1), replayFaceTime);
         expect(resFaceTime.updated.experience).toBe(50);
-        expect(resFaceTime.updated.dependability).toBe(52);
-        expect(resFaceTime.updated.social).toBeGreaterThanOrEqual(1); // 1d3 Social gained
+        expect(resFaceTime.wagesEarned).toBe(0);
+        expect(resFaceTime.updated.dependability).toBe(51.5);
+        expect(resFaceTime.updated.social).toBe(2);
 
-        // With high social (e.g. 50 -> +2 extra dep)
+        // With Social 50: ceil(50/25)/2 = 1.0 -> 1 + 1.0 = +2.0 Dep
         const socialPlayer = { ...basePlayer, social: 50 };
         const resFaceTimeSocial = workShift(socialPlayer, salesManager, 6, advRules, undefined, 'face_time');
-        expect(resFaceTimeSocial.updated.dependability).toBe(54); // +2 base + 2 social bonus = +4
-        expect(resFaceTimeSocial.updated.social).toBeGreaterThanOrEqual(51);
+        expect(resFaceTimeSocial.updated.dependability).toBe(52);
       });
 
       it('innovate requires at least one degree', () => {
@@ -217,97 +228,96 @@ describe('Job Engine', () => {
         expect(result.messages?.[0]?.key).toBe('action.job.innovateNeedDegree');
       });
 
-      it('innovate accumulates breakthrough chance and escrow with surplus XP, mental, and computer', () => {
+      it('innovate earns 0.5x wage and rolls 2d2-2 for Dep and Exp', () => {
         const player = {
           id: 'p1',
           hoursRemaining: 20,
           currentJobId: 'sales_manager',
           currentWage: 12,
-          experience: 60, // req is 50 -> +10 surplus -> +0.5 pp bonus
+          experience: 50,
           dependability: 50,
           degrees: ['business_admin'],
           physicalCondition: 50,
-          mentalCondition: 60, // > 50 -> +0.5 pp bonus
-          innovateChance: 0,
-          innovateEscrow: 0,
-          innovateProjectsCompleted: 0,
+          mentalCondition: 50,
+          innovationCount: 0,
           turnFlags: {},
-          inventory: {
-            businessClothesWeeks: 10,
-            selectedClothes: 'business',
-            appliances: [{ id: 'computer' }] // Computer -> +1.0 pp bonus
-          }
+          inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         } as unknown as PlayerState;
 
-        // Base 1.8 + surplus XP 0.5 + mental 0.5 + computer 1.0 = 3.8 pp
-        // Force breakthrough roll to miss (roll 99 > 3.8)
-        const replay = {
+        // Roll X = 1 (die1=1, die2=2 -> sum 3 - 2 = 1) -> +1 Dep, +1 Exp
+        const replayBalanced = {
           inDecisions: [
-            { type: `innovate_serendipity_${player.id}_1`, result: false },
-            { type: `innovate_roll_${player.id}_1`, result: 99 }
+            { type: `work_innovate_die1_${player.id}_1`, result: 1 },
+            { type: `work_innovate_die2_${player.id}_1`, result: 2 }
           ],
           outDecisions: []
         };
 
-        const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
+        const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replayBalanced);
         expect(result.success).toBe(true);
-        expect(result.wagesEarned).toBe(0); // 0 upfront wage
-        expect(result.updated.innovateChance).toBe(3.8); // 3.8 pp accumulated
-        expect(result.updated.innovateEscrow).toBe(48); // 12 * 4 = 48 in escrow (0.5x rate)
+        expect(result.wagesEarned).toBe(48); // 12 * 8 * 0.5 = 48
+        expect(result.updated.dependability).toBe(51);
+        expect(result.updated.experience).toBe(51);
       });
 
-      it('innovate triggers breakthrough when roll <= chance, paying out randomized escrow and boosting stats', () => {
-        const player = {
+      it('innovate at max capacity expands stat cap and increments innovationCount without raising current stat', () => {
+        const maxedPlayer = {
           id: 'p1',
           hoursRemaining: 20,
           currentJobId: 'sales_manager',
           currentWage: 10,
-          money: 500,
           degrees: ['business_admin'],
           physicalCondition: 50,
           mentalCondition: 50,
-          innovateChance: 40,
-          innovateEscrow: 120, // accumulated 3 previous shifts of $40
-          innovateProjectsCompleted: 0,
-          dependability: 50,
+          // Sales manager req is 50 Dep, 50 Exp. Effective max: Dep = 20 + 50 = 70; Exp = 10 + 50 = 60.
+          dependability: 70, // at max
+          experience: 60, // at max
           depMaxBonus: 0,
           xpMaxBonus: 0,
-          experience: 50,
+          innovationCount: 0,
           turnFlags: {},
-          inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
+          inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         } as unknown as PlayerState;
 
-        // This shift adds $40 to escrow (total 160).
-        // Force breakthrough roll to succeed (roll 10 <= 41.8) and variance to be 1.0
-        const replay = {
+        // Roll X = 2 (die1=2, die2=2 -> sum 4 - 2 = 2) -> +2 Dep roll at max Dep
+        const replayDepBust = {
           inDecisions: [
-            { type: `innovate_serendipity_${player.id}_1`, result: false },
-            { type: `innovate_roll_${player.id}_1`, result: 10 },
-            { type: `innovate_grant_variance_${player.id}_1`, result: 1.0 }
+            { type: `work_innovate_die1_${maxedPlayer.id}_1`, result: 2 },
+            { type: `work_innovate_die2_${maxedPlayer.id}_1`, result: 2 }
           ],
           outDecisions: []
         };
 
-        const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
-        expect(result.success).toBe(true);
-        expect(result.updated.innovateChance).toBe(0); // reset after breakthrough
-        expect(result.updated.innovateEscrow).toBe(0); // reset after payout
-        expect(result.updated.innovateProjectsCompleted).toBe(1); // 1 project completed
-        expect(result.updated.money).toBe(500 + 160); // 500 + 160 grant payout = 660
-        expect(result.updated.depMaxBonus).toBe(3); // +3 Max Dep
-        expect(result.updated.xpMaxBonus).toBe(3); // +3 Max Exp
-        expect(result.updated.dependability).toBe(55); // +5 Dep
-        expect(result.updated.experience).toBe(53); // +3 Exp
+        const resDep = workShift(maxedPlayer, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replayDepBust);
+        expect(resDep.success).toBe(true);
+        expect(resDep.updated.depMaxBonus).toBe(1); // Cap expanded!
+        expect(resDep.updated.dependability).toBe(70); // Current stat remains at 70 (does not increase)
+        expect(resDep.updated.innovationCount).toBe(1);
+
+        // Roll X = 0 (die1=1, die2=1 -> sum 2 - 2 = 0) -> +2 Exp roll at max Exp
+        const replayExpBust = {
+          inDecisions: [
+            { type: `work_innovate_die1_${maxedPlayer.id}_1`, result: 1 },
+            { type: `work_innovate_die2_${maxedPlayer.id}_1`, result: 1 }
+          ],
+          outDecisions: []
+        };
+
+        const resExp = workShift(maxedPlayer, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replayExpBust);
+        expect(resExp.success).toBe(true);
+        expect(resExp.updated.xpMaxBonus).toBe(1); // Cap expanded!
+        expect(resExp.updated.experience).toBe(60); // Current stat remains at 60
+        expect(resExp.updated.innovationCount).toBe(1);
       });
 
-      it('completed innovation projects discount raises and provide extra firing protection', () => {
+      it('completed innovation breakthroughs discount raises and provide extra firing protection', () => {
         const player = {
           hoursRemaining: 20,
           currentJobId: 'sales_manager',
           currentWage: 12,
           raisesAtCurrentJob: 2,
-          innovateProjectsCompleted: 1, // 1 completed project discounts 1 raise (effective raises = 1)
-          dependability: 55, // req 50 + (1 * 5) = 55 (with 0 projects, would have needed 60)
+          innovationCount: 1, // 1 innovation discounts 1 raise (effective raises = 1)
+          dependability: 55, // req 50 + (1 * 5) = 55 (with 0 innovations, would have needed 60)
           degrees: ['business_admin'],
           experience: 60,
           turnFlags: { jobsRejectedThisTurn: [] }
@@ -318,199 +328,18 @@ describe('Job Engine', () => {
         expect(raiseResult.updated.currentWage).toBe(14);
         expect(raiseResult.updated.raisesAtCurrentJob).toBe(3);
 
-        // Firing protection: with 1 project, fire threshold is req (50) - (5 + 1*2) = 43
-        // At dependability 44 (which is 6 below req 50), player is NOT fired!
+        // Firing protection: with 1 innovation, fire threshold is req (50) - (5 + 1) = 44
+        // At dependability 45 (which is 5 below req 50), player is NOT fired!
         const protectedPlayer = {
           ...raiseResult.updated,
-          dependability: 44,
+          dependability: 45,
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         };
         const workResult = workShift(protectedPlayer, salesManager, 6, advRules);
         expect(workResult.success).toBe(true); // not fired
       });
 
-      it('innovate prorates chance gain and escrow when working partial hours', () => {
-        const player = {
-          id: 'p1',
-          hoursRemaining: 3, // only 3 hours (half shift)
-          currentJobId: 'sales_manager',
-          currentWage: 10,
-          experience: 50,
-          dependability: 50,
-          degrees: ['business_admin'],
-          physicalCondition: 50,
-          mentalCondition: 50,
-          innovateChance: 0,
-          innovateEscrow: 0,
-          innovateProjectsCompleted: 0,
-          turnFlags: {},
-          inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
-        } as unknown as PlayerState;
-
-        // Base 1.8. Fraction = 3/6 = 0.5. Gain = 1.8 * 0.5 = 0.9 pp.
-        // Escrow = 10 * 4 * 0.5 = $20.
-        const replay = {
-          inDecisions: [
-            { type: `innovate_serendipity_${player.id}_1`, result: false },
-            { type: `innovate_roll_${player.id}_1`, result: 99 }
-          ],
-          outDecisions: []
-        };
-
-        const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
-        expect(result.success).toBe(true);
-        expect(result.updated.hoursRemaining).toBe(0);
-        expect(result.updated.innovateChance).toBe(0.9);
-        expect(result.updated.innovateEscrow).toBe(20);
-      });
-
-      it('innovate hard-caps banked chance at 85%', () => {
-        const player = {
-          id: 'p1',
-          hoursRemaining: 20,
-          currentJobId: 'sales_manager',
-          currentWage: 10,
-          experience: 75,
-          dependability: 50,
-          degrees: ['business_admin'],
-          physicalCondition: 50,
-          mentalCondition: 75,
-          innovateChance: 84, // already at 84%
-          innovateEscrow: 500,
-          innovateProjectsCompleted: 0,
-          turnFlags: {},
-          inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [{ id: 'computer' }] }
-        } as unknown as PlayerState;
-
-        const replay = {
-          inDecisions: [
-            { type: `innovate_serendipity_${player.id}_1`, result: false },
-            { type: `innovate_roll_${player.id}_1`, result: 99 }
-          ],
-          outDecisions: []
-        };
-
-        const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
-        expect(result.success).toBe(true);
-        expect(result.updated.innovateChance).toBe(85); // capped at 85%
-      });
-
-      it('innovate scales difficulty across multiple completed projects', () => {
-        const player = {
-          id: 'p1',
-          hoursRemaining: 20,
-          currentJobId: 'sales_manager',
-          currentWage: 10,
-          experience: 50,
-          dependability: 50,
-          degrees: ['business_admin'],
-          physicalCondition: 50,
-          mentalCondition: 50,
-          innovateChance: 0,
-          innovateEscrow: 0,
-          innovateProjectsCompleted: 2, // 2 completed projects -> divisor = 4.5
-          turnFlags: {},
-          inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
-        } as unknown as PlayerState;
-
-        // Base 1.8. Divisor 4.5 -> gain = 0.4 pp.
-        const replay = {
-          inDecisions: [
-            { type: `innovate_serendipity_${player.id}_1`, result: false },
-            { type: `innovate_roll_${player.id}_1`, result: 99 }
-          ],
-          outDecisions: []
-        };
-
-        const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
-        expect(result.success).toBe(true);
-        expect(result.updated.innovateChance).toBe(0.4);
-      });
-
-      it('innovate serendipity triggers grant bonus max dependability or experience', () => {
-        const player = {
-          id: 'p1',
-          hoursRemaining: 20,
-          currentJobId: 'sales_manager',
-          currentWage: 10,
-          experience: 50,
-          dependability: 50,
-          degrees: ['business_admin'],
-          physicalCondition: 50,
-          mentalCondition: 50,
-          depMaxBonus: 0,
-          innovateChance: 0,
-          innovateEscrow: 0,
-          innovateProjectsCompleted: 0,
-          turnFlags: {},
-          inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
-        } as unknown as PlayerState;
-
-        // Serendipity type 1: grants +1 depMaxBonus
-        const replay1 = {
-          inDecisions: [
-            { type: `innovate_serendipity_${player.id}_1`, result: true },
-            { type: `innovate_serendipity_type_${player.id}_1`, result: 1 },
-            { type: `innovate_roll_${player.id}_1`, result: 99 }
-          ],
-          outDecisions: []
-        };
-
-        const result1 = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay1);
-        expect(result1.updated.depMaxBonus).toBe(1);
-
-        // Serendipity type 2: grants +1 experience
-        const replay2 = {
-          inDecisions: [
-            { type: `innovate_serendipity_${player.id}_1`, result: true },
-            { type: `innovate_serendipity_type_${player.id}_1`, result: 2 },
-            { type: `innovate_roll_${player.id}_1`, result: 99 }
-          ],
-          outDecisions: []
-        };
-
-        const result2 = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay2);
-        expect(result2.updated.experience).toBe(51);
-      });
-
-      it('breakthrough grant garnishes rent debt properly', () => {
-        const player = {
-          id: 'p1',
-          hoursRemaining: 20,
-          currentJobId: 'sales_manager',
-          currentWage: 10,
-          money: 0,
-          rentDebt: 100, // $100 rent debt
-          experience: 50,
-          degrees: ['business_admin'],
-          physicalCondition: 50,
-          mentalCondition: 50,
-          innovateChance: 50,
-          innovateEscrow: 200,
-          innovateProjectsCompleted: 0,
-          dependability: 50,
-          turnFlags: {},
-          inventory: { businessClothesWeeks: 10, selectedClothes: 'business', appliances: [] }
-        } as unknown as PlayerState;
-
-        // This shift adds $40 to escrow (total 240).
-        // Debt is $100. Payout pays off $100 debt -> leaves $140 money and $0 debt.
-        const replay = {
-          inDecisions: [
-            { type: `innovate_serendipity_${player.id}_1`, result: false },
-            { type: `innovate_roll_${player.id}_1`, result: 1 }, // breakthrough!
-            { type: `innovate_grant_variance_${player.id}_1`, result: 1.0 }
-          ],
-          outDecisions: []
-        };
-
-        const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replay);
-        expect(result.success).toBe(true);
-        expect(result.updated.rentDebt).toBe(0);
-        expect(result.updated.money).toBe(140);
-      });
-
-      it('switching jobs resets innovation progress, chance, escrow, and completed projects', () => {
+      it('switching jobs resets innovationCount, depMaxBonus, and xpMaxBonus', () => {
         const player = {
           hoursRemaining: 20,
           currentJobId: 'sales_manager',
@@ -518,9 +347,9 @@ describe('Job Engine', () => {
           experience: 10,
           dependability: 20,
           degrees: ['business_admin'],
-          innovateChance: 45,
-          innovateEscrow: 300,
-          innovateProjectsCompleted: 2,
+          depMaxBonus: 3,
+          xpMaxBonus: 2,
+          innovationCount: 5,
           turnFlags: { jobsRejectedThisTurn: [] }
         } as unknown as PlayerState;
 
@@ -532,9 +361,9 @@ describe('Job Engine', () => {
         const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1), advRules, 1, replay);
         expect(result.success).toBe(true);
         expect(result.updated.currentJobId).toBe('zmart_clerk');
-        expect(result.updated.innovateChance).toBe(0);
-        expect(result.updated.innovateEscrow).toBe(0);
-        expect(result.updated.innovateProjectsCompleted).toBe(0);
+        expect(result.updated.innovationCount).toBe(0);
+        expect(result.updated.depMaxBonus).toBe(0);
+        expect(result.updated.xpMaxBonus).toBe(0);
       });
     });
   });

@@ -304,7 +304,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(nextPlayer.dependability).toBe(51);
     });
 
-    it('Face Time: 0.5x Phys cost, +1 Mental cost, 0.5x wage, +2 Dep (+floor(Social/25)), +1d3 Social, 0 XP', () => {
+    it('Face Time: 0.5x Phys cost, +2 Mental cost, $0 wage, scaled Dep, smooth Social', () => {
       player.physicalCondition = 40;
       player.mentalCondition = 40;
       player.social = 9;
@@ -312,33 +312,28 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
 
       const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'face_time' }, context);
       expect(nextPlayer.physicalCondition).toBe(39.5);
-      expect(nextPlayer.mentalCondition).toBe(39);
-      expect(nextPlayer.money).toBe(1000 + 10 * 8);
-      expect(nextPlayer.dependability).toBe(52); // 50 + 2 + floor(9/25)=0
-      expect(nextPlayer.social).toBeGreaterThanOrEqual(10); // 9 + 1d3
+      expect(nextPlayer.mentalCondition).toBe(38); // 0 base + 2 face_time = 2
+      expect(nextPlayer.money).toBe(1000); // $0 wage
+      expect(nextPlayer.dependability).toBe(51.5); // 50 + 1 + ceil(9/25)/2 = 51.5
       expect(nextPlayer.experience).toBe(initialExp); // No XP gain for Face Time
 
-      // High social gives +floor(Social/25) extra Dep
+      // High social (50) gives +1.0 extra Dep (total +2.0 Dep)
       player.social = 50;
       player.dependability = 50;
       const { updatedPlayer: highSocialPlayer } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'face_time' }, context);
-      expect(highSocialPlayer.dependability).toBe(54); // 50 + 2 + floor(50/25)=2 => 54
-      expect(highSocialPlayer.social).toBeGreaterThanOrEqual(51);
+      expect(highSocialPlayer.dependability).toBe(52); // 50 + 1 + ceil(50/25)/2 = 52
     });
 
-    it('Innovate: 1.0x Phys, +4 Mental cost, $0 upfront wage, requires degree', () => {
+    it('Innovate: 1.0x Phys, +2 Mental cost, 0.5x wage, rolls 2d2-2 Dep/Exp, requires degree', () => {
       player.degrees = ['cs_degree'];
       player.physicalCondition = 40;
       player.mentalCondition = 40;
-      const initialExp = player.experience;
 
       const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'innovate' }, context);
       expect(nextPlayer.physicalCondition).toBe(39); // 1 base
-      expect(nextPlayer.mentalCondition).toBe(36); // 0 base + 4 innovate = 4
-      expect(nextPlayer.money).toBe(1000); // $0 upfront wage
-      expect(nextPlayer.innovateChance).toBeGreaterThan(0); // accumulates chance
-      expect(nextPlayer.innovateEscrow).toBe(20 * 4); // 80 in escrow (0.5x wage rate)
-      expect(nextPlayer.experience).toBe(initialExp); // No regular shift XP
+      expect(nextPlayer.mentalCondition).toBe(38); // 0 base + 2 innovate = 2
+      expect(nextPlayer.money).toBe(1000 + 20 * 4); // 80 earned (0.5x wage rate)
+      expect(nextPlayer.dependability + nextPlayer.experience).toBe(50 + 10 + 2); // 2 total stat points gained from 2d2-2 roll
     });
   });
 
@@ -389,17 +384,15 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(scoreWithMistakes).toBe(scoreNormal - 2);
     });
 
-    it('innovate research blunder drains mental and deducts banked chance while preserving max mental', () => {
+    it('innovate mistake halts progress and penalizes stats when mental condition is below 10', () => {
       const job = campaign.jobs[0];
       player.currentJobId = job.id;
       player.currentWage = job.baseWage;
       player.physicalCondition = 50;
-      player.mentalCondition = 20; // below 25 -> blunder risk
+      player.mentalCondition = 8; // below 10 -> mistake risk
       player.dependability = 50;
       player.experience = 10;
       player.degrees = ['cs_degree'];
-      player.innovateChance = 20;
-      player.innovateEscrow = 160;
 
       // Force innovate mental mistake
       const replay = {
@@ -410,10 +403,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       };
 
       const result = workShift(player, job, 6, rules, campaign.config.statRules, 'innovate', new Random(1), replay);
-      expect(result.updated.innovateChance).toBe(18); // loses 2.0 pp banked chance
-      expect(result.updated.innovateEscrow).toBe(160); // 0 escrow added on mistake
-      expect(result.updated.mentalCondition).toBe(20 - 4 - 5); // 11
-      expect(result.updated.mentalConditionMax).toBe(51); // 50 + 1 (high exertion bonus), preserved from reduction
+      expect(result.updated.mentalConditionMax).toBe(49);
       expect(result.updated.experience).toBe(10); // no XP gain on mistake
     });
 

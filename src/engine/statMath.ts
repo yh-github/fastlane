@@ -329,14 +329,14 @@ export function calcTheoreticalRobberyChance(
 
 /**
  * Calculate the dependability required to get a raise at the current job.
- * Completed innovation projects discount previous raises.
+ * Innovation breakthroughs discount previous raises.
  *
  * @param jobRequiredDep — Base dependability required for the job
  * @param raisesReceived — Number of raises already received at this job
- * @param projectsCompleted — Number of innovation projects completed at this job
+ * @param innovationCount — Number of innovation breakthroughs at this job
  */
-export function calcRaiseThreshold(jobRequiredDep: number, raisesReceived: number, projectsCompleted: number = 0): number {
-  return jobRequiredDep + 5 * Math.max(0, raisesReceived - projectsCompleted);
+export function calcRaiseThreshold(jobRequiredDep: number, raisesReceived: number, innovationCount: number = 0): number {
+  return jobRequiredDep + 5 * Math.max(0, raisesReceived - innovationCount);
 }
 
 // ─── Goal Progress ──────────────────────────────────────────────
