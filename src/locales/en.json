@@ -74,10 +74,11 @@
       "raiseLess": "Why are you asking for less money?",
       "mistake": "Made a mistake at work ({{type}})! Lost {{penalty}} Dependability (Total reputation penalties at this location: {{total}})",
       "innovateNeedDegree": "You need at least one University Degree to innovate at work.",
-      "innovateProgress": "R&D Session: Breakthrough chance is now {{chance}}% (~${{escrow}} grant in escrow).",
-      "innovateSerendipityDep": "Serendipitous discovery! A creative experiment revealed insights for greater reliability (+1 Max Dependability).",
-      "innovateSerendipityExp": "Serendipitous discovery! An experiment taught you new skills (+1 Experience).",
-      "innovateBreakthrough": "BREAKTHROUGH! Completed Innovation Project #{{projectNum}}! Received ${{grant}} research grant, +5 Dependability, +3 Max Dependability, +3 Max Experience, +3 Experience!"
+      "innovateGainExp": "R&D Brainstorm: Gained +{{amount}} Experience!",
+      "innovateGainDep": "R&D Optimization: Gained +{{amount}} Dependability!",
+      "innovateGainBoth": "R&D Progress: Gained +1 Dependability and +1 Experience!",
+      "innovateCapExp": "R&D BREAKTHROUGH! Surpassed normal limits and expanded Maximum Experience to {{newMax}}!",
+      "innovateCapDep": "R&D BREAKTHROUGH! Surpassed normal limits and expanded Maximum Dependability to {{newMax}}!"
     },
     "workModal": {
       "title": "Choose Work Strategy",
@@ -86,9 +87,10 @@
       "workWork": "Work Work",
       "workWorkDesc": "Standard shift: 1.0x costs, 1.0x wage, +1 Dependability, +1 XP.",
       "faceTime": "Face Time",
-      "faceTimeDesc": "0.5x Physical, +1 Mental cost, 0.5x wage, +2 Dependability, 0 XP.",
+      "faceTimeDesc": "0.5x Physical cost, +2 Mental cost, $0 wage. High Dependability gains (+1.5 to +3.0 Dep scaling with Social) and builds Social networking.",
       "innovate": "Innovate",
-      "innovateDesc": "Requires Degree. 1.0x Physical, +4 Mental cost, $0 upfront wage. Builds banked Breakthrough chance (+1.8+ percentage points/shift, up to 85%) and research grant escrow (~50% wage). Weekly decay: -3.0 percentage points. On Breakthrough: Randomized grant payout & major career bonuses. Warning: Mental < 25 risks severe research blunders!",
+      "innovateDesc": "Requires Degree. 1.0x Physical, escalating Mental cost (+1 per breakthrough), 0.5x wage. Rolls 2d2-2 to gain 0-2 Dep & Exp. If at max capacity, breakthroughs expand your maximum stat caps!",
+      "innovateReward": "2d2-2 Dep & Exp (Cap Buster)",
       "requiresDegree": "Requires Degree",
       "close": "Cancel",
       "done": "Done",

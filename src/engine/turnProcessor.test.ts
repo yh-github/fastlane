@@ -479,14 +479,5 @@ describe('Turn Processor', () => {
       expect(state.players[0].dependability).toBe(49);
       expect(state.players[0].social).toBe(50);
     });
-
-    it('decays innovateChance by 3.0 percentage points at turn transition', () => {
-      let state = createTestGameState(mockCampaign, [{ name: 'Player1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
-      state.turn = 1;
-      state.players[0].innovateChance = 10.5;
-
-      state = processTurnStart(state, mockCampaign);
-      expect(state.players[0].innovateChance).toBe(7.5); // 10.5 - 3.0 = 7.5
-    });
   });
 });
