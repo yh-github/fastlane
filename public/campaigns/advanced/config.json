@@ -22,7 +22,11 @@
     "usePhysicalMentalConditions": true,
     "turnStartAtHome": true,
     "trackMess": true,
-    "maskEarlyJobRejections": false
+    "maskEarlyJobRejections": false,
+    "percentageEducation": true,
+    "proportionalDivisibleActions": true,
+    "conditionResolution": 0.5,
+    "educationResolution": 0.1
   },
   "statRules": {
     "startingPhysicalCondition": 50,

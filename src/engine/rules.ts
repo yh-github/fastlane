@@ -158,6 +158,26 @@ export interface GameRules {
    * Classic Floppy/CD-ROM: true. QoL / Advanced: false.
    */
   maskEarlyJobRejections?: boolean;
+
+  /**
+   * ADVANCED: If true, degree education is tracked on a 0-100% continuous progress scale instead of integer classes.
+   */
+  percentageEducation?: boolean;
+
+  /**
+   * ADVANCED: If true, continuous/divisible actions (Work, Study, Relax, Clean) scale gains and stamina costs proportionally when hours are below standard cost.
+   */
+  proportionalDivisibleActions?: boolean;
+
+  /**
+   * ADVANCED: Step resolution for physical and mental condition scores (default 0.5 for half points).
+   */
+  conditionResolution?: number;
+
+  /**
+   * ADVANCED: Decimal resolution for percentage education progress (default 0.1).
+   */
+  educationResolution?: number;
 }
 
 export interface EventRules {
@@ -341,6 +361,10 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   showItemImages: 'Displays graphical icons for items in menus and inventory',
   delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',
   maskEarlyJobRejections: 'Masks unqualified job applications as "No openings" during turns 1-4 (Original Floppy/CD-ROM behavior)',
+  percentageEducation: 'Tracks degree progress on a 0-100% continuous progress scale',
+  proportionalDivisibleActions: 'Scales gains and stamina costs proportionally for continuous actions (Work, Study, Relax, Clean)',
+  conditionResolution: 'Step resolution for physical and mental condition scores (default 0.5 for half points)',
+  educationResolution: 'Decimal precision for percentage degree progress (default 0.1)',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
   marketCrashThreshold: 'Minimum economic reading required for a market crash to trigger (default 60)',

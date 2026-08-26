@@ -181,14 +181,18 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   const hasDegrees = player.degrees && player.degrees.length > 0;
   const faceTimeDep = 1 + Math.ceil((player.social || 1) / 25) / 2;
 
+  const shiftCost = campaign.config.timeRules?.workSessionCost ?? 6;
+  const hoursToWork = player.hoursRemaining > 0 ? Math.min(shiftCost, player.hoursRemaining) : shiftCost;
+  const workRatio = hoursToWork / shiftCost;
+
   const modes = [
     {
       id: 'work_work',
       label: t('action.workModal.workWork', { defaultValue: 'Work Work' }),
-      physCost: basePhys * 1.0,
-      mentalCost: baseMental * 1.0 + fatigueMental,
-      wage: player.currentWage * 8,
-      rewardText: '+1 Dep, +1 XP',
+      physCost: roundToResolution(basePhys * 1.0 * workRatio, 0.5),
+      mentalCost: roundToResolution((baseMental * 1.0 + fatigueMental) * workRatio, 0.5),
+      wage: Math.floor(player.currentWage * 8 * workRatio),
+      rewardText: hoursToWork < shiftCost ? `+${roundToResolution(1 * workRatio, 0.5)} Dep, +${roundToResolution(1 * workRatio, 0.5)} XP` : '+1 Dep, +1 XP',
       color: '#2ecc71',
       isDefault: true,
       disabled: false
@@ -196,9 +200,9 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     {
       id: 'look_busy',
       label: t('action.workModal.lookBusy', { defaultValue: 'Look Busy' }),
-      physCost: basePhys * 0.5,
-      mentalCost: baseMental * 0.5 + halfFatigueMental,
-      wage: player.currentWage * 8,
+      physCost: roundToResolution(basePhys * 0.5 * workRatio, 0.5),
+      mentalCost: roundToResolution((baseMental * 0.5 + halfFatigueMental) * workRatio, 0.5),
+      wage: Math.floor(player.currentWage * 8 * workRatio),
       rewardText: '+0 Dep, 0 XP',
       color: '#3498db',
       isDefault: false,
@@ -207,10 +211,10 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     {
       id: 'face_time',
       label: t('action.workModal.faceTime', { defaultValue: 'Face Time' }),
-      physCost: basePhys * 0.5,
-      mentalCost: baseMental * 1.0 + 2.0 + halfFatigueMental,
+      physCost: roundToResolution(basePhys * 0.5 * workRatio, 0.5),
+      mentalCost: roundToResolution((baseMental * 1.0 + 2.0 + halfFatigueMental) * workRatio, 0.5),
       wage: 0,
-      rewardText: `+${faceTimeDep.toFixed(1)} Dep, +Social`,
+      rewardText: `+${roundToResolution(faceTimeDep * workRatio, 0.5)} Dep, +Social`,
       color: '#9b59b6',
       isDefault: false,
       disabled: false
@@ -218,9 +222,9 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     {
       id: 'innovate',
       label: t('action.workModal.innovate', { defaultValue: 'Innovate' }),
-      physCost: basePhys * 1.0,
-      mentalCost: baseMental + 2.0 + (player.innovationCount || 0) + fatigueMental,
-      wage: Math.floor(player.currentWage * 8 * 0.5),
+      physCost: roundToResolution(basePhys * 1.0 * workRatio, 0.5),
+      mentalCost: roundToResolution((baseMental + 2.0 + (player.innovationCount || 0) + fatigueMental) * workRatio, 0.5),
+      wage: Math.floor(player.currentWage * 8 * 0.5 * workRatio),
       rewardText: hasDegrees ? t('action.workModal.innovateReward', { defaultValue: '2d2-2 Dep & Exp (Cap Buster)' }) : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree' }),
       color: '#e67e22',
       isDefault: false,
@@ -232,7 +236,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     <div className="interaction-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
         <h3 style={{ margin: 0 }}>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
-        <span style={{ fontSize: '12px', color: '#00e5ff', fontWeight: 'bold' }}>${player.currentWage}/hr {tierLabel}</span>
+        <span style={{ fontSize: '12px', color: '#00e5ff', fontWeight: 'bold' }}>${player.currentWage}/hr ({hoursToWork}h) {tierLabel}</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
@@ -265,7 +269,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                   : `1px solid ${canAfford ? m.color : '#444'}`,
                 boxShadow: isWorkWork && canAfford ? '0 0 10px rgba(46, 204, 113, 0.25)' : undefined,
                 color: canAfford ? '#fff' : '#777',
-                cursor: canAfford ? 'pointer' : 'not-allowed',
+                cursor: 'pointer',
                 opacity: canAfford ? 1 : 0.55,
                 textAlign: 'left',
                 position: 'relative'
@@ -375,53 +379,34 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const cleaningServicePrice = calcEconomyPrice(cleaningServiceBasePrice, economicIndex);
   const canAffordCleaning = player.money >= cleaningServicePrice;
 
+  const hoursToRelax = player.hoursRemaining > 0 ? Math.min(relaxCost, player.hoursRemaining) : relaxCost;
+  const relaxRatio = hoursToRelax / relaxCost;
+  const isRelaxDisabled = player.hoursRemaining <= 0;
+
   const socializeCost = campaign?.config.timeRules?.socializeCost ?? 6;
   const isTooExhaustedForSocial = !!rules?.usePhysicalMentalConditions && ((player.physicalCondition ?? 50) - 1 < 1.0);
   const isNotEnoughTimeForSocial = player.hoursRemaining < socializeCost;
   const isSocialDisabled = isMessTooHighForSocial || isNotEnoughTimeForSocial || isTooExhaustedForSocial;
-
-  let socialSubtext = '-1 Phys, +Social stat (Generates Mess)';
-  if (isMessTooHighForSocial) {
-    socialSubtext = '⚠️ Clean room first (Mess > 25!)';
-  } else if (isNotEnoughTimeForSocial) {
-    socialSubtext = `⚠️ Not enough time (Needs ${socializeCost} hrs)`;
-  } else if (isTooExhaustedForSocial) {
-    socialSubtext = '⚠️ Too exhausted (-1 Phys required)';
-  }
+  const socialSubtext = '-1 Phys, +Social stat (Generates Mess)';
 
   const cleanPhysicalCost = campaign?.config.statRules?.cleanPhysicalCost ?? 1;
-  const isTooExhaustedForClean = !!rules?.usePhysicalMentalConditions && ((player.physicalCondition ?? 50) - cleanPhysicalCost < 1.0);
-  const isNotEnoughTimeForClean = player.hoursRemaining < 3;
+  const hoursToClean = player.hoursRemaining > 0 ? Math.min(3, player.hoursRemaining) : 3;
+  const cleanRatio = hoursToClean / 3;
+  const cleanPhysGain = Math.max(0.5, roundToResolution(cleanPhysicalCost * cleanRatio, 0.5));
+  const isTooExhaustedForClean = !!rules?.usePhysicalMentalConditions && ((player.physicalCondition ?? 50) - cleanPhysGain < 1.0);
+  const isNotEnoughTimeForClean = player.hoursRemaining <= 0;
   const isCleanDisabled = isMessClean || isNotEnoughTimeForClean || isTooExhaustedForClean;
-
-  let cleanSubtext = `Cleans 2d3 Mess ${rules?.usePhysicalMentalConditions ? `(-${cleanPhysicalCost} Phys)` : ''}`;
-  if (isMessClean) {
-    cleanSubtext += ' (Already Clean)';
-  } else if (isNotEnoughTimeForClean) {
-    cleanSubtext = `⚠️ Not enough time (Needs 3 hrs)`;
-  } else if (isTooExhaustedForClean) {
-    cleanSubtext = `⚠️ Too exhausted (-${cleanPhysicalCost} Phys required)`;
-  }
+  const cleanSubtext = `Cleans mess ${rules?.usePhysicalMentalConditions ? `(-${cleanPhysGain} Phys)` : ''}`;
 
   const isNotEnoughTimeForService = player.hoursRemaining < cleaningServiceCost;
   const isCannotAffordService = !canAffordCleaning;
   const isServiceDisabled = isMessClean || isCannotAffordService || isNotEnoughTimeForService;
-
-  let serviceSubtext = 'Professional cleaning (-10 Mess)';
-  if (isMessClean) {
-    serviceSubtext += ' (Already Clean)';
-  } else if (isCannotAffordService && isNotEnoughTimeForService) {
-    serviceSubtext += ` (Needs $${cleaningServicePrice}, Needs ${cleaningServiceCost} hr)`;
-  } else if (isCannotAffordService) {
-    serviceSubtext += ` (Needs $${cleaningServicePrice})`;
-  } else if (isNotEnoughTimeForService) {
-    serviceSubtext += ` (Needs ${cleaningServiceCost} hr)`;
-  }
+  const serviceSubtext = 'Professional cleaning (-10 Mess)';
 
   const hasFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0;
 
   const handleRelaxClick = () => {
-    if (rules?.usePhysicalMentalConditions && !hasFood && !warnedThisVisit) {
+    if (rules?.usePhysicalMentalConditions && !hasFood && !warnedThisVisit && player.hoursRemaining > 0) {
       setShowUnfedWarning(true);
     } else {
       handleHomeAction({ type: 'relax' });
@@ -533,28 +518,28 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
               data-action-target="relax" 
               onClick={handleRelaxClick}
               style={{
-                backgroundColor: player.hoursRemaining < relaxCost ? '#444' : '#27ae60',
-                color: player.hoursRemaining < relaxCost ? '#bbb' : '#fff',
+                backgroundColor: isRelaxDisabled ? '#444' : '#27ae60',
+                color: isRelaxDisabled ? '#bbb' : '#fff',
                 border: 'none',
                 padding: '10px',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
                 textAlign: 'left',
-                opacity: player.hoursRemaining < relaxCost ? 0.65 : 1
+                opacity: isRelaxDisabled ? 0.65 : 1
               }}
             >
-              <div>🧘 {t('homeRelax.button', { cost: relaxCost })}</div>
+              <div>🧘 {t('homeRelax.button', { cost: hoursToRelax, defaultValue: `Relax (${hoursToRelax} hrs)` })}</div>
               {rules?.usePhysicalMentalConditions ? (
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: '#e8f8f5' }}>
-                  {player.hoursRemaining < relaxCost ? `⚠️ Not enough time (Needs ${relaxCost} hrs)` : `${hasFood ? '+Physical, +Mental condition' : '⚠️ No food: +1/+1 (-1 Max Phys & Mental)'} ${rules?.trackMess ? '(+1 Mess)' : ''}`}
+                  {hasFood 
+                    ? `+${Math.max(0.5, roundToResolution(2 * relaxRatio, 0.5))} Phys, +${Math.max(0.5, roundToResolution(3 * relaxRatio, 0.5))} Mental condition`
+                    : `⚠️ No food: -1 Max Phys & Mental`} {rules?.trackMess ? `(+${Math.max(1, Math.round(1 * relaxRatio))} Mess)` : ''}
                 </div>
               ) : (
-                player.hoursRemaining < relaxCost && (
-                  <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: '#ffb3b3' }}>
-                    ⚠️ Not enough time (Needs {relaxCost} hrs)
-                  </div>
-                )
+                <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: '#e8f8f5' }}>
+                  +{Math.max(1, Math.round((campaign?.config.timeRules?.relaxGain ?? 3) * relaxRatio))} Relaxation
+                </div>
               )}
             </button>
 
@@ -614,7 +599,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                   opacity: isSocialDisabled ? 0.65 : 1
                 }}
               >
-                <div>🎉 Socialize / Entertain Guests (6 hrs)</div>
+                <div>🎉 Socialize / Entertain Guests ({socializeCost} hrs)</div>
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: isSocialDisabled ? '#ffb3b3' : 'inherit' }}>
                   {socialSubtext}
                 </div>
@@ -644,7 +629,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                     opacity: isCleanDisabled ? 0.65 : 1
                   }}
                 >
-                  <div>🧹 Clean Apartment (3 hrs)</div>
+                  <div>🧹 Clean Apartment ({hoursToClean} hrs)</div>
                   <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: isCleanDisabled ? '#ffb3b3' : 'inherit' }}>
                     {cleanSubtext}
                   </div>
@@ -684,8 +669,8 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
 }
 
 import { calcEconomyPrice, calcItemPrice, calcStockPrice } from '../engine/economyEngine';
-import { calcRequiredLessons } from '../engine/educationEngine';
-import { calcMovingFee, calcMaxMess } from '../engine/statMath';
+import { calcRequiredLessons, formatDegreeProgress } from '../engine/educationEngine';
+import { calcMovingFee, calcMaxMess, roundToResolution } from '../engine/statMath';
 
 import type { GameRules } from '../engine/gameState';
 
@@ -1581,11 +1566,12 @@ export function DiscountAndPawnShop({ player, onAction, availableItems, economic
   );
 }
 
-export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees: EducationDef[], rules?: import('../engine/gameState').GameRules, campaign: CampaignBundle, economicIndex?: number }) {
+export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees?: EducationDef[], rules?: import('../engine/gameState').GameRules, campaign: CampaignBundle, economicIndex?: number }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<'available'|'tree'>('available');
 
-  const rootDegrees = availableDegrees.filter(d => d.prerequisites.length === 0);
+  const degreesList = availableDegrees || campaign?.degrees || [];
+  const rootDegrees = degreesList.filter(d => d.prerequisites.length === 0);
 
   return (
     <div className="interaction-panel">
@@ -1604,7 +1590,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
         <>
           <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 10px 0', fontSize: '0.95em' }}>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
-            {availableDegrees
+            {degreesList
               .filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)))
               .filter(deg => !player.degrees.includes(deg.id))
               .map(deg => {
@@ -1629,50 +1615,72 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                       )}
                       
                       {isEnrolled && (
-                        <div style={{ fontSize: '12px', marginTop: '4px', color: 'var(--accent-cyan)' }}>
-                          {t('university.lessons', { completed: lessonsCompleted, required, defaultValue: `Lessons: ${lessonsCompleted} / ${required}` })}
+                        <div style={{ marginTop: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--accent-cyan)', marginBottom: '3px' }}>
+                            <span>{rules?.percentageEducation ? t('university.progress', { defaultValue: 'Progress' }) : t('university.lessons', { defaultValue: 'Lessons' })}:</span>
+                            <span style={{ fontWeight: 'bold' }}>
+                              {rules?.percentageEducation 
+                                ? `${formatDegreeProgress(lessonsCompleted, true)} / 100%` 
+                                : `${lessonsCompleted} / ${required}`}
+                            </span>
+                          </div>
+                          {rules?.percentageEducation && (
+                            <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                              <div style={{ width: `${Math.min(100, lessonsCompleted)}%`, height: '100%', backgroundColor: '#3498db', transition: 'width 0.3s ease' }} />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
 
                     <div style={{ marginTop: '10px' }}>
-                      {isEnrolled ? (
+                      {isEnrolled ? (() => {
+                        const standardCost = campaign.config.timeRules.studySessionCost;
+                        const hoursToStudy = player.hoursRemaining > 0 ? Math.min(standardCost, player.hoursRemaining) : standardCost;
+                        const studyRatio = hoursToStudy / standardCost;
+
+                        return (
+                          <button 
+                            data-testid={`study-${deg.id}`}
+                            data-action-target={`study-${deg.id}`}
+                            style={{ width: '100%', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1, cursor: 'pointer' }} 
+                            onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
+                          >
+                            {t('university.studyBtn', { cost: hoursToStudy, defaultValue: `Study (${hoursToStudy}h)` })}
+                            {rules?.usePhysicalMentalConditions && (() => {
+                              const sRules = campaign.config.statRules;
+                              const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
+                              const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;
+                              const studyGrindThresh = sRules?.studyGrindThreshold ?? 4;
+
+                              let mCost = sRules?.studyMentalCost ?? sRules?.studyNormalMentalCost ?? 1;
+                              let pCost = sRules?.studyNormalPhysicalCost ?? 0;
+                              let studyTierLabel = '';
+
+                              if (nextStudyAction >= studyOvertimeThresh) {
+                                mCost = sRules?.studyOvertimeMentalCost ?? 2;
+                                pCost = sRules?.studyOvertimePhysicalCost ?? 1;
+                                studyTierLabel = ' [Hyper]';
+                              } else if (nextStudyAction >= studyGrindThresh) {
+                                mCost = sRules?.studyGrindMentalCost ?? 2;
+                                pCost = sRules?.studyGrindPhysicalCost ?? 0;
+                                studyTierLabel = ' [Grind]';
+                              }
+
+                              const scaledMCost = roundToResolution(mCost * studyRatio, 0.5);
+                              const scaledPCost = roundToResolution(pCost * studyRatio, 0.5);
+
+                              return (
+                                <span style={{ fontSize: '11px', marginLeft: '5px' }}>
+                                  (-{scaledMCost} Mental{scaledPCost > 0 ? `, -${scaledPCost} Phys` : ''}{studyTierLabel})
+                                </span>
+                              );
+                            })()}
+                          </button>
+                        );
+                      })() : (
                         <button 
-                          style={{ width: '100%', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1 }} 
-                          onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
-                          data-action-target={`study-${deg.id}`}
-                        >
-                          {t('university.studyBtn', { cost: campaign.config.timeRules.studySessionCost, defaultValue: `Study (${campaign.config.timeRules.studySessionCost}h)` })}
-                          {rules?.usePhysicalMentalConditions && (() => {
-                            const sRules = campaign.config.statRules;
-                            const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
-                            const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;
-                            const studyGrindThresh = sRules?.studyGrindThreshold ?? 4;
-
-                            let mCost = sRules?.studyMentalCost ?? sRules?.studyNormalMentalCost ?? 1;
-                            let pCost = sRules?.studyNormalPhysicalCost ?? 0;
-                            let studyTierLabel = '';
-
-                            if (nextStudyAction >= studyOvertimeThresh) {
-                              mCost = sRules?.studyOvertimeMentalCost ?? 2;
-                              pCost = sRules?.studyOvertimePhysicalCost ?? 1;
-                              studyTierLabel = ' [Hyper]';
-                            } else if (nextStudyAction >= studyGrindThresh) {
-                              mCost = sRules?.studyGrindMentalCost ?? 2;
-                              pCost = sRules?.studyGrindPhysicalCost ?? 0;
-                              studyTierLabel = ' [Grind]';
-                            }
-
-                            return (
-                              <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-                                (-{mCost} Mental{pCost > 0 ? `, -${pCost} Phys` : ''}{studyTierLabel})
-                              </span>
-                            );
-                          })()}
-                        </button>
-                      ) : (
-                        <button 
-                          style={{ width: '100%', background: '#2ecc71', color: '#000' }} 
+                          style={{ width: '100%', background: '#2ecc71', color: '#000', cursor: 'pointer' }} 
                           onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
                           data-action-target={`enroll-${deg.id}`}
                         >
@@ -1684,7 +1692,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                 );
               })}
           </div>
-          {availableDegrees.filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)) && !player.degrees.includes(deg.id)).length === 0 && (
+          {degreesList.filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)) && !player.degrees.includes(deg.id)).length === 0 && (
             <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('university.noClasses', { defaultValue: 'No classes available to take right now.' })}</p>
           )}
         </>
@@ -1693,7 +1701,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
       {tab === 'tree' && (
         <div style={{ marginTop: '10px', padding: '10px', background: '#222', borderRadius: '4px', overflowX: 'auto' }}>
           {rootDegrees.map(root => (
-            <ClassTreeNode key={root.id} degreeId={root.id} availableDegrees={availableDegrees} player={player} />
+            <ClassTreeNode key={root.id} degreeId={root.id} availableDegrees={degreesList} player={player} />
           ))}
         </div>
       )}

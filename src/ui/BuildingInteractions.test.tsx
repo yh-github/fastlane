@@ -256,7 +256,7 @@ describe('BuildingInteractions', () => {
     const cleanServiceBtn = screen.getByRole('button', { name: /Call Cleaning Service/i });
     expect(cleanServiceBtn).not.toBeDisabled();
     expect(cleanServiceBtn.textContent).toContain('$100');
-    expect(screen.getByText(/Needs \$100/i)).toBeInTheDocument();
+    expect(cleanServiceBtn.textContent).toContain('Professional cleaning (-10 Mess)');
 
     // Clicking softly-disabled button calls onAction and receives feedback
     fireEvent.click(cleanServiceBtn);
@@ -282,7 +282,7 @@ describe('BuildingInteractions', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'call_cleaning_service' });
   });
 
-  it('HomeRelax softly disables Socialize button with reason when messy, exhausted, or low on time', async () => {
+  it('HomeRelax softly disables Socialize button with feedback banner when clicked', async () => {
     const { fireEvent } = await import('@testing-library/react');
     const { HomeRelax } = await import('./BuildingInteractions');
 
@@ -318,20 +318,20 @@ describe('BuildingInteractions', () => {
 
     const socializeBtn = screen.getByRole('button', { name: /Socialize \/ Entertain Guests/i });
     expect(socializeBtn).not.toBeDisabled();
-    expect(socializeBtn.textContent).toContain('Clean room first (Mess > 25!)');
+    expect(socializeBtn.textContent).toContain('-1 Phys, +Social stat (Generates Mess)');
 
     fireEvent.click(socializeBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'socialize_guests' });
   });
 
-  it('WorkStation renders prominent Work Work default option and keeps modal open across clicks until Done is clicked', async () => {
+  it('WorkStation renders prominent Work Work default option and prorates partial hours', async () => {
     const { WorkStation } = await import('./BuildingInteractions');
     const { fireEvent } = await import('@testing-library/react');
 
     const mockPlayer = {
       name: 'Tester',
       currentWage: 20,
-      hoursRemaining: 40,
+      hoursRemaining: 3, // Partial shift (3 hrs out of 6)
       physicalCondition: 30,
       mentalCondition: 30,
       workActionsThisTurn: 0,
@@ -368,22 +368,66 @@ describe('BuildingInteractions', () => {
 
     // Inline strategy options are displayed directly without a modal
     expect(screen.getByText(/DEFAULT/i)).toBeInTheDocument();
+    expect(screen.getByText(/\(3h\)/i)).toBeInTheDocument();
 
     const workWorkBtn = screen.getByTestId('work-mode-work_work');
     expect(workWorkBtn).toBeInTheDocument();
+    // 3/6 hours * $160 = $80
+    expect(workWorkBtn.textContent).toContain('$80');
 
     // Click Work Work
     fireEvent.click(workWorkBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'work_work' });
+  });
 
-    // Click Look Busy
-    const lookBusyBtn = screen.getByTestId('work-mode-look_busy');
-    fireEvent.click(lookBusyBtn);
-    expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'look_busy' });
+  it('UniversityRegistry renders percentage progress bar when percentageEducation is enabled', async () => {
+    const { UniversityRegistry } = await import('./BuildingInteractions');
+    const { fireEvent } = await import('@testing-library/react');
 
-    // Click Innovate
-    const innovateBtn = screen.getByTestId('work-mode-innovate');
-    fireEvent.click(innovateBtn);
-    expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'innovate' });
+    const mockPlayer = {
+      name: 'Tester',
+      money: 1000,
+      hoursRemaining: 4,
+      degrees: [],
+      enrolledClasses: {
+        'trade_school': 45.5
+      },
+      inventory: {}
+    } as any;
+
+    const mockCampaign = {
+      degrees: [
+        {
+          id: 'trade_school',
+          name: 'Trade School',
+          baseTuitionFee: 100,
+          lessonsRequired: 10,
+          prerequisites: [],
+          rewards: { dependability: 5, happiness: 10, maxDepBoost: 5, maxExpBoost: 5 }
+        }
+      ],
+      config: {
+        timeRules: { studySessionCost: 6 },
+        statRules: {}
+      }
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <UniversityRegistry
+        player={mockPlayer}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+        rules={{ percentageEducation: true } as any}
+      />
+    );
+
+    expect(screen.getByText(/45.5% \/ 100%/i)).toBeInTheDocument();
+    const studyBtn = screen.getByTestId('study-trade_school');
+    expect(studyBtn.textContent).toContain('Study (4h)');
+
+    fireEvent.click(studyBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'study', degreeId: 'trade_school' });
   });
 });

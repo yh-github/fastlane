@@ -1,7 +1,7 @@
 import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import { spendHours } from './timeManager';
 import { processRentDebt } from './economyEngine';
-import { calcEmployabilityScore } from './statMath';
+import { calcEmployabilityScore, roundToResolution } from './statMath';
 import type { JobDef } from './dataLoader';
 import type { Random } from '../utils/rng';
 import { resolveDecision, type ReplayContext } from './replayTypes';
@@ -25,7 +25,7 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     return m;
   };
 
-  if (player.hoursRemaining <= 0 || (player.hoursRemaining < timeCost && !rules?.allowPartialHours)) {
+  if (player.hoursRemaining < timeCost) {
     return { updated: player, success: false, message: { key: 'action.error.notEnoughTime' } };
   }
 
@@ -263,6 +263,16 @@ export function workShift(
       mentalCost += fatigueCost;
     }
 
+    const hoursToWork = Math.min(player.hoursRemaining, shiftCost);
+    const ratio = hoursToWork / shiftCost;
+
+    if (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) {
+      const conditionRes = rules?.conditionResolution ?? 0.5;
+      physicalCost = Math.max(0, roundToResolution(physicalCost * ratio, conditionRes));
+      mentalCost = Math.max(0, roundToResolution(mentalCost * ratio, conditionRes));
+      baseDepGain = roundToResolution(baseDepGain * ratio, 0.5);
+    }
+
     // Strict stat floor check: currentStat - cost >= 1.0
     const curMental = player.mentalCondition ?? 50;
     const physLow = curPhys - physicalCost < 1.0;
@@ -280,11 +290,12 @@ export function workShift(
   }
 
   const hoursToWork = Math.min(player.hoursRemaining, shiftCost);
+  const ratio = hoursToWork / shiftCost;
   let updated = spendHours(player, hoursToWork);
 
   // Prorate wage: shiftCost hours = 8 hours of base wage (full shift)
   const fullShiftWage = Math.floor(updated.currentWage * 8 * wageMultiplier);
-  const rawWagesEarned = Math.floor(fullShiftWage * (hoursToWork / shiftCost));
+  const rawWagesEarned = Math.floor(fullShiftWage * ratio);
 
   let wagesEarned = rawWagesEarned;
   let totalGarnished = 0;
@@ -364,47 +375,54 @@ export function workShift(
         const die2 = resolveDecision(replay, `work_innovate_die2_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < 0.5 ? 1 : 2);
         const rollX = die1 + die2 - 2;
 
+        const gainMultiplier = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? ratio : 1.0;
+
         if (rollX === 0) {
           // +0 Dep, +2 Exp
+          const expGain = roundToResolution(2 * gainMultiplier, 0.5);
           if (updated.experience >= effectiveMaxExp) {
             updated.xpMaxBonus = (updated.xpMaxBonus || 0) + 1;
             updated.innovationCount = (updated.innovationCount || 0) + 1;
             messages.push({ key: 'action.job.innovateCapExp', params: { newMax: effectiveMaxExp + 1 } });
           } else {
-            updated.experience = Math.min(effectiveMaxExp, updated.experience + 2);
-            messages.push({ key: 'action.job.innovateGainExp', params: { amount: 2 } });
+            updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
+            messages.push({ key: 'action.job.innovateGainExp', params: { amount: expGain } });
           }
         } else if (rollX === 1) {
           // +1 Dep, +1 Exp
-          updated.dependability = Math.min(effectiveMaxDep, Math.round((updated.dependability + 1) * 10) / 10);
-          updated.experience = Math.min(effectiveMaxExp, updated.experience + 1);
+          const depGain = roundToResolution(1 * gainMultiplier, 0.5);
+          const expGain = roundToResolution(1 * gainMultiplier, 0.5);
+          updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + depGain, 0.5));
+          updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
           messages.push({ key: 'action.job.innovateGainBoth' });
         } else {
           // +2 Dep, +0 Exp (rollX === 2)
+          const depGain = roundToResolution(2 * gainMultiplier, 0.5);
           if (updated.dependability >= effectiveMaxDep) {
             updated.depMaxBonus = (updated.depMaxBonus || 0) + 1;
             updated.innovationCount = (updated.innovationCount || 0) + 1;
             messages.push({ key: 'action.job.innovateCapDep', params: { newMax: effectiveMaxDep + 1 } });
           } else {
-            updated.dependability = Math.min(effectiveMaxDep, Math.round((updated.dependability + 2) * 10) / 10);
-            messages.push({ key: 'action.job.innovateGainDep', params: { amount: 2 } });
+            updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + depGain, 0.5));
+            messages.push({ key: 'action.job.innovateGainDep', params: { amount: depGain } });
           }
         }
       } else {
         // Normal stat growth for other modes
-        updated.dependability = Math.min(effectiveMaxDep, Math.round((updated.dependability + baseDepGain) * 10) / 10);
+        updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + baseDepGain, 0.5));
       }
     }
 
     if (mode === 'work_work') {
       const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
-      updated.experience = Math.min(effectiveMaxExp, updated.experience + 1);
+      const expGain = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? roundToResolution(1 * ratio, 0.5) : 1;
+      updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
     }
 
     let socialGain = 0;
     if (mode === 'face_time' && !physMistake && !mentalMistake) {
       const curSoc = player.social || 1;
-      const socChance = Math.max(0, (100 - curSoc) / 100);
+      const socChance = Math.max(0, ((100 - curSoc) / 100) * ratio);
       const isSocSuccess = resolveDecision(replay, `work_facetime_social_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < socChance);
       if (isSocSuccess) {
         socialGain = 1;
@@ -424,8 +442,11 @@ export function workShift(
     const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0);
     const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0);
 
-    updated.experience = Math.min(effectiveMaxExp, updated.experience + 1);
-    updated.dependability = Math.min(effectiveMaxDep, updated.dependability + 1);
+    const classicExpGain = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? roundToResolution(1 * ratio, 0.5) : 1;
+    const classicDepGain = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? roundToResolution(1 * ratio, 0.5) : 1;
+
+    updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + classicExpGain, 0.5));
+    updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + classicDepGain, 0.5));
     messages.unshift({ key: 'action.job.worked', params: { title: job.title, wagesEarned, stats: '' } });
   }
 
