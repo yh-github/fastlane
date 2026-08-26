@@ -3,10 +3,10 @@ import { type CampaignBundle } from './dataLoader';
 import { type Random } from '../utils/rng';
 import { applyForJob, workShift } from './jobEngine';
 import { buyItem } from './shoppingEngine';
-import { enrollInDegree, study, calcRequiredLessons } from './educationEngine';
+import { enrollInDegree, study, calcRequiredLessons, formatDegreeProgress } from './educationEngine';
 import { spendHours } from './timeManager';
 import { calcItemPrice, calcEconomyPrice } from './economyEngine';
-import { calcMovingFee, messGrowth, safeDecrementPhysical, safeDecrementMental, calcMaxMess } from './statMath';
+import { calcMovingFee, messGrowth, safeDecrementPhysical, safeDecrementMental, calcMaxMess, roundToResolution } from './statMath';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
 import { resolveDecision, type EngineDecision, type ReplayContext } from './replayTypes';
@@ -227,6 +227,14 @@ export function gameReducer(
           const hoursToSpend = context.rules.allowPartialHours
             ? Math.min(nextPlayer.hoursRemaining, studySessionCost)
             : studySessionCost;
+          const ratio = hoursToSpend / studySessionCost;
+
+          if (context.rules.proportionalDivisibleActions && hoursToSpend < studySessionCost) {
+            const conditionRes = context.rules.conditionResolution ?? 0.5;
+            physicalCost = Math.max(0, roundToResolution(physicalCost * ratio, conditionRes));
+            mentalCost = Math.max(0, roundToResolution(mentalCost * ratio, conditionRes));
+          }
+
           nextPlayer = spendHours(nextPlayer, hoursToSpend);
           nextPlayer.studyActionsThisTurn = actionCount;
 
@@ -257,10 +265,27 @@ export function gameReducer(
           } else {
             // Study progress
             nextPlayer.enrolledClasses = { ...(nextPlayer.enrolledClasses || {}) };
-            nextPlayer.enrolledClasses[degDef.id] = (nextPlayer.enrolledClasses[degDef.id] || 0) + 1;
+            const isPercentage = !!context.rules.percentageEducation;
             const required = calcRequiredLessons(nextPlayer, degDef, context.rules);
+            let isGraduated = false;
 
-            if (nextPlayer.enrolledClasses[degDef.id] >= required) {
+            if (isPercentage) {
+              const totalRequiredHours = required * studySessionCost;
+              const progressGain = roundToResolution((hoursToSpend / totalRequiredHours) * 100, context.rules.educationResolution ?? 0.1);
+              const newProgress = Math.min(100, roundToResolution((nextPlayer.enrolledClasses[degDef.id] || 0) + progressGain, context.rules.educationResolution ?? 0.1));
+              nextPlayer.enrolledClasses[degDef.id] = newProgress;
+              isGraduated = newProgress >= 99.95;
+            } else {
+              nextPlayer.enrolledClasses[degDef.id] = (nextPlayer.enrolledClasses[degDef.id] || 0) + 1;
+              isGraduated = nextPlayer.enrolledClasses[degDef.id] >= required;
+            }
+
+            const currentDisplay = isPercentage 
+              ? formatDegreeProgress(nextPlayer.enrolledClasses[degDef.id], true)
+              : String(nextPlayer.enrolledClasses[degDef.id]);
+            const requiredDisplay = isPercentage ? '100%' : String(required);
+
+            if (isGraduated) {
               nextPlayer.degrees = [...nextPlayer.degrees, degDef.id];
               delete nextPlayer.enrolledClasses[degDef.id];
               delete nextPlayer.enrolledClasses[`${degDef.id}_req`];
@@ -277,7 +302,7 @@ export function gameReducer(
 
               actionLog = { key: 'action.education.graduated', params: { name: degDef.name, stats: statsStr } };
             } else {
-              actionLog = { key: 'action.education.studied', params: { name: degDef.name, current: nextPlayer.enrolledClasses[degDef.id], required, stats: statsStr } };
+              actionLog = { key: 'action.education.studied', params: { name: degDef.name, current: currentDisplay, required: requiredDisplay, stats: statsStr } };
             }
           }
         } else {
@@ -291,14 +316,13 @@ export function gameReducer(
     case 'relax': {
       const relaxCost = requireConfig(context.campaign.config.timeRules?.relaxCost, 'timeRules.relaxCost');
       const relaxGain = context.campaign.config.timeRules.relaxGain ?? 3;
-      if (nextPlayer.hoursRemaining < relaxCost) {
-        if (!context.rules.allowPartialHours || nextPlayer.hoursRemaining <= 0) {
-          actionLog = { key: 'action.error.notEnoughTimeRelax' };
-          break;
-        }
+      if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < relaxCost && !context.rules.allowPartialHours)) {
+        actionLog = { key: 'action.error.notEnoughTimeRelax' };
+        break;
       }
       
       const actualHours = Math.min(relaxCost, nextPlayer.hoursRemaining);
+      const ratio = actualHours / relaxCost;
       nextPlayer = spendHours(nextPlayer, actualHours);
       
       let statsStr = '';
@@ -306,6 +330,7 @@ export function gameReducer(
         const statRules = context.campaign.config.statRules;
         const maxPhysical = nextPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
         const maxMental = nextPlayer.mentalConditionMax ?? 50;
+        const conditionRes = context.rules.conditionResolution ?? 0.5;
 
         const hasFood = (nextPlayer.inventory?.freshFoodUnits || 0) > 0 || (nextPlayer.inventory?.fastFoodItems?.length || 0) > 0;
 
@@ -316,29 +341,44 @@ export function gameReducer(
           const extraMess = relaxEffects.get('mess') || 0;
 
           const mentalStat = nextPlayer.mentalCondition ?? 50;
-          const physGain = 1 + Math.floor(mentalStat / 25) + physBonus;
+          const rawPhysGain = 1 + Math.floor(mentalStat / 25) + physBonus;
+          const physGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
+            ? Math.max(0.5, roundToResolution(rawPhysGain * ratio, conditionRes))
+            : rawPhysGain;
           nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
 
           const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
           const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
           const socialMentalBonus = Math.floor((nextPlayer.social || 0) / 15);
-          const mentalGain = Math.max(0, firstBonus + 3 - messPenalty) + mentalBonus + socialMentalBonus;
+          const rawMentalGain = Math.max(0, firstBonus + 3 - messPenalty) + mentalBonus + socialMentalBonus;
+          const mentalGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
+            ? Math.max(0.5, roundToResolution(rawMentalGain * ratio, conditionRes))
+            : rawMentalGain;
           nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
 
           if (context.rules.trackMess) {
             const baseRelaxMess = statRules?.relaxMessIncrease ?? 1;
             const relaxMess = baseRelaxMess + extraMess;
+            const scaledMess = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
+              ? Math.max(1, Math.round(relaxMess * ratio))
+              : relaxMess;
             const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
-            nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + relaxMess);
+            nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + scaledMess);
           }
 
-          nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
+          nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
           statsStr = ` (+${physGain} Physical, +${mentalGain} Mental)`;
           actionLog = { key: 'action.relax', params: { stats: statsStr } };
         } else {
-          // Unfed Relaxing: +1 Physical, +1 Mental, -1 Max Physical, -1 Max Mental
-          const physGain = 1;
-          const mentalGain = 1;
+          // Unfed Relaxing
+          const rawPhysGain = 1;
+          const rawMentalGain = 1;
+          const physGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
+            ? Math.max(0.5, roundToResolution(rawPhysGain * ratio, conditionRes))
+            : rawPhysGain;
+          const mentalGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
+            ? Math.max(0.5, roundToResolution(rawMentalGain * ratio, conditionRes))
+            : rawMentalGain;
 
           nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
           nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
@@ -356,12 +396,15 @@ export function gameReducer(
             nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + baseRelaxMess);
           }
 
-          nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
+          nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
           statsStr = ` (+${physGain} Physical, +${mentalGain} Mental, -1 Max Physical, -1 Max Mental)`;
           actionLog = { key: 'action.relax_unfed', params: { stats: statsStr } };
         }
       } else {
-        nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + relaxGain);
+        const scaledGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
+          ? Math.max(1, Math.round(relaxGain * ratio))
+          : relaxGain;
+        nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + scaledGain);
         if (!nextPlayer.turnFlags.relaxedThisTurn) {
           nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
         }
@@ -376,37 +419,45 @@ export function gameReducer(
         actionLog = { key: 'action.error.alreadyClean' };
         break;
       }
-      if (nextPlayer.hoursRemaining < 3) {
-        if (!context.rules.allowPartialHours || nextPlayer.hoursRemaining <= 0) {
-          actionLog = { key: 'action.error.notEnoughTimeClean' };
-          break;
-        }
+      if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < 3 && !context.rules.allowPartialHours)) {
+        actionLog = { key: 'action.error.notEnoughTimeClean' };
+        break;
       }
+      const actualHours = Math.min(3, nextPlayer.hoursRemaining);
+      const ratio = actualHours / 3;
+      const conditionRes = context.rules.conditionResolution ?? 0.5;
+
+      let cleanCost = 0;
       if (context.rules.usePhysicalMentalConditions) {
         const statRules = context.campaign.config.statRules;
-        const cleanCost = statRules?.cleanPhysicalCost ?? 1;
+        const rawCleanCost = statRules?.cleanPhysicalCost ?? 1;
+        cleanCost = (context.rules.proportionalDivisibleActions && actualHours < 3)
+          ? Math.max(0.5, roundToResolution(rawCleanCost * ratio, conditionRes))
+          : rawCleanCost;
         const currentPhys = nextPlayer.physicalCondition ?? (statRules?.initialPhysicalMax ?? 50);
         if (currentPhys - cleanCost < 1.0) {
           actionLog = { key: 'action.error.tooExhausted' };
           break;
         }
       }
-      nextPlayer = spendHours(nextPlayer, 3);
+      nextPlayer = spendHours(nextPlayer, actualHours);
       let cleanStatsStr = '';
       if (context.rules.usePhysicalMentalConditions) {
         const statRules = context.campaign.config.statRules;
         const minPhysical = statRules?.minPhysicalCondition ?? 1;
-        const cleanCost = statRules?.cleanPhysicalCost ?? 1;
 
         const currentPhys = nextPlayer.physicalCondition ?? (statRules?.initialPhysicalMax ?? 50);
         nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, cleanCost, minPhysical);
-        nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + 3;
+        nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
         cleanStatsStr = ` (-${cleanCost} Physical)`;
       }
       if (context.rules.trackMess || context.rules.usePhysicalMentalConditions) {
         const d3_1 = context.rng.nextInt(1, 3);
         const d3_2 = context.rng.nextInt(1, 3);
-        const reduction = d3_1 + d3_2;
+        const rawReduction = d3_1 + d3_2;
+        const reduction = (context.rules.proportionalDivisibleActions && actualHours < 3)
+          ? Math.max(1, Math.round(rawReduction * ratio))
+          : rawReduction;
         const minMess = context.campaign.config.statRules?.globalMessMin ?? 0;
         nextPlayer.mess = Math.max(minMess, (nextPlayer.mess || 0) - reduction);
       }
@@ -579,7 +630,7 @@ export function gameReducer(
     }
     case 'open_broker': {
       const timeCost = requireConfig(context.campaign.config.timeRules?.brokerCost, 'timeRules.brokerCost');
-      if (nextPlayer.hoursRemaining < timeCost && !context.rules.allowPartialHours) {
+      if (nextPlayer.hoursRemaining < timeCost) {
         actionLog = { key: 'action.error.notEnoughTimeBroker' };
         break;
       }
@@ -621,7 +672,7 @@ export function gameReducer(
     }
     case 'take_loan': {
       const timeCost = requireConfig(context.campaign.config.timeRules?.loanCost, 'timeRules.loanCost');
-      if (nextPlayer.hoursRemaining < timeCost && !context.rules.allowPartialHours) {
+      if (nextPlayer.hoursRemaining < timeCost) {
         actionLog = { key: 'action.error.notEnoughTimeLoan' };
         break;
       }

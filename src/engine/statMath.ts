@@ -457,3 +457,12 @@ export function calcMaxMess(player: PlayerState, statRules?: import('./rules').S
   const globalMax = statRules?.globalMessMax ?? 99;
   return Math.min(baseMax, globalMax);
 }
+
+/**
+ * Rounds a number to a specific step resolution (e.g. 0.5 for half points, 0.1 for decimals).
+ */
+export function roundToResolution(value: number, resolution: number = 0.5): number {
+  if (resolution <= 0) return value;
+  const factor = 1 / resolution;
+  return Math.round(value * factor) / factor;
+}

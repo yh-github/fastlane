@@ -78,6 +78,16 @@ export function calcRequiredLessons(player: PlayerState, degree: EducationDef, r
   return Math.max(1, required);
 }
 
+import { roundToResolution } from './statMath';
+
+export function formatDegreeProgress(progress: number, isPercentage?: boolean): string {
+  if (isPercentage) {
+    const rounded = Math.min(100, Math.max(0, roundToResolution(progress, 0.1)));
+    return `${rounded.toFixed(1)}%`;
+  }
+  return String(Math.floor(progress));
+}
+
 export function study(player: PlayerState, degree: EducationDef, timeCost: number, rules?: GameRules): EducationResult {
   if (player.enrolledClasses?.[degree.id] === undefined) {
     return { updated: player, success: false, message: { key: 'action.error.cannotStudy' } };
@@ -95,15 +105,32 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
     
   let updated = spendHours(player, hoursToSpend);
   updated.enrolledClasses = { ...(updated.enrolledClasses || {}) };
-  updated.enrolledClasses[degree.id] += 1;
 
-  // Calculate dynamic lessons required
+  const isPercentage = !!rules?.percentageEducation;
   const required = calcRequiredLessons(player, degree, rules);
 
-  let message: GameEvent = { key: 'action.education.studied', params: { name: degree.name, current: updated.enrolledClasses[degree.id], required } };
+  let isGraduated = false;
+
+  if (isPercentage) {
+    const totalRequiredHours = required * timeCost;
+    const progressGain = roundToResolution((hoursToSpend / totalRequiredHours) * 100, rules?.educationResolution ?? 0.1);
+    const newProgress = Math.min(100, roundToResolution((updated.enrolledClasses[degree.id] || 0) + progressGain, rules?.educationResolution ?? 0.1));
+    updated.enrolledClasses[degree.id] = newProgress;
+    isGraduated = newProgress >= 99.95;
+  } else {
+    updated.enrolledClasses[degree.id] = (updated.enrolledClasses[degree.id] || 0) + 1;
+    isGraduated = updated.enrolledClasses[degree.id] >= required;
+  }
+
+  const currentDisplay = isPercentage 
+    ? formatDegreeProgress(updated.enrolledClasses[degree.id], true)
+    : String(updated.enrolledClasses[degree.id]);
+  const requiredDisplay = isPercentage ? '100%' : String(required);
+
+  let message: GameEvent = { key: 'action.education.studied', params: { name: degree.name, current: currentDisplay, required: requiredDisplay } };
 
   // Check for graduation
-  if (updated.enrolledClasses[degree.id] >= required) {
+  if (isGraduated) {
     updated.degrees = [...updated.degrees, degree.id];
     delete updated.enrolledClasses[degree.id];
     delete updated.enrolledClasses[`${degree.id}_req`];
@@ -126,3 +153,4 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
 
   return { updated, success: true, message };
 }
+
