@@ -280,6 +280,12 @@ function validateConfig(config: unknown): asserts config is CampaignConfig {
   if (!Array.isArray(c.winConditions)) throw new Error('config.json: missing "winConditions"');
 }
 
+const campaignCache = new Map<string, CampaignBundle>();
+
+export function clearCampaignCache(): void {
+  campaignCache.clear();
+}
+
 /**
  * Load and validate an entire campaign bundle.
  *
@@ -287,6 +293,11 @@ function validateConfig(config: unknown): asserts config is CampaignConfig {
  * @returns            Fully typed and validated campaign data
  */
 export async function loadCampaign(campaignId: string): Promise<CampaignBundle> {
+  const cached = campaignCache.get(campaignId);
+  if (cached) {
+    return structuredClone(cached);
+  }
+
   const config = await loadJSON<CampaignConfig>(campaignId, 'config.json', false);
   if (!config) throw new Error('config.json missing');
 
@@ -352,6 +363,8 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
   }
 
   validateConfig(finalBundle.config);
+
+  campaignCache.set(campaignId, structuredClone(finalBundle));
 
   return finalBundle;
 }

@@ -224,9 +224,26 @@ export function gameReducer(
             mentalMistake = resolveDecision(replayContext, `study_mental_mistake_${nextPlayer.id}_${actionCount}`, () => context.rng.next() < mentalChance);
           }
 
-          const hoursToSpend = context.rules.allowPartialHours
+          const isPercentage = !!context.rules.percentageEducation;
+          const required = calcRequiredLessons(nextPlayer, degDef, context.rules);
+          const totalRequiredHours = required * studySessionCost;
+          const currentProgress = nextPlayer.enrolledClasses?.[degDef.id] || 0;
+
+          let maxSpend = context.rules.allowPartialHours
             ? Math.min(nextPlayer.hoursRemaining, studySessionCost)
             : studySessionCost;
+
+          if (isPercentage && context.rules.proportionalDivisibleActions) {
+            const remainingPct = Math.max(0, 100 - currentProgress);
+            const hoursNeeded = (remainingPct / 100) * totalRequiredHours;
+            if (hoursNeeded < maxSpend) {
+              maxSpend = Math.max(0.5, roundToResolution(hoursNeeded, 0.5));
+            }
+          }
+
+          const hoursToSpend = context.rules.allowPartialHours
+            ? Math.min(nextPlayer.hoursRemaining, maxSpend)
+            : maxSpend;
           const ratio = hoursToSpend / studySessionCost;
 
           if (context.rules.proportionalDivisibleActions && hoursToSpend < studySessionCost) {
@@ -265,16 +282,24 @@ export function gameReducer(
           } else {
             // Study progress
             nextPlayer.enrolledClasses = { ...(nextPlayer.enrolledClasses || {}) };
-            const isPercentage = !!context.rules.percentageEducation;
-            const required = calcRequiredLessons(nextPlayer, degDef, context.rules);
             let isGraduated = false;
 
             if (isPercentage) {
-              const totalRequiredHours = required * studySessionCost;
-              const progressGain = roundToResolution((hoursToSpend / totalRequiredHours) * 100, context.rules.educationResolution ?? 0.1);
-              const newProgress = Math.min(100, roundToResolution((nextPlayer.enrolledClasses[degDef.id] || 0) + progressGain, context.rules.educationResolution ?? 0.1));
-              nextPlayer.enrolledClasses[degDef.id] = newProgress;
-              isGraduated = newProgress >= 99.95;
+              const progressGain = (hoursToSpend / totalRequiredHours) * 100;
+              const rawProgress = currentProgress + progressGain;
+              
+              if (rawProgress >= 99.0 || (totalRequiredHours - (currentProgress / 100 * totalRequiredHours) <= hoursToSpend + 0.1)) {
+                nextPlayer.enrolledClasses[degDef.id] = 100;
+                isGraduated = true;
+              } else {
+                const newProgress = Math.min(100, roundToResolution(rawProgress, context.rules.educationResolution ?? 0.1));
+                if (newProgress >= 99.0) {
+                  nextPlayer.enrolledClasses[degDef.id] = 100;
+                  isGraduated = true;
+                } else {
+                  nextPlayer.enrolledClasses[degDef.id] = newProgress;
+                }
+              }
             } else {
               nextPlayer.enrolledClasses[degDef.id] = (nextPlayer.enrolledClasses[degDef.id] || 0) + 1;
               isGraduated = nextPlayer.enrolledClasses[degDef.id] >= required;

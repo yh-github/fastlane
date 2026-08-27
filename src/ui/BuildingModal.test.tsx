@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BuildingModal } from './BuildingModal';
 import type { PlayerState } from '../engine/gameState';
@@ -117,8 +117,7 @@ describe('BuildingModal Component', () => {
     expect(screen.getByText('Buy Back (50% Value)')).toBeInTheDocument();
   });
 
-  it('renders Bank building modal with Banking, Stocks, and Loans tabs', async () => {
-    const { fireEvent } = await import('@testing-library/react');
+  it('renders Bank building modal with Banking, Stocks, and Loans tabs', () => {
     const mockOnAction = vi.fn().mockResolvedValue([]);
 
     render(
@@ -139,12 +138,15 @@ describe('BuildingModal Component', () => {
     
     // Verify all 3 tabs are present
     expect(screen.getByText(/^Bank$|bank\.tabBanking/i)).toBeInTheDocument();
-    const stocksTab = screen.getByText(/^Stocks$|bank\.tabStocks/i);
-    expect(stocksTab).toBeInTheDocument();
-    expect(screen.getByText(/^Loans$|bank\.tabLoans/i)).toBeInTheDocument();
+    expect(screen.getByText('Stocks')).toBeInTheDocument();
+    expect(screen.getByText('Loans')).toBeInTheDocument();
 
-    // Click Stocks tab and verify stocks are displayed
-    fireEvent.click(stocksTab);
+    // Verify Banking tab is active by default
+    expect(screen.getByText(/Deposit Money/i)).toBeInTheDocument();
+    expect(screen.getByText(/Withdraw Money/i)).toBeInTheDocument();
+
+    // Click Stocks tab
+    fireEvent.click(screen.getByText('Stocks'));
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'open_broker' });
     expect(screen.getByText(/Treasury Bills/i)).toBeInTheDocument();
     expect(screen.getByText(/Blue Chip Stocks/i)).toBeInTheDocument();
@@ -169,9 +171,7 @@ describe('BuildingModal Component', () => {
     expect(screen.getByText('Employment Office')).toBeInTheDocument();
   });
 
-  it('correctly interpolates loan payment parameters (payment, principal, interest) in speech bubble', async () => {
-    const { fireEvent } = await import('@testing-library/react');
-
+  it('correctly interpolates loan payment parameters (payment, principal, interest) in speech bubble', () => {
     const mockOnAction = vi.fn().mockResolvedValue({
       key: 'action.loan.paidInstallment',
       params: { payment: 50, principal: 45, interest: 5 }
@@ -199,9 +199,7 @@ describe('BuildingModal Component', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'pay_loan' });
   });
 
-  it('renders Work and Shop tabs when employed at a shop and speaks error in speech bubble on click', async () => {
-    const { fireEvent } = await import('@testing-library/react');
-
+  it('renders Work and Shop tabs when employed at a shop and speaks error in speech bubble on click', () => {
     const jobBurger = {
       id: 'job_burger_cook',
       title: 'Burger Cook',
@@ -266,7 +264,6 @@ describe('BuildingModal Component', () => {
   });
 
   it('displays speech bubble when a raise is denied', async () => {
-    const { fireEvent, waitFor } = await import('@testing-library/react');
 
     const jobBurger = {
       id: 'job_burger_cook',

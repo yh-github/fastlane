@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { enrollInDegree, study } from './educationEngine';
+import { enrollInDegree, study, formatDegreeProgress } from './educationEngine';
 import type { PlayerState } from './gameState';
 import type { EducationDef } from './dataLoader';
 
@@ -136,8 +136,7 @@ describe('Education Engine', () => {
       expect(result.updated.degreeExpBoost).toBe(52);
     });
 
-    it('percentageEducation tracks continuous 0-100% progress and prorates partial sessions', async () => {
-      const { formatDegreeProgress } = await import('./educationEngine');
+    it('percentageEducation tracks continuous 0-100% progress and prorates partial sessions', () => {
       
       const rules = {
         percentageEducation: true,
@@ -158,7 +157,7 @@ describe('Education Engine', () => {
       expect(result.updated.enrolledClasses['junior_college']).toBe(45.0);
       expect(result.updated.hoursRemaining).toBe(0);
 
-      // Verify graduation on reaching >= 99.95%
+      // Verify graduation on reaching >= 99.0%
       const graduatingPlayer = {
         hoursRemaining: 6,
         enrolledClasses: { 'junior_college': 95.0 },
@@ -172,9 +171,38 @@ describe('Education Engine', () => {
       expect(gradResult.updated.degrees).toContain('junior_college');
       expect(gradResult.updated.enrolledClasses['junior_college']).toBeUndefined();
 
+      // Verify computer discount 9 lessons (11.1% per session -> 88.8% on 8th session, 9th session finishes at 99.9% -> graduates!)
+      const computerPlayer = {
+        hoursRemaining: 6,
+        enrolledClasses: { 'junior_college': 88.8, 'junior_college_req': 9 },
+        happiness: 50, dependability: 50, degreeDepBoost: 50, degreeExpBoost: 50,
+        degrees: [],
+        inventory: { appliances: [{ id: 'computer', name: 'Computer' }], books: [] }
+      } as unknown as PlayerState;
+
+      const compResult = study(computerPlayer, mockDegree, 6, rules);
+      expect(compResult.success).toBe(true);
+      expect(compResult.updated.degrees).toContain('junior_college');
+
+      // Verify proportional hours spent when near completion
+      const nearDonePlayer = {
+        hoursRemaining: 6,
+        enrolledClasses: { 'junior_college': 98.0 },
+        happiness: 50, dependability: 50, degreeDepBoost: 50, degreeExpBoost: 50,
+        degrees: [],
+        inventory: { appliances: [], books: [] }
+      } as unknown as PlayerState;
+
+      const nearDoneResult = study(nearDonePlayer, mockDegree, 6, rules);
+      expect(nearDoneResult.success).toBe(true);
+      expect(nearDoneResult.updated.degrees).toContain('junior_college');
+      // 2% of 60h is 1.2h -> spends only ~1.5h, not 6h!
+      expect(nearDoneResult.updated.hoursRemaining).toBeGreaterThanOrEqual(4);
+
       // Format degree progress tests
       expect(formatDegreeProgress(45.5, true)).toBe('45.5%');
       expect(formatDegreeProgress(50.0, true)).toBe('50%');
+      expect(formatDegreeProgress(99.9, true)).toBe('100%');
       expect(formatDegreeProgress(4, false)).toBe('4');
     });
   });

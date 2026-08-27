@@ -32,8 +32,8 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
   const robberyRisk = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
-  const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0);
-  const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0);
+  const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);
+  const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
   const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0, player.innovationCount || 0) : null;
 
   return (

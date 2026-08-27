@@ -90,8 +90,8 @@ export function Dashboard({
   const currentJob = player.currentJobId ? campaign?.jobs.find(j => j.id === player.currentJobId) : null;
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
-  const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0);
-  const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0);
+  const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);
+  const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
 
   const homeHistory = [...(player.homeTimeHistory || []), player.homeTimeThisTurn || 0];
   const homeTimeAvg = homeHistory.length > 0 ? (homeHistory.reduce((a, b) => a + b, 0) / homeHistory.length) : 0;

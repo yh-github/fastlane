@@ -78,7 +78,7 @@ describe('App Integration & StrictMode', () => {
 
     // Wait a tick for the pathfinding and mock animation to complete and React to re-render
     await act(async () => {
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 0));
     });
 
     // Click again to open the building modal
@@ -102,7 +102,7 @@ describe('App Integration & StrictMode', () => {
 
     // Flush any pending async state updates (like SpeechBubble timeouts) before unmounting
     await act(async () => {
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 0));
     });
   });
 
@@ -129,7 +129,7 @@ describe('App Integration & StrictMode', () => {
     if (!screen.queryByTestId('btn-relax')) {
       fireEvent.click(homeNodeBtn);
       await act(async () => {
-        await new Promise(r => setTimeout(r, 50));
+        await new Promise(r => setTimeout(r, 0));
       });
       fireEvent.click(homeNodeBtn);
     }
@@ -145,7 +145,7 @@ describe('App Integration & StrictMode', () => {
         fireEvent.click(confirmBtn);
       }
       await act(async () => {
-        await new Promise(r => setTimeout(r, 20));
+        await new Promise(r => setTimeout(r, 0));
       });
     }
 
@@ -159,14 +159,14 @@ describe('App Integration & StrictMode', () => {
     const firstEventBtn = await screen.findByRole('button', { name: /Next|Continue/i });
     fireEvent.click(firstEventBtn);
     await act(async () => {
-      await new Promise(r => setTimeout(r, 50));
+      await new Promise(r => setTimeout(r, 0));
     });
 
     let nextOrContinue = screen.queryByRole('button', { name: /Next|Continue/i });
     while (nextOrContinue) {
       fireEvent.click(nextOrContinue);
       await act(async () => {
-        await new Promise(r => setTimeout(r, 50));
+        await new Promise(r => setTimeout(r, 0));
       });
       nextOrContinue = screen.queryByRole('button', { name: /Next|Continue/i });
     }
@@ -180,7 +180,7 @@ describe('App Integration & StrictMode', () => {
     await screen.findByText(/Player 1 - Week 2/i);
 
     await act(async () => {
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 0));
     });
   });
 
@@ -206,7 +206,7 @@ describe('App Integration & StrictMode', () => {
     if (closeBtn) {
       fireEvent.click(closeBtn);
       await act(async () => {
-        await new Promise(r => setTimeout(r, 50));
+        await new Promise(r => setTimeout(r, 0));
       });
     }
 
@@ -215,7 +215,7 @@ describe('App Integration & StrictMode', () => {
     fireEvent.click(bankNodeBtn);
 
     await act(async () => {
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 0));
     });
 
     // Open Bank modal if not open
@@ -231,7 +231,7 @@ describe('App Integration & StrictMode', () => {
     fireEvent.click(stocksTabBtn);
 
     await act(async () => {
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 0));
     });
 
     // Verify stocks are listed (Treasury Bills / T-Bills, Blue Chip, Penny Stocks)
@@ -242,7 +242,7 @@ describe('App Integration & StrictMode', () => {
     });
 
     await act(async () => {
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 0));
     });
   });
 
@@ -272,7 +272,7 @@ describe('App Integration & StrictMode', () => {
     fireEvent.click(bankNodeBtn);
 
     await act(async () => {
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 0));
     });
 
     // The player should reach bank destination

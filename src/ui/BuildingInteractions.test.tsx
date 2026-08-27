@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { JobBoard } from './BuildingInteractions';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { JobBoard, StockTradeRow, BankInterface, HomeRelax, WorkStation, UniversityRegistry } from './BuildingInteractions';
 import type { PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
 
@@ -61,8 +61,6 @@ describe('BuildingInteractions', () => {
       config: {}
     } as unknown as CampaignBundle;
 
-    const { fireEvent } = require('@testing-library/react');
-
     render(
       <JobBoard
         player={mockPlayer}
@@ -82,10 +80,7 @@ describe('BuildingInteractions', () => {
     expect(jobHeadings[2].textContent).toContain('Manager');
   });
 
-  it('StockTradeRow displays softly disabled explanation modal when buying with insufficient funds or selling with 0 shares', async () => {
-    const { fireEvent } = await import('@testing-library/react');
-    const { StockTradeRow } = await import('./BuildingInteractions');
-
+  it('StockTradeRow displays softly disabled explanation modal when buying with insufficient funds or selling with 0 shares', () => {
     const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 100, type: 'stable' as const };
     const mockOnAction = vi.fn();
 
@@ -112,10 +107,7 @@ describe('BuildingInteractions', () => {
     fireEvent.click(screen.getByText('OK'));
   });
 
-  it('StockTradeRow opens trade dialog and confirms buy/sell transactions', async () => {
-    const { fireEvent } = await import('@testing-library/react');
-    const { StockTradeRow } = await import('./BuildingInteractions');
-
+  it('StockTradeRow opens trade dialog and confirms buy/sell transactions', () => {
     const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 50, type: 'stable' as const };
     const mockOnAction = vi.fn();
 
@@ -134,10 +126,7 @@ describe('BuildingInteractions', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy_stock', stockId: 'acme', quantity: 1, cost: 50 });
   });
 
-  it('BankInterface handles deposit/withdraw dialogs and softly disabled states', async () => {
-    const { fireEvent } = await import('@testing-library/react');
-    const { BankInterface } = await import('./BuildingInteractions');
-
+  it('BankInterface handles deposit/withdraw dialogs and softly disabled states', () => {
     const mockPlayer = {
       id: 'p1',
       money: 150,
@@ -162,10 +151,7 @@ describe('BuildingInteractions', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'bank_transaction', amount: 150 });
   });
 
-  it('BankInterface renders Stocks tab even when rules are passed and allows switching to Stocks tab', async () => {
-    const { fireEvent } = await import('@testing-library/react');
-    const { BankInterface } = await import('./BuildingInteractions');
-
+  it('BankInterface renders Stocks tab even when rules are passed and allows switching to Stocks tab', () => {
     const mockPlayer = {
       id: 'p1',
       money: 500,
@@ -219,10 +205,7 @@ describe('BuildingInteractions', () => {
     expect(screen.getByText(/Owned:\s*10/i)).toBeInTheDocument();
   });
 
-  it('HomeRelax displays dynamic economy price for Cleaning Service and softly disables with reason when broke or clean', async () => {
-    const { fireEvent } = await import('@testing-library/react');
-    const { HomeRelax } = await import('./BuildingInteractions');
-
+  it('HomeRelax displays dynamic economy price for Cleaning Service and softly disables with reason when broke or clean', () => {
     const mockPlayer = {
       id: 'p1',
       money: 50, // Less than $100 price
@@ -282,10 +265,7 @@ describe('BuildingInteractions', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'call_cleaning_service' });
   });
 
-  it('HomeRelax softly disables Socialize button with feedback banner when clicked', async () => {
-    const { fireEvent } = await import('@testing-library/react');
-    const { HomeRelax } = await import('./BuildingInteractions');
-
+  it('HomeRelax softly disables Socialize button with feedback banner when clicked', () => {
     const messyPlayer = {
       id: 'p1',
       money: 500,
@@ -324,10 +304,7 @@ describe('BuildingInteractions', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'socialize_guests' });
   });
 
-  it('WorkStation renders prominent Work Work default option and prorates partial hours', async () => {
-    const { WorkStation } = await import('./BuildingInteractions');
-    const { fireEvent } = await import('@testing-library/react');
-
+  it('WorkStation renders prominent Work Work default option and prorates partial hours', () => {
     const mockPlayer = {
       name: 'Tester',
       currentWage: 20,
@@ -380,10 +357,7 @@ describe('BuildingInteractions', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_dev', mode: 'work_work' });
   });
 
-  it('UniversityRegistry renders percentage progress bar when percentageEducation is enabled', async () => {
-    const { UniversityRegistry } = await import('./BuildingInteractions');
-    const { fireEvent } = await import('@testing-library/react');
-
+  it('UniversityRegistry renders percentage progress bar when percentageEducation is enabled', () => {
     const mockPlayer = {
       name: 'Tester',
       money: 1000,

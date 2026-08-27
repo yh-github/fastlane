@@ -5,7 +5,7 @@ import { gameReducer } from './gameReducer';
 import { processTurnStart } from './turnProcessor';
 import { type ReplayData, type ReplayContext } from './replayTypes';
 import { Random } from '../utils/rng';
-import type { CampaignBundle } from './dataLoader';
+import { loadCampaign, type CampaignBundle } from './dataLoader';
 
 describe('Deterministic Replay Regression', () => {
   it('replays a recorded game exactly using test_replay.json', () => {
@@ -112,7 +112,6 @@ describe('Deterministic Replay Regression', () => {
   });
 
   it('replays a real game using fastlane-replay-21-weeks.json', async () => {
-    const { loadCampaign } = await import('./dataLoader');
     const replayPath = path.resolve('tests/fixtures/regression/fastlane-replay-21-weeks.json');
     if (!fs.existsSync(replayPath)) {
       console.warn('Skipping replay test: fastlane-replay-21-weeks.json not found');
@@ -154,7 +153,6 @@ describe('Deterministic Replay Regression', () => {
     expect(currentState).toMatchSnapshot();
   });
   it('replays bug 1785246627881 (apartment robbery without appliances)', async () => {
-    const { loadCampaign } = await import('./dataLoader');
     const replayPath = path.resolve('tests/fixtures/regression/fastlane-replay-1785246627881.json');
     if (!fs.existsSync(replayPath)) {
       console.warn('Skipping replay test: fastlane-replay-1785246627881.json not found');

@@ -83,6 +83,7 @@ import { roundToResolution } from './statMath';
 export function formatDegreeProgress(progress: number, isPercentage?: boolean): string {
   if (isPercentage) {
     const rounded = Math.min(100, Math.max(0, roundToResolution(progress, 0.1)));
+    if (rounded >= 99.0) return '100%';
     const formatted = rounded % 1 === 0 ? String(rounded) : rounded.toFixed(1);
     return `${formatted}%`;
   }
@@ -99,25 +100,49 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
     return { updated: player, success: false, message: { key: 'action.error.notEnoughTime' } };
   }
 
-  // Cost to study (allow partial hours if rule is enabled)
-  const hoursToSpend = rules?.allowPartialHours
+  const isPercentage = !!rules?.percentageEducation;
+  const required = calcRequiredLessons(player, degree, rules);
+  const totalRequiredHours = required * timeCost;
+  const currentProgress = player.enrolledClasses[degree.id] || 0;
+
+  // Cost to study (allow partial/proportional hours if rule is enabled)
+  let maxSpend = rules?.allowPartialHours
     ? Math.min(player.hoursRemaining, timeCost)
     : timeCost;
+
+  if (isPercentage && rules?.proportionalDivisibleActions) {
+    const remainingPct = Math.max(0, 100 - currentProgress);
+    const hoursNeeded = (remainingPct / 100) * totalRequiredHours;
+    if (hoursNeeded < maxSpend) {
+      maxSpend = Math.max(0.5, roundToResolution(hoursNeeded, 0.5));
+    }
+  }
+
+  const hoursToSpend = rules?.allowPartialHours
+    ? Math.min(player.hoursRemaining, maxSpend)
+    : maxSpend;
     
   let updated = spendHours(player, hoursToSpend);
   updated.enrolledClasses = { ...(updated.enrolledClasses || {}) };
 
-  const isPercentage = !!rules?.percentageEducation;
-  const required = calcRequiredLessons(player, degree, rules);
-
   let isGraduated = false;
 
   if (isPercentage) {
-    const totalRequiredHours = required * timeCost;
-    const progressGain = roundToResolution((hoursToSpend / totalRequiredHours) * 100, rules?.educationResolution ?? 0.1);
-    const newProgress = Math.min(100, roundToResolution((updated.enrolledClasses[degree.id] || 0) + progressGain, rules?.educationResolution ?? 0.1));
-    updated.enrolledClasses[degree.id] = newProgress;
-    isGraduated = newProgress >= 99.95;
+    const progressGain = (hoursToSpend / totalRequiredHours) * 100;
+    const rawProgress = currentProgress + progressGain;
+    
+    if (rawProgress >= 99.0 || (totalRequiredHours - (currentProgress / 100 * totalRequiredHours) <= hoursToSpend + 0.1)) {
+      updated.enrolledClasses[degree.id] = 100;
+      isGraduated = true;
+    } else {
+      const newProgress = Math.min(100, roundToResolution(rawProgress, rules?.educationResolution ?? 0.1));
+      if (newProgress >= 99.0) {
+        updated.enrolledClasses[degree.id] = 100;
+        isGraduated = true;
+      } else {
+        updated.enrolledClasses[degree.id] = newProgress;
+      }
+    }
   } else {
     updated.enrolledClasses[degree.id] = (updated.enrolledClasses[degree.id] || 0) + 1;
     isGraduated = updated.enrolledClasses[degree.id] >= required;

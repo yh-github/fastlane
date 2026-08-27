@@ -63,6 +63,10 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
 
     for (let i = 0; i < 10; i++) {
       await relaxBtn.click();
+      const confirmRelaxBtn = page.getByRole('button', { name: /Relax Anyway|הירגע בכל זאת/i });
+      if (await confirmRelaxBtn.isVisible()) {
+        await confirmRelaxBtn.click();
+      }
     }
 
     // Verify hours dropped to 0.0
@@ -114,6 +118,10 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
     if (await week2RelaxBtn.isVisible()) {
       for (let i = 0; i < 10; i++) {
         await week2RelaxBtn.click();
+        const confirmRelaxBtn = page.getByRole('button', { name: /Relax Anyway|הירגע בכל זאת/i });
+        if (await confirmRelaxBtn.isVisible()) {
+          await confirmRelaxBtn.click();
+        }
       }
       await expect(dashboard).toContainText(/0\.0\s*\/\s*60/);
 
