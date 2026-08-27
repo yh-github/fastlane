@@ -1636,7 +1636,19 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                     <div style={{ marginTop: '10px' }}>
                       {isEnrolled ? (() => {
                         const standardCost = campaign.config.timeRules.studySessionCost;
-                        const hoursToStudy = player.hoursRemaining > 0 ? Math.min(standardCost, player.hoursRemaining) : standardCost;
+                        let maxSpend = standardCost;
+
+                        if (rules?.percentageEducation && rules?.proportionalDivisibleActions) {
+                          const totalRequiredHours = required * standardCost;
+                          const currentProgress = lessonsCompleted;
+                          const remainingPct = Math.max(0, 100 - currentProgress);
+                          const hoursNeeded = (remainingPct / 100) * totalRequiredHours;
+                          if (hoursNeeded < standardCost) {
+                            maxSpend = Math.max(0.5, roundToResolution(hoursNeeded, 0.5));
+                          }
+                        }
+
+                        const hoursToStudy = player.hoursRemaining > 0 ? Math.min(maxSpend, player.hoursRemaining) : maxSpend;
                         const studyRatio = hoursToStudy / standardCost;
 
                         return (

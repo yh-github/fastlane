@@ -306,7 +306,28 @@ In Advanced Edition, the workplace is no longer a simple button-clicking grind. 
 
 ---
 
-## 11. Configuration Reference (`config.json`)
+## 11. Higher Education & Academic Progression
+
+Higher education in Advanced Edition provides degree credentials, career prerequisites, max mental capacity expansions, and permanent stat boosts upon graduation.
+
+### 11.1. Extra Credit & Course Discounts
+- **Computer in Inventory**: $-1$ lesson requirement per degree.
+- **Complete Book Set (Dictionary, Encyclopedia, Atlas)**: $-1$ lesson requirement per degree.
+- **Stacking Limit**: Reductions stack up to $-2$ lessons total (minimum 1 lesson).
+
+### 11.2. Percentage Tracking & Graduation Precision
+- Course progress is tracked as a clean percentage ($0.0\%\text{--}100.0\%$).
+- **Clean 100% Graduation Threshold**: To avoid floating-point / rounding truncation traps (e.g. 9 lessons at $11.11\%$ yielding $99.9\%$), reaching $\ge 99.0\%$ automatically rounds up to $100\%$ and triggers graduation without requiring redundant extra sessions.
+
+### 11.3. Proportional Study on Final Lessons
+- When completing the final portion of a degree where less than a full 6-hour session is needed:
+  - The player only spends the exact hours needed ($\text{hoursNeeded} = \frac{100 - \text{Current}\%}{100} \times \text{TotalHours}$).
+  - Time, physical, and mental costs are scaled proportionally to the fraction of the shift spent.
+  - The UI dynamically displays the exact time and mental costs (e.g. `Study (1.5h) (-0.5 Mental)`), ensuring players never waste full 6-hour shifts and stamina on fractional lesson remainders.
+
+---
+
+## 12. Configuration Reference (`config.json`)
 
 All Advanced Edition mechanics are governed by the campaign configuration file [public/campaigns/advanced/config.json](file:///home/yoavh/code/antigravity/fastlane/public/campaigns/advanced/config.json):
 
