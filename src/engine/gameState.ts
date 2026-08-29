@@ -2,17 +2,11 @@
  * gameState.ts — Master game state definition.
  *
  * Central source of truth for all game state types.
- * The game uses a 60-hour turn model where each activity
- * costs a variable number of hours. Players manage money,
- * stats, inventory, housing, education, and employment
- * across weekly turns.
- *
- * Design: All state is immutable — functions return new
- * state objects rather than mutating in place.
+ * All state is immutable.
  */
 
-import { type CampaignBundle, type EffectTrigger, type StatTarget } from './dataLoader';
-import { messGrowth, calcMaxMental } from './statMath';
+import type { GameRules } from './rules';
+import type { DebugQueuedEvent } from './debugEvents';
 
 // ─── Core Game State ────────────────────────────────────────────
 
@@ -49,7 +43,6 @@ export interface GameState {
 
 export type { DebugEventType, DebugQueuedEvent } from './debugEvents';
 export type { GameRules } from './rules';
-import { type GameRules, DEFAULT_GAME_RULES } from './rules';
 
 export type GamePhase =
   | 'setup'         // Pre-game: win condition allocation
@@ -58,7 +51,6 @@ export type GamePhase =
   | 'turn-end'      // End-of-turn processing
   | 'weekend'       // Displaying the end-of-turn summary
   | 'game-over';    // A player has won
-
 
 // ─── Player State ───────────────────────────────────────────────
 
@@ -249,8 +241,6 @@ export interface PawnedItem {
   purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop';
 }
 
-
-
 // ─── Turn Flags ─────────────────────────────────────────────────
 
 export interface TurnFlags {
@@ -296,347 +286,13 @@ export interface TurnFlags {
   mentalDropsThisTurn?: number;
 }
 
-// ─── Stat Constants ─────────────────────────────────────────────
-
-export const STARTING_EXPERIENCE = 10;
-export const STARTING_DEPENDABILITY = 20;
-export const STARTING_HAPPINESS = 50;
-export const STARTING_RELAXATION = 16;
-export const STARTING_CASUAL_CLOTHES_WEEKS = 6;
-
-export const MIN_HAPPINESS = 10;
-export const MAX_HAPPINESS = 100;
-export const DEPENDABILITY_WEEKLY_DECAY = 3;
-
-// ─── Factory Functions ──────────────────────────────────────────
-
-export function createDefaultTurnFlags(): TurnFlags {
-  return {
-    hasEaten: false,
-    hasWorked: false,
-    drinkHappinessGranted: false,
-    fastFoodHappinessGranted: false,
-    freshFoodHappinessGranted: false,
-    caffeineDebt: 0,
-    askedForExtension: false,
-    rentPaidThisTurn: false,
-    freeNewspaper: false,
-    hasSeenEvents: false,
-    hasSeenWeekend: false,
-    relaxedThisTurn: false,
-    rentExtensionRefusedThisTurn: false,
-    jobsRejectedThisTurn: [],
-    bookSetCompletedThisTurn: false,
-    lotteryHappinessGranted: false,
-    ticketHappinessGranted: false,
-    mentalDropsThisTurn: 0,
-  };
-}
-
-export function createDefaultInventory(): InventoryState {
-  return {
-    selectedClothes: 'casual',
-    casualClothesWeeks: STARTING_CASUAL_CLOTHES_WEEKS,
-    dressClothesWeeks: 0,
-    businessClothesWeeks: 0,
-    freshFoodUnits: 0,
-    fastFoodItems: [],
-    appliances: [],
-    books: [],
-    tickets: { baseball: 0, theatre: 0, concert: 0 },
-    lotteryTickets: 0,
-    stocks: { tBills: 0, holdings: {} },
-    pawnedItems: [],
-  };
-}
-
-export function createDefaultGoalAllotment(): GoalAllotment {
-  return { wealth: 50, happiness: 50, education: 50, career: 50 };
-}
-
 export interface PlayerConfig {
   name: string;
   isAi: boolean;
   goals: GoalAllotment;
 }
 
-export function createPlayerState(id: string, name: string, isAi: boolean, goals: GoalAllotment, startNode: string, config: any): PlayerState {
-  return {
-    id,
-    name,
-    isAi,
-    hoursRemaining: config.timeRules?.hoursPerTurn || 60,
-    money: config.startingMoney || 200,
-    bankSavings: 0,
-    rentDebt: 0,
-    loanDebt: 0,
-    timesDefaulted: 0,
-    loanPaymentDeadline: 0,
-    happiness: config.statRules?.startingHappiness ?? STARTING_HAPPINESS,
-    experience: STARTING_EXPERIENCE,
-    dependability: STARTING_DEPENDABILITY,
-    degreeExpBoost: 0,
-    degreeDepBoost: 0,
-    relaxation: config.statRules?.startingRelaxation ?? STARTING_RELAXATION,
-    currentJobId: null,
-    currentWage: 0,
-    raisesAtCurrentJob: 0,
-    currentHousingId: 'low_cost',
-    currentRentPrice: 325, // Default base for low_cost
-    rentPaidUntilWeek: 4,
-    rentExtensionActive: false,
-    rentExtensionsReceived: 0,
-    rentExtensionsDeniedPermanently: false,
-    degrees: [],
-    enrolledClasses: {},
-    inventory: createDefaultInventory(),
-    nakedTurns: 0,
-    position: startNode,
-    goalAllotment: goals,
-    turnFlags: createDefaultTurnFlags(),
-    turnEvents: [],
-    newspaperHeadline: null,
-    activeEffects: {},
-    ...(config.gameRules?.usePhysicalMentalConditions ? (() => {
-      const startMess = config.gameRules?.trackMess ? 3 : 0;
-      const startSocial = config.statRules?.startingSocial ?? 9;
-      const initMaxMental = calcMaxMental(startMess, startSocial, 0, undefined, config.statRules);
-      const initMaxPhys = config.statRules?.initialPhysicalMax ?? 50;
-      return {
-        physicalConditionMax: initMaxPhys,
-        minPhysicalCondition: config.statRules?.initialMinPhysical ?? config.statRules?.minPhysicalCondition ?? 3,
-        physicalCondition: config.statRules?.startingPhysicalCondition ?? initMaxPhys,
-        mentalConditionMax: initMaxMental,
-        mentalCondition: config.statRules?.startingMentalCondition ?? initMaxMental,
-        social: startSocial,
-        resilienceBonus: 0,
-        lifestyle: 0,
-        mistakesByLocation: {},
-        depMaxBonus: 0,
-        xpMaxBonus: 0,
-        innovationCount: 0
-      };
-    })() : {}),
-    ...(config.gameRules?.trackMess ? { mess: 3 } : {}),
-  };
-}
+// ─── Re-exports ─────────────────────────────────────────────────
 
-export function createInitialGameState(
-  campaign: CampaignBundle,
-  playersConfig: PlayerConfig[],
-  startNode: string,
-  rules: Partial<GameRules> | undefined,
-  seed: number
-): GameState {
-  const defaultRules = DEFAULT_GAME_RULES;
-
-  const finalRules = {
-    ...defaultRules,
-    ...(campaign.config.gameRules || {}),
-    ...rules
-  };
-
-  return {
-    turn: 0,
-    economicIndex: 0,
-    economicTrend: 0,
-    rngState: seed,
-    pawnShopItemsForSale: [],
-    players: playersConfig.map((cfg, i) =>
-      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config)
-    ),
-    phase: 'setup',
-    winnerId: null,
-    campaignId: campaign.config.name,
-    rules: finalRules,
-  };
-}
-
-export function recalculatePlayerEffects(player: PlayerState, campaign: CampaignBundle): PlayerState {
-  const activeEffects: Record<string, number> = {};
-  const activeTags = new Set<string>();
-
-  // Gather tags from inventory
-  // 1. Appliances
-  for (const app of player.inventory.appliances) {
-    activeTags.add(`item:${app.id}`);
-    const itemDef = campaign.items.find(i => i.id === app.id);
-    if (itemDef?.tags) {
-      itemDef.tags.forEach(t => activeTags.add(`tag:${t}`));
-    }
-  }
-
-  // 2. Books
-  for (const bookId of player.inventory.books) {
-    activeTags.add(`item:${bookId}`);
-    const itemDef = campaign.items.find(i => i.id === bookId);
-    if (itemDef?.tags) {
-      itemDef.tags.forEach(t => activeTags.add(`tag:${t}`));
-    }
-  }
-
-  // Evaluate Synergies
-  for (const synergy of campaign.synergies || []) {
-    const requirementsMet = synergy.requires.every(req => activeTags.has(req));
-    if (requirementsMet) {
-      for (const effect of synergy.effects) {
-        const currentVal = activeEffects[effect.type];
-        
-        switch (effect.operation) {
-          case 'MAX':
-            activeEffects[effect.type] = currentVal === undefined ? effect.value : Math.max(currentVal, effect.value);
-            break;
-          case 'ADD':
-            activeEffects[effect.type] = (currentVal || 0) + effect.value;
-            break;
-          case 'SET':
-            activeEffects[effect.type] = effect.value;
-            break;
-        }
-      }
-    }
-  }
-
-  let updatedPlayer = {
-    ...player,
-    activeEffects
-  };
-
-  if (campaign.config.gameRules?.usePhysicalMentalConditions) {
-    const statRules = campaign.config.statRules;
-    const calculatedMaxMental = calcMaxMental(
-      updatedPlayer.mess || 0,
-      updatedPlayer.social || 9,
-      updatedPlayer.resilienceBonus || 0,
-      updatedPlayer,
-      statRules,
-      campaign
-    );
-    updatedPlayer.mentalConditionMax = calculatedMaxMental;
-    if (updatedPlayer.mentalCondition !== undefined) {
-      updatedPlayer.mentalCondition = Math.min(updatedPlayer.mentalConditionMax, updatedPlayer.mentalCondition);
-    }
-
-    const globalMaxPhys = statRules?.globalMaxPhysicalCondition ?? 100;
-    if (updatedPlayer.physicalConditionMax !== undefined) {
-      updatedPlayer.physicalConditionMax = Math.min(globalMaxPhys, updatedPlayer.physicalConditionMax);
-    }
-    if (updatedPlayer.physicalCondition !== undefined && updatedPlayer.physicalConditionMax !== undefined) {
-      updatedPlayer.physicalCondition = Math.min(updatedPlayer.physicalConditionMax, updatedPlayer.physicalCondition);
-    }
-  }
-
-  if (updatedPlayer.lifestyle !== undefined) {
-    updatedPlayer.lifestyle = recalculateLifestyle(updatedPlayer, campaign);
-  }
-
-  return updatedPlayer;
-}
-
-export function recalculateLifestyle(player: PlayerState, campaign: CampaignBundle): number {
-  let lifestyle = 0;
-
-  const housingDef = campaign.housing.find(h => h.id === player.currentHousingId);
-  if (housingDef && housingDef.lifestyleValue !== undefined) {
-    lifestyle += housingDef.lifestyleValue;
-  }
-
-  const itemCounts: Record<string, number> = {};
-
-  for (const app of player.inventory.appliances) {
-    itemCounts[app.id] = (itemCounts[app.id] || 0) + 1;
-  }
-  for (const book of player.inventory.books) {
-    itemCounts[book] = (itemCounts[book] || 0) + 1;
-  }
-  if (player.inventory.casualClothesWeeks > 0) itemCounts['casual_clothes'] = 1;
-  if (player.inventory.dressClothesWeeks > 0) itemCounts['dress_clothes'] = 1;
-  if (player.inventory.businessClothesWeeks > 0) itemCounts['business_suit'] = 1;
-
-  for (const [itemId, count] of Object.entries(itemCounts)) {
-    const itemDef = campaign.items.find(i => i.id === itemId);
-    if (itemDef && itemDef.lifestyleValue) {
-      const val = itemDef.lifestyleValue;
-      if (count === 1) {
-        lifestyle += val;
-      } else if (count >= 2) {
-        lifestyle += val + Math.floor(val * 0.5);
-      }
-    }
-  }
-
-  if (player.mess !== undefined) {
-    lifestyle -= Math.floor(messGrowth(player.mess) / 2);
-  }
-  if (player.social !== undefined) {
-    lifestyle += Math.floor(player.social / 10);
-  }
-
-  return Math.max(0, Math.min(100, lifestyle));
-}
-
-export function calcMaxLifestyle(campaign: CampaignBundle): number {
-  let maxLifestyle = 0;
-
-  // Max housing
-  let maxHousing = 0;
-  for (const h of campaign.housing) {
-    if (h.lifestyleValue !== undefined && h.lifestyleValue > maxHousing) {
-      maxHousing = h.lifestyleValue;
-    }
-  }
-  maxLifestyle += maxHousing;
-
-  // Max items (assuming optimal diminishing returns: 2 appliances, 2 books, 1 clothing)
-  for (const item of campaign.items) {
-    if (item.lifestyleValue) {
-      if (item.category === 'appliance' || item.category === 'book') {
-        maxLifestyle += item.lifestyleValue + Math.floor(item.lifestyleValue * 0.5); // 2 copies
-      } else if (item.category === 'clothes') {
-        // Technically player can hold one of each clothing type
-        maxLifestyle += item.lifestyleValue;
-      }
-    }
-  }
-
-  return maxLifestyle;
-}
-
-export function collectItemEffects(
-  player: PlayerState,
-  campaign?: CampaignBundle,
-  trigger?: EffectTrigger
-): Map<StatTarget, number> {
-  const totals = new Map<StatTarget, number>();
-  if (!campaign || !campaign.items || !trigger) return totals;
-
-  const seenItemIds = new Set<string>();
-
-  // Process appliances
-  for (const app of player.inventory?.appliances || []) {
-    if (seenItemIds.has(app.id)) continue;
-    seenItemIds.add(app.id);
-
-    const itemDef = campaign.items?.find(i => i.id === app.id);
-    for (const effect of itemDef?.effects || []) {
-      if (effect.trigger === trigger) {
-        totals.set(effect.stat, (totals.get(effect.stat) || 0) + effect.value);
-      }
-    }
-  }
-
-  // Process books
-  for (const bookId of player.inventory?.books || []) {
-    if (seenItemIds.has(bookId)) continue;
-    seenItemIds.add(bookId);
-
-    const itemDef = campaign.items?.find(i => i.id === bookId);
-    for (const effect of itemDef?.effects || []) {
-      if (effect.trigger === trigger) {
-        totals.set(effect.stat, (totals.get(effect.stat) || 0) + effect.value);
-      }
-    }
-  }
-
-  return totals;
-}
+export * from './stateFactories';
+export * from './synergyEngine';
