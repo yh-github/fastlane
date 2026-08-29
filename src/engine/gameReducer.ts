@@ -3,7 +3,7 @@ import { type CampaignBundle } from './dataLoader';
 import { type Random } from '../utils/rng';
 import { applyForJob, workShift } from './jobEngine';
 import { buyItem } from './shoppingEngine';
-import { enrollInDegree, study, calcRequiredLessons, formatDegreeProgress } from './educationEngine';
+import { enrollInDegree, study, calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from './educationEngine';
 import { spendHours } from './timeManager';
 import { calcItemPrice, calcEconomyPrice } from './economyEngine';
 import { calcMovingFee, messGrowth, safeDecrementPhysical, safeDecrementMental, calcMaxMess, roundToResolution } from './statMath';
@@ -199,6 +199,9 @@ export function gameReducer(
             physicalCost = statRules?.studyNormalPhysicalCost ?? 0;
           }
 
+          const prereqDepth = getPrerequisiteChainDepth(degDef.id, context.campaign.education);
+          mentalCost += prereqDepth;
+
           const curPhys = nextPlayer.physicalCondition ?? 50;
           if (curPhys < 10) {
             mentalCost += 1;
@@ -258,14 +261,30 @@ export function gameReducer(
           nextPlayer.physicalCondition = curPhys - physicalCost;
           nextPlayer.mentalCondition = curMental - mentalCost;
 
-          if (mentalCost >= (statRules?.resilienceDropThreshold ?? 3)) {
-            nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) + 1;
-            nextPlayer.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (nextPlayer.mentalConditionMax || 50) + 1);
+          // Academic freedom bonus check
+          let baseDepBonus = 0;
+          const currentJob = context.campaign.jobs.find(j => j.id === nextPlayer.currentJobId);
+          if (currentJob?.tags?.includes('academic_freedom')) {
+            if (actionCount >= overtimeThreshold) {
+              baseDepBonus = 2;
+            } else if (actionCount >= grindThreshold) {
+              baseDepBonus = 1;
+            }
           }
 
-          const statsStr = physicalCost > 0 
-            ? ` (-${mentalCost} Mental, -${physicalCost} Physical)` 
-            : ` (-${mentalCost} Mental)`;
+          const appliedDepBonus = (context.rules.proportionalDivisibleActions && hoursToSpend < studySessionCost)
+            ? roundToResolution(baseDepBonus * ratio, 0.5)
+            : baseDepBonus;
+
+          if (appliedDepBonus > 0 && !physMistake && !mentalMistake) {
+            nextPlayer.dependability = Math.min(100, roundToResolution(nextPlayer.dependability + appliedDepBonus, 0.5));
+          }
+
+          const statCosts: string[] = [];
+          if (mentalCost > 0) statCosts.push(`-${mentalCost} Mental`);
+          if (physicalCost > 0) statCosts.push(`-${physicalCost} Physical`);
+          if (appliedDepBonus > 0 && !physMistake && !mentalMistake) statCosts.push(`+${appliedDepBonus} Dep`);
+          const statsStr = statCosts.length > 0 ? ` (${statCosts.join(', ')})` : '';
 
           if (physMistake || mentalMistake) {
             if (physMistake) {

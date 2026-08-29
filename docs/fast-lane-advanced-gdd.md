@@ -46,9 +46,9 @@ Represents the player's bodily stamina, nutrition, and physical health.
   - **Work Actions 1–3 (Normal)**: `-1` Physical condition, `0` Mental.
   - **Work Actions 4–7 (Grind)**: `-1` Physical condition, `-1` Mental condition.
   - **Work Actions 8+ (Overtime)**: `-2` Physical condition, `-2` Mental condition.
-  - **Study Actions 1–3 (Normal)**: `0` Physical condition, `-1` Mental condition.
-  - **Study Actions 4–7 (Academic Grind)**: `0` Physical condition, `-2` Mental condition.
-  - **Study Actions 8+ (Hyper-Accelerating)**: `-1` Physical condition, `-2` Mental condition.
+  - **Study Actions 1–3 (Normal)**: `0` Physical condition, `-1` Mental condition (+ `1` Mental for each class behind in prerequisites chain).
+  - **Study Actions 4–7 (Academic Grind)**: `0` Physical condition, `-2` Mental condition (+ `1` Mental for each class behind in prerequisites chain).
+  - **Study Actions 8+ (Hyper-Accelerating)**: `-1` Physical condition, `-2` Mental condition (+ `1` Mental for each class behind in prerequisites chain).
 - **Other Costs & Drains**:
   - Cleaning Apartment: `-1` Physical condition.
   - Socializing / Hosting Guests: `-1` Physical condition.
@@ -63,9 +63,9 @@ Represents psychological resilience, cognitive energy, and stress tolerance.
 - **Initial Min Floor**: `5` (`minMentalCondition = 5`, `globalMentalMin = 1`)
 - **Starting Behavior**: Does **not** start at max value (`51 < 85`).
 - **Costs & Drains**:
-  - Normal Study (Actions 1–3): `-1` Mental condition.
-  - Academic Grind (Actions 4–7): `-2` Mental condition.
-  - Hyper-Accelerating (Actions 8+): `-2` Mental condition, `-1` Physical condition.
+  - Normal Study (Actions 1–3): `-1` Mental condition (+ `1` Mental per prerequisite depth).
+  - Academic Grind (Actions 4–7): `-2` Mental condition (+ `1` Mental per prerequisite depth).
+  - Hyper-Accelerating (Actions 8+): `-2` Mental condition (+ `1` Mental per prerequisite depth), `-1` Physical condition.
   - Work Grind (Actions 4–7): `-1` Mental condition.
   - Work Overtime (Actions 8+): `-2` Mental condition, `-2` Physical condition.
   - Socialize (Entertaining Guests): Base cost $= X \times \text{mess\_growth}$, reduced by appliance bonuses.
@@ -324,6 +324,22 @@ Higher education in Advanced Edition provides degree credentials, career prerequ
   - The player only spends the exact hours needed ($\text{hoursNeeded} = \frac{100 - \text{Current}\%}{100} \times \text{TotalHours}$).
   - Time, physical, and mental costs are scaled proportionally to the fraction of the shift spent.
   - The UI dynamically displays the exact time and mental costs (e.g. `Study (1.5h) (-0.5 Mental)`), ensuring players never waste full 6-hour shifts and stamina on fractional lesson remainders.
+
+### 11.4. Prerequisite Depth Mental Scaling
+- The Mental condition cost of studying increases by **$+1$ Mental for each degree behind the enrolled course in the prerequisite chain**:
+  - Junior College / Trade School (Depth 0): $1$ Mental (Normal), $2$ Mental (Grind/Overtime).
+  - Business Admin / Academic / Electronics / Pre-Engineering (Depth 1): $2$ Mental (Normal), $3$ Mental (Grind/Overtime).
+  - Graduate School / Engineering (Depth 2): $3$ Mental (Normal), $4$ Mental (Grind/Overtime).
+  - Post-Doctoral (Depth 3): $4$ Mental (Normal), $5$ Mental (Grind/Overtime).
+  - Research (Depth 4): $5$ Mental (Normal), $6$ Mental (Grind/Overtime).
+  - Publishing (Depth 5): $6$ Mental (Normal), $7$ Mental (Grind/Overtime).
+- Note: Voluntary study actions do not grant `resilienceBonus`, ensuring high-tier studies remain a genuine cognitive challenge rather than an infinite Max Mental buff exploit.
+
+### 11.5. Academic Freedom (Professor Job Perk)
+- The Professor job (`uni_professor`) carries the `"academic_freedom"` tag:
+  - **Academic Grinding (Actions 4–7)**: Grants $+1\text{ Dependability}$ per study session.
+  - **Academic Overtime (Actions 8+)**: Grants $+2\text{ Dependability}$ per study session.
+- Enables tenured professors to advance career reputation directly through intensive research and course study without working standard office shifts.
 
 ---
 

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { enrollInDegree, study, formatDegreeProgress } from './educationEngine';
+import { enrollInDegree, study, formatDegreeProgress, getPrerequisiteChainDepth } from './educationEngine';
 import type { PlayerState } from './gameState';
 import type { EducationDef } from './dataLoader';
 
@@ -206,5 +206,48 @@ describe('Education Engine', () => {
       expect(formatDegreeProgress(4, false)).toBe('4');
     });
   });
+
+  describe('getPrerequisiteChainDepth', () => {
+    const educationList: EducationDef[] = [
+      { id: 'junior_college', name: 'Junior College', prerequisites: [] } as any,
+      { id: 'trade_school', name: 'Trade School', prerequisites: [] } as any,
+      { id: 'business_admin', name: 'Business Admin', prerequisites: ['junior_college'] } as any,
+      { id: 'academic', name: 'Academic', prerequisites: ['junior_college'] } as any,
+      { id: 'electronics', name: 'Electronics', prerequisites: ['trade_school'] } as any,
+      { id: 'pre_engineering', name: 'Pre-Engineering', prerequisites: ['trade_school'] } as any,
+      { id: 'graduate_school', name: 'Graduate School', prerequisites: ['academic'] } as any,
+      { id: 'engineering', name: 'Engineering', prerequisites: ['pre_engineering'] } as any,
+      { id: 'post_doctoral', name: 'Post-Doctoral', prerequisites: ['graduate_school'] } as any,
+      { id: 'research', name: 'Research', prerequisites: ['post_doctoral'] } as any,
+      { id: 'publishing', name: 'Publishing', prerequisites: ['research'] } as any,
+    ];
+
+    it('returns 0 for degrees with no prerequisites', () => {
+      expect(getPrerequisiteChainDepth('junior_college', educationList)).toBe(0);
+      expect(getPrerequisiteChainDepth('trade_school', educationList)).toBe(0);
+    });
+
+    it('returns 1 for tier 1 degrees (1 parent behind them)', () => {
+      expect(getPrerequisiteChainDepth('business_admin', educationList)).toBe(1);
+      expect(getPrerequisiteChainDepth('academic', educationList)).toBe(1);
+      expect(getPrerequisiteChainDepth('electronics', educationList)).toBe(1);
+      expect(getPrerequisiteChainDepth('pre_engineering', educationList)).toBe(1);
+    });
+
+    it('returns correct chain depth for advanced degrees (graduate, post-doc, research, publishing)', () => {
+      expect(getPrerequisiteChainDepth('graduate_school', educationList)).toBe(2);
+      expect(getPrerequisiteChainDepth('engineering', educationList)).toBe(2);
+      expect(getPrerequisiteChainDepth('post_doctoral', educationList)).toBe(3);
+      expect(getPrerequisiteChainDepth('research', educationList)).toBe(4);
+      expect(getPrerequisiteChainDepth('publishing', educationList)).toBe(5);
+    });
+
+    it('returns 0 for empty or unknown degrees', () => {
+      expect(getPrerequisiteChainDepth('unknown_degree', educationList)).toBe(0);
+      expect(getPrerequisiteChainDepth('junior_college', [])).toBe(0);
+      expect(getPrerequisiteChainDepth('junior_college', undefined)).toBe(0);
+    });
+  });
 });
+
 

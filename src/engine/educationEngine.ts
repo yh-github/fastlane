@@ -180,3 +180,28 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
   return { updated, success: true, message };
 }
 
+/**
+ * Calculates the depth of prerequisites behind a given degree.
+ * Returns 0 if the degree has no prerequisites, 1 if it has 1 prerequisite level, etc.
+ */
+export function getPrerequisiteChainDepth(degreeId: string, educationList?: EducationDef[]): number {
+  if (!educationList || educationList.length === 0) return 0;
+  const eduMap = new Map(educationList.map(e => [e.id, e]));
+  const visited = new Set<string>();
+
+  function getDepth(id: string): number {
+    if (visited.has(id)) return 0;
+    visited.add(id);
+    const def = eduMap.get(id);
+    if (!def || !def.prerequisites || def.prerequisites.length === 0) {
+      return 0;
+    }
+    let maxParentDepth = 0;
+    for (const p of def.prerequisites) {
+      maxParentDepth = Math.max(maxParentDepth, 1 + getDepth(p));
+    }
+    return maxParentDepth;
+  }
+
+  return getDepth(degreeId);
+}

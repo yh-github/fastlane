@@ -669,7 +669,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
 }
 
 import { calcEconomyPrice, calcItemPrice, calcStockPrice } from '../engine/economyEngine';
-import { calcRequiredLessons, formatDegreeProgress } from '../engine/educationEngine';
+import { calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../engine/educationEngine';
 import { calcMovingFee, calcMaxMess, roundToResolution } from '../engine/statMath';
 
 import type { GameRules } from '../engine/gameState';
@@ -1669,22 +1669,36 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                               let pCost = sRules?.studyNormalPhysicalCost ?? 0;
                               let studyTierLabel = '';
 
+                              let depBonus = 0;
+                              const currentJob = campaign.jobs.find(j => j.id === player.currentJobId);
+                              const hasAcademicFreedom = currentJob?.tags?.includes('academic_freedom');
+
                               if (nextStudyAction >= studyOvertimeThresh) {
                                 mCost = sRules?.studyOvertimeMentalCost ?? 2;
                                 pCost = sRules?.studyOvertimePhysicalCost ?? 1;
                                 studyTierLabel = ' [Hyper]';
+                                if (hasAcademicFreedom) {
+                                  depBonus = 2;
+                                }
                               } else if (nextStudyAction >= studyGrindThresh) {
                                 mCost = sRules?.studyGrindMentalCost ?? 2;
                                 pCost = sRules?.studyGrindPhysicalCost ?? 0;
                                 studyTierLabel = ' [Grind]';
+                                if (hasAcademicFreedom) {
+                                  depBonus = 1;
+                                }
                               }
+
+                              const prereqDepth = getPrerequisiteChainDepth(deg.id, campaign.education);
+                              mCost += prereqDepth;
 
                               const scaledMCost = roundToResolution(mCost * studyRatio, 0.5);
                               const scaledPCost = roundToResolution(pCost * studyRatio, 0.5);
+                              const scaledDepBonus = roundToResolution(depBonus * studyRatio, 0.5);
 
                               return (
                                 <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-                                  (-{scaledMCost} Mental{scaledPCost > 0 ? `, -${scaledPCost} Phys` : ''}{studyTierLabel})
+                                  (-{scaledMCost} Mental{scaledPCost > 0 ? `, -${scaledPCost} Phys` : ''}{scaledDepBonus > 0 ? `, +${scaledDepBonus} Dep` : ''}{studyTierLabel})
                                 </span>
                               );
                             })()}

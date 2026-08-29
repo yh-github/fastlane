@@ -10,5 +10,9 @@
   {
     "id": "zmart_mgr",
     "locationId": "discount_and_pawn"
+  },
+  {
+    "id": "uni_professor",
+    "tags": ["academic_freedom"]
   }
 ]
