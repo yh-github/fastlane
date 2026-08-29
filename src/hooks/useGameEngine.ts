@@ -4,7 +4,7 @@ import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
 import { loadCampaign, type CampaignBundle } from '../engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
-import { animatePlayerPath, pulsePlayer, showMapClick, animateRobberInterception, type PlayerPosition } from '../graphics/mapRenderer';
+import { animatePlayerPath, pulsePlayer, showMapClick, animateRobberInterception } from '../graphics/mapRenderer';
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
 import { simulateActionVisuals } from '../engine/aiTranslator';
@@ -12,14 +12,9 @@ import { gameReducer, type GameAction } from '../engine/gameReducer';
 import type { GameEvent } from '../engine/gameState';
 import { Random, generateRandomSeed } from '../utils/rng';
 import type { ReplayData, EngineDecision, ReplayContext } from '../engine/replayTypes';
+import { calculateStatDiffsAndAnimate, type AppStatus, type LogEntry } from './gameEngine';
 
-export type AppStatus = 'loading' | 'ready' | 'error';
-
-export interface LogEntry {
-  week: number;
-  event: GameEvent;
-  playerId?: string;
-}
+export type { AppStatus, LogEntry };
 
 export function useGameEngine(
   campaignId: string | null,
@@ -389,88 +384,13 @@ export function useGameEngine(
       // Process explicit diffs and attach to log
       if (actionLog) {
         const logsArray = Array.isArray(actionLog) ? actionLog : [actionLog];
+        const diffStr = calculateStatDiffsAndAnimate(player, oldPlayer, prevState.rules, triggerAnim);
         
         logsArray.forEach((log, index) => {
           let finalActionLog: GameEvent = { ...log, params: { ...log.params } };
-          
-          // Only attach diff to the FIRST log in the array to avoid duplication
-          if (index === 0) {
-            let diffStr = [];
-            const moneyDiff = player.money - oldPlayer.money;
-            const hapDiff = player.happiness - oldPlayer.happiness;
-            const physDiff = (player.physicalCondition || 0) - (oldPlayer.physicalCondition || 0);
-            const mentalDiff = (player.mentalCondition || 0) - (oldPlayer.mentalCondition || 0);
-            const lifeDiff = (player.lifestyle || 0) - (oldPlayer.lifestyle || 0);
-            const relaxDiff = (player.relaxation || 0) - (oldPlayer.relaxation || 0);
-            const depDiff = (player.dependability || 0) - (oldPlayer.dependability || 0);
-            const expDiff = (player.experience || 0) - (oldPlayer.experience || 0);
-            const socDiff = (player.social !== undefined && oldPlayer.social !== undefined) ? player.social - oldPlayer.social : 0;
-            
-            if (moneyDiff !== 0) {
-              diffStr.push(`${moneyDiff > 0 ? '+' : ''}$${moneyDiff}`);
-              if (prevState.rules.enableAnimations) {
-                if (moneyDiff < 0) {
-                  triggerAnim('text', `-$${Math.abs(moneyDiff)}`, { targetId: 'stat-money', customClass: 'anim-negative' });
-                } else {
-                  triggerAnim('text', `+$${moneyDiff}`, { targetId: 'stat-money', customClass: 'anim-positive' });
-                }
-              }
-            }
-            if (hapDiff !== 0) {
-              diffStr.push(`${hapDiff > 0 ? '+' : ''}${hapDiff} Happiness`);
-              if (prevState.rules.enableAnimations) {
-                triggerAnim('text', `${hapDiff > 0 ? '+' : ''}${hapDiff} 😊`, { targetId: 'stat-happiness', customClass: hapDiff > 0 ? 'anim-positive' : 'anim-negative' });
-              }
-            }
-            if (physDiff !== 0) {
-              diffStr.push(`${physDiff > 0 ? '+' : ''}${physDiff} Physical`);
-              if (prevState.rules.enableAnimations) {
-                triggerAnim('text', `${physDiff > 0 ? '+' : ''}${physDiff} 💪`, { targetId: 'stat-physical', customClass: physDiff > 0 ? 'anim-positive' : 'anim-negative' });
-              }
-            }
-            if (mentalDiff !== 0) {
-              diffStr.push(`${mentalDiff > 0 ? '+' : ''}${mentalDiff} Mental`);
-              if (prevState.rules.enableAnimations) {
-                triggerAnim('text', `${mentalDiff > 0 ? '+' : ''}${mentalDiff} 🧠`, { targetId: 'stat-mental', customClass: mentalDiff > 0 ? 'anim-positive' : 'anim-negative' });
-              }
-            }
-            if (lifeDiff !== 0) {
-              diffStr.push(`${lifeDiff > 0 ? '+' : ''}${lifeDiff} Lifestyle`);
-              if (prevState.rules.enableAnimations) {
-                const lifeIcon = (player.lifestyle || 0) > 50 ? '🧐' : '😎';
-                triggerAnim('text', `${lifeDiff > 0 ? '+' : ''}${lifeDiff} ${lifeIcon}`, { targetId: 'stat-lifestyle', customClass: lifeDiff > 0 ? 'anim-positive' : 'anim-negative' });
-              }
-            }
-            if (relaxDiff !== 0) {
-              diffStr.push(`${relaxDiff > 0 ? '+' : ''}${relaxDiff} Relaxation`);
-              if (prevState.rules.enableAnimations) {
-                triggerAnim('text', `${relaxDiff > 0 ? '+' : ''}${relaxDiff} 🧘`, { targetId: 'stat-relaxation', customClass: relaxDiff > 0 ? 'anim-positive' : 'anim-negative' });
-              }
-            }
-            if (depDiff !== 0) {
-              diffStr.push(`${depDiff > 0 ? '+' : ''}${depDiff} Dependability`);
-              if (prevState.rules.enableAnimations) {
-                triggerAnim('text', `${depDiff > 0 ? '+' : ''}${depDiff} 🤝`, { targetId: 'stat-dependability', customClass: depDiff > 0 ? 'anim-positive' : 'anim-negative' });
-              }
-            }
-            if (expDiff !== 0) {
-              diffStr.push(`${expDiff > 0 ? '+' : ''}${expDiff} Experience`);
-              if (prevState.rules.enableAnimations) {
-                triggerAnim('text', `${expDiff > 0 ? '+' : ''}${expDiff} 👌`, { targetId: 'stat-experience', customClass: expDiff > 0 ? 'anim-positive' : 'anim-negative' });
-              }
-            }
-            if (socDiff !== 0) {
-              diffStr.push(`${socDiff > 0 ? '+' : ''}${socDiff} Social`);
-              if (prevState.rules.enableAnimations) {
-                triggerAnim('text', `${socDiff > 0 ? '+' : ''}${socDiff} 👥`, { targetId: 'stat-social', customClass: socDiff > 0 ? 'anim-positive' : 'anim-negative' });
-              }
-            }
-            
-            if (diffStr.length > 0) {
-              finalActionLog.params = { ...finalActionLog.params, diff: ` (${diffStr.join(', ')})` };
-            }
+          if (index === 0 && diffStr) {
+            finalActionLog.params = { ...finalActionLog.params, diff: diffStr };
           }
-          
           addLog(finalActionLog, prevState.turn, player.id);
         });
       }
@@ -521,8 +441,8 @@ export function useGameEngine(
       }
     }
 
-    // Only run AI if it's playing phase, it's an AI, AND they haven't just started their turn looking at the weekend screen
-    if (gameState?.phase === 'playing' && gameState.players[activePlayerIndex]?.isAi && gameState.players[activePlayerIndex]?.turnFlags?.hasSeenWeekend) {
+    const hasSeenWeekend = gameState?.players[activePlayerIndex]?.turnFlags?.hasSeenWeekend;
+    if (gameState?.phase === 'playing' && gameState.players[activePlayerIndex]?.isAi && hasSeenWeekend) {
       const runAi = async () => {
         setIsAnimating(true);
         
@@ -579,6 +499,7 @@ export function useGameEngine(
       };
       runAi();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState?.phase, activePlayerIndex, gameState?.players[activePlayerIndex]?.turnFlags?.hasSeenWeekend]);
 
   return {
