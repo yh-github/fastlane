@@ -310,7 +310,7 @@ describe('BuildingModal Component', () => {
     const locationCard = screen.getByText('Employment Office', { selector: 'strong' });
     fireEvent.click(locationCard);
 
-    const raiseBtn = screen.getByRole('button', { name: 'jobBoard.askRaise' });
+    const raiseBtn = screen.getByRole('button', { name: /jobBoard\.askRaise/i });
     expect(raiseBtn).toBeInTheDocument();
 
     fireEvent.click(raiseBtn);

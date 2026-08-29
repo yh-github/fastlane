@@ -608,7 +608,7 @@ export function collectItemEffects(
   trigger?: EffectTrigger
 ): Map<StatTarget, number> {
   const totals = new Map<StatTarget, number>();
-  if (!campaign || !trigger) return totals;
+  if (!campaign || !campaign.items || !trigger) return totals;
 
   const seenItemIds = new Set<string>();
 
@@ -617,7 +617,7 @@ export function collectItemEffects(
     if (seenItemIds.has(app.id)) continue;
     seenItemIds.add(app.id);
 
-    const itemDef = campaign.items.find(i => i.id === app.id);
+    const itemDef = campaign.items?.find(i => i.id === app.id);
     for (const effect of itemDef?.effects || []) {
       if (effect.trigger === trigger) {
         totals.set(effect.stat, (totals.get(effect.stat) || 0) + effect.value);
@@ -630,7 +630,7 @@ export function collectItemEffects(
     if (seenItemIds.has(bookId)) continue;
     seenItemIds.add(bookId);
 
-    const itemDef = campaign.items.find(i => i.id === bookId);
+    const itemDef = campaign.items?.find(i => i.id === bookId);
     for (const effect of itemDef?.effects || []) {
       if (effect.trigger === trigger) {
         totals.set(effect.stat, (totals.get(effect.stat) || 0) + effect.value);
