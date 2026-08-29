@@ -405,5 +405,32 @@ describe('gameReducer', () => {
       expect(getLogKey(brokerRes.actionLog)).toBe('action.error.notEnoughTimeBroker');
     });
   });
+
+  describe('education actions', () => {
+    it('enrolls in a degree successfully', () => {
+      player.money = 1000;
+      player.hoursRemaining = 20;
+      const result = gameReducer(player, { type: 'enroll', degreeId: 'business_admin' }, context);
+      expect(result.updatedPlayer.money).toBe(500); // 1000 - 500 tuition
+      expect(result.updatedPlayer.enrolledClasses['business_admin']).toBe(0);
+      expect(getLogKey(result.actionLog)).toBe('action.education.enrolled');
+    });
+
+    it('studies an enrolled class successfully', () => {
+      player.hoursRemaining = 20;
+      player.enrolledClasses['business_admin'] = 0;
+      const result = gameReducer(player, { type: 'study', degreeId: 'business_admin' }, context);
+      expect(result.updatedPlayer.hoursRemaining).toBe(14); // 20 - 6 study session cost
+      expect(result.updatedPlayer.enrolledClasses['business_admin']).toBe(1);
+    });
+  });
+
+  describe('clothes actions', () => {
+    it('changes clothes successfully', () => {
+      player.inventory.businessClothesWeeks = 10;
+      const result = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, context);
+      expect(result.updatedPlayer.inventory.selectedClothes).toBe('business');
+    });
+  });
 });
 
