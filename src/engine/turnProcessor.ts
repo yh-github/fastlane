@@ -1,127 +1,32 @@
 /**
  * turnProcessor.ts — Orchestrates the turn-start event sequence.
  */
-import { type GameState, type GameEvent, recalculatePlayerEffects, collectItemEffects } from './gameState';
+import { type GameState, recalculatePlayerEffects, collectItemEffects } from './gameState';
 import { type CampaignBundle } from './dataLoader';
-import { calcEconomyPrice, applyMarketCrash, applyEconomicBoom, calcLiquidAssets } from './economyEngine';
-import { applyMoraleEffect, applyHappinessChange } from './statEffects';
-import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress, messGrowth, calcMaxMental, calcWellbeingScore, calcMaxMess } from './statMath';
+import { applyMoraleEffect } from './statEffects';
+import { messGrowth, calcMaxMental, calcMaxMess } from './statMath';
 import { resetPlayerClock } from './timeManager';
-import { processStarvation, processDoctorVisit, processApartmentRobbery, processDonations } from './eventEngine';
-import { fluctuateEconomy } from './economyEngine';
-import { processWeekend } from './weekendEngine';
 import { Random } from '../utils/rng';
 import { resolveDecision, type ReplayContext } from './replayTypes';
-import { requireConfig } from './rules';
+import {
+  processEconomicTurnPhase,
+  processHealthAndFoodPhase,
+  processHousingAndLoanPhase,
+  processPawnExpiration,
+  processMaintenanceAndDecayPhase,
+  processPostHealthMaintenance
+} from './turn';
 
 export function processTurnStart(state: GameState, campaign: CampaignBundle, replay?: ReplayContext): GameState {
   const rng = new Random(state.rngState);
 
-  // 1. Economic Changes
-  const minReading = state.rules.minEconomicReading ?? -30;
-  let [newEconomy, newTrend] = fluctuateEconomy(state.economicIndex, state.economicTrend || 0, minReading, rng, replay);
-
-  // 16. Market Crash & Economic Boom Roll (Determined here, applied later)
-  let crashSeverity: 'none' | 'minor' | 'moderate' | 'major' = 'none';
-  let economicBoom = false;
-  let currentHeadline: GameEvent | null = null;
-  const cancelledGlobalEvents: GameEvent[] = [];
-
-  const debugCrash = state.debugQueue?.find(e => e.type === 'market_crash');
-  const debugBoom = state.debugQueue?.find(e => e.type === 'market_boom');
-
-  if (debugCrash) {
-    const crashThreshold = campaign.config.eventRules?.marketCrashThreshold ?? 60;
-    if (state.turn >= 8 && newEconomy >= crashThreshold) {
-      const forcedSeverity = debugCrash.crashSeverity || (debugCrash as any).crashType || 'moderate';
-      crashSeverity = forcedSeverity;
-      const trendDrop = -3;
-      if (forcedSeverity === 'minor') {
-        newEconomy = Math.max(minReading, newEconomy - 15);
-        newTrend = -2;
-        currentHeadline = { key: 'newspaper.crash_minor' };
-      } else if (forcedSeverity === 'moderate') {
-        newEconomy = Math.max(minReading, newEconomy - 30);
-        newTrend = trendDrop;
-        currentHeadline = { key: 'newspaper.crash_moderate' };
-      } else {
-        newEconomy = Math.max(minReading, newEconomy - 50);
-        newTrend = trendDrop;
-        currentHeadline = { key: 'newspaper.crash_major' };
-      }
-    } else {
-      const crashThreshold = campaign.config.eventRules?.marketCrashThreshold ?? 60;
-      cancelledGlobalEvents.push({
-        key: 'debug.event_cancelled',
-        params: {
-          event: 'Market Crash',
-          reason: state.turn < 8 ? 'Requires Turn 8+' : `Economy must be ≥ ${crashThreshold} (Current: ${newEconomy})`,
-        },
-      });
-    }
-  } else if (state.turn >= 8) {
-    const crashThreshold = campaign.config.eventRules?.marketCrashThreshold ?? 60;
-    if (newEconomy >= crashThreshold) {
-      const crashDivisor = campaign.config.eventRules?.marketCrashDivisor ?? 20;
-      const crashChance = 1 / (1 + (crashDivisor * state.players.length));
-      
-      const crashTriggered = resolveDecision(replay, `market_crash_trigger`, () => rng.next() < crashChance);
-      if (crashTriggered) {
-        const roll = resolveDecision(replay, `market_crash_roll`, () => rng.next());
-        const trendDrop = resolveDecision(replay, `market_crash_trend`, () => Math.floor(rng.next() * 3) - 3); // -3 to -1
-        
-        if (roll < 0.333) {
-          crashSeverity = 'minor';
-          newEconomy = Math.max(minReading, newEconomy - 15);
-          newTrend = -2;
-          currentHeadline = { key: 'newspaper.crash_minor' };
-        } else if (roll < 0.666) {
-          crashSeverity = 'moderate';
-          newEconomy = Math.max(minReading, newEconomy - 30);
-          newTrend = trendDrop;
-          currentHeadline = { key: 'newspaper.crash_moderate' };
-        } else {
-          crashSeverity = 'major';
-          newEconomy = Math.max(minReading, newEconomy - 50);
-          newTrend = trendDrop;
-          currentHeadline = { key: 'newspaper.crash_major' };
-        }
-      }
-    }
-  }
-
-  if (debugBoom && crashSeverity === 'none') {
-    if (state.turn >= 8 && newEconomy >= 0) {
-      economicBoom = true;
-      newEconomy = Math.min(90, newEconomy + 6);
-      newTrend = 2;
-      currentHeadline = { key: 'newspaper.boom' };
-    } else {
-      cancelledGlobalEvents.push({
-        key: 'debug.event_cancelled',
-        params: {
-          event: 'Economic Boom',
-          reason: state.turn < 8 ? 'Requires Turn 8+' : `Economy must be ≥ 0 (Current: ${newEconomy})`,
-        },
-      });
-    }
-  } else if (crashSeverity === 'none' && newEconomy <= 120 && state.turn >= 8) {
-    const boomDivisor = campaign.config.eventRules?.economicBoomDivisor ?? 50;
-    const boomChance = 1 / (1 + (boomDivisor * state.players.length));
-    const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
-    if (boomTriggered) {
-      economicBoom = true;
-      newEconomy = Math.min(90, newEconomy + 6); // +10% (6 points)
-      newTrend = resolveDecision(replay, `market_boom_trend`, () => Math.floor(rng.next() * 3) + 1); // +1 to +3
-      currentHeadline = { key: 'newspaper.boom' };
-    }
-  }
+  // 1. Economic Changes & Market Crash/Boom Phase
+  const econResult = processEconomicTurnPhase(state, campaign, rng, replay);
 
   const previousPlayerWeekends: string[] = [];
+  const newPawnShopItemsForSale = [...(state.pawnShopItemsForSale || [])];
 
   // Process each player
-  let newPawnShopItemsForSale = [...(state.pawnShopItemsForSale || [])];
-
   const updatedPlayers = state.players.map(player => {
     let p = resetPlayerClock(structuredClone(player), campaign.config.timeRules.hoursPerTurn);
     p = recalculatePlayerEffects(p, campaign); 
@@ -178,7 +83,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         }
         p.homeTimeThisTurn = 0;
       }
-      // 2. Turn-Start Item Effects (Cooking & Hot Tub cumulative bonuses)
+
+      // Turn-Start Item Effects (Cooking & Hot Tub cumulative bonuses)
       if (state.rules.usePhysicalMentalConditions) {
         const turnStartEffects = collectItemEffects(p, campaign, 'turn_start');
         const physBonus = turnStartEffects.get('physical') || 0;
@@ -199,513 +105,35 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         }
       }
 
-      // 3. Winner Check
-      let allGoalsMet = true;
-      const winConditions = campaign.config.winConditions || [
-        { stat: 'wealth', target: 100, label: 'Wealth' },
-        { stat: 'happiness', target: 100, label: 'Happiness' },
-        { stat: 'education', target: 100, label: 'Education' },
-        { stat: 'career', target: 100, label: 'Career' }
-      ];
-      for (const cond of winConditions) {
-        const target = p.goalAllotment[cond.stat] || 0;
-        let progress = 0;
-        if (cond.stat === 'wealth') progress = calcWealthProgress(calcLiquidAssets(p, campaign, state.economicIndex, state.turn));
-        else if (cond.stat === 'education') progress = calcEducationProgress(p.degrees.length);
-        else if (cond.stat === 'career') progress = calcCareerProgress(p.dependability, p.currentJobId !== null);
-        else if (cond.stat === 'happiness') progress = p.happiness;
-        else if (cond.stat === 'lifestyle') progress = p.lifestyle || 0;
-        else if (cond.stat === 'wellbeing') progress = calcWellbeingScore(p.physicalCondition ?? 50, p.mentalCondition ?? 25);
-        else progress = (p as any)[cond.stat] || 0;
-        
-        if (progress < target) {
-          allGoalsMet = false;
-          break;
-        }
-      }
-
-      if (allGoalsMet) {
-        p.hasWon = true;
-      }
-
-      // 4. Weekend
-      const weekendResult = processWeekend(p, state.turn, previousPlayerWeekends, campaign.weekends, rng, state.rules, campaign);
-      p = weekendResult;
-      if (p.weekendResult) {
-        previousPlayerWeekends.push(p.weekendResult.event.key);
-      }
-
-      // Update Time
-      resetPlayerClock(p, campaign.config.timeRules.hoursPerTurn);
-
-      // 5. Check Lottery
-      const queuedLottery = state.debugQueue?.find(e => e.type === 'lottery_win' && (e.playerId === p.id || !e.playerId));
-      if (queuedLottery) {
-        if (p.inventory.lotteryTickets > 0) {
-          const tier = queuedLottery.lotteryTier || 'large';
-          let amount = 5000;
-          let happiness = 10;
-          if (tier === 'small') { amount = 200; happiness = 5; }
-          else if (tier === 'medium') { amount = 500; happiness = 5; }
-          p.money += amount;
-          p = applyHappinessChange(p, happiness, 'lottery_win', state.rules, campaign.config.statRules);
-          p.turnEvents.push({ key: 'events.lottery', params: { amount } });
-          p.inventory.lotteryTickets = 0;
-        } else {
-          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Lottery Win', reason: 'Player owns 0 lottery tickets' } });
-        }
-      } else if (p.inventory.lotteryTickets > 0) {
-        const r = resolveDecision(replay, `lottery_roll_${p.id}`, () => Math.floor(rng.next() * 501));
-        const t = p.inventory.lotteryTickets;
-        if (r < t) {
-          if (r <= t / 20) { p.money += 5000; p = applyHappinessChange(p, 10, 'lottery_win', state.rules, campaign.config.statRules); p.turnEvents.push({ key: 'events.lottery', params: { amount: 5000 } }); }
-          else if (r <= t / 5) { p.money += 500; p = applyHappinessChange(p, 5, 'lottery_win', state.rules, campaign.config.statRules); p.turnEvents.push({ key: 'events.lottery', params: { amount: 500 } }); }
-          else { p.money += 200; p = applyHappinessChange(p, 5, 'lottery_win', state.rules, campaign.config.statRules); p.turnEvents.push({ key: 'events.lottery', params: { amount: 200 } }); }
-        }
-        p.inventory.lotteryTickets = 0;
-      }
-
-      // 6. Computer Profits
-      const queuedCompProfit = state.debugQueue?.find(e => e.type === 'computer_profit' && (e.playerId === p.id || !e.playerId));
-      const computerIncomeChance = p.activeEffects['computer_income_chance'] || 0;
-      if (queuedCompProfit) {
-        if (computerIncomeChance > 0) {
-          const profit = resolveDecision(replay, `computer_profit_amount_${p.id}`, () => Math.floor(rng.next() * 81) + 20);
-          p.money += profit; 
-          p = applyHappinessChange(p, 3, 'computer_profit', state.rules, campaign.config.statRules);
-          p.turnEvents.push({ key: 'events.computerProfit', params: { profit } });
-        } else {
-          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Computer Profit', reason: 'No active computer synergy' } });
-        }
-      } else if (computerIncomeChance > 0) {
-        const compProfitTrigger = resolveDecision(replay, `computer_profit_trigger_${p.id}`, () => rng.next() < (1/7));
-        if (compProfitTrigger) {
-          const profit = resolveDecision(replay, `computer_profit_amount_${p.id}`, () => Math.floor(rng.next() * 81) + 20);
-          p.money += profit; 
-          p = applyHappinessChange(p, 3, 'computer_profit', state.rules, campaign.config.statRules);
-          p.turnEvents.push({ key: 'events.computerProfit', params: { profit } });
-        }
-      }
-
-      // 7. Degrade Relaxation (and Dependability decay)
-      const preventRelaxationDecay = p.activeEffects['prevent_relaxation_decay'] || 0;
-      if (!preventRelaxationDecay) {
-        const decay = campaign.config.statRules?.relaxationDecayRate ?? 1;
-        const threshold = state.rules.relaxationDoctorThreshold ?? 10;
-        p.relaxation = Math.max(threshold, p.relaxation - decay);
-      }
-      const curJob = p.currentJobId && campaign?.jobs ? campaign.jobs.find(j => j.id === p.currentJobId) : undefined;
-      p.dependability = calcDependabilityDecay(p.dependability, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, p.social); 
-
-      // 8. Apartment Robbery
-      const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === p.id || !e.playerId));
-      const robberyStartWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
-      const preRobberyStorage = p.activeEffects['set_food_storage'] || 0;
-      if (queuedAptRobbery) {
-        const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
-        if (curHousing?.isRobberyImmune || p.currentHousingId === 'security') {
-          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Apartment Robbery', reason: `Living in ${curHousing?.name || 'La Security'}` } });
-        } else if (p.inventory.appliances.length === 0) {
-          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Apartment Robbery', reason: 'Player owns 0 appliances' } });
-        } else {
-          const robberyResult = processApartmentRobbery(
-            p,
-            rng,
-            state.rules.protectBuiltInAppliances,
-            state.rules,
-            state.turn,
-            robberyStartWeek,
-            replay,
-            campaign.config.statRules,
-            true,
-            queuedAptRobbery.stolenItemIds
-          );
-          p = robberyResult.updated;
-        }
-      } else {
-        const robberyResult = processApartmentRobbery(p, rng, state.rules.protectBuiltInAppliances, state.rules, state.turn, robberyStartWeek, replay, campaign.config.statRules);
-        p = robberyResult.updated;
-      }
+      // Maintenance & Decay Phase 1 (Winner check, weekend, lottery, computer profit, relaxation/dep decay, apartment robbery)
+      const { updatedPlayer, preRobberyStorage } = processMaintenanceAndDecayPhase(
+        p,
+        state,
+        campaign,
+        rng,
+        replay,
+        previousPlayerWeekends,
+        econResult
+      );
+      p = updatedPlayer;
 
       // Recalculate active effects immediately after robbery so loss of appliances affects stats
       p = recalculatePlayerEffects(p, campaign);
 
-      // 9. Spoiled Food & Starvation (Order of Operations)
-      let spoiledFoodSickMultiplier = 1;
-      const maxStorage = state.rules.delayRobberyFoodSpoilage ? preRobberyStorage : (p.activeEffects['set_food_storage'] || 0);
-      let doctorNeeded = false;
-      let doctorReasons: string[] = [];
+      // Health, Food Spoilage, Starvation & Doctor Phase
+      p = processHealthAndFoodPhase(p, state, campaign, rng, replay, preRobberyStorage);
 
-      if (state.rules.usePhysicalMentalConditions) {
-        let hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
-        p.inventory.fastFoodItems = [];
+      // Housing, Rent, Clothing Decay & Loan Phase
+      p = processHousingAndLoanPhase(p, state, campaign);
 
-        let ateSpoiledThisTurn = false;
-        let starvedThisTurn = false;
-
-        if (maxStorage === 0 && p.inventory.freshFoodUnits > 0) {
-          const lostFood = p.inventory.freshFoodUnits;
-          p.inventory.freshFoodUnits = 0;
-          p.mess = Math.min(99, (p.mess || 0) + lostFood);
-          p = applyMoraleEffect(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
-
-          if (hasEatenFastFood) {
-            p.turnFlags.hasEaten = true;
-            const key = state.rules.helpfulUI ? 'events.foodSpoiled.noFridge_qol' : 'events.foodSpoiled.noFridge';
-            p.turnEvents.push({ key, params: { amount: lostFood } });
-          } else {
-            ateSpoiledThisTurn = true;
-            p.turnFlags.hasEaten = true;
-            const key = state.rules.helpfulUI ? 'events.foodSpoiled.ateSpoiled_qol' : 'events.foodSpoiled.ateSpoiled';
-            p.turnEvents.push({ key, params: { amount: lostFood } });
-          }
-        } else if (maxStorage > 0 && p.inventory.freshFoodUnits > maxStorage) {
-          const lostFood = p.inventory.freshFoodUnits - maxStorage;
-          p.inventory.freshFoodUnits = maxStorage;
-          p = applyMoraleEffect(p, -1, 'food_spoilage', state.rules, campaign.config.statRules);
-          p.mess = Math.min(99, (p.mess || 0) + lostFood);
-          const key = state.rules.helpfulUI ? 'events.foodSpoiled.tooMuch_qol' : 'events.foodSpoiled.tooMuch';
-          p.turnEvents.push({ key, params: { amount: lostFood, capacity: maxStorage } });
-        }
-
-        if (!p.turnFlags.hasEaten) {
-          if (hasEatenFastFood) {
-            p.turnFlags.hasEaten = true;
-          } else if (p.inventory.freshFoodUnits > 0) {
-            p.inventory.freshFoodUnits--;
-            p.turnFlags.hasEaten = true;
-          } else {
-            starvedThisTurn = true;
-          }
-        }
-
-        if (ateSpoiledThisTurn) {
-          p.minPhysicalCondition = Math.max(campaign.config.statRules?.globalPhysicalMin ?? 1, (p.minPhysicalCondition ?? 3) - 1);
-          p.physicalConditionMax = Math.max(campaign.config.statRules?.minMaxPhysical ?? 10, (p.physicalConditionMax ?? 50) - 1);
-          const currentPhys = p.physicalCondition ?? 50;
-          p.physicalCondition = Math.max(p.minPhysicalCondition, Math.min(currentPhys - 5, Math.floor(10 * currentPhys / (p.physicalConditionMax || 50))));
-          const mentalDrop = 5;
-          p.mentalCondition = Math.max(campaign.config.statRules?.minMentalCondition ?? 5, (p.mentalCondition ?? 50) - mentalDrop);
-          if (mentalDrop >= 3) p.resilienceBonus = (p.resilienceBonus || 0) + 1;
-          spoiledFoodSickMultiplier = 2;
-        }
-
-        if (starvedThisTurn) {
-          p.minPhysicalCondition = Math.max(campaign.config.statRules?.globalPhysicalMin ?? 1, (p.minPhysicalCondition ?? 3) - 1);
-          p.physicalConditionMax = Math.max(campaign.config.statRules?.minMaxPhysical ?? 10, (p.physicalConditionMax ?? 50) - 1);
-          p.physicalCondition = p.minPhysicalCondition;
-          const mentalDrop = 10;
-          p.mentalCondition = Math.max(campaign.config.statRules?.minMentalCondition ?? 5, (p.mentalCondition ?? 50) - mentalDrop);
-          if (mentalDrop >= 3) p.resilienceBonus = (p.resilienceBonus || 0) + 1;
-          p.turnEvents.push({ key: 'events.starvation' });
-        }
-      } else {
-        let hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
-        p.inventory.fastFoodItems = [];
-
-        if (maxStorage === 0 && p.inventory.freshFoodUnits > 0) {
-          const lostFood = p.inventory.freshFoodUnits;
-          p.inventory.freshFoodUnits = 0;
-          p.mess = Math.min(20, (p.mess || 0) + lostFood);
-          p = applyMoraleEffect(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
-
-          if (hasEatenFastFood) {
-            p.turnFlags.hasEaten = true;
-            const key = state.rules.helpfulUI ? 'events.foodSpoiled.noFridge_qol' : 'events.foodSpoiled.noFridge';
-            p.turnEvents.push({ key, params: { amount: lostFood } });
-          } else {
-            p.turnFlags.hasEaten = true;
-            const key = state.rules.helpfulUI ? 'events.foodSpoiled.ateSpoiled_qol' : 'events.foodSpoiled.ateSpoiled';
-            p.turnEvents.push({ key, params: { amount: lostFood } });
-            if (p.money > 0) {
-              const sickTrigger = resolveDecision(replay, `spoiled_food_sick_1_${p.id}`, () => rng.next() < 0.5);
-              if (sickTrigger) {
-                doctorNeeded = true;
-                doctorReasons.push('Spoiled food');
-                p.turnEvents.push({ key: 'events.foodSpoiled.sick' });
-              }
-            }
-          }
-        } else if (maxStorage > 0 && p.inventory.freshFoodUnits > maxStorage) {
-          const lostFood = p.inventory.freshFoodUnits - maxStorage;
-          p.inventory.freshFoodUnits = maxStorage;
-          p = applyMoraleEffect(p, -1, 'food_spoilage', state.rules, campaign.config.statRules);
-          p.mess = Math.min(20, (p.mess || 0) + lostFood);
-          const key = state.rules.helpfulUI ? 'events.foodSpoiled.tooMuch_qol' : 'events.foodSpoiled.tooMuch';
-          p.turnEvents.push({ key, params: { amount: lostFood, capacity: maxStorage } });
-        }
-
-        if (!p.turnFlags.hasEaten) {
-          if (hasEatenFastFood) {
-            p.turnFlags.hasEaten = true;
-          } else if (p.inventory.freshFoodUnits > 0) {
-            p.inventory.freshFoodUnits--;
-            p.turnFlags.hasEaten = true;
-          } else {
-            const starvationPenalty = requireConfig(campaign.config.timeRules?.starvationPenalty, 'timeRules.starvationPenalty');
-            const { updated, doctorTriggered } = processStarvation(p, starvationPenalty, rng, state.rules, replay);
-            p = updated;
-            p.turnEvents.push({ key: 'events.starvation' });
-            if (doctorTriggered) {
-              doctorNeeded = true;
-              doctorReasons.push('Starvation');
-            }
-          }
-        }
-      }
-
-      // 11. Doctor Visit
-      const queuedDoctor = state.debugQueue?.find(e => e.type === 'doctor_visit' && (e.playerId === p.id || !e.playerId));
-      if (queuedDoctor) {
-        const canVisit = !state.rules.bypassDoctorIfBroke || p.money > 0;
-        let isEligible = false;
-        if (canVisit) {
-          if (state.rules.usePhysicalMentalConditions) {
-            const statRules = campaign.config.statRules;
-            const physThreshold = statRules?.physicalDoctorThreshold ?? 10;
-            const mentalThreshold = statRules?.lowSpiritsThreshold ?? 10;
-            if (
-              (p.physicalCondition !== undefined && p.physicalCondition < physThreshold) ||
-              (p.mentalCondition !== undefined && p.mentalCondition < mentalThreshold)
-            ) {
-              isEligible = true;
-            }
-          } else if (state.rules.enableRelaxationDoctor) {
-            const threshold = state.rules.relaxationDoctorThreshold ?? 10;
-            if (p.relaxation <= threshold) {
-              isEligible = true;
-            }
-          }
-        }
-        if (isEligible) {
-          doctorNeeded = true;
-          doctorReasons.push('Doctor Visit (Forced)');
-        } else {
-          p.turnEvents.push({
-            key: 'debug.event_cancelled',
-            params: {
-              event: 'Doctor Visit',
-              reason: canVisit ? 'Health / relaxation above thresholds' : 'Player carries $0 and bypass rule is active',
-            },
-          });
-        }
-      }
-
-      if (state.rules.usePhysicalMentalConditions) {
-        const statRules = campaign.config.statRules;
-        const physThreshold = statRules?.physicalDoctorThreshold ?? statRules?.doctorVisitPhysicalThreshold ?? 10;
-        const physChance = (statRules?.physicalDoctorChancePerPoint ?? statRules?.doctorVisitPhysicalChancePerPoint ?? 0.05) * spoiledFoodSickMultiplier;
-
-        // Physical Doctor
-        if (p.physicalCondition !== undefined && p.physicalCondition < physThreshold) {
-          const chance = Math.min(1.0, (physThreshold - p.physicalCondition) * physChance);
-          const physSickTrigger = resolveDecision(replay, `phys_sick_${p.id}`, () => rng.next() < chance);
-          if (physSickTrigger) {
-            doctorNeeded = true;
-            doctorReasons.push('Physical condition critically low');
-          }
-        }
-      } else if (state.rules.enableRelaxationDoctor) {
-        const threshold = state.rules.relaxationDoctorThreshold ?? 10;
-        const chance = campaign.config.statRules?.relaxationDoctorChance ?? 0.20;
-        if (p.relaxation <= threshold) {
-          const lowRelaxSickTrigger = resolveDecision(replay, `low_relax_sick_${p.id}`, () => rng.next() < chance);
-          if (lowRelaxSickTrigger) {
-            doctorNeeded = true;
-            doctorReasons.push('Relaxation critically low');
-          }
-        }
-      }
-
-      if (doctorNeeded) {
-        const moneyBefore = p.money;
-        const loanBefore = p.loanDebt || 0;
-        const doctorPenalty = requireConfig(campaign.config.timeRules?.doctorPenalty, 'timeRules.doctorPenalty');
-        p = processDoctorVisit(p, doctorPenalty, rng, state.rules.bypassDoctorIfBroke, state.rules, replay);
-        const totalPaid = (moneyBefore - p.money) + ((p.loanDebt || 0) - loanBefore);
-        if (totalPaid > 0 || !state.rules.bypassDoctorIfBroke) {
-          const evtParams: any = { cost: totalPaid };
-          let key = 'events.doctorVisit';
-          if (state.rules.helpfulUI && doctorReasons.length > 0) {
-            evtParams.reasons = doctorReasons.join(', ');
-            key = 'events.doctorVisit_reasons';
-          }
-          p.turnEvents.push({ key, params: evtParams });
-        }
-      }
-
-      // 12. Rent Notice
-      if (p.rentPaidUntilWeek <= state.turn) {
-        if (p.rentExtensionActive) {
-          p.rentExtensionActive = false;
-          p.turnEvents.push({ key: 'events.rent.extensionExpired' });
-        } else {
-          p.rentExtensionsDeniedPermanently = true; 
-          const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
-          const baseRent = curHousing?.baseRent ?? (p.currentHousingId === 'security' ? 475 : 325);
-          const debtAmount = state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice;
-          p.rentDebt += debtAmount;
-          p.rentPaidUntilWeek = state.turn + 4; 
-          p.turnEvents.push({ key: 'events.rent.charged', params: { amount: debtAmount } });
-
-          // Strict eviction: warning if debt > 1 month rent, eviction to low_cost if debt > 2 months rent
-          if (state.rules.strictEviction) {
-            const monthRent = debtAmount;
-            if (p.rentDebt > 2 * monthRent) {
-              if (p.currentHousingId !== 'low_cost') {
-                p.currentHousingId = 'low_cost';
-                p.currentRentPrice = 325;
-                p.turnEvents.push({ key: 'events.rent.evicted' });
-              }
-            } else if (p.rentDebt > monthRent) {
-              p.turnEvents.push({ key: 'events.rent.warning' });
-            }
-          }
-        }
-      } else if (p.rentPaidUntilWeek <= state.turn + 1) { 
-        if (p.rentExtensionsDeniedPermanently) {
-          p.turnEvents.push({ key: 'events.rent.due_nodenied' });
-        } else {
-          p.turnEvents.push({ key: 'events.rent.due' });
-        }
-      }
-
-      // 13. Buy New Clothes
-      if (state.rules.clothingDecaysAll) {
-        if (p.inventory.casualClothesWeeks > 0) {
-          p.inventory.casualClothesWeeks--;
-          if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
-        }
-        if (p.inventory.dressClothesWeeks > 0) {
-          p.inventory.dressClothesWeeks--;
-          if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
-        }
-        if (p.inventory.businessClothesWeeks > 0) {
-          p.inventory.businessClothesWeeks--;
-          if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
-        }
-      } else {
-        if (p.inventory.selectedClothes === 'casual' && p.inventory.casualClothesWeeks > 0) {
-          p.inventory.casualClothesWeeks--;
-          if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
-        } else if (p.inventory.selectedClothes === 'dress' && p.inventory.dressClothesWeeks > 0) {
-          p.inventory.dressClothesWeeks--;
-          if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
-        } else if (p.inventory.selectedClothes === 'business' && p.inventory.businessClothesWeeks > 0) {
-          p.inventory.businessClothesWeeks--;
-          if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
-        }
-      }
-
-      const hasCasual = p.inventory.casualClothesWeeks > 0;
-      const hasDress = p.inventory.dressClothesWeeks > 0;
-      const hasBusiness = p.inventory.businessClothesWeeks > 0;
-      let activeClothes: 'casual' | 'dress' | 'business' | 'none' = (p.inventory.selectedClothes as any) || 'none';
-
-      if (state.rules.autoEquipBestClothes) {
-        if (hasBusiness) activeClothes = 'business';
-        else if (hasDress) activeClothes = 'dress';
-        else if (hasCasual) activeClothes = 'casual';
-        else activeClothes = 'none';
-      } else {
-        if (activeClothes === 'business' && !hasBusiness) activeClothes = hasDress ? 'dress' : (hasCasual ? 'casual' : 'none');
-        if (activeClothes === 'dress' && !hasDress) activeClothes = hasBusiness ? 'business' : (hasCasual ? 'casual' : 'none');
-        if (activeClothes === 'casual' && !hasCasual) activeClothes = hasDress ? 'dress' : (hasBusiness ? 'business' : 'none');
-      }
-      p.inventory.selectedClothes = activeClothes as any;
-
-      if (activeClothes === 'none') {
-        p.nakedTurns++;
-      } else {
-        p.nakedTurns = 0;
-      }
-
-      // 14. Loan Payments
-      if (p.loanDebt > 0) {
-        if (state.turn % 4 === 1) { 
-          if (p.loanPaymentDeadline < state.turn) {
-            p.timesDefaulted += 1;
-            p = applyHappinessChange(p, -1, 'loan_default', state.rules, campaign.config.statRules);
-            p.turnFlags.loanDefaultWarning = true;
-          }
-        } else if (state.turn % 4 === 0) { 
-          if (p.loanPaymentDeadline <= state.turn) {
-            p.turnFlags.loanPayableWarning = true;
-            p.turnEvents.push({ key: 'events.loan.due' });
-          }
-        }
-      }
-
-      // 15. Appliance Repair
-      const formatAppName = (id: string) => campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => (w.toLowerCase() === 'tv' || w.toLowerCase() === 'vcr' ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
-      const queuedAppBreak = state.debugQueue?.find(e => e.type === 'appliance_break' && (e.playerId === p.id || !e.playerId));
-      if (queuedAppBreak) {
-        if (p.inventory.appliances.length > 0) {
-          const targetApp = p.inventory.appliances.find(a => a.id === queuedAppBreak.applianceId) || p.inventory.appliances[0];
-          const repairCost = Math.floor(targetApp.purchasePrice * (0.05 + rng.next() * 0.2));
-          p.money = Math.max(0, p.money - repairCost);
-          p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-          p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(targetApp.id), repairCost } });
-
-          for (const app of p.inventory.appliances.filter(a => a !== targetApp)) {
-            const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
-            const breakTrigger = resolveDecision(replay, `appliance_break_${p.id}_${app.id}`, () => rng.next() < breakChance);
-            if (breakTrigger) {
-              const rCost = resolveDecision(replay, `appliance_repair_${p.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
-              p.money = Math.max(0, p.money - rCost);
-              p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-              p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost: rCost } });
-            }
-          }
-        } else {
-          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Appliance Break', reason: 'Player owns 0 appliances' } });
-        }
-      } else {
-        for (const app of p.inventory.appliances) {
-          const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
-          const breakTrigger = resolveDecision(replay, `appliance_break_${p.id}_${app.id}`, () => rng.next() < breakChance);
-          if (breakTrigger) {
-            const repairCost = resolveDecision(replay, `appliance_repair_${p.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
-            p.money = Math.max(0, p.money - repairCost);
-            p = applyHappinessChange(p, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-            p.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost } });
-          }
-        }
-      }
-
-      // Prepend any cancelled global events
-      if (cancelledGlobalEvents.length > 0) {
-        p.turnEvents = [...cancelledGlobalEvents, ...p.turnEvents];
-      }
-
-      // 16. Economic Events
-      if (crashSeverity !== 'none') {
-        p = applyMarketCrash(p, crashSeverity, rng, replay, state.rules, campaign.config.statRules);
-      } else if (economicBoom) {
-        p = applyEconomicBoom(p, campaign, newEconomy, state.turn, state.rules, campaign.config.statRules);
-      }
-
-      if (currentHeadline) {
-        p.newspaperHeadline = currentHeadline;
-        p.turnFlags.freeNewspaper = true;
-      }
-
-      // 17. Donations
-      p = processDonations(p, state, campaign, rng, replay);
+      // Maintenance Phase 2 (Appliance repair, economic events, donations)
+      p = processPostHealthMaintenance(p, state, campaign, rng, replay, econResult);
 
       // Pawn Shop Expiration
-      if (p.inventory.pawnedItems && p.inventory.pawnedItems.length > 0) {
-        const newTurn = state.turn + 1;
-        const expired = p.inventory.pawnedItems.filter(item => newTurn - item.weekPawned >= 3);
-        if (expired.length > 0) {
-          p.turnEvents.push({ key: 'events.pawnExpired' });
-          newPawnShopItemsForSale.push(...expired);
-          p.inventory.pawnedItems = p.inventory.pawnedItems.filter(item => newTurn - item.weekPawned < 3);
-        }
-      }
+      p = processPawnExpiration(p, state, newPawnShopItemsForSale);
     }
 
-    // 18. Player Control (Set Newspaper if none)
+    // Player Control (Set Newspaper if none)
     if (!p.newspaperHeadline) {
       const randomHeadlines = [
         "newspaper.random.1",
@@ -738,8 +166,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   const resultState: GameState = {
     ...state,
     rngState: rng.getState(),
-    economicIndex: newEconomy,
-    economicTrend: newTrend,
+    economicIndex: econResult.newEconomy,
+    economicTrend: econResult.newTrend,
     pawnShopItemsForSale: newPawnShopItemsForSale,
     players: updatedPlayers,
     turn: state.turn + 1,
