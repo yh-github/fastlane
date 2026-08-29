@@ -146,8 +146,8 @@ describe('BuildingInteractions', () => {
     expect(screen.getByText(/Deposit Money into Savings/i)).toBeInTheDocument();
 
     // Select Max preset button
-    fireEvent.click(screen.getByText(/Max \(\$150\)/i));
-    fireEvent.click(screen.getByText(/Confirm Deposit \(\$150\)/i));
+    fireEvent.click(screen.getByText(/Max.*150/i));
+    fireEvent.click(screen.getByText(/Confirm Deposit.*150/i));
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'bank_transaction', amount: 150 });
   });
 
@@ -239,7 +239,7 @@ describe('BuildingInteractions', () => {
     const cleanServiceBtn = screen.getByRole('button', { name: /Call Cleaning Service/i });
     expect(cleanServiceBtn).not.toBeDisabled();
     expect(cleanServiceBtn.textContent).toContain('$100');
-    expect(cleanServiceBtn.textContent).toContain('Professional cleaning (-10 Mess)');
+    expect(cleanServiceBtn.textContent).toContain('Professional cleaning (-10 🧹)');
 
     // Clicking softly-disabled button calls onAction and receives feedback
     fireEvent.click(cleanServiceBtn);
@@ -298,7 +298,7 @@ describe('BuildingInteractions', () => {
 
     const socializeBtn = screen.getByRole('button', { name: /Socialize \/ Entertain Guests/i });
     expect(socializeBtn).not.toBeDisabled();
-    expect(socializeBtn.textContent).toContain('-1 Phys, +Social stat (Generates Mess)');
+    expect(socializeBtn.textContent).toContain('-1 💪, +👥 (generates 🧹)');
 
     fireEvent.click(socializeBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'socialize_guests' });
@@ -345,7 +345,7 @@ describe('BuildingInteractions', () => {
 
     // Inline strategy options are displayed directly without a modal
     expect(screen.getByText(/DEFAULT/i)).toBeInTheDocument();
-    expect(screen.getByText(/\(3h\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/3h/i)).toBeInTheDocument();
 
     const workWorkBtn = screen.getByTestId('work-mode-work_work');
     expect(workWorkBtn).toBeInTheDocument();
@@ -399,9 +399,149 @@ describe('BuildingInteractions', () => {
 
     expect(screen.getByText(/45.5% \/ 100%/i)).toBeInTheDocument();
     const studyBtn = screen.getByTestId('study-trade_school');
-    expect(studyBtn.textContent).toContain('Study (4h)');
+    expect(studyBtn.textContent).toContain('Study');
+    expect(studyBtn.textContent).toContain('4h');
 
     fireEvent.click(studyBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'study', degreeId: 'trade_school' });
+  });
+
+  it('HomeRelax dynamically updates Relax button with exact runtime gains based on conditions, mental condition bonus, first-turn bonus, mess, social, and appliances', () => {
+    const mockPlayer = {
+      id: 'p1',
+      hoursRemaining: 6,
+      physicalCondition: 30,
+      mentalCondition: 50,
+      social: 15,
+      mess: 0,
+      turnFlags: { relaxedThisTurn: false },
+      inventory: {
+        freshFoodUnits: 2,
+        appliances: [{ id: 'color_tv', purchasePrice: 400, purchaseSource: 'socket_city' }],
+        books: ['encyclopedia']
+      }
+    } as any;
+
+    const mockCampaign = {
+      housing: [{ id: 'low_cost', name: 'Low Cost' }],
+      items: [
+        { id: 'color_tv', name: 'Color TV', basePrice: 400, category: 'appliance', effects: [{ trigger: 'on_relax', stat: 'mental', value: 1 }] },
+        { id: 'encyclopedia', name: 'Encyclopedia', basePrice: 100, category: 'book', effects: [{ trigger: 'continuous', stat: 'mental_max', value: 1 }] }
+      ],
+      config: {
+        timeRules: { relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6 },
+        economyRules: { cleaningServiceBasePrice: 100 },
+        statRules: { relaxMessIncrease: 1 }
+      }
+    } as any;
+
+    const { rerender } = render(
+      <HomeRelax
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, usePhysicalMentalConditions: true } as any}
+        economicIndex={0}
+      />
+    );
+
+    // Initial Relax button:
+    // Phys gain: 1 + Math.floor(50/25) = 3
+    // Mental gain: firstBonus (2) + 3 + mentalBonus(1) + socialMentalBonus(1) = 7
+    // Mess: +1
+    const relaxBtn = screen.getByTestId('btn-relax');
+    expect(relaxBtn.textContent).toContain('+3 💪, +7 🧠 (+1 🧹)');
+
+    // After relaxing once this turn (relaxedThisTurn = true)
+    const relaxedPlayer = {
+      ...mockPlayer,
+      turnFlags: { relaxedThisTurn: true }
+    };
+    rerender(
+      <HomeRelax
+        player={relaxedPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, usePhysicalMentalConditions: true } as any}
+        economicIndex={0}
+      />
+    );
+    // firstBonus becomes 0 -> Mental gain is 5
+    expect(relaxBtn.textContent).toContain('+3 💪, +5 🧠 (+1 🧹)');
+
+    // When starving (0 food)
+    const starvingPlayer = {
+      ...mockPlayer,
+      inventory: { freshFoodUnits: 0, fastFoodItems: [], appliances: [], books: [] }
+    };
+    rerender(
+      <HomeRelax
+        player={starvingPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, usePhysicalMentalConditions: true } as any}
+        economicIndex={0}
+      />
+    );
+    expect(relaxBtn.textContent).toContain('⚠️ No food: +1 💪, +1 🧠 (-1 Max 💪 & 🧠)');
+  });
+
+  it('HomeRelax renders presentable Amenities & Storage section with Fresh food, fridge status, fast food, and appliances', () => {
+    const mockPlayer = {
+      id: 'p1',
+      hoursRemaining: 6,
+      inventory: {
+        freshFoodUnits: 4,
+        fastFoodItems: [{ itemId: 'cheeseburger', happinessBonus: 3 }],
+        appliances: [
+          { id: 'refrigerator', purchasePrice: 600, purchaseSource: 'socket_city' },
+          { id: 'stereo', purchasePrice: 200, purchaseSource: 'socket_city' }
+        ],
+        books: ['dictionary']
+      }
+    } as any;
+
+    const mockCampaign = {
+      housing: [{ id: 'low_cost', name: 'Low Cost' }],
+      items: [
+        { id: 'refrigerator', name: 'Refrigerator', basePrice: 600, category: 'appliance', tags: ['refrigerator'] },
+        { id: 'stereo', name: 'Stereo', basePrice: 200, category: 'appliance', effects: [{ trigger: 'on_relax', stat: 'mental', value: 1 }] },
+        { id: 'cheeseburger', name: 'Cheeseburger', basePrice: 6, category: 'food' },
+        { id: 'dictionary', name: 'Dictionary', basePrice: 40, category: 'book', effects: [{ trigger: 'continuous', stat: 'mental_max', value: 1 }] }
+      ],
+      config: {
+        timeRules: { relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6 },
+        economyRules: { cleaningServiceBasePrice: 100 },
+        statRules: {}
+      }
+    } as any;
+
+    render(
+      <HomeRelax
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, usePhysicalMentalConditions: true } as any}
+        economicIndex={0}
+      />
+    );
+
+    // Verify Amenities Section headers
+    expect(screen.getByText(/Home Amenities & Storage/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
+    expect(screen.getByText(/Refrigerator Active/i)).toBeInTheDocument();
+
+    // Verify Fresh Food
+    expect(screen.getByText(/4 units/i)).toBeInTheDocument();
+
+    // Verify Fast food
+    expect(screen.getByText(/Cheeseburger/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+3 😊/i)).toBeInTheDocument();
+
+    // Verify Appliances & Books
+    expect(screen.getByText(/Stereo/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 🧠/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dictionary/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 Max 🧠/i)).toBeInTheDocument();
   });
 });
