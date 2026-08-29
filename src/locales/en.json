@@ -138,6 +138,8 @@
       "cannotStudy": "Cannot study this.",
       "notEnoughMoneyBuyBack": "Not enough money to buy back.",
       "notEnoughMoneyBuyPawn": "Not enough money to buy pawned item.",
+      "notEnoughSpace": "You don't have enough space in {{home}} for {{item}}.",
+      "notEnoughSpaceMove": "You don't have enough space in {{targetName}} for all your possessions. Pawn some items first.",
       "pawnShopFull": "The Pawn Shop is full (max 6 items).",
       "pawnShopHasDuplicate": "The Pawn Shop already has an item of this type.",
       "notEnoughMoneyDeposit": "Not enough cash to deposit.",

@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { calcEconomyPrice, calcItemPrice, calcStockPrice } from '../engine/economyEngine';
 import { calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../engine/educationEngine';
-import { calcEmployabilityScore, calcMovingFee, calcMaxMess, roundToResolution } from '../engine/statMath';
+import { calcEmployabilityScore, calcMovingFee, calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap } from '../engine/statMath';
 
 interface InteractionProps {
   player: PlayerState;
@@ -297,8 +297,11 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   );
 }
 
-export function StoreFront({ player, onAction, availableItems, economicIndex = 0, rules }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number, rules?: import('../engine/gameState').GameRules }) {
+export function StoreFront({ player, onAction, availableItems, economicIndex = 0, rules, campaign }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number, rules?: import('../engine/gameState').GameRules, campaign?: CampaignBundle }) {
   const { t } = useTranslation();
+  const currentSpace = calcUsedSpace(player, campaign, true);
+  const maxSpace = calcHousingSpaceCap(player, campaign);
+
   return (
     <div className="interaction-panel">
       <h3 style={{ marginBottom: '12px' }}>{t('storeFront.title')}</h3>
@@ -310,24 +313,32 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
           if (item.category === 'book') alreadyOwned = player.inventory.books.includes(item.id);
           else if (item.category === 'appliance') alreadyOwned = player.inventory.appliances.some(a => a.id === item.id);
           
+          let itemSpace = item.space ?? 0;
+          if (item.category === 'book' && itemSpace === 0) {
+            itemSpace = item.id === 'encyclopedia' ? 2 : 1;
+          }
+          const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
+          const canBuy = canAfford && (!rules?.helpfulUI || hasSpace);
+
           return (
             <div 
               key={item.id} 
-              className={`interaction-item interaction-item--clickable ${!canAfford ? 'interaction-item--disabled' : ''}`}
+              className={`interaction-item interaction-item--clickable ${!canBuy ? 'interaction-item--disabled' : ''}`}
               style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
                 margin: 0,
                 padding: '8px 12px',
-                opacity: canAfford ? 1 : 0.5,
-                cursor: canAfford ? 'pointer' : 'not-allowed',
+                opacity: canBuy ? 1 : 0.5,
+                cursor: canBuy ? 'pointer' : 'not-allowed',
                 borderRadius: '6px'
               }}
               onClick={() => {
                 onAction({ type: 'buy', itemId: item.id });
               }}
               data-action-target={`buy-${item.id}`}
+              title={!hasSpace ? `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)` : undefined}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                 {rules?.showItemImages && (
@@ -341,6 +352,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                 <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {t(`item.${item.id}`, { defaultValue: item.name })}
                   {rules?.helpfulUI && alreadyOwned && <span style={{ color: '#4caf50', marginLeft: '6px', fontWeight: 'bold' }}>✓ {t('storeFront.owned', { defaultValue: 'Owned' })}</span>}
+                  {rules?.spaceCapping && itemSpace > 0 && <span style={{ color: !hasSpace ? '#e74c3c' : '#00e5ff', marginLeft: '6px', fontSize: '11px' }}>📦{itemSpace}</span>}
                 </span>
               </div>
               <span style={{ fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>${adjustedPrice}</span>
@@ -930,8 +942,6 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const { t } = useTranslation();
   const [confirmMove, setConfirmMove] = useState<{housingId: string, baseCost: number, movingFee: number, totalCost: number, newAptName: string} | null>(null);
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
-  const lowCostHousing = campaign?.housing.find(h => h.id === 'low_cost');
-  const securityHousing = campaign?.housing.find(h => h.id === 'security');
 
   const rentOwed = player.rentDebt;
   const isWeek4 = turn % 4 === 0;
@@ -939,8 +949,10 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const isJobHere = !!(player.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
   const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || (isJobHere && !!rules?.allowEmployedRentPayment);
 
-  const lowCostMovePrice = lowCostHousing ? calcEconomyPrice(lowCostHousing.baseRent, economicIndex) : 0;
-  const securityMovePrice = securityHousing ? calcEconomyPrice(securityHousing.baseRent, economicIndex) : 0;
+  const availableHousingList = (campaign?.housing || [
+    { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, spaceCap: 10 },
+    { id: 'security', name: 'Security Apartments', baseRent: 475, spaceCap: 25 }
+  ]).filter(h => h.id !== 'street');
 
   const rentAdvanceCost = rules?.fluctuatingRent && currentHousing
     ? calcEconomyPrice(currentHousing.baseRent, economicIndex)
@@ -1031,37 +1043,37 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <h4 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '0.95em' }}>{t('rentOffice.availableApts')}:</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {lowCostHousing && (!rules?.helpfulUI || player.currentHousingId !== lowCostHousing.id) && (
-                <div className="store-item" style={{ padding: '12px', borderRadius: '6px', border: '1px solid #444', background: 'rgba(0,0,0,0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <strong>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })}</strong>
-                    <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${lowCostMovePrice}/mo</span>
+              {availableHousingList.map(h => {
+                const movePrice = calcEconomyPrice(h.baseRent, economicIndex);
+                const isCurrent = player.currentHousingId === h.id;
+                const durablesSpace = calcUsedSpace(player, campaign, false);
+                const targetCap = h.spaceCap ?? 999999;
+                const hasSpace = !rules?.spaceCapping || durablesSpace <= targetCap;
+
+                if (rules?.helpfulUI && isCurrent) return null;
+
+                return (
+                  <div key={h.id} className="store-item" style={{ padding: '12px', borderRadius: '6px', border: '1px solid #444', background: 'rgba(0,0,0,0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <strong>{t(`housing.${h.id}`, { defaultValue: h.name })}</strong>
+                      <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${movePrice}/mo</span>
+                    </div>
+                    {rules?.spaceCapping && h.spaceCap !== undefined && (
+                      <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>
+                        📦 Capacity: <strong>{h.spaceCap} space</strong>
+                        {!hasSpace && <span style={{ color: '#e74c3c', marginLeft: '6px' }}>(You own {durablesSpace} space)</span>}
+                      </div>
+                    )}
+                    <button 
+                      onClick={() => handleInitiateMove(h.id, movePrice, t(`housing.${h.id}`, { defaultValue: h.name }))}
+                      disabled={(rules?.helpfulUI && isCurrent) || (rules?.helpfulUI && !hasSpace)}
+                      style={{ width: '100%', opacity: !hasSpace ? 0.6 : 1 }}
+                    >
+                      🏠 {isCurrent ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : (hasSpace ? t('rentOffice.moveIn') : 'Possessions Exceed Space')}
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => handleInitiateMove(lowCostHousing.id, lowCostMovePrice, t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name }))}
-                    disabled={rules?.helpfulUI && player.currentHousingId === lowCostHousing.id}
-                    style={{ width: '100%' }}
-                  >
-                    🏠 {player.currentHousingId === lowCostHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
-                  </button>
-                </div>
-              )}
-              
-              {securityHousing && (!rules?.helpfulUI || player.currentHousingId !== securityHousing.id) && (
-                <div className="store-item" style={{ padding: '12px', borderRadius: '6px', border: '1px solid #444', background: 'rgba(0,0,0,0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <strong>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })}</strong>
-                    <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${securityMovePrice}/mo</span>
-                  </div>
-                  <button 
-                    onClick={() => handleInitiateMove(securityHousing.id, securityMovePrice, t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name }))}
-                    disabled={rules?.helpfulUI && player.currentHousingId === securityHousing.id}
-                    style={{ width: '100%' }}
-                  >
-                    🏠 {player.currentHousingId === securityHousing.id ? t('rentOffice.currentApt', { defaultValue: 'Current' }) : t('rentOffice.moveIn')}
-                  </button>
-                </div>
-              )}
+                );
+              })}
             </div>
           </div>
         </div>

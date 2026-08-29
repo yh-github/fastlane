@@ -1,15 +1,18 @@
 [
   {
     "id": "refrigerator",
-    "lifestyleValue": 1
+    "lifestyleValue": 1,
+    "space": 4
   },
   {
     "id": "freezer",
-    "lifestyleValue": 2
+    "lifestyleValue": 2,
+    "space": 3
   },
   {
     "id": "stove",
     "lifestyleValue": 1,
+    "space": 4,
     "effects": [
       { "trigger": "on_relax", "stat": "physical", "value": 1 }
     ]
@@ -17,6 +20,7 @@
   {
     "id": "stereo",
     "lifestyleValue": 2,
+    "space": 2,
     "effects": [
       { "trigger": "on_socialize", "stat": "social", "value": 1 }
     ]
@@ -24,12 +28,14 @@
   {
     "id": "color_tv",
     "lifestyleValue": 2,
+    "space": 2,
     "effects": [
       { "trigger": "on_socialize", "stat": "social", "value": 2 }
     ]
   },
   {
     "id": "bw_tv",
+    "space": 2,
     "effects": [
       { "trigger": "on_socialize", "stat": "social", "value": 1 }
     ]
@@ -37,6 +43,7 @@
   {
     "id": "microwave",
     "lifestyleValue": 2,
+    "space": 2,
     "effects": [
       { "trigger": "on_relax", "stat": "physical", "value": 1 },
       { "trigger": "on_socialize", "stat": "social", "value": 1 }
@@ -44,12 +51,14 @@
   },
   {
     "id": "vcr",
-    "lifestyleValue": 2
+    "lifestyleValue": 2,
+    "space": 1
   },
   {
     "id": "hot_tub",
     "lifestyleValue": 5,
     "mentalBonus": 5,
+    "space": 9,
     "effects": [
       { "trigger": "turn_start", "stat": "physical", "value": 1 },
       { "trigger": "turn_start", "stat": "mental", "value": 1 },
@@ -63,6 +72,7 @@
   {
     "id": "computer",
     "lifestyleValue": 3,
+    "space": 4,
     "effects": [
       { "trigger": "continuous", "stat": "mental_max", "value": 3 }
     ]
@@ -70,6 +80,7 @@
   {
     "id": "encyclopedia",
     "lifestyleValue": 1,
+    "space": 2,
     "effects": [
       { "trigger": "continuous", "stat": "mental_max", "value": 1 }
     ]
@@ -77,6 +88,7 @@
   {
     "id": "dictionary",
     "lifestyleValue": 1,
+    "space": 1,
     "effects": [
       { "trigger": "continuous", "stat": "mental_max", "value": 1 }
     ]
@@ -84,6 +96,7 @@
   {
     "id": "atlas",
     "lifestyleValue": 1,
+    "space": 1,
     "effects": [
       { "trigger": "continuous", "stat": "mental_max", "value": 1 }
     ]

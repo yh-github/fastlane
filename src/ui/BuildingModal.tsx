@@ -153,6 +153,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
               key = 'clerkDialogs.z_mart.buySuccess';
             }
             nextMsg = getRandomMessage(key, t('clerkDialogs.default.buySuccess'));
+          } else if (mainLog?.key === 'action.error.notEnoughSpace') {
+            nextMsg = String(t('action.error.notEnoughSpace', mainLog.params));
           } else {
             nextMsg = "You do not have enough cash.";
           }
@@ -173,6 +175,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
               key = 'clerkDialogs.pawn_shop.redeemSuccess';
             }
             nextMsg = getRandomMessage(key, t('clerkDialogs.default.buySuccess'));
+          } else if (mainLog?.key === 'action.error.notEnoughSpace') {
+            nextMsg = String(t('action.error.notEnoughSpace', mainLog.params));
           } else {
             nextMsg = "You do not have enough cash.";
           }
@@ -230,6 +234,8 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
             nextMsg = `You already live at the ${aptName}!`;
           } else if (mainLog.key === 'action.rent.moved') {
             nextMsg = getRandomMessage(`clerkDialogs.apartment_complex.moved`, 'Here are your new keys. Enjoy your stay.');
+          } else if (mainLog.key === 'action.error.notEnoughSpaceMove') {
+            nextMsg = String(t('action.error.notEnoughSpaceMove', mainLog.params));
           } else if (success) {
             const isLowCost = payload.housingId === 'low_cost' || payload.housingId === 'low_cost_housing';
             const moveKey = isLowCost ? 'moveInLowCost' : 'moveInSecurity';
@@ -451,6 +457,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
                   availableItems={itemsHere} 
                   economicIndex={economicIndex}
                   rules={rules}
+                  campaign={campaign}
                 />
               )}
               {isDiscountAndPawn && activeTab === 'pawn' && (
@@ -485,6 +492,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
                       availableItems={itemsHere} 
                       economicIndex={economicIndex}
                       rules={rules}
+                      campaign={campaign}
                     />
                   )}
                   {building.archetype === 'education' && (
@@ -596,6 +604,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
                 availableItems={itemsHere} 
                 economicIndex={economicIndex}
                 rules={rules}
+                campaign={campaign}
               />
             )}
             {isDiscountAndPawn && activeTab === 'pawn' && (
@@ -630,6 +639,7 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
                     availableItems={itemsHere} 
                     economicIndex={economicIndex}
                     rules={rules}
+                    campaign={campaign}
                   />
                 )}
                 {building.archetype === 'education' && (

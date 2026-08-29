@@ -6,14 +6,27 @@
     "isRobberyImmune": false,
     "homeNodeId": "node_low_cost",
     "description": "Living on the streets. It's free, but very dangerous.",
-    "lifestyleValue": 0
+    "lifestyleValue": 0,
+    "spaceCap": 0
   },
   {
     "id": "low_cost",
-    "lifestyleValue": 10
+    "lifestyleValue": 10,
+    "spaceCap": 10
   },
   {
     "id": "security",
-    "lifestyleValue": 30
+    "lifestyleValue": 30,
+    "spaceCap": 25
+  },
+  {
+    "id": "penthouse",
+    "name": "Penthouse Suite",
+    "baseRent": 850,
+    "isRobberyImmune": true,
+    "homeNodeId": "node_security",
+    "description": "Ultra-luxurious top-floor suite with massive living space.",
+    "lifestyleValue": 50,
+    "spaceCap": 75
   }
 ]

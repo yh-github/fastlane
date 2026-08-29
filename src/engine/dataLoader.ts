@@ -91,6 +91,7 @@ export interface ItemDef {
   tags?: string[];
   isFixedPrice?: boolean;
   effects?: ItemEffect[];
+  space?: number;
 }
 
 export interface EducationDef {
@@ -115,6 +116,7 @@ export interface HousingDef {
   homeNodeId: string;
   description: string;
   lifestyleValue?: number;
+  spaceCap?: number;
 }
 
 export interface EventDef {

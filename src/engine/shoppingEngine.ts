@@ -1,6 +1,7 @@
 import { type PlayerState, type GameRules, type GameEvent } from './gameState';
-import type { ItemDef } from './dataLoader';
+import type { ItemDef, CampaignBundle } from './dataLoader';
 import { applyMentalChange, applyMoraleEffect } from './statEffects';
+import { calcUsedSpace, calcHousingSpaceCap } from './statMath';
 
 export interface ShoppingResult {
   updated: PlayerState;
@@ -8,7 +9,7 @@ export interface ShoppingResult {
   message: GameEvent;
 }
 
-export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): ShoppingResult {
+export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules, campaign?: CampaignBundle): ShoppingResult {
   const price = item.basePrice ?? 0;
   if (player.money < price) {
     return { updated: player, success: false, message: { key: 'action.error.notEnoughMoney' } };
@@ -16,6 +17,31 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules): 
 
   if (item.id === 'computer' && player.inventory.appliances.some(a => a.id === 'computer')) {
     return { updated: player, success: false, message: { key: 'action.error.alreadyOwnComputer' } };
+  }
+
+  if (rules?.spaceCapping) {
+    let itemSpace = item.space ?? 0;
+    if (item.category === 'book' && itemSpace === 0) {
+      itemSpace = item.id === 'encyclopedia' ? 2 : 1;
+    }
+    if (itemSpace > 0) {
+      const currentSpace = calcUsedSpace(player, campaign, true);
+      const maxSpace = calcHousingSpaceCap(player, campaign);
+      if (currentSpace + itemSpace > maxSpace) {
+        const housingDef = campaign?.housing?.find(h => h.id === player.currentHousingId);
+        return {
+          updated: player,
+          success: false,
+          message: {
+            key: 'action.error.notEnoughSpace',
+            params: {
+              home: housingDef?.name || 'your home',
+              item: item.name
+            }
+          }
+        };
+      }
+    }
   }
 
   let happinessBonus = item.happinessBonus || 0;

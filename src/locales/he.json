@@ -136,6 +136,8 @@
       "cannotStudy": "לא ניתן ללמוד זאת.",
       "notEnoughMoneyBuyBack": "אין מספיק כסף לקנות בחזרה.",
       "notEnoughMoneyBuyPawn": "אין מספיק כסף לקנות פריט ממושכן.",
+      "notEnoughSpace": "אין לך מספיק מקום ב{{home}} עבור {{item}}.",
+      "notEnoughSpaceMove": "אין לך מספיק מקום ב{{targetName}} עבור כל החפצים שלך. ממשכן חלק מהחפצים תחילה.",
       "pawnShopFull": "חנות המשכונות מלאה (מקסימום 6 פריטים).",
       "pawnShopHasDuplicate": "בחנות המשכונות כבר קיים פריט מסוג זה.",
       "notEnoughMoneyDeposit": "אין מספיק מזומן להפקיד.",

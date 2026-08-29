@@ -445,9 +445,14 @@ export function safeDecrementMental(current: number, cost: number, minMental: nu
  * Calculate dynamic housing Mess limit considering Hot Tub (+5 MAX_MESS bonus).
  */
 export function calcMaxMess(player: PlayerState, statRules?: import('./rules').StatRules, campaign?: CampaignBundle): number {
-  let baseMax = player.currentHousingId === 'security'
-    ? (statRules?.securityMessMax ?? 90)
-    : (statRules?.lowCostMessMax ?? 50);
+  let baseMax = 50;
+  if (player.currentHousingId === 'penthouse') {
+    baseMax = 99;
+  } else if (player.currentHousingId === 'security') {
+    baseMax = statRules?.securityMessMax ?? 90;
+  } else {
+    baseMax = statRules?.lowCostMessMax ?? 50;
+  }
 
   if (campaign) {
     const continuousEffects = collectItemEffects(player, campaign, 'continuous');
@@ -461,6 +466,36 @@ export function calcMaxMess(player: PlayerState, statRules?: import('./rules').S
 }
 
 /**
+ * Calculate space occupied by durables and mess.
+ */
+export function calcUsedSpace(player: PlayerState, campaign?: CampaignBundle, includeMess: boolean = true): number {
+  let used = 0;
+  // Appliances
+  for (const app of (player.inventory?.appliances || [])) {
+    const def = campaign?.items?.find(i => i.id === app.id);
+    used += def?.space ?? 0;
+  }
+  // Books
+  for (const bookId of (player.inventory?.books || [])) {
+    const def = campaign?.items?.find(i => i.id === bookId);
+    used += def?.space ?? (bookId === 'encyclopedia' ? 2 : 1);
+  }
+  // Mess
+  if (includeMess && player.mess && player.mess > 0) {
+    used += Math.ceil(player.mess / 10);
+  }
+  return used;
+}
+
+/**
+ * Get the max space capacity for player's current housing.
+ */
+export function calcHousingSpaceCap(player: PlayerState, campaign?: CampaignBundle): number {
+  const housingDef = campaign?.housing?.find(h => h.id === player.currentHousingId);
+  return housingDef?.spaceCap ?? 999999;
+}
+
+/**
  * Rounds a number to a specific step resolution (e.g. 0.5 for half points, 0.1 for decimals).
  */
 export function roundToResolution(value: number, resolution: number = 0.5): number {
@@ -468,3 +503,4 @@ export function roundToResolution(value: number, resolution: number = 0.5): numb
   const factor = 1 / resolution;
   return Math.round(value * factor) / factor;
 }
+
