@@ -317,7 +317,7 @@ export function calcTheoreticalRobberyChance(
   player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[]; homeTimeThisTurn?: number },
   rules?: { useHomeTimeRobbery?: boolean }
 ): number {
-  if (player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments') return 0;
+  if (player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments' || player.currentHousingId === 'penthouse') return 0;
 
   if (rules?.useHomeTimeRobbery) {
     const history = [...(player.homeTimeHistory || []), player.homeTimeThisTurn || 0];

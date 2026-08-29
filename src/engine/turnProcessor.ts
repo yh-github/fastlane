@@ -5,7 +5,7 @@ import { type GameState, type GameEvent, recalculatePlayerEffects, collectItemEf
 import { type CampaignBundle } from './dataLoader';
 import { calcEconomyPrice, applyMarketCrash, applyEconomicBoom, calcLiquidAssets } from './economyEngine';
 import { applyMoraleEffect, applyHappinessChange } from './statEffects';
-import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress, messGrowth, calcMaxMental, calcWellbeingScore } from './statMath';
+import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress, messGrowth, calcMaxMental, calcWellbeingScore, calcMaxMess } from './statMath';
 import { resetPlayerClock } from './timeManager';
 import { processStarvation, processDoctorVisit, processApartmentRobbery, processDonations } from './eventEngine';
 import { fluctuateEconomy } from './economyEngine';
@@ -150,7 +150,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
     }
 
     if (state.rules.turnStartAtHome) {
-      const housing = campaign.housing.find(h => h.id === p.currentHousingId);
+      const housing = campaign?.housing?.find(h => h.id === p.currentHousingId);
       if (housing && housing.homeNodeId) {
         p.position = housing.homeNodeId;
       }
@@ -158,7 +158,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
 
     if (state.turn > 0) {
       if (state.rules.trackMess) {
-        const maxMess = p.currentHousingId === 'security' ? (campaign.config.statRules?.securityMessMax ?? 90) : (campaign.config.statRules?.lowCostMessMax ?? 50);
+        const maxMess = calcMaxMess(p, campaign.config.statRules);
         const growth = messGrowth(p.mess || 0);
         p.mess = Math.min(maxMess, (p.mess || 0) + growth);
       }
@@ -302,8 +302,9 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       const robberyStartWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
       const preRobberyStorage = p.activeEffects['set_food_storage'] || 0;
       if (queuedAptRobbery) {
-        if (p.currentHousingId === 'security') {
-          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Apartment Robbery', reason: 'Living in La Security' } });
+        const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
+        if (curHousing?.isRobberyImmune || p.currentHousingId === 'security') {
+          p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Apartment Robbery', reason: `Living in ${curHousing?.name || 'La Security'}` } });
         } else if (p.inventory.appliances.length === 0) {
           p.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Apartment Robbery', reason: 'Player owns 0 appliances' } });
         } else {
@@ -540,7 +541,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
           p.turnEvents.push({ key: 'events.rent.extensionExpired' });
         } else {
           p.rentExtensionsDeniedPermanently = true; 
-          const baseRent = p.currentHousingId === 'security' ? 475 : 325;
+          const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
+          const baseRent = curHousing?.baseRent ?? (p.currentHousingId === 'security' ? 475 : 325);
           const debtAmount = state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice;
           p.rentDebt += debtAmount;
           p.rentPaidUntilWeek = state.turn + 4; 
@@ -715,7 +717,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       p.newspaperHeadline = { key: randomHeadlines[headlineIdx] };
     }
 
-    p.position = p.currentHousingId === 'security' ? 'node_security' : 'node_low_cost';
+    const housing = campaign?.housing?.find(h => h.id === p.currentHousingId);
+    p.position = housing?.homeNodeId || (p.currentHousingId === 'security' || p.currentHousingId === 'penthouse' ? 'node_security' : 'node_low_cost');
 
     return p;
   });

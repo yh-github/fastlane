@@ -3,6 +3,7 @@ import { createPlayerState, type PlayerState, type CampaignBundle } from './game
 import { calcUsedSpace, calcHousingSpaceCap } from './statMath';
 import { buyItem } from './shoppingEngine';
 import { gameReducer } from './gameReducer';
+import { processTurnStart } from './turnProcessor';
 import { DEFAULT_GAME_RULES } from './rules';
 
 const mockCampaign: CampaignBundle = {
@@ -16,6 +17,19 @@ const mockCampaign: CampaignBundle = {
       spaceCapping: true,
       trackMess: true,
       helpfulUI: true
+    },
+    timeRules: {
+      hoursPerTurn: 60,
+      workSessionCost: 6,
+      relaxCost: 6,
+      cleaningServiceCost: 1,
+      socializeCost: 6,
+      starvationPenalty: 20,
+      doctorPenalty: 10,
+      newspaperCost: 1,
+      buildingEntryCost: 2,
+      loanCost: 2,
+      brokerCost: 2
     },
     statRules: {
       startingRelaxation: 50,
@@ -353,6 +367,30 @@ describe('Space Capping Module', () => {
       // 4+3+4+2+2+1+2+4+9 + 1+1+2 = 35 space used
       expect(calcUsedSpace(player, mockCampaign, false)).toBe(35);
       expect(calcUsedSpace(player, mockCampaign, false) <= 75).toBe(true);
+    });
+
+    it('starts turn at the Security Building (node_security) after moving into penthouse', () => {
+      // 1. Move into penthouse
+      const context = {
+        state: { players: [player], economicIndex: 0, turn: 1 } as any,
+        rules: mockCampaign.config.gameRules!,
+        campaign: mockCampaign
+      };
+
+      const moveResult = gameReducer(player, { type: 'move_apartment', housingId: 'penthouse', cost: 850 }, context as any);
+      expect(moveResult.updatedPlayer.currentHousingId).toBe('penthouse');
+
+      // 2. Process turn start for next week
+      const gameState: any = {
+        turn: 1,
+        players: [moveResult.updatedPlayer],
+        rules: mockCampaign.config.gameRules,
+        economicIndex: 0,
+        rngState: 12345
+      };
+
+      const nextState = processTurnStart(gameState, mockCampaign);
+      expect(nextState.players[0].position).toBe('node_security');
     });
   });
 });

@@ -124,7 +124,7 @@ export function processApartmentRobbery(
   forceRobbed?: boolean,
   forcedStolenItemIds?: string[]
 ): { updated: PlayerState; robbed: boolean } {
-  if (player.currentHousingId === 'security') return { updated: player, robbed: false };
+  if (player.currentHousingId === 'security' || player.currentHousingId === 'penthouse') return { updated: player, robbed: false };
 
   let chance = calcRobberyChance(player.relaxation);
 

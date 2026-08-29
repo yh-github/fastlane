@@ -571,9 +571,10 @@ export function gameReducer(
 
       const mentalCost = X * growth;
       const finalMentalCost = mentalCost - appBonus;
-      const cashRate = nextPlayer.currentHousingId === 'security' ? (context.campaign.config.economyRules?.socializeSecurityCashCost ?? 50) : (context.campaign.config.economyRules?.socializeLowCostCashCost ?? 25);
+      const isHighEndHousing = nextPlayer.currentHousingId === 'security' || nextPlayer.currentHousingId === 'penthouse';
+      const cashRate = isHighEndHousing ? (context.campaign.config.economyRules?.socializeSecurityCashCost ?? 50) : (context.campaign.config.economyRules?.socializeLowCostCashCost ?? 25);
       const cashCost = X * cashRate;
-      const fullReward = nextPlayer.currentHousingId === 'security' ? X * 2 : X;
+      const fullReward = isHighEndHousing ? X * 2 : X;
 
       const currentMental = nextPlayer.mentalCondition ?? 25;
       const minMental = statRules?.minMentalCondition ?? 5;
