@@ -1,6 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { JobBoard, StockTradeRow, BankInterface, HomeRelax, WorkStation, UniversityRegistry } from './BuildingInteractions';
+import { 
+  JobBoard, 
+  StockTradeRow, 
+  BankInterface, 
+  HomeRelax, 
+  WorkStation, 
+  UniversityRegistry,
+  StoreFront,
+  RentOffice,
+  PawnShop,
+  DiscountAndPawnShop,
+  ActionReasonModal
+} from './BuildingInteractions';
 import type { PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
 
@@ -544,4 +556,120 @@ describe('BuildingInteractions', () => {
     expect(screen.getByText(/Dictionary/i)).toBeInTheDocument();
     expect(screen.getByText(/\+1 Max 🧠/i)).toBeInTheDocument();
   });
+
+  it('StoreFront renders items for sale and dispatches buy action', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 500,
+      hoursRemaining: 10,
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const mockItems = [
+      { id: 'bicycle', name: 'Bicycle', basePrice: 100, category: 'vehicle' },
+      { id: 'color_tv', name: 'Color TV', basePrice: 300, category: 'appliance' }
+    ] as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <StoreFront
+        player={mockPlayer}
+        onAction={mockOnAction}
+        availableItems={mockItems}
+        economicIndex={0}
+      />
+    );
+
+    expect(screen.getByText(/Bicycle/i)).toBeInTheDocument();
+    expect(screen.getByText(/Color TV/i)).toBeInTheDocument();
+
+    const bicycleItem = screen.getByText(/Bicycle/i);
+    fireEvent.click(bicycleItem);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy', itemId: 'bicycle' });
+  });
+
+  it('RentOffice renders housing options and rent payment controls', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 1000,
+      hoursRemaining: 10,
+      currentHousingId: 'low_cost',
+      currentRentPrice: 300,
+      rentPaidUntilWeek: 4,
+      rentDebt: 0,
+      turnFlags: { rentPaidThisTurn: false },
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const mockCampaign = {
+      housing: [
+        { id: 'low_cost', name: 'Low Cost Housing', baseRent: 300, isRobberyImmune: false },
+        { id: 'security', name: 'Security Apartments', baseRent: 800, isRobberyImmune: true }
+      ],
+      config: {
+        timeRules: { moveApartmentCost: 4 }
+      }
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <RentOffice
+        player={mockPlayer}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+        turn={4}
+        economicIndex={0}
+      />
+    );
+
+    expect(screen.getByText(/Security Apartments/i)).toBeInTheDocument();
+  });
+
+  it('PawnShop renders pawn and redeem interface and handles pawn actions', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 200,
+      hoursRemaining: 10,
+      inventory: {
+        appliances: [{ id: 'stereo', purchasePrice: 200, purchaseSource: 'socket_city' }],
+        pawnedItems: [{ itemId: 'color_tv', originalPrice: 400, redeemCost: 200, weekPawned: 1, ownerId: 'p1' }]
+      }
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <PawnShop
+        player={mockPlayer}
+        onAction={mockOnAction}
+        economicIndex={0}
+        pawnShopItemsForSale={[]}
+      />
+    );
+
+    expect(screen.getByText(/Sell Items/i)).toBeInTheDocument();
+    expect(screen.getByText(/Buy Back/i)).toBeInTheDocument();
+    expect(screen.getByText(/Stereo/i)).toBeInTheDocument();
+  });
+
+  it('ActionReasonModal renders reason and dismisses via onClose', () => {
+    const handleClose = vi.fn();
+
+    render(
+      <ActionReasonModal
+        title="Custom Title"
+        reason="Because reasons"
+        onClose={handleClose}
+      />
+    );
+
+    expect(screen.getByText(/Custom Title/i)).toBeInTheDocument();
+    expect(screen.getByText(/Because reasons/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('OK'));
+    expect(handleClose).toHaveBeenCalled();
+  });
 });
+
