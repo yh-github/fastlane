@@ -200,7 +200,7 @@ describe('Advanced Variation Mechanics', () => {
     expect(player.resilienceBonus || 0).toBe(0); // NO resilience bonus from incremental drops!
     expect(player.mentalConditionMax).toBe(50);
 
-    // Now simulate a single event with drop >= 3 (e.g. customized action with drop >= 3)
+    // Verify study action does NOT award resilience bonus even for large drops >= 3
     const customRules = {
       ...mockStatRules,
       studyGrindMentalCost: 4 // 4th action is in Grind tier, drops 4 Mental in one single action
@@ -210,8 +210,117 @@ describe('Advanced Variation Mechanics', () => {
 
     player = gameReducer(player, { type: 'study', degreeId: 'degree1' }, shockContext).updatedPlayer;
     expect(player.mentalCondition).toBe(43);
-    expect(player.resilienceBonus).toBe(1); // Single event shock >= 3 awards resilience!
-    expect(player.mentalConditionMax).toBe(51);
+    expect(player.resilienceBonus || 0).toBe(0); // Voluntary study does NOT award resilience!
+    expect(player.mentalConditionMax).toBe(50);
+  });
+
+  it('should increase mental cost of studying by 1 for each class behind in prerequisites chain', () => {
+    const rules: GameRules = { usePhysicalMentalConditions: true };
+    const customCampaign = {
+      ...mockCampaign,
+      config: { ...mockCampaign.config, gameRules: rules },
+      education: [
+        { id: 'jc', name: 'Junior College', prerequisites: [], lessonsRequired: 10, baseTuitionFee: 50 },
+        { id: 'acad', name: 'Academic', prerequisites: ['jc'], lessonsRequired: 10, baseTuitionFee: 50 },
+        { id: 'grad', name: 'Graduate School', prerequisites: ['acad'], lessonsRequired: 10, baseTuitionFee: 50 },
+        { id: 'postdoc', name: 'Post Doctoral', prerequisites: ['grad'], lessonsRequired: 10, baseTuitionFee: 50 }
+      ]
+    };
+    
+    let player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, customCampaign.config);
+    player.enrolledClasses = { 'jc': 0, 'acad': 0, 'grad': 0, 'postdoc': 0 };
+    player.hoursRemaining = 60;
+    
+    const context = {
+      campaign: customCampaign,
+      rules,
+      turn: 1,
+      economicIndex: 0,
+      rng: { next: () => 0.5, nextInt: (min: number, max: number) => 1 } as any,
+      state: { players: [player], rules } as any
+    };
+
+    // JC (depth 0): normal cost = 1 Mental
+    let p = gameReducer(player, { type: 'study', degreeId: 'jc' }, context).updatedPlayer;
+    expect(p.mentalCondition).toBe(49); // 50 - 1 = 49
+
+    // Acad (depth 1): actionCount 2 (Normal tier: base 1 + 1 prereq = 2 Mental)
+    p = gameReducer(p, { type: 'study', degreeId: 'acad' }, context).updatedPlayer;
+    expect(p.mentalCondition).toBe(47); // 49 - 2 = 47
+
+    // Grad (depth 2): actionCount 3 (Normal tier: base 1 + 2 prereqs = 3 Mental)
+    p = gameReducer(p, { type: 'study', degreeId: 'grad' }, context).updatedPlayer;
+    expect(p.mentalCondition).toBe(44); // 47 - 3 = 44
+
+    // Postdoc (depth 3): actionCount 4 (Grind tier: base 2 + 3 prereqs = 5 Mental)
+    p = gameReducer(p, { type: 'study', degreeId: 'postdoc' }, context).updatedPlayer;
+    expect(p.mentalCondition).toBe(39); // 44 - 5 = 39
+  });
+
+  it('should grant academic_freedom Dep bonuses (+1 for grinding, +2 for overtime) when studying', () => {
+    const rules: GameRules = { usePhysicalMentalConditions: true };
+    const customCampaign = {
+      ...mockCampaign,
+      config: { ...mockCampaign.config, gameRules: rules },
+      jobs: [
+        { id: 'uni_prof', title: 'Professor', baseWage: 20, requirements: { dependability: 60, experience: 50 }, tags: ['academic_freedom'] },
+        { id: 'clerk', title: 'Clerk', baseWage: 5, requirements: { dependability: 10, experience: 10 } }
+      ],
+      education: [
+        { id: 'degree1', name: 'Degree 1', prerequisites: [], lessonsRequired: 20, baseTuitionFee: 50 }
+      ]
+    };
+    
+    let player = createPlayerState('test_p', 'Test Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, customCampaign.config);
+    player.currentJobId = 'uni_prof';
+    player.dependability = 60;
+    player.enrolledClasses = { 'degree1': 0 };
+    player.hoursRemaining = 60;
+    
+    const context = {
+      campaign: customCampaign,
+      rules,
+      turn: 1,
+      economicIndex: 0,
+      rng: { next: () => 0.5, nextInt: (min: number, max: number) => 1 } as any,
+      state: { players: [player], rules } as any
+    };
+
+    let p = player;
+    // Lessons 1-3 (Normal tier): no Dep bonus
+    for (let i = 1; i <= 3; i++) {
+      p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+      expect(p.dependability).toBe(60);
+    }
+
+    // Lesson 4 (Grind tier): +1 Dep bonus
+    p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+    expect(p.dependability).toBe(61);
+
+    // Lessons 5-7 (Grind tier): +1 Dep bonus each
+    for (let i = 5; i <= 7; i++) {
+      p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+    }
+    expect(p.dependability).toBe(64); // 60 + 4*1 = 64
+
+    // Lesson 8 (Overtime tier): +2 Dep bonus
+    p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+    expect(p.dependability).toBe(66); // 64 + 2 = 66
+
+    // Lesson 9 (Overtime tier): +2 Dep bonus
+    p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+    expect(p.dependability).toBe(68); // 66 + 2 = 68
+
+    // Test that a regular job (clerk) does NOT get Dep bonus on study grinding
+    let clerkPlayer = createPlayerState('test_clerk', 'Clerk Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, customCampaign.config);
+    clerkPlayer.currentJobId = 'clerk';
+    clerkPlayer.dependability = 20;
+    clerkPlayer.enrolledClasses = { 'degree1': 0 };
+    clerkPlayer.hoursRemaining = 60;
+    clerkPlayer.studyActionsThisTurn = 3; // next will be action 4 (Grind)
+
+    let cp = gameReducer(clerkPlayer, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
+    expect(cp.dependability).toBe(20); // No bonus for non-academic_freedom jobs
   });
 
   it('should not drop physical/mental conditions below minimums', () => {
