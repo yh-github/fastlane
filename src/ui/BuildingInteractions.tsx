@@ -74,7 +74,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
                   <strong>{t(`job.${job.id}`, { defaultValue: job.title })}</strong>
-                  <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>💰${offeredWage}/hr</span>
+                  <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${offeredWage}/hr</span>
                 </div>
                 <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px' }}>
                   {t('jobBoard.base')}: ${job.baseWage}/hr
@@ -102,7 +102,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 {isCurrentJob ? (
                   (!rules?.helpfulUI || offeredWage > player.currentWage) ? (
                     <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                      💰 {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
+                      {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
                     </button>
                   ) : (
                     <span style={{ color: '#4caf50', fontWeight: 'bold', display: 'block', textAlign: 'center', padding: '6px' }}>✓ {t('jobBoard.currentJob', { wage: player.currentWage })}</span>
@@ -137,7 +137,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     return (
       <div className="interaction-panel">
         <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
-        <p style={{ fontSize: '12px', marginBottom: '10px' }}>💰 ${player.currentWage}/hr</p>
+        <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
         <button
           data-action-target={`work-${job.id}`}
           onClick={() => onAction({ type: 'work', jobId: job.id })}
@@ -237,7 +237,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     <div className="interaction-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
         <h3 style={{ margin: 0 }}>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
-        <span style={{ fontSize: '12px', color: '#00e5ff', fontWeight: 'bold' }}>💰${player.currentWage}/hr (⏳{hoursToWork}h) {tierLabel}</span>
+        <span style={{ fontSize: '12px', color: '#00e5ff', fontWeight: 'bold' }}>${player.currentWage}/hr (⏳{hoursToWork}h) {tierLabel}</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
@@ -287,7 +287,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                 )}
               </div>
               <div style={{ fontSize: '0.78em', marginTop: '3px', color: canAfford ? '#bbb' : '#777' }}>
-                {costStr} | 💰${m.wage} | {m.rewardText}
+                {costStr} | ${m.wage} | {m.rewardText}
               </div>
             </button>
           );
@@ -343,7 +343,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                   {rules?.helpfulUI && alreadyOwned && <span style={{ color: '#4caf50', marginLeft: '6px', fontWeight: 'bold' }}>✓ {t('storeFront.owned', { defaultValue: 'Owned' })}</span>}
                 </span>
               </div>
-              <span style={{ fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>💰${adjustedPrice}</span>
+              <span style={{ fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>${adjustedPrice}</span>
             </div>
           );
         })}
@@ -710,12 +710,12 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                     padding: '10px', 
                     borderRadius: '4px', 
                     cursor: 'pointer', 
-                    fontWeight: 'bold',
-                    textAlign: 'left',
-                    opacity: isServiceDisabled ? 0.65 : 1
+                    fontWeight: 'bold', 
+                    textAlign: 'left', 
+                    opacity: isServiceDisabled ? 0.65 : 1 
                   }}
                 >
-                  <div>🧼 Call Cleaning Service (⏳ {cleaningServiceCost}h, 💰${cleaningServicePrice})</div>
+                  <div>🧼 Call Cleaning Service (⏳ {cleaningServiceCost}h, ${cleaningServicePrice})</div>
                   <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '2px', color: isServiceDisabled ? '#ffb3b3' : 'inherit' }}>
                     {serviceSubtext}
                   </div>
@@ -976,7 +976,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                   onClick={() => onAction({ type: 'rent_transaction', amount: rentOwed })}
                   style={{ marginTop: '10px', backgroundColor: '#c0392b' }}
                 >
-                  💰 {t('rentOffice.payRentDebt')}
+                  {t('rentOffice.payRentDebt')}
                 </button>
               </div>
             )}
@@ -990,7 +990,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                   onClick={() => onAction({ type: 'pay_rent_advance', amount: rentAdvanceCost })}
                   style={{ width: '100%' }}
                 >
-                  💰 {t('rentOffice.payAdvance', { cost: rentAdvanceCost })}
+                  {t('rentOffice.payAdvance', { cost: rentAdvanceCost })}
                 </button>
               </div>
             )}
@@ -1035,7 +1035,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                 <div className="store-item" style={{ padding: '12px', borderRadius: '6px', border: '1px solid #444', background: 'rgba(0,0,0,0.2)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <strong>{t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name })}</strong>
-                    <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>💰${lowCostMovePrice}/mo</span>
+                    <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${lowCostMovePrice}/mo</span>
                   </div>
                   <button 
                     onClick={() => handleInitiateMove(lowCostHousing.id, lowCostMovePrice, t(`housing.${lowCostHousing.id}`, { defaultValue: lowCostHousing.name }))}
@@ -1051,7 +1051,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                 <div className="store-item" style={{ padding: '12px', borderRadius: '6px', border: '1px solid #444', background: 'rgba(0,0,0,0.2)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <strong>{t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name })}</strong>
-                    <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>💰${securityMovePrice}/mo</span>
+                    <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${securityMovePrice}/mo</span>
                   </div>
                   <button 
                     onClick={() => handleInitiateMove(securityHousing.id, securityMovePrice, t(`housing.${securityHousing.id}`, { defaultValue: securityHousing.name }))}
@@ -1078,7 +1078,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                   <div>📦 <strong>Moving Fee (Mess & Durables):</strong> ${confirmMove.movingFee}</div>
                 )}
                 <hr style={{ borderColor: '#444', margin: '6px 0' }} />
-                <div style={{ color: '#00e5ff', fontWeight: 'bold' }}>💰 <strong>Total Cost:</strong> ${confirmMove.totalCost}</div>
+                <div style={{ color: '#00e5ff', fontWeight: 'bold' }}><strong>Total Cost:</strong> ${confirmMove.totalCost}</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
                 <button 
@@ -1089,7 +1089,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                   disabled={player.money < confirmMove.totalCost}
                   style={{ flex: 1, padding: '8px 16px', background: player.money >= confirmMove.totalCost ? 'var(--accent-cyan, #00e5ff)' : '#555', color: player.money >= confirmMove.totalCost ? '#000' : '#888', border: 'none', fontWeight: 'bold', cursor: player.money >= confirmMove.totalCost ? 'pointer' : 'not-allowed' }}
                 >
-                  {player.money >= confirmMove.totalCost ? `✓ ${t('common.yes', { defaultValue: 'CONFIRM MOVE' })}` : 'NOT ENOUGH 💰'}
+                  {player.money >= confirmMove.totalCost ? `✓ ${t('common.yes', { defaultValue: 'CONFIRM MOVE' })}` : 'NOT ENOUGH MONEY'}
                 </button>
                 <button 
                   onClick={() => setConfirmMove(null)}
@@ -1202,7 +1202,7 @@ export function StockTradeDialog({
       </h3>
 
       <div style={{ fontSize: '13px', color: '#ccc', marginBottom: '15px' }}>
-        Price: <strong>💰${price}</strong> / share | {isBuy ? `Available Cash: 💰$${playerMoney}` : `Owned Shares: ${owned}`}
+        Price: <strong>${price}</strong> / share | {isBuy ? `Available Cash: $${playerMoney}` : `Owned Shares: ${owned}`}
       </div>
 
       <div style={{ background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '8px', marginBottom: '15px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1239,16 +1239,16 @@ export function StockTradeDialog({
       <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '6px', marginBottom: '15px', fontSize: '12px', lineHeight: '1.6' }}>
         {isBuy ? (
           <>
-            <div>💵 <strong>Total Cost:</strong> 💰${totalCost}</div>
-            <div>💰 <strong>Cash Remaining:</strong> 💰${Math.max(0, playerMoney - totalCost)}</div>
+            <div><strong>Total Cost:</strong> ${totalCost}</div>
+            <div><strong>Cash Remaining:</strong> ${Math.max(0, playerMoney - totalCost)}</div>
           </>
         ) : (
           <>
-            <div>💵 <strong>Gross Revenue:</strong> 💰${grossRevenue}</div>
+            <div><strong>Gross Revenue:</strong> ${grossRevenue}</div>
             {sellFeePercent > 0 && (
-              <div style={{ color: '#e74c3c' }}>✂️ <strong>Fee ({sellFeePercent}%):</strong> -💰${totalSellFee}</div>
+              <div style={{ color: '#e74c3c' }}>✂️ <strong>Fee ({sellFeePercent}%):</strong> -${totalSellFee}</div>
             )}
-            <div>💰 <strong>Net Revenue:</strong> 💰${netRevenue}</div>
+            <div><strong>Net Revenue:</strong> ${netRevenue}</div>
             <div>📈 <strong>Shares Remaining:</strong> {Math.max(0, owned - numShares)}</div>
           </>
         )}
@@ -1266,7 +1266,7 @@ export function StockTradeDialog({
           disabled={!canConfirm}
           style={{ flex: 1, padding: '10px', background: canConfirm ? (isBuy ? '#2ecc71' : '#e74c3c') : '#555', color: canConfirm ? (isBuy ? '#000' : '#fff') : '#888', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: canConfirm ? 'pointer' : 'not-allowed' }}
         >
-          {isBuy ? `Confirm Buy (💰$${totalCost})` : `Confirm Sell (+💰$${netRevenue})`}
+          {isBuy ? `Confirm Buy ($${totalCost})` : `Confirm Sell (+$${netRevenue})`}
         </button>
         <button 
           onClick={onClose}
@@ -1321,7 +1321,7 @@ export function BankTransactionDialog({
       </h3>
 
       <div style={{ fontSize: '13px', color: '#ccc', marginBottom: '15px' }}>
-        Current Cash: <strong>💰${playerCash}</strong> | Savings: <strong>💰${playerSavings}</strong>
+        Current Cash: <strong>${playerCash}</strong> | Savings: <strong>${playerSavings}</strong>
       </div>
 
       <div style={{ background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '8px', marginBottom: '15px', textAlign: 'left' }}>
@@ -1344,28 +1344,28 @@ export function BankTransactionDialog({
             onClick={() => setAmountInput('50')}
             style={{ flex: 1, padding: '4px 8px', fontSize: '11px', background: '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', cursor: 'pointer' }}
           >
-            💰$50
+            $50
           </button>
           <button 
             type="button"
             onClick={() => setAmountInput('100')}
             style={{ flex: 1, padding: '4px 8px', fontSize: '11px', background: '#333', color: '#fff', border: '1px solid #555', borderRadius: '4px', cursor: 'pointer' }}
           >
-            💰$100
+            $100
           </button>
           <button 
             type="button"
             onClick={() => setAmountInput(String(maxAvailable))}
             style={{ flex: 1, padding: '4px 8px', fontSize: '11px', background: '#4aa', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
           >
-            Max (💰${maxAvailable})
+            Max (${maxAvailable})
           </button>
         </div>
       </div>
 
       <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '6px', marginBottom: '15px', fontSize: '12px', lineHeight: '1.6' }}>
-        <div>💰 <strong>Cash After Transaction:</strong> 💰${Math.max(0, updatedCash)}</div>
-        <div>🏦 <strong>Savings After Transaction:</strong> 💰${Math.max(0, updatedSavings)}</div>
+        <div><strong>Cash After Transaction:</strong> ${Math.max(0, updatedCash)}</div>
+        <div>🏦 <strong>Savings After Transaction:</strong> ${Math.max(0, updatedSavings)}</div>
         {!isDeposit && (
           <div style={{ fontSize: '11px', color: '#e67e22', marginTop: '4px' }}>
             ℹ️ Early withdrawal fees apply if specified by rules.
@@ -1385,7 +1385,7 @@ export function BankTransactionDialog({
           disabled={!canConfirm}
           style={{ flex: 1, padding: '10px', background: canConfirm ? (isDeposit ? '#2ecc71' : '#3498db') : '#555', color: canConfirm ? (isDeposit ? '#000' : '#fff') : '#888', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: canConfirm ? 'pointer' : 'not-allowed' }}
         >
-          {isDeposit ? `Confirm Deposit (💰$${amount})` : `Confirm Withdraw (💰$${amount})`}
+          {isDeposit ? `Confirm Deposit ($${amount})` : `Confirm Withdraw ($${amount})`}
         </button>
         <button 
           onClick={onClose}
@@ -1551,7 +1551,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <strong>{t('bank.cash', { defaultValue: 'Cash:' })}</strong> 💰${player.money}
+          <strong>{t('bank.cash', { defaultValue: 'Cash:' })}</strong> ${player.money}
         </div>
         {tab === 'banking' && (
           <div>
@@ -1560,7 +1560,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
         )}
         {tab === 'loans' && (
           <div>
-            <strong>{t('bank.debt', { defaultValue: 'Debt:' })}</strong> 💰${player.loanDebt || 0}
+            <strong>{t('bank.debt', { defaultValue: 'Debt:' })}</strong> ${player.loanDebt || 0}
           </div>
         )}
       </div>
@@ -1669,7 +1669,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
             onClick={() => onAction({ type: 'pay_loan' })} 
             style={{ padding: '14px', borderRadius: '8px' }}
           >
-            💰 {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment (💰$${loanPaymentAmount} or remainder)` })}
+            {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanPaymentAmount} or remainder)` })}
           </button>
         </div>
       )}
@@ -1708,7 +1708,7 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                   )}
                   <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.id}`, { defaultValue: formatItemName(app.id) })}</span>
                 </div>
-                <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>+💰${pawnValue}</span>
+                <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>+${pawnValue}</span>
               </li>
             );
           })}
@@ -1735,7 +1735,7 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                   )}
                   <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
                 </div>
-                <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-💰${redeemCost}</span>
+                <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-${redeemCost}</span>
               </li>
             );
           })}
@@ -1761,7 +1761,7 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                     )}
                     <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
                   </div>
-                  <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-💰${buyCost}</span>
+                  <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-${buyCost}</span>
                 </li>
               );
             })}
@@ -1862,7 +1862,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                       </div>
                       {!isEnrolled && (
                         <div style={{ fontSize: '12px', color: '#ccc', marginBottom: '6px' }}>
-                          {t('university.tuition', { fee: tuitionFee, defaultValue: `Tuition: 💰$${tuitionFee}` })}
+                          {t('university.tuition', { fee: tuitionFee, defaultValue: `Tuition: $${tuitionFee}` })}
                         </div>
                       )}
                       
@@ -1962,7 +1962,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                           onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
                           data-action-target={`enroll-${deg.id}`}
                         >
-                          🎓 {t('university.enrollBtn', { defaultValue: 'Enroll' })} (💰${tuitionFee})
+                          🎓 {t('university.enrollBtn', { defaultValue: 'Enroll' })} (${tuitionFee})
                         </button>
                       )}
                     </div>
