@@ -31,16 +31,20 @@ npm install
 npm run dev
 ```
 
+## Developer & Codebase Guide
+
+For a comprehensive guide mapping all **game concepts to specific files**, architecture diagrams, execution pipelines, and development recipes, see:
+👉 **[`docs/CODE_GUIDE.md`](./docs/CODE_GUIDE.md)**
+
 ## Project Structure
 
 | Path | Purpose |
 |------|---------|
-| `src/engine/` | Core game loop: stat math, time management, data loading |
-| `src/graphics/` | PixiJS rendering and pathfinding |
-| `src/ui/` | React components (Dashboard, ActionPanel, Tooltips) |
-| `campaigns/classic_1990/` | Base game data (buildings, jobs, items, map, events) |
-| `campaigns/modern_v2/` | Future expansion slot |
-| `docs/` | Game Design Document |
+| `src/engine/` | Core game loop: domain action reducers (`src/engine/actions/`), turn lifecycle (`src/engine/turn/`), stat math, economy |
+| `src/graphics/` | PixiJS canvas rendering and pathfinding |
+| `src/ui/` | React components (Dashboard, Building Modals in `src/ui/buildings/`, HUD, GameLog) |
+| `campaigns/classic_1990/` | Base game data (buildings, jobs, items, map, events, config) |
+| `docs/` | Game Design Documents and Developer Code Guide |
 
 ## Sprint Roadmap
 
