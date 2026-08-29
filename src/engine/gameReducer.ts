@@ -1,60 +1,35 @@
-import { type PlayerState, type GameRules, type OwnedAppliance, type PawnedItem, type GameEvent, recalculatePlayerEffects, collectItemEffects } from './gameState';
-import { type CampaignBundle } from './dataLoader';
-import { type Random } from '../utils/rng';
-import { applyForJob, workShift } from './jobEngine';
-import { buyItem } from './shoppingEngine';
-import { enrollInDegree, study, calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from './educationEngine';
-import { spendHours } from './timeManager';
-import { calcItemPrice, calcEconomyPrice } from './economyEngine';
-import { calcMovingFee, messGrowth, safeDecrementPhysical, safeDecrementMental, calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap } from './statMath';
-import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
-import { processStreetRobbery } from './eventEngine';
-import { resolveDecision, type EngineDecision, type ReplayContext } from './replayTypes';
-import { requireConfig } from './rules';
-import { applyMoraleEffect, applyHappinessChange } from './statEffects';
+import type { PlayerState, GameEvent, PawnedItem } from './gameState';
+import { recalculatePlayerEffects } from './gameState';
+import type { EngineDecision, ReplayContext } from './replayTypes';
+import type { GameAction, ReducerContext, ReducerResult } from './actions';
+import {
+  handleApplyAction,
+  handleWorkAction,
+  handleBuyAction,
+  handleEnrollAction,
+  handleStudyAction,
+  handleRelaxAction,
+  handleCleanAction,
+  handleCleaningServiceAction,
+  handleSocializeAction,
+  handleChangeClothesAction,
+  handleMoveAction,
+  handleBankTransactionAction,
+  handleOpenBrokerAction,
+  handleBuyStockAction,
+  handleSellStockAction,
+  handleTakeLoanAction,
+  handlePayLoanAction,
+  handleRentTransactionAction,
+  handleMoveApartmentAction,
+  handlePayRentAdvanceAction,
+  handleAskRentExtensionAction,
+  handlePawnItemAction,
+  handleRedeemItemAction,
+  handleBuyPawnItemAction
+} from './actions';
 
-export type GameAction =
-  | { type: 'apply'; jobId: string; offeredWage?: number }
-  | { type: 'work'; jobId: string; mode?: 'look_busy' | 'work_work' | 'face_time' | 'innovate' }
-  | { type: 'buy'; itemId: string }
-  | { type: 'enroll'; degreeId: string }
-  | { type: 'study'; degreeId: string }
-  | { type: 'relax' }
-  | { type: 'bank_transaction'; amount: number }
-  | { type: 'open_broker' }
-  | { type: 'move'; nodeId: string }
-  | { type: 'buy_stock'; stockId: string; quantity: number; cost: number }
-  | { type: 'sell_stock'; stockId: string; quantity: number; revenue: number }
-  | { type: 'take_loan' }
-  | { type: 'pay_loan' }
-  | { type: 'rent_transaction'; amount: number }
-  | { type: 'move_apartment'; housingId: string; cost: number }
-  | { type: 'pay_rent_advance'; amount: number }
-  | { type: 'pawn_item'; item: OwnedAppliance; value: number }
-  | { type: 'redeem_item'; item: PawnedItem; cost: number }
-  | { type: 'buy_pawn_item'; item: PawnedItem; cost: number }
-  | { type: 'change_clothes'; clothes: 'casual' | 'dress' | 'business' | 'none' }
-  | { type: 'ask_rent_extension' }
-  | { type: 'clean' }
-  | { type: 'call_cleaning_service' }
-  | { type: 'socialize_guests' };
-
-export interface ReducerContext {
-  campaign: CampaignBundle;
-  rules: GameRules;
-  turn: number;
-  economicIndex: number;
-  rng: Random;
-  state: import('./gameState').GameState;
-  engineDecisions?: EngineDecision[]; // Incoming decisions for replay
-}
-
-export interface ReducerResult {
-  updatedPlayer: PlayerState;
-  actionLog?: GameEvent | GameEvent[];
-  updatedPawnShopItemsForSale?: PawnedItem[];
-  outEngineDecisions?: EngineDecision[];
-}
+export type { GameAction, ReducerContext, ReducerResult } from './actions';
 
 export function gameReducer(
   player: PlayerState,
@@ -64,936 +39,93 @@ export function gameReducer(
   let nextPlayer = structuredClone(player);
   let actionLog: GameEvent | GameEvent[] | undefined = undefined;
   let updatedPawnShopItemsForSale: PawnedItem[] | undefined = undefined;
-  let outEngineDecisions: EngineDecision[] = [];
+  const outEngineDecisions: EngineDecision[] = [];
   const replayContext: ReplayContext = {
     inDecisions: context.engineDecisions,
     outDecisions: outEngineDecisions
   };
 
+  let res;
   switch (action.type) {
-    case 'apply': {
-      const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
-      if (jobDef) {
-        const jobApplicationCost = requireConfig(context.campaign.config.timeRules?.jobApplicationCost, 'timeRules.jobApplicationCost');
-        const result = applyForJob(nextPlayer, jobDef, jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules, context.turn, replayContext);
-        nextPlayer = result.updated;
-        actionLog = result.message;
-      }
+    case 'apply':
+      res = handleApplyAction(nextPlayer, action, context, replayContext);
       break;
-    }
-    case 'work': {
-      const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
-      if (jobDef) {
-        const workSessionCost = requireConfig(context.campaign.config.timeRules?.workSessionCost, 'timeRules.workSessionCost');
-        const result = workShift(
-          nextPlayer,
-          jobDef,
-          workSessionCost,
-          context.rules,
-          context.campaign.config.statRules,
-          action.mode || 'work_work',
-          context.rng,
-          replayContext
-        );
-        nextPlayer = result.updated;
-        if (result.messages && result.messages.length > 0) {
-          actionLog = result.messages.length === 1 ? result.messages[0] : result.messages;
-        } else {
-          actionLog = result.success ? { key: 'action.job.worked' } : { key: 'action.error.cannotWork' };
-        }
-      }
+    case 'work':
+      res = handleWorkAction(nextPlayer, action, context, replayContext);
       break;
-    }
-    case 'buy': {
-      const currentBuildingId = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
-      const buildingDef = context.campaign.buildings.find(b => b.id === currentBuildingId);
-      const inventoryEntry = buildingDef?.inventory?.find(i => i.itemId === action.itemId);
-      const baseItemDef = context.campaign.items.find(i => i.id === action.itemId);
-      
-      console.log(`[DEBUG-GAMEREDUCER-BUY] itemId=${action.itemId}, currentBuilding=${currentBuildingId}, itemDefFound=${!!baseItemDef}`);
-      
-      if (baseItemDef) {
-        const timeCost = baseItemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
-        if (timeCost > 0 && nextPlayer.hoursRemaining < timeCost) {
-          if (!context.rules.allowPartialHours) {
-            actionLog = { key: 'action.error.notEnoughTimeBuy', params: { name: baseItemDef.name } };
-            break;
-          }
-        }
-        
-        // Resolve price from inventory override or fallback to old basePrice, default to 0
-        const basePrice = inventoryEntry?.priceOverride ?? baseItemDef.basePrice ?? 0;
-        
-        // Ensure price is adjusted for economy, respecting fixed-price items
-        const itemForPricing = { ...baseItemDef, basePrice };
-        const adjustedPrice = calcItemPrice(itemForPricing, context.economicIndex);
-        const itemWithPriceAndStore = { ...baseItemDef, basePrice: adjustedPrice, store: currentBuildingId };
-        
-        const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules, context.campaign);
-        console.log(`[DEBUG-GAMEREDUCER-BUY] buyItem success=${result.success}, newMoney=${result.updated.money}`);
-        if (result.success) {
-          nextPlayer = spendHours(result.updated, timeCost);
-          if (baseItemDef.id === 'newspaper') {
-            nextPlayer.turnFlags.readNewspaperThisTurn = true;
-          }
-          if (context.rules.usePhysicalMentalConditions) {
-            if (baseItemDef.category === 'appliance' || baseItemDef.category === 'clothes') {
-              nextPlayer.lifestyle = Math.min(100, (nextPlayer.lifestyle || 50) + 1);
-            }
-            const isBurger = ['hamburger', 'cheeseburger', 'burger'].includes(baseItemDef.id);
-            const isJunkOrBadFastFood = !isBurger && (
-              baseItemDef.category === 'fast_food' ||
-              baseItemDef.category === 'junk' ||
-              ['fries', 'shake', 'cola', 'colas', 'shakes', 'astro_chicken'].includes(baseItemDef.id)
-            );
-            if (isJunkOrBadFastFood) {
-              const minPhys = nextPlayer.minPhysicalCondition ?? 1;
-              nextPlayer.physicalCondition = safeDecrementPhysical(nextPlayer.physicalCondition ?? 50, 1, minPhys);
-              nextPlayer.physicalConditionMax = Math.max(minPhys, (nextPlayer.physicalConditionMax ?? 50) - 1);
-              nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax, nextPlayer.physicalCondition);
-            }
-          }
-          actionLog = result.message;
-        } else {
-          actionLog = result.message;
-        }
-      }
+    case 'buy':
+      res = handleBuyAction(nextPlayer, action, context);
       break;
-    }
-    case 'enroll': {
-      const degDef = context.campaign.education.find(d => d.id === action.degreeId);
-      if (degDef) {
-        const result = enrollInDegree(nextPlayer, degDef, context.economicIndex);
-        nextPlayer = result.updated;
-        actionLog = result.message;
-      }
+    case 'enroll':
+      res = handleEnrollAction(nextPlayer, action, context);
       break;
-    }
-    case 'study': {
-      const degDef = context.campaign.education.find(d => d.id === action.degreeId);
-      if (degDef) {
-        const studySessionCost = requireConfig(context.campaign.config.timeRules?.studySessionCost, 'timeRules.studySessionCost');
-        if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < studySessionCost && !context.rules.allowPartialHours)) {
-          actionLog = { key: 'action.error.notEnoughTime' };
-          break;
-        }
-
-        if (context.rules.usePhysicalMentalConditions) {
-          const statRules = context.campaign.config.statRules;
-          const actionCount = (nextPlayer.studyActionsThisTurn || 0) + 1;
-
-          const overtimeThreshold = statRules?.studyOvertimeThreshold ?? 8;
-          const grindThreshold = statRules?.studyGrindThreshold ?? 4;
-
-          let mentalCost: number;
-          let physicalCost: number;
-
-          if (actionCount >= overtimeThreshold) {
-            mentalCost = statRules?.studyOvertimeMentalCost ?? 2;
-            physicalCost = statRules?.studyOvertimePhysicalCost ?? 1;
-          } else if (actionCount >= grindThreshold) {
-            mentalCost = statRules?.studyGrindMentalCost ?? 2;
-            physicalCost = statRules?.studyGrindPhysicalCost ?? 0;
-          } else {
-            mentalCost = statRules?.studyMentalCost ?? statRules?.studyNormalMentalCost ?? 1;
-            physicalCost = statRules?.studyNormalPhysicalCost ?? 0;
-          }
-
-          const prereqDepth = getPrerequisiteChainDepth(degDef.id, context.campaign.education);
-          mentalCost += prereqDepth;
-
-          const curPhys = nextPlayer.physicalCondition ?? 50;
-          if (curPhys < 10) {
-            mentalCost += 1;
-          }
-
-          const curMental = nextPlayer.mentalCondition ?? 50;
-          if ((curPhys - physicalCost < 1.0) || (curMental - mentalCost < 1.0)) {
-            actionLog = { key: 'action.error.tooExhausted' };
-            break;
-          }
-
-          // Mistake checks for study
-          let physMistake = false;
-          let mentalMistake = false;
-
-          if (physicalCost > 0 && curPhys < 10) {
-            const physChance = (10 - curPhys) * 0.025;
-            physMistake = resolveDecision(replayContext, `study_phys_mistake_${nextPlayer.id}_${actionCount}`, () => context.rng.next() < physChance);
-          }
-
-          if (mentalCost > 0 && curMental < 10) {
-            const mentalChance = (10 - curMental) * 0.025;
-            mentalMistake = resolveDecision(replayContext, `study_mental_mistake_${nextPlayer.id}_${actionCount}`, () => context.rng.next() < mentalChance);
-          }
-
-          const isPercentage = !!context.rules.percentageEducation;
-          const required = calcRequiredLessons(nextPlayer, degDef, context.rules);
-          const totalRequiredHours = required * studySessionCost;
-          const currentProgress = nextPlayer.enrolledClasses?.[degDef.id] || 0;
-
-          let maxSpend = context.rules.allowPartialHours
-            ? Math.min(nextPlayer.hoursRemaining, studySessionCost)
-            : studySessionCost;
-
-          if (isPercentage && context.rules.proportionalDivisibleActions) {
-            const remainingPct = Math.max(0, 100 - currentProgress);
-            const hoursNeeded = (remainingPct / 100) * totalRequiredHours;
-            if (hoursNeeded < maxSpend) {
-              maxSpend = Math.max(0.5, roundToResolution(hoursNeeded, 0.5));
-            }
-          }
-
-          const hoursToSpend = context.rules.allowPartialHours
-            ? Math.min(nextPlayer.hoursRemaining, maxSpend)
-            : maxSpend;
-          const ratio = hoursToSpend / studySessionCost;
-
-          if (context.rules.proportionalDivisibleActions && hoursToSpend < studySessionCost) {
-            const conditionRes = context.rules.conditionResolution ?? 0.5;
-            physicalCost = Math.max(0, roundToResolution(physicalCost * ratio, conditionRes));
-            mentalCost = Math.max(0, roundToResolution(mentalCost * ratio, conditionRes));
-          }
-
-          nextPlayer = spendHours(nextPlayer, hoursToSpend);
-          nextPlayer.studyActionsThisTurn = actionCount;
-
-          nextPlayer.physicalCondition = curPhys - physicalCost;
-          nextPlayer.mentalCondition = curMental - mentalCost;
-
-          // Academic freedom bonus check
-          let baseDepBonus = 0;
-          const currentJob = context.campaign.jobs.find(j => j.id === nextPlayer.currentJobId);
-          if (currentJob?.tags?.includes('academic_freedom')) {
-            if (actionCount >= overtimeThreshold) {
-              baseDepBonus = 2;
-            } else if (actionCount >= grindThreshold) {
-              baseDepBonus = 1;
-            }
-          }
-
-          const appliedDepBonus = (context.rules.proportionalDivisibleActions && hoursToSpend < studySessionCost)
-            ? roundToResolution(baseDepBonus * ratio, 0.5)
-            : baseDepBonus;
-
-          if (appliedDepBonus > 0 && !physMistake && !mentalMistake) {
-            nextPlayer.dependability = Math.min(100, roundToResolution(nextPlayer.dependability + appliedDepBonus, 0.5));
-          }
-
-          const statCosts: string[] = [];
-          if (mentalCost > 0) statCosts.push(`-${mentalCost} Mental`);
-          if (physicalCost > 0) statCosts.push(`-${physicalCost} Physical`);
-          if (appliedDepBonus > 0 && !physMistake && !mentalMistake) statCosts.push(`+${appliedDepBonus} Dep`);
-          const statsStr = statCosts.length > 0 ? ` (${statCosts.join(', ')})` : '';
-
-          if (physMistake || mentalMistake) {
-            if (physMistake) {
-              nextPlayer.physicalConditionMax = Math.max(1, (nextPlayer.physicalConditionMax ?? 50) - 1);
-              nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax, nextPlayer.physicalCondition);
-            }
-            if (mentalMistake) {
-              nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) - 1;
-              nextPlayer.mentalConditionMax = Math.max(1, (nextPlayer.mentalConditionMax ?? 50) - 1);
-              nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax, nextPlayer.mentalCondition);
-            }
-            const mistakeTypes = [physMistake ? 'Physical' : null, mentalMistake ? 'Mental' : null].filter(Boolean).join(' & ');
-            actionLog = { key: 'action.education.mistake', params: { name: degDef.name, type: mistakeTypes, stats: statsStr } };
-          } else {
-            // Study progress
-            nextPlayer.enrolledClasses = { ...(nextPlayer.enrolledClasses || {}) };
-            let isGraduated = false;
-
-            if (isPercentage) {
-              const progressGain = (hoursToSpend / totalRequiredHours) * 100;
-              const rawProgress = currentProgress + progressGain;
-              
-              if (rawProgress >= 99.0 || (totalRequiredHours - (currentProgress / 100 * totalRequiredHours) <= hoursToSpend + 0.1)) {
-                nextPlayer.enrolledClasses[degDef.id] = 100;
-                isGraduated = true;
-              } else {
-                const newProgress = Math.min(100, roundToResolution(rawProgress, context.rules.educationResolution ?? 0.1));
-                if (newProgress >= 99.0) {
-                  nextPlayer.enrolledClasses[degDef.id] = 100;
-                  isGraduated = true;
-                } else {
-                  nextPlayer.enrolledClasses[degDef.id] = newProgress;
-                }
-              }
-            } else {
-              nextPlayer.enrolledClasses[degDef.id] = (nextPlayer.enrolledClasses[degDef.id] || 0) + 1;
-              isGraduated = nextPlayer.enrolledClasses[degDef.id] >= required;
-            }
-
-            const currentDisplay = isPercentage 
-              ? formatDegreeProgress(nextPlayer.enrolledClasses[degDef.id], true)
-              : String(nextPlayer.enrolledClasses[degDef.id]);
-            const requiredDisplay = isPercentage ? '100%' : String(required);
-
-            if (isGraduated) {
-              nextPlayer.degrees = [...nextPlayer.degrees, degDef.id];
-              delete nextPlayer.enrolledClasses[degDef.id];
-              delete nextPlayer.enrolledClasses[`${degDef.id}_req`];
-
-              const qolReduced = context.rules.reducedDegreeStatBonus;
-              const depReward = qolReduced ? Math.min(2, degDef.rewards.dependability) : degDef.rewards.dependability;
-              const maxDepReward = qolReduced ? Math.min(2, degDef.rewards.maxDepBoost) : degDef.rewards.maxDepBoost;
-              const maxExpReward = qolReduced ? Math.min(2, degDef.rewards.maxExpBoost) : degDef.rewards.maxExpBoost;
-
-              nextPlayer = applyHappinessChange(nextPlayer, degDef.rewards.happiness, 'graduation', context.rules, context.campaign.config.statRules);
-              nextPlayer.degreeDepBoost += maxDepReward;
-              nextPlayer.dependability = Math.min(100, nextPlayer.dependability + depReward);
-              nextPlayer.degreeExpBoost += maxExpReward;
-
-              actionLog = { key: 'action.education.graduated', params: { name: degDef.name, stats: statsStr } };
-            } else {
-              actionLog = { key: 'action.education.studied', params: { name: degDef.name, current: currentDisplay, required: requiredDisplay, stats: statsStr } };
-            }
-          }
-        } else {
-          const result = study(nextPlayer, degDef, studySessionCost, context.rules);
-          nextPlayer = result.updated;
-          actionLog = result.message;
-        }
-      }
+    case 'study':
+      res = handleStudyAction(nextPlayer, action, context, replayContext);
       break;
-    }
-    case 'relax': {
-      const relaxCost = requireConfig(context.campaign.config.timeRules?.relaxCost, 'timeRules.relaxCost');
-      const relaxGain = context.campaign.config.timeRules.relaxGain ?? 3;
-      if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < relaxCost && !context.rules.allowPartialHours && !context.rules.proportionalDivisibleActions)) {
-        actionLog = { key: 'action.error.notEnoughTimeRelax' };
-        break;
-      }
-      
-      const actualHours = Math.min(relaxCost, nextPlayer.hoursRemaining);
-      const ratio = actualHours / relaxCost;
-      nextPlayer = spendHours(nextPlayer, actualHours);
-      
-      let statsStr = '';
-      if (context.rules.usePhysicalMentalConditions) {
-        const statRules = context.campaign.config.statRules;
-        const maxPhysical = nextPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
-        const maxMental = nextPlayer.mentalConditionMax ?? 50;
-        const conditionRes = context.rules.conditionResolution ?? 0.5;
-
-        const hasFood = (nextPlayer.inventory?.freshFoodUnits || 0) > 0 || (nextPlayer.inventory?.fastFoodItems?.length || 0) > 0;
-
-        if (hasFood) {
-          const relaxEffects = collectItemEffects(nextPlayer, context.campaign, 'on_relax');
-          const physBonus = relaxEffects.get('physical') || 0;
-          const mentalBonus = relaxEffects.get('mental') || 0;
-          const extraMess = relaxEffects.get('mess') || 0;
-
-          const mentalStat = nextPlayer.mentalCondition ?? 50;
-          const rawPhysGain = 1 + Math.floor(mentalStat / 25) + physBonus;
-          const physGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
-            ? Math.max(0.5, roundToResolution(rawPhysGain * ratio, conditionRes))
-            : rawPhysGain;
-          nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
-
-          const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
-          const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
-          const socialMentalBonus = Math.floor((nextPlayer.social || 0) / 15);
-          const rawMentalGain = Math.max(0, firstBonus + 3 - messPenalty) + mentalBonus + socialMentalBonus;
-          const mentalGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
-            ? Math.max(0.5, roundToResolution(rawMentalGain * ratio, conditionRes))
-            : rawMentalGain;
-          nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
-
-          if (context.rules.trackMess) {
-            const baseRelaxMess = statRules?.relaxMessIncrease ?? 1;
-            const relaxMess = baseRelaxMess + extraMess;
-            const scaledMess = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
-              ? Math.max(1, Math.round(relaxMess * ratio))
-              : relaxMess;
-            const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
-            nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + scaledMess);
-          }
-
-          nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
-          statsStr = ` (+${physGain} Physical, +${mentalGain} Mental)`;
-          actionLog = { key: 'action.relax', params: { stats: statsStr } };
-        } else {
-          // Unfed Relaxing
-          const rawPhysGain = 1;
-          const rawMentalGain = 1;
-          const physGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
-            ? Math.max(0.5, roundToResolution(rawPhysGain * ratio, conditionRes))
-            : rawPhysGain;
-          const mentalGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
-            ? Math.max(0.5, roundToResolution(rawMentalGain * ratio, conditionRes))
-            : rawMentalGain;
-
-          nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
-          nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
-
-          nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) - 1;
-          nextPlayer.physicalConditionMax = Math.max(1, (nextPlayer.physicalConditionMax ?? maxPhysical) - 1);
-          nextPlayer.mentalConditionMax = Math.max(1, (nextPlayer.mentalConditionMax ?? maxMental) - 1);
-
-          nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax, nextPlayer.physicalCondition);
-          nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax, nextPlayer.mentalCondition);
-
-          if (context.rules.trackMess) {
-            const baseRelaxMess = statRules?.relaxMessIncrease ?? 1;
-            const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
-            nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + baseRelaxMess);
-          }
-
-          nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
-          statsStr = ` (+${physGain} Physical, +${mentalGain} Mental, -1 Max Physical, -1 Max Mental)`;
-          actionLog = { key: 'action.relax_unfed', params: { stats: statsStr } };
-        }
-      } else {
-        const scaledGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
-          ? Math.max(1, Math.round(relaxGain * ratio))
-          : relaxGain;
-        nextPlayer.relaxation = Math.min(50, nextPlayer.relaxation + scaledGain);
-        if (!nextPlayer.turnFlags.relaxedThisTurn) {
-          nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
-        }
-        actionLog = { key: 'action.relax', params: { stats: statsStr } };
-      }
-      
-      nextPlayer.turnFlags.relaxedThisTurn = true;
+    case 'relax':
+      res = handleRelaxAction(nextPlayer, action, context);
       break;
-    }
-    case 'clean': {
-      if ((nextPlayer.mess || 0) <= 0) {
-        actionLog = { key: 'action.error.alreadyClean' };
-        break;
-      }
-      if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < 3 && !context.rules.allowPartialHours && !context.rules.proportionalDivisibleActions)) {
-        actionLog = { key: 'action.error.notEnoughTimeClean' };
-        break;
-      }
-      const actualHours = Math.min(3, nextPlayer.hoursRemaining);
-      const ratio = actualHours / 3;
-      const conditionRes = context.rules.conditionResolution ?? 0.5;
-
-      let cleanCost = 0;
-      if (context.rules.usePhysicalMentalConditions) {
-        const statRules = context.campaign.config.statRules;
-        const rawCleanCost = statRules?.cleanPhysicalCost ?? 1;
-        cleanCost = (context.rules.proportionalDivisibleActions && actualHours < 3)
-          ? Math.max(0.5, roundToResolution(rawCleanCost * ratio, conditionRes))
-          : rawCleanCost;
-        const currentPhys = nextPlayer.physicalCondition ?? (statRules?.initialPhysicalMax ?? 50);
-        if (currentPhys - cleanCost < 1.0) {
-          actionLog = { key: 'action.error.tooExhausted' };
-          break;
-        }
-      }
-      nextPlayer = spendHours(nextPlayer, actualHours);
-      let cleanStatsStr = '';
-      if (context.rules.usePhysicalMentalConditions) {
-        const statRules = context.campaign.config.statRules;
-        const minPhysical = statRules?.minPhysicalCondition ?? 1;
-
-        const currentPhys = nextPlayer.physicalCondition ?? (statRules?.initialPhysicalMax ?? 50);
-        nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, cleanCost, minPhysical);
-        nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
-        cleanStatsStr = ` (-${cleanCost} Physical)`;
-      }
-      if (context.rules.trackMess || context.rules.usePhysicalMentalConditions) {
-        const d3_1 = context.rng.nextInt(1, 3);
-        const d3_2 = context.rng.nextInt(1, 3);
-        const rawReduction = d3_1 + d3_2;
-        const reduction = (context.rules.proportionalDivisibleActions && actualHours < 3)
-          ? Math.max(1, Math.round(rawReduction * ratio))
-          : rawReduction;
-        const minMess = context.campaign.config.statRules?.globalMessMin ?? 0;
-        nextPlayer.mess = Math.max(minMess, (nextPlayer.mess || 0) - reduction);
-      }
-      actionLog = { key: 'action.clean', params: { stats: cleanStatsStr } };
+    case 'clean':
+      res = handleCleanAction(nextPlayer, action, context);
       break;
-    }
-    case 'call_cleaning_service': {
-      if ((nextPlayer.mess || 0) <= 0) {
-        actionLog = { key: 'action.error.alreadyClean' };
-        break;
-      }
-      const timeCost = context.campaign.config.timeRules?.cleaningServiceCost ?? 1;
-      if (nextPlayer.hoursRemaining < timeCost) {
-        actionLog = { key: 'action.error.notEnoughTimeClean' };
-        break;
-      }
-      const basePrice = context.campaign.config.economyRules?.cleaningServiceBasePrice ?? 100;
-      const price = calcEconomyPrice(basePrice, context.economicIndex);
-      if (nextPlayer.money < price) {
-        actionLog = { key: 'action.error.notEnoughMoneyCleanService' };
-        break;
-      }
-      nextPlayer = spendHours(nextPlayer, timeCost);
-      nextPlayer.money -= price;
-      const minMess = context.campaign.config.statRules?.globalMessMin ?? 0;
-      nextPlayer.mess = Math.max(minMess, (nextPlayer.mess || 0) - 10);
-      actionLog = { key: 'action.callCleaningService', params: { cost: price } };
+    case 'call_cleaning_service':
+      res = handleCleaningServiceAction(nextPlayer, action, context);
       break;
-    }
-    case 'socialize_guests': {
-      const timeCost = context.campaign.config.timeRules?.socializeCost ?? 6;
-      if (nextPlayer.hoursRemaining < timeCost) {
-        actionLog = { key: 'action.error.notEnoughTimeSocialize' };
-        break;
-      }
-      if ((nextPlayer.mess || 0) > 25) {
-        actionLog = { key: 'action.error.messTooHighSocialize' };
-        break;
-      }
-      if (context.rules.usePhysicalMentalConditions) {
-        const currentPhys = nextPlayer.physicalCondition ?? 50;
-        if (currentPhys - 1 < 1.0) {
-          actionLog = { key: 'action.error.tooExhausted' };
-          break;
-        }
-      }
-      nextPlayer = spendHours(nextPlayer, timeCost);
+    case 'socialize_guests':
+      res = handleSocializeAction(nextPlayer, action, context);
+      break;
+    case 'change_clothes':
+      res = handleChangeClothesAction(nextPlayer, action);
+      break;
+    case 'move':
+      res = handleMoveAction(nextPlayer, action, context, replayContext);
+      break;
+    case 'bank_transaction':
+      res = handleBankTransactionAction(nextPlayer, action);
+      break;
+    case 'open_broker':
+      res = handleOpenBrokerAction(nextPlayer, action, context);
+      break;
+    case 'buy_stock':
+      res = handleBuyStockAction(nextPlayer, action);
+      break;
+    case 'sell_stock':
+      res = handleSellStockAction(nextPlayer, action);
+      break;
+    case 'take_loan':
+      res = handleTakeLoanAction(nextPlayer, action, context);
+      break;
+    case 'pay_loan':
+      res = handlePayLoanAction(nextPlayer, action, context);
+      break;
+    case 'rent_transaction':
+      res = handleRentTransactionAction(nextPlayer, action, context);
+      break;
+    case 'move_apartment':
+      res = handleMoveApartmentAction(nextPlayer, action, context);
+      break;
+    case 'pay_rent_advance':
+      res = handlePayRentAdvanceAction(nextPlayer, action);
+      break;
+    case 'ask_rent_extension':
+      res = handleAskRentExtensionAction(nextPlayer, action, context, replayContext);
+      break;
+    case 'pawn_item':
+      res = handlePawnItemAction(nextPlayer, action, context);
+      break;
+    case 'redeem_item':
+      res = handleRedeemItemAction(nextPlayer, action, context);
+      break;
+    case 'buy_pawn_item':
+      res = handleBuyPawnItemAction(nextPlayer, action, context);
+      break;
+  }
 
-      const minPhysical = nextPlayer.minPhysicalCondition ?? 1;
-      const currentPhys = nextPlayer.physicalCondition ?? 50;
-      nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, 1, minPhysical);
-
-      const statRules = context.campaign.config.statRules;
-
-      let appBonus = 0;
-      if (context.rules.usePhysicalMentalConditions) {
-        const socializeEffects = collectItemEffects(nextPlayer, context.campaign, 'on_socialize');
-        appBonus += socializeEffects.get('social') || 0;
-        appBonus += nextPlayer.activeEffects?.['vcr_social_bonus'] || 0;
-      }
-
-      const X = context.rng.nextInt(1, 3);
-      const growth = messGrowth(nextPlayer.mess || 0);
-      const messGen = X * growth;
-      const maxMess = calcMaxMess(nextPlayer, statRules, context.campaign);
-      nextPlayer.mess = Math.min(maxMess, (nextPlayer.mess || 0) + messGen);
-
-      const mentalCost = X * growth;
-      const finalMentalCost = mentalCost - appBonus;
-      const isHighEndHousing = nextPlayer.currentHousingId === 'security' || nextPlayer.currentHousingId === 'penthouse';
-      const cashRate = isHighEndHousing ? (context.campaign.config.economyRules?.socializeSecurityCashCost ?? 50) : (context.campaign.config.economyRules?.socializeLowCostCashCost ?? 25);
-      const cashCost = X * cashRate;
-      const fullReward = isHighEndHousing ? X * 2 : X;
-
-      const currentMental = nextPlayer.mentalCondition ?? 25;
-      const minMental = statRules?.minMentalCondition ?? 5;
-      const maxMental = nextPlayer.mentalConditionMax ?? 90;
-      const hasFullCash = nextPlayer.money >= cashCost;
-      const hasFullMental = finalMentalCost <= 0 || currentMental >= finalMentalCost;
-
-      let actualReward = fullReward + appBonus;
-      if (hasFullCash && hasFullMental) {
-        nextPlayer.money -= cashCost;
-        if (finalMentalCost >= 0) {
-          nextPlayer.mentalCondition = safeDecrementMental(currentMental, finalMentalCost, minMental);
-        } else {
-          nextPlayer.mentalCondition = Math.min(maxMental, currentMental - finalMentalCost);
-        }
-      } else {
-        nextPlayer.money = Math.max(0, nextPlayer.money - cashCost);
-        if (finalMentalCost >= 0) {
-          nextPlayer.mentalCondition = safeDecrementMental(currentMental, finalMentalCost, minMental);
-        } else {
-          nextPlayer.mentalCondition = Math.min(maxMental, currentMental - finalMentalCost);
-        }
-        actualReward = Math.floor(fullReward / 2) + appBonus;
-      }
-
-      const maxSocial = statRules?.maxSocial ?? 99;
-      nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? 9) + actualReward);
-
-      actionLog = { key: 'action.socialize', params: { reward: actualReward, guests: X } };
-      break;
-    }
-    case 'move': {
-      const nodeId = action.nodeId;
-      if (nextPlayer.position === nodeId) {
-        break;
-      }
-
-      const adjacencyMap = context.campaign.map?.nodes ? buildAdjacencyMap(context.campaign.map.nodes) : new Map<string, string[]>();
-      const pathResult = context.campaign.map?.nodes ? findShortestPath(adjacencyMap, nextPlayer.position, nodeId) : { found: true, steps: 1, path: [] };
-      console.log(`[DEBUG-GAMEREDUCER-MOVE] from ${nextPlayer.position} to ${nodeId}: path found=${pathResult.found}, steps=${pathResult.steps}, hoursRemaining=${nextPlayer.hoursRemaining}`);
-
-      if (pathResult.found) {
-        const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
-        if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
-          const preRobberyMoney = nextPlayer.money;
-          const isForced = !!context.state.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === nextPlayer.id || !e.playerId));
-          nextPlayer = processStreetRobbery(nextPlayer, currentBuilding, context.turn, context.rng, context.campaign, replayContext, isForced);
-          if (isForced && context.state.debugQueue) {
-            context.state.debugQueue = context.state.debugQueue.filter(e => !(e.type === 'street_robbery' && (e.playerId === nextPlayer.id || !e.playerId)));
-          }
-          if (nextPlayer.money < preRobberyMoney) {
-            actionLog = { key: 'log.robbery' };
-          }
-        }
-
-        const movementCost = (context.campaign.config.mapRules as any)?.movementCostPerNode ?? 1;
-        let requiredHours = pathResult.steps * movementCost;
-        
-        const destNode = context.campaign.map?.nodes?.find(n => n.id === nodeId);
-        if (destNode && destNode.buildingId) {
-            const buildingEntryCost = requireConfig(context.campaign.config.timeRules?.buildingEntryCost, 'timeRules.buildingEntryCost');
-            requiredHours += buildingEntryCost;
-        }
-
-        if (nextPlayer.hoursRemaining >= requiredHours || context.rules.allowPartialHours) {
-          nextPlayer.position = nodeId;
-          nextPlayer = spendHours(nextPlayer, requiredHours);
-          console.log(`[DEBUG-GAMEREDUCER-MOVE-SUCCESS] new position: ${nextPlayer.position}, hoursRemaining: ${nextPlayer.hoursRemaining}`);
-        } else {
-          actionLog = { key: 'action.error.notEnoughTime' };
-          console.log(`[DEBUG-GAMEREDUCER-MOVE-FAIL] not enough time`);
-        }
-      } else {
-         console.log(`[DEBUG-GAMEREDUCER-MOVE-FAIL] path not found`);
-      }
-      break;
-    }
-    case 'bank_transaction': {
-      if (action.amount > 0) { // Deposit
-        if (nextPlayer.money >= action.amount) {
-          nextPlayer.money -= action.amount;
-          nextPlayer.bankSavings += action.amount;
-          actionLog = { key: 'action.bank.deposit', params: { amount: action.amount } };
-        } else {
-          actionLog = { key: 'action.error.notEnoughMoneyDeposit' };
-        }
-      } else { // Withdraw
-        const absAmount = Math.abs(action.amount);
-        if (nextPlayer.bankSavings >= absAmount) {
-          nextPlayer.bankSavings -= absAmount;
-          nextPlayer.money += absAmount;
-          actionLog = { key: 'action.bank.withdraw', params: { amount: absAmount } };
-        } else {
-          actionLog = { key: 'action.error.notEnoughSavings' };
-        }
-      }
-      break;
-    }
-    case 'open_broker': {
-      const timeCost = requireConfig(context.campaign.config.timeRules?.brokerCost, 'timeRules.brokerCost');
-      if (nextPlayer.hoursRemaining < timeCost) {
-        actionLog = { key: 'action.error.notEnoughTimeBroker' };
-        break;
-      }
-      nextPlayer = spendHours(nextPlayer, timeCost);
-      actionLog = { key: 'action.broker.visited' };
-      break;
-    }
-    case 'buy_stock': {
-      if (nextPlayer.money >= action.cost) {
-        nextPlayer.money -= action.cost;
-        if (action.stockId === 'tbills') {
-          nextPlayer.inventory.stocks.tBills += action.quantity;
-        } else {
-          nextPlayer.inventory.stocks.holdings[action.stockId] = (nextPlayer.inventory.stocks.holdings[action.stockId] || 0) + action.quantity;
-        }
-        actionLog = { key: 'action.broker.buy', params: { quantity: action.quantity, stockId: action.stockId } };
-      } else {
-        actionLog = { key: 'action.error.notEnoughMoneyStock' };
-      }
-      break;
-    }
-    case 'sell_stock': {
-      const owned = action.stockId === 'tbills' 
-        ? nextPlayer.inventory.stocks.tBills 
-        : (nextPlayer.inventory.stocks.holdings[action.stockId] || 0);
-      
-      if (owned >= action.quantity) {
-        if (action.stockId === 'tbills') {
-          nextPlayer.inventory.stocks.tBills -= action.quantity;
-        } else {
-          nextPlayer.inventory.stocks.holdings[action.stockId] -= action.quantity;
-        }
-        nextPlayer.money += action.revenue;
-        actionLog = { key: 'action.broker.sell', params: { quantity: action.quantity, stockId: action.stockId } };
-      } else {
-        actionLog = { key: 'action.error.notEnoughShares' };
-      }
-      break;
-    }
-    case 'take_loan': {
-      const timeCost = requireConfig(context.campaign.config.timeRules?.loanCost, 'timeRules.loanCost');
-      if (nextPlayer.hoursRemaining < timeCost) {
-        actionLog = { key: 'action.error.notEnoughTimeLoan' };
-        break;
-      }
-      nextPlayer = spendHours(nextPlayer, timeCost);
-      
-      const liquidAssets = nextPlayer.money + nextPlayer.bankSavings - (nextPlayer.loanDebt || 0);
-      const liquidity = nextPlayer.currentWage + (liquidAssets / 1000);
-      let risk = 5;
-      if (nextPlayer.timesDefaulted > 0 || (nextPlayer.loanDebt || 0) > 0) {
-        risk = 5 + nextPlayer.timesDefaulted + ((nextPlayer.loanDebt || 0) / 100) + ((nextPlayer.loanDebt || 0) > 0 ? 1 : 0);
-      }
-      const maxLoan = 100 * Math.max(0, liquidity - risk);
-      const isDefaulted = nextPlayer.loanPaymentDeadline > 0 && nextPlayer.loanPaymentDeadline < context.turn;
-
-      if (isDefaulted || liquidity <= risk || (context.rules.requireJobForLoan && nextPlayer.currentJobId === null)) {
-        actionLog = { key: 'action.loan.refused' };
-        nextPlayer = applyHappinessChange(nextPlayer, -1, 'loan_refused', context.rules, context.campaign.config.statRules);
-      } else {
-        const loanSize = Math.floor(maxLoan);
-        if (loanSize > 0) {
-          if ((nextPlayer.loanDebt || 0) === 0) {
-            nextPlayer.loanPaymentDeadline = Math.floor((context.turn - 1) / 4) * 4 + 4; // Week 4 of current month
-          }
-          nextPlayer.money += loanSize;
-          nextPlayer.loanDebt = (nextPlayer.loanDebt || 0) + loanSize;
-          nextPlayer = applyHappinessChange(nextPlayer, 5, 'loan_approved', context.rules, context.campaign.config.statRules);
-          actionLog = { key: 'action.loan.approved', params: { loanSize } };
-        } else {
-          actionLog = { key: 'action.loan.refused' };
-          nextPlayer = applyHappinessChange(nextPlayer, -1, 'loan_refused', context.rules, context.campaign.config.statRules);
-        }
-      }
-      break;
-    }
-    case 'pay_loan': {
-      if ((nextPlayer.loanDebt || 0) > 0) {
-        const loanPaymentAmount = context.campaign.config.economyRules?.loanPaymentAmount ?? 50;
-        const loanPrincipalAmount = context.campaign.config.economyRules?.loanPrincipalAmount ?? 45;
-        const loanInterestAmount = context.campaign.config.economyRules?.loanInterestAmount ?? 5;
-        
-        if (nextPlayer.loanDebt < loanPaymentAmount && nextPlayer.money >= nextPlayer.loanDebt) {
-          const amount = nextPlayer.loanDebt;
-          nextPlayer.money -= amount;
-          nextPlayer.loanDebt = 0;
-          nextPlayer.loanPaymentDeadline += 4;
-          actionLog = { key: 'action.loan.paidOff', params: { amount } };
-        } else if (nextPlayer.money >= loanPaymentAmount) {
-          nextPlayer.money -= loanPaymentAmount;
-          nextPlayer.loanDebt = Math.max(0, nextPlayer.loanDebt - loanPrincipalAmount);
-          nextPlayer.loanPaymentDeadline += 4;
-          actionLog = { key: 'action.loan.paidInstallment', params: { payment: loanPaymentAmount, principal: loanPrincipalAmount, interest: loanInterestAmount } };
-        } else {
-          actionLog = { key: 'action.error.notEnoughMoneyPayment' };
-        }
-        if (nextPlayer.loanDebt === 0) {
-          nextPlayer.loanPaymentDeadline = 0;
-        }
-      } else {
-        actionLog = { key: 'action.error.noLoan' };
-      }
-      break;
-    }
-    case 'rent_transaction': {
-      if (nextPlayer.money >= action.amount) {
-        nextPlayer.money -= action.amount;
-        nextPlayer.rentDebt = 0;
-        nextPlayer.turnFlags.rentPaidThisTurn = true;
-        // BUG FIX: Actually extend the rentPaidUntilWeek counter
-        if (nextPlayer.rentPaidUntilWeek <= context.turn) {
-          // If they were behind, paying resets them to end of current month
-          nextPlayer.rentPaidUntilWeek = context.turn + 4;
-        } else {
-          nextPlayer.rentPaidUntilWeek += 4;
-        }
-        actionLog = { key: 'action.rent.paid', params: { amount: action.amount } };
-      } else {
-        actionLog = { key: 'action.error.notEnoughMoneyRent' };
-      }
-      break;
-    }
-    case 'move_apartment': {
-      const housingDef = context.campaign.housing.find(h => h.id === action.housingId);
-      if (housingDef) {
-        if (nextPlayer.currentHousingId === housingDef.id) {
-          actionLog = { key: 'action.rent.alreadyLiveHere', params: { name: housingDef.name } };
-        } else {
-          if (context.rules.spaceCapping) {
-            const durablesSpace = calcUsedSpace(nextPlayer, context.campaign, false);
-            const targetCap = housingDef.spaceCap ?? 999999;
-            if (durablesSpace > targetCap) {
-              actionLog = { key: 'action.error.notEnoughSpaceMove', params: { targetName: housingDef.name } };
-              break;
-            }
-          }
-          const movingFee = context.rules.trackMess ? calcMovingFee(nextPlayer.mess || 0, nextPlayer.inventory.appliances.length, context.campaign.config.economyRules) : 0;
-          const totalCost = action.cost + movingFee;
-          if (nextPlayer.money >= totalCost) {
-            nextPlayer.money -= totalCost;
-            nextPlayer.currentHousingId = housingDef.id;
-            nextPlayer.currentRentPrice = action.cost;
-            nextPlayer.rentPaidUntilWeek = context.turn + 4; // Pay for a month
-            nextPlayer.rentExtensionActive = false;
-            nextPlayer.turnFlags.rentPaidThisTurn = true;
-            if (context.rules.trackMess) {
-              nextPlayer.mess = 3 + nextPlayer.inventory.appliances.length;
-            }
-            actionLog = { key: 'action.rent.moved', params: { name: housingDef.name, cost: totalCost } };
-          } else {
-            actionLog = { key: 'action.error.notEnoughMoneyMove', params: { name: housingDef.name } };
-          }
-        }
-      }
-      break;
-    }
-    case 'pay_rent_advance': {
-      if (nextPlayer.money >= action.amount) {
-        nextPlayer.money -= action.amount;
-        nextPlayer.rentPaidUntilWeek += 4;
-        nextPlayer.rentExtensionActive = false;
-        nextPlayer.turnFlags.rentPaidThisTurn = true;
-        actionLog = { key: 'action.rent.advancePaid', params: { amount: action.amount } };
-      } else {
-        actionLog = { key: 'action.error.notEnoughMoneyRentAdvance' };
-      }
-      break;
-    }
-    case 'pawn_item': {
-      // Validate global pawn shop constraints
-      const allPawned = context.state.players.flatMap(p => p.inventory.pawnedItems || []);
-      const forSale = context.state.pawnShopItemsForSale || [];
-      const totalPawnShopItems = allPawned.length + forSale.length;
-      const maxPawnCapacity = context.rules.spaceCapping ? 1_000_000 : 6;
-      
-      if (totalPawnShopItems >= maxPawnCapacity) {
-        actionLog = { key: 'action.error.pawnShopFull' };
-        break;
-      }
-      if (allPawned.some(p => p.itemId === action.item.id) || forSale.some(p => p.itemId === action.item.id)) {
-        actionLog = { key: 'action.error.pawnShopHasDuplicate' };
-        break;
-      }
-
-      nextPlayer.inventory.appliances = nextPlayer.inventory.appliances.filter(a => a.id !== action.item.id);
-      if (!nextPlayer.inventory.pawnedItems) nextPlayer.inventory.pawnedItems = [];
-      const pawnedItem = {
-        itemId: action.item.id,
-        originalPrice: action.item.purchasePrice,
-        redeemCost: Math.floor(action.item.purchasePrice * 0.5),
-        weekPawned: context.turn,
-        ownerId: nextPlayer.id,
-        purchaseSource: action.item.purchaseSource || 'socket_city'
-      };
-      nextPlayer.inventory.pawnedItems.push(pawnedItem);
-      nextPlayer.money += action.value;
-      nextPlayer = applyHappinessChange(nextPlayer, -1, 'pawn_item', context.rules, context.campaign.config.statRules);
-      if (action.item.id === 'refrigerator' && nextPlayer.inventory.freshFoodUnits > 0) {
-        nextPlayer = applyHappinessChange(nextPlayer, -1, 'pawn_item', context.rules, context.campaign.config.statRules);
-      }
-      const formatItem = (id: string) => context.campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      const itemName = formatItem(action.item.id);
-      actionLog = { key: 'action.pawn.pawned', params: { itemName, value: action.value } };
-      break;
-    }
-    case 'redeem_item': {
-      if (nextPlayer.money >= action.cost) {
-        const itemDef = context.campaign.items?.find(i => i.id === action.item.itemId);
-        if (context.rules.spaceCapping) {
-          const itemSpace = itemDef?.space ?? 0;
-          const currentSpace = calcUsedSpace(nextPlayer, context.campaign, true);
-          const maxSpace = calcHousingSpaceCap(nextPlayer, context.campaign);
-          if (currentSpace + itemSpace > maxSpace) {
-            const currentHousing = context.campaign.housing.find(h => h.id === nextPlayer.currentHousingId);
-            actionLog = {
-              key: 'action.error.notEnoughSpace',
-              params: {
-                home: currentHousing?.name || 'your home',
-                item: itemDef?.name || action.item.itemId
-              }
-            };
-            break;
-          }
-        }
-        nextPlayer.money -= action.cost;
-        nextPlayer.inventory.pawnedItems = nextPlayer.inventory.pawnedItems.filter(a => a.itemId !== action.item.itemId);
-        nextPlayer.inventory.appliances.push({
-          id: action.item.itemId,
-          purchasePrice: action.item.originalPrice,
-          purchaseSource: action.item.purchaseSource || 'socket_city'
-        });
-        const formatItem = (id: string) => context.campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        const itemName = formatItem(action.item.itemId);
-        actionLog = { key: 'action.pawn.redeemed', params: { itemName, cost: action.cost } };
-      } else {
-        actionLog = { key: 'action.error.notEnoughMoneyBuyBack' };
-      }
-      break;
-    }
-    case 'buy_pawn_item': {
-      if (nextPlayer.money >= action.cost) {
-        const itemDef = context.campaign.items?.find(i => i.id === action.item.itemId);
-        if (context.rules.spaceCapping) {
-          const itemSpace = itemDef?.space ?? 0;
-          const currentSpace = calcUsedSpace(nextPlayer, context.campaign, true);
-          const maxSpace = calcHousingSpaceCap(nextPlayer, context.campaign);
-          if (currentSpace + itemSpace > maxSpace) {
-            const currentHousing = context.campaign.housing.find(h => h.id === nextPlayer.currentHousingId);
-            actionLog = {
-              key: 'action.error.notEnoughSpace',
-              params: {
-                home: currentHousing?.name || 'your home',
-                item: itemDef?.name || action.item.itemId
-              }
-            };
-            break;
-          }
-        }
-        nextPlayer.money -= action.cost;
-        updatedPawnShopItemsForSale = (context.state.pawnShopItemsForSale || []).filter(i => i.itemId !== action.item.itemId);
-        nextPlayer.inventory.appliances.push({
-          id: action.item.itemId,
-          purchasePrice: action.item.originalPrice,
-          purchaseSource: 'pawnshop'
-        });
-        const formatItem = (id: string) => context.campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        const itemName = formatItem(action.item.itemId);
-        actionLog = { key: 'action.pawn.bought', params: { itemName, cost: action.cost } };
-      } else {
-        actionLog = { key: 'action.error.notEnoughMoneyBuyPawn' };
-      }
-      break;
-    }
-    case 'change_clothes': {
-      nextPlayer.inventory.selectedClothes = action.clothes;
-      actionLog = { key: 'action.clothes.changed', params: { clothes: action.clothes } };
-      break;
-    }
-    case 'ask_rent_extension': {
-      if (nextPlayer.rentPaidUntilWeek > context.turn + 1) {
-        actionLog = { key: 'rentOffice.notNeeded' };
-        break;
-      }
-      if (nextPlayer.rentExtensionActive || nextPlayer.turnFlags.askedForExtension) {
-        actionLog = { key: 'action.rent.alreadyGranted' };
-        break;
-      }
-      if (nextPlayer.rentExtensionsDeniedPermanently) {
-        actionLog = { key: 'action.rent.extensionDenied' };
-        break;
-      }
-      nextPlayer.turnFlags.askedForExtension = true;
-      let approved = false;
-      if (nextPlayer.rentExtensionsReceived === 0) {
-        approved = true;
-      } else {
-        const baseChance = Math.max(25, 100 - (nextPlayer.rentExtensionsReceived * 25));
-        const messPenalty = context.rules.trackMess ? (nextPlayer.mess || 0) : 0;
-        const chance = Math.max(1, baseChance - messPenalty);
-        const roll = resolveDecision(replayContext, `rent_extension_roll`, () => Math.floor(context.rng.next() * 100));
-        if (roll < chance) {
-          approved = true;
-        }
-      }
-
-      if (approved) {
-        nextPlayer.rentExtensionsReceived += 1;
-        nextPlayer.rentExtensionActive = true;
-        nextPlayer = applyHappinessChange(nextPlayer, 1, 'rent_extension_approved', context.rules, context.campaign.config.statRules);
-        actionLog = { key: 'action.rent.extensionApproved' };
-      } else {
-        if (!nextPlayer.turnFlags.rentExtensionRefusedThisTurn) {
-          nextPlayer = applyHappinessChange(nextPlayer, -1, 'rent_extension_denied', context.rules, context.campaign.config.statRules);
-          nextPlayer.turnFlags.rentExtensionRefusedThisTurn = true;
-        }
-        actionLog = { key: 'action.rent.extensionDenied' };
-      }
-      break;
+  if (res) {
+    nextPlayer = res.nextPlayer;
+    actionLog = res.actionLog;
+    if (res.updatedPawnShopItemsForSale !== undefined) {
+      updatedPawnShopItemsForSale = res.updatedPawnShopItemsForSale;
     }
   }
 
