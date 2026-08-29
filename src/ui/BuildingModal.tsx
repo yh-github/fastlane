@@ -88,6 +88,12 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
     };
   }, [clerkMessage]);
 
+  // Reset tab on building change
+  useEffect(() => {
+    setActiveTab('shop');
+    setIsWorkOpen(true);
+  }, [currentBuildingId]);
+
   if (!player || !campaign || !currentBuildingId || !building) return null;
 
   // Check if the player's current job is at this building
@@ -336,12 +342,6 @@ export function BuildingModal({ player, campaign, currentBuildingId, turn, econo
   const isRentOfficeOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || !!playerJobHere;
   const isDiscountAndPawn = building.archetype === 'discount_and_pawn';
   const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
-
-  // Reset tab on building change
-  useEffect(() => {
-    setActiveTab('shop');
-    setIsWorkOpen(true);
-  }, [building.id]);
 
   let currentFace = getFace(building.id, building.archetype);
   if (building.archetype === 'home' && !livesHere) {
