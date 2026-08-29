@@ -178,6 +178,11 @@ export interface GameRules {
    * ADVANCED: Decimal resolution for percentage education progress (default 0.1).
    */
   educationResolution?: number;
+
+  /**
+   * ADVANCED: If true, limits inventory durables and mess by housing space capacity.
+   */
+  spaceCapping?: boolean;
 }
 
 export interface EventRules {
@@ -334,6 +339,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   turnStartAtHome: false,
   delayRobberyFoodSpoilage: false,
   maskEarlyJobRejections: true,
+  spaceCapping: false,
 };
 
 /**
@@ -365,6 +371,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   proportionalDivisibleActions: 'Scales gains and stamina costs proportionally for continuous actions (Work, Study, Relax, Clean)',
   conditionResolution: 'Step resolution for physical and mental condition scores (default 0.5 for half points)',
   educationResolution: 'Decimal precision for percentage degree progress (default 0.1)',
+  spaceCapping: 'Limits inventory durables and mess according to housing tier space capacity',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
   marketCrashThreshold: 'Minimum economic reading required for a market crash to trigger (default 60)',

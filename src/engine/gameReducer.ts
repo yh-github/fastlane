@@ -6,7 +6,7 @@ import { buyItem } from './shoppingEngine';
 import { enrollInDegree, study, calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from './educationEngine';
 import { spendHours } from './timeManager';
 import { calcItemPrice, calcEconomyPrice } from './economyEngine';
-import { calcMovingFee, messGrowth, safeDecrementPhysical, safeDecrementMental, calcMaxMess, roundToResolution } from './statMath';
+import { calcMovingFee, messGrowth, safeDecrementPhysical, safeDecrementMental, calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap } from './statMath';
 import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
 import { processStreetRobbery } from './eventEngine';
 import { resolveDecision, type EngineDecision, type ReplayContext } from './replayTypes';
@@ -129,7 +129,7 @@ export function gameReducer(
         const adjustedPrice = calcItemPrice(itemForPricing, context.economicIndex);
         const itemWithPriceAndStore = { ...baseItemDef, basePrice: adjustedPrice, store: currentBuildingId };
         
-        const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules);
+        const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules, context.campaign);
         console.log(`[DEBUG-GAMEREDUCER-BUY] buyItem success=${result.success}, newMoney=${result.updated.money}`);
         if (result.success) {
           nextPlayer = spendHours(result.updated, timeCost);
@@ -803,6 +803,14 @@ export function gameReducer(
         if (nextPlayer.currentHousingId === housingDef.id) {
           actionLog = { key: 'action.rent.alreadyLiveHere', params: { name: housingDef.name } };
         } else {
+          if (context.rules.spaceCapping) {
+            const durablesSpace = calcUsedSpace(nextPlayer, context.campaign, false);
+            const targetCap = housingDef.spaceCap ?? 999999;
+            if (durablesSpace > targetCap) {
+              actionLog = { key: 'action.error.notEnoughSpaceMove', params: { targetName: housingDef.name } };
+              break;
+            }
+          }
           const movingFee = context.rules.trackMess ? calcMovingFee(nextPlayer.mess || 0, nextPlayer.inventory.appliances.length, context.campaign.config.economyRules) : 0;
           const totalCost = action.cost + movingFee;
           if (nextPlayer.money >= totalCost) {
@@ -840,8 +848,9 @@ export function gameReducer(
       const allPawned = context.state.players.flatMap(p => p.inventory.pawnedItems || []);
       const forSale = context.state.pawnShopItemsForSale || [];
       const totalPawnShopItems = allPawned.length + forSale.length;
+      const maxPawnCapacity = context.rules.spaceCapping ? 1_000_000 : 6;
       
-      if (totalPawnShopItems >= 6) {
+      if (totalPawnShopItems >= maxPawnCapacity) {
         actionLog = { key: 'action.error.pawnShopFull' };
         break;
       }
@@ -873,6 +882,23 @@ export function gameReducer(
     }
     case 'redeem_item': {
       if (nextPlayer.money >= action.cost) {
+        const itemDef = context.campaign.items?.find(i => i.id === action.item.itemId);
+        if (context.rules.spaceCapping) {
+          const itemSpace = itemDef?.space ?? 0;
+          const currentSpace = calcUsedSpace(nextPlayer, context.campaign, true);
+          const maxSpace = calcHousingSpaceCap(nextPlayer, context.campaign);
+          if (currentSpace + itemSpace > maxSpace) {
+            const currentHousing = context.campaign.housing.find(h => h.id === nextPlayer.currentHousingId);
+            actionLog = {
+              key: 'action.error.notEnoughSpace',
+              params: {
+                home: currentHousing?.name || 'your home',
+                item: itemDef?.name || action.item.itemId
+              }
+            };
+            break;
+          }
+        }
         nextPlayer.money -= action.cost;
         nextPlayer.inventory.pawnedItems = nextPlayer.inventory.pawnedItems.filter(a => a.itemId !== action.item.itemId);
         nextPlayer.inventory.appliances.push({
@@ -890,6 +916,23 @@ export function gameReducer(
     }
     case 'buy_pawn_item': {
       if (nextPlayer.money >= action.cost) {
+        const itemDef = context.campaign.items?.find(i => i.id === action.item.itemId);
+        if (context.rules.spaceCapping) {
+          const itemSpace = itemDef?.space ?? 0;
+          const currentSpace = calcUsedSpace(nextPlayer, context.campaign, true);
+          const maxSpace = calcHousingSpaceCap(nextPlayer, context.campaign);
+          if (currentSpace + itemSpace > maxSpace) {
+            const currentHousing = context.campaign.housing.find(h => h.id === nextPlayer.currentHousingId);
+            actionLog = {
+              key: 'action.error.notEnoughSpace',
+              params: {
+                home: currentHousing?.name || 'your home',
+                item: itemDef?.name || action.item.itemId
+              }
+            };
+            break;
+          }
+        }
         nextPlayer.money -= action.cost;
         updatedPawnShopItemsForSale = (context.state.pawnShopItemsForSale || []).filter(i => i.itemId !== action.item.itemId);
         nextPlayer.inventory.appliances.push({

@@ -6,7 +6,7 @@
  */
 
 import { type PlayerState, type GameState } from '../engine/gameState';
-import { calcEducationProgress, calcCareerProgress, calcWealthProgress, calcEmployabilityScore, calcMaxDependability, calcMaxExperience, calcWellbeingScore } from '../engine/statMath';
+import { calcEducationProgress, calcCareerProgress, calcWealthProgress, calcEmployabilityScore, calcMaxDependability, calcMaxExperience, calcWellbeingScore, calcUsedSpace, calcHousingSpaceCap } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../engine/dataLoader';
@@ -206,6 +206,17 @@ export function Dashboard({
               )
             }
           </div>
+          {gameState.rules.spaceCapping && (
+            <div 
+              title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess && player.mess > 0 ? Math.ceil(player.mess / 10) : 0} space`}
+              style={{
+                fontWeight: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? 'bold' : 'normal',
+                color: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? '#e74c3c' : 'inherit'
+              }}
+            >
+              <strong>📦 {t('stat.space', 'Space')}:</strong> {calcUsedSpace(player, campaign, true)}/{calcHousingSpaceCap(player, campaign)}
+            </div>
+          )}
         </div>
       )}
 
