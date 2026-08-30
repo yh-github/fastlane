@@ -12,12 +12,12 @@
   {
     "id": "low_cost",
     "lifestyleValue": 10,
-    "spaceCap": 10
+    "spaceCap": 100
   },
   {
     "id": "security",
     "lifestyleValue": 30,
-    "spaceCap": 25
+    "spaceCap": 250
   },
   {
     "id": "penthouse",
@@ -27,6 +27,6 @@
     "homeNodeId": "node_security",
     "description": "Ultra-luxurious top-floor suite with massive living space.",
     "lifestyleValue": 50,
-    "spaceCap": 75
+    "spaceCap": 750
   }
 ]

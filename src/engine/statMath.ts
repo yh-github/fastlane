@@ -478,11 +478,11 @@ export function calcUsedSpace(player: PlayerState, campaign?: CampaignBundle, in
   // Books
   for (const bookId of (player.inventory?.books || [])) {
     const def = campaign?.items?.find(i => i.id === bookId);
-    used += def?.space ?? (bookId === 'encyclopedia' ? 2 : 1);
+    used += def?.space ?? (bookId === 'encyclopedia' ? 20 : 10);
   }
-  // Mess
+  // Mess (1:1 with space)
   if (includeMess && player.mess && player.mess > 0) {
-    used += Math.ceil(player.mess / 10);
+    used += player.mess;
   }
   return used;
 }

@@ -35,15 +35,37 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const maxMessHousing = calcMaxMess(player, campaign?.config.statRules);
   const isMessClean = currentMess <= 0;
 
-  // Space calculation
+  // Space & Mess calculation
   const durablesSpace = calcUsedSpace(player, campaign, false);
-  const clutterSpace = (player.mess && player.mess > 0) ? Math.ceil(player.mess / 10) : 0;
-  const totalUsedSpace = durablesSpace + clutterSpace;
+  const totalUsedSpace = durablesSpace + currentMess;
   const spaceCap = calcHousingSpaceCap(player, campaign);
   const freeSpace = Math.max(0, spaceCap - totalUsedSpace);
+  const overflow = Math.max(0, totalUsedSpace - spaceCap);
+  const isOvercapacity = overflow > 0;
+
+  // Bar segment percentages
+  let durablesWidthPct = 0;
+  let overlapWidthPct = 0;
+  let messWidthPct = 0;
+  let freeWidthPct = 0;
+
+  if (rules?.spaceCapping) {
+    if (!isOvercapacity) {
+      durablesWidthPct = spaceCap > 0 ? (durablesSpace / spaceCap) * 100 : 0;
+      messWidthPct = spaceCap > 0 ? (currentMess / spaceCap) * 100 : 0;
+      freeWidthPct = Math.max(0, 100 - durablesWidthPct - messWidthPct);
+    } else {
+      // Overcapacity: trash piles on top of durables
+      const cleanDurables = Math.max(0, spaceCap - currentMess);
+      durablesWidthPct = spaceCap > 0 ? (cleanDurables / spaceCap) * 100 : 0;
+      overlapWidthPct = spaceCap > 0 ? (overflow / spaceCap) * 100 : 0;
+      const floorMess = Math.max(0, spaceCap - durablesSpace);
+      messWidthPct = spaceCap > 0 ? (floorMess / spaceCap) * 100 : 0;
+    }
+  }
 
   // Socialize logic
-  const isNoSpaceForSocial = rules?.spaceCapping ? (freeSpace < 1) : (currentMess > 25);
+  const isNoSpaceForSocial = rules?.spaceCapping ? (freeSpace < 10) : (currentMess > 25);
   const cleaningServiceCost = campaign?.config.timeRules?.cleaningServiceCost ?? 1;
   const cleaningServiceBasePrice = campaign?.config.economyRules?.cleaningServiceBasePrice ?? 100;
   const cleaningServicePrice = calcEconomyPrice(cleaningServiceBasePrice, economicIndex);
@@ -73,8 +95,8 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   let socialSubtext = '-1 💪, +👥 (generates 🧹)';
   if (rules?.usePhysicalMentalConditions) {
     if (isSocialDisabled) {
-      if (rules?.spaceCapping && freeSpace < 1) {
-        socialSubtext = '⚠️ No room for guests (0 free space)';
+      if (rules?.spaceCapping && freeSpace < 10) {
+        socialSubtext = '⚠️ Need at least 10 free space for guests';
       } else if (!rules?.spaceCapping && currentMess > 25) {
         socialSubtext = '-1 💪, +👥 (generates 🧹)';
       } else if (isNotEnoughTimeForSocial) {
@@ -252,35 +274,103 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           padding: '8px 12px', 
           background: 'linear-gradient(135deg, rgba(20,20,35,0.85) 0%, rgba(35,35,55,0.85) 100%)', 
           borderRadius: '6px',
-          border: `1px solid ${messBarColor}`,
-          boxShadow: `0 0 8px ${messBarColor}22`
+          border: isOvercapacity ? '1px solid #e74c3c' : `1px solid ${messBarColor}`,
+          boxShadow: isOvercapacity ? '0 0 10px rgba(231,76,60,0.4)' : `0 0 8px ${messBarColor}22`
         }}>
+          {/* Header Row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '0.88em' }}>
-              {messIcon} Apartment Mess: <span style={{ color: messBarColor }}>{messLabel}</span>
+            <span style={{ fontWeight: 'bold', fontSize: '0.85em', color: '#00e5ff' }}>
+              🛋️ Durables: {durablesSpace} space
+            </span>
+            <span style={{ fontWeight: 'bold', fontSize: '0.85em', textAlign: 'center' }}>
+              {rules?.spaceCapping ? (
+                isOvercapacity ? (
+                  <span style={{ color: '#e74c3c', background: 'rgba(231,76,60,0.2)', padding: '1px 6px', borderRadius: '3px' }}>
+                    ⚠️ OVERCROWDED (+{overflow})
+                  </span>
+                ) : freeSpace === 0 ? (
+                  <span style={{ color: '#f39c12' }}>FULL (0 free)</span>
+                ) : (
+                  <span style={{ color: '#2ecc71' }}>{freeSpace} free space</span>
+                )
+              ) : null}
             </span>
             <span style={{ fontWeight: 'bold', fontSize: '0.85em', color: messBarColor }}>
-              {currentMess} / {maxMessHousing} mess
+              {messIcon} Mess: {currentMess} <span style={{ fontSize: '0.85em', opacity: 0.9 }}>({messLabel})</span>
             </span>
           </div>
 
-          <div style={{ width: '100%', height: '8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{
-              width: `${messPercentage}%`,
-              height: '100%',
-              backgroundColor: messBarColor,
-              transition: 'width 0.5s ease-in-out, background-color 0.5s ease'
-            }} />
-          </div>
+          {/* Opposing Gauge Bar */}
+          {rules?.spaceCapping ? (
+            <div 
+              style={{ 
+                width: '100%', 
+                height: '10px', 
+                backgroundColor: 'rgba(255,255,255,0.1)', 
+                borderRadius: '5px', 
+                overflow: 'hidden',
+                display: 'flex',
+                position: 'relative'
+              }}
+              title={`Durables: ${durablesSpace} space | Clutter/Mess: ${currentMess} space | Free: ${freeSpace} space${overflow > 0 ? ` (⚠️ ${overflow} space overcrowded!)` : ''}`}
+            >
+              {/* Left Segment: Clean Durables (Cyan) */}
+              <div style={{
+                width: `${durablesWidthPct}%`,
+                height: '100%',
+                backgroundColor: '#00e5ff',
+                transition: 'width 0.4s ease'
+              }} />
 
+              {/* Overlap Segment: Hazard Stripes when Overcrowded */}
+              {isOvercapacity && (
+                <div style={{
+                  width: `${overlapWidthPct}%`,
+                  height: '100%',
+                  background: 'repeating-linear-gradient(45deg, #e74c3c, #e74c3c 6px, #f39c12 6px, #f39c12 12px)',
+                  boxShadow: '0 0 6px rgba(231,76,60,0.8)',
+                  transition: 'width 0.4s ease'
+                }} />
+              )}
+
+              {/* Center Segment: Free Space (Dark Empty Gap) */}
+              {!isOvercapacity && (
+                <div style={{
+                  width: `${freeWidthPct}%`,
+                  height: '100%',
+                  backgroundColor: 'transparent'
+                }} />
+              )}
+
+              {/* Right Segment: Mess (Orange/Red) */}
+              <div style={{
+                width: `${messWidthPct}%`,
+                height: '100%',
+                backgroundColor: messBarColor,
+                transition: 'width 0.4s ease'
+              }} />
+            </div>
+          ) : (
+            <div style={{ width: '100%', height: '8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{
+                width: `${messPercentage}%`,
+                height: '100%',
+                backgroundColor: messBarColor,
+                transition: 'width 0.5s ease-in-out, background-color 0.5s ease'
+              }} />
+            </div>
+          )}
+
+          {/* Subtext Footer */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '0.72em', color: '#aaa', flexWrap: 'wrap', gap: '4px' }}>
             {rules?.spaceCapping ? (
               <>
-                <span style={{ color: freeSpace < 1 ? '#e74c3c' : '#00e5ff', fontWeight: 'bold' }}>
-                  📦 Space: {totalUsedSpace} / {spaceCap} ({freeSpace} free)
+                <span style={{ color: '#00e5ff' }}>0 (Start)</span>
+                <span>
+                  Capacity: <strong>{spaceCap} space</strong>
+                  {overflow > 0 && <span style={{ color: '#e74c3c', marginLeft: '4px' }}>(Total: {totalUsedSpace})</span>}
                 </span>
-                <span>Durables: {durablesSpace} | Clutter: {clutterSpace} 📦</span>
-                <span>Max Mess: {maxMessHousing}</span>
+                <span style={{ color: messBarColor }}>Max Mess: {maxMessHousing}</span>
               </>
             ) : (
               <>

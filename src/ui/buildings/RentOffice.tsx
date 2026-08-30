@@ -19,8 +19,8 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || (isJobHere && !!rules?.allowEmployedRentPayment);
 
   const availableHousingList = (campaign?.housing || [
-    { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, spaceCap: 10 },
-    { id: 'security', name: 'Security Apartments', baseRent: 475, spaceCap: 25 }
+    { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, spaceCap: 100 },
+    { id: 'security', name: 'Security Apartments', baseRent: 475, spaceCap: 250 }
   ]).filter(h => h.id !== 'street');
 
   const rentAdvanceCost = rules?.fluctuatingRent && currentHousing

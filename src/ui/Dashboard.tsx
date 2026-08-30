@@ -219,7 +219,7 @@ export function Dashboard({
             </div>
             {gameState.rules.spaceCapping && (
               <div 
-                title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess && player.mess > 0 ? Math.ceil(player.mess / 10) : 0} space`}
+                title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess || 0} space`}
                 style={{
                   fontWeight: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? 'bold' : 'normal',
                   color: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? '#e74c3c' : 'inherit'
