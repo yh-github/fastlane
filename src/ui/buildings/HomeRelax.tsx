@@ -43,26 +43,8 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const overflow = Math.max(0, totalUsedSpace - spaceCap);
   const isOvercapacity = overflow > 0;
 
-  // Bar segment percentages
-  let durablesWidthPct = 0;
-  let overlapWidthPct = 0;
-  let messWidthPct = 0;
-  let freeWidthPct = 0;
-
-  if (rules?.spaceCapping) {
-    if (!isOvercapacity) {
-      durablesWidthPct = spaceCap > 0 ? (durablesSpace / spaceCap) * 100 : 0;
-      messWidthPct = spaceCap > 0 ? (currentMess / spaceCap) * 100 : 0;
-      freeWidthPct = Math.max(0, 100 - durablesWidthPct - messWidthPct);
-    } else {
-      // Overcapacity: trash piles on top of durables
-      const cleanDurables = Math.max(0, spaceCap - currentMess);
-      durablesWidthPct = spaceCap > 0 ? (cleanDurables / spaceCap) * 100 : 0;
-      overlapWidthPct = spaceCap > 0 ? (overflow / spaceCap) * 100 : 0;
-      const floorMess = Math.max(0, spaceCap - durablesSpace);
-      messWidthPct = spaceCap > 0 ? (floorMess / spaceCap) * 100 : 0;
-    }
-  }
+  const durablesPct = spaceCap > 0 ? Math.min(100, (durablesSpace / spaceCap) * 100) : 0;
+  const messPct = spaceCap > 0 ? Math.min(100, (currentMess / spaceCap) * 100) : 0;
 
   // Socialize logic
   const isNoSpaceForSocial = rules?.spaceCapping ? (freeSpace < 10) : (currentMess > 25);
@@ -305,49 +287,39 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
             <div 
               style={{ 
                 width: '100%', 
-                height: '10px', 
-                backgroundColor: 'rgba(255,255,255,0.1)', 
-                borderRadius: '5px', 
+                height: '12px', 
+                backgroundColor: 'rgba(255,255,255,0.08)', 
+                borderRadius: '6px', 
                 overflow: 'hidden',
-                display: 'flex',
                 position: 'relative'
               }}
-              title={`Durables: ${durablesSpace} space | Clutter/Mess: ${currentMess} space | Free: ${freeSpace} space${overflow > 0 ? ` (⚠️ ${overflow} space overcrowded!)` : ''}`}
+              title={`Durables: ${durablesSpace} space | Mess: ${currentMess} space | Free: ${freeSpace} space${overflow > 0 ? ` (⚠️ ${overflow} space overcrowded!)` : ''}`}
             >
-              {/* Left Segment: Clean Durables (Cyan) */}
+              {/* Left Layer: Durables (Cyan - anchored to left) */}
               <div style={{
-                width: `${durablesWidthPct}%`,
-                height: '100%',
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: `${durablesPct}%`,
                 backgroundColor: '#00e5ff',
-                transition: 'width 0.4s ease'
+                transition: 'width 0.3s ease',
+                zIndex: 1
               }} />
 
-              {/* Overlap Segment: Hazard Stripes when Overcrowded */}
-              {isOvercapacity && (
-                <div style={{
-                  width: `${overlapWidthPct}%`,
-                  height: '100%',
-                  background: 'repeating-linear-gradient(45deg, #e74c3c, #e74c3c 6px, #f39c12 6px, #f39c12 12px)',
-                  boxShadow: '0 0 6px rgba(231,76,60,0.8)',
-                  transition: 'width 0.4s ease'
-                }} />
-              )}
-
-              {/* Center Segment: Free Space (Dark Empty Gap) */}
-              {!isOvercapacity && (
-                <div style={{
-                  width: `${freeWidthPct}%`,
-                  height: '100%',
-                  backgroundColor: 'transparent'
-                }} />
-              )}
-
-              {/* Right Segment: Mess (Orange/Red) */}
+              {/* Right Layer: Mess (Anchored to right) */}
               <div style={{
-                width: `${messWidthPct}%`,
-                height: '100%',
-                backgroundColor: messBarColor,
-                transition: 'width 0.4s ease'
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: `${messPct}%`,
+                background: isOvercapacity 
+                  ? 'repeating-linear-gradient(45deg, #e74c3c, #e74c3c 6px, #f39c12 6px, #f39c12 12px)'
+                  : messBarColor,
+                boxShadow: isOvercapacity ? '0 0 8px rgba(231,76,60,0.8)' : undefined,
+                transition: 'width 0.3s ease',
+                zIndex: 2
               }} />
             </div>
           ) : (
