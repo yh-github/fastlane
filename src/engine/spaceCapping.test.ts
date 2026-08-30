@@ -55,23 +55,23 @@ const mockCampaign: CampaignBundle = {
   education: [],
   housing: [
     { id: 'street', name: 'The Streets', baseRent: 0, isRobberyImmune: false, homeNodeId: 'node_low_cost', description: '', spaceCap: 0, lifestyleValue: 0 },
-    { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, isRobberyImmune: false, homeNodeId: 'node_low_cost', description: '', spaceCap: 10, lifestyleValue: 10 },
-    { id: 'security', name: 'Security Apartments', baseRent: 475, isRobberyImmune: true, homeNodeId: 'node_security', description: '', spaceCap: 25, lifestyleValue: 30 },
-    { id: 'penthouse', name: 'Penthouse Suite', baseRent: 850, isRobberyImmune: true, homeNodeId: 'node_security', description: '', spaceCap: 75, lifestyleValue: 50 }
+    { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, isRobberyImmune: false, homeNodeId: 'node_low_cost', description: '', spaceCap: 100, lifestyleValue: 10 },
+    { id: 'security', name: 'Security Apartments', baseRent: 475, isRobberyImmune: true, homeNodeId: 'node_security', description: '', spaceCap: 250, lifestyleValue: 30 },
+    { id: 'penthouse', name: 'Penthouse Suite', baseRent: 850, isRobberyImmune: true, homeNodeId: 'node_security', description: '', spaceCap: 750, lifestyleValue: 50 }
   ],
   items: [
-    { id: 'refrigerator', name: 'Refrigerator', category: 'appliance', basePrice: 650, happinessBonus: 1, space: 4, lifestyleValue: 1 },
-    { id: 'stove', name: 'Stove', category: 'appliance', basePrice: 490, happinessBonus: 1, space: 4, lifestyleValue: 1 },
-    { id: 'microwave', name: 'Microwave', category: 'appliance', basePrice: 220, happinessBonus: 1, space: 2, lifestyleValue: 2 },
-    { id: 'freezer', name: 'Freezer', category: 'appliance', basePrice: 513, happinessBonus: 2, space: 3, lifestyleValue: 2 },
-    { id: 'color_tv', name: 'Color TV', category: 'appliance', basePrice: 349, happinessBonus: 1, space: 2, lifestyleValue: 2 },
-    { id: 'vcr', name: 'VCR', category: 'appliance', basePrice: 250, happinessBonus: 1, space: 1, lifestyleValue: 2 },
-    { id: 'stereo', name: 'Stereo', category: 'appliance', basePrice: 450, happinessBonus: 1, space: 2, lifestyleValue: 2 },
-    { id: 'computer', name: 'Computer', category: 'appliance', basePrice: 1599, happinessBonus: 3, space: 4, lifestyleValue: 3 },
-    { id: 'hot_tub', name: 'Hot Tub', category: 'appliance', basePrice: 1255, happinessBonus: 3, space: 9, lifestyleValue: 5 },
-    { id: 'dictionary', name: 'Dictionary', category: 'book', basePrice: 70, happinessBonus: 1, space: 1, lifestyleValue: 1 },
-    { id: 'atlas', name: 'Atlas', category: 'book', basePrice: 55, happinessBonus: 1, space: 1, lifestyleValue: 1 },
-    { id: 'encyclopedia', name: 'Encyclopedia', category: 'book', basePrice: 475, happinessBonus: 1, space: 2, lifestyleValue: 1 },
+    { id: 'refrigerator', name: 'Refrigerator', category: 'appliance', basePrice: 650, happinessBonus: 1, space: 40, lifestyleValue: 1 },
+    { id: 'stove', name: 'Stove', category: 'appliance', basePrice: 490, happinessBonus: 1, space: 40, lifestyleValue: 1 },
+    { id: 'microwave', name: 'Microwave', category: 'appliance', basePrice: 220, happinessBonus: 1, space: 20, lifestyleValue: 2 },
+    { id: 'freezer', name: 'Freezer', category: 'appliance', basePrice: 513, happinessBonus: 2, space: 30, lifestyleValue: 2 },
+    { id: 'color_tv', name: 'Color TV', category: 'appliance', basePrice: 349, happinessBonus: 1, space: 20, lifestyleValue: 2 },
+    { id: 'vcr', name: 'VCR', category: 'appliance', basePrice: 250, happinessBonus: 1, space: 10, lifestyleValue: 2 },
+    { id: 'stereo', name: 'Stereo', category: 'appliance', basePrice: 450, happinessBonus: 1, space: 20, lifestyleValue: 2 },
+    { id: 'computer', name: 'Computer', category: 'appliance', basePrice: 1599, happinessBonus: 3, space: 40, lifestyleValue: 3 },
+    { id: 'hot_tub', name: 'Hot Tub', category: 'appliance', basePrice: 1255, happinessBonus: 3, space: 90, lifestyleValue: 5 },
+    { id: 'dictionary', name: 'Dictionary', category: 'book', basePrice: 70, happinessBonus: 1, space: 10, lifestyleValue: 1 },
+    { id: 'atlas', name: 'Atlas', category: 'book', basePrice: 55, happinessBonus: 1, space: 10, lifestyleValue: 1 },
+    { id: 'encyclopedia', name: 'Encyclopedia', category: 'book', basePrice: 475, happinessBonus: 1, space: 20, lifestyleValue: 1 },
     { id: 'casual_clothes', name: 'Casual Clothes', category: 'clothes', basePrice: 35, happinessBonus: 0, weeks: 9, space: 0 },
     { id: 'food_1week', name: 'Food for 1 Week', category: 'food', basePrice: 55, happinessBonus: 1, units: 1, space: 0 },
     { id: 'lottery_tickets', name: '10 Lottery Tickets', category: 'ticket', basePrice: 10, happinessBonus: 2, space: 0 }
@@ -99,7 +99,7 @@ describe('Space Capping Module', () => {
   describe('Space Calculation (calcUsedSpace & calcHousingSpaceCap)', () => {
     it('calculates space correctly for empty inventory', () => {
       expect(calcUsedSpace(player, mockCampaign, true)).toBe(0);
-      expect(calcHousingSpaceCap(player, mockCampaign)).toBe(10);
+      expect(calcHousingSpaceCap(player, mockCampaign)).toBe(100);
     });
 
     it('calculates space for appliances and books correctly', () => {
@@ -107,30 +107,30 @@ describe('Space Capping Module', () => {
         { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' },
         { id: 'microwave', purchasePrice: 220, purchaseSource: 'z_mart' }
       ];
-      player.inventory.books = ['dictionary', 'encyclopedia']; // 1 + 2 = 3
+      player.inventory.books = ['dictionary', 'encyclopedia']; // 10 + 20 = 30
 
-      // 4 (fridge) + 2 (microwave) + 1 (dict) + 2 (encyclopedia) = 9
-      expect(calcUsedSpace(player, mockCampaign, false)).toBe(9);
-      expect(calcUsedSpace(player, mockCampaign, true)).toBe(9);
+      // 40 (fridge) + 20 (microwave) + 10 (dict) + 20 (encyclopedia) = 90
+      expect(calcUsedSpace(player, mockCampaign, false)).toBe(90);
+      expect(calcUsedSpace(player, mockCampaign, true)).toBe(90);
     });
 
-    it('calculates mess space dynamically with Math.ceil(mess / 10)', () => {
-      player.inventory.appliances = [{ id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }]; // 4 space
+    it('calculates mess space directly 1:1', () => {
+      player.inventory.appliances = [{ id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }]; // 40 space
 
       player.mess = 0;
-      expect(calcUsedSpace(player, mockCampaign, true)).toBe(4);
+      expect(calcUsedSpace(player, mockCampaign, true)).toBe(40);
 
-      player.mess = 1; // ceil(1/10) = 1 space
-      expect(calcUsedSpace(player, mockCampaign, true)).toBe(5);
+      player.mess = 1; // 1 space
+      expect(calcUsedSpace(player, mockCampaign, true)).toBe(41);
 
-      player.mess = 10; // ceil(10/10) = 1 space
-      expect(calcUsedSpace(player, mockCampaign, true)).toBe(5);
+      player.mess = 10; // 10 space
+      expect(calcUsedSpace(player, mockCampaign, true)).toBe(50);
 
-      player.mess = 11; // ceil(11/10) = 2 space
-      expect(calcUsedSpace(player, mockCampaign, true)).toBe(6);
+      player.mess = 15; // 15 space
+      expect(calcUsedSpace(player, mockCampaign, true)).toBe(55);
 
-      player.mess = 25; // ceil(25/10) = 3 space
-      expect(calcUsedSpace(player, mockCampaign, true)).toBe(7);
+      player.mess = 25; // 25 space
+      expect(calcUsedSpace(player, mockCampaign, true)).toBe(65);
     });
 
     it('returns 0 for non-durables (clothes, food, tickets)', () => {
@@ -152,13 +152,13 @@ describe('Space Capping Module', () => {
     });
 
     it('rejects purchasing durables when space cap would be exceeded', () => {
-      // Fill to 8 space: Fridge (4) + Stove (4) = 8
+      // Fill to 80 space: Fridge (40) + Stove (40) = 80
       player.inventory.appliances = [
         { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' },
         { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' }
       ];
 
-      // Try to buy Freezer (3 space) -> 8 + 3 = 11 > 10
+      // Try to buy Freezer (30 space) -> 80 + 30 = 110 > 100
       const freezer = mockCampaign.items.find(i => i.id === 'freezer')!;
       const result = buyItem(player, freezer, mockCampaign.config.gameRules, mockCampaign);
 
@@ -168,14 +168,14 @@ describe('Space Capping Module', () => {
     });
 
     it('rejects purchasing books when space cap is reached', () => {
-      // Fill to 9 space: Fridge (4) + Stove (4) + VCR (1) = 9
+      // Fill to 90 space: Fridge (40) + Stove (40) + VCR (10) = 90
       player.inventory.appliances = [
         { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' },
         { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' },
         { id: 'vcr', purchasePrice: 250, purchaseSource: 'z_mart' }
       ];
 
-      // Try to buy Encyclopedia (2 space) -> 9 + 2 = 11 > 10
+      // Try to buy Encyclopedia (20 space) -> 90 + 20 = 110 > 100
       const encyclopedia = mockCampaign.items.find(i => i.id === 'encyclopedia')!;
       const result = buyItem(player, encyclopedia, mockCampaign.config.gameRules, mockCampaign);
 
@@ -184,15 +184,15 @@ describe('Space Capping Module', () => {
     });
 
     it('handles the Mess Trap: Clutter pushing space over cap blocks purchases until cleaned', () => {
-      // 8 space of appliances
+      // 80 space of appliances
       player.inventory.appliances = [
         { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' },
         { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' }
       ];
-      // Mess = 25 -> 3 space. Total space = 8 + 3 = 11 > 10
+      // Mess = 25 space. Total space = 80 + 25 = 105 > 100
       player.mess = 25;
 
-      // Try to buy Dictionary (1 space)
+      // Try to buy Dictionary (10 space)
       const dictionary = mockCampaign.items.find(i => i.id === 'dictionary')!;
       const result = buyItem(player, dictionary, mockCampaign.config.gameRules, mockCampaign);
 
@@ -201,7 +201,7 @@ describe('Space Capping Module', () => {
     });
 
     it('allows buying consumables (food, clothes, tickets) even if space is full', () => {
-      // Full house (10/10)
+      // Full house (100/100)
       player.inventory.appliances = [
         { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' },
         { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' },
@@ -223,7 +223,7 @@ describe('Space Capping Module', () => {
         { id: 'microwave', purchasePrice: 220, purchaseSource: 'z_mart' }
       ];
 
-      const hotTub = mockCampaign.items.find(i => i.id === 'hot_tub')!; // 9 space
+      const hotTub = mockCampaign.items.find(i => i.id === 'hot_tub')!; // 90 space
       const result = buyItem(player, hotTub, nonCappedRules, mockCampaign);
 
       expect(result.success).toBe(true);
@@ -233,11 +233,11 @@ describe('Space Capping Module', () => {
   describe('Moving Apartments (move_apartment in gameReducer)', () => {
     it('rejects moving to smaller housing if durables exceed target space cap', () => {
       player.currentHousingId = 'security';
-      // 17 space of durables
+      // 170 space of durables
       player.inventory.appliances = [
-        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 4
-        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' }, // 4
-        { id: 'hot_tub', purchasePrice: 1255, purchaseSource: 'socket_city' } // 9 -> total 17 space
+        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 40
+        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' }, // 40
+        { id: 'hot_tub', purchasePrice: 1255, purchaseSource: 'socket_city' } // 90 -> total 170 space
       ];
 
       const context = {
@@ -256,12 +256,12 @@ describe('Space Capping Module', () => {
 
     it('allows moving to smaller housing if durables fit, ignoring old apartment mess', () => {
       player.currentHousingId = 'security';
-      // 8 space of durables
+      // 80 space of durables
       player.inventory.appliances = [
-        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 4
-        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' } // 4 -> total 8 space
+        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 40
+        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' } // 40 -> total 80 space
       ];
-      // Mess = 40 (4 space) -> would be 12 total, but mess shouldn't block move!
+      // Mess = 40 (40 space) -> would be 120 total, but mess shouldn't block move!
       player.mess = 40;
 
       const context = {
@@ -282,13 +282,13 @@ describe('Space Capping Module', () => {
 
   describe('Pawn Shop & Redemption Space Checking', () => {
     it('rejects redeeming an item if it would exceed space capacity', () => {
-      // 8 space of durables in 10-cap Low Cost
+      // 80 space of durables in 100-cap Low Cost
       player.inventory.appliances = [
-        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 4
-        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' } // 4
+        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 40
+        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' } // 40
       ];
       player.inventory.pawnedItems = [{
-        itemId: 'freezer', // 3 space -> 8 + 3 = 11 > 10
+        itemId: 'freezer', // 30 space -> 80 + 30 = 110 > 100
         originalPrice: 500,
         redeemCost: 250,
         weekPawned: 1,
@@ -347,11 +347,11 @@ describe('Space Capping Module', () => {
   });
 
   describe('Penthouse Suite Tier', () => {
-    it('allows massive durable collection and grants high space cap (75)', () => {
+    it('allows massive durable collection and grants high space cap (750)', () => {
       player.currentHousingId = 'penthouse';
-      expect(calcHousingSpaceCap(player, mockCampaign)).toBe(75);
+      expect(calcHousingSpaceCap(player, mockCampaign)).toBe(750);
 
-      // Buy full suite of items: 35 space
+      // Buy full suite of items: 350 space
       player.inventory.appliances = [
         { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' },
         { id: 'freezer', purchasePrice: 513, purchaseSource: 'socket_city' },
@@ -365,9 +365,9 @@ describe('Space Capping Module', () => {
       ];
       player.inventory.books = ['dictionary', 'atlas', 'encyclopedia'];
 
-      // 4+3+4+2+2+1+2+4+9 + 1+1+2 = 35 space used
-      expect(calcUsedSpace(player, mockCampaign, false)).toBe(35);
-      expect(calcUsedSpace(player, mockCampaign, false) <= 75).toBe(true);
+      // 40+30+40+20+20+10+20+40+90 + 10+10+20 = 350 space used
+      expect(calcUsedSpace(player, mockCampaign, false)).toBe(350);
+      expect(calcUsedSpace(player, mockCampaign, false) <= 750).toBe(true);
     });
 
     it('starts turn at the Security Building (node_security) after moving into penthouse', () => {
@@ -396,15 +396,15 @@ describe('Space Capping Module', () => {
   });
 
   describe('Socializing & Space Integration', () => {
-    it('rejects socializing if apartment has 0 free space (durables + clutter mess >= spaceCap)', () => {
-      player.currentHousingId = 'low_cost'; // Cap 10
-      // 9 space of durables
+    it('rejects socializing if apartment has less than 10 free space', () => {
+      player.currentHousingId = 'low_cost'; // Cap 100
+      // 90 space of durables
       player.inventory.appliances = [
-        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 4
-        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' } // 4
+        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 40
+        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' } // 40
       ];
-      player.inventory.books = ['dictionary']; // 1
-      player.mess = 15; // ceil(15/10) = 2 clutter space -> 9 + 2 = 11 > 10 (0 free space)
+      player.inventory.books = ['dictionary']; // 10 -> 90 durables
+      player.mess = 5; // 90 + 5 = 95 -> 5 free space (< 10)
 
       const context = {
         state: { players: [player], economicIndex: 0, turn: 1, rngState: 12345 } as any,
@@ -418,9 +418,9 @@ describe('Space Capping Module', () => {
       expect(actionLog?.key).toBe('action.error.noSpaceSocialize');
     });
 
-    it('allows socializing if free space >= 1 even if mess > 25 when spaceCapping is true', () => {
-      player.currentHousingId = 'penthouse'; // Cap 75
-      player.mess = 35; // Mess > 25, but 4 clutter space + 0 durables = 4/75 (71 free space)
+    it('allows socializing if free space >= 10 even if mess > 25 when spaceCapping is true', () => {
+      player.currentHousingId = 'penthouse'; // Cap 750
+      player.mess = 35; // Mess > 25, but 35 mess + 0 durables = 35/750 (715 free space >= 10)
       player.money = 500;
       player.hoursRemaining = 30;
       player.physicalCondition = 40;
@@ -488,6 +488,31 @@ describe('Space Capping Module', () => {
       const result = gameReducer(player, { type: 'socialize_guests' }, context as any);
       const actionLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog;
       expect(actionLog?.key).toBe('action.error.messTooHighSocialize');
+    });
+  });
+
+  describe('Overcrowding & Hazard Space Calculations', () => {
+    it('accurately tracks overcapacity when durables + mess exceed housing capacity', () => {
+      player.currentHousingId = 'low_cost'; // Cap 100
+      player.inventory.appliances = [
+        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 40
+        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' } // 40
+      ];
+      player.mess = 45; // 80 durables + 45 mess = 125 total space
+
+      const durablesSpace = calcUsedSpace(player, mockCampaign, false);
+      const totalSpace = calcUsedSpace(player, mockCampaign, true);
+      const spaceCap = calcHousingSpaceCap(player, mockCampaign);
+
+      expect(durablesSpace).toBe(80);
+      expect(totalSpace).toBe(125);
+      expect(spaceCap).toBe(100);
+
+      const overflow = Math.max(0, totalSpace - spaceCap);
+      const freeSpace = Math.max(0, spaceCap - totalSpace);
+
+      expect(overflow).toBe(25);
+      expect(freeSpace).toBe(0);
     });
   });
 });

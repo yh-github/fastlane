@@ -160,7 +160,7 @@
       "notEnoughMoneyCleanService": "Not enough money to call cleaning service.",
       "alreadyClean": "Your apartment is already spotless.",
       "messTooHighSocialize": "Your apartment is too messy to invite guests over (Clean below 25 Mess first).",
-      "noSpaceSocialize": "You don't have enough empty space in your apartment to host guests (Need at least 1 free space).",
+      "noSpaceSocialize": "You don't have enough empty space in your apartment to host guests (Need at least 10 free space).",
       "noLoan": "You don't have a loan.",
       "notEnoughMoney": "Not enough money.",
       "alreadyOwnComputer": "You already own a computer.",

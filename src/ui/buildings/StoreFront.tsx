@@ -22,9 +22,9 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
           else if (item.category === 'appliance') alreadyOwned = player.inventory.appliances.some(a => a.id === item.id);
           
           let itemSpace = item.space ?? 0;
-          if (item.category === 'book' && itemSpace === 0) {
-            itemSpace = item.id === 'encyclopedia' ? 2 : 1;
-          }
+            if (item.category === 'book' && itemSpace === 0) {
+              itemSpace = item.id === 'encyclopedia' ? 20 : 10;
+            }
           const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
           const canBuy = canAfford && (!rules?.helpfulUI || hasSpace);
 

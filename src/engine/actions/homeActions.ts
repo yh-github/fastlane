@@ -222,7 +222,7 @@ export function handleSocializeAction(
   if (context.rules.spaceCapping) {
     const usedSpace = calcUsedSpace(nextPlayer, context.campaign, true);
     const spaceCap = calcHousingSpaceCap(nextPlayer, context.campaign);
-    if (spaceCap - usedSpace < 1) {
+    if (spaceCap - usedSpace < 10) {
       actionLog = { key: 'action.error.noSpaceSocialize' };
       return { nextPlayer, actionLog };
     }
