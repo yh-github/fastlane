@@ -14,6 +14,7 @@ describe('SettingsModal', () => {
   const dummyGameState: GameState = {
     turn: 1,
     economicIndex: 0,
+    economicTrend: 0,
     pawnShopItemsForSale: [],
     players: [],
     phase: 'turn-start',

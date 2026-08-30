@@ -209,9 +209,9 @@ export function requireConfig<T>(value: T | undefined | null, name: string): T {
 
 export interface StatRules {
   startingHappiness?: number;
-  startingRelaxation: number;
-  relaxationDecayRate: number;
-  relaxationDoctorChance: number;
+  startingRelaxation?: number;
+  relaxationDecayRate?: number;
+  relaxationDoctorChance?: number;
   
   // Advanced mechanics
   enableAdvancedStats?: boolean;
@@ -226,6 +226,9 @@ export interface StatRules {
   globalMaxMentalCondition?: number;
   physicalDoctorThreshold?: number;
   physicalDoctorChancePerPoint?: number;
+  doctorVisitPhysicalThreshold?: number;
+  doctorVisitPhysicalChancePerPoint?: number;
+  hotTubMaxMessBonus?: number;
   lowSpiritsThreshold?: number;
   lowSpiritsChancePerPoint?: number;
   workGrindThreshold?: number;

@@ -10,7 +10,6 @@ import {
   StoreFront,
   RentOffice,
   PawnShop,
-  DiscountAndPawnShop,
   ActionReasonModal
 } from './BuildingInteractions';
 import type { PlayerState } from '../engine/gameState';
@@ -93,10 +92,10 @@ describe('BuildingInteractions', () => {
   });
 
   it('StockTradeRow displays softly disabled explanation modal when buying with insufficient funds or selling with 0 shares', () => {
-    const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 100, type: 'stable' as const };
+    const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 100, type: 'fixed' as const };
     const mockOnAction = vi.fn();
 
-    const { rerender } = render(
+    render(
       <StockTradeRow stock={stockDef} price={100} owned={0} playerMoney={20} onAction={mockOnAction} />
     );
 
@@ -120,7 +119,7 @@ describe('BuildingInteractions', () => {
   });
 
   it('StockTradeRow opens trade dialog and confirms buy/sell transactions', () => {
-    const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 50, type: 'stable' as const };
+    const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 50, type: 'fixed' as const };
     const mockOnAction = vi.fn();
 
     render(

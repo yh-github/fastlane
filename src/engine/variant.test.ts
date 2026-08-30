@@ -41,7 +41,7 @@ describe('Game Variant mechanics', () => {
   });
 
   const getDummyState = (): GameState => ({
-    turn: 4, economicIndex: 0, pawnShopItemsForSale: [], players: [], phase: 'turn-start',
+    turn: 4, economicIndex: 0, economicTrend: 0, pawnShopItemsForSale: [], players: [], phase: 'turn-start',
     campaignId: 'classic', rngState: 12345,
     rules: { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: false, autoEquipBestClothes: false, classicStockMarket: true, allowPartialHours: true, enableRelaxationDoctor: false, requireJobForLoan: false, helpfulUI: false, enableAnimations: false, allowOverAchievingGoals: false, bypassDoctorIfBroke: true, relaxationDoctorThreshold: 10 },
     winnerId: null

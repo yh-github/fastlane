@@ -1,5 +1,7 @@
+import { createTestPlayer } from './testFactories';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createPlayerState, type PlayerState, type CampaignBundle } from './gameState';
+import { type PlayerState, type GameRules } from './gameState';
+import { type CampaignBundle, type ItemDef } from './dataLoader';
 import { calcUsedSpace, calcHousingSpaceCap } from './statMath';
 import { buyItem } from './shoppingEngine';
 import { gameReducer } from './gameReducer';
@@ -11,6 +13,7 @@ const mockCampaign: CampaignBundle = {
   config: {
     name: 'Advanced Space Test',
     version: '1.0.0',
+    description: 'Advanced Space Test Description',
     startingMoney: 5000,
     winConditions: [],
     gameRules: {
@@ -22,6 +25,8 @@ const mockCampaign: CampaignBundle = {
     timeRules: {
       hoursPerTurn: 60,
       workSessionCost: 6,
+      studySessionCost: 6,
+      jobApplicationCost: 4,
       relaxCost: 6,
       cleaningServiceCost: 1,
       socializeCost: 6,
@@ -44,12 +49,15 @@ const mockCampaign: CampaignBundle = {
       repairCostMax: 0.2,
       pawnPayoutRate: 0.4,
       pawnRedeemRate: 0.5
+    },
+    mapRules: {
+      movementCostPerNode: 1
     }
   },
   buildings: [
-    { id: 'apartment_complex', name: 'Rent Office', archetype: 'housing', description: '' },
-    { id: 'socket_city', name: 'Socket City', archetype: 'shop', description: '' },
-    { id: 'pawn_shop', name: 'Pawn Shop', archetype: 'pawnshop', description: '' }
+    { id: 'apartment_complex', name: 'Rent Office', archetype: 'housing', spritePath: '', description: '' },
+    { id: 'socket_city', name: 'Socket City', archetype: 'shop', spritePath: '', description: '' },
+    { id: 'pawn_shop', name: 'Pawn Shop', archetype: 'pawnshop', spritePath: '', description: '' }
   ],
   jobs: [],
   education: [],
@@ -78,7 +86,7 @@ const mockCampaign: CampaignBundle = {
   ],
   events: [],
   stocks: [],
-  map: { width: 10, height: 10, nodes: [{ id: 'node_low_cost', name: 'Low Cost Apt', buildingId: 'low_cost_housing', x: 0, y: 0 }] },
+  map: { width: 10, height: 10, nodes: [{ id: 'node_low_cost', buildingId: 'low_cost_housing', x: 0, y: 0, connections: [] }] },
   messages: {},
   weekends: { ticketWeekends: {}, durableWeekends: {}, randomWeekends: [] },
   synergies: []
@@ -88,12 +96,13 @@ describe('Space Capping Module', () => {
   let player: PlayerState;
 
   beforeEach(() => {
-    player = {
-      ...createPlayerState('p1', 'Player 1', false, 'node_low_cost', mockCampaign.config, mockCampaign.config.statRules),
+    player = createTestPlayer({
+      id: 'p1',
+      name: 'Player 1',
       currentHousingId: 'low_cost',
       money: 5000,
       mess: 0
-    };
+    }, mockCampaign);
   });
 
   describe('Space Calculation (calcUsedSpace & calcHousingSpaceCap)', () => {
@@ -144,7 +153,7 @@ describe('Space Capping Module', () => {
 
   describe('Shopping with Space Capping (buyItem)', () => {
     it('allows purchasing durables when within space capacity', () => {
-      const fridge = mockCampaign.items.find(i => i.id === 'refrigerator')!;
+      const fridge = mockCampaign.items.find((i: ItemDef) => i.id === 'refrigerator')!;
       const result = buyItem(player, fridge, mockCampaign.config.gameRules, mockCampaign);
 
       expect(result.success).toBe(true);
@@ -159,7 +168,7 @@ describe('Space Capping Module', () => {
       ];
 
       // Try to buy Freezer (30 space) -> 80 + 30 = 110 > 100
-      const freezer = mockCampaign.items.find(i => i.id === 'freezer')!;
+      const freezer = mockCampaign.items.find((i: ItemDef) => i.id === 'freezer')!;
       const result = buyItem(player, freezer, mockCampaign.config.gameRules, mockCampaign);
 
       expect(result.success).toBe(false);
@@ -176,7 +185,7 @@ describe('Space Capping Module', () => {
       ];
 
       // Try to buy Encyclopedia (20 space) -> 90 + 20 = 110 > 100
-      const encyclopedia = mockCampaign.items.find(i => i.id === 'encyclopedia')!;
+      const encyclopedia = mockCampaign.items.find((i: ItemDef) => i.id === 'encyclopedia')!;
       const result = buyItem(player, encyclopedia, mockCampaign.config.gameRules, mockCampaign);
 
       expect(result.success).toBe(false);
@@ -193,7 +202,7 @@ describe('Space Capping Module', () => {
       player.mess = 25;
 
       // Try to buy Dictionary (10 space)
-      const dictionary = mockCampaign.items.find(i => i.id === 'dictionary')!;
+      const dictionary = mockCampaign.items.find((i: ItemDef) => i.id === 'dictionary')!;
       const result = buyItem(player, dictionary, mockCampaign.config.gameRules, mockCampaign);
 
       expect(result.success).toBe(false);
@@ -208,7 +217,7 @@ describe('Space Capping Module', () => {
         { id: 'microwave', purchasePrice: 220, purchaseSource: 'z_mart' }
       ];
 
-      const food = mockCampaign.items.find(i => i.id === 'food_1week')!;
+      const food = mockCampaign.items.find((i: ItemDef) => i.id === 'food_1week')!;
       const result = buyItem(player, food, mockCampaign.config.gameRules, mockCampaign);
 
       expect(result.success).toBe(true);
@@ -216,14 +225,14 @@ describe('Space Capping Module', () => {
     });
 
     it('allows buying all items without space restriction if spaceCapping is false', () => {
-      const nonCappedRules = { ...mockCampaign.config.gameRules, spaceCapping: false };
+      const nonCappedRules = { ...(mockCampaign.config.gameRules as GameRules), spaceCapping: false };
       player.inventory.appliances = [
         { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' },
         { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' },
         { id: 'microwave', purchasePrice: 220, purchaseSource: 'z_mart' }
       ];
 
-      const hotTub = mockCampaign.items.find(i => i.id === 'hot_tub')!; // 90 space
+      const hotTub = mockCampaign.items.find((i: ItemDef) => i.id === 'hot_tub')!; // 90 space
       const result = buyItem(player, hotTub, nonCappedRules, mockCampaign);
 
       expect(result.success).toBe(true);
@@ -467,8 +476,8 @@ describe('Space Capping Module', () => {
       const result = gameReducer(player, { type: 'socialize_guests' }, context as any);
       const actionLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog;
       expect(actionLog?.key).toBe('action.socialize');
-      const guests = actionLog?.params?.guests; // 1, 2, or 3
-      expect(actionLog?.params?.reward).toBe(guests * 3);
+      const guests = Number(actionLog?.params?.guests); // 1, 2, or 3
+      expect(Number(actionLog?.params?.reward)).toBe(guests * 3);
       expect(result.updatedPlayer.money).toBe(500 - (guests * 75));
     });
 

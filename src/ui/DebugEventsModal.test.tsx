@@ -1,33 +1,9 @@
-import { createTestGameState } from '../engine/testFactories';
+import { createTestGameState, createMockCampaign } from '../engine/testFactories';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DebugEventsModal } from './DebugEventsModal';
-import {  } from '../engine/gameState';
-import { type CampaignBundle } from '../engine/dataLoader';
 
-const mockCampaign: CampaignBundle = {
-  config: {
-    name: 'test_campaign',
-    startingMoney: 200,
-    timeRules: { hoursPerTurn: 60 } as any,
-    statRules: { startingHappiness: 50, startingRelaxation: 16 } as any,
-    eventRules: { willyRobberyStartWeek: 4 } as any,
-    winConditions: [],
-  },
-  housing: [
-    { id: 'low_cost', name: 'Low Cost Apt', baseRent: 325, lifestyleValue: 10 },
-  ],
-  jobs: [],
-  education: [],
-  items: [
-    { id: 'tv', name: 'Color TV', category: 'appliance', basePrice: 400 },
-  ],
-  synergies: [],
-  weekends: { ticketWeekends: {}, durableWeekends: {}, randomWeekends: [] },
-  map: { nodes: [] },
-  messages: {},
-  stocks: [],
-};
+const mockCampaign = createMockCampaign();
 
 describe('DebugEventsModal UI', () => {
   it('renders global economy controls and updates state', () => {

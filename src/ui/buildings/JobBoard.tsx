@@ -119,7 +119,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
  */
 export function WorkStation({ player, onAction, job, campaign }: InteractionProps & { job: JobDef, campaign?: CampaignBundle }) {
   const { t } = useTranslation();
-  const rules = campaign?.rules || campaign?.config?.gameRules;
+  const rules = campaign?.config?.gameRules;
   const statRules = campaign?.config?.statRules;
   const isAdvanced = !!rules?.usePhysicalMentalConditions;
   const workSessionCost = campaign?.config.timeRules?.workSessionCost ?? 6;

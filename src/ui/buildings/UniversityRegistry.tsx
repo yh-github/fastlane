@@ -11,8 +11,8 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
   const { t } = useTranslation();
   const [tab, setTab] = useState<'available'|'tree'>('available');
 
-  const degreesList = availableDegrees || campaign?.degrees || [];
-  const rootDegrees = degreesList.filter(d => d.prerequisites.length === 0);
+  const degreesList: EducationDef[] = availableDegrees || campaign?.education || (campaign as any)?.degrees || [];
+  const rootDegrees = degreesList.filter((d: EducationDef) => d.prerequisites.length === 0);
 
   return (
     <div className="interaction-panel">
