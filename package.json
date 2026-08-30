@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "npm run test:types && vite build && vitest run && npm run test:e2e",
-    "test:types": "tsc --noEmit",
+    "test:types": "tsc -b --noEmit",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:watch": "vitest",

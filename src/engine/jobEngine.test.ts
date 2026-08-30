@@ -333,7 +333,7 @@ describe('Job Engine', () => {
         const protectedPlayer = {
           ...raiseResult.updated,
           dependability: 45,
-          inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
+          inventory: { ...raiseResult.updated.inventory, businessClothesWeeks: 10, selectedClothes: 'business' as const }
         };
         const workResult = workShift(protectedPlayer, salesManager, 6, advRules);
         expect(workResult.success).toBe(true); // not fired

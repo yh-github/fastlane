@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import React from 'react';
 import { render } from '@testing-library/react';
 import i18n from '../i18n';
 import en from './en.json';
@@ -10,11 +9,8 @@ import {
   BankInterface, 
   StockTradeRow, 
   JobBoard, 
-  StoreFront, 
   HomeRelax, 
-  RentOffice, 
-  PawnShop, 
-  UniversityRegistry 
+  RentOffice
 } from '../ui/BuildingInteractions';
 import { WeekendScreen } from '../ui/WeekendScreen';
 
@@ -372,7 +368,6 @@ describe('Translation Interpolation & Template Verification', () => {
       const { container } = render(
         <RentOffice 
           player={mockPlayer} 
-          housing={mockCampaign.housing} 
           turn={1} 
           economicIndex={0} 
           campaign={mockCampaign} 
@@ -391,7 +386,6 @@ describe('Translation Interpolation & Template Verification', () => {
       const { container } = render(
         <HomeRelax 
           player={mockPlayer} 
-          relaxCost={6} 
           campaign={mockCampaign} 
           rules={{ helpfulUI: true } as any} 
           onAction={vi.fn()} 
@@ -410,7 +404,6 @@ describe('Translation Interpolation & Template Verification', () => {
           turn={2} 
           player={mockPlayer} 
           onStartWeek={vi.fn()} 
-          onActivitySelect={vi.fn()} 
         />
       );
 

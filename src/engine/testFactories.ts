@@ -8,18 +8,29 @@
 import { type PlayerState, type GameState, type GameRules, createPlayerState, createInitialGameState } from './gameState';
 import { type CampaignBundle } from './dataLoader';
 import { DEFAULT_GAME_RULES } from './rules';
+import type { TimeRules, StatRules, EconomyRules, EventRules } from './rules';
+import type { CampaignConfig } from './dataLoader';
+
+export type MockCampaignOverrides = Partial<Omit<CampaignBundle, 'config'>> & {
+  config?: Partial<Omit<CampaignConfig, 'timeRules' | 'economyRules' | 'statRules' | 'gameRules' | 'eventRules'>> & {
+    timeRules?: Partial<TimeRules>;
+    economyRules?: Partial<EconomyRules>;
+    statRules?: Partial<StatRules>;
+    gameRules?: Partial<GameRules>;
+    eventRules?: Partial<EventRules>;
+  };
+};
 
 /**
  * Creates a valid, complete CampaignBundle with sensible defaults for testing.
  */
-export function createMockCampaign(overrides: Partial<CampaignBundle> = {}): CampaignBundle {
+export function createMockCampaign(overrides: MockCampaignOverrides = {}): CampaignBundle {
   const defaultCampaign: CampaignBundle = {
     config: {
       name: 'test_mock_campaign',
       version: '1.0.0',
       description: 'Mock Campaign for Unit Tests',
       startingMoney: 200,
-      startingHousingId: 'node_low_cost',
       winConditions: [],
       timeRules: {
         hoursPerTurn: 60,
@@ -33,7 +44,6 @@ export function createMockCampaign(overrides: Partial<CampaignBundle> = {}): Cam
         buildingEntryCost: 2,
         loanCost: 2,
         brokerCost: 2,
-        cleanPhysicalCost: 1,
         cleaningServiceCost: 1,
         socializeCost: 6,
       },
@@ -76,14 +86,14 @@ export function createMockCampaign(overrides: Partial<CampaignBundle> = {}): Cam
       gameRules: { ...DEFAULT_GAME_RULES },
     },
     buildings: [
-      { id: 'monolith_burgers', name: 'Monolith Burgers' },
-      { id: 'socket_city', name: 'Socket City' },
-      { id: 'university', name: 'University' },
-      { id: 'bank', name: '1st National Bank' },
-      { id: 'blacks_market', name: "Black's Market" },
-      { id: 'discount_and_pawn', name: 'Discount & Pawn' },
-      { id: 'low_cost', name: 'Low Cost Apartments' },
-      { id: 'security', name: 'Security Apartments' },
+      { id: 'monolith_burgers', name: 'Monolith Burgers', archetype: 'restaurant', spritePath: '', description: '' },
+      { id: 'socket_city', name: 'Socket City', archetype: 'shop', spritePath: '', description: '' },
+      { id: 'university', name: 'University', archetype: 'education', spritePath: '', description: '' },
+      { id: 'bank', name: '1st National Bank', archetype: 'bank', spritePath: '', description: '' },
+      { id: 'blacks_market', name: "Black's Market", archetype: 'shop', spritePath: '', description: '' },
+      { id: 'discount_and_pawn', name: 'Discount & Pawn', archetype: 'discount_and_pawn', spritePath: '', description: '' },
+      { id: 'low_cost', name: 'Low Cost Apartments', archetype: 'housing', spritePath: '', description: '' },
+      { id: 'security', name: 'Security Apartments', archetype: 'housing', spritePath: '', description: '' },
     ],
     map: {
       width: 1000,
@@ -97,15 +107,15 @@ export function createMockCampaign(overrides: Partial<CampaignBundle> = {}): Cam
       ],
     },
     items: [
-      { id: 'newspaper', name: 'Newspaper', basePrice: 1, category: 'item' },
+      { id: 'newspaper', name: 'Newspaper', basePrice: 1, category: 'junk', happinessBonus: 0 },
       { id: 'burger', name: 'Burger', basePrice: 5, category: 'food', subcategory: 'fast_food', happinessBonus: 1 },
       { id: 'groceries', name: 'Groceries', basePrice: 20, category: 'food', subcategory: 'fresh_food', units: 4, happinessBonus: 0 },
-      { id: 'refrigerator', name: 'Refrigerator', basePrice: 400, category: 'appliance', tags: ['refrigerator'] },
-      { id: 'color_tv', name: 'Color TV', basePrice: 350, category: 'appliance', tags: ['tv'] },
-      { id: 'hot_tub', name: 'Hot Tub', basePrice: 1200, category: 'appliance', tags: ['hot_tub'] },
-      { id: 'casual_clothes', name: 'Casual Clothes', basePrice: 40, category: 'clothes', subcategory: 'casual', weeks: 12 },
-      { id: 'dress_clothes', name: 'Dress Clothes', basePrice: 120, category: 'clothes', subcategory: 'dress', weeks: 12 },
-      { id: 'business_suit', name: 'Business Suit', basePrice: 250, category: 'clothes', subcategory: 'business', weeks: 12 },
+      { id: 'refrigerator', name: 'Refrigerator', basePrice: 400, category: 'appliance', tags: ['refrigerator'], happinessBonus: 1 },
+      { id: 'color_tv', name: 'Color TV', basePrice: 350, category: 'appliance', tags: ['tv'], happinessBonus: 2 },
+      { id: 'hot_tub', name: 'Hot Tub', basePrice: 1200, category: 'appliance', tags: ['hot_tub'], happinessBonus: 4 },
+      { id: 'casual_clothes', name: 'Casual Clothes', basePrice: 40, category: 'clothes', subcategory: 'casual', weeks: 12, happinessBonus: 0 },
+      { id: 'dress_clothes', name: 'Dress Clothes', basePrice: 120, category: 'clothes', subcategory: 'dress', weeks: 12, happinessBonus: 0 },
+      { id: 'business_suit', name: 'Business Suit', basePrice: 250, category: 'clothes', subcategory: 'business', weeks: 12, happinessBonus: 0 },
     ],
     jobs: [
       {
@@ -197,6 +207,7 @@ export function createMockCampaign(overrides: Partial<CampaignBundle> = {}): Cam
       economyRules: { ...defaultCampaign.config.economyRules, ...(overrides.config?.economyRules || {}) },
       statRules: { ...defaultCampaign.config.statRules, ...(overrides.config?.statRules || {}) },
       gameRules: { ...defaultCampaign.config.gameRules, ...(overrides.config?.gameRules || {}) },
+      eventRules: overrides.config?.eventRules ? { ...(defaultCampaign.config.eventRules || {}), ...overrides.config.eventRules } as EventRules : defaultCampaign.config.eventRules,
     },
   };
 }
@@ -285,5 +296,10 @@ export function createTestGameState(
   rules?: Partial<GameRules>,
   seed: number = 12345
 ): GameState {
-  return createInitialGameState(campaign, playersConfig, startNode, rules, seed);
+  const formattedPlayers = playersConfig.map(p => ({
+    name: p.name,
+    isAi: p.isAi,
+    goals: p.goals || { wealth: 50, happiness: 50, education: 50, career: 50 }
+  }));
+  return createInitialGameState(campaign, formattedPlayers, startNode, rules, seed);
 }

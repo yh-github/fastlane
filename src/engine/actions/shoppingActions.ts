@@ -50,7 +50,6 @@ export function handleBuyAction(
         }
         const isBurger = ['hamburger', 'cheeseburger', 'burger'].includes(baseItemDef.id);
         const isJunkOrBadFastFood = !isBurger && (
-          baseItemDef.category === 'fast_food' ||
           baseItemDef.category === 'junk' ||
           ['fries', 'shake', 'cola', 'colas', 'shakes', 'astro_chicken'].includes(baseItemDef.id)
         );

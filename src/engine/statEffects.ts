@@ -19,12 +19,12 @@ export function applyMoraleEffect(
   player: PlayerState, 
   amount: number, 
   _reason: MoraleReason,
-  rules: GameRules,
+  rules?: Partial<GameRules>,
   statRules?: StatRules
 ): PlayerState {
   let nextPlayer = { ...player };
 
-  if (!rules.usePhysicalMentalConditions) {
+  if (!rules?.usePhysicalMentalConditions) {
     nextPlayer.happiness = Math.max(10, Math.min(100, nextPlayer.happiness + amount));
   } else {
     const minMental = statRules?.minMentalCondition ?? 1;

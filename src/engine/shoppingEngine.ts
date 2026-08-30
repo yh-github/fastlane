@@ -9,7 +9,7 @@ export interface ShoppingResult {
   message: GameEvent;
 }
 
-export function buyItem(player: PlayerState, item: ItemDef, rules?: GameRules, campaign?: CampaignBundle): ShoppingResult {
+export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<GameRules>, campaign?: CampaignBundle): ShoppingResult {
   const price = item.basePrice ?? 0;
   if (player.money < price) {
     return { updated: player, success: false, message: { key: 'action.error.notEnoughMoney' } };

@@ -30,7 +30,7 @@ describe('Event Engine', () => {
       expect(updated.happiness).toBe(46); // 50 - 4
       expect(updated.inventory.appliances.length).toBe(1); // TV stolen, fridge kept
       expect(updated.inventory.appliances[0].id).toBe('refrigerator');
-      expect(updated.turnEvents[0].params.items).toBe('TV');
+      expect(updated.turnEvents[0]?.params?.items).toBe('TV');
     });
 
     it('no robbery if chance fails', () => {

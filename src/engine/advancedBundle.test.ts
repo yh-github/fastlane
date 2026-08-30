@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { messGrowth, calcMaxMental, calcWellbeingScore, calcMovingFee } from './statMath';
-import { createPlayerState, createInitialGameState } from './gameState';
+import { createPlayerState } from './gameState';
 import { gameReducer } from './gameReducer';
-import { processTurnStart } from './turnProcessor';
 import { Random } from '../utils/rng';
 
 describe('Advanced Feature Bundle', () => {

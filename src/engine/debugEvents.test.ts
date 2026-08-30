@@ -1,18 +1,19 @@
-import { createTestGameState } from './testFactories';
+import { createTestGameState, createMockCampaign } from './testFactories';
 import { describe, it, expect } from 'vitest';
-import { checkEventPreconditions, type DebugQueuedEvent } from './debugEvents';
-import {  } from './gameState';
+import { checkEventPreconditions } from './debugEvents';
 import { processTurnStart } from './turnProcessor';
-import { type CampaignBundle } from './dataLoader';
 
-const mockCampaign: CampaignBundle = {
+const mockCampaign = createMockCampaign({
   config: {
     name: 'test_campaign',
+    version: '1.0.0',
+    description: 'Test Campaign',
     startingMoney: 200,
     timeRules: {
       hoursPerTurn: 60,
       workSessionCost: 8,
       studySessionCost: 10,
+      jobApplicationCost: 4,
       relaxCost: 6,
       relaxGain: 3,
       brokerCost: 1,
@@ -44,21 +45,14 @@ const mockCampaign: CampaignBundle = {
     winConditions: [],
   },
   housing: [
-    { id: 'low_cost', name: 'Low Cost Apt', baseRent: 325, lifestyleValue: 10 },
-    { id: 'security', name: 'La Security', baseRent: 475, lifestyleValue: 30 },
+    { id: 'low_cost', name: 'Low Cost Apt', baseRent: 325, lifestyleValue: 10, isRobberyImmune: false, homeNodeId: 'node_low_cost', description: '' },
+    { id: 'security', name: 'La Security', baseRent: 475, lifestyleValue: 30, isRobberyImmune: true, homeNodeId: 'node_security', description: '' },
   ],
-  jobs: [],
-  education: [],
   items: [
-    { id: 'tv', name: 'Color TV', category: 'appliance', basePrice: 400 },
-    { id: 'computer', name: 'Personal Computer', category: 'appliance', basePrice: 900, effects: [{ stat: 'computer_income_chance' as any, value: 1, trigger: 'turn_start' }] },
+    { id: 'tv', name: 'Color TV', category: 'appliance', basePrice: 400, happinessBonus: 1 },
+    { id: 'computer', name: 'Personal Computer', category: 'appliance', basePrice: 900, happinessBonus: 2, effects: [{ stat: 'computer_income_chance' as any, value: 1, trigger: 'turn_start' }] },
   ],
-  synergies: [],
-  weekends: { ticketWeekends: {}, durableWeekends: {}, randomWeekends: [] },
-  map: { nodes: [] },
-  messages: {},
-  stocks: [],
-};
+});
 
 describe('Debug Events Precondition Logic', () => {
   it('market_crash requires turn >= 8 and economicIndex >= 80', () => {

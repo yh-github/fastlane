@@ -475,7 +475,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                             >
                               {selectedPlayer.inventory.appliances.map((app, idx) => (
                                 <option key={`${app.id}_${idx}`} value={app.id}>
-                                  {app.name || app.id.replaceAll('_', ' ')} (${app.purchasePrice})
+                                  {campaign?.items?.find(i => i.id === app.id)?.name || app.id.replaceAll('_', ' ')} (${app.purchasePrice})
                                 </option>
                               ))}
                             </select>
@@ -509,7 +509,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                                     }}
                                     style={{ accentColor: 'var(--accent-cyan)' }}
                                   />
-                                  {app.name || app.id.replaceAll('_', ' ')} (${app.purchasePrice})
+                                  {campaign?.items?.find(i => i.id === app.id)?.name || app.id.replaceAll('_', ' ')} (${app.purchasePrice})
                                 </label>
                               ))}
                             </div>

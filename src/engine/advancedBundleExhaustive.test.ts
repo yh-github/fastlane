@@ -203,7 +203,8 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
 
       // Total cost: $475 (rent) + $500 (mess fee) + $50 (durables fee) = $1025... wait!
       // Money = 1000 < 1025 => not enough money!
-      expect(res.actionLog?.key).toBe('action.error.notEnoughMoneyMove');
+      const log = Array.isArray(res.actionLog) ? res.actionLog[0] : res.actionLog;
+      expect(log?.key).toBe('action.error.notEnoughMoneyMove');
 
       // Increase money to 1200
       player.money = 1200;
@@ -309,23 +310,19 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
         state: {} as any
       });
 
-      expect(res.actionLog?.key).toBe('action.error.messTooHighSocialize');
+      const log = Array.isArray(res.actionLog) ? res.actionLog[0] : res.actionLog;
+      expect(log?.key).toBe('action.error.messTooHighSocialize');
     });
 
     it('socialize action handles full payment vs partial payment', () => {
       // Full payment test
       const player1 = createPlayerState('p1', 'P1', false, {}, 'node_low_cost', mockCampaign.config);
-      player1.mess = 5; // mess_growth = 2
+      player1.mess = 5;
       player1.money = 200;
       player1.mentalCondition = 25;
       player1.social = 9;
       player1.hoursRemaining = 60;
 
-      // Seed where 1d3 roll returns 2 (X = 2)
-      // Mess generated = 2 * 2 = 4 => new mess = 9
-      // Cash required = 2 * 2 * 25 = 100
-      // Mental required = 2 * 2 = 4
-      // Full reward = 2 * 2 = +4 Social => new social = 13
       const resFull = gameReducer(player1, { type: 'socialize_guests' }, {
         campaign: mockCampaign,
         rules: mockRules,
@@ -341,7 +338,7 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       // Partial payment test (insufficient money)
       const player2 = createPlayerState('p2', 'P2', false, {}, 'node_low_cost', mockCampaign.config);
       player2.mess = 5;
-      player2.money = 10; // Insufficient for full payment ($100)
+      player2.money = 10;
       player2.mentalCondition = 25;
       player2.social = 9;
       player2.hoursRemaining = 60;
@@ -355,7 +352,6 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
         state: {} as any
       });
 
-      // Partial payment drains remaining cash to $0 and awards half reward
       expect(resPartial.updatedPlayer.money).toBe(0);
       expect(resPartial.updatedPlayer.social).toBeGreaterThan(9);
     });
@@ -364,7 +360,7 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
   describe('7. Hot Tub Subsystem & Bounce Back Mechanism', () => {
     it('Hot Tub increases max mess cap by +5 and provides turn-start & relax bonuses', () => {
       const player = createPlayerState('p1', 'P1', false, {}, 'node_low_cost', mockCampaign.config);
-      player.inventory.appliances.push({ id: 'hot_tub', name: 'Hot Tub', purchasePrice: 800, store: 'socket_city', purchaseSource: 'socket_city' });
+      player.inventory.appliances.push({ id: 'hot_tub', purchasePrice: 800, purchaseSource: 'socket_city' });
       
       const maxMess = calcMaxMess(player, mockCampaign.config.statRules);
       expect(maxMess).toBe(55); // 50 base low_cost + 5 Hot Tub bonus
@@ -376,7 +372,7 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       player.hoursRemaining = 60;
       player.inventory.freshFoodUnits = 2;
 
-      const resRelax = gameReducer(player, { type: 'relax' }, {
+      const res = gameReducer(player, { type: 'relax' }, {
         campaign: mockCampaign,
         rules: mockRules,
         turn: 1,
@@ -385,8 +381,8 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
         state: {} as any
       });
 
-      expect(resRelax.updatedPlayer.physicalCondition).toBe(44); // +4 Phys with Hot Tub (1 + floor(50/25) + 1 = 4)
-      expect(resRelax.updatedPlayer.mess).toBe(12); // +2 Mess with Hot Tub
+      expect(res.updatedPlayer.physicalCondition).toBe(44); // +4 Phys with Hot Tub (1 + floor(50/25) + 1 = 4)
+      expect(res.updatedPlayer.mess).toBe(12); // +2 Mess with Hot Tub
     });
 
     it('Bounce back mechanism: Doctor visit restores +8 Physical and Low Spirits restores +8 Mental', () => {
@@ -397,6 +393,34 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
 
       const docRes = processDoctorVisit(player, 4, new Random(1), true, mockRules);
       expect(docRes.physicalCondition).toBe(18); // 10 + 8 = 18 Physical
+    });
+  });
+
+  describe('8. Edge Cases & Integration Scenarios', () => {
+    it('handles Socialize with high social values capped at MAX_SOCIAL (99)', () => {
+      const rules = { usePhysicalMentalConditions: true, maxSocial: 99 };
+      const config = {
+        ...mockCampaign.config,
+        statRules: { ...mockCampaign.config.statRules, maxSocial: 99 }
+      };
+      const customCampaign = { ...mockCampaign, config };
+      let player = createPlayerState('p1', 'P1', false, {}, 'node_low_cost', config);
+      player.social = 98;
+      player.money = 500;
+      player.mentalCondition = 80;
+      player.hoursRemaining = 60;
+
+      const context = {
+        campaign: customCampaign,
+        rules,
+        turn: 1,
+        economicIndex: 0,
+        rng: { next: () => 0.5, nextInt: (_min: number, _max: number) => 1 } as any,
+        state: { players: [player], rules } as any
+      };
+
+      const res = gameReducer(player, { type: 'socialize_guests' }, context as any);
+      expect(res.updatedPlayer.social).toBe(99);
     });
 
     it('Safe stat decrements prevent boosting stats when at or below MIN', () => {
@@ -482,11 +506,11 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
         rules,
         turn: 1,
         economicIndex: 0,
-        rng: { next: () => 0.5, nextInt: (min: number, max: number) => 1 } as any,
+        rng: { next: () => 0.5, nextInt: (_min: number, _max: number) => 1 } as any,
         state: { players: [player], rules } as any
       };
 
-      const res = gameReducer(player, { type: 'socialize_guests' }, context);
+      const res = gameReducer(player, { type: 'socialize_guests' }, context as any);
       player = res.updatedPlayer;
 
       expect(player.mentalCondition).toBe(81);

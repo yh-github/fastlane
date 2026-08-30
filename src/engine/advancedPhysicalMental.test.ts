@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createPlayerState, type PlayerState, type GameRules, type GameState } from './gameState';
+import { DEFAULT_GAME_RULES } from './rules';
 import { gameReducer, type ReducerContext } from './gameReducer';
-import { type CampaignBundle, type JobDef, type ItemDef, type EducationDef } from './dataLoader';
+import { type CampaignBundle } from './dataLoader';
 import { Random } from '../utils/rng';
 import { calcDependabilityDecay, calcEmployabilityScore } from './statMath';
-import { applyForJob, workShift } from './jobEngine';
+import { workShift } from './jobEngine';
 import { processDoctorVisit } from './eventEngine';
 
 describe('Advanced Physical & Mental Condition Overhaul', () => {
@@ -16,10 +17,15 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
   beforeEach(() => {
     campaign = {
       config: {
+        name: 'Advanced Physical Mental',
+        version: '1.0.0',
+        description: 'Advanced Physical & Mental rules',
+        startingMoney: 1000,
+        winConditions: [],
         gameRules: {
+          ...DEFAULT_GAME_RULES,
           usePhysicalMentalConditions: true,
           trackMess: true,
-          useHousingTierComfort: true,
           allowPartialHours: false
         },
         statRules: {
@@ -49,22 +55,34 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
           jobApplicationCost: 4,
           newspaperCost: 1,
           cleaningServiceCost: 1,
-          socializeCost: 6
+          socializeCost: 6,
+          starvationPenalty: 20,
+          doctorPenalty: 10,
+          buildingEntryCost: 0,
+          loanCost: 2,
+          brokerCost: 2
         },
         economyRules: {
+          rentGarnishRate: 0.5,
+          rentFee: 20,
+          repairCostMin: 10,
+          repairCostMax: 50,
+          pawnPayoutRate: 0.5,
+          pawnRedeemRate: 1.0,
           cleaningServiceBasePrice: 100
         },
         eventRules: {
+          willyRobberyStartWeek: 4,
           doctorCost: 500,
           lowSpiritsThreshold: 10
         }
       } as any,
       items: [
-        { id: 'stove', name: 'Stove', category: 'appliance', basePrice: 200, effects: [{ trigger: 'on_relax', stat: 'physical', value: 1 }] },
-        { id: 'microwave', name: 'Microwave', category: 'appliance', basePrice: 100, effects: [{ trigger: 'on_relax', stat: 'physical', value: 1 }] },
-        { id: 'fries', name: 'Fries', category: 'fast_food', basePrice: 5 },
-        { id: 'hamburger', name: 'Hamburgers', category: 'food', subcategory: 'fast_food', basePrice: 10 },
-        { id: 'fresh_groceries', name: 'Fresh Food', category: 'food', subcategory: 'fresh', basePrice: 20 }
+        { id: 'stove', name: 'Stove', category: 'appliance', basePrice: 200, happinessBonus: 1, effects: [{ trigger: 'on_relax', stat: 'physical', value: 1 }] },
+        { id: 'microwave', name: 'Microwave', category: 'appliance', basePrice: 100, happinessBonus: 1, effects: [{ trigger: 'on_relax', stat: 'physical', value: 1 }] },
+        { id: 'fries', name: 'Fries', category: 'food', subcategory: 'fast_food', basePrice: 5, happinessBonus: 0 },
+        { id: 'hamburger', name: 'Hamburgers', category: 'food', subcategory: 'fast_food', basePrice: 10, happinessBonus: 1 },
+        { id: 'fresh_groceries', name: 'Fresh Food', category: 'food', subcategory: 'fresh', basePrice: 20, happinessBonus: 0 }
       ],
       jobs: [
         {
@@ -72,23 +90,25 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
           title: 'Software Developer',
           locationId: 'tech_hq',
           baseWage: 20,
-          requirements: { dependability: 50, experience: 20, degrees: [] }
+          requirements: { dependability: 50, experience: 20, degrees: [], uniform: 'casual' },
+          perks: []
         },
         {
           id: 'cook_job',
           title: 'Line Cook',
           locationId: 'diner',
           baseWage: 10,
-          requirements: { dependability: 15, experience: 0, degrees: [] }
+          requirements: { dependability: 15, experience: 0, degrees: [], uniform: 'casual' },
+          perks: []
         }
       ],
       education: [
         {
           id: 'cs_degree',
           name: 'Computer Science Degree',
-          lessons: 5,
-          tuition: 100,
-          requirements: { prerequisites: [] },
+          lessonsRequired: 5,
+          baseTuitionFee: 100,
+          prerequisites: [],
           rewards: { dependability: 5, happiness: 5, maxDepBoost: 5, maxExpBoost: 5 }
         }
       ],
@@ -96,13 +116,17 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
         {
           id: 'diner',
           name: 'Diner',
-          type: 'commercial',
+          archetype: 'shop',
+          spritePath: '',
+          description: '',
           inventory: [{ itemId: 'fries', priceOverride: 5 }, { itemId: 'hamburger', priceOverride: 10 }]
         },
         {
           id: 'grocery_store',
           name: 'Supermarket',
-          type: 'commercial',
+          archetype: 'shop',
+          spritePath: '',
+          description: '',
           inventory: [{ itemId: 'fresh_groceries', priceOverride: 20 }]
         }
       ],
@@ -110,28 +134,34 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
         {
           id: 'studio',
           name: 'Studio Apartment',
-          tier: 'budget',
-          rent: 100,
-          deposit: 100,
-          comfortModifier: 1,
-          maxMessCapacity: 50
+          baseRent: 100,
+          lifestyleValue: 10,
+          isRobberyImmune: false,
+          homeNodeId: 'node_home',
+          description: ''
         }
       ],
       map: {
+        width: 1000,
+        height: 1000,
         nodes: [
-          { id: 'node_home', buildingId: 'home', type: 'residential' },
-          { id: 'node_tech', buildingId: 'tech_hq', type: 'commercial' },
-          { id: 'node_diner', buildingId: 'diner', type: 'commercial' },
-          { id: 'node_grocery', buildingId: 'grocery_store', type: 'commercial' }
-        ],
-        edges: []
-      }
+          { id: 'node_home', buildingId: 'home', x: 0, y: 0, connections: [] },
+          { id: 'node_tech', buildingId: 'tech_hq', x: 100, y: 0, connections: [] },
+          { id: 'node_diner', buildingId: 'diner', x: 200, y: 0, connections: [] },
+          { id: 'node_grocery', buildingId: 'grocery_store', x: 300, y: 0, connections: [] }
+        ]
+      },
+      messages: {},
+      weekends: { ticketWeekends: {}, durableWeekends: {}, randomWeekends: [] },
+      synergies: [],
+      stocks: [],
+      events: []
     };
 
     rules = {
+      ...DEFAULT_GAME_RULES,
       usePhysicalMentalConditions: true,
       trackMess: true,
-      useHousingTierComfort: true,
       allowPartialHours: false
     };
 
@@ -195,8 +225,8 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       player.physicalCondition = 30;
       player.inventory.freshFoodUnits = 2;
       player.inventory.appliances = [
-        { id: 'stove', condition: 100 },
-        { id: 'microwave', condition: 100 }
+        { id: 'stove', purchasePrice: 200, purchaseSource: 'socket_city' },
+        { id: 'microwave', purchasePrice: 100, purchaseSource: 'socket_city' }
       ];
 
       // Math: 1 + floor(50 / 25) = 1 + 2 = 3 + 2 (stove + microwave) = 5
@@ -366,7 +396,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       const result = workShift(player, job, 6, rules, campaign.config.statRules, 'work_work', new Random(1), replay);
 
       expect(result.success).toBe(true);
-      expect(result.updated.mistakesByLocation['tech_hq']).toBe(1);
+      expect(result.updated.mistakesByLocation?.['tech_hq']).toBe(1);
       expect(result.updated.physicalConditionMax).toBe(49);
       expect(result.updated.dependability).toBe(50); // 0 penalty on first mistake (curMistakes was 0)
     });
