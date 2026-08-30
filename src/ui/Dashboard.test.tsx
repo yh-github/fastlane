@@ -204,4 +204,69 @@ describe('Dashboard Component', () => {
     expect(screen.getByTitle('Career')).toBeInTheDocument();
     expect(screen.getByTitle('Wealth')).toBeInTheDocument();
   });
+
+  it('renders Mental and Physical stats in orange when <= 2*threshold and red+bold when <= threshold', () => {
+    const mockPlayer = {
+      name: 'Player 1',
+      degrees: [],
+      money: 100,
+      mentalCondition: 15, // <= 20 (orange)
+      mentalConditionMax: 50,
+      physicalCondition: 8, // <= 10 (red + bold)
+      physicalConditionMax: 50,
+      goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      inventory: { selectedClothes: 'none', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = {
+      rules: {
+        helpfulUI: true,
+        usePhysicalMentalConditions: true
+      }
+    } as any;
+
+    const mockCampaign = {
+      config: {
+        timeRules: { hoursPerTurn: 50 },
+        statRules: {
+          enableAdvancedStats: true,
+          mentalWarningThreshold: 10,
+          physicalWarningThreshold: 10
+        }
+      }
+    } as any;
+
+    render(
+      <Dashboard 
+        player={mockPlayer} 
+        gameState={mockGameState} 
+        turn={1} 
+        economicIndex={0} 
+        hoursPerTurn={50} 
+        campaign={mockCampaign}
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    // Main badges
+    const physicalBadge = screen.getByTitle('Physical');
+    const physicalValue = physicalBadge.querySelector('.stat-badge__value');
+    expect(physicalValue).toHaveStyle('color: rgb(255, 51, 51)');
+    expect(physicalValue).toHaveStyle('font-weight: bold');
+
+    const mentalBadge = screen.getByTitle('Mental');
+    const mentalValue = mentalBadge.querySelector('.stat-badge__value');
+    expect(mentalValue).toHaveStyle('color: rgb(230, 126, 34)'); // orange
+    expect(mentalValue).toHaveStyle('font-weight: bold');
+
+    // Advanced stats bar
+    const mentalText = screen.getByText(/stat\.mentalCondition/i).closest('div');
+    expect(mentalText).toHaveStyle('color: rgb(230, 126, 34)'); // orange
+
+    const physicalText = screen.getByText(/stat\.physicalCondition/i).closest('div');
+    expect(physicalText).toHaveStyle('color: rgb(231, 76, 60)'); // red
+    expect(physicalText).toHaveStyle('font-weight: bold');
+  });
 });

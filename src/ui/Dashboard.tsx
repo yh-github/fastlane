@@ -160,65 +160,77 @@ export function Dashboard({
         </button>
       </div>
 
-      {campaign?.config.statRules?.enableAdvancedStats && (
-        <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
-          <div 
-            style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
-            onClick={() => handleFilterToggle('lifestyle')}
-          >
-            <strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}
-          </div>
-          <div 
-            style={{
-               cursor: 'pointer',
-               opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
-               fontWeight: (player.mentalCondition || 0) <= (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'bold' : 'normal',
-               color: (player.mentalCondition || 0) < (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'red' : ((player.mentalCondition || 0) === (campaign.config.statRules?.mentalWarningThreshold || 10) ? 'orange' : 'inherit')
-            }}
-            onClick={() => handleFilterToggle('mental')}
-          >
-             <strong>{t('stat.mentalCondition')}:</strong> {Math.floor(player.mentalCondition || 0)}
-          </div>
-          <div 
-            style={{
-               cursor: 'pointer',
-               opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
-               fontWeight: (player.physicalCondition || 0) <= (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'bold' : 'normal',
-               color: (player.physicalCondition || 0) < (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'red' : ((player.physicalCondition || 0) === (campaign.config.statRules?.physicalWarningThreshold || 10) ? 'orange' : 'inherit')
-            }}
-            onClick={() => handleFilterToggle('physical')}
-          >
-             <strong>{t('stat.physicalCondition')}:</strong> {Math.floor(player.physicalCondition || 0)}
-          </div>
-          {gameState.rules.useHomeTimeRobbery && (
-            <div>
-              <strong>🏠 {t('stat.homeTime', 'Home Time')}:</strong> {Math.round(homeTimeAvg)}h/wk
-            </div>
-          )}
-          <div>
-            <strong>🏠 {t('stat.breakInChance', 'Break-in Risk')}:</strong> {
-              !isWillyActive && theoreticalRobbery > 0 ? (
-                <span style={{ color: '#888', fontStyle: 'italic' }} title={`Theoretical risk based on home time (Inactive until Week ${willyStartWeek})`}>
-                  {(theoreticalRobbery * 100).toFixed(1)}%
-                </span>
-              ) : (
-                `${(effectiveRobbery * 100).toFixed(1)}%`
-              )
-            }
-          </div>
-          {gameState.rules.spaceCapping && (
+      {campaign?.config.statRules?.enableAdvancedStats && (() => {
+        const mentalThreshold = campaign?.config?.statRules?.mentalWarningThreshold ?? campaign?.config?.statRules?.lowSpiritsThreshold ?? 10;
+        const mentalVal = player.mentalCondition || 0;
+        const isMentalCritical = mentalVal <= mentalThreshold;
+        const isMentalWarning = mentalVal <= mentalThreshold * 2;
+
+        const physicalThreshold = campaign?.config?.statRules?.physicalWarningThreshold ?? campaign?.config?.statRules?.physicalDoctorThreshold ?? 10;
+        const physicalVal = player.physicalCondition || 0;
+        const isPhysicalCritical = physicalVal <= physicalThreshold;
+        const isPhysicalWarning = physicalVal <= physicalThreshold * 2;
+
+        return (
+          <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
             <div 
-              title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess && player.mess > 0 ? Math.ceil(player.mess / 10) : 0} space`}
-              style={{
-                fontWeight: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? 'bold' : 'normal',
-                color: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? '#e74c3c' : 'inherit'
-              }}
+              style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
+              onClick={() => handleFilterToggle('lifestyle')}
             >
-              <strong>📦 {t('stat.space', 'Space')}:</strong> {calcUsedSpace(player, campaign, true)}/{calcHousingSpaceCap(player, campaign)}
+              <strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}
             </div>
-          )}
-        </div>
-      )}
+            <div 
+              style={{
+                 cursor: 'pointer',
+                 opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
+                 fontWeight: isMentalCritical ? 'bold' : 'normal',
+                 color: isMentalCritical ? '#e74c3c' : (isMentalWarning ? '#e67e22' : 'inherit')
+              }}
+              onClick={() => handleFilterToggle('mental')}
+            >
+               <strong>{t('stat.mentalCondition')}:</strong> {Math.floor(player.mentalCondition || 0)}
+            </div>
+            <div 
+              style={{
+                 cursor: 'pointer',
+                 opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
+                 fontWeight: isPhysicalCritical ? 'bold' : 'normal',
+                 color: isPhysicalCritical ? '#e74c3c' : (isPhysicalWarning ? '#e67e22' : 'inherit')
+              }}
+              onClick={() => handleFilterToggle('physical')}
+            >
+               <strong>{t('stat.physicalCondition')}:</strong> {Math.floor(player.physicalCondition || 0)}
+            </div>
+            {gameState.rules.useHomeTimeRobbery && (
+              <div>
+                <strong>🏠 {t('stat.homeTime', 'Home Time')}:</strong> {Math.round(homeTimeAvg)}h/wk
+              </div>
+            )}
+            <div>
+              <strong>🏠 {t('stat.breakInChance', 'Break-in Risk')}:</strong> {
+                !isWillyActive && theoreticalRobbery > 0 ? (
+                  <span style={{ color: '#888', fontStyle: 'italic' }} title={`Theoretical risk based on home time (Inactive until Week ${willyStartWeek})`}>
+                    {(theoreticalRobbery * 100).toFixed(1)}%
+                  </span>
+                ) : (
+                  `${(effectiveRobbery * 100).toFixed(1)}%`
+                )
+              }
+            </div>
+            {gameState.rules.spaceCapping && (
+              <div 
+                title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess && player.mess > 0 ? Math.ceil(player.mess / 10) : 0} space`}
+                style={{
+                  fontWeight: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? 'bold' : 'normal',
+                  color: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? '#e74c3c' : 'inherit'
+                }}
+              >
+                <strong>📦 {t('stat.space', 'Space')}:</strong> {calcUsedSpace(player, campaign, true)}/{calcHousingSpaceCap(player, campaign)}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {(gameState.rules as any).showDetailedStats && !campaign?.config.statRules?.enableAdvancedStats && (
         <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
@@ -260,32 +272,48 @@ export function Dashboard({
             <StatBadge label={t('dashboard.employability', { defaultValue: 'Employability' })} value={`${employabilityScore}%`} icon="👨‍💼" id="stat-employability" isActive={activeLogFilter === 'employability'} onClick={() => handleFilterToggle('employability')} />
           </>
         )}
-        {gameState.rules.usePhysicalMentalConditions && (
-          <>
-            <StatBadge 
-              label={t('dashboard.physical', { defaultValue: 'Physical' })} 
-              value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`} 
-              icon="💪" 
-              id="stat-physical" 
-              badge={(player.physicalConditionMax !== undefined && player.physicalConditionMax < 50) ? `Max ${player.physicalConditionMax} ↓` : undefined}
-              isActive={activeLogFilter === 'physical'} 
-              onClick={() => handleFilterToggle('physical')} 
-            />
-            <StatBadge 
-              label={t('dashboard.mental', { defaultValue: 'Mental' })} 
-              value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`} 
-              icon="🧠" 
-              id="stat-mental" 
-              badge={(player.mentalConditionMax !== undefined && player.mentalConditionMax < 50) ? `Max ${player.mentalConditionMax} ↓` : undefined}
-              isActive={activeLogFilter === 'mental'} 
-              onClick={() => handleFilterToggle('mental')} 
-            />
-            <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
-            {gameState.rules.trackMess && (
-              <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
-            )}
-          </>
-        )}
+        {gameState.rules.usePhysicalMentalConditions && (() => {
+          const mentalThreshold = campaign?.config?.statRules?.mentalWarningThreshold ?? campaign?.config?.statRules?.lowSpiritsThreshold ?? 10;
+          const mentalVal = player.mentalCondition || 0;
+          const isMentalCritical = mentalVal <= mentalThreshold;
+          const isMentalWarning = mentalVal <= mentalThreshold * 2;
+
+          const physicalThreshold = campaign?.config?.statRules?.physicalWarningThreshold ?? campaign?.config?.statRules?.physicalDoctorThreshold ?? 10;
+          const physicalVal = player.physicalCondition || 0;
+          const isPhysicalCritical = physicalVal <= physicalThreshold;
+          const isPhysicalWarning = physicalVal <= physicalThreshold * 2;
+
+          return (
+            <>
+              <StatBadge 
+                label={t('dashboard.physical', { defaultValue: 'Physical' })} 
+                value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`} 
+                icon="💪" 
+                id="stat-physical" 
+                danger={isPhysicalCritical}
+                warning={!isPhysicalCritical && isPhysicalWarning}
+                badge={(player.physicalConditionMax !== undefined && player.physicalConditionMax < 50) ? `Max ${player.physicalConditionMax} ↓` : undefined}
+                isActive={activeLogFilter === 'physical'} 
+                onClick={() => handleFilterToggle('physical')} 
+              />
+              <StatBadge 
+                label={t('dashboard.mental', { defaultValue: 'Mental' })} 
+                value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`} 
+                icon="🧠" 
+                id="stat-mental" 
+                danger={isMentalCritical}
+                warning={!isMentalCritical && isMentalWarning}
+                badge={(player.mentalConditionMax !== undefined && player.mentalConditionMax < 50) ? `Max ${player.mentalConditionMax} ↓` : undefined}
+                isActive={activeLogFilter === 'mental'} 
+                onClick={() => handleFilterToggle('mental')} 
+              />
+              <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
+              {gameState.rules.trackMess && (
+                <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
+              )}
+            </>
+          );
+        })()}
         {(gameState.rules.useHomeTimeRobbery || gameState.rules.helpfulUI) && (
           <StatBadge 
             label={t('dashboard.home', { defaultValue: 'HOME' })} 
@@ -354,12 +382,13 @@ interface StatBadgeProps {
   icon: string;
   id?: string;
   danger?: boolean;
+  warning?: boolean;
   badge?: string;
   isActive?: boolean;
   onClick?: () => void;
 }
 
-function StatBadge({ label, value, icon, id, danger, badge, isActive, onClick }: StatBadgeProps) {
+function StatBadge({ label, value, icon, id, danger, warning, badge, isActive, onClick }: StatBadgeProps) {
   const activeStyle: React.CSSProperties = isActive ? {
     borderColor: '#00e5ff',
     boxShadow: '0 0 10px rgba(0, 229, 255, 0.7)',
@@ -382,8 +411,18 @@ function StatBadge({ label, value, icon, id, danger, badge, isActive, onClick }:
       }}
     >
       <span className="stat-badge__icon">{icon}</span>
-      <span className="stat-badge__value" style={danger ? { color: '#ff3333', fontWeight: 'bold', textShadow: '0 0 8px rgba(255,51,51,0.6)' } : {}}>{value}</span>
-      <span className="stat-badge__label" style={danger ? { color: '#ff3333' } : {}}>{label}</span>
+      <span 
+        className="stat-badge__value" 
+        style={danger ? { color: '#ff3333', fontWeight: 'bold', textShadow: '0 0 8px rgba(255,51,51,0.6)' } : (warning ? { color: '#e67e22', fontWeight: 'bold', textShadow: '0 0 8px rgba(230,126,34,0.4)' } : {})}
+      >
+        {value}
+      </span>
+      <span 
+        className="stat-badge__label" 
+        style={danger ? { color: '#ff3333' } : (warning ? { color: '#e67e22' } : {})}
+      >
+        {label}
+      </span>
       {badge && (
         <span style={{
           position: 'absolute',

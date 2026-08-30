@@ -5,6 +5,7 @@ import { buyItem } from './shoppingEngine';
 import { gameReducer } from './gameReducer';
 import { processTurnStart } from './turnProcessor';
 import { DEFAULT_GAME_RULES } from './rules';
+import { Random } from '../utils/rng';
 
 const mockCampaign: CampaignBundle = {
   config: {
@@ -391,6 +392,102 @@ describe('Space Capping Module', () => {
 
       const nextState = processTurnStart(gameState, mockCampaign);
       expect(nextState.players[0].position).toBe('node_security');
+    });
+  });
+
+  describe('Socializing & Space Integration', () => {
+    it('rejects socializing if apartment has 0 free space (durables + clutter mess >= spaceCap)', () => {
+      player.currentHousingId = 'low_cost'; // Cap 10
+      // 9 space of durables
+      player.inventory.appliances = [
+        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' }, // 4
+        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' } // 4
+      ];
+      player.inventory.books = ['dictionary']; // 1
+      player.mess = 15; // ceil(15/10) = 2 clutter space -> 9 + 2 = 11 > 10 (0 free space)
+
+      const context = {
+        state: { players: [player], economicIndex: 0, turn: 1, rngState: 12345 } as any,
+        rules: { ...mockCampaign.config.gameRules!, spaceCapping: true },
+        campaign: mockCampaign,
+        rng: new Random(12345)
+      };
+
+      const result = gameReducer(player, { type: 'socialize_guests' }, context as any);
+      const actionLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog;
+      expect(actionLog?.key).toBe('action.error.noSpaceSocialize');
+    });
+
+    it('allows socializing if free space >= 1 even if mess > 25 when spaceCapping is true', () => {
+      player.currentHousingId = 'penthouse'; // Cap 75
+      player.mess = 35; // Mess > 25, but 4 clutter space + 0 durables = 4/75 (71 free space)
+      player.money = 500;
+      player.hoursRemaining = 30;
+      player.physicalCondition = 40;
+      player.mentalCondition = 40;
+
+      const context = {
+        state: { players: [player], economicIndex: 0, turn: 1, rngState: 12345 } as any,
+        rules: { ...mockCampaign.config.gameRules!, spaceCapping: true, usePhysicalMentalConditions: true },
+        campaign: mockCampaign,
+        rng: new Random(12345)
+      };
+
+      const result = gameReducer(player, { type: 'socialize_guests' }, context as any);
+      const actionLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog;
+      expect(actionLog?.key).toBe('action.socialize');
+      expect(result.updatedPlayer.social).toBeGreaterThan(9);
+    });
+
+    it('grants 3x social reward in Penthouse and charges $75/guest', () => {
+      player.currentHousingId = 'penthouse';
+      player.mess = 0;
+      player.money = 500;
+      player.hoursRemaining = 30;
+      player.physicalCondition = 40;
+      player.mentalCondition = 40;
+      player.social = 10;
+
+      const context = {
+        state: { players: [player], economicIndex: 0, turn: 1, rngState: 12345 } as any,
+        rules: { ...mockCampaign.config.gameRules!, spaceCapping: true, usePhysicalMentalConditions: true },
+        campaign: {
+          ...mockCampaign,
+          config: {
+            ...mockCampaign.config,
+            economyRules: {
+              ...mockCampaign.config.economyRules,
+              socializePenthouseCashCost: 75
+            }
+          }
+        },
+        rng: new Random(12345)
+      };
+
+      const result = gameReducer(player, { type: 'socialize_guests' }, context as any);
+      const actionLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog;
+      expect(actionLog?.key).toBe('action.socialize');
+      const guests = actionLog?.params?.guests; // 1, 2, or 3
+      expect(actionLog?.params?.reward).toBe(guests * 3);
+      expect(result.updatedPlayer.money).toBe(500 - (guests * 75));
+    });
+
+    it('falls back to 25 mess limit when spaceCapping is false', () => {
+      player.currentHousingId = 'low_cost';
+      player.mess = 26; // > 25 mess
+      player.money = 500;
+      player.hoursRemaining = 30;
+
+      const context = {
+        state: { players: [player], economicIndex: 0, turn: 1, rngState: 12345 } as any,
+        rules: { ...mockCampaign.config.gameRules!, spaceCapping: false },
+        campaign: mockCampaign,
+        rng: new Random(12345)
+      };
+
+      const result = gameReducer(player, { type: 'socialize_guests' }, context as any);
+      const actionLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog;
+      expect(actionLog?.key).toBe('action.error.messTooHighSocialize');
     });
   });
 });
