@@ -158,6 +158,7 @@
       "notEnoughMoneyCleanService": "אין מספיק כסף להזמנת שירותי ניקיון.",
       "alreadyClean": "הדירה שלך כבר נקייה לחלוטין.",
       "messTooHighSocialize": "הדירה שלך מבולגנת מדי לאירוח חברים (נקה מתחת ל-25 בלגן תחילה).",
+      "noSpaceSocialize": "אין מספיק מקום פנוי בדירה לאירוח אורחים (דרוש לפחות מקום 1 פנוי).",
       "noLoan": "אין לך הלוואה.",
       "notEnoughMoney": "אין מספיק כסף.",
       "alreadyOwnComputer": "כבר יש בבעלותך מחשב."

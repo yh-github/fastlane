@@ -307,6 +307,7 @@ export interface EconomyRules {
   cleaningServiceBasePrice?: number;
   socializeLowCostCashCost?: number;
   socializeSecurityCashCost?: number;
+  socializePenthouseCashCost?: number;
   moveFeeMessThreshold?: number;
   moveFeeMessRate?: number;
   moveFeeDurableRate?: number;

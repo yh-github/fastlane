@@ -4,7 +4,7 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import { requireConfig } from '../rules';
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
-import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental } from '../statMath';
+import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental, calcUsedSpace, calcHousingSpaceCap } from '../statMath';
 
 export function handleRelaxAction(
   player: PlayerState,
@@ -219,7 +219,14 @@ export function handleSocializeAction(
     actionLog = { key: 'action.error.notEnoughTimeSocialize' };
     return { nextPlayer, actionLog };
   }
-  if ((nextPlayer.mess || 0) > 25) {
+  if (context.rules.spaceCapping) {
+    const usedSpace = calcUsedSpace(nextPlayer, context.campaign, true);
+    const spaceCap = calcHousingSpaceCap(nextPlayer, context.campaign);
+    if (spaceCap - usedSpace < 1) {
+      actionLog = { key: 'action.error.noSpaceSocialize' };
+      return { nextPlayer, actionLog };
+    }
+  } else if ((nextPlayer.mess || 0) > 25) {
     actionLog = { key: 'action.error.messTooHighSocialize' };
     return { nextPlayer, actionLog };
   }
@@ -253,10 +260,18 @@ export function handleSocializeAction(
 
   const mentalCost = X * growth;
   const finalMentalCost = mentalCost - appBonus;
-  const isHighEndHousing = nextPlayer.currentHousingId === 'security' || nextPlayer.currentHousingId === 'penthouse';
-  const cashRate = isHighEndHousing ? (context.campaign.config.economyRules?.socializeSecurityCashCost ?? 50) : (context.campaign.config.economyRules?.socializeLowCostCashCost ?? 25);
+
+  let cashRate = context.campaign.config.economyRules?.socializeLowCostCashCost ?? 25;
+  let socialMultiplier = 1;
+  if (nextPlayer.currentHousingId === 'penthouse') {
+    cashRate = context.campaign.config.economyRules?.socializePenthouseCashCost ?? 75;
+    socialMultiplier = 3;
+  } else if (nextPlayer.currentHousingId === 'security') {
+    cashRate = context.campaign.config.economyRules?.socializeSecurityCashCost ?? 50;
+    socialMultiplier = 2;
+  }
   const cashCost = X * cashRate;
-  const fullReward = isHighEndHousing ? X * 2 : X;
+  const fullReward = socialMultiplier * X;
 
   const currentMental = nextPlayer.mentalCondition ?? 25;
   const minMental = statRules?.minMentalCondition ?? 5;
