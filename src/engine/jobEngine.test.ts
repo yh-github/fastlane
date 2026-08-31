@@ -442,7 +442,119 @@ describe('Job Engine', () => {
         expect(resInnovate.updated.dependability).toBe(50.5);
         expect(resInnovate.updated.experience).toBe(50.5);
       });
+
+      it('does NOT decrease Exp or Dep when working a lower-tier job with a lower cap (Classic and Advanced)', () => {
+        const lowJob: JobDef = {
+          id: 'janitor',
+          title: 'Janitor',
+          locationId: 'z_mart',
+          baseWage: 5,
+          requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+
+        const highStatPlayer = {
+          id: 'p_high',
+          hoursRemaining: 6,
+          currentJobId: 'janitor',
+          currentWage: 5,
+          degrees: [],
+          physicalCondition: 50,
+          mentalCondition: 50,
+          dependability: 60, // higher than effectiveMaxDep (30)
+          experience: 50,    // higher than effectiveMaxExp (20)
+          social: 10,
+          turnFlags: {},
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        // Classic mode
+        const classicRes = workShift(highStatPlayer, lowJob, 6);
+        expect(classicRes.success).toBe(true);
+        expect(classicRes.updated.experience).toBe(50); // MUST NOT drop to 20
+        expect(classicRes.updated.dependability).toBe(60); // MUST NOT drop to 30
+
+        // Advanced mode (work_work)
+        const advRes = workShift(highStatPlayer, lowJob, 6, advRules, undefined, 'work_work');
+        expect(advRes.success).toBe(true);
+        expect(advRes.updated.experience).toBe(50); // MUST NOT drop to 20
+        expect(advRes.updated.dependability).toBe(60); // MUST NOT drop to 30
+      });
+
+      it('fires the player immediately on 3 work mistakes in the same turn and flags location for probation', () => {
+        const job: JobDef = {
+          id: 'factory_worker',
+          title: 'Factory Worker',
+          locationId: 'factory',
+          baseWage: 8,
+          requirements: { experience: 10, dependability: 20, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+
+        const exhaustedPlayer = {
+          id: 'p_exhausted',
+          hoursRemaining: 18,
+          currentJobId: 'factory_worker',
+          currentWage: 8,
+          degrees: [],
+          physicalCondition: 2,
+          mentalCondition: 2,
+          dependability: 40,
+          experience: 20,
+          social: 10,
+          workMistakesThisTurn: 2, // already had 2 mistakes this turn
+          turnFlags: {},
+          mistakesByLocation: { factory: 2 },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        // Force a physical mistake on this 3rd work shift
+        const replay = {
+          inDecisions: [{ type: `work_phys_mistake_${exhaustedPlayer.id}_1`, result: true }],
+          outDecisions: []
+        };
+
+        const result = workShift(exhaustedPlayer, job, 6, advRules, undefined, 'work_work', new Random(1), replay);
+        expect(result.updated.currentJobId).toBeNull();
+        expect(result.updated.turnFlags.firedLocationsThisTurn).toContain('factory');
+        expect(result.messages?.some(m => m.key === 'action.job.firedMistakes' || m.key === 'action.job.fired')).toBe(true);
+      });
+
+      it('halves employability score when applying to a location where player was fired this turn (Probation)', () => {
+        const job: JobDef = {
+          id: 'factory_worker',
+          title: 'Factory Worker',
+          locationId: 'factory',
+          baseWage: 8,
+          requirements: { experience: 10, dependability: 20, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+
+        const firedPlayer = {
+          id: 'p_fired',
+          hoursRemaining: 10,
+          currentJobId: null,
+          currentWage: 0,
+          degrees: [],
+          dependability: 30,
+          experience: 30,
+          social: 10,
+          turnFlags: { firedLocationsThisTurn: ['factory'] },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        // Try applying with luck roll = 30 (which would normally pass employability ~50, but fails under halved probation score ~25)
+        const replay = {
+          inDecisions: [{ type: 'job_apply_luck', result: 30 }],
+          outDecisions: []
+        };
+
+        const result = applyForJob(firedPlayer, job, 4, {}, undefined, new Random(1), undefined, 1, replay);
+        expect(result.success).toBe(false);
+        expect(result.message.key).toBe('action.job.noOpeningsProbation');
+      });
     });
   });
 });
+
 

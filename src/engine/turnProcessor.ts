@@ -45,11 +45,15 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       hasSeenWeekend: state.turn === 0,
       loanDefaultWarning: false,
       loanPayableWarning: false,
-      mentalDropsThisTurn: 0
+      mentalDropsThisTurn: 0,
+      firedLocationsThisTurn: [],
+      workMistakesThisTurn: 0,
+      jobsRejectedThisTurn: []
     };
     p.turnEvents = [];
     p.newspaperHeadline = null;
     p.workActionsThisTurn = 0;
+    p.workMistakesThisTurn = 0;
     if (state.rules.usePhysicalMentalConditions || p.studyActionsThisTurn !== undefined) {
       p.studyActionsThisTurn = 0;
     }

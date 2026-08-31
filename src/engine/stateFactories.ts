@@ -40,6 +40,8 @@ export function createDefaultTurnFlags(): TurnFlags {
     lotteryHappinessGranted: false,
     ticketHappinessGranted: false,
     mentalDropsThisTurn: 0,
+    firedLocationsThisTurn: [],
+    workMistakesThisTurn: 0,
   };
 }
 

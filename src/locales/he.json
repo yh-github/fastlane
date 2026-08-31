@@ -70,6 +70,8 @@
       "raiseSuccess": "קיבלת העלאה במשכורת!",
       "raiseDenied": "בקשת העלאה נדחתה.",
       "raiseWaste": "כבר יש לך את השכר המקסימלי כאן.",
+      "firedMistakes": "רשלנות חמורה! לאחר {{count}} תקלות בעבודה בתור זה, ההנהלה פיטרה אותך לאלתר!",
+      "noOpeningsProbation": "הבקשה נדחתה: פוטרת ממיקום זה בתור הנוכחי ואתה תחת תקופת מבחן!",
       "mistake": "עשית טעות בעבודה ({{type}})! איבדת {{penalty}} אמינות (סה״כ עונשי מוניטין במיקום זה: {{total}})",
       "innovateNeedDegree": "דרוש לפחות תואר אקדמי אחד כדי לחדש בעבודה.",
       "innovateGainExp": "סיעור מוחות ומו\"פ: קיבלת {{amount}}+ ניסיון!",
@@ -317,12 +319,18 @@
     "askRaise": "בקש העלאה ל-{{wage}}$/שעה ({{cost}} שעות)",
     "currentJob": "עבודה נוכחית ({{wage}}$/שעה)",
     "apply": "הגש מועמדות ({{cost}} שעות)",
+    "probationBadge": "תקופת מבחן (הניקוד הופחת בחצי)",
+    "mistakesBadge": "{{count}} תקריות (-{{count}})",
+    "cleanRecord": "עבר נקי",
     "employabilityScoreInfo": "👨‍💼 מדד התעסוקתיות שלך הוא {{score}}/100. (בעת הגשת מועמדות, נדרשת הטלת קוביה של 1-100 הקטנה או שווה ל-{{score}} כדי שתוצע משרה).",
     "filterEmployabilityLog": "🔍 הצג יומן תעסוקתיות ועבודות"
   },
   "workStation": {
     "title": "העבודה שלך: {{jobTitle}}",
-    "workShift": "משמרת עבודה (עד {{cost}} שעות)"
+    "workShift": "משמרת עבודה (עד {{cost}} שעות)",
+    "innovations": "חידושים: {{count}}",
+    "mistakesThisTurn": "תקלות בתור זה: {{count}}/3",
+    "locationMistakes": "תקריות במיקום: {{count}}"
   },
   "storeFront": {
     "title": "חנות"

@@ -167,6 +167,7 @@ export interface PlayerState {
   depMaxBonus?: number;
   xpMaxBonus?: number;
   innovationCount?: number;
+  workMistakesThisTurn?: number;
 }
 
 export interface WeekendResult {
@@ -284,6 +285,10 @@ export interface TurnFlags {
   ticketHappinessGranted?: boolean;
   /** Total mental condition drops this turn */
   mentalDropsThisTurn?: number;
+  /** Locations the player was fired from this turn (causes probation penalty) */
+  firedLocationsThisTurn?: string[];
+  /** Work mistakes made this turn */
+  workMistakesThisTurn?: number;
 }
 
 export interface PlayerConfig {

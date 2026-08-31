@@ -26,10 +26,27 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
           {locations.map(loc => {
             const jobCount = availableJobs.filter(j => j.locationId === loc).length;
+            const isFiredThisTurn = player.turnFlags?.firedLocationsThisTurn?.includes(loc);
+            const locMistakes = player.mistakesByLocation?.[loc] || 0;
+
             return (
-              <div key={loc} className="interaction-item interaction-item--clickable" style={{ margin: 0, padding: '10px 14px', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setSelectedLocation(loc)}>
-                <strong style={{ color: 'var(--accent-cyan)' }}>{t(`building.${loc}`, { defaultValue: buildings.find(b => b.id === loc)?.name || loc })}</strong>
-                <div style={{ fontSize: '12px', marginTop: '4px', color: '#bbb' }}>{t('jobBoard.positions', { count: jobCount })}</div>
+              <div key={loc} className="interaction-item interaction-item--clickable" style={{ margin: 0, padding: '10px 14px', border: isFiredThisTurn ? '1px solid #ff4d4d' : '1px solid #444', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setSelectedLocation(loc)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <strong style={{ color: isFiredThisTurn ? '#ff6b6b' : 'var(--accent-cyan)' }}>{t(`building.${loc}`, { defaultValue: buildings.find(b => b.id === loc)?.name || loc })}</strong>
+                  {isFiredThisTurn && (
+                    <span style={{ fontSize: '10px', background: 'rgba(255, 77, 77, 0.2)', color: '#ff6b6b', border: '1px solid #ff4d4d', padding: '1px 5px', borderRadius: '4px', fontWeight: 'bold' }}>
+                      {t('jobBoard.probationBadge')}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '4px', color: '#bbb' }}>
+                  <span>{t('jobBoard.positions', { count: jobCount })}</span>
+                  {locMistakes > 0 ? (
+                    <span style={{ fontSize: '11px', color: '#ffb300' }}>⚠️ {t('jobBoard.mistakesBadge', { count: locMistakes })}</span>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: '#2ecc71', opacity: 0.8 }}>🛡️ {t('jobBoard.cleanRecord')}</span>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -47,11 +64,36 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
       return a.id.localeCompare(b.id);
     });
 
+  const isSelectedFired = player.turnFlags?.firedLocationsThisTurn?.includes(selectedLocation);
+  const selectedLocMistakes = player.mistakesByLocation?.[selectedLocation] || 0;
+  const locationScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, selectedLocMistakes, player.social || 0, isSelectedFired);
+
   return (
     <div className="interaction-panel">
-      <h3 style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-        <button onClick={() => setSelectedLocation(null)} style={{ marginInlineEnd: '10px', padding: '4px 10px', fontSize: '12px' }}>{t('jobBoard.back')}</button>
-        <span>{t('jobBoard.jobsAt', { location: t(`building.${selectedLocation}`, { defaultValue: buildings.find(b => b.id === selectedLocation)?.name || selectedLocation }) })}</span>
+      <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <button onClick={() => setSelectedLocation(null)} style={{ marginInlineEnd: '10px', padding: '4px 10px', fontSize: '12px' }}>{t('jobBoard.back')}</button>
+          <span>{t('jobBoard.jobsAt', { location: t(`building.${selectedLocation}`, { defaultValue: buildings.find(b => b.id === selectedLocation)?.name || selectedLocation }) })}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px' }}>
+          {isSelectedFired && (
+            <span style={{ background: 'rgba(255, 77, 77, 0.2)', color: '#ff6b6b', border: '1px solid #ff4d4d', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+              🚫 {t('jobBoard.probationBadge')}
+            </span>
+          )}
+          {selectedLocMistakes > 0 ? (
+            <span style={{ color: '#ffb300', background: 'rgba(255,179,0,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ffb300' }}>
+              ⚠️ {t('jobBoard.mistakesBadge', { count: selectedLocMistakes })}
+            </span>
+          ) : (
+            <span style={{ color: '#2ecc71', background: 'rgba(46,204,113,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+              🛡️ {t('jobBoard.cleanRecord')}
+            </span>
+          )}
+          <span style={{ color: '#00e5ff', opacity: 0.9 }}>
+            ({t('jobBoard.score', { defaultValue: 'Score' })}: {locationScore})
+          </span>
+        </div>
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px' }}>
         {jobsAtLocation.map(job => {
@@ -225,12 +267,36 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     }
   ];
 
+  const innovationsCount = player.innovationCount || 0;
+  const locationMistakes = player.mistakesByLocation?.[job.locationId] || 0;
+  const turnMistakes = player.workMistakesThisTurn || 0;
+
   return (
     <div className="interaction-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
         <h3 style={{ margin: 0 }}>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
         <span style={{ fontSize: '12px', color: '#00e5ff', fontWeight: 'bold' }}>${player.currentWage}/hr (⏳{hoursToWork}h) {tierLabel}</span>
       </div>
+
+      {(innovationsCount > 0 || locationMistakes > 0 || (isAdvanced && turnMistakes > 0)) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px', marginBottom: '8px', fontSize: '11px' }}>
+          {innovationsCount > 0 && (
+            <span style={{ background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', border: '1px solid #00e5ff', padding: '2px 6px', borderRadius: '4px' }}>
+              💡 {t('workStation.innovations', { count: innovationsCount })}
+            </span>
+          )}
+          {isAdvanced && turnMistakes > 0 && (
+            <span style={{ background: 'rgba(255, 77, 77, 0.15)', color: '#ff6b6b', border: '1px solid #ff4d4d', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+              ⚠️ {t('workStation.mistakesThisTurn', { count: turnMistakes })}
+            </span>
+          )}
+          {locationMistakes > 0 && (
+            <span style={{ background: 'rgba(255, 179, 0, 0.15)', color: '#ffb300', border: '1px solid #ffb300', padding: '2px 6px', borderRadius: '4px' }}>
+              ⚠️ {t('workStation.locationMistakes', { count: locationMistakes })}
+            </span>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
         {modes.map(m => {
