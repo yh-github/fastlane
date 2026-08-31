@@ -113,12 +113,16 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
 
   // Hiring threshold check for new jobs
   const locMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
-  const employability = calcEmployabilityScore(updated.dependability, updated.experience, updated.degrees.length, locMistakes, updated.social);
+  const isProbation = updated.turnFlags.firedLocationsThisTurn?.includes(job.locationId) ?? false;
+  const employability = calcEmployabilityScore(updated.dependability, updated.experience, updated.degrees.length, locMistakes, updated.social, isProbation);
   const roll = resolveDecision(replay, `job_apply_luck`, () => Math.floor((rng ? rng.next() : Math.random()) * 100) + 1);
 
   if (roll > employability) {
     if (!updated.turnFlags.jobsRejectedThisTurn) updated.turnFlags.jobsRejectedThisTurn = [];
     updated.turnFlags.jobsRejectedThisTurn.push(job.id);
+    if (isProbation) {
+      return { updated, success: false, message: { key: 'action.job.noOpeningsProbation' } };
+    }
     return { updated, success: false, message: { key: 'action.job.noOpenings' } };
   }
 
@@ -174,7 +178,11 @@ export function workShift(
       raisesAtCurrentJob: 0,
       innovationCount: 0,
       depMaxBonus: 0,
-      xpMaxBonus: 0
+      xpMaxBonus: 0,
+      turnFlags: {
+        ...player.turnFlags,
+        firedLocationsThisTurn: Array.from(new Set([...(player.turnFlags.firedLocationsThisTurn || []), job.locationId]))
+      }
     };
     updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
     return { updated, wagesEarned: 0, success: false, messages: [{ key: 'action.job.fired' }] };
@@ -363,8 +371,31 @@ export function workShift(
         [job.locationId]: curMistakes + mistakesAdded
       };
 
+      const currentTurnMistakes = (updated.workMistakesThisTurn || updated.turnFlags?.workMistakesThisTurn || 0) + mistakesAdded;
+      updated.workMistakesThisTurn = currentTurnMistakes;
+      if (updated.turnFlags) {
+        updated.turnFlags.workMistakesThisTurn = currentTurnMistakes;
+      }
+
       const mistakeTypes = [physMistake ? 'Physical' : null, mentalMistake ? 'Mental' : null].filter(Boolean).join(' & ');
       messages.push({ key: 'action.job.mistake', params: { type: mistakeTypes, penalty: curMistakes, total: curMistakes + mistakesAdded } });
+
+      if (currentTurnMistakes >= 3) {
+        // 3 work mistakes in the same turn -> Immediate Termination (Gross Negligence)
+        updated.currentJobId = null;
+        updated.currentWage = 0;
+        updated.raisesAtCurrentJob = 0;
+        updated.innovationCount = 0;
+        updated.depMaxBonus = 0;
+        updated.xpMaxBonus = 0;
+        updated.dependability = Math.max(0, updated.dependability - 5);
+        updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
+        updated.turnFlags = {
+          ...updated.turnFlags,
+          firedLocationsThisTurn: Array.from(new Set([...(updated.turnFlags.firedLocationsThisTurn || []), job.locationId]))
+        };
+        messages.push({ key: 'action.job.firedMistakes', params: { title: job.title, count: currentTurnMistakes } });
+      }
     } else {
       const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0) + (updated.depMaxBonus || 0);
       const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
@@ -392,8 +423,12 @@ export function workShift(
           // +1 Dep, +1 Exp
           const depGain = roundToResolution(1 * gainMultiplier, 0.5);
           const expGain = roundToResolution(1 * gainMultiplier, 0.5);
-          updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + depGain, 0.5));
-          updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
+          if (updated.dependability < effectiveMaxDep) {
+            updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + depGain, 0.5));
+          }
+          if (updated.experience < effectiveMaxExp) {
+            updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
+          }
           messages.push({ key: 'action.job.innovateGainBoth' });
         } else {
           // +2 Dep, +0 Exp (rollX === 2)
@@ -409,14 +444,18 @@ export function workShift(
         }
       } else {
         // Normal stat growth for other modes
-        updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + baseDepGain, 0.5));
+        if (baseDepGain > 0 && updated.dependability < effectiveMaxDep) {
+          updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + baseDepGain, 0.5));
+        }
       }
     }
 
-    if (mode === 'work_work') {
+    if (mode === 'work_work' && !physMistake && !mentalMistake) {
       const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
       const expGain = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? roundToResolution(1 * ratio, 0.5) : 1;
-      updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
+      if (updated.experience < effectiveMaxExp) {
+        updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
+      }
     }
 
     let socialGain = 0;
@@ -445,8 +484,12 @@ export function workShift(
     const classicExpGain = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? roundToResolution(1 * ratio, 0.5) : 1;
     const classicDepGain = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? roundToResolution(1 * ratio, 0.5) : 1;
 
-    updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + classicExpGain, 0.5));
-    updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + classicDepGain, 0.5));
+    if (updated.experience < effectiveMaxExp) {
+      updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + classicExpGain, 0.5));
+    }
+    if (updated.dependability < effectiveMaxDep) {
+      updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + classicDepGain, 0.5));
+    }
     messages.unshift({ key: 'action.job.worked', params: { title: job.title, wagesEarned, stats: '' } });
   }
 

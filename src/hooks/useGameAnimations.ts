@@ -64,11 +64,25 @@ export function useGameAnimations() {
     setFloatingAnims(prev => prev.filter(a => a.id !== id));
   }, []);
 
+  const triggerScreenShake = useCallback((durationMs: number = 450) => {
+    const container = document.querySelector('.app-container') || document.body;
+    if (container) {
+      container.classList.remove('screen-shake');
+      void (container as HTMLElement).offsetWidth;
+      container.classList.add('screen-shake');
+      setTimeout(() => {
+        container.classList.remove('screen-shake');
+      }, durationMs);
+    }
+  }, []);
+
   return {
     floatingAnims,
     triggerAnim,
+    triggerScreenShake,
     removeAnim,
     isAnimating,
     setIsAnimating,
   };
 }
+

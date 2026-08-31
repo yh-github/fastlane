@@ -29,7 +29,7 @@ export default function App() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [activeLogFilter, setActiveLogFilter] = useState<GoalFilter | null>(null);
 
-  const { floatingAnims, triggerAnim, removeAnim, isAnimating, setIsAnimating } = useGameAnimations();
+  const { floatingAnims, triggerAnim, triggerScreenShake, removeAnim, isAnimating, setIsAnimating } = useGameAnimations();
 
   const {
     status,
@@ -47,7 +47,7 @@ export default function App() {
     replayData,
     streetRobberyNotice,
     setStreetRobberyNotice
-  } = useGameEngine(selectedCampaignId, triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen);
+  } = useGameEngine(selectedCampaignId, triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen, triggerScreenShake);
 
   if (showTitle) {
     return <TitleScreen onStartGame={(campaignId) => {

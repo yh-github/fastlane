@@ -225,11 +225,13 @@ export function calcEmployabilityScore(
   experience: number,
   degreesCount: number,
   mistakesAtLocation: number = 0,
-  social: number = 0
+  social: number = 0,
+  isProbation: boolean = false
 ): number {
   const socialBonus = Math.floor((social || 0) / 15);
   const baseScore = Math.floor(30 + (10 + dependability + experience + 8 * degreesCount) / 3) + socialBonus;
-  return Math.max(0, baseScore - mistakesAtLocation);
+  const score = Math.max(0, baseScore - mistakesAtLocation);
+  return isProbation ? Math.floor(score / 2) : score;
 }
 
 /**

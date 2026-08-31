@@ -22,7 +22,8 @@ export function useGameEngine(
   setIsAnimating: (val: boolean) => void,
   isAnimating: boolean,
   setIsBuildingModalOpen: (val: boolean) => void,
-  setIsNewspaperModalOpen: (val: boolean) => void
+  setIsNewspaperModalOpen: (val: boolean) => void,
+  triggerScreenShake?: (durationMs?: number) => void
 ) {
   const [status, setStatus] = useState<AppStatus>('loading');
   const [campaign, setCampaign] = useState<CampaignBundle | null>(null);
@@ -386,6 +387,19 @@ export function useGameEngine(
         const logsArray = Array.isArray(actionLog) ? actionLog : [actionLog];
         const diffStr = calculateStatDiffsAndAnimate(player, oldPlayer, prevState.rules, triggerAnim);
         
+        for (const log of logsArray) {
+          if (log.key === 'action.job.mistake' || log.key === 'action.education.mistake' || log.key === 'action.job.firedMistakes') {
+            if (triggerScreenShake) triggerScreenShake(500);
+            if (prevState.rules.enableAnimations) {
+              triggerAnim('text', '💥 MISTAKE!', { customClass: 'anim-mistake' });
+            }
+          } else if (log.key?.startsWith('action.job.innovateCap') || log.key === 'action.job.innovateGainBoth') {
+            if (prevState.rules.enableAnimations) {
+              triggerAnim('text', '💡 INNOVATION!', { customClass: 'anim-breakthrough' });
+            }
+          }
+        }
+
         logsArray.forEach((log, index) => {
           let finalActionLog: GameEvent = { ...log, params: { ...log.params } };
           if (index === 0 && diffStr) {
