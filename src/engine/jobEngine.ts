@@ -593,9 +593,9 @@ export function workShift(
     let physMistake = false;
     let mentalMistake = false;
 
-    if (physicalCost > 0 && oldPhys < 10) {
-      const physMultiplier = hasJobTag(job, 'heavy_physical') ? 2.0 : 1.0;
-      const physChance = (10 - oldPhys) * 0.025 * physMultiplier;
+    const physMistakeThreshold = hasJobTag(job, 'heavy_physical') ? 20 : 10;
+    if (physicalCost > 0 && oldPhys < physMistakeThreshold) {
+      const physChance = (physMistakeThreshold - oldPhys) * 0.025;
       physMistake = resolveDecision(replay, `work_phys_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < physChance);
     }
 

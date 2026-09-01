@@ -727,6 +727,70 @@ describe('Job Engine', () => {
         expect(wwResult.updated.experience).toBe(0.5); // 0 + 0.5
       });
 
+      it('applies Heavy_Physical mistake threshold of 20 for physical condition and halved mental mistake chance', () => {
+        const heavyJob: JobDef = {
+          id: 'factory_assembly',
+          title: 'Assembly Worker',
+          locationId: 'factory',
+          baseWage: 8,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: ['heavy_physical'],
+          perks: []
+        };
+
+        const normalJob: JobDef = {
+          id: 'office_worker',
+          title: 'Office Worker',
+          locationId: 'tech_hq',
+          baseWage: 8,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: [],
+          perks: []
+        };
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+
+        // Test at Phys = 15:
+        // On normal job (threshold 10), Phys 15 is safe (0% mistake chance, no decision resolved)
+        const playerAt15 = {
+          id: 'p_test',
+          hoursRemaining: 10,
+          currentJobId: 'office_worker',
+          currentWage: 8,
+          degrees: [],
+          dependability: 20,
+          experience: 0,
+          physicalCondition: 15,
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const normalReplay = { inDecisions: [], outDecisions: [] as any[] };
+        const normalRes = workShift(playerAt15, normalJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), normalReplay);
+        expect(normalRes.success).toBe(true);
+        expect(normalReplay.outDecisions.length).toBe(0); // No mistake roll triggered for normal job
+
+        // On heavy_physical job (threshold 20), Phys 15 is in danger zone (triggers mistake roll with chance (20-15)*0.025 = 12.5%)
+        const heavyPlayerAt15 = { ...playerAt15, currentJobId: 'factory_assembly' };
+        const heavyReplay = {
+          inDecisions: [{ type: `work_phys_mistake_${heavyPlayerAt15.id}_1`, result: true }],
+          outDecisions: [] as any[]
+        };
+        const heavyRes = workShift(heavyPlayerAt15, heavyJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), heavyReplay);
+        expect(heavyRes.success).toBe(true);
+        expect(heavyRes.messages?.some(m => m.key === 'action.job.mistake')).toBe(true);
+        expect(heavyRes.updated.mistakesByLocation?.['factory']).toBe(1);
+
+        // At Phys = 20, heavy_physical job is safe (0% mistake chance, no decision resolved)
+        const heavyPlayerAt20 = { ...playerAt15, currentJobId: 'factory_assembly', physicalCondition: 20 };
+        const heavySafeReplay = { inDecisions: [], outDecisions: [] as any[] };
+        const heavySafeRes = workShift(heavyPlayerAt20, heavyJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), heavySafeReplay);
+        expect(heavySafeRes.success).toBe(true);
+        expect(heavySafeReplay.outDecisions.length).toBe(0);
+      });
+
       it('applies Frontline_Service modifiers: +1 Social on normal shift, extra -1 Social on mistake', () => {
         const frontlineJob: JobDef = {
           id: 'zmart_clerk',
