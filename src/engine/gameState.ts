@@ -171,10 +171,17 @@ export interface PlayerState {
   workMistakesThisTurn?: number;
 }
 
+export interface StatModification {
+  stat: 'money' | 'happiness' | 'mental' | 'physical' | 'dependability' | 'mess' | 'social' | 'relaxation' | string;
+  diff: number;
+  label?: string;
+}
+
 export interface WeekendResult {
   event: GameEvent;
   cost: number;
   happinessBonus?: number;
+  modifications?: StatModification[];
 }
 
 // ─── Inventory ──────────────────────────────────────────────────

@@ -12,6 +12,7 @@ vi.mock('react-i18next', () => ({
     }
   }),
 }));
+
 describe('WeekendScreen', () => {
   it('renders weekend summary with activities, cost, happiness, and continues to next week', () => {
     const player = createTestPlayer({
@@ -27,7 +28,8 @@ describe('WeekendScreen', () => {
     render(<WeekendScreen player={player} turn={4} onStartWeek={onStartWeek} />);
 
     expect(screen.getByText(/Alice/i)).toBeInTheDocument();
-    expect(screen.getByText(/45/i)).toBeInTheDocument();
+    expect(screen.getByText(/-?\$45/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+3 😊/i)).toBeInTheDocument();
 
     const startWeekBtn = screen.getByRole('button');
     fireEvent.click(startWeekBtn);
@@ -44,7 +46,7 @@ describe('WeekendScreen', () => {
     expect(screen.getByText(/Bob/i)).toBeInTheDocument();
   });
 
-  it('renders Mental Condition instead of Happiness when mental condition is active', () => {
+  it('renders mental condition icon when mental condition is active', () => {
     const player = createTestPlayer({
       name: 'Charlie',
       mentalCondition: 45,
@@ -56,7 +58,44 @@ describe('WeekendScreen', () => {
     });
 
     render(<WeekendScreen player={player} turn={3} onStartWeek={vi.fn()} />);
-    expect(screen.getAllByText(/Mental Condition/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/\+2/)).toBeInTheDocument();
+    expect(screen.getByText(/\+2 🧠/i)).toBeInTheDocument();
+    expect(screen.getByText(/-?\$30/i)).toBeInTheDocument();
+  });
+
+  it('renders complete list of weekly modifications with icons when provided', () => {
+    const player = createTestPlayer({
+      name: 'Dana',
+      mentalCondition: 30,
+      dependability: 25,
+      mess: 15,
+      social: 8,
+      physicalCondition: 45,
+      weekendResult: {
+        event: { key: 'events.weekend.random_3', params: {} },
+        cost: 25,
+        happinessBonus: 1,
+        modifications: [
+          { stat: 'money', diff: -25 },
+          { stat: 'mental', diff: 1 },
+          { stat: 'dependability', diff: -3 },
+          { stat: 'mess', diff: 3 },
+          { stat: 'social', diff: -1 },
+          { stat: 'physical', diff: 1 },
+        ]
+      }
+    });
+
+    render(<WeekendScreen player={player} turn={5} onStartWeek={vi.fn()} />);
+
+    expect(screen.getByText(/-\$25/)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 🧠/)).toBeInTheDocument();
+    expect(screen.getByText(/-3 🤝/)).toBeInTheDocument();
+    expect(screen.getByText(/\+3 🧹/)).toBeInTheDocument();
+    expect(screen.getByText(/-1 🥂/)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 💪/)).toBeInTheDocument();
+
+    // Verify Weekly Adjustments card is NOT rendered
+    expect(screen.queryByText('Weekly Adjustments')).not.toBeInTheDocument();
   });
 });
+
