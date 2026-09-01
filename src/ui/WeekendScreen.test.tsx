@@ -62,7 +62,7 @@ describe('WeekendScreen', () => {
     expect(screen.getByText(/-?\$30/i)).toBeInTheDocument();
   });
 
-  it('renders complete list of weekly modifications with icons when provided', () => {
+  it('renders complete list of weekly modifications with icons when helpfulUI is true or undefined', () => {
     const player = createTestPlayer({
       name: 'Dana',
       mentalCondition: 30,
@@ -91,11 +91,44 @@ describe('WeekendScreen', () => {
     expect(screen.getByText(/\+1 🧠/)).toBeInTheDocument();
     expect(screen.getByText(/-3 🤝/)).toBeInTheDocument();
     expect(screen.getByText(/\+3 🧹/)).toBeInTheDocument();
-    expect(screen.getByText(/-1 🥂/)).toBeInTheDocument();
+    expect(screen.getByText(/-1 👥/)).toBeInTheDocument();
     expect(screen.getByText(/\+1 💪/)).toBeInTheDocument();
 
     // Verify Weekly Adjustments card is NOT rendered
     expect(screen.queryByText('Weekly Adjustments')).not.toBeInTheDocument();
+  });
+
+  it('renders only money spent when helpfulUI is false', () => {
+    const player = createTestPlayer({
+      name: 'Dana',
+      mentalCondition: 30,
+      dependability: 25,
+      mess: 15,
+      social: 8,
+      physicalCondition: 45,
+      weekendResult: {
+        event: { key: 'events.weekend.random_3', params: {} },
+        cost: 25,
+        happinessBonus: 1,
+        modifications: [
+          { stat: 'money', diff: -25 },
+          { stat: 'mental', diff: 1 },
+          { stat: 'dependability', diff: -3 },
+          { stat: 'mess', diff: 3 },
+          { stat: 'social', diff: -1 },
+          { stat: 'physical', diff: 1 },
+        ]
+      }
+    });
+
+    render(<WeekendScreen player={player} turn={5} onStartWeek={vi.fn()} rules={{ helpfulUI: false } as any} />);
+
+    expect(screen.getByText(/-\$25/)).toBeInTheDocument();
+    expect(screen.queryByText(/\+1 🧠/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/-3 🤝/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+3 🧹/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/-1 👥/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+1 💪/)).not.toBeInTheDocument();
   });
 });
 

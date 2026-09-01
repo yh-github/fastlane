@@ -126,6 +126,7 @@ export default function App() {
       <WeekendScreen
         player={activePlayer}
         turn={gameState.turn}
+        rules={gameState.rules}
         onStartWeek={() => {
           const newPlayers = [...gameState.players];
           newPlayers[activePlayerIndex] = {

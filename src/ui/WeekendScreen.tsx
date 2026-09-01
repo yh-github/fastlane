@@ -1,14 +1,17 @@
-import type { PlayerState, StatModification } from '../engine/gameState';
+import type { PlayerState, StatModification, GameRules } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
 
 interface WeekendScreenProps {
   player: PlayerState;
   turn: number;
   onStartWeek: () => void;
+  rules?: GameRules;
 }
 
-export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps) {
+export function WeekendScreen({ player, turn, onStartWeek, rules }: WeekendScreenProps) {
   const { t } = useTranslation();
+
+  const isHelpfulUI = rules?.helpfulUI ?? true;
 
   const getStatInfo = (stat: string) => {
     switch (stat) {
@@ -23,7 +26,7 @@ export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps)
       case 'mess':
         return { icon: '🧹', label: t('weekendScreen.mess', { defaultValue: 'Apartment Mess' }) };
       case 'social':
-        return { icon: '🥂', label: t('weekendScreen.social', { defaultValue: 'Social Standing' }) };
+        return { icon: '👥', label: t('weekendScreen.social', { defaultValue: 'Social Standing' }) };
       case 'happiness':
         return { icon: '😊', label: t('weekendScreen.happiness', { defaultValue: 'Happiness' }) };
       case 'relaxation':
@@ -33,7 +36,7 @@ export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps)
     }
   };
 
-  const modifications: StatModification[] = (() => {
+  const rawModifications: StatModification[] = (() => {
     if (player.weekendResult?.modifications && player.weekendResult.modifications.length > 0) {
       return player.weekendResult.modifications;
     }
@@ -53,6 +56,10 @@ export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps)
     }
     return mods;
   })();
+
+  const modifications = isHelpfulUI 
+    ? rawModifications 
+    : rawModifications.filter(mod => mod.stat === 'money');
 
   return (
     <div className="weekend-screen" style={{
