@@ -2,17 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoader';
 import { calcEconomyPrice } from '../../engine/economyEngine';
-import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, roundToResolution } from '../../engine/statMath';
+import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore } from '../../engine/statMath';
 import type { InteractionProps } from './types';
-import {
-  getJobPhysicalCostModifier,
-  getJobMentalCostModifier,
-  isFaceTimeAllowed,
-  isLookBusyAllowed,
-  getLookBusyDepPenalty,
-  getJobExpMultiplier,
-  getJobSocialModifier
-} from '../../engine/jobTags';
+import { calcWorkShiftSummary } from '../../engine/jobEngine';
 
 /**
  * JobBoard — Shown at the Employment Office.
@@ -225,100 +217,16 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
     );
   }
 
-  const actionCount = (player.workActionsThisTurn || 0) + 1;
-  const overtimeThreshold = statRules?.workOvertimeThreshold ?? 8;
-  const grindThreshold = statRules?.workGrindThreshold ?? 4;
-
-  let basePhys = 1;
-  let baseMental = 0;
-  let tierLabel = '';
-
-  if (actionCount >= overtimeThreshold) {
-    basePhys = statRules?.workOvertimePhysicalCost ?? 2;
-    baseMental = statRules?.workOvertimeMentalCost ?? 2;
-    tierLabel = ' [Overtime]';
-  } else if (actionCount >= grindThreshold) {
-    basePhys = statRules?.workGrindPhysicalCost ?? 1;
-    baseMental = statRules?.workGrindMentalCost ?? 1;
-    tierLabel = ' [Grind]';
-  }
-
-  const curPhys = player.physicalCondition ?? 50;
-  const fatigueMental = curPhys < 10 ? 1 : 0;
-  const halfFatigueMental = curPhys < 10 ? 0.5 : 0;
-  const hasDegrees = player.degrees && player.degrees.length > 0;
-  const faceTimeDep = 1 + Math.ceil((player.social || 1) / 25) / 2;
-
   const shiftCost = campaign?.config.timeRules?.workSessionCost ?? 6;
-  const hoursToWork = player.hoursRemaining > 0 ? Math.min(shiftCost, player.hoursRemaining) : shiftCost;
-  const workRatio = hoursToWork / shiftCost;
+  const summary = calcWorkShiftSummary(player, job, shiftCost, rules, statRules);
+  const { hoursToWork, tierLabel, modes, innovationsCount, locationMistakes, turnMistakes } = summary;
 
-  const physTagMod = getJobPhysicalCostModifier(job);
-  const mentalTagMod = getJobMentalCostModifier(job);
-  const expMult = getJobExpMultiplier(job);
-  const socialMod = getJobSocialModifier(job, actionCount);
-  const isFTAllowed = isFaceTimeAllowed(job);
-  const isLBAllowed = isLookBusyAllowed(job);
-  const lbDepPenalty = getLookBusyDepPenalty(job);
-
-  const workWorkExpGain = roundToResolution((hoursToWork < shiftCost ? 1 * workRatio : 1) * expMult, 0.5);
-  const workWorkDepGain = roundToResolution(hoursToWork < shiftCost ? 1 * workRatio : 1, 0.5);
-  const socialGainText = socialMod > 0 ? `, +${socialMod} 👥` : (socialMod < 0 ? `, ${socialMod} 👥` : '');
-
-  const modes = [
-    {
-      id: 'work_work',
-      label: `💼 ${t('action.workModal.workWork', { defaultValue: 'Work Work' })}`,
-      physCost: roundToResolution((basePhys * 1.0 + physTagMod) * workRatio, 0.5),
-      mentalCost: roundToResolution((baseMental * 1.0 + mentalTagMod + fatigueMental) * workRatio, 0.5),
-      wage: Math.floor(player.currentWage * 8 * workRatio),
-      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}`,
-      color: '#2ecc71',
-      isDefault: true,
-      disabled: false
-    },
-    {
-      id: 'look_busy',
-      label: `👀 ${t('action.workModal.lookBusy', { defaultValue: 'Look Busy' })}`,
-      physCost: roundToResolution(basePhys * 0.5 * workRatio, 0.5),
-      mentalCost: roundToResolution((baseMental * 0.5 + halfFatigueMental) * workRatio, 0.5),
-      wage: Math.floor(player.currentWage * 8 * workRatio),
-      rewardText: !isLBAllowed
-        ? t('action.job.lookBusyDisabled', { defaultValue: 'Disabled for Management' })
-        : (lbDepPenalty > 0 ? `-${lbDepPenalty} 🤝, +0 👌` : '+0 🤝, +0 👌'),
-      color: '#3498db',
-      isDefault: false,
-      disabled: !isLBAllowed
-    },
-    {
-      id: 'face_time',
-      label: `🤝 ${t('action.workModal.faceTime', { defaultValue: 'Face Time' })}`,
-      physCost: roundToResolution(basePhys * 0.5 * workRatio, 0.5),
-      mentalCost: roundToResolution((baseMental * 1.0 + 2.0 + halfFatigueMental) * workRatio, 0.5),
-      wage: 0,
-      rewardText: !isFTAllowed
-        ? t('action.job.faceTimeDisabled', { defaultValue: 'Disabled for Physical Labor' })
-        : `+${roundToResolution(faceTimeDep * workRatio, 0.5)} 🤝, +👥`,
-      color: '#9b59b6',
-      isDefault: false,
-      disabled: !isFTAllowed
-    },
-    {
-      id: 'innovate',
-      label: `💡 ${t('action.workModal.innovate', { defaultValue: 'Innovate' })}`,
-      physCost: roundToResolution(basePhys * 1.0 * workRatio, 0.5),
-      mentalCost: roundToResolution((baseMental + 2.0 + (player.innovationCount || 0) + fatigueMental) * workRatio, 0.5),
-      wage: Math.floor(player.currentWage * 8 * 0.5 * workRatio),
-      rewardText: hasDegrees ? t('action.workModal.innovateReward', { defaultValue: '🎲 2d2-2 🤝 & 👌 (Cap Buster)' }) : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree 🎓' }),
-      color: '#e67e22',
-      isDefault: false,
-      disabled: !hasDegrees
-    }
-  ];
-
-  const innovationsCount = player.innovationCount || 0;
-  const locationMistakes = player.mistakesByLocation?.[job.locationId] || 0;
-  const turnMistakes = player.workMistakesThisTurn || 0;
+  const modeLabels: Record<string, string> = {
+    work_work: `💼 ${t('action.workModal.workWork', { defaultValue: 'Work Work' })}`,
+    look_busy: `👀 ${t('action.workModal.lookBusy', { defaultValue: 'Look Busy' })}`,
+    face_time: `🤝 ${t('action.workModal.faceTime', { defaultValue: 'Face Time' })}`,
+    innovate: `💡 ${t('action.workModal.innovate', { defaultValue: 'Innovate' })}`
+  };
 
   return (
     <div className="interaction-panel">
@@ -349,6 +257,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
         {modes.map(m => {
+          const curPhys = player.physicalCondition ?? 50;
           const hasEnoughTime = player.hoursRemaining > 0;
           const hasEnoughPhys = curPhys - m.physCost >= 1.0;
           const hasEnoughMental = (player.mentalCondition ?? 50) - m.mentalCost >= 1.0;
@@ -357,6 +266,14 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
           const costStr = m.mentalCost > 0
             ? `-${m.physCost} 💪, -${m.mentalCost} 🧠`
             : `-${m.physCost} 💪`;
+
+          const displayReward = m.disabledReasonKey
+            ? t(m.disabledReasonKey)
+            : (m.id === 'innovate'
+                ? (player.degrees && player.degrees.length > 0
+                    ? t('action.workModal.innovateReward', { defaultValue: '🎲 2d2-2 🤝 & 👌 (Cap Buster)' })
+                    : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree 🎓' }))
+                : m.rewardText);
 
           return (
             <button
@@ -377,7 +294,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                   : `1px solid ${canAfford ? m.color : '#444'}`,
                 boxShadow: isWorkWork && canAfford ? '0 0 10px rgba(46, 204, 113, 0.25)' : undefined,
                 color: canAfford ? '#fff' : '#777',
-                cursor: 'pointer',
+                cursor: canAfford ? 'pointer' : 'not-allowed',
                 opacity: canAfford ? 1 : 0.55,
                 textAlign: 'left',
                 position: 'relative'
@@ -385,7 +302,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontWeight: 'bold', color: canAfford ? (isWorkWork ? '#2ecc71' : m.color) : '#888', fontSize: isWorkWork ? '1.05em' : '0.98em' }}>
-                  {m.label}
+                  {modeLabels[m.id] || m.id}
                 </span>
                 {isWorkWork && (
                   <span style={{ fontSize: '0.65em', padding: '1px 5px', background: canAfford ? '#2ecc71' : '#555', color: '#111', borderRadius: '3px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -394,7 +311,7 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
                 )}
               </div>
               <div style={{ fontSize: '0.78em', marginTop: '3px', color: canAfford ? '#bbb' : '#777' }}>
-                {costStr} | ${m.wage} | {m.rewardText}
+                {costStr} | ${m.wage} | {displayReward}
               </div>
             </button>
           );
