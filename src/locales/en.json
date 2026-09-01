@@ -312,8 +312,8 @@
     "messStatus": "Apartment Mess"
   },
   "tag": {
-    "auto_accept": "Auto-Hire",
-    "auto_accept_desc": "Guaranteed entry-level position.",
+    "always_hiring": "Always Hiring",
+    "always_hiring_desc": "High-turnover entry/essential job. Guaranteed hiring if minimum qualifications are met.",
     "academic_freedom": "Academic Freedom",
     "academic_freedom_desc": "High-level scholarship and research position.",
     "heavy_physical": "Heavy Physical",
@@ -740,6 +740,7 @@
     "dep": "Dep",
     "degrees": "Degrees",
     "missingReq": "You do not meet the minimum requirements for this position.",
+    "alwaysHiring": "Always Hiring",
     "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
     "currentJob": "Current Job (${{wage}}/hr)",
     "apply": "Apply ({{cost}}h)",

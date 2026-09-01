@@ -125,7 +125,7 @@ export function createMockCampaign(overrides: MockCampaignOverrides = {}): Campa
         locationId: 'monolith_burgers',
         requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
         perks: [],
-        tags: ['auto_accept'],
+        tags: ['always_hiring'],
       },
       {
         id: 'office_clerk',

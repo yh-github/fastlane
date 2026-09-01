@@ -91,23 +91,6 @@ export function applyForJob(
   
   const isRaise = player.currentJobId === job.id;
 
-  // Some jobs are automatically granted regardless of luck or exact stat checks
-  if (job.tags?.includes('auto_accept') && !isRaise) {
-    updated.currentJobId = job.id;
-    updated.currentWage = offeredWage ?? job.baseWage;
-    updated.raisesAtCurrentJob = 0;
-    updated.innovationCount = 0;
-    updated.depMaxBonus = 0;
-    updated.xpMaxBonus = 0;
-    
-    if (updated.dependability < 10) {
-      updated.dependability = 10;
-    }
-    updated.experience += 2;
-    
-    return { updated, success: true, message: { key: 'action.job.gotJob', params: { title: job.title } } };
-  }
-
   if (isRaise) {
     // Raise logic
     const newWage = offeredWage ?? job.baseWage;
@@ -134,7 +117,7 @@ export function applyForJob(
     }
   }
 
-  // Regular job application logic
+  // Regular job application logic: Check hard requirements first
   const rejectionReasons: string[] = [];
 
   if (updated.experience < job.requirements.experience) {
@@ -164,7 +147,24 @@ export function applyForJob(
     return { updated, success: false, message: { key: 'action.job.rejected', params: { reasons: rejectionReasons.join(' ') } } };
   }
 
-  // Hiring threshold check for new jobs
+  // If the job is "always_hiring" and requirements are met, skip luck roll and auto-hire!
+  const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
+  if (isAlwaysHiring) {
+    updated.currentJobId = job.id;
+    updated.currentWage = offeredWage ?? job.baseWage;
+    updated.raisesAtCurrentJob = 0;
+    updated.innovationCount = 0;
+    updated.depMaxBonus = 0;
+    updated.xpMaxBonus = 0;
+    
+    if (updated.dependability < 10) {
+      updated.dependability = 10;
+    }
+    
+    return { updated, success: true, message: { key: 'action.job.gotJob', params: { title: job.title } } };
+  }
+
+  // Hiring threshold check for normal jobs
   const locMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
   const isProbation = updated.turnFlags.firedLocationsThisTurn?.includes(job.locationId) ?? false;
   
@@ -217,9 +217,6 @@ export function applyForJob(
   if (updated.dependability < 10) {
     updated.dependability = 10;
   }
-  
-  // Bonus experience for getting a new job
-  updated.experience += 2;
 
   return { updated, success: true, message: { key: 'action.job.gotJob', params: { title: job.title } } };
 }

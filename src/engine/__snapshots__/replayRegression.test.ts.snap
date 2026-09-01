@@ -3,7 +3,7 @@
 exports[`Deterministic Replay Regression > replays a real game using fastlane-replay-21-weeks.json 1`] = `
 {
   "campaignId": "The Fast Lane — Improved Version (QoL)",
-  "economicIndex": -17,
+  "economicIndex": 65,
   "economicTrend": 1,
   "pawnShopItemsForSale": [],
   "phase": "setup",
@@ -23,7 +23,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "depMaxBonus": 0,
       "dependability": 0,
       "enrolledClasses": {},
-      "experience": 20,
+      "experience": 17,
       "goalAllotment": {
         "career": 25,
         "education": 25,
@@ -63,8 +63,9 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 98,
-      "nakedTurns": 1,
+      "mess": 1,
+      "money": 55,
+      "nakedTurns": 0,
       "name": "Player 1",
       "newspaperHeadline": {
         "key": "newspaper.random.4",
@@ -84,6 +85,12 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         },
         {
           "key": "events.rent.due_nodenied",
+        },
+        {
+          "key": "events.donation",
+          "params": {
+            "amount": 55,
+          },
         },
       ],
       "turnFlags": {
@@ -106,18 +113,17 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "workMistakesThisTurn": 0,
       },
       "weekendResult": {
-        "cost": 6,
+        "cost": 0,
         "event": {
-          "key": "events.weekend.random_15",
+          "key": "events.weekend.too_broke",
         },
-        "happinessBonus": undefined,
       },
       "workActionsThisTurn": 0,
       "workMistakesThisTurn": 0,
       "xpMaxBonus": 0,
     },
   ],
-  "rngState": 221286083004,
+  "rngState": 272569925768,
   "rules": {
     "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
@@ -170,7 +176,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "depMaxBonus": 0,
       "dependability": 12,
       "enrolledClasses": {},
-      "experience": 12,
+      "experience": 10,
       "goalAllotment": {
         "career": 50,
         "education": 50,
@@ -307,7 +313,7 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
       "depMaxBonus": 0,
       "dependability": 28,
       "enrolledClasses": {},
-      "experience": 12,
+      "experience": 10,
       "goalAllotment": {
         "career": 25,
         "education": 25,

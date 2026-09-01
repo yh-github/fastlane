@@ -13,7 +13,7 @@ describe('Job Engine', () => {
     baseWage: 5,
     perks: [],
     requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
-    tags: ['auto_accept']
+    tags: ['always_hiring']
   };
 
   const salesManager: JobDef = {
@@ -39,12 +39,30 @@ describe('Job Engine', () => {
   });
 
   describe('applyForJob', () => {
-    it('burger cook is always accepted', () => {
-      const player = { hoursRemaining: 20, experience: 0, dependability: 0, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+    it('always_hiring job is accepted when requirements are met without increasing experience', () => {
+      const player = { hoursRemaining: 20, experience: 0, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
       const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(true);
       expect(result.updated.currentJobId).toBe('burger_cook');
       expect(result.updated.currentWage).toBe(5);
+      expect(result.updated.experience).toBe(0); // No artificial +2 exp!
+    });
+
+    it('always_hiring job is rejected if player does not meet hard requirements', () => {
+      const strictHiringJob: JobDef = {
+        id: 'uni_janitor',
+        title: 'Janitor',
+        locationId: 'university',
+        baseWage: 5,
+        perks: [],
+        requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
+        tags: ['always_hiring']
+      };
+      const player = { hoursRemaining: 20, experience: 0, dependability: 0, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const result = applyForJob(player, strictHiringJob, 4, {}, undefined, new Random(1), undefined, 5);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.job.rejected');
+      expect(result.message?.params?.reasons).toContain('Poor Work History.');
     });
 
     it('rejects if missing hard requirements (experience)', () => {
@@ -68,6 +86,7 @@ describe('Job Engine', () => {
       const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.job.rejected');
+      expect(result.message?.params?.reasons).toContain('Missing required degree: business_admin');
     });
 
     it('rejects due to insufficient employability roll', () => {
@@ -78,12 +97,12 @@ describe('Job Engine', () => {
       expect(result.message?.key).toBe('action.job.noOpenings');
     });
 
-    it('grants +2 experience when getting a new job', () => {
+    it('preserves existing experience when getting a new job', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); 
       const player = { hoursRemaining: 20, experience: 10, dependability: 20, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
       const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(true);
-      expect(result.updated.experience).toBe(12);
+      expect(result.updated.experience).toBe(10);
     });
 
     it('resets dependability to 10 if it is below 10 when getting a new job', () => {

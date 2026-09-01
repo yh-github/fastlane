@@ -15,7 +15,7 @@
   },
   {
     "id": "burger_cook",
-    "tags": ["auto_accept", "heavy_physical"]
+    "tags": ["always_hiring", "heavy_physical"]
   },
   {
     "id": "burger_clerk",
@@ -39,8 +39,7 @@
   },
   {
     "id": "uni_janitor",
-    "requirements": { "experience": 0, "dependability": 0, "degrees": [], "uniform": "casual" },
-    "tags": ["auto_accept", "heavy_physical"]
+    "tags": ["always_hiring", "heavy_physical"]
   },
   {
     "id": "uni_professor",
@@ -48,8 +47,7 @@
   },
   {
     "id": "factory_janitor",
-    "requirements": { "experience": 0, "dependability": 0, "degrees": [], "uniform": "casual" },
-    "tags": ["auto_accept", "heavy_physical"]
+    "tags": ["always_hiring", "heavy_physical"]
   },
   {
     "id": "factory_assembly",
@@ -69,8 +67,7 @@
   },
   {
     "id": "bank_janitor",
-    "requirements": { "experience": 0, "dependability": 0, "degrees": [], "uniform": "casual" },
-    "tags": ["auto_accept", "heavy_physical"]
+    "tags": ["always_hiring", "heavy_physical"]
   },
   {
     "id": "bank_teller",
@@ -82,8 +79,7 @@
   },
   {
     "id": "blacks_janitor",
-    "requirements": { "experience": 0, "dependability": 0, "degrees": [], "uniform": "casual" },
-    "tags": ["auto_accept", "heavy_physical"]
+    "tags": ["always_hiring", "heavy_physical"]
   },
   {
     "id": "blacks_checker",

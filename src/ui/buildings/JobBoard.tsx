@@ -4,6 +4,15 @@ import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoade
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, roundToResolution } from '../../engine/statMath';
 import type { InteractionProps } from './types';
+import {
+  getJobPhysicalCostModifier,
+  getJobMentalCostModifier,
+  isFaceTimeAllowed,
+  isLookBusyAllowed,
+  getLookBusyDepPenalty,
+  getJobExpMultiplier,
+  getJobSocialModifier
+} from '../../engine/jobTags';
 
 /**
  * JobBoard — Shown at the Employment Office.
@@ -96,10 +105,11 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const missingExp = player.experience < job.requirements.experience;
           const missingDep = player.dependability < job.requirements.dependability;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
+          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0;
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
-          const isAutoAccept = job.tags?.includes('auto_accept');
+          const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
           
-          const jobScore = isAutoAccept ? 100 : (isAdvanced
+          const jobScore = isAlwaysHiring ? (hasMissingReqs ? 0 : 100) : (isAdvanced
             ? calcAdvancedJobEmployabilityScore(
                 player.dependability || 0,
                 player.experience || 0,
@@ -123,13 +133,13 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#888', marginBottom: '6px' }}>
                   <span>{t('jobBoard.base')}: ${job.baseWage}/hr</span>
-                  <span style={{ color: isAutoAccept ? '#2ecc71' : (jobScore >= 70 ? '#2ecc71' : (jobScore >= 45 ? '#00e5ff' : '#f39c12')), fontWeight: 'bold' }}>
-                    {isAutoAccept ? `🎯 ${t('jobBoard.autoHire', { defaultValue: 'Auto-Hire' })}` : `🎯 ${jobScore}%`}
+                  <span style={{ color: isAlwaysHiring ? (hasMissingReqs ? '#e74c3c' : '#2ecc71') : (jobScore >= 70 ? '#2ecc71' : (jobScore >= 45 ? '#00e5ff' : '#f39c12')), fontWeight: 'bold' }}>
+                    {isAlwaysHiring ? (hasMissingReqs ? '🎯 0%' : `🎯 100% (${t('jobBoard.alwaysHiring', { defaultValue: 'Always Hiring' })})`) : `🎯 ${jobScore}%`}
                   </span>
                 </div>
-                {job.tags && job.tags.filter(tg => tg !== 'auto_accept').length > 0 && (
+                {job.tags && job.tags.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
-                    {job.tags.filter(tg => tg !== 'auto_accept').map(tg => (
+                    {job.tags.map(tg => (
                       <span key={tg} style={{ fontSize: '10px', background: 'rgba(255,255,255,0.08)', color: '#bbb', padding: '1px 5px', borderRadius: '3px' }}>
                         {t(`tag.${tg}`, { defaultValue: tg })}
                       </span>
@@ -243,14 +253,26 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
   const hoursToWork = player.hoursRemaining > 0 ? Math.min(shiftCost, player.hoursRemaining) : shiftCost;
   const workRatio = hoursToWork / shiftCost;
 
+  const physTagMod = getJobPhysicalCostModifier(job);
+  const mentalTagMod = getJobMentalCostModifier(job);
+  const expMult = getJobExpMultiplier(job);
+  const socialMod = getJobSocialModifier(job, actionCount);
+  const isFTAllowed = isFaceTimeAllowed(job);
+  const isLBAllowed = isLookBusyAllowed(job);
+  const lbDepPenalty = getLookBusyDepPenalty(job);
+
+  const workWorkExpGain = roundToResolution((hoursToWork < shiftCost ? 1 * workRatio : 1) * expMult, 0.5);
+  const workWorkDepGain = roundToResolution(hoursToWork < shiftCost ? 1 * workRatio : 1, 0.5);
+  const socialGainText = socialMod > 0 ? `, +${socialMod} 👥` : (socialMod < 0 ? `, ${socialMod} 👥` : '');
+
   const modes = [
     {
       id: 'work_work',
       label: `💼 ${t('action.workModal.workWork', { defaultValue: 'Work Work' })}`,
-      physCost: roundToResolution(basePhys * 1.0 * workRatio, 0.5),
-      mentalCost: roundToResolution((baseMental * 1.0 + fatigueMental) * workRatio, 0.5),
+      physCost: roundToResolution((basePhys * 1.0 + physTagMod) * workRatio, 0.5),
+      mentalCost: roundToResolution((baseMental * 1.0 + mentalTagMod + fatigueMental) * workRatio, 0.5),
       wage: Math.floor(player.currentWage * 8 * workRatio),
-      rewardText: hoursToWork < shiftCost ? `+${roundToResolution(1 * workRatio, 0.5)} 🤝, +${roundToResolution(1 * workRatio, 0.5)} 👌` : '+1 🤝, +1 👌',
+      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}`,
       color: '#2ecc71',
       isDefault: true,
       disabled: false
@@ -261,10 +283,12 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       physCost: roundToResolution(basePhys * 0.5 * workRatio, 0.5),
       mentalCost: roundToResolution((baseMental * 0.5 + halfFatigueMental) * workRatio, 0.5),
       wage: Math.floor(player.currentWage * 8 * workRatio),
-      rewardText: '+0 🤝, +0 👌',
+      rewardText: !isLBAllowed
+        ? t('action.job.lookBusyDisabled', { defaultValue: 'Disabled for Management' })
+        : (lbDepPenalty > 0 ? `-${lbDepPenalty} 🤝, +0 👌` : '+0 🤝, +0 👌'),
       color: '#3498db',
       isDefault: false,
-      disabled: false
+      disabled: !isLBAllowed
     },
     {
       id: 'face_time',
@@ -272,10 +296,12 @@ export function WorkStation({ player, onAction, job, campaign }: InteractionProp
       physCost: roundToResolution(basePhys * 0.5 * workRatio, 0.5),
       mentalCost: roundToResolution((baseMental * 1.0 + 2.0 + halfFatigueMental) * workRatio, 0.5),
       wage: 0,
-      rewardText: `+${roundToResolution(faceTimeDep * workRatio, 0.5)} 🤝, +👥`,
+      rewardText: !isFTAllowed
+        ? t('action.job.faceTimeDisabled', { defaultValue: 'Disabled for Physical Labor' })
+        : `+${roundToResolution(faceTimeDep * workRatio, 0.5)} 🤝, +👥`,
       color: '#9b59b6',
       isDefault: false,
-      disabled: false
+      disabled: !isFTAllowed
     },
     {
       id: 'innovate',

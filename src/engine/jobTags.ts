@@ -5,7 +5,7 @@
 import type { JobDef } from './dataLoader';
 
 export type JobTag =
-  | 'auto_accept'
+  | 'always_hiring'
   | 'academic_freedom'
   | 'heavy_physical'
   | 'frontline_service'
@@ -19,10 +19,10 @@ export interface JobTagDefinition {
 }
 
 export const JOB_TAG_REGISTRY: Record<JobTag, JobTagDefinition> = {
-  auto_accept: {
-    id: 'auto_accept',
-    nameKey: 'tag.auto_accept',
-    descKey: 'tag.auto_accept_desc'
+  always_hiring: {
+    id: 'always_hiring',
+    nameKey: 'tag.always_hiring',
+    descKey: 'tag.always_hiring_desc'
   },
   academic_freedom: {
     id: 'academic_freedom',
