@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoader';
 import { calcEconomyPrice } from '../../engine/economyEngine';
-import { calcEmployabilityScore, roundToResolution } from '../../engine/statMath';
+import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, roundToResolution } from '../../engine/statMath';
 import type { InteractionProps } from './types';
 
 /**
@@ -13,6 +13,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   const { t } = useTranslation();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
+  const isAdvanced = !!rules?.usePhysicalMentalConditions;
   const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, 0, player.social || 0);
 
   // Group jobs by locationId
@@ -41,10 +42,8 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '4px', color: '#bbb' }}>
                   <span>{t('jobBoard.positions', { count: jobCount })}</span>
-                  {locMistakes > 0 ? (
+                  {locMistakes > 0 && (
                     <span style={{ fontSize: '11px', color: '#ffb300' }}>⚠️ {t('jobBoard.mistakesBadge', { count: locMistakes })}</span>
-                  ) : (
-                    <span style={{ fontSize: '11px', color: '#2ecc71', opacity: 0.8 }}>🛡️ {t('jobBoard.cleanRecord')}</span>
                   )}
                 </div>
               </div>
@@ -81,13 +80,9 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
               🚫 {t('jobBoard.probationBadge')}
             </span>
           )}
-          {selectedLocMistakes > 0 ? (
+          {selectedLocMistakes > 0 && (
             <span style={{ color: '#ffb300', background: 'rgba(255,179,0,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ffb300' }}>
               ⚠️ {t('jobBoard.mistakesBadge', { count: selectedLocMistakes })}
-            </span>
-          ) : (
-            <span style={{ color: '#2ecc71', background: 'rgba(46,204,113,0.1)', padding: '2px 6px', borderRadius: '4px' }}>
-              🛡️ {t('jobBoard.cleanRecord')}
             </span>
           )}
           <span style={{ color: '#00e5ff', opacity: 0.9 }}>
@@ -102,6 +97,22 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const missingDep = player.dependability < job.requirements.dependability;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
+          const isAutoAccept = job.tags?.includes('auto_accept');
+          
+          const jobScore = isAutoAccept ? 100 : (isAdvanced
+            ? calcAdvancedJobEmployabilityScore(
+                player.dependability || 0,
+                player.experience || 0,
+                player.degrees?.length || 0,
+                job.requirements.dependability,
+                job.requirements.experience,
+                player.innovationsByLocation?.[selectedLocation] || 0,
+                selectedLocMistakes,
+                player.social || 0,
+                economicIndex,
+                isSelectedFired
+              )
+            : locationScore);
           
           return (
             <div key={job.id} className="interaction-item" style={{ margin: 0, padding: '12px', border: '1px solid #444', borderRadius: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -110,9 +121,21 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                   <strong>{t(`job.${job.id}`, { defaultValue: job.title })}</strong>
                   <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${offeredWage}/hr</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px' }}>
-                  {t('jobBoard.base')}: ${job.baseWage}/hr
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#888', marginBottom: '6px' }}>
+                  <span>{t('jobBoard.base')}: ${job.baseWage}/hr</span>
+                  <span style={{ color: isAutoAccept ? '#2ecc71' : (jobScore >= 70 ? '#2ecc71' : (jobScore >= 45 ? '#00e5ff' : '#f39c12')), fontWeight: 'bold' }}>
+                    {isAutoAccept ? `🎯 ${t('jobBoard.autoHire', { defaultValue: 'Auto-Hire' })}` : `🎯 ${jobScore}%`}
+                  </span>
                 </div>
+                {job.tags && job.tags.filter(tg => tg !== 'auto_accept').length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
+                    {job.tags.filter(tg => tg !== 'auto_accept').map(tg => (
+                      <span key={tg} style={{ fontSize: '10px', background: 'rgba(255,255,255,0.08)', color: '#bbb', padding: '1px 5px', borderRadius: '3px' }}>
+                        {t(`tag.${tg}`, { defaultValue: tg })}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {rules?.helpfulUI && (
                   <>
                     <div style={{ fontSize: '12px', marginTop: '5px' }}>

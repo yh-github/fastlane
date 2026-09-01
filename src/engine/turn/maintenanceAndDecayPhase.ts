@@ -122,7 +122,8 @@ export function processMaintenanceAndDecayPhase(
     player.relaxation = Math.max(threshold, player.relaxation - decay);
   }
   const curJob = player.currentJobId && campaign?.jobs ? campaign.jobs.find(j => j.id === player.currentJobId) : undefined;
-  player.dependability = calcDependabilityDecay(player.dependability, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, player.social); 
+  const isHighDowntime = curJob?.tags?.includes('high_downtime') ?? false;
+  player.dependability = calcDependabilityDecay(player.dependability, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, player.social, isHighDowntime); 
 
   // 8. Apartment Robbery
   const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === player.id || !e.playerId));

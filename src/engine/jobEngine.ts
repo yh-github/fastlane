@@ -1,12 +1,23 @@
 import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import { spendHours } from './timeManager';
 import { processRentDebt } from './economyEngine';
-import { calcEmployabilityScore, roundToResolution } from './statMath';
+import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, roundToResolution } from './statMath';
 import type { JobDef } from './dataLoader';
 import type { Random } from '../utils/rng';
 import { resolveDecision, type ReplayContext } from './replayTypes';
 import { applyMoraleEffect, applyHappinessChange } from './statEffects';
 import { type StatRules } from './rules';
+import {
+  hasJobTag,
+  getJobPhysicalCostModifier,
+  getJobMentalCostModifier,
+  isFaceTimeAllowed,
+  isLookBusyAllowed,
+  getLookBusyDepPenalty,
+  getJobExpMultiplier,
+  getJobSocialModifier,
+  getJobWorkMistakeSocialPenalty
+} from './jobTags';
 
 export interface JobApplicationResult {
   updated: PlayerState;
@@ -18,7 +29,19 @@ export function calculateJobEmployability(player: PlayerState): number {
   return calcEmployabilityScore(player.dependability, player.experience, player.degrees.length, 0, player.social);
 }
 
-export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, messages: Record<string, string> = {}, offeredWage?: number, rng?: Random, rules?: GameRules, turn: number = 1, replay?: ReplayContext, statRules?: StatRules): JobApplicationResult {
+export function applyForJob(
+  player: PlayerState,
+  job: JobDef,
+  timeCost: number,
+  messages: Record<string, string> = {},
+  offeredWage?: number,
+  rng?: Random,
+  rules?: GameRules,
+  turn: number = 1,
+  replay?: ReplayContext,
+  statRules?: StatRules,
+  economicIndex: number = 0
+): JobApplicationResult {
   const msg = (key: string, defaultMsg: string, vars: Record<string, string> = {}) => {
     let m = messages[key] || defaultMsg;
     for (const [k, v] of Object.entries(vars)) m = m.replaceAll(`{${k}}`, v as string);
@@ -33,8 +56,38 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
     return { updated: player, success: false, message: { key: 'action.job.noOpenings' } };
   }
 
-  // Cost to apply
+  const isAdvanced = !!rules?.usePhysicalMentalConditions;
+
+  // Interview costs 1 Mental in Advanced mode
+  if (isAdvanced) {
+    const curMental = player.mentalCondition ?? 50;
+    if (curMental - 1 < 1.0) {
+      return { updated: player, success: false, message: { key: 'action.error.tooMentallyExhausted' } };
+    }
+  }
+
+  // Cost to apply (time)
   let updated = spendHours(player, timeCost);
+
+  // Apply mental cost and check for interview mistake
+  if (isAdvanced) {
+    const oldMental = updated.mentalCondition ?? 50;
+    updated.mentalCondition = oldMental - 1;
+
+    if (oldMental < 10) {
+      const mistakeChance = (10 - oldMental) * 0.025;
+      const isMistake = resolveDecision(
+        replay,
+        `job_interview_mental_mistake_${player.id}_${turn}_${job.id}`,
+        () => (rng ? rng.next() : Math.random()) < mistakeChance
+      );
+      if (isMistake) {
+        if (!updated.turnFlags.jobsRejectedThisTurn) updated.turnFlags.jobsRejectedThisTurn = [];
+        updated.turnFlags.jobsRejectedThisTurn.push(job.id);
+        return { updated, success: false, message: { key: 'action.job.interviewMistake' } };
+      }
+    }
+  }
   
   const isRaise = player.currentJobId === job.id;
 
@@ -114,7 +167,33 @@ export function applyForJob(player: PlayerState, job: JobDef, timeCost: number, 
   // Hiring threshold check for new jobs
   const locMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
   const isProbation = updated.turnFlags.firedLocationsThisTurn?.includes(job.locationId) ?? false;
-  const employability = calcEmployabilityScore(updated.dependability, updated.experience, updated.degrees.length, locMistakes, updated.social, isProbation);
+  
+  let employability: number;
+  if (isAdvanced) {
+    const locInnovations = updated.innovationsByLocation?.[job.locationId] || 0;
+    employability = calcAdvancedJobEmployabilityScore(
+      updated.dependability,
+      updated.experience,
+      updated.degrees.length,
+      job.requirements.dependability,
+      job.requirements.experience,
+      locInnovations,
+      locMistakes,
+      updated.social || 0,
+      economicIndex,
+      isProbation
+    );
+  } else {
+    employability = calcEmployabilityScore(
+      updated.dependability,
+      updated.experience,
+      updated.degrees.length,
+      locMistakes,
+      updated.social || 0,
+      isProbation
+    );
+  }
+
   const roll = resolveDecision(replay, `job_apply_luck`, () => Math.floor((rng ? rng.next() : Math.random()) * 100) + 1);
 
   if (roll > employability) {
@@ -216,6 +295,14 @@ export function workShift(
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.innovateNeedDegree' }] };
   }
 
+  if (mode === 'face_time' && !isFaceTimeAllowed(job)) {
+    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.faceTimeDisabled' }] };
+  }
+
+  if (mode === 'look_busy' && !isLookBusyAllowed(job)) {
+    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.lookBusyDisabled' }] };
+  }
+
   const isAdvanced = !!rules?.usePhysicalMentalConditions;
   let physicalCost = 0;
   let mentalCost = 0;
@@ -258,8 +345,8 @@ export function workShift(
       baseDepGain = 0;
     } else {
       // work_work
-      physicalCost = basePhys * 1.0;
-      mentalCost = baseMental * 1.0;
+      physicalCost = basePhys * 1.0 + getJobPhysicalCostModifier(job);
+      mentalCost = baseMental * 1.0 + getJobMentalCostModifier(job);
       wageMultiplier = 1.0;
       baseDepGain = 1;
     }
@@ -335,17 +422,26 @@ export function workShift(
       updated.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (updated.mentalConditionMax || 50) + 1);
     }
 
+    if (mode === 'look_busy') {
+      const lookBusyDepPenalty = getLookBusyDepPenalty(job);
+      if (lookBusyDepPenalty > 0) {
+        updated.dependability = Math.max(0, updated.dependability - lookBusyDepPenalty);
+      }
+    }
+
     // Mistake resolution
     let physMistake = false;
     let mentalMistake = false;
 
     if (physicalCost > 0 && oldPhys < 10) {
-      const physChance = (10 - oldPhys) * 0.025;
+      const physMultiplier = hasJobTag(job, 'heavy_physical') ? 2.0 : 1.0;
+      const physChance = (10 - oldPhys) * 0.025 * physMultiplier;
       physMistake = resolveDecision(replay, `work_phys_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < physChance);
     }
 
     if (mentalCost > 0 && oldMental < 10) {
-      const mentalChance = (10 - oldMental) * 0.025;
+      const mentalMultiplier = hasJobTag(job, 'heavy_physical') ? 0.5 : 1.0;
+      const mentalChance = (10 - oldMental) * 0.025 * mentalMultiplier;
       mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
     }
 
@@ -366,6 +462,11 @@ export function workShift(
 
       // Penalty = NUM_OF_MISTAKES (current counter before adding this turn's mistakes)
       updated.dependability = Math.max(0, updated.dependability - curMistakes);
+      const extraSocialPenalty = getJobWorkMistakeSocialPenalty(job);
+      if (extraSocialPenalty > 0) {
+        updated.social = Math.max(1, (updated.social || 1) - extraSocialPenalty);
+      }
+
       updated.mistakesByLocation = {
         ...(updated.mistakesByLocation || {}),
         [job.locationId]: curMistakes + mistakesAdded
@@ -414,6 +515,10 @@ export function workShift(
           if (updated.experience >= effectiveMaxExp) {
             updated.xpMaxBonus = (updated.xpMaxBonus || 0) + 1;
             updated.innovationCount = (updated.innovationCount || 0) + 1;
+            updated.innovationsByLocation = {
+              ...(updated.innovationsByLocation || {}),
+              [job.locationId]: (updated.innovationsByLocation?.[job.locationId] || 0) + 1
+            };
             messages.push({ key: 'action.job.innovateCapExp', params: { newMax: effectiveMaxExp + 1 } });
           } else {
             updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
@@ -436,6 +541,10 @@ export function workShift(
           if (updated.dependability >= effectiveMaxDep) {
             updated.depMaxBonus = (updated.depMaxBonus || 0) + 1;
             updated.innovationCount = (updated.innovationCount || 0) + 1;
+            updated.innovationsByLocation = {
+              ...(updated.innovationsByLocation || {}),
+              [job.locationId]: (updated.innovationsByLocation?.[job.locationId] || 0) + 1
+            };
             messages.push({ key: 'action.job.innovateCapDep', params: { newMax: effectiveMaxDep + 1 } });
           } else {
             updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + depGain, 0.5));
@@ -452,9 +561,15 @@ export function workShift(
 
     if (mode === 'work_work' && !physMistake && !mentalMistake) {
       const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
-      const expGain = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? roundToResolution(1 * ratio, 0.5) : 1;
+      const expMult = getJobExpMultiplier(job);
+      const expGain = roundToResolution(((rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? 1 * ratio : 1) * expMult, 0.5);
       if (updated.experience < effectiveMaxExp) {
         updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
+      }
+
+      const socialMod = getJobSocialModifier(job, actionCount);
+      if (socialMod !== 0) {
+        updated.social = Math.max(1, Math.min(99, (updated.social || 1) + socialMod));
       }
     }
 
