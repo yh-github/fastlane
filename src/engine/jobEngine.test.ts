@@ -553,8 +553,193 @@ describe('Job Engine', () => {
         expect(result.success).toBe(false);
         expect(result.message.key).toBe('action.job.noOpeningsProbation');
       });
+
+      it('interview costs 1 Mental in Advanced mode and fails if mentally exhausted', () => {
+        const job: JobDef = {
+          id: 'zmart_clerk',
+          title: 'Z-Mart Clerk',
+          locationId: 'discount_and_pawn',
+          baseWage: 5,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+
+        const exhaustedPlayer = {
+          id: 'p_exhausted',
+          hoursRemaining: 10,
+          currentJobId: null,
+          currentWage: 0,
+          degrees: [],
+          dependability: 20,
+          experience: 20,
+          mentalCondition: 1.5,
+          turnFlags: { jobsRejectedThisTurn: [] },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        const result = applyForJob(exhaustedPlayer, job, 4, {}, undefined, new Random(1), advancedRules as any, 1);
+        expect(result.success).toBe(false);
+        expect(result.message.key).toBe('action.error.tooMentallyExhausted');
+      });
+
+      it('interview encounters a Mental Mistake when Mental < 10', () => {
+        const job: JobDef = {
+          id: 'zmart_clerk',
+          title: 'Z-Mart Clerk',
+          locationId: 'discount_and_pawn',
+          baseWage: 5,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+
+        const lowMentalPlayer = {
+          id: 'p_low_mental',
+          hoursRemaining: 10,
+          currentJobId: null,
+          currentWage: 0,
+          degrees: [],
+          dependability: 20,
+          experience: 20,
+          mentalCondition: 5.0,
+          turnFlags: { jobsRejectedThisTurn: [] },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        const replay = {
+          inDecisions: [{ type: `job_interview_mental_mistake_p_low_mental_1_zmart_clerk`, result: true }],
+          outDecisions: []
+        };
+
+        const result = applyForJob(lowMentalPlayer, job, 4, {}, undefined, new Random(1), advancedRules as any, 1, replay);
+        expect(result.success).toBe(false);
+        expect(result.message.key).toBe('action.job.interviewMistake');
+        expect(result.updated.mentalCondition).toBe(4.0); // 5.0 - 1.0
+        expect(result.updated.turnFlags.jobsRejectedThisTurn).toContain('zmart_clerk');
+      });
+
+      it('applies Heavy_Physical modifiers: +1 Phys cost, 0.5x Exp, face_time disabled, look_busy -1 Dep', () => {
+        const heavyJob: JobDef = {
+          id: 'factory_assembly',
+          title: 'Assembly Worker',
+          locationId: 'factory',
+          baseWage: 8,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: ['heavy_physical'],
+          perks: []
+        };
+
+        const player = {
+          id: 'p_heavy',
+          hoursRemaining: 10,
+          currentJobId: 'factory_assembly',
+          currentWage: 8,
+          degrees: [],
+          dependability: 20,
+          experience: 0,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+
+        // Test face_time disabled
+        const ftResult = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'face_time');
+        expect(ftResult.success).toBe(false);
+        expect(ftResult.messages?.[0].key).toBe('action.job.faceTimeDisabled');
+
+        // Test look_busy costs 1 Dep
+        const lbResult = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'look_busy');
+        expect(lbResult.success).toBe(true);
+        expect(lbResult.updated.dependability).toBe(19); // 20 - 1
+
+        // Test work_work has +1 Physical cost (base 1 + 1 = 2) and grants 0.5 Exp
+        const wwResult = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(wwResult.success).toBe(true);
+        expect(wwResult.updated.physicalCondition).toBe(48); // 50 - 2
+        expect(wwResult.updated.experience).toBe(0.5); // 0 + 0.5
+      });
+
+      it('applies Frontline_Service modifiers: +1 Social on normal shift, extra -1 Social on mistake', () => {
+        const frontlineJob: JobDef = {
+          id: 'zmart_clerk',
+          title: 'Z-Mart Clerk',
+          locationId: 'discount_and_pawn',
+          baseWage: 5,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: ['frontline_service'],
+          perks: []
+        };
+
+        const player = {
+          id: 'p_frontline',
+          hoursRemaining: 10,
+          currentJobId: 'zmart_clerk',
+          currentWage: 5,
+          degrees: [],
+          dependability: 20,
+          experience: 0,
+          social: 10,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        const wwResult = workShift(player, frontlineJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(wwResult.success).toBe(true);
+        expect(wwResult.updated.social).toBe(11); // 10 + 1
+      });
+
+      it('applies Middle_Management modifiers: +1 Mental cost, +0.5 Social, look_busy disabled', () => {
+        const mgrJob: JobDef = {
+          id: 'zmart_asst_mgr',
+          title: 'Asst Manager',
+          locationId: 'discount_and_pawn',
+          baseWage: 10,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: ['middle_management'],
+          perks: []
+        };
+
+        const player = {
+          id: 'p_mgr',
+          hoursRemaining: 10,
+          currentJobId: 'zmart_asst_mgr',
+          currentWage: 10,
+          degrees: [],
+          dependability: 20,
+          experience: 0,
+          social: 10,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+
+        // look_busy disabled
+        const lbResult = workShift(player, mgrJob, 6, advancedRules as any, undefined, 'look_busy');
+        expect(lbResult.success).toBe(false);
+        expect(lbResult.messages?.[0].key).toBe('action.job.lookBusyDisabled');
+
+        // work_work: base Mental 0 + 1 = 1 Mental cost, +0.5 Social
+        const wwResult = workShift(player, mgrJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(wwResult.success).toBe(true);
+        expect(wwResult.updated.mentalCondition).toBe(49); // 50 - 1
+        expect(wwResult.updated.social).toBe(10.5); // 10 + 0.5
+      });
     });
   });
 });
+
 
 

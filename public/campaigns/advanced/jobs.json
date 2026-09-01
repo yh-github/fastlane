@@ -1,18 +1,104 @@
 [
   {
     "id": "zmart_clerk",
-    "locationId": "discount_and_pawn"
+    "locationId": "discount_and_pawn",
+    "tags": ["frontline_service"]
   },
   {
     "id": "zmart_asst_mgr",
-    "locationId": "discount_and_pawn"
+    "locationId": "discount_and_pawn",
+    "tags": ["middle_management"]
   },
   {
     "id": "zmart_mgr",
     "locationId": "discount_and_pawn"
   },
   {
+    "id": "burger_cook",
+    "tags": ["auto_accept", "heavy_physical"]
+  },
+  {
+    "id": "burger_clerk",
+    "tags": ["frontline_service"]
+  },
+  {
+    "id": "burger_asst_mgr",
+    "tags": ["middle_management"]
+  },
+  {
+    "id": "qt_salesperson",
+    "tags": ["frontline_service", "high_downtime"]
+  },
+  {
+    "id": "qt_asst_mgr",
+    "tags": ["middle_management"]
+  },
+  {
+    "id": "socket_salesperson",
+    "tags": ["frontline_service", "high_downtime"]
+  },
+  {
+    "id": "uni_janitor",
+    "requirements": { "experience": 0, "dependability": 0, "degrees": [], "uniform": "casual" },
+    "tags": ["auto_accept", "heavy_physical"]
+  },
+  {
     "id": "uni_professor",
     "tags": ["academic_freedom"]
+  },
+  {
+    "id": "factory_janitor",
+    "requirements": { "experience": 0, "dependability": 0, "degrees": [], "uniform": "casual" },
+    "tags": ["auto_accept", "heavy_physical"]
+  },
+  {
+    "id": "factory_assembly",
+    "tags": ["heavy_physical"]
+  },
+  {
+    "id": "factory_secretary",
+    "tags": ["high_downtime"]
+  },
+  {
+    "id": "factory_machinist_helper",
+    "tags": ["heavy_physical"]
+  },
+  {
+    "id": "factory_dept_mgr",
+    "tags": ["middle_management"]
+  },
+  {
+    "id": "bank_janitor",
+    "requirements": { "experience": 0, "dependability": 0, "degrees": [], "uniform": "casual" },
+    "tags": ["auto_accept", "heavy_physical"]
+  },
+  {
+    "id": "bank_teller",
+    "tags": ["frontline_service"]
+  },
+  {
+    "id": "bank_asst_mgr",
+    "tags": ["middle_management"]
+  },
+  {
+    "id": "blacks_janitor",
+    "requirements": { "experience": 0, "dependability": 0, "degrees": [], "uniform": "casual" },
+    "tags": ["auto_accept", "heavy_physical"]
+  },
+  {
+    "id": "blacks_checker",
+    "tags": ["frontline_service"]
+  },
+  {
+    "id": "blacks_asst_mgr",
+    "tags": ["middle_management"]
+  },
+  {
+    "id": "rent_groundskeeper",
+    "tags": ["heavy_physical"]
+  },
+  {
+    "id": "rent_mgr",
+    "tags": ["middle_management", "high_downtime"]
   }
 ]

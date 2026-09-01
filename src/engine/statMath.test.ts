@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   calcEmployabilityScore,
+  calcAdvancedJobEmployabilityScore,
   calcDependabilityDecay,
   calcMaxDependability,
   calcMaxExperience,
@@ -25,16 +26,44 @@ describe('statMath', () => {
     expect(calcEmployabilityScore(20, 10, 0, 5, 45)).toBe(41); // 43 + 3 - 5 mistakes = 41
   });
 
+  it('calcAdvancedJobEmployabilityScore calculates score based on margin, innovations, degrees, social, and economic index', () => {
+    // Base exact match (req: 10 dep, 10 exp; player: 10 dep, 10 exp, 0 deg, 0 innov, 0 soc, 0 econ) -> 45
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 0)).toBe(45);
+
+    // Overqualified: player has 30 dep, 30 exp for 10/10 job -> margin (20 + 20) * 0.5 = +20 -> 65
+    expect(calcAdvancedJobEmployabilityScore(30, 30, 0, 10, 10, 0, 0, 0, 0)).toBe(65);
+
+    // Degrees (+1 each), Innovations (+5 each), Social (+floor(soc/15))
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 2, 10, 10, 1, 0, 30, 0)).toBe(45 + 2 + 5 + 2); // 54
+
+    // Economic boom (+60 index -> +6)
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 60)).toBe(51);
+
+    // Economic recession (-30 index): entry job (req <= 20) -> -3
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, -30)).toBe(42);
+
+    // Economic recession (-30 index): high-tier job (req > 40) -> -12
+    expect(calcAdvancedJobEmployabilityScore(70, 70, 0, 70, 70, 0, 0, 0, -30)).toBe(33);
+
+    // Mistakes at location (-1 each)
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 3, 0, 0)).toBe(42);
+
+    // Probation (halved)
+    expect(calcAdvancedJobEmployabilityScore(30, 30, 0, 10, 10, 0, 0, 0, 0, true)).toBe(32); // Math.floor(65 / 2) = 32
+  });
+
   it('calcDependabilityDecay decays by 3, min 0 in classic', () => {
     expect(calcDependabilityDecay(10)).toBe(7);
     expect(calcDependabilityDecay(2)).toBe(0);
   });
 
-  it('calcDependabilityDecay in advanced mode with job requirements and social offset', () => {
+  it('calcDependabilityDecay in advanced mode with job requirements, social offset, and high downtime', () => {
     // Unemployed (req=0 -> baseLoss 3): social 0 -> -3
     expect(calcDependabilityDecay(50, 0, true, 0)).toBe(47);
     // Job req 50 -> ceil(50/10) = 5 loss. With social 25 (offset 1) -> 5 - 1 = 4 loss
     expect(calcDependabilityDecay(50, 50, true, 25)).toBe(46);
+    // High downtime: 4 loss halved -> 2 loss
+    expect(calcDependabilityDecay(50, 50, true, 25, true)).toBe(48);
     // Job req 50 -> 5 loss. With social 75 (offset 3) -> 5 - 3 = 2 loss
     expect(calcDependabilityDecay(50, 50, true, 75)).toBe(48);
     // Offset must never reduce loss below 1: Job req 10 -> base 1 loss. Social 99 (offset 3) -> min loss 1

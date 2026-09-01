@@ -15,7 +15,19 @@ export function handleApplyAction(
   const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
   if (jobDef) {
     const jobApplicationCost = requireConfig(context.campaign.config.timeRules?.jobApplicationCost, 'timeRules.jobApplicationCost');
-    const result = applyForJob(nextPlayer, jobDef, jobApplicationCost, context.campaign.messages, action.offeredWage, context.rng, context.rules, context.turn, replayContext);
+    const result = applyForJob(
+      nextPlayer,
+      jobDef,
+      jobApplicationCost,
+      context.campaign.messages,
+      action.offeredWage,
+      context.rng,
+      context.rules,
+      context.turn,
+      replayContext,
+      context.campaign.config.statRules,
+      context.economicIndex
+    );
     nextPlayer = result.updated;
     actionLog = result.message;
   }

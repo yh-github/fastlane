@@ -56,7 +56,7 @@ describe('WeekendScreen', () => {
     });
 
     render(<WeekendScreen player={player} turn={3} onStartWeek={vi.fn()} />);
-    expect(screen.getByText(/Mental Condition:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Mental Condition/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/\+2/)).toBeInTheDocument();
   });
 });

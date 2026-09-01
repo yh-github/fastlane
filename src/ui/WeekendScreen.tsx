@@ -49,9 +49,48 @@ export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps)
                 {t('weekendScreen.nothingSpecial')}
               </p>
             )}
-
-
           </div>
+
+          {(player.physicalCondition !== undefined || player.mentalCondition !== undefined || player.dependability !== undefined) && (
+            <div className="weekend-player-summary" style={{
+              padding: '20px', backgroundColor: '#1e293b', borderRadius: '8px', 
+              width: '350px', border: '2px solid #334155', textAlign: 'left'
+            }}>
+              <h3 style={{ borderBottom: '1px solid #555', paddingBottom: '10px', margin: '0 0 15px 0', textAlign: 'center' }}>
+                {t('weekendScreen.weeklyStatus', { defaultValue: 'Weekly Adjustments' })}
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.95em' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>🤝 {t('weekendScreen.depStatus', { defaultValue: 'Dependability' })}:</span>
+                  <strong style={{ color: '#38bdf8' }}>{player.dependability}</strong>
+                </div>
+                {player.physicalCondition !== undefined && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>💪 {t('weekendScreen.physStatus', { defaultValue: 'Physical Condition' })}:</span>
+                    <strong style={{ color: (player.physicalCondition < 15 ? '#f87171' : '#4ade80') }}>{player.physicalCondition} / {player.physicalConditionMax ?? 50}</strong>
+                  </div>
+                )}
+                {player.mentalCondition !== undefined && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>🧠 {t('weekendScreen.mentalStatus', { defaultValue: 'Mental Condition' })}:</span>
+                    <strong style={{ color: (player.mentalCondition < 15 ? '#f87171' : '#a78bfa') }}>{player.mentalCondition} / {player.mentalConditionMax ?? 50}</strong>
+                  </div>
+                )}
+                {player.social !== undefined && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>🥂 {t('weekendScreen.socialStatus', { defaultValue: 'Social Standing' })}:</span>
+                    <strong style={{ color: '#fbbf24' }}>{player.social}</strong>
+                  </div>
+                )}
+                {player.mess !== undefined && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>🧹 {t('weekendScreen.messStatus', { defaultValue: 'Apartment Mess' })}:</span>
+                    <strong style={{ color: (player.mess > 20 ? '#f87171' : '#94a3b8') }}>{player.mess}</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
       </div>
 
       <button 

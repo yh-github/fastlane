@@ -235,18 +235,73 @@ export function calcEmployabilityScore(
 }
 
 /**
+ * Calculate the Advanced Per-Job Employability Score.
+ * Accounts for qualification margin, location innovations, degrees, social charm,
+ * and labor market dynamics across economic cycles.
+ */
+export function calcAdvancedJobEmployabilityScore(
+  dependability: number,
+  experience: number,
+  degreesCount: number,
+  jobReqDep: number,
+  jobReqExp: number,
+  innovationsAtLocation: number = 0,
+  mistakesAtLocation: number = 0,
+  social: number = 0,
+  economicIndex: number = 0,
+  isProbation: boolean = false
+): number {
+  const base = 45;
+  const depMargin = Math.max(0, dependability - jobReqDep);
+  const expMargin = Math.max(0, experience - jobReqExp);
+  const marginBonus = Math.min(45, Math.floor(0.5 * (depMargin + expMargin)));
+
+  const degreesBonus = degreesCount * 1;
+  const innovBonus = innovationsAtLocation * 5;
+  const socialBonus = Math.floor((social || 0) / 15);
+
+  let econModifier = 0;
+  if (economicIndex >= 0) {
+    econModifier = Math.floor(economicIndex / 10);
+  } else {
+    // In recession (< 0), tier-scaled penalty based on job required dependability
+    if (jobReqDep <= 20) {
+      econModifier = Math.floor(economicIndex / 10); // e.g. -3 at -30 index
+    } else if (jobReqDep <= 40) {
+      econModifier = Math.floor(economicIndex / 5);  // e.g. -6 at -30 index
+    } else {
+      econModifier = Math.floor(economicIndex / 2.5); // e.g. -12 at -30 index
+    }
+  }
+
+  const rawScore = base + marginBonus + degreesBonus + innovBonus + socialBonus + econModifier - mistakesAtLocation;
+  const clampedScore = Math.max(1, Math.min(99, rawScore));
+  return isProbation ? Math.floor(clampedScore / 2) : clampedScore;
+}
+
+
+/**
  * Calculate dependability decay for the start of a turn.
  * Always flat -3 per turn in classic.
  * In advanced (usePhysicalMentalConditions): dep_loss = Math.max(1, Math.ceil(D_REQ / 10) - Math.floor(social / 25)),
  * where D_REQ is current job requirement or 3 for unemployed.
  */
-export function calcDependabilityDecay(current: number, jobRequiredDep?: number, isAdvanced?: boolean, social: number = 0): number {
+export function calcDependabilityDecay(
+  current: number,
+  jobRequiredDep?: number,
+  isAdvanced?: boolean,
+  social: number = 0,
+  isHighDowntime: boolean = false
+): number {
   if (isAdvanced) {
     const baseDepLoss = (jobRequiredDep !== undefined && jobRequiredDep > 0)
       ? Math.ceil(jobRequiredDep / 10)
       : 3;
     const socialOffset = Math.floor((social || 0) / 25);
-    const depLoss = Math.max(1, baseDepLoss - socialOffset);
+    let depLoss = Math.max(1, baseDepLoss - socialOffset);
+    if (isHighDowntime) {
+      depLoss = Math.max(1, Math.floor(depLoss / 2));
+    }
     return clampZero(current - depLoss);
   }
   return clampZero(current - DEPENDABILITY_WEEKLY_DECAY);
