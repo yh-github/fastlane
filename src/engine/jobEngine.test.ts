@@ -1,7 +1,7 @@
 import { Random } from '../utils/rng';
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { applyForJob, workShift } from './jobEngine';
+import { applyForJob, workShift, calcWorkShiftSummary } from './jobEngine';
 import type { PlayerState } from './gameState';
 import type { JobDef } from './dataLoader';
 
@@ -12,7 +12,7 @@ describe('Job Engine', () => {
     locationId: 'burger_palace',
     baseWage: 5,
     perks: [],
-    requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+    requirements: { experience: 0, dependability: 10, degrees: [], uniform: 'casual' },
     tags: ['always_hiring']
   };
 
@@ -39,27 +39,26 @@ describe('Job Engine', () => {
   });
 
   describe('applyForJob', () => {
-    it('always_hiring job is accepted when requirements are met without increasing experience', () => {
+    it('always_hiring job is accepted when requirements are met', () => {
       const player = { hoursRemaining: 20, experience: 0, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1));
+      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), { grantExpOnJobSwitch: true });
       expect(result.success).toBe(true);
       expect(result.updated.currentJobId).toBe('burger_cook');
       expect(result.updated.currentWage).toBe(5);
-      expect(result.updated.experience).toBe(0); // No artificial +2 exp!
+      expect(result.updated.experience).toBe(2); // With grantExpOnJobSwitch: true
+    });
+
+    it('does not grant experience on job switch if grantExpOnJobSwitch is false (Advanced)', () => {
+      const player = { hoursRemaining: 20, experience: 0, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), { grantExpOnJobSwitch: false });
+      expect(result.success).toBe(true);
+      expect(result.updated.currentJobId).toBe('burger_cook');
+      expect(result.updated.experience).toBe(0);
     });
 
     it('always_hiring job is rejected if player does not meet hard requirements', () => {
-      const strictHiringJob: JobDef = {
-        id: 'uni_janitor',
-        title: 'Janitor',
-        locationId: 'university',
-        baseWage: 5,
-        perks: [],
-        requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
-        tags: ['always_hiring']
-      };
       const player = { hoursRemaining: 20, experience: 0, dependability: 0, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, strictHiringJob, 4, {}, undefined, new Random(1), undefined, 5);
+      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), undefined, 5);
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.job.rejected');
       expect(result.message?.params?.reasons).toContain('Poor Work History.');
@@ -97,20 +96,65 @@ describe('Job Engine', () => {
       expect(result.message?.key).toBe('action.job.noOpenings');
     });
 
-    it('preserves existing experience when getting a new job', () => {
+    it('grants +2 experience in classic when getting a new job', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); 
       const player = { hoursRemaining: 20, experience: 10, dependability: 20, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1));
+      const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1), { grantExpOnJobSwitch: true });
       expect(result.success).toBe(true);
-      expect(result.updated.experience).toBe(10);
+      expect(result.updated.experience).toBe(12);
     });
 
     it('resets dependability to 10 if it is below 10 when getting a new job', () => {
+      const zeroDepJob: JobDef = {
+        id: 'entry_zero',
+        title: 'Entry Zero',
+        locationId: 'entry',
+        baseWage: 5,
+        perks: [],
+        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+        tags: ['always_hiring']
+      };
       const player = { hoursRemaining: 20, experience: 10, dependability: 5, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      // burgerCook requires 0 dep, so player won't be rejected upfront
-      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1));
+      const result = applyForJob(player, zeroDepJob, 4, {}, undefined, new Random(1));
       expect(result.success).toBe(true);
       expect(result.updated.dependability).toBe(10);
+    });
+  });
+
+  describe('calcWorkShiftSummary', () => {
+    it('computes accurate shift options, stamina costs, and disabled statuses', () => {
+      const heavyJob: JobDef = {
+        id: 'factory_assembly',
+        title: 'Assembly Worker',
+        locationId: 'factory',
+        baseWage: 8,
+        requirements: { experience: 30, dependability: 30, degrees: [], uniform: 'casual' },
+        tags: ['heavy_physical'],
+        perks: []
+      };
+      const player = {
+        hoursRemaining: 6,
+        currentWage: 8,
+        physicalCondition: 50,
+        mentalCondition: 50,
+        degrees: [],
+        workActionsThisTurn: 0,
+        social: 10
+      } as unknown as PlayerState;
+
+      const summary = calcWorkShiftSummary(player, heavyJob, 6, { usePhysicalMentalConditions: true } as any);
+      expect(summary.hoursToWork).toBe(6);
+      expect(summary.modes.length).toBe(4);
+
+      const workWork = summary.modes.find(m => m.id === 'work_work');
+      expect(workWork?.physCost).toBe(2); // base 1 + heavy_physical 1 = 2
+      expect(workWork?.rewardExp).toBe(0.5); // 0.5x exp gain
+
+      const faceTime = summary.modes.find(m => m.id === 'face_time');
+      expect(faceTime?.disabled).toBe(true);
+
+      const innovate = summary.modes.find(m => m.id === 'innovate');
+      expect(innovate?.disabled).toBe(true); // No degrees
     });
   });
 

@@ -36,10 +36,10 @@ export function applyForJob(
   messages: Record<string, string> = {},
   offeredWage?: number,
   rng?: Random,
-  rules?: GameRules,
+  rules?: GameRules | Partial<GameRules>,
   turn: number = 1,
   replay?: ReplayContext,
-  statRules?: StatRules,
+  statRules?: StatRules | Partial<StatRules>,
   economicIndex: number = 0
 ): JobApplicationResult {
   const msg = (key: string, defaultMsg: string, vars: Record<string, string> = {}) => {
@@ -160,6 +160,11 @@ export function applyForJob(
     if (updated.dependability < 10) {
       updated.dependability = 10;
     }
+
+    const shouldGrantExpOnSwitch = rules?.grantExpOnJobSwitch ?? true;
+    if (shouldGrantExpOnSwitch) {
+      updated.experience += 2;
+    }
     
     return { updated, success: true, message: { key: 'action.job.gotJob', params: { title: job.title } } };
   }
@@ -218,7 +223,165 @@ export function applyForJob(
     updated.dependability = 10;
   }
 
+  const shouldGrantExpOnSwitch = rules?.grantExpOnJobSwitch ?? true;
+  if (shouldGrantExpOnSwitch) {
+    updated.experience += 2;
+  }
+
   return { updated, success: true, message: { key: 'action.job.gotJob', params: { title: job.title } } };
+}
+
+export interface WorkShiftOption {
+  id: WorkMode;
+  physCost: number;
+  mentalCost: number;
+  wage: number;
+  rewardDep: number;
+  rewardExp: number;
+  rewardSocial: number;
+  rewardText: string;
+  color: string;
+  isDefault: boolean;
+  disabled: boolean;
+  disabledReasonKey?: string;
+}
+
+export interface WorkShiftSummary {
+  hoursToWork: number;
+  shiftCost: number;
+  workRatio: number;
+  tierLabel: string;
+  modes: WorkShiftOption[];
+  innovationsCount: number;
+  locationMistakes: number;
+  turnMistakes: number;
+}
+
+export function calcWorkShiftSummary(
+  player: PlayerState,
+  job: JobDef,
+  shiftCost: number = 6,
+  rules?: GameRules | Partial<GameRules>,
+  statRules?: StatRules | Partial<StatRules>
+): WorkShiftSummary {
+  const isAdvanced = !!rules?.usePhysicalMentalConditions;
+  const actionCount = (player.workActionsThisTurn || 0) + 1;
+  const overtimeThreshold = statRules?.workOvertimeThreshold ?? 8;
+  const grindThreshold = statRules?.workGrindThreshold ?? 4;
+
+  let basePhys = 1;
+  let baseMental = 0;
+  let tierLabel = '';
+
+  if (isAdvanced) {
+    if (actionCount >= overtimeThreshold) {
+      basePhys = statRules?.workOvertimePhysicalCost ?? 2;
+      baseMental = statRules?.workOvertimeMentalCost ?? 2;
+      tierLabel = ' [Overtime]';
+    } else if (actionCount >= grindThreshold) {
+      basePhys = statRules?.workGrindPhysicalCost ?? 1;
+      baseMental = statRules?.workGrindMentalCost ?? 1;
+      tierLabel = ' [Grind]';
+    } else {
+      basePhys = statRules?.workPhysicalCost ?? 1;
+      baseMental = statRules?.workNormalMentalCost ?? 0;
+    }
+  }
+
+  const curPhys = player.physicalCondition ?? 50;
+  const fatigueMental = curPhys < 10 ? 1.0 : 0.0;
+  const halfFatigueMental = curPhys < 10 ? 0.5 : 0.0;
+  const hasDegrees = !!(player.degrees && player.degrees.length > 0);
+  const faceTimeDep = 1 + Math.ceil((player.social || 1) / 25) / 2;
+
+  const hoursToWork = player.hoursRemaining > 0 ? Math.min(shiftCost, player.hoursRemaining) : shiftCost;
+  const workRatio = rules?.proportionalDivisibleActions && hoursToWork < shiftCost ? hoursToWork / shiftCost : 1.0;
+  const conditionRes = rules?.conditionResolution ?? 0.5;
+
+  const physTagMod = getJobPhysicalCostModifier(job);
+  const mentalTagMod = getJobMentalCostModifier(job);
+  const expMult = getJobExpMultiplier(job);
+  const socialMod = getJobSocialModifier(job, actionCount - 1);
+  const isFTAllowed = isFaceTimeAllowed(job);
+  const isLBAllowed = isLookBusyAllowed(job);
+  const lbDepPenalty = getLookBusyDepPenalty(job);
+
+  const workWorkDepGain = roundToResolution(1 * workRatio, 0.5);
+  const workWorkExpGain = roundToResolution(1 * expMult * workRatio, 0.5);
+  const socialGainText = socialMod > 0 ? `, +${socialMod} 👥` : (socialMod < 0 ? `, ${socialMod} 👥` : '');
+
+  const modes: WorkShiftOption[] = [
+    {
+      id: 'work_work',
+      physCost: isAdvanced ? Math.max(0, roundToResolution((basePhys * 1.0 + physTagMod) * workRatio, conditionRes)) : 0,
+      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 1.0 + mentalTagMod + fatigueMental) * workRatio, conditionRes)) : 0,
+      wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
+      rewardDep: workWorkDepGain,
+      rewardExp: workWorkExpGain,
+      rewardSocial: socialMod,
+      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}`,
+      color: '#2ecc71',
+      isDefault: true,
+      disabled: false
+    },
+    {
+      id: 'look_busy',
+      physCost: isAdvanced ? Math.max(0, roundToResolution(basePhys * 0.5 * workRatio, conditionRes)) : 0,
+      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 0.5 + halfFatigueMental) * workRatio, conditionRes)) : 0,
+      wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
+      rewardDep: lbDepPenalty > 0 ? -lbDepPenalty : 0,
+      rewardExp: 0,
+      rewardSocial: 0,
+      rewardText: !isLBAllowed
+        ? 'action.job.lookBusyDisabled'
+        : (lbDepPenalty > 0 ? `-${lbDepPenalty} 🤝, +0 👌` : '+0 🤝, +0 👌'),
+      color: '#3498db',
+      isDefault: false,
+      disabled: !isLBAllowed,
+      disabledReasonKey: !isLBAllowed ? 'action.job.lookBusyDisabled' : undefined
+    },
+    {
+      id: 'face_time',
+      physCost: isAdvanced ? Math.max(0, roundToResolution(basePhys * 0.5 * workRatio, conditionRes)) : 0,
+      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 1.0 + 2.0 + halfFatigueMental) * workRatio, conditionRes)) : 0,
+      wage: 0,
+      rewardDep: roundToResolution(faceTimeDep * workRatio, 0.5),
+      rewardExp: 0,
+      rewardSocial: 1,
+      rewardText: !isFTAllowed
+        ? 'action.job.faceTimeDisabled'
+        : `+${roundToResolution(faceTimeDep * workRatio, 0.5)} 🤝, +👥`,
+      color: '#9b59b6',
+      isDefault: false,
+      disabled: !isFTAllowed,
+      disabledReasonKey: !isFTAllowed ? 'action.job.faceTimeDisabled' : undefined
+    },
+    {
+      id: 'innovate',
+      physCost: isAdvanced ? Math.max(0, roundToResolution(basePhys * 1.0 * workRatio, conditionRes)) : 0,
+      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental + 2.0 + (player.innovationCount || 0) + fatigueMental) * workRatio, conditionRes)) : 0,
+      wage: Math.floor((player.currentWage || job.baseWage) * 8 * 0.5 * (hoursToWork / shiftCost)),
+      rewardDep: 0,
+      rewardExp: 0,
+      rewardSocial: 0,
+      rewardText: hasDegrees ? 'action.workModal.innovateReward' : 'action.workModal.requiresDegree',
+      color: '#e67e22',
+      isDefault: false,
+      disabled: !hasDegrees,
+      disabledReasonKey: !hasDegrees ? 'action.job.innovateNeedDegree' : undefined
+    }
+  ];
+
+  return {
+    hoursToWork,
+    shiftCost,
+    workRatio,
+    tierLabel,
+    modes,
+    innovationsCount: player.innovationCount || 0,
+    locationMistakes: player.mistakesByLocation?.[job.locationId] || 0,
+    turnMistakes: player.workMistakesThisTurn || 0
+  };
 }
 
 export interface WorkResult {
@@ -234,8 +397,8 @@ export function workShift(
   player: PlayerState,
   job: JobDef,
   shiftCost: number,
-  rules?: GameRules,
-  statRules?: StatRules,
+  rules?: GameRules | Partial<GameRules>,
+  statRules?: StatRules | Partial<StatRules>,
   mode: WorkMode = 'work_work',
   rng?: Random,
   replay?: ReplayContext

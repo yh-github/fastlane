@@ -70,6 +70,7 @@
     "strictEviction": false,
     "maxEnrolledClasses": 4,
     "turnStartAtHome": false,
-    "maskEarlyJobRejections": true
+    "maskEarlyJobRejections": true,
+    "grantExpOnJobSwitch": true
   }
 }

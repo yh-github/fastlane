@@ -183,6 +183,12 @@ export interface GameRules {
    * ADVANCED: If true, limits inventory durables and mess by housing space capacity.
    */
   spaceCapping?: boolean;
+
+  /**
+   * If true, switching to a new job grants +2 Experience immediately.
+   * Classic Floppy/CD-ROM: true. Advanced: false.
+   */
+  grantExpOnJobSwitch?: boolean;
 }
 
 export interface EventRules {
@@ -344,6 +350,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   delayRobberyFoodSpoilage: false,
   maskEarlyJobRejections: true,
   spaceCapping: false,
+  grantExpOnJobSwitch: true,
 };
 
 /**
@@ -363,6 +370,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   allowOverAchievingGoals: 'Allows progression metrics to exceed 100%',
   bypassDoctorIfBroke: 'Bypasses mandatory doctor visit without penalty if player has no money',
   relaxationDoctorThreshold: 'Relaxation level threshold that triggers mandatory doctor event',
+  grantExpOnJobSwitch: 'Grants +2 Experience immediately whenever hired for a new job',
   protectBuiltInAppliances: 'Protects built-in appliances from theft during apartment burglaries',
   allowEmployedRentPayment: 'Allows paying rent manually at any time if employed at Rent Office',
   delayBookSetCredit: 'Requires waiting until next turn for 3-book set lesson discount',
