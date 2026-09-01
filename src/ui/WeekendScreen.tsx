@@ -1,4 +1,4 @@
-import type { PlayerState } from '../engine/gameState';
+import type { PlayerState, StatModification } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
 
 interface WeekendScreenProps {
@@ -9,6 +9,51 @@ interface WeekendScreenProps {
 
 export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps) {
   const { t } = useTranslation();
+
+  const getStatInfo = (stat: string) => {
+    switch (stat) {
+      case 'money':
+        return { icon: '$', label: t('weekendScreen.cost', { defaultValue: 'Money' }) };
+      case 'mental':
+        return { icon: '🧠', label: t('weekendScreen.mental', { defaultValue: 'Mental Condition' }) };
+      case 'physical':
+        return { icon: '💪', label: t('weekendScreen.physical', { defaultValue: 'Physical Condition' }) };
+      case 'dependability':
+        return { icon: '🤝', label: t('weekendScreen.dependability', { defaultValue: 'Dependability' }) };
+      case 'mess':
+        return { icon: '🧹', label: t('weekendScreen.mess', { defaultValue: 'Apartment Mess' }) };
+      case 'social':
+        return { icon: '🥂', label: t('weekendScreen.social', { defaultValue: 'Social Standing' }) };
+      case 'happiness':
+        return { icon: '😊', label: t('weekendScreen.happiness', { defaultValue: 'Happiness' }) };
+      case 'relaxation':
+        return { icon: '🧘', label: t('weekendScreen.relaxation', { defaultValue: 'Relaxation' }) };
+      default:
+        return { icon: '', label: stat };
+    }
+  };
+
+  const modifications: StatModification[] = (() => {
+    if (player.weekendResult?.modifications && player.weekendResult.modifications.length > 0) {
+      return player.weekendResult.modifications;
+    }
+    if (!player.weekendResult) {
+      return [];
+    }
+    const mods: StatModification[] = [];
+    if (player.weekendResult.cost > 0) {
+      mods.push({ stat: 'money', diff: -player.weekendResult.cost });
+    }
+    if (player.weekendResult.happinessBonus) {
+      if (player.mentalCondition !== undefined) {
+        mods.push({ stat: 'mental', diff: player.weekendResult.happinessBonus });
+      } else {
+        mods.push({ stat: 'happiness', diff: player.weekendResult.happinessBonus });
+      }
+    }
+    return mods;
+  })();
+
   return (
     <div className="weekend-screen" style={{
       position: 'absolute', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
@@ -18,79 +63,103 @@ export function WeekendScreen({ player, turn, onStartWeek }: WeekendScreenProps)
       <h1 style={{ color: '#00e5ff', textShadow: '0 0 10px #00e5ff' }}>{t('weekendScreen.title')}</h1>
       <h2>{t('weekendScreen.summary', { turn, name: player.name })}</h2>
       
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center', margin: '20px 0', maxWidth: '800px' }}>
-          <div className="weekend-player-summary" style={{
-            padding: '20px', backgroundColor: '#2c3e50', borderRadius: '8px', 
-            width: '350px', border: '2px solid #34495e', textAlign: 'center'
-          }}>
-            <h3 style={{ borderBottom: '1px solid #555', paddingBottom: '10px', margin: '0 0 15px 0' }}>
-              {t('weekendScreen.activities')}
-            </h3>
-            
-            {player.weekendResult ? (
-              <>
-                <h4 style={{ color: '#f1c40f', margin: '0 0 10px 0' }}>{t('weekendScreen.whatYouDid')}</h4>
-                <p style={{ fontSize: '1.1em', fontStyle: 'italic', marginBottom: '10px' }}>
-                  "{t(player.weekendResult.event.key, player.weekendResult.event.params as any) as string}"
-                </p>
-                <p style={{ color: '#e74c3c', fontWeight: 'bold', margin: '5px 0' }}>
-                  {t('weekendScreen.cost')}: ${player.weekendResult.cost}
-                </p>
-                {player.weekendResult.happinessBonus && (
-                  <p style={{ color: '#2ecc71', fontWeight: 'bold', margin: '5px 0' }}>
-                    {player.mentalCondition !== undefined
-                      ? t('weekendScreen.mental', { defaultValue: 'Mental Condition:' })
-                      : t('weekendScreen.happiness')} +{player.weekendResult.happinessBonus}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p style={{ fontStyle: 'italic', color: '#aaa', minHeight: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {t('weekendScreen.nothingSpecial')}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0', width: '100%', maxWidth: '520px' }}>
+        <div className="weekend-player-summary" style={{
+          padding: '24px', backgroundColor: '#2c3e50', borderRadius: '12px', 
+          width: '100%', border: '2px solid #34495e', textAlign: 'center',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)'
+        }}>
+          <h3 style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.2)', paddingBottom: '12px', margin: '0 0 16px 0' }}>
+            {t('weekendScreen.activities')}
+          </h3>
+          
+          {player.weekendResult ? (
+            <>
+              <h4 style={{ color: '#f1c40f', margin: '0 0 12px 0' }}>{t('weekendScreen.whatYouDid')}</h4>
+              <p style={{ fontSize: '1.15em', fontStyle: 'italic', marginBottom: '18px', lineHeight: 1.4 }}>
+                "{t(player.weekendResult.event.key, player.weekendResult.event.params as any) as string}"
               </p>
-            )}
-          </div>
 
-          {(player.physicalCondition !== undefined || player.mentalCondition !== undefined || player.dependability !== undefined) && (
-            <div className="weekend-player-summary" style={{
-              padding: '20px', backgroundColor: '#1e293b', borderRadius: '8px', 
-              width: '350px', border: '2px solid #334155', textAlign: 'left'
-            }}>
-              <h3 style={{ borderBottom: '1px solid #555', paddingBottom: '10px', margin: '0 0 15px 0', textAlign: 'center' }}>
-                {t('weekendScreen.weeklyStatus', { defaultValue: 'Weekly Adjustments' })}
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.95em' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>🤝 {t('weekendScreen.depStatus', { defaultValue: 'Dependability' })}:</span>
-                  <strong style={{ color: '#38bdf8' }}>{player.dependability}</strong>
+              {modifications.length > 0 && (
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '10px',
+                  justifyContent: 'center',
+                  marginTop: '16px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.15)'
+                }}>
+                  {modifications.map((mod, idx) => {
+                    const info = getStatInfo(mod.stat);
+                    const isMoney = mod.stat === 'money';
+
+                    let text = '';
+                    if (isMoney) {
+                      text = mod.diff < 0 ? `-$${Math.abs(mod.diff)}` : (mod.diff > 0 ? `+$${mod.diff}` : `$0`);
+                    } else {
+                      const sign = mod.diff > 0 ? '+' : '';
+                      text = info.icon ? `${sign}${mod.diff} ${info.icon}` : `${sign}${mod.diff} ${info.label}`;
+                    }
+
+                    let isPositive = false;
+                    let isNegative = false;
+                    if (isMoney) {
+                      if (mod.diff < 0) isNegative = true;
+                      else if (mod.diff > 0) isPositive = true;
+                    } else if (mod.stat === 'mess') {
+                      if (mod.diff > 0) isNegative = true;
+                      else if (mod.diff < 0) isPositive = true;
+                    } else {
+                      if (mod.diff > 0) isPositive = true;
+                      else if (mod.diff < 0) isNegative = true;
+                    }
+
+                    let color = '#94a3b8';
+                    let bg = 'rgba(148, 163, 184, 0.15)';
+                    let border = '1px solid rgba(148, 163, 184, 0.3)';
+
+                    if (isPositive) {
+                      color = '#4ade80';
+                      bg = 'rgba(74, 222, 128, 0.18)';
+                      border = '1px solid rgba(74, 222, 128, 0.35)';
+                    } else if (isNegative) {
+                      color = mod.stat === 'mess' ? '#fb923c' : '#f87171';
+                      bg = mod.stat === 'mess' ? 'rgba(251, 146, 60, 0.18)' : 'rgba(248, 113, 113, 0.18)';
+                      border = mod.stat === 'mess' ? '1px solid rgba(251, 146, 60, 0.35)' : '1px solid rgba(248, 113, 113, 0.35)';
+                    }
+
+                    return (
+                      <span
+                        key={idx}
+                        title={info.label}
+                        aria-label={`${info.label}: ${text}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '6px 12px',
+                          borderRadius: '20px',
+                          fontWeight: 'bold',
+                          fontSize: '1em',
+                          color,
+                          backgroundColor: bg,
+                          border,
+                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        {text}
+                      </span>
+                    );
+                  })}
                 </div>
-                {player.physicalCondition !== undefined && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>💪 {t('weekendScreen.physStatus', { defaultValue: 'Physical Condition' })}:</span>
-                    <strong style={{ color: (player.physicalCondition < 15 ? '#f87171' : '#4ade80') }}>{player.physicalCondition} / {player.physicalConditionMax ?? 50}</strong>
-                  </div>
-                )}
-                {player.mentalCondition !== undefined && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>🧠 {t('weekendScreen.mentalStatus', { defaultValue: 'Mental Condition' })}:</span>
-                    <strong style={{ color: (player.mentalCondition < 15 ? '#f87171' : '#a78bfa') }}>{player.mentalCondition} / {player.mentalConditionMax ?? 50}</strong>
-                  </div>
-                )}
-                {player.social !== undefined && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>🥂 {t('weekendScreen.socialStatus', { defaultValue: 'Social Standing' })}:</span>
-                    <strong style={{ color: '#fbbf24' }}>{player.social}</strong>
-                  </div>
-                )}
-                {player.mess !== undefined && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>🧹 {t('weekendScreen.messStatus', { defaultValue: 'Apartment Mess' })}:</span>
-                    <strong style={{ color: (player.mess > 20 ? '#f87171' : '#94a3b8') }}>{player.mess}</strong>
-                  </div>
-                )}
-              </div>
-            </div>
+              )}
+            </>
+          ) : (
+            <p style={{ fontStyle: 'italic', color: '#aaa', minHeight: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {t('weekendScreen.nothingSpecial')}
+            </p>
           )}
+        </div>
       </div>
 
       <button 

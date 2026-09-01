@@ -111,6 +111,12 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
           "key": "events.weekend.random_15",
         },
         "happinessBonus": undefined,
+        "modifications": [
+          {
+            "diff": -6,
+            "stat": "money",
+          },
+        ],
       },
       "workActionsThisTurn": 0,
       "workMistakesThisTurn": 0,
@@ -257,6 +263,20 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
           "key": "events.weekend.random_2",
         },
         "happinessBonus": undefined,
+        "modifications": [
+          {
+            "diff": -5,
+            "stat": "money",
+          },
+          {
+            "diff": -1,
+            "stat": "relaxation",
+          },
+          {
+            "diff": -3,
+            "stat": "dependability",
+          },
+        ],
       },
       "workActionsThisTurn": 0,
       "workMistakesThisTurn": 0,

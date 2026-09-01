@@ -1,7 +1,7 @@
 /**
  * turnProcessor.ts — Orchestrates the turn-start event sequence.
  */
-import { type GameState, recalculatePlayerEffects, collectItemEffects } from './gameState';
+import { type GameState, type StatModification, recalculatePlayerEffects, collectItemEffects } from './gameState';
 import { type CampaignBundle } from './dataLoader';
 import { applyMoraleEffect } from './statEffects';
 import { messGrowth, calcMaxMental, calcMaxMess } from './statMath';
@@ -66,6 +66,16 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
     }
 
     if (state.turn > 0) {
+      const preTurnStats = {
+        dependability: p.dependability,
+        mess: p.mess ?? 0,
+        social: p.social ?? 9,
+        physicalCondition: p.physicalCondition ?? 50,
+        mentalCondition: p.mentalCondition ?? 50,
+        happiness: p.happiness,
+        relaxation: p.relaxation
+      };
+
       if (state.rules.trackMess) {
         const maxMess = calcMaxMess(p, campaign.config.statRules);
         const growth = messGrowth(p.mess || 0);
@@ -120,6 +130,47 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         econResult
       );
       p = updatedPlayer;
+
+      if (p.weekendResult) {
+        const mods: StatModification[] = [];
+        if (p.weekendResult.cost > 0) {
+          mods.push({ stat: 'money', diff: -p.weekendResult.cost });
+        }
+        if (state.rules.usePhysicalMentalConditions) {
+          const mentalDiff = (p.mentalCondition ?? 0) - preTurnStats.mentalCondition;
+          if (mentalDiff !== 0) {
+            mods.push({ stat: 'mental', diff: mentalDiff });
+          }
+          const physDiff = (p.physicalCondition ?? 0) - preTurnStats.physicalCondition;
+          if (physDiff !== 0) {
+            mods.push({ stat: 'physical', diff: physDiff });
+          }
+          const socDiff = (p.social ?? 0) - preTurnStats.social;
+          if (socDiff !== 0) {
+            mods.push({ stat: 'social', diff: socDiff });
+          }
+        } else {
+          const hapDiff = p.happiness - preTurnStats.happiness;
+          if (hapDiff !== 0) {
+            mods.push({ stat: 'happiness', diff: hapDiff });
+          }
+          const relaxDiff = p.relaxation - preTurnStats.relaxation;
+          if (relaxDiff !== 0) {
+            mods.push({ stat: 'relaxation', diff: relaxDiff });
+          }
+        }
+        const depDiff = p.dependability - preTurnStats.dependability;
+        if (depDiff !== 0) {
+          mods.push({ stat: 'dependability', diff: depDiff });
+        }
+        if (state.rules.trackMess) {
+          const messDiff = (p.mess ?? 0) - preTurnStats.mess;
+          if (messDiff !== 0) {
+            mods.push({ stat: 'mess', diff: messDiff });
+          }
+        }
+        p.weekendResult.modifications = mods;
+      }
 
       // Recalculate active effects immediately after robbery so loss of appliances affects stats
       p = recalculatePlayerEffects(p, campaign);
