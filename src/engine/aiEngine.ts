@@ -157,7 +157,7 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
         name: `Apply_${job.id}`,
         cost: 4,
         precondition: (s) => {
-          const depMet = s.dep >= job.requirements.dependability || (job.tags?.includes('auto_accept') ?? false);
+          const depMet = s.dep >= job.requirements.dependability;
           return s.nodeId === empNode && s.hours >= 4 && s.exp >= job.requirements.experience && depMet && job.requirements.degrees.every(d => s.degrees.includes(d)) && s.jobId !== job.id && !s.rejectedJobs.includes(job.id);
         },
         effect: (s) => ({ ...s, hours: s.hours - 4, jobId: job.id, rejectedJobs: [...s.rejectedJobs, job.id] }), // Mark as rejected in state just in case it plans it again
@@ -378,7 +378,7 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     let bestScore = -1;
     
     for (const job of campaign.jobs) {
-      const depMet = s.dep >= job.requirements.dependability || (job.tags?.includes('auto_accept') ?? false);
+      const depMet = s.dep >= job.requirements.dependability;
       let uniformAffordable = true;
       if (job.requirements.uniform === 'dress' && s.money < 100 && player.inventory.selectedClothes !== 'dress' && player.inventory.selectedClothes !== 'business') uniformAffordable = false;
       if (job.requirements.uniform === 'business' && s.money < 300 && player.inventory.selectedClothes !== 'business') uniformAffordable = false;
