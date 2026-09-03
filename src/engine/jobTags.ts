@@ -10,7 +10,8 @@ export type JobTag =
   | 'heavy_physical'
   | 'frontline_service'
   | 'middle_management'
-  | 'high_downtime';
+  | 'high_downtime'
+  | 'technical';
 
 export interface JobTagDefinition {
   id: JobTag;
@@ -48,6 +49,11 @@ export const JOB_TAG_REGISTRY: Record<JobTag, JobTagDefinition> = {
     id: 'high_downtime',
     nameKey: 'tag.high_downtime',
     descKey: 'tag.high_downtime_desc'
+  },
+  technical: {
+    id: 'technical',
+    nameKey: 'tag.technical',
+    descKey: 'tag.technical_desc'
   }
 };
 
@@ -153,3 +159,11 @@ export function getJobWorkMistakeSocialPenalty(job: JobDef | undefined | null): 
 export function isDepDecayHalved(job: JobDef | undefined | null): boolean {
   return hasJobTag(job, 'high_downtime');
 }
+
+/**
+ * Check if a job is technical (rewards and utilizes Skill_Tech).
+ */
+export function isTechnicalJob(job: JobDef | undefined | null): boolean {
+  return hasJobTag(job, 'technical');
+}
+

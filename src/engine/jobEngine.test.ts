@@ -864,6 +864,70 @@ describe('Job Engine', () => {
         expect(wwResult.updated.mentalCondition).toBe(49); // 50 - 1
         expect(wwResult.updated.social).toBe(10.5); // 10 + 0.5
       });
+
+      it('applies Technical tag mechanics: builds skillTech and skillTech reduces prerequisites', () => {
+        const techJob: JobDef = {
+          id: 'factory_assembly',
+          title: 'Assembly Worker',
+          locationId: 'factory',
+          baseWage: 8,
+          requirements: { experience: 30, dependability: 30, degrees: [], uniform: 'casual' },
+          tags: ['technical', 'heavy_physical'],
+          perks: []
+        };
+
+        const player = {
+          id: 'p_tech',
+          hoursRemaining: 10,
+          currentJobId: 'factory_assembly',
+          currentWage: 8,
+          degrees: [],
+          dependability: 30,
+          experience: 30,
+          skillTech: 1.0,
+          social: 10,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false, jobsRejectedThisTurn: [] },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+
+        // Working heavy physical technical job grants 0.5 Exp, so +0.125 skillTech
+        const shiftRes = workShift(player, techJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(shiftRes.success).toBe(true);
+        expect(shiftRes.updated.skillTech).toBeCloseTo(1.15, 2); // 1.0 + 0.125 ~ 1.15 rounded to 0.05
+
+        // Prerequisite check: A player with 28 Exp and 3 skillTech meets 30 Exp requirement for tech job
+        const applicant = {
+          hoursRemaining: 10,
+          experience: 28,
+          dependability: 30,
+          skillTech: 3.0,
+          degrees: [],
+          turnFlags: { jobsRejectedThisTurn: [] }
+        } as unknown as PlayerState;
+
+        vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
+        const applyRes = applyForJob(applicant, techJob, 4, {}, undefined, new Random(1), advancedRules as any);
+        expect(applyRes.success).toBe(true);
+
+        // A player with 28 Exp and 0 skillTech fails prerequisite check
+        const unqualifiedApplicant = {
+          hoursRemaining: 10,
+          experience: 28,
+          dependability: 30,
+          skillTech: 0,
+          degrees: [],
+          turnFlags: { jobsRejectedThisTurn: [] }
+        } as unknown as PlayerState;
+
+        const unqRes = applyForJob(unqualifiedApplicant, techJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
+        expect(unqRes.success).toBe(false);
+        expect(unqRes.message.params?.reasons).toContain('Not enough experience.');
+      });
     });
   });
 });

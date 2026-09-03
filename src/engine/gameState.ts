@@ -169,6 +169,7 @@ export interface PlayerState {
   innovationCount?: number;
   innovationsByLocation?: Record<string, number>;
   workMistakesThisTurn?: number;
+  skillTech?: number;
 }
 
 export interface StatModification {

@@ -34,8 +34,20 @@
     "tags": ["middle_management"]
   },
   {
+    "id": "socket_clerk",
+    "tags": ["frontline_service"]
+  },
+  {
     "id": "socket_salesperson",
     "tags": ["frontline_service", "high_downtime"]
+  },
+  {
+    "id": "socket_repairman",
+    "tags": ["technical"]
+  },
+  {
+    "id": "socket_mgr",
+    "tags": ["technical", "middle_management"]
   },
   {
     "id": "uni_janitor",
@@ -51,19 +63,35 @@
   },
   {
     "id": "factory_assembly",
-    "tags": ["heavy_physical"]
+    "tags": ["heavy_physical", "technical"]
   },
   {
     "id": "factory_secretary",
-    "tags": ["high_downtime"]
+    "tags": ["frontline_service", "high_downtime"]
   },
   {
     "id": "factory_machinist_helper",
-    "tags": ["heavy_physical"]
+    "tags": ["heavy_physical", "technical"]
+  },
+  {
+    "id": "factory_exec_secretary",
+    "tags": ["middle_management", "high_downtime"]
+  },
+  {
+    "id": "factory_machinist",
+    "tags": ["technical"]
   },
   {
     "id": "factory_dept_mgr",
-    "tags": ["middle_management"]
+    "tags": ["technical", "middle_management"]
+  },
+  {
+    "id": "factory_engineer",
+    "tags": ["technical"]
+  },
+  {
+    "id": "factory_gen_mgr",
+    "tags": ["technical", "middle_management"]
   },
   {
     "id": "bank_janitor",

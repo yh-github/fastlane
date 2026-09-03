@@ -106,8 +106,13 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px' }}>
         {jobsAtLocation.map(job => {
           const isCurrentJob = player.currentJobId === job.id;
-          const missingExp = player.experience < job.requirements.experience;
-          const missingDep = player.dependability < job.requirements.dependability;
+          const isTechnical = isAdvanced && job.tags?.includes('technical');
+          const isFrontline = job.tags?.includes('frontline_service');
+          const techSkill = isTechnical ? (player.skillTech || 0) : 0;
+          const effectiveExp = (player.experience || 0) + techSkill;
+          const effectiveDep = (player.dependability || 0) + techSkill;
+          const missingExp = effectiveExp < job.requirements.experience;
+          const missingDep = effectiveDep < job.requirements.dependability;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
           const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0;
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
@@ -124,7 +129,10 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 selectedLocMistakes,
                 player.social || 0,
                 economicIndex,
-                isSelectedFired
+                isSelectedFired,
+                isFrontline,
+                player.skillTech || 0,
+                isTechnical
               )
             : locationScore);
           
