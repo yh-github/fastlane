@@ -311,6 +311,12 @@ export function Dashboard({
               {gameState.rules.trackMess && (
                 <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
               )}
+              <StatBadge 
+                label={t('dashboard.skillTech', { defaultValue: 'Tech' })} 
+                value={`${(player.skillTech ?? 0).toFixed(1)}/10`} 
+                icon="🔧" 
+                id="stat-skill-tech" 
+              />
             </>
           );
         })()}

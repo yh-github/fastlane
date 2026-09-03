@@ -33,8 +33,14 @@ describe('statMath', () => {
     // Overqualified: player has 30 dep, 30 exp for 10/10 job -> margin (20 + 20) * 0.5 = +20 -> 65
     expect(calcAdvancedJobEmployabilityScore(30, 30, 0, 10, 10, 0, 0, 0, 0)).toBe(65);
 
-    // Degrees (+1 each), Innovations (+5 each), Social (+floor(soc/15))
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 2, 10, 10, 1, 0, 30, 0)).toBe(45 + 2 + 5 + 2); // 54
+    // Degrees (+1 each), Innovations (+5 each), Social (+floor(soc/10))
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 2, 10, 10, 1, 0, 30, 0)).toBe(45 + 2 + 5 + 3); // 55
+
+    // Frontline service doubles social bonus (30 soc -> 2 * 3 = +6)
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 30, 0, false, true)).toBe(45 + 6); // 51
+
+    // Technical job with skillTech (4 skillTech -> effective stats margin + tech bonus floor(4*1.5)=6)
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 0, false, false, 4, true)).toBe(45 + 4 + 6); // 55
 
     // Economic boom (+60 index -> +6)
     expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 60)).toBe(51);

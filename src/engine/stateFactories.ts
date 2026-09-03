@@ -127,7 +127,8 @@ export function createPlayerState(
         mistakesByLocation: {},
         depMaxBonus: 0,
         xpMaxBonus: 0,
-        innovationCount: 0
+        innovationCount: 0,
+        skillTech: 0
       };
     })() : {}),
     ...(config.gameRules?.trackMess ? { mess: 3 } : {}),

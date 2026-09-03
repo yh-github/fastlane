@@ -32,7 +32,8 @@
     "employability": "Employability",
     "education": "Education",
     "career": "Career",
-    "wealth": "Wealth"
+    "wealth": "Wealth",
+    "skillTech": "Tech"
   },
   "action": {
     "buy": "Purchased {{itemName}}",
@@ -328,7 +329,9 @@
     "middle_management": "Middle Management",
     "middle_management_desc": "High-pressure leadership role. +1 Mental cost, +0.5 Social, Look Busy disabled.",
     "high_downtime": "High Downtime",
-    "high_downtime_desc": "Low-pressure role with substantial idle time. Weekly Dependability decay is halved."
+    "high_downtime_desc": "Low-pressure role with substantial idle time. Weekly Dependability decay is halved.",
+    "technical": "Technical",
+    "technical_desc": "Requires technical aptitude. Shift work, innovation, and freelance computing build Skill Tech, which reduces requirements and boosts hiring odds for technical jobs."
   },
   "gameOver": {
     "congrats": "Congratulations!",

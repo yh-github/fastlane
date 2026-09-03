@@ -2,7 +2,7 @@ import type { PlayerState, GameState, GameEvent } from '../gameState';
 import type { CampaignBundle } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
-import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress, calcWellbeingScore } from '../statMath';
+import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress, calcWellbeingScore, roundToResolution } from '../statMath';
 import { calcLiquidAssets, applyMarketCrash, applyEconomicBoom } from '../economyEngine';
 import { applyHappinessChange } from '../statEffects';
 import { processApartmentRobbery, processDonations } from '../eventEngine';
@@ -100,6 +100,9 @@ export function processMaintenanceAndDecayPhase(
       const profit = resolveDecision(replay, `computer_profit_amount_${player.id}`, () => Math.floor(rng.next() * 81) + 20);
       player.money += profit; 
       player = applyHappinessChange(player, 3, 'computer_profit', state.rules, campaign.config.statRules);
+      if (state.rules.usePhysicalMentalConditions) {
+        player.skillTech = Math.min(10, roundToResolution((player.skillTech || 0) + 0.25, 0.05));
+      }
       player.turnEvents.push({ key: 'events.computerProfit', params: { profit } });
     } else {
       player.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Computer Profit', reason: 'No active computer synergy' } });
@@ -110,6 +113,9 @@ export function processMaintenanceAndDecayPhase(
       const profit = resolveDecision(replay, `computer_profit_amount_${player.id}`, () => Math.floor(rng.next() * 81) + 20);
       player.money += profit; 
       player = applyHappinessChange(player, 3, 'computer_profit', state.rules, campaign.config.statRules);
+      if (state.rules.usePhysicalMentalConditions) {
+        player.skillTech = Math.min(10, roundToResolution((player.skillTech || 0) + 0.25, 0.05));
+      }
       player.turnEvents.push({ key: 'events.computerProfit', params: { profit } });
     }
   }

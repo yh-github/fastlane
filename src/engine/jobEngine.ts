@@ -120,10 +120,16 @@ export function applyForJob(
   // Regular job application logic: Check hard requirements first
   const rejectionReasons: string[] = [];
 
-  if (updated.experience < job.requirements.experience) {
+  const isTechnical = isAdvanced && hasJobTag(job, 'technical');
+  const isFrontline = hasJobTag(job, 'frontline_service');
+  const techSkill = isTechnical ? (updated.skillTech || 0) : 0;
+  const effectiveExp = updated.experience + techSkill;
+  const effectiveDep = updated.dependability + techSkill;
+
+  if (effectiveExp < job.requirements.experience) {
     rejectionReasons.push(msg('job_apply_missing_experience', 'Not enough experience.'));
   }
-  if (updated.dependability < job.requirements.dependability) {
+  if (effectiveDep < job.requirements.dependability) {
     rejectionReasons.push(msg('job_apply_missing_dependability', 'Poor Work History.'));
   }
   
@@ -186,7 +192,10 @@ export function applyForJob(
       locMistakes,
       updated.social || 0,
       economicIndex,
-      isProbation
+      isProbation,
+      isFrontline,
+      updated.skillTech || 0,
+      isTechnical
     );
   } else {
     employability = calcEmployabilityScore(
@@ -309,6 +318,9 @@ export function calcWorkShiftSummary(
   const workWorkDepGain = roundToResolution(1 * workRatio, 0.5);
   const workWorkExpGain = roundToResolution(1 * expMult * workRatio, 0.5);
   const socialGainText = socialMod > 0 ? `, +${socialMod} 👥` : (socialMod < 0 ? `, ${socialMod} 👥` : '');
+  const isTech = isAdvanced && hasJobTag(job, 'technical');
+  const techGain = isTech ? roundToResolution(workWorkExpGain * 0.25, 0.05) : 0;
+  const techGainText = techGain > 0 ? `, +${techGain} 🔧` : '';
 
   const modes: WorkShiftOption[] = [
     {
@@ -319,7 +331,7 @@ export function calcWorkShiftSummary(
       rewardDep: workWorkDepGain,
       rewardExp: workWorkExpGain,
       rewardSocial: socialMod,
-      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}`,
+      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}${techGainText}`,
       color: '#2ecc71',
       isDefault: true,
       disabled: false
@@ -711,6 +723,10 @@ export function workShift(
             messages.push({ key: 'action.job.innovateGainDep', params: { amount: depGain } });
           }
         }
+
+        if (hasJobTag(job, 'technical')) {
+          updated.skillTech = Math.min(10, roundToResolution((updated.skillTech || 0) + 0.25, 0.05));
+        }
       } else {
         // Normal stat growth for other modes
         if (baseDepGain > 0 && updated.dependability < effectiveMaxDep) {
@@ -725,6 +741,13 @@ export function workShift(
       const expGain = roundToResolution(((rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? 1 * ratio : 1) * expMult, 0.5);
       if (updated.experience < effectiveMaxExp) {
         updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
+      }
+
+      if (hasJobTag(job, 'technical')) {
+        const techGain = roundToResolution(expGain * 0.25, 0.05);
+        if (techGain > 0) {
+          updated.skillTech = Math.min(10, roundToResolution((updated.skillTech || 0) + techGain, 0.05));
+        }
       }
 
       const socialMod = getJobSocialModifier(job, actionCount);
