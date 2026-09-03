@@ -107,14 +107,21 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
         {jobsAtLocation.map(job => {
           const isCurrentJob = player.currentJobId === job.id;
           const isTechnical = isAdvanced && job.tags?.includes('technical');
+          const isMiddleMgmt = isAdvanced && job.tags?.includes('middle_management');
+          const isExecMgmt = isAdvanced && job.tags?.includes('executive_management');
+          const isManagement = isMiddleMgmt || isExecMgmt;
           const isFrontline = job.tags?.includes('frontline_service');
+
           const techSkill = isTechnical ? (player.skillTech || 0) : 0;
-          const effectiveExp = (player.experience || 0) + techSkill;
-          const effectiveDep = (player.dependability || 0) + techSkill;
+          const mgmtSkill = isManagement ? (player.skillMgmt || 0) : 0;
+          const effectiveExp = (player.experience || 0) + techSkill + mgmtSkill;
+          const effectiveDep = (player.dependability || 0) + techSkill + mgmtSkill;
+          const reqMgmt = isExecMgmt ? Math.floor(job.requirements.experience / 10) : 0;
+          const missingMgmt = isExecMgmt && ((player.skillMgmt || 0) < reqMgmt);
           const missingExp = effectiveExp < job.requirements.experience;
           const missingDep = effectiveDep < job.requirements.dependability;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
-          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0;
+          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt;
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
           const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
           
@@ -132,7 +139,9 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 isSelectedFired,
                 isFrontline,
                 player.skillTech || 0,
-                isTechnical
+                isTechnical,
+                player.skillMgmt || 0,
+                isManagement
               )
             : locationScore);
           
@@ -163,13 +172,18 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                     <div style={{ fontSize: '12px', marginTop: '5px' }}>
                       <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>👌 {t('jobBoard.exp')}: {job.requirements.experience}</span> | 
                       <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>🤝 {t('jobBoard.dep')}: {job.requirements.dependability}</span>
+                      {isExecMgmt && (
+                        <span style={{ color: missingMgmt ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
+                          | 👔 {t('dashboard.skillMgmt', { defaultValue: 'Mgmt' })}: {reqMgmt}.00
+                        </span>
+                      )}
                       {job.requirements.degrees.length > 0 && (
                         <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
                           | 🎓 {t('jobBoard.degrees')}: {job.requirements.degrees.map(d => t(`education.${d}`, { defaultValue: d })).join(', ')}
                         </span>
                       )}
                     </div>
-                    {(missingExp || missingDep || missingDegrees.length > 0) && (
+                    {hasMissingReqs && (
                       <div style={{ fontSize: '11px', color: '#e74c3c', fontStyle: 'italic', marginTop: '2px' }}>
                         {t('jobBoard.missingReq')}
                       </div>

@@ -858,11 +858,12 @@ describe('Job Engine', () => {
         expect(lbResult.success).toBe(false);
         expect(lbResult.messages?.[0].key).toBe('action.job.lookBusyDisabled');
 
-        // work_work: base Mental 0 + 1 = 1 Mental cost, +0.5 Social
+        // work_work: base Mental 0 + 1 = 1 Mental cost, builds skillMgmt (+0.25)
         const wwResult = workShift(player, mgrJob, 6, advancedRules as any, undefined, 'work_work');
         expect(wwResult.success).toBe(true);
         expect(wwResult.updated.mentalCondition).toBe(49); // 50 - 1
-        expect(wwResult.updated.social).toBe(10.5); // 10 + 0.5
+        expect(wwResult.updated.social).toBe(10); // Social unaffected
+        expect(wwResult.updated.skillMgmt).toBe(0.25); // +0.25 Skill_Mgmt
       });
 
       it('applies Technical tag mechanics: builds skillTech and skillTech reduces prerequisites', () => {
@@ -964,6 +965,132 @@ describe('Job Engine', () => {
         // Player should NOT be fired!
         expect(shiftRes.success).toBe(true);
         expect(shiftRes.updated.currentJobId).toBe('factory_engineer');
+      });
+    });
+
+    describe('Management Skill (Skill_Mgmt) & Executive Management', () => {
+      it('awards +0.25 skillMgmt on middle_management and +0.50 on executive_management work_work shifts', () => {
+        const asstJob: JobDef = {
+          id: 'zmart_asst_mgr',
+          title: 'Assistant Manager',
+          locationId: 'z_mart',
+          baseWage: 7,
+          requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'dress' },
+          tags: ['middle_management'],
+          perks: []
+        };
+
+        const execJob: JobDef = {
+          id: 'zmart_mgr',
+          title: 'Manager',
+          locationId: 'z_mart',
+          baseWage: 8,
+          requirements: { experience: 30, dependability: 30, degrees: ['junior_college'], uniform: 'business' },
+          tags: ['executive_management'],
+          perks: []
+        };
+
+        const player = {
+          id: 'p1',
+          hoursRemaining: 10,
+          currentJobId: 'zmart_asst_mgr',
+          currentWage: 7,
+          degrees: ['junior_college'],
+          dependability: 30,
+          experience: 20,
+          skillMgmt: 0,
+          social: 10,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false },
+          inventory: { dressClothesWeeks: 10, businessClothesWeeks: 10, selectedClothes: 'dress' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        
+        // Middle management shift -> +0.25 skillMgmt
+        const res1 = workShift(player, asstJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(res1.success).toBe(true);
+        expect(res1.updated.skillMgmt).toBe(0.25);
+
+        // Executive management shift -> +0.50 skillMgmt
+        const execPlayer = { ...player, currentJobId: 'zmart_mgr', currentWage: 8, skillMgmt: 2.0, inventory: { selectedClothes: 'business', businessClothesWeeks: 10 } } as unknown as PlayerState;
+        const res2 = workShift(execPlayer, execJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(res2.success).toBe(true);
+        expect(res2.updated.skillMgmt).toBe(2.50);
+      });
+
+      it('awards +0.25 skillMgmt on face_time in management jobs', () => {
+        const asstJob: JobDef = {
+          id: 'zmart_asst_mgr',
+          title: 'Assistant Manager',
+          locationId: 'z_mart',
+          baseWage: 7,
+          requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'dress' },
+          tags: ['middle_management'],
+          perks: []
+        };
+
+        const player = {
+          id: 'p1',
+          hoursRemaining: 10,
+          currentJobId: 'zmart_asst_mgr',
+          currentWage: 7,
+          degrees: [],
+          dependability: 30,
+          experience: 20,
+          skillMgmt: 1.0,
+          social: 10,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false },
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        const res = workShift(player, asstJob, 6, advancedRules as any, undefined, 'face_time');
+        expect(res.success).toBe(true);
+        expect(res.updated.skillMgmt).toBe(1.25);
+      });
+
+      it('enforces hard requirement of skillMgmt >= Exp_req / 10 for executive_management jobs', () => {
+        const execJob: JobDef = {
+          id: 'factory_gen_mgr',
+          title: 'General Manager',
+          locationId: 'factory',
+          baseWage: 25,
+          requirements: { experience: 70, dependability: 70, degrees: ['business_admin', 'engineering'], uniform: 'business' },
+          tags: ['technical', 'executive_management'],
+          perks: []
+        };
+
+        // Player meets degrees, dep, and exp, but only has 5.0 skillMgmt (needs 7.0)
+        const underQualifiedPlayer = {
+          hoursRemaining: 10,
+          experience: 70,
+          dependability: 70,
+          skillMgmt: 5.0,
+          skillTech: 10.0,
+          degrees: ['business_admin', 'engineering'],
+          turnFlags: { jobsRejectedThisTurn: [] }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        const rejectRes = applyForJob(underQualifiedPlayer, execJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
+        expect(rejectRes.success).toBe(false);
+        expect(rejectRes.message.params?.reasons).toContain('Management Skill');
+
+        // Qualified player with 7.0 skillMgmt passes requirements
+        const qualifiedPlayer = {
+          ...underQualifiedPlayer,
+          skillMgmt: 7.0
+        } as unknown as PlayerState;
+
+        const qualifiedRes = applyForJob(qualifiedPlayer, execJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
+        expect(qualifiedRes.success).toBe(true);
+        expect(qualifiedRes.updated.currentJobId).toBe('factory_gen_mgr');
       });
     });
   });

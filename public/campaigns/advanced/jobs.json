@@ -11,7 +11,8 @@
   },
   {
     "id": "zmart_mgr",
-    "locationId": "discount_and_pawn"
+    "locationId": "discount_and_pawn",
+    "tags": ["executive_management"]
   },
   {
     "id": "burger_cook",
@@ -26,12 +27,20 @@
     "tags": ["middle_management"]
   },
   {
+    "id": "burger_mgr",
+    "tags": ["executive_management"]
+  },
+  {
     "id": "qt_salesperson",
     "tags": ["frontline_service", "high_downtime"]
   },
   {
     "id": "qt_asst_mgr",
     "tags": ["middle_management"]
+  },
+  {
+    "id": "qt_mgr",
+    "tags": ["executive_management"]
   },
   {
     "id": "socket_clerk",
@@ -47,7 +56,7 @@
   },
   {
     "id": "socket_mgr",
-    "tags": ["technical"]
+    "tags": ["technical", "executive_management"]
   },
   {
     "id": "uni_janitor",
@@ -91,7 +100,7 @@
   },
   {
     "id": "factory_gen_mgr",
-    "tags": ["technical"]
+    "tags": ["technical", "executive_management"]
   },
   {
     "id": "bank_janitor",
@@ -106,6 +115,10 @@
     "tags": ["middle_management"]
   },
   {
+    "id": "bank_mgr",
+    "tags": ["executive_management"]
+  },
+  {
     "id": "blacks_janitor",
     "tags": ["always_hiring", "heavy_physical"]
   },
@@ -118,11 +131,15 @@
     "tags": ["middle_management"]
   },
   {
+    "id": "blacks_mgr",
+    "tags": ["executive_management"]
+  },
+  {
     "id": "rent_groundskeeper",
     "tags": ["heavy_physical"]
   },
   {
     "id": "rent_mgr",
-    "tags": ["middle_management", "high_downtime"]
+    "tags": ["frontline_service", "high_downtime"]
   }
 ]

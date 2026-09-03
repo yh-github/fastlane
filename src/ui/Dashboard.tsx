@@ -313,9 +313,15 @@ export function Dashboard({
               )}
               <StatBadge 
                 label={t('dashboard.skillTech', { defaultValue: 'Tech' })} 
-                value={`${(player.skillTech ?? 0).toFixed(1)}/10`} 
+                value={`${(player.skillTech ?? 0).toFixed(2)}/10`} 
                 icon="🔧" 
                 id="stat-skill-tech" 
+              />
+              <StatBadge 
+                label={t('dashboard.skillMgmt', { defaultValue: 'Mgmt' })} 
+                value={`${(player.skillMgmt ?? 0).toFixed(2)}/10`} 
+                icon="👔" 
+                id="stat-skill-mgmt" 
               />
             </>
           );

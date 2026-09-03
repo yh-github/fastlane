@@ -128,7 +128,8 @@ export function createPlayerState(
         depMaxBonus: 0,
         xpMaxBonus: 0,
         innovationCount: 0,
-        skillTech: 0
+        skillTech: 0,
+        skillMgmt: 0
       };
     })() : {}),
     ...(config.gameRules?.trackMess ? { mess: 3 } : {}),

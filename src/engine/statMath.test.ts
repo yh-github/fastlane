@@ -42,6 +42,9 @@ describe('statMath', () => {
     // Technical job with skillTech (4 skillTech -> effective stats margin + tech bonus floor(4*1.5)=6)
     expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 0, false, false, 4, true)).toBe(45 + 4 + 6); // 55
 
+    // Management job with skillMgmt (4 skillMgmt -> effective stats margin + mgmt bonus floor(4*1.5)=6)
+    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 0, false, false, 0, false, 4, true)).toBe(45 + 4 + 6); // 55
+
     // Economic boom (+60 index -> +6)
     expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 60)).toBe(51);
 
