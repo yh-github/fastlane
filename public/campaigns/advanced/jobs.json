@@ -47,7 +47,7 @@
   },
   {
     "id": "socket_mgr",
-    "tags": ["technical", "middle_management"]
+    "tags": ["technical"]
   },
   {
     "id": "uni_janitor",
@@ -91,7 +91,7 @@
   },
   {
     "id": "factory_gen_mgr",
-    "tags": ["technical", "middle_management"]
+    "tags": ["technical"]
   },
   {
     "id": "bank_janitor",

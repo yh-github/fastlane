@@ -928,6 +928,43 @@ describe('Job Engine', () => {
         expect(unqRes.success).toBe(false);
         expect(unqRes.message.params?.reasons).toContain('Not enough experience.');
       });
+
+      it('prevents premature firing when skillTech fulfills dependability requirements (regression test)', () => {
+        const engineerJob: JobDef = {
+          id: 'factory_engineer',
+          title: 'Factory Engineer',
+          locationId: 'factory',
+          baseWage: 49,
+          requirements: { experience: 60, dependability: 70, degrees: ['electronics'], uniform: 'dress' },
+          tags: ['technical'],
+          perks: []
+        };
+
+        // Player has 65 dependability (5 below req 70), but 10 skillTech -> effectiveDep = 75
+        const engineerPlayer = {
+          id: 'p_eng',
+          hoursRemaining: 10,
+          currentJobId: 'factory_engineer',
+          currentWage: 49,
+          degrees: ['electronics'],
+          dependability: 65,
+          experience: 60,
+          skillTech: 10.0,
+          social: 10,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false },
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        const shiftRes = workShift(engineerPlayer, engineerJob, 6, advancedRules as any, undefined, 'work_work');
+        
+        // Player should NOT be fired!
+        expect(shiftRes.success).toBe(true);
+        expect(shiftRes.updated.currentJobId).toBe('factory_engineer');
+      });
     });
   });
 });
