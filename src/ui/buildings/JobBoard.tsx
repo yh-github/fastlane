@@ -30,6 +30,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
             const jobCount = availableJobs.filter(j => j.locationId === loc).length;
             const isFiredThisTurn = player.turnFlags?.firedLocationsThisTurn?.includes(loc);
             const locMistakes = player.mistakesByLocation?.[loc] || 0;
+            const locInnovations = player.innovationsByLocation?.[loc] || 0;
 
             return (
               <div key={loc} className="interaction-item interaction-item--clickable" style={{ margin: 0, padding: '10px 14px', border: isFiredThisTurn ? '1px solid #ff4d4d' : '1px solid #444', borderRadius: '6px', cursor: 'pointer' }} onClick={() => setSelectedLocation(loc)}>
@@ -43,9 +44,14 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '4px', color: '#bbb' }}>
                   <span>{t('jobBoard.positions', { count: jobCount })}</span>
-                  {locMistakes > 0 && (
-                    <span style={{ fontSize: '11px', color: '#ffb300' }}>⚠️ {t('jobBoard.mistakesBadge', { count: locMistakes })}</span>
-                  )}
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    {locInnovations > 0 && (
+                      <span style={{ fontSize: '11px', color: '#00e5ff' }}>💡 {t('jobBoard.innovationsBadge', { count: locInnovations, bonus: locInnovations * 5, defaultValue: `${locInnovations} Innovations (+${locInnovations * 5})` })}</span>
+                    )}
+                    {locMistakes > 0 && (
+                      <span style={{ fontSize: '11px', color: '#ffb300' }}>⚠️ {t('jobBoard.mistakesBadge', { count: locMistakes })}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -66,6 +72,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
 
   const isSelectedFired = player.turnFlags?.firedLocationsThisTurn?.includes(selectedLocation);
   const selectedLocMistakes = player.mistakesByLocation?.[selectedLocation] || 0;
+  const selectedLocInnovations = player.innovationsByLocation?.[selectedLocation] || 0;
   const locationScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, selectedLocMistakes, player.social || 0, isSelectedFired);
 
   return (
@@ -79,6 +86,11 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           {isSelectedFired && (
             <span style={{ background: 'rgba(255, 77, 77, 0.2)', color: '#ff6b6b', border: '1px solid #ff4d4d', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
               🚫 {t('jobBoard.probationBadge')}
+            </span>
+          )}
+          {selectedLocInnovations > 0 && (
+            <span style={{ color: '#00e5ff', background: 'rgba(0,229,255,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid #00e5ff' }}>
+              💡 {t('jobBoard.innovationsBadge', { count: selectedLocInnovations, bonus: selectedLocInnovations * 5, defaultValue: `${selectedLocInnovations} Innovations (+${selectedLocInnovations * 5})` })}
             </span>
           )}
           {selectedLocMistakes > 0 && (

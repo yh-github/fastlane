@@ -63,7 +63,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>Overview</h3>
           <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
-            <li><strong>Job:</strong> {currentJob ? `${currentJob.title} at ${t(`building.${currentJob.locationId}`, { defaultValue: currentJob.locationId })}` : 'Unemployed'} {currentJob ? `($${player.currentWage}/hr)` : ''}</li>
+            <li><strong>Job:</strong> {currentJob ? `${currentJob.title} at ${t(`building.${currentJob.locationId}`, { defaultValue: currentJob.locationId })}` : 'Unemployed'} {currentJob ? `($${player.currentWage}/hr)` : ''}{(player.innovationCount || 0) > 0 ? ` | 💡 ${player.innovationCount} ${player.innovationCount === 1 ? 'Innovation' : 'Innovations'}` : ''}</li>
             <li><strong>Finances:</strong> Cash: ${player.money} | Savings: ${player.bankSavings} | T-Bills: {inventory.stocks.tBills} | Stocks: {totalStocks} shares</li>
             <li><strong>Debt:</strong> Loans: ${player.loanDebt} | Rent Arrears: ${player.rentDebt}</li>
             <li><strong>Housing:</strong> {currentHousing ? t(`building.${currentHousing.id}`, { defaultValue: currentHousing.name }) : 'Homeless'} | Rent Paid Until Week {player.rentPaidUntilWeek} (Next due: Week {Math.max(turn || 1, player.rentPaidUntilWeek - 1)})</li>
@@ -80,6 +80,9 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
               <li><strong>{t('statusModal.dependabilityCap', 'Dependability Cap:')}</strong> {player.dependability} / {maxDep} (Current / Max Cap)</li>
               <li><strong>{t('statusModal.experienceCap', 'Experience Cap:')}</strong> {player.experience} / {maxExp} (Current / Max Cap)</li>
               <li><strong>{t('statusModal.nextRaiseReq', 'Dependability for Next Raise:')}</strong> {raiseThreshold !== null ? `${player.dependability} / ${raiseThreshold}` : t('statusModal.notEmployed', 'N/A (Unemployed)')}</li>
+              {(player.innovationCount || 0) > 0 && (
+                <li><strong>{t('statusModal.innovations', 'Workplace Innovations:')}</strong> 💡 {player.innovationCount}</li>
+              )}
             </ul>
           </div>
         )}

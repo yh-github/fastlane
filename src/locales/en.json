@@ -751,6 +751,7 @@
     "apply": "Apply ({{cost}}h)",
     "probationBadge": "Probation (Score Halved)",
     "mistakesBadge": "{{count}} Incidents (-{{count}})",
+    "innovationsBadge": "{{count}} Innovations (+{{bonus}})",
     "cleanRecord": "Clean Record",
     "employabilityScoreInfo": "👨‍💼 Your Employability Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
     "filterEmployabilityLog": "🔍 View Employability & Job Logs"
@@ -862,6 +863,7 @@
     "dependabilityCap": "Dependability Cap:",
     "experienceCap": "Experience Cap:",
     "nextRaiseReq": "Dependability for Next Raise:",
+    "innovations": "Workplace Innovations:",
     "notEmployed": "N/A (Unemployed)"
   },
   "gameLog": {
