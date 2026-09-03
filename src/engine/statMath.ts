@@ -252,11 +252,13 @@ export function calcAdvancedJobEmployabilityScore(
   isProbation: boolean = false,
   isFrontline: boolean = false,
   skillTech: number = 0,
-  isTechnical: boolean = false
+  isTechnical: boolean = false,
+  skillMgmt: number = 0,
+  isManagement: boolean = false
 ): number {
   const base = 45;
-  const effectiveDep = isTechnical ? dependability + skillTech : dependability;
-  const effectiveExp = isTechnical ? experience + skillTech : experience;
+  const effectiveDep = dependability + (isTechnical ? skillTech : 0) + (isManagement ? skillMgmt : 0);
+  const effectiveExp = experience + (isTechnical ? skillTech : 0) + (isManagement ? skillMgmt : 0);
   const depMargin = Math.max(0, effectiveDep - jobReqDep);
   const expMargin = Math.max(0, effectiveExp - jobReqExp);
   const marginBonus = Math.min(45, Math.floor(0.5 * (depMargin + expMargin)));
@@ -267,6 +269,7 @@ export function calcAdvancedJobEmployabilityScore(
     ? 2 * Math.floor((social || 0) / 10)
     : Math.floor((social || 0) / 10);
   const techBonus = isTechnical ? Math.floor(skillTech * 1.5) : 0;
+  const mgmtBonus = isManagement ? Math.floor(skillMgmt * 1.5) : 0;
 
   let econModifier = 0;
   if (economicIndex >= 0) {
@@ -282,7 +285,7 @@ export function calcAdvancedJobEmployabilityScore(
     }
   }
 
-  const rawScore = base + marginBonus + degreesBonus + innovBonus + socialBonus + techBonus + econModifier - mistakesAtLocation;
+  const rawScore = base + marginBonus + degreesBonus + innovBonus + socialBonus + techBonus + mgmtBonus + econModifier - mistakesAtLocation;
   const clampedScore = Math.max(1, Math.min(99, rawScore));
   return isProbation ? Math.floor(clampedScore / 2) : clampedScore;
 }

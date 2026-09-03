@@ -10,6 +10,7 @@ export type JobTag =
   | 'heavy_physical'
   | 'frontline_service'
   | 'middle_management'
+  | 'executive_management'
   | 'high_downtime'
   | 'technical';
 
@@ -44,6 +45,11 @@ export const JOB_TAG_REGISTRY: Record<JobTag, JobTagDefinition> = {
     id: 'middle_management',
     nameKey: 'tag.middle_management',
     descKey: 'tag.middle_management_desc'
+  },
+  executive_management: {
+    id: 'executive_management',
+    nameKey: 'tag.executive_management',
+    descKey: 'tag.executive_management_desc'
   },
   high_downtime: {
     id: 'high_downtime',
@@ -126,7 +132,7 @@ export function getJobExpMultiplier(job: JobDef | undefined | null): number {
 }
 
 /**
- * Get Social gain or loss during work_work for frontline_service and middle_management.
+ * Get Social gain or loss during work_work for frontline_service.
  */
 export function getJobSocialModifier(job: JobDef | undefined | null, actionCount: number): number {
   let mod = 0;
@@ -136,9 +142,6 @@ export function getJobSocialModifier(job: JobDef | undefined | null, actionCount
     } else if (actionCount >= 8) {
       mod -= 1;
     }
-  }
-  if (hasJobTag(job, 'middle_management')) {
-    mod += 0.5;
   }
   return mod;
 }
@@ -166,4 +169,19 @@ export function isDepDecayHalved(job: JobDef | undefined | null): boolean {
 export function isTechnicalJob(job: JobDef | undefined | null): boolean {
   return hasJobTag(job, 'technical');
 }
+
+/**
+ * Check if a job is managerial (middle or executive management).
+ */
+export function isManagementJob(job: JobDef | undefined | null): boolean {
+  return hasJobTag(job, 'middle_management') || hasJobTag(job, 'executive_management');
+}
+
+/**
+ * Check if a job is top-tier executive management (requires Management Skill).
+ */
+export function isExecutiveManagementJob(job: JobDef | undefined | null): boolean {
+  return hasJobTag(job, 'executive_management');
+}
+
 

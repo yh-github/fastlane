@@ -98,9 +98,11 @@ export function getAvailableActions(
         // Close enough = missing at most 1 degree, and within 20 points of exp/dep
         const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d)).length;
         const isTechnical = !!state.rules?.usePhysicalMentalConditions && job.tags?.includes('technical');
+        const isManagement = !!state.rules?.usePhysicalMentalConditions && (job.tags?.includes('middle_management') || job.tags?.includes('executive_management'));
         const techSkill = isTechnical ? (player.skillTech || 0) : 0;
-        const effectiveExp = player.experience + techSkill;
-        const effectiveDep = player.dependability + techSkill;
+        const mgmtSkill = isManagement ? (player.skillMgmt || 0) : 0;
+        const effectiveExp = player.experience + techSkill + mgmtSkill;
+        const effectiveDep = player.dependability + techSkill + mgmtSkill;
         const closeEnoughExp = effectiveExp >= (job.requirements.experience - 20);
         const closeEnoughDep = effectiveDep >= (job.requirements.dependability - 20);
         
