@@ -97,8 +97,12 @@ export function getAvailableActions(
         // Filter jobs: Show jobs player qualifies for, OR is only slightly underqualified for (1 tier higher)
         // Close enough = missing at most 1 degree, and within 20 points of exp/dep
         const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d)).length;
-        const closeEnoughExp = player.experience >= (job.requirements.experience - 20);
-        const closeEnoughDep = player.dependability >= (job.requirements.dependability - 20);
+        const isTechnical = !!state.rules?.usePhysicalMentalConditions && job.tags?.includes('technical');
+        const techSkill = isTechnical ? (player.skillTech || 0) : 0;
+        const effectiveExp = player.experience + techSkill;
+        const effectiveDep = player.dependability + techSkill;
+        const closeEnoughExp = effectiveExp >= (job.requirements.experience - 20);
+        const closeEnoughDep = effectiveDep >= (job.requirements.dependability - 20);
         
         if (missingDegrees <= 1 && closeEnoughExp && closeEnoughDep) {
           const jobLocationDef = campaign.buildings.find(b => b.id === job.locationId);

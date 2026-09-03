@@ -102,8 +102,10 @@ export function applyForJob(
     }
 
     const effectiveRaises = Math.max(0, updated.raisesAtCurrentJob - (updated.innovationCount || 0));
+    const isTechnical = isAdvanced && hasJobTag(job, 'technical');
+    const effectiveDep = updated.dependability + (isTechnical ? (updated.skillTech || 0) : 0);
     const reqDep = job.requirements.dependability + (effectiveRaises * 5);
-    if (updated.dependability >= reqDep) {
+    if (effectiveDep >= reqDep) {
       if (newWage > player.currentWage) {
         updated.currentWage = newWage;
         updated.raisesAtCurrentJob += 1;
@@ -419,9 +421,13 @@ export function workShift(
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.cannotWork' }] };
   }
   
+  const isAdvanced = !!rules?.usePhysicalMentalConditions;
+  const isTechnical = isAdvanced && hasJobTag(job, 'technical');
+  const effectiveDep = player.dependability + (isTechnical ? (player.skillTech || 0) : 0);
+  
   // Dependability firing & warning checks
   const fireBuffer = 5 + (player.innovationCount || 0);
-  if (player.dependability <= job.requirements.dependability - fireBuffer) {
+  if (effectiveDep <= job.requirements.dependability - fireBuffer) {
     let updated: PlayerState = {
       ...player,
       currentJobId: null,
@@ -475,7 +481,6 @@ export function workShift(
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.lookBusyDisabled' }] };
   }
 
-  const isAdvanced = !!rules?.usePhysicalMentalConditions;
   let physicalCost = 0;
   let mentalCost = 0;
   let wageMultiplier = 1.0;
@@ -792,7 +797,7 @@ export function workShift(
   }
 
   const warnBuffer = 3 + (player.innovationCount || 0);
-  if (player.dependability <= job.requirements.dependability - warnBuffer) {
+  if (effectiveDep <= job.requirements.dependability - warnBuffer) {
     messages.unshift({ key: 'action.job.warning' });
   }
   if (totalGarnished > 0) {
