@@ -353,6 +353,52 @@ describe('Space Capping Module', () => {
       expect(result.updatedPlayer.inventory.appliances.length).toBe(0);
       expect(result.updatedPlayer.inventory.pawnedItems?.length).toBe(1);
     });
+
+    it('confirms pawned appliances do not provide space usage, synergies, lifestyle, or food storage', () => {
+      // Player with Fridge and Stove
+      player.inventory.appliances = [
+        { id: 'refrigerator', purchasePrice: 650, purchaseSource: 'z_mart' },
+        { id: 'stove', purchasePrice: 490, purchaseSource: 'z_mart' }
+      ];
+      player.inventory.freshFoodUnits = 3;
+
+      // Space is 80 (40 fridge + 40 stove)
+      expect(calcUsedSpace(player, mockCampaign, false)).toBe(80);
+
+      const context = {
+        state: {
+          players: [player],
+          pawnShopItemsForSale: [],
+          economicIndex: 0,
+          turn: 1
+        } as any,
+        rules: mockCampaign.config.gameRules!,
+        campaign: mockCampaign
+      };
+
+      // Pawn the refrigerator
+      const pawnResult = gameReducer(player, {
+        type: 'pawn_item',
+        item: player.inventory.appliances[0],
+        value: 200
+      }, context as any);
+
+      const updated = pawnResult.updatedPlayer;
+
+      // 1. Used space drops by 40 (only Stove remains)
+      expect(calcUsedSpace(updated, mockCampaign, false)).toBe(40);
+
+      // 2. Appliances array only has Stove
+      expect(updated.inventory.appliances.length).toBe(1);
+      expect(updated.inventory.appliances[0].id).toBe('stove');
+
+      // 3. Refrigerator is in pawnedItems
+      expect(updated.inventory.pawnedItems?.length).toBe(1);
+      expect(updated.inventory.pawnedItems?.[0].itemId).toBe('refrigerator');
+
+      // 4. Synergies and food storage effects do not include the pawned fridge
+      expect(updated.activeEffects['set_food_storage']).toBeUndefined();
+    });
   });
 
   describe('Penthouse Suite Tier', () => {

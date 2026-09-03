@@ -50,6 +50,41 @@ describe('BuildingInteractions', () => {
     expect(screen.getByText(/Monolith Burgers/i)).toBeInTheDocument();
   });
 
+  it('renders JobBoard with location innovation badge when player has innovations at that location', () => {
+    const mockPlayer = {
+      name: 'Tester',
+      dependability: 10,
+      experience: 10,
+      degrees: [],
+      inventory: {},
+      innovationsByLocation: { burger_palace: 2 }
+    } as unknown as PlayerState;
+
+    const mockCampaign = {
+      jobs: [
+        { id: 'burger_cook', title: 'Cook', locationId: 'burger_palace', baseWage: 5, requirements: { experience: 0, dependability: 0, degrees: [] } }
+      ],
+      buildings: [
+        { id: 'burger_palace', name: 'Monolith Burgers' }
+      ],
+      items: [],
+      config: {}
+    } as unknown as CampaignBundle;
+
+    render(
+      <JobBoard
+        player={mockPlayer}
+        onAction={vi.fn()}
+        availableJobs={mockCampaign.jobs}
+        buildings={mockCampaign.buildings}
+        economicIndex={0}
+        campaign={mockCampaign}
+      />
+    );
+
+    expect(screen.getByText(/2 Innovations/i)).toBeInTheDocument();
+  });
+
   it('sorts jobs by baseWage ascending in JobBoard (Janitor before Manager)', () => {
     const mockPlayer = {
       name: 'Tester',

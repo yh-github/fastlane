@@ -107,4 +107,45 @@ describe('InventoryModal', () => {
     fireEvent.change(select, { target: { value: 'dress' } });
     expect(onAction).toHaveBeenCalledWith({ type: 'change_clothes', clothes: 'dress' });
   });
+
+  it('renders innovations in Overview and Formula Attributes sections when player has innovations', () => {
+    const campaign = createMockCampaign();
+    const player = createTestPlayer(
+      {
+        currentJobId: 'burger_cook',
+        currentWage: 6,
+        innovationCount: 3,
+        inventory: {
+          freshFoodUnits: 0,
+          fastFoodItems: [],
+          casualClothesWeeks: 4,
+          dressClothesWeeks: 0,
+          businessClothesWeeks: 0,
+          selectedClothes: 'casual',
+          appliances: [],
+          books: [],
+          tickets: { baseball: 0, theatre: 0, concert: 0 },
+          lotteryTickets: 0,
+          stocks: { tBills: 0, holdings: {} },
+          pawnedItems: [],
+        },
+      },
+      campaign
+    );
+
+    render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        onAction={vi.fn()}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    expect(screen.getByText(/3 Innovations/i)).toBeInTheDocument();
+    expect(screen.getByText(/Workplace Innovations:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/💡 3/i).length).toBeGreaterThan(0);
+  });
 });

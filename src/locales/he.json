@@ -350,6 +350,7 @@
     "apply": "הגש מועמדות ({{cost}} שעות)",
     "probationBadge": "תקופת מבחן (הניקוד הופחת בחצי)",
     "mistakesBadge": "{{count}} תקריות (-{{count}})",
+    "innovationsBadge": "{{count}} חידושים (+{{bonus}})",
     "cleanRecord": "עבר נקי",
     "employabilityScoreInfo": "👨‍💼 מדד התעסוקתיות שלך הוא {{score}}/100. (בעת הגשת מועמדות, נדרשת הטלת קוביה של 1-100 הקטנה או שווה ל-{{score}} כדי שתוצע משרה).",
     "filterEmployabilityLog": "🔍 הצג יומן תעסוקתיות ועבודות"
@@ -584,6 +585,7 @@
     "dependabilityCap": "תקרת אמינות:",
     "experienceCap": "תקרת ניסיון:",
     "nextRaiseReq": "אמינות נדרשת להעלאה הבאה:",
+    "innovations": "חידושים במקום העבודה:",
     "notEmployed": "לא מועסק"
   },
   "gameLog": {

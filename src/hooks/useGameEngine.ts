@@ -393,7 +393,7 @@ export function useGameEngine(
             if (prevState.rules.enableAnimations) {
               triggerAnim('text', '💥 MISTAKE!', { customClass: 'anim-mistake' });
             }
-          } else if (log.key?.startsWith('action.job.innovateCap') || log.key === 'action.job.innovateGainBoth') {
+          } else if (log.key?.startsWith('action.job.innovateCap')) {
             if (prevState.rules.enableAnimations) {
               triggerAnim('text', '💡 INNOVATION!', { customClass: 'anim-breakthrough' });
             }
