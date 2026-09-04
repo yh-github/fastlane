@@ -45,7 +45,21 @@ export function handleRelaxAction(
       const physGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
         ? Math.max(0.5, roundToResolution(rawPhysGain * ratio, conditionRes))
         : rawPhysGain;
-      nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
+
+      const globalMaxPhys = statRules?.initialPhysicalMax ?? 50;
+      const curPhys = nextPlayer.physicalCondition ?? maxPhysical;
+      let maxPhysGain = 0;
+
+      if (curPhys >= maxPhysical && maxPhysical < globalMaxPhys) {
+        // Relaxing at full health: rehabilitate Max_Physical by half of normal physGain
+        maxPhysGain = roundToResolution(physGain * 0.5, conditionRes);
+        if (maxPhysGain > 0) {
+          nextPlayer.physicalConditionMax = Math.min(globalMaxPhys, roundToResolution(maxPhysical + maxPhysGain, conditionRes));
+          // Current physicalCondition remains at old value (so player is now below max, needing a second relax to fill)
+        }
+      } else {
+        nextPlayer.physicalCondition = Math.min(maxPhysical, curPhys + physGain);
+      }
 
       const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
       const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
@@ -67,7 +81,8 @@ export function handleRelaxAction(
       }
 
       nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
-      statsStr = ` (+${physGain} Physical, +${mentalGain} Mental)`;
+      const physDesc = maxPhysGain > 0 ? `+${maxPhysGain} Max Physical` : `+${physGain} Physical`;
+      statsStr = ` (${physDesc}, +${mentalGain} Mental)`;
       actionLog = { key: 'action.relax', params: { stats: statsStr } };
     } else {
       // Unfed Relaxing
