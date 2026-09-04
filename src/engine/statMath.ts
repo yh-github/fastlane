@@ -15,6 +15,7 @@ import {
   collectItemEffects
 } from './gameState';
 import type { CampaignBundle } from './dataLoader';
+import type { GameRules } from './rules';
 
 // ─── Stat Definitions & Dependency Graph ───────────────────────
 
@@ -570,5 +571,128 @@ export function roundToResolution(value: number, resolution: number = 0.5): numb
   if (resolution <= 0) return value;
   const factor = 1 / resolution;
   return Math.round(value * factor) / factor;
+}
+
+export interface SocializeParameters {
+  diceCount: number;
+  minRolledGuests: number;
+  maxRolledGuests: number;
+  freeSpace: number;
+  maxGuestsBySpace: number;
+  effectiveMinGuests: number;
+  effectiveMaxGuests: number;
+  isCappedBySpace: boolean;
+  isNoSpace: boolean;
+  timeCost: number;
+  hasTime: boolean;
+  isTooExhausted: boolean;
+  isDisabled: boolean;
+  disabledReasonKey?: 'notEnoughTime' | 'noSpace' | 'messTooHigh' | 'tooExhausted';
+  cashRate: number;
+  appBonus: number;
+  minCashNeeded: number;
+  maxCashNeeded: number;
+  isHalfRewardExpected: boolean;
+  minReward: number;
+  maxReward: number;
+}
+
+/**
+ * Centralized calculation of socialize action parameters, cost, constraints, and rewards.
+ * Shared across game engine and UI to ensure calculations stay DRY and consistent.
+ */
+export function calcSocializeParameters(
+  player: PlayerState,
+  campaign?: CampaignBundle,
+  rules?: GameRules
+): SocializeParameters {
+  const isPenthouse = player.currentHousingId === 'penthouse';
+  const isSecurity = player.currentHousingId === 'security';
+
+  const diceCount = isPenthouse ? 3 : isSecurity ? 2 : 1;
+  const minRolledGuests = diceCount * 1;
+  const maxRolledGuests = diceCount * 3;
+
+  let freeSpace = 0;
+  let maxGuestsBySpace = Infinity;
+  let isNoSpace = false;
+  let disabledReasonKey: 'notEnoughTime' | 'noSpace' | 'messTooHigh' | 'tooExhausted' | undefined;
+
+  if (rules?.spaceCapping) {
+    const usedSpace = calcUsedSpace(player, campaign, true);
+    const spaceCap = calcHousingSpaceCap(player, campaign);
+    freeSpace = Math.max(0, spaceCap - usedSpace);
+    maxGuestsBySpace = Math.floor(freeSpace / 10);
+    if (freeSpace < 10) {
+      isNoSpace = true;
+      disabledReasonKey = 'noSpace';
+    }
+  } else {
+    if ((player.mess || 0) > 25) {
+      isNoSpace = true;
+      disabledReasonKey = 'messTooHigh';
+    }
+  }
+
+  const effectiveMaxGuests = Math.max(0, Math.min(maxRolledGuests, maxGuestsBySpace));
+  const effectiveMinGuests = Math.max(0, Math.min(minRolledGuests, effectiveMaxGuests));
+  const isCappedBySpace = !!rules?.spaceCapping && maxGuestsBySpace < maxRolledGuests;
+
+  const timeCost = campaign?.config?.timeRules?.socializeCost ?? 6;
+  const hasTime = player.hoursRemaining >= timeCost;
+  if (!hasTime && !disabledReasonKey) {
+    disabledReasonKey = 'notEnoughTime';
+  }
+
+  const currentPhys = player.physicalCondition ?? 50;
+  const isTooExhausted = !!rules?.usePhysicalMentalConditions && (currentPhys - 1 < 1.0);
+  if (isTooExhausted && !disabledReasonKey) {
+    disabledReasonKey = 'tooExhausted';
+  }
+
+  const isDisabled = isNoSpace || !hasTime || isTooExhausted;
+
+  let appBonus = 0;
+  if (rules?.usePhysicalMentalConditions) {
+    const socializeEffects = collectItemEffects(player, campaign, 'on_socialize');
+    appBonus += socializeEffects.get('social') || 0;
+    appBonus += player.activeEffects?.['vcr_social_bonus'] || 0;
+  }
+
+  const cashRate = campaign?.config?.economyRules?.socializeLowCostCashCost ?? 25;
+  const minCashNeeded = effectiveMinGuests * cashRate;
+  const maxCashNeeded = effectiveMaxGuests * cashRate;
+
+  const currentMental = player.mentalCondition ?? 50;
+  const hasSufficientCash = player.money >= minCashNeeded;
+  const hasSufficientMental = currentMental >= 5;
+  const isHalfRewardExpected = !hasSufficientCash || !hasSufficientMental;
+
+  const minReward = (isHalfRewardExpected ? Math.floor(effectiveMinGuests / 2) : effectiveMinGuests) + appBonus;
+  const maxReward = (isHalfRewardExpected ? Math.floor(effectiveMaxGuests / 2) : effectiveMaxGuests) + appBonus;
+
+  return {
+    diceCount,
+    minRolledGuests,
+    maxRolledGuests,
+    freeSpace,
+    maxGuestsBySpace,
+    effectiveMinGuests,
+    effectiveMaxGuests,
+    isCappedBySpace,
+    isNoSpace,
+    timeCost,
+    hasTime,
+    isTooExhausted,
+    isDisabled,
+    disabledReasonKey,
+    cashRate,
+    appBonus,
+    minCashNeeded,
+    maxCashNeeded,
+    isHalfRewardExpected,
+    minReward,
+    maxReward
+  };
 }
 

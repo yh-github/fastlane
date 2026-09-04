@@ -12,7 +12,8 @@ import {
   calcWealthProgress,
   calcEducationProgress,
   STAT_REGISTRY,
-  getStatFilterCategories
+  getStatFilterCategories,
+  calcSocializeParameters
 } from './statMath';
 
 describe('statMath', () => {
@@ -142,5 +143,104 @@ describe('statMath', () => {
     const wealthCategories = getStatFilterCategories('wealth');
     expect(wealthCategories.has('money')).toBe(true);
     expect(wealthCategories.has('wealth')).toBe(true);
+  });
+
+  describe('calcSocializeParameters', () => {
+    const baseCampaign: any = {
+      housing: [
+        { id: 'low_cost', name: 'Low-Cost Housing', spaceCap: 100 },
+        { id: 'security', name: 'Security Apartments', spaceCap: 250 },
+        { id: 'penthouse', name: 'Penthouse Suite', spaceCap: 500 }
+      ],
+      items: [],
+      config: {
+        timeRules: { socializeCost: 6 },
+        economyRules: { socializeLowCostCashCost: 25 }
+      }
+    };
+
+    it('scales dice by housing tier: 1d3 low-cost, 2d3 security, 3d3 penthouse', () => {
+      const pLow: any = { currentHousingId: 'low_cost', hoursRemaining: 10, physicalCondition: 20, money: 200, inventory: {} };
+      const pSec: any = { currentHousingId: 'security', hoursRemaining: 10, physicalCondition: 20, money: 200, inventory: {} };
+      const pPent: any = { currentHousingId: 'penthouse', hoursRemaining: 10, physicalCondition: 20, money: 200, inventory: {} };
+
+      const resLow = calcSocializeParameters(pLow, baseCampaign, { spaceCapping: true } as any);
+      expect(resLow.diceCount).toBe(1);
+      expect(resLow.minRolledGuests).toBe(1);
+      expect(resLow.maxRolledGuests).toBe(3);
+
+      const resSec = calcSocializeParameters(pSec, baseCampaign, { spaceCapping: true } as any);
+      expect(resSec.diceCount).toBe(2);
+      expect(resSec.minRolledGuests).toBe(2);
+      expect(resSec.maxRolledGuests).toBe(6);
+
+      const resPent = calcSocializeParameters(pPent, baseCampaign, { spaceCapping: true } as any);
+      expect(resPent.diceCount).toBe(3);
+      expect(resPent.minRolledGuests).toBe(3);
+      expect(resPent.maxRolledGuests).toBe(9);
+    });
+
+    it('dynamically clamps max guests when free space is restricted', () => {
+      // Penthouse (500 cap) with 450 mess -> 50 free space -> max 5 guests
+      const player: any = {
+        currentHousingId: 'penthouse',
+        hoursRemaining: 10,
+        physicalCondition: 20,
+        money: 500,
+        mess: 450,
+        inventory: {}
+      };
+
+      const res = calcSocializeParameters(player, baseCampaign, { spaceCapping: true } as any);
+      expect(res.freeSpace).toBe(50);
+      expect(res.maxGuestsBySpace).toBe(5);
+      expect(res.effectiveMinGuests).toBe(3);
+      expect(res.effectiveMaxGuests).toBe(5); // Clamped from 9 down to 5
+      expect(res.isCappedBySpace).toBe(true);
+      expect(res.isDisabled).toBe(false);
+    });
+
+    it('disables socialize when free space is below 10 under spaceCapping', () => {
+      const player: any = {
+        currentHousingId: 'low_cost',
+        hoursRemaining: 10,
+        physicalCondition: 20,
+        money: 100,
+        mess: 95, // 100 - 95 = 5 free space < 10
+        inventory: {}
+      };
+
+      const res = calcSocializeParameters(player, baseCampaign, { spaceCapping: true } as any);
+      expect(res.freeSpace).toBe(5);
+      expect(res.isNoSpace).toBe(true);
+      expect(res.isDisabled).toBe(true);
+      expect(res.disabledReasonKey).toBe('noSpace');
+    });
+
+    it('detects exhaustion and insufficient time', () => {
+      const exhaustedPlayer: any = {
+        currentHousingId: 'low_cost',
+        hoursRemaining: 10,
+        physicalCondition: 1.5, // 1.5 - 1 = 0.5 < 1.0 -> exhausted
+        money: 100,
+        inventory: {}
+      };
+      const resExhausted = calcSocializeParameters(exhaustedPlayer, baseCampaign, { usePhysicalMentalConditions: true } as any);
+      expect(resExhausted.isTooExhausted).toBe(true);
+      expect(resExhausted.isDisabled).toBe(true);
+      expect(resExhausted.disabledReasonKey).toBe('tooExhausted');
+
+      const lowHourPlayer: any = {
+        currentHousingId: 'low_cost',
+        hoursRemaining: 5, // needs 6
+        physicalCondition: 20,
+        money: 100,
+        inventory: {}
+      };
+      const resTime = calcSocializeParameters(lowHourPlayer, baseCampaign, {} as any);
+      expect(resTime.hasTime).toBe(false);
+      expect(resTime.isDisabled).toBe(true);
+      expect(resTime.disabledReasonKey).toBe('notEnoughTime');
+    });
   });
 });

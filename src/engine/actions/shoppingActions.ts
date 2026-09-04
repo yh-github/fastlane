@@ -18,8 +18,6 @@ export function handleBuyAction(
   const inventoryEntry = buildingDef?.inventory?.find(i => i.itemId === action.itemId);
   const baseItemDef = context.campaign.items.find(i => i.id === action.itemId);
 
-  console.log(`[DEBUG-GAMEREDUCER-BUY] itemId=${action.itemId}, currentBuilding=${currentBuildingId}, itemDefFound=${!!baseItemDef}`);
-
   if (baseItemDef) {
     const timeCost = baseItemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
     if (timeCost > 0 && nextPlayer.hoursRemaining < timeCost) {
@@ -38,7 +36,6 @@ export function handleBuyAction(
     const itemWithPriceAndStore = { ...baseItemDef, basePrice: adjustedPrice, store: currentBuildingId };
 
     const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules, context.campaign);
-    console.log(`[DEBUG-GAMEREDUCER-BUY] buyItem success=${result.success}, newMoney=${result.updated.money}`);
     if (result.success) {
       nextPlayer = spendHours(result.updated, timeCost);
       if (baseItemDef.id === 'newspaper') {

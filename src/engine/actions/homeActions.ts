@@ -4,7 +4,7 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import { requireConfig } from '../rules';
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
-import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental, calcUsedSpace, calcHousingSpaceCap } from '../statMath';
+import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental, calcSocializeParameters } from '../statMath';
 
 export function handleRelaxAction(
   player: PlayerState,
@@ -229,30 +229,26 @@ export function handleSocializeAction(
   let nextPlayer = structuredClone(player);
   let actionLog;
 
-  const timeCost = context.campaign.config.timeRules?.socializeCost ?? 6;
-  if (nextPlayer.hoursRemaining < timeCost) {
+  const params = calcSocializeParameters(nextPlayer, context.campaign, context.rules);
+
+  if (!params.hasTime) {
     actionLog = { key: 'action.error.notEnoughTimeSocialize' };
     return { nextPlayer, actionLog };
   }
-  if (context.rules.spaceCapping) {
-    const usedSpace = calcUsedSpace(nextPlayer, context.campaign, true);
-    const spaceCap = calcHousingSpaceCap(nextPlayer, context.campaign);
-    if (spaceCap - usedSpace < 10) {
+  if (params.isNoSpace) {
+    if (context.rules.spaceCapping) {
       actionLog = { key: 'action.error.noSpaceSocialize' };
-      return { nextPlayer, actionLog };
+    } else {
+      actionLog = { key: 'action.error.messTooHighSocialize' };
     }
-  } else if ((nextPlayer.mess || 0) > 25) {
-    actionLog = { key: 'action.error.messTooHighSocialize' };
     return { nextPlayer, actionLog };
   }
-  if (context.rules.usePhysicalMentalConditions) {
-    const currentPhys = nextPlayer.physicalCondition ?? 50;
-    if (currentPhys - 1 < 1.0) {
-      actionLog = { key: 'action.error.tooExhausted' };
-      return { nextPlayer, actionLog };
-    }
+  if (params.isTooExhausted) {
+    actionLog = { key: 'action.error.tooExhausted' };
+    return { nextPlayer, actionLog };
   }
-  nextPlayer = spendHours(nextPlayer, timeCost);
+
+  nextPlayer = spendHours(nextPlayer, params.timeCost);
 
   const minPhysical = nextPlayer.minPhysicalCondition ?? 1;
   const currentPhys = nextPlayer.physicalCondition ?? 50;
@@ -260,33 +256,27 @@ export function handleSocializeAction(
 
   const statRules = context.campaign.config.statRules;
 
-  let appBonus = 0;
-  if (context.rules.usePhysicalMentalConditions) {
-    const socializeEffects = collectItemEffects(nextPlayer, context.campaign, 'on_socialize');
-    appBonus += socializeEffects.get('social') || 0;
-    appBonus += nextPlayer.activeEffects?.['vcr_social_bonus'] || 0;
+  // Roll guests based on housing tier dice (1d3 low-cost, 2d3 security, 3d3 penthouse)
+  let rawRoll = 0;
+  for (let i = 0; i < params.diceCount; i++) {
+    rawRoll += context.rng.nextInt(1, 3);
   }
 
-  const X = context.rng.nextInt(1, 3);
+  // Dynamic space capping: clamp guests to available room (10 free space per guest)
+  const X = context.rules.spaceCapping
+    ? Math.max(1, Math.min(rawRoll, params.maxGuestsBySpace))
+    : rawRoll;
+
   const growth = messGrowth(nextPlayer.mess || 0);
   const messGen = X * growth;
   const maxMess = calcMaxMess(nextPlayer, statRules, context.campaign);
   nextPlayer.mess = Math.min(maxMess, (nextPlayer.mess || 0) + messGen);
 
   const mentalCost = X * growth;
-  const finalMentalCost = mentalCost - appBonus;
+  const finalMentalCost = mentalCost - params.appBonus;
 
-  let cashRate = context.campaign.config.economyRules?.socializeLowCostCashCost ?? 25;
-  let socialMultiplier = 1;
-  if (nextPlayer.currentHousingId === 'penthouse') {
-    cashRate = context.campaign.config.economyRules?.socializePenthouseCashCost ?? 75;
-    socialMultiplier = 3;
-  } else if (nextPlayer.currentHousingId === 'security') {
-    cashRate = context.campaign.config.economyRules?.socializeSecurityCashCost ?? 50;
-    socialMultiplier = 2;
-  }
-  const cashCost = X * cashRate;
-  const fullReward = socialMultiplier * X;
+  const cashCost = X * params.cashRate;
+  const fullReward = X; // 1:1 base social reward per guest
 
   const currentMental = nextPlayer.mentalCondition ?? 25;
   const minMental = statRules?.minMentalCondition ?? 5;
@@ -294,7 +284,7 @@ export function handleSocializeAction(
   const hasFullCash = nextPlayer.money >= cashCost;
   const hasFullMental = finalMentalCost <= 0 || currentMental >= finalMentalCost;
 
-  let actualReward = fullReward + appBonus;
+  let actualReward = fullReward + params.appBonus;
   if (hasFullCash && hasFullMental) {
     nextPlayer.money -= cashCost;
     if (finalMentalCost >= 0) {
@@ -309,7 +299,7 @@ export function handleSocializeAction(
     } else {
       nextPlayer.mentalCondition = Math.min(maxMental, currentMental - finalMentalCost);
     }
-    actualReward = Math.floor(fullReward / 2) + appBonus;
+    actualReward = Math.floor(fullReward / 2) + params.appBonus;
   }
 
   const maxSocial = statRules?.maxSocial ?? 99;

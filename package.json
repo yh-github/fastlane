@@ -11,6 +11,8 @@
     "test": "npm run test:types && vite build && vitest run && npm run test:e2e",
     "test:types": "tsc -b --noEmit",
     "test:unit": "vitest run",
+    "test:fast": "vitest run --exclude='**/*.test.tsx' --exclude='tests/stateInvariantsFuzz.test.ts'",
+    "test:changed": "vitest run --changed",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "play:cli": "vite-node src/cli/index.ts"
