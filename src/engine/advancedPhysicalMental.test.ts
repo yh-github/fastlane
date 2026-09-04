@@ -249,6 +249,28 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(nextPlayer.mentalCondition).toBe(37);
     });
 
+    it('rehabilitates physicalConditionMax by half of physGain when relaxing with food at full physical', () => {
+      player.mentalCondition = 50;
+      player.mentalConditionMax = 50;
+      player.physicalCondition = 48;
+      player.physicalConditionMax = 48; // Damaged max (below initial 50)
+      player.inventory.freshFoodUnits = 2;
+      player.mess = 0;
+
+      // Normal physGain = 1 + floor(50 / 25) = 3
+      // When curPhys == maxPhysical: maxPhysGain = roundToResolution(3 * 0.5, 0.5) = 1.5
+      // New physicalConditionMax: 48 + 1.5 = 49.5
+      // Current physicalCondition remains 48
+      const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'relax' }, context);
+      expect(nextPlayer.physicalConditionMax).toBe(49.5);
+      expect(nextPlayer.physicalCondition).toBe(48);
+
+      // Relaxing again at 48 / 49.5 heals current physical to 49.5
+      const { updatedPlayer: secondPlayer } = gameReducer(nextPlayer, { type: 'relax' }, context);
+      expect(secondPlayer.physicalConditionMax).toBe(49.5);
+      expect(secondPlayer.physicalCondition).toBe(49.5);
+    });
+
     it('applies unfed penalty (+1/+1, -1 Max Phys, -1 Max Mental) when relaxing without food', () => {
       player.physicalCondition = 20;
       player.physicalConditionMax = 50;

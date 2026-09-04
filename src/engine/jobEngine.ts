@@ -17,6 +17,8 @@ import {
   getJobExpMultiplier,
   getJobSocialModifier,
   getJobWorkMistakeSocialPenalty,
+  getLookBusyPhysicalCostModifier,
+  getJobPhysicalFatigueThreshold,
   isManagementJob,
   isExecutiveManagementJob
 } from './jobTags';
@@ -44,9 +46,9 @@ export function applyForJob(
   statRules?: StatRules | Partial<StatRules>,
   economicIndex: number = 0
 ): JobApplicationResult {
-  const msg = (key: string, defaultMsg: string, vars: Record<string, string> = {}) => {
+  const msg = (key: string, defaultMsg: string, vars: Record<string, string | number> = {}) => {
     let m = messages[key] || defaultMsg;
-    for (const [k, v] of Object.entries(vars)) m = m.replaceAll(`{${k}}`, v as string);
+    for (const [k, v] of Object.entries(vars)) m = m.replaceAll(`{${k}}`, String(v));
     return m;
   };
 
@@ -316,8 +318,9 @@ export function calcWorkShiftSummary(
   }
 
   const curPhys = player.physicalCondition ?? 50;
-  const fatigueMental = curPhys < 10 ? 1.0 : 0.0;
-  const halfFatigueMental = curPhys < 10 ? 0.5 : 0.0;
+  const fatigueThreshold = getJobPhysicalFatigueThreshold(job);
+  const fatigueMental = curPhys < fatigueThreshold ? 1.0 : 0.0;
+  const halfFatigueMental = curPhys < fatigueThreshold ? 0.5 : 0.0;
   const hasDegrees = !!(player.degrees && player.degrees.length > 0);
   const faceTimeDep = 1 + Math.ceil((player.social || 1) / 25) / 2;
 
@@ -326,6 +329,8 @@ export function calcWorkShiftSummary(
   const conditionRes = rules?.conditionResolution ?? 0.5;
 
   const physTagMod = getJobPhysicalCostModifier(job);
+  const lbPhysTagMod = getLookBusyPhysicalCostModifier(job);
+  const physRes = (lbPhysTagMod % 0.5 !== 0 || physTagMod % 0.5 !== 0) ? Math.min(conditionRes, 0.25) : conditionRes;
   const mentalTagMod = getJobMentalCostModifier(job);
   const expMult = getJobExpMultiplier(job);
   const socialMod = getJobSocialModifier(job, actionCount - 1);
@@ -347,23 +352,27 @@ export function calcWorkShiftSummary(
   const mgmtGain = isMiddleMgmt ? roundToResolution(workWorkExpGain * 0.25, 0.05) : (isExecMgmt ? roundToResolution(workWorkExpGain * 0.50, 0.05) : 0);
   const mgmtGainText = mgmtGain > 0 ? `, +${mgmtGain.toFixed(2)} 👔` : '';
 
+  const isOvertimeShift = actionCount >= overtimeThreshold;
+  const isHeavyGrindShift = actionCount >= grindThreshold && hasJobTag(job, 'heavy_physical');
+  const maxPhysDropText = isAdvanced && (isOvertimeShift || isHeavyGrindShift) ? ', -0.5 Max 💪' : '';
+
   const modes: WorkShiftOption[] = [
     {
       id: 'work_work',
-      physCost: isAdvanced ? Math.max(0, roundToResolution((basePhys * 1.0 + physTagMod) * workRatio, conditionRes)) : 0,
+      physCost: isAdvanced ? Math.max(0, roundToResolution((basePhys * 1.0 + physTagMod) * workRatio, physRes)) : 0,
       mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 1.0 + mentalTagMod + fatigueMental) * workRatio, conditionRes)) : 0,
       wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
       rewardDep: workWorkDepGain,
       rewardExp: workWorkExpGain,
       rewardSocial: socialMod,
-      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}${techGainText}${mgmtGainText}`,
+      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}${techGainText}${mgmtGainText}${maxPhysDropText}`,
       color: '#2ecc71',
       isDefault: true,
       disabled: false
     },
     {
       id: 'look_busy',
-      physCost: isAdvanced ? Math.max(0, roundToResolution(basePhys * 0.5 * workRatio, conditionRes)) : 0,
+      physCost: isAdvanced ? Math.max(0, roundToResolution((basePhys * 0.5 + lbPhysTagMod) * workRatio, physRes)) : 0,
       mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 0.5 + halfFatigueMental) * workRatio, conditionRes)) : 0,
       wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
       rewardDep: lbDepPenalty > 0 ? -lbDepPenalty : 0,
@@ -530,7 +539,7 @@ export function workShift(
     }
 
     if (mode === 'look_busy') {
-      physicalCost = basePhys * 0.5;
+      physicalCost = basePhys * 0.5 + getLookBusyPhysicalCostModifier(job);
       mentalCost = baseMental * 0.5;
       wageMultiplier = 1.0;
       baseDepGain = 0;
@@ -552,9 +561,10 @@ export function workShift(
       baseDepGain = 1;
     }
 
-    // Fatigue: when Physical < 10, +1 Mental cost (or 0.5 if halved)
+    // Fatigue: when Physical is below threshold, +1 Mental cost (or 0.5 if halved)
     const curPhys = player.physicalCondition ?? 50;
-    if (curPhys < 10) {
+    const fatigueThreshold = getJobPhysicalFatigueThreshold(job);
+    if (curPhys < fatigueThreshold) {
       const fatigueCost = (mode === 'look_busy' || mode === 'face_time') ? 0.5 : 1.0;
       mentalCost += fatigueCost;
     }
@@ -564,7 +574,8 @@ export function workShift(
 
     if (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) {
       const conditionRes = rules?.conditionResolution ?? 0.5;
-      physicalCost = Math.max(0, roundToResolution(physicalCost * ratio, conditionRes));
+      const physRes = (physicalCost % 0.5 !== 0) ? Math.min(conditionRes, 0.25) : conditionRes;
+      physicalCost = Math.max(0, roundToResolution(physicalCost * ratio, physRes));
       mentalCost = Math.max(0, roundToResolution(mentalCost * ratio, conditionRes));
       baseDepGain = roundToResolution(baseDepGain * ratio, 0.5);
     }
@@ -608,9 +619,12 @@ export function workShift(
 
   const messages: GameEvent[] = [];
 
+  let maxPhysDrop = 0;
   if (isAdvanced) {
     const actionCount = (player.workActionsThisTurn || 0) + 1;
     updated.workActionsThisTurn = actionCount;
+    const overtimeThreshold = statRules?.workOvertimeThreshold ?? 8;
+    const grindThreshold = statRules?.workGrindThreshold ?? 4;
 
     const oldPhys = updated.physicalCondition ?? 50;
     const oldMental = updated.mentalCondition ?? 50;
@@ -621,6 +635,21 @@ export function workShift(
     if (mentalCost >= (statRules?.resilienceDropThreshold ?? 3)) {
       updated.resilienceBonus = (updated.resilienceBonus || 0) + 1;
       updated.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (updated.mentalConditionMax || 50) + 1);
+    }
+
+    if (mode === 'work_work') {
+      const isOvertime = actionCount >= overtimeThreshold;
+      const isHeavyGrind = actionCount >= grindThreshold && hasJobTag(job, 'heavy_physical');
+      if (isOvertime || isHeavyGrind) {
+        const minMaxPhys = statRules?.minMaxPhysical ?? 10;
+        const curMaxPhys = updated.physicalConditionMax ?? (statRules?.initialPhysicalMax ?? 50);
+        const newMaxPhys = Math.max(minMaxPhys, roundToResolution(curMaxPhys - 0.5, 0.5));
+        if (newMaxPhys < curMaxPhys) {
+          maxPhysDrop = roundToResolution(curMaxPhys - newMaxPhys, 0.5);
+          updated.physicalConditionMax = newMaxPhys;
+          updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition);
+        }
+      }
     }
 
     if (mode === 'look_busy') {
@@ -816,6 +845,7 @@ export function workShift(
 
     const statCosts: string[] = [];
     if (physicalCost > 0) statCosts.push(`-${physicalCost} Physical`);
+    if (maxPhysDrop > 0) statCosts.push(`-${maxPhysDrop} Max Physical`);
     if (mentalCost > 0) statCosts.push(`-${mentalCost} Mental`);
     if (socialGain > 0) statCosts.push(`+${socialGain} Social`);
     const statsStr = statCosts.length > 0 ? ` (${statCosts.join(', ')})` : '';

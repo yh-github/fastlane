@@ -147,8 +147,12 @@ describe('Job Engine', () => {
       expect(summary.modes.length).toBe(4);
 
       const workWork = summary.modes.find(m => m.id === 'work_work');
-      expect(workWork?.physCost).toBe(2); // base 1 + heavy_physical 1 = 2
+      expect(workWork?.physCost).toBe(1.5); // base 1 + heavy_physical 0.5 = 1.5
       expect(workWork?.rewardExp).toBe(0.5); // 0.5x exp gain
+
+      const lookBusy = summary.modes.find(m => m.id === 'look_busy');
+      expect(lookBusy?.physCost).toBe(0.75); // base 0.5 + heavy_physical 0.25 = 0.75
+      expect(lookBusy?.rewardDep).toBe(-1); // -1 dep penalty for heavy_physical
 
       const faceTime = summary.modes.find(m => m.id === 'face_time');
       expect(faceTime?.disabled).toBe(true);
@@ -715,15 +719,16 @@ describe('Job Engine', () => {
         expect(ftResult.success).toBe(false);
         expect(ftResult.messages?.[0].key).toBe('action.job.faceTimeDisabled');
 
-        // Test look_busy costs 1 Dep
+        // Test look_busy costs 1 Dep and +0.25 extra Phys (base 0.5 + 0.25 = 0.75)
         const lbResult = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'look_busy');
         expect(lbResult.success).toBe(true);
         expect(lbResult.updated.dependability).toBe(19); // 20 - 1
+        expect(lbResult.updated.physicalCondition).toBe(49.25); // 50 - 0.75
 
-        // Test work_work has +1 Physical cost (base 1 + 1 = 2) and grants 0.5 Exp
+        // Test work_work has +0.5 Physical cost (base 1 + 0.5 = 1.5) and grants 0.5 Exp
         const wwResult = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'work_work');
         expect(wwResult.success).toBe(true);
-        expect(wwResult.updated.physicalCondition).toBe(48); // 50 - 2
+        expect(wwResult.updated.physicalCondition).toBe(48.5); // 50 - 1.5
         expect(wwResult.updated.experience).toBe(0.5); // 0 + 0.5
       });
 
@@ -1091,6 +1096,96 @@ describe('Job Engine', () => {
         const qualifiedRes = applyForJob(qualifiedPlayer, execJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
         expect(qualifiedRes.success).toBe(true);
         expect(qualifiedRes.updated.currentJobId).toBe('factory_gen_mgr');
+      });
+
+      it('reduces Max_Physical by 0.5 on Grind/Overtime for heavy_physical, and on Overtime for normal jobs', () => {
+        const heavyJob: JobDef = {
+          id: 'burger_cook',
+          title: 'Cook',
+          locationId: 'burger_palace',
+          baseWage: 5,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: ['heavy_physical'],
+          perks: []
+        };
+
+        const normalJob: JobDef = {
+          id: 'office_worker',
+          title: 'Office Worker',
+          locationId: 'tech_hq',
+          baseWage: 8,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: [],
+          perks: []
+        };
+
+        const player = {
+          id: 'p_wear',
+          hoursRemaining: 10,
+          currentJobId: 'burger_cook',
+          currentWage: 5,
+          degrees: [],
+          dependability: 20,
+          experience: 0,
+          physicalCondition: 50,
+          physicalConditionMax: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 3, // next action is 4 -> Grind tier
+          turnFlags: { hasWorked: false },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+
+        // Action 4 (Grind) on heavy_physical: drops physicalConditionMax by 0.5 (50 -> 49.5)
+        const resGrindHeavy = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(resGrindHeavy.success).toBe(true);
+        expect(resGrindHeavy.updated.physicalConditionMax).toBe(49.5);
+
+        // Action 4 (Grind) on normal job: does NOT drop physicalConditionMax (remains 50)
+        const normalPlayerGrind = { ...player, currentJobId: 'office_worker' };
+        const resGrindNormal = workShift(normalPlayerGrind, normalJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(resGrindNormal.success).toBe(true);
+        expect(resGrindNormal.updated.physicalConditionMax).toBe(50);
+
+        // Action 8 (Overtime) on normal job: drops physicalConditionMax by 0.5 (50 -> 49.5)
+        const normalPlayerOvertime = { ...player, currentJobId: 'office_worker', workActionsThisTurn: 7 };
+        const resOvertimeNormal = workShift(normalPlayerOvertime, normalJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(resOvertimeNormal.success).toBe(true);
+        expect(resOvertimeNormal.updated.physicalConditionMax).toBe(49.5);
+      });
+
+      it('triggers Physical Fatigue Spillover (+1 Mental) below 20 Physical on heavy_physical jobs', () => {
+        const heavyJob: JobDef = {
+          id: 'burger_cook',
+          title: 'Cook',
+          locationId: 'burger_palace',
+          baseWage: 5,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: ['heavy_physical'],
+          perks: []
+        };
+
+        const playerAt18 = {
+          id: 'p_spill',
+          hoursRemaining: 10,
+          currentJobId: 'burger_cook',
+          currentWage: 5,
+          degrees: [],
+          dependability: 20,
+          experience: 0,
+          physicalCondition: 18, // Below 20 threshold
+          mentalCondition: 50,
+          workActionsThisTurn: 0,
+          turnFlags: { hasWorked: false },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        // Normal tier work_work has 0 base mental cost, but Physical < 20 triggers +1 Mental fatigue spillover
+        const res = workShift(playerAt18, heavyJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(res.success).toBe(true);
+        expect(res.updated.mentalCondition).toBe(49); // 50 - 1
       });
     });
   });

@@ -76,9 +76,29 @@ export function hasJobTag(job: JobDef | undefined | null, tag: JobTag): boolean 
  */
 export function getJobPhysicalCostModifier(job: JobDef | undefined | null): number {
   if (hasJobTag(job, 'heavy_physical')) {
-    return 1;
+    return 0.5;
   }
   return 0;
+}
+
+/**
+ * Get the extra physical cost for look_busy from job tags.
+ */
+export function getLookBusyPhysicalCostModifier(job: JobDef | undefined | null): number {
+  if (hasJobTag(job, 'heavy_physical')) {
+    return 0.25;
+  }
+  return 0;
+}
+
+/**
+ * Get the physical fatigue threshold (below which mental fatigue spillover occurs).
+ */
+export function getJobPhysicalFatigueThreshold(job: JobDef | undefined | null): number {
+  if (hasJobTag(job, 'heavy_physical')) {
+    return 20;
+  }
+  return 10;
 }
 
 /**
