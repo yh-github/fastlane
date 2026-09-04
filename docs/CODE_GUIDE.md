@@ -289,24 +289,40 @@ Use this table as a quick cheat-sheet for where to find and edit game mechanics:
 
 ## 5. Testing & Quality Gates
 
-Always run the full test verification gate before committing code:
+To avoid redundant testing and maintain fast development iteration, developers and agents follow the **Tiered Testing Pyramid**. Consult [`docs/fragile_tests.md`](file:///home/yoavh/code/antigravity/fastlane/docs/fragile_tests.md) for code hotspots and fragile test catalogs.
+
+### The 3-Tier Testing Pyramid
+
+| Tier | Command | Runtime | When to Run | Purpose |
+|---|---|---|---|---|
+| **Tier 0** | `git status` | ~0.05s | Sequential start | If working tree is clean and previous task passed, **skip baseline tests**. |
+| **Tier 1 (Inner Loop)** | `npx vitest run <file>.test.ts`<br>`npx vitest related <file.ts> --run` | **~0.5s - 1.5s** | Active editing | Rapid feedback on the code directly being changed. |
+| **Tier 1.5 (Engine Fast)** | `npm run test:fast` | **~2.9s** | Engine edits | Runs all 32 engine test files (410+ tests); skips JSDOM UI and fuzz. |
+| **Tier 2 (Unit Suite)** | `npm run test:unit` | **~9.4s** | Pre-delivery | Runs all 48 test files across the engine and UI. |
+| **Tier 3 (Delivery Gate)** | `npm test` | **~27s** | Final gate | Runs full suite: `test:types`, `build`, `test:unit`, and Playwright E2E. |
 
 ```bash
-# 1. Typecheck: Must pass with 0 errors
-npm run test:types
+# Rapid inner-loop testing for modified files
+npx vitest related src/engine/statMath.ts --run
 
-# 2. Lint check: Must pass with 0 errors
-npm run lint
+# Rapid engine verification (2.9s)
+npm run test:fast
 
-# 3. Unit test suite: Must pass all 440+ tests
+# Full unit suite (9.4s)
 npm run test:unit
 
-# 4. Deterministic replay regression suite: Verifies exact turn replay matching
-npx vitest run src/engine/replayRegression.test.ts
-
-# 5. State invariant fuzz testing: Stress tests state transitions
-npx vitest run tests/stateInvariantsFuzz.test.ts
+# Full verification gate (run once before final PR / push)
+npm test
 ```
+
+### Fragile Tests & Code Hotspots
+Before making changes to core engine state, copy, or campaign data, review [`docs/fragile_tests.md`](file:///home/yoavh/code/antigravity/fastlane/docs/fragile_tests.md) for known sensitive tests:
+- **Replay Regression** (`src/engine/replayRegression.test.ts`): Tests deterministic simulation. Update snapshots (`-u`) only on intentional balance/state changes.
+- **UI Exact Text Matchers** (`BuildingInteractions.test.tsx`, `BuildingModal.test.tsx`): Strict string matchers for prices and button copy.
+- **Translation Completeness** (`src/locales/translationInterpolation.test.tsx`): Verifies all keys and variables exist in both `en.json` and `he.json`.
+- **Campaign Integrity** (`tests/campaignIntegrity.test.ts`): Graph connectivity and foreign keys across all campaigns.
+- **State Invariants Fuzz** (`tests/stateInvariantsFuzz.test.ts`): 32+ turns of randomized fuzz testing checking for NaN or out-of-bounds stats.
+- **Playwright E2E** (`tests/e2e/gameplayFlows.spec.ts`): Headless browser multi-week flow testing.
 
 ### Commit Guidelines
 - Commit changes in small, self-contained atomic commits.

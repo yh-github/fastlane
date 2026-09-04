@@ -65,7 +65,7 @@ const mockCampaign: CampaignBundle = {
     { id: 'street', name: 'The Streets', baseRent: 0, isRobberyImmune: false, homeNodeId: 'node_low_cost', description: '', spaceCap: 0, lifestyleValue: 0 },
     { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, isRobberyImmune: false, homeNodeId: 'node_low_cost', description: '', spaceCap: 100, lifestyleValue: 10 },
     { id: 'security', name: 'Security Apartments', baseRent: 475, isRobberyImmune: true, homeNodeId: 'node_security', description: '', spaceCap: 250, lifestyleValue: 30 },
-    { id: 'penthouse', name: 'Penthouse Suite', baseRent: 850, isRobberyImmune: true, homeNodeId: 'node_security', description: '', spaceCap: 750, lifestyleValue: 50 }
+    { id: 'penthouse', name: 'Penthouse Suite', baseRent: 850, isRobberyImmune: true, homeNodeId: 'node_security', description: '', spaceCap: 500, lifestyleValue: 50 }
   ],
   items: [
     { id: 'refrigerator', name: 'Refrigerator', category: 'appliance', basePrice: 650, happinessBonus: 1, space: 40, lifestyleValue: 1 },
@@ -402,9 +402,9 @@ describe('Space Capping Module', () => {
   });
 
   describe('Penthouse Suite Tier', () => {
-    it('allows massive durable collection and grants high space cap (750)', () => {
+    it('allows massive durable collection and grants high space cap (500)', () => {
       player.currentHousingId = 'penthouse';
-      expect(calcHousingSpaceCap(player, mockCampaign)).toBe(750);
+      expect(calcHousingSpaceCap(player, mockCampaign)).toBe(500);
 
       // Buy full suite of items: 350 space
       player.inventory.appliances = [
@@ -422,7 +422,7 @@ describe('Space Capping Module', () => {
 
       // 40+30+40+20+20+10+20+40+90 + 10+10+20 = 350 space used
       expect(calcUsedSpace(player, mockCampaign, false)).toBe(350);
-      expect(calcUsedSpace(player, mockCampaign, false) <= 750).toBe(true);
+      expect(calcUsedSpace(player, mockCampaign, false) <= 500).toBe(true);
     });
 
     it('starts turn at the Security Building (node_security) after moving into penthouse', () => {
@@ -474,8 +474,8 @@ describe('Space Capping Module', () => {
     });
 
     it('allows socializing if free space >= 10 even if mess > 25 when spaceCapping is true', () => {
-      player.currentHousingId = 'penthouse'; // Cap 750
-      player.mess = 35; // Mess > 25, but 35 mess + 0 durables = 35/750 (715 free space >= 10)
+      player.currentHousingId = 'penthouse'; // Cap 500
+      player.mess = 35; // Mess > 25, but 35 mess + 0 durables = 35/500 (465 free space >= 10)
       player.money = 500;
       player.hoursRemaining = 30;
       player.physicalCondition = 40;
@@ -494,7 +494,7 @@ describe('Space Capping Module', () => {
       expect(result.updatedPlayer.social).toBeGreaterThan(9);
     });
 
-    it('grants 3x social reward in Penthouse and charges $75/guest', () => {
+    it('rolls 3d3 guests (3 to 9) in Penthouse, awards 1:1 base social reward and charges $25/guest', () => {
       player.currentHousingId = 'penthouse';
       player.mess = 0;
       player.money = 500;
@@ -506,25 +506,44 @@ describe('Space Capping Module', () => {
       const context = {
         state: { players: [player], economicIndex: 0, turn: 1, rngState: 12345 } as any,
         rules: { ...mockCampaign.config.gameRules!, spaceCapping: true, usePhysicalMentalConditions: true },
-        campaign: {
-          ...mockCampaign,
-          config: {
-            ...mockCampaign.config,
-            economyRules: {
-              ...mockCampaign.config.economyRules,
-              socializePenthouseCashCost: 75
-            }
-          }
-        },
+        campaign: mockCampaign,
         rng: new Random(12345)
       };
 
       const result = gameReducer(player, { type: 'socialize_guests' }, context as any);
       const actionLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog;
       expect(actionLog?.key).toBe('action.socialize');
-      const guests = Number(actionLog?.params?.guests); // 1, 2, or 3
-      expect(Number(actionLog?.params?.reward)).toBe(guests * 3);
-      expect(result.updatedPlayer.money).toBe(500 - (guests * 75));
+      const guests = Number(actionLog?.params?.guests); // 3 to 9
+      expect(guests).toBeGreaterThanOrEqual(3);
+      expect(guests).toBeLessThanOrEqual(9);
+      expect(Number(actionLog?.params?.reward)).toBe(guests);
+      expect(result.updatedPlayer.money).toBe(500 - (guests * 25));
+    });
+
+    it('dynamically clamps guest count based on available free space (10 space per guest)', () => {
+      player.currentHousingId = 'penthouse'; // Cap 500
+      // 500 cap - 460 used space = 40 free space -> max 4 guests
+      player.mess = 460;
+      player.money = 500;
+      player.hoursRemaining = 30;
+      player.physicalCondition = 40;
+      player.mentalCondition = 40;
+      player.social = 10;
+
+      const context = {
+        state: { players: [player], economicIndex: 0, turn: 1, rngState: 12345 } as any,
+        rules: { ...mockCampaign.config.gameRules!, spaceCapping: true, usePhysicalMentalConditions: true },
+        campaign: mockCampaign,
+        rng: new Random(12345)
+      };
+
+      const result = gameReducer(player, { type: 'socialize_guests' }, context as any);
+      const actionLog = Array.isArray(result.actionLog) ? result.actionLog[0] : result.actionLog;
+      expect(actionLog?.key).toBe('action.socialize');
+      const guests = Number(actionLog?.params?.guests);
+      expect(guests).toBeLessThanOrEqual(4);
+      expect(guests).toBeGreaterThanOrEqual(1);
+      expect(result.updatedPlayer.money).toBe(500 - (guests * 25));
     });
 
     it('falls back to 25 mess limit when spaceCapping is false', () => {

@@ -204,11 +204,27 @@ function buildActions(campaign: CampaignBundle, economicIndex: number): GoapActi
   return actions;
 }
 
+const actionCache = new WeakMap<CampaignBundle, Map<number, GoapAction[]>>();
+
+function getOrBuildActions(campaign: CampaignBundle, economicIndex: number): GoapAction[] {
+  let campaignCache = actionCache.get(campaign);
+  if (!campaignCache) {
+    campaignCache = new Map();
+    actionCache.set(campaign, campaignCache);
+  }
+  let actions = campaignCache.get(economicIndex);
+  if (!actions) {
+    actions = buildActions(campaign, economicIndex);
+    campaignCache.set(economicIndex, actions);
+  }
+  return actions;
+}
+
 export function executeAITurn(player: PlayerState, gameState: GameState, campaign: CampaignBundle): GameAction[] {
   if (player.hoursRemaining <= 0) return [];
 
   const s = extractState(player, gameState.turn);
-  const actions = buildActions(campaign, gameState.economicIndex);
+  const actions = getOrBuildActions(campaign, gameState.economicIndex);
 
   function tryAction(name: string): GameAction | null {
     const a = actions.find(x => x.name === name);
@@ -218,9 +234,6 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
 
   const moveTo = (archetypeOrId: string): GameAction | null => {
     let bId = getBuildingNodeByArchetype(campaign, archetypeOrId) || getBuildingNodeById(campaign, archetypeOrId);
-    if (archetypeOrId === 'z_mart') {
-       console.log(`[DEBUG-MOVETO] archetypeOrId: ${archetypeOrId}, bId: ${bId}, s.nodeId: ${s.nodeId}, s.hours: ${s.hours}`);
-    }
     if (bId && s.nodeId !== bId && s.hours >= 2) {
       return { type: 'move', nodeId: bId };
     }
@@ -419,7 +432,6 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     }
     
     if (bestJob && bestScore > currentScore) {
-      console.log(`[DEBUG-JOB-SEARCH] targetCareerProgress: ${targetCareerProgress}, bestJob: ${bestJob.id}, bestScore: ${bestScore}, currentScore: ${currentScore}`);
       const applyAction = tryAction(`Apply_${bestJob.id}`);
       if (applyAction) return [applyAction];
       const move = moveTo('employment');
@@ -488,6 +500,5 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
 
 
 
-  console.log(`[DEBUG-AI-NO-ACTION] s.hours=${s.hours}, s.money=${s.money}, s.jobId=${s.jobId}, s.clothes=${s.clothes}, s.food=${s.food}, targetCareerProgress=${targetCareerProgress}`);
   return [];
 }

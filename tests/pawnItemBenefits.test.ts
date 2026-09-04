@@ -93,7 +93,7 @@ const mockCampaign: CampaignBundle = {
   housing: [
     { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, isRobberyImmune: false, homeNodeId: 'node_low_cost', spaceCap: 100, lifestyleValue: 10 },
     { id: 'security', name: 'Security Apartments', baseRent: 475, isRobberyImmune: true, homeNodeId: 'node_security', spaceCap: 250, lifestyleValue: 30 },
-    { id: 'penthouse', name: 'Penthouse Suite', baseRent: 850, isRobberyImmune: true, homeNodeId: 'node_security', spaceCap: 750, lifestyleValue: 50 }
+    { id: 'penthouse', name: 'Penthouse Suite', baseRent: 850, isRobberyImmune: true, homeNodeId: 'node_security', spaceCap: 500, lifestyleValue: 50 }
   ],
   items: [
     {
@@ -392,8 +392,8 @@ describe('Pawned Appliances Benefits & Invariants', () => {
     const equippedSocialResult = gameReducer(equippedPlayer, { type: 'socialize_guests' }, equippedContext);
     const equippedActionLog = Array.isArray(equippedSocialResult.actionLog) ? equippedSocialResult.actionLog[0] : equippedSocialResult.actionLog;
     const guests = equippedActionLog?.params?.guests;
-    // Base Penthouse reward: guests * 3 + 3 (effects bonus)
-    expect(equippedActionLog?.params?.reward).toBe((guests * 3) + 3);
+    // Base Penthouse reward: guests + 3 (effects bonus)
+    expect(equippedActionLog?.params?.reward).toBe(guests + 3);
 
     // Pawn both appliances:
     let pawnedPlayer = equippedPlayer;
@@ -403,8 +403,8 @@ describe('Pawned Appliances Benefits & Invariants', () => {
     const pawnedSocialResult = gameReducer(pawnedPlayer, { type: 'socialize_guests' }, { ...context, state: { ...context.state, players: [pawnedPlayer] } });
     const pawnedActionLog = Array.isArray(pawnedSocialResult.actionLog) ? pawnedSocialResult.actionLog[0] : pawnedSocialResult.actionLog;
     const pawnedGuests = pawnedActionLog?.params?.guests;
-    // Reward has NO extra item effects: strictly guests * 3
-    expect(pawnedActionLog?.params?.reward).toBe(pawnedGuests * 3);
+    // Reward has NO extra item effects: strictly guests
+    expect(pawnedActionLog?.params?.reward).toBe(pawnedGuests);
   });
 
   it('3. Food Preservation & Spoilage: Pawned Refrigerator causes food to spoil across turn maintenance', () => {

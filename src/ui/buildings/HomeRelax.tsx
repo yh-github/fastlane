@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../engine/dataLoader';
 import { type GameRules, collectItemEffects } from '../../engine/gameState';
 import { calcEconomyPrice } from '../../engine/economyEngine';
-import { calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
+import { calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap, calcSocializeParameters } from '../../engine/statMath';
 import type { InteractionProps } from './types';
 
 export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules, economicIndex?: number }) {
@@ -47,49 +47,44 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const messPct = spaceCap > 0 ? Math.min(100, (currentMess / spaceCap) * 100) : 0;
 
   // Socialize logic
-  const isNoSpaceForSocial = rules?.spaceCapping ? (freeSpace < 10) : (currentMess > 25);
+  const socialParams = calcSocializeParameters(player, campaign, rules);
+  const isSocialDisabled = socialParams.isDisabled;
+  const isHalfRewardExpected = socialParams.isHalfRewardExpected;
+
   const cleaningServiceCost = campaign?.config.timeRules?.cleaningServiceCost ?? 1;
   const cleaningServiceBasePrice = campaign?.config.economyRules?.cleaningServiceBasePrice ?? 100;
   const cleaningServicePrice = calcEconomyPrice(cleaningServiceBasePrice, economicIndex);
   const canAffordCleaning = player.money >= cleaningServicePrice;
 
-  const socializeCost = campaign?.config.timeRules?.socializeCost ?? 6;
-  const isTooExhaustedForSocial = !!rules?.usePhysicalMentalConditions && ((player.physicalCondition ?? 50) - 1 < 1.0);
-  const isNotEnoughTimeForSocial = player.hoursRemaining < socializeCost;
-  const isSocialDisabled = isNoSpaceForSocial || isNotEnoughTimeForSocial || isTooExhaustedForSocial;
-
-  // Pricing & multipliers for socialize
   const isPenthouse = player.currentHousingId === 'penthouse';
   const isSecurity = player.currentHousingId === 'security';
-  const cashRate = isPenthouse 
-    ? (campaign?.config.economyRules?.socializePenthouseCashCost ?? 75) 
-    : isSecurity 
-    ? (campaign?.config.economyRules?.socializeSecurityCashCost ?? 50) 
-    : (campaign?.config.economyRules?.socializeLowCostCashCost ?? 25);
-  const socialMultiplier = isPenthouse ? 3 : isSecurity ? 2 : 1;
-
-  const minCashNeeded = cashRate;
-  const currentMental = player.mentalCondition ?? 50;
-  const hasSufficientCash = player.money >= minCashNeeded;
-  const hasSufficientMental = currentMental >= 5;
-  const isHalfRewardExpected = !hasSufficientCash || !hasSufficientMental;
 
   let socialSubtext = '-1 💪, +👥 (generates 🧹)';
   if (rules?.usePhysicalMentalConditions) {
-    if (isSocialDisabled) {
-      if (rules?.spaceCapping && freeSpace < 10) {
+    if (socialParams.isDisabled) {
+      if (socialParams.disabledReasonKey === 'noSpace') {
         socialSubtext = '⚠️ Need at least 10 free space for guests';
-      } else if (!rules?.spaceCapping && currentMess > 25) {
+      } else if (socialParams.disabledReasonKey === 'messTooHigh') {
         socialSubtext = '-1 💪, +👥 (generates 🧹)';
-      } else if (isNotEnoughTimeForSocial) {
-        socialSubtext = `⚠️ Need ⏳ ${socializeCost}h`;
-      } else if (isTooExhaustedForSocial) {
+      } else if (socialParams.disabledReasonKey === 'notEnoughTime') {
+        socialSubtext = `⚠️ Need ⏳ ${socialParams.timeCost}h`;
+      } else if (socialParams.disabledReasonKey === 'tooExhausted') {
         socialSubtext = '⚠️ Too exhausted (-1 💪 would collapse)';
       }
-    } else if (isHalfRewardExpected) {
-      socialSubtext = `⚠️ Budget Hospitality: half social gain (-1 💪, +👥/2, generates 🧹)`;
     } else {
-      socialSubtext = `✨ Full Hospitality (-1 💪, +${socialMultiplier * 1} to +${socialMultiplier * 3} 👥, -$${cashRate}-$${cashRate * 3})`;
+      const costRange = socialParams.minCashNeeded === socialParams.maxCashNeeded
+        ? `$${socialParams.minCashNeeded}`
+        : `$${socialParams.minCashNeeded}-$${socialParams.maxCashNeeded}`;
+      const rewardRange = socialParams.minReward === socialParams.maxReward
+        ? `+${socialParams.minReward}`
+        : `+${socialParams.minReward} to +${socialParams.maxReward}`;
+      const spaceCappedNote = socialParams.isCappedBySpace ? ' (capped by space)' : '';
+
+      if (socialParams.isHalfRewardExpected) {
+        socialSubtext = `⚠️ Budget Hospitality: half social gain (-1 💪, ${rewardRange} 👥${spaceCappedNote}, generates 🧹)`;
+      } else {
+        socialSubtext = `✨ Full Hospitality (-1 💪, ${rewardRange} 👥${spaceCappedNote}, -${costRange})`;
+      }
     }
   }
 
@@ -447,7 +442,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                   opacity: isSocialDisabled ? 0.65 : 1
                 }}
               >
-                <div style={{ fontSize: '0.9em' }}>🎉 Socialize / Entertain Guests (⏳ {socializeCost}h)</div>
+                <div style={{ fontSize: '0.9em' }}>🎉 Socialize / Entertain Guests (⏳ {socialParams.timeCost}h)</div>
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '1px', color: isSocialDisabled ? '#ffb3b3' : '#e8f8f5' }}>
                   {socialSubtext}
                 </div>

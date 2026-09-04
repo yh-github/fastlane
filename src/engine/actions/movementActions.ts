@@ -22,7 +22,6 @@ export function handleMoveAction(
 
   const adjacencyMap = context.campaign.map?.nodes ? buildAdjacencyMap(context.campaign.map.nodes) : new Map<string, string[]>();
   const pathResult = context.campaign.map?.nodes ? findShortestPath(adjacencyMap, nextPlayer.position, nodeId) : { found: true, steps: 1, path: [] };
-  console.log(`[DEBUG-GAMEREDUCER-MOVE] from ${nextPlayer.position} to ${nodeId}: path found=${pathResult.found}, steps=${pathResult.steps}, hoursRemaining=${nextPlayer.hoursRemaining}`);
 
   if (pathResult.found) {
     const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
@@ -50,13 +49,9 @@ export function handleMoveAction(
     if (nextPlayer.hoursRemaining >= requiredHours || context.rules.allowPartialHours) {
       nextPlayer.position = nodeId;
       nextPlayer = spendHours(nextPlayer, requiredHours);
-      console.log(`[DEBUG-GAMEREDUCER-MOVE-SUCCESS] new position: ${nextPlayer.position}, hoursRemaining: ${nextPlayer.hoursRemaining}`);
     } else {
       actionLog = { key: 'action.error.notEnoughTime' };
-      console.log(`[DEBUG-GAMEREDUCER-MOVE-FAIL] not enough time`);
     }
-  } else {
-    console.log(`[DEBUG-GAMEREDUCER-MOVE-FAIL] path not found`);
   }
 
   return { nextPlayer, actionLog };
