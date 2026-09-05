@@ -8,6 +8,7 @@ import {
   checkEventPreconditions,
   DEBUG_EVENT_METAS,
 } from '../engine/debugEvents';
+import { ApartmentMockupSandbox } from './buildings/home/ApartmentMockupSandbox';
 
 interface DebugEventsModalProps {
   gameState: GameState;
@@ -27,7 +28,106 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
   const [selectedApplianceId, setSelectedApplianceId] = useState<string>('');
   const [stolenApplianceIds, setStolenApplianceIds] = useState<string[]>([]);
 
+  const [isMockupSandboxOpen, setIsMockupSandboxOpen] = useState<boolean>(false);
+  const [applianceConditionToAdd, setApplianceConditionToAdd] = useState<'new' | 'used'>('new');
+
   const selectedPlayer = gameState.players.find(p => p.id === selectedPlayerId);
+
+  const handleUpdatePlayerCash = (delta: number) => {
+    if (!selectedPlayer) return;
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        players: prev.players.map(p => p.id === selectedPlayer.id ? { ...p, money: Math.max(0, p.money + delta) } : p)
+      };
+    });
+  };
+
+  const handleSetPlayerCash = (val: number) => {
+    if (!selectedPlayer) return;
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        players: prev.players.map(p => p.id === selectedPlayer.id ? { ...p, money: Math.max(0, val) } : p)
+      };
+    });
+  };
+
+  const handleSetPlayerMess = (val: number) => {
+    if (!selectedPlayer) return;
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        players: prev.players.map(p => p.id === selectedPlayer.id ? { ...p, mess: Math.max(0, val) } : p)
+      };
+    });
+  };
+
+  const handleSetPlayerHousing = (housingId: string) => {
+    if (!selectedPlayer) return;
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        players: prev.players.map(p => p.id === selectedPlayer.id ? { ...p, currentHousingId: housingId } : p)
+      };
+    });
+  };
+
+  const handleToggleAppliance = (itemId: string) => {
+    if (!selectedPlayer) return;
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        players: prev.players.map(p => {
+          if (p.id !== selectedPlayer.id) return p;
+          const exists = p.inventory.appliances.some(a => a.id === itemId);
+          const updated = exists
+            ? p.inventory.appliances.filter(a => a.id !== itemId)
+            : [...p.inventory.appliances, {
+                id: itemId,
+                purchasePrice: 200,
+                purchaseSource: applianceConditionToAdd === 'new' ? ('socket_city' as const) : ('z_mart' as const),
+                condition: applianceConditionToAdd
+              }];
+          return {
+            ...p,
+            inventory: {
+              ...p.inventory,
+              appliances: updated
+            }
+          };
+        })
+      };
+    });
+  };
+
+  const handleToggleBook = (bookId: string) => {
+    if (!selectedPlayer) return;
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        players: prev.players.map(p => {
+          if (p.id !== selectedPlayer.id) return p;
+          const currentBooks = p.inventory.books || [];
+          const exists = currentBooks.includes(bookId);
+          const updated = exists ? currentBooks.filter(b => b !== bookId) : [...currentBooks, bookId];
+          return {
+            ...p,
+            inventory: {
+              ...p.inventory,
+              books: updated
+            }
+          };
+        })
+      };
+    });
+  };
 
   const minEconReading = gameState.rules.minEconomicReading ?? -30;
   const maxEconReading = 90;
@@ -238,6 +338,249 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
               </button>
             ))}
           </div>
+
+          {/* Player State & Apartment Sandbox Controls */}
+          {selectedPlayerId !== 'global' && selectedPlayer && (
+            <div
+              style={{
+                background: 'rgba(20, 26, 46, 0.75)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                border: '1px solid rgba(0, 229, 255, 0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontWeight: 600, color: 'var(--accent-cyan)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🛠️ Player & Apartment Sandbox ({selectedPlayer.name})
+                </div>
+                <button
+                  onClick={() => setIsMockupSandboxOpen(true)}
+                  style={{
+                    padding: '4px 10px',
+                    background: 'linear-gradient(135deg, #00e5ff 0%, #0284c7 100%)',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  🎨 Open Mockup Playground
+                </button>
+              </div>
+
+              {/* Cash Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.8rem', color: '#bbb', minWidth: '85px' }}>
+                  💰 Cash: <strong style={{ color: '#85ffb5' }}>${selectedPlayer.money}</strong>
+                </span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={() => handleUpdatePlayerCash(500)}
+                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    +$500
+                  </button>
+                  <button
+                    onClick={() => handleUpdatePlayerCash(2000)}
+                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    +$2,000
+                  </button>
+                  <button
+                    onClick={() => handleUpdatePlayerCash(10000)}
+                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    +$10,000
+                  </button>
+                  <button
+                    onClick={() => handleUpdatePlayerCash(-500)}
+                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#ff8585', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    -$500
+                  </button>
+                  <button
+                    onClick={() => handleSetPlayerCash(0)}
+                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#aaa', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    $0 (Broke)
+                  </button>
+                </div>
+              </div>
+
+              {/* Mess Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.8rem', color: '#bbb', minWidth: '85px' }}>
+                  🧹 Mess: <strong style={{ color: (selectedPlayer.mess ?? 0) > 20 ? '#e74c3c' : '#f39c12' }}>{selectedPlayer.mess ?? 0}</strong>
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={50}
+                  value={selectedPlayer.mess ?? 0}
+                  onChange={(e) => handleSetPlayerMess(Number(e.target.value))}
+                  style={{ width: '110px', accentColor: '#f39c12', cursor: 'pointer' }}
+                />
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={() => handleSetPlayerMess(0)}
+                    style={{ padding: '2px 6px', fontSize: '0.72rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    0 (Clean)
+                  </button>
+                  <button
+                    onClick={() => handleSetPlayerMess(15)}
+                    style={{ padding: '2px 6px', fontSize: '0.72rem', background: '#1e293b', color: '#f39c12', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    15
+                  </button>
+                  <button
+                    onClick={() => handleSetPlayerMess(30)}
+                    style={{ padding: '2px 6px', fontSize: '0.72rem', background: '#1e293b', color: '#e74c3c', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    30 (Dirty)
+                  </button>
+                  <button
+                    onClick={() => handleSetPlayerMess(50)}
+                    style={{ padding: '2px 6px', fontSize: '0.72rem', background: '#1e293b', color: '#e74c3c', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    50 (Max)
+                  </button>
+                </div>
+              </div>
+
+              {/* Housing Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.8rem', color: '#bbb', minWidth: '85px' }}>
+                  🏠 Housing:
+                </span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {[
+                    { id: 'low_cost', name: 'Low-Cost (10)', icon: '🏚️' },
+                    { id: 'security_apartments', name: 'Security (15)', icon: '🏢' },
+                    { id: 'penthouse', name: 'Penthouse (25)', icon: '🏙️' }
+                  ].map(h => (
+                    <button
+                      key={h.id}
+                      onClick={() => handleSetPlayerHousing(h.id)}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: '0.72rem',
+                        background: selectedPlayer.currentHousingId === h.id ? 'rgba(0, 229, 255, 0.2)' : '#1e293b',
+                        color: selectedPlayer.currentHousingId === h.id ? '#00e5ff' : '#ccc',
+                        border: selectedPlayer.currentHousingId === h.id ? '1px solid #00e5ff' : '1px solid #334155',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: selectedPlayer.currentHousingId === h.id ? 'bold' : 'normal'
+                      }}
+                    >
+                      {h.icon} {h.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Durables Toggle Grid */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#aaa', fontWeight: 600 }}>
+                    🛋️ Appliances ({selectedPlayer.inventory.appliances.length}) & Books ({selectedPlayer.inventory.books?.length || 0}):
+                  </span>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '0.7rem' }}>
+                    <span style={{ color: '#888' }}>Add Condition:</span>
+                    <button
+                      onClick={() => setApplianceConditionToAdd('new')}
+                      style={{
+                        padding: '1px 5px',
+                        fontSize: '0.68rem',
+                        background: applianceConditionToAdd === 'new' ? '#064e3b' : '#111',
+                        color: applianceConditionToAdd === 'new' ? '#85ffb5' : '#777',
+                        border: '1px solid #334155',
+                        borderRadius: '3px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✨ New
+                    </button>
+                    <button
+                      onClick={() => setApplianceConditionToAdd('used')}
+                      style={{
+                        padding: '1px 5px',
+                        fontSize: '0.68rem',
+                        background: applianceConditionToAdd === 'used' ? '#075985' : '#111',
+                        color: applianceConditionToAdd === 'used' ? '#85c1e9' : '#777',
+                        border: '1px solid #334155',
+                        borderRadius: '3px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📦 Used
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {[
+                    'refrigerator', 'freezer', 'stove', 'microwave',
+                    'color_tv', 'bw_tv', 'stereo', 'vcr', 'computer', 'hot_tub'
+                  ].map(id => {
+                    const owned = selectedPlayer.inventory.appliances.some(a => a.id === id);
+                    const itemApp = selectedPlayer.inventory.appliances.find(a => a.id === id);
+                    const isNew = itemApp?.condition === 'new' || itemApp?.purchaseSource === 'socket_city';
+                    const displayName = id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => handleToggleAppliance(id)}
+                        style={{
+                          padding: '3px 7px',
+                          fontSize: '0.7rem',
+                          background: owned ? (isNew ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.2)') : 'rgba(255,255,255,0.03)',
+                          color: owned ? (isNew ? '#85ffb5' : '#85c1e9') : '#666',
+                          border: owned ? (isNew ? '1px solid #2ecc71' : '1px solid #3498db') : '1px dashed #444',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {owned ? (isNew ? '✨' : '📦') : '+'} {displayName}
+                      </button>
+                    );
+                  })}
+
+                  {['dictionary', 'encyclopedia', 'atlas'].map(bId => {
+                    const owned = selectedPlayer.inventory.books?.includes(bId);
+                    const displayName = bId.charAt(0).toUpperCase() + bId.slice(1);
+
+                    return (
+                      <button
+                        key={bId}
+                        onClick={() => handleToggleBook(bId)}
+                        style={{
+                          padding: '3px 7px',
+                          fontSize: '0.7rem',
+                          background: owned ? 'rgba(155, 89, 182, 0.2)' : 'rgba(255,255,255,0.03)',
+                          color: owned ? '#d7bde2' : '#666',
+                          border: owned ? '1px solid #9b59b6' : '1px dashed #444',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {owned ? '📚' : '+'} {displayName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Event List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -551,6 +894,32 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
           </button>
         </div>
       </div>
+
+      {isMockupSandboxOpen && (
+        <ApartmentMockupSandbox
+          campaign={campaign}
+          onClose={() => setIsMockupSandboxOpen(false)}
+          onApplyToPlayer={selectedPlayer ? (state) => {
+            setGameState(prev => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                players: prev.players.map(p => p.id === selectedPlayer.id ? {
+                  ...p,
+                  currentHousingId: state.housingId,
+                  mess: state.mess,
+                  money: state.money,
+                  inventory: {
+                    ...p.inventory,
+                    appliances: state.appliances,
+                    books: state.books
+                  }
+                } : p)
+              };
+            });
+          } : undefined}
+        />
+      )}
     </div>
   );
 }

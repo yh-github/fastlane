@@ -9,6 +9,7 @@ interface DurableCardModalProps {
     id: string;
     isBook?: boolean;
     applianceData?: OwnedAppliance;
+    isOwned?: boolean;
   };
   campaign?: CampaignBundle;
   onClose: () => void;
@@ -23,16 +24,20 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   const itemDef = campaign?.items.find(i => i.id === durable.id);
   const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : durable.id;
 
-  // Condition resolution:
-  // For appliances: check condition attribute or fallback to purchaseSource ('socket_city' = new, else used)
-  // For books: books are bought at Z-Mart, so default to 'used' unless otherwise specified
+  const isOwned = durable.isOwned !== false;
   const isNew = durable.isBook 
     ? false 
     : (durable.applianceData?.condition === 'new' || durable.applianceData?.purchaseSource === 'socket_city');
-  const conditionLabel = isNew ? '✨ Brand New' : '📦 Used';
-  const conditionDetail = isNew 
-    ? 'Purchased brand new from Socket City. Clean and pristine working condition.'
-    : 'Second-hand from Z-Mart or Pawn Shop. Fully functional and broken-in.';
+  const conditionLabel = !isOwned 
+    ? '🏬 Not Owned' 
+    : (isNew ? '✨ Brand New' : (durable.isBook ? '📚 Book' : '📦 Used'));
+  const conditionDetail = !isOwned
+    ? (durable.isBook 
+        ? 'Available at Z-Mart. Purchase to study and permanently boost your cognitive reserves.'
+        : 'Available at Socket City (Brand New) or Z-Mart & Pawn Shop (Used). Furnish your home to gain its perks!')
+    : (isNew 
+        ? 'Purchased brand new from Socket City. Clean and pristine working condition.'
+        : (durable.isBook ? 'Reference book in your apartment collection.' : 'Second-hand from Z-Mart or Pawn Shop. Fully functional and broken-in.'));
 
   // Fluff descriptions for durables:
   const getFluffDescription = (id: string, isBook?: boolean): string => {

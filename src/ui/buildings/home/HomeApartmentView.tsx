@@ -7,6 +7,13 @@ import { LeisureCards } from './LeisureCards';
 import { ChoresCards } from './ChoresCards';
 import { PantryCard } from './PantryCard';
 import { DurableCardModal } from './DurableCardModal';
+import { ApartmentMockupSandbox } from './ApartmentMockupSandbox';
+
+const DEFAULT_APPLIANCES = [
+  'refrigerator', 'freezer', 'stove', 'microwave',
+  'color_tv', 'bw_tv', 'stereo', 'vcr', 'computer', 'hot_tub'
+];
+const DEFAULT_BOOKS = ['dictionary', 'encyclopedia', 'atlas'];
 
 interface HomeApartmentViewProps {
   player: PlayerState;
@@ -110,10 +117,12 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const [activeDeck, setActiveDeck] = useState<'leisure' | 'chores' | 'pantry' | null>(null);
+  const [isSandboxOpen, setIsSandboxOpen] = useState<boolean>(false);
   const [inspectedDurable, setInspectedDurable] = useState<{
     id: string;
     isBook?: boolean;
     applianceData?: OwnedAppliance;
+    isOwned?: boolean;
   } | null>(null);
 
   // Group appliances so each unique ID has an entry, keeping 'new' if any copy is new
@@ -131,16 +140,52 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   const ownedBooks = player.inventory?.books || [];
   const totalDurablesCount = uniqueAppliances.length + ownedBooks.length;
 
+  const allApplianceIds = Array.from(new Set([
+    ...DEFAULT_APPLIANCES,
+    ...(campaign?.items?.filter(i => i.category === 'appliance').map(i => i.id) || [])
+  ]));
+
+  const allBookIds = Array.from(new Set([
+    ...DEFAULT_BOOKS,
+    ...(campaign?.items?.filter(i => i.category === 'book').map(i => i.id) || [])
+  ]));
+
   return (
-    <div className="interaction-panel" style={{ width: '100%', boxSizing: 'border-box' }}>
+    <div className="interaction-panel" style={{ 
+      width: '100%', 
+      height: '100%',
+      maxHeight: '430px',
+      display: 'flex',
+      flexDirection: 'column',
+      boxSizing: 'border-box',
+      overflow: 'hidden',
+      position: 'relative'
+    }}>
       {/* Title Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1em' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexShrink: 0 }}>
+        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05em' }}>
           🏠 {housingName}
         </h3>
-        <span style={{ fontSize: '0.82em', color: '#00e5ff', fontWeight: 'bold' }}>
-          {t('homeRelax.title', { defaultValue: 'Apartment Life' })}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={() => setIsSandboxOpen(true)}
+            style={{
+              padding: '2px 8px',
+              background: 'rgba(0, 229, 255, 0.15)',
+              border: '1px solid rgba(0, 229, 255, 0.35)',
+              borderRadius: '4px',
+              color: 'var(--accent-cyan)',
+              fontSize: '0.72rem',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            🎨 Mockups Sandbox
+          </button>
+          <span style={{ fontSize: '0.82em', color: '#00e5ff', fontWeight: 'bold' }}>
+            {t('homeRelax.title', { defaultValue: 'Apartment Life' })}
+          </span>
+        </div>
       </div>
 
       {actionFeedback && (
@@ -164,7 +209,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
       {/* Space & Mess Opposing Gauge Bar */}
       {(rules?.trackMess || rules?.spaceCapping) && (
         <div className="mess-visual-card" style={{ 
-          marginBottom: '14px', 
+          marginBottom: '8px', 
           padding: '8px 12px', 
           background: 'linear-gradient(135deg, rgba(20,20,35,0.85) 0%, rgba(35,35,55,0.85) 100%)', 
           borderRadius: '8px',
@@ -262,292 +307,326 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         </div>
       )}
 
-      {/* FRONT AND CENTER: DURABLES SHOWCASE */}
+      {/* FRONT AND CENTER: COLLECTIBLE DURABLES SHOWCASE */}
       <div style={{
         background: 'linear-gradient(180deg, rgba(16, 20, 36, 0.9) 0%, rgba(10, 12, 22, 0.95) 100%)',
-        borderRadius: '12px',
+        borderRadius: '10px',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: '16px',
-        marginBottom: '16px',
-        boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.6)'
+        padding: '10px 12px',
+        marginBottom: '8px',
+        boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)',
+        flex: '1 1 auto',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h4 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '0.92em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            🛋️ {t('homeRelax.durablesShowcase', { defaultValue: 'Apartment Furnishings & Belongings' })}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexShrink: 0 }}>
+          <h4 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '0.88em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            🛋️ {t('homeRelax.durablesShowcase', { defaultValue: 'Apartment Furnishings' })}
           </h4>
-          <span style={{ fontSize: '0.75rem', color: '#888' }}>
-            {totalDurablesCount} {totalDurablesCount === 1 ? 'durable' : 'durables'} owned (Click to inspect)
+          <span style={{ fontSize: '0.74rem', color: totalDurablesCount > 0 ? '#2ecc71' : '#888', fontWeight: 'bold' }}>
+            {totalDurablesCount} / {allApplianceIds.length + allBookIds.length} Furnished
           </span>
         </div>
 
-        {totalDurablesCount === 0 ? (
-          <div style={{
-            padding: '24px 16px',
-            textAlign: 'center',
-            borderRadius: '8px',
-            background: 'rgba(0, 0, 0, 0.3)',
-            border: '1px dashed rgba(255, 255, 255, 0.15)',
-            color: '#94a3b8'
-          }}>
-            <div style={{ fontSize: '2rem', marginBottom: '6px' }}>📦</div>
-            <div style={{ fontSize: '0.88rem', fontWeight: 'bold', color: '#e2e8f0', marginBottom: '4px' }}>
-              Your apartment is completely unfurnished!
-            </div>
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8', maxWidth: '340px', margin: '0 auto' }}>
-              Just bare floors and echoing walls. Visit Socket City or Z-Mart to buy appliances and books to furnish your home and improve your lifestyle.
-            </div>
-          </div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))',
-            gap: '12px',
-            justifyItems: 'center',
-            maxHeight: '220px',
-            overflowY: 'auto',
-            padding: '4px'
-          }}>
-            {/* Appliances */}
-            {uniqueAppliances.map((app) => {
-              const itemDef = campaign?.items?.find(i => i.id === app.id);
-              const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : app.id;
-              const isNew = app.condition === 'new' || app.purchaseSource === 'socket_city';
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(66px, 1fr))',
+          gap: '8px',
+          justifyItems: 'center',
+          overflowY: 'auto',
+          padding: '2px',
+          flex: '1 1 auto'
+        }}>
+          {/* Appliances */}
+          {allApplianceIds.map((appDefId) => {
+            const ownedApp = uniqueAppliances.find(a => a.id === appDefId);
+            const isOwned = Boolean(ownedApp);
+            const itemDef = campaign?.items?.find(i => i.id === appDefId);
+            const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : appDefId;
+            const isNew = ownedApp ? (ownedApp.condition === 'new' || ownedApp.purchaseSource === 'socket_city') : false;
 
-              return (
-                <div
-                  key={app.id}
-                  onClick={() => setInspectedDurable({ id: app.id, isBook: false, applianceData: app })}
-                  title={`${itemName} (${isNew ? 'New' : 'Used'}) — Click to inspect`}
+            return (
+              <div
+                key={appDefId}
+                onClick={() => setInspectedDurable({
+                  id: appDefId,
+                  isBook: false,
+                  applianceData: ownedApp,
+                  isOwned
+                })}
+                title={isOwned 
+                  ? `${itemName} (${isNew ? 'New' : 'Used'}) — Click to inspect`
+                  : `${itemName} (Unowned — Available at Socket City/Z-Mart)`}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '66px',
+                  height: '74px',
+                  background: isOwned ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
+                  border: isOwned 
+                    ? `1.5px solid ${isNew ? '#2ecc71' : '#3498db'}`
+                    : '1.5px dashed rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  boxShadow: isOwned 
+                    ? (isNew ? '0 0 8px rgba(46, 204, 113, 0.25)' : '0 0 8px rgba(52, 152, 219, 0.25)')
+                    : 'none',
+                  opacity: isOwned ? 1 : 0.45,
+                  transition: 'all 0.15s ease',
+                  position: 'relative',
+                  padding: '4px 2px',
+                  boxSizing: 'border-box'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)';
+                  if (isOwned) {
+                    e.currentTarget.style.boxShadow = isNew 
+                      ? '0 0 12px rgba(46, 204, 113, 0.5)' 
+                      : '0 0 12px rgba(52, 152, 219, 0.5)';
+                  } else {
+                    e.currentTarget.style.opacity = '0.8';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  if (isOwned) {
+                    e.currentTarget.style.boxShadow = isNew 
+                      ? '0 0 8px rgba(46, 204, 113, 0.25)' 
+                      : '0 0 8px rgba(52, 152, 219, 0.25)';
+                  } else {
+                    e.currentTarget.style.opacity = '0.45';
+                  }
+                }}
+              >
+                <img
+                  src={`/assets/raw_images/${appDefId}.png`}
+                  alt={itemName}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '74px',
-                    height: '84px',
-                    background: 'rgba(0, 0, 0, 0.45)',
-                    border: `1.5px solid ${isNew ? '#2ecc71' : '#3498db'}`,
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    boxShadow: isNew 
-                      ? '0 0 10px rgba(46, 204, 113, 0.25)' 
-                      : '0 0 10px rgba(52, 152, 219, 0.25)',
-                    transition: 'all 0.2s ease',
-                    position: 'relative',
-                    padding: '6px 4px',
-                    boxSizing: 'border-box'
+                    width: '38px',
+                    height: '38px',
+                    objectFit: 'contain',
+                    filter: isOwned 
+                      ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' 
+                      : 'grayscale(100%) opacity(0.35) brightness(0.6)'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
-                    e.currentTarget.style.boxShadow = isNew 
-                      ? '0 0 16px rgba(46, 204, 113, 0.5)' 
-                      : '0 0 16px rgba(52, 152, 219, 0.5)';
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = isNew 
-                      ? '0 0 10px rgba(46, 204, 113, 0.25)' 
-                      : '0 0 10px rgba(52, 152, 219, 0.25)';
-                  }}
-                >
-                  <img
-                    src={`/assets/raw_images/${app.id}.png`}
-                    alt={itemName}
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      objectFit: 'contain',
-                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))'
-                    }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                  <span style={{
-                    fontSize: '0.66rem',
-                    color: '#e2e8f0',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '68px',
-                    marginTop: '4px'
-                  }}>
-                    {itemName}
-                  </span>
+                />
+                <span style={{
+                  fontSize: '0.62rem',
+                  color: isOwned ? '#e2e8f0' : '#718096',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '60px',
+                  marginTop: '2px'
+                }}>
+                  {itemName}
+                </span>
+                {isOwned && (
                   <span style={{
                     position: 'absolute',
-                    top: '3px',
-                    right: '4px',
-                    fontSize: '0.65rem'
+                    top: '2px',
+                    right: '3px',
+                    fontSize: '0.62rem'
                   }}>
                     {isNew ? '✨' : '📦'}
                   </span>
-                </div>
-              );
-            })}
+                )}
+              </div>
+            );
+          })}
 
-            {/* Books */}
-            {ownedBooks.map((bId) => {
-              const itemDef = campaign?.items?.find(i => i.id === bId);
-              const bookName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : bId;
+          {/* Books */}
+          {allBookIds.map((bId) => {
+            const isOwned = ownedBooks.includes(bId);
+            const itemDef = campaign?.items?.find(i => i.id === bId);
+            const bookName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : bId;
 
-              return (
-                <div
-                  key={bId}
-                  onClick={() => setInspectedDurable({ id: bId, isBook: true })}
-                  title={`${bookName} (Book) — Click to inspect`}
+            return (
+              <div
+                key={bId}
+                onClick={() => setInspectedDurable({
+                  id: bId,
+                  isBook: true,
+                  isOwned
+                })}
+                title={isOwned 
+                  ? `${bookName} (Book) — Click to inspect`
+                  : `${bookName} (Book, Unowned — Available at Socket City/Z-Mart)`}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '66px',
+                  height: '74px',
+                  background: isOwned ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
+                  border: isOwned ? '1.5px solid #9b59b6' : '1.5px dashed rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  boxShadow: isOwned ? '0 0 8px rgba(155, 89, 182, 0.25)' : 'none',
+                  opacity: isOwned ? 1 : 0.45,
+                  transition: 'all 0.15s ease',
+                  position: 'relative',
+                  padding: '4px 2px',
+                  boxSizing: 'border-box'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)';
+                  if (isOwned) {
+                    e.currentTarget.style.boxShadow = '0 0 12px rgba(155, 89, 182, 0.5)';
+                  } else {
+                    e.currentTarget.style.opacity = '0.8';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  if (isOwned) {
+                    e.currentTarget.style.boxShadow = '0 0 8px rgba(155, 89, 182, 0.25)';
+                  } else {
+                    e.currentTarget.style.opacity = '0.45';
+                  }
+                }}
+              >
+                <img
+                  src={`/assets/raw_images/${bId}.png`}
+                  alt={bookName}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '74px',
-                    height: '84px',
-                    background: 'rgba(0, 0, 0, 0.45)',
-                    border: '1.5px solid #9b59b6',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    boxShadow: '0 0 10px rgba(155, 89, 182, 0.25)',
-                    transition: 'all 0.2s ease',
-                    position: 'relative',
-                    padding: '6px 4px',
-                    boxSizing: 'border-box'
+                    width: '38px',
+                    height: '38px',
+                    objectFit: 'contain',
+                    filter: isOwned 
+                      ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' 
+                      : 'grayscale(100%) opacity(0.35) brightness(0.6)'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
-                    e.currentTarget.style.boxShadow = '0 0 16px rgba(155, 89, 182, 0.5)';
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = '0 0 10px rgba(155, 89, 182, 0.25)';
-                  }}
-                >
-                  <img
-                    src={`/assets/raw_images/${bId}.png`}
-                    alt={bookName}
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      objectFit: 'contain',
-                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))'
-                    }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                  <span style={{
-                    fontSize: '0.66rem',
-                    color: '#e2e8f0',
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '68px',
-                    marginTop: '4px'
-                  }}>
-                    {bookName}
-                  </span>
+                />
+                <span style={{
+                  fontSize: '0.62rem',
+                  color: isOwned ? '#e2e8f0' : '#718096',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '60px',
+                  marginTop: '2px'
+                }}>
+                  {bookName}
+                </span>
+                {isOwned && (
                   <span style={{
                     position: 'absolute',
-                    top: '3px',
-                    right: '4px',
-                    fontSize: '0.65rem'
+                    top: '2px',
+                    right: '3px',
+                    fontSize: '0.62rem'
                   }}>
                     📚
                   </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* ACTION CONTROLS BAR (Leisure, Chores, Pantry) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '12px'
+        gap: '8px',
+        flexShrink: 0,
+        marginTop: 'auto',
+        paddingTop: '6px',
+        borderTop: '1px solid rgba(255, 255, 255, 0.12)'
       }}>
         {/* Leisure Button */}
         <button
           onClick={() => setActiveDeck('leisure')}
           style={{
-            padding: '12px 10px',
+            padding: '8px 6px',
             background: 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
             color: '#000',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             fontWeight: 'bold',
-            fontSize: '0.95rem',
+            fontSize: '0.9rem',
             cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+            boxShadow: '0 3px 10px rgba(16, 185, 129, 0.35)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '4px',
+            gap: '2px',
             transition: 'transform 0.15s ease'
           }}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
         >
-          <span style={{ fontSize: '1.4rem' }}>🛋️</span>
+          <span style={{ fontSize: '1.25rem' }}>🛋️</span>
           <span>{t('homeRelax.btnLeisure', { defaultValue: 'Leisure' })}</span>
-          <span style={{ fontSize: '0.68rem', color: '#064e3b', fontWeight: 'bold' }}>Relax & Socialize</span>
+          <span style={{ fontSize: '0.65rem', color: '#064e3b', fontWeight: 'bold' }}>Relax & Socialize</span>
         </button>
 
         {/* Chores Button */}
         <button
           onClick={() => setActiveDeck('chores')}
           style={{
-            padding: '12px 10px',
+            padding: '8px 6px',
             background: 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
             color: '#fff',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             fontWeight: 'bold',
-            fontSize: '0.95rem',
+            fontSize: '0.9rem',
             cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(2, 132, 199, 0.4)',
+            boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '4px',
+            gap: '2px',
             transition: 'transform 0.15s ease'
           }}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
         >
-          <span style={{ fontSize: '1.4rem' }}>🧹</span>
+          <span style={{ fontSize: '1.25rem' }}>🧹</span>
           <span>{t('homeRelax.btnChores', { defaultValue: 'Chores' })}</span>
-          <span style={{ fontSize: '0.68rem', color: '#e0f2fe', fontWeight: 'normal' }}>Clean & Service</span>
+          <span style={{ fontSize: '0.65rem', color: '#e0f2fe', fontWeight: 'normal' }}>Clean & Service</span>
         </button>
 
         {/* Pantry Button */}
         <button
           onClick={() => setActiveDeck('pantry')}
           style={{
-            padding: '12px 10px',
+            padding: '8px 6px',
             background: 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
             color: '#000',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             fontWeight: 'bold',
-            fontSize: '0.95rem',
+            fontSize: '0.9rem',
             cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+            boxShadow: '0 3px 10px rgba(245, 158, 11, 0.35)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '4px',
+            gap: '2px',
             transition: 'transform 0.15s ease'
           }}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
         >
-          <span style={{ fontSize: '1.4rem' }}>🥫</span>
+          <span style={{ fontSize: '1.25rem' }}>🥫</span>
           <span>{t('homeRelax.btnPantry', { defaultValue: 'Pantry' })}</span>
-          <span style={{ fontSize: '0.68rem', color: '#78350f', fontWeight: 'bold' }}>
+          <span style={{ fontSize: '0.65rem', color: '#78350f', fontWeight: 'bold' }}>
             {player.inventory?.freshFoodUnits || 0} units
           </span>
         </button>
@@ -629,6 +708,14 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           durable={inspectedDurable}
           campaign={campaign}
           onClose={() => setInspectedDurable(null)}
+        />
+      )}
+
+      {/* MOCKUP SANDBOX MODAL */}
+      {isSandboxOpen && (
+        <ApartmentMockupSandbox
+          campaign={campaign}
+          onClose={() => setIsSandboxOpen(false)}
         />
       )}
     </div>
