@@ -134,6 +134,42 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         modal.style.overflow = 'visible';
         setModalParent(modal);
       }
+      const content = panelRef.current.closest<HTMLElement>('.building-modal__content');
+      const prevOverflow = content?.style.overflowY;
+      const prevDisplay = content?.style.display;
+      const prevDirection = content?.style.flexDirection;
+      if (content) {
+        content.style.overflowY = 'hidden';
+        content.style.display = 'flex';
+        content.style.flexDirection = 'column';
+      }
+      const parent = panelRef.current.parentElement;
+      const prevParentHeight = parent?.style.height;
+      const prevParentFlex = parent?.style.flex;
+      const prevParentMinHeight = parent?.style.minHeight;
+      const prevParentDisplay = parent?.style.display;
+      const prevParentDirection = parent?.style.flexDirection;
+      if (parent && parent !== content) {
+        parent.style.height = '100%';
+        parent.style.flex = '1';
+        parent.style.minHeight = '0';
+        parent.style.display = 'flex';
+        parent.style.flexDirection = 'column';
+      }
+      return () => {
+        if (content) {
+          content.style.overflowY = prevOverflow || '';
+          content.style.display = prevDisplay || '';
+          content.style.flexDirection = prevDirection || '';
+        }
+        if (parent && parent !== content) {
+          parent.style.height = prevParentHeight || '';
+          parent.style.flex = prevParentFlex || '';
+          parent.style.minHeight = prevParentMinHeight || '';
+          parent.style.display = prevParentDisplay || '';
+          parent.style.flexDirection = prevParentDirection || '';
+        }
+      };
     }
   }, []);
 
@@ -168,6 +204,9 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
       className="interaction-panel home-apartment-panel" 
       style={{ 
         width: '100%', 
+        height: '100%',
+        flex: '1 1 auto',
+        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         boxSizing: 'border-box',
@@ -187,22 +226,27 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           fontSize: '12px',
           display: 'flex',
           alignItems: 'center',
-          gap: '6px'
+          gap: '6px',
+          flexShrink: 0
         }}>
           <span>{actionFeedback.isError ? '⚠️' : '✓'}</span>
           <span>{actionFeedback.message}</span>
         </div>
       )}
 
-      {/* Space & Mess Opposing Gauge Bar */}
+      {/* Space & Mess Opposing Gauge Bar - Fixed / Always Visible */}
       {(rules?.trackMess || rules?.spaceCapping) && (
         <div className="mess-visual-card" style={{ 
           marginBottom: '8px', 
           padding: '8px 12px', 
-          background: 'linear-gradient(135deg, rgba(20,20,35,0.85) 0%, rgba(35,35,55,0.85) 100%)', 
+          background: 'linear-gradient(135deg, rgba(20,20,35,0.95) 0%, rgba(35,35,55,0.95) 100%)', 
           borderRadius: '8px',
           border: isOvercapacity ? '1px solid #e74c3c' : `1px solid ${messBarColor}`,
-          boxShadow: isOvercapacity ? '0 0 10px rgba(231,76,60,0.4)' : `0 0 8px ${messBarColor}22`
+          boxShadow: isOvercapacity ? '0 0 10px rgba(231,76,60,0.4)' : `0 0 8px ${messBarColor}22`,
+          flexShrink: 0,
+          position: 'sticky',
+          top: 0,
+          zIndex: 20
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
             <span style={{ fontWeight: 'bold', fontSize: '0.85em', color: '#00e5ff' }}>
@@ -297,11 +341,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 
       {/* MIDDLE CONTENT: EITHER ACTIVE CARD DECK OR DURABLES SHOWCASE */}
       {activeDeck === 'leisure' ? (
-        <HomeCardDeck
-          title={t('homeRelax.deckLeisure', { defaultValue: 'Leisure & Living' })}
-          icon="🛋️"
-          onClose={() => setActiveDeck(null)}
-        >
+        <HomeCardDeck>
           <LeisureCards
             hoursToRelax={hoursToRelax}
             isRelaxDisabled={isRelaxDisabled}
@@ -323,11 +363,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           />
         </HomeCardDeck>
       ) : activeDeck === 'chores' ? (
-        <HomeCardDeck
-          title={t('homeRelax.deckChores', { defaultValue: 'Chores & Maintenance' })}
-          icon="🧹"
-          onClose={() => setActiveDeck(null)}
-        >
+        <HomeCardDeck>
           <ChoresCards
             hoursToClean={hoursToClean}
             cleanPhysGain={cleanPhysGain}
@@ -346,11 +382,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           />
         </HomeCardDeck>
       ) : activeDeck === 'pantry' ? (
-        <HomeCardDeck
-          title={t('homeRelax.deckPantry', { defaultValue: 'Kitchen & Pantry' })}
-          icon="🥫"
-          onClose={() => setActiveDeck(null)}
-        >
+        <HomeCardDeck>
           <PantryCard
             freshFoodUnits={player.inventory?.freshFoodUnits || 0}
             fastFoodItems={player.inventory?.fastFoodItems || []}

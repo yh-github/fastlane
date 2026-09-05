@@ -197,38 +197,39 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     // Click Leisure
     fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
 
-    // Now Leisure deck is visible, durables showcase is replaced, but Mess gauge is STILL visible!
-    expect(screen.getByText(/Leisure & Living/i)).toBeInTheDocument();
+    // Now Leisure deck is visible without redundant section title or back button, Mess gauge is STILL visible!
     expect(screen.getByText(/Relax & Recharge/i)).toBeInTheDocument();
     expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
     expect(screen.queryByText(/Apartment Furnishings/i)).toBeNull();
-
-    // Click "✕ Back to Furnishings"
-    fireEvent.click(screen.getByRole('button', { name: /✕ Back to Furnishings/i }));
-    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
     expect(screen.queryByText(/Leisure & Living/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /✕ Back to Furnishings/i })).toBeNull();
+
+    // Clicking active Leisure button toggles back to furnishings
+    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
+    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Relax & Recharge/i)).toBeNull();
 
     // Click Chores
     fireEvent.click(screen.getByRole('button', { name: /Chores/i }));
-    expect(screen.getByText(/Chores & Maintenance/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Clean Apartment/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Call Cleaning Service/i })).toBeInTheDocument();
     expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Chores & Maintenance/i)).toBeNull();
 
     // Clicking active Chores button toggles back to furnishings
     fireEvent.click(screen.getByRole('button', { name: /Chores/i }));
     expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Chores & Maintenance/i)).toBeNull();
+    expect(screen.queryByRole('heading', { name: /Clean Apartment/i })).toBeNull();
 
     // Switching directly from Pantry to Leisure
     fireEvent.click(screen.getByRole('button', { name: /Pantry/i }));
-    expect(screen.getByText(/Kitchen & Pantry/i)).toBeInTheDocument();
     expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
     expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Kitchen & Pantry/i)).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
-    expect(screen.getByText(/Leisure & Living/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Kitchen & Pantry/i)).toBeNull();
+    expect(screen.getByText(/Relax & Recharge/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Pantry & Food Supplies/i)).toBeNull();
     expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
   });
 });
