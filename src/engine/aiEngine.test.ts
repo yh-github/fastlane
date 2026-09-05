@@ -1,8 +1,8 @@
 import { createTestGameState } from './testFactories';
 // @ts-nocheck
 import { describe, it, expect } from 'vitest';
-import { executeAITurn } from './aiEngine';
-import {  } from './gameState';
+import { executeAITurn, selectAiWeekendCard } from './aiEngine';
+import type { PlayerState, WeekendCard } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 
 describe('AI Engine', () => {
@@ -115,5 +115,119 @@ describe('AI Engine', () => {
     const actions = executeAITurn(aiPlayer, state, mockCampaign);
     
     expect(actions.length).toBe(0);
+  });
+
+  describe('selectAiWeekendCard', () => {
+    const mockCards: WeekendCard[] = [
+      {
+        id: 'card_cheap_mental',
+        tier: 'cheap',
+        type: 'random',
+        eventKey: 'event.1',
+        titleKey: 'title.1',
+        fluff: 'fluff',
+        icon: '🧠',
+        costMin: 5,
+        costMax: 20,
+        targetStat: 'mental',
+        potentialBonusMin: 0,
+        potentialBonusMax: 0
+      },
+      {
+        id: 'card_medium_dep',
+        tier: 'medium',
+        type: 'random',
+        eventKey: 'event.2',
+        titleKey: 'title.2',
+        fluff: 'fluff',
+        icon: '🤝',
+        costMin: 25,
+        costMax: 50,
+        targetStat: 'dependability',
+        potentialBonusMin: 1,
+        potentialBonusMax: 2
+      },
+      {
+        id: 'card_expensive_social',
+        tier: 'expensive',
+        type: 'random',
+        eventKey: 'event.3',
+        titleKey: 'title.3',
+        fluff: 'fluff',
+        icon: '👥',
+        costMin: 75,
+        costMax: 100,
+        targetStat: 'social',
+        potentialBonusMin: 3,
+        potentialBonusMax: 4
+      }
+    ];
+
+    it('selects affordable cheap card when low on cash', () => {
+      const player = {
+        money: 20,
+        mentalCondition: 50,
+        dependability: 50,
+        social: 10
+      } as unknown as PlayerState;
+
+      const chosenId = selectAiWeekendCard(player, mockCards);
+      expect(chosenId).toBe('card_cheap_mental');
+    });
+
+    it('prioritizes dependability card when dependability has a severe deficit', () => {
+      const player = {
+        money: 200,
+        mentalCondition: 80,
+        dependability: 20, // Severe deficit (80 - 20 = 60)
+        social: 40
+      } as unknown as PlayerState;
+
+      const chosenId = selectAiWeekendCard(player, mockCards);
+      expect(chosenId).toBe('card_medium_dep');
+    });
+
+    it('chooses clean over rest when broke and apartment mess is high', () => {
+      const player = {
+        money: 0,
+        mess: 25,
+        physicalCondition: 30,
+        mentalCondition: 50
+      } as unknown as PlayerState;
+
+      const brokeCards: WeekendCard[] = [
+        {
+          id: 'broke_stay_home',
+          tier: 'free',
+          type: 'rest',
+          eventKey: 'event.rest',
+          titleKey: 'title.rest',
+          fluff: 'fluff',
+          icon: '🛋️',
+          costMin: 0,
+          costMax: 0,
+          targetStat: 'mental',
+          potentialBonusMin: 1,
+          potentialBonusMax: 1
+        },
+        {
+          id: 'broke_deep_clean',
+          tier: 'free',
+          type: 'clean',
+          eventKey: 'event.clean',
+          titleKey: 'title.clean',
+          fluff: 'fluff',
+          icon: '🧹',
+          costMin: 0,
+          costMax: 0,
+          targetStat: 'mess',
+          potentialBonusMin: 8,
+          potentialBonusMax: 12
+        }
+      ];
+
+      const chosenId = selectAiWeekendCard(player, brokeCards);
+      expect(chosenId).toBe('broke_deep_clean');
+    });
   });
 });

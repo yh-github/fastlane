@@ -1,15 +1,21 @@
+import { useState } from 'react';
 import type { PlayerState, StatModification, GameRules } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
+import { WeekendCardView } from './WeekendCardView';
 
 interface WeekendScreenProps {
   player: PlayerState;
   turn: number;
   onStartWeek: () => void;
+  onSelectCard?: (cardId: string) => void;
   rules?: GameRules;
 }
 
-export function WeekendScreen({ player, turn, onStartWeek, rules }: WeekendScreenProps) {
+export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }: WeekendScreenProps) {
   const { t } = useTranslation();
+  const offeredCards = player.offeredWeekendCards || [];
+  const isSelectionMode = offeredCards.length > 0 && !player.weekendResult;
+  const [selectedCardId, setSelectedCardId] = useState<string>(offeredCards[0]?.id || '');
 
   const isHelpfulUI = rules?.helpfulUI ?? true;
 
@@ -61,11 +67,109 @@ export function WeekendScreen({ player, turn, onStartWeek, rules }: WeekendScree
     ? rawModifications 
     : rawModifications.filter(mod => mod.stat === 'money');
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // CARD SELECTION MODE
+  // ───────────────────────────────────────────────────────────────────────────
+  if (isSelectionMode) {
+    const handleConfirm = (cardId: string) => {
+      if (onSelectCard) {
+        onSelectCard(cardId);
+      }
+    };
+
+    return (
+      <div className="weekend-screen weekend-screen--selection" style={{
+        position: 'absolute', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
+        backgroundColor: 'rgba(5, 8, 15, 0.95)', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', color: 'white', zIndex: 1000, overflowY: 'auto', padding: '30px 16px',
+        boxSizing: 'border-box'
+      }}>
+        <h1 style={{ color: '#00e5ff', textShadow: '0 0 12px #00e5ff', margin: '0 0 8px', textAlign: 'center' }}>
+          {t('weekendScreen.cardChoiceTitle', { defaultValue: 'Weekend Plans' })}
+        </h1>
+        <h2 style={{ color: '#94a3b8', fontSize: '1.1rem', margin: '0 0 20px', textAlign: 'center' }}>
+          {t('weekendScreen.cardChoiceSubtitle', { defaultValue: 'Choose how {{name}} will spend the weekend before Week {{turn}} begins.', name: player.name, turn })}
+        </h2>
+
+        {/* Responsive Card Spread / Carousel Container */}
+        <div
+          className="weekend-cards-container"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '20px',
+            justifyContent: 'center',
+            alignItems: 'stretch',
+            width: '100%',
+            maxWidth: '960px',
+            margin: '10px 0 24px',
+            padding: '10px 4px'
+          }}
+        >
+          {offeredCards.map((card) => {
+            const isSelected = selectedCardId === card.id;
+            return (
+              <WeekendCardView
+                key={card.id}
+                card={card}
+                isSelected={isSelected}
+                onSelect={() => setSelectedCardId(card.id)}
+                onConfirm={() => handleConfirm(card.id)}
+              />
+            );
+          })}
+        </div>
+
+        {/* Sticky Mobile Friendly Confirm Bar */}
+        {selectedCardId && (
+          <div style={{
+            position: 'sticky',
+            bottom: '16px',
+            zIndex: 10,
+            marginTop: 'auto',
+            padding: '12px 24px',
+            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+            borderRadius: '12px',
+            border: '1px solid rgba(0, 229, 255, 0.4)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            gap: '16px',
+            alignItems: 'center'
+          }}>
+            <span style={{ fontSize: '0.95rem', color: '#e2e8f0' }}>
+              {t('weekendScreen.selectedPrompt', { defaultValue: 'Ready to commit your plans?' })}
+            </span>
+            <button
+              onClick={() => handleConfirm(selectedCardId)}
+              style={{
+                padding: '10px 24px',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                backgroundColor: '#00e5ff',
+                color: '#000',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                boxShadow: '0 0 10px #00e5ff'
+              }}
+            >
+              {t('weekendScreen.confirmSelection', { defaultValue: 'Lock In Weekend' })}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // SUMMARY / RESOLUTION MODE
+  // ───────────────────────────────────────────────────────────────────────────
   return (
-    <div className="weekend-screen" style={{
+    <div className="weekend-screen weekend-screen--summary" style={{
       position: 'absolute', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
       backgroundColor: 'rgba(0, 0, 0, 0.90)', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', color: 'white', zIndex: 1000, overflowY: 'auto', padding: '40px 20px'
+      alignItems: 'center', color: 'white', zIndex: 1000, overflowY: 'auto', padding: '40px 20px',
+      boxSizing: 'border-box'
     }}>
       <h1 style={{ color: '#00e5ff', textShadow: '0 0 10px #00e5ff' }}>{t('weekendScreen.title')}</h1>
       <h2>{t('weekendScreen.summary', { turn, name: player.name })}</h2>
@@ -82,9 +186,27 @@ export function WeekendScreen({ player, turn, onStartWeek, rules }: WeekendScree
           
           {player.weekendResult ? (
             <>
+              {player.weekendResult.chosenCard && (
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  backgroundColor: 'rgba(0, 229, 255, 0.12)',
+                  border: '1px solid rgba(0, 229, 255, 0.3)',
+                  padding: '4px 12px',
+                  borderRadius: '16px',
+                  marginBottom: '12px',
+                  fontSize: '0.9rem',
+                  color: '#00e5ff'
+                }}>
+                  <span>{player.weekendResult.chosenCard.icon}</span>
+                  <span>{t(player.weekendResult.chosenCard.titleKey, { defaultValue: 'Weekend Choice' })}</span>
+                </div>
+              )}
+
               <h4 style={{ color: '#f1c40f', margin: '0 0 12px 0' }}>{t('weekendScreen.whatYouDid')}</h4>
               <p style={{ fontSize: '1.15em', fontStyle: 'italic', marginBottom: '18px', lineHeight: 1.4 }}>
-                "{t(player.weekendResult.event.key, player.weekendResult.event.params as any) as string}"
+                "{player.weekendResult.chosenCard ? player.weekendResult.chosenCard.fluff : (t(player.weekendResult.event.key, player.weekendResult.event.params as any) as string)}"
               </p>
 
               {modifications.length > 0 && (
@@ -182,3 +304,4 @@ export function WeekendScreen({ player, turn, onStartWeek, rules }: WeekendScree
     </div>
   );
 }
+

@@ -134,6 +134,11 @@ describe('App Integration & StrictMode', () => {
       fireEvent.click(homeNodeBtn);
     }
 
+    const leisureBtn = screen.queryByRole('button', { name: /Leisure/i });
+    if (leisureBtn) {
+      fireEvent.click(leisureBtn);
+    }
+
     // Relax in home modal to spend down hours
     const relaxBtn = await screen.findByTestId('btn-relax');
     expect(relaxBtn).toBeInTheDocument();
@@ -169,6 +174,15 @@ describe('App Integration & StrictMode', () => {
         await new Promise(r => setTimeout(r, 0));
       });
       nextOrContinue = screen.queryByRole('button', { name: /Next|Continue/i });
+    }
+
+    // If on card choice screen (Advanced Edition), pick a weekend activity first
+    const chooseActivityBtn = screen.queryByText(/Lock In Weekend/i);
+    if (chooseActivityBtn) {
+      fireEvent.click(chooseActivityBtn);
+      await act(async () => {
+        await new Promise(r => setTimeout(r, 0));
+      });
     }
 
     // Wait for Weekend Screen and click start week

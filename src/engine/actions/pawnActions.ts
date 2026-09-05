@@ -2,6 +2,7 @@ import type { PlayerState, OwnedAppliance, PawnedItem } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { calcUsedSpace, calcHousingSpaceCap } from '../statMath';
 import { applyHappinessChange } from '../statEffects';
+import { addApplianceCardToDeck, removeApplianceCardFromDeck } from '../weekendEngine';
 
 export function handlePawnItemAction(
   player: PlayerState,
@@ -27,14 +28,19 @@ export function handlePawnItemAction(
   }
 
   nextPlayer.inventory.appliances = nextPlayer.inventory.appliances.filter(a => a.id !== action.item.id);
+  if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
+    nextPlayer = removeApplianceCardFromDeck(nextPlayer, action.item.id);
+  }
   if (!nextPlayer.inventory.pawnedItems) nextPlayer.inventory.pawnedItems = [];
+  const trackCondition = !!(context.rules.advancedHomeGUI || context.rules.usePhysicalMentalConditions);
   const pawnedItem: PawnedItem = {
     itemId: action.item.id,
     originalPrice: action.item.purchasePrice,
     redeemCost: Math.floor(action.item.purchasePrice * 0.5),
     weekPawned: context.turn,
     ownerId: nextPlayer.id,
-    purchaseSource: action.item.purchaseSource || 'socket_city'
+    purchaseSource: action.item.purchaseSource || 'socket_city',
+    ...((trackCondition || action.item.condition) ? { condition: action.item.condition || (action.item.purchaseSource === 'socket_city' ? 'new' : 'used') } : {})
   };
   nextPlayer.inventory.pawnedItems.push(pawnedItem);
   nextPlayer.money += action.value;
@@ -77,11 +83,22 @@ export function handleRedeemItemAction(
     }
     nextPlayer.money -= action.cost;
     nextPlayer.inventory.pawnedItems = nextPlayer.inventory.pawnedItems.filter(a => a.itemId !== action.item.itemId);
+    const trackCondition = !!(context.rules.advancedHomeGUI || context.rules.usePhysicalMentalConditions);
+    const existingRedeem = nextPlayer.inventory.appliances.filter(a => a.id === action.item.itemId);
+    const hasAnyNewRedeem = action.item.condition === 'new' || action.item.purchaseSource === 'socket_city' || existingRedeem.some(a => a.condition === 'new' || a.purchaseSource === 'socket_city');
+    const redeemCondition: 'new' | 'used' = hasAnyNewRedeem ? 'new' : 'used';
+    if (hasAnyNewRedeem && trackCondition) {
+      nextPlayer.inventory.appliances = nextPlayer.inventory.appliances.map(a => a.id === action.item.itemId ? { ...a, condition: 'new' as const } : a);
+    }
     nextPlayer.inventory.appliances.push({
       id: action.item.itemId,
       purchasePrice: action.item.originalPrice,
-      purchaseSource: action.item.purchaseSource || 'socket_city'
+      purchaseSource: action.item.purchaseSource || 'socket_city',
+      ...((trackCondition || action.item.condition) ? { condition: redeemCondition } : {})
     });
+    if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
+      nextPlayer = addApplianceCardToDeck(nextPlayer, action.item.itemId);
+    }
     const formatItem = (id: string) => context.campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const itemName = formatItem(action.item.itemId);
     actionLog = { key: 'action.pawn.redeemed', params: { itemName, cost: action.cost } };
@@ -121,11 +138,19 @@ export function handleBuyPawnItemAction(
     }
     nextPlayer.money -= action.cost;
     updatedPawnShopItemsForSale = (context.state.pawnShopItemsForSale || []).filter(i => i.itemId !== action.item.itemId);
+    const trackCondition = !!(context.rules.advancedHomeGUI || context.rules.usePhysicalMentalConditions);
+    const existingBuy = nextPlayer.inventory.appliances.filter(a => a.id === action.item.itemId);
+    const hasAnyNewBuy = existingBuy.some(a => a.condition === 'new' || a.purchaseSource === 'socket_city');
+    const buyCondition: 'new' | 'used' = hasAnyNewBuy ? 'new' : 'used';
     nextPlayer.inventory.appliances.push({
       id: action.item.itemId,
       purchasePrice: action.item.originalPrice,
-      purchaseSource: 'pawnshop'
+      purchaseSource: 'pawnshop',
+      ...((trackCondition || action.item.condition) ? { condition: buyCondition } : {})
     });
+    if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
+      nextPlayer = addApplianceCardToDeck(nextPlayer, action.item.itemId);
+    }
     const formatItem = (id: string) => context.campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const itemName = formatItem(action.item.itemId);
     actionLog = { key: 'action.pawn.bought', params: { itemName, cost: action.cost } };

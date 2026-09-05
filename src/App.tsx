@@ -8,9 +8,10 @@ import { SetupScreen } from './ui/SetupScreen';
 import { GameOverScreen } from './ui/GameOverScreen';
 import { GameLog } from './ui/GameLog';
 import { createInitialGameState } from './engine/gameState';
-import { generateRandomSeed } from './utils/rng';
+import { generateRandomSeed, Random } from './utils/rng';
 import { processTurnStart } from './engine/turnProcessor';
 import { WeekendScreen } from './ui/WeekendScreen';
+import { resolveWeekendChoice } from './engine/weekendEngine';
 import { InventoryModal } from './ui/InventoryModal';
 import { NewspaperModal } from './ui/NewspaperModal';
 import { SettingsModal } from './ui/SettingsModal';
@@ -127,6 +128,20 @@ export default function App() {
         player={activePlayer}
         turn={gameState.turn}
         rules={gameState.rules}
+        onSelectCard={(cardId: string) => {
+          const rng = new Random(gameState.rngState);
+          const resolvedPlayer = resolveWeekendChoice(activePlayer, cardId, rng, gameState.rules, campaign?.config.statRules);
+          const newPlayers = [...gameState.players];
+          newPlayers[activePlayerIndex] = resolvedPlayer;
+          setGameState({
+            ...gameState,
+            players: newPlayers,
+            rngState: rng.getState()
+          });
+          if (resolvedPlayer.weekendResult) {
+            addLog({ key: `Weekend: ${resolvedPlayer.name} selected activity.` }, gameState.turn, activePlayer.id);
+          }
+        }}
         onStartWeek={() => {
           const newPlayers = [...gameState.players];
           newPlayers[activePlayerIndex] = {

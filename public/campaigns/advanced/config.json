@@ -28,7 +28,8 @@
     "conditionResolution": 0.5,
     "educationResolution": 0.1,
     "spaceCapping": true,
-    "grantExpOnJobSwitch": false
+    "grantExpOnJobSwitch": false,
+    "alternativeWeekends": true
   },
   "statRules": {
     "startingPhysicalCondition": 50,

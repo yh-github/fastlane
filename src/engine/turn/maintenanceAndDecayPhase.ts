@@ -6,7 +6,8 @@ import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calc
 import { calcLiquidAssets, applyMarketCrash, applyEconomicBoom } from '../economyEngine';
 import { applyHappinessChange } from '../statEffects';
 import { processApartmentRobbery, processDonations } from '../eventEngine';
-import { processWeekend } from '../weekendEngine';
+import { processWeekend, generateWeekendChoices, resolveWeekendChoice } from '../weekendEngine';
+import { selectAiWeekendCard } from '../aiEngine';
 import { resetPlayerClock } from '../timeManager';
 
 export function processMaintenanceAndDecayPhase(
@@ -56,8 +57,21 @@ export function processMaintenanceAndDecayPhase(
   }
 
   // 4. Weekend
-  const weekendResult = processWeekend(player, state.turn, previousPlayerWeekends, campaign.weekends, rng, state.rules, campaign);
-  player = weekendResult;
+  if (state.rules?.alternativeWeekends) {
+    if (player.isAi) {
+      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng);
+      const bestCardId = selectAiWeekendCard(pWithChoices, cards);
+      player = resolveWeekendChoice(pWithChoices, bestCardId, rng, state.rules, campaign.config.statRules);
+    } else {
+      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng);
+      player = pWithChoices;
+      player.offeredWeekendCards = cards;
+      player.weekendResult = undefined;
+    }
+  } else {
+    const weekendResult = processWeekend(player, state.turn, previousPlayerWeekends, campaign.weekends, rng, state.rules, campaign);
+    player = weekendResult;
+  }
   if (player.weekendResult) {
     previousPlayerWeekends.push(player.weekendResult.event.key);
   }

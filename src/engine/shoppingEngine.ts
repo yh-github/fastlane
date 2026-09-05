@@ -2,6 +2,7 @@ import { type PlayerState, type GameRules, type GameEvent } from './gameState';
 import type { ItemDef, CampaignBundle } from './dataLoader';
 import { applyMentalChange, applyMoraleEffect } from './statEffects';
 import { calcUsedSpace, calcHousingSpaceCap } from './statMath';
+import { addApplianceCardToDeck } from './weekendEngine';
 
 export interface ShoppingResult {
   updated: PlayerState;
@@ -136,13 +137,33 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
         else if (hasCasual) updated.inventory.selectedClothes = 'casual';
       }
       break;
-    case 'appliance':
-      updated.inventory.appliances = [...updated.inventory.appliances, {
+    case 'appliance': {
+      const source = (item.store as 'socket_city' | 'z_mart' | 'pawnshop') || 'z_mart';
+      const isNew = source === 'socket_city';
+      const existingItems = updated.inventory.appliances.filter(a => a.id === item.id);
+      const hasAnyNew = isNew || existingItems.some(a => a.condition === 'new' || a.purchaseSource === 'socket_city');
+      const itemCondition: 'new' | 'used' = hasAnyNew ? 'new' : 'used';
+      const trackCondition = !!(rules?.advancedHomeGUI || rules?.usePhysicalMentalConditions);
+
+      // If any copy is new, all copies of this appliance keep the 'new' condition
+      const updatedAppliances = updated.inventory.appliances.map(a => {
+        if (a.id === item.id && hasAnyNew && trackCondition) {
+          return { ...a, condition: 'new' as const };
+        }
+        return a;
+      });
+
+      updated.inventory.appliances = [...updatedAppliances, {
         id: item.id,
         purchasePrice: price,
-        purchaseSource: (item.store as 'socket_city' | 'z_mart' | 'pawnshop') || 'z_mart'
+        purchaseSource: source,
+        ...(trackCondition ? { condition: itemCondition } : {})
       }];
+      if (rules?.alternativeWeekends && updated.weekendDecks) {
+        updated = addApplianceCardToDeck(updated, item.id);
+      }
       break;
+    }
     case 'book':
       const hadAllBooksBefore = player.inventory.books?.includes('dictionary') &&
                                 player.inventory.books?.includes('encyclopedia') &&
