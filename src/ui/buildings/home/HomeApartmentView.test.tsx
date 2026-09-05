@@ -101,9 +101,9 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     // Close the inspection modal
     fireEvent.click(screen.getByRole('button', { name: /Back to Apartment|✕/i }));
 
-    // Clicking Mockups Sandbox button opens the sandbox modal
-    fireEvent.click(screen.getByRole('button', { name: /🎨 Mockups Sandbox/i }));
-    expect(screen.getByText(/Apartment Visual Mockups & Playground/i)).toBeInTheDocument();
+    // Title bar and mockups sandbox button should NOT be in the view
+    expect(screen.queryByRole('button', { name: /🎨 Mockups Sandbox/i })).toBeNull();
+    expect(screen.queryByText(/Home Sweet Home/i)).toBeNull();
   });
 
   it('allows switching mockup concepts and toggling controls in ApartmentMockupSandbox', () => {

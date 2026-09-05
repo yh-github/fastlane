@@ -136,7 +136,7 @@ body {
   flex-direction: column;
   box-shadow: 0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan);
   z-index: 50;
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
 }
 
