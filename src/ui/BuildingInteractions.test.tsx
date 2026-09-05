@@ -583,8 +583,8 @@ describe('BuildingInteractions', () => {
     );
 
     // Verify Showcase headers
-    expect(screen.getByText(/Apartment Furnishings & Belongings/i)).toBeInTheDocument();
-    expect(screen.getByText(/3 durables owned/i)).toBeInTheDocument();
+    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 \/ 13 Furnished/i)).toBeInTheDocument();
 
     // Verify Durables shown in showcase
     expect(screen.getByText(/Refrigerator/i)).toBeInTheDocument();
