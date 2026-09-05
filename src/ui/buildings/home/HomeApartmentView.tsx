@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
@@ -7,7 +8,6 @@ import { LeisureCards } from './LeisureCards';
 import { ChoresCards } from './ChoresCards';
 import { PantryCard } from './PantryCard';
 import { DurableCardModal } from './DurableCardModal';
-import { ApartmentMockupSandbox } from './ApartmentMockupSandbox';
 
 const DEFAULT_APPLIANCES = [
   'refrigerator', 'freezer', 'stove', 'microwave',
@@ -75,7 +75,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   player,
   campaign,
   rules,
-  housingName,
+  housingName: _housingName,
   actionFeedback,
   durablesSpace,
   totalUsedSpace,
@@ -117,13 +117,25 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const [activeDeck, setActiveDeck] = useState<'leisure' | 'chores' | 'pantry' | null>(null);
-  const [isSandboxOpen, setIsSandboxOpen] = useState<boolean>(false);
   const [inspectedDurable, setInspectedDurable] = useState<{
     id: string;
     isBook?: boolean;
     applianceData?: OwnedAppliance;
     isOwned?: boolean;
   } | null>(null);
+
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [modalParent, setModalParent] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (panelRef.current) {
+      const modal = panelRef.current.closest<HTMLElement>('.building-modal');
+      if (modal) {
+        modal.style.overflow = 'visible';
+        setModalParent(modal);
+      }
+    }
+  }, []);
 
   // Group appliances so each unique ID has an entry, keeping 'new' if any copy is new
   const uniqueApplianceIds = Array.from(new Set(player.inventory?.appliances?.map(a => a.id) || []));
@@ -151,42 +163,18 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   ]));
 
   return (
-    <div className="interaction-panel" style={{ 
-      width: '100%', 
-      height: '100%',
-      maxHeight: '430px',
-      display: 'flex',
-      flexDirection: 'column',
-      boxSizing: 'border-box',
-      overflow: 'hidden',
-      position: 'relative'
-    }}>
-      {/* Title Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexShrink: 0 }}>
-        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05em' }}>
-          🏠 {housingName}
-        </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            onClick={() => setIsSandboxOpen(true)}
-            style={{
-              padding: '2px 8px',
-              background: 'rgba(0, 229, 255, 0.15)',
-              border: '1px solid rgba(0, 229, 255, 0.35)',
-              borderRadius: '4px',
-              color: 'var(--accent-cyan)',
-              fontSize: '0.72rem',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            🎨 Mockups Sandbox
-          </button>
-          <span style={{ fontSize: '0.82em', color: '#00e5ff', fontWeight: 'bold' }}>
-            {t('homeRelax.title', { defaultValue: 'Apartment Life' })}
-          </span>
-        </div>
-      </div>
+    <div 
+      ref={panelRef}
+      className="interaction-panel home-apartment-panel" 
+      style={{ 
+        width: '100%', 
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+        position: 'relative',
+        paddingBottom: modalParent ? '34px' : '0'
+      }}
+    >
 
       {actionFeedback && (
         <div style={{
@@ -538,99 +526,209 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         </div>
       </div>
 
-      {/* ACTION CONTROLS BAR (Leisure, Chores, Pantry) */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '8px',
-        flexShrink: 0,
-        marginTop: 'auto',
-        paddingTop: '6px',
-        borderTop: '1px solid rgba(255, 255, 255, 0.12)'
-      }}>
-        {/* Leisure Button */}
-        <button
-          onClick={() => setActiveDeck('leisure')}
+      {/* ACTION CONTROLS BAR (Leisure, Chores, Pantry) - DOCKED OVER THE BOTTOM WINDOW BORDER */}
+      {modalParent ? createPortal(
+        <div 
+          className="home-docked-actions"
           style={{
-            padding: '8px 6px',
-            background: 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
-            color: '#000',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            boxShadow: '0 3px 10px rgba(16, 185, 129, 0.35)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px',
-            transition: 'transform 0.15s ease'
+            position: 'absolute',
+            bottom: 'calc(-26px * var(--board-scale, 1))',
+            left: 'calc(20px * var(--board-scale, 1))',
+            right: 'calc(20px * var(--board-scale, 1))',
+            zIndex: 60,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: 'calc(10px * var(--board-scale, 1))',
+            background: 'linear-gradient(180deg, rgba(14, 18, 32, 0.98) 0%, rgba(8, 10, 20, 0.99) 100%)',
+            padding: 'calc(6px * var(--board-scale, 1)) calc(12px * var(--board-scale, 1))',
+            borderRadius: 'calc(10px * var(--board-scale, 1))',
+            border: '2px solid var(--accent-cyan)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 229, 255, 0.4)',
+            backdropFilter: 'blur(12px)',
+            boxSizing: 'border-box'
           }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
         >
-          <span style={{ fontSize: '1.25rem' }}>🛋️</span>
-          <span>{t('homeRelax.btnLeisure', { defaultValue: 'Leisure' })}</span>
-          <span style={{ fontSize: '0.65rem', color: '#064e3b', fontWeight: 'bold' }}>Relax & Socialize</span>
-        </button>
+          {/* Leisure Button */}
+          <button
+            onClick={() => setActiveDeck('leisure')}
+            style={{
+              padding: '8px 10px',
+              background: 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 3px 10px rgba(16, 185, 129, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'transform 0.15s ease'
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+          >
+            <span style={{ fontSize: '1.4rem' }}>🛋️</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 800 }}>{t('homeRelax.btnLeisure', { defaultValue: 'Leisure' })}</span>
+              <span style={{ fontSize: '0.65rem', color: '#064e3b', fontWeight: 'bold' }}>Relax & Socialize</span>
+            </div>
+          </button>
 
-        {/* Chores Button */}
-        <button
-          onClick={() => setActiveDeck('chores')}
-          style={{
-            padding: '8px 6px',
-            background: 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px',
-            transition: 'transform 0.15s ease'
-          }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
-        >
-          <span style={{ fontSize: '1.25rem' }}>🧹</span>
-          <span>{t('homeRelax.btnChores', { defaultValue: 'Chores' })}</span>
-          <span style={{ fontSize: '0.65rem', color: '#e0f2fe', fontWeight: 'normal' }}>Clean & Service</span>
-        </button>
+          {/* Chores Button */}
+          <button
+            onClick={() => setActiveDeck('chores')}
+            style={{
+              padding: '8px 10px',
+              background: 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 3px 10px rgba(2, 132, 199, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'transform 0.15s ease'
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+          >
+            <span style={{ fontSize: '1.4rem' }}>🧹</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 800 }}>{t('homeRelax.btnChores', { defaultValue: 'Chores' })}</span>
+              <span style={{ fontSize: '0.65rem', color: '#e0f2fe', fontWeight: 'normal' }}>Clean & Service</span>
+            </div>
+          </button>
 
-        {/* Pantry Button */}
-        <button
-          onClick={() => setActiveDeck('pantry')}
-          style={{
-            padding: '8px 6px',
-            background: 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
-            color: '#000',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 'bold',
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            boxShadow: '0 3px 10px rgba(245, 158, 11, 0.35)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px',
-            transition: 'transform 0.15s ease'
-          }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
-        >
-          <span style={{ fontSize: '1.25rem' }}>🥫</span>
-          <span>{t('homeRelax.btnPantry', { defaultValue: 'Pantry' })}</span>
-          <span style={{ fontSize: '0.65rem', color: '#78350f', fontWeight: 'bold' }}>
-            {player.inventory?.freshFoodUnits || 0} units
-          </span>
-        </button>
-      </div>
+          {/* Pantry Button */}
+          <button
+            onClick={() => setActiveDeck('pantry')}
+            style={{
+              padding: '8px 10px',
+              background: 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 3px 10px rgba(245, 158, 11, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'transform 0.15s ease'
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+          >
+            <span style={{ fontSize: '1.4rem' }}>🥫</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 800 }}>{t('homeRelax.btnPantry', { defaultValue: 'Pantry' })}</span>
+              <span style={{ fontSize: '0.65rem', color: '#78350f', fontWeight: 'bold' }}>
+                {player.inventory?.freshFoodUnits || 0} units
+              </span>
+            </div>
+          </button>
+        </div>,
+        modalParent
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '8px',
+          flexShrink: 0,
+          marginTop: 'auto',
+          paddingTop: '6px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.12)'
+        }}>
+          {/* Leisure Button */}
+          <button
+            onClick={() => setActiveDeck('leisure')}
+            style={{
+              padding: '8px 6px',
+              background: 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              boxShadow: '0 3px 10px rgba(16, 185, 129, 0.35)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              transition: 'transform 0.15s ease'
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+          >
+            <span style={{ fontSize: '1.25rem' }}>🛋️</span>
+            <span>{t('homeRelax.btnLeisure', { defaultValue: 'Leisure' })}</span>
+            <span style={{ fontSize: '0.65rem', color: '#064e3b', fontWeight: 'bold' }}>Relax & Socialize</span>
+          </button>
+
+          {/* Chores Button */}
+          <button
+            onClick={() => setActiveDeck('chores')}
+            style={{
+              padding: '8px 6px',
+              background: 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              transition: 'transform 0.15s ease'
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+          >
+            <span style={{ fontSize: '1.25rem' }}>🧹</span>
+            <span>{t('homeRelax.btnChores', { defaultValue: 'Chores' })}</span>
+            <span style={{ fontSize: '0.65rem', color: '#e0f2fe', fontWeight: 'normal' }}>Clean & Service</span>
+          </button>
+
+          {/* Pantry Button */}
+          <button
+            onClick={() => setActiveDeck('pantry')}
+            style={{
+              padding: '8px 6px',
+              background: 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              boxShadow: '0 3px 10px rgba(245, 158, 11, 0.35)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              transition: 'transform 0.15s ease'
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+          >
+            <span style={{ fontSize: '1.25rem' }}>🥫</span>
+            <span>{t('homeRelax.btnPantry', { defaultValue: 'Pantry' })}</span>
+            <span style={{ fontSize: '0.65rem', color: '#78350f', fontWeight: 'bold' }}>
+              {player.inventory?.freshFoodUnits || 0} units
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* CARD DECKS MODALS */}
       {activeDeck === 'leisure' && (
@@ -708,14 +806,6 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           durable={inspectedDurable}
           campaign={campaign}
           onClose={() => setInspectedDurable(null)}
-        />
-      )}
-
-      {/* MOCKUP SANDBOX MODAL */}
-      {isSandboxOpen && (
-        <ApartmentMockupSandbox
-          campaign={campaign}
-          onClose={() => setIsSandboxOpen(false)}
         />
       )}
     </div>
