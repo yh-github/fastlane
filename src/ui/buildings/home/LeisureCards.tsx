@@ -67,25 +67,25 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
           flexDirection: 'column',
           justifyContent: 'space-between',
           width: '100%',
-          maxWidth: '290px',
-          minHeight: '380px',
-          padding: '16px',
-          borderRadius: '16px',
-          border: '3px solid #34d399',
-          boxShadow: '0 0 20px rgba(52, 211, 153, 0.4), 0 8px 24px rgba(0,0,0,0.6)',
+          maxWidth: '300px',
+          minHeight: '260px',
+          padding: '10px 12px',
+          borderRadius: '12px',
+          border: '2px solid #34d399',
+          boxShadow: '0 0 16px rgba(52, 211, 153, 0.3), 0 4px 14px rgba(0,0,0,0.6)',
           background: 'linear-gradient(165deg, #0f2c1d 0%, #06160e 100%)',
           boxSizing: 'border-box'
         }}
       >
         <div>
           {/* Header Banner */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
             <span style={{
-              fontSize: '0.72rem',
+              fontSize: '0.68rem',
               fontWeight: 'bold',
               letterSpacing: '0.08em',
-              padding: '3px 8px',
-              borderRadius: '6px',
+              padding: '2px 6px',
+              borderRadius: '5px',
               backgroundColor: 'rgba(52, 211, 153, 0.15)',
               color: '#34d399',
               border: '1px solid #34d399'
@@ -94,10 +94,10 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
             </span>
 
             <span style={{
-              fontSize: '0.82rem',
+              fontSize: '0.78rem',
               fontWeight: 'bold',
-              padding: '3px 10px',
-              borderRadius: '12px',
+              padding: '2px 8px',
+              borderRadius: '10px',
               backgroundColor: '#064e3b',
               color: '#d1fae5',
               boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
@@ -111,20 +111,20 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            height: '75px',
-            margin: '6px 0 12px',
-            borderRadius: '12px',
+            height: '48px',
+            margin: '4px 0 8px',
+            borderRadius: '8px',
             backgroundColor: 'rgba(0, 0, 0, 0.4)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            fontSize: '2.5rem'
+            fontSize: '1.8rem'
           }}>
             <span role="img" aria-label="Relax">🧘</span>
           </div>
 
           {/* Title */}
           <h3 style={{
-            margin: '0 0 6px',
-            fontSize: '1.1rem',
+            margin: '0 0 4px',
+            fontSize: '1.02rem',
             fontWeight: 'bold',
             color: '#ffffff',
             textAlign: 'center'
@@ -134,27 +134,26 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
 
           {/* Fluff Narrative */}
           <p style={{
-            fontSize: '0.82rem',
-            lineHeight: '1.4',
+            fontSize: '0.76rem',
+            lineHeight: '1.3',
             color: '#cbd5e1',
             fontStyle: 'italic',
             textAlign: 'center',
-            margin: '0 0 12px',
-            padding: '0 4px',
-            minHeight: '52px'
+            margin: '0 0 8px',
+            padding: '0 4px'
           }}>
-            "Sink into your favorite armchair, kick off your shoes, and let the city's grind melt away. A quiet evening at home restores your vitality and mental focus."
+            "Sink into your favorite armchair, kick off your shoes, and let the city's grind melt away. A quiet evening restores your vitality."
           </p>
         </div>
 
         {/* Benefits Breakdown */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <div style={{
-            padding: '8px 10px',
-            borderRadius: '8px',
+            padding: '6px 8px',
+            borderRadius: '6px',
             backgroundColor: 'rgba(0, 0, 0, 0.35)',
             border: '1px solid rgba(255, 255, 255, 0.08)',
-            fontSize: '0.78rem'
+            fontSize: '0.76rem'
           }}>
             {usePhysicalMental ? (
               hasFood ? (
@@ -164,7 +163,7 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
                   {trackMess && scaledMess > 0 && <span style={{ color: '#f39c12' }}>+{scaledMess} 🧹 Mess</span>}
                 </div>
               ) : (
-                <div style={{ color: '#ff9999', textAlign: 'center', fontSize: '0.74rem' }}>
+                <div style={{ color: '#ff9999', textAlign: 'center', fontSize: '0.72rem' }}>
                   ⚠️ Starving: +{physGain} 💪, +{mentalGain} 🧠 (-1 Max 💪 & 🧠!)
                 </div>
               )
@@ -183,16 +182,16 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
             disabled={isRelaxDisabled}
             style={{
               width: '100%',
-              padding: '10px',
-              borderRadius: '8px',
+              padding: '8px',
+              borderRadius: '6px',
               border: 'none',
               backgroundColor: isRelaxDisabled ? '#4b5563' : '#10b981',
               color: isRelaxDisabled ? '#9ca3af' : '#000',
               fontWeight: 'bold',
-              fontSize: '0.92rem',
+              fontSize: '0.88rem',
               cursor: isRelaxDisabled ? 'not-allowed' : 'pointer',
-              boxShadow: isRelaxDisabled ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.4)',
-              transition: 'all 0.2s ease'
+              boxShadow: isRelaxDisabled ? 'none' : '0 3px 10px rgba(16, 185, 129, 0.4)',
+              transition: 'all 0.15s ease'
             }}
           >
             🧘 {t('homeRelax.button', { cost: hoursToRelax, defaultValue: `Relax (${hoursToRelax}h)` })}
@@ -210,25 +209,25 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
             flexDirection: 'column',
             justifyContent: 'space-between',
             width: '100%',
-            maxWidth: '290px',
-            minHeight: '380px',
-            padding: '16px',
-            borderRadius: '16px',
-            border: `3px solid ${socialParams.isHalfRewardExpected ? '#f59e0b' : '#38bdf8'}`,
-            boxShadow: `0 0 20px ${socialParams.isHalfRewardExpected ? 'rgba(245, 158, 11, 0.4)' : 'rgba(56, 189, 248, 0.4)'}, 0 8px 24px rgba(0,0,0,0.6)`,
+            maxWidth: '300px',
+            minHeight: '260px',
+            padding: '10px 12px',
+            borderRadius: '12px',
+            border: `2px solid ${socialParams.isHalfRewardExpected ? '#f59e0b' : '#38bdf8'}`,
+            boxShadow: `0 0 16px ${socialParams.isHalfRewardExpected ? 'rgba(245, 158, 11, 0.3)' : 'rgba(56, 189, 248, 0.3)'}, 0 4px 14px rgba(0,0,0,0.6)`,
             background: 'linear-gradient(165deg, #0c213b 0%, #06111f 100%)',
             boxSizing: 'border-box'
           }}
         >
           <div>
             {/* Header Banner */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <span style={{
-                fontSize: '0.72rem',
+                fontSize: '0.68rem',
                 fontWeight: 'bold',
                 letterSpacing: '0.08em',
-                padding: '3px 8px',
-                borderRadius: '6px',
+                padding: '2px 6px',
+                borderRadius: '5px',
                 backgroundColor: 'rgba(56, 189, 248, 0.15)',
                 color: '#38bdf8',
                 border: '1px solid #38bdf8'
@@ -237,10 +236,10 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
               </span>
 
               <span style={{
-                fontSize: '0.82rem',
+                fontSize: '0.78rem',
                 fontWeight: 'bold',
-                padding: '3px 10px',
-                borderRadius: '12px',
+                padding: '2px 8px',
+                borderRadius: '10px',
                 backgroundColor: '#075985',
                 color: '#e0f2fe',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
@@ -254,20 +253,20 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              height: '75px',
-              margin: '6px 0 12px',
-              borderRadius: '12px',
+              height: '48px',
+              margin: '4px 0 8px',
+              borderRadius: '8px',
               backgroundColor: 'rgba(0, 0, 0, 0.4)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
-              fontSize: '2.5rem'
+              fontSize: '1.8rem'
             }}>
               <span role="img" aria-label="Socialize">🎉</span>
             </div>
 
             {/* Title */}
             <h3 style={{
-              margin: '0 0 6px',
-              fontSize: '1.1rem',
+              margin: '0 0 4px',
+              fontSize: '1.02rem',
               fontWeight: 'bold',
               color: '#ffffff',
               textAlign: 'center'
@@ -277,34 +276,33 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
 
             {/* Fluff Narrative */}
             <p style={{
-              fontSize: '0.82rem',
-              lineHeight: '1.4',
+              fontSize: '0.76rem',
+              lineHeight: '1.3',
               color: '#cbd5e1',
               fontStyle: 'italic',
               textAlign: 'center',
-              margin: '0 0 12px',
-              padding: '0 4px',
-              minHeight: '52px'
+              margin: '0 0 8px',
+              padding: '0 4px'
             }}>
-              "Invite friends and colleagues over for an evening of lively banter and good times. Hospitality elevates your social standing, but be prepared for the mess left behind!"
+              "Invite friends over for lively banter and good times. Hospitality elevates social standing, but leaves mess behind!"
             </p>
           </div>
 
           {/* Benefits Breakdown */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{
-              padding: '8px 10px',
-              borderRadius: '8px',
+              padding: '6px 8px',
+              borderRadius: '6px',
               backgroundColor: 'rgba(0, 0, 0, 0.35)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
-              fontSize: '0.78rem'
+              fontSize: '0.76rem'
             }}>
               <div style={{ color: '#38bdf8', display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', fontWeight: 'bold' }}>
                 <span>{rewardRange} 👥 Social{spaceCappedNote}</span>
                 <span style={{ color: '#ff9999' }}>-1 💪 Fatigue</span>
                 <span>-{costRange}</span>
               </div>
-              <div style={{ fontSize: '0.72rem', color: '#aaa', textAlign: 'center', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.70rem', color: '#aaa', textAlign: 'center', marginTop: '2px' }}>
                 {socialParams.isHalfRewardExpected ? '⚠️ Budget Hospitality (half social reward)' : '✨ Full Hospitality (generates mess 🧹)'}
               </div>
             </div>
@@ -315,16 +313,16 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
               onClick={onSocializeClick}
               style={{
                 width: '100%',
-                padding: '10px',
-                borderRadius: '8px',
+                padding: '8px',
+                borderRadius: '6px',
                 border: 'none',
                 backgroundColor: socialParams.isDisabled ? '#4b5563' : (socialParams.isHalfRewardExpected ? '#f59e0b' : '#0ea5e9'),
                 color: socialParams.isDisabled ? '#9ca3af' : '#fff',
                 fontWeight: 'bold',
-                fontSize: '0.92rem',
-                cursor: 'pointer',
-                boxShadow: socialParams.isDisabled ? 'none' : '0 4px 12px rgba(14, 165, 233, 0.4)',
-                transition: 'all 0.2s ease'
+                fontSize: '0.88rem',
+                cursor: socialParams.isDisabled ? 'not-allowed' : 'pointer',
+                boxShadow: socialParams.isDisabled ? 'none' : '0 3px 10px rgba(14, 165, 233, 0.4)',
+                transition: 'all 0.15s ease'
               }}
             >
               🎉 Socialize / Entertain Guests

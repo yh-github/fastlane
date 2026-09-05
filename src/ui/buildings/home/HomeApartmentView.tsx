@@ -295,9 +295,74 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         </div>
       )}
 
-      {/* FRONT AND CENTER: COLLECTIBLE DURABLES SHOWCASE */}
-      <div style={{
-        background: 'linear-gradient(180deg, rgba(16, 20, 36, 0.9) 0%, rgba(10, 12, 22, 0.95) 100%)',
+      {/* MIDDLE CONTENT: EITHER ACTIVE CARD DECK OR DURABLES SHOWCASE */}
+      {activeDeck === 'leisure' ? (
+        <HomeCardDeck
+          title={t('homeRelax.deckLeisure', { defaultValue: 'Leisure & Living' })}
+          icon="🛋️"
+          onClose={() => setActiveDeck(null)}
+        >
+          <LeisureCards
+            hoursToRelax={hoursToRelax}
+            isRelaxDisabled={isRelaxDisabled}
+            hasFood={hasFood}
+            physGain={physGain}
+            mentalGain={mentalGain}
+            scaledMess={scaledMess}
+            trackMess={rules?.trackMess}
+            usePhysicalMental={rules?.usePhysicalMentalConditions}
+            classicGain={classicGain}
+            classicFirstBonus={classicFirstBonus}
+            onRelaxClick={() => {
+              onRelaxClick();
+            }}
+            socialParams={socialParams}
+            onSocializeClick={() => {
+              onSocializeClick();
+            }}
+          />
+        </HomeCardDeck>
+      ) : activeDeck === 'chores' ? (
+        <HomeCardDeck
+          title={t('homeRelax.deckChores', { defaultValue: 'Chores & Maintenance' })}
+          icon="🧹"
+          onClose={() => setActiveDeck(null)}
+        >
+          <ChoresCards
+            hoursToClean={hoursToClean}
+            cleanPhysGain={cleanPhysGain}
+            isCleanDisabled={isCleanDisabled}
+            cleanSubtext={cleanSubtext}
+            onCleanClick={() => {
+              onCleanClick();
+            }}
+            cleaningServiceCost={cleaningServiceCost}
+            cleaningServicePrice={cleaningServicePrice}
+            isServiceDisabled={isServiceDisabled}
+            serviceSubtext={serviceSubtext}
+            onServiceClick={() => {
+              onServiceClick();
+            }}
+          />
+        </HomeCardDeck>
+      ) : activeDeck === 'pantry' ? (
+        <HomeCardDeck
+          title={t('homeRelax.deckPantry', { defaultValue: 'Kitchen & Pantry' })}
+          icon="🥫"
+          onClose={() => setActiveDeck(null)}
+        >
+          <PantryCard
+            freshFoodUnits={player.inventory?.freshFoodUnits || 0}
+            fastFoodItems={player.inventory?.fastFoodItems || []}
+            hasFridge={hasFridge}
+            hasFreezer={hasFreezer}
+            campaign={campaign}
+          />
+        </HomeCardDeck>
+      ) : (
+        /* FRONT AND CENTER: COLLECTIBLE DURABLES SHOWCASE */
+        <div style={{
+          background: 'linear-gradient(180deg, rgba(16, 20, 36, 0.9) 0%, rgba(10, 12, 22, 0.95) 100%)',
         borderRadius: '10px',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         padding: '10px 12px',
@@ -525,6 +590,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           })}
         </div>
       </div>
+      )}
 
       {/* ACTION CONTROLS BAR (Leisure, Chores, Pantry) - DOCKED OVER THE BOTTOM WINDOW BORDER */}
       {modalParent ? createPortal(
@@ -550,24 +616,29 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         >
           {/* Leisure Button */}
           <button
-            onClick={() => setActiveDeck('leisure')}
+            onClick={() => setActiveDeck(activeDeck === 'leisure' ? null : 'leisure')}
             style={{
               padding: '8px 10px',
-              background: 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
+              background: activeDeck === 'leisure'
+                ? 'linear-gradient(145deg, #34d399 0%, #10b981 100%)'
+                : 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
               color: '#000',
-              border: 'none',
+              border: activeDeck === 'leisure' ? '2px solid #ffffff' : '2px solid transparent',
               borderRadius: '8px',
               fontWeight: 'bold',
               cursor: 'pointer',
-              boxShadow: '0 3px 10px rgba(16, 185, 129, 0.4)',
+              boxShadow: activeDeck === 'leisure'
+                ? '0 0 16px rgba(52, 211, 153, 0.8), 0 4px 12px rgba(0,0,0,0.7)'
+                : '0 3px 10px rgba(16, 185, 129, 0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              transition: 'transform 0.15s ease'
+              transform: activeDeck === 'leisure' ? 'translateY(-2px)' : 'none',
+              transition: 'all 0.15s ease'
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+            onMouseUp={(e) => e.currentTarget.style.transform = activeDeck === 'leisure' ? 'translateY(-2px)' : 'none'}
           >
             <span style={{ fontSize: '1.4rem' }}>🛋️</span>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
@@ -578,24 +649,29 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 
           {/* Chores Button */}
           <button
-            onClick={() => setActiveDeck('chores')}
+            onClick={() => setActiveDeck(activeDeck === 'chores' ? null : 'chores')}
             style={{
               padding: '8px 10px',
-              background: 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
+              background: activeDeck === 'chores'
+                ? 'linear-gradient(145deg, #38bdf8 0%, #0284c7 100%)'
+                : 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
               color: '#fff',
-              border: 'none',
+              border: activeDeck === 'chores' ? '2px solid #ffffff' : '2px solid transparent',
               borderRadius: '8px',
               fontWeight: 'bold',
               cursor: 'pointer',
-              boxShadow: '0 3px 10px rgba(2, 132, 199, 0.4)',
+              boxShadow: activeDeck === 'chores'
+                ? '0 0 16px rgba(56, 189, 248, 0.8), 0 4px 12px rgba(0,0,0,0.7)'
+                : '0 3px 10px rgba(2, 132, 199, 0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              transition: 'transform 0.15s ease'
+              transform: activeDeck === 'chores' ? 'translateY(-2px)' : 'none',
+              transition: 'all 0.15s ease'
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+            onMouseUp={(e) => e.currentTarget.style.transform = activeDeck === 'chores' ? 'translateY(-2px)' : 'none'}
           >
             <span style={{ fontSize: '1.4rem' }}>🧹</span>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
@@ -606,24 +682,29 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 
           {/* Pantry Button */}
           <button
-            onClick={() => setActiveDeck('pantry')}
+            onClick={() => setActiveDeck(activeDeck === 'pantry' ? null : 'pantry')}
             style={{
               padding: '8px 10px',
-              background: 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
+              background: activeDeck === 'pantry'
+                ? 'linear-gradient(145deg, #fbbf24 0%, #f59e0b 100%)'
+                : 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
               color: '#000',
-              border: 'none',
+              border: activeDeck === 'pantry' ? '2px solid #ffffff' : '2px solid transparent',
               borderRadius: '8px',
               fontWeight: 'bold',
               cursor: 'pointer',
-              boxShadow: '0 3px 10px rgba(245, 158, 11, 0.4)',
+              boxShadow: activeDeck === 'pantry'
+                ? '0 0 16px rgba(251, 191, 36, 0.8), 0 4px 12px rgba(0,0,0,0.7)'
+                : '0 3px 10px rgba(245, 158, 11, 0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              transition: 'transform 0.15s ease'
+              transform: activeDeck === 'pantry' ? 'translateY(-2px)' : 'none',
+              transition: 'all 0.15s ease'
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
+            onMouseUp={(e) => e.currentTarget.style.transform = activeDeck === 'pantry' ? 'translateY(-2px)' : 'none'}
           >
             <span style={{ fontSize: '1.4rem' }}>🥫</span>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
@@ -647,22 +728,26 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         }}>
           {/* Leisure Button */}
           <button
-            onClick={() => setActiveDeck('leisure')}
+            onClick={() => setActiveDeck(activeDeck === 'leisure' ? null : 'leisure')}
             style={{
               padding: '8px 6px',
-              background: 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
+              background: activeDeck === 'leisure'
+                ? 'linear-gradient(145deg, #34d399 0%, #10b981 100%)'
+                : 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
               color: '#000',
-              border: 'none',
+              border: activeDeck === 'leisure' ? '2px solid #ffffff' : '2px solid transparent',
               borderRadius: '8px',
               fontWeight: 'bold',
               fontSize: '0.9rem',
               cursor: 'pointer',
-              boxShadow: '0 3px 10px rgba(16, 185, 129, 0.35)',
+              boxShadow: activeDeck === 'leisure'
+                ? '0 0 14px rgba(52, 211, 153, 0.8)'
+                : '0 3px 10px rgba(16, 185, 129, 0.35)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               gap: '2px',
-              transition: 'transform 0.15s ease'
+              transition: 'all 0.15s ease'
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
             onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
@@ -674,22 +759,26 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 
           {/* Chores Button */}
           <button
-            onClick={() => setActiveDeck('chores')}
+            onClick={() => setActiveDeck(activeDeck === 'chores' ? null : 'chores')}
             style={{
               padding: '8px 6px',
-              background: 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
+              background: activeDeck === 'chores'
+                ? 'linear-gradient(145deg, #38bdf8 0%, #0284c7 100%)'
+                : 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
               color: '#fff',
-              border: 'none',
+              border: activeDeck === 'chores' ? '2px solid #ffffff' : '2px solid transparent',
               borderRadius: '8px',
               fontWeight: 'bold',
               fontSize: '0.9rem',
               cursor: 'pointer',
-              boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)',
+              boxShadow: activeDeck === 'chores'
+                ? '0 0 14px rgba(56, 189, 248, 0.8)'
+                : '0 3px 10px rgba(2, 132, 199, 0.35)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               gap: '2px',
-              transition: 'transform 0.15s ease'
+              transition: 'all 0.15s ease'
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
             onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
@@ -701,22 +790,26 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 
           {/* Pantry Button */}
           <button
-            onClick={() => setActiveDeck('pantry')}
+            onClick={() => setActiveDeck(activeDeck === 'pantry' ? null : 'pantry')}
             style={{
               padding: '8px 6px',
-              background: 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
+              background: activeDeck === 'pantry'
+                ? 'linear-gradient(145deg, #fbbf24 0%, #f59e0b 100%)'
+                : 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
               color: '#000',
-              border: 'none',
+              border: activeDeck === 'pantry' ? '2px solid #ffffff' : '2px solid transparent',
               borderRadius: '8px',
               fontWeight: 'bold',
               fontSize: '0.9rem',
               cursor: 'pointer',
-              boxShadow: '0 3px 10px rgba(245, 158, 11, 0.35)',
+              boxShadow: activeDeck === 'pantry'
+                ? '0 0 14px rgba(251, 191, 36, 0.8)'
+                : '0 3px 10px rgba(245, 158, 11, 0.35)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               gap: '2px',
-              transition: 'transform 0.15s ease'
+              transition: 'all 0.15s ease'
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
             onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
@@ -728,76 +821,6 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             </span>
           </button>
         </div>
-      )}
-
-      {/* CARD DECKS MODALS */}
-      {activeDeck === 'leisure' && (
-        <HomeCardDeck
-          title={t('homeRelax.deckLeisure', { defaultValue: 'Leisure & Living' })}
-          icon="🛋️"
-          onClose={() => setActiveDeck(null)}
-        >
-          <LeisureCards
-            hoursToRelax={hoursToRelax}
-            isRelaxDisabled={isRelaxDisabled}
-            hasFood={hasFood}
-            physGain={physGain}
-            mentalGain={mentalGain}
-            scaledMess={scaledMess}
-            trackMess={rules?.trackMess}
-            usePhysicalMental={rules?.usePhysicalMentalConditions}
-            classicGain={classicGain}
-            classicFirstBonus={classicFirstBonus}
-            onRelaxClick={() => {
-              onRelaxClick();
-            }}
-            socialParams={socialParams}
-            onSocializeClick={() => {
-              onSocializeClick();
-            }}
-          />
-        </HomeCardDeck>
-      )}
-
-      {activeDeck === 'chores' && (
-        <HomeCardDeck
-          title={t('homeRelax.deckChores', { defaultValue: 'Chores & Maintenance' })}
-          icon="🧹"
-          onClose={() => setActiveDeck(null)}
-        >
-          <ChoresCards
-            hoursToClean={hoursToClean}
-            cleanPhysGain={cleanPhysGain}
-            isCleanDisabled={isCleanDisabled}
-            cleanSubtext={cleanSubtext}
-            onCleanClick={() => {
-              onCleanClick();
-            }}
-            cleaningServiceCost={cleaningServiceCost}
-            cleaningServicePrice={cleaningServicePrice}
-            isServiceDisabled={isServiceDisabled}
-            serviceSubtext={serviceSubtext}
-            onServiceClick={() => {
-              onServiceClick();
-            }}
-          />
-        </HomeCardDeck>
-      )}
-
-      {activeDeck === 'pantry' && (
-        <HomeCardDeck
-          title={t('homeRelax.deckPantry', { defaultValue: 'Kitchen & Pantry' })}
-          icon="🥫"
-          onClose={() => setActiveDeck(null)}
-        >
-          <PantryCard
-            freshFoodUnits={player.inventory?.freshFoodUnits || 0}
-            fastFoodItems={player.inventory?.fastFoodItems || []}
-            hasFridge={hasFridge}
-            hasFreezer={hasFreezer}
-            campaign={campaign}
-          />
-        </HomeCardDeck>
       )}
 
       {/* DURABLE CARD INSPECTION MODAL */}

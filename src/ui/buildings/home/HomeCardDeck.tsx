@@ -1,5 +1,4 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 
 interface HomeCardDeckProps {
   title: string;
@@ -14,96 +13,84 @@ export const HomeCardDeck: React.FC<HomeCardDeckProps> = ({
   onClose,
   children
 }) => {
-  if (typeof document === 'undefined') return null;
-
-  return createPortal(
+  return (
     <div
-      onClick={onClose}
+      className="home-card-deck-inline"
       style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(5, 7, 15, 0.82)',
-        backdropFilter: 'blur(10px)',
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '20px',
-        boxSizing: 'border-box'
+        flex: '1 1 auto',
+        minHeight: 0,
+        background: 'linear-gradient(180deg, rgba(16, 20, 36, 0.95) 0%, rgba(10, 12, 22, 0.98) 100%)',
+        borderRadius: '10px',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        padding: '10px 12px',
+        boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)',
+        boxSizing: 'border-box',
+        overflow: 'hidden'
       }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: '100%',
-          maxWidth: '680px',
+      {/* Top Header Bar */}
+      <div style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '8px',
+        flexShrink: 0
+      }}>
+        <h4 style={{
+          margin: 0,
+          fontSize: '0.95rem',
+          color: 'var(--accent-cyan)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          gap: '16px'
-        }}
-      >
-        {/* Top Header Bar */}
-        <div style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0 4px'
+          gap: '6px'
         }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: '1.3rem',
-            color: '#fff',
+          {icon && <span>{icon}</span>}
+          <span>{title}</span>
+        </h4>
+
+        <button
+          onClick={onClose}
+          style={{
+            padding: '4px 10px',
+            background: 'rgba(255, 255, 255, 0.08)',
+            color: '#cbd5e1',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '6px',
+            fontSize: '0.74rem',
+            fontWeight: 'bold',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            textShadow: '0 2px 10px rgba(0,0,0,0.5)'
-          }}>
-            {icon && <span>{icon}</span>}
-            <span>{title}</span>
-          </h2>
-
-          <button
-            onClick={onClose}
-            style={{
-              padding: '6px 14px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '20px',
-              fontSize: '0.85rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s'
-            }}
-          >
-            ✕ Back to Apartment
-          </button>
-        </div>
-
-        {/* Cards Tray */}
-        <div style={{
-          width: '100%',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '16px',
-          justifyItems: 'center',
-          maxHeight: '80vh',
-          overflowY: 'auto',
-          padding: '4px'
-        }}>
-          {children}
-        </div>
+            gap: '4px',
+            transition: 'background-color 0.15s ease'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+        >
+          ✕ Back to Furnishings
+        </button>
       </div>
-    </div>,
-    document.body
+
+      {/* Cards Tray */}
+      <div style={{
+        width: '100%',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+        gap: '12px',
+        overflowY: 'auto',
+        flex: '1 1 auto',
+        minHeight: 0,
+        padding: '4px',
+        justifyItems: 'center',
+        alignItems: 'stretch',
+        boxSizing: 'border-box'
+      }}>
+        {children}
+      </div>
+    </div>
   );
 };
