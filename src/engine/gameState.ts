@@ -171,6 +171,39 @@ export interface PlayerState {
   workMistakesThisTurn?: number;
   skillTech?: number;
   skillMgmt?: number;
+
+  // ── Alternative Weekend Card System ──
+  weekendDecks?: {
+    cheap: WeekendDeckState;
+    medium: WeekendDeckState;
+    expensive: WeekendDeckState;
+  };
+  recentWeekendTiers?: WeekendDeckTier[];
+  offeredWeekendCards?: WeekendCard[];
+}
+
+export type WeekendDeckTier = 'cheap' | 'medium' | 'expensive';
+
+export interface WeekendDeckState {
+  drawPile: string[];
+  discardPile: string[];
+}
+
+export interface WeekendCard {
+  id: string;
+  tier: 'free' | 'cheap' | 'medium' | 'expensive';
+  type: 'random' | 'durable' | 'ticket' | 'clean' | 'rest';
+  eventKey: string;
+  fluff: string;
+  titleKey: string;
+  icon: string;
+  costMin: number;
+  costMax: number;
+  targetStat?: 'mental' | 'social' | 'dependability' | 'physical' | 'mess';
+  potentialBonusMin: number;
+  potentialBonusMax: number;
+  isSpecial?: boolean;
+  specialBonus?: number;
 }
 
 export interface StatModification {
@@ -184,6 +217,7 @@ export interface WeekendResult {
   cost: number;
   happinessBonus?: number;
   modifications?: StatModification[];
+  chosenCard?: WeekendCard;
 }
 
 // ─── Inventory ──────────────────────────────────────────────────
@@ -226,6 +260,8 @@ export interface OwnedAppliance {
   purchasePrice: number;
   /** Where it was bought — affects breakage chance */
   purchaseSource: 'socket_city' | 'z_mart' | 'pawnshop';
+  /** Item condition: new (Socket City) or used (Z-Mart / Pawn Shop) */
+  condition?: 'new' | 'used';
 }
 
 export type GoalAllotment = Record<string, number>;
@@ -250,6 +286,7 @@ export interface PawnedItem {
   weekPawned: number;
   ownerId: string;
   purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop';
+  condition?: 'new' | 'used';
 }
 
 // ─── Turn Flags ─────────────────────────────────────────────────

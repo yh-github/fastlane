@@ -1,4 +1,4 @@
-import type { GameState, PlayerState } from './gameState';
+import type { GameState, PlayerState, WeekendCard } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 import { getStoreForItem } from './dataLoader';
 import type { GameAction } from './gameReducer';
@@ -502,3 +502,78 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
 
   return [];
 }
+
+/**
+ * Utility evaluation for AI players selecting an alternative weekend card.
+ * Scores options based on current stat deficits (Mental, Dep, Social) weighted against cash reserves.
+ */
+export function selectAiWeekendCard(player: PlayerState, cards: WeekendCard[]): string {
+  if (cards.length === 0) return '';
+  if (cards.length === 1) return cards[0].id;
+
+  let bestCard = cards[0];
+  let bestScore = -Infinity;
+
+  const currentMoney = player.money;
+  const mental = player.mentalCondition ?? player.relaxation ?? 50;
+  const dep = player.dependability ?? 50;
+  const social = player.social ?? 10;
+  const mess = player.mess ?? 0;
+  const physical = player.physicalCondition ?? 50;
+
+  for (const card of cards) {
+    const avgCost = (card.costMin + card.costMax) / 2;
+    if (avgCost > currentMoney) {
+      continue; // Unaffordable
+    }
+
+    let utility = 0;
+
+    // Money penalty: spending hurts more if low on funds
+    const moneyBuffer = currentMoney - avgCost;
+    if (moneyBuffer < 20) {
+      utility -= 40;
+    } else if (moneyBuffer < 50) {
+      utility -= 15;
+    } else {
+      utility -= avgCost * 0.1;
+    }
+
+    // Special bonus evaluation
+    if (card.isSpecial) {
+      utility += (card.specialBonus ?? 3) * 10;
+    }
+
+    // Stat gain evaluation
+    const avgBonus = (card.potentialBonusMin + card.potentialBonusMax) / 2;
+    if (card.targetStat === 'mental') {
+      const mentalDeficit = Math.max(0, 70 - mental);
+      utility += avgBonus * (mentalDeficit > 30 ? 15 : 6);
+    } else if (card.targetStat === 'dependability') {
+      const depDeficit = Math.max(0, 80 - dep);
+      utility += avgBonus * (depDeficit > 30 ? 18 : 8);
+    } else if (card.targetStat === 'social') {
+      const socialDeficit = Math.max(0, 50 - social);
+      utility += avgBonus * (socialDeficit > 20 ? 12 : 5);
+    } else if (card.targetStat === 'mess') {
+      if (mess > 20) utility += 15;
+      else if (mess > 10) utility += 5;
+      if (physical < 20) utility -= 10;
+    }
+
+    // Broke options
+    if (card.type === 'clean') {
+      if (mess > 15 && physical > 15) utility += 20;
+    } else if (card.type === 'rest') {
+      if (mental < 40) utility += 15;
+    }
+
+    if (utility > bestScore) {
+      bestScore = utility;
+      bestCard = card;
+    }
+  }
+
+  return bestCard.id;
+}
+

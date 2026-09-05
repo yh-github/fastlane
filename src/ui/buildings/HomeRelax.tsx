@@ -5,6 +5,7 @@ import type { CampaignBundle } from '../../engine/dataLoader';
 import { type GameRules, collectItemEffects } from '../../engine/gameState';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap, calcSocializeParameters } from '../../engine/statMath';
+import { HomeApartmentView } from './home/HomeApartmentView';
 import type { InteractionProps } from './types';
 
 export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules, economicIndex?: number }) {
@@ -213,6 +214,100 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
 
   const housingDef = campaign?.housing?.find(h => h.id === player.currentHousingId);
   const housingName = housingDef ? t(`housing.${housingDef.id}.name`, { defaultValue: housingDef.name }) : (isPenthouse ? 'Penthouse Suite' : isSecurity ? 'Security Apartments' : 'Low-Cost Housing');
+
+  const useAdvancedHome = rules?.advancedHomeGUI ?? rules?.usePhysicalMentalConditions ?? false;
+
+  const unfedWarningPortal = showUnfedWarning && typeof document !== 'undefined' && createPortal(
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000,
+      padding: '16px', boxSizing: 'border-box'
+    }}>
+      <div style={{
+        background: '#2c1e1e', padding: '20px', borderRadius: '10px', maxWidth: '420px', width: '100%', maxHeight: '90vh',
+        overflowY: 'auto', boxSizing: 'border-box', border: '1px solid #e74c3c', color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,0.6)'
+      }}>
+        <h3 style={{ margin: '0 0 10px 0', color: '#e74c3c' }}>
+          ⚠️ {t('action.unfedRelaxModal.title', { defaultValue: 'Relax Without Food?' })}
+        </h3>
+        <p style={{ fontSize: '0.9em', lineHeight: '1.4', marginBottom: '16px' }}>
+          {t('action.unfedRelaxModal.warning', { defaultValue: 'You have no food in your inventory! Relaxing while starving will permanently reduce your Max Physical and Max Mental capacity by 1.' })}
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+          <button
+            onClick={() => setShowUnfedWarning(false)}
+            style={{ padding: '6px 12px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            ✕ {t('action.unfedRelaxModal.cancel', { defaultValue: 'Cancel' })}
+          </button>
+          <button
+            data-testid="confirm-unfed-relax"
+            onClick={() => {
+              setWarnedThisVisit(true);
+              setShowUnfedWarning(false);
+              handleHomeAction({ type: 'relax' });
+            }}
+            style={{ padding: '6px 12px', background: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            ⚠️ {t('action.unfedRelaxModal.confirm', { defaultValue: 'Relax Anyway' })}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+
+  if (useAdvancedHome) {
+    return (
+      <>
+        <HomeApartmentView
+          player={player}
+          campaign={campaign}
+          rules={rules}
+          housingName={housingName}
+          actionFeedback={actionFeedback}
+          durablesSpace={durablesSpace}
+          totalUsedSpace={totalUsedSpace}
+          spaceCap={spaceCap}
+          freeSpace={freeSpace}
+          overflow={overflow}
+          isOvercapacity={isOvercapacity}
+          durablesPct={durablesPct}
+          messPct={messPct}
+          currentMess={currentMess}
+          maxMessHousing={maxMessHousing}
+          messIcon={messIcon}
+          messLabel={messLabel}
+          messBarColor={messBarColor}
+          messPercentage={messPercentage}
+          hoursToRelax={hoursToRelax}
+          isRelaxDisabled={isRelaxDisabled}
+          hasFood={hasFood}
+          physGain={physGain}
+          mentalGain={mentalGain}
+          scaledMess={scaledMess}
+          classicGain={classicGain}
+          classicFirstBonus={classicFirstBonus}
+          onRelaxClick={handleRelaxClick}
+          socialParams={socialParams}
+          onSocializeClick={() => handleHomeAction({ type: 'socialize_guests' })}
+          hoursToClean={hoursToClean}
+          cleanPhysGain={cleanPhysGain}
+          isCleanDisabled={isCleanDisabled}
+          cleanSubtext={cleanSubtext}
+          onCleanClick={() => handleHomeAction({ type: 'clean' })}
+          cleaningServiceCost={cleaningServiceCost}
+          cleaningServicePrice={cleaningServicePrice}
+          isServiceDisabled={isServiceDisabled}
+          serviceSubtext={serviceSubtext}
+          onServiceClick={() => handleHomeAction({ type: 'call_cleaning_service' })}
+          hasFridge={hasFridge}
+          hasFreezer={hasFreezer}
+        />
+        {unfedWarningPortal}
+      </>
+    );
+  }
 
   return (
     <div className="interaction-panel" style={{ width: '100%', boxSizing: 'border-box' }}>

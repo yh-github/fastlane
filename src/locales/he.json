@@ -295,10 +295,31 @@
     "startWeek": "התחל שבוע {{turn}}",
     "weeklyStatus": "התאמות שבועיות",
     "depStatus": "אמינות",
-    "physStatus": "מצב גופני",
-    "mentalStatus": "מצב נפשי",
-    "socialStatus": "מעמד חברתי",
-    "messStatus": "בלאגן בדירה"
+    "messStatus": "בלאגן בדירה",
+    "cardChoiceTitle": "תוכניות לסוף השבוע",
+    "cardChoiceSubtitle": "בחר כיצד {{name}} יבלה את סוף השבוע לפני תחילת שבוע {{turn}}.",
+    "selectedPrompt": "מוכן להתחייב לתוכניות שלך?",
+    "confirmSelection": "קבע סוף שבוע",
+    "chooseThisActivity": "✓ בחר פעילות זו",
+    "selectCard": "בחר",
+    "potentialOutcome": "תוצאה אפשרית",
+    "noBonusStat": "ללא בונוס נוסף",
+    "tierCheap": "זול",
+    "tierMedium": "בינוני",
+    "tierExpensive": "יקר",
+    "tierFree": "בחינם",
+    "card": {
+      "stayHomeTitle": "להישאר בבית ולנוח",
+      "deepCleanTitle": "ניקיון יסודי לסופ\"ש",
+      "cheapTitle": "בילוי רגוע",
+      "mediumTitle": "פעילות פנאי",
+      "expensiveTitle": "נופש יוקרתי",
+      "specialTitle": "הפתעה מרוממת רוח",
+      "applianceTitle": "נוחות ביתית",
+      "ticket_baseball": "משחק בייסבול",
+      "ticket_theatre": "הצגת תיאטרון",
+      "ticket_concert": "הופעת רוק"
+    }
   },
   "tag": {
     "always_hiring": "גיוס מובטח",
@@ -373,7 +394,17 @@
   },
   "homeRelax": {
     "title": "אין כמו בבית",
-    "button": "לנוח ({{cost}} שעות)"
+    "button": "לנוח ({{cost}} שעות)",
+    "durablesShowcase": "ריהוט וציוד לדירה",
+    "btnLeisure": "פנאי",
+    "btnChores": "מטלות",
+    "btnPantry": "מזווה",
+    "deckLeisure": "פנאי ומנוחה",
+    "deckChores": "מטלות ואחזקה",
+    "deckPantry": "מטבח ומזווה",
+    "pantryCardTitle": "מזווה ואספקת מזון",
+    "relaxTitle": "מנוחה והתרעננות",
+    "socializeTitle": "אירוח חברים"
   },
   "rentOffice": {
     "title": "משרד שכירות",

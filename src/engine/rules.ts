@@ -189,6 +189,16 @@ export interface GameRules {
    * Classic Floppy/CD-ROM: true. Advanced: false.
    */
   grantExpOnJobSwitch?: boolean;
+
+  /**
+   * ADVANCED: If true, alternative card-based weekend choices are presented instead of automated classic weekend events.
+   */
+  alternativeWeekends?: boolean;
+
+  /**
+   * ADVANCED: If true, uses the card-based GUI and visual apartment showcase for Home.
+   */
+  advancedHomeGUI?: boolean;
 }
 
 export interface EventRules {
@@ -351,6 +361,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   maskEarlyJobRejections: true,
   spaceCapping: false,
   grantExpOnJobSwitch: true,
+  alternativeWeekends: false,
 };
 
 /**
@@ -371,6 +382,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   bypassDoctorIfBroke: 'Bypasses mandatory doctor visit without penalty if player has no money',
   relaxationDoctorThreshold: 'Relaxation level threshold that triggers mandatory doctor event',
   grantExpOnJobSwitch: 'Grants +2 Experience immediately whenever hired for a new job',
+  alternativeWeekends: 'Presents interactive card-based choices during weekends with deck momentum and risk/reward options',
   protectBuiltInAppliances: 'Protects built-in appliances from theft during apartment burglaries',
   allowEmployedRentPayment: 'Allows paying rent manually at any time if employed at Rent Office',
   delayBookSetCredit: 'Requires waiting until next turn for 3-book set lesson discount',

@@ -316,7 +316,31 @@
     "physStatus": "Physical Condition",
     "mentalStatus": "Mental Condition",
     "socialStatus": "Social Standing",
-    "messStatus": "Apartment Mess"
+    "messStatus": "Apartment Mess",
+    "cardChoiceTitle": "Weekend Plans",
+    "cardChoiceSubtitle": "Choose how {{name}} will spend the weekend before Week {{turn}} begins.",
+    "selectedPrompt": "Ready to commit your plans?",
+    "confirmSelection": "Lock In Weekend",
+    "chooseThisActivity": "✓ Choose This Activity",
+    "selectCard": "Select",
+    "potentialOutcome": "Potential Outcome",
+    "noBonusStat": "No extra bonus",
+    "tierCheap": "CHEAP",
+    "tierMedium": "MEDIUM",
+    "tierExpensive": "EXPENSIVE",
+    "tierFree": "FREE",
+    "card": {
+      "stayHomeTitle": "Stay Home & Rest",
+      "deepCleanTitle": "Weekend Deep Clean",
+      "cheapTitle": "Low-Key Outing",
+      "mediumTitle": "Weekend Leisure",
+      "expensiveTitle": "Luxury Getaway",
+      "specialTitle": "Serendipitous Bliss",
+      "applianceTitle": "Home Comfort",
+      "ticket_baseball": "Live Baseball Game",
+      "ticket_theatre": "Theatre Show",
+      "ticket_concert": "Rock Concert"
+    }
   },
   "tag": {
     "always_hiring": "Always Hiring",
@@ -774,7 +798,17 @@
   },
   "homeRelax": {
     "title": "Home Sweet Home",
-    "button": "Relax ({{cost}}h)"
+    "button": "Relax ({{cost}}h)",
+    "durablesShowcase": "Apartment Furnishings & Belongings",
+    "btnLeisure": "Leisure",
+    "btnChores": "Chores",
+    "btnPantry": "Pantry",
+    "deckLeisure": "Leisure & Living",
+    "deckChores": "Chores & Maintenance",
+    "deckPantry": "Kitchen & Pantry",
+    "pantryCardTitle": "Pantry & Food Supplies",
+    "relaxTitle": "Relax & Recharge",
+    "socializeTitle": "Host a Gathering"
   },
   "bank": {
     "title": "Bank of Jones",

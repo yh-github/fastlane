@@ -342,9 +342,12 @@ describe('BuildingInteractions', () => {
       />
     );
 
+    // Open Leisure deck in advanced mode
+    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
+
     const socializeBtn = screen.getByRole('button', { name: /Socialize \/ Entertain Guests/i });
     expect(socializeBtn).not.toBeDisabled();
-    expect(socializeBtn.textContent).toContain('-1 💪, +👥 (generates 🧹)');
+    expect(screen.getByText(/-1 💪 Fatigue/i)).toBeInTheDocument();
 
     fireEvent.click(socializeBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'socialize_guests' });
@@ -491,12 +494,18 @@ describe('BuildingInteractions', () => {
       />
     );
 
-    // Initial Relax button:
+    // Open Leisure deck in advanced mode
+    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
+
+    // Initial Relax card:
     // Phys gain: 1 + Math.floor(50/25) = 3
     // Mental gain: firstBonus (2) + 3 + mentalBonus(1) + socialMentalBonus(1) = 7
     // Mess: +1
+    expect(screen.getByText(/\+3 💪 Physical/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+7 🧠 Mental/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 🧹 Mess/i)).toBeInTheDocument();
     const relaxBtn = screen.getByTestId('btn-relax');
-    expect(relaxBtn.textContent).toContain('+3 💪, +7 🧠 (+1 🧹)');
+    expect(relaxBtn.textContent).toContain('Relax');
 
     // After relaxing once this turn (relaxedThisTurn = true)
     const relaxedPlayer = {
@@ -513,7 +522,8 @@ describe('BuildingInteractions', () => {
       />
     );
     // firstBonus becomes 0 -> Mental gain is 5
-    expect(relaxBtn.textContent).toContain('+3 💪, +5 🧠 (+1 🧹)');
+    expect(screen.getByText(/\+3 💪 Physical/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+5 🧠 Mental/i)).toBeInTheDocument();
 
     // When starving (0 food)
     const starvingPlayer = {
@@ -529,7 +539,7 @@ describe('BuildingInteractions', () => {
         economicIndex={0}
       />
     );
-    expect(relaxBtn.textContent).toContain('⚠️ No food: +1 💪, +1 🧠 (-1 Max 💪 & 🧠)');
+    expect(screen.getByText(/⚠️ Starving: \+1 💪, \+1 🧠 \(-1 Max 💪 & 🧠!\)/i)).toBeInTheDocument();
   });
 
   it('HomeRelax renders presentable Amenities & Storage section with Fresh food, fridge status, fast food, and appliances', () => {
@@ -572,7 +582,75 @@ describe('BuildingInteractions', () => {
       />
     );
 
-    // Verify Amenities Section headers
+    // Verify Showcase headers
+    expect(screen.getByText(/Apartment Furnishings & Belongings/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 durables owned/i)).toBeInTheDocument();
+
+    // Verify Durables shown in showcase
+    expect(screen.getByText(/Refrigerator/i)).toBeInTheDocument();
+    expect(screen.getByText(/Stereo/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dictionary/i)).toBeInTheDocument();
+
+    // Click Stereo to inspect card
+    fireEvent.click(screen.getByTitle(/Stereo/i));
+    expect(screen.getByText(/\+1 🧠/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Back to Apartment|✕/i }));
+
+    // Click Dictionary to inspect card
+    fireEvent.click(screen.getByTitle(/Dictionary/i));
+    expect(screen.getByText(/\+1 Max 🧠/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Back to Apartment|✕/i }));
+
+    // Open Pantry card
+    fireEvent.click(screen.getByRole('button', { name: /Pantry/i }));
+    expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
+    expect(screen.getByText(/Fridge Active/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/4 units/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Cheeseburger/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+3 😊/i)).toBeInTheDocument();
+  });
+
+  it('HomeRelax renders classic amenities layout when advancedHomeGUI is disabled', () => {
+    const mockPlayer = {
+      id: 'p1',
+      hoursRemaining: 6,
+      inventory: {
+        freshFoodUnits: 4,
+        fastFoodItems: [{ itemId: 'cheeseburger', happinessBonus: 3 }],
+        appliances: [
+          { id: 'refrigerator', purchasePrice: 600, purchaseSource: 'socket_city' },
+          { id: 'stereo', purchasePrice: 200, purchaseSource: 'socket_city' }
+        ],
+        books: ['dictionary']
+      }
+    } as any;
+
+    const mockCampaign = {
+      housing: [{ id: 'low_cost', name: 'Low Cost' }],
+      items: [
+        { id: 'refrigerator', name: 'Refrigerator', basePrice: 600, category: 'appliance', tags: ['refrigerator'] },
+        { id: 'stereo', name: 'Stereo', basePrice: 200, category: 'appliance', effects: [{ trigger: 'on_relax', stat: 'mental', value: 1 }] },
+        { id: 'cheeseburger', name: 'Cheeseburger', basePrice: 6, category: 'food' },
+        { id: 'dictionary', name: 'Dictionary', basePrice: 40, category: 'book', effects: [{ trigger: 'continuous', stat: 'mental_max', value: 1 }] }
+      ],
+      config: {
+        timeRules: { relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6 },
+        economyRules: { cleaningServiceBasePrice: 100 },
+        statRules: {}
+      }
+    } as any;
+
+    render(
+      <HomeRelax
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ trackMess: true } as any}
+        economicIndex={0}
+      />
+    );
+
+    // Verify Amenities Section headers in classic mode
     expect(screen.getByText(/Home Amenities & Storage/i)).toBeInTheDocument();
     expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
     expect(screen.getByText(/Refrigerator Active/i)).toBeInTheDocument();
