@@ -141,4 +141,94 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     fireEvent.click(screen.getByRole('button', { name: /Close/i }));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('switches between inline card decks without hiding Space & Mess gauge, and toggles back to furnishings', () => {
+    render(
+      <HomeApartmentView
+        player={basePlayer}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, spaceCapping: true, usePhysicalMentalConditions: true } as any}
+        housingName="Low-Cost Housing"
+        actionFeedback={null}
+        durablesSpace={5}
+        totalUsedSpace={10}
+        spaceCap={10}
+        freeSpace={0}
+        overflow={0}
+        isOvercapacity={false}
+        durablesPct={50}
+        messPct={50}
+        currentMess={5}
+        maxMessHousing={50}
+        messIcon="🧹"
+        messLabel="Messy"
+        messBarColor="#f39c12"
+        messPercentage={10}
+        hoursToRelax={6}
+        isRelaxDisabled={false}
+        hasFood={true}
+        physGain={5}
+        mentalGain={10}
+        scaledMess={2}
+        classicGain={5}
+        classicFirstBonus={0}
+        onRelaxClick={vi.fn()}
+        socialParams={{ timeCost: 4, isDisabled: false }}
+        onSocializeClick={vi.fn()}
+        hoursToClean={3}
+        cleanPhysGain={2}
+        isCleanDisabled={false}
+        cleanSubtext=""
+        onCleanClick={vi.fn()}
+        cleaningServiceCost={100}
+        cleaningServicePrice={100}
+        isServiceDisabled={false}
+        serviceSubtext=""
+        onServiceClick={vi.fn()}
+        hasFridge={true}
+        hasFreezer={false}
+      />
+    );
+
+    // Initial state: Durables showcase is visible, Space & Mess gauge is visible
+    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+
+    // Click Leisure
+    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
+
+    // Now Leisure deck is visible, durables showcase is replaced, but Mess gauge is STILL visible!
+    expect(screen.getByText(/Leisure & Living/i)).toBeInTheDocument();
+    expect(screen.getByText(/Relax & Recharge/i)).toBeInTheDocument();
+    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Apartment Furnishings/i)).toBeNull();
+
+    // Click "✕ Back to Furnishings"
+    fireEvent.click(screen.getByRole('button', { name: /✕ Back to Furnishings/i }));
+    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Leisure & Living/i)).toBeNull();
+
+    // Click Chores
+    fireEvent.click(screen.getByRole('button', { name: /Chores/i }));
+    expect(screen.getByText(/Chores & Maintenance/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Clean Apartment/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Call Cleaning Service/i })).toBeInTheDocument();
+    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+
+    // Clicking active Chores button toggles back to furnishings
+    fireEvent.click(screen.getByRole('button', { name: /Chores/i }));
+    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Chores & Maintenance/i)).toBeNull();
+
+    // Switching directly from Pantry to Leisure
+    fireEvent.click(screen.getByRole('button', { name: /Pantry/i }));
+    expect(screen.getByText(/Kitchen & Pantry/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
+    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
+    expect(screen.getByText(/Leisure & Living/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Kitchen & Pantry/i)).toBeNull();
+    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+  });
 });
