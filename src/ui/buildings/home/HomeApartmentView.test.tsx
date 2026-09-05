@@ -98,6 +98,10 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.getByText(/Available at Socket City/i)).toBeInTheDocument();
     expect(screen.getByText(/Not Owned/i)).toBeInTheDocument();
 
+    // Verify the backdrop does NOT blur out the rest of the screen
+    const backdrop = screen.getByTestId('durable-card-modal-backdrop');
+    expect(backdrop.style.backdropFilter).toBeFalsy();
+
     // Close the inspection modal
     fireEvent.click(screen.getByRole('button', { name: /Back to Apartment|✕/i }));
 

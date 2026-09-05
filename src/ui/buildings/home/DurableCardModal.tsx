@@ -114,6 +114,8 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
 
   return createPortal(
     <div 
+      data-testid="durable-card-modal-backdrop"
+      className="durable-card-modal-backdrop"
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -121,8 +123,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(8px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
