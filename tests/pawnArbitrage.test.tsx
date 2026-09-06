@@ -1,9 +1,12 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { gameReducer } from '../src/engine/gameReducer';
 import { calcEconomyPrice } from '../src/engine/economyEngine';
 import { getAvailableActions } from '../src/engine/actionProvider';
-import type { PlayerState, GameState, OwnedAppliance, PawnedItem } from '../src/engine/gameState';
-import type { CampaignBundle } from '../src/engine/dataLoader';
+import { PawnShop } from '../src/ui/buildings/PawnShop';
+import type { PlayerState, GameState } from '../src/engine/gameState';
+import { loadCampaign, type CampaignBundle } from '../src/engine/dataLoader';
 import { Random } from '../src/utils/rng';
 
 function createMockCampaign(preventPawnArbitrage = true): CampaignBundle {
@@ -272,5 +275,218 @@ describe('Pawn Shop Arbitrage Prevention', () => {
     const actionsAfterPawn = getAvailableActions(pawnRes.updatedPlayer, stateAfterPawn, campaign, true);
     const redeemAction = actionsAfterPawn.find(a => a.action.type === 'redeem_item');
     expect(redeemAction!.action.cost).toBe(325);
+  });
+
+  it('guarantees across ALL items and ALL economic indices that earning money on the same turn is impossible', async () => {
+    const campaigns = [await loadCampaign('qol_improved'), await loadCampaign('advanced')];
+
+    for (const campaign of campaigns) {
+      const pawnableItems = campaign.items.filter(i => i.category === 'appliance' || i.category === 'book');
+      const payoutRate = campaign.config.economyRules.pawnPayoutRate;
+      const redeemRate = campaign.config.economyRules.pawnRedeemRate;
+
+      for (let economy = -30; economy <= 90; economy += 5) {
+        for (const item of pawnableItems) {
+          const currentMarketPrice = calcEconomyPrice(item.basePrice, economy);
+          const pawnValue = Math.floor(currentMarketPrice * payoutRate);
+          const redeemCost = Math.floor(currentMarketPrice * redeemRate);
+          const clearanceCost = Math.floor(currentMarketPrice * redeemRate);
+
+          // Invariant 1: Redeem cost is strictly greater than pawn payout (unless both are 0)
+          if (pawnValue > 0) {
+            expect(redeemCost).toBeGreaterThan(pawnValue);
+            expect(clearanceCost).toBeGreaterThan(pawnValue);
+          }
+
+          // Invariant 2: Net gain from pawn -> redeem cycle is strictly negative
+          const cycleProfit = pawnValue - redeemCost;
+          expect(cycleProfit).toBeLessThanOrEqual(0);
+          if (pawnValue > 0) {
+            expect(cycleProfit).toBeLessThan(0);
+          }
+
+          // Invariant 3: Net gain from clearance buy -> pawn cycle is strictly negative
+          const clearanceArbitrage = pawnValue - clearanceCost;
+          expect(clearanceArbitrage).toBeLessThanOrEqual(0);
+          if (pawnValue > 0) {
+            expect(clearanceArbitrage).toBeLessThan(0);
+          }
+        }
+      }
+    }
+  });
+
+  it('drains player money when attempting repeated pawn and redeem loops without economy change', () => {
+    const campaign = createMockCampaign(true);
+    let state = createInitialState(campaign, 50); // High economy boom
+    let player = state.players[0];
+    const initialMoney = player.money;
+
+    const context = {
+      state,
+      rules: state.rules!,
+      campaign,
+      turn: 1,
+      rng: new Random(42)
+    };
+
+    // Attempt 5 consecutive pawn-and-redeem cycles on the exact same turn
+    for (let cycle = 0; cycle < 5; cycle++) {
+      const prevMoney = player.money;
+      const actions = getAvailableActions(player, state, campaign, true);
+      const pawnAction = actions.find(a => a.action.type === 'pawn_item' && a.action.item.id === 'refrigerator');
+      expect(pawnAction).toBeDefined();
+
+      const pawnRes = gameReducer(player, pawnAction!.action, context);
+      player = pawnRes.updatedPlayer;
+      state = { ...state, players: [player] };
+
+      const actionsAfterPawn = getAvailableActions(player, state, campaign, true);
+      const redeemAction = actionsAfterPawn.find(a => a.action.type === 'redeem_item');
+      expect(redeemAction).toBeDefined();
+
+      const redeemRes = gameReducer(player, redeemAction!.action, context);
+      player = redeemRes.updatedPlayer;
+      state = { ...state, players: [player] };
+
+      // After completing one full pawn + redeem cycle, player must have LESS money than before
+      expect(player.money).toBeLessThan(prevMoney);
+    }
+
+    // After 5 cycles, total money lost should be significant
+    expect(player.money).toBeLessThan(initialMoney);
+  });
+
+  it('drains player money when buying second-hand and attempting to pawn on the same turn', () => {
+    const campaign = createMockCampaign(true);
+    let state = createInitialState(campaign, 50);
+    state.pawnShopItemsForSale = [
+      { itemId: 'color_tv', originalPrice: 400, redeemCost: 200, weekPawned: 0, ownerId: 'other' }
+    ];
+    let player = state.players[0];
+    const initialMoney = player.money;
+
+    const context = {
+      state,
+      rules: state.rules!,
+      campaign,
+      turn: 1,
+      rng: new Random(42)
+    };
+
+    const actions = getAvailableActions(player, state, campaign, true);
+    const buyAction = actions.find(a => a.action.type === 'buy_pawn_item');
+    expect(buyAction).toBeDefined();
+
+    // Buy the TV from clearance rack
+    const buyRes = gameReducer(player, buyAction!.action, context);
+    player = buyRes.updatedPlayer;
+    state = { ...state, players: [player], pawnShopItemsForSale: buyRes.updatedPawnShopItemsForSale || [] };
+
+    // Immediately pawn the TV
+    const actionsAfterBuy = getAvailableActions(player, state, campaign, true);
+    const pawnAction = actionsAfterBuy.find(a => a.action.type === 'pawn_item' && a.action.item.id === 'color_tv');
+    expect(pawnAction).toBeDefined();
+
+    const pawnRes = gameReducer(player, pawnAction!.action, context);
+    player = pawnRes.updatedPlayer;
+
+    // Buying and immediately pawning on the same turn strictly results in a loss
+    expect(player.money).toBeLessThan(initialMoney);
+  });
+
+  it('confirms that profit is impossible unless the economy swings downward while pawned', () => {
+    const campaign = createMockCampaign(true);
+    const item = campaign.items.find(i => i.id === 'refrigerator')!;
+    const payoutRate = campaign.config.economyRules.pawnPayoutRate;
+    const redeemRate = campaign.config.economyRules.pawnRedeemRate;
+
+    // Test a range of (pawnEconomy, redeemEconomy) pairs
+    const testCases = [
+      // Economy unchanged: profit MUST be negative (loss)
+      { pawnE: 60, redeemE: 60, expectedProfitPossible: false },
+      { pawnE: 30, redeemE: 30, expectedProfitPossible: false },
+      { pawnE: 0, redeemE: 0, expectedProfitPossible: false },
+      { pawnE: -20, redeemE: -20, expectedProfitPossible: false },
+      // Economy rose (inflation): profit MUST be negative (even bigger loss)
+      { pawnE: 0, redeemE: 40, expectedProfitPossible: false },
+      { pawnE: -20, redeemE: 60, expectedProfitPossible: false },
+      // Small economy drop: profit still negative (interest fee outweighs small drop)
+      { pawnE: 30, redeemE: 25, expectedProfitPossible: false },
+      // Major economy crash: profit IS possible (reward for market timing)
+      { pawnE: 60, redeemE: -20, expectedProfitPossible: true },
+      { pawnE: 60, redeemE: -30, expectedProfitPossible: true },
+      { pawnE: 50, redeemE: -30, expectedProfitPossible: true },
+    ];
+
+    for (const tc of testCases) {
+      const pawnPrice = calcEconomyPrice(item.basePrice, tc.pawnE);
+      const pawnValue = Math.floor(pawnPrice * payoutRate);
+
+      const redeemPrice = calcEconomyPrice(item.basePrice, tc.redeemE);
+      const redeemCost = Math.floor(redeemPrice * redeemRate);
+
+      const netProfit = pawnValue - redeemCost;
+
+      if (tc.expectedProfitPossible) {
+        expect(netProfit).toBeGreaterThan(0);
+      } else {
+        expect(netProfit).toBeLessThan(0);
+      }
+    }
+  });
+
+  it('PawnShop UI renders dynamic prices and prevents arbitrage on click', () => {
+    const campaign = createMockCampaign(true);
+    const mockPlayer = {
+      id: 'p1',
+      money: 1000,
+      inventory: {
+        appliances: [{ id: 'refrigerator', purchasePrice: 650, purchaseSource: 'socket_city' }],
+        books: ['dictionary'],
+        pawnedItems: [{ itemId: 'color_tv', originalPrice: 400, redeemCost: 200, weekPawned: 1, ownerId: 'p1' }]
+      }
+    } as any;
+
+    const clearanceItems = [
+      { itemId: 'color_tv', originalPrice: 400, redeemCost: 200, weekPawned: 0, ownerId: 'other' }
+    ];
+
+    const actionsReceived: any[] = [];
+    const handleAction = (act: any) => actionsReceived.push(act);
+
+    // Render at high economy (+60)
+    const { container } = render(
+      <PawnShop
+        player={mockPlayer}
+        onAction={handleAction}
+        economicIndex={60}
+        pawnShopItemsForSale={clearanceItems}
+        rules={{ preventPawnArbitrage: true }}
+        campaign={campaign}
+      />
+    );
+
+    // Verify UI displayed prices:
+    // Refrigerator pawn value at +60 should be +$520
+    expect(screen.getByText('+$520')).toBeInTheDocument();
+    // Color TV redeem cost and clearance buy cost at +60 should both be -$400 (not static -$200)
+    expect(screen.getAllByText('-$400')).toHaveLength(2);
+
+    // Click all items to verify dispatched action payloads
+    const storeItems = container.querySelectorAll('.store-item');
+    storeItems.forEach(item => fireEvent.click(item));
+
+    const pawnAct = actionsReceived.find(a => a.type === 'pawn_item' && a.item.id === 'refrigerator');
+    const redeemAct = actionsReceived.find(a => a.type === 'redeem_item');
+    const buyAct = actionsReceived.find(a => a.type === 'buy_pawn_item');
+
+    expect(pawnAct.value).toBe(520);
+    expect(redeemAct.cost).toBe(400); // 50% of 800
+    expect(buyAct.cost).toBe(400);    // 50% of 800
+
+    // Redemption and clearance buy cost are strictly greater than payout for the same item at the same economy reading
+    expect(redeemAct.cost).toBeGreaterThan(Math.floor(calcEconomyPrice(400, 60) * 0.4));
+    expect(buyAct.cost).toBeGreaterThan(Math.floor(calcEconomyPrice(400, 60) * 0.4));
   });
 });
