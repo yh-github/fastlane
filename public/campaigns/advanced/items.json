@@ -158,14 +158,37 @@
   },
   {
     "id": "dog_food",
-    "_remove": true
+    "name": "Canned Mystery Meat",
+    "category": "food",
+    "subcategory": "canned",
+    "basePrice": 18,
+    "mentalBonus": -2.5,
+    "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -3 }
+    ]
   },
   {
     "id": "8track",
-    "_remove": true
+    "name": "8-Track Player",
+    "category": "appliance",
+    "basePrice": 75,
+    "space": 10,
+    "lifestyleValue": 1,
+    "mentalBonus": -1,
+    "effects": [
+      { "trigger": "on_socialize", "stat": "social", "value": 0.5 }
+    ]
   },
   {
     "id": "capote",
-    "_remove": true
+    "name": "Works of Capote",
+    "category": "book",
+    "basePrice": 100,
+    "space": 10,
+    "lifestyleValue": 1,
+    "mentalBonus": -1,
+    "effects": [
+      { "trigger": "continuous", "stat": "mental_max", "value": 1 }
+    ]
   }
 ]

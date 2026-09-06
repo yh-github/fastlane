@@ -49,6 +49,8 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
           return 'Mastery over language, definitions, and rhetoric. Enhances your cognitive precision and maximum intellect.';
         case 'atlas':
           return 'Detailed cartography and geopolitical charts of the world. Expands your worldview and cognitive reserves.';
+        case 'capote':
+          return "An anthology of Truman Capote's literary masterpieces. Engaging and provocative prose that expands your cognitive capacity.";
         default:
           return 'Engaging literature and reference material. Reading sharpens your mind and grants permanent cognitive capacity.';
       }
@@ -69,6 +71,8 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
         return 'A vintage cathode-ray television. Humble black-and-white broadcasts that still bring people together for an evening show.';
       case 'stereo':
         return 'Crank the volume and fill the apartment with your favorite tunes. Sets an upbeat, festive mood whenever you entertain.';
+      case '8track':
+        return 'A vintage 8-track magnetic tape player. Plays your favorite classic jams with humble fidelity to get the party started.';
       case 'vcr':
         return 'Pop in a video cassette for a cozy movie night. Classic Hollywood cinema right from the comfort of your own couch.';
       case 'hot_tub':

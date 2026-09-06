@@ -233,6 +233,8 @@ export interface InventoryState {
   businessClothesWeeks: number;
   /** Units of fresh food in storage */
   freshFoodUnits: number;
+  /** Units of canned shelf-stable food in pantry */
+  cannedFoodUnits?: number;
   /** Fast food items purchased this turn (consumed at turn start) */
   fastFoodItems: FastFoodEntry[];
   /** Owned appliance IDs */

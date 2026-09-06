@@ -52,6 +52,7 @@ export function createDefaultInventory(): InventoryState {
     dressClothesWeeks: 0,
     businessClothesWeeks: 0,
     freshFoodUnits: 0,
+    cannedFoodUnits: 0,
     fastFoodItems: [],
     appliances: [],
     books: [],

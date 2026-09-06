@@ -32,7 +32,7 @@ export function handleRelaxAction(
     const maxMental = nextPlayer.mentalConditionMax ?? 50;
     const conditionRes = context.rules.conditionResolution ?? 0.5;
 
-    const hasFood = (nextPlayer.inventory?.freshFoodUnits || 0) > 0 || (nextPlayer.inventory?.fastFoodItems?.length || 0) > 0;
+    const hasFood = (nextPlayer.inventory?.freshFoodUnits || 0) > 0 || (nextPlayer.inventory?.fastFoodItems?.length || 0) > 0 || (nextPlayer.inventory?.cannedFoodUnits || 0) > 0;
 
     if (hasFood) {
       const relaxEffects = collectItemEffects(nextPlayer, context.campaign, 'on_relax');

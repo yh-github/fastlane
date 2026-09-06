@@ -992,6 +992,7 @@ export const ApartmentMockupSandbox: React.FC<ApartmentMockupSandboxProps> = ({
         <HomeCardDeck title="Kitchen & Pantry" icon="🥫" onClose={() => setActiveDeck(null)}>
           <PantryCard
             freshFoodUnits={4}
+            cannedFoodUnits={2}
             fastFoodItems={[{ itemId: 'cheeseburger', happinessBonus: 3 }]}
             hasFridge={!!ownedApplianceMap['refrigerator']?.owned}
             hasFreezer={!!ownedApplianceMap['freezer']?.owned}

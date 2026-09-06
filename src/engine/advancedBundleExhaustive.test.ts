@@ -278,8 +278,8 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
 
       // minPhysicalCondition drained from 3 to 2
       expect(p.minPhysicalCondition).toBe(2);
-      // physicalConditionMax drained from 50 to 49
-      expect(p.physicalConditionMax).toBe(49);
+      // physicalConditionMax drained from 50 to 40 (-10 starvation penalty)
+      expect(p.physicalConditionMax).toBe(40);
       // Physical dropped to MIN (2)
       expect(p.physicalCondition).toBe(2);
       // Mental: 25 - 10 (starvation, 0 turn start gain) = 15
@@ -385,14 +385,14 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       expect(res.updatedPlayer.mess).toBe(12); // +2 Mess with Hot Tub
     });
 
-    it('Bounce back mechanism: Doctor visit restores +8 Physical and Low Spirits restores +8 Mental', () => {
+    it('Bounce back mechanism: Doctor visit restores +4 Physical and Low Spirits restores +8 Mental', () => {
       const player = createPlayerState('p1', 'P1', false, {}, 'node_low_cost', mockCampaign.config);
       player.physicalCondition = 10;
       player.physicalConditionMax = 50;
       player.money = 200;
 
       const docRes = processDoctorVisit(player, 4, new Random(1), true, mockRules);
-      expect(docRes.physicalCondition).toBe(18); // 10 + 8 = 18 Physical
+      expect(docRes.physicalCondition).toBe(14); // 10 + 4 = 14 Physical
     });
   });
 

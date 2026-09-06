@@ -495,7 +495,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       };
 
       const updated = processDoctorVisit(player, 0, context.rng, false, rules, replay);
-      expect(updated.physicalCondition).toBeGreaterThanOrEqual(10);
+      expect(updated.physicalCondition).toBe(9); // 5 + 4 (bounce back)
       expect(updated.money).toBe(0);
       expect(updated.loanDebt).toBe(400); // 500 - 100 paid = 400 loan debt
     });

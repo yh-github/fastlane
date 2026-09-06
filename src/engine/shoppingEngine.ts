@@ -63,7 +63,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
       happinessBonus = 0;
       mentalBonus = 0;
     }
-  } else if (item.category === 'food' && item.subcategory !== 'fast_food') {
+  } else if (item.category === 'food' && item.subcategory !== 'fast_food' && item.subcategory !== 'canned') {
     if (!player.turnFlags?.freshFoodHappinessGranted) {
       newTurnFlags.freshFoodHappinessGranted = true;
       if (rules?.usePhysicalMentalConditions) {
@@ -109,7 +109,45 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
     updated = applyMentalChange(updated, mentalBonus);
   }
 
-  if (rules?.usePhysicalMentalConditions && item.category === 'food' && item.subcategory !== 'fast_food' && !player.turnFlags?.freshFoodHappinessGranted) {
+  // Generic on_purchase item effects
+  for (const effect of item.effects || []) {
+    if (effect.trigger === 'on_purchase') {
+      if (effect.stat === 'physical_max') {
+        const minPhys = updated.minPhysicalCondition ?? 1;
+        updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) + effect.value);
+        updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
+      } else if (effect.stat === 'physical') {
+        const maxPhys = updated.physicalConditionMax ?? 50;
+        const minPhys = updated.minPhysicalCondition ?? 1;
+        updated.physicalCondition = Math.max(minPhys, Math.min(maxPhys, (updated.physicalCondition ?? 50) + effect.value));
+      } else if (effect.stat === 'mental_max') {
+        updated.mentalConditionMax = Math.max(10, (updated.mentalConditionMax ?? 50) + effect.value);
+        updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition ?? 50);
+      } else if (effect.stat === 'mental') {
+        updated = applyMentalChange(updated, effect.value);
+      } else if (effect.stat === 'happiness') {
+        if (rules) {
+          updated = applyMoraleEffect(updated, effect.value, 'shopping_bonus', rules);
+        } else {
+          updated.happiness = Math.max(0, Math.min(100, updated.happiness + effect.value));
+        }
+      } else if (effect.stat === 'mess') {
+        updated.mess = Math.max(0, (updated.mess || 0) + effect.value);
+      } else if (effect.stat === 'social') {
+        updated.social = Math.max(0, (updated.social || 0) + effect.value);
+      }
+    }
+  }
+
+  // Backward compatibility fallback for dog_food if not explicitly defined in effects
+  const hasDogFoodPurchaseEffect = item.effects?.some(e => e.trigger === 'on_purchase' && e.stat === 'physical_max');
+  if (rules?.usePhysicalMentalConditions && item.id === 'dog_food' && !hasDogFoodPurchaseEffect) {
+    const minPhys = updated.minPhysicalCondition ?? 1;
+    updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) - 3);
+    updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
+  }
+
+  if (rules?.usePhysicalMentalConditions && item.category === 'food' && item.subcategory !== 'fast_food' && item.subcategory !== 'canned' && !player.turnFlags?.freshFoodHappinessGranted) {
     const maxPhys = updated.physicalConditionMax ?? 50;
     updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 50) + 1);
   }
@@ -118,6 +156,8 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
     case 'food':
       if (item.subcategory === 'fast_food') {
         updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];
+      } else if (item.subcategory === 'canned') {
+        updated.inventory.cannedFoodUnits = (updated.inventory.cannedFoodUnits || 0) + (item.units || 1);
       } else {
         updated.inventory.freshFoodUnits += (item.units || 1);
       }

@@ -103,7 +103,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const isServiceDisabled = isMessClean || isCannotAffordService || isNotEnoughTimeForService;
   const serviceSubtext = 'Professional cleaning (-10 🧹)';
 
-  const hasFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0;
+  const hasFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0 || (player.inventory?.cannedFoodUnits || 0) > 0;
 
   const relaxEffects = collectItemEffects(player, campaign, 'on_relax');
   const physBonus = relaxEffects.get('physical') || 0;
