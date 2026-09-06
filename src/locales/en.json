@@ -179,7 +179,7 @@
       "willy": "Wild Willy robbed you in the street!",
       "apartment": "Your apartment was robbed! Stolen: {{items}}"
     },
-    "donation": "You were feeling generous and donated ${{amount}} to charity.",
+    "donation": "A favorite relative felt sorry for you and sent you:\n${{amount}}\nand told you to buy some clothes, and to get a life!",
     "lottery": "You won ${{amount}} in the lottery!",
     "starvation": "Less time! ⏰ Due to hunger",
     "doctorVisit": "You had to visit the doctor. It cost you ${{cost}}.",

@@ -51,6 +51,9 @@ export function TurnEventsQueue({ events, onComplete }: TurnEventsQueueProps) {
   } else if (currentEvent.key.includes('bonus')) {
     icon = '💰';
     color = '#2ecc71';
+  } else if (currentEvent.key.includes('donation')) {
+    icon = '💌';
+    color = '#2ecc71';
   }
 
   return (
@@ -76,7 +79,7 @@ export function TurnEventsQueue({ events, onComplete }: TurnEventsQueueProps) {
           {icon}
         </div>
         
-        <h2 style={{ fontSize: '24px', margin: '20px 0', lineHeight: '1.4' }}>
+        <h2 style={{ fontSize: '24px', margin: '20px 0', lineHeight: '1.4', whiteSpace: 'pre-line' }}>
           {t(currentEvent.key, currentEvent.params as any) as string}
         </h2>
         
