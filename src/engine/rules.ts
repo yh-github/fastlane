@@ -199,6 +199,11 @@ export interface GameRules {
    * ADVANCED: If true, uses the card-based GUI and visual apartment showcase for Home.
    */
   advancedHomeGUI?: boolean;
+
+  /**
+   * QoL & ADVANCED: Adjusts pawn redemption and clearance prices dynamically with the economy to prevent infinite-money same-turn arbitrage.
+   */
+  preventPawnArbitrage?: boolean;
 }
 
 export interface EventRules {
@@ -281,6 +286,7 @@ export interface StatRules {
   maxSocial?: number;
   relaxMessIncrease?: number;
   doctorPhysicalBounceBack?: number;
+  starvationMaxPhysicalPenalty?: number;
   lowSpiritsMentalBounceBack?: number;
   globalMaxPhysicalCondition?: number;
   mentalMaxBaseValue?: number;
@@ -362,6 +368,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   spaceCapping: false,
   grantExpOnJobSwitch: true,
   alternativeWeekends: false,
+  preventPawnArbitrage: false,
 };
 
 /**
@@ -369,6 +376,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
   strictEviction: 'Warns at 1 month rent debt and evicts from apartment at >2 months debt',
+  preventPawnArbitrage: 'Prevents infinite-money exploits by adjusting pawn redemption and clearance prices with the economic index',
   fluctuatingRent: 'Rent rates adjust dynamically with economic index changes',
   clothingDecaysAll: 'All clothing in inventory decays by 1 week every turn (vs only worn clothing)',
   autoEquipBestClothes: 'Automatically equips best available clothes for current job',
