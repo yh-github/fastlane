@@ -12,6 +12,7 @@
     "bypassDoctorIfBroke": true,
     "delayBookSetCredit": false,
     "reducedDegreeStatBonus": true,
-    "maskEarlyJobRejections": false
+    "maskEarlyJobRejections": false,
+    "preventPawnArbitrage": true
   }
 }

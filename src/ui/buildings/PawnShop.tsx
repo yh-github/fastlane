@@ -8,7 +8,16 @@ import type { InteractionProps } from './types';
 
 export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsForSale = [], rules, campaign }: InteractionProps & { economicIndex?: number, pawnShopItemsForSale?: PawnedItem[], rules?: GameRules, campaign?: CampaignBundle }) {
   const { t } = useTranslation();
-  const pawnableAppliances = player.inventory.appliances;
+  const pawnableAppliances = player.inventory.appliances || [];
+  const pawnableBooks = (player.inventory.books || []).map(bId => {
+    const bookDef = campaign?.items.find(i => i.id === bId);
+    return {
+      id: bId,
+      purchasePrice: bookDef?.basePrice || 100,
+      purchaseSource: 'z_mart' as const
+    };
+  });
+  const pawnableItems = [...pawnableAppliances, ...pawnableBooks];
   const redeemableItems = player.inventory.pawnedItems || [];
 
   const formatItemName = (id: string) => campaign?.items.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -18,24 +27,27 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
       <h3>{t('pawnShop.title', { defaultValue: 'Pawn Shop' })}</h3>
       
       <h4 style={{ color: 'var(--accent-cyan)', margin: '12px 0 8px 0', fontSize: '0.95em' }}>{t('pawnShop.sellTitle', { defaultValue: 'Sell Items (40% Value)' })}</h4>
-      {pawnableAppliances.length === 0 ? (
-        <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('pawnShop.noSell', { defaultValue: 'You have no appliances to pawn.' })}</p>
+      {pawnableItems.length === 0 ? (
+        <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('pawnShop.noSell', { defaultValue: 'You have no durables to pawn.' })}</p>
       ) : (
         <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
-          {pawnableAppliances.map((app, idx) => {
-            const pawnValue = Math.floor(calcEconomyPrice(app.purchasePrice, economicIndex) * 0.4);
+          {pawnableItems.map((item, idx) => {
+            const itemDef = campaign?.items.find(i => i.id === item.id);
+            const basePrice = itemDef?.basePrice ?? item.purchasePrice;
+            const payoutRate = campaign?.config?.economyRules?.pawnPayoutRate ?? 0.4;
+            const pawnValue = Math.floor(calcEconomyPrice(basePrice, economicIndex) * payoutRate);
             return (
-              <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item: app, value: pawnValue })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>
+              <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item, value: pawnValue })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                   {rules?.showItemImages && (
                     <img 
-                      src={`/assets/raw_images/${app.id}.png`} 
-                      alt={app.id} 
+                      src={`/assets/raw_images/${item.id}.png`} 
+                      alt={item.id} 
                       style={{ width: '28px', height: '28px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px', flexShrink: 0 }}
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
-                  <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.id}`, { defaultValue: formatItemName(app.id) })}</span>
+                  <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${item.id}`, { defaultValue: formatItemName(item.id) })}</span>
                 </div>
                 <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>+${pawnValue}</span>
               </li>
@@ -50,7 +62,12 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
       ) : (
         <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
           {redeemableItems.map((app, idx) => {
-            const redeemCost = app.redeemCost;
+            const itemDef = campaign?.items.find(i => i.id === app.itemId);
+            const basePrice = itemDef?.basePrice ?? app.originalPrice;
+            const redeemRate = campaign?.config?.economyRules?.pawnRedeemRate ?? 0.5;
+            const redeemCost = rules?.preventPawnArbitrage
+              ? Math.floor(calcEconomyPrice(basePrice, economicIndex) * redeemRate)
+              : app.redeemCost;
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'redeem_item', item: app, cost: redeemCost })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
@@ -76,7 +93,12 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
           <h4 style={{ color: 'var(--accent-cyan)', margin: '16px 0 8px 0', fontSize: '0.95em' }}>{t('pawnShop.secondHandTitle', { defaultValue: 'Second Hand Items (50% Value)' })}</h4>
           <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
             {pawnShopItemsForSale.map((app, idx) => {
-              const buyCost = Math.floor(app.originalPrice * 0.5);
+              const itemDef = campaign?.items.find(i => i.id === app.itemId);
+              const basePrice = itemDef?.basePrice ?? app.originalPrice;
+              const redeemRate = campaign?.config?.economyRules?.pawnRedeemRate ?? 0.5;
+              const buyCost = rules?.preventPawnArbitrage
+                ? Math.floor(calcEconomyPrice(basePrice, economicIndex) * redeemRate)
+                : Math.floor(app.originalPrice * 0.5);
               return (
                 <li key={idx} className="store-item" onClick={() => onAction({ type: 'buy_pawn_item', item: app, cost: buyCost })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>

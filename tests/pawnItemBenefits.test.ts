@@ -3,7 +3,7 @@ import { GameState, PlayerState, createPlayerState, GameRules, StatRules, OwnedA
 import { gameReducer } from '../src/engine/gameReducer';
 import { processTurnStart } from '../src/engine/turnProcessor';
 import { calcMaxMental, calcMaxMess, calcUsedSpace } from '../src/engine/statMath';
-import { recalculateLifestyle } from '../src/engine/synergyEngine';
+import { recalculateLifestyle, collectItemEffects } from '../src/engine/synergyEngine';
 import { calcRequiredLessons, study } from '../src/engine/educationEngine';
 import { processWeekend } from '../src/engine/weekendEngine';
 import { Random } from '../src/utils/rng';
@@ -623,5 +623,56 @@ describe('Pawned Appliances Benefits & Invariants', () => {
     // Pawned appliances must NEVER trigger their durable weekend events
     expect(result.weekendResult?.event.key).not.toBe('events.weekend.durable_color_tv');
     expect(result.weekendResult?.event.key).not.toBe('events.weekend.durable_stereo');
+  });
+
+  it('9. Book Pawning and Redeeming: Books can be pawned and redeemed just like appliances', () => {
+    const bookPlayer: PlayerState = {
+      ...player,
+      inventory: {
+        ...player.inventory,
+        books: ['dictionary'],
+        pawnedItems: []
+      },
+      money: 100
+    };
+
+    const initialMentalMax = calcMaxMental(bookPlayer.mess || 0, bookPlayer.social || 0, 0, bookPlayer, mockStatRules, mockCampaign);
+    expect(initialMentalMax).toBe(51); // base 51 - messGrowth(0)[1] + 1 book[1] = 51
+
+    const context = {
+      state: { players: [bookPlayer], economicIndex: 0, turn: 1, rules: mockCampaign.config.gameRules! } as any,
+      rules: mockCampaign.config.gameRules!,
+      campaign: mockCampaign,
+      turn: 1,
+      rng: new Random(12345)
+    };
+
+    // 1. Pawn the dictionary
+    const pawnRes = gameReducer(
+      bookPlayer,
+      { type: 'pawn_item', item: { id: 'dictionary', purchasePrice: 70 }, value: 28 },
+      context
+    );
+    expect(pawnRes.updatedPlayer.inventory.books).not.toContain('dictionary');
+    expect(pawnRes.updatedPlayer.inventory.pawnedItems).toHaveLength(1);
+    expect(pawnRes.updatedPlayer.inventory.pawnedItems[0].itemId).toBe('dictionary');
+    expect(pawnRes.updatedPlayer.money).toBe(128);
+
+    // Mental max without book drops by 1
+    const pawnedMentalMax = calcMaxMental(pawnRes.updatedPlayer.mess || 0, pawnRes.updatedPlayer.social || 0, 0, pawnRes.updatedPlayer, mockStatRules, mockCampaign);
+    expect(pawnedMentalMax).toBe(50);
+
+    // 2. Redeem the dictionary
+    const redeemRes = gameReducer(
+      pawnRes.updatedPlayer,
+      { type: 'redeem_item', item: pawnRes.updatedPlayer.inventory.pawnedItems[0], cost: 35 },
+      { ...context, state: { ...context.state, players: [pawnRes.updatedPlayer] } }
+    );
+    expect(redeemRes.updatedPlayer.inventory.books).toContain('dictionary');
+    expect(redeemRes.updatedPlayer.inventory.pawnedItems).toHaveLength(0);
+    expect(redeemRes.updatedPlayer.money).toBe(93);
+
+    const redeemedMentalMax = calcMaxMental(redeemRes.updatedPlayer.mess || 0, redeemRes.updatedPlayer.social || 0, 0, redeemRes.updatedPlayer, mockStatRules, mockCampaign);
+    expect(redeemedMentalMax).toBe(51);
   });
 });

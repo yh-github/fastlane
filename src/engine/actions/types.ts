@@ -3,6 +3,8 @@ import type { CampaignBundle } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import type { EngineDecision } from '../replayTypes';
 
+export type PawnableItem = OwnedAppliance | { id: string; purchasePrice: number; purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop'; condition?: 'new' | 'used'; isBook?: boolean };
+
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
   | { type: 'work'; jobId: string; mode?: 'look_busy' | 'work_work' | 'face_time' | 'innovate' }
@@ -20,7 +22,7 @@ export type GameAction =
   | { type: 'rent_transaction'; amount: number }
   | { type: 'move_apartment'; housingId: string; cost: number }
   | { type: 'pay_rent_advance'; amount: number }
-  | { type: 'pawn_item'; item: OwnedAppliance; value: number }
+  | { type: 'pawn_item'; item: PawnableItem; value: number }
   | { type: 'redeem_item'; item: PawnedItem; cost: number }
   | { type: 'buy_pawn_item'; item: PawnedItem; cost: number }
   | { type: 'change_clothes'; clothes: 'casual' | 'dress' | 'business' | 'none' }

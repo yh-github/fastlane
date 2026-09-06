@@ -29,7 +29,8 @@
     "educationResolution": 0.1,
     "spaceCapping": true,
     "grantExpOnJobSwitch": false,
-    "alternativeWeekends": true
+    "alternativeWeekends": true,
+    "preventPawnArbitrage": true
   },
   "statRules": {
     "startingPhysicalCondition": 50,
@@ -41,7 +42,8 @@
     "globalMaxMentalCondition": 100,
     "physicalDoctorThreshold": 10,
     "physicalDoctorChancePerPoint": 0.05,
-    "doctorPhysicalBounceBack": 8,
+    "doctorPhysicalBounceBack": 4,
+    "starvationMaxPhysicalPenalty": 10,
     "lowSpiritsThreshold": 10,
     "lowSpiritsChancePerPoint": 0.05,
     "lowSpiritsMentalBounceBack": 8,

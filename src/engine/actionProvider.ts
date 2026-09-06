@@ -70,21 +70,43 @@ export function getAvailableActions(
       }
     }
 
-    // Pawn Shop
-    if (bDef?.archetype === 'pawnshop') {
+    // Pawn Shop & Discount and Pawn
+    if (bDef?.archetype === 'pawnshop' || bDef?.archetype === 'discount_and_pawn') {
+      const payoutRate = campaign.config.economyRules.pawnPayoutRate;
+      const redeemRate = campaign.config.economyRules.pawnRedeemRate;
+
       player.inventory.appliances.forEach(app => {
-        const value = Math.floor(calcEconomyPrice(app.purchasePrice, state.economicIndex) * campaign.config.economyRules.pawnPayoutRate);
+        const itemDef = campaign.items.find(i => i.id === app.id);
+        const basePrice = itemDef?.basePrice ?? app.purchasePrice;
+        const value = Math.floor(calcEconomyPrice(basePrice, state.economicIndex) * payoutRate);
         const pawnLabel = helpful ? `Pawn ${app.id} (+$${value})` : `Pawn ${app.id}`;
         options.push({ label: pawnLabel, action: { type: 'pawn_item', item: app, value } });
       });
+
+      player.inventory.books?.forEach(bookId => {
+        const bookDef = campaign.items.find(i => i.id === bookId);
+        const price = bookDef?.basePrice || 100;
+        const value = Math.floor(calcEconomyPrice(price, state.economicIndex) * payoutRate);
+        const pawnLabel = helpful ? `Pawn ${bookId} (+$${value})` : `Pawn ${bookId}`;
+        options.push({ label: pawnLabel, action: { type: 'pawn_item', item: { id: bookId, purchasePrice: price, purchaseSource: 'z_mart' }, value } });
+      });
       
       player.inventory.pawnedItems?.forEach(pawned => {
-        const redeemLabel = helpful ? `Redeem ${pawned.itemId} (-$${pawned.redeemCost})` : `Redeem ${pawned.itemId}`;
-        options.push({ label: redeemLabel, action: { type: 'redeem_item', item: pawned, cost: pawned.redeemCost } });
+        const itemDef = campaign.items.find(i => i.id === pawned.itemId);
+        const basePrice = itemDef?.basePrice ?? pawned.originalPrice;
+        const cost = state.rules?.preventPawnArbitrage
+          ? Math.floor(calcEconomyPrice(basePrice, state.economicIndex) * redeemRate)
+          : pawned.redeemCost;
+        const redeemLabel = helpful ? `Redeem ${pawned.itemId} (-$${cost})` : `Redeem ${pawned.itemId}`;
+        options.push({ label: redeemLabel, action: { type: 'redeem_item', item: pawned, cost } });
       });
 
       state.pawnShopItemsForSale?.forEach(pawned => {
-        const cost = Math.floor(pawned.originalPrice * 0.5);
+        const itemDef = campaign.items.find(i => i.id === pawned.itemId);
+        const basePrice = itemDef?.basePrice ?? pawned.originalPrice;
+        const cost = state.rules?.preventPawnArbitrage
+          ? Math.floor(calcEconomyPrice(basePrice, state.economicIndex) * redeemRate)
+          : Math.floor(pawned.originalPrice * 0.5);
         const buyLabel = helpful ? `Buy ${pawned.itemId} from Pawn Shop (-$${cost})` : `Buy ${pawned.itemId}`;
         options.push({ label: buyLabel, action: { type: 'buy_pawn_item', item: pawned, cost } });
       });
