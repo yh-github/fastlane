@@ -88,6 +88,89 @@ describe('Job Engine', () => {
       expect(result.message?.params?.reasons).toContain('Missing required degree: business_admin');
     });
 
+    it('suppresses Poor Work History on turns 1-4 when missing multiple requirements and maskEarlyJobRejections is true', () => {
+      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), { maskEarlyJobRejections: true }, 1);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.job.rejected');
+      expect(result.message?.params?.reasons).toContain('Not enough experience.');
+      expect(result.message?.params?.reasons).toContain('Missing required degree: business_admin');
+      expect(result.message?.params?.reasons).not.toContain('Poor Work History.');
+    });
+
+    it('masks as "no openings" on turns 1-4 when dependability is the ONLY missing requirement and maskEarlyJobRejections is true', () => {
+      const player = { hoursRemaining: 20, experience: 50, dependability: 10, degrees: ['business_admin'], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), { maskEarlyJobRejections: true }, 1);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.job.noOpenings');
+    });
+
+    it('returns ALL rejection reasons together (experience, dependability, degrees) when multiple requirements are missing', () => {
+      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      // Turn 5: maskEarlyJobRejections no longer suppresses Poor Work History
+      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.job.rejected');
+      const reasons = String(result.message?.params?.reasons);
+      expect(reasons).toContain('Not enough experience.');
+      expect(reasons).toContain('Poor Work History.');
+      expect(reasons).toContain('Missing required degree: business_admin');
+    });
+
+    it('returns "Not enough education." alongside experience and dependability when job_apply_missing_education is configured', () => {
+      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const messages = {
+        job_apply_missing_experience: 'Not enough experience.',
+        job_apply_missing_dependability: 'Poor Work History.',
+        job_apply_missing_education: 'Not enough education.'
+      };
+      const result = applyForJob(player, salesManager, 4, messages, undefined, new Random(1), { helpfulUI: false }, 5);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.job.rejected');
+      const reasons = String(result.message?.params?.reasons);
+      expect(reasons).toContain('Not enough experience.');
+      expect(reasons).toContain('Poor Work History.');
+      expect(reasons).toContain('Not enough education.');
+    });
+
+    it('returns ALL rejection reasons in Advanced including Management Skill and Technical Skill', () => {
+      const advExecTechJob: JobDef = {
+        id: 'tech_exec_mgr',
+        title: 'Tech Executive Manager',
+        locationId: 'factory',
+        baseWage: 30,
+        perks: [],
+        tags: ['technical', 'executive_management'],
+        requirements: {
+          experience: 50,
+          dependability: 50,
+          degrees: ['business_admin'],
+          uniform: 'business',
+          techSkill: 5.0
+        } as any
+      };
+      const advancedRules = { usePhysicalMentalConditions: true };
+      const player = {
+        hoursRemaining: 20,
+        experience: 20, // Missing 30 Exp
+        dependability: 20, // Missing 30 Dep
+        degrees: [], // Missing degree
+        skillMgmt: 1.0, // Requires 50/10 = 5.0 Skill_Mgmt
+        skillTech: 1.0, // Requires 5.0 Skill_Tech
+        turnFlags: { jobsRejectedThisTurn: [] }
+      } as unknown as PlayerState;
+
+      const result = applyForJob(player, advExecTechJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.job.rejected');
+      const reasons = String(result.message?.params?.reasons);
+      expect(reasons).toContain('Not enough experience.');
+      expect(reasons).toContain('Poor Work History.');
+      expect(reasons).toContain('Missing required degree: business_admin');
+      expect(reasons).toContain('Management Skill');
+      expect(reasons).toContain('Technical Skill');
+    });
+
     it('rejects due to insufficient employability roll', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99); // Force high roll (99)
       const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;

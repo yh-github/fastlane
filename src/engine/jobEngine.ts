@@ -137,11 +137,31 @@ export function applyForJob(
   const effectiveExp = updated.experience + techSkill + mgmtSkill;
   const effectiveDep = updated.dependability + techSkill + mgmtSkill;
 
+  const shouldMask = rules?.maskEarlyJobRejections !== undefined 
+    ? (rules.maskEarlyJobRejections && turn <= 4)
+    : (turn <= 4 && !rules?.helpfulUI);
+
+  const missingDep = effectiveDep < job.requirements.dependability;
+
   if (effectiveExp < job.requirements.experience) {
     rejectionReasons.push(msg('job_apply_missing_experience', 'Not enough experience.'));
   }
-  if (effectiveDep < job.requirements.dependability) {
+  if (missingDep && !shouldMask) {
     rejectionReasons.push(msg('job_apply_missing_dependability', 'Poor Work History.'));
+  }
+
+  // Check degrees / education
+  const missingDegrees = job.requirements.degrees.filter(degree => !updated.degrees.includes(degree));
+  if (missingDegrees.length > 0) {
+    if (messages['job_apply_missing_education'] && !rules?.helpfulUI) {
+      rejectionReasons.push(msg('job_apply_missing_education', 'Not enough education.'));
+    } else if (messages['job_apply_missing_education'] && !messages['job_apply_missing_degree']) {
+      rejectionReasons.push(msg('job_apply_missing_education', 'Not enough education.'));
+    } else {
+      for (const degree of missingDegrees) {
+        rejectionReasons.push(msg('job_apply_missing_degree', `Missing required degree: ${degree}`, { degree }));
+      }
+    }
   }
 
   if (isExecutive) {
@@ -150,11 +170,11 @@ export function applyForJob(
       rejectionReasons.push(msg('job_apply_missing_mgmt_skill', `Requires at least ${reqMgmt}.00 Management Skill (Skill_Mgmt). Gain experience in Middle Management.`, { reqMgmt }));
     }
   }
-  
-  // Check degrees
-  for (const degree of job.requirements.degrees) {
-    if (!updated.degrees.includes(degree)) {
-      rejectionReasons.push(msg('job_apply_missing_degree', `Missing required degree: ${degree}`, { degree }));
+
+  const reqTech = (job.requirements as any)?.techSkill ?? (job.requirements as any)?.skillTech;
+  if (isTechnical && reqTech !== undefined) {
+    if ((updated.skillTech || 0) < reqTech) {
+      rejectionReasons.push(msg('job_apply_missing_tech_skill', `Requires at least ${reqTech}.00 Technical Skill (Skill_Tech).`, { reqTech }));
     }
   }
 
@@ -162,13 +182,12 @@ export function applyForJob(
   // The workplace checks clothes during workShift.
 
   if (rejectionReasons.length > 0) {
-    const shouldMask = rules?.maskEarlyJobRejections !== undefined 
-      ? (rules.maskEarlyJobRejections && turn <= 4)
-      : (turn <= 4 && !rules?.helpfulUI);
-    if (shouldMask) {
-      return { updated, success: false, message: { key: 'action.job.noOpenings' } };
-    }
     return { updated, success: false, message: { key: 'action.job.rejected', params: { reasons: rejectionReasons.join(' ') } } };
+  }
+
+  // If dependability was the only missing requirement during early turns, mask it as "No openings"
+  if (missingDep && shouldMask) {
+    return { updated, success: false, message: { key: 'action.job.noOpenings' } };
   }
 
   // If the job is "always_hiring" and requirements are met, skip luck roll and auto-hire!
