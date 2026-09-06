@@ -133,7 +133,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       const player = nextState.players[0];
 
       // Verify doctor visit occurred and restored physical condition
-      expect(player.physicalCondition).toBeGreaterThanOrEqual(10);
+      expect(player.physicalCondition).toBeGreaterThanOrEqual(8);
       expect(player.turnEvents.some(e => e.key.startsWith('events.doctorVisit'))).toBe(true);
     });
   });
@@ -277,8 +277,8 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       // Verify doctor fee was charged ($30–$200)
       expect(player.money).toBeLessThan(482);
 
-      // Verify physical bounce back (+8 from processDoctorVisit: 5 - 1 mess decay + 8 = 12)
-      expect(player.physicalCondition).toBe(12);
+      // Verify physical bounce back (+4 from processDoctorVisit: 5 - 1 mess decay + 4 = 8)
+      expect(player.physicalCondition).toBe(8);
 
       // Verify doctor visit event logged
       expect(player.turnEvents.some(e => e.key.startsWith('events.doctorVisit'))).toBe(true);

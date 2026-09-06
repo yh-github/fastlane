@@ -74,6 +74,18 @@
       {
         "itemId": "concert_tickets",
         "priceOverride": 40
+      },
+      {
+        "itemId": "dog_food",
+        "priceOverride": 18
+      },
+      {
+        "itemId": "8track",
+        "priceOverride": 75
+      },
+      {
+        "itemId": "capote",
+        "priceOverride": 100
       }
     ]
   }

@@ -385,6 +385,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         <HomeCardDeck>
           <PantryCard
             freshFoodUnits={player.inventory?.freshFoodUnits || 0}
+            cannedFoodUnits={player.inventory?.cannedFoodUnits || 0}
             fastFoodItems={player.inventory?.fastFoodItems || []}
             hasFridge={hasFridge}
             hasFreezer={hasFreezer}

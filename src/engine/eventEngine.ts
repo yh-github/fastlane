@@ -83,7 +83,7 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number, rng
   
   if (rules?.usePhysicalMentalConditions) {
     const maxPhys = updated.physicalConditionMax ?? 50;
-    const physBounce = (rules as any)?.doctorPhysicalBounceBack ?? 8;
+    const physBounce = (rules as any)?.doctorPhysicalBounceBack ?? 4;
     updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 15) + physBounce);
   } else {
     updated.happiness = Math.max(10, updated.happiness - 4);

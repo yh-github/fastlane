@@ -65,8 +65,8 @@ export interface JobDef {
   tags?: string[];
 }
 
-export type EffectTrigger = 'turn_start' | 'on_relax' | 'on_socialize' | 'continuous';
-export type StatTarget = 'physical' | 'mental' | 'mental_max' | 'mess' | 'mess_max' | 'social' | 'happiness';
+export type EffectTrigger = 'turn_start' | 'on_relax' | 'on_socialize' | 'continuous' | 'on_purchase';
+export type StatTarget = 'physical' | 'physical_max' | 'mental' | 'mental_max' | 'mess' | 'mess_max' | 'social' | 'happiness';
 export type EffectOperation = 'ADD' | 'MAX' | 'SET';
 
 export interface ItemEffect {

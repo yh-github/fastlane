@@ -92,8 +92,10 @@ export function recalculateLifestyle(player: PlayerState, campaign: CampaignBund
   }
 
   const itemCounts: Record<string, number> = {};
+  const hasStereo = player.inventory.appliances.some(a => a.id === 'stereo');
 
   for (const app of player.inventory.appliances) {
+    if (hasStereo && app.id === '8track') continue;
     itemCounts[app.id] = (itemCounts[app.id] || 0) + 1;
   }
   for (const book of player.inventory.books) {
@@ -161,10 +163,14 @@ export function collectItemEffects(
   if (!campaign || !campaign.items || !trigger) return totals;
 
   const seenItemIds = new Set<string>();
+  const hasStereo = player.inventory?.appliances?.some(a => a.id === 'stereo');
+  const hasColorTv = player.inventory?.appliances?.some(a => a.id === 'color_tv');
 
   // Process appliances
   for (const app of player.inventory?.appliances || []) {
     if (seenItemIds.has(app.id)) continue;
+    if (hasStereo && app.id === '8track') continue;
+    if (hasColorTv && app.id === 'bw_tv') continue;
     seenItemIds.add(app.id);
 
     const itemDef = campaign.items?.find(i => i.id === app.id);

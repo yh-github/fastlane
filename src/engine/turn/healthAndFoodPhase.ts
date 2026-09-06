@@ -57,6 +57,9 @@ export function processHealthAndFoodPhase(
       } else if (p.inventory.freshFoodUnits > 0) {
         p.inventory.freshFoodUnits--;
         p.turnFlags.hasEaten = true;
+      } else if ((p.inventory.cannedFoodUnits || 0) > 0) {
+        p.inventory.cannedFoodUnits!--;
+        p.turnFlags.hasEaten = true;
       } else {
         starvedThisTurn = true;
       }
@@ -74,8 +77,9 @@ export function processHealthAndFoodPhase(
     }
 
     if (starvedThisTurn) {
+      const starvationDrop = campaign.config.statRules?.starvationMaxPhysicalPenalty ?? 10;
       p.minPhysicalCondition = Math.max(campaign.config.statRules?.globalPhysicalMin ?? 1, (p.minPhysicalCondition ?? 3) - 1);
-      p.physicalConditionMax = Math.max(campaign.config.statRules?.minMaxPhysical ?? 10, (p.physicalConditionMax ?? 50) - 1);
+      p.physicalConditionMax = Math.max(campaign.config.statRules?.minMaxPhysical ?? 10, (p.physicalConditionMax ?? 50) - starvationDrop);
       p.physicalCondition = p.minPhysicalCondition;
       const mentalDrop = 10;
       p.mentalCondition = Math.max(campaign.config.statRules?.minMentalCondition ?? 5, (p.mentalCondition ?? 50) - mentalDrop);
@@ -123,6 +127,9 @@ export function processHealthAndFoodPhase(
         p.turnFlags.hasEaten = true;
       } else if (p.inventory.freshFoodUnits > 0) {
         p.inventory.freshFoodUnits--;
+        p.turnFlags.hasEaten = true;
+      } else if ((p.inventory.cannedFoodUnits || 0) > 0) {
+        p.inventory.cannedFoodUnits!--;
         p.turnFlags.hasEaten = true;
       } else {
         const starvationPenalty = requireConfig(campaign.config.timeRules?.starvationPenalty, 'timeRules.starvationPenalty');

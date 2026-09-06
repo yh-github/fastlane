@@ -5,6 +5,7 @@ import type { FastFoodEntry } from '../../../engine/gameState';
 
 interface PantryCardProps {
   freshFoodUnits: number;
+  cannedFoodUnits?: number;
   fastFoodItems: FastFoodEntry[];
   hasFridge: boolean;
   hasFreezer: boolean;
@@ -13,13 +14,14 @@ interface PantryCardProps {
 
 export const PantryCard: React.FC<PantryCardProps> = ({
   freshFoodUnits,
+  cannedFoodUnits = 0,
   fastFoodItems,
   hasFridge,
   hasFreezer,
   campaign
 }) => {
   const { t } = useTranslation();
-  const totalFood = freshFoodUnits + (fastFoodItems?.length || 0);
+  const totalFood = freshFoodUnits + (fastFoodItems?.length || 0) + cannedFoodUnits;
 
   return (
     <div
@@ -140,6 +142,38 @@ export const PantryCard: React.FC<PantryCardProps> = ({
             {freshFoodUnits} units
           </span>
         </div>
+
+        {/* Canned Shelf-Stable Food */}
+        {cannedFoodUnits > 0 && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'rgba(0,0,0,0.4)',
+            padding: '6px 10px',
+            borderRadius: '6px',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '1.1rem' }}>🥫</span>
+              <div>
+                <div style={{ fontSize: '0.80rem', fontWeight: 'bold', color: '#fff' }}>
+                  Canned Reserves
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#38bdf8' }}>
+                  Non-perishable shelf-stable provisions
+                </div>
+              </div>
+            </div>
+            <span style={{
+              fontSize: '0.92rem',
+              fontWeight: 'bold',
+              color: '#38bdf8'
+            }}>
+              {cannedFoodUnits} cans
+            </span>
+          </div>
+        )}
 
         {/* Fast Food Items */}
         {fastFoodItems && fastFoodItems.length > 0 && (
