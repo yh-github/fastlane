@@ -225,23 +225,33 @@ describe('Balance, Burnout & Spoilage Tests', () => {
       openings: 1
     };
 
-    it('masks missing qualifications as "no openings" on turns 1-4 when maskEarlyJobRejections is true (Classic Floppy / CD-ROM)', () => {
+    it('masks low dependability as "no openings" and suppresses Poor Work History on turns 1-4 when maskEarlyJobRejections is true (Classic Floppy / CD-ROM)', () => {
       const rng = new Random(1);
       const player = createTestGameState(baseCampaign, [{ name: 'P1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost').players[0];
       player.experience = 10; // Fails reqExperience (30)
+      player.dependability = 20; // Fails reqDependability (50)
 
       const classicRules = { ...baseCampaign.config.gameRules, maskEarlyJobRejections: true };
 
-      // On turn 2 (< 5), unqualified player gets "no openings"
-      const resultEarly = applyForJob(player, mockJob as any, 4, {}, undefined, rng, classicRules, 2);
-      expect(resultEarly.success).toBe(false);
-      expect(resultEarly.message?.key).toBe('action.job.noOpenings');
+      // On turn 2 (< 5), player missing experience & dependability gets rejected with experience/degrees reasons, but 'Poor Work History' is suppressed
+      const resultMissingBoth = applyForJob(player, mockJob as any, 4, {}, undefined, rng, classicRules, 2);
+      expect(resultMissingBoth.success).toBe(false);
+      expect(resultMissingBoth.message?.key).toBe('action.job.rejected');
+      expect((resultMissingBoth.message?.params as any)?.reasons).toContain('experience');
+      expect((resultMissingBoth.message?.params as any)?.reasons).not.toContain('Poor Work History');
 
-      // On turn 5 (>= 5), unqualified player gets explicit rejection reason
+      // When player meets all requirements EXCEPT dependability, it is masked as "no openings"
+      player.experience = 30;
+      player.degrees = ['degree_business'];
+      const resultEarlyOnlyDep = applyForJob(player, mockJob as any, 4, {}, undefined, rng, classicRules, 2);
+      expect(resultEarlyOnlyDep.success).toBe(false);
+      expect(resultEarlyOnlyDep.message?.key).toBe('action.job.noOpenings');
+
+      // On turn 5 (>= 5), unqualified player gets explicit rejection reason including Poor Work History
       const resultLate = applyForJob(player, mockJob as any, 4, {}, undefined, rng, classicRules, 5);
       expect(resultLate.success).toBe(false);
       expect(resultLate.message?.key).toBe('action.job.rejected');
-      expect((resultLate.message?.params as any)?.reasons).toContain('experience');
+      expect((resultLate.message?.params as any)?.reasons).toContain('Poor Work History');
     });
 
     it('shows exact missing requirement on turns 1-4 when maskEarlyJobRejections is false (QoL / Advanced)', () => {

@@ -398,7 +398,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   reducedDegreeStatBonus: 'Reduces the Dependability and Experience boost from degrees from +5 to +2',
   showItemImages: 'Displays graphical icons for items in menus and inventory',
   delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',
-  maskEarlyJobRejections: 'Masks unqualified job applications as "No openings" during turns 1-4 (Original Floppy/CD-ROM behavior)',
+  maskEarlyJobRejections: 'Masks low dependability rejection as "No openings" (and suppresses "Poor Work History" if other requirements are missing) during turns 1-4 (Original Floppy/CD-ROM behavior)',
   percentageEducation: 'Tracks degree progress on a 0-100% continuous progress scale',
   proportionalDivisibleActions: 'Scales gains and stamina costs proportionally for continuous actions (Work, Study, Relax, Clean)',
   conditionResolution: 'Step resolution for physical and mental condition scores (default 0.5 for half points)',
