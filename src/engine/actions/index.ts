@@ -7,3 +7,4 @@ export * from './movementActions';
 export * from './financeActions';
 export * from './housingActions';
 export * from './pawnActions';
+export * from './maintenanceActions';

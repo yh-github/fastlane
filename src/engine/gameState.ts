@@ -264,6 +264,8 @@ export interface OwnedAppliance {
   purchaseSource: 'socket_city' | 'z_mart' | 'pawnshop';
   /** Item condition: new (Socket City) or used (Z-Mart / Pawn Shop) */
   condition?: 'new' | 'used';
+  /** Whether the appliance is currently broken down */
+  isBroken?: boolean;
 }
 
 export type GoalAllotment = Record<string, number>;
@@ -289,6 +291,7 @@ export interface PawnedItem {
   ownerId: string;
   purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop';
   condition?: 'new' | 'used';
+  isBroken?: boolean;
 }
 
 // ─── Turn Flags ─────────────────────────────────────────────────

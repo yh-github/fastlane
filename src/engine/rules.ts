@@ -204,6 +204,11 @@ export interface GameRules {
    * QoL & ADVANCED: Adjusts pawn redemption and clearance prices dynamically with the economy to prevent infinite-money same-turn arbitrage.
    */
   preventPawnArbitrage?: boolean;
+
+  /**
+   * ADVANCED: Appliances break instead of auto-repairing for money, requiring manual repair, service, or disposal.
+   */
+  advancedMaintenance?: boolean;
 }
 
 export interface EventRules {
@@ -369,12 +374,14 @@ export const DEFAULT_GAME_RULES: GameRules = {
   grantExpOnJobSwitch: true,
   alternativeWeekends: false,
   preventPawnArbitrage: false,
+  advancedMaintenance: false,
 };
 
 /**
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  advancedMaintenance: 'Appliances break instead of auto-repairing for money, requiring manual repair, service, or disposal',
   strictEviction: 'Warns at 1 month rent debt and evicts from apartment at >2 months debt',
   preventPawnArbitrage: 'Prevents infinite-money exploits by adjusting pawn redemption and clearance prices with the economic index',
   fluctuatingRent: 'Rent rates adjust dynamically with economic index changes',

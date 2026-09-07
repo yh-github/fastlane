@@ -303,6 +303,8 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           onServiceClick={() => handleHomeAction({ type: 'call_cleaning_service' })}
           hasFridge={hasFridge}
           hasFreezer={hasFreezer}
+          economicIndex={economicIndex}
+          onAction={handleHomeAction}
         />
         {unfedWarningPortal}
       </>

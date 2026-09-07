@@ -6,7 +6,7 @@ export type MoraleReason =
   | 'rent_extension_denied' | 'street_robbery' | 'apartment_robbery' 
   | 'weekend_bonus' | 'raise_approved' | 'fired' | 'market_crash' 
   | 'economic_boom' | 'graduation' | 'lottery_win' | 'computer_profit'
-  | 'food_spoilage' | 'loan_default' | 'appliance_break' | 'appliance_breakage' | 'starvation' 
+  | 'food_spoilage' | 'loan_default' | 'appliance_break' | 'appliance_breakage' | 'appliance_repair' | 'starvation' 
   | 'doctor_visit' | 'eat_consumable' | 'cooking_bonus' | 'pawn_item' | 'shopping_bonus';
 
 export type HappinessReason = MoraleReason;

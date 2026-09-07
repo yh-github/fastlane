@@ -35,7 +35,9 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
             const itemDef = campaign?.items.find(i => i.id === item.id);
             const basePrice = itemDef?.basePrice ?? item.purchasePrice;
             const payoutRate = campaign?.config?.economyRules?.pawnPayoutRate ?? 0.4;
-            const pawnValue = Math.floor(calcEconomyPrice(basePrice, economicIndex) * payoutRate);
+            const standardPawnValue = Math.floor(calcEconomyPrice(basePrice, economicIndex) * payoutRate);
+            const isBroken = (item as any).isBroken;
+            const pawnValue = isBroken ? Math.floor(standardPawnValue * 0.25) : standardPawnValue;
             return (
               <li key={idx} className="store-item" onClick={() => onAction({ type: 'pawn_item', item, value: pawnValue })} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
@@ -47,7 +49,14 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
-                  <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${item.id}`, { defaultValue: formatItemName(item.id) })}</span>
+                  <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {t(`item.${item.id}`, { defaultValue: formatItemName(item.id) })}
+                    {isBroken && (
+                      <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
+                        ({t('pawnShop.brokenTag', { defaultValue: 'Broken — 25%' })})
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>+${pawnValue}</span>
               </li>
@@ -79,7 +88,14 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
-                  <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
+                  <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}
+                    {app.isBroken && (
+                      <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
+                        ({t('pawnShop.brokenTagShort', { defaultValue: 'Broken' })})
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-${redeemCost}</span>
               </li>
@@ -110,7 +126,14 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     )}
-                    <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}</span>
+                    <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}
+                      {app.isBroken && (
+                        <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
+                          ({t('pawnShop.brokenTagShort', { defaultValue: 'Broken' })})
+                        </span>
+                      )}
+                    </span>
                   </div>
                   <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-${buyCost}</span>
                 </li>

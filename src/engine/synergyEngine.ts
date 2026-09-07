@@ -9,6 +9,7 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
   // Gather tags from inventory
   // 1. Appliances
   for (const app of player.inventory.appliances) {
+    if (app.isBroken) continue;
     activeTags.add(`item:${app.id}`);
     const itemDef = campaign.items.find(i => i.id === app.id);
     if (itemDef?.tags) {
@@ -163,11 +164,12 @@ export function collectItemEffects(
   if (!campaign || !campaign.items || !trigger) return totals;
 
   const seenItemIds = new Set<string>();
-  const hasStereo = player.inventory?.appliances?.some(a => a.id === 'stereo');
-  const hasColorTv = player.inventory?.appliances?.some(a => a.id === 'color_tv');
+  const hasStereo = player.inventory?.appliances?.some(a => a.id === 'stereo' && !a.isBroken);
+  const hasColorTv = player.inventory?.appliances?.some(a => a.id === 'color_tv' && !a.isBroken);
 
   // Process appliances
   for (const app of player.inventory?.appliances || []) {
+    if (app.isBroken) continue;
     if (seenItemIds.has(app.id)) continue;
     if (hasStereo && app.id === '8track') continue;
     if (hasColorTv && app.id === 'bw_tv') continue;

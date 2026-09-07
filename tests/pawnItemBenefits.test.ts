@@ -675,4 +675,49 @@ describe('Pawned Appliances Benefits & Invariants', () => {
     const redeemedMentalMax = calcMaxMental(redeemRes.updatedPlayer.mess || 0, redeemRes.updatedPlayer.social || 0, 0, redeemRes.updatedPlayer, mockStatRules, mockCampaign);
     expect(redeemedMentalMax).toBe(51);
   });
+
+  it('10. Broken Appliance Pawning and Redeeming: Preserves isBroken across pawn, redeem, and second-hand buy', () => {
+    const brokenPlayer: PlayerState = {
+      ...player,
+      inventory: {
+        ...player.inventory,
+        appliances: [{ id: 'refrigerator', purchasePrice: 500, condition: 'used', isBroken: true }],
+        pawnedItems: []
+      },
+      money: 300
+    };
+
+    const context = {
+      state: { players: [brokenPlayer], economicIndex: 0, turn: 1, rules: mockCampaign.config.gameRules! } as any,
+      rules: mockCampaign.config.gameRules!,
+      campaign: mockCampaign,
+      turn: 1,
+      rng: new Random(12345)
+    };
+
+    // 1. Pawn the broken refrigerator (25% payout = 125)
+    const pawnRes = gameReducer(
+      brokenPlayer,
+      { type: 'pawn_item', item: { id: 'refrigerator', purchasePrice: 500, condition: 'used', isBroken: true }, value: 125 },
+      context
+    );
+
+    expect(pawnRes.updatedPlayer.inventory.appliances).toHaveLength(0);
+    expect(pawnRes.updatedPlayer.inventory.pawnedItems).toHaveLength(1);
+    expect(pawnRes.updatedPlayer.inventory.pawnedItems[0].itemId).toBe('refrigerator');
+    expect(pawnRes.updatedPlayer.inventory.pawnedItems[0].isBroken).toBe(true);
+    expect(pawnRes.updatedPlayer.money).toBe(425);
+
+    // 2. Redeem the broken refrigerator
+    const redeemRes = gameReducer(
+      pawnRes.updatedPlayer,
+      { type: 'redeem_item', item: pawnRes.updatedPlayer.inventory.pawnedItems[0], cost: 250 },
+      { ...context, state: { ...context.state, players: [pawnRes.updatedPlayer] } }
+    );
+
+    expect(redeemRes.updatedPlayer.inventory.appliances).toHaveLength(1);
+    expect(redeemRes.updatedPlayer.inventory.appliances[0].id).toBe('refrigerator');
+    expect(redeemRes.updatedPlayer.inventory.appliances[0].isBroken).toBe(true);
+    expect(redeemRes.updatedPlayer.inventory.pawnedItems).toHaveLength(0);
+  });
 });

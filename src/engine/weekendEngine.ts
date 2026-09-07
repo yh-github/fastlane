@@ -41,6 +41,7 @@ export function initPlayerWeekendDecks(player: PlayerState, weekendData: Weekend
   // Owned appliances: add durable_${id} to cheap deck
   if (player.inventory?.appliances) {
     for (const app of player.inventory.appliances) {
+      if (app.isBroken) continue;
       const cardId = `durable_${app.id}`;
       if (!cheapCards.includes(cardId)) {
         cheapCards.push(cardId);
@@ -538,6 +539,7 @@ export function processWeekend(
     const shuffledAppliances = rng.shuffle(newPlayer.inventory.appliances);
     
     for (const app of shuffledAppliances) {
+      if (app.isBroken) continue;
       if (weekendData.durableWeekends[app.id]) {
         if (rng.next() < 0.20) {
           const candidateEvent = { key: `events.weekend.durable_${app.id}` };

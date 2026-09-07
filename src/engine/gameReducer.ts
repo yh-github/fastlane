@@ -26,7 +26,8 @@ import {
   handleAskRentExtensionAction,
   handlePawnItemAction,
   handleRedeemItemAction,
-  handleBuyPawnItemAction
+  handleBuyPawnItemAction,
+  handleApplianceMaintenanceAction
 } from './actions';
 
 export type { GameAction, ReducerContext, ReducerResult } from './actions';
@@ -118,6 +119,9 @@ export function gameReducer(
       break;
     case 'buy_pawn_item':
       res = handleBuyPawnItemAction(nextPlayer, action, context);
+      break;
+    case 'appliance_maintenance':
+      res = handleApplianceMaintenanceAction(nextPlayer, action, context, replayContext);
       break;
   }
 

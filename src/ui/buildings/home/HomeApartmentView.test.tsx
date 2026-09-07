@@ -236,4 +236,110 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.queryByText(/Pantry & Food Supplies/i)).toBeNull();
     expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
   });
+
+  it('renders broken appliance with badge and allows executing maintenance options', () => {
+    const onAction = vi.fn();
+    const brokenPlayer = {
+      ...basePlayer,
+      inventory: {
+        ...basePlayer.inventory,
+        appliances: [
+          { id: 'refrigerator', condition: 'used', purchaseSource: 'socket_city', isBroken: true }
+        ]
+      }
+    };
+
+    render(
+      <HomeApartmentView
+        player={brokenPlayer}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, spaceCapping: true, advancedMaintenance: true } as any}
+        housingName="Low-Cost Housing"
+        actionFeedback={null}
+        durablesSpace={5}
+        totalUsedSpace={10}
+        spaceCap={10}
+        freeSpace={0}
+        overflow={0}
+        isOvercapacity={false}
+        durablesPct={50}
+        messPct={50}
+        currentMess={5}
+        maxMessHousing={50}
+        messIcon="🧹"
+        messLabel="Messy"
+        messBarColor="#f39c12"
+        messPercentage={10}
+        hoursToRelax={6}
+        isRelaxDisabled={false}
+        hasFood={true}
+        physGain={5}
+        mentalGain={10}
+        scaledMess={2}
+        classicGain={5}
+        classicFirstBonus={0}
+        onRelaxClick={vi.fn()}
+        socialParams={{}}
+        onSocializeClick={vi.fn()}
+        hoursToClean={3}
+        cleanPhysGain={2}
+        isCleanDisabled={false}
+        cleanSubtext=""
+        onCleanClick={vi.fn()}
+        cleaningServiceCost={100}
+        cleaningServicePrice={100}
+        isServiceDisabled={false}
+        serviceSubtext=""
+        onServiceClick={vi.fn()}
+        hasFridge={true}
+        hasFreezer={false}
+        economicIndex={0}
+        onAction={onAction}
+      />
+    );
+
+    // Broken badge should be visible on the card in the grid
+    expect(screen.getByText(/BROKEN/i)).toBeInTheDocument();
+
+    // Click the broken refrigerator card to open inspection modal
+    const fridgeCard = screen.getByTitle(/Refrigerator \(BROKEN — Needs Repair\) — Click to maintain/i);
+    fireEvent.click(fridgeCard);
+
+    // Maintenance section and options should be present
+    expect(screen.getByText(/Appliance Maintenance/i)).toBeInTheDocument();
+    expect(screen.getByText(/This appliance has broken down and does not function until repaired/i)).toBeInTheDocument();
+
+    // Verify maintenance buttons
+    const diyButton = screen.getByRole('button', { name: /DIY Fix/i });
+    const repairmanButton = screen.getByRole('button', { name: /Repairman/i });
+    const throwOutButton = screen.getByRole('button', { name: /Throw Out/i });
+
+    expect(diyButton).toBeInTheDocument();
+    expect(repairmanButton).toBeInTheDocument();
+    expect(throwOutButton).toBeInTheDocument();
+
+    // Click DIY Fix
+    fireEvent.click(diyButton);
+    expect(onAction).toHaveBeenCalledWith({
+      type: 'appliance_maintenance',
+      applianceId: 'refrigerator',
+      option: 'diy'
+    });
+
+    // Click Call Repairman
+    fireEvent.click(repairmanButton);
+    expect(onAction).toHaveBeenCalledWith({
+      type: 'appliance_maintenance',
+      applianceId: 'refrigerator',
+      option: 'repairman'
+    });
+
+    // Click Throw Out
+    fireEvent.click(throwOutButton);
+    expect(onAction).toHaveBeenCalledWith({
+      type: 'appliance_maintenance',
+      applianceId: 'refrigerator',
+      option: 'throw_out'
+    });
+  });
 });

@@ -42,6 +42,12 @@
     "relax": "Relaxed at home{{stats}}",
     "relax_unfed": "Relaxed without food in your inventory!{{stats}}",
     "clean": "Cleaned the apartment{{stats}}",
+    "appliance": {
+      "diySuccess": "DIY Fix successful! Repaired {{appliance}} (Success chance: {{chance}}%).",
+      "diyFailure": "DIY Fix failed. {{appliance}} is still broken (Success chance: {{chance}}%).",
+      "repairmanSuccess": "Repairman fixed {{appliance}} for ${{cost}}! Restored to brand new condition.",
+      "throwOutSuccess": "Threw out broken {{appliance}}. Added +{{mess}} Mess to apartment."
+    },
     "bank": {
       "deposit": "Deposited ${{amount}} into savings",
       "withdraw": "Withdrew ${{amount}} from savings"
@@ -132,6 +138,8 @@
       "alreadyGranted": "Rent extension already active for this period."
     },
     "error": {
+      "applianceNotBroken": "This appliance is not broken.",
+      "notEnoughMoneyRepairman": "Not enough money to hire repairman (Costs ${{cost}}).",
       "cannotApply": "Could not apply for job.",
       "notEnoughTime": "Not enough time to apply.",
       "cannotWork": "Could not work.",
@@ -221,6 +229,7 @@
       "due": "Your loan payment is due."
     },
     "applianceBroke": "Your {{appliance}} broke! Repair cost: ${{repairCost}}",
+    "applianceBrokeNeedRepair": "Your {{appliance}} broke down! It will not function until repaired.",
     "pawnExpired": "A pawned item expired.",
     "computerProfit": "You made ${{profit}} profit from your computer.",
     "weekend": {
@@ -968,5 +977,19 @@
     "tabPawn": "Pawn",
     "tabServices": "Services",
     "dontLiveHere": "You don't live here."
+  },
+  "pawnShop": {
+    "title": "Pawn Shop",
+    "sellTitle": "Sell Items (40% Value)",
+    "noSell": "You have no durables to pawn.",
+    "buyTitle": "Buy Back (50% Value)",
+    "noBuy": "You have no items pawned.",
+    "secondHandTitle": "Second Hand Items (50% Value)",
+    "brokenTag": "Broken — 25%",
+    "brokenTagShort": "Broken"
+  },
+  "homeDurable": {
+    "maintenanceTitle": "Appliance Maintenance",
+    "brokenDesc": "This appliance has broken down and does not function until repaired."
   }
 }
