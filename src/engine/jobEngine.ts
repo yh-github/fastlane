@@ -292,6 +292,9 @@ export interface WorkShiftOption {
   isDefault: boolean;
   disabled: boolean;
   disabledReasonKey?: string;
+  physMistakeChance?: number;
+  mentalMistakeChance?: number;
+  totalMistakeChance?: number;
 }
 
 export interface WorkShiftSummary {
@@ -352,7 +355,7 @@ export function calcWorkShiftSummary(
   const physRes = (lbPhysTagMod % 0.5 !== 0 || physTagMod % 0.5 !== 0) ? Math.min(conditionRes, 0.25) : conditionRes;
   const mentalTagMod = getJobMentalCostModifier(job);
   const expMult = getJobExpMultiplier(job);
-  const socialMod = getJobSocialModifier(job, actionCount - 1);
+  const socialMod = getJobSocialModifier(job, actionCount);
   const isFTAllowed = isFaceTimeAllowed(job);
   const isLBAllowed = isLookBusyAllowed(job);
   const lbDepPenalty = getLookBusyDepPenalty(job);
@@ -436,6 +439,22 @@ export function calcWorkShiftSummary(
       disabledReasonKey: !hasDegrees ? 'action.job.innovateNeedDegree' : undefined
     }
   ];
+
+  const physMistakeThreshold = hasJobTag(job, 'heavy_physical') ? 20 : 10;
+  const mentalMultiplier = hasJobTag(job, 'heavy_physical') ? 0.5 : 1.0;
+  const curMental = player.mentalCondition ?? 50;
+
+  for (const m of modes) {
+    const physChance = (isAdvanced && m.physCost > 0 && curPhys < physMistakeThreshold)
+      ? Math.min(1.0, Math.max(0, (physMistakeThreshold - curPhys) * 0.025))
+      : 0;
+    const mentalChance = (isAdvanced && m.mentalCost > 0 && curMental < 10)
+      ? Math.min(1.0, Math.max(0, (10 - curMental) * 0.025 * mentalMultiplier))
+      : 0;
+    m.physMistakeChance = physChance;
+    m.mentalMistakeChance = mentalChance;
+    m.totalMistakeChance = isAdvanced ? (1 - (1 - physChance) * (1 - mentalChance)) : 0;
+  }
 
   return {
     hoursToWork,
