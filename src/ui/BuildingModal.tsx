@@ -41,6 +41,7 @@ export function BuildingModal({
   const { t } = useTranslation();
   const [clerkMessage, setClerkMessage] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'shop' | 'pawn'>('shop');
+  const [isWorkDeckOpen, setIsWorkDeckOpen] = useState(true);
   const justUpdatedMessageRef = useRef(false);
 
   // Helper to pick random string if translation is an array
@@ -101,6 +102,7 @@ export function BuildingModal({
   // Reset tab on building change
   useEffect(() => {
     setActiveTab('shop');
+    setIsWorkDeckOpen(true);
   }, [currentBuildingId]);
 
   if (!player || !campaign || !currentBuildingId || !building) return null;
@@ -301,62 +303,88 @@ export function BuildingModal({
         </div>
       </div>
 
-      <div className="building-modal__content">
-        {playerJobHere ? (
+      <div className="building-modal__content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {/* Full-width shop / services content */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          {renderBuildingServices()}
+        </div>
+
+        {/* Docked bottom WORK button when employed here */}
+        {playerJobHere && (
           <div 
-            className="building-modal__columns"
+            className="building-modal__work-dock"
+            data-testid="tab-work"
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'minmax(280px, 320px) 1fr',
-              gap: '16px',
-              alignItems: 'start'
+              marginTop: 'auto',
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexShrink: 0
             }}
           >
-            {/* Left Column: Work Station */}
-            <div 
-              data-testid="tab-work"
+            <button
+              data-testid="btn-toggle-work"
+              data-action-target={`work-${playerJobHere.id}`}
+              onClick={() => setIsWorkDeckOpen(!isWorkDeckOpen)}
               style={{
-                background: 'rgba(41, 128, 185, 0.12)',
-                border: '1px solid rgba(52, 152, 219, 0.35)',
+                width: '100%',
+                maxWidth: '520px',
+                padding: '9px 16px',
+                background: isWorkDeckOpen
+                  ? 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)'
+                  : 'linear-gradient(145deg, #059669 0%, #047857 100%)',
+                color: '#fff',
+                border: isWorkDeckOpen ? '2px solid #38bdf8' : '2px solid #34d399',
                 borderRadius: '8px',
-                padding: '12px 14px',
+                fontWeight: 'bold',
+                fontSize: '0.92rem',
+                cursor: 'pointer',
+                boxShadow: isWorkDeckOpen
+                  ? '0 0 14px rgba(56, 189, 248, 0.4), 0 3px 10px rgba(0,0,0,0.5)'
+                  : '0 0 14px rgba(52, 211, 153, 0.4), 0 3px 10px rgba(0,0,0,0.5)',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '8px'
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.15s ease'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2em' }}>💼</span>
-                <div>
-                  <strong style={{ color: 'var(--accent-cyan)', display: 'block', fontSize: '1.0em' }}>
-                    {t('workStation.title', { jobTitle: t(`job.${playerJobHere.id}`, { defaultValue: playerJobHere.title }) })}
-                  </strong>
-                  <span style={{ fontSize: '0.85em', color: '#bbb' }}>
-                    ${player.currentWage}/hr
-                  </span>
-                </div>
-              </div>
-
-              <WorkStation
-                player={player}
-                onAction={handleActionIntercept}
-                job={playerJobHere}
-                campaign={campaign}
-              />
-            </div>
-
-            {/* Right Column: Shop & Building Services */}
-            <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {renderBuildingServices()}
-            </div>
-          </div>
-        ) : (
-          /* Single Column: When not employed here */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {renderBuildingServices()}
+              <span style={{ fontSize: '1.2rem' }}>💼</span>
+              <span>
+                {isWorkDeckOpen
+                  ? t('workStation.hideWorkDeck', { defaultValue: 'Hide Work Console' })
+                  : t('workStation.showWorkDeck', {
+                      defaultValue: `Work Shift (${playerJobHere.title} — $${player.currentWage || playerJobHere.baseWage}/hr)`
+                    })}
+              </span>
+              <span style={{
+                fontSize: '0.75rem',
+                background: 'rgba(0,0,0,0.35)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                color: '#cbd5e1'
+              }}>
+                ⏳ {player.hoursRemaining}h
+              </span>
+            </button>
           </div>
         )}
       </div>
+
+      {/* Flanking Radial Work Cards (Steals screen space from surrounding board, 0% obstruction of store!) */}
+      {playerJobHere && isWorkDeckOpen && (
+        <WorkStation
+          player={player}
+          onAction={handleActionIntercept}
+          job={playerJobHere}
+          campaign={campaign}
+          rules={rules}
+          layoutMode="flanking"
+          onClose={() => setIsWorkDeckOpen(false)}
+        />
+      )}
     </div>
   );
 }

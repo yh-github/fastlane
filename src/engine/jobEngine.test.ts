@@ -1270,6 +1270,113 @@ describe('Job Engine', () => {
         expect(res.success).toBe(true);
         expect(res.updated.mentalCondition).toBe(49); // 50 - 1
       });
+
+      it('calcWorkShiftSummary and workShift match exactly for frontline_service social modifier across shifts', () => {
+        const frontlineJob: JobDef = {
+          id: 'frontline_clerk',
+          title: 'Clerk',
+          locationId: 'store',
+          baseWage: 5,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: ['frontline_service'],
+          perks: []
+        };
+        const advancedRules = { usePhysicalMentalConditions: true };
+
+        const basePlayer = {
+          id: 'p_frontline',
+          hoursRemaining: 50,
+          currentJobId: 'frontline_clerk',
+          currentWage: 5,
+          degrees: [],
+          dependability: 20,
+          experience: 0,
+          social: 20,
+          physicalCondition: 30,
+          mentalCondition: 30,
+          turnFlags: { hasWorked: false },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        // Shift 3 (workActionsThisTurn: 2 -> next shift is 3): < 4, so socialMod = +1
+        const pShift3 = { ...basePlayer, workActionsThisTurn: 2, social: 20 };
+        const summary3 = calcWorkShiftSummary(pShift3, frontlineJob, 6, advancedRules as any);
+        const workWork3 = summary3.modes.find(m => m.id === 'work_work')!;
+        expect(workWork3.rewardSocial).toBe(1);
+        expect(workWork3.rewardText).toContain('+1 👥');
+        const res3 = workShift(pShift3, frontlineJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(res3.updated.social).toBe(21); // +1 👥
+
+        // Shift 4 (workActionsThisTurn: 3 -> next shift is 4, Grind tier): NOT < 4, so socialMod = 0
+        const pShift4 = { ...basePlayer, workActionsThisTurn: 3, social: 20 };
+        const summary4 = calcWorkShiftSummary(pShift4, frontlineJob, 6, advancedRules as any);
+        const workWork4 = summary4.modes.find(m => m.id === 'work_work')!;
+        expect(workWork4.rewardSocial).toBe(0);
+        expect(workWork4.rewardText).not.toContain('👥');
+        const res4 = workShift(pShift4, frontlineJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(res4.updated.social).toBe(20); // 0 👥
+
+        // Shift 8 (workActionsThisTurn: 7 -> next shift is 8, Overtime tier): >= 8, so socialMod = -1
+        const pShift8 = { ...basePlayer, workActionsThisTurn: 7, social: 20 };
+        const summary8 = calcWorkShiftSummary(pShift8, frontlineJob, 6, advancedRules as any);
+        const workWork8 = summary8.modes.find(m => m.id === 'work_work')!;
+        expect(workWork8.rewardSocial).toBe(-1);
+        expect(workWork8.rewardText).toContain('-1 👥');
+        const res8 = workShift(pShift8, frontlineJob, 6, advancedRules as any, undefined, 'work_work');
+        expect(res8.updated.social).toBe(19); // -1 👥
+      });
+
+      it('calcWorkShiftSummary correctly computes mistake chances when fatigued', () => {
+        const normalJob: JobDef = {
+          id: 'office_clerk',
+          title: 'Clerk',
+          locationId: 'office',
+          baseWage: 10,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+        const advancedRules = { usePhysicalMentalConditions: true };
+
+        // Safe player: physical 30, mental 30 -> 0% risk
+        const safePlayer = {
+          id: 'p_safe',
+          hoursRemaining: 10,
+          physicalCondition: 30,
+          mentalCondition: 30,
+          workActionsThisTurn: 0
+        } as unknown as PlayerState;
+        const safeSummary = calcWorkShiftSummary(safePlayer, normalJob, 6, advancedRules as any);
+        const safeWork = safeSummary.modes.find(m => m.id === 'work_work')!;
+        expect(safeWork.physMistakeChance).toBe(0);
+        expect(safeWork.mentalMistakeChance).toBe(0);
+        expect(safeWork.totalMistakeChance).toBe(0);
+
+        // Fatigued player: physical 8 (threshold 10 -> (10-8)*0.025 = 0.05), mental 6 (threshold 10 -> (10-6)*0.025 = 0.10)
+        const tiredPlayer = {
+          id: 'p_tired',
+          hoursRemaining: 10,
+          physicalCondition: 8,
+          mentalCondition: 6,
+          workActionsThisTurn: 3 // Grind tier: basePhys 1, baseMental 1
+        } as unknown as PlayerState;
+        const tiredSummary = calcWorkShiftSummary(tiredPlayer, normalJob, 6, advancedRules as any);
+        const tiredWork = tiredSummary.modes.find(m => m.id === 'work_work')!;
+        expect(tiredWork.physMistakeChance).toBeCloseTo(0.05, 4);
+        expect(tiredWork.mentalMistakeChance).toBeCloseTo(0.10, 4);
+        // total: 1 - (1 - 0.05) * (1 - 0.10) = 1 - 0.95 * 0.90 = 1 - 0.855 = 0.145 (14.5%)
+        expect(tiredWork.totalMistakeChance).toBeCloseTo(0.145, 4);
+
+        // Heavy physical job: physical threshold is 20
+        const heavyJob: JobDef = {
+          ...normalJob,
+          id: 'heavy_worker',
+          tags: ['heavy_physical']
+        };
+        // Player at physical 16: threshold 20 -> (20 - 16) * 0.025 = 0.10
+        const heavySummary = calcWorkShiftSummary({ ...tiredPlayer, physicalCondition: 16 }, heavyJob, 6, advancedRules as any);
+        const heavyWork = heavySummary.modes.find(m => m.id === 'work_work')!;
+        expect(heavyWork.physMistakeChance).toBeCloseTo(0.10, 4);
+      });
     });
   });
 });

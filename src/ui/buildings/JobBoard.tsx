@@ -4,7 +4,6 @@ import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoade
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore } from '../../engine/statMath';
 import type { InteractionProps } from './types';
-import { calcWorkShiftSummary } from '../../engine/jobEngine';
 
 /**
  * JobBoard — Shown at the Employment Office.
@@ -214,143 +213,22 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   );
 }
 
+import { WorkShiftCards } from './work/WorkShiftCards';
+
 /**
  * WorkStation — Shown at workplace buildings where the player is employed.
- * Allows the player to work a shift.
+ * Allows the player to work a shift via the WorkShiftCards card GUI.
  */
-export function WorkStation({ player, onAction, job, campaign }: InteractionProps & { job: JobDef, campaign?: CampaignBundle }) {
-  const { t } = useTranslation();
-  const rules = campaign?.config?.gameRules;
-  const statRules = campaign?.config?.statRules;
-  const isAdvanced = !!rules?.usePhysicalMentalConditions;
-  const workSessionCost = campaign?.config.timeRules?.workSessionCost ?? 6;
-
-  if (!isAdvanced) {
-    const canWork = player.hoursRemaining > 0;
-    return (
-      <div className="interaction-panel">
-        <h3>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
-        <p style={{ fontSize: '12px', marginBottom: '10px' }}>${player.currentWage}/hr</p>
-        <button
-          data-action-target={`work-${job.id}`}
-          onClick={() => onAction({ type: 'work', jobId: job.id })}
-          style={{
-            padding: '10px 16px',
-            fontWeight: 'bold',
-            backgroundColor: canWork ? '#2980b9' : '#444',
-            color: canWork ? '#fff' : '#888',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: canWork ? 'pointer' : 'not-allowed',
-            opacity: canWork ? 1 : 0.55
-          }}
-        >
-          💼 {t('workStation.workShift', { cost: workSessionCost })}
-        </button>
-      </div>
-    );
-  }
-
-  const shiftCost = campaign?.config.timeRules?.workSessionCost ?? 6;
-  const summary = calcWorkShiftSummary(player, job, shiftCost, rules, statRules);
-  const { hoursToWork, tierLabel, modes, innovationsCount, locationMistakes, turnMistakes } = summary;
-
-  const modeLabels: Record<string, string> = {
-    work_work: `💼 ${t('action.workModal.workWork', { defaultValue: 'Work Work' })}`,
-    look_busy: `👀 ${t('action.workModal.lookBusy', { defaultValue: 'Look Busy' })}`,
-    face_time: `🤝 ${t('action.workModal.faceTime', { defaultValue: 'Face Time' })}`,
-    innovate: `💡 ${t('action.workModal.innovate', { defaultValue: 'Innovate' })}`
-  };
-
+export function WorkStation({ player, onAction, job, campaign, onClose, rules, layoutMode }: InteractionProps & { job: JobDef, campaign?: CampaignBundle, onClose?: () => void, rules?: import('../../engine/gameState').GameRules, layoutMode?: 'flanking' | 'grid' }) {
   return (
-    <div className="interaction-panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '8px' }}>
-        <h3 style={{ margin: 0 }}>{t('workStation.title', { jobTitle: t(`job.${job.id}`, { defaultValue: job.title }) })}</h3>
-        <span style={{ fontSize: '12px', color: '#00e5ff', fontWeight: 'bold' }}>${player.currentWage}/hr (⏳{hoursToWork}h) {tierLabel}</span>
-      </div>
-
-      {(innovationsCount > 0 || locationMistakes > 0 || (isAdvanced && turnMistakes > 0)) && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px', marginBottom: '8px', fontSize: '11px' }}>
-          {innovationsCount > 0 && (
-            <span style={{ background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', border: '1px solid #00e5ff', padding: '2px 6px', borderRadius: '4px' }}>
-              💡 {t('workStation.innovations', { count: innovationsCount })}
-            </span>
-          )}
-          {isAdvanced && turnMistakes > 0 && (
-            <span style={{ background: 'rgba(255, 77, 77, 0.15)', color: '#ff6b6b', border: '1px solid #ff4d4d', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-              ⚠️ {t('workStation.mistakesThisTurn', { count: turnMistakes })}
-            </span>
-          )}
-          {locationMistakes > 0 && (
-            <span style={{ background: 'rgba(255, 179, 0, 0.15)', color: '#ffb300', border: '1px solid #ffb300', padding: '2px 6px', borderRadius: '4px' }}>
-              ⚠️ {t('workStation.locationMistakes', { count: locationMistakes })}
-            </span>
-          )}
-        </div>
-      )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-        {modes.map(m => {
-          const curPhys = player.physicalCondition ?? 50;
-          const hasEnoughTime = player.hoursRemaining > 0;
-          const hasEnoughPhys = curPhys - m.physCost >= 1.0;
-          const hasEnoughMental = (player.mentalCondition ?? 50) - m.mentalCost >= 1.0;
-          const canAfford = hasEnoughTime && hasEnoughPhys && hasEnoughMental && !m.disabled;
-          const isWorkWork = m.id === 'work_work';
-          const costStr = m.mentalCost > 0
-            ? `-${m.physCost} 💪, -${m.mentalCost} 🧠`
-            : `-${m.physCost} 💪`;
-
-          const displayReward = m.disabledReasonKey
-            ? t(m.disabledReasonKey)
-            : (m.id === 'innovate'
-                ? (player.degrees && player.degrees.length > 0
-                    ? t('action.workModal.innovateReward', { defaultValue: '🎲 2d2-2 🤝 & 👌 (Cap Buster)' })
-                    : t('action.workModal.requiresDegree', { defaultValue: 'Requires Degree 🎓' }))
-                : m.rewardText);
-
-          return (
-            <button
-              key={m.id}
-              data-testid={`work-mode-${m.id}`}
-              data-action-target={isWorkWork ? `work-${job.id}` : undefined}
-              onClick={() => {
-                onAction({ type: 'work', jobId: job.id, mode: m.id as any });
-              }}
-              style={{
-                padding: isWorkWork ? '10px 14px' : '8px 12px',
-                borderRadius: '6px',
-                backgroundColor: isWorkWork && canAfford
-                  ? 'rgba(46, 204, 113, 0.15)'
-                  : (canAfford ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)'),
-                border: isWorkWork && canAfford
-                  ? '2px solid #2ecc71'
-                  : `1px solid ${canAfford ? m.color : '#444'}`,
-                boxShadow: isWorkWork && canAfford ? '0 0 10px rgba(46, 204, 113, 0.25)' : undefined,
-                color: canAfford ? '#fff' : '#777',
-                cursor: canAfford ? 'pointer' : 'not-allowed',
-                opacity: canAfford ? 1 : 0.55,
-                textAlign: 'left',
-                position: 'relative'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 'bold', color: canAfford ? (isWorkWork ? '#2ecc71' : m.color) : '#888', fontSize: isWorkWork ? '1.05em' : '0.98em' }}>
-                  {modeLabels[m.id] || m.id}
-                </span>
-                {isWorkWork && (
-                  <span style={{ fontSize: '0.65em', padding: '1px 5px', background: canAfford ? '#2ecc71' : '#555', color: '#111', borderRadius: '3px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    {t('action.workModal.defaultBadge', { defaultValue: 'Default' })}
-                  </span>
-                )}
-              </div>
-              <div style={{ fontSize: '0.78em', marginTop: '3px', color: canAfford ? '#bbb' : '#777' }}>
-                {costStr} | ${m.wage} | {displayReward}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <WorkShiftCards
+      player={player}
+      job={job}
+      campaign={campaign}
+      rules={rules}
+      onAction={onAction}
+      onClose={onClose}
+      layoutMode={layoutMode}
+    />
   );
 }

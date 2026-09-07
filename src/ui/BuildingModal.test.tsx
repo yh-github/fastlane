@@ -320,4 +320,84 @@ describe('BuildingModal Component', () => {
       expect(screen.getByText(/Raise denied/i)).toBeInTheDocument();
     }, { timeout: 2000 });
   });
+
+  it('toggles floating work card console via docked bottom WORK button and close button', async () => {
+    const jobDev = {
+      id: 'job_dev_at_zmart',
+      title: 'Z-Mart Developer',
+      baseWage: 25,
+      locationId: 'z_mart',
+      perks: [],
+      requirements: { dependability: 10, experience: 0, degrees: [], uniform: 'casual' as const }
+    };
+
+    const campaign = {
+      ...mockCampaign,
+      jobs: [jobDev],
+      items: [
+        {
+          id: 'item_radio',
+          name: 'Portable Radio',
+          price: 40,
+          locationId: 'z_mart',
+          category: 'appliance' as const,
+          happinessBonus: 5,
+          effects: []
+        }
+      ]
+    };
+
+    const mockOnAction = vi.fn().mockResolvedValue({});
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'job_dev_at_zmart',
+          currentWage: 25,
+          physicalCondition: 30,
+          mentalCondition: 30,
+          hoursRemaining: 12
+        }}
+        campaign={campaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        onAction={mockOnAction}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Docked bottom WORK button is present
+    const toggleWorkBtn = screen.getByTestId('btn-toggle-work');
+    expect(toggleWorkBtn).toBeInTheDocument();
+
+    // Floating overlay is open by default, showing work cards and safe mistake risk badges on all 4 cards
+    expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
+    expect(screen.getAllByText(/0% \(Safe\)/i).length).toBe(4);
+
+    // Clicking '?' opens the WorkCardHelpModal
+    const helpBtn = screen.getByTestId('help-btn-work_work');
+    fireEvent.click(helpBtn);
+    expect(screen.getByTestId('work-help-modal-work_work')).toBeInTheDocument();
+    expect(screen.getByText(/CORE SHIFT/i)).toBeInTheDocument();
+    expect(screen.getByText(/Put your head down and grind/i)).toBeInTheDocument();
+
+    // Close help modal
+    const closeHelpBtn = screen.getByRole('button', { name: /Got It, Back to Work/i });
+    fireEvent.click(closeHelpBtn);
+    expect(screen.queryByTestId('work-help-modal-work_work')).not.toBeInTheDocument();
+
+    // Click close button on the flanking console to dismiss it
+    const closeWingsBtn = screen.getByTestId('btn-close-work-wings');
+    fireEvent.click(closeWingsBtn);
+
+    // Flanking cards are now dismissed
+    expect(screen.queryByTestId('work-mode-work_work')).not.toBeInTheDocument();
+
+    // Click docked bottom WORK button to reopen flanking cards
+    fireEvent.click(toggleWorkBtn);
+    expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
+  });
 });
