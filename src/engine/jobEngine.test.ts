@@ -1326,6 +1326,58 @@ describe('Job Engine', () => {
         expect(res8.updated.social).toBe(19); // -1 👥
       });
 
+      it('applies look_busy -1 Social penalty on frontline_service jobs', () => {
+        const frontlineJob: JobDef = {
+          id: 'store_cashier',
+          title: 'Cashier',
+          locationId: 'zmart',
+          baseWage: 12,
+          tags: ['frontline_service'],
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+        const normalJob: JobDef = {
+          id: 'office_worker',
+          title: 'Clerk',
+          locationId: 'office',
+          baseWage: 12,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+        const advancedRules = { usePhysicalMentalConditions: true };
+        const player = {
+          id: 'p_test',
+          hoursRemaining: 10,
+          currentJobId: 'store_cashier',
+          currentWage: 12,
+          physicalCondition: 30,
+          mentalCondition: 30,
+          social: 15,
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        // Frontline Service: look_busy previews -1 Social and deducts 1 Social
+        const frontlineSummary = calcWorkShiftSummary(player, frontlineJob, 6, advancedRules as any);
+        const frontlineLB = frontlineSummary.modes.find(m => m.id === 'look_busy')!;
+        expect(frontlineLB.rewardSocial).toBe(-1);
+        expect(frontlineLB.rewardText).toContain('-1 👥');
+
+        const frontlineRes = workShift(player, frontlineJob, 6, advancedRules as any, undefined, 'look_busy');
+        expect(frontlineRes.success).toBe(true);
+        expect(frontlineRes.updated.social).toBe(14); // 15 - 1 = 14
+
+        // Non-frontline job: look_busy does not penalize Social
+        const normalSummary = calcWorkShiftSummary(player, normalJob, 6, advancedRules as any);
+        const normalLB = normalSummary.modes.find(m => m.id === 'look_busy')!;
+        expect(normalLB.rewardSocial).toBe(0);
+        expect(normalLB.rewardText).not.toContain('👥');
+
+        const normalRes = workShift({ ...player, currentJobId: 'office_worker' }, normalJob, 6, advancedRules as any, undefined, 'look_busy');
+        expect(normalRes.success).toBe(true);
+        expect(normalRes.updated.social).toBe(15);
+      });
+
       it('calcWorkShiftSummary correctly computes mistake chances when fatigued', () => {
         const normalJob: JobDef = {
           id: 'office_clerk',

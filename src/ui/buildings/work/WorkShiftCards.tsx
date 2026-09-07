@@ -288,20 +288,52 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
         {/* Top Header: Badge, Duration & '?' Help Button */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <span
-              style={{
-                fontSize: '0.62rem',
-                fontWeight: 'bold',
-                letterSpacing: '0.04em',
-                padding: '1px 5px',
-                borderRadius: '4px',
-                backgroundColor: canAfford ? `${meta.themeColor}22` : 'rgba(255,255,255,0.05)',
-                color: canAfford ? meta.themeColor : '#71717a',
-                border: `1px solid ${canAfford ? meta.themeColor : '#3f3f46'}`
-              }}
-            >
-              {meta.badge}
-            </span>
+            {summary.tier === 'overtime' ? (
+              <span
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  letterSpacing: '0.04em',
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.25)',
+                  color: '#ef4444',
+                  border: '1px solid #ef4444'
+                }}
+              >
+                🔥 OVERTIME
+              </span>
+            ) : summary.tier === 'grind' ? (
+              <span
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  letterSpacing: '0.04em',
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                  backgroundColor: 'rgba(245, 158, 11, 0.25)',
+                  color: '#fbbf24',
+                  border: '1px solid #f59e0b'
+                }}
+              >
+                ⚡ GRIND
+              </span>
+            ) : (
+              <span
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  letterSpacing: '0.04em',
+                  padding: '1px 5px',
+                  borderRadius: '4px',
+                  backgroundColor: canAfford ? `${meta.themeColor}22` : 'rgba(255,255,255,0.05)',
+                  color: canAfford ? meta.themeColor : '#71717a',
+                  border: `1px solid ${canAfford ? meta.themeColor : '#3f3f46'}`
+                }}
+              >
+                {meta.badge}
+              </span>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span
@@ -401,25 +433,17 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           >
             {/* Fatigue & Mistake Risk */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#fca5a5', fontWeight: 'bold' }}>
-                {fatigueCostText}
+              <span style={{
+                color: summary.tier === 'overtime' ? '#f87171' : (summary.tier === 'grind' ? '#fbbf24' : '#fca5a5'),
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}>
+                {summary.tier === 'overtime' ? '🔥 ' : (summary.tier === 'grind' ? '⚡ ' : '')}{fatigueCostText}
               </span>
 
-              {totalMistakeChance === 0 ? (
-                <span
-                  style={{
-                    color: '#86efac',
-                    fontWeight: 'bold',
-                    fontSize: '0.65rem',
-                    background: 'rgba(34, 197, 94, 0.15)',
-                    padding: '1px 4px',
-                    borderRadius: '3px',
-                    border: '1px solid rgba(34, 197, 94, 0.3)'
-                  }}
-                >
-                  🟢 0% (Safe)
-                </span>
-              ) : (
+              {totalMistakeChance > 0 && (
                 <span
                   title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%`}
                   style={{
@@ -427,7 +451,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                     fontWeight: 'bold',
                     fontSize: '0.65rem',
                     background: 'rgba(239, 68, 68, 0.2)',
-                    padding: '1px 4px',
+                    padding: '1px 5px',
                     borderRadius: '3px',
                     border: '1px solid #ef4444'
                   }}
@@ -437,17 +461,34 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               )}
             </div>
 
+            {/* Overtime Permanent Wear & Tear Banner */}
+            {summary.tier === 'overtime' && isWorkWork && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid #ef4444',
+                borderRadius: '4px',
+                padding: '2px 5px',
+                color: '#fca5a5',
+                fontSize: '0.63rem',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <span>🔥</span>
+                <span>-0.5 Max Physical Condition</span>
+              </div>
+            )}
+
             {/* Reward Perks */}
             <div style={{
               color: canAfford ? '#67e8f9' : '#71717a',
               fontWeight: 'bold',
               fontSize: '0.66rem',
-              lineHeight: '1.2',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              lineHeight: '1.25',
+              wordBreak: 'break-word'
             }}>
-              {displayReward}
+              {displayReward.replace(/,\s*-0\.5\s*Max\s*💪/g, '')}
             </div>
           </div>
 
@@ -497,6 +538,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           job={job}
           player={player}
           campaign={campaign}
+          summary={summary}
           onClose={() => setActiveHelpMode(null)}
         />
       )}
@@ -509,9 +551,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             className="work-wing-left"
             style={{
               position: 'absolute',
-              right: 'calc(100% + 14px)',
+              right: 'calc(100% + 12px)',
               top: '20px',
-              width: 'calc(185px * var(--board-scale, 1))',
+              width: 'calc(205px * var(--board-scale, 1))',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
@@ -519,18 +561,58 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             }}
           >
             <div style={{
-              background: 'rgba(15, 23, 42, 0.96)',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
+              background: summary.tier === 'overtime'
+                ? 'linear-gradient(135deg, rgba(69, 10, 10, 0.96) 0%, rgba(24, 10, 15, 0.98) 100%)'
+                : (summary.tier === 'grind'
+                  ? 'linear-gradient(135deg, rgba(69, 39, 10, 0.96) 0%, rgba(26, 18, 10, 0.98) 100%)'
+                  : 'rgba(15, 23, 42, 0.96)'),
+              border: summary.tier === 'overtime'
+                ? '1px solid #ef4444'
+                : (summary.tier === 'grind'
+                  ? '1px solid #f59e0b'
+                  : '1px solid rgba(56, 189, 248, 0.4)'),
               borderRadius: '8px',
               padding: '5px 8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+              boxShadow: summary.tier === 'overtime'
+                ? '0 0 12px rgba(239, 68, 68, 0.4), 0 4px 12px rgba(0,0,0,0.5)'
+                : (summary.tier === 'grind'
+                  ? '0 0 10px rgba(245, 158, 11, 0.35), 0 4px 12px rgba(0,0,0,0.5)'
+                  : '0 4px 12px rgba(0,0,0,0.5)')
             }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
-                💼 Work Console
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 'bold', color: '#fff' }}>
+                  Shift #{summary.actionCount}
+                </span>
+                {summary.tier === 'grind' && (
+                  <span style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 'bold',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    background: 'rgba(245, 158, 11, 0.25)',
+                    color: '#f59e0b',
+                    border: '1px solid #f59e0b'
+                  }}>
+                    ⚡ GRIND
+                  </span>
+                )}
+                {summary.tier === 'overtime' && (
+                  <span style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 'bold',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    background: 'rgba(239, 68, 68, 0.25)',
+                    color: '#ef4444',
+                    border: '1px solid #ef4444'
+                  }}>
+                    🔥 OVERTIME
+                  </span>
+                )}
+              </div>
               <span style={{ fontSize: '0.70rem', color: '#a5f3fc', fontWeight: 'bold' }}>
                 ${player.currentWage || job.baseWage}/hr
               </span>
@@ -544,9 +626,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             className="work-wing-right"
             style={{
               position: 'absolute',
-              left: 'calc(100% + 14px)',
+              left: 'calc(100% + 12px)',
               top: '20px',
-              width: 'calc(185px * var(--board-scale, 1))',
+              width: 'calc(205px * var(--board-scale, 1))',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',

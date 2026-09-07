@@ -253,6 +253,50 @@ describe('Weekend Engine', () => {
       expect(resolved.social).toBe(23); // 20 + 3
       expect(resolved.recentWeekendTiers).toContain('expensive');
     });
+
+    it('merges turn maintenanceModifications (dependability decay, mess accumulation) into weekendResult.modifications', () => {
+      const player = {
+        id: 'p1',
+        money: 100,
+        inventory: { tickets: { baseball: 0, theatre: 0, concert: 0 } },
+        maintenanceModifications: [
+          { stat: 'dependability', diff: -1 },
+          { stat: 'mess', diff: 3 },
+          { stat: 'social', diff: -1 }
+        ],
+        offeredWeekendCards: [
+          {
+            id: 'random_1',
+            type: 'random',
+            tier: 'cheap',
+            titleKey: 'weekend.card_1',
+            eventKey: 'events.weekend.random_1',
+            fluff: 'Chilled out.',
+            icon: '☕',
+            costMin: 25,
+            costMax: 25,
+            targetStat: 'mental',
+            potentialBonusMin: 1,
+            potentialBonusMax: 1
+          }
+        ]
+      } as unknown as PlayerState;
+
+      const resolved = resolveWeekendChoice(player, 'random_1', new Random(1), { usePhysicalMentalConditions: true } as any);
+      expect(resolved.weekendResult).toBeDefined();
+      const mods = resolved.weekendResult!.modifications!;
+      expect(mods).toBeDefined();
+
+      // Should include card money & mental, plus maintenance dependability, mess, and social
+      expect(mods.find(m => m.stat === 'money')?.diff).toBe(-25);
+      expect(mods.find(m => m.stat === 'mental')?.diff).toBe(1);
+      expect(mods.find(m => m.stat === 'dependability')?.diff).toBe(-1);
+      expect(mods.find(m => m.stat === 'mess')?.diff).toBe(3);
+      expect(mods.find(m => m.stat === 'social')?.diff).toBe(-1);
+
+      // Player maintenanceModifications should be cleared
+      expect(resolved.maintenanceModifications).toBeUndefined();
+    });
   });
 });
 

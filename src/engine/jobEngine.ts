@@ -14,6 +14,7 @@ import {
   isFaceTimeAllowed,
   isLookBusyAllowed,
   getLookBusyDepPenalty,
+  getLookBusySocialPenalty,
   getJobExpMultiplier,
   getJobSocialModifier,
   getJobWorkMistakeSocialPenalty,
@@ -297,10 +298,14 @@ export interface WorkShiftOption {
   totalMistakeChance?: number;
 }
 
+export type ShiftTier = 'normal' | 'grind' | 'overtime';
+
 export interface WorkShiftSummary {
   hoursToWork: number;
   shiftCost: number;
   workRatio: number;
+  actionCount: number;
+  tier: ShiftTier;
   tierLabel: string;
   modes: WorkShiftOption[];
   innovationsCount: number;
@@ -323,6 +328,10 @@ export function calcWorkShiftSummary(
   let basePhys = 1;
   let baseMental = 0;
   let tierLabel = '';
+
+  const tier: ShiftTier = actionCount >= overtimeThreshold
+    ? 'overtime'
+    : (actionCount >= grindThreshold ? 'grind' : 'normal');
 
   if (isAdvanced) {
     if (actionCount >= overtimeThreshold) {
@@ -359,6 +368,8 @@ export function calcWorkShiftSummary(
   const isFTAllowed = isFaceTimeAllowed(job);
   const isLBAllowed = isLookBusyAllowed(job);
   const lbDepPenalty = getLookBusyDepPenalty(job);
+  const lbSocialPenalty = getLookBusySocialPenalty(job);
+  const lbSocialText = lbSocialPenalty > 0 ? `, -${lbSocialPenalty} 👥` : '';
 
   const workWorkDepGain = roundToResolution(1 * workRatio, 0.5);
   const workWorkExpGain = roundToResolution(1 * expMult * workRatio, 0.5);
@@ -399,10 +410,10 @@ export function calcWorkShiftSummary(
       wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
       rewardDep: lbDepPenalty > 0 ? -lbDepPenalty : 0,
       rewardExp: 0,
-      rewardSocial: 0,
+      rewardSocial: lbSocialPenalty > 0 ? -lbSocialPenalty : 0,
       rewardText: !isLBAllowed
         ? 'action.job.lookBusyDisabled'
-        : (lbDepPenalty > 0 ? `-${lbDepPenalty} 🤝, +0 👌` : '+0 🤝, +0 👌'),
+        : (lbDepPenalty > 0 ? `-${lbDepPenalty} 🤝, +0 👌${lbSocialText}` : `+0 🤝, +0 👌${lbSocialText}`),
       color: '#3498db',
       isDefault: false,
       disabled: !isLBAllowed,
@@ -460,6 +471,8 @@ export function calcWorkShiftSummary(
     hoursToWork,
     shiftCost,
     workRatio,
+    actionCount,
+    tier,
     tierLabel,
     modes,
     innovationsCount: player.innovationCount || 0,
@@ -694,6 +707,10 @@ export function workShift(
       const lookBusyDepPenalty = getLookBusyDepPenalty(job);
       if (lookBusyDepPenalty > 0) {
         updated.dependability = Math.max(0, updated.dependability - lookBusyDepPenalty);
+      }
+      const lookBusySocPenalty = getLookBusySocialPenalty(job);
+      if (lookBusySocPenalty > 0) {
+        updated.social = Math.max(1, (updated.social || 1) - lookBusySocPenalty);
       }
     }
 

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { PlayerState } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
-import type { WorkMode } from '../../../engine/jobEngine';
+import type { WorkMode, WorkShiftSummary } from '../../../engine/jobEngine';
 import { hasJobTag } from '../../../engine/jobTags';
 
 export interface WorkCardHelpModalProps {
@@ -12,6 +12,7 @@ export interface WorkCardHelpModalProps {
   player: PlayerState;
   onClose: () => void;
   campaign?: CampaignBundle;
+  summary?: WorkShiftSummary;
 }
 
 interface SectionItem {
@@ -24,7 +25,8 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
   mode,
   job,
   player,
-  onClose
+  onClose,
+  summary
 }) => {
   const { t } = useTranslation();
 
@@ -167,6 +169,14 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         });
       }
 
+      if (isFrontline) {
+        outputs.push({
+          icon: '👥',
+          title: 'Frontline Service Penalty (-1 Social)',
+          desc: 'Coasting and ignoring customers in customer-facing roles damages your reputation (-1 Social standing).'
+        });
+      }
+
       outputs.push(
         {
           icon: '💵',
@@ -185,6 +195,9 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         }
       );
 
+      if (isFrontline) {
+        tips.push('Warning: Looking busy on Frontline Service jobs costs -1 Social standing because customers notice your absence!');
+      }
       tips.push(
         'Ideal when your Physical condition drops below 10 (or 20 for heavy jobs) and you need cash without risking devastating mistakes.',
         'Great when your Dependability is already safely above your job requirements and you need to conserve stamina for studying or chores.',
@@ -395,6 +408,33 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
           </button>
         </div>
 
+        {/* Active Shift Tracker if summary provided */}
+        {summary && (
+          <div style={{
+            padding: '6px 12px',
+            borderRadius: '6px',
+            background: summary.tier === 'overtime'
+              ? 'rgba(239, 68, 68, 0.2)'
+              : (summary.tier === 'grind' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.05)'),
+            border: summary.tier === 'overtime'
+              ? '1px solid #ef4444'
+              : (summary.tier === 'grind' ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.1)'),
+            fontSize: '0.78rem',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            color: summary.tier === 'overtime' ? '#fca5a5' : (summary.tier === 'grind' ? '#fde68a' : '#cbd5e1')
+          }}>
+            <span>Current Progress: Shift #{summary.actionCount}</span>
+            <span>
+              {summary.tier === 'overtime' && '🔥 OVERTIME TIER (Doubled Fatigue & Permanent Stat Drop!)'}
+              {summary.tier === 'grind' && '⚡ GRIND TIER (+1.0 🧠 Mental Cost Active)'}
+              {summary.tier === 'normal' && 'Baseline Fatigue'}
+            </span>
+          </div>
+        )}
+
         {/* Fluff Lore Quote */}
         <div style={{
           padding: '10px 14px',
@@ -464,6 +504,76 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Shift Fatigue Tiers Guide */}
+        <div style={{
+          background: 'rgba(15, 23, 42, 0.75)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: '10px',
+          padding: '12px 14px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          <h4 style={{ margin: 0, fontSize: '0.88rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            ⚡ Shift Fatigue Tiers (Normal → Grind → Overtime)
+          </h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '0.74rem' }}>
+            {/* Tier 1: Baseline Shifts 1-3 */}
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.08)',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              borderRadius: '6px',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}>
+              <strong style={{ color: '#34d399', fontSize: '0.76rem' }}>
+                🟢 Shifts 1–3
+              </strong>
+              <div style={{ color: '#cbd5e1', lineHeight: '1.3' }}>• 1.0 💪, 0.0 🧠</div>
+              <div style={{ color: '#94a3b8', lineHeight: '1.3' }}>• Zero wear & tear</div>
+              {isFrontline && <div style={{ color: '#67e8f9', fontWeight: 'bold' }}>• +1 👥 Social</div>}
+            </div>
+
+            {/* Tier 2: Grind Shifts 4-7 */}
+            <div style={{
+              background: 'rgba(245, 158, 11, 0.08)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: '6px',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}>
+              <strong style={{ color: '#fbbf24', fontSize: '0.76rem' }}>
+                ⚡ Shifts 4–7 (Grind)
+              </strong>
+              <div style={{ color: '#fbbf24', fontWeight: 'bold', lineHeight: '1.3' }}>• +1.0 🧠 Mental Drain</div>
+              {isHeavyPhysical && <div style={{ color: '#f87171', fontWeight: 'bold' }}>• -0.5 Max 💪 Condition</div>}
+              {isFrontline && <div style={{ color: '#94a3b8' }}>• 0 👥 Social (burnout)</div>}
+            </div>
+
+            {/* Tier 3: Overtime Shifts 8+ */}
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '6px',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}>
+              <strong style={{ color: '#f87171', fontSize: '0.76rem' }}>
+                🔥 Shifts 8+ (Overtime)
+              </strong>
+              <div style={{ color: '#f87171', fontWeight: 'bold', lineHeight: '1.3' }}>• 2.0 💪, 2.0 🧠 (Doubled!)</div>
+              <div style={{ color: '#fca5a5', fontWeight: 'bold', lineHeight: '1.3' }}>• -0.5 Max 💪 on ALL jobs!</div>
+              {isFrontline && <div style={{ color: '#f87171', fontWeight: 'bold' }}>• -1 👥 Social penalty</div>}
+            </div>
           </div>
         </div>
 

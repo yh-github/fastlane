@@ -131,45 +131,50 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       );
       p = updatedPlayer;
 
+      const maintenanceMods: StatModification[] = [];
+      if (state.rules.usePhysicalMentalConditions) {
+        const mentalDiff = (p.mentalCondition ?? 0) - preTurnStats.mentalCondition;
+        if (mentalDiff !== 0) {
+          maintenanceMods.push({ stat: 'mental', diff: mentalDiff });
+        }
+        const physDiff = (p.physicalCondition ?? 0) - preTurnStats.physicalCondition;
+        if (physDiff !== 0) {
+          maintenanceMods.push({ stat: 'physical', diff: physDiff });
+        }
+        const socDiff = (p.social ?? 0) - preTurnStats.social;
+        if (socDiff !== 0) {
+          maintenanceMods.push({ stat: 'social', diff: socDiff });
+        }
+      } else {
+        const hapDiff = p.happiness - preTurnStats.happiness;
+        if (hapDiff !== 0) {
+          maintenanceMods.push({ stat: 'happiness', diff: hapDiff });
+        }
+        const relaxDiff = p.relaxation - preTurnStats.relaxation;
+        if (relaxDiff !== 0) {
+          maintenanceMods.push({ stat: 'relaxation', diff: relaxDiff });
+        }
+      }
+      const depDiff = p.dependability - preTurnStats.dependability;
+      if (depDiff !== 0) {
+        maintenanceMods.push({ stat: 'dependability', diff: depDiff });
+      }
+      if (state.rules.trackMess) {
+        const messDiff = (p.mess ?? 0) - preTurnStats.mess;
+        if (messDiff !== 0) {
+          maintenanceMods.push({ stat: 'mess', diff: messDiff });
+        }
+      }
+
       if (p.weekendResult) {
         const mods: StatModification[] = [];
         if (p.weekendResult.cost > 0) {
           mods.push({ stat: 'money', diff: -p.weekendResult.cost });
         }
-        if (state.rules.usePhysicalMentalConditions) {
-          const mentalDiff = (p.mentalCondition ?? 0) - preTurnStats.mentalCondition;
-          if (mentalDiff !== 0) {
-            mods.push({ stat: 'mental', diff: mentalDiff });
-          }
-          const physDiff = (p.physicalCondition ?? 0) - preTurnStats.physicalCondition;
-          if (physDiff !== 0) {
-            mods.push({ stat: 'physical', diff: physDiff });
-          }
-          const socDiff = (p.social ?? 0) - preTurnStats.social;
-          if (socDiff !== 0) {
-            mods.push({ stat: 'social', diff: socDiff });
-          }
-        } else {
-          const hapDiff = p.happiness - preTurnStats.happiness;
-          if (hapDiff !== 0) {
-            mods.push({ stat: 'happiness', diff: hapDiff });
-          }
-          const relaxDiff = p.relaxation - preTurnStats.relaxation;
-          if (relaxDiff !== 0) {
-            mods.push({ stat: 'relaxation', diff: relaxDiff });
-          }
-        }
-        const depDiff = p.dependability - preTurnStats.dependability;
-        if (depDiff !== 0) {
-          mods.push({ stat: 'dependability', diff: depDiff });
-        }
-        if (state.rules.trackMess) {
-          const messDiff = (p.mess ?? 0) - preTurnStats.mess;
-          if (messDiff !== 0) {
-            mods.push({ stat: 'mess', diff: messDiff });
-          }
-        }
+        mods.push(...maintenanceMods);
         p.weekendResult.modifications = mods;
+      } else if (p.offeredWeekendCards) {
+        p.maintenanceModifications = maintenanceMods;
       }
 
       // Recalculate active effects immediately after robbery so loss of appliances affects stats

@@ -143,6 +143,8 @@ export interface PlayerState {
   newspaperHeadline: GameEvent | null;
   /** The result of the weekend activity processing */
   weekendResult?: WeekendResult;
+  /** Turn maintenance stat modifications (decay, mess growth, social) pending weekend display */
+  maintenanceModifications?: StatModification[];
   
   // ── Active Effects ──
   /** Calculated effects from synergies and items */

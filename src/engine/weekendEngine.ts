@@ -317,6 +317,25 @@ export function generateWeekendChoices(
   return { player: updatedPlayer, cards: drawnCards };
 }
 
+function mergeWeekendModifications(
+  cardMods: StatModification[],
+  maintenanceMods?: StatModification[]
+): StatModification[] {
+  if (!maintenanceMods || maintenanceMods.length === 0) {
+    return cardMods;
+  }
+  const merged = cardMods.map(m => ({ ...m }));
+  for (const mMod of maintenanceMods) {
+    const existing = merged.find(m => m.stat === mMod.stat);
+    if (existing) {
+      existing.diff += mMod.diff;
+    } else {
+      merged.push({ ...mMod });
+    }
+  }
+  return merged.filter(m => m.diff !== 0);
+}
+
 export function resolveWeekendChoice(
   player: PlayerState,
   selectedCardId: string,
@@ -360,11 +379,14 @@ export function resolveWeekendChoice(
       modifications.push({ stat: 'mess', diff: messIncrease });
     }
 
+    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
+    updatedPlayer.maintenanceModifications = undefined;
+
     updatedPlayer.weekendResult = {
       event: { key: card.eventKey },
       cost: 0,
       happinessBonus: mentalBonus,
-      modifications,
+      modifications: finalMods,
       chosenCard: card
     };
     updatedPlayer.offeredWeekendCards = undefined;
@@ -391,10 +413,13 @@ export function resolveWeekendChoice(
       }
     }
 
+    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
+    updatedPlayer.maintenanceModifications = undefined;
+
     updatedPlayer.weekendResult = {
       event: { key: card.eventKey },
       cost: 0,
-      modifications,
+      modifications: finalMods,
       chosenCard: card
     };
     updatedPlayer.offeredWeekendCards = undefined;
@@ -488,11 +513,14 @@ export function resolveWeekendChoice(
     updatedPlayer.mentalCondition = Math.min(maxMental, updatedPlayer.mentalCondition ?? maxMental);
   }
 
+  const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
+  updatedPlayer.maintenanceModifications = undefined;
+
   updatedPlayer.weekendResult = {
     event: { key: card.eventKey },
     cost,
     happinessBonus,
-    modifications,
+    modifications: finalMods,
     chosenCard: card
   };
 

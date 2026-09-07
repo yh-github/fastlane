@@ -373,9 +373,10 @@ describe('BuildingModal Component', () => {
     const toggleWorkBtn = screen.getByTestId('btn-toggle-work');
     expect(toggleWorkBtn).toBeInTheDocument();
 
-    // Floating overlay is open by default, showing work cards and safe mistake risk badges on all 4 cards
+    // Flanking cards are open by default. Mistake risk badge is NOT rendered when safe (0% chance)
     expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
-    expect(screen.getAllByText(/0% \(Safe\)/i).length).toBe(4);
+    expect(screen.queryByText(/0% \(Safe\)/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Shift #1/i)).toBeInTheDocument();
 
     // Clicking '?' opens the WorkCardHelpModal
     const helpBtn = screen.getByTestId('help-btn-work_work');
@@ -383,6 +384,8 @@ describe('BuildingModal Component', () => {
     expect(screen.getByTestId('work-help-modal-work_work')).toBeInTheDocument();
     expect(screen.getByText(/CORE SHIFT/i)).toBeInTheDocument();
     expect(screen.getByText(/Put your head down and grind/i)).toBeInTheDocument();
+    expect(screen.getByText(/Shift Fatigue Tiers/i)).toBeInTheDocument();
+    expect(screen.getByText(/Current Progress: Shift #1/i)).toBeInTheDocument();
 
     // Close help modal
     const closeHelpBtn = screen.getByRole('button', { name: /Got It, Back to Work/i });
@@ -399,5 +402,84 @@ describe('BuildingModal Component', () => {
     // Click docked bottom WORK button to reopen flanking cards
     fireEvent.click(toggleWorkBtn);
     expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
+  });
+
+  it('renders prominent Grind tier badges on Shift 4 and Overtime badges with -0.5 Max Physical on Shift 8', () => {
+    const jobDev = {
+      id: 'job_dev_at_zmart',
+      title: 'Z-Mart Developer',
+      baseWage: 25,
+      locationId: 'z_mart',
+      perks: [],
+      requirements: { dependability: 10, experience: 0, degrees: [], uniform: 'casual' as const }
+    };
+
+    const campaign = {
+      ...mockCampaign,
+      jobs: [jobDev],
+      items: [
+        {
+          id: 'item_radio',
+          name: 'Portable Radio',
+          price: 40,
+          locationId: 'z_mart',
+          category: 'appliance' as const,
+          happinessBonus: 5,
+          effects: []
+        }
+      ]
+    };
+
+    // 1. Shift #4: Grind tier
+    const { unmount } = render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'job_dev_at_zmart',
+          currentWage: 25,
+          physicalCondition: 30,
+          mentalCondition: 30,
+          hoursRemaining: 12,
+          workActionsThisTurn: 3 // next shift is #4 -> Grind
+        }}
+        campaign={campaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/Shift #4/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/⚡ GRIND/i).length).toBeGreaterThan(0);
+    unmount();
+
+    // 2. Shift #8: Overtime tier
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'job_dev_at_zmart',
+          currentWage: 25,
+          physicalCondition: 30,
+          mentalCondition: 30,
+          hoursRemaining: 12,
+          workActionsThisTurn: 7 // next shift is #8 -> Overtime
+        }}
+        campaign={campaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/Shift #8/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/🔥 OVERTIME/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/-0\.5 Max Physical Condition/i)).toBeInTheDocument();
   });
 });
