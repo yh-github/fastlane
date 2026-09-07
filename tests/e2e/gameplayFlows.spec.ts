@@ -57,11 +57,18 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
     const buildingModal = page.locator('.building-modal');
     await expect(buildingModal).toBeVisible({ timeout: 5000 });
 
+    // In advanced home apartment view, actions are organized in docked category decks
+    const leisureBtn = page.getByRole('button', { name: /Leisure|פנאי/i });
+    if (await leisureBtn.isVisible()) {
+      await leisureBtn.click();
+    }
+
     // 8. Spend all 60 hours in Turn 1 (Relax takes 6 hrs each, click 10 times)
     const relaxBtn = page.locator('[data-action-target="relax"]');
     await expect(relaxBtn).toBeVisible();
 
     for (let i = 0; i < 10; i++) {
+      if (await relaxBtn.isDisabled()) break;
       await relaxBtn.click();
       const confirmRelaxBtn = page.getByRole('button', { name: /Relax Anyway|הירגע בכל זאת/i });
       if (await confirmRelaxBtn.isVisible()) {
@@ -93,9 +100,14 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
     await expect(weekendScreen).toBeVisible({ timeout: 5000 });
     await expect(weekendScreen).toContainText(/Weekend|סוף שבוע/i);
 
-    // 11. Click Start Week 2 on Weekend Screen
+    // 11. Click Start Week 2 on Weekend Screen (lock in if interactive)
+    const lockInBtn = page.getByRole('button', { name: /Lock In Weekend|נעל סוף שבוע/i });
+    if (await lockInBtn.isVisible()) {
+      await lockInBtn.click();
+    }
+
     const startWeek2Btn = page.locator('.weekend-screen button').filter({ hasText: /Start Week|התחל שבוע/i }).first();
-    await expect(startWeek2Btn).toBeVisible();
+    await expect(startWeek2Btn).toBeVisible({ timeout: 5000 });
     await startWeek2Btn.click();
 
     // 12. Verify Week 2 begins: Dashboard displays Week 2 and hours reset
@@ -114,9 +126,15 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
       }
     }
 
+    const week2LeisureBtn = page.getByRole('button', { name: /Leisure|פנאי/i });
+    if (await week2LeisureBtn.isVisible()) {
+      await week2LeisureBtn.click();
+    }
+
     const week2RelaxBtn = page.locator('[data-action-target="relax"]');
     if (await week2RelaxBtn.isVisible()) {
       for (let i = 0; i < 10; i++) {
+        if (await week2RelaxBtn.isDisabled()) break;
         await week2RelaxBtn.click();
         const confirmRelaxBtn = page.getByRole('button', { name: /Relax Anyway|הירגע בכל זאת/i });
         if (await confirmRelaxBtn.isVisible()) {
@@ -141,6 +159,10 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
       }
 
       await expect(weekendScreen).toBeVisible({ timeout: 5000 });
+      const lockIn3Btn = page.getByRole('button', { name: /Lock In Weekend|נעל סוף שבוע/i });
+      if (await lockIn3Btn.isVisible()) {
+        await lockIn3Btn.click();
+      }
       const startWeek3Btn = page.locator('.weekend-screen button').filter({ hasText: /Start Week|התחל שבוע/i }).first();
       await expect(startWeek3Btn).toBeVisible();
       await startWeek3Btn.click();

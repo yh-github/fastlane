@@ -3,7 +3,7 @@ import type { CampaignBundle } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import type { EngineDecision } from '../replayTypes';
 
-export type PawnableItem = OwnedAppliance | { id: string; purchasePrice: number; purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop'; condition?: 'new' | 'used'; isBook?: boolean };
+export type PawnableItem = OwnedAppliance | { id: string; purchasePrice: number; purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop'; condition?: 'new' | 'used'; isBook?: boolean; isBroken?: boolean };
 
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
@@ -29,7 +29,8 @@ export type GameAction =
   | { type: 'ask_rent_extension' }
   | { type: 'clean' }
   | { type: 'call_cleaning_service' }
-  | { type: 'socialize_guests' };
+  | { type: 'socialize_guests' }
+  | { type: 'appliance_maintenance'; applianceId: string; option: 'diy' | 'repairman' | 'throw_out' };
 
 export interface ReducerContext {
   campaign: CampaignBundle;

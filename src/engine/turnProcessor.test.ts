@@ -123,6 +123,88 @@ describe('Turn Processor', () => {
       expect(brokeEvent).toBeDefined();
       expect(brokeEvent?.params?.appliance).toBe('Color TV');
     });
+
+    describe('advancedMaintenance', () => {
+      it('marks appliance as broken, does not deduct money, and notifies player', () => {
+        let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+        state.turn = 2;
+        state.rules.protectBuiltInAppliances = true;
+        state.rules.advancedMaintenance = true;
+        state.players[0].money = 1000;
+        state.players[0].inventory.freshFoodUnits = 1;
+        state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+
+        vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
+        const nextState = processTurnStart(state, mockCampaign);
+
+        // Money was NOT deducted for repair (only weekend cost if any)
+        const weekendCost = nextState.players[0].weekendResult?.cost ?? 0;
+        expect(nextState.players[0].money).toBe(1000 - weekendCost);
+        // Appliance marked broken
+        expect(nextState.players[0].inventory.appliances[0].isBroken).toBe(true);
+        // Event logged
+        const brokeEvent = nextState.players[0].turnEvents.find(e => e.key === 'events.applianceBrokeNeedRepair');
+        expect(brokeEvent).toBeDefined();
+        expect(brokeEvent?.params?.appliance).toBe('Fridge');
+      });
+
+      it('eats food safely before appliance breaks on the break turn', () => {
+        let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+        state.turn = 2;
+        state.rules.protectBuiltInAppliances = true;
+        state.rules.advancedMaintenance = true;
+        state.rules.allowEatingSpoiledFood = false;
+        state.players[0].money = 1000;
+        state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+        state.players[0].inventory.freshFoodUnits = 1; // Exactly 1 unit to eat
+
+        vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
+        const nextState = processTurnStart(state, mockCampaign);
+
+        // Food was eaten (freshFoodUnits consumed to 0)
+        expect(nextState.players[0].inventory.freshFoodUnits).toBe(0);
+        // No starvation penalty
+        expect(nextState.players[0].turnEvents.some(e => e.key === 'events.starvation')).toBe(false);
+        // And then fridge broke
+        expect(nextState.players[0].inventory.appliances[0].isBroken).toBe(true);
+      });
+
+      it('does not re-roll breakage for already broken appliances', () => {
+        let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+        state.turn = 3;
+        state.rules.protectBuiltInAppliances = true;
+        state.rules.advancedMaintenance = true;
+        state.players[0].money = 1000;
+        state.players[0].inventory.freshFoodUnits = 1;
+        state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city', isBroken: true });
+
+        vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
+        const nextState = processTurnStart(state, mockCampaign);
+
+        // Should NOT emit applianceBrokeNeedRepair again
+        expect(nextState.players[0].turnEvents.some(e => e.key === 'events.applianceBrokeNeedRepair')).toBe(false);
+      });
+
+      it('breaks synergy when broken so food storage drops on subsequent turns', () => {
+        let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+        state.turn = 3;
+        state.rules.protectBuiltInAppliances = true;
+        state.rules.advancedMaintenance = true;
+        state.rules.allowEatingSpoiledFood = false;
+        // Broken fridge
+        state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city', isBroken: true });
+        // Player has 5 fresh food, eats 1, 4 remain but storage is 0 because fridge is broken
+        state.players[0].inventory.freshFoodUnits = 5;
+
+        // No random breakage this turn
+        vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99);
+        const nextState = processTurnStart(state, mockCampaign);
+
+        // 1 eaten, the remaining 4 spoil because broken fridge provides no set_food_storage
+        expect(nextState.players[0].inventory.freshFoodUnits).toBe(0);
+        expect(nextState.players[0].turnEvents.some(e => e.key.startsWith('events.foodSpoiled'))).toBe(true);
+      });
+    });
   });
 
   describe('Happiness Bonuses', () => {

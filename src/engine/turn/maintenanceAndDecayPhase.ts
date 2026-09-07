@@ -197,36 +197,60 @@ export function processPostHealthMaintenance(
   // 15. Appliance Repair
   const formatAppName = (id: string) => campaign.items?.find(i => i.id === id)?.name || id.split('_').map(w => (w.toLowerCase() === 'tv' || w.toLowerCase() === 'vcr' ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
   const queuedAppBreak = state.debugQueue?.find(e => e.type === 'appliance_break' && (e.playerId === player.id || !e.playerId));
-  if (queuedAppBreak) {
-    if (player.inventory.appliances.length > 0) {
-      const targetApp = player.inventory.appliances.find(a => a.id === queuedAppBreak.applianceId) || player.inventory.appliances[0];
-      const repairCost = Math.floor(targetApp.purchasePrice * (0.05 + rng.next() * 0.2));
-      player.money = Math.max(0, player.money - repairCost);
-      player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-      player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(targetApp.id), repairCost } });
+  const isAdvancedMaint = !!state.rules.advancedMaintenance;
 
-      for (const app of player.inventory.appliances.filter(a => a !== targetApp)) {
+  if (queuedAppBreak) {
+    const candidateApps = isAdvancedMaint 
+      ? player.inventory.appliances.filter(a => !a.isBroken)
+      : player.inventory.appliances;
+    if (candidateApps.length > 0) {
+      const targetApp = candidateApps.find(a => a.id === queuedAppBreak.applianceId) || candidateApps[0];
+      if (isAdvancedMaint) {
+        targetApp.isBroken = true;
+        player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
+        player.turnEvents.push({ key: 'events.applianceBrokeNeedRepair', params: { appliance: formatAppName(targetApp.id) } });
+      } else {
+        const repairCost = Math.floor(targetApp.purchasePrice * (0.05 + rng.next() * 0.2));
+        player.money = Math.max(0, player.money - repairCost);
+        player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
+        player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(targetApp.id), repairCost } });
+      }
+
+      for (const app of player.inventory.appliances.filter(a => a !== targetApp && (!isAdvancedMaint || !a.isBroken))) {
         const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
         const breakTrigger = resolveDecision(replay, `appliance_break_${player.id}_${app.id}`, () => rng.next() < breakChance);
         if (breakTrigger) {
-          const rCost = resolveDecision(replay, `appliance_repair_${player.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
-          player.money = Math.max(0, player.money - rCost);
-          player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-          player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost: rCost } });
+          if (isAdvancedMaint) {
+            app.isBroken = true;
+            player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
+            player.turnEvents.push({ key: 'events.applianceBrokeNeedRepair', params: { appliance: formatAppName(app.id) } });
+          } else {
+            const rCost = resolveDecision(replay, `appliance_repair_${player.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
+            player.money = Math.max(0, player.money - rCost);
+            player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
+            player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost: rCost } });
+          }
         }
       }
     } else {
-      player.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Appliance Break', reason: 'Player owns 0 appliances' } });
+      player.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Appliance Break', reason: 'Player owns 0 eligible appliances' } });
     }
   } else {
     for (const app of player.inventory.appliances) {
+      if (isAdvancedMaint && app.isBroken) continue;
       const breakChance = app.purchaseSource === 'socket_city' ? 1/51 : 1/36;
       const breakTrigger = resolveDecision(replay, `appliance_break_${player.id}_${app.id}`, () => rng.next() < breakChance);
       if (breakTrigger) {
-        const repairCost = resolveDecision(replay, `appliance_repair_${player.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
-        player.money = Math.max(0, player.money - repairCost);
-        player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-        player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost } });
+        if (isAdvancedMaint) {
+          app.isBroken = true;
+          player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
+          player.turnEvents.push({ key: 'events.applianceBrokeNeedRepair', params: { appliance: formatAppName(app.id) } });
+        } else {
+          const repairCost = resolveDecision(replay, `appliance_repair_${player.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
+          player.money = Math.max(0, player.money - repairCost);
+          player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
+          player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost } });
+        }
       }
     }
   }

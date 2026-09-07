@@ -69,12 +69,18 @@ interface HomeApartmentViewProps {
   // Pantry props
   hasFridge: boolean;
   hasFreezer: boolean;
+
+  // Maintenance & Actions
+  economicIndex?: number;
+  onAction?: (action: any) => void;
 }
 
 export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   player,
   campaign,
   rules,
+  economicIndex = 0,
+  onAction,
   housingName: _housingName,
   actionFeedback,
   durablesSpace,
@@ -173,15 +179,17 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
     }
   }, []);
 
-  // Group appliances so each unique ID has an entry, keeping 'new' if any copy is new
+  // Group appliances so each unique ID has an entry, prioritizing broken copy if any is broken
   const uniqueApplianceIds = Array.from(new Set(player.inventory?.appliances?.map(a => a.id) || []));
   const uniqueAppliances = uniqueApplianceIds.map(id => {
     const matching = player.inventory?.appliances?.filter(a => a.id === id) || [];
     const hasAnyNew = matching.some(a => a.condition === 'new' || a.purchaseSource === 'socket_city');
-    const first = matching[0];
+    const brokenCopy = matching.find(a => a.isBroken);
+    const first = brokenCopy || matching[0];
     return {
       ...first,
-      condition: (hasAnyNew ? 'new' : 'used') as 'new' | 'used'
+      condition: (hasAnyNew ? 'new' : 'used') as 'new' | 'used',
+      isBroken: Boolean(brokenCopy)
     };
   });
 
@@ -432,6 +440,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             const itemDef = campaign?.items?.find(i => i.id === appDefId);
             const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : appDefId;
             const isNew = ownedApp ? (ownedApp.condition === 'new' || ownedApp.purchaseSource === 'socket_city') : false;
+            const isBroken = Boolean(ownedApp?.isBroken);
 
             return (
               <div
@@ -443,7 +452,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                   isOwned
                 })}
                 title={isOwned 
-                  ? `${itemName} (${isNew ? 'New' : 'Used'}) — Click to inspect`
+                  ? (isBroken ? `${itemName} (BROKEN — Needs Repair) — Click to maintain` : `${itemName} (${isNew ? 'New' : 'Used'}) — Click to inspect`)
                   : `${itemName} (Unowned — Available at Socket City/Z-Mart)`}
                 style={{
                   display: 'flex',
@@ -452,14 +461,16 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                   justifyContent: 'center',
                   width: '66px',
                   height: '74px',
-                  background: isOwned ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
+                  background: isOwned 
+                    ? (isBroken ? 'rgba(239, 68, 68, 0.22)' : 'rgba(0, 0, 0, 0.45)') 
+                    : 'rgba(0, 0, 0, 0.25)',
                   border: isOwned 
-                    ? `1.5px solid ${isNew ? '#2ecc71' : '#3498db'}`
+                    ? (isBroken ? '1.5px solid #ef4444' : `1.5px solid ${isNew ? '#2ecc71' : '#3498db'}`)
                     : '1.5px dashed rgba(255, 255, 255, 0.2)',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   boxShadow: isOwned 
-                    ? (isNew ? '0 0 8px rgba(46, 204, 113, 0.25)' : '0 0 8px rgba(52, 152, 219, 0.25)')
+                    ? (isBroken ? '0 0 10px rgba(239, 68, 68, 0.5)' : (isNew ? '0 0 8px rgba(46, 204, 113, 0.25)' : '0 0 8px rgba(52, 152, 219, 0.25)'))
                     : 'none',
                   opacity: isOwned ? 1 : 0.45,
                   transition: 'all 0.15s ease',
@@ -470,9 +481,11 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)';
                   if (isOwned) {
-                    e.currentTarget.style.boxShadow = isNew 
-                      ? '0 0 12px rgba(46, 204, 113, 0.5)' 
-                      : '0 0 12px rgba(52, 152, 219, 0.5)';
+                    e.currentTarget.style.boxShadow = isBroken
+                      ? '0 0 16px rgba(239, 68, 68, 0.8)'
+                      : (isNew 
+                        ? '0 0 12px rgba(46, 204, 113, 0.5)' 
+                        : '0 0 12px rgba(52, 152, 219, 0.5)');
                   } else {
                     e.currentTarget.style.opacity = '0.8';
                   }
@@ -480,9 +493,11 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'none';
                   if (isOwned) {
-                    e.currentTarget.style.boxShadow = isNew 
-                      ? '0 0 8px rgba(46, 204, 113, 0.25)' 
-                      : '0 0 8px rgba(52, 152, 219, 0.25)';
+                    e.currentTarget.style.boxShadow = isBroken
+                      ? '0 0 10px rgba(239, 68, 68, 0.5)'
+                      : (isNew 
+                        ? '0 0 8px rgba(46, 204, 113, 0.25)' 
+                        : '0 0 8px rgba(52, 152, 219, 0.25)');
                   } else {
                     e.currentTarget.style.opacity = '0.45';
                   }
@@ -496,7 +511,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                     height: '38px',
                     objectFit: 'contain',
                     filter: isOwned 
-                      ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' 
+                      ? (isBroken ? 'drop-shadow(0 2px 4px rgba(239,68,68,0.8)) sepia(30%)' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))') 
                       : 'grayscale(100%) opacity(0.35) brightness(0.6)'
                   }}
                   onError={(e) => {
@@ -516,14 +531,34 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                   {itemName}
                 </span>
                 {isOwned && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '2px',
-                    right: '3px',
-                    fontSize: '0.62rem'
-                  }}>
-                    {isNew ? '✨' : '📦'}
-                  </span>
+                  isBroken ? (
+                    <span style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      background: '#dc2626',
+                      color: '#ffffff',
+                      fontSize: '0.50rem',
+                      fontWeight: 'bold',
+                      letterSpacing: '0.04em',
+                      padding: '1px 4px',
+                      borderRadius: '4px',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.8)',
+                      zIndex: 2,
+                      border: '1px solid #f87171'
+                    }}>
+                      BROKEN
+                    </span>
+                  ) : (
+                    <span style={{
+                      position: 'absolute',
+                      top: '2px',
+                      right: '3px',
+                      fontSize: '0.62rem'
+                    }}>
+                      {isNew ? '✨' : '📦'}
+                    </span>
+                  )
                 )}
               </div>
             );
@@ -860,7 +895,11 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
       {inspectedDurable && (
         <DurableCardModal
           durable={inspectedDurable}
+          player={player}
           campaign={campaign}
+          rules={rules}
+          economicIndex={economicIndex}
+          onAction={onAction}
           onClose={() => setInspectedDurable(null)}
         />
       )}

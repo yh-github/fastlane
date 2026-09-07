@@ -54,7 +54,8 @@ export function handlePawnItemAction(
     weekPawned: context.turn,
     ownerId: nextPlayer.id,
     purchaseSource: action.item.purchaseSource || 'socket_city',
-    ...((trackCondition || action.item.condition) ? { condition: action.item.condition || (action.item.purchaseSource === 'socket_city' ? 'new' : 'used') } : {})
+    ...((trackCondition || action.item.condition) ? { condition: action.item.condition || (action.item.purchaseSource === 'socket_city' ? 'new' : 'used') } : {}),
+    ...(action.item.isBroken ? { isBroken: true } : {})
   };
   nextPlayer.inventory.pawnedItems.push(pawnedItem);
   nextPlayer.money += action.value;
@@ -124,9 +125,10 @@ export function handleRedeemItemAction(
         id: action.item.itemId,
         purchasePrice: action.item.originalPrice,
         purchaseSource: action.item.purchaseSource || 'socket_city',
-        ...((trackCondition || action.item.condition) ? { condition: redeemCondition } : {})
+        ...((trackCondition || action.item.condition) ? { condition: redeemCondition } : {}),
+        ...(action.item.isBroken ? { isBroken: true } : {})
       });
-      if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
+      if (!action.item.isBroken && context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
         nextPlayer = addApplianceCardToDeck(nextPlayer, action.item.itemId);
       }
     }
@@ -194,9 +196,10 @@ export function handleBuyPawnItemAction(
         id: action.item.itemId,
         purchasePrice: action.item.originalPrice,
         purchaseSource: 'pawnshop',
-        ...((trackCondition || action.item.condition) ? { condition: buyCondition } : {})
+        ...((trackCondition || action.item.condition) ? { condition: buyCondition } : {}),
+        ...(action.item.isBroken ? { isBroken: true } : {})
       });
-      if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
+      if (!action.item.isBroken && context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
         nextPlayer = addApplianceCardToDeck(nextPlayer, action.item.itemId);
       }
     }

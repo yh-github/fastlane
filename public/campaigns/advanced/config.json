@@ -30,7 +30,8 @@
     "spaceCapping": true,
     "grantExpOnJobSwitch": false,
     "alternativeWeekends": true,
-    "preventPawnArbitrage": true
+    "preventPawnArbitrage": true,
+    "advancedMaintenance": true
   },
   "statRules": {
     "startingPhysicalCondition": 50,

@@ -42,6 +42,12 @@
     "relax": "נחת בבית{{stats}}",
     "relax_unfed": "נחת ללא אוכל במזווה!{{stats}}",
     "clean": "ניקית את הדירה{{stats}}",
+    "appliance": {
+      "diySuccess": "תיקון עצמי הצליח! תיקנת את ה{{appliance}} (סיכוי הצלחה: {{chance}}%).",
+      "diyFailure": "תיקון עצמי נכשל. ה{{appliance}} עדיין מקולקל (סיכוי הצלחה: {{chance}}%).",
+      "repairmanSuccess": "טכנאי תיקן את ה{{appliance}} תמורת {{cost}}$! המכשיר חזר למצב חדש.",
+      "throwOutSuccess": "זרקת את ה{{appliance}} המקולקל. נוספו {{mess}}+ לכלוך בדירה."
+    },
     "bank": {
       "deposit": "הופקדו {{amount}}$ לחסכונות",
       "withdraw": "נמשכו {{amount}}$ מהחסכונות"
@@ -130,6 +136,8 @@
       "alreadyGranted": "הארכת שכר דירה כבר פעילה לתקופה זו."
     },
     "error": {
+      "applianceNotBroken": "מכשיר זה אינו מקולקל.",
+      "notEnoughMoneyRepairman": "אין מספיק כסף להזמנת טכנאי (עולה {{cost}}$).",
       "cannotApply": "לא ניתן להגיש מועמדות לעבודה.",
       "notEnoughTime": "אין מספיק זמן כדי להגיש מועמדות.",
       "cannotWork": "לא ניתן לעבוד.",
@@ -218,6 +226,7 @@
       "due": "הגיע זמן התשלום להלוואה שלך."
     },
     "applianceBroke": "ה{{appliance}} שלך נשבר! עלות תיקון: {{repairCost}}$",
+    "applianceBrokeNeedRepair": "ה{{appliance}} שלך התקלקל! הוא לא יפעל עד שיתוקן.",
     "pawnExpired": "פריט ממושכן פג תוקף.",
     "computerProfit": "הרווחת {{profit}}$ מהמחשב שלך.",
     "weekend": {
@@ -497,7 +506,10 @@
     "sellTitle": "מכור פריטים (40% מהשווי)",
     "noSell": "אין לך מכשירי חשמל למשכן.",
     "buyTitle": "קנה חזרה (50% מהשווי)",
-    "noBuy": "אין לך פריטים ממושכנים."
+    "noBuy": "אין לך פריטים ממושכנים.",
+    "secondHandTitle": "פריטים יד שנייה (50% מהשווי)",
+    "brokenTag": "מקולקל — 25%",
+    "brokenTagShort": "מקולקל"
   },
   "university": {
     "title": "רישום אוניברסיטאי",
@@ -637,5 +649,9 @@
     "tabPawn": "משכון",
     "tabServices": "שירותים",
     "dontLiveHere": "אינך מתגורר כאן."
+  },
+  "homeDurable": {
+    "maintenanceTitle": "תחזוקת מכשירי חשמל",
+    "brokenDesc": "מכשיר זה התקלקל ואינו פעיל עד שיתוקן."
   }
 }
