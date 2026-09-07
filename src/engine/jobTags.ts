@@ -142,6 +142,17 @@ export function getLookBusyDepPenalty(job: JobDef | undefined | null): number {
 }
 
 /**
+ * Get the Social penalty for look_busy mode if any.
+ * In frontline_service jobs, coasting/slacking off instead of helping customers reduces 1 Social.
+ */
+export function getLookBusySocialPenalty(job: JobDef | undefined | null): number {
+  if (hasJobTag(job, 'frontline_service')) {
+    return 1;
+  }
+  return 0;
+}
+
+/**
  * Get Experience gain multiplier for this job.
  */
 export function getJobExpMultiplier(job: JobDef | undefined | null): number {
