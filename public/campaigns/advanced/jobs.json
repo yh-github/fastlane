@@ -152,8 +152,8 @@
     "locationId": "pawn_shop",
     "baseWage": 7,
     "requirements": {
-      "experience": 20,
-      "dependability": 20,
+      "experience": 15,
+      "dependability": 15,
       "degrees": [],
       "uniform": "casual"
     },
@@ -166,8 +166,8 @@
     "locationId": "pawn_shop",
     "baseWage": 9,
     "requirements": {
-      "experience": 30,
-      "dependability": 30,
+      "experience": 25,
+      "dependability": 25,
       "degrees": ["trade_school"],
       "uniform": "casual"
     },
