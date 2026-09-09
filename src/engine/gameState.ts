@@ -367,6 +367,8 @@ export interface TurnFlags {
   firedLocationsThisTurn?: string[];
   /** Work mistakes made this turn */
   workMistakesThisTurn?: number;
+  /** Whether curio purchase novelty mental bonus (+1) was already granted this turn */
+  curioNoveltyGranted?: boolean;
 }
 
 export interface PlayerConfig {

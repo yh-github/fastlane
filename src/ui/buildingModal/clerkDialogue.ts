@@ -1,4 +1,5 @@
 import type { BuildingDef, CampaignBundle, ItemDef } from '../../engine/dataLoader';
+import { CURIO_CATALOG } from '../../engine/curioCatalog';
 
 export function getClerkFace(id: string, archetype: string): string {
   switch (id) {
@@ -29,12 +30,78 @@ export function getClerkFace(id: string, archetype: string): string {
   }
 }
 
+export function getPawnShopWeeklyStock(
+  campaign: CampaignBundle,
+  turn: number,
+  playerId: string
+): ItemDef[] {
+  let seed = turn * 7919 + (playerId.charCodeAt(playerId.length - 1) || 0) * 104729;
+  const random = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+
+  const appliances = (campaign.items || []).filter(i => i.category === 'appliance');
+  const stock: ItemDef[] = [];
+
+  for (let i = 0; i < 6; i++) {
+    const roll = random();
+    if (roll < 0.65) {
+      // Curio from CURIO_CATALOG (most of them)
+      const curioIdx = Math.floor(random() * CURIO_CATALOG.length);
+      const curio = CURIO_CATALOG[curioIdx] || CURIO_CATALOG[0];
+      stock.push({
+        id: 'knick_knack',
+        name: curio.name,
+        category: 'junk',
+        subcategory: 'curio',
+        basePrice: 10,
+        space: 2,
+        happinessBonus: 1,
+        tags: [curio.id, 'curio']
+      });
+    } else if (roll < 0.85 || appliances.length === 0) {
+      // Spare parts
+      stock.push({
+        id: 'spare_parts',
+        name: 'Box of Spare Parts',
+        category: 'junk',
+        subcategory: 'parts',
+        basePrice: 15,
+        space: 2,
+        happinessBonus: 0
+      });
+    } else {
+      // Broken appliance at heavy discount (30% catalog basePrice)
+      const app = appliances[Math.floor(random() * appliances.length)];
+      const discountedPrice = Math.max(10, Math.floor((app.basePrice || 100) * 0.3));
+      stock.push({
+        id: app.id,
+        name: `Broken ${app.name}`,
+        category: 'appliance',
+        subcategory: app.subcategory,
+        basePrice: discountedPrice,
+        space: app.space || 3,
+        happinessBonus: 0,
+        tags: ['broken', 'used']
+      });
+    }
+  }
+
+  return stock;
+}
+
 export function getAvailableItemsForBuilding(
   building: BuildingDef,
   campaign: CampaignBundle,
   turn: number,
   playerId: string
 ): ItemDef[] {
+  // Pawn Shop weekly rotating stock of ~6 items (curios, spare parts, and broken appliances)
+  if (building.id === 'pawn_shop' || building.archetype === 'pawnshop') {
+    return getPawnShopWeeklyStock(campaign, turn, playerId);
+  }
+
   let itemsHere = (building.inventory || [])
     .map(inv => {
       const baseItem = campaign.items.find(i => i.id === inv.itemId);

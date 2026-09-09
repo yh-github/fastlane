@@ -761,9 +761,48 @@ describe('BuildingInteractions', () => {
       />
     );
 
+    fireEvent.click(screen.getByTestId('tab-pawnshop-pawn'));
     expect(screen.getByText(/Sell Items/i)).toBeInTheDocument();
     expect(screen.getByText(/Buy Back/i)).toBeInTheDocument();
     expect(screen.getByText(/Stereo/i)).toBeInTheDocument();
+  });
+
+  it('PawnShop allows switching between Buy and Pawn tabs', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 200,
+      hoursRemaining: 10,
+      inventory: {
+        appliances: [{ id: 'stereo', purchasePrice: 200, purchaseSource: 'socket_city' }],
+        pawnedItems: []
+      }
+    } as any;
+
+    const mockItems = [
+      { id: 'knick_knack', name: 'Vintage Tin Robot', category: 'junk' as const, subcategory: 'curio', basePrice: 10, space: 2, happinessBonus: 1 }
+    ];
+
+    render(
+      <PawnShop
+        player={mockPlayer}
+        onAction={vi.fn()}
+        economicIndex={0}
+        availableItems={mockItems}
+      />
+    );
+
+    // Starts on Buy tab by default when availableItems present
+    expect(screen.getByText(/Vintage Tin Robot/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Sell Items/i)).not.toBeInTheDocument();
+
+    // Click Pawn tab
+    fireEvent.click(screen.getByTestId('tab-pawnshop-pawn'));
+    expect(screen.getByText(/Sell Items/i)).toBeInTheDocument();
+    expect(screen.getByText(/Stereo/i)).toBeInTheDocument();
+
+    // Click Buy tab again
+    fireEvent.click(screen.getByTestId('tab-pawnshop-buy'));
+    expect(screen.getByText(/Vintage Tin Robot/i)).toBeInTheDocument();
   });
 
   it('ActionReasonModal renders reason and dismisses via onClose', () => {

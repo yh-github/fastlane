@@ -107,49 +107,49 @@ export function processMaintenanceAndDecayPhase(
     player.inventory.lotteryTickets = 0;
   }
 
-  // 5b. Curio / Knick-Knack Weekend Appraisal
+  // 5b. Curio / Knick-Knack Weekend Appraisal (Unified Lottery: at most 1 event, diminishing returns approaching 80%)
   const uninspectedCurios = player.inventory.uninspectedKnickKnacks || 0;
   if (uninspectedCurios > 0) {
-    for (let i = 0; i < uninspectedCurios; i++) {
-      const curioIndex = resolveDecision(replay, `curio_catalog_${player.id}_turn_${state.turn}_${i}`, () => Math.floor(rng.next() * CURIO_CATALOG.length));
-      const curio = CURIO_CATALOG[curioIndex] || CURIO_CATALOG[0];
-      const roll = resolveDecision(replay, `curio_outcome_${player.id}_turn_${state.turn}_${i}`, () => rng.next());
+    const winChance = 0.80 * (1 - Math.pow(0.55, uninspectedCurios));
+    const winRoll = resolveDecision(replay, `curio_lottery_win_${player.id}_turn_${state.turn}`, () => rng.next());
 
-      if (roll < 0.35) {
-        // 35% Cozy Decor (+0.5 or +1.0 Lifestyle)
-        const lifestyleGain = roll < 0.175 ? 0.5 : 1.0;
+    if (winRoll < winChance) {
+      const curioIndex = resolveDecision(replay, `curio_catalog_${player.id}_turn_${state.turn}`, () => Math.floor(rng.next() * CURIO_CATALOG.length));
+      const curio = CURIO_CATALOG[curioIndex] || CURIO_CATALOG[0];
+      const outcomeRoll = resolveDecision(replay, `curio_outcome_${player.id}_turn_${state.turn}`, () => rng.next());
+
+      if (outcomeRoll < 0.40) {
+        // 40% Cozy Decor (+0.5 or +1.0 Lifestyle)
+        const lifestyleGain = outcomeRoll < 0.20 ? 0.5 : 1.0;
         player.lifestyle = Math.min(100, roundToResolution((player.lifestyle || 0) + lifestyleGain, 0.1));
-        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + 1;
+        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + uninspectedCurios;
         player.turnEvents.push({
           key: 'events.curioDecor',
           params: { name: curio.name, lifestyle: lifestyleGain }
         });
-      } else if (roll < 0.70) {
-        // 35% Fascinating Trinket (+1 or +2 Mental)
-        const mentalGain = roll < 0.525 ? 1 : 2;
+      } else if (outcomeRoll < 0.80) {
+        // 40% Fascinating Trinket (+1 or +2 Mental)
+        const mentalGain = outcomeRoll < 0.60 ? 1 : 2;
         player = applyMentalChange(player, mentalGain, campaign.config.statRules);
-        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + 1;
+        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + uninspectedCurios;
         player.turnEvents.push({
           key: 'events.curioMental',
           params: { name: curio.name, mental: mentalGain }
         });
-      } else if (roll < 0.90) {
+      } else {
         // 20% Collector's Antique Cash ($35–$50)
-        const cashAmount = resolveDecision(replay, `curio_cash_${player.id}_turn_${state.turn}_${i}`, () => 35 + Math.floor(rng.next() * 16));
+        const cashAmount = resolveDecision(replay, `curio_cash_${player.id}_turn_${state.turn}`, () => 35 + Math.floor(rng.next() * 16));
         player.money += cashAmount;
-        // Sold to collector: item leaves inventory, so knickKnacks is NOT incremented (frees 2 space)
+        // Sold to collector: 1 item leaves inventory, remaining kept on shelf
+        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + (uninspectedCurios - 1);
         player.turnEvents.push({
           key: 'events.curioCash',
           params: { name: curio.name, amount: cashAmount }
         });
-      } else {
-        // 10% Quirky Dud (Kept on shelf, 2 space, 0 bonus)
-        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + 1;
-        player.turnEvents.push({
-          key: 'events.curioDud',
-          params: { name: curio.name }
-        });
       }
+    } else {
+      // Lottery lost: all uninspected curios quietly placed on display shelf without event clutter
+      player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + uninspectedCurios;
     }
     player.inventory.uninspectedKnickKnacks = 0;
   }

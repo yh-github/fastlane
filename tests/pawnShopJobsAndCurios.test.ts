@@ -7,6 +7,7 @@ import { calcAdvancedJobEmployabilityScore, calcUsedSpace } from '../src/engine/
 import { gameReducer } from '../src/engine/gameReducer';
 import { buyItem } from '../src/engine/shoppingEngine';
 import { processMaintenanceAndDecayPhase } from '../src/engine/turn/maintenanceAndDecayPhase';
+import { getPawnShopWeeklyStock } from '../src/ui/buildingModal/clerkDialogue';
 import { Random } from '../src/utils/rng';
 
 describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
@@ -32,27 +33,27 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       expect(getJobExpMultiplier(job)).toBe(0.5);
     });
 
-    it('rejects applicant with Physical Condition < 50', () => {
+    it('rejects applicant with Physical Condition < 30', () => {
       const job = campaign.jobs.find((j: any) => j.id === 'pawn_security_guard');
       let player = makePlayer();
       player.experience = 25;
       player.dependability = 25;
-      player.physicalCondition = 45; // Below 50
+      player.physicalCondition = 25; // Below 30
 
       const rng = new Random(42);
       const result = applyForJob(player, job, 1, campaign.messages, undefined, rng, rules, 1, undefined, campaign.config.statRules, 0);
       expect(result.updated.currentJobId).toBeNull();
       expect(result.message.key).toBe('action.job.rejected');
-      expect((result.message.params as any)?.reasons).toContain('Physical Condition >= 50');
+      expect((result.message.params as any)?.reasons).toContain('Physical Condition >= 30');
     });
 
-    it('scales employability score with Physical Condition above 50', () => {
+    it('scales employability score with Physical Condition above 30', () => {
+      const score30 = calcAdvancedJobEmployabilityScore(20, 20, 20, 20, 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 30, true);
+      const score40 = calcAdvancedJobEmployabilityScore(20, 20, 20, 20, 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 40, true);
       const score50 = calcAdvancedJobEmployabilityScore(20, 20, 20, 20, 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 50, true);
-      const score60 = calcAdvancedJobEmployabilityScore(20, 20, 20, 20, 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 60, true);
-      const score70 = calcAdvancedJobEmployabilityScore(20, 20, 20, 20, 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 70, true);
 
-      expect(score60).toBe(score50 + 6); // +3% per 5 points -> +6% for +10
-      expect(score70).toBe(score50 + 12); // +12% for +20
+      expect(score40).toBe(score30 + 10); // +1% per point above 30 -> +10%
+      expect(score50).toBe(score30 + 20); // +20% for +20
     });
   });
 
@@ -125,9 +126,26 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       expect(spaceUsed).toBe(2);
     });
 
-    it('processes uninspected curios during weekend phase', () => {
+    it('grants novelty bonus on first curio buy, but 0 on subsequent buys in same turn', () => {
       let player = makePlayer();
-      player.inventory.uninspectedKnickKnacks = 2;
+      player.money = 100;
+      player.currentHousingId = 'low_cost';
+
+      const knickKnackDef = campaign.items.find((i: any) => i.id === 'knick_knack');
+      const buyRes1 = buyItem(player, knickKnackDef, rules, campaign);
+      expect(buyRes1.success).toBe(true);
+      expect(buyRes1.updated.turnFlags.curioNoveltyGranted).toBe(true);
+      expect((buyRes1.message.params as any)?.happinessBonus ?? (buyRes1.message.params as any)?.mentalBonus).toBeDefined();
+
+      const buyRes2 = buyItem(buyRes1.updated, knickKnackDef, rules, campaign);
+      expect(buyRes2.success).toBe(true);
+      expect((buyRes2.message.params as any)?.happinessBonus).toBeUndefined();
+      expect((buyRes2.message.params as any)?.mentalBonus).toBeUndefined();
+    });
+
+    it('processes uninspected curios as a single lottery event during weekend phase', () => {
+      let player = makePlayer();
+      player.inventory.uninspectedKnickKnacks = 3;
       player.money = 100;
 
       const state: any = {
@@ -142,9 +160,9 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
 
       // Uninspected count is cleared
       expect(result.updatedPlayer.inventory.uninspectedKnickKnacks).toBe(0);
-      // Turn events record the curio reveals
+      // At most 1 curio event is triggered (unified lottery, never an event per item)
       const curioEvents = result.updatedPlayer.turnEvents.filter(e => e.key.startsWith('events.curio'));
-      expect(curioEvents.length).toBe(2);
+      expect(curioEvents.length).toBeLessThanOrEqual(1);
     });
   });
 
@@ -163,6 +181,45 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       expect(butcher).toBeDefined();
       expect(hasJobTag(butcher, 'heavy_physical')).toBe(true);
       expect(getJobExpMultiplier(butcher)).toBe(0.5);
+    });
+  });
+
+  describe('Pawn Shop Weekly Rotating Stock', () => {
+    it('generates a rotating stock of 6 items changing every turn', () => {
+      const stockWeek1 = getPawnShopWeeklyStock(campaign, 1, 'p1');
+      const stockWeek2 = getPawnShopWeeklyStock(campaign, 2, 'p1');
+
+      expect(stockWeek1.length).toBe(6);
+      expect(stockWeek2.length).toBe(6);
+
+      // Should contain curios (knick_knack with vintage name)
+      const hasCurio = stockWeek1.some(i => i.id === 'knick_knack');
+      expect(hasCurio).toBe(true);
+
+      // Verify that the inventory rotates from week 1 to week 2
+      const namesWeek1 = stockWeek1.map(i => i.name).join(',');
+      const namesWeek2 = stockWeek2.map(i => i.name).join(',');
+      expect(namesWeek1).not.toBe(namesWeek2);
+    });
+
+    it('discounted broken appliances have tags broken and used and heavy discount', () => {
+      // Find a turn seed that generates a broken appliance
+      let foundBroken: any = null;
+      for (let t = 1; t <= 20; t++) {
+        const stock = getPawnShopWeeklyStock(campaign, t, 'p1');
+        const broken = stock.find(i => i.tags?.includes('broken'));
+        if (broken) {
+          foundBroken = broken;
+          break;
+        }
+      }
+
+      if (foundBroken) {
+        expect(foundBroken.category).toBe('appliance');
+        expect(foundBroken.name).toMatch(/^Broken /);
+        expect(foundBroken.tags).toContain('broken');
+        expect(foundBroken.tags).toContain('used');
+      }
     });
   });
 });

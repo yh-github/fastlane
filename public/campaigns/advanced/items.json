@@ -198,7 +198,8 @@
     "basePrice": 10,
     "space": 2,
     "lifestyleValue": 0,
-    "happinessBonus": 1
+    "happinessBonus": 1,
+    "mentalBonus": 1
   },
   {
     "id": "spare_parts",

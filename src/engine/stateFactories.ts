@@ -42,6 +42,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     mentalDropsThisTurn: 0,
     firedLocationsThisTurn: [],
     workMistakesThisTurn: 0,
+    curioNoveltyGranted: false,
   };
 }
 
