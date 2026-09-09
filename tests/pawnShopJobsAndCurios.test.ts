@@ -26,8 +26,8 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       const job = campaign.jobs.find((j: any) => j.id === 'pawn_security_guard');
       expect(job).toBeDefined();
       expect(job.baseWage).toBe(7);
-      expect(job.requirements.experience).toBe(20);
-      expect(job.requirements.dependability).toBe(20);
+      expect(job.requirements.experience).toBe(15);
+      expect(job.requirements.dependability).toBe(15);
       expect(hasJobTag(job, 'look_fit')).toBe(true);
       expect(hasJobTag(job, 'high_downtime')).toBe(true);
       expect(getJobExpMultiplier(job)).toBe(0.5);
@@ -62,7 +62,8 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       const job = campaign.jobs.find((j: any) => j.id === 'pawn_appraiser');
       expect(job).toBeDefined();
       expect(job.baseWage).toBe(9);
-      expect(job.requirements.experience).toBe(30);
+      expect(job.requirements.experience).toBe(25);
+      expect(job.requirements.dependability).toBe(25);
       expect(job.requirements.degrees).toContain('trade_school');
       expect(hasJobTag(job, 'frontline_service')).toBe(true);
       expect(hasJobTag(job, 'high_downtime')).toBe(true);

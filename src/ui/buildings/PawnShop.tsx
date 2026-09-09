@@ -92,11 +92,11 @@ export function PawnShop({
       {activeTab === 'buy' && (
         <div>
           {availableItems.length > 0 ? (
-            <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
+            <div style={{ marginBottom: '20px' }}>
               <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 10px 0', fontSize: '0.95em' }}>
                 🏷️ {t('pawnShop.weeklyStockTitle', { defaultValue: 'Weekly Pawn & Curio Stock' })}
               </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
                 {availableItems.map((item, idx) => {
                   const slotKey = `${item.id}_${item.name}_${idx}`;
                   const isBroken = item.tags?.includes('broken') || (item as any).isBroken;
@@ -131,57 +131,65 @@ export function PawnShop({
                     });
                   }
 
+                  const handleBuy = async () => {
+                    if (!canAfford || isSoldOut) return;
+                    if (isBroken) {
+                      setPurchasedItemKeys(prev => ({ ...prev, [slotKey]: true }));
+                      await onAction({
+                        type: 'buy_pawn_item',
+                        item: {
+                          itemId: item.id,
+                          originalPrice: item.basePrice || 100,
+                          redeemCost: price,
+                          weekPawned: 0,
+                          ownerId: 'pawnshop',
+                          purchaseSource: 'pawnshop',
+                          condition: 'used',
+                          isBroken: true
+                        },
+                        cost: price
+                      });
+                    } else {
+                      await onAction({ type: 'buy', itemId: item.id });
+                    }
+                  };
+
                   return (
                     <div
                       key={slotKey}
+                      className={`interaction-item store-item ${canAfford && !isSoldOut ? 'interaction-item--clickable' : 'interaction-item--disabled'}`}
+                      onClick={canAfford && !isSoldOut ? handleBuy : undefined}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '8px 12px',
-                        background: 'rgba(255,255,255,0.05)',
-                        border: isBroken ? '1px solid #78350f' : '1px solid #444',
-                        borderRadius: '6px'
+                        padding: '12px 14px',
+                        margin: 0,
+                        border: isBroken ? '1px solid #b45309' : undefined,
+                        cursor: canAfford && !isSoldOut ? 'pointer' : 'not-allowed'
                       }}
                     >
-                      <div style={{ minWidth: 0, flex: 1, paddingRight: '8px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ minWidth: 0, flex: 1, paddingRight: '12px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', whiteSpace: 'normal', wordBreak: 'normal', lineHeight: 1.3 }}>
                           {icon}
                           {displayName}
                         </div>
-                        <div style={{ fontSize: '11px', color: isBroken ? '#f59e0b' : '#94a3b8' }}>
+                        <div style={{ fontSize: '11px', color: isBroken ? '#f59e0b' : '#94a3b8', marginTop: '3px' }}>
                           {descText}
                         </div>
                       </div>
                       <button
                         disabled={!canAfford || isSoldOut}
-                        onClick={async () => {
-                          if (isBroken) {
-                            setPurchasedItemKeys(prev => ({ ...prev, [slotKey]: true }));
-                            await onAction({
-                              type: 'buy_pawn_item',
-                              item: {
-                                itemId: item.id,
-                                originalPrice: item.basePrice || 100,
-                                redeemCost: price,
-                                weekPawned: 0,
-                                ownerId: 'pawnshop',
-                                purchaseSource: 'pawnshop',
-                                condition: 'used',
-                                isBroken: true
-                              },
-                              cost: price
-                            });
-                          } else {
-                            await onAction({ type: 'buy', itemId: item.id });
-                          }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleBuy();
                         }}
                         style={{
                           background: isSoldOut ? '#334155' : canAfford ? '#10b981' : '#4b5563',
                           color: '#fff',
                           border: 'none',
                           borderRadius: '4px',
-                          padding: '4px 10px',
+                          padding: '6px 12px',
                           fontSize: '12px',
                           fontWeight: 'bold',
                           cursor: (canAfford && !isSoldOut) ? 'pointer' : 'not-allowed',
@@ -207,7 +215,7 @@ export function PawnShop({
               <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 8px 0', fontSize: '0.95em' }}>
                 📦 {t('pawnShop.forfeitedStockTitle', { defaultValue: 'Forfeited Second-Hand Belongings' })}
               </h4>
-              <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
+              <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', listStyle: 'none', padding: 0, margin: 0 }}>
                 {pawnShopItemsForSale.map((app, idx) => {
                   const itemDef = campaign?.items.find(i => i.id === app.itemId);
                   const basePrice = itemDef?.basePrice ?? app.originalPrice;
@@ -218,11 +226,11 @@ export function PawnShop({
                   return (
                     <li
                       key={idx}
-                      className="store-item"
+                      className="store-item interaction-item interaction-item--clickable"
                       onClick={() => onAction({ type: 'buy_pawn_item', item: app, cost: buyCost })}
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', margin: 0, borderRadius: '6px', cursor: 'pointer' }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, paddingRight: '12px' }}>
                         {rules?.showItemImages && (
                           <img
                             src={`/assets/raw_images/${app.itemId}.png`}
@@ -231,7 +239,7 @@ export function PawnShop({
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         )}
-                        <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', whiteSpace: 'normal', wordBreak: 'normal', lineHeight: 1.3 }}>
                           {t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}
                           {app.isBroken && (
                             <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
@@ -262,7 +270,7 @@ export function PawnShop({
               {t('pawnShop.noSell', { defaultValue: 'You have no durables to pawn.' })}
             </p>
           ) : (
-            <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
+            <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', listStyle: 'none', padding: 0, margin: 0 }}>
               {pawnableItems.map((item, idx) => {
                 const itemDef = campaign?.items.find(i => i.id === item.id);
                 const basePrice = itemDef?.basePrice ?? item.purchasePrice;
@@ -273,11 +281,11 @@ export function PawnShop({
                 return (
                   <li
                     key={idx}
-                    className="store-item"
+                    className="store-item interaction-item interaction-item--clickable"
                     onClick={() => onAction({ type: 'pawn_item', item, value: pawnValue })}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', margin: 0, borderRadius: '6px', cursor: 'pointer' }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, paddingRight: '12px' }}>
                       {rules?.showItemImages && (
                         <img
                           src={`/assets/raw_images/${item.id}.png`}
@@ -286,7 +294,7 @@ export function PawnShop({
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', whiteSpace: 'normal', wordBreak: 'normal', lineHeight: 1.3 }}>
                         {t(`item.${item.id}`, { defaultValue: formatItemName(item.id) })}
                         {isBroken && (
                           <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
@@ -311,7 +319,7 @@ export function PawnShop({
               {t('pawnShop.noBuy', { defaultValue: 'You have no items pawned.' })}
             </p>
           ) : (
-            <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', listStyle: 'none', padding: 0, margin: 0 }}>
+            <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', listStyle: 'none', padding: 0, margin: 0 }}>
               {redeemableItems.map((app, idx) => {
                 const itemDef = campaign?.items.find(i => i.id === app.itemId);
                 const basePrice = itemDef?.basePrice ?? app.originalPrice;
@@ -322,11 +330,11 @@ export function PawnShop({
                 return (
                   <li
                     key={idx}
-                    className="store-item"
+                    className="store-item interaction-item interaction-item--clickable"
                     onClick={() => onAction({ type: 'redeem_item', item: app, cost: redeemCost })}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', margin: 0, borderRadius: '6px', cursor: 'pointer' }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, paddingRight: '12px' }}>
                       {rules?.showItemImages && (
                         <img
                           src={`/assets/raw_images/${app.itemId}.png`}
@@ -335,7 +343,7 @@ export function PawnShop({
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', whiteSpace: 'normal', wordBreak: 'normal', lineHeight: 1.3 }}>
                         {t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}
                         {app.isBroken && (
                           <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
