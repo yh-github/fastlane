@@ -195,9 +195,9 @@
     },
     "donation": "A favorite relative felt sorry for you and sent you:\n${{amount}}\nand told you to buy some clothes, and to get a life!",
     "lottery": "You won ${{amount}} in the lottery!",
-    "curioDecor": "You cleaned up your antique find ({{name}}). It adds a charming touch of class to your home! (+{{lifestyle}} Lifestyle)",
-    "curioMental": "You spent an evening tinkering with {{name}}. Fascinating mechanics! (+{{mental}} Mental)",
-    "curioCash": "Your find turned out to be a collector's item ({{name}})! A local dealer bought it for ${{amount}}.",
+    "curioDecor": "You cleaned up your antique find ({{name}}). It adds a charming touch of class to your home! (+{{lifestyle}} ✨)",
+    "curioMental": "You spent an evening tinkering with {{name}}. Fascinating mechanics! (+{{mental}} 🧠)",
+    "curioCash": "Your find turned out to be a collector's item ({{name}})! A local dealer bought it for ${{amount}} 💰.",
     "curioDud": "You dusted off {{name}}. Turns out it's just a cheap replica, but it looks amusing on your shelf.",
     "starvation": "Less time! ⏰ Due to hunger",
     "doctorVisit": "You had to visit the doctor. It cost you ${{cost}}.",
@@ -379,7 +379,7 @@
     "technical": "Technical",
     "technical_desc": "Requires technical aptitude. Shift work, innovation, and freelance computing build Skill Tech, which reduces requirements and boosts hiring odds for technical jobs.",
     "look_fit": "Imposing Physique",
-    "look_fit_desc": "Requires Physical Condition >= 50 at interview. Physical fitness scales employability. 0.5x Experience gain without cumulative burnout."
+    "look_fit_desc": "Requires Physical Condition >= 30 at interview. Physical fitness scales employability (+1% per point above 30). 0.5x Experience gain without cumulative burnout."
   },
   "gameOver": {
     "congrats": "Congratulations!",
@@ -996,6 +996,14 @@
   },
   "pawnShop": {
     "title": "Pawn Shop",
+    "tabBuy": "Buy & Browse",
+    "tabPawn": "Pawn & Redeem",
+    "weeklyStockTitle": "Weekly Pawn & Curio Stock",
+    "forfeitedStockTitle": "Forfeited Second-Hand Belongings",
+    "soldOut": "Sold Out",
+    "brokenDesc": "Broken appliance. Needs repair ({{space}} space)",
+    "brokenPrefix": "Broken {{name}}",
+    "brokenItemName": "Broken {{name}}",
     "sellTitle": "Sell Items (40% Value)",
     "noSell": "You have no durables to pawn.",
     "buyTitle": "Buy Back (50% Value)",

@@ -54,6 +54,18 @@ export function TurnEventsQueue({ events, onComplete }: TurnEventsQueueProps) {
   } else if (currentEvent.key.includes('donation')) {
     icon = '💌';
     color = '#2ecc71';
+  } else if (currentEvent.key.includes('curioDecor')) {
+    icon = '✨';
+    color = '#f1c40f';
+  } else if (currentEvent.key.includes('curioMental')) {
+    icon = '🧠';
+    color = '#9b59b6';
+  } else if (currentEvent.key.includes('curioCash')) {
+    icon = '💰';
+    color = '#2ecc71';
+  } else if (currentEvent.key.includes('curio')) {
+    icon = '📦';
+    color = '#e67e22';
   }
 
   return (

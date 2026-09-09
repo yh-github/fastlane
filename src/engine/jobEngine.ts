@@ -182,8 +182,8 @@ export function applyForJob(
   const isLookFit = isAdvanced && hasJobTag(job, 'look_fit');
   if (isLookFit) {
     const phys = updated.physicalCondition ?? 50;
-    if (phys < 50) {
-      rejectionReasons.push(msg('job_apply_missing_physical_condition', 'Not physically fit enough for security guard work. Requires Physical Condition >= 50.'));
+    if (phys < 30) {
+      rejectionReasons.push(msg('job_apply_missing_physical_condition', 'Not physically fit enough for security guard work. Requires Physical Condition >= 30.'));
     }
   }
 

@@ -113,6 +113,11 @@ describe('BuildingModal Component', () => {
     );
 
     expect(screen.getAllByText('Pawn Shop').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('tab-pawnshop-buy')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-pawnshop-pawn')).toBeInTheDocument();
+
+    // Tab 2: Pawn & Redeem reveals Sell and Buy Back sections
+    fireEvent.click(screen.getByTestId('tab-pawnshop-pawn'));
     expect(screen.getByText('Sell Items (40% Value)')).toBeInTheDocument();
     expect(screen.getByText('Buy Back (50% Value)')).toBeInTheDocument();
   });

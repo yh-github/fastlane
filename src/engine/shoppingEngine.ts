@@ -88,6 +88,17 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
       happinessBonus = 0;
       mentalBonus = 0;
     }
+  } else if (item.id === 'knick_knack' || item.subcategory === 'curio' || item.tags?.includes('curio')) {
+    if (!player.turnFlags?.curioNoveltyGranted) {
+      newTurnFlags.curioNoveltyGranted = true;
+      if (rules?.usePhysicalMentalConditions) {
+        mentalBonus = 1;
+        happinessBonus = 0;
+      }
+    } else {
+      happinessBonus = 0;
+      mentalBonus = 0;
+    }
   }
 
   let updated: PlayerState = { 

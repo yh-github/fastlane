@@ -274,7 +274,7 @@ export function calcAdvancedJobEmployabilityScore(
   const techBonus = isTechnical ? Math.floor(skillTech * 1.5) : 0;
   const mgmtBonus = isManagement ? Math.floor(skillMgmt * 1.5) : 0;
   const lookFitBonus = isLookFit
-    ? Math.max(0, Math.floor((physicalCondition - 50) / 5) * 3)
+    ? Math.max(0, physicalCondition - 30)
     : 0;
 
   let econModifier = 0;

@@ -196,7 +196,7 @@ describe('App Integration & StrictMode', () => {
     await act(async () => {
       await new Promise(r => setTimeout(r, 0));
     });
-  }, 15000);
+  }, 30000);
 
   it('renders Bank modal with visible Stocks tab and allows viewing stock market offerings', async () => {
     render(

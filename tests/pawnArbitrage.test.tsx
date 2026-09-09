@@ -467,15 +467,21 @@ describe('Pawn Shop Arbitrage Prevention', () => {
       />
     );
 
-    // Verify UI displayed prices:
+    // Verify UI displayed prices across tabs:
+    // On Buy & Browse tab: clearance buy cost at +60 should be -$400
+    expect(screen.getByText('-$400')).toBeInTheDocument();
+    container.querySelectorAll('.store-item').forEach(item => fireEvent.click(item));
+
+    // Switch to Pawn & Redeem tab
+    fireEvent.click(screen.getByTestId('tab-pawnshop-pawn'));
+
     // Refrigerator pawn value at +60 should be +$520
     expect(screen.getByText('+$520')).toBeInTheDocument();
-    // Color TV redeem cost and clearance buy cost at +60 should both be -$400 (not static -$200)
-    expect(screen.getAllByText('-$400')).toHaveLength(2);
+    // Color TV redeem cost at +60 should be -$400
+    expect(screen.getByText('-$400')).toBeInTheDocument();
 
-    // Click all items to verify dispatched action payloads
-    const storeItems = container.querySelectorAll('.store-item');
-    storeItems.forEach(item => fireEvent.click(item));
+    // Click all pawn & redeem items to verify dispatched action payloads
+    container.querySelectorAll('.store-item').forEach(item => fireEvent.click(item));
 
     const pawnAct = actionsReceived.find(a => a.type === 'pawn_item' && a.item.id === 'refrigerator');
     const redeemAct = actionsReceived.find(a => a.type === 'redeem_item');
