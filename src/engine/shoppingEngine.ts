@@ -230,7 +230,11 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
       }
       break;
     case 'junk':
-      // Currently just gives happiness bonus
+      if (item.id === 'knick_knack') {
+        updated.inventory.uninspectedKnickKnacks = (updated.inventory.uninspectedKnickKnacks || 0) + 1;
+      } else if (item.id === 'spare_parts') {
+        updated.inventory.spareParts = (updated.inventory.spareParts || 0) + 1;
+      }
       break;
   }
 

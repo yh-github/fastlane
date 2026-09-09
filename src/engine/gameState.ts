@@ -174,6 +174,9 @@ export interface PlayerState {
   skillTech?: number;
   skillMgmt?: number;
 
+  /** Pending appraisal dilemma options when working as Counter Appraiser */
+  pendingAppraisalDilemma?: AppraisalDilemmaState | null;
+
   // ── Alternative Weekend Card System ──
   weekendDecks?: {
     cheap: WeekendDeckState;
@@ -251,6 +254,27 @@ export interface InventoryState {
   stocks: StockPortfolio;
   /** Items currently at the pawn shop */
   pawnedItems: PawnedItem[];
+  /** Knick-knacks and curios displayed at home */
+  knickKnacks?: number;
+  /** Uninspected curios bought this turn, pending weekend appraisal */
+  uninspectedKnickKnacks?: number;
+  /** Spare parts for DIY appliance maintenance */
+  spareParts?: number;
+}
+
+export interface AppraisalDilemmaOption {
+  type: 'cash' | 'standing' | 'item';
+  title: string;
+  description: string;
+  cashAmount?: number;
+  depAmount?: number;
+  mentalAmount?: number;
+  itemType?: 'knick_knack' | 'spare_parts';
+}
+
+export interface AppraisalDilemmaState {
+  itemTitle: string;
+  options: AppraisalDilemmaOption[];
 }
 
 export interface FastFoodEntry {

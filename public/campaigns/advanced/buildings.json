@@ -1,11 +1,16 @@
 [
   {
-    "id": "z_mart",
-    "_remove": true
-  },
-  {
     "id": "pawn_shop",
-    "_remove": true
+    "inventory": [
+      {
+        "itemId": "knick_knack",
+        "priceOverride": 10
+      },
+      {
+        "itemId": "spare_parts",
+        "priceOverride": 15
+      }
+    ]
   },
   {
     "id": "discount_and_pawn",

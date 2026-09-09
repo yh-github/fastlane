@@ -1,17 +1,17 @@
 [
   {
     "id": "zmart_clerk",
-    "locationId": "discount_and_pawn",
+    "locationId": "z_mart",
     "tags": ["frontline_service"]
   },
   {
     "id": "zmart_asst_mgr",
-    "locationId": "discount_and_pawn",
+    "locationId": "z_mart",
     "tags": ["middle_management"]
   },
   {
     "id": "zmart_mgr",
-    "locationId": "discount_and_pawn",
+    "locationId": "z_mart",
     "tags": ["executive_management"]
   },
   {
@@ -127,6 +127,10 @@
     "tags": ["frontline_service"]
   },
   {
+    "id": "blacks_butcher",
+    "tags": ["heavy_physical"]
+  },
+  {
     "id": "blacks_asst_mgr",
     "tags": ["middle_management"]
   },
@@ -141,5 +145,47 @@
   {
     "id": "rent_mgr",
     "tags": ["frontline_service", "high_downtime"]
+  },
+  {
+    "id": "pawn_security_guard",
+    "title": "Security Guard",
+    "locationId": "pawn_shop",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 20,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["high_downtime", "look_fit"],
+    "perks": []
+  },
+  {
+    "id": "pawn_appraiser",
+    "title": "Counter Appraiser",
+    "locationId": "pawn_shop",
+    "baseWage": 9,
+    "requirements": {
+      "experience": 30,
+      "dependability": 30,
+      "degrees": ["trade_school"],
+      "uniform": "casual"
+    },
+    "tags": ["frontline_service", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "pawn_horologist",
+    "title": "Horologist",
+    "locationId": "pawn_shop",
+    "baseWage": 13,
+    "requirements": {
+      "experience": 35,
+      "dependability": 35,
+      "degrees": ["pre_engineering"],
+      "uniform": "casual"
+    },
+    "tags": ["technical", "high_downtime"],
+    "perks": []
   }
 ]

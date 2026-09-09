@@ -12,17 +12,20 @@ export interface DiySuccessChanceBreakdown {
   baseChance: number;
   techBonus: number;
   electronicsBonus: number;
+  partsBonus?: number;
   totalChance: number;
 }
 
 /**
  * Calculates DIY Fix success probability based on base (40%), Tech skill (+3% per skillTech),
- * and Electronics course progress (+10pp if complete, scaled proportionally if enrolled).
+ * Electronics course progress (+10pp if complete, scaled proportionally if enrolled),
+ * and Spare Parts (+30pp if available/used).
  */
 export function calcDiySuccessChance(
   player: PlayerState,
   campaign?: CampaignBundle,
-  rules?: GameRules
+  rules?: GameRules,
+  useSpareParts?: boolean
 ): DiySuccessChanceBreakdown {
   const baseChance = 40;
   const techSkill = player.skillTech || 0;
@@ -42,12 +45,14 @@ export function calcDiySuccessChance(
   }
 
   const electronicsBonus = Math.round((electronicsProgress / 10) * 10) / 10;
-  const totalChance = Math.min(100, Math.max(0, Math.round(baseChance + techBonus + electronicsBonus)));
+  const partsBonus = (useSpareParts ?? ((player.inventory?.spareParts || 0) > 0)) ? 30 : 0;
+  const totalChance = Math.min(100, Math.max(0, Math.round(baseChance + techBonus + electronicsBonus + partsBonus)));
 
   return {
     baseChance,
     techBonus,
     electronicsBonus,
+    partsBonus,
     totalChance
   };
 }
@@ -124,7 +129,12 @@ export function handleApplianceMaintenanceAction(
       nextPlayer.mentalCondition = safeDecrementMental(currentMental, 1, minMental);
     }
 
-    const breakdown = calcDiySuccessChance(player, context.campaign, context.rules);
+    const hasSpareParts = (nextPlayer.inventory?.spareParts || 0) > 0;
+    if (hasSpareParts) {
+      nextPlayer.inventory.spareParts = (nextPlayer.inventory.spareParts || 0) - 1;
+    }
+
+    const breakdown = calcDiySuccessChance(player, context.campaign, context.rules, hasSpareParts);
     const roll = resolveDecision(replayContext, `diy_fix_${nextPlayer.id}_${app.id}_${nextPlayer.hoursRemaining}`, () => Math.floor(context.rng.next() * 100));
     const isSuccess = roll < breakdown.totalChance;
 
@@ -141,11 +151,11 @@ export function handleApplianceMaintenanceAction(
       }
 
       nextPlayer.skillTech = Math.min(10, roundToResolution((nextPlayer.skillTech || 0) + 0.5, 0.05));
-      actionLog = { key: 'action.appliance.diySuccess', params: { appliance: applianceName, chance: breakdown.totalChance } };
+      actionLog = { key: 'action.appliance.diySuccess', params: { appliance: applianceName, chance: breakdown.totalChance, usedParts: hasSpareParts ? 1 : 0 } };
     } else {
       // Failure: remains broken, consolation +0.1 skill_tech
       nextPlayer.skillTech = Math.min(10, roundToResolution((nextPlayer.skillTech || 0) + 0.1, 0.05));
-      actionLog = { key: 'action.appliance.diyFailure', params: { appliance: applianceName, chance: breakdown.totalChance } };
+      actionLog = { key: 'action.appliance.diyFailure', params: { appliance: applianceName, chance: breakdown.totalChance, usedParts: hasSpareParts ? 1 : 0 } };
     }
 
     return { nextPlayer, actionLog };

@@ -199,6 +199,23 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
           ) : <p style={{ margin: 0, fontStyle: 'italic', color: '#888' }}>{t('inventoryModal.none')}</p>}
         </div>
 
+        {((inventory.knickKnacks || 0) > 0 || (inventory.uninspectedKnickKnacks || 0) > 0 || (inventory.spareParts || 0) > 0) && (
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.curiosAndParts', 'Curios & Spare Parts')}</h3>
+            <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
+              {(inventory.knickKnacks || 0) > 0 && (
+                <li>🏺 {t('inventoryModal.curios', 'Curios on Display')}: {inventory.knickKnacks} ({(inventory.knickKnacks || 0) * 2} space)</li>
+              )}
+              {(inventory.uninspectedKnickKnacks || 0) > 0 && (
+                <li>📦 {t('inventoryModal.uninspectedCurios', 'Uninspected Curios (Pending Weekend Appraisal)')}: {inventory.uninspectedKnickKnacks} ({(inventory.uninspectedKnickKnacks || 0) * 2} space)</li>
+              )}
+              {(inventory.spareParts || 0) > 0 && (
+                <li>⚙️ {t('inventoryModal.spareParts', 'Spare Parts (+30% DIY Repair)')}: {inventory.spareParts} ({(inventory.spareParts || 0) * 2} space)</li>
+              )}
+            </ul>
+          </div>
+        )}
+
         <div>
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.entertainment', 'Entertainment')}</h3>
           <ul style={{ margin: 0, paddingInlineStart: '20px' }}>

@@ -190,5 +190,23 @@
     "effects": [
       { "trigger": "continuous", "stat": "mental_max", "value": 1 }
     ]
+  },
+  {
+    "id": "knick_knack",
+    "name": "Curio & Knick-Knack",
+    "category": "junk",
+    "basePrice": 10,
+    "space": 2,
+    "lifestyleValue": 0,
+    "happinessBonus": 1
+  },
+  {
+    "id": "spare_parts",
+    "name": "Box of Spare Parts",
+    "category": "junk",
+    "basePrice": 15,
+    "space": 2,
+    "lifestyleValue": 0,
+    "happinessBonus": 0
   }
 ]
