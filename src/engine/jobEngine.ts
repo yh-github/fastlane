@@ -179,6 +179,14 @@ export function applyForJob(
     }
   }
 
+  const isLookFit = isAdvanced && hasJobTag(job, 'look_fit');
+  if (isLookFit) {
+    const phys = updated.physicalCondition ?? 50;
+    if (phys < 50) {
+      rejectionReasons.push(msg('job_apply_missing_physical_condition', 'Not physically fit enough for security guard work. Requires Physical Condition >= 50.'));
+    }
+  }
+
   // Clothing is intentionally NOT checked here, as per game rules.
   // The workplace checks clothes during workShift.
 
@@ -217,6 +225,7 @@ export function applyForJob(
   const locMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
   const isProbation = updated.turnFlags.firedLocationsThisTurn?.includes(job.locationId) ?? false;
   
+  // Calculate Employability Score (1–99%)
   let employability: number;
   if (isAdvanced) {
     const locInnovations = updated.innovationsByLocation?.[job.locationId] || 0;
@@ -235,7 +244,9 @@ export function applyForJob(
       updated.skillTech || 0,
       isTechnical,
       updated.skillMgmt || 0,
-      isManagement
+      isManagement,
+      updated.physicalCondition ?? 50,
+      isLookFit
     );
   } else {
     employability = calcEmployabilityScore(
@@ -881,6 +892,47 @@ export function workShift(
       const socialMod = getJobSocialModifier(job, actionCount);
       if (socialMod !== 0) {
         updated.social = Math.max(1, Math.min(99, (updated.social || 1) + socialMod));
+      }
+
+      if (isAdvanced && job.id === 'pawn_appraiser' && !updated.pendingAppraisalDilemma) {
+        const dilemmaRoll = resolveDecision(replay, `appraisal_dilemma_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
+        if (dilemmaRoll < 0.15) {
+          const cashAmount = 15 + Math.floor(resolveDecision(replay, `appraisal_cash_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random())) * 11);
+          const itemRoll = resolveDecision(replay, `appraisal_item_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
+          const itemType: 'knick_knack' | 'spare_parts' = itemRoll < 0.5 ? 'spare_parts' : 'knick_knack';
+
+          updated.pendingAppraisalDilemma = {
+            itemTitle: itemType === 'spare_parts' ? 'Box of Salvaged Radio Parts' : 'Tarnished Antique Pocketwatch',
+            options: [
+              {
+                type: 'cash',
+                title: 'Fast Cash Commission',
+                description: 'Broker a quick sale for the shop and pocket an immediate commission.',
+                cashAmount
+              },
+              {
+                type: 'standing',
+                title: 'Boss Appreciation & Integrity',
+                description: 'Authenticate the piece for the shop record to boost your workplace standing.',
+                depAmount: 2
+              },
+              {
+                type: 'item',
+                title: 'Side Deal for Yourself',
+                description: 'Customer agrees to discard extra components. Take it home for yourself!',
+                itemType
+              }
+            ]
+          };
+
+          if (updated.isAi) {
+            updated.money += cashAmount;
+            updated.pendingAppraisalDilemma = null;
+            messages.push({ key: 'action.job.appraisalCommissionAi', params: { amount: cashAmount } });
+          } else {
+            messages.push({ key: 'action.job.appraisalDilemmaTriggered' });
+          }
+        }
       }
     }
 

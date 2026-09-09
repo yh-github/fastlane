@@ -6,7 +6,7 @@ import { calcEconomyPrice } from '../../engine/economyEngine';
 import { StoreFront } from './StoreFront';
 import type { InteractionProps } from './types';
 
-export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsForSale = [], rules, campaign }: InteractionProps & { economicIndex?: number, pawnShopItemsForSale?: PawnedItem[], rules?: GameRules, campaign?: CampaignBundle }) {
+export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsForSale = [], rules, campaign, availableItems = [] }: InteractionProps & { economicIndex?: number, pawnShopItemsForSale?: PawnedItem[], rules?: GameRules, campaign?: CampaignBundle, availableItems?: ItemDef[] }) {
   const { t } = useTranslation();
   const pawnableAppliances = player.inventory.appliances || [];
   const pawnableBooks = (player.inventory.books || []).map(bId => {
@@ -26,6 +26,67 @@ export function PawnShop({ player, onAction, economicIndex = 0, pawnShopItemsFor
     <div className="interaction-panel">
       <h3>{t('pawnShop.title', { defaultValue: 'Pawn Shop' })}</h3>
       
+      {availableItems.length > 0 && (
+        <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
+          <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 8px 0', fontSize: '0.95em' }}>
+            🏷️ {t('pawnShop.counterShelfTitle', { defaultValue: 'Curios & Spare Parts Shelf' })}
+          </h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
+            {availableItems.map(item => {
+              const price = calcEconomyPrice(item.basePrice || 0, economicIndex);
+              const canAfford = player.money >= price;
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 12px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid #444',
+                    borderRadius: '6px'
+                  }}
+                >
+                  <div style={{ minWidth: 0, flex: 1, paddingRight: '8px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold' }}>
+                      {item.id === 'spare_parts' ? '⚙️ ' : '🏺 '}
+                      {t(`item.${item.id}`, { defaultValue: item.name })}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      {item.id === 'spare_parts'
+                        ? t('pawnShop.sparePartsDesc', { defaultValue: '+30% DIY Repair (2 space)' })
+                        : t('pawnShop.knickKnackDesc', { defaultValue: 'Weekend Appraisal (2 space)' })}
+                    </div>
+                  </div>
+                  <button
+                    disabled={!canAfford}
+                    onClick={() => onAction({ type: 'buy', itemId: item.id })}
+                    style={{
+                      background: canAfford ? '#10b981' : '#4b5563',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '4px 10px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      cursor: canAfford ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    ${price}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '11px', color: '#94a3b8', display: 'flex', gap: '12px' }}>
+            <span>🏺 {t('pawnShop.curiosOwned', { defaultValue: 'Curios' })}: {player.inventory.knickKnacks || 0}</span>
+            <span>📦 {t('pawnShop.uninspectedOwned', { defaultValue: 'Uninspected' })}: {player.inventory.uninspectedKnickKnacks || 0}</span>
+            <span>⚙️ {t('pawnShop.partsOwned', { defaultValue: 'Spare Parts' })}: {player.inventory.spareParts || 0}</span>
+          </div>
+        </div>
+      )}
+
       <h4 style={{ color: 'var(--accent-cyan)', margin: '12px 0 8px 0', fontSize: '0.95em' }}>{t('pawnShop.sellTitle', { defaultValue: 'Sell Items (40% Value)' })}</h4>
       {pawnableItems.length === 0 ? (
         <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('pawnShop.noSell', { defaultValue: 'You have no durables to pawn.' })}</p>
@@ -186,6 +247,7 @@ export function DiscountAndPawnShop({ player, onAction, availableItems, economic
           pawnShopItemsForSale={pawnShopItemsForSale}
           rules={rules}
           campaign={campaign}
+          availableItems={availableItems.filter(i => i.id === 'knick_knack' || i.id === 'spare_parts')}
         />
       )}
     </div>

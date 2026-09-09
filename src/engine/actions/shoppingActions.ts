@@ -46,7 +46,8 @@ export function handleBuyAction(
           nextPlayer.lifestyle = Math.min(100, (nextPlayer.lifestyle || 50) + 1);
         }
         const isBurger = ['hamburger', 'cheeseburger', 'burger'].includes(baseItemDef.id);
-        const isJunkOrBadFastFood = !isBurger && (
+        const isCurioOrParts = baseItemDef.id === 'knick_knack' || baseItemDef.id === 'spare_parts';
+        const isJunkOrBadFastFood = !isBurger && !isCurioOrParts && (
           baseItemDef.category === 'junk' ||
           ['fries', 'shake', 'cola', 'colas', 'shakes', 'astro_chicken'].includes(baseItemDef.id)
         );

@@ -4,7 +4,8 @@ import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress, calcWellbeingScore, roundToResolution } from '../statMath';
 import { calcLiquidAssets, applyMarketCrash, applyEconomicBoom } from '../economyEngine';
-import { applyHappinessChange } from '../statEffects';
+import { applyHappinessChange, applyMentalChange } from '../statEffects';
+import { CURIO_CATALOG } from '../curioCatalog';
 import { processApartmentRobbery, processDonations } from '../eventEngine';
 import { processWeekend, generateWeekendChoices, resolveWeekendChoice } from '../weekendEngine';
 import { selectAiWeekendCard } from '../aiEngine';
@@ -104,6 +105,53 @@ export function processMaintenanceAndDecayPhase(
       else { player.money += 200; player = applyHappinessChange(player, 5, 'lottery_win', state.rules, campaign.config.statRules); player.turnEvents.push({ key: 'events.lottery', params: { amount: 200 } }); }
     }
     player.inventory.lotteryTickets = 0;
+  }
+
+  // 5b. Curio / Knick-Knack Weekend Appraisal
+  const uninspectedCurios = player.inventory.uninspectedKnickKnacks || 0;
+  if (uninspectedCurios > 0) {
+    for (let i = 0; i < uninspectedCurios; i++) {
+      const curioIndex = resolveDecision(replay, `curio_catalog_${player.id}_turn_${state.turn}_${i}`, () => Math.floor(rng.next() * CURIO_CATALOG.length));
+      const curio = CURIO_CATALOG[curioIndex] || CURIO_CATALOG[0];
+      const roll = resolveDecision(replay, `curio_outcome_${player.id}_turn_${state.turn}_${i}`, () => rng.next());
+
+      if (roll < 0.35) {
+        // 35% Cozy Decor (+0.5 or +1.0 Lifestyle)
+        const lifestyleGain = roll < 0.175 ? 0.5 : 1.0;
+        player.lifestyle = Math.min(100, roundToResolution((player.lifestyle || 0) + lifestyleGain, 0.1));
+        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + 1;
+        player.turnEvents.push({
+          key: 'events.curioDecor',
+          params: { name: curio.name, lifestyle: lifestyleGain }
+        });
+      } else if (roll < 0.70) {
+        // 35% Fascinating Trinket (+1 or +2 Mental)
+        const mentalGain = roll < 0.525 ? 1 : 2;
+        player = applyMentalChange(player, mentalGain, campaign.config.statRules);
+        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + 1;
+        player.turnEvents.push({
+          key: 'events.curioMental',
+          params: { name: curio.name, mental: mentalGain }
+        });
+      } else if (roll < 0.90) {
+        // 20% Collector's Antique Cash ($35–$50)
+        const cashAmount = resolveDecision(replay, `curio_cash_${player.id}_turn_${state.turn}_${i}`, () => 35 + Math.floor(rng.next() * 16));
+        player.money += cashAmount;
+        // Sold to collector: item leaves inventory, so knickKnacks is NOT incremented (frees 2 space)
+        player.turnEvents.push({
+          key: 'events.curioCash',
+          params: { name: curio.name, amount: cashAmount }
+        });
+      } else {
+        // 10% Quirky Dud (Kept on shelf, 2 space, 0 bonus)
+        player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + 1;
+        player.turnEvents.push({
+          key: 'events.curioDud',
+          params: { name: curio.name }
+        });
+      }
+    }
+    player.inventory.uninspectedKnickKnacks = 0;
   }
 
   // 6. Computer Profits

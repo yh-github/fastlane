@@ -12,7 +12,8 @@ export type JobTag =
   | 'middle_management'
   | 'executive_management'
   | 'high_downtime'
-  | 'technical';
+  | 'technical'
+  | 'look_fit';
 
 export interface JobTagDefinition {
   id: JobTag;
@@ -60,6 +61,11 @@ export const JOB_TAG_REGISTRY: Record<JobTag, JobTagDefinition> = {
     id: 'technical',
     nameKey: 'tag.technical',
     descKey: 'tag.technical_desc'
+  },
+  look_fit: {
+    id: 'look_fit',
+    nameKey: 'tag.look_fit',
+    descKey: 'tag.look_fit_desc'
   }
 };
 
@@ -156,7 +162,7 @@ export function getLookBusySocialPenalty(job: JobDef | undefined | null): number
  * Get Experience gain multiplier for this job.
  */
 export function getJobExpMultiplier(job: JobDef | undefined | null): number {
-  if (hasJobTag(job, 'heavy_physical')) {
+  if (hasJobTag(job, 'heavy_physical') || hasJobTag(job, 'look_fit')) {
     return 0.5;
   }
   return 1.0;

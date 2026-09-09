@@ -255,7 +255,9 @@ export function calcAdvancedJobEmployabilityScore(
   skillTech: number = 0,
   isTechnical: boolean = false,
   skillMgmt: number = 0,
-  isManagement: boolean = false
+  isManagement: boolean = false,
+  physicalCondition: number = 50,
+  isLookFit: boolean = false
 ): number {
   const base = 45;
   const effectiveDep = dependability + (isTechnical ? skillTech : 0) + (isManagement ? skillMgmt : 0);
@@ -271,6 +273,9 @@ export function calcAdvancedJobEmployabilityScore(
     : Math.floor((social || 0) / 10);
   const techBonus = isTechnical ? Math.floor(skillTech * 1.5) : 0;
   const mgmtBonus = isManagement ? Math.floor(skillMgmt * 1.5) : 0;
+  const lookFitBonus = isLookFit
+    ? Math.max(0, Math.floor((physicalCondition - 50) / 5) * 3)
+    : 0;
 
   let econModifier = 0;
   if (economicIndex >= 0) {
@@ -286,7 +291,7 @@ export function calcAdvancedJobEmployabilityScore(
     }
   }
 
-  const rawScore = base + marginBonus + degreesBonus + innovBonus + socialBonus + techBonus + mgmtBonus + econModifier - mistakesAtLocation;
+  const rawScore = base + marginBonus + degreesBonus + innovBonus + socialBonus + techBonus + mgmtBonus + lookFitBonus + econModifier - mistakesAtLocation;
   const clampedScore = Math.max(1, Math.min(99, rawScore));
   return isProbation ? Math.floor(clampedScore / 2) : clampedScore;
 }
@@ -549,6 +554,10 @@ export function calcUsedSpace(player: PlayerState, campaign?: CampaignBundle, in
     const def = campaign?.items?.find(i => i.id === bookId);
     used += def?.space ?? (bookId === 'encyclopedia' ? 20 : 10);
   }
+  // Knick-knacks and curios (2 space each)
+  used += ((player.inventory as any)?.knickKnacks || 0) * 2;
+  used += ((player.inventory as any)?.uninspectedKnickKnacks || 0) * 2;
+  used += ((player.inventory as any)?.spareParts || 0) * 2;
   // Mess (1:1 with space)
   if (includeMess && player.mess && player.mess > 0) {
     used += player.mess;

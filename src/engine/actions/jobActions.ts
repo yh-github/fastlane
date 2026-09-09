@@ -64,3 +64,44 @@ export function handleWorkAction(
   }
   return { nextPlayer, actionLog };
 }
+
+export function handleResolveAppraisalDilemmaAction(
+  player: PlayerState,
+  action: { type: 'resolve_appraisal_dilemma'; choiceIndex: number },
+  _context: ReducerContext
+): ActionHandlerResult {
+  let nextPlayer = structuredClone(player);
+  let actionLog;
+
+  const dilemma = nextPlayer.pendingAppraisalDilemma;
+  if (!dilemma || !dilemma.options[action.choiceIndex]) {
+    return { nextPlayer, actionLog };
+  }
+
+  const choice = dilemma.options[action.choiceIndex];
+  if (choice.type === 'cash') {
+    const amount = choice.cashAmount || 0;
+    nextPlayer.money += amount;
+    actionLog = { key: 'action.job.appraisalChoiceCash', params: { amount } };
+  } else if (choice.type === 'standing') {
+    if (choice.depAmount) {
+      nextPlayer.dependability = Math.min(100, (nextPlayer.dependability || 0) + choice.depAmount);
+    }
+    if (choice.mentalAmount) {
+      nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, (nextPlayer.mentalCondition ?? 50) + choice.mentalAmount);
+    }
+    actionLog = { key: 'action.job.appraisalChoiceStanding', params: { dep: choice.depAmount ?? 0, mental: choice.mentalAmount ?? 0 } };
+  } else if (choice.type === 'item') {
+    if (choice.itemType === 'spare_parts') {
+      nextPlayer.inventory.spareParts = (nextPlayer.inventory.spareParts || 0) + 1;
+      actionLog = { key: 'action.job.appraisalChoiceSpareParts' };
+    } else {
+      nextPlayer.inventory.uninspectedKnickKnacks = (nextPlayer.inventory.uninspectedKnickKnacks || 0) + 1;
+      actionLog = { key: 'action.job.appraisalChoiceCurio' };
+    }
+  }
+
+  nextPlayer.pendingAppraisalDilemma = null;
+  return { nextPlayer, actionLog };
+}
+

@@ -60,6 +60,9 @@ export function createDefaultInventory(): InventoryState {
     lotteryTickets: 0,
     stocks: { tBills: 0, holdings: {} },
     pawnedItems: [],
+    knickKnacks: 0,
+    uninspectedKnickKnacks: 0,
+    spareParts: 0,
   };
 }
 

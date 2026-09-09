@@ -12,6 +12,7 @@ import {
   BankInterface, 
   PawnShop 
 } from './BuildingInteractions';
+import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
 import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 
@@ -217,7 +218,7 @@ export function BuildingModal({
               rules={rules}
             />
           )}
-          {itemsHere.length > 0 && (
+          {itemsHere.length > 0 && building.archetype !== 'pawnshop' && (
             <StoreFront 
               player={player} 
               onAction={handleActionIntercept} 
@@ -265,6 +266,7 @@ export function BuildingModal({
               pawnShopItemsForSale={pawnShopItemsForSale}
               rules={rules}
               campaign={campaign}
+              availableItems={itemsHere}
             />
           )}
           {building.archetype === 'home' && (
@@ -383,6 +385,13 @@ export function BuildingModal({
           rules={rules}
           layoutMode="flanking"
           onClose={() => setIsWorkDeckOpen(false)}
+        />
+      )}
+
+      {player?.pendingAppraisalDilemma && (
+        <AppraisalDilemmaModal
+          dilemma={player.pendingAppraisalDilemma}
+          onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_appraisal_dilemma', choiceIndex: idx })}
         />
       )}
     </div>

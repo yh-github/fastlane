@@ -30,7 +30,8 @@ export type GameAction =
   | { type: 'clean' }
   | { type: 'call_cleaning_service' }
   | { type: 'socialize_guests' }
-  | { type: 'appliance_maintenance'; applianceId: string; option: 'diy' | 'repairman' | 'throw_out' };
+  | { type: 'appliance_maintenance'; applianceId: string; option: 'diy' | 'repairman' | 'throw_out' }
+  | { type: 'resolve_appraisal_dilemma'; choiceIndex: number };
 
 export interface ReducerContext {
   campaign: CampaignBundle;

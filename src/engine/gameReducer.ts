@@ -27,7 +27,8 @@ import {
   handlePawnItemAction,
   handleRedeemItemAction,
   handleBuyPawnItemAction,
-  handleApplianceMaintenanceAction
+  handleApplianceMaintenanceAction,
+  handleResolveAppraisalDilemmaAction
 } from './actions';
 
 export type { GameAction, ReducerContext, ReducerResult } from './actions';
@@ -122,6 +123,9 @@ export function gameReducer(
       break;
     case 'appliance_maintenance':
       res = handleApplianceMaintenanceAction(nextPlayer, action, context, replayContext);
+      break;
+    case 'resolve_appraisal_dilemma':
+      res = handleResolveAppraisalDilemmaAction(nextPlayer, action, context);
       break;
   }
 
