@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { ItemDef, CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules, PawnedItem } from '../../engine/gameState';
 import { calcEconomyPrice } from '../../engine/economyEngine';
+import { calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
 import { StoreFront } from './StoreFront';
 import type { InteractionProps } from './types';
 
@@ -38,6 +39,8 @@ export function PawnShop({
   });
   const pawnableItems = [...pawnableAppliances, ...pawnableBooks];
   const redeemableItems = player.inventory.pawnedItems || [];
+  const currentSpace = calcUsedSpace(player, campaign, true);
+  const maxSpace = calcHousingSpaceCap(player, campaign);
 
   const formatItemName = (id: string) =>
     campaign?.items.find(i => i.id === id)?.name ||
@@ -92,23 +95,22 @@ export function PawnShop({
       {activeTab === 'buy' && (
         <div>
           {availableItems.length > 0 ? (
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '16px' }}>
               <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 10px 0', fontSize: '0.95em' }}>
                 🏷️ {t('pawnShop.weeklyStockTitle', { defaultValue: 'Weekly Pawn & Curio Stock' })}
               </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
                 {availableItems.map((item, idx) => {
                   const slotKey = `${item.id}_${item.name}_${idx}`;
                   const isBroken = item.tags?.includes('broken') || (item as any).isBroken;
                   const isSpareParts = item.id === 'spare_parts';
                   const price = calcEconomyPrice(item.basePrice || 0, economicIndex);
-                  const canAfford = player.money >= price;
                   const isSoldOut = isBroken && !!purchasedItemKeys[slotKey];
+                  const canAfford = player.money >= price;
+                  const itemSpace = item.space ?? (isSpareParts ? 2 : item.category === 'junk' ? 2 : 3);
+                  const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
+                  const canBuy = canAfford && !isSoldOut && (!rules?.helpfulUI || hasSpace);
 
-                  // Icon
-                  const icon = isBroken ? '🔧 ' : isSpareParts ? '⚙️ ' : '🏺 ';
-
-                  // Display Name
                   let displayName = item.name;
                   if (isBroken) {
                     const rawName = item.name.replace('Broken ', '');
@@ -118,21 +120,12 @@ export function PawnShop({
                     });
                   } else if (isSpareParts) {
                     displayName = t('item.spare_parts', { defaultValue: item.name });
-                  }
-
-                  // Description
-                  let descText = t('pawnShop.knickKnackDesc', { defaultValue: 'Weekend Appraisal (2 space)' });
-                  if (isSpareParts) {
-                    descText = t('pawnShop.sparePartsDesc', { defaultValue: '+30% DIY Repair (2 space)' });
-                  } else if (isBroken) {
-                    descText = t('pawnShop.brokenDesc', {
-                      space: item.space || 3,
-                      defaultValue: `Broken appliance. Needs repair (${item.space || 3} space)`
-                    });
+                  } else {
+                    displayName = t(`item.${item.id}`, { defaultValue: item.name });
                   }
 
                   const handleBuy = async () => {
-                    if (!canAfford || isSoldOut) return;
+                    if (!canBuy) return;
                     if (isBroken) {
                       setPurchasedItemKeys(prev => ({ ...prev, [slotKey]: true }));
                       await onAction({
@@ -157,47 +150,42 @@ export function PawnShop({
                   return (
                     <div
                       key={slotKey}
-                      className={`interaction-item store-item ${canAfford && !isSoldOut ? 'interaction-item--clickable' : 'interaction-item--disabled'}`}
-                      onClick={canAfford && !isSoldOut ? handleBuy : undefined}
+                      className={`interaction-item store-item interaction-item--clickable ${!canBuy ? 'interaction-item--disabled' : ''}`}
+                      onClick={canBuy ? handleBuy : undefined}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '12px 14px',
                         margin: 0,
-                        border: isBroken ? '1px solid #b45309' : undefined,
-                        cursor: canAfford && !isSoldOut ? 'pointer' : 'not-allowed'
+                        padding: '8px 12px',
+                        opacity: canBuy ? 1 : 0.5,
+                        cursor: canBuy ? 'pointer' : 'not-allowed',
+                        borderRadius: '6px'
                       }}
+                      data-action-target={`buy-${item.id}`}
+                      title={!hasSpace ? `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)` : undefined}
                     >
-                      <div style={{ minWidth: 0, flex: 1, paddingRight: '12px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', whiteSpace: 'normal', wordBreak: 'normal', lineHeight: 1.3 }}>
-                          {icon}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                        {rules?.showItemImages && (
+                          <img
+                            src={`/assets/raw_images/${item.id}.png`}
+                            alt={displayName}
+                            style={{ width: '28px', height: '28px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px', flexShrink: 0 }}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        )}
+                        <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {displayName}
-                        </div>
-                        <div style={{ fontSize: '11px', color: isBroken ? '#f59e0b' : '#94a3b8', marginTop: '3px' }}>
-                          {descText}
-                        </div>
+                          {rules?.spaceCapping && itemSpace > 0 && (
+                            <span style={{ color: !hasSpace ? '#e74c3c' : '#00e5ff', marginLeft: '6px', fontSize: '11px' }}>
+                              📦{itemSpace}
+                            </span>
+                          )}
+                        </span>
                       </div>
-                      <button
-                        disabled={!canAfford || isSoldOut}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBuy();
-                        }}
-                        style={{
-                          background: isSoldOut ? '#334155' : canAfford ? '#10b981' : '#4b5563',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          padding: '6px 12px',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          cursor: (canAfford && !isSoldOut) ? 'pointer' : 'not-allowed',
-                          flexShrink: 0
-                        }}
-                      >
+                      <span style={{ fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>
                         {isSoldOut ? t('pawnShop.soldOut', { defaultValue: 'Sold Out' }) : `$${price}`}
-                      </button>
+                      </span>
                     </div>
                   );
                 })}
@@ -211,11 +199,11 @@ export function PawnShop({
 
           {/* Forfeited Second Hand Belongings */}
           {pawnShopItemsForSale.length > 0 && (
-            <div style={{ marginTop: '20px' }}>
+            <div style={{ marginTop: '16px' }}>
               <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 8px 0', fontSize: '0.95em' }}>
                 📦 {t('pawnShop.forfeitedStockTitle', { defaultValue: 'Forfeited Second-Hand Belongings' })}
               </h4>
-              <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', listStyle: 'none', padding: 0, margin: 0 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
                 {pawnShopItemsForSale.map((app, idx) => {
                   const itemDef = campaign?.items.find(i => i.id === app.itemId);
                   const basePrice = itemDef?.basePrice ?? app.originalPrice;
@@ -223,14 +211,33 @@ export function PawnShop({
                   const buyCost = rules?.preventPawnArbitrage
                     ? Math.floor(calcEconomyPrice(basePrice, economicIndex) * redeemRate)
                     : Math.floor(app.originalPrice * 0.5);
+                  const canAfford = player.money >= buyCost;
+                  let itemSpace = itemDef?.space ?? (itemDef?.category === 'book' ? 10 : 3);
+                  if (itemDef?.category === 'book' && itemSpace === 0) {
+                    itemSpace = itemDef.id === 'encyclopedia' ? 20 : 10;
+                  }
+                  const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
+                  const canBuy = canAfford && (!rules?.helpfulUI || hasSpace);
+
                   return (
-                    <li
+                    <div
                       key={idx}
-                      className="store-item interaction-item interaction-item--clickable"
-                      onClick={() => onAction({ type: 'buy_pawn_item', item: app, cost: buyCost })}
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', margin: 0, borderRadius: '6px', cursor: 'pointer' }}
+                      className={`interaction-item store-item interaction-item--clickable ${!canBuy ? 'interaction-item--disabled' : ''}`}
+                      onClick={() => canBuy && onAction({ type: 'buy_pawn_item', item: app, cost: buyCost })}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        margin: 0,
+                        padding: '8px 12px',
+                        opacity: canBuy ? 1 : 0.5,
+                        cursor: canBuy ? 'pointer' : 'not-allowed',
+                        borderRadius: '6px'
+                      }}
+                      data-action-target={`buy-pawn-${app.itemId}`}
+                      title={!hasSpace ? `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)` : undefined}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, paddingRight: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                         {rules?.showItemImages && (
                           <img
                             src={`/assets/raw_images/${app.itemId}.png`}
@@ -239,20 +246,25 @@ export function PawnShop({
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         )}
-                        <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', whiteSpace: 'normal', wordBreak: 'normal', lineHeight: 1.3 }}>
+                        <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}
                           {app.isBroken && (
                             <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
                               ({t('pawnShop.brokenTagShort', { defaultValue: 'Broken' })})
                             </span>
                           )}
+                          {rules?.spaceCapping && itemSpace > 0 && (
+                            <span style={{ color: !hasSpace ? '#e74c3c' : '#00e5ff', marginLeft: '6px', fontSize: '11px' }}>
+                              📦{itemSpace}
+                            </span>
+                          )}
                         </span>
                       </div>
-                      <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-${buyCost}</span>
-                    </li>
+                      <span style={{ fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0, color: '#e74c3c' }}>-${buyCost}</span>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             </div>
           )}
         </div>
@@ -270,7 +282,7 @@ export function PawnShop({
               {t('pawnShop.noSell', { defaultValue: 'You have no durables to pawn.' })}
             </p>
           ) : (
-            <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', listStyle: 'none', padding: 0, margin: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
               {pawnableItems.map((item, idx) => {
                 const itemDef = campaign?.items.find(i => i.id === item.id);
                 const basePrice = itemDef?.basePrice ?? item.purchasePrice;
@@ -278,14 +290,25 @@ export function PawnShop({
                 const standardPawnValue = Math.floor(calcEconomyPrice(basePrice, economicIndex) * payoutRate);
                 const isBroken = (item as any).isBroken;
                 const pawnValue = isBroken ? Math.floor(standardPawnValue * 0.25) : standardPawnValue;
+                const itemSpace = itemDef?.space ?? ((item as any).isBook ? 10 : 3);
+
                 return (
-                  <li
+                  <div
                     key={idx}
-                    className="store-item interaction-item interaction-item--clickable"
+                    className="interaction-item store-item interaction-item--clickable"
                     onClick={() => onAction({ type: 'pawn_item', item, value: pawnValue })}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', margin: 0, borderRadius: '6px', cursor: 'pointer' }}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      margin: 0,
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                    data-action-target={`pawn-${item.id}`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, paddingRight: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                       {rules?.showItemImages && (
                         <img
                           src={`/assets/raw_images/${item.id}.png`}
@@ -294,20 +317,25 @@ export function PawnShop({
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', whiteSpace: 'normal', wordBreak: 'normal', lineHeight: 1.3 }}>
+                      <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {t(`item.${item.id}`, { defaultValue: formatItemName(item.id) })}
                         {isBroken && (
                           <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
                             ({t('pawnShop.brokenTag', { defaultValue: 'Broken — 25%' })})
                           </span>
                         )}
+                        {rules?.spaceCapping && itemSpace > 0 && (
+                          <span style={{ color: '#00e5ff', marginLeft: '6px', fontSize: '11px' }}>
+                            📦{itemSpace}
+                          </span>
+                        )}
                       </span>
                     </div>
                     <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>+${pawnValue}</span>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           )}
 
           {/* Buy Back / Redeem */}
@@ -319,7 +347,7 @@ export function PawnShop({
               {t('pawnShop.noBuy', { defaultValue: 'You have no items pawned.' })}
             </p>
           ) : (
-            <ul className="store-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px', listStyle: 'none', padding: 0, margin: 0 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
               {redeemableItems.map((app, idx) => {
                 const itemDef = campaign?.items.find(i => i.id === app.itemId);
                 const basePrice = itemDef?.basePrice ?? app.originalPrice;
@@ -327,14 +355,33 @@ export function PawnShop({
                 const redeemCost = rules?.preventPawnArbitrage
                   ? Math.floor(calcEconomyPrice(basePrice, economicIndex) * redeemRate)
                   : app.redeemCost;
+                let itemSpace = itemDef?.space ?? (itemDef?.category === 'book' ? 10 : 3);
+                if (itemDef?.category === 'book' && itemSpace === 0) {
+                  itemSpace = itemDef.id === 'encyclopedia' ? 20 : 10;
+                }
+                const canAfford = player.money >= redeemCost;
+                const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
+                const canRedeem = canAfford && (!rules?.spaceCapping || hasSpace);
+
                 return (
-                  <li
+                  <div
                     key={idx}
-                    className="store-item interaction-item interaction-item--clickable"
-                    onClick={() => onAction({ type: 'redeem_item', item: app, cost: redeemCost })}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', margin: 0, borderRadius: '6px', cursor: 'pointer' }}
+                    className={`interaction-item store-item ${canRedeem ? 'interaction-item--clickable' : 'interaction-item--disabled'}`}
+                    onClick={() => canRedeem && onAction({ type: 'redeem_item', item: app, cost: redeemCost })}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      margin: 0,
+                      padding: '8px 12px',
+                      opacity: canRedeem ? 1 : 0.5,
+                      cursor: canRedeem ? 'pointer' : 'not-allowed',
+                      borderRadius: '6px'
+                    }}
+                    data-action-target={`redeem-${app.itemId}`}
+                    title={!hasSpace ? `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)` : undefined}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1, paddingRight: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                       {rules?.showItemImages && (
                         <img
                           src={`/assets/raw_images/${app.itemId}.png`}
@@ -343,20 +390,25 @@ export function PawnShop({
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', whiteSpace: 'normal', wordBreak: 'normal', lineHeight: 1.3 }}>
+                      <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}
                         {app.isBroken && (
                           <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
                             ({t('pawnShop.brokenTagShort', { defaultValue: 'Broken' })})
                           </span>
                         )}
+                        {rules?.spaceCapping && itemSpace > 0 && (
+                          <span style={{ color: !hasSpace ? '#e74c3c' : '#00e5ff', marginLeft: '6px', fontSize: '11px' }}>
+                            📦{itemSpace}
+                          </span>
+                        )}
                       </span>
                     </div>
                     <span style={{ color: '#e74c3c', fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>-${redeemCost}</span>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           )}
         </div>
       )}

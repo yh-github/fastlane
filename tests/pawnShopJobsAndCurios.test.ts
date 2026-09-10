@@ -48,12 +48,12 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
     });
 
     it('scales employability score with Physical Condition above 30', () => {
-      const score30 = calcAdvancedJobEmployabilityScore(20, 20, 20, 20, 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 30, true);
-      const score40 = calcAdvancedJobEmployabilityScore(20, 20, 20, 20, 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 40, true);
-      const score50 = calcAdvancedJobEmployabilityScore(20, 20, 20, 20, 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 50, true);
+      const score30 = calcAdvancedJobEmployabilityScore(20, 20, 0, 20, 20, 0, 0, 0, 0, false, false, 0, false, 0, false, 30, true);
+      const score40 = calcAdvancedJobEmployabilityScore(20, 20, 0, 20, 20, 0, 0, 0, 0, false, false, 0, false, 0, false, 40, true);
+      const score50 = calcAdvancedJobEmployabilityScore(20, 20, 0, 20, 20, 0, 0, 0, 0, false, false, 0, false, 0, false, 50, true);
 
-      expect(score40).toBe(score30 + 10); // +1% per point above 30 -> +10%
-      expect(score50).toBe(score30 + 20); // +20% for +20
+      expect(score40).toBe(score30 + 20); // +2% per point above 30 -> +20%
+      expect(score50).toBe(score30 + 40); // +40% for +20
     });
   });
 
