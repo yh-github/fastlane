@@ -120,7 +120,9 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const missingExp = effectiveExp < job.requirements.experience;
           const missingDep = effectiveDep < job.requirements.dependability;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
-          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt;
+          const isLookFit = isAdvanced && job.tags?.includes('look_fit');
+          const missingPhysical = isLookFit && ((player.physicalCondition ?? 50) < 30);
+          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt || missingPhysical;
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
           const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
           
@@ -140,7 +142,9 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 player.skillTech || 0,
                 isTechnical,
                 player.skillMgmt || 0,
-                isManagement
+                isManagement,
+                player.physicalCondition ?? 50,
+                isLookFit
               )
             : locationScore);
           
