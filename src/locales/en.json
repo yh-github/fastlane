@@ -379,7 +379,7 @@
     "technical": "Technical",
     "technical_desc": "Requires technical aptitude. Shift work, innovation, and freelance computing build Skill Tech, which reduces requirements and boosts hiring odds for technical jobs.",
     "look_fit": "Look Fit",
-    "look_fit_desc": "Requires Physical Condition >= 30 at interview. Physical fitness scales employability (+1% per point above 30). 0.5x Experience gain without cumulative burnout."
+    "look_fit_desc": "Requires Physical Condition >= 30 at interview. Physical fitness scales employability (+2% per point above 30). 0.5x Experience gain without cumulative burnout."
   },
   "gameOver": {
     "congrats": "Congratulations!",
