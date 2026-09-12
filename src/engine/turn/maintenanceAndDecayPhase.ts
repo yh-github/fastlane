@@ -39,7 +39,10 @@ export function processMaintenanceAndDecayPhase(
   for (const cond of winConditions) {
     const target = player.goalAllotment[cond.stat] || 0;
     let progress = 0;
-    if (cond.stat === 'wealth') progress = calcWealthProgress(calcLiquidAssets(player, campaign, state.economicIndex, state.turn));
+    if (cond.stat === 'wealth') {
+      const hasEarnedIncome = player.hasEarnedIncome ?? (state.turn > 1 || !!player.turnFlags?.hasWorked);
+      progress = calcWealthProgress(calcLiquidAssets(player, campaign, state.economicIndex, state.turn), hasEarnedIncome);
+    }
     else if (cond.stat === 'education') progress = calcEducationProgress(player.degrees.length);
     else if (cond.stat === 'career') progress = calcCareerProgress(player.dependability, player.currentJobId !== null);
     else if (cond.stat === 'happiness') progress = player.happiness;
@@ -191,7 +194,7 @@ export function processMaintenanceAndDecayPhase(
   }
   const curJob = player.currentJobId && campaign?.jobs ? campaign.jobs.find(j => j.id === player.currentJobId) : undefined;
   const isHighDowntime = curJob?.tags?.includes('high_downtime') ?? false;
-  player.dependability = calcDependabilityDecay(player.dependability, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, player.social, isHighDowntime); 
+  player.dependability = calcDependabilityDecay(player.dependability, campaign.config.statRules, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, player.social, isHighDowntime); 
 
   // 8. Apartment Robbery
   const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === player.id || !e.playerId));

@@ -296,8 +296,8 @@ describe('getGameSummary', () => {
 
     // Career should be 0 without a job
     expect(summary.player.goalProgress.career).toBe(0)
-    // Education with 0 degrees = 1
-    expect(summary.player.goalProgress.education).toBe(1)
+    // Education with 0 degrees = 0
+    expect(summary.player.goalProgress.education).toBe(0)
   })
 
   it('includes goal allotment', () => {

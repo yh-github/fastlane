@@ -4,7 +4,7 @@ import { collectItemEffects, type PlayerState } from './gameState';
 import { type CampaignBundle } from './dataLoader';
 
 describe('createTestGameState', () => {
-  it('initializes players with starting relaxation of 16', () => {
+  it('initializes players with starting relaxation of 25', () => {
     const mockCampaign = {
       config: { name: 'test', startingMoney: 200, timeRules: { hoursPerTurn: 60, starvationPenalty: 20, doctorPenalty: 10 }, economyRules: { repairCostMin: 0.05, repairCostMax: 0.25 } } as any,
 
@@ -21,7 +21,7 @@ describe('createTestGameState', () => {
       'low_cost'
 );
 
-    expect(state.players[0].relaxation).toBe(16);
+    expect(state.players[0].relaxation).toBe(25);
   });
 });
 

@@ -15,6 +15,7 @@ import {
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
 import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
+import { calcEffectiveRobberyChance } from '../engine/statMath';
 
 interface BuildingModalProps {
   player: PlayerState | null;
@@ -266,7 +267,6 @@ export function BuildingModal({
               pawnShopItemsForSale={pawnShopItemsForSale}
               rules={rules}
               campaign={campaign}
-              availableItems={itemsHere}
             />
           )}
           {building.archetype === 'home' && (
@@ -277,6 +277,7 @@ export function BuildingModal({
                 rules={rules}
                 economicIndex={economicIndex}
                 onAction={handleActionIntercept}
+                turn={turn}
               />
             ) : (
               <div className="interaction-panel">
@@ -292,7 +293,9 @@ export function BuildingModal({
 
   return (
     <div className="building-modal">
-      <button className="building-modal__close" onClick={onClose}>&times;</button>
+      {!player?.pendingAppraisalDilemma && (
+        <button className="building-modal__close" onClick={onClose}>&times;</button>
+      )}
       
       <div className="building-modal__header">
         <div className="building-modal__face" style={{ position: 'relative' }}>
@@ -300,7 +303,45 @@ export function BuildingModal({
           {clerkMessage && shouldShowSpeechBubble && <SpeechBubble message={clerkMessage} />}
         </div>
         <div className="building-modal__title-group">
-          <h2>{t(`building.${building.id}`, { defaultValue: building.name })}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <h2>{t(`building.${building.id}`, { defaultValue: building.name })}</h2>
+            {rules?.helpfulUI && building.archetype === 'home' && livesHere && (() => {
+              const robberyRate = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
+              const willyStartWeek = campaign?.config?.eventRules?.willyRobberyStartWeek ?? 4;
+              const isInactive = turn < willyStartWeek;
+              const isProtectedHousing = player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments' || player.currentHousingId === 'penthouse';
+              
+              let homeTimeStr = '';
+              if (rules?.useHomeTimeRobbery) {
+                const history = [...(player.homeTimeHistory || []), player.homeTimeThisTurn || 0];
+                const meanHome = history.length > 0 ? (history.reduce((a, b) => a + b, 0) / history.length) : 0;
+                homeTimeStr = `${Math.round(meanHome)}h/wk · `;
+              }
+
+              return (
+                <span 
+                  data-testid="home-burglary-badge"
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    background: 'rgba(0, 229, 255, 0.1)',
+                    border: '1px solid var(--accent-cyan, #00e5ff)',
+                    color: 'var(--accent-cyan, #00e5ff)',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginInlineEnd: '48px',
+                    marginTop: '10px'
+                  }}
+                  title={isProtectedHousing ? 'Protected by Security Housing' : (isInactive ? `Inactive until Week ${willyStartWeek}` : undefined)}
+                >
+                  🏠 {homeTimeStr}Break-in Risk: {robberyRate}%{isProtectedHousing ? ' (Protected)' : (isInactive ? ' (Inactive)' : '')}
+                </span>
+              );
+            })()}
+          </div>
           <p>{t(`buildingDesc.${building.id}`, { defaultValue: building.description })}</p>
         </div>
       </div>

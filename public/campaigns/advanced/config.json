@@ -31,9 +31,14 @@
     "grantExpOnJobSwitch": false,
     "alternativeWeekends": true,
     "preventPawnArbitrage": true,
-    "advancedMaintenance": true
+    "advancedMaintenance": true,
+    "advancedHomeGUI": true,
+    "autoEquipBestClothes": false,
+    "showJobTags": true,
+    "pawnRummageBins": true
   },
   "statRules": {
+    "startingSocial": 20,
     "startingPhysicalCondition": 50,
     "startingMentalCondition": 51,
     "minPhysicalCondition": 1,

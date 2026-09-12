@@ -36,7 +36,7 @@ export function handleApplyAction(
 
 export function handleWorkAction(
   player: PlayerState,
-  action: { type: 'work'; jobId: string; mode?: 'look_busy' | 'work_work' | 'face_time' | 'innovate' },
+  action: { type: 'work'; jobId: string; mode?: 'look_busy' | 'work_work' | 'face_time' | 'innovate' | 'show_initiative' },
   context: ReducerContext,
   replayContext: ReplayContext
 ): ActionHandlerResult {
@@ -99,6 +99,14 @@ export function handleResolveAppraisalDilemmaAction(
       nextPlayer.inventory.uninspectedKnickKnacks = (nextPlayer.inventory.uninspectedKnickKnacks || 0) + 1;
       actionLog = { key: 'action.job.appraisalChoiceCurio' };
     }
+  } else if (choice.type === 'skill') {
+    if (choice.techSkillAmount) {
+      nextPlayer.skillTech = Math.min(10, Math.round(((nextPlayer.skillTech || 0) + choice.techSkillAmount) * 100) / 100);
+    }
+    if (choice.mentalAmount) {
+      nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, (nextPlayer.mentalCondition ?? 50) + choice.mentalAmount);
+    }
+    actionLog = { key: 'action.job.appraisalChoiceSkill', params: { tech: choice.techSkillAmount ?? 0 } };
   }
 
   nextPlayer.pendingAppraisalDilemma = null;

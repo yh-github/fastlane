@@ -645,13 +645,13 @@ describe('BuildingInteractions', () => {
         player={mockPlayer}
         onAction={vi.fn()}
         campaign={mockCampaign}
-        rules={{ trackMess: true } as any}
+        rules={{ trackMess: true, helpfulUI: true } as any}
         economicIndex={0}
       />
     );
 
-    // Verify Amenities Section headers in classic mode
-    expect(screen.getByText(/Home Amenities & Storage/i)).toBeInTheDocument();
+    // Verify Furnishings and Pantry headers in classic mode
+    expect(screen.getByText(/Apartment Furnishings & Belongings/i)).toBeInTheDocument();
     expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
     expect(screen.getByText(/Refrigerator Active/i)).toBeInTheDocument();
 
@@ -664,9 +664,70 @@ describe('BuildingInteractions', () => {
 
     // Verify Appliances & Books
     expect(screen.getByText(/Stereo/i)).toBeInTheDocument();
-    expect(screen.getByText(/\+1 🧠/i)).toBeInTheDocument();
     expect(screen.getByText(/Dictionary/i)).toBeInTheDocument();
+
+    // Clicking inspects durable cards
+    fireEvent.click(screen.getByTestId('durable-card-stereo'));
+    expect(screen.getByText(/\+1 🧠/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Back to Apartment|✕/i }));
+
+    fireEvent.click(screen.getByTestId('durable-card-dictionary'));
     expect(screen.getByText(/\+1 Max 🧠/i)).toBeInTheDocument();
+  });
+
+  it('HomeRelax base version hides modifiers, pantry, and cleaning when helpfulUI and trackMess are off', () => {
+    const mockPlayer = {
+      id: 'p1',
+      hoursRemaining: 6,
+      inventory: {
+        freshFoodUnits: 4,
+        fastFoodItems: [{ itemId: 'cheeseburger', happinessBonus: 3 }],
+        appliances: [{ id: 'stereo', purchasePrice: 200, purchaseSource: 'socket_city' }],
+        books: ['dictionary']
+      }
+    } as any;
+
+    const mockCampaign = {
+      housing: [{ id: 'low_cost', name: 'Low Cost' }],
+      items: [
+        { id: 'stereo', name: 'Stereo', basePrice: 200, category: 'appliance', effects: [{ trigger: 'on_relax', stat: 'mental', value: 1 }] },
+        { id: 'cheeseburger', name: 'Cheeseburger', basePrice: 6, category: 'food' },
+        { id: 'dictionary', name: 'Dictionary', basePrice: 40, category: 'book', effects: [{ trigger: 'continuous', stat: 'mental_max', value: 1 }] }
+      ],
+      config: {
+        timeRules: { relaxCost: 6 },
+        statRules: {}
+      }
+    } as any;
+
+    render(
+      <HomeRelax
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ trackMess: false, helpfulUI: false } as any}
+        economicIndex={0}
+      />
+    );
+
+    // Relax button displays classic short label RELAX
+    const relaxBtn = screen.getByTestId('btn-relax');
+    expect(relaxBtn.textContent).toBe('RELAX');
+
+    // No cleaning column
+    expect(screen.queryByText(/Cleaning & Maintenance/i)).not.toBeInTheDocument();
+
+    // No pantry
+    expect(screen.queryByText(/Pantry & Food Supplies/i)).not.toBeInTheDocument();
+
+    // Visual cards for owned durables exist
+    expect(screen.getByTestId('durable-card-stereo')).toBeInTheDocument();
+    expect(screen.getByTestId('durable-card-dictionary')).toBeInTheDocument();
+
+    // Clicking opens inspection modal
+    fireEvent.click(screen.getByTestId('durable-card-stereo'));
+    expect(screen.getAllByText(/Stereo/i).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(/\+1 🧠/i)).toBeInTheDocument();
   });
 
   it('StoreFront renders items for sale and dispatches buy action', () => {

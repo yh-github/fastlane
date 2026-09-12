@@ -84,6 +84,10 @@
       "faceTimeDisabled": "נוכחות בולטת אינה זמינה בתפקידים של עבודה פיזית מאומצת.",
       "lookBusyDisabled": "העמדת פנים כעסוק אינה זמינה בתפקידי ניהול ביניים.",
       "mistake": "עשית טעות בעבודה ({{type}})! איבדת {{penalty}} אמינות (סה״כ עונשי מוניטין במיקום זה: {{total}})",
+      "initiativeNeedExp": "דרוש לפחות {{reqExp}} ניסיון (+10 מעל דרישת התפקיד) כדי לגלות יוזמה.",
+      "needMoreSocial": "מצב חברתי ירוד מדי ועצבנות מונעים ממך לבצע זאת כרגע.",
+      "initiativeSuccess": "הפגנת יוזמה ומנהיגות! (מיומנות ניהול: {{skillMgmt}})",
+      "initiativeClearedMistake": "היוזמה שלך תיקנה תקלת עבודה קודמת במיקום זה!",
       "innovateNeedDegree": "דרוש לפחות תואר אקדמי אחד כדי לחדש בעבודה.",
       "innovateGainExp": "סיעור מוחות ומו\"פ: קיבלת {{amount}}+ ניסיון!",
       "innovateGainDep": "ייעול תהליכים ומו\"פ: קיבלת {{amount}}+ אמינות!",
@@ -95,7 +99,8 @@
       "appraisalChoiceCash": "שלשלת לכיס עמלת שמאות מהירה של +${{amount}}.",
       "appraisalChoiceStanding": "חיזקת את המוניטין המקצועי שלך (+{{dep}} אמינות).",
       "appraisalChoiceSpareParts": "השגת ארגז חלקי חילוף שימושיים.",
-      "appraisalChoiceCurio": "השגת פריט ענתיקה לא בדוק למדף שלך."
+      "appraisalChoiceCurio": "השגת פריט ענתיקה לא בדוק למדף שלך.",
+      "appraisalChoiceSkill": "חקרת את המנגנון המורכב (+{{tech}} מיומנות טכנולוגיה)."
     },
     "workModal": {
       "title": "בחר אסטרטגיית עבודה",
@@ -105,6 +110,10 @@
       "workWorkDesc": "משמרת רגילה: עלויות רגילות, 1.0x שכר, 1+ אמינות, 1+ ניסיון.",
       "faceTime": "נוכחות בולטת (Face Time)",
       "faceTimeDesc": "0.5x גופני, 2+ עלות נפשית, 0$ שכר. עלייה מהירה באמינות (1.5+ עד 3.0+ לפי ציון חברתי) וחיזוק קשרים חברתיים.",
+      "showInitiative": "לגלות יוזמה",
+      "showInitiativeDesc": "דרוש +10 ניסיון מעל דרישת התפקיד. 1.5x עלות גופנית ונפשית, 0.4x שכר. מוחק תקלה אחת במיקום, מעניק +1 יוזמה מקומית ו-+0.25 מיומנות ניהול.",
+      "initiativeReward": "+0.25 👔, -1 ⚠️, +1 🌟",
+      "requiresExp": "דרוש {{reqExp}} ניסיון",
       "innovate": "לחדש (Innovate)",
       "innovateDesc": "דרוש תואר. עלות גופנית רגילה, עלות נפשית עולה (1+ לכל פריצת דרך), 0.5x שכר. גלגול 2d2-2 המעניק 0-2 אמינות/ניסיון. בהגעה לתקרה, פריצות דרך מרחיבות את תקרת המקסימום!",
       "innovateReward": "2d2-2 אמינות וניסיון (פריצת תקרות)",
@@ -127,8 +136,13 @@
     },
     "pawn": {
       "pawned": "מישכנת {{itemName}} תמורת {{value}}$",
+      "pawnedKnickKnacks": "מכרת {{count}} חפצי נוי לחנות המשכונות תמורת {{totalValue}}$",
       "redeemed": "פדית {{itemName}} תמורת {{cost}}$",
-      "bought": "קנית {{itemName}} מחנות המשכונות תמורת {{cost}}$"
+      "bought": "קנית {{itemName}} מחנות המשכונות תמורת {{cost}}$",
+      "rummaged": "הקדשת שעה לחיטוט בארגזי המציאות של חנות המשכונות.",
+      "boughtRummageItem": "קנית את {{itemName}} מהארגזים תמורת {{cost}}$.",
+      "boughtTrinket": "מצאת {{itemName}} נדיר ב-{{cost}}$! הוא מעניק שלווה ומשיב נקודת חוסן נפשי (+1 נפשי).",
+      "closedRummage": "התרחקת מארגזי המציאות."
     },
     "callCleaningService": "הזמנת שירותי ניקיון מקצועיים (עלות: {{cost}}$)",
     "socialize": "אירחת חברים ונפגשתם (+{{reward}} מצב נפשי, {{guests}} אורחים הגיעו)",
@@ -142,6 +156,9 @@
       "alreadyGranted": "הארכת שכר דירה כבר פעילה לתקופה זו."
     },
     "error": {
+      "mustResolveDilemma": "עליך להכריע בדילמת הלקוח לפני שתוכל לעשות כל דבר אחר.",
+      "noKnickKnacksToPawn": "אין לך חפצי נוי וענתיקות למשכן.",
+      "noRummageItem": "פריט זה כבר אינו זמין בארגזים.",
       "applianceNotBroken": "מכשיר זה אינו מקולקל.",
       "notEnoughMoneyRepairman": "אין מספיק כסף להזמנת טכנאי (עולה {{cost}}$).",
       "cannotApply": "לא ניתן להגיש מועמדות לעבודה.",
@@ -192,7 +209,7 @@
     },
     "donation": "קרוב משפחה אהוב ריחם עליך ושלח לך:\n{{amount}}$\nואמר לך לקנות כמה בגדים, ולהתחיל לחיות!",
     "lottery": "זכית ב-${{amount}} בלוטו!",
-    "curioDecor": "ניקית וסידרת את המציאה שלך ({{name}}). היא מוסיפה נופך יוקרתי לבית! (+{{lifestyle}} ✨)",
+    "curioDecor": "ניקית וסידרת את המציאה שלך ({{name}}). היא מוסיפה נופך יוקרתי לבית! (+{{lifestyle}} 😎)",
     "curioMental": "בילית ערב בחקר המנגנון של {{name}}. מכניקה מרתקת! (+{{mental}} 🧠)",
     "curioCash": "המציאה שלך התבררה כפריט אספנים נדיר ({{name}})! סוחר מקומי קנה אותה ב-{{amount}}$ 💰.",
     "curioDud": "ניקית את {{name}} מאבק. מסתבר שזה חיקוי זול, אבל זה נראה משעשע על המדף.",
@@ -399,6 +416,7 @@
     "probationBadge": "תקופת מבחן (הניקוד הופחת בחצי)",
     "mistakesBadge": "{{count}} תקריות (-{{count}})",
     "innovationsBadge": "{{count}} חידושים (+{{bonus}})",
+    "initiativesBadge": "{{count}} יוזמות (+{{bonus}}%)",
     "cleanRecord": "עבר נקי",
     "employabilityScoreInfo": "👨‍💼 מדד התעסוקתיות שלך הוא {{score}}/100. (בעת הגשת מועמדות, נדרשת הטלת קוביה של 1-100 הקטנה או שווה ל-{{score}} כדי שתוצע משרה).",
     "filterEmployabilityLog": "🔍 הצג יומן תעסוקתיות ועבודות"
@@ -407,6 +425,8 @@
     "title": "העבודה שלך: {{jobTitle}}",
     "workShift": "משמרת עבודה (עד {{cost}} שעות)",
     "innovations": "חידושים: {{count}}",
+    "initiatives": "יוזמות: {{count}}",
+    "actionShowInitiative": "לגלות יוזמה",
     "mistakesThisTurn": "תקלות בתור זה: {{count}}/3",
     "locationMistakes": "תקריות במיקום: {{count}}"
   },
@@ -416,6 +436,7 @@
   "homeRelax": {
     "title": "אין כמו בבית",
     "button": "לנוח ({{cost}} שעות)",
+    "relaxBtnText": "מנוחה",
     "durablesShowcase": "ריהוט וציוד לדירה",
     "btnLeisure": "פנאי",
     "btnChores": "מטלות",
@@ -539,7 +560,17 @@
     "knickKnackDesc": "שמאות בסוף השבוע (2 מקום)",
     "curiosOwned": "ענתיקות",
     "uninspectedOwned": "לא בדוקות",
-    "partsOwned": "חלקי חילוף"
+    "partsOwned": "חלקי חילוף",
+    "rummageTitle": "ארגזי מציאות וענתיקות",
+    "rummageDesc": "חטט בארגזים בלתי ממוינים של חפצים ישנים. תוכל למצוא מציאה, קמע כיס מרגיע, חלקי חילוף או מכשיר תקול. (עולה שעה אחת)",
+    "actionRummage": "חטט בארגזים (שעה אחת)",
+    "rummageItemTitle": "מציאה שנמצאה",
+    "trinketTag": "קמע כיס נדיר",
+    "trinketEffect": "משיב מיד +1 חוסן נפשי ברכישה (0 מקום נדרש)",
+    "walkAway": "וותר / המשך הלאה",
+    "btnTakeBargain": "קח פריט",
+    "btnPassOnBatch": "וותר (השאר בארגז)",
+    "btnRummageAgain": "חטט שוב (שעה 1)"
   },
   "university": {
     "title": "רישום אוניברסיטאי",
@@ -703,6 +734,10 @@
     "option_item": {
       "title": "עסקה צדדית לעצמך",
       "desc": "הלקוח מוותר על רכיבים עודפים. קח את זה הביתה לעצמך!"
+    },
+    "option_skill": {
+      "title": "מחקר טכני",
+      "desc": "פרק ובחן את המנגנון כדי להעמיק את הבנתך הטכנולוגית."
     }
   }
 }

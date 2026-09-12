@@ -301,7 +301,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
 
         {/* Maintenance / Special Action Hook */}
         {isBroken && isOwned ? (() => {
-          const diyBreakdown = player ? calcDiySuccessChance(player, campaign, rules) : { baseChance: 40, techBonus: 0, electronicsBonus: 0, totalChance: 40 };
+          const diyBreakdown = player ? calcDiySuccessChance(player, campaign, rules, undefined, durable.id) : { baseChance: 25, techBonus: 0, electronicsBonus: 0, partsBonus: 0, complexityPenalty: 0, totalChance: 25 };
           const hasDiyHours = (player?.hoursRemaining ?? 0) >= 6;
           const curPhys = player?.physicalCondition ?? 50;
           const curMental = player?.mentalCondition ?? 50;
@@ -354,7 +354,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
                   <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>⏳ 6h | -2 💪 | -1 🧠</span>
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#85ffb5', marginBottom: '2px' }}>
-                  Success: <strong>{diyBreakdown.totalChance}%</strong> ({diyBreakdown.baseChance}% Base + {diyBreakdown.techBonus}% Tech + {diyBreakdown.electronicsBonus}% Electronics)
+                  Success: <strong>{diyBreakdown.totalChance}%</strong> ({diyBreakdown.baseChance}% Base + {diyBreakdown.techBonus}% Tech + {diyBreakdown.electronicsBonus}% Electronics{diyBreakdown.partsBonus ? ` + ${diyBreakdown.partsBonus}% Parts` : ''} - {diyBreakdown.complexityPenalty} Complexity)
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '6px' }}>
                   Success: Restores to Used, +3 🧠, +0.5 Tech Skill • Fail: Remains broken, +0.1 Tech Skill

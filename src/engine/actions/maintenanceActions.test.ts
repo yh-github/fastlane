@@ -70,57 +70,65 @@ describe('maintenanceActions', () => {
   });
 
   describe('calcDiySuccessChance', () => {
-    it('returns base 40% when no tech skill and no education', () => {
+    it('returns base competence and calculates chance without tech or education', () => {
       const breakdown = calcDiySuccessChance(player, mockCampaign, context.rules);
-      expect(breakdown.baseChance).toBe(40);
+      expect(breakdown.baseChance).toBe(25);
       expect(breakdown.techBonus).toBe(0);
       expect(breakdown.electronicsBonus).toBe(0);
-      expect(breakdown.totalChance).toBe(40);
+      expect(breakdown.complexityPenalty).toBe(0);
+      expect(breakdown.totalChance).toBe(64);
     });
 
-    it('adds +3% per skillTech point', () => {
+    it('adds +2.5% per skillTech point', () => {
       player.skillTech = 5;
       const breakdown = calcDiySuccessChance(player, mockCampaign, context.rules);
-      expect(breakdown.techBonus).toBe(15);
-      expect(breakdown.totalChance).toBe(55);
+      expect(breakdown.techBonus).toBe(12.5);
+      expect(breakdown.totalChance).toBe(68);
     });
 
-    it('adds +10pp if electronics degree is completed', () => {
+    it('adds +15pp if electronics degree is completed', () => {
       player.degrees = ['electronics'];
       const breakdown = calcDiySuccessChance(player, mockCampaign, context.rules);
-      expect(breakdown.electronicsBonus).toBe(10);
-      expect(breakdown.totalChance).toBe(50);
+      expect(breakdown.electronicsBonus).toBe(15);
+      expect(breakdown.totalChance).toBe(69);
     });
 
     it('scales electronics bonus proportionally when enrolled (lesson-based)', () => {
-      // 5 out of 10 lessons completed = 50% progress -> +5pp bonus
+      // 5 out of 10 lessons completed = 50% progress -> +7.5pp bonus
       player.enrolledClasses = { electronics: 5 };
       const breakdown = calcDiySuccessChance(player, mockCampaign, context.rules);
-      expect(breakdown.electronicsBonus).toBe(5);
-      expect(breakdown.totalChance).toBe(45);
+      expect(breakdown.electronicsBonus).toBe(7.5);
+      expect(breakdown.totalChance).toBe(67);
     });
 
     it('scales electronics bonus proportionally when enrolled (percentage-based rules)', () => {
       const rules = { ...context.rules, percentageEducation: true };
       player.enrolledClasses = { electronics: 70 }; // 70%
       const breakdown = calcDiySuccessChance(player, mockCampaign, rules);
-      expect(breakdown.electronicsBonus).toBe(7);
-      expect(breakdown.totalChance).toBe(47);
+      expect(breakdown.electronicsBonus).toBe(10.5);
+      expect(breakdown.totalChance).toBe(68);
     });
 
-    it('clamps chance at 100% maximum', () => {
-      player.skillTech = 25; // 25 * 3 = 75%
-      player.degrees = ['electronics']; // +10% -> 40 + 75 + 10 = 125% -> clamped to 100%
-      const breakdown = calcDiySuccessChance(player, mockCampaign, context.rules);
-      expect(breakdown.totalChance).toBe(100);
+    it('applies complexity penalty for complex appliances (like refrigerator or computer)', () => {
+      const fridgeBreakdown = calcDiySuccessChance(player, 'refrigerator', mockCampaign, context.rules);
+      expect(fridgeBreakdown.complexityPenalty).toBe(9); // 500/100 + 20/5 = 9
+      expect(fridgeBreakdown.totalChance).toBe(50);
+    });
+
+    it('strictly caps chance below 80% (max 79%) even with max skills and parts', () => {
+      player.skillTech = 100; // very high tech
+      player.degrees = ['electronics'];
+      const breakdown = calcDiySuccessChance(player, mockCampaign, context.rules, true);
+      expect(breakdown.totalChance).toBeLessThan(80);
+      expect(breakdown.totalChance).toBeGreaterThanOrEqual(75);
     });
   });
 
   describe('calcRepairmanCost', () => {
-    it('calculates 10% of basePrice adjusted for neutral economy', () => {
-      // Refrigerator basePrice = 500, 10% = 50
+    it('calculates 12% of basePrice + complexity surcharge for neutral economy', () => {
+      // Refrigerator basePrice = 500, space = 20, complexity = 9 -> 500 * 0.12 + 18 = 78
       const cost = calcRepairmanCost('refrigerator', 0, mockCampaign);
-      expect(cost).toBe(50);
+      expect(cost).toBe(78);
     });
 
     it('adjusts repair cost for economic index', () => {
@@ -252,7 +260,7 @@ describe('maintenanceActions', () => {
       });
 
       it('fails validation if player lacks funds for repair', () => {
-        player.money = 20; // Refrigerator repair is $50
+        player.money = 20; // Refrigerator repair is $78
         const result = handleApplianceMaintenanceAction(
           player,
           { type: 'appliance_maintenance', applianceId: 'refrigerator', option: 'repairman' },
@@ -260,11 +268,11 @@ describe('maintenanceActions', () => {
         );
         expect(result.actionLog).toEqual({
           key: 'action.error.notEnoughMoneyRepairman',
-          params: { cost: 50 }
+          params: { cost: 78 }
         });
       });
 
-      it('repairs appliance to new condition, costs 1h and 10% price', () => {
+      it('repairs appliance to new condition, costs 1h and repairman price', () => {
         player.money = 100;
 
         const result = handleApplianceMaintenanceAction(
@@ -274,7 +282,7 @@ describe('maintenanceActions', () => {
         );
 
         expect(result.nextPlayer.hoursRemaining).toBe(40 - 1);
-        expect(result.nextPlayer.money).toBe(100 - 50);
+        expect(result.nextPlayer.money).toBe(100 - 78);
 
         const app = result.nextPlayer.inventory.appliances.find(a => a.id === 'refrigerator');
         expect(app?.isBroken).toBeFalsy();

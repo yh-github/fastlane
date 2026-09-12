@@ -22,7 +22,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   if (!selectedLocation) {
     return (
       <div className="interaction-panel">
-        <h3>{t('jobBoard.title')} <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 'normal' }}>({t('jobBoard.score', { defaultValue: 'Score' })}: {employabilityScore})</span></h3>
+        <h3>{t('jobBoard.title')} {rules?.helpfulUI && <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 'normal' }}>({t('jobBoard.score', { defaultValue: 'Score' })}: {employabilityScore})</span>}</h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
           {locations.map(loc => {
@@ -72,6 +72,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   const isSelectedFired = player.turnFlags?.firedLocationsThisTurn?.includes(selectedLocation);
   const selectedLocMistakes = player.mistakesByLocation?.[selectedLocation] || 0;
   const selectedLocInnovations = player.innovationsByLocation?.[selectedLocation] || 0;
+  const selectedLocInitiatives = player.initiativesByLocation?.[selectedLocation] || 0;
   const locationScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, selectedLocMistakes, player.social || 0, isSelectedFired);
 
   return (
@@ -92,14 +93,21 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
               💡 {t('jobBoard.innovationsBadge', { count: selectedLocInnovations, bonus: selectedLocInnovations * 5, defaultValue: `${selectedLocInnovations} Innovations (+${selectedLocInnovations * 5})` })}
             </span>
           )}
+          {selectedLocInitiatives > 0 && (
+            <span style={{ color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid #f59e0b' }}>
+              🌟 {t('jobBoard.initiativesBadge', { count: selectedLocInitiatives, bonus: selectedLocInitiatives * 3, defaultValue: `${selectedLocInitiatives} Initiatives (+${selectedLocInitiatives * 3}%)` })}
+            </span>
+          )}
           {selectedLocMistakes > 0 && (
             <span style={{ color: '#ffb300', background: 'rgba(255,179,0,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ffb300' }}>
               ⚠️ {t('jobBoard.mistakesBadge', { count: selectedLocMistakes })}
             </span>
           )}
-          <span style={{ color: '#00e5ff', opacity: 0.9 }}>
-            ({t('jobBoard.score', { defaultValue: 'Score' })}: {locationScore})
-          </span>
+          {rules?.helpfulUI && (
+            <span style={{ color: '#00e5ff', opacity: 0.9 }}>
+              ({t('jobBoard.score', { defaultValue: 'Score' })}: {locationScore})
+            </span>
+          )}
         </div>
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px' }}>
@@ -127,25 +135,26 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
           
           const jobScore = isAlwaysHiring ? (hasMissingReqs ? 0 : 100) : (isAdvanced
-            ? calcAdvancedJobEmployabilityScore(
-                player.dependability || 0,
-                player.experience || 0,
-                player.degrees?.length || 0,
-                job.requirements.dependability,
-                job.requirements.experience,
-                player.innovationsByLocation?.[selectedLocation] || 0,
-                selectedLocMistakes,
-                player.social || 0,
-                economicIndex,
-                isSelectedFired,
+            ? calcAdvancedJobEmployabilityScore({
+                dependability: player.dependability || 0,
+                experience: player.experience || 0,
+                degreesCount: player.degrees?.length || 0,
+                jobReqDep: job.requirements.dependability,
+                jobReqExp: job.requirements.experience,
+                innovationsAtLocation: selectedLocInnovations,
+                initiativesAtLocation: selectedLocInitiatives,
+                mistakesAtLocation: selectedLocMistakes,
+                social: player.social || 0,
+                economicIndex: economicIndex,
+                isProbation: isSelectedFired,
                 isFrontline,
-                player.skillTech || 0,
+                skillTech: player.skillTech || 0,
                 isTechnical,
-                player.skillMgmt || 0,
+                skillMgmt: player.skillMgmt || 0,
                 isManagement,
-                player.physicalCondition ?? 50,
+                physicalCondition: player.physicalCondition ?? 50,
                 isLookFit
-              )
+              })
             : locationScore);
           
           return (
@@ -155,13 +164,17 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                   <strong>{t(`job.${job.id}`, { defaultValue: job.title })}</strong>
                   <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>${offeredWage}/hr</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#888', marginBottom: '6px' }}>
-                  <span>{t('jobBoard.base')}: ${job.baseWage}/hr</span>
-                  <span style={{ color: isAlwaysHiring ? (hasMissingReqs ? '#e74c3c' : '#2ecc71') : (jobScore >= 70 ? '#2ecc71' : (jobScore >= 45 ? '#00e5ff' : '#f39c12')), fontWeight: 'bold' }}>
-                    {isAlwaysHiring ? (hasMissingReqs ? '🎯 0%' : `🎯 100% (${t('jobBoard.alwaysHiring', { defaultValue: 'Always Hiring' })})`) : `🎯 ${jobScore}%`}
-                  </span>
-                </div>
-                {job.tags && job.tags.length > 0 && (
+                {rules?.helpfulUI && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#888', marginBottom: '6px' }}>
+                    <span>{t('jobBoard.base')}: ${job.baseWage}/hr</span>
+                    <span style={{ color: isAlwaysHiring ? (hasMissingReqs ? '#e74c3c' : '#2ecc71') : (jobScore >= 70 ? '#2ecc71' : (jobScore >= 45 ? '#00e5ff' : '#f39c12')), fontWeight: 'bold' }}>
+                      {isAlwaysHiring 
+                        ? (hasMissingReqs ? '🎯 0%' : (rules?.showJobTags ? `🎯 100% (${t('jobBoard.alwaysHiring', { defaultValue: 'Always Hiring' })})` : '🎯 100%')) 
+                        : `🎯 ${jobScore}%`}
+                    </span>
+                  </div>
+                )}
+                {rules?.showJobTags && rules?.helpfulUI && job.tags && job.tags.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '6px' }}>
                     {job.tags.map(tg => (
                       <span key={tg} style={{ fontSize: '10px', background: 'rgba(255,255,255,0.08)', color: '#bbb', padding: '1px 5px', borderRadius: '3px' }}>

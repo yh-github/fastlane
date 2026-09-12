@@ -36,7 +36,6 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
   const isMiddleMgmt = hasJobTag(job, 'middle_management');
   const isExecMgmt = hasJobTag(job, 'executive_management');
   const isMgmt = isMiddleMgmt || isExecMgmt;
-  const hasDegree = !!(player.degrees && player.degrees.length > 0);
 
   let title = '';
   let icon = '💼';
@@ -263,59 +262,86 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
       );
       break;
 
-    case 'innovate':
-      title = t('action.workModal.innovate', { defaultValue: 'Innovate (R&D Breakthroughs)' });
-      icon = '💡';
-      badge = 'CAP BUSTER';
-      themeColor = '#a855f7';
-      glowColor = 'rgba(168, 85, 247, 0.4)';
-      fluff = "Pitch ambitious ideas and experiment with bold processes. Requires a degree to break past normal limits. True visionaries don't just follow protocols—they rewrite them.";
-      rationale = 'High-risk, high-reward creative endeavor where formal education and ambition unlock breakthroughs beyond routine operational limits.';
+    case 'show_initiative':
+    case 'innovate': {
+      title = t('action.workModal.showInitiative', { defaultValue: 'Show Initiative (Leadership & Problem Solving)' });
+      icon = '🌟';
+      badge = 'LEADERSHIP';
+      themeColor = '#f59e0b';
+      glowColor = 'rgba(245, 158, 11, 0.4)';
+      fluff = "Step up, take charge of unresolved problems, and demonstrate leadership potential. It's demanding and earns less immediately, but proves your management readiness and cleans up your record.";
+      rationale = 'Proactive leadership and internal advancement: resolve workplace incidents, gain valuable management experience, and position yourself as a favored candidate for internal promotions.';
+
+      const reqExp = (job.requirements?.experience ?? 0) + 10;
+      const hasReqExp = (player.experience ?? 0) >= reqExp;
 
       inputs.push(
         {
-          icon: hasDegree ? '🎓' : '❌',
-          title: hasDegree ? 'College Degree (Satisfied)' : 'College Degree Required (Missing)',
-          desc: hasDegree
-            ? `You hold ${player.degrees.length} degree(s), satisfying the prerequisite to attempt innovations.`
-            : 'Hard prerequisite! You must hold at least one University Degree to unlock and attempt innovation breakthroughs.'
+          icon: hasReqExp ? '👌' : '❌',
+          title: hasReqExp ? `Role Mastery Satisfied (${player.experience}/${reqExp} Exp)` : `Role Mastery Required (+10 Exp above job req)`,
+          desc: hasReqExp
+            ? `You have ${player.experience} Experience (exceeds ${reqExp}), qualifying you to step up and lead.`
+            : `You need at least ${reqExp} Experience (+10 above job requirement) before you can show initiative.`
         },
         {
-          icon: '🧠',
-          title: 'Escalating Mental Cost',
-          desc: 'Each completed innovation breakthrough at this job makes subsequent breakthroughs mentally more taxing.'
+          icon: '💪',
+          title: 'High Physical & Mental Strain',
+          desc: 'Costs 1.5x standard Physical fatigue and +2.0 extra Mental strain as you take on extra responsibilities.'
+        },
+        {
+          icon: '👥',
+          title: 'Social Mistake Vulnerability',
+          desc: isFrontline
+            ? 'Frontline Service: Social mistake threshold is 20 (double standard!). When below 20 Social, mistake risk increases by 2.5% per missing point.'
+            : 'Standard Job: Social mistake threshold is 10. Low Social risks awkward friction and workplace incidents.'
         }
       );
 
       outputs.push(
         {
           icon: '💵',
-          title: 'Half Pay (50% Wages)',
-          desc: `Earns 50% of your hourly wage ($${Math.floor((player.currentWage || job.baseWage) * 0.5)}/hr) as company research stipend.`
+          title: 'Reduced Pay (40% Wages)',
+          desc: `Earns 40% of standard hourly wage ($${Math.floor((player.currentWage || job.baseWage) * 0.4)}/hr). You are investing time into leadership and fixing mistakes rather than routine billable output.`
         },
         {
-          icon: '🎲',
-          title: 'Cap Buster Roll (2d2 - 2)',
-          desc: 'Rolls 2d2-2 (0 to 2 points) for BOTH Dependability and Experience simultaneously.'
+          icon: '👔',
+          title: isExecMgmt
+            ? 'Executive Management Skill (+1.00)'
+            : (isMiddleMgmt ? 'Management Skill (+0.50)' : 'Management Skill (+0.25)'),
+          desc: isExecMgmt
+            ? 'Earns +1.00 Management Skill (👔) per shift, supercharging your executive mastery.'
+            : (isMiddleMgmt
+                ? 'Earns +0.50 Management Skill (👔) per shift, accelerating your leadership growth.'
+                : 'Earns +0.25 Management Skill (👔) per shift, allowing non-managers to build leadership and qualify for executive roles!')
         },
         {
-          icon: '🚀',
-          title: 'Stat Cap Expansion',
-          desc: 'Can push your Dependability and Experience past the normal maximum limits of your current job tier!'
+          icon: '🧹',
+          title: 'Clear 1 Workplace Incident',
+          desc: 'Immediately removes 1 recorded mistake incident at this employer, repairing your standing.'
         },
         {
-          icon: '🛡️',
-          title: 'Firing Protection',
-          desc: 'Each completed innovation grants an Innovation Token that protects against firing and discounts future raise requests.'
+          icon: '🌟',
+          title: isExecMgmt ? 'Location Initiative (+2, +6% Standing)' : 'Location Initiative (+1, +3% Standing)',
+          desc: 'Builds permanent Location Initiatives at this workplace, acting as local experience: adds +3% employability per initiative on all jobs here and offsets past raises.'
+        },
+        {
+          icon: '🤝',
+          title: isExecMgmt ? 'Dependability (+2.0)' : (isMiddleMgmt ? 'Dependability (+1.5)' : 'Dependability (+1.0)'),
+          desc: isExecMgmt
+            ? 'Steadily builds +2.0 Dependability through executive ownership and problem solving.'
+            : (isMiddleMgmt
+                ? 'Steadily builds +1.5 Dependability through demonstrated leadership.'
+                : 'Steadily builds +1.0 Dependability through demonstrated reliability.')
         }
       );
 
       tips.push(
-        'Essential when you have reached your job tier cap and need higher stats to qualify for executive promotions.',
-        'Invaluable for high-intellect characters aiming to secure a permanent legacy and bulletproof job security.',
-        'Mental drain is high; ensure you relax and recharge your mental condition before attempting innovative shifts.'
+        'Use Show Initiative to erase damaging mistake incidents before your employer disciplines or fires you.',
+        'The best way to build Management skill on lower-tier jobs without needing to hold an executive role first.',
+        'Accumulating initiatives acts as local experience, adding +3% promotion employability and qualifying you for raises more easily.'
       );
       break;
+    }
   }
 
   if (typeof document === 'undefined') return null;

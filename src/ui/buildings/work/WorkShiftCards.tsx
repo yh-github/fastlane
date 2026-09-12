@@ -216,13 +216,21 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       glowColor: 'rgba(14, 165, 233, 0.35)',
       buttonLabel: `🤝 ${t('workStation.actionFaceTime', { defaultValue: 'Network' })}`
     },
+    show_initiative: {
+      title: t('action.workModal.showInitiative', { defaultValue: 'Show Initiative' }),
+      icon: '🌟',
+      badge: 'LEADERSHIP',
+      themeColor: '#f59e0b',
+      glowColor: 'rgba(245, 158, 11, 0.35)',
+      buttonLabel: `🌟 ${t('workStation.actionShowInitiative', { defaultValue: 'Show Initiative' })}`
+    },
     innovate: {
-      title: t('action.workModal.innovate', { defaultValue: 'Innovate' }),
-      icon: '💡',
-      badge: 'R&D',
-      themeColor: '#a855f7',
-      glowColor: 'rgba(168, 85, 247, 0.35)',
-      buttonLabel: `💡 ${t('workStation.actionInnovate', { defaultValue: 'Innovate' })}`
+      title: t('action.workModal.showInitiative', { defaultValue: 'Show Initiative' }),
+      icon: '🌟',
+      badge: 'LEADERSHIP',
+      themeColor: '#f59e0b',
+      glowColor: 'rgba(245, 158, 11, 0.35)',
+      buttonLabel: `🌟 ${t('workStation.actionShowInitiative', { defaultValue: 'Show Initiative' })}`
     }
   };
 
@@ -248,17 +256,17 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     const totalMistakeChance = m.totalMistakeChance ?? 0;
     const physChance = m.physMistakeChance ?? 0;
     const mentalChance = m.mentalMistakeChance ?? 0;
+    const socialChance = m.socialMistakeChance ?? 0;
 
     const fatigueCostText = m.mentalCost > 0
       ? `-${m.physCost} 💪, -${m.mentalCost} 🧠`
       : `-${m.physCost} 💪`;
 
+    const reqExp = (job.requirements?.experience ?? 0) + 10;
     const displayReward = m.disabledReasonKey
-      ? t(m.disabledReasonKey)
-      : (m.id === 'innovate'
-          ? (player.degrees && player.degrees.length > 0
-              ? t('action.workModal.innovateReward', { defaultValue: '🎲 2d2-2 🤝 & 👌' })
-              : t('action.workModal.requiresDegree', { defaultValue: 'Needs Degree 🎓' }))
+      ? t(m.disabledReasonKey, { reqExp })
+      : (m.id === 'show_initiative' || m.id === 'innovate'
+          ? t(m.rewardText, { reqExp })
           : m.rewardText);
 
     return (
@@ -445,7 +453,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 
               {totalMistakeChance > 0 && (
                 <span
-                  title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%`}
+                  title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%${socialChance > 0 ? `, Social: ${(socialChance * 100).toFixed(1)}%` : ''}`}
                   style={{
                     color: '#f87171',
                     fontWeight: 'bold',
@@ -492,42 +500,58 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             </div>
           </div>
 
-          {/* Primary Action Button */}
-          <button
-            data-testid={`work-mode-${m.id}`}
-            data-action-target={isWorkWork ? `work-${job.id}` : undefined}
-            onClick={() => {
-              onAction({ type: 'work', jobId: job.id, mode: m.id as any });
-            }}
-            style={{
-              width: '100%',
-              padding: '6px 4px',
-              borderRadius: '6px',
-              border: canAfford ? `1px solid ${meta.themeColor}` : 'none',
-              backgroundColor: canAfford ? meta.themeColor : '#3f3f46',
-              color: canAfford ? '#000000' : '#71717a',
-              fontWeight: 'bold',
-              fontSize: '0.78rem',
-              cursor: canAfford ? 'pointer' : 'not-allowed',
-              boxShadow: canAfford ? `0 2px 8px ${meta.glowColor}` : 'none',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseDown={(e) => {
-              if (canAfford) e.currentTarget.style.transform = 'scale(0.97)';
-            }}
-            onMouseUp={(e) => {
-              if (canAfford) e.currentTarget.style.transform = 'none';
-            }}
-          >
-            {meta.buttonLabel} {m.wage > 0 ? `(+$${m.wage})` : '($0)'}
-          </button>
+          {/* Action Button */}
+          <div>
+            {m.disabled && m.disabledReasonKey && (
+              <div
+                style={{
+                  fontSize: '0.66rem',
+                  color: '#fca5a5',
+                  marginBottom: '4px',
+                  textAlign: 'center',
+                  fontWeight: 'bold'
+                }}
+              >
+                {displayReward}
+              </div>
+            )}
+
+            <button
+              data-testid={`work-mode-${m.id}`}
+              data-action-target={isWorkWork ? `work-${job.id}` : undefined}
+              onClick={() => {
+                onAction({ type: 'work', jobId: job.id, mode: m.id as any });
+              }}
+              style={{
+                width: '100%',
+                padding: '6px 4px',
+                borderRadius: '6px',
+                border: canAfford ? `1px solid ${meta.themeColor}` : 'none',
+                backgroundColor: canAfford ? meta.themeColor : '#3f3f46',
+                color: canAfford ? '#000000' : '#71717a',
+                fontWeight: 'bold',
+                fontSize: '0.78rem',
+                cursor: canAfford ? 'pointer' : 'not-allowed',
+                boxShadow: canAfford ? `0 2px 8px ${meta.glowColor}` : 'none',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseDown={(e) => {
+                if (canAfford) e.currentTarget.style.transform = 'scale(0.97)';
+              }}
+              onMouseUp={(e) => {
+                if (canAfford) e.currentTarget.style.transform = 'none';
+              }}
+            >
+              {meta.buttonLabel} {m.wage > 0 ? `(+$${m.wage})` : '($0)'}
+            </button>
+          </div>
         </div>
       </div>
     );
   };
 
   const leftModes = modes.filter(m => m.id === 'work_work' || m.id === 'look_busy');
-  const rightModes = modes.filter(m => m.id === 'face_time' || m.id === 'innovate');
+  const rightModes = modes.filter(m => m.id === 'face_time' || m.id === 'show_initiative' || m.id === 'innovate');
 
   return (
     <>
@@ -645,9 +669,27 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               justifyContent: 'space-between',
               boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
             }}>
-              <span style={{ fontSize: '0.70rem', color: '#cbd5e1' }}>
-                ⏳ {player.hoursRemaining} hrs left
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.70rem', color: '#cbd5e1' }}>
+                  ⏳ {player.hoursRemaining}h left
+                </span>
+                {summary.locationInitiatives > 0 && (
+                  <span
+                    title={`${summary.locationInitiatives} Initiatives (+${summary.locationInitiatives * 3}% promotion standing)`}
+                    style={{
+                      fontSize: '0.62rem',
+                      fontWeight: 'bold',
+                      color: '#f59e0b',
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      padding: '1px 4px',
+                      borderRadius: '4px',
+                      border: '1px solid rgba(245, 158, 11, 0.3)'
+                    }}
+                  >
+                    🌟 {summary.locationInitiatives}
+                  </span>
+                )}
+              </div>
               {onClose && (
                 <button
                   data-testid="btn-close-work-wings"
@@ -690,9 +732,21 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontWeight: 'bold' }}>
                 💼 {t(`job.${job.id}`, { defaultValue: job.title })}
               </h3>
-              <span style={{ fontSize: '0.85rem', color: '#00e5ff', fontWeight: 'bold' }}>
-                ${player.currentWage || job.baseWage}/hr (⏳{hoursToWork}h) {tierLabel}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
+                <span style={{ fontSize: '0.85rem', color: '#00e5ff', fontWeight: 'bold' }}>
+                  ${player.currentWage || job.baseWage}/hr (⏳{hoursToWork}h) {tierLabel}
+                </span>
+                {summary.locationInitiatives > 0 && (
+                  <span style={{ fontSize: '0.74rem', color: '#f59e0b', fontWeight: 'bold', background: 'rgba(245, 158, 11, 0.15)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    🌟 {summary.locationInitiatives} Initiatives (+{summary.locationInitiatives * 3}% standing)
+                  </span>
+                )}
+                {summary.locationMistakes > 0 && (
+                  <span style={{ fontSize: '0.74rem', color: '#f87171', fontWeight: 'bold', background: 'rgba(239, 68, 68, 0.15)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                    ⚠️ {summary.locationMistakes} Incidents
+                  </span>
+                )}
+              </div>
             </div>
             {onClose && (
               <button

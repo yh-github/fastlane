@@ -76,7 +76,31 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
             <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('statusModal.attributesTitle', 'Formula Attributes & Caps')}</h3>
             <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
               <li><strong>{t('statusModal.employabilityScore', 'Employability Score (Hiring Roll Threshold):')}</strong> {employabilityScore} / 100</li>
-              <li><strong>{t('statusModal.robberyRisk', 'Home Robbery Risk:')}</strong> {robberyRisk}%</li>
+              <li>
+                <strong>{t('statusModal.robberyRisk', 'Home Robbery Risk:')}</strong> {robberyRisk}%
+                <div style={{ fontSize: '11px', color: '#bbb', marginTop: '2px', paddingInlineStart: '8px' }}>
+                  {(() => {
+                    const isProtectedHousing = player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments' || player.currentHousingId === 'penthouse';
+                    if (isProtectedHousing) {
+                      return '🛡️ 0.0% (Protected by Security Housing)';
+                    }
+                    const willyStartWeek = campaign?.config?.eventRules?.willyRobberyStartWeek ?? 4;
+                    const isInactive = (turn || 1) < willyStartWeek;
+                    const inactivityNote = isInactive ? ` [Inactive until Week ${willyStartWeek}, currently 0.0%]` : '';
+
+                    if (rules?.useHomeTimeRobbery) {
+                      const history = [...(player.homeTimeHistory || []), player.homeTimeThisTurn || 0];
+                      const meanHome = history.length > 0 ? (history.reduce((a, b) => a + b, 0) / history.length) : 0;
+                      const theoretical = (1 / (11 + meanHome)) * 100;
+                      return `📐 Formula: 1 / (11 + ${meanHome.toFixed(1)}h avg home time) = ${theoretical.toFixed(1)}%${inactivityNote}`;
+                    } else {
+                      const relax = player.relaxation || 0;
+                      const theoretical = (1 / (relax + 1)) * 100;
+                      return `📐 Formula: 1 / (Relaxation [${relax}] + 1) = ${theoretical.toFixed(1)}%${inactivityNote}`;
+                    }
+                  })()}
+                </div>
+              </li>
               <li><strong>{t('statusModal.dependabilityCap', 'Dependability Cap:')}</strong> {player.dependability} / {maxDep} (Current / Max Cap)</li>
               <li><strong>{t('statusModal.experienceCap', 'Experience Cap:')}</strong> {player.experience} / {maxExp} (Current / Max Cap)</li>
               <li><strong>{t('statusModal.nextRaiseReq', 'Dependability for Next Raise:')}</strong> {raiseThreshold !== null ? `${player.dependability} / ${raiseThreshold}` : t('statusModal.notEmployed', 'N/A (Unemployed)')}</li>
@@ -135,16 +159,27 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.clothes', 'Clothes')}</h3>
           <div style={{ marginBottom: '10px' }}>
             <label style={{ marginInlineEnd: '10px' }}>{t('inventoryModal.wearing', 'Wearing:')}</label>
-            <select 
-              value={inventory.selectedClothes || 'none'} 
-              onChange={(e) => onAction && onAction({ type: 'change_clothes', clothes: e.target.value })}
-              style={{ padding: '4px' }}
-            >
-              <option value="none">{t('inventoryModal.none', 'None')}</option>
-              <option value="casual" disabled={inventory.casualClothesWeeks <= 0}>{t('inventoryModal.casual', 'Casual')}</option>
-              <option value="dress" disabled={inventory.dressClothesWeeks <= 0}>{t('inventoryModal.dress', 'Dress')}</option>
-              <option value="business" disabled={inventory.businessClothesWeeks <= 0}>{t('inventoryModal.business', 'Business')}</option>
-            </select>
+            {rules?.autoEquipBestClothes ? (
+              <span style={{ fontWeight: 'bold' }}>
+                {inventory.selectedClothes && inventory.selectedClothes !== 'none'
+                  ? t(`inventoryModal.${inventory.selectedClothes}`, { defaultValue: inventory.selectedClothes.charAt(0).toUpperCase() + inventory.selectedClothes.slice(1) })
+                  : t('inventoryModal.none', 'None')}
+                <span style={{ fontSize: '11px', color: '#aaa', marginInlineStart: '8px', fontWeight: 'normal' }}>
+                  ({t('inventoryModal.autoEquipped', { defaultValue: 'Auto-equipped' })})
+                </span>
+              </span>
+            ) : (
+              <select 
+                value={inventory.selectedClothes || 'none'} 
+                onChange={(e) => onAction && onAction({ type: 'change_clothes', clothes: e.target.value })}
+                style={{ padding: '4px' }}
+              >
+                <option value="none">{t('inventoryModal.none', 'None')}</option>
+                <option value="casual" disabled={inventory.casualClothesWeeks <= 0}>{t('inventoryModal.casual', 'Casual')}</option>
+                <option value="dress" disabled={inventory.dressClothesWeeks <= 0}>{t('inventoryModal.dress', 'Dress')}</option>
+                <option value="business" disabled={inventory.businessClothesWeeks <= 0}>{t('inventoryModal.business', 'Business')}</option>
+              </select>
+            )}
           </div>
           <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
             <li>{t('inventoryModal.casualClothes', 'Casual Clothes')}: {inventory.casualClothesWeeks > 0 ? t('inventoryModal.weeksLeft', `${inventory.casualClothesWeeks} weeks left`, { count: inventory.casualClothesWeeks }) : t('inventoryModal.none')}</li>
@@ -164,11 +199,44 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
                       <img 
                         src={`/assets/raw_images/${a.id}.png`} 
                         alt={a.id} 
-                        style={{ width: '32px', height: '32px', objectFit: 'contain', backgroundColor: '#000', borderRadius: '4px' }}
+                        style={{ 
+                          width: '32px', 
+                          height: '32px', 
+                          objectFit: 'contain', 
+                          backgroundColor: '#000', 
+                          borderRadius: '4px',
+                          filter: a.isBroken ? 'grayscale(80%) sepia(40%) hue-rotate(-50deg)' : 'none'
+                        }}
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     )}
-                    <span>{t(`item.${a.id}`, { defaultValue: formatItemName(a.id) })}</span>
+                    <span style={{ color: a.isBroken ? '#fca5a5' : 'inherit' }}>
+                      {t(`item.${a.id}`, { defaultValue: formatItemName(a.id) })}
+                    </span>
+                    {a.isBroken ? (
+                      <span 
+                        data-testid={`appliance-status-broken-${a.id}`}
+                        style={{
+                          backgroundColor: '#dc2626',
+                          color: '#fff',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          marginLeft: '6px'
+                        }}
+                      >
+                        ⚠️ {t('inventoryModal.broken', 'BROKEN')}
+                      </span>
+                    ) : (
+                      <span style={{
+                        fontSize: '11px',
+                        color: a.condition === 'new' ? '#86efac' : '#94a3b8',
+                        marginLeft: '6px'
+                      }}>
+                        ({a.condition === 'new' ? t('inventoryModal.new', 'Brand New') : t('inventoryModal.used', 'Used')})
+                      </span>
+                    )}
                   </div>
                 </li>
               ))}

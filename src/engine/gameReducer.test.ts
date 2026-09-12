@@ -137,7 +137,7 @@ describe('gameReducer', () => {
       player.hoursRemaining = 10;
       const result = gameReducer(player, { type: 'relax' }, context);
       expect(result.updatedPlayer.hoursRemaining).toBe(4);
-      expect(result.updatedPlayer.relaxation).toBe(19); // 16 (starting) + 3 (gain)
+      expect(result.updatedPlayer.relaxation).toBe(28); // 25 (starting) + 3 (gain)
     });
 
     it('consumes remaining hours if less than relaxCost but still grants full gain', () => {
@@ -145,7 +145,7 @@ describe('gameReducer', () => {
       context.rules.allowPartialHours = true;
       const result = gameReducer(player, { type: 'relax' }, context);
       expect(result.updatedPlayer.hoursRemaining).toBe(0);
-      expect(result.updatedPlayer.relaxation).toBe(19); // 16 (starting) + 3 (gain)
+      expect(result.updatedPlayer.relaxation).toBe(28); // 25 (starting) + 3 (gain)
     });
   });
 

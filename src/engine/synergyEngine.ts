@@ -118,6 +118,12 @@ export function recalculateLifestyle(player: PlayerState, campaign: CampaignBund
     }
   }
 
+  // Knick-knacks / Curios contribution with diminishing returns
+  const curioCount = player.inventory?.knickKnacks || 0;
+  if (curioCount > 0) {
+    lifestyle += Math.min(15, Math.floor(2.8 * Math.sqrt(curioCount)));
+  }
+
   if (player.mess !== undefined) {
     lifestyle -= Math.floor(messGrowth(player.mess) / 2);
   }
@@ -151,6 +157,9 @@ export function calcMaxLifestyle(campaign: CampaignBundle): number {
       }
     }
   }
+
+  // Max curios / knick-knacks bonus
+  maxLifestyle += 15;
 
   return maxLifestyle;
 }

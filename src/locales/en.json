@@ -86,6 +86,11 @@
       "faceTimeDisabled": "Face Time is not available for heavy physical labor positions.",
       "lookBusyDisabled": "Look Busy is not available for middle management positions.",
       "mistake": "Made a mistake at work ({{type}})! Lost {{penalty}} Dependability (Total reputation penalties at this location: {{total}})",
+      "socialMistake": "Customer / Coworker clash! Your low social energy caused an embarrassing incident (-1 Social, +1 Incident).",
+      "needMoreSocial": "Too anti-social & irritable (Social too low) to handle this right now.",
+      "initiativeNeedExp": "You need at least {{reqExp}} Experience (+10 above job requirement) to show initiative.",
+      "initiativeSuccess": "Leadership initiative recognized! Gained Management Skill (now {{skillMgmt}}).",
+      "initiativeClearedMistake": "By taking ownership, you resolved a past workplace mistake at this location!",
       "innovateNeedDegree": "You need at least one University Degree to innovate at work.",
       "innovateGainExp": "R&D Brainstorm: Gained +{{amount}} Experience!",
       "innovateGainDep": "R&D Optimization: Gained +{{amount}} Dependability!",
@@ -97,7 +102,8 @@
       "appraisalChoiceCash": "Pocketed a quick appraisal commission of +${{amount}}.",
       "appraisalChoiceStanding": "Enhanced your appraisal reputation (+{{dep}} Dep).",
       "appraisalChoiceSpareParts": "Acquired a salvage box of spare parts.",
-      "appraisalChoiceCurio": "Acquired an uninspected curio for your shelf."
+      "appraisalChoiceCurio": "Acquired an uninspected curio for your shelf.",
+      "appraisalChoiceSkill": "Studied the intricate mechanism (+{{tech}} Tech Skill)."
     },
     "workModal": {
       "title": "Choose Work Strategy",
@@ -107,6 +113,10 @@
       "workWorkDesc": "Standard shift: 1.0x costs, 1.0x wage, +1 Dependability, +1 XP.",
       "faceTime": "Face Time",
       "faceTimeDesc": "0.5x Physical cost, +2 Mental cost, $0 wage. High Dependability gains (+1.5 to +3.0 Dep scaling with Social) and builds Social networking.",
+      "showInitiative": "Show Initiative",
+      "showInitiativeDesc": "Requires +10 Exp above job requirement. 1.5x Physical/Mental cost, 0.4x wage. Clears 1 location mistake, builds +1 Location Initiative and +0.25 Management Skill.",
+      "initiativeReward": "+0.25 👔, -1 ⚠️, +1 🌟",
+      "requiresExp": "Needs {{reqExp}} Exp",
       "innovate": "Innovate",
       "innovateDesc": "Requires Degree. 1.0x Physical, escalating Mental cost (+1 per breakthrough), 0.5x wage. Rolls 2d2-2 to gain 0-2 Dep & Exp. If at max capacity, breakthroughs expand your maximum stat caps!",
       "innovateReward": "2d2-2 Dep & Exp (Cap Buster)",
@@ -129,8 +139,13 @@
     },
     "pawn": {
       "pawned": "Pawned {{itemName}} for ${{value}}",
+      "pawnedKnickKnacks": "Sold {{count}} curios to the pawnbroker for ${{totalValue}}",
       "redeemed": "Redeemed {{itemName}} for ${{cost}}",
-      "bought": "Bought {{itemName}} from Pawn Shop for ${{cost}}"
+      "bought": "Bought {{itemName}} from Pawn Shop for ${{cost}}",
+      "rummaged": "Spent 1 hour digging through the pawn shop junk bins.",
+      "boughtRummageItem": "Purchased {{itemName}} from the bins for ${{cost}}.",
+      "boughtTrinket": "Found a rare {{itemName}} for ${{cost}}! Touching its worn surface brings peace and restores +1 Mental.",
+      "closedRummage": "Walked away from the junk bins."
     },
     "callCleaningService": "Called professional cleaning service (Cost: ${{cost}})",
     "socialize": "Hosted friends and socialized (+{{reward}} Mental Condition, {{guests}} guests attended)",
@@ -144,6 +159,9 @@
       "alreadyGranted": "Rent extension already active for this period."
     },
     "error": {
+      "mustResolveDilemma": "You must resolve the customer dilemma before doing anything else.",
+      "noKnickKnacksToPawn": "You have no curios to pawn.",
+      "noRummageItem": "That item is no longer available in the bins.",
       "applianceNotBroken": "This appliance is not broken.",
       "notEnoughMoneyRepairman": "Not enough money to hire repairman (Costs ${{cost}}).",
       "cannotApply": "Could not apply for job.",
@@ -195,7 +213,7 @@
     },
     "donation": "A favorite relative felt sorry for you and sent you:\n${{amount}}\nand told you to buy some clothes, and to get a life!",
     "lottery": "You won ${{amount}} in the lottery!",
-    "curioDecor": "You cleaned up your antique find ({{name}}). It adds a charming touch of class to your home! (+{{lifestyle}} ✨)",
+    "curioDecor": "You cleaned up your antique find ({{name}}). It adds a charming touch of class to your home! (+{{lifestyle}} 😎)",
     "curioMental": "You spent an evening tinkering with {{name}}. Fascinating mechanics! (+{{mental}} 🧠)",
     "curioCash": "Your find turned out to be a collector's item ({{name}})! A local dealer bought it for ${{amount}} 💰.",
     "curioDud": "You dusted off {{name}}. Turns out it's just a cheap replica, but it looks amusing on your shelf.",
@@ -803,6 +821,7 @@
     "probationBadge": "Probation (Score Halved)",
     "mistakesBadge": "{{count}} Incidents (-{{count}})",
     "innovationsBadge": "{{count}} Innovations (+{{bonus}})",
+    "initiativesBadge": "{{count}} Initiatives (+{{bonus}}%)",
     "cleanRecord": "Clean Record",
     "employabilityScoreInfo": "👨‍💼 Your Employability Score is {{score}}/100. (When applying, a roll of 1-100 ≤ {{score}} is required for an opening).",
     "filterEmployabilityLog": "🔍 View Employability & Job Logs"
@@ -811,6 +830,8 @@
     "title": "Your Job: {{jobTitle}}",
     "workShift": "Work Shift (up to {{cost}}h)",
     "innovations": "Innovations: {{count}}",
+    "initiatives": "Initiatives: {{count}}",
+    "actionShowInitiative": "Show Initiative",
     "mistakesThisTurn": "Mistakes this turn: {{count}}/3",
     "locationMistakes": "Location Incidents: {{count}}"
   },
@@ -820,6 +841,7 @@
   "homeRelax": {
     "title": "Home Sweet Home",
     "button": "Relax ({{cost}}h)",
+    "relaxBtnText": "RELAX",
     "durablesShowcase": "Apartment Furnishings & Belongings",
     "btnLeisure": "Leisure",
     "btnChores": "Chores",
@@ -1016,7 +1038,17 @@
     "knickKnackDesc": "Weekend Appraisal (2 space)",
     "curiosOwned": "Curios",
     "uninspectedOwned": "Uninspected",
-    "partsOwned": "Spare Parts"
+    "partsOwned": "Spare Parts",
+    "rummageTitle": "Dusty Junk Bins & Crates",
+    "rummageDesc": "Dig through unsorted bins of discarded goods and curios. You might find a bargain, a rare calming trinket, spare parts, or broken machinery. (Costs 1 hour)",
+    "actionRummage": "Rummage Through Bins (1 hr)",
+    "rummageItemTitle": "Unearthed Item",
+    "trinketTag": "Rare Pocket Trinket",
+    "trinketEffect": "Instantly restores +1 Mental on purchase (0 space needed)",
+    "walkAway": "Pass / Leave",
+    "btnTakeBargain": "Take Item",
+    "btnPassOnBatch": "Leave It (Pass)",
+    "btnRummageAgain": "Draw Another (1 hr)"
   },
   "homeDurable": {
     "maintenanceTitle": "Appliance Maintenance",
@@ -1036,6 +1068,10 @@
     "option_item": {
       "title": "Side Deal for Yourself",
       "desc": "Customer agrees to discard extra components. Take it home for yourself!"
+    },
+    "option_skill": {
+      "title": "Technical Study",
+      "desc": "Disassemble and examine the mechanism to gain technical insight."
     }
   }
 }

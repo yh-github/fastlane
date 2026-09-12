@@ -84,7 +84,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       if (state.rules.usePhysicalMentalConditions) {
         const minSocial = campaign.config.statRules?.minSocial ?? 1;
         p.social = Math.max(minSocial, (p.social ?? 9) - 1);
-        p.mentalConditionMax = calcMaxMental(p.mess || 0, p.social || 9, p.resilienceBonus || 0, p, campaign.config.statRules, campaign);
+        p.mentalConditionMax = calcMaxMental(p.mess || 0, p.social ?? 9, p.resilienceBonus || 0, p, campaign.config.statRules, campaign);
         if (p.mentalCondition !== undefined && p.mentalCondition > p.mentalConditionMax) {
           p.mentalCondition = p.mentalConditionMax;
         }

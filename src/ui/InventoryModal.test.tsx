@@ -99,13 +99,50 @@ describe('InventoryModal', () => {
         turn={1}
         onClose={vi.fn()}
         onAction={onAction}
-        rules={{ helpfulUI: true } as any}
+        rules={{ helpfulUI: true, autoEquipBestClothes: false } as any}
       />
     );
 
     const select = screen.getByRole('combobox');
     fireEvent.change(select, { target: { value: 'dress' } });
     expect(onAction).toHaveBeenCalledWith({ type: 'change_clothes', clothes: 'dress' });
+  });
+
+  it('hides clothes dropdown and shows auto-equipped text when autoEquipBestClothes is enabled', () => {
+    const campaign = createMockCampaign();
+    const player = createTestPlayer(
+      {
+        inventory: {
+          freshFoodUnits: 0,
+          fastFoodItems: [],
+          casualClothesWeeks: 4,
+          dressClothesWeeks: 2,
+          businessClothesWeeks: 0,
+          selectedClothes: 'dress',
+          appliances: [],
+          books: [],
+          tickets: { baseball: 0, theatre: 0, concert: 0 },
+          lotteryTickets: 0,
+          stocks: { tBills: 0, holdings: {} },
+          pawnedItems: [],
+        }
+      },
+      campaign
+    );
+
+    render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        onAction={vi.fn()}
+        rules={{ helpfulUI: true, autoEquipBestClothes: true } as any}
+      />
+    );
+
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.getByText(/Auto-equipped/i)).toBeInTheDocument();
   });
 
   it('renders innovations in Overview and Formula Attributes sections when player has innovations', () => {

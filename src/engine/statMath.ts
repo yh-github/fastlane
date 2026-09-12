@@ -10,10 +10,10 @@
 import {
   MIN_HAPPINESS,
   MAX_HAPPINESS,
-  DEPENDABILITY_WEEKLY_DECAY,
   type PlayerState,
   collectItemEffects
 } from './gameState';
+import type { StatRules } from './rules';
 import type { CampaignBundle } from './dataLoader';
 import type { GameRules } from './rules';
 
@@ -240,25 +240,40 @@ export function calcEmployabilityScore(
  * Accounts for qualification margin, location innovations, degrees, social charm,
  * and labor market dynamics across economic cycles.
  */
-export function calcAdvancedJobEmployabilityScore(
-  dependability: number,
-  experience: number,
-  degreesCount: number,
-  jobReqDep: number,
-  jobReqExp: number,
-  innovationsAtLocation: number = 0,
-  mistakesAtLocation: number = 0,
-  social: number = 0,
-  economicIndex: number = 0,
-  isProbation: boolean = false,
-  isFrontline: boolean = false,
-  skillTech: number = 0,
-  isTechnical: boolean = false,
-  skillMgmt: number = 0,
-  isManagement: boolean = false,
-  physicalCondition: number = 50,
-  isLookFit: boolean = false
-): number {
+export interface EmployabilityCalculatorOptions {
+  dependability: number;
+  experience: number;
+  degreesCount: number;
+  jobReqDep: number;
+  jobReqExp: number;
+  innovationsAtLocation?: number;
+  initiativesAtLocation?: number;
+  mistakesAtLocation?: number;
+  social?: number;
+  economicIndex?: number;
+  isProbation?: boolean;
+  isFrontline?: boolean;
+  skillTech?: number;
+  isTechnical?: boolean;
+  skillMgmt?: number;
+  isManagement?: boolean;
+  physicalCondition?: number;
+  isLookFit?: boolean;
+}
+
+/**
+ * Calculates a dynamic employability score based on physical/mental condition models.
+ * Accounts for qualification margin, location innovations, degrees, social charm,
+ * and labor market dynamics across economic cycles.
+ */
+export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorOptions): number {
+  const {
+    dependability, experience, degreesCount, jobReqDep, jobReqExp,
+    innovationsAtLocation = 0, initiativesAtLocation = 0, mistakesAtLocation = 0, social = 0, economicIndex = 0,
+    isProbation = false, isFrontline = false, skillTech = 0, isTechnical = false,
+    skillMgmt = 0, isManagement = false, physicalCondition = 50, isLookFit = false
+  } = opts;
+
   const base = 45;
   const effectiveDep = dependability + (isTechnical ? skillTech : 0) + (isManagement ? skillMgmt : 0);
   const effectiveExp = experience + (isTechnical ? skillTech : 0) + (isManagement ? skillMgmt : 0);
@@ -268,6 +283,7 @@ export function calcAdvancedJobEmployabilityScore(
 
   const degreesBonus = degreesCount * 1;
   const innovBonus = innovationsAtLocation * 5;
+  const initiativeBonus = initiativesAtLocation * 3;
   const socialBonus = isFrontline
     ? 2 * Math.floor((social || 0) / 10)
     : Math.floor((social || 0) / 10);
@@ -291,7 +307,7 @@ export function calcAdvancedJobEmployabilityScore(
     }
   }
 
-  const rawScore = base + marginBonus + degreesBonus + innovBonus + socialBonus + techBonus + mgmtBonus + lookFitBonus + econModifier - mistakesAtLocation;
+  const rawScore = base + marginBonus + degreesBonus + innovBonus + initiativeBonus + socialBonus + techBonus + mgmtBonus + lookFitBonus + econModifier - mistakesAtLocation;
   const clampedScore = Math.max(1, Math.min(99, rawScore));
   return isProbation ? Math.floor(clampedScore / 2) : clampedScore;
 }
@@ -305,6 +321,7 @@ export function calcAdvancedJobEmployabilityScore(
  */
 export function calcDependabilityDecay(
   current: number,
+  statRules?: StatRules,
   jobRequiredDep?: number,
   isAdvanced?: boolean,
   social: number = 0,
@@ -321,7 +338,7 @@ export function calcDependabilityDecay(
     }
     return clampZero(current - depLoss);
   }
-  return clampZero(current - DEPENDABILITY_WEEKLY_DECAY);
+  return clampZero(current - (statRules?.dependabilityWeeklyDecay ?? 3));
 }
 
 /**
@@ -430,17 +447,21 @@ export function calcCareerProgress(dependability: number, hasJob: boolean): numb
 /**
  * Calculate current Wealth stat (0-100) based on Liquid Assets.
  * $10,000 = 100 Wealth.
+ * Starts at 0 until the player earns income or advances past the initial start.
  */
-export function calcWealthProgress(liquidAssets: number): number {
+export function calcWealthProgress(liquidAssets: number, hasEarnedIncome: boolean = true): number {
+  if (!hasEarnedIncome) return 0;
   return Math.min(100, Math.floor(liquidAssets / 100));
 }
 
 /**
  * Calculate current Education stat (0-100) based on Degrees.
  * 11 Degrees = 100 Education.
+ * Strictly 0 when no degrees have been earned.
  */
 export function calcEducationProgress(numDegrees: number): number {
-  return Math.min(100, 1 + 9 * numDegrees);
+  if (numDegrees <= 0) return 0;
+  return Math.min(100, Math.round((numDegrees / 11) * 100));
 }
 
 /**

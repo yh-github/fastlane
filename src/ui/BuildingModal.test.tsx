@@ -487,4 +487,49 @@ describe('BuildingModal Component', () => {
     expect(screen.getAllByText(/🔥 OVERTIME/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/-0\.5 Max Physical Condition/i)).toBeInTheDocument();
   });
+
+  it('shows break-in risk badge only when helpfulUI is on, and hides it when helpfulUI is off', () => {
+    const homeCampaign: CampaignBundle = {
+      ...mockCampaign,
+      buildings: [
+        ...mockCampaign.buildings,
+        { id: 'home_building', name: 'Home', description: 'Your home', archetype: 'home' } as any
+      ],
+      housing: [{ id: 'low_cost', name: 'Low Cost Apt', baseRent: 300, homeNodeId: 'home_node' }] as any,
+      map: { nodes: [{ id: 'home_node', buildingId: 'home_building' }] } as any,
+    };
+
+    // When helpfulUI is true
+    const { unmount } = render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={homeCampaign}
+        currentBuildingId="home_building"
+        turn={4}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: true }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('home-burglary-badge')).toBeInTheDocument();
+    unmount();
+
+    // When helpfulUI is false
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={homeCampaign}
+        currentBuildingId="home_building"
+        turn={4}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: false }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('home-burglary-badge')).not.toBeInTheDocument();
+  });
 });

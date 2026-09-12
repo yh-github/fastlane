@@ -41,12 +41,31 @@ export function getPawnShopWeeklyStock(
     return seed / 233280;
   };
 
-  const appliances = (campaign.items || []).filter(i => i.category === 'appliance');
+  const EXCLUDED_BROKEN_APPLIANCES = new Set(['computer', 'hot_tub', 'refrigerator', 'freezer']);
+  const appliances = (campaign.items || []).filter(
+    i => i.category === 'appliance' && (i.basePrice || 0) <= 500 && !EXCLUDED_BROKEN_APPLIANCES.has(i.id)
+  );
   const stock: ItemDef[] = [];
+  let hasBrokenAppliance = false;
 
   for (let i = 0; i < 6; i++) {
     const roll = random();
-    if (roll < 0.65) {
+    // Broken appliance: rarer spawn, strictly at most 1 per week (checked on slot 0)
+    if (i === 0 && !hasBrokenAppliance && appliances.length > 0 && roll < 0.35) {
+      hasBrokenAppliance = true;
+      const app = appliances[Math.floor(random() * appliances.length)];
+      const discountedPrice = Math.max(10, Math.floor((app.basePrice || 100) * 0.3));
+      stock.push({
+        id: app.id,
+        name: `Broken ${app.name}`,
+        category: 'appliance',
+        subcategory: app.subcategory,
+        basePrice: discountedPrice,
+        space: app.space || 3,
+        happinessBonus: 0,
+        tags: ['broken', 'used']
+      });
+    } else if (roll < 0.70) {
       // Curio from CURIO_CATALOG (most of them)
       const curioIdx = Math.floor(random() * CURIO_CATALOG.length);
       const curio = CURIO_CATALOG[curioIdx] || CURIO_CATALOG[0];
@@ -60,7 +79,7 @@ export function getPawnShopWeeklyStock(
         happinessBonus: 1,
         tags: [curio.id, 'curio']
       });
-    } else if (roll < 0.85 || appliances.length === 0) {
+    } else {
       // Spare parts
       stock.push({
         id: 'spare_parts',
@@ -70,20 +89,6 @@ export function getPawnShopWeeklyStock(
         basePrice: 15,
         space: 2,
         happinessBonus: 0
-      });
-    } else {
-      // Broken appliance at heavy discount (30% catalog basePrice)
-      const app = appliances[Math.floor(random() * appliances.length)];
-      const discountedPrice = Math.max(10, Math.floor((app.basePrice || 100) * 0.3));
-      stock.push({
-        id: app.id,
-        name: `Broken ${app.name}`,
-        category: 'appliance',
-        subcategory: app.subcategory,
-        basePrice: discountedPrice,
-        space: app.space || 3,
-        happinessBonus: 0,
-        tags: ['broken', 'used']
       });
     }
   }

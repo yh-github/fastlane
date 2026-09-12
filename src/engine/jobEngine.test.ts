@@ -240,8 +240,8 @@ describe('Job Engine', () => {
       const faceTime = summary.modes.find(m => m.id === 'face_time');
       expect(faceTime?.disabled).toBe(true);
 
-      const innovate = summary.modes.find(m => m.id === 'innovate');
-      expect(innovate?.disabled).toBe(true); // No degrees
+      const initiative = summary.modes.find(m => m.id === 'show_initiative');
+      expect(initiative?.disabled).toBe(true); // Insufficient Exp (req 0 + 10 = 10, player has 0)
     });
   });
 
@@ -361,103 +361,48 @@ describe('Job Engine', () => {
         expect(resFaceTimeSocial.updated.dependability).toBe(52);
       });
 
-      it('innovate requires at least one degree', () => {
-        const playerNoDegree = {
+      it('show_initiative requires at least +10 Exp above job requirement', () => {
+        const playerLowExp = {
           hoursRemaining: 20,
           currentJobId: 'sales_manager',
           currentWage: 12,
-          degrees: [],
+          experience: 50, // req is 50, needs 60
           physicalCondition: 50,
           mentalCondition: 50,
           turnFlags: {},
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         } as unknown as PlayerState;
 
-        const result = workShift(playerNoDegree, salesManager, 6, advRules, undefined, 'innovate');
+        const result = workShift(playerLowExp, salesManager, 6, advRules, undefined, 'show_initiative');
         expect(result.success).toBe(false);
-        expect(result.messages?.[0]?.key).toBe('action.job.innovateNeedDegree');
+        expect(result.messages?.[0]?.key).toBe('action.job.initiativeNeedExp');
       });
 
-      it('innovate earns 0.5x wage and rolls 2d2-2 for Dep and Exp', () => {
+      it('show_initiative earns 0.4x wage, grants Management skill, clears mistake, and tracks initiative', () => {
         const player = {
           id: 'p1',
           hoursRemaining: 20,
           currentJobId: 'sales_manager',
           currentWage: 12,
-          experience: 50,
+          experience: 60, // req 50 + 10 = 60
           dependability: 50,
-          degrees: ['business_admin'],
+          skillMgmt: 1.0,
+          mistakesByLocation: { [salesManager.locationId]: 1 },
+          initiativesByLocation: {},
           physicalCondition: 50,
           mentalCondition: 50,
-          innovationCount: 0,
           turnFlags: {},
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         } as unknown as PlayerState;
 
-        // Roll X = 1 (die1=1, die2=2 -> sum 3 - 2 = 1) -> +1 Dep, +1 Exp
-        const replayBalanced = {
-          inDecisions: [
-            { type: `work_innovate_die1_${player.id}_1`, result: 1 },
-            { type: `work_innovate_die2_${player.id}_1`, result: 2 }
-          ],
-          outDecisions: []
-        };
-
-        const result = workShift(player, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replayBalanced);
+        const result = workShift(player, salesManager, 6, advRules, undefined, 'show_initiative');
         expect(result.success).toBe(true);
-        expect(result.wagesEarned).toBe(48); // 12 * 8 * 0.5 = 48
+        expect(result.wagesEarned).toBe(38); // Math.floor(12 * 8 * 0.4) = 38
         expect(result.updated.dependability).toBe(51);
-        expect(result.updated.experience).toBe(51);
-      });
-
-      it('innovate at max capacity expands stat cap and increments innovationCount without raising current stat', () => {
-        const maxedPlayer = {
-          id: 'p1',
-          hoursRemaining: 20,
-          currentJobId: 'sales_manager',
-          currentWage: 10,
-          degrees: ['business_admin'],
-          physicalCondition: 50,
-          mentalCondition: 50,
-          // Sales manager req is 50 Dep, 50 Exp. Effective max: Dep = 20 + 50 = 70; Exp = 10 + 50 = 60.
-          dependability: 70, // at max
-          experience: 60, // at max
-          depMaxBonus: 0,
-          xpMaxBonus: 0,
-          innovationCount: 0,
-          turnFlags: {},
-          inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
-        } as unknown as PlayerState;
-
-        // Roll X = 2 (die1=2, die2=2 -> sum 4 - 2 = 2) -> +2 Dep roll at max Dep
-        const replayDepBust = {
-          inDecisions: [
-            { type: `work_innovate_die1_${maxedPlayer.id}_1`, result: 2 },
-            { type: `work_innovate_die2_${maxedPlayer.id}_1`, result: 2 }
-          ],
-          outDecisions: []
-        };
-
-        const resDep = workShift(maxedPlayer, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replayDepBust);
-        expect(resDep.success).toBe(true);
-        expect(resDep.updated.depMaxBonus).toBe(1); // Cap expanded!
-        expect(resDep.updated.dependability).toBe(70); // Current stat remains at 70 (does not increase)
-        expect(resDep.updated.innovationCount).toBe(1);
-
-        // Roll X = 0 (die1=1, die2=1 -> sum 2 - 2 = 0) -> +2 Exp roll at max Exp
-        const replayExpBust = {
-          inDecisions: [
-            { type: `work_innovate_die1_${maxedPlayer.id}_1`, result: 1 },
-            { type: `work_innovate_die2_${maxedPlayer.id}_1`, result: 1 }
-          ],
-          outDecisions: []
-        };
-
-        const resExp = workShift(maxedPlayer, salesManager, 6, advRules, undefined, 'innovate', new Random(1), replayExpBust);
-        expect(resExp.success).toBe(true);
-        expect(resExp.updated.xpMaxBonus).toBe(1); // Cap expanded!
-        expect(resExp.updated.experience).toBe(60); // Current stat remains at 60
-        expect(resExp.updated.innovationCount).toBe(1);
+        expect(result.updated.skillMgmt).toBe(1.25); // +0.25 for standard jobs
+        expect(result.updated.mistakesByLocation?.[salesManager.locationId]).toBe(0);
+        expect(result.updated.initiativesByLocation?.[salesManager.locationId]).toBe(1);
+        expect(result.messages?.some(m => m.key === 'action.job.initiativeClearedMistake')).toBe(true);
       });
 
       it('completed innovation breakthroughs discount raises and provide extra firing protection', () => {
@@ -546,7 +491,8 @@ describe('Job Engine', () => {
           physicalCondition: 30,
           mentalCondition: 30,
           dependability: 50,
-          experience: 50,
+          experience: 60,
+          xpMaxBonus: 5,
           social: 20,
           turnFlags: {},
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
@@ -557,7 +503,7 @@ describe('Job Engine', () => {
         expect(resWorkWork.success).toBe(true);
         expect(resWorkWork.wagesEarned).toBe(40); // 10 * 8 * 0.5 = 40
         expect(resWorkWork.updated.dependability).toBe(50.5);
-        expect(resWorkWork.updated.experience).toBe(50.5);
+        expect(resWorkWork.updated.experience).toBe(60.5);
         expect(resWorkWork.updated.hoursRemaining).toBe(0);
 
         // 2. look_busy mode: half wages ($40), +0 Dep, 0 Exp
@@ -565,7 +511,7 @@ describe('Job Engine', () => {
         expect(resLookBusy.success).toBe(true);
         expect(resLookBusy.wagesEarned).toBe(40);
         expect(resLookBusy.updated.dependability).toBe(50);
-        expect(resLookBusy.updated.experience).toBe(50);
+        expect(resLookBusy.updated.experience).toBe(60);
 
         // 3. face_time mode: $0 wages, half Dep (+0.5 Dep)
         const replayFaceTime = {
@@ -578,19 +524,12 @@ describe('Job Engine', () => {
         expect(resFaceTime.updated.dependability).toBeGreaterThan(50);
         expect(resFaceTime.updated.social).toBe(21);
 
-        // 4. innovate mode: half wages ($20), scaled breakthrough rewards
-        const replayInnovate = {
-          inDecisions: [
-            { type: `work_innovate_die1_${basePlayer.id}_1`, result: 1 },
-            { type: `work_innovate_die2_${basePlayer.id}_1`, result: 2 }
-          ],
-          outDecisions: []
-        };
-        const resInnovate = workShift(basePlayer, salesManager, 6, propRules, undefined, 'innovate', new Random(1), replayInnovate);
-        expect(resInnovate.success).toBe(true);
-        expect(resInnovate.wagesEarned).toBe(20); // 10 * 8 * 0.5 * 0.5 = 20
-        expect(resInnovate.updated.dependability).toBe(50.5);
-        expect(resInnovate.updated.experience).toBe(50.5);
+        // 4. show_initiative mode: 0.4x wages ($16), +0.5 Dep, +0.5 Mgmt
+        const resInitiative = workShift(basePlayer, salesManager, 6, propRules, undefined, 'show_initiative', new Random(1));
+        expect(resInitiative.success).toBe(true);
+        expect(resInitiative.wagesEarned).toBe(16); // 10 * 8 * 0.4 * 0.5 = 16
+        expect(resInitiative.updated.dependability).toBe(50.5);
+        expect(resInitiative.updated.skillMgmt).toBe(0.25);
       });
 
       it('does NOT decrease Exp or Dep when working a lower-tier job with a lower cap (Classic and Advanced)', () => {
@@ -907,7 +846,11 @@ describe('Job Engine', () => {
         } as unknown as PlayerState;
 
         const advancedRules = { usePhysicalMentalConditions: true };
-        const wwResult = workShift(player, frontlineJob, 6, advancedRules as any, undefined, 'work_work');
+        const replay = {
+          inDecisions: [{ type: `work_social_mistake_${player.id}_1`, result: false }],
+          outDecisions: []
+        };
+        const wwResult = workShift(player, frontlineJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), replay);
         expect(wwResult.success).toBe(true);
         expect(wwResult.updated.social).toBe(11); // 10 + 1
       });
@@ -1363,7 +1306,8 @@ describe('Job Engine', () => {
         expect(frontlineLB.rewardSocial).toBe(-1);
         expect(frontlineLB.rewardText).toContain('-1 👥');
 
-        const frontlineRes = workShift(player, frontlineJob, 6, advancedRules as any, undefined, 'look_busy');
+        const safeRng = { next: () => 0.99 } as any;
+        const frontlineRes = workShift(player, frontlineJob, 6, advancedRules as any, undefined, 'look_busy', safeRng);
         expect(frontlineRes.success).toBe(true);
         expect(frontlineRes.updated.social).toBe(14); // 15 - 1 = 14
 
@@ -1373,7 +1317,7 @@ describe('Job Engine', () => {
         expect(normalLB.rewardSocial).toBe(0);
         expect(normalLB.rewardText).not.toContain('👥');
 
-        const normalRes = workShift({ ...player, currentJobId: 'office_worker' }, normalJob, 6, advancedRules as any, undefined, 'look_busy');
+        const normalRes = workShift({ ...player, currentJobId: 'office_worker' }, normalJob, 6, advancedRules as any, undefined, 'look_busy', safeRng);
         expect(normalRes.success).toBe(true);
         expect(normalRes.updated.social).toBe(15);
       });
