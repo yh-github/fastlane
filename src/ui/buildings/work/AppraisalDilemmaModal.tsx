@@ -14,13 +14,13 @@ export function AppraisalDilemmaModal({ dilemma, onSelectOption }: AppraisalDile
       className="building-modal-overlay"
       onClick={(e) => e.stopPropagation()}
       style={{
-        position: 'absolute',
+        position: 'fixed',
         top: 0,
-        insetInlineStart: 0,
-        insetInlineEnd: 0,
+        left: 0,
+        right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        zIndex: 1100,
+        zIndex: 9999,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -73,6 +73,10 @@ export function AppraisalDilemmaModal({ dilemma, onSelectOption }: AppraisalDile
               icon = opt.itemType === 'spare_parts' ? '⚙️' : '🏺';
               borderColor = '#a855f7';
               rewardText = opt.itemType === 'spare_parts' ? '1x Spare Parts' : '1x Knick-Knack';
+            } else if (opt.type === 'skill') {
+              icon = '🔬';
+              borderColor = '#f59e0b';
+              rewardText = `+${opt.techSkillAmount || 0} Tech`;
             }
 
             return (

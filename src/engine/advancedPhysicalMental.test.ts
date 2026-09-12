@@ -376,16 +376,19 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(highSocialPlayer.dependability).toBe(52); // 50 + 1 + ceil(50/25)/2 = 52
     });
 
-    it('Innovate: 1.0x Phys, +2 Mental cost, 0.5x wage, rolls 2d2-2 Dep/Exp, requires degree', () => {
-      player.degrees = ['cs_degree'];
+    it('Show Initiative: 1.5x Phys, +2 Mental cost, 0.4x wage, requires +10 Exp', () => {
+      player.currentJobId = 'dev_job';
+      player.currentWage = 20;
+      player.experience = 30; // dev_job requires 20, +10 = 30
       player.physicalCondition = 40;
       player.mentalCondition = 40;
 
-      const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'innovate' }, context);
-      expect(nextPlayer.physicalCondition).toBe(39); // 1 base
-      expect(nextPlayer.mentalCondition).toBe(38); // 0 base + 2 innovate = 2
-      expect(nextPlayer.money).toBe(1000 + 20 * 4); // 80 earned (0.5x wage rate)
-      expect(nextPlayer.dependability + nextPlayer.experience).toBe(50 + 10 + 2); // 2 total stat points gained from 2d2-2 roll
+      const { updatedPlayer: nextPlayer } = gameReducer(player, { type: 'work', jobId: 'dev_job', mode: 'show_initiative' }, context);
+      expect(nextPlayer.physicalCondition).toBe(38.5); // 1.5 base (1 * 1.5)
+      expect(nextPlayer.mentalCondition).toBe(38); // 0 base + 2 initiative = 2
+      expect(nextPlayer.money).toBe(1000 + Math.floor(20 * 8 * 0.4)); // 64 earned (0.4x wage rate)
+      expect(nextPlayer.dependability).toBe(51);
+      expect(nextPlayer.skillMgmt).toBe(0.25);
     });
   });
 
@@ -436,17 +439,17 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(scoreWithMistakes).toBe(scoreNormal - 2);
     });
 
-    it('innovate mistake halts progress and penalizes stats when mental condition is below 10', () => {
+    it('show_initiative mistake halts progress and penalizes stats when mental condition is below 10', () => {
       const job = campaign.jobs[0];
       player.currentJobId = job.id;
       player.currentWage = job.baseWage;
       player.physicalCondition = 50;
       player.mentalCondition = 8; // below 10 -> mistake risk
       player.dependability = 50;
-      player.experience = 10;
+      player.experience = 30; // dev_job requires 20, +10 = 30
       player.degrees = ['cs_degree'];
 
-      // Force innovate mental mistake
+      // Force mental mistake
       const replay = {
         inDecisions: [
           { type: `work_mental_mistake_${player.id}_1`, result: true }
@@ -454,9 +457,9 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
         outDecisions: []
       };
 
-      const result = workShift(player, job, 6, rules, campaign.config.statRules, 'innovate', new Random(1), replay);
+      const result = workShift(player, job, 6, rules, campaign.config.statRules, 'show_initiative', new Random(1), replay);
       expect(result.updated.mentalConditionMax).toBe(49);
-      expect(result.updated.experience).toBe(10); // no XP gain on mistake
+      expect(result.updated.experience).toBe(30); // no XP gain on mistake
     });
 
     it('study mistake halts lesson progress and reduces max stat', () => {
@@ -477,11 +480,11 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
   describe('Dependability Decay & Doctor Emergency Loans', () => {
     it('calcDependabilityDecay uses ceil(D_REQ / 10) for current job requirement', () => {
       // Dev job req is 50 -> ceil(50 / 10) = 5 loss -> 50 - 5 = 45
-      expect(calcDependabilityDecay(50, 50, true)).toBe(45);
+      expect(calcDependabilityDecay(50, ({ dependabilityWeeklyDecay: 3 } as any), 50, true)).toBe(45);
       // Cook job req is 15 -> ceil(15 / 10) = 2 loss -> 50 - 2 = 48
-      expect(calcDependabilityDecay(50, 15, true)).toBe(48);
+      expect(calcDependabilityDecay(50, ({ dependabilityWeeklyDecay: 3 } as any), 15, true)).toBe(48);
       // Unemployed D_REQ = 0 -> default 3 loss -> 50 - 3 = 47
-      expect(calcDependabilityDecay(50, 0, true)).toBe(47);
+      expect(calcDependabilityDecay(50, ({ dependabilityWeeklyDecay: 3 } as any), 0, true)).toBe(47);
     });
 
     it('doctor visits trigger on Physical < 10 and unpaid bills convert to loan debt', () => {

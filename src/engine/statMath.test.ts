@@ -28,58 +28,54 @@ describe('statMath', () => {
   });
 
   it('calcAdvancedJobEmployabilityScore calculates score based on margin, innovations, degrees, social, and economic index', () => {
-    // Base exact match (req: 10 dep, 10 exp; player: 10 dep, 10 exp, 0 deg, 0 innov, 0 soc, 0 econ) -> 45
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 0)).toBe(45);
+    // Base exact match
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10 })).toBe(45);
 
-    // Overqualified: player has 30 dep, 30 exp for 10/10 job -> margin (20 + 20) * 0.5 = +20 -> 65
-    expect(calcAdvancedJobEmployabilityScore(30, 30, 0, 10, 10, 0, 0, 0, 0)).toBe(65);
+    // Overqualified
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 30, experience: 30, degreesCount: 0, jobReqDep: 10, jobReqExp: 10 })).toBe(65);
 
-    // Degrees (+1 each), Innovations (+5 each), Social (+floor(soc/10))
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 2, 10, 10, 1, 0, 30, 0)).toBe(45 + 2 + 5 + 3); // 55
+    // Degrees, Innovations, Social
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 2, jobReqDep: 10, jobReqExp: 10, innovationsAtLocation: 1, social: 30 })).toBe(45 + 2 + 5 + 3);
 
-    // Frontline service doubles social bonus (30 soc -> 2 * 3 = +6)
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 30, 0, false, true)).toBe(45 + 6); // 51
+    // Frontline service
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, social: 30, isFrontline: true })).toBe(45 + 6);
 
-    // Technical job with skillTech (4 skillTech -> effective stats margin + tech bonus floor(4*1.5)=6)
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 0, false, false, 4, true)).toBe(45 + 4 + 6); // 55
+    // Technical job
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, skillTech: 4, isTechnical: true })).toBe(45 + 4 + 6);
 
-    // Management job with skillMgmt (4 skillMgmt -> effective stats margin + mgmt bonus floor(4*1.5)=6)
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 0, false, false, 0, false, 4, true)).toBe(45 + 4 + 6); // 55
+    // Management job
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, skillMgmt: 4, isManagement: true })).toBe(45 + 4 + 6);
 
-    // Economic boom (+60 index -> +6)
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, 60)).toBe(51);
+    // Economic boom
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, economicIndex: 60 })).toBe(51);
 
-    // Economic recession (-30 index): entry job (req <= 20) -> -3
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 0, 0, -30)).toBe(42);
+    // Economic recession entry job
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, economicIndex: -30 })).toBe(42);
 
-    // Economic recession (-30 index): high-tier job (req > 40) -> -12
-    expect(calcAdvancedJobEmployabilityScore(70, 70, 0, 70, 70, 0, 0, 0, -30)).toBe(33);
+    // Economic recession high-tier job
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 70, experience: 70, degreesCount: 0, jobReqDep: 70, jobReqExp: 70, economicIndex: -30 })).toBe(33);
 
-    // Mistakes at location (-1 each)
-    expect(calcAdvancedJobEmployabilityScore(10, 10, 0, 10, 10, 0, 3, 0, 0)).toBe(42);
+    // Mistakes at location
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, mistakesAtLocation: 3 })).toBe(42);
 
-    // Probation (halved)
-    expect(calcAdvancedJobEmployabilityScore(30, 30, 0, 10, 10, 0, 0, 0, 0, true)).toBe(32); // Math.floor(65 / 2) = 32
+    // Probation
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 30, experience: 30, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, isProbation: true })).toBe(32);
   });
 
+  const mockStatRules = { dependabilityWeeklyDecay: 3 } as any;
+
   it('calcDependabilityDecay decays by 3, min 0 in classic', () => {
-    expect(calcDependabilityDecay(10)).toBe(7);
-    expect(calcDependabilityDecay(2)).toBe(0);
+    expect(calcDependabilityDecay(10, mockStatRules)).toBe(7);
+    expect(calcDependabilityDecay(2, mockStatRules)).toBe(0);
   });
 
   it('calcDependabilityDecay in advanced mode with job requirements, social offset, and high downtime', () => {
-    // Unemployed (req=0 -> baseLoss 3): social 0 -> -3
-    expect(calcDependabilityDecay(50, 0, true, 0)).toBe(47);
-    // Job req 50 -> ceil(50/10) = 5 loss. With social 25 (offset 1) -> 5 - 1 = 4 loss
-    expect(calcDependabilityDecay(50, 50, true, 25)).toBe(46);
-    // High downtime: 4 loss halved -> 2 loss
-    expect(calcDependabilityDecay(50, 50, true, 25, true)).toBe(48);
-    // Job req 50 -> 5 loss. With social 75 (offset 3) -> 5 - 3 = 2 loss
-    expect(calcDependabilityDecay(50, 50, true, 75)).toBe(48);
-    // Offset must never reduce loss below 1: Job req 10 -> base 1 loss. Social 99 (offset 3) -> min loss 1
-    expect(calcDependabilityDecay(50, 10, true, 99)).toBe(49);
-    // Unemployed base 3 loss. Social 99 (offset 3) -> min loss 1
-    expect(calcDependabilityDecay(50, 0, true, 99)).toBe(49);
+    expect(calcDependabilityDecay(50, mockStatRules, 0, true, 0)).toBe(47);
+    expect(calcDependabilityDecay(50, mockStatRules, 50, true, 25)).toBe(46);
+    expect(calcDependabilityDecay(50, mockStatRules, 50, true, 25, true)).toBe(48);
+    expect(calcDependabilityDecay(50, mockStatRules, 50, true, 75)).toBe(48);
+    expect(calcDependabilityDecay(50, mockStatRules, 10, true, 99)).toBe(49);
+    expect(calcDependabilityDecay(50, mockStatRules, 0, true, 99)).toBe(49);
   });
 
   it('calcMaxDependability', () => {
@@ -121,10 +117,12 @@ describe('statMath', () => {
   it('calcWealthProgress', () => {
     expect(calcWealthProgress(10000)).toBe(100);
     expect(calcWealthProgress(5000)).toBe(50);
+    expect(calcWealthProgress(200, false)).toBe(0);
+    expect(calcWealthProgress(200, true)).toBe(2);
   });
 
   it('calcEducationProgress', () => {
-    expect(calcEducationProgress(0)).toBe(1);
+    expect(calcEducationProgress(0)).toBe(0);
     expect(calcEducationProgress(11)).toBe(100);
   });
 

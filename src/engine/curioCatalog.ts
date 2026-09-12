@@ -35,3 +35,22 @@ export const CURIO_CATALOG: CurioItem[] = [
   { id: 'curio_morse_telegraph_key', name: 'Vintage Telegraph Key' },
   { id: 'curio_kaleidoscope', name: 'Stained-Glass Kaleidoscope' }
 ];
+
+export interface RareTrinketItem {
+  id: string;
+  name: string;
+  basePrice: number;
+  description: string;
+}
+
+export const RARE_TRINKET_CATALOG: RareTrinketItem[] = [
+  { id: 'trinket_lucky_coin', name: 'Engraved Lucky Coin', basePrice: 5, description: 'An old brass good-luck token. Rubbing its worn edge eases the mind.' },
+  { id: 'trinket_worry_stone', name: 'Smooth River Worry Stone', basePrice: 6, description: 'Cool to the touch. Fiddling with it relieves anxiety and clears your thoughts.' },
+  { id: 'trinket_music_pendant', name: 'Miniature Music Pendant', basePrice: 8, description: 'A delicate pendant that plays a single soothing harmonic chime.' },
+  { id: 'trinket_vintage_photo', name: 'Vintage Sepia Portrait', basePrice: 4, description: 'A portrait from a simpler era. Looking at it gives a quiet sense of perspective.' },
+  { id: 'trinket_quartz_crystal', name: 'Polished Quartz Crystal', basePrice: 7, description: 'A clear prismatic pebble that sparkles brightly when held to the light.' },
+  { id: 'trinket_carved_acorn', name: 'Hand-Carved Wooden Acorn', basePrice: 5, description: 'Smooth polished wood with fine detail, comforting to roll in your palm.' },
+  { id: 'trinket_origami_crane', name: 'Laminated Golden Origami Crane', basePrice: 4, description: 'Folded with intricate care. A reminder of patience and resilience.' },
+  { id: 'trinket_pressed_flower', name: 'Glass-Framed Pressed Clover', basePrice: 6, description: 'A preserved lucky four-leaf clover glowing softly in an antique brass frame.' }
+];
+

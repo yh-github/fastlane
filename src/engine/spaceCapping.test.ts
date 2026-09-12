@@ -1,57 +1,21 @@
+import { type ItemDef } from "./dataLoader";
 import { createTestPlayer } from './testFactories';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { type PlayerState, type GameRules } from './gameState';
-import { type CampaignBundle, type ItemDef } from './dataLoader';
 import { calcUsedSpace, calcHousingSpaceCap } from './statMath';
 import { buyItem } from './shoppingEngine';
 import { gameReducer } from './gameReducer';
 import { processTurnStart } from './turnProcessor';
-import { DEFAULT_GAME_RULES } from './rules';
 import { Random } from '../utils/rng';
 
-const mockCampaign: CampaignBundle = {
+import { createMockCampaign } from './testFactories';
+
+const mockCampaign = createMockCampaign({
   config: {
-    name: 'Advanced Space Test',
-    version: '1.0.0',
-    description: 'Advanced Space Test Description',
-    startingMoney: 5000,
-    winConditions: [],
     gameRules: {
-      ...DEFAULT_GAME_RULES,
       spaceCapping: true,
       trackMess: true,
       helpfulUI: true
-    },
-    timeRules: {
-      hoursPerTurn: 60,
-      workSessionCost: 6,
-      studySessionCost: 6,
-      jobApplicationCost: 4,
-      relaxCost: 6,
-      cleaningServiceCost: 1,
-      socializeCost: 6,
-      starvationPenalty: 20,
-      doctorPenalty: 10,
-      newspaperCost: 1,
-      buildingEntryCost: 2,
-      loanCost: 2,
-      brokerCost: 2
-    },
-    statRules: {
-      startingRelaxation: 50,
-      relaxationDecayRate: 5,
-      relaxationDoctorChance: 0.1
-    },
-    economyRules: {
-      rentGarnishRate: 0.25,
-      rentFee: 0.1,
-      repairCostMin: 0.1,
-      repairCostMax: 0.2,
-      pawnPayoutRate: 0.4,
-      pawnRedeemRate: 0.5
-    },
-    mapRules: {
-      movementCostPerNode: 1
     }
   },
   buildings: [
@@ -90,7 +54,7 @@ const mockCampaign: CampaignBundle = {
   messages: {},
   weekends: { ticketWeekends: {}, durableWeekends: {}, randomWeekends: [] },
   synergies: []
-};
+});
 
 describe('Space Capping Module', () => {
   let player: PlayerState;

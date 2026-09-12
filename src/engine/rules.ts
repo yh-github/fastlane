@@ -82,139 +82,149 @@ export interface GameRules {
    * The relaxation level below which the doctor event triggers.
    * Classic Floppy/CD-ROM: 10. QoL Improved: 10.
    */
-  relaxationDoctorThreshold?: number;
+  relaxationDoctorThreshold: number;
 
   /**
    * If true, prevents built-in appliances (like refrigerators) from being stolen during apartment robberies.
    * Classic Floppy/CD-ROM: false. QoL Improved: false.
    */
-  protectBuiltInAppliances?: boolean;
+  protectBuiltInAppliances: boolean;
 
   /**
    * Allows paying rent manually at any time if you are employed at the same building (the Rent Office).
    * Classic Floppy/CD-ROM: false. QoL Improved: false.
    */
-  allowEmployedRentPayment?: boolean;
+  allowEmployedRentPayment: boolean;
 
   /**
    * If true, completing a 3-book set requires waiting until the next turn for the lesson discount.
    * Classic Floppy/CD-ROM: true. QoL Improved: false.
    */
-  delayBookSetCredit?: boolean;
+  delayBookSetCredit: boolean;
 
   /**
    * If true, allows eating spoiled/expired food (potentially with happiness penalties).
    */
-  allowEatingSpoiledFood?: boolean;
+  allowEatingSpoiledFood: boolean;
 
   /**
    * Reduces the stat padding given by degrees from +5 to +2 for current and max Dep/Exp.
    */
-  reducedDegreeStatBonus?: boolean;
+  reducedDegreeStatBonus: boolean;
 
   /**
    * Maximum number of courses a player can be concurrently enrolled in.
    * Classic Floppy/CD-ROM: 4.
    */
-  maxEnrolledClasses?: number;
+  maxEnrolledClasses: number;
 
   /**
    * If true, displays item graphics next to items in menus and inventory.
    */
-  showItemImages?: boolean;
+  showItemImages: boolean;
 
   /**
    * ADVANCED: If true, apartment robberies are based on a 4-week moving average of time spent at home.
    */
-  useHomeTimeRobbery?: boolean;
+  useHomeTimeRobbery: boolean;
 
   /**
    * ADVANCED: If true, the game tracks Physical and Mental Condition separately instead of a single Relaxation stat.
    */
-  usePhysicalMentalConditions?: boolean;
+  usePhysicalMentalConditions: boolean;
 
   /**
    * The lowest possible value the economic index (reading) can reach.
    */
-  minEconomicReading?: number;
+  minEconomicReading: number;
 
   /**
    * ADVANCED: If true, the player starts their turn at their home node.
    */
-  turnStartAtHome?: boolean;
+  turnStartAtHome: boolean;
 
   /**
    * ADVANCED: If true, tracks 'Mess' at home, allowing cleaning.
    */
-  trackMess?: boolean;
+  trackMess: boolean;
 
   /**
    * If true, stolen refrigerators/freezers don't cause immediate food rot on the turn of theft (1-week grace period).
    */
-  delayRobberyFoodSpoilage?: boolean;
+  delayRobberyFoodSpoilage: boolean;
 
   /**
    * If true, unqualified job applications in early weeks (turns 1-4) return 'No openings' instead of explicit missing requirements.
    * Classic Floppy/CD-ROM: true. QoL / Advanced: false.
    */
-  maskEarlyJobRejections?: boolean;
+  maskEarlyJobRejections: boolean;
 
   /**
    * ADVANCED: If true, degree education is tracked on a 0-100% continuous progress scale instead of integer classes.
    */
-  percentageEducation?: boolean;
+  percentageEducation: boolean;
 
   /**
    * ADVANCED: If true, continuous/divisible actions (Work, Study, Relax, Clean) scale gains and stamina costs proportionally when hours are below standard cost.
    */
-  proportionalDivisibleActions?: boolean;
+  proportionalDivisibleActions: boolean;
 
   /**
    * ADVANCED: Step resolution for physical and mental condition scores (default 0.5 for half points).
    */
-  conditionResolution?: number;
+  conditionResolution: number;
 
   /**
    * ADVANCED: Decimal resolution for percentage education progress (default 0.1).
    */
-  educationResolution?: number;
+  educationResolution: number;
 
   /**
    * ADVANCED: If true, limits inventory durables and mess by housing space capacity.
    */
-  spaceCapping?: boolean;
+  spaceCapping: boolean;
 
   /**
    * If true, switching to a new job grants +2 Experience immediately.
    * Classic Floppy/CD-ROM: true. Advanced: false.
    */
-  grantExpOnJobSwitch?: boolean;
+  grantExpOnJobSwitch: boolean;
 
   /**
    * ADVANCED: If true, alternative card-based weekend choices are presented instead of automated classic weekend events.
    */
-  alternativeWeekends?: boolean;
+  alternativeWeekends: boolean;
 
   /**
    * ADVANCED: If true, uses the card-based GUI and visual apartment showcase for Home.
    */
-  advancedHomeGUI?: boolean;
+  advancedHomeGUI: boolean;
 
   /**
    * QoL & ADVANCED: Adjusts pawn redemption and clearance prices dynamically with the economy to prevent infinite-money same-turn arbitrage.
    */
-  preventPawnArbitrage?: boolean;
+  preventPawnArbitrage: boolean;
 
   /**
    * ADVANCED: Appliances break instead of auto-repairing for money, requiring manual repair, service, or disposal.
    */
-  advancedMaintenance?: boolean;
+  advancedMaintenance: boolean;
+
+  /**
+   * ADVANCED: If true, displays job archetype tags (Always Hiring, Frontline Service, Technical, etc.) in the Employment Office.
+   */
+  showJobTags: boolean;
+
+  /**
+   * ADVANCED: If true, enables the Dusty Junk Bins & Crates rummage section in the Pawn Shop.
+   */
+  pawnRummageBins: boolean;
 }
 
 export interface EventRules {
   marketCrashDivisor: number;
-  marketCrashThreshold?: number;
-  economicBoomDivisor?: number;
+  marketCrashThreshold: number;
+  economicBoomDivisor: number;
   willyRobberyStartWeek: number;
   charity: {
     maxCash: number;
@@ -234,68 +244,78 @@ export function requireConfig<T>(value: T | undefined | null, name: string): T {
 }
 
 export interface StatRules {
-  startingHappiness?: number;
-  startingRelaxation?: number;
-  relaxationDecayRate?: number;
-  relaxationDoctorChance?: number;
+  startingHappiness: number;
+  startingRelaxation: number;
+  relaxationDecayRate: number;
+  relaxationDoctorChance: number;
   
   // Advanced mechanics
-  enableAdvancedStats?: boolean;
-  mentalWarningThreshold?: number;
-  physicalWarningThreshold?: number;
-  startingPhysicalCondition?: number;
-  startingMentalCondition?: number;
-  minPhysicalCondition?: number;
-  maxPhysicalCondition?: number;
-  minMentalCondition?: number;
-  maxMentalCondition?: number;
-  globalMaxMentalCondition?: number;
-  physicalDoctorThreshold?: number;
-  physicalDoctorChancePerPoint?: number;
-  doctorVisitPhysicalThreshold?: number;
-  doctorVisitPhysicalChancePerPoint?: number;
-  hotTubMaxMessBonus?: number;
-  lowSpiritsThreshold?: number;
-  lowSpiritsChancePerPoint?: number;
-  workGrindThreshold?: number;
-  workGrindMentalCost?: number;
-  workGrindPhysicalCost?: number;
-  workPhysicalCost?: number;
-  workNormalMentalCost?: number;
-  workOvertimeThreshold?: number;
-  workOvertimePhysicalCost?: number;
-  workOvertimeMentalCost?: number;
-  studyMentalCost?: number;
-  studyNormalMentalCost?: number;
-  studyNormalPhysicalCost?: number;
-  studyGrindThreshold?: number;
-  studyGrindMentalCost?: number;
-  studyGrindPhysicalCost?: number;
-  studyOvertimeThreshold?: number;
-  studyOvertimeMentalCost?: number;
-  studyOvertimePhysicalCost?: number;
-  resilienceDropThreshold?: number;
-  cleanPhysicalCost?: number;
+  enableAdvancedStats: boolean;
+  mentalWarningThreshold: number;
+  physicalWarningThreshold: number;
+  startingPhysicalCondition: number;
+  startingMentalCondition: number;
+  minPhysicalCondition: number;
+  maxPhysicalCondition: number;
+  minMentalCondition: number;
+  maxMentalCondition: number;
+  globalMaxMentalCondition: number;
+  physicalDoctorThreshold: number;
+  physicalDoctorChancePerPoint: number;
+  doctorVisitPhysicalThreshold: number;
+  doctorVisitPhysicalChancePerPoint: number;
+  hotTubMaxMessBonus: number;
+  lowSpiritsThreshold: number;
+  lowSpiritsChancePerPoint: number;
+  workGrindThreshold: number;
+  workGrindMentalCost: number;
+  workGrindPhysicalCost: number;
+  workPhysicalCost: number;
+  workNormalMentalCost: number;
+  workOvertimeThreshold: number;
+  workOvertimePhysicalCost: number;
+  workOvertimeMentalCost: number;
+  studyMentalCost: number;
+  studyNormalMentalCost: number;
+  studyNormalPhysicalCost: number;
+  studyGrindThreshold: number;
+  studyGrindMentalCost: number;
+  studyGrindPhysicalCost: number;
+  studyOvertimeThreshold: number;
+  studyOvertimeMentalCost: number;
+  studyOvertimePhysicalCost: number;
+  resilienceDropThreshold: number;
+  cleanPhysicalCost: number;
   // Advanced feature bundle configuration
-  initialPhysicalMax?: number;
-  initialMinPhysical?: number;
-  globalPhysicalMin?: number;
-  minMaxPhysical?: number;
-  globalMessMax?: number;
-  lowCostMessMax?: number;
-  securityMessMax?: number;
-  initialMessMin?: number;
-  globalMessMin?: number;
-  startingSocial?: number;
-  minSocial?: number;
-  maxSocial?: number;
-  relaxMessIncrease?: number;
-  doctorPhysicalBounceBack?: number;
-  starvationMaxPhysicalPenalty?: number;
-  lowSpiritsMentalBounceBack?: number;
-  globalMaxPhysicalCondition?: number;
-  mentalMaxBaseValue?: number;
-  mentalMaxDegreeBonus?: number;
+  initialPhysicalMax: number;
+  initialMinPhysical: number;
+  globalPhysicalMin: number;
+  minMaxPhysical: number;
+  globalMessMax: number;
+  lowCostMessMax: number;
+  securityMessMax: number;
+  initialMessMin: number;
+  globalMessMin: number;
+  startingSocial: number;
+  minSocial: number;
+  maxSocial: number;
+  relaxMessIncrease: number;
+  doctorPhysicalBounceBack: number;
+  starvationMaxPhysicalPenalty: number;
+  lowSpiritsMentalBounceBack: number;
+  globalMaxPhysicalCondition: number;
+  mentalMaxBaseValue: number;
+  mentalMaxDegreeBonus: number;
+  
+  // Starting values
+  startingExperience: number;
+  startingDependability: number;
+  startingCasualClothesWeeks: number;
+  
+  // Caps and limits
+  maxExperience: number;
+  maxDependability: number;
+  dependabilityWeeklyDecay: number;
 }
 
 export interface WinCondition {
@@ -311,15 +331,15 @@ export interface TimeRules {
   studySessionCost: number;
   jobApplicationCost: number;
   relaxCost: number;
-  relaxGain?: number;
+  relaxGain: number;
   newspaperCost: number;
   starvationPenalty: number;
   doctorPenalty: number;
-  burnoutPenalty?: number;
+  burnoutPenalty: number;
   loanCost: number;
   brokerCost: number;
-  cleaningServiceCost?: number;
-  socializeCost?: number;
+  cleaningServiceCost: number;
+  socializeCost: number;
 }
 
 export interface EconomyRules {
@@ -329,18 +349,18 @@ export interface EconomyRules {
   repairCostMax: number;
   pawnPayoutRate: number;
   pawnRedeemRate: number;
-  bankTransactionIncrementSmall?: number;
-  bankTransactionIncrementLarge?: number;
-  loanPaymentAmount?: number;
-  loanInterestAmount?: number;
-  loanPrincipalAmount?: number;
-  cleaningServiceBasePrice?: number;
-  socializeLowCostCashCost?: number;
-  socializeSecurityCashCost?: number;
-  socializePenthouseCashCost?: number;
-  moveFeeMessThreshold?: number;
-  moveFeeMessRate?: number;
-  moveFeeDurableRate?: number;
+  bankTransactionIncrementSmall: number;
+  bankTransactionIncrementLarge: number;
+  loanPaymentAmount: number;
+  loanInterestAmount: number;
+  loanPrincipalAmount: number;
+  cleaningServiceBasePrice: number;
+  socializeLowCostCashCost: number;
+  socializeSecurityCashCost: number;
+  socializePenthouseCashCost: number;
+  moveFeeMessThreshold: number;
+  moveFeeMessRate: number;
+  moveFeeDurableRate: number;
 }
 
 /**
@@ -350,7 +370,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   strictEviction: false,
   fluctuatingRent: false,
   clothingDecaysAll: true,
-  autoEquipBestClothes: false,
+  autoEquipBestClothes: true,
   classicStockMarket: true,
   allowPartialHours: true,
   enableRelaxationDoctor: true,
@@ -375,6 +395,17 @@ export const DEFAULT_GAME_RULES: GameRules = {
   alternativeWeekends: false,
   preventPawnArbitrage: false,
   advancedMaintenance: false,
+  showJobTags: false,
+  pawnRummageBins: false,
+  useHomeTimeRobbery: false,
+  usePhysicalMentalConditions: false,
+  minEconomicReading: -90,
+  trackMess: false,
+  percentageEducation: false,
+  proportionalDivisibleActions: false,
+  conditionResolution: 0.5,
+  educationResolution: 0.1,
+  advancedHomeGUI: false,
 };
 
 /**
@@ -382,6 +413,8 @@ export const DEFAULT_GAME_RULES: GameRules = {
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
   advancedMaintenance: 'Appliances break instead of auto-repairing for money, requiring manual repair, service, or disposal',
+  showJobTags: 'Displays job archetype tags (Always Hiring, Frontline Service, Technical, etc.) in the Employment Office',
+  pawnRummageBins: 'Enables Dusty Junk Bins & Crates section in the Pawn Shop for rummaging bargains, curios, and spare parts',
   strictEviction: 'Warns at 1 month rent debt and evicts from apartment at >2 months debt',
   preventPawnArbitrage: 'Prevents infinite-money exploits by adjusting pawn redemption and clearance prices with the economic index',
   fluctuatingRent: 'Rent rates adjust dynamically with economic index changes',
@@ -490,6 +523,9 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   studyOvertimeMentalCost: 'Mental condition lost per study session during Hyper-Accelerating (action 8+)',
   studyOvertimePhysicalCost: 'Physical condition lost per study session during Hyper-Accelerating (action 8+)',
   resilienceDropThreshold: 'Single-event mental drop threshold required to award a permanent resilience bonus (e.g. 3)',
-  cleanPhysicalCost: 'Physical condition lost per cleaning action'
+  cleanPhysicalCost: 'Physical condition lost per cleaning action',
+  startingCasualClothesWeeks: 'Initial durability in weeks of starting casual clothes',
+  startingExperience: 'Initial work experience points at campaign start',
+  startingDependability: 'Initial dependability points at campaign start'
 };
 

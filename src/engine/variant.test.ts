@@ -6,6 +6,7 @@ import { buyItem } from './shoppingEngine';
 import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 import { Random } from '../utils/rng';
+import { DEFAULT_GAME_RULES } from './rules';
 
 describe('Game Variant mechanics', () => {
   const dummyCampaign = {
@@ -43,7 +44,7 @@ describe('Game Variant mechanics', () => {
   const getDummyState = (): GameState => ({
     turn: 4, economicIndex: 0, economicTrend: 0, pawnShopItemsForSale: [], players: [], phase: 'turn-start',
     campaignId: 'classic', rngState: 12345,
-    rules: { strictEviction: false, fluctuatingRent: false, clothingDecaysAll: false, autoEquipBestClothes: false, classicStockMarket: true, allowPartialHours: true, enableRelaxationDoctor: false, requireJobForLoan: false, helpfulUI: false, enableAnimations: false, allowOverAchievingGoals: false, bypassDoctorIfBroke: true, relaxationDoctorThreshold: 10 },
+    rules: DEFAULT_GAME_RULES,
     winnerId: null
   });
 

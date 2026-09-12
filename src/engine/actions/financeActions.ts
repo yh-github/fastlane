@@ -92,6 +92,7 @@ export function handleSellStockAction(
       nextPlayer.inventory.stocks.holdings[action.stockId] -= action.quantity;
     }
     nextPlayer.money += action.revenue;
+    nextPlayer.hasEarnedIncome = true;
     actionLog = { key: 'action.broker.sell', params: { quantity: action.quantity, stockId: action.stockId } };
   } else {
     actionLog = { key: 'action.error.notEnoughShares' };

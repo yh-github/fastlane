@@ -25,7 +25,6 @@ interface DashboardProps {
   onOpenSettings: () => void;
 }
 
-import { calcEffectiveRobberyChance, calcTheoreticalRobberyChance } from '../engine/statMath';
 
 export function Dashboard({
   player,
@@ -44,7 +43,8 @@ export function Dashboard({
 
   let education = calcEducationProgress(player.degrees.length);
   let career = calcCareerProgress(player.dependability, player.currentJobId !== null);
-  let wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn));
+  const hasEarnedIncome = player.hasEarnedIncome ?? (turn > 1 || !!player.turnFlags?.hasWorked);
+  let wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn), hasEarnedIncome);
   let lifestyle = player.lifestyle || 0;
   let wellbeing = calcWellbeingScore(player.physicalCondition ?? 50, player.mentalCondition ?? 25);
 
@@ -93,12 +93,6 @@ export function Dashboard({
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);
   const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
 
-  const homeHistory = [...(player.homeTimeHistory || []), player.homeTimeThisTurn || 0];
-  const homeTimeAvg = homeHistory.length > 0 ? (homeHistory.reduce((a, b) => a + b, 0) / homeHistory.length) : 0;
-  const willyStartWeek = campaign?.config?.eventRules?.willyRobberyStartWeek ?? 4;
-  const isWillyActive = turn >= willyStartWeek;
-  const theoreticalRobbery = calcTheoreticalRobberyChance(player, gameState.rules);
-  const effectiveRobbery = calcEffectiveRobberyChance(player, gameState.rules, turn, campaign);
 
   const handleFilterToggle = (filter: GoalFilter) => {
     if (!onSelectLogFilter) return;
@@ -201,22 +195,6 @@ export function Dashboard({
             >
                <strong>{t('stat.physicalCondition')}:</strong> {Math.floor(player.physicalCondition || 0)}
             </div>
-            {gameState.rules.useHomeTimeRobbery && (
-              <div>
-                <strong>🏠 {t('stat.homeTime', 'Home Time')}:</strong> {Math.round(homeTimeAvg)}h/wk
-              </div>
-            )}
-            <div>
-              <strong>🏠 {t('stat.breakInChance', 'Break-in Risk')}:</strong> {
-                !isWillyActive && theoreticalRobbery > 0 ? (
-                  <span style={{ color: '#888', fontStyle: 'italic' }} title={`Theoretical risk based on home time (Inactive until Week ${willyStartWeek})`}>
-                    {(theoreticalRobbery * 100).toFixed(1)}%
-                  </span>
-                ) : (
-                  `${(effectiveRobbery * 100).toFixed(1)}%`
-                )
-              }
-            </div>
             {gameState.rules.spaceCapping && (
               <div 
                 title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess || 0} space`}
@@ -241,22 +219,6 @@ export function Dashboard({
               <strong>{t('stat.relaxation')}:</strong> {Math.floor(player.relaxation || 0)}
             </div>
           )}
-          {gameState.rules.useHomeTimeRobbery && (
-            <div>
-              <strong>🏠 {t('stat.homeTime', 'Home Time')}:</strong> {Math.round(homeTimeAvg)}h/wk
-            </div>
-          )}
-          <div>
-            <strong>🏠 {t('stat.breakInChance', 'Break-in Risk')}:</strong> {
-              !isWillyActive && theoreticalRobbery > 0 ? (
-                <span style={{ color: '#888', fontStyle: 'italic' }} title={`Theoretical risk (Inactive until Week ${willyStartWeek})`}>
-                  {(theoreticalRobbery * 100).toFixed(1)}%
-                </span>
-              ) : (
-                `${(effectiveRobbery * 100).toFixed(1)}%`
-              )
-            }
-          </div>
         </div>
       )}
 
@@ -326,26 +288,6 @@ export function Dashboard({
             </>
           );
         })()}
-        {(gameState.rules.useHomeTimeRobbery || gameState.rules.helpfulUI) && (
-          <StatBadge 
-            label={t('dashboard.home', { defaultValue: 'HOME' })} 
-            value={
-              <>
-                {Math.round(homeTimeAvg)}h {
-                  !isWillyActive && theoreticalRobbery > 0 ? (
-                    <span style={{ color: '#aaa', fontStyle: 'italic' }} title={`Theoretical risk based on home time (Inactive until Week ${willyStartWeek})`}>
-                      ({(theoreticalRobbery * 100).toFixed(1)}%)
-                    </span>
-                  ) : (
-                    `(${(effectiveRobbery * 100).toFixed(1)}%)`
-                  )
-                }
-              </>
-            } 
-            icon="🏠" 
-            id="stat-home-risk" 
-          />
-        )}
         <StatBadge label={t('dashboard.victory', { defaultValue: 'Victory' })} value={`${victoryPercent}%`} icon="🏆" id="stat-victory" />
         {(campaign?.config.winConditions || [
           { stat: 'happiness', label: 'Happiness' },

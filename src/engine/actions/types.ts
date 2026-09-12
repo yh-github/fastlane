@@ -7,7 +7,7 @@ export type PawnableItem = OwnedAppliance | { id: string; purchasePrice: number;
 
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
-  | { type: 'work'; jobId: string; mode?: 'look_busy' | 'work_work' | 'face_time' | 'innovate' }
+  | { type: 'work'; jobId: string; mode?: 'look_busy' | 'work_work' | 'face_time' | 'innovate' | 'show_initiative' }
   | { type: 'buy'; itemId: string }
   | { type: 'enroll'; degreeId: string }
   | { type: 'study'; degreeId: string }
@@ -31,7 +31,13 @@ export type GameAction =
   | { type: 'call_cleaning_service' }
   | { type: 'socialize_guests' }
   | { type: 'appliance_maintenance'; applianceId: string; option: 'diy' | 'repairman' | 'throw_out' }
-  | { type: 'resolve_appraisal_dilemma'; choiceIndex: number };
+  | { type: 'pawn_knick_knacks'; count: number; valuePerItem: number }
+  | { type: 'resolve_appraisal_dilemma'; choiceIndex: number }
+  | { type: 'rummage_pawn_shop' }
+  | { type: 'buy_rummage_item'; itemIndex?: number }
+  | { type: 'buy_pawn_rummage_item'; itemIndex?: number }
+  | { type: 'close_rummage' }
+  | { type: 'pass_pawn_rummage' };
 
 export interface ReducerContext {
   campaign: CampaignBundle;

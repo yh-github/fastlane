@@ -15,6 +15,13 @@ export function getAvailableActions(
   campaign: CampaignBundle, 
   isInside: boolean
 ): ActionChoice[] {
+  if (player.pendingAppraisalDilemma) {
+    return player.pendingAppraisalDilemma.options.map((opt, idx) => ({
+      label: `Dilemma: ${opt.title}`,
+      action: { type: 'resolve_appraisal_dilemma', choiceIndex: idx }
+    }));
+  }
+
   const options: ActionChoice[] = [];
   const helpful = state.rules.helpfulUI;
   const currentNode = campaign.map.nodes.find(n => n.id === player.position);

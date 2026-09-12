@@ -172,6 +172,21 @@ body {
   height: 100%;
 }
 
+.building-modal:has(.home-basic-panel) .building-modal__content {
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+.building-modal:has(.home-basic-panel) .building-modal__content > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+}
+
 .building-modal__face {
   font-size: 3rem;
   line-height: 1;

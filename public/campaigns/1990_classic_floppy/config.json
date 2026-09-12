@@ -41,10 +41,13 @@
     "movementCostPerNode": 0.5
   },
   "statRules": {
-    "startingHappiness": 10,
-    "startingRelaxation": 16,
+    "startingHappiness": 0,
+    "startingRelaxation": 25,
     "relaxationDecayRate": 1,
-    "relaxationDoctorChance": 0.20
+    "relaxationDoctorChance": 0.20,
+    "startingExperience": 10,
+    "startingDependability": 20,
+    "startingCasualClothesWeeks": 6
   },
   "eventRules": {
     "marketCrashDivisor": 20,

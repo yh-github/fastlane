@@ -9,8 +9,11 @@ describe('Campaign Referential & Structural Integrity Audit', () => {
     describe(`Campaign: ${campaignId}`, () => {
       let campaign: CampaignBundle;
 
-      it('loads campaign bundle without errors', async () => {
+      beforeAll(async () => {
         campaign = await loadCampaign(campaignId);
+      });
+
+      it('loads campaign bundle without errors', () => {
         expect(campaign).toBeDefined();
         expect(campaign.config).toBeDefined();
         expect(campaign.config.name).toBeTruthy();
@@ -20,8 +23,7 @@ describe('Campaign Referential & Structural Integrity Audit', () => {
         expect(campaign.housing.length).toBeGreaterThan(0);
       });
 
-      it('verifies map nodes, bidirectional connectivity, and full graph reachability', async () => {
-        if (!campaign) campaign = await loadCampaign(campaignId);
+      it('verifies map nodes, bidirectional connectivity, and full graph reachability', () => {
         const nodes = campaign.map.nodes;
         const nodeMap = new Map<string, MapNode>();
         nodes.forEach((n) => nodeMap.set(n.id, n));
@@ -139,6 +141,11 @@ describe('Campaign Referential & Structural Integrity Audit', () => {
             `Job "${job.id}" references non-existent locationId "${locId}"`
           ).toBe(true);
 
+          expect(job.requirements, `Job "${job.id}" missing requirements`).toBeDefined();
+          expect(typeof job.requirements.experience).toBe('number');
+          expect(typeof job.requirements.dependability).toBe('number');
+          expect(job.requirements.uniform).toBeTruthy();
+
           if (job.requirements?.degrees) {
             for (const degId of job.requirements.degrees) {
               expect(
@@ -214,6 +221,18 @@ describe('Campaign Referential & Structural Integrity Audit', () => {
             }
           }
         }
+      });
+
+      it('verifies valid player state initialization from campaign config', async () => {
+        if (!campaign) campaign = await loadCampaign(campaignId);
+        const { createPlayerState, createDefaultGoalAllotment } = await import('../src/engine/stateFactories');
+        const player = createPlayerState('p1', 'Player 1', false, createDefaultGoalAllotment(), 'apartment_complex', campaign.config);
+        
+        expect(typeof player.money).toBe('number');
+        expect(typeof player.dependability).toBe('number');
+        expect(typeof player.experience).toBe('number');
+        expect(typeof player.happiness).toBe('number');
+        expect(typeof player.relaxation).toBe('number');
       });
     });
   });

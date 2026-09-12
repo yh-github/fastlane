@@ -27,8 +27,12 @@ import {
   handlePawnItemAction,
   handleRedeemItemAction,
   handleBuyPawnItemAction,
+  handlePawnKnickKnacksAction,
   handleApplianceMaintenanceAction,
-  handleResolveAppraisalDilemmaAction
+  handleResolveAppraisalDilemmaAction,
+  handleRummagePawnShopAction,
+  handleBuyRummageItemAction,
+  handleCloseRummageAction
 } from './actions';
 
 export type { GameAction, ReducerContext, ReducerResult } from './actions';
@@ -46,6 +50,14 @@ export function gameReducer(
     inDecisions: context.engineDecisions,
     outDecisions: outEngineDecisions
   };
+
+  // If there's a pending dilemma, block all other actions until resolved
+  if (player.pendingAppraisalDilemma && action.type !== 'resolve_appraisal_dilemma') {
+    return {
+      updatedPlayer: nextPlayer,
+      actionLog: { key: 'action.error.mustResolveDilemma' }
+    };
+  }
 
   let res;
   switch (action.type) {
@@ -124,8 +136,22 @@ export function gameReducer(
     case 'appliance_maintenance':
       res = handleApplianceMaintenanceAction(nextPlayer, action, context, replayContext);
       break;
+    case 'pawn_knick_knacks':
+      res = handlePawnKnickKnacksAction(nextPlayer, action, context);
+      break;
     case 'resolve_appraisal_dilemma':
       res = handleResolveAppraisalDilemmaAction(nextPlayer, action, context);
+      break;
+    case 'rummage_pawn_shop':
+      res = handleRummagePawnShopAction(nextPlayer, action, context);
+      break;
+    case 'buy_pawn_rummage_item':
+    case 'buy_rummage_item':
+      res = handleBuyRummageItemAction(nextPlayer, action, context);
+      break;
+    case 'pass_pawn_rummage':
+    case 'close_rummage':
+      res = handleCloseRummageAction(nextPlayer, action, context);
       break;
   }
 

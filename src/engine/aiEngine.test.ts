@@ -92,6 +92,7 @@ describe('AI Engine', () => {
     aiPlayer.inventory.freshFoodUnits = 10; 
     aiPlayer.rentPaidUntilWeek = 10; 
     aiPlayer.inventory.casualClothesWeeks = 10; 
+    aiPlayer.happiness = 25;
     aiPlayer.money = 500;
     aiPlayer.hoursRemaining = 60;
     aiPlayer.currentJobId = 'job_clerk';

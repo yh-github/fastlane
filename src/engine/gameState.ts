@@ -7,6 +7,7 @@
 
 import type { GameRules } from './rules';
 import type { DebugQueuedEvent } from './debugEvents';
+import type { ItemDef } from './dataLoader';
 
 // ─── Core Game State ────────────────────────────────────────────
 
@@ -78,7 +79,7 @@ export interface PlayerState {
   loanPaymentDeadline: number;
 
   // ── Core Stats ──
-  /** Happiness: 10–100. Drives the Happiness goal. */
+  /** Happiness: 0–100. Drives the Happiness goal. */
   happiness: number;
   /** Experience: starts at 10. Required for job applications. Never decreases. */
   experience: number;
@@ -91,13 +92,15 @@ export interface PlayerState {
   /** Relaxation: hidden stat. Affects robbery chance at home. */
   relaxation: number;
 
-  // ── Employment ──
+  // ── Employment & Income ──
   /** Current job ID (null if unemployed) */
   currentJobId: string | null;
   /** Current locked-in hourly wage (set at hire, persists through economy changes) */
   currentWage: number;
   /** Number of raises received at current job (resets on job change) */
   raisesAtCurrentJob: number;
+  /** Whether the player has earned any income/wages this game (activates wealth goal progress) */
+  hasEarnedIncome?: boolean;
 
   // ── Housing ──
   /** Current housing tier ID */
@@ -170,12 +173,16 @@ export interface PlayerState {
   xpMaxBonus?: number;
   innovationCount?: number;
   innovationsByLocation?: Record<string, number>;
+  initiativesByLocation?: Record<string, number>;
   workMistakesThisTurn?: number;
   skillTech?: number;
   skillMgmt?: number;
 
   /** Pending appraisal dilemma options when working as Counter Appraiser */
   pendingAppraisalDilemma?: AppraisalDilemmaState | null;
+
+  /** Pending rummaged pawn shop items offered for 1-item purchase */
+  pendingPawnRummage?: ItemDef[] | null;
 
   // ── Alternative Weekend Card System ──
   weekendDecks?: {
@@ -263,12 +270,13 @@ export interface InventoryState {
 }
 
 export interface AppraisalDilemmaOption {
-  type: 'cash' | 'standing' | 'item';
+  type: 'cash' | 'standing' | 'item' | 'skill';
   title: string;
   description: string;
   cashAmount?: number;
   depAmount?: number;
   mentalAmount?: number;
+  techSkillAmount?: number;
   itemType?: 'knick_knack' | 'spare_parts';
 }
 

@@ -1,4 +1,4 @@
-import type { CampaignBundle } from './dataLoader';
+import type { CampaignBundle, CampaignConfig } from './dataLoader';
 import { type GameRules, DEFAULT_GAME_RULES } from './rules';
 import { calcMaxMental } from './statMath';
 import type {
@@ -10,15 +10,8 @@ import type {
   PlayerConfig
 } from './gameState';
 
-export const STARTING_EXPERIENCE = 10;
-export const STARTING_DEPENDABILITY = 20;
-export const STARTING_HAPPINESS = 50;
-export const STARTING_RELAXATION = 16;
-export const STARTING_CASUAL_CLOTHES_WEEKS = 6;
-
 export const MIN_HAPPINESS = 10;
 export const MAX_HAPPINESS = 100;
-export const DEPENDABILITY_WEEKLY_DECAY = 3;
 
 export function createDefaultTurnFlags(): TurnFlags {
   return {
@@ -46,10 +39,10 @@ export function createDefaultTurnFlags(): TurnFlags {
   };
 }
 
-export function createDefaultInventory(): InventoryState {
+export function createDefaultInventory(config?: CampaignConfig): InventoryState {
   return {
     selectedClothes: 'casual',
-    casualClothesWeeks: STARTING_CASUAL_CLOTHES_WEEKS,
+    casualClothesWeeks: config?.statRules?.startingCasualClothesWeeks ?? 6,
     dressClothesWeeks: 0,
     businessClothesWeeks: 0,
     freshFoodUnits: 0,
@@ -77,28 +70,29 @@ export function createPlayerState(
   isAi: boolean,
   goals: GoalAllotment,
   startNode: string,
-  config: any
+  config: CampaignConfig
 ): PlayerState {
   return {
     id,
     name,
     isAi,
-    hoursRemaining: config.timeRules?.hoursPerTurn || 60,
-    money: config.startingMoney || 200,
+    hoursRemaining: config.timeRules?.hoursPerTurn ?? 60,
+    money: config.startingMoney ?? 200,
     bankSavings: 0,
     rentDebt: 0,
     loanDebt: 0,
     timesDefaulted: 0,
     loanPaymentDeadline: 0,
-    happiness: config.statRules?.startingHappiness ?? STARTING_HAPPINESS,
-    experience: STARTING_EXPERIENCE,
-    dependability: STARTING_DEPENDABILITY,
+    happiness: config.statRules?.startingHappiness ?? 0,
+    experience: config.statRules?.startingExperience ?? 10,
+    dependability: config.statRules?.startingDependability ?? 20,
     degreeExpBoost: 0,
     degreeDepBoost: 0,
-    relaxation: config.statRules?.startingRelaxation ?? STARTING_RELAXATION,
+    relaxation: config.statRules?.startingRelaxation ?? 25,
     currentJobId: null,
     currentWage: 0,
     raisesAtCurrentJob: 0,
+    hasEarnedIncome: false,
     currentHousingId: 'low_cost',
     currentRentPrice: 325, // Default base for low_cost
     rentPaidUntilWeek: 4,
@@ -107,7 +101,7 @@ export function createPlayerState(
     rentExtensionsDeniedPermanently: false,
     degrees: [],
     enrolledClasses: {},
-    inventory: createDefaultInventory(),
+    inventory: createDefaultInventory(config),
     nakedTurns: 0,
     position: startNode,
     goalAllotment: goals,
@@ -122,7 +116,7 @@ export function createPlayerState(
       const initMaxPhys = config.statRules?.initialPhysicalMax ?? 50;
       return {
         physicalConditionMax: initMaxPhys,
-        minPhysicalCondition: config.statRules?.initialMinPhysical ?? config.statRules?.minPhysicalCondition ?? 3,
+        minPhysicalCondition: config.statRules?.minPhysicalCondition ?? 1,
         physicalCondition: config.statRules?.startingPhysicalCondition ?? initMaxPhys,
         mentalConditionMax: initMaxMental,
         mentalCondition: config.statRules?.startingMentalCondition ?? initMaxMental,

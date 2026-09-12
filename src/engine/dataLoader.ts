@@ -24,9 +24,9 @@ export interface CampaignConfig {
   timeRules: TimeRules;
   economyRules: EconomyRules;
   mapRules: Record<string, unknown>;
-  statRules?: StatRules;
-  eventRules?: EventRules;
-  gameRules?: Partial<GameRules>;
+  statRules: StatRules;
+  eventRules: EventRules;
+  gameRules: GameRules;
   baseCampaign?: string;
 }
 
@@ -92,6 +92,7 @@ export interface ItemDef {
   isFixedPrice?: boolean;
   effects?: ItemEffect[];
   space?: number;
+  description?: string;
 }
 
 export interface EducationDef {
@@ -280,6 +281,52 @@ function validateConfig(config: unknown): asserts config is CampaignConfig {
   if (typeof c.name !== 'string') throw new Error('config.json: missing "name"');
   if (typeof c.startingMoney !== 'number') throw new Error('config.json: missing "startingMoney"');
   if (!Array.isArray(c.winConditions)) throw new Error('config.json: missing "winConditions"');
+  if (!c.timeRules) throw new Error('config.json: missing "timeRules"');
+  if (!c.economyRules) throw new Error('config.json: missing "economyRules"');
+  if (!c.statRules) throw new Error('config.json: missing "statRules"');
+  if (!c.eventRules) throw new Error('config.json: missing "eventRules"');
+  if (!c.gameRules) throw new Error('config.json: missing "gameRules"');
+  
+  const sr = c.statRules as Record<string, unknown>;
+  if (typeof sr.startingHappiness !== 'number') throw new Error('config.json: missing "statRules.startingHappiness"');
+  if (typeof sr.startingExperience !== 'number') throw new Error('config.json: missing "statRules.startingExperience"');
+  if (typeof sr.startingDependability !== 'number') throw new Error('config.json: missing "statRules.startingDependability"');
+}
+
+function validateBundle(bundle: CampaignBundle) {
+  validateConfig(bundle.config);
+  
+  for (const job of bundle.jobs) {
+    if (!job.requirements) throw new Error(`Job ${job.id} missing requirements`);
+    if (typeof job.requirements.experience !== 'number') throw new Error(`Job ${job.id} missing requirements.experience`);
+    if (typeof job.requirements.dependability !== 'number') throw new Error(`Job ${job.id} missing requirements.dependability`);
+    if (!Array.isArray(job.requirements.degrees)) throw new Error(`Job ${job.id} missing requirements.degrees`);
+    if (typeof job.baseWage !== 'number') throw new Error(`Job ${job.id} missing baseWage`);
+  }
+
+  for (const item of bundle.items) {
+    if (!item.id || !item.name) throw new Error(`Item missing id or name`);
+    if (!item.category) throw new Error(`Item ${item.id} missing category`);
+    if (typeof item.happinessBonus !== 'number') throw new Error(`Item ${item.id} missing happinessBonus`);
+  }
+
+  for (const house of bundle.housing) {
+    if (!house.id || !house.name) throw new Error(`Housing missing id or name`);
+    if (typeof house.baseRent !== 'number') throw new Error(`Housing ${house.id} missing baseRent`);
+    if (!house.homeNodeId) throw new Error(`Housing ${house.id} missing homeNodeId`);
+  }
+
+  for (const edu of bundle.education) {
+    if (!edu.id || !edu.name) throw new Error(`Education missing id or name`);
+    if (typeof edu.baseTuitionFee !== 'number') throw new Error(`Education ${edu.id} missing baseTuitionFee`);
+    if (typeof edu.lessonsRequired !== 'number') throw new Error(`Education ${edu.id} missing lessonsRequired`);
+    if (!edu.rewards) throw new Error(`Education ${edu.id} missing rewards`);
+    if (typeof edu.rewards.dependability !== 'number') throw new Error(`Education ${edu.id} missing rewards.dependability`);
+  }
+
+  for (const b of bundle.buildings) {
+    if (!b.id || !b.name) throw new Error(`Building missing id or name`);
+  }
 }
 
 const campaignCache = new Map<string, CampaignBundle>();
@@ -364,7 +411,7 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
     }
   }
 
-  validateConfig(finalBundle.config);
+  validateBundle(finalBundle);
 
   campaignCache.set(campaignId, structuredClone(finalBundle));
 

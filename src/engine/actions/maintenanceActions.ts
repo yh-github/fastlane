@@ -13,23 +13,58 @@ export interface DiySuccessChanceBreakdown {
   techBonus: number;
   electronicsBonus: number;
   partsBonus?: number;
+  complexityPenalty: number;
   totalChance: number;
 }
 
 /**
- * Calculates DIY Fix success probability based on base (40%), Tech skill (+3% per skillTech),
- * Electronics course progress (+10pp if complete, scaled proportionally if enrolled),
- * and Spare Parts (+30pp if available/used).
+ * Calculates Appliance DIY repair complexity based on base price, space footprint,
+ * and narrative/technical sophistication (e.g. computer).
+ */
+export function calcApplianceComplexity(applianceId?: string, campaign?: CampaignBundle): number {
+  if (!applianceId) return 0;
+  const itemDef = campaign?.items?.find(i => i.id === applianceId);
+  const basePrice = itemDef?.basePrice ?? 100;
+  const space = itemDef?.space ?? 10;
+  const isHighTech = applianceId === 'computer' || itemDef?.tags?.includes('computer') || itemDef?.tags?.includes('tech');
+  return Math.floor(basePrice / 100) + Math.floor(space / 5) + (isHighTech ? 4 : 0);
+}
+
+/**
+ * Calculates DIY Fix success probability based on player competence:
+ * Base competence (25), Tech skill (+2.5 per skillTech, max +25),
+ * Electronics course/degree (up to +15), and Spare Parts (+20).
+ * Difficulty penalty D scales with appliance size and base price.
+ * The chance approaches 80% asymptotically but never reaches 80% (strict ceiling of 79%).
  */
 export function calcDiySuccessChance(
   player: PlayerState,
-  campaign?: CampaignBundle,
-  rules?: GameRules,
-  useSpareParts?: boolean
+  arg2?: CampaignBundle | string,
+  arg3?: GameRules | CampaignBundle,
+  arg4?: boolean | GameRules,
+  arg5?: boolean | string,
+  arg6?: string
 ): DiySuccessChanceBreakdown {
-  const baseChance = 40;
+  let campaign: CampaignBundle | undefined;
+  let rules: GameRules | undefined;
+  let useSpareParts: boolean | undefined;
+  let applianceId: string | undefined;
+
+  if (typeof arg2 === 'string') {
+    applianceId = arg2;
+    campaign = arg3 as CampaignBundle | undefined;
+    rules = arg4 as GameRules | undefined;
+    useSpareParts = arg5 as boolean | undefined;
+  } else {
+    campaign = arg2 as CampaignBundle | undefined;
+    rules = arg3 as GameRules | undefined;
+    useSpareParts = arg4 as boolean | undefined;
+    applianceId = typeof arg5 === 'string' ? arg5 : arg6;
+  }
+
+  const baseChance = 25;
   const techSkill = player.skillTech || 0;
-  const techBonus = Math.round(techSkill * 3 * 10) / 10;
+  const techBonus = Math.round(techSkill * 2.5 * 10) / 10;
 
   let electronicsProgress = 0;
   if (player.degrees?.includes('electronics')) {
@@ -44,21 +79,30 @@ export function calcDiySuccessChance(
     }
   }
 
-  const electronicsBonus = Math.round((electronicsProgress / 10) * 10) / 10;
-  const partsBonus = (useSpareParts ?? ((player.inventory?.spareParts || 0) > 0)) ? 30 : 0;
-  const totalChance = Math.min(100, Math.max(0, Math.round(baseChance + techBonus + electronicsBonus + partsBonus)));
+  const electronicsBonus = Math.round((electronicsProgress * 0.15) * 10) / 10;
+  const partsBonus = (useSpareParts ?? ((player.inventory?.spareParts || 0) > 0)) ? 20 : 0;
+  const competence = baseChance + techBonus + electronicsBonus + partsBonus;
+
+  const complexityPenalty = calcApplianceComplexity(applianceId, campaign);
+
+  // Asymptotic formula approaching 80%, strictly capped at 79%
+  const totalChance = Math.min(
+    79,
+    Math.max(5, Math.floor(80 * (competence / (competence + complexityPenalty + 6))))
+  );
 
   return {
     baseChance,
     techBonus,
     electronicsBonus,
     partsBonus,
+    complexityPenalty,
     totalChance
   };
 }
 
 /**
- * Calculates Repairman service cost (10% of catalog base price, adjusted for economy).
+ * Calculates Repairman service cost (12% of catalog base price + complexity surcharge, adjusted for economy).
  */
 export function calcRepairmanCost(
   applianceId: string,
@@ -67,7 +111,9 @@ export function calcRepairmanCost(
 ): number {
   const itemDef = campaign?.items?.find(i => i.id === applianceId);
   const catalogBasePrice = itemDef?.basePrice ?? 100;
-  return calcEconomyPrice(Math.round(catalogBasePrice * 0.10), economicIndex);
+  const complexity = calcApplianceComplexity(applianceId, campaign);
+  const rawCost = Math.round(catalogBasePrice * 0.12 + complexity * 2);
+  return calcEconomyPrice(rawCost, economicIndex);
 }
 
 /**
@@ -134,7 +180,7 @@ export function handleApplianceMaintenanceAction(
       nextPlayer.inventory.spareParts = (nextPlayer.inventory.spareParts || 0) - 1;
     }
 
-    const breakdown = calcDiySuccessChance(player, context.campaign, context.rules, hasSpareParts);
+    const breakdown = calcDiySuccessChance(player, context.campaign, context.rules, hasSpareParts, app.id);
     const roll = resolveDecision(replayContext, `diy_fix_${nextPlayer.id}_${app.id}_${nextPlayer.hoursRemaining}`, () => Math.floor(context.rng.next() * 100));
     const isSuccess = roll < breakdown.totalChance;
 
