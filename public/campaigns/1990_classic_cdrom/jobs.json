@@ -1,4 +1,101 @@
 [
-  { "id": "qt_janitor", "title": "Janitor", "locationId": "qt_clothing", "baseWage": 6, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] },
-  { "id": "socket_clerk", "title": "Clerk", "locationId": "socket_city", "baseWage": 6, "requirements": { "experience": 10, "dependability": 20, "degrees": [], "uniform": "casual" }, "perks": [] }
+  {
+    "id": "factory_janitor",
+    "requirements": {
+      "experience": 10,
+      "dependability": 20
+    }
+  },
+  {
+    "id": "bank_janitor",
+    "requirements": {
+      "experience": 10,
+      "dependability": 20
+    }
+  },
+  {
+    "id": "rent_groundskeeper",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 10,
+      "dependability": 20
+    }
+  },
+  {
+    "id": "burger_cook",
+    "baseWage": 5
+  },
+  {
+    "id": "burger_clerk",
+    "baseWage": 6
+  },
+  {
+    "id": "burger_asst_mgr",
+    "baseWage": 7
+  },
+  {
+    "id": "burger_mgr",
+    "baseWage": 8
+  },
+  {
+    "id": "zmart_clerk",
+    "baseWage": 5
+  },
+  {
+    "id": "zmart_asst_mgr",
+    "baseWage": 7
+  },
+  {
+    "id": "zmart_mgr",
+    "baseWage": 8
+  },
+  {
+    "id": "uni_janitor",
+    "baseWage": 5
+  },
+  {
+    "id": "blacks_janitor",
+    "baseWage": 6
+  },
+  {
+    "id": "rent_mgr",
+    "baseWage": 9
+  },
+  {
+    "id": "socket_salesperson",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 30
+    }
+  },
+  {
+    "id": "qt_salesperson",
+    "baseWage": 8
+  },
+  {
+    "id": "qt_janitor",
+    "title": "Janitor",
+    "locationId": "qt_clothing",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 10,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "perks": []
+  },
+  {
+    "id": "socket_clerk",
+    "title": "Clerk",
+    "locationId": "socket_city",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 10,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "perks": []
+  }
 ]
