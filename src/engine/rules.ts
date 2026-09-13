@@ -67,6 +67,17 @@ export interface GameRules {
   enableAnimations: boolean;
 
   /**
+   * If true (default), renders character sprites with nearest-neighbor crisp pixelation.
+   * If false, renders with smooth bilinear filtering.
+   */
+  pixelatedSprites?: boolean;
+
+  /**
+   * If true, renders character sprites with transparent background instead of solid color.
+   */
+  removeCharacterBg?: boolean;
+
+  /**
    * Allows progression metrics to go beyond 100% (useful for scoring or AI optimization).
    * Classic Floppy/CD-ROM: false. QoL Improved: true.
    */

@@ -144,6 +144,10 @@ body {
   object-fit: contain;
 }
 
+.center-character-sprite--smooth {
+  image-rendering: auto;
+}
+
 /* Building Modal */
 .building-modal {
   position: absolute;

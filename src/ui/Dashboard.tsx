@@ -142,6 +142,7 @@ export function Dashboard({
           📊 {t('dashboard.status', { defaultValue: 'Status' })}
         </button>
         <button 
+          id="btn-settings"
           onClick={onOpenSettings}
           style={{
             padding: '8px 12px', marginRight: '10px',
