@@ -110,4 +110,74 @@ test.describe('Character Center Walking Animation E2E', () => {
     const canvas = centerStage.locator('canvas.center-character-sprite');
     await expect(canvas).toBeVisible();
   });
+
+  test('toggles Graphics settings (Remove Background and Smooth Rendering)', async ({ page }) => {
+    await page.goto('/');
+    const startGameBtn = page.locator('.title-screen__btn').first();
+    await startGameBtn.click();
+
+    const startLifeBtn = page.locator('.action-panel__btn').filter({ hasText: /Start Life|התחל חיים/i }).first();
+    await expect(startLifeBtn).toBeVisible({ timeout: 5000 });
+    await startLifeBtn.click();
+
+    // Close initial home modal
+    const buildingModal = page.locator('.building-modal');
+    if (await buildingModal.isVisible()) {
+      const closeBtn = page.locator('.building-modal__close');
+      await closeBtn.click();
+      await expect(buildingModal).toBeHidden({ timeout: 3000 });
+    }
+
+    const centerStage = page.locator('[data-testid="center-walk-animation"]');
+    await expect(centerStage).toBeVisible();
+    await expect(centerStage).toHaveAttribute('data-remove-bg', 'false');
+    await expect(centerStage).toHaveAttribute('data-pixelated', 'true');
+
+    // 1. Open Settings modal
+    const settingsBtn = page.locator('#btn-settings');
+    await settingsBtn.click();
+
+    const settingsModal = page.locator('.building-modal');
+    await expect(settingsModal).toBeVisible();
+
+    // 2. Click Graphics tab
+    const graphicsTab = page.locator('[data-testid="tab-settings-graphics"]');
+    await graphicsTab.click();
+
+    // 3. Toggle "Remove Character Background"
+    const removeBgToggle = page.locator('[data-testid="setting-remove-character-bg"]');
+    await removeBgToggle.click();
+
+    // Close settings modal
+    const closeSettingsBtn = page.locator('.action-panel__btn').filter({ hasText: /Close|סגור/i }).first();
+    await closeSettingsBtn.click();
+    await expect(settingsModal).toBeHidden();
+
+    // 4. Verify center stage has transparent background
+    await expect(centerStage).toHaveAttribute('data-remove-bg', 'true');
+    await page.waitForTimeout(400);
+
+    // Save screenshot of transparent background
+    await page.screenshot({ path: '/home/yoavh/.gemini/antigravity/brain/baba78ec-dc3f-47a6-8d0c-8fcc6a50339a/walking_transparent_bg.png' });
+
+    // 5. Open Settings again and toggle Crisp Pixel Art off (Smooth on)
+    await settingsBtn.click();
+    await expect(settingsModal).toBeVisible();
+    await graphicsTab.click();
+
+    const pixelatedToggle = page.locator('[data-testid="setting-pixelated-sprites"]');
+    await pixelatedToggle.click();
+
+    await closeSettingsBtn.click();
+    await expect(settingsModal).toBeHidden();
+
+    // 6. Verify smooth rendering is active
+    await expect(centerStage).toHaveAttribute('data-pixelated', 'false');
+    const sprite = centerStage.locator('canvas.center-character-sprite');
+    await expect(sprite).toHaveClass(/center-character-sprite--smooth/);
+    await page.waitForTimeout(400);
+
+    // Save screenshot of smooth rendering with transparent background
+    await page.screenshot({ path: '/home/yoavh/.gemini/antigravity/brain/baba78ec-dc3f-47a6-8d0c-8fcc6a50339a/walking_smooth_rendering.png' });
+  });
 });

@@ -113,4 +113,25 @@ describe('CenterWalkAnimation', () => {
       HTMLCanvasElement.prototype.getContext = originalGetContext;
     }
   });
+
+  it('respects pixelated=false and removeBg=true props', () => {
+    const { rerender } = render(
+      <CenterWalkAnimation isWalking={false} pixelated={true} removeBg={false} />
+    );
+    let stage = screen.getByTestId('center-walk-animation');
+    expect(stage.dataset.pixelated).toBe('true');
+    expect(stage.dataset.removeBg).toBe('false');
+    expect(stage.style.backgroundColor).toBe('rgb(255, 255, 255)');
+
+    rerender(
+      <CenterWalkAnimation isWalking={false} pixelated={false} removeBg={true} />
+    );
+    stage = screen.getByTestId('center-walk-animation');
+    expect(stage.dataset.pixelated).toBe('false');
+    expect(stage.dataset.removeBg).toBe('true');
+    expect(stage.style.backgroundColor).toBe('transparent');
+
+    const canvas = stage.querySelector('canvas');
+    expect(canvas).toHaveClass('center-character-sprite--smooth');
+  });
 });

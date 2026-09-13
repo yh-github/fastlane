@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { SettingsModal } from './SettingsModal';
 import { DEFAULT_GAME_RULES } from '../engine/rules';
@@ -50,5 +50,49 @@ describe('SettingsModal', () => {
     expect(screen.queryByText('Bypass Doctor Visit if Cash is $0')).not.toBeInTheDocument();
     expect(screen.queryByText('Enable Doctor Visit from Low Relaxation')).not.toBeInTheDocument();
     expect(screen.queryByText('Low Relaxation Threshold')).not.toBeInTheDocument();
+  });
+
+  it('switches to Graphics submenu tab and toggles pixelated sprites and remove background', () => {
+    let state = { ...dummyGameState };
+    const setGameState = vi.fn().mockImplementation((updater) => {
+      state = updater(state);
+    });
+
+    const { rerender } = render(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+
+    // Switch to Graphics tab
+    const graphicsTabBtn = screen.getByTestId('tab-settings-graphics');
+    fireEvent.click(graphicsTabBtn);
+
+    // Verify Graphics submenu items appear
+    expect(screen.getByText('Crisp Pixel Art')).toBeInTheDocument();
+    expect(screen.getByText('Remove Character Background')).toBeInTheDocument();
+
+    // Toggle Pixelated Sprites
+    const pixelatedItem = screen.getByTestId('setting-pixelated-sprites');
+    fireEvent.click(pixelatedItem);
+    expect(setGameState).toHaveBeenCalled();
+    expect(state.rules.pixelatedSprites).toBe(false);
+
+    // Toggle Remove Character Background
+    const removeBgItem = screen.getByTestId('setting-remove-character-bg');
+    fireEvent.click(removeBgItem);
+    expect(state.rules.removeCharacterBg).toBe(true);
+
+    // Re-render and verify updated checkbox states
+    rerender(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByText('Remove Character Background')).toBeInTheDocument();
   });
 });
