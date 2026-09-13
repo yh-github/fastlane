@@ -37,6 +37,7 @@ export function useGameEngine(
   const replayDataRef = useRef<ReplayData | null>(null);
   const pendingDestinationRef = useRef<string | null>(null);
   const isMovingRef = useRef<boolean>(false);
+  const [isTravelling, setIsTravelling] = useState<boolean>(false);
 
   const setGameState = useCallback((updater: GameState | null | ((prev: GameState | null) => GameState | null)) => {
     if (typeof updater === 'function') {
@@ -98,6 +99,7 @@ export function useGameEngine(
 
     if (player.position !== homeNodeId) {
       setIsAnimating(true);
+      setIsTravelling(true);
       const pathResult = findShortestPath(adjacencyMap, player.position, homeNodeId);
       if (pathResult.found) {
         const pathCoords = pathResult.path.map(id => {
@@ -106,6 +108,7 @@ export function useGameEngine(
         });
         await animatePlayerPath(pathCoords.slice(1), activePlayerIndex, 150); // Double speed (150ms) when running home
       }
+      setIsTravelling(false);
       setIsAnimating(false);
       // BUG FIX: Clone the array properly to prevent mutability leaks
       const newPlayers = [...updatedPlayers];
@@ -184,6 +187,7 @@ export function useGameEngine(
       setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
       setIsAnimating(true);
       isMovingRef.current = true;
+      setIsTravelling(true);
       pendingDestinationRef.current = null;
 
       try {
@@ -333,6 +337,7 @@ export function useGameEngine(
       } finally {
         isMovingRef.current = false;
         pendingDestinationRef.current = null;
+        setIsTravelling(false);
         setIsAnimating(false);
       }
       return;
@@ -531,6 +536,7 @@ export function useGameEngine(
     addLog,
     replayData: replayDataRef.current,
     streetRobberyNotice,
-    setStreetRobberyNotice
+    setStreetRobberyNotice,
+    isTravelling
   };
 }

@@ -118,6 +118,32 @@ body {
   display: block;
 }
 
+/* Center Character Walking Stage */
+.center-character-stage {
+  position: absolute;
+  left: calc(var(--board-x, calc(50% - 600px)) + (185px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (126px * var(--board-scale, 1)));
+  width: calc(830px * var(--board-scale, 1));
+  height: calc(540px * var(--board-scale, 1));
+  max-width: calc(830px * var(--board-scale, 1));
+  max-height: calc(540px * var(--board-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+.center-character-sprite {
+  height: 85%;
+  width: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  object-fit: contain;
+}
+
 /* Building Modal */
 .building-modal {
   position: absolute;

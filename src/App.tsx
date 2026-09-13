@@ -20,6 +20,7 @@ import { useGameAnimations } from './hooks/useGameAnimations';
 import { useGameEngine } from './hooks/useGameEngine';
 import { TurnEventsQueue } from './ui/TurnEventsQueue';
 import { StreetRobberyModal } from './ui/StreetRobberyModal';
+import { CenterWalkAnimation } from './ui/CenterWalkAnimation';
 
 export default function App() {
   const [showTitle, setShowTitle] = useState(true);
@@ -47,7 +48,8 @@ export default function App() {
     addLog,
     replayData,
     streetRobberyNotice,
-    setStreetRobberyNotice
+    setStreetRobberyNotice,
+    isTravelling
   } = useGameEngine(selectedCampaignId, triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen, triggerScreenShake);
 
   if (showTitle) {
@@ -186,6 +188,13 @@ export default function App() {
         </div>
         {gameState.rules.helpfulUI && (
           <GameLog entries={logs} players={gameState.players} activeFilter={activeLogFilter} onSelectFilter={setActiveLogFilter} />
+        )}
+        {(!isBuildingModalOpen || !currentBuildingId) && activePlayer && (
+          <CenterWalkAnimation
+            characterIndex={0}
+            clothesType={activePlayer.inventory?.selectedClothes || 'casual'}
+            isWalking={isTravelling}
+          />
         )}
         {isBuildingModalOpen && currentBuildingId && (
           <BuildingModal
