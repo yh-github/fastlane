@@ -532,4 +532,43 @@ describe('BuildingModal Component', () => {
 
     expect(screen.queryByTestId('home-burglary-badge')).not.toBeInTheDocument();
   });
+
+  it('renders non-scrollable RELAX button portaled to the modal bottom border in basic home view', () => {
+    const homeCampaign: CampaignBundle = {
+      ...mockCampaign,
+      buildings: [
+        ...mockCampaign.buildings,
+        { id: 'home_building', name: 'Home', description: 'Your home', archetype: 'home' } as any
+      ],
+      housing: [{ id: 'low_cost', name: 'Low Cost Apt', baseRent: 300, homeNodeId: 'home_node' }] as any,
+      map: { nodes: [{ id: 'home_node', buildingId: 'home_building' }] } as any,
+    };
+
+    const onAction = vi.fn();
+    const { container } = render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={homeCampaign}
+        currentBuildingId="home_building"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, advancedHomeGUI: false, usePhysicalMentalConditions: false }}
+        onAction={onAction}
+        onClose={vi.fn()}
+      />
+    );
+
+    const modal = container.querySelector('.building-modal');
+    expect(modal).toBeInTheDocument();
+
+    const relaxDock = modal?.querySelector('.home-relax-bottom-dock');
+    expect(relaxDock).toBeInTheDocument();
+    // Verify it is a direct child of .building-modal (portaled to the window border, outside scrollable content)
+    expect(relaxDock?.parentElement).toBe(modal);
+
+    const relaxBtn = screen.getByTestId('btn-relax');
+    expect(relaxBtn.textContent).toBe('RELAX');
+    fireEvent.click(relaxBtn);
+    expect(onAction).toHaveBeenCalledWith({ type: 'relax' });
+  });
 });

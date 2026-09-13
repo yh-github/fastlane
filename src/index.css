@@ -199,7 +199,7 @@ body {
 }
 
 .building-modal:has(.home-basic-panel) .building-modal__content {
-  overflow: visible;
+  overflow-y: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -210,7 +210,6 @@ body {
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  overflow: visible;
 }
 
 .building-modal__face {

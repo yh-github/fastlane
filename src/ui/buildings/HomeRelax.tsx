@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../engine/dataLoader';
@@ -21,6 +21,55 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
     applianceData?: OwnedAppliance;
     isOwned?: boolean;
   } | null>(null);
+
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [modalParent, setModalParent] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (panelRef.current) {
+      const modal = panelRef.current.closest<HTMLElement>('.building-modal');
+      if (modal) {
+        modal.style.overflow = 'visible';
+        setModalParent(modal);
+      }
+      const content = panelRef.current.closest<HTMLElement>('.building-modal__content');
+      const prevOverflow = content?.style.overflowY;
+      const prevDisplay = content?.style.display;
+      const prevDirection = content?.style.flexDirection;
+      if (content) {
+        content.style.overflowY = 'hidden';
+        content.style.display = 'flex';
+        content.style.flexDirection = 'column';
+      }
+      const parent = panelRef.current.parentElement;
+      const prevParentHeight = parent?.style.height;
+      const prevParentFlex = parent?.style.flex;
+      const prevParentMinHeight = parent?.style.minHeight;
+      const prevParentDisplay = parent?.style.display;
+      const prevParentDirection = parent?.style.flexDirection;
+      if (parent && parent !== content) {
+        parent.style.height = '100%';
+        parent.style.flex = '1';
+        parent.style.minHeight = '0';
+        parent.style.display = 'flex';
+        parent.style.flexDirection = 'column';
+      }
+      return () => {
+        if (content) {
+          content.style.overflowY = prevOverflow || '';
+          content.style.display = prevDisplay || '';
+          content.style.flexDirection = prevDirection || '';
+        }
+        if (parent && parent !== content) {
+          parent.style.height = prevParentHeight || '';
+          parent.style.flex = prevParentFlex || '';
+          parent.style.minHeight = prevParentMinHeight || '';
+          parent.style.display = prevParentDisplay || '';
+          parent.style.flexDirection = prevParentDirection || '';
+        }
+      };
+    }
+  }, []);
 
   const handleHomeAction = async (payload: any) => {
     setActionFeedback(null);
@@ -288,7 +337,19 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   }
 
   return (
-    <div className="interaction-panel home-basic-panel" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
+    <div 
+      ref={panelRef}
+      className="interaction-panel home-basic-panel" 
+      style={{ 
+        width: '100%', 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: 0, 
+        position: 'relative',
+        paddingBottom: modalParent ? '26px' : '0'
+      }}
+    >
       {actionFeedback && (
         <div style={{
           padding: '6px 10px',
@@ -523,45 +584,51 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
         />
       </div>
 
-      {/* Non-scrollable RELAX button on bottom border */}
-      <div 
-        className="home-relax-bottom-dock"
-        style={{
-          position: 'absolute',
-          bottom: 'calc(-18px * var(--board-scale, 1))',
-          left: '50%',
-          transform: 'translate(-50%, 50%)',
-          zIndex: 60,
-          display: 'flex',
-          justifyContent: 'center',
-          pointerEvents: 'auto'
-        }}
-      >
-        <button
-          data-action-target="relax"
-          data-testid="btn-relax"
-          onClick={handleRelaxClick}
-          disabled={isRelaxDisabled}
-          title={rules?.helpfulUI ? (classicFirstBonus > 0 ? `Relax (${hoursToRelax}h) +${classicGain} 🧘 (+${classicFirstBonus} 😊)` : `Relax (${hoursToRelax}h) +${classicGain} 🧘`) : `Relax (${hoursToRelax}h)`}
-          style={{
-            background: isRelaxDisabled ? '#333' : 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)',
-            color: isRelaxDisabled ? '#777' : '#fff',
-            border: isRelaxDisabled ? '2px solid #555' : '2px solid #2ecc71',
-            boxShadow: isRelaxDisabled ? 'none' : '0 4px 10px rgba(0,0,0,0.8), 0 0 10px rgba(46,204,113,0.5)',
-            padding: '4px 18px',
-            borderRadius: '4px',
-            fontWeight: 'bold',
-            fontSize: '0.92rem',
-            letterSpacing: '1px',
-            cursor: isRelaxDisabled ? 'not-allowed' : 'pointer',
-            textTransform: 'uppercase',
-            minWidth: 'auto',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {t('homeRelax.relaxBtnText', { defaultValue: 'RELAX' })}
-        </button>
-      </div>
+      {/* Non-scrollable RELAX button portaled to bottom border of building-modal */}
+      {(() => {
+        const relaxButtonElement = (
+          <div 
+            className="home-relax-bottom-dock"
+            style={{
+              position: 'absolute',
+              bottom: modalParent ? '0px' : 'calc(-18px * var(--board-scale, 1))',
+              left: '50%',
+              transform: 'translate(-50%, 50%)',
+              zIndex: 60,
+              display: 'flex',
+              justifyContent: 'center',
+              pointerEvents: 'auto'
+            }}
+          >
+            <button
+              data-action-target="relax"
+              data-testid="btn-relax"
+              onClick={handleRelaxClick}
+              disabled={isRelaxDisabled}
+              title={rules?.helpfulUI ? (classicFirstBonus > 0 ? `Relax (${hoursToRelax}h) +${classicGain} 🧘 (+${classicFirstBonus} 😊)` : `Relax (${hoursToRelax}h) +${classicGain} 🧘`) : `Relax (${hoursToRelax}h)`}
+              style={{
+                background: isRelaxDisabled ? '#333' : 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)',
+                color: isRelaxDisabled ? '#777' : '#fff',
+                border: isRelaxDisabled ? '2px solid #555' : '2px solid #2ecc71',
+                boxShadow: isRelaxDisabled ? 'none' : '0 4px 10px rgba(0,0,0,0.8), 0 0 10px rgba(46,204,113,0.5)',
+                padding: '4px 18px',
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                fontSize: '0.92rem',
+                letterSpacing: '1px',
+                cursor: isRelaxDisabled ? 'not-allowed' : 'pointer',
+                textTransform: 'uppercase',
+                minWidth: 'auto',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {t('homeRelax.relaxBtnText', { defaultValue: 'RELAX' })}
+            </button>
+          </div>
+        );
+
+        return modalParent ? createPortal(relaxButtonElement, modalParent) : relaxButtonElement;
+      })()}
 
       {unfedWarningPortal}
 
