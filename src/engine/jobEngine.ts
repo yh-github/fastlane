@@ -30,6 +30,25 @@ export interface JobApplicationResult {
   message: GameEvent;
 }
 
+export const DEGREE_NAMES: Record<string, string> = {
+  junior_college: 'Junior College',
+  trade_school: 'Trade School',
+  business_admin: 'Business Administration',
+  academic: 'Academic',
+  electronics: 'Electronics',
+  pre_engineering: 'Pre-Engineering',
+  graduate_school: 'Graduate School',
+  engineering: 'Engineering',
+  post_doctoral: 'Post-Doctoral',
+  research: 'Research',
+  publishing: 'Publishing'
+};
+
+export function formatDegreeName(id: string): string {
+  if (DEGREE_NAMES[id]) return DEGREE_NAMES[id];
+  return id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
 export function calculateJobEmployability(player: PlayerState): number {
   return calcEmployabilityScore(player.dependability, player.experience, player.degrees.length, 0, player.social);
 }
@@ -155,9 +174,10 @@ export function applyForJob(
   // Check degrees / education
   const missingDegrees = job.requirements.degrees.filter(degree => !updated.degrees.includes(degree));
   if (missingDegrees.length > 0) {
-    if (messages['job_apply_missing_education'] && !rules?.helpfulUI) {
-      rejectionReasons.push(msg('job_apply_missing_education', 'Not enough education.'));
-    } else if (messages['job_apply_missing_education'] && !messages['job_apply_missing_degree']) {
+    if (rules?.helpfulUI) {
+      const degreeNames = missingDegrees.map(d => messages[`education_${d}`] || formatDegreeName(d)).join(', ');
+      rejectionReasons.push(msg('job_apply_missing_education_helpful', `Not enough education: missing ${degreeNames}.`, { degrees: degreeNames }));
+    } else if (messages['job_apply_missing_education']) {
       rejectionReasons.push(msg('job_apply_missing_education', 'Not enough education.'));
     } else {
       for (const degree of missingDegrees) {
@@ -192,7 +212,17 @@ export function applyForJob(
   // The workplace checks clothes during workShift.
 
   if (rejectionReasons.length > 0) {
-    return { updated, success: false, message: { key: 'action.job.rejected', params: { reasons: rejectionReasons.join(' ') } } };
+    return {
+      updated,
+      success: false,
+      message: {
+        key: 'action.job.rejected',
+        params: {
+          reasons: rejectionReasons.join(' '),
+          missingDegrees: missingDegrees.join(',')
+        }
+      }
+    };
   }
 
   // If dependability was the only missing requirement during early turns, mask it as "No openings"
