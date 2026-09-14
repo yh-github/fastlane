@@ -70,9 +70,11 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           }}>
             SHIFT
           </span>
-          <span style={{ fontSize: '0.72rem', color: '#a5f3fc', fontWeight: 'bold' }}>
-            ⏳ {shiftCost} hrs
-          </span>
+          {isHelpful && (
+            <span style={{ fontSize: '0.72rem', color: '#a5f3fc', fontWeight: 'bold' }}>
+              ⏳ {shiftCost} hrs
+            </span>
+          )}
         </div>
 
         <div style={{ textAlign: 'center' }}>

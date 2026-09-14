@@ -351,7 +351,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <strong style={{ fontSize: '0.82rem', color: '#38bdf8' }}>🔧 DIY Fix</strong>
-                  <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>⏳ 6h | -2 💪 | -1 🧠</span>
+                  <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>{rules?.helpfulUI ? '⏳ 6h | -2 💪 | -1 🧠' : '-2 💪 | -1 🧠'}</span>
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#85ffb5', marginBottom: '2px' }}>
                   Success: <strong>{diyBreakdown.totalChance}%</strong> ({diyBreakdown.baseChance}% Base + {diyBreakdown.techBonus}% Tech + {diyBreakdown.electronicsBonus}% Electronics{diyBreakdown.partsBonus ? ` + ${diyBreakdown.partsBonus}% Parts` : ''} - {diyBreakdown.complexityPenalty} Complexity)
@@ -391,7 +391,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <strong style={{ fontSize: '0.82rem', color: '#c084fc' }}>📞 Call Repairman</strong>
-                  <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>⏳ 1h | ${repairCost}</span>
+                  <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>{rules?.helpfulUI ? `⏳ 1h | $${repairCost}` : `$${repairCost}`}</span>
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '6px' }}>
                   Professional repair. Guaranteed fix, restores to ✨ Brand New condition.
@@ -428,7 +428,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <strong style={{ fontSize: '0.82rem', color: '#f87171' }}>🗑️ Throw Out</strong>
-                  <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>⏳ 0h | Free</span>
+                  <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>{rules?.helpfulUI ? '⏳ 0h | Free' : 'Free'}</span>
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '6px' }}>
                   Discards appliance permanently. Leaves +{throwMess} 🧹 Mess in apartment.
