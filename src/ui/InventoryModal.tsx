@@ -229,13 +229,15 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
                         ⚠️ {t('inventoryModal.broken', 'BROKEN')}
                       </span>
                     ) : (
-                      <span style={{
-                        fontSize: '11px',
-                        color: a.condition === 'new' ? '#86efac' : '#94a3b8',
-                        marginLeft: '6px'
-                      }}>
-                        ({a.condition === 'new' ? t('inventoryModal.new', 'Brand New') : t('inventoryModal.used', 'Used')})
-                      </span>
+                      rules?.helpfulUI ? (
+                        <span style={{
+                          fontSize: '11px',
+                          color: a.condition === 'new' ? '#86efac' : '#94a3b8',
+                          marginLeft: '6px'
+                        }}>
+                          ({a.condition === 'new' ? t('inventoryModal.new', 'Brand New') : t('inventoryModal.used', 'Used')})
+                        </span>
+                      ) : null
                     )}
                   </div>
                 </li>
