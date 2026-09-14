@@ -22,3 +22,11 @@ For the advanced campaign with "The Streets" (`street` housing tier), resting an
 - **Hi-Tech U Library / Lounge**: Crashing in the student study hall (requires enrollment or intellect).
 - **Low-Cost Stoop**: Sleeping outside the apartment building with 0 space.
 
+## Commodity Food Pricing & Sector Coupling (Advanced Edition)
+
+In the classic game, all store items scale uniformly with the consumer goods index (`gdsIndex`). For the Advanced Edition, we can introduce sector-specific commodity coupling:
+- **Pork Bellies & Food Costs**: Spikes or dips in the agricultural / pork bellies commodity market directly impact food prices at Monolith Burgers and Black's Market.
+- **Precious Metals & Pawn Valuations**: Fluctuations in Gold and Silver alter the pawn shop payout, appraisal values, and redemption costs of luxury jewelry/curios.
+- **Sticky Wages vs Inflation**: Consumer retail prices fluctuate rapidly with commodity demand, while base job wages remain stickier, creating realistic cost-of-living squeezes during high-inflation economic phases.
+
+

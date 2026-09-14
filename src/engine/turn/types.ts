@@ -7,4 +7,5 @@ export interface EconomicTurnResult {
   economicBoom: boolean;
   currentHeadline: GameEvent | null;
   cancelledGlobalEvents: GameEvent[];
+  newEconomySimulation?: import('../gameState').EconomySimulationState;
 }

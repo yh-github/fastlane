@@ -235,12 +235,26 @@ export interface GameRules {
    * ADVANCED: If true, enables the Dusty Junk Bins & Crates rummage section in the Pawn Shop.
    */
   pawnRummageBins: boolean;
+
+  /**
+   * Allows street robbery to happen when leaving the Bank or Black Market upon ending a turn (0 hours left).
+   * Classic Floppy/CD-ROM: true. QoL / Advanced: true.
+   */
+  streetRobberyOnTurnEnd: boolean;
+
+  /**
+   * QoL & ADVANCED: If true, the weekly newspaper includes predictive stock market tips and financial column.
+   */
+  predictiveNewspaperStockTips: boolean;
 }
 
 export interface EventRules {
   marketCrashDivisor: number;
   marketCrashThreshold: number;
+  marketCrashStartWeek?: number;
   economicBoomDivisor: number;
+  economicBoomStartWeek?: number;
+  economicBoomThreshold?: number;
   willyRobberyStartWeek: number;
   charity: {
     maxCash: number;
@@ -377,6 +391,19 @@ export interface EconomyRules {
   moveFeeMessThreshold: number;
   moveFeeMessRate: number;
   moveFeeDurableRate: number;
+
+  // Multi-Sector Economy Simulation (Authentic Sierra SCI)
+  model?: 'authentic_sectors' | 'legacy_scalar';
+  baselineReading?: number;
+  minReading?: number;
+  maxReading?: number;
+  priceFloorPercent?: number;
+  priceCeilingPercent?: number;
+  upwardBounceStrongThreshold?: number;
+  upwardBounceModerateThreshold?: number;
+  downwardBounceStrongThreshold?: number;
+  downwardBounceModerateThreshold?: number;
+  sectorRisks?: Record<string, number>;
 }
 
 /**
@@ -425,12 +452,18 @@ export const DEFAULT_GAME_RULES: GameRules = {
   educationResolution: 0.1,
   advancedHomeGUI: false,
   advancedWorkGUI: false,
+  streetRobberyOnTurnEnd: true,
+  predictiveNewspaperStockTips: false,
 };
 
 /**
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',
+  removeCharacterBg: 'Renders character sprites with transparent backgrounds instead of solid colored backdrops',
+  streetRobberyOnTurnEnd: 'Allows street robbery when leaving the Bank or Black Market upon ending a turn (0 hours left)',
+  predictiveNewspaperStockTips: 'Enables predictive stock market tips and financial column in the weekly newspaper',
   advancedHomeGUI: 'Uses the card-based GUI and visual apartment showcase for Home',
   advancedWorkGUI: 'Uses the card-based GUI and flanking work shift console for workplaces',
   advancedMaintenance: 'Appliances break instead of auto-repairing for money, requiring manual repair, service, or disposal',
@@ -468,9 +501,13 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
   marketCrashThreshold: 'Minimum economic reading required for a market crash to trigger (default 60)',
-  economicBoomDivisor: 'Divisor determining the frequency of economic boom events (default 50)',
+  marketCrashStartWeek: 'Game turn/week when stock market crash events begin (e.g. week 4 or 8)',
+  economicBoomDivisor: 'Divisor determining the frequency of economic boom events (default 30 or 50)',
+  economicBoomStartWeek: 'Game turn/week when economic boom events begin (e.g. week 4 or 8)',
+  economicBoomThreshold: 'Maximum reading threshold for economic boom events to trigger (default 120)',
   minEconomicReading: 'The lowest possible value the economic index (reading) can reach (-90 for Floppy, -30 for CD-ROM)',
   willyRobberyStartWeek: 'Game turn/week when Willy robbery events begin',
+  charity: 'Charity eligibility limits and payout rules',
   'charity.maxCash': 'Maximum cash limit to remain eligible for charity payout',
   'charity.maxWealth': 'Maximum wealth limit to remain eligible for charity payout',
   'charity.wealthMetric': 'Wealth calculation metric for charity (durableValue vs netWorth)',
@@ -496,6 +533,8 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   burnoutPenalty: 'Time penalty (in hours) deducted if mental health leave is taken for burnout',
   loanCost: 'Hours required to negotiate or process a bank loan',
   brokerCost: 'Hours required to visit the stock broker',
+  cleaningServiceCost: 'Hours required when using the professional cleaning service',
+  socializeCost: 'Hours required when socializing with friends or neighbors',
 
   // EconomyRules
   rentGarnishRate: 'Percentage of wages garnished if evicted with outstanding rent debt',
@@ -509,12 +548,33 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   loanPaymentAmount: 'Fixed payment amount for bank loans',
   loanInterestAmount: 'Interest charged per turn on active loans',
   loanPrincipalAmount: 'Principal deducted per turn on active loans',
+  cleaningServiceBasePrice: 'Base price for professional apartment cleaning service',
+  socializeLowCostCashCost: 'Cash cost to socialize while living in Low Cost Housing',
+  socializeSecurityCashCost: 'Cash cost to socialize while living in Security Apartments',
+  socializePenthouseCashCost: 'Cash cost to socialize while living in Penthouse Suites',
+  moveFeeMessThreshold: 'Mess level threshold above which additional move-out cleaning fees apply',
+  moveFeeMessRate: 'Fee charged per point of mess exceeding the moving mess threshold',
+  moveFeeDurableRate: 'Fee charged per appliance or durable item when moving residences',
+  model: 'Economic model mode (authentic_sectors or legacy_scalar)',
+  baselineReading: 'Baseline starting reading for economic sectors (default 100)',
+  minReading: 'Minimum sector reading floor (default 10 for Floppy, 70 for CD-ROM)',
+  maxReading: 'Maximum sector reading ceiling (default 130)',
+  priceFloorPercent: 'Absolute lowest price percentage scaling allowed (default 50%)',
+  priceCeilingPercent: 'Absolute highest price percentage scaling allowed (default 250%)',
+  upwardBounceStrongThreshold: 'Sector reading threshold triggering +2 upward bounce (e.g. 40 for Floppy, 80 for CD-ROM)',
+  upwardBounceModerateThreshold: 'Sector reading threshold triggering +1 upward bounce (e.g. 70 for Floppy, 90 for CD-ROM)',
+  downwardBounceStrongThreshold: 'Sector reading threshold triggering -2 downward bounce (default 120)',
+  downwardBounceModerateThreshold: 'Sector reading threshold triggering -1 downward bounce (default 110)',
+  sectorRisks: 'Volatility and momentum risk multipliers per economic sector',
 
   // StatRules
   startingHappiness: 'Initial happiness score at the start of a campaign',
   startingRelaxation: 'Initial relaxation score at the start of a campaign',
   relaxationDecayRate: 'Amount of relaxation lost naturally per turn',
   relaxationDoctorChance: 'Probability of a doctor visit if relaxation is critically low',
+  enableAdvancedStats: 'Enables advanced physical condition and mental health tracking',
+  mentalWarningThreshold: 'Mental condition threshold below which low mental health warnings trigger',
+  physicalWarningThreshold: 'Physical condition threshold below which low physical condition warnings trigger',
   startingPhysicalCondition: 'Initial physical condition (if Advanced Stats enabled)',
   startingMentalCondition: 'Initial mental condition (if Advanced Stats enabled)',
   minPhysicalCondition: 'Absolute minimum physical condition',
@@ -524,6 +584,9 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   globalMaxMentalCondition: 'Absolute maximum mental condition (hard cap)',
   physicalDoctorThreshold: 'Physical condition level that triggers potential doctor visits',
   physicalDoctorChancePerPoint: 'Probability of doctor visit per point below the physical threshold',
+  doctorVisitPhysicalThreshold: 'Physical condition threshold below which emergency doctor visits may trigger',
+  doctorVisitPhysicalChancePerPoint: 'Probability increase per point below threshold for emergency doctor visit',
+  hotTubMaxMessBonus: 'Bonus apartment mess tolerance granted by owning a hot tub',
   lowSpiritsThreshold: 'Mental condition level that triggers Low Spirits penalty',
   lowSpiritsChancePerPoint: 'Probability of Low Spirits per point below the mental threshold',
   workGrindThreshold: 'Number of work shifts taken in a turn before Grind penalties apply (e.g. 4 means actions 4-7)',
@@ -545,8 +608,30 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   studyOvertimePhysicalCost: 'Physical condition lost per study session during Hyper-Accelerating (action 8+)',
   resilienceDropThreshold: 'Single-event mental drop threshold required to award a permanent resilience bonus (e.g. 3)',
   cleanPhysicalCost: 'Physical condition lost per cleaning action',
+  initialPhysicalMax: 'Initial maximum physical condition ceiling',
+  initialMinPhysical: 'Initial minimum physical condition floor',
+  globalPhysicalMin: 'Absolute global minimum physical condition limit',
+  minMaxPhysical: 'Absolute minimum ceiling for maximum physical condition',
+  globalMessMax: 'Absolute maximum mess limit an apartment can reach',
+  lowCostMessMax: 'Maximum mess capacity for Low Cost Housing',
+  securityMessMax: 'Maximum mess capacity for Security Apartments',
+  initialMessMin: 'Initial baseline mess floor',
+  globalMessMin: 'Absolute minimum apartment mess level',
+  startingSocial: 'Initial social connection score at campaign start',
+  minSocial: 'Minimum possible social stat value',
+  maxSocial: 'Maximum possible social stat value',
+  relaxMessIncrease: 'Amount of apartment mess generated per relaxation action',
+  doctorPhysicalBounceBack: 'Physical condition restored after receiving medical care',
+  starvationMaxPhysicalPenalty: 'Maximum physical condition penalty suffered from starvation',
+  lowSpiritsMentalBounceBack: 'Mental condition restored when recovering from Low Spirits',
+  globalMaxPhysicalCondition: 'Absolute maximum possible physical condition cap',
+  mentalMaxBaseValue: 'Base maximum mental condition ceiling',
+  mentalMaxDegreeBonus: 'Bonus maximum mental condition ceiling granted per completed degree',
   startingCasualClothesWeeks: 'Initial durability in weeks of starting casual clothes',
   startingExperience: 'Initial work experience points at campaign start',
-  startingDependability: 'Initial dependability points at campaign start'
+  startingDependability: 'Initial dependability points at campaign start',
+  maxExperience: 'Maximum work experience points attainable',
+  maxDependability: 'Maximum dependability points attainable',
+  dependabilityWeeklyDecay: 'Dependability points lost each week if unemployed'
 };
 

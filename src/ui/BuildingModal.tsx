@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { CampaignBundle } from '../engine/dataLoader';
-import type { GameRules, PlayerState, PawnedItem } from '../engine/gameState';
+import type { GameRules, PlayerState, PawnedItem, EconomySimulationState } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
 import { 
   JobBoard, 
@@ -25,6 +25,7 @@ interface BuildingModalProps {
   economicIndex: number;
   rules: GameRules;
   pawnShopItemsForSale?: PawnedItem[];
+  economySimulation?: EconomySimulationState;
   onAction: (actionPayload: any) => Promise<any>;
   onClose: () => void;
 }
@@ -37,6 +38,7 @@ export function BuildingModal({
   economicIndex,
   rules,
   pawnShopItemsForSale,
+  economySimulation,
   onAction,
   onClose
 }: BuildingModalProps) {
@@ -258,6 +260,7 @@ export function BuildingModal({
               turn={turn}
               economicIndex={economicIndex}
               rules={rules}
+              economySimulation={economySimulation}
               onAction={handleActionIntercept}
             />
           )}

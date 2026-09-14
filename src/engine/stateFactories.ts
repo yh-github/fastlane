@@ -1,6 +1,7 @@
 import type { CampaignBundle, CampaignConfig } from './dataLoader';
 import { type GameRules, DEFAULT_GAME_RULES } from './rules';
 import { calcMaxMental } from './statMath';
+import { createDefaultEconomySimulationState } from './economyEngine';
 import type {
   PlayerState,
   GameState,
@@ -156,6 +157,7 @@ export function createInitialGameState(
     turn: 0,
     economicIndex: 0,
     economicTrend: 0,
+    economySimulation: createDefaultEconomySimulationState(campaign.config.economyRules),
     rngState: seed,
     pawnShopItemsForSale: [],
     players: playersConfig.map((cfg, i) =>

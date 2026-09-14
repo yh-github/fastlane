@@ -13,6 +13,7 @@
     "delayBookSetCredit": false,
     "reducedDegreeStatBonus": true,
     "maskEarlyJobRejections": false,
-    "preventPawnArbitrage": true
+    "preventPawnArbitrage": true,
+    "predictiveNewspaperStockTips": true
   }
 }

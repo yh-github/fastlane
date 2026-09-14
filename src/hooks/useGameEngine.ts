@@ -97,6 +97,57 @@ export function useGameEngine(
 
     setIsBuildingModalOpen(false);
 
+    const currentState = gameStateRef.current!;
+    const streetRobberyOnTurnEnd = currentState.rules.streetRobberyOnTurnEnd ?? true;
+    const currentBuilding = campaign!.map.nodes.find(n => n.id === player.position)?.buildingId;
+    const turnEndDecisions: EngineDecision[] = [];
+
+    if (streetRobberyOnTurnEnd && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
+      const preRobberyMoney = player.money;
+      const rng = new Random(currentState.rngState);
+      const replayCtx: ReplayContext = { outDecisions: turnEndDecisions };
+      const isForced = !!currentState.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId));
+      player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign!, replayCtx, isForced);
+
+      if (isForced) {
+        setGameState(prev => prev ? {
+          ...prev,
+          debugQueue: (prev.debugQueue || []).filter(e => !(e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId)))
+        } : prev);
+      }
+
+      if (player.money < preRobberyMoney) {
+        const lostAmount = preRobberyMoney - player.money;
+        addLog({ key: 'log.robbery' }, undefined, player.id);
+        if (currentState.rules.enableAnimations) {
+          const diff = player.money - preRobberyMoney;
+          triggerAnim('text', `${diff} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
+        }
+        player.newspaperHeadline = { key: 'newspaper.robbery' };
+
+        // Triggers map robbery interception animation
+        await animateRobberInterception(activePlayerIndex);
+
+        if (!player.isAi) {
+          await new Promise<void>(resolve => {
+            setStreetRobberyNotice({
+              lostAmount,
+              location: currentBuilding || '',
+              onConfirm: () => {
+                setStreetRobberyNotice(null);
+                resolve();
+              }
+            });
+          });
+        }
+      }
+
+      const newPlayers = [...updatedPlayers];
+      newPlayers[activePlayerIndex] = player;
+      updatedPlayers = newPlayers;
+      setGameState(prev => prev ? { ...prev, players: updatedPlayers, rngState: rng.getState() } : prev);
+    }
+
     if (player.position !== homeNodeId) {
       setIsAnimating(true);
       setIsTravelling(true);
@@ -130,7 +181,7 @@ export function useGameEngine(
         replayDataRef.current.steps.push({
           turn: gameStateRef.current!.turn,
           action: { type: 'end_turn' },
-          engineDecisions: outDecisions
+          engineDecisions: [...turnEndDecisions, ...outDecisions]
         });
       }
 

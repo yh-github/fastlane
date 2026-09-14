@@ -15,6 +15,37 @@ export interface GameEvent {
   key: string;
   params?: Record<string, string | number>;
   categories?: string[];
+  stockTip?: {
+    commodityId: string;
+    action: 'buy' | 'sell' | 'hold';
+    headlineKey: string;
+    detailKey: string;
+  };
+}
+
+export interface SectorState {
+  index: number;      // momentum (-3 to +3, expandable)
+  reading: number;    // price level (centered at 100)
+  high: number;       // upward mean-reversion flag (0, 1, 2)
+  low: number;        // downward mean-reversion flag (0, 1, 2)
+  lowerRange?: number;
+  upperRange?: number;
+  adjustment?: number;
+}
+
+export interface EconomySimulationState {
+  main: SectorState;        // Overall economy (Risk 4)
+  goods: SectorState;       // Consumer goods multiplier (Risk 4)
+  investments: SectorState; // Investment sector (Risk 4)
+  stocks: {
+    gold: SectorState;        // Gold market (Risk 2)
+    silver: SectorState;      // Silver market (Risk 2)
+    pork: SectorState;        // Pork bellies (Risk 4)
+    blueChip: SectorState;    // Blue Chip stocks (Risk 1)
+    penny: SectorState;       // Penny stocks (Risk 10)
+  };
+  lastCrashSeverity?: 'none' | 'minor' | 'moderate' | 'major';
+  lastBoom?: boolean;
 }
 
 export interface GameState {
@@ -24,6 +55,9 @@ export interface GameState {
   economicIndex: number;
   /** Global economic trend/momentum: -3 to +3 */
   economicTrend: number;
+  /** Multi-sector authentic economy simulation state */
+  economySimulation?: EconomySimulationState;
+
   /** Items that have expired and are for sale globally */
   pawnShopItemsForSale: PawnedItem[];
   /** All player states */

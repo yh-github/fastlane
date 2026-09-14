@@ -1,7 +1,21 @@
 import { Random } from '../utils/rng';
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fluctuateEconomy, applyMarketCrash, applyEconomicBoom, calcEconomyPrice, calcItemPrice, processRentDebt } from './economyEngine';
+import {
+  fluctuateEconomy,
+  applyMarketCrash,
+  applyEconomicBoom,
+  calcEconomyPrice,
+  calcItemPrice,
+  processRentDebt,
+  createDefaultEconomySimulationState,
+  calcSectorPrice,
+  stepSector,
+  stepEconomySimulation,
+  determineNewspaperMover,
+  generatePredictiveStockTip,
+  calcStockPrice,
+} from './economyEngine';
 import type { PlayerState } from './gameState';
 
 describe('Economy Engine', () => {
@@ -188,6 +202,304 @@ describe('Economy Engine', () => {
       expect(updated.rentDebt).toBe(0); // Debt fully cleared
       expect(netWage).toBe(70); // $100 - $30 = $70
       expect(totalGarnished).toBe(30); // No interest fee collected
+    });
+  });
+
+  describe('calcSectorPrice (Sierra Script 109 math)', () => {
+    it('returns exact base price when reading is at baseline 100', () => {
+      expect(calcSectorPrice(100, 100)).toBe(100);
+      expect(calcSectorPrice(50, 100)).toBe(50);
+      expect(calcSectorPrice(250, 100)).toBe(250);
+    });
+
+    it('scales prices proportionally by 5/3 ratio for readings above and below 100', () => {
+      // Reading 130: pct = 100 + floor((130-100)*5/3) = 150% -> 100 * 1.5 = 150
+      expect(calcSectorPrice(100, 130)).toBe(150);
+      // Reading 70: pct = 100 + floor((70-100)*5/3) = 50% -> 100 * 0.5 = 50
+      expect(calcSectorPrice(100, 70)).toBe(50);
+      // Reading 112: floor(12 * 5 / 3) = 20 -> 120% -> 100 * 1.2 = 120
+      expect(calcSectorPrice(100, 112)).toBe(120);
+    });
+
+    it('enforces floor of 50% and ceiling of 250% by default', () => {
+      // Deep depression reading 10: uncapped = -50%, capped = 50% -> 50
+      expect(calcSectorPrice(100, 10)).toBe(50);
+      // Massive bubble reading 220: uncapped = 300%, capped = 250% -> 250
+      expect(calcSectorPrice(100, 220)).toBe(250);
+    });
+
+    it('respects custom price floor and ceiling rules', () => {
+      const customRules = { priceFloorPercent: 40, priceCeilingPercent: 300 };
+      expect(calcSectorPrice(100, 10, customRules)).toBe(40);
+      expect(calcSectorPrice(100, 250, customRules)).toBe(300);
+    });
+
+    it('ensures prices never drop below 1 dollar', () => {
+      expect(calcSectorPrice(1, 10)).toBe(1);
+    });
+  });
+
+  describe('stepSector (Authentic Sierra Script 107 momentum & coupling)', () => {
+    const defaultRules = {
+      upwardBounceStrongThreshold: 80,
+      upwardBounceModerateThreshold: 90,
+      downwardBounceStrongThreshold: 160,
+      downwardBounceModerateThreshold: 130,
+      minReading: 70,
+      maxReading: 190,
+    };
+
+    it('flags high mean-reversion when reading drops below thresholds', () => {
+      const depressedSector = {
+        index: 0,
+        reading: 75, // < 80 -> high = 2
+        high: 0,
+        low: 0,
+        lowerRange: -3,
+        upperRange: 3,
+        adjustment: 0,
+      };
+
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.5);
+      const stepped = stepSector(depressedSector, 2, 0, defaultRules, new Random(1), false, 0, false);
+      expect(stepped.high).toBe(2);
+      expect(stepped.low).toBe(0);
+    });
+
+    it('flags low mean-reversion when reading rises above thresholds', () => {
+      const overheatedSector = {
+        index: 0,
+        reading: 165, // > 160 -> low = 2
+        high: 0,
+        low: 0,
+        lowerRange: -3,
+        upperRange: 3,
+        adjustment: 0,
+      };
+
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.5);
+      const stepped = stepSector(overheatedSector, 2, 0, defaultRules, new Random(1), false, 0, false);
+      expect(stepped.low).toBe(2);
+      expect(stepped.high).toBe(0);
+    });
+
+    it('applies crash momentum shock and drop', () => {
+      const sector = {
+        index: 2,
+        reading: 120,
+        high: 0,
+        low: 0,
+        lowerRange: -3,
+        upperRange: 3,
+        adjustment: 0,
+      };
+
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.5);
+      // crashSeverity 3 = minor (-2 shock, -15 reading drop)
+      const steppedMinor = stepSector(sector, 2, 0, defaultRules, new Random(1), true, 3, false);
+      expect(steppedMinor.index).toBeLessThanOrEqual(-2);
+      expect(steppedMinor.reading).toBeLessThan(120);
+
+      // crashSeverity 1 = major (-3 shock, -50 reading drop)
+      const steppedMajor = stepSector(sector, 2, 0, defaultRules, new Random(1), true, 1, false);
+      expect(steppedMajor.index).toBe(-3);
+      expect(steppedMajor.reading).toBeLessThan(80);
+    });
+
+    it('applies economic boom momentum shock and boost', () => {
+      const sector = {
+        index: -2,
+        reading: 95,
+        high: 0,
+        low: 0,
+        lowerRange: -3,
+        upperRange: 3,
+        adjustment: 0,
+      };
+
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.5);
+      const steppedBoom = stepSector(sector, 2, 0, defaultRules, new Random(1), false, 0, true);
+      expect(steppedBoom.index).toBeGreaterThanOrEqual(2);
+      expect(steppedBoom.reading).toBeGreaterThan(95);
+    });
+
+    it('incorporates parent sector index coupling (parentIndex / 3)', () => {
+      const sector = {
+        index: 0,
+        reading: 100,
+        high: 0,
+        low: 0,
+        lowerRange: -3,
+        upperRange: 3,
+        adjustment: 0,
+      };
+
+      // Force target to match index (0) so index stays 0, and adjustment roll to 0
+      const steppedPositive = stepSector(sector, 0, 3, defaultRules, { next: () => 0.5 } as any, false, 0, false);
+      // parentCoupling = floor(3 / 3) = +1
+      const steppedNegative = stepSector(sector, 0, -3, defaultRules, { next: () => 0.5 } as any, false, 0, false);
+      // parentCoupling = floor(-3 / 3) = -1
+
+      expect(steppedPositive.reading).toBeGreaterThanOrEqual(steppedNegative.reading);
+    });
+
+    it('clamps reading within minReading and maxReading', () => {
+      const nearMaxSector = {
+        index: 3,
+        reading: 189,
+        high: 0,
+        low: 0,
+        lowerRange: -3,
+        upperRange: 9,
+        adjustment: 0,
+      };
+
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99); // Max positive jump
+      const stepped = stepSector(nearMaxSector, 0, 3, defaultRules, new Random(1), false, 0, false);
+      expect(stepped.reading).toBeLessThanOrEqual(defaultRules.maxReading);
+
+      const nearMinSector = {
+        index: -3,
+        reading: 71,
+        high: 0,
+        low: 0,
+        lowerRange: -9,
+        upperRange: 3,
+        adjustment: 0,
+      };
+
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); // Max negative drop
+      const steppedLow = stepSector(nearMinSector, 10, -3, defaultRules, new Random(1), false, 0, false);
+      expect(steppedLow.reading).toBeGreaterThanOrEqual(defaultRules.minReading);
+    });
+  });
+
+  describe('stepEconomySimulation (Hierarchical 8-Sector Engine)', () => {
+    it('creates default simulation state with all 8 sectors initialized to 100', () => {
+      const sim = createDefaultEconomySimulationState();
+      expect(sim.main.reading).toBe(100);
+      expect(sim.goods.reading).toBe(100);
+      expect(sim.investments.reading).toBe(100);
+      expect(sim.stocks.gold.reading).toBe(100);
+      expect(sim.stocks.silver.reading).toBe(100);
+      expect(sim.stocks.pork.reading).toBe(100);
+      expect(sim.stocks.blueChip.reading).toBe(100);
+      expect(sim.stocks.penny.reading).toBe(100);
+    });
+
+    it('advances all 8 sectors during normal step', () => {
+      const sim = createDefaultEconomySimulationState();
+      const stepped = stepEconomySimulation(sim, {}, new Random(42), 'none', false);
+
+      expect(stepped.main).toBeDefined();
+      expect(stepped.goods).toBeDefined();
+      expect(stepped.investments).toBeDefined();
+      expect(stepped.stocks.gold).toBeDefined();
+      expect(stepped.stocks.silver).toBeDefined();
+      expect(stepped.stocks.pork).toBeDefined();
+      expect(stepped.stocks.blueChip).toBeDefined();
+      expect(stepped.stocks.penny).toBeDefined();
+      expect(stepped.lastCrashSeverity).toBe('none');
+      expect(stepped.lastBoom).toBe(false);
+    });
+
+    it('propagates crash severity across all sectors', () => {
+      const sim = createDefaultEconomySimulationState();
+      const stepped = stepEconomySimulation(sim, {}, new Random(42), 'major', false);
+
+      expect(stepped.lastCrashSeverity).toBe('major');
+      expect(stepped.main.reading).toBeLessThan(100);
+      expect(stepped.goods.reading).toBeLessThan(100);
+      expect(stepped.stocks.gold.reading).toBeLessThan(100);
+    });
+  });
+
+  describe('determineNewspaperMover', () => {
+    it('returns null if all sector indices are within [-1, 1]', () => {
+      const sim = createDefaultEconomySimulationState();
+      sim.stocks.gold.index = 1;
+      sim.stocks.silver.index = -1;
+      sim.stocks.pork.index = 0;
+      sim.stocks.blueChip.index = 0;
+      sim.stocks.penny.index = 1;
+      sim.investments.index = -1;
+      sim.goods.index = 0;
+
+      expect(determineNewspaperMover(sim)).toBeNull();
+    });
+
+    it('identifies the biggest gainer when gainer magnitude >= 2', () => {
+      const sim = createDefaultEconomySimulationState();
+      sim.stocks.gold.index = 3;
+      sim.stocks.silver.index = 1;
+
+      const mover = determineNewspaperMover(sim);
+      expect(mover).not.toBeNull();
+      expect(mover?.moverKey).toBe('newspaper.stocks.gold_up');
+      expect(mover?.isUp).toBe(true);
+      expect(mover?.sectorKey).toBe('gold');
+    });
+
+    it('prioritizes loser when loser drop magnitude exceeds gainer magnitude', () => {
+      const sim = createDefaultEconomySimulationState();
+      sim.stocks.gold.index = 2;
+      sim.stocks.pork.index = -3;
+
+      const mover = determineNewspaperMover(sim);
+      expect(mover).not.toBeNull();
+      expect(mover?.moverKey).toBe('newspaper.stocks.pork_down');
+      expect(mover?.isUp).toBe(false);
+      expect(mover?.sectorKey).toBe('pork');
+    });
+  });
+
+  describe('generatePredictiveStockTip', () => {
+    it('generates a strong buy tip when a stock has high mean-reversion flag set (depressed price)', () => {
+      const sim = createDefaultEconomySimulationState();
+      sim.stocks.gold.high = 2; // Strong bounce imminent
+      sim.stocks.gold.index = 1;
+
+      const tip = generatePredictiveStockTip(sim, new Random(1));
+      expect(tip).not.toBeNull();
+      expect(tip?.action).toBe('buy');
+      expect(tip?.commodityId).toBe('gold');
+      expect(tip?.headlineKey).toContain('gold_buy_headline');
+    });
+
+    it('generates a strong sell tip when a stock has low mean-reversion flag set (overheated price)', () => {
+      const sim = createDefaultEconomySimulationState();
+      sim.stocks.penny.low = 2; // Overheated, correction imminent
+      sim.stocks.penny.index = -1;
+
+      const tip = generatePredictiveStockTip(sim, new Random(1));
+      expect(tip).not.toBeNull();
+      expect(tip?.action).toBe('sell');
+      expect(tip?.commodityId).toBe('penny_stocks');
+      expect(tip?.headlineKey).toContain('penny_stocks_sell_headline');
+    });
+
+    it('generates a hold tip when all stocks are in neutral range', () => {
+      const sim = createDefaultEconomySimulationState();
+      // All sectors high=0, low=0, index=0
+      const tip = generatePredictiveStockTip(sim, new Random(1));
+      expect(tip).not.toBeNull();
+      expect(tip?.action).toBe('hold');
+    });
+  });
+
+  describe('calcStockPrice with authentic economy simulation', () => {
+    it('calculates price from commodity sector reading when simulation is provided', () => {
+      const sim = createDefaultEconomySimulationState();
+      sim.stocks.gold.reading = 130; // 150% of basePrice (100) -> 150
+
+      const price = calcStockPrice(100, 0, 12345, sim, 'gold');
+      expect(price).toBe(150);
+    });
+
+    it('falls back to deterministic sine wave when economySimulation is not provided', () => {
+      const price1 = calcStockPrice(100, 0, 12345, undefined, 'gold');
+      expect(typeof price1).toBe('number');
+      expect(price1).toBeGreaterThan(0);
     });
   });
 });
