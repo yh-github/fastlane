@@ -109,7 +109,7 @@ export const CenterWalkAnimation: React.FC<CenterWalkAnimationProps> = ({
   isWalking,
   frameDurationMs = 150,
   pixelated = true,
-  removeBg = false,
+  removeBg = true,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [frameIndex, setFrameIndex] = useState(0);

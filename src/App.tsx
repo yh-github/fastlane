@@ -195,7 +195,7 @@ export default function App() {
             clothesType={activePlayer.inventory?.selectedClothes || 'casual'}
             isWalking={isTravelling}
             pixelated={gameState.rules.pixelatedSprites ?? true}
-            removeBg={gameState.rules.removeCharacterBg ?? false}
+            removeBg={gameState.rules.removeCharacterBg ?? true}
           />
         )}
         {isBuildingModalOpen && currentBuildingId && (

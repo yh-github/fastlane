@@ -80,10 +80,10 @@ describe('SettingsModal', () => {
     expect(setGameState).toHaveBeenCalled();
     expect(state.rules.pixelatedSprites).toBe(false);
 
-    // Toggle Remove Character Background
+    // Toggle Remove Character Background (starts true by default -> toggles to false)
     const removeBgItem = screen.getByTestId('setting-remove-character-bg');
     fireEvent.click(removeBgItem);
-    expect(state.rules.removeCharacterBg).toBe(true);
+    expect(state.rules.removeCharacterBg).toBe(false);
 
     // Re-render and verify updated checkbox states
     rerender(
