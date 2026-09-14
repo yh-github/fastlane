@@ -197,7 +197,7 @@ export function createMockCampaign(overrides: MockCampaignOverrides = {}): Campa
         title: 'Burger Cook',
         baseWage: 5,
         locationId: 'monolith_burgers',
-        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+        requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
         perks: [],
         tags: ['always_hiring'],
       },

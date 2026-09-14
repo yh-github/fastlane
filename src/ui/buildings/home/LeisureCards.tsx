@@ -26,6 +26,7 @@ interface LeisureCardsProps {
     timeCost: number;
     isCappedBySpace?: boolean;
   };
+  helpfulUI?: boolean;
   onSocializeClick: () => void;
 }
 
@@ -40,6 +41,7 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
   usePhysicalMental,
   classicGain,
   classicFirstBonus,
+  helpfulUI,
   onRelaxClick,
   socialParams,
   onSocializeClick
@@ -194,7 +196,7 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
               transition: 'all 0.15s ease'
             }}
           >
-            🧘 {t('homeRelax.button', { cost: hoursToRelax, defaultValue: `Relax (${hoursToRelax}h)` })}
+            🧘 {helpfulUI ? t('homeRelax.button', { cost: hoursToRelax, defaultValue: `Relax (${hoursToRelax}h)` }) : t('homeRelax.buttonBasic', { defaultValue: 'Relax' })}
           </button>
         </div>
       </div>

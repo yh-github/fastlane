@@ -382,7 +382,7 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
   );
 }
 
-export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules: _rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
+export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<'banking'|'stocks'|'loans'>('banking');
   const [bankDialogMode, setBankDialogMode] = useState<'deposit' | 'withdraw' | null>(null);
@@ -545,7 +545,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
             onClick={() => onAction({ type: 'take_loan' })}
             style={{ padding: '14px', borderRadius: '8px' }}
           >
-            📝 {t('bank.applyLoan', { cost: campaign?.config.timeRules?.loanCost ?? 2, defaultValue: `Apply for Loan (Costs ⏳ ${campaign?.config.timeRules?.loanCost ?? 2} Hours)` })}
+            📝 {rules?.helpfulUI ? t('bank.applyLoan', { cost: campaign?.config.timeRules?.loanCost ?? 2, defaultValue: `Apply for Loan (Costs ⏳ ${campaign?.config.timeRules?.loanCost ?? 2} Hours)` }) : t('bank.applyLoanBasic', { defaultValue: 'Apply for Loan' })}
           </button>
           <button 
             onClick={() => onAction({ type: 'pay_loan' })} 

@@ -15,8 +15,28 @@ interface SettingsModalProps {
 
 export function SettingsModal({ gameState, setGameState, campaign, replayData, onClose }: SettingsModalProps) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'general' | 'graphics'>('general');
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
+
+  const toggleCategory = (catId: string) => {
+    setCollapsedCategories(prev => ({
+      ...prev,
+      [catId]: !prev[catId]
+    }));
+  };
+
+  const handleToggleHelpfulUI = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          helpfulUI: !prev.rules.helpfulUI
+        }
+      };
+    });
+  };
 
   const handleToggleAnimations = () => {
     setGameState(prev => {
@@ -44,19 +64,6 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     });
   };
 
-  const handleToggleOverAchieve = () => {
-    setGameState(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        rules: {
-          ...prev.rules,
-          allowOverAchievingGoals: !prev.rules.allowOverAchievingGoals
-        }
-      };
-    });
-  };
-
   const handleTogglePixelatedSprites = () => {
     setGameState(prev => {
       if (!prev) return prev;
@@ -74,11 +81,12 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
   const handleToggleRemoveCharacterBg = () => {
     setGameState(prev => {
       if (!prev) return prev;
+      const current = prev.rules.removeCharacterBg !== false;
       return {
         ...prev,
         rules: {
           ...prev.rules,
-          removeCharacterBg: !prev.rules.removeCharacterBg
+          removeCharacterBg: !current
         }
       };
     });
@@ -95,10 +103,14 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     URL.revokeObjectURL(url);
   };
 
+  const isInterfaceCollapsed = !!collapsedCategories['interface'];
+  const isGraphicsCollapsed = !!collapsedCategories['graphics'];
+  const isDeveloperCollapsed = !!collapsedCategories['developer'];
+
   return (
     <>
       <div className="fullscreen-overlay settings-modal-overlay" style={{ zIndex: 9999 }}>
-        <div className="building-modal settings-modal-content">
+        <div className="building-modal settings-modal-content" style={{ maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
           <button className="building-modal__close" onClick={onClose}>×</button>
           <div className="building-modal__header">
             <div className="building-modal__face">⚙️</div>
@@ -107,119 +119,138 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '8px' }}>
-            <button
+          <div className="interaction-panel" style={{ overflowY: 'auto', flex: 1, paddingRight: '4px' }}>
+            {/* --- Category: Interface & Assistance --- */}
+            <div
+              className="settings-category-header"
+              onClick={() => toggleCategory('interface')}
+              data-testid="category-header-interface"
               style={{
-                background: activeTab === 'general' ? 'var(--accent-cyan)' : 'transparent',
-                color: activeTab === 'general' ? '#000' : 'var(--text-main, #fff)',
-                border: '1px solid var(--accent-cyan)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 12px',
+                background: 'rgba(255, 255, 255, 0.06)',
                 borderRadius: '6px',
-                padding: '6px 14px',
-                fontWeight: 600,
                 cursor: 'pointer',
-                fontSize: '0.9rem',
-                transition: 'all 0.15s ease'
-              }}
-              onClick={() => setActiveTab('general')}
-              data-testid="tab-settings-general"
-            >
-              ⚙️ {t('settings.tabs.general', { defaultValue: 'General' })}
-            </button>
-            <button
-              style={{
-                background: activeTab === 'graphics' ? 'var(--accent-cyan)' : 'transparent',
-                color: activeTab === 'graphics' ? '#000' : 'var(--text-main, #fff)',
-                border: '1px solid var(--accent-cyan)',
-                borderRadius: '6px',
-                padding: '6px 14px',
+                userSelect: 'none',
                 fontWeight: 600,
-                cursor: 'pointer',
                 fontSize: '0.9rem',
-                transition: 'all 0.15s ease'
+                color: 'var(--accent-cyan, #00e5ff)',
+                border: '1px solid rgba(0, 229, 255, 0.25)',
+                marginBottom: isInterfaceCollapsed ? '10px' : '6px',
+                transition: 'background 0.15s ease'
               }}
-              onClick={() => setActiveTab('graphics')}
-              data-testid="tab-settings-graphics"
             >
-              🎨 {t('settings.tabs.graphics', { defaultValue: 'Graphics' })}
-            </button>
-          </div>
+              <span>🧭 {t('settings.categories.interface', { defaultValue: 'Interface & Assistance' })}</span>
+              <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>
+                {isInterfaceCollapsed ? '▶ ' + t('settings.show', { defaultValue: 'Expand' }) : '▼ ' + t('settings.hide', { defaultValue: 'Fold' })}
+              </span>
+            </div>
 
-          <div className="interaction-panel">
-            {activeTab === 'general' && (
-              <>
+            {!isInterfaceCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
                 <div 
                   className="interaction-item interaction-item--clickable"
-                  onClick={handleToggleShowItemImages}
+                  onClick={handleToggleHelpfulUI}
+                  data-testid="setting-helpful-ui"
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{t('settings.showItemImages', { defaultValue: 'Show Item Graphics' })}</span>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.helpfulUI', { defaultValue: 'Helpful Interface' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.helpfulUI 
+                          ? t('settings.helpfulUIOn', { defaultValue: 'Displays exact prices, wage estimates, and break-in risk (ON)' })
+                          : t('settings.helpfulUIOff', { defaultValue: 'Authentic minimal information (OFF)' })}
+                      </div>
+                    </div>
                     <input 
                       type="checkbox" 
-                      checked={gameState.rules.showItemImages} 
+                      checked={!!gameState.rules.helpfulUI} 
                       readOnly
                       style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
                     />
                   </div>
                 </div>
+
                 <div 
                   className="interaction-item interaction-item--clickable"
                   onClick={handleToggleAnimations}
+                  data-testid="setting-enable-animations"
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{t('settings.animations', { defaultValue: 'Enable Animations' })}</span>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.animations', { defaultValue: 'Floating Stat Popups & Effects' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.enableAnimations 
+                          ? t('settings.animationsOn', { defaultValue: 'Displays floating numbers and icons when stats change (ON)' })
+                          : t('settings.animationsOff', { defaultValue: 'Suppressed stat change popups (OFF)' })}
+                      </div>
+                    </div>
                     <input 
                       type="checkbox" 
-                      checked={gameState.rules.enableAnimations} 
+                      checked={!!gameState.rules.enableAnimations} 
                       readOnly
                       style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
                     />
                   </div>
                 </div>
+
                 <div 
                   className="interaction-item interaction-item--clickable"
-                  onClick={handleToggleOverAchieve}
+                  onClick={handleToggleShowItemImages}
+                  data-testid="setting-show-item-images"
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{t('settings.overachieve', { defaultValue: 'Allow Over-Achieving Goals' })}</span>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.showItemImages', { defaultValue: 'Show Item Graphics' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.showItemImages 
+                          ? t('settings.itemImagesOn', { defaultValue: 'Graphical icons in shops and inventory (ON)' })
+                          : t('settings.itemImagesOff', { defaultValue: 'Text-only item listings (OFF)' })}
+                      </div>
+                    </div>
                     <input 
                       type="checkbox" 
-                      checked={gameState.rules.allowOverAchievingGoals} 
+                      checked={!!gameState.rules.showItemImages} 
                       readOnly
                       style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
                     />
                   </div>
                 </div>
-
-                {campaign && (
-                  <div 
-                    className="interaction-item interaction-item--clickable"
-                    onClick={() => setIsDebugModalOpen(true)}
-                    style={{ border: '1px solid rgba(0, 229, 255, 0.3)', marginTop: '8px' }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>
-                        🛠️ {t('settings.debugEvents', { defaultValue: 'Debug Events & Economy' })}
-                      </span>
-                      {(gameState.debugQueue?.length || 0) > 0 && (
-                        <span style={{
-                          background: 'rgba(255, 179, 0, 0.2)',
-                          color: 'var(--accent-amber)',
-                          fontSize: '0.7rem',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontWeight: 700
-                        }}>
-                          {gameState.debugQueue?.length} Queued
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
+              </div>
             )}
 
-            {activeTab === 'graphics' && (
-              <>
+            {/* --- Category: Graphics & Sprites --- */}
+            <div
+              className="settings-category-header"
+              onClick={() => toggleCategory('graphics')}
+              data-testid="category-header-graphics"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 12px',
+                background: 'rgba(255, 255, 255, 0.06)',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                userSelect: 'none',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                color: 'var(--accent-cyan, #00e5ff)',
+                border: '1px solid rgba(0, 229, 255, 0.25)',
+                marginBottom: isGraphicsCollapsed ? '10px' : '6px',
+                transition: 'background 0.15s ease'
+              }}
+            >
+              <span>🎨 {t('settings.categories.graphics', { defaultValue: 'Graphics & Sprites' })}</span>
+              <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>
+                {isGraphicsCollapsed ? '▶ ' + t('settings.show', { defaultValue: 'Expand' }) : '▼ ' + t('settings.hide', { defaultValue: 'Fold' })}
+              </span>
+            </div>
+
+            {!isGraphicsCollapsed && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
                 <div 
                   className="interaction-item interaction-item--clickable"
                   onClick={handleTogglePixelatedSprites}
@@ -252,49 +283,82 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                     <div>
                       <div style={{ fontWeight: 600 }}>{t('settings.removeCharacterBg', { defaultValue: 'Remove Character Background' })}</div>
                       <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                        {gameState.rules.removeCharacterBg 
+                        {gameState.rules.removeCharacterBg !== false
                           ? t('settings.removeBgOn', { defaultValue: 'Transparent stage background (ON)' })
                           : t('settings.removeBgOff', { defaultValue: 'Original solid character background (OFF)' })}
                       </div>
                     </div>
                     <input 
                       type="checkbox" 
-                      checked={!!gameState.rules.removeCharacterBg} 
+                      checked={gameState.rules.removeCharacterBg !== false} 
                       readOnly
                       style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
                     />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- Category: Developer & Diagnostics --- */}
+            {(campaign || replayData) && (
+              <>
+                <div
+                  className="settings-category-header"
+                  onClick={() => toggleCategory('developer')}
+                  data-testid="category-header-developer"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 12px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    color: 'var(--accent-cyan, #00e5ff)',
+                    border: '1px solid rgba(0, 229, 255, 0.25)',
+                    marginBottom: isDeveloperCollapsed ? '10px' : '6px',
+                    transition: 'background 0.15s ease'
+                  }}
+                >
+                  <span>🛠️ {t('settings.categories.developer', { defaultValue: 'Developer & Tools' })}</span>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>
+                    {isDeveloperCollapsed ? '▶ ' + t('settings.show', { defaultValue: 'Expand' }) : '▼ ' + t('settings.hide', { defaultValue: 'Fold' })}
+                  </span>
                 </div>
 
-                <div 
-                  className="interaction-item interaction-item--clickable"
-                  onClick={handleToggleShowItemImages}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{t('settings.showItemImages', { defaultValue: 'Show Item Graphics' })}</span>
-                    <input 
-                      type="checkbox" 
-                      checked={gameState.rules.showItemImages} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                {!isDeveloperCollapsed && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                    {campaign && (
+                      <div 
+                        className="interaction-item interaction-item--clickable"
+                        onClick={() => setIsDebugModalOpen(true)}
+                        style={{ border: '1px solid rgba(0, 229, 255, 0.3)' }}
+                        data-testid="btn-open-debug-events"
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>
+                            🛠️ {t('settings.debugEvents', { defaultValue: 'Debug Events & Economy' })}
+                          </span>
+                          {(gameState.debugQueue?.length || 0) > 0 && (
+                            <span style={{
+                              background: 'rgba(255, 179, 0, 0.2)',
+                              color: 'var(--accent-amber)',
+                              fontSize: '0.7rem',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontWeight: 700
+                            }}>
+                              {gameState.debugQueue?.length} Queued
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                <div 
-                  className="interaction-item interaction-item--clickable"
-                  onClick={handleToggleAnimations}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{t('settings.animations', { defaultValue: 'Enable UI Animations' })}</span>
-                    <input 
-                      type="checkbox" 
-                      checked={gameState.rules.enableAnimations} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
-                  </div>
-                </div>
+                )}
               </>
             )}
           </div>

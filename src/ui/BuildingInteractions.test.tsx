@@ -442,7 +442,7 @@ describe('BuildingInteractions', () => {
         player={mockPlayer}
         onAction={mockOnAction}
         campaign={mockCampaign}
-        rules={{ percentageEducation: true } as any}
+        rules={{ percentageEducation: true, helpfulUI: true } as any}
       />
     );
 

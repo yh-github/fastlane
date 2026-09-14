@@ -99,8 +99,8 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                             style={{ width: '100%', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1, cursor: 'pointer' }} 
                             onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
                           >
-                            🎓 {t('university.studyBtn', { cost: hoursToStudy, defaultValue: `Study (⏳ ${hoursToStudy}h)` })}
-                            {rules?.usePhysicalMentalConditions && (() => {
+                            🎓 {rules?.helpfulUI ? t('university.studyBtn', { cost: hoursToStudy, defaultValue: `Study (⏳ ${hoursToStudy}h)` }) : t('university.studyBtnBasic', { defaultValue: 'Study' })}
+                            {rules?.usePhysicalMentalConditions && rules?.helpfulUI && (() => {
                               const sRules = campaign.config.statRules;
                               const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
                               const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;

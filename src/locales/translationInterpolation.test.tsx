@@ -86,6 +86,13 @@ describe('Translation Interpolation & Template Verification', () => {
       expect(askRaise).toBe('Ask for Raise to $30/hr (4h)');
       expect(askRaise).not.toContain('{{');
 
+      const askRaiseAdvanced = i18n.t('jobBoard.askRaiseAdvanced', { wage: 30, cost: 4 });
+      expect(askRaiseAdvanced).toBe('Ask for Raise to $30/hr (4h, -1 🧠)');
+      expect(askRaiseAdvanced).not.toContain('{{');
+
+      const askRaiseBasic = i18n.t('jobBoard.askRaiseBasic');
+      expect(askRaiseBasic).toBe('Ask for a Raise');
+
       const currentJob = i18n.t('jobBoard.currentJob', { wage: 18 });
       expect(currentJob).toBe('Current Job ($18/hr)');
       expect(currentJob).not.toContain('{{');
@@ -93,6 +100,13 @@ describe('Translation Interpolation & Template Verification', () => {
       const applyJob = i18n.t('jobBoard.apply', { cost: 4 });
       expect(applyJob).toBe('Apply (4h)');
       expect(applyJob).not.toContain('{{');
+
+      const applyJobAdvanced = i18n.t('jobBoard.applyAdvanced', { cost: 4 });
+      expect(applyJobAdvanced).toBe('Apply (4h, -1 🧠)');
+      expect(applyJobAdvanced).not.toContain('{{');
+
+      const applyJobBasic = i18n.t('jobBoard.applyBasic');
+      expect(applyJobBasic).toBe('Apply');
 
       // Work Station
       const workTitle = i18n.t('workStation.title', { jobTitle: 'Senior Manager' });
@@ -155,9 +169,23 @@ describe('Translation Interpolation & Template Verification', () => {
       expect(askRaise).toBe('בקש העלאה ל-30$/שעה (4 שעות)');
       expect(askRaise).not.toContain('{{');
 
+      const askRaiseAdvanced = i18n.t('jobBoard.askRaiseAdvanced', { wage: 30, cost: 4 });
+      expect(askRaiseAdvanced).toBe('בקש העלאה ל-30$/שעה (4 שעות, -1 🧠)');
+      expect(askRaiseAdvanced).not.toContain('{{');
+
+      const askRaiseBasic = i18n.t('jobBoard.askRaiseBasic');
+      expect(askRaiseBasic).toBe('בקש העלאה');
+
       const applyJob = i18n.t('jobBoard.apply', { cost: 4 });
       expect(applyJob).toBe('הגש מועמדות (4 שעות)');
       expect(applyJob).not.toContain('{{');
+
+      const applyJobAdvanced = i18n.t('jobBoard.applyAdvanced', { cost: 4 });
+      expect(applyJobAdvanced).toBe('הגש מועמדות (4 שעות, -1 🧠)');
+      expect(applyJobAdvanced).not.toContain('{{');
+
+      const applyJobBasic = i18n.t('jobBoard.applyBasic');
+      expect(applyJobBasic).toBe('הגש מועמדות');
 
       const workShift = i18n.t('workStation.workShift', { cost: 6 });
       expect(workShift).toBe('משמרת עבודה (עד 6 שעות)');

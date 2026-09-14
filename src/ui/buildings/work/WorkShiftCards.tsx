@@ -102,7 +102,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             transition: 'all 0.15s ease'
           }}
         >
-          💼 {t('workStation.workShift', { cost: shiftCost, defaultValue: `Work Shift (${shiftCost}h)` })}
+          💼 {rules?.helpfulUI ? t('workStation.workShift', { cost: shiftCost, defaultValue: `Work Shift (${shiftCost}h)` }) : t('workStation.workShiftBasic', { defaultValue: 'Work Shift' })}
         </button>
       </div>
     );
@@ -152,7 +152,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               💼 {t(`job.${job.id}`, { defaultValue: job.title })}
             </h3>
             <span style={{ fontSize: '0.85rem', color: 'var(--accent-cyan, #00e5ff)', fontWeight: 'bold' }}>
-              ${player.currentWage || job.baseWage}/hr (⏳{shiftCost}h)
+              ${player.currentWage || job.baseWage}/hr{rules?.helpfulUI ? ` (⏳${shiftCost}h)` : ''}
             </span>
           </div>
           {onClose && (
@@ -344,6 +344,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {rules?.helpfulUI && (
               <span
                 style={{
                   fontSize: '0.68rem',
@@ -356,6 +357,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               >
                 ⏳ {hoursToWork} hrs
               </span>
+            )}
 
               {/* Strategy & Mechanics Guide '?' Button */}
               <button
@@ -734,7 +736,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               </h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
                 <span style={{ fontSize: '0.85rem', color: '#00e5ff', fontWeight: 'bold' }}>
-                  ${player.currentWage || job.baseWage}/hr (⏳{hoursToWork}h) {tierLabel}
+                  ${player.currentWage || job.baseWage}/hr{rules?.helpfulUI ? ` (⏳${hoursToWork}h)` : ''} {tierLabel}
                 </span>
                 {summary.locationInitiatives > 0 && (
                   <span style={{ fontSize: '0.74rem', color: '#f59e0b', fontWeight: 'bold', background: 'rgba(245, 158, 11, 0.15)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>

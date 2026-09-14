@@ -411,8 +411,12 @@
     "missingReq": "אינך עומד בדרישות המינימום למשרה זו.",
     "alwaysHiring": "גיוס מובטח",
     "askRaise": "בקש העלאה ל-{{wage}}$/שעה ({{cost}} שעות)",
+    "askRaiseBasic": "בקש העלאה",
+    "askRaiseAdvanced": "בקש העלאה ל-{{wage}}$/שעה ({{cost}} שעות, -1 🧠)",
     "currentJob": "עבודה נוכחית ({{wage}}$/שעה)",
     "apply": "הגש מועמדות ({{cost}} שעות)",
+    "applyBasic": "הגש מועמדות",
+    "applyAdvanced": "הגש מועמדות ({{cost}} שעות, -1 🧠)",
     "probationBadge": "תקופת מבחן (הניקוד הופחת בחצי)",
     "mistakesBadge": "{{count}} תקריות (-{{count}})",
     "innovationsBadge": "{{count}} חידושים (+{{bonus}})",
@@ -424,6 +428,7 @@
   "workStation": {
     "title": "העבודה שלך: {{jobTitle}}",
     "workShift": "משמרת עבודה (עד {{cost}} שעות)",
+    "workShiftBasic": "משמרת עבודה",
     "innovations": "חידושים: {{count}}",
     "initiatives": "יוזמות: {{count}}",
     "actionShowInitiative": "לגלות יוזמה",
@@ -437,6 +442,9 @@
   "homeRelax": {
     "title": "אין כמו בבית",
     "button": "לנוח ({{cost}} שעות)",
+    "buttonBasic": "לנוח",
+    "cleanBasic": "נקה דירה",
+    "cleaningServiceBasic": "הזמן שירות ניקיון ({{cost}}$)",
     "relaxBtnText": "מנוחה",
     "durablesShowcase": "ריהוט וציוד לדירה",
     "btnLeisure": "פנאי",
@@ -529,6 +537,7 @@
     "depositAmount": "הפקד {{amount}}$ (או שארית)",
     "withdrawAmount": "משוך {{amount}}$ (או שארית)",
     "applyLoan": "בקש הלוואה (עולה {{cost}} שעות)",
+    "applyLoanBasic": "בקש הלוואה",
     "makePayment": "שלם הלוואה ({{amount}}$ או שארית)"
   },
   "stocks": {
@@ -565,6 +574,7 @@
     "rummageTitle": "ארגזי מציאות וענתיקות",
     "rummageDesc": "חטט בארגזים בלתי ממוינים של חפצים ישנים. תוכל למצוא מציאה, קמע כיס מרגיע, חלקי חילוף או מכשיר תקול. (עולה שעה אחת)",
     "actionRummage": "חטט בארגזים (שעה אחת)",
+    "actionRummageBasic": "חטט בארגזים",
     "rummageItemTitle": "מציאה שנמצאה",
     "trinketTag": "קמע כיס נדיר",
     "trinketEffect": "משיב מיד +1 חוסן נפשי ברכישה (0 מקום נדרש)",
@@ -581,6 +591,7 @@
     "bonus": "★ בונוס",
     "lessons": "שיעורים: {{completed}} / {{required}}",
     "studyBtn": "למד ({{cost}} שעות)",
+    "studyBtnBasic": "למד",
     "enrollBtn": "הירשם"
   },
   "job": {

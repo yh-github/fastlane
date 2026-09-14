@@ -329,6 +329,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             usePhysicalMental={rules?.usePhysicalMentalConditions}
             classicGain={classicGain}
             classicFirstBonus={classicFirstBonus}
+            helpfulUI={rules?.helpfulUI}
             onRelaxClick={() => {
               onRelaxClick();
             }}
@@ -345,6 +346,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             cleanPhysGain={cleanPhysGain}
             isCleanDisabled={isCleanDisabled}
             cleanSubtext={cleanSubtext}
+            helpfulUI={rules?.helpfulUI}
             onCleanClick={() => {
               onCleanClick();
             }}
