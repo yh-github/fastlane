@@ -581,7 +581,8 @@
     "walkAway": "וותר / המשך הלאה",
     "btnTakeBargain": "קח פריט",
     "btnPassOnBatch": "וותר (השאר בארגז)",
-    "btnRummageAgain": "חטט שוב (שעה 1)"
+    "btnRummageAgain": "חטט שוב (שעה 1)",
+    "btnRummageAgainBasic": "חטט שוב"
   },
   "university": {
     "title": "רישום אוניברסיטאי",

@@ -68,17 +68,19 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
               CHORE
             </span>
 
-            <span style={{
-              fontSize: '0.78rem',
-              fontWeight: 'bold',
-              padding: '2px 8px',
-              borderRadius: '10px',
-              backgroundColor: '#075985',
-              color: '#e0f2fe',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-            }}>
-              ⏳ {hoursToClean}h
-            </span>
+            {helpfulUI && (
+              <span style={{
+                fontSize: '0.78rem',
+                fontWeight: 'bold',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                backgroundColor: '#075985',
+                color: '#e0f2fe',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                ⏳ {hoursToClean}h
+              </span>
+            )}
           </div>
 
           {/* Artwork Frame */}
@@ -207,7 +209,7 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
               color: '#f3e8ff',
               boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
             }}>
-              ⏳ {cleaningServiceCost}h | ${cleaningServicePrice}
+              {helpfulUI ? `⏳ ${cleaningServiceCost}h | ` : ''}${cleaningServicePrice}
             </span>
           </div>
 

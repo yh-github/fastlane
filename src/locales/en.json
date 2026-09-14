@@ -1059,7 +1059,8 @@
     "walkAway": "Pass / Leave",
     "btnTakeBargain": "Take Item",
     "btnPassOnBatch": "Leave It (Pass)",
-    "btnRummageAgain": "Draw Another (1 hr)"
+    "btnRummageAgain": "Draw Another (1 hr)",
+    "btnRummageAgainBasic": "Draw Another"
   },
   "homeDurable": {
     "maintenanceTitle": "Appliance Maintenance",

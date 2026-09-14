@@ -243,7 +243,7 @@ export function PawnShop({
                         gap: '4px'
                       }}
                     >
-                      🔄 {t('pawnShop.btnRummageAgain', { defaultValue: 'Draw Another (1 hr)' })}
+                      🔄 {rules?.helpfulUI ? t('pawnShop.btnRummageAgain', { defaultValue: 'Draw Another (1 hr)' }) : t('pawnShop.btnRummageAgainBasic', { defaultValue: 'Draw Another' })}
                     </button>
                   )}
                   <button
