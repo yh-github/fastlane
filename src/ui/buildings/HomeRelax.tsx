@@ -495,7 +495,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                   fontSize: '0.85em'
                 }}
               >
-                <div>🧹 Clean Apartment (⏳ {hoursToClean}h)</div>
+                <div>🧹 {rules?.helpfulUI ? `Clean Apartment (⏳ ${hoursToClean}h)` : t('homeRelax.cleanBasic', { defaultValue: 'Clean Apartment' })}</div>
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '1px', color: isCleanDisabled ? '#ffb3b3' : 'inherit' }}>
                   {cleanSubtext}
                 </div>
@@ -517,7 +517,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                   fontSize: '0.85em'
                 }}
               >
-                <div>🧼 Call Cleaning Service (⏳ {cleaningServiceCost}h, ${cleaningServicePrice})</div>
+                <div>🧼 {rules?.helpfulUI ? `Call Cleaning Service (⏳ ${cleaningServiceCost}h, $${cleaningServicePrice})` : t('homeRelax.cleaningServiceBasic', { cost: cleaningServicePrice, defaultValue: `Call Cleaning Service ($${cleaningServicePrice})` })}</div>
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '1px', color: isServiceDisabled ? '#ffb3b3' : 'inherit' }}>
                   {serviceSubtext}
                 </div>
@@ -605,7 +605,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
               data-testid="btn-relax"
               onClick={handleRelaxClick}
               disabled={isRelaxDisabled}
-              title={rules?.helpfulUI ? (classicFirstBonus > 0 ? `Relax (${hoursToRelax}h) +${classicGain} 🧘 (+${classicFirstBonus} 😊)` : `Relax (${hoursToRelax}h) +${classicGain} 🧘`) : `Relax (${hoursToRelax}h)`}
+              title={rules?.helpfulUI ? (classicFirstBonus > 0 ? `Relax (${hoursToRelax}h) +${classicGain} 🧘 (+${classicFirstBonus} 😊)` : `Relax (${hoursToRelax}h) +${classicGain} 🧘`) : undefined}
               style={{
                 background: isRelaxDisabled ? '#333' : 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)',
                 color: isRelaxDisabled ? '#777' : '#fff',

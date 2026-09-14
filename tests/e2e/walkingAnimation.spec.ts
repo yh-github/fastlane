@@ -140,11 +140,7 @@ test.describe('Character Center Walking Animation E2E', () => {
     const settingsModal = page.locator('.building-modal');
     await expect(settingsModal).toBeVisible();
 
-    // 2. Click Graphics tab
-    const graphicsTab = page.locator('[data-testid="tab-settings-graphics"]');
-    await graphicsTab.click();
-
-    // 3. Toggle "Remove Character Background" (from ON to OFF)
+    // 2. Toggle "Remove Character Background" (from ON to OFF)
     const removeBgToggle = page.locator('[data-testid="setting-remove-character-bg"]');
     await removeBgToggle.click();
 
@@ -153,17 +149,22 @@ test.describe('Character Center Walking Animation E2E', () => {
     await closeSettingsBtn.click();
     await expect(settingsModal).toBeHidden();
 
-    // 4. Verify center stage has solid background (OFF)
+    // 3. Verify center stage has solid background (OFF)
     await expect(centerStage).toHaveAttribute('data-remove-bg', 'false');
     await page.waitForTimeout(400);
 
     // Save screenshot of solid background
     await page.screenshot({ path: '/home/yoavh/.gemini/antigravity/brain/baba78ec-dc3f-47a6-8d0c-8fcc6a50339a/walking_solid_bg.png' });
 
-    // 5. Toggle it back ON
+    // 4. Toggle it back ON and test folding Interface category
     await settingsBtn.click();
     await expect(settingsModal).toBeVisible();
-    await graphicsTab.click();
+    
+    // Fold Interface category
+    const interfaceHeader = page.locator('[data-testid="category-header-interface"]');
+    await interfaceHeader.click();
+    await expect(page.locator('[data-testid="setting-helpful-ui"]')).toBeHidden();
+
     await removeBgToggle.click();
     await closeSettingsBtn.click();
     await expect(settingsModal).toBeHidden();
@@ -176,7 +177,6 @@ test.describe('Character Center Walking Animation E2E', () => {
     // 5. Open Settings again and toggle Crisp Pixel Art off (Smooth on)
     await settingsBtn.click();
     await expect(settingsModal).toBeVisible();
-    await graphicsTab.click();
 
     const pixelatedToggle = page.locator('[data-testid="setting-pixelated-sprites"]');
     await pixelatedToggle.click();

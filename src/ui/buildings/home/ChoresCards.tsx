@@ -12,6 +12,7 @@ interface ChoresCardsProps {
   cleaningServicePrice: number;
   isServiceDisabled: boolean;
   serviceSubtext: string;
+  helpfulUI?: boolean;
   onServiceClick: () => void;
 }
 
@@ -25,6 +26,7 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
   cleaningServicePrice,
   isServiceDisabled,
   serviceSubtext,
+  helpfulUI,
   onServiceClick
 }) => {
   const { t } = useTranslation();
@@ -156,7 +158,7 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
               transition: 'all 0.15s ease'
             }}
           >
-            🧹 Clean Apartment (⏳ {hoursToClean}h)
+            🧹 {helpfulUI ? `Clean Apartment (⏳ ${hoursToClean}h)` : t('homeRelax.cleanBasic', { defaultValue: 'Clean Apartment' })}
           </button>
         </div>
       </div>

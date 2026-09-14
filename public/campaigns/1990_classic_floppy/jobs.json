@@ -46,7 +46,7 @@
     "locationId": "burger_palace",
     "baseWage": 4,
     "requirements": {
-      "experience": 0,
+      "experience": 10,
       "dependability": 10,
       "degrees": [],
       "uniform": "casual"

@@ -24,7 +24,7 @@ describe('SettingsModal', () => {
     winnerId: null,
   };
 
-  it('renders user display settings (Show Item Graphics, Enable Animations, Allow Over-Achieving)', () => {
+  it('renders Interface & Assistance settings (Helpful Interface, Floating Stat Popups, Show Item Graphics)', () => {
     render(
       <SettingsModal
         gameState={dummyGameState}
@@ -33,12 +33,13 @@ describe('SettingsModal', () => {
       />
     );
 
+    expect(screen.getByText('Helpful Interface')).toBeInTheDocument();
+    expect(screen.getByText('Floating Stat Popups & Effects')).toBeInTheDocument();
     expect(screen.getByText('Show Item Graphics')).toBeInTheDocument();
-    expect(screen.getByText('Enable Animations')).toBeInTheDocument();
-    expect(screen.getByText('Allow Over-Achieving Goals')).toBeInTheDocument();
+    expect(screen.queryByText('Allow Over-Achieving Goals')).not.toBeInTheDocument();
   });
 
-  it('does NOT render campaign optional rules in Settings modal', () => {
+  it('does NOT render campaign optional rules or win condition rules in Settings modal', () => {
     render(
       <SettingsModal
         gameState={dummyGameState}
@@ -47,12 +48,13 @@ describe('SettingsModal', () => {
       />
     );
 
+    expect(screen.queryByText('Allow Over-Achieving Goals')).not.toBeInTheDocument();
     expect(screen.queryByText('Bypass Doctor Visit if Cash is $0')).not.toBeInTheDocument();
     expect(screen.queryByText('Enable Doctor Visit from Low Relaxation')).not.toBeInTheDocument();
     expect(screen.queryByText('Low Relaxation Threshold')).not.toBeInTheDocument();
   });
 
-  it('switches to Graphics submenu tab and toggles pixelated sprites and remove background', () => {
+  it('toggles Helpful Interface, Pixelated Sprites, and Remove Background on the single screen', () => {
     let state = { ...dummyGameState };
     const setGameState = vi.fn().mockImplementation((updater) => {
       state = updater(state);
@@ -66,18 +68,19 @@ describe('SettingsModal', () => {
       />
     );
 
-    // Switch to Graphics tab
-    const graphicsTabBtn = screen.getByTestId('tab-settings-graphics');
-    fireEvent.click(graphicsTabBtn);
-
-    // Verify Graphics submenu items appear
+    // Verify Graphics items are visible on the single screen
     expect(screen.getByText('Crisp Pixel Art')).toBeInTheDocument();
     expect(screen.getByText('Remove Character Background')).toBeInTheDocument();
 
-    // Toggle Pixelated Sprites
+    // Toggle Helpful Interface (default false -> true)
+    const helpfulItem = screen.getByTestId('setting-helpful-ui');
+    fireEvent.click(helpfulItem);
+    expect(setGameState).toHaveBeenCalled();
+    expect(state.rules.helpfulUI).toBe(true);
+
+    // Toggle Pixelated Sprites (default true -> false)
     const pixelatedItem = screen.getByTestId('setting-pixelated-sprites');
     fireEvent.click(pixelatedItem);
-    expect(setGameState).toHaveBeenCalled();
     expect(state.rules.pixelatedSprites).toBe(false);
 
     // Toggle Remove Character Background (starts true by default -> toggles to false)
@@ -85,7 +88,7 @@ describe('SettingsModal', () => {
     fireEvent.click(removeBgItem);
     expect(state.rules.removeCharacterBg).toBe(false);
 
-    // Re-render and verify updated checkbox states
+    // Re-render and verify updated state reflects
     rerender(
       <SettingsModal
         gameState={state}
@@ -94,5 +97,35 @@ describe('SettingsModal', () => {
       />
     );
     expect(screen.getByText('Remove Character Background')).toBeInTheDocument();
+  });
+
+  it('folds and expands categories when clicking category headers', () => {
+    render(
+      <SettingsModal
+        gameState={dummyGameState}
+        setGameState={() => {}}
+        onClose={() => {}}
+      />
+    );
+
+    // Interface items initially visible
+    expect(screen.getByText('Helpful Interface')).toBeInTheDocument();
+
+    // Click to fold Interface category
+    const interfaceHeader = screen.getByTestId('category-header-interface');
+    fireEvent.click(interfaceHeader);
+
+    // Interface items should now be folded/hidden
+    expect(screen.queryByText('Helpful Interface')).not.toBeInTheDocument();
+
+    // Click again to expand Interface category
+    fireEvent.click(interfaceHeader);
+    expect(screen.getByText('Helpful Interface')).toBeInTheDocument();
+
+    // Fold Graphics category
+    expect(screen.getByText('Crisp Pixel Art')).toBeInTheDocument();
+    const graphicsHeader = screen.getByTestId('category-header-graphics');
+    fireEvent.click(graphicsHeader);
+    expect(screen.queryByText('Crisp Pixel Art')).not.toBeInTheDocument();
   });
 });

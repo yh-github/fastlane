@@ -816,8 +816,12 @@
     "missingReq": "You do not meet the minimum requirements for this position.",
     "alwaysHiring": "Always Hiring",
     "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
+    "askRaiseBasic": "Ask for a Raise",
+    "askRaiseAdvanced": "Ask for Raise to ${{wage}}/hr ({{cost}}h, -1 🧠)",
     "currentJob": "Current Job (${{wage}}/hr)",
     "apply": "Apply ({{cost}}h)",
+    "applyBasic": "Apply",
+    "applyAdvanced": "Apply ({{cost}}h, -1 🧠)",
     "probationBadge": "Probation (Score Halved)",
     "mistakesBadge": "{{count}} Incidents (-{{count}})",
     "innovationsBadge": "{{count}} Innovations (+{{bonus}})",
@@ -829,6 +833,7 @@
   "workStation": {
     "title": "Your Job: {{jobTitle}}",
     "workShift": "Work Shift (up to {{cost}}h)",
+    "workShiftBasic": "Work Shift",
     "innovations": "Innovations: {{count}}",
     "initiatives": "Initiatives: {{count}}",
     "actionShowInitiative": "Show Initiative",
@@ -842,6 +847,9 @@
   "homeRelax": {
     "title": "Home Sweet Home",
     "button": "Relax ({{cost}}h)",
+    "buttonBasic": "Relax",
+    "cleanBasic": "Clean Apartment",
+    "cleaningServiceBasic": "Call Cleaning Service (${{cost}})",
     "relaxBtnText": "RELAX",
     "durablesShowcase": "Apartment Furnishings & Belongings",
     "btnLeisure": "Leisure",
@@ -868,6 +876,7 @@
     "depositAmount": "Deposit ${{amount}} (or remainder)",
     "withdrawAmount": "Withdraw ${{amount}} (or remainder)",
     "applyLoan": "Apply for Loan (Costs {{cost}}h)",
+    "applyLoanBasic": "Apply for Loan",
     "makePayment": "Make Loan Payment (${{amount}} or remainder)"
   },
   "stocks": {
@@ -1043,6 +1052,7 @@
     "rummageTitle": "Dusty Junk Bins & Crates",
     "rummageDesc": "Dig through unsorted bins of discarded goods and curios. You might find a bargain, a rare calming trinket, spare parts, or broken machinery. (Costs 1 hour)",
     "actionRummage": "Rummage Through Bins (1 hr)",
+    "actionRummageBasic": "Rummage Through Bins",
     "rummageItemTitle": "Unearthed Item",
     "trinketTag": "Rare Pocket Trinket",
     "trinketEffect": "Instantly restores +1 Mental on purchase (0 space needed)",
@@ -1054,6 +1064,17 @@
   "homeDurable": {
     "maintenanceTitle": "Appliance Maintenance",
     "brokenDesc": "This appliance has broken down and does not function until repaired."
+  },
+  "university": {
+    "title": "University Registry",
+    "available": "Available Degrees",
+    "completed": "Completed ✓",
+    "tuition": "- Tuition: ${{fee}}",
+    "bonus": "★ Bonus",
+    "lessons": "Lessons: {{completed}} / {{required}}",
+    "studyBtn": "Study ({{cost}}h)",
+    "studyBtnBasic": "Study",
+    "enrollBtn": "Enroll"
   },
   "appraisalDilemma": {
     "title": "Appraisal Dilemma",

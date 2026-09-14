@@ -133,6 +133,9 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt || missingPhysical;
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
           const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
+          const appCost = campaign.config.timeRules?.jobApplicationCost ?? 4;
+          const curMental = player.mentalCondition ?? 50;
+          const mentalMistakeChance = isAdvanced && curMental < 10 ? Math.round((10 - curMental) * 2.5 * 10) / 10 : 0;
           
           const jobScore = isAlwaysHiring ? (hasMissingReqs ? 0 : 100) : (isAdvanced
             ? calcAdvancedJobEmployabilityScore({
@@ -211,14 +214,64 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 {isCurrentJob ? (
                   (!rules?.helpfulUI || offeredWage > player.currentWage) ? (
                     <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                      {t('jobBoard.askRaise', { wage: offeredWage, cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
+                      {!rules?.helpfulUI ? (
+                        t('jobBoard.askRaiseBasic', { defaultValue: 'Ask for a Raise' })
+                      ) : isAdvanced ? (
+                        <>
+                          {t('jobBoard.askRaiseAdvanced', { wage: offeredWage, cost: appCost, defaultValue: `Ask for Raise to $${offeredWage}/hr (${appCost}h, -1 🧠)` })}
+                          {mentalMistakeChance > 0 && (
+                            <span
+                              data-testid="interview-mistake-risk"
+                              style={{
+                                fontSize: '11px',
+                                color: '#f87171',
+                                fontWeight: 'bold',
+                                marginInlineStart: '6px',
+                                background: 'rgba(239, 68, 68, 0.2)',
+                                padding: '1px 4px',
+                                borderRadius: '3px',
+                                border: '1px solid #ef4444'
+                              }}
+                            >
+                              ⚠️ {mentalMistakeChance.toFixed(1)}%
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        t('jobBoard.askRaise', { wage: offeredWage, cost: appCost })
+                      )}
                     </button>
                   ) : (
                     <span style={{ color: '#4caf50', fontWeight: 'bold', display: 'block', textAlign: 'center', padding: '6px' }}>✓ {t('jobBoard.currentJob', { wage: player.currentWage })}</span>
                   )
                 ) : (
                   <button data-action-target={`apply-${job.id}`} onClick={() => onAction({ type: 'apply', jobId: job.id, offeredWage })}>
-                    💼 {t('jobBoard.apply', { cost: campaign.config.timeRules?.jobApplicationCost ?? 4 })}
+                    {!rules?.helpfulUI ? (
+                      `💼 ${t('jobBoard.applyBasic', { defaultValue: 'Apply' })}`
+                    ) : isAdvanced ? (
+                      <>
+                        💼 {t('jobBoard.applyAdvanced', { cost: appCost, defaultValue: `Apply (${appCost}h, -1 🧠)` })}
+                        {mentalMistakeChance > 0 && (
+                          <span
+                            data-testid="interview-mistake-risk"
+                            style={{
+                              fontSize: '11px',
+                              color: '#f87171',
+                              fontWeight: 'bold',
+                              marginInlineStart: '6px',
+                              background: 'rgba(239, 68, 68, 0.2)',
+                              padding: '1px 4px',
+                              borderRadius: '3px',
+                              border: '1px solid #ef4444'
+                            }}
+                          >
+                            ⚠️ {mentalMistakeChance.toFixed(1)}%
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      `💼 ${t('jobBoard.apply', { cost: appCost })}`
+                    )}
                   </button>
                 )}
               </div>

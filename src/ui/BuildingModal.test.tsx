@@ -635,4 +635,173 @@ describe('BuildingModal Component', () => {
     fireEvent.click(relaxBtn);
     expect(onAction).toHaveBeenCalledWith({ type: 'relax' });
   });
+
+  it('renders JobBoard apply and askRaise buttons without hours when helpfulUI is false', () => {
+    const jobDev = {
+      id: 'job_dev',
+      title: 'Developer',
+      baseWage: 20,
+      locationId: 'employment_office',
+      requirements: { dependability: 10, experience: 0, degrees: [] }
+    };
+
+    const campaignWithJob: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [jobDev as any],
+    };
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: null,
+          hoursRemaining: 10
+        }}
+        campaign={campaignWithJob}
+        currentBuildingId="employment_office"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: false, usePhysicalMentalConditions: false }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Select Employment Office location
+    const locCard = screen.getByText('Employment Office', { selector: 'strong' });
+    fireEvent.click(locCard);
+
+    // Apply button should have 'Apply' and NOT '4h' or '4H'
+    const applyBtn = screen.getByRole('button', { name: /Apply/i });
+    expect(applyBtn.textContent).toContain('Apply');
+    expect(applyBtn.textContent).not.toMatch(/4h/i);
+  });
+
+  it('renders JobBoard with (-1 🧠) and mistake risk when helpfulUI is true and mental < 10, but hides risk when mental >= 10', () => {
+    const jobDev = {
+      id: 'job_dev',
+      title: 'Developer',
+      baseWage: 20,
+      locationId: 'employment_office',
+      requirements: { dependability: 10, experience: 0, degrees: [] }
+    };
+
+    const campaignWithJob: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [jobDev as any],
+    };
+
+    // Case 1: Low mental (8) -> mistake chance = (10 - 8) * 2.5% = 5.0%
+    const { rerender } = render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          mentalCondition: 8,
+          currentJobId: null,
+          hoursRemaining: 10
+        }}
+        campaign={campaignWithJob}
+        currentBuildingId="employment_office"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: true, usePhysicalMentalConditions: true }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    const locCard = screen.getByText('Employment Office', { selector: 'strong' });
+    fireEvent.click(locCard);
+
+    const applyBtn = screen.getByRole('button', { name: /Apply/i });
+    expect(applyBtn.textContent).toContain('-1 🧠');
+    expect(screen.getByTestId('interview-mistake-risk')).toBeInTheDocument();
+    expect(screen.getByTestId('interview-mistake-risk').textContent).toBe('⚠️ 5.0%');
+
+    // Case 2: Healthy mental (50) -> mistake chance = 0% -> MUST NOT show badge
+    rerender(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          mentalCondition: 50,
+          currentJobId: null,
+          hoursRemaining: 10
+        }}
+        campaign={campaignWithJob}
+        currentBuildingId="employment_office"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: true, usePhysicalMentalConditions: true }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('interview-mistake-risk')).not.toBeInTheDocument();
+    expect(applyBtn.textContent).toContain('-1 🧠');
+  });
+
+  it('renders University study button and Bank apply loan button without hours when helpfulUI is false', () => {
+    const degreeCS = {
+      id: 'degree_cs',
+      name: 'Computer Science',
+      prerequisites: [],
+      cost: 500,
+      requiredHours: 10
+    };
+
+    const campaignWithUniAndBank: CampaignBundle = {
+      ...mockCampaign,
+      education: [degreeCS as any]
+    };
+
+    // 1. Check University
+    const { rerender } = render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          hoursRemaining: 10,
+          degrees: [],
+          enrolledClasses: { degree_cs: 0 }
+        }}
+        campaign={campaignWithUniAndBank}
+        currentBuildingId="university"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: false }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    const studyBtn = screen.getByRole('button', { name: /Study/i });
+    expect(studyBtn.textContent).toBe('🎓 Study');
+    expect(studyBtn.textContent).not.toMatch(/⏳|4h|\dh/i);
+
+    // 2. Check Bank Loans tab
+    rerender(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          hoursRemaining: 10,
+          loanDebt: 0
+        }}
+        campaign={campaignWithUniAndBank}
+        currentBuildingId="bank"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: false }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Click Loans tab
+    const loansTab = screen.getByText('Loans');
+    fireEvent.click(loansTab);
+
+    const applyLoanBtn = screen.getByRole('button', { name: /Apply for Loan/i });
+    expect(applyLoanBtn.textContent).toBe('📝 Apply for Loan');
+    expect(applyLoanBtn.textContent).not.toMatch(/⏳|Hours|2h/i);
+  });
 });

@@ -306,7 +306,7 @@ export function PawnShop({
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  🔍 {t('pawnShop.actionRummage', { defaultValue: 'Rummage Through Bins (1 hr)' })}
+                  🔍 {rules?.helpfulUI ? t('pawnShop.actionRummage', { defaultValue: 'Rummage Through Bins (1 hr)' }) : t('pawnShop.actionRummageBasic', { defaultValue: 'Rummage Through Bins' })}
                 </button>
               </div>
             )
