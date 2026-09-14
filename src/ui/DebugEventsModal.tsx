@@ -718,7 +718,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                             fontSize: '0.8rem',
                           }}
                         >
-                          {meta.type === 'street_robbery' ? 'Queue (Next Exit)' : 'Queue (Next Turn)'}
+                          {meta.type === 'street_robbery' ? 'Queue (Next Exit / Turn End)' : 'Queue (Next Turn)'}
                         </button>
                       )}
                     </div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { StockDef, CampaignBundle } from '../../engine/dataLoader';
-import type { GameRules } from '../../engine/gameState';
+import type { GameRules, EconomySimulationState } from '../../engine/gameState';
 import { calcStockPrice } from '../../engine/economyEngine';
 import { ActionReasonModal } from './ActionReasonModal';
 import type { InteractionProps } from './types';
@@ -382,7 +382,21 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
   );
 }
 
-export function BankInterface({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
+export function BankInterface({
+  player,
+  onAction,
+  campaign,
+  turn = 1,
+  economicIndex = 0,
+  rules,
+  economySimulation,
+}: InteractionProps & {
+  campaign?: CampaignBundle;
+  turn?: number;
+  economicIndex?: number;
+  rules?: GameRules;
+  economySimulation?: EconomySimulationState;
+}) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<'banking'|'stocks'|'loans'>('banking');
   const [bankDialogMode, setBankDialogMode] = useState<'deposit' | 'withdraw' | null>(null);
@@ -528,7 +542,7 @@ export function BankInterface({ player, onAction, campaign, turn = 1, economicIn
             let price = stock.basePrice;
             if (stock.type === 'fluctuating') {
               const seed = turn * 997 + stock.id.charCodeAt(0) * 31;
-              price = calcStockPrice(stock.basePrice, economicIndex, seed);
+              price = calcStockPrice(stock.basePrice, economicIndex, seed, economySimulation, stock.id, campaign?.config?.economyRules);
             }
             const owned = stock.id === 'tbills' 
               ? (player.inventory?.stocks?.tBills || 0)

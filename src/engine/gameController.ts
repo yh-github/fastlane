@@ -24,6 +24,7 @@ import { calcWealthProgress, calcEducationProgress, calcCareerProgress } from '.
 import { calcLiquidAssets } from './economyEngine'
 import { spendHours } from './timeManager'
 import { calcRequiredLessons } from './educationEngine'
+import { processStreetRobbery } from './eventEngine'
 
 // ─── Controller Types ───────────────────────────────────────────
 
@@ -136,7 +137,27 @@ export function processControllerAction(
     case 'end_turn': {
       let outDecisions: EngineDecision[] = []
       const replayContext: ReplayContext = { inDecisions: inEngineDecisions, outDecisions }
-      const newState = processTurnStart(state, campaign, replayContext)
+      let currentState = state
+      const streetRobberyOnTurnEnd = state.rules.streetRobberyOnTurnEnd ?? true
+      if (streetRobberyOnTurnEnd) {
+        const currentBuilding = campaign.map?.nodes?.find(n => n.id === player.position)?.buildingId
+        if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
+          const rng = new Random(state.rngState)
+          const isForced = !!state.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId))
+          const updatedPlayer = processStreetRobbery(player, currentBuilding, state.turn, rng, campaign, replayContext, isForced)
+          let nextDebugQueue = state.debugQueue
+          if (isForced && nextDebugQueue) {
+            nextDebugQueue = nextDebugQueue.filter(e => !(e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId)))
+          }
+          currentState = {
+            ...state,
+            rngState: rng.getState(),
+            debugQueue: nextDebugQueue,
+            players: state.players.map((p, i) => i === playerIndex ? updatedPlayer : p)
+          }
+        }
+      }
+      const newState = processTurnStart(currentState, campaign, replayContext)
       return {
         state: newState,
         insideBuilding: false,
@@ -229,7 +250,7 @@ export function getGameSummary(
     : null
 
   // Calculate goal progress
-  const liquidAssets = calcLiquidAssets(player, campaign, state.economicIndex, state.turn)
+  const liquidAssets = calcLiquidAssets(player, campaign, state.economicIndex, state.turn, state.economySimulation)
   const wealthProgress = calcWealthProgress(liquidAssets)
   const educationProgress = calcEducationProgress(player.degrees.length)
   const careerProgress = calcCareerProgress(player.dependability, player.currentJobId !== null)

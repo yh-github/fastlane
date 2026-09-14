@@ -41,7 +41,7 @@ export function processMaintenanceAndDecayPhase(
     let progress = 0;
     if (cond.stat === 'wealth') {
       const hasEarnedIncome = player.hasEarnedIncome ?? (state.turn > 1 || !!player.turnFlags?.hasWorked);
-      progress = calcWealthProgress(calcLiquidAssets(player, campaign, state.economicIndex, state.turn), hasEarnedIncome);
+      progress = calcWealthProgress(calcLiquidAssets(player, campaign, state.economicIndex, state.turn, state.economySimulation), hasEarnedIncome);
     }
     else if (cond.stat === 'education') progress = calcEducationProgress(player.degrees.length);
     else if (cond.stat === 'career') progress = calcCareerProgress(player.dependability, player.currentJobId !== null);

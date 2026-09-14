@@ -6,11 +6,19 @@
   "baseCampaign": "1990_classic_floppy",
   "gameRules": {
     "minEconomicReading": -30,
-    "maskEarlyJobRejections": true
+    "maskEarlyJobRejections": true,
+    "predictiveNewspaperStockTips": false
+  },
+  "economyRules": {
+    "minReading": 70,
+    "upwardBounceStrongThreshold": 80,
+    "upwardBounceModerateThreshold": 90
   },
   "eventRules": {
-    "marketCrashDivisor": 20,
-    "economicBoomDivisor": 50,
+    "marketCrashStartWeek": 8,
+    "marketCrashDivisor": 30,
+    "economicBoomStartWeek": 8,
+    "economicBoomDivisor": 30,
     "marketCrashThreshold": 60,
     "willyRobberyStartWeek": 4,
     "charity": {

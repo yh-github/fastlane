@@ -16,7 +16,7 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
   const mockCampaign: any = {
     config: {
       gameRules: mockRules,
-      timeRules: { hoursPerTurn: 60, relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6, cleanPhysicalCost: 1, starvationPenalty: 20 },
+      timeRules: { hoursPerTurn: 60, relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6, cleanPhysicalCost: 1, starvationPenalty: 20, doctorPenalty: 10 },
       statRules: {
         globalMessMin: 0,
         globalMessMax: 99,

@@ -207,6 +207,7 @@ export default function App() {
             economicIndex={gameState.economicIndex}
             rules={gameState.rules}
             pawnShopItemsForSale={gameState.pawnShopItemsForSale}
+            economySimulation={gameState.economySimulation}
             onAction={handleAction}
             onClose={() => {
               setIsBuildingModalOpen(false);

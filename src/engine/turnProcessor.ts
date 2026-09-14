@@ -205,6 +205,10 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       p.newspaperHeadline = { key: randomHeadlines[headlineIdx] };
     }
 
+    if (econResult.currentHeadline?.stockTip && !p.newspaperHeadline.stockTip) {
+      p.newspaperHeadline.stockTip = econResult.currentHeadline.stockTip;
+    }
+
     const housing = campaign?.housing?.find(h => h.id === p.currentHousingId);
     p.position = housing?.homeNodeId || (p.currentHousingId === 'security' || p.currentHousingId === 'penthouse' ? 'node_security' : 'node_low_cost');
 
@@ -228,12 +232,17 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
     rngState: rng.getState(),
     economicIndex: econResult.newEconomy,
     economicTrend: econResult.newTrend,
+    ...(econResult.newEconomySimulation !== undefined ? { economySimulation: econResult.newEconomySimulation } : {}),
     pawnShopItemsForSale: newPawnShopItemsForSale,
     players: updatedPlayers,
     turn: state.turn + 1,
     phase,
     winnerId,
   };
+
+  if (econResult.newEconomySimulation === undefined && 'economySimulation' in resultState) {
+    delete (resultState as any).economySimulation;
+  }
 
   if (survivingDebugQueue.length > 0) {
     resultState.debugQueue = survivingDebugQueue;

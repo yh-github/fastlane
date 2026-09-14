@@ -34,7 +34,11 @@
     "bankTransactionIncrementLarge": 100,
     "loanPaymentAmount": 50,
     "loanInterestAmount": 5,
-    "loanPrincipalAmount": 45
+    "loanPrincipalAmount": 45,
+    "model": "authentic_sectors",
+    "minReading": 10,
+    "upwardBounceStrongThreshold": 40,
+    "upwardBounceModerateThreshold": 70
   },
   "mapRules": {
     "allowDiagonalMovement": false,
@@ -50,8 +54,10 @@
     "startingCasualClothesWeeks": 6
   },
   "eventRules": {
+    "marketCrashStartWeek": 4,
     "marketCrashDivisor": 20,
-    "economicBoomDivisor": 50,
+    "economicBoomStartWeek": 4,
+    "economicBoomDivisor": 20,
     "marketCrashThreshold": 60,
     "willyRobberyStartWeek": 1,
     "charity": {
@@ -74,6 +80,8 @@
     "maxEnrolledClasses": 4,
     "turnStartAtHome": false,
     "maskEarlyJobRejections": true,
-    "grantExpOnJobSwitch": true
+    "grantExpOnJobSwitch": true,
+    "streetRobberyOnTurnEnd": true,
+    "predictiveNewspaperStockTips": false
   }
 }

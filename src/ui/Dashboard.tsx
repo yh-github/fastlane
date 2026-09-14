@@ -44,7 +44,7 @@ export function Dashboard({
   let education = calcEducationProgress(player.degrees.length);
   let career = calcCareerProgress(player.dependability, player.currentJobId !== null);
   const hasEarnedIncome = player.hasEarnedIncome ?? (turn > 1 || !!player.turnFlags?.hasWorked);
-  let wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn), hasEarnedIncome);
+  let wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn, gameState?.economySimulation), hasEarnedIncome);
   let lifestyle = player.lifestyle || 0;
   let wellbeing = calcWellbeingScore(player.physicalCondition ?? 50, player.mentalCondition ?? 25);
 

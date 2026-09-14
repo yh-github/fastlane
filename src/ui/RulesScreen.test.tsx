@@ -54,5 +54,6 @@ describe('RulesScreen', () => {
 
     expect(screen.getByText('Game Rules')).toBeInTheDocument();
     expect(screen.getByText('Event Rules')).toBeInTheDocument();
+    expect(screen.queryByText('Missing description')).not.toBeInTheDocument();
   });
 });
