@@ -191,7 +191,7 @@ export default function App() {
         )}
         {(!isBuildingModalOpen || !currentBuildingId) && activePlayer && (
           <CenterWalkAnimation
-            characterIndex={0}
+            characterIndex={activePlayer.characterIndex ?? 0}
             clothesType={activePlayer.inventory?.selectedClothes || 'casual'}
             isWalking={isTravelling}
             pixelated={gameState.rules.pixelatedSprites ?? true}

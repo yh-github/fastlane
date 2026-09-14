@@ -70,12 +70,14 @@ export function createPlayerState(
   isAi: boolean,
   goals: GoalAllotment,
   startNode: string,
-  config: CampaignConfig
+  config: CampaignConfig,
+  characterIndex: number = 0
 ): PlayerState {
   return {
     id,
     name,
     isAi,
+    characterIndex,
     hoursRemaining: config.timeRules?.hoursPerTurn ?? 60,
     money: config.startingMoney ?? 200,
     bankSavings: 0,
@@ -157,7 +159,7 @@ export function createInitialGameState(
     rngState: seed,
     pawnShopItemsForSale: [],
     players: playersConfig.map((cfg, i) =>
-      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config)
+      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config, cfg.characterIndex ?? ((i % 4) + 1))
     ),
     phase: 'setup',
     winnerId: null,

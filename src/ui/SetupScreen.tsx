@@ -22,17 +22,20 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
       name: 'Player 1',
       isAi: false,
       goals: generateDefaultGoals(),
+      characterIndex: 1,
     }
   ]);
 
   const addPlayer = () => {
     if (players.length < 4) {
+      const nextChar = (players.length % 4) + 1;
       setPlayers([
         ...players,
         {
           name: `Player ${players.length + 1}`,
           isAi: false,
           goals: generateDefaultGoals(),
+          characterIndex: nextChar,
         }
       ]);
     }
@@ -97,6 +100,54 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
                     />
                     {t('setupScreen.isAi')}
                   </label>
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', color: '#94a3b8' }}>
+                    {t('setupScreen.character', { defaultValue: 'Select Character' })}
+                  </label>
+                  <div style={{ display: 'flex', gap: '6px', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {[1, 2, 3, 4, 0].map((charIdx) => {
+                      const isSelected = (player.characterIndex ?? ((index % 4) + 1)) === charIdx;
+                      const charLabel = charIdx === 0 ? 'Jones' : `${charIdx}`;
+                      return (
+                        <button
+                          key={`char-${charIdx}`}
+                          type="button"
+                          data-testid={`player-${index}-char-${charIdx}`}
+                          onClick={() => updatePlayer(index, 'characterIndex', charIdx)}
+                          style={{
+                            flex: 1,
+                            background: isSelected ? 'rgba(0, 229, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                            border: isSelected ? '2px solid var(--accent-cyan, #00e5ff)' : '1px solid rgba(255, 255, 255, 0.15)',
+                            borderRadius: '6px',
+                            padding: '4px 2px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            transition: 'all 0.15s ease',
+                            outline: 'none'
+                          }}
+                          title={charIdx === 0 ? 'Jones' : `Character ${charIdx}`}
+                        >
+                          <img
+                            src={`/assets/chars/avatars/char_${charIdx}.png`}
+                            alt={`Character ${charIdx}`}
+                            style={{
+                              height: '48px',
+                              width: 'auto',
+                              imageRendering: 'pixelated',
+                              display: 'block'
+                            }}
+                          />
+                          <span style={{ fontSize: '0.7rem', marginTop: '2px', color: isSelected ? 'var(--accent-cyan, #00e5ff)' : '#ccc', fontWeight: isSelected ? 700 : 400 }}>
+                            {charLabel}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {winConditions.map((cond) => (
