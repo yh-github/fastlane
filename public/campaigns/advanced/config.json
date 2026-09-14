@@ -33,6 +33,7 @@
     "preventPawnArbitrage": true,
     "advancedMaintenance": true,
     "advancedHomeGUI": true,
+    "advancedWorkGUI": true,
     "autoEquipBestClothes": false,
     "showJobTags": true,
     "pawnRummageBins": true
