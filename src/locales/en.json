@@ -833,7 +833,8 @@
     "initiatives": "Initiatives: {{count}}",
     "actionShowInitiative": "Show Initiative",
     "mistakesThisTurn": "Mistakes this turn: {{count}}/3",
-    "locationMistakes": "Location Incidents: {{count}}"
+    "locationMistakes": "Location Incidents: {{count}}",
+    "workBtnText": "WORK"
   },
   "storeFront": {
     "title": "Storefront"

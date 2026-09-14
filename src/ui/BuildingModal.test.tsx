@@ -268,6 +268,70 @@ describe('BuildingModal Component', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_burger_cook', mode: 'work_work' });
   });
 
+  it('renders bottom-docked WORK button and executes basic work shift when in Basic mode', () => {
+    const jobBurger = {
+      id: 'job_burger_cook',
+      title: 'Burger Cook',
+      baseWage: 12,
+      locationId: 'z_mart',
+      requirements: { dependability: 10, experience: 0, degrees: [] }
+    };
+
+    const campaignWithJob: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [jobBurger as any],
+      buildings: [
+        {
+          id: 'z_mart',
+          name: 'Z-Mart',
+          description: 'Department Store',
+          inventory: [{ itemId: 'burger', priceOverride: 5 }],
+          archetype: 'general_store'
+        } as any
+      ],
+      items: [
+        { id: 'burger', name: 'Burger', basePrice: 5, category: 'food' } as any
+      ]
+    };
+
+    const mockOnAction = vi.fn().mockResolvedValue({ success: true });
+
+    const { container } = render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'job_burger_cook',
+          currentWage: 12,
+          hoursRemaining: 10
+        }}
+        campaign={campaignWithJob}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, usePhysicalMentalConditions: false, advancedWorkGUI: false }}
+        onAction={mockOnAction}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Advanced console toggle and flanking cards should NOT be present
+    expect(screen.queryByTestId('tab-work')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('work-mode-work_work')).not.toBeInTheDocument();
+
+    // Basic WORK button docked directly on building-modal
+    const modal = container.querySelector('.building-modal');
+    const workDock = screen.getByTestId('dock-work-basic');
+    expect(workDock).toBeInTheDocument();
+    expect(workDock.parentElement).toBe(modal);
+
+    const workBtn = screen.getByTestId('btn-work');
+    expect(workBtn.textContent).toBe('WORK');
+    expect(workBtn).not.toBeDisabled();
+
+    fireEvent.click(workBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'work', jobId: 'job_burger_cook' });
+  });
+
   it('displays speech bubble when a raise is denied', async () => {
 
     const jobBurger = {

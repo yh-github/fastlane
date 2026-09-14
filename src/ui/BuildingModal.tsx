@@ -114,6 +114,8 @@ export function BuildingModal({
     ? campaign.jobs.find(j => j.id === player.currentJobId && j.locationId === currentBuildingId)
     : null;
 
+  const isAdvancedWorkGUI = rules ? (rules.advancedWorkGUI ?? !!rules.usePhysicalMentalConditions) : false;
+
   const itemsHere = getAvailableItemsForBuilding(building, campaign, turn, player.id);
 
   const handleActionIntercept = async (payload: any) => {
@@ -346,14 +348,22 @@ export function BuildingModal({
         </div>
       </div>
 
-      <div className="building-modal__content" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div 
+        className="building-modal__content" 
+        style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minHeight: 0,
+          paddingBottom: (playerJobHere && !isAdvancedWorkGUI) ? '20px' : '0'
+        }}
+      >
         {/* Full-width shop / services content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {renderBuildingServices()}
         </div>
 
-        {/* Docked bottom WORK button when employed here */}
-        {playerJobHere && (
+        {/* Docked bottom WORK button when employed here (Advanced GUI) */}
+        {playerJobHere && isAdvancedWorkGUI && (
           <div 
             className="building-modal__work-dock"
             data-testid="tab-work"
@@ -416,8 +426,8 @@ export function BuildingModal({
         )}
       </div>
 
-      {/* Flanking Radial Work Cards (Steals screen space from surrounding board, 0% obstruction of store!) */}
-      {playerJobHere && isWorkDeckOpen && (
+      {/* Flanking Radial Work Cards (Steals screen space from surrounding board, 0% obstruction of store!) - Advanced GUI */}
+      {playerJobHere && isAdvancedWorkGUI && isWorkDeckOpen && (
         <WorkStation
           player={player}
           onAction={handleActionIntercept}
@@ -428,6 +438,58 @@ export function BuildingModal({
           onClose={() => setIsWorkDeckOpen(false)}
         />
       )}
+
+      {/* Non-scrollable WORK button on bottom border for Basic mode */}
+      {playerJobHere && !isAdvancedWorkGUI && (() => {
+        const shiftCost = campaign?.config?.timeRules?.workSessionCost ?? 6;
+        const isWorkDisabled = rules?.allowPartialHours ? player.hoursRemaining <= 0 : player.hoursRemaining < shiftCost;
+        const actualHoursWorked = rules?.allowPartialHours && player.hoursRemaining < shiftCost ? player.hoursRemaining : shiftCost;
+        const wageEarned = Math.floor((player.currentWage || playerJobHere.baseWage) * actualHoursWorked);
+
+        return (
+          <div 
+            className="building-work-bottom-dock"
+            data-testid="dock-work-basic"
+            style={{
+              position: 'absolute',
+              bottom: '0px',
+              left: '50%',
+              transform: 'translate(-50%, 50%)',
+              zIndex: 60,
+              display: 'flex',
+              justifyContent: 'center',
+              pointerEvents: 'auto'
+            }}
+          >
+            <button
+              data-action-target={`work-${playerJobHere.id}`}
+              data-testid="btn-work"
+              onClick={() => handleActionIntercept({ type: 'work', jobId: playerJobHere.id })}
+              disabled={isWorkDisabled}
+              title={rules?.helpfulUI 
+                ? `Work (${shiftCost}h, +$${wageEarned})` 
+                : undefined}
+              style={{
+                background: isWorkDisabled ? '#333' : 'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)',
+                color: isWorkDisabled ? '#777' : '#fff',
+                border: isWorkDisabled ? '2px solid #555' : '2px solid #38bdf8',
+                boxShadow: isWorkDisabled ? 'none' : '0 4px 10px rgba(0,0,0,0.8), 0 0 10px rgba(56,189,248,0.5)',
+                padding: '4px 18px',
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                fontSize: '0.92rem',
+                letterSpacing: '1px',
+                cursor: isWorkDisabled ? 'not-allowed' : 'pointer',
+                textTransform: 'uppercase',
+                minWidth: 'auto',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {t('workStation.workBtnText', { defaultValue: 'WORK' })}
+            </button>
+          </div>
+        );
+      })()}
 
       {player?.pendingAppraisalDilemma && (
         <AppraisalDilemmaModal

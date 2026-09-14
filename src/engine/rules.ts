@@ -212,6 +212,11 @@ export interface GameRules {
   advancedHomeGUI: boolean;
 
   /**
+   * ADVANCED: If true, uses the card-based GUI and flanking work shift console for workplaces.
+   */
+  advancedWorkGUI: boolean;
+
+  /**
    * QoL & ADVANCED: Adjusts pawn redemption and clearance prices dynamically with the economy to prevent infinite-money same-turn arbitrage.
    */
   preventPawnArbitrage: boolean;
@@ -388,6 +393,8 @@ export const DEFAULT_GAME_RULES: GameRules = {
   requireJobForLoan: true,
   helpfulUI: false,
   enableAnimations: false,
+  pixelatedSprites: true,
+  removeCharacterBg: true,
   allowOverAchievingGoals: true,
   bypassDoctorIfBroke: true,
   relaxationDoctorThreshold: 10,
@@ -417,12 +424,15 @@ export const DEFAULT_GAME_RULES: GameRules = {
   conditionResolution: 0.5,
   educationResolution: 0.1,
   advancedHomeGUI: false,
+  advancedWorkGUI: false,
 };
 
 /**
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  advancedHomeGUI: 'Uses the card-based GUI and visual apartment showcase for Home',
+  advancedWorkGUI: 'Uses the card-based GUI and flanking work shift console for workplaces',
   advancedMaintenance: 'Appliances break instead of auto-repairing for money, requiring manual repair, service, or disposal',
   showJobTags: 'Displays job archetype tags (Always Hiring, Frontline Service, Technical, etc.) in the Employment Office',
   pawnRummageBins: 'Enables Dusty Junk Bins & Crates section in the Pawn Shop for rummaging bargains, curios, and spare parts',

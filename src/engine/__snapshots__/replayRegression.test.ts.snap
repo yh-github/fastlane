@@ -156,6 +156,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
   "economicTrend": 2,
   "pawnShopItemsForSale": [
     {
+      "condition": "new",
       "itemId": "refrigerator",
       "originalPrice": 400,
       "ownerId": "player_1",

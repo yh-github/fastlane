@@ -428,7 +428,8 @@
     "initiatives": "יוזמות: {{count}}",
     "actionShowInitiative": "לגלות יוזמה",
     "mistakesThisTurn": "תקלות בתור זה: {{count}}/3",
-    "locationMistakes": "תקריות במיקום: {{count}}"
+    "locationMistakes": "תקריות במיקום: {{count}}",
+    "workBtnText": "עבודה"
   },
   "storeFront": {
     "title": "חנות"
