@@ -130,7 +130,7 @@ test.describe('Character Center Walking Animation E2E', () => {
 
     const centerStage = page.locator('[data-testid="center-walk-animation"]');
     await expect(centerStage).toBeVisible();
-    await expect(centerStage).toHaveAttribute('data-remove-bg', 'false');
+    await expect(centerStage).toHaveAttribute('data-remove-bg', 'true');
     await expect(centerStage).toHaveAttribute('data-pixelated', 'true');
 
     // 1. Open Settings modal
@@ -144,7 +144,7 @@ test.describe('Character Center Walking Animation E2E', () => {
     const graphicsTab = page.locator('[data-testid="tab-settings-graphics"]');
     await graphicsTab.click();
 
-    // 3. Toggle "Remove Character Background"
+    // 3. Toggle "Remove Character Background" (from ON to OFF)
     const removeBgToggle = page.locator('[data-testid="setting-remove-character-bg"]');
     await removeBgToggle.click();
 
@@ -153,7 +153,20 @@ test.describe('Character Center Walking Animation E2E', () => {
     await closeSettingsBtn.click();
     await expect(settingsModal).toBeHidden();
 
-    // 4. Verify center stage has transparent background
+    // 4. Verify center stage has solid background (OFF)
+    await expect(centerStage).toHaveAttribute('data-remove-bg', 'false');
+    await page.waitForTimeout(400);
+
+    // Save screenshot of solid background
+    await page.screenshot({ path: '/home/yoavh/.gemini/antigravity/brain/baba78ec-dc3f-47a6-8d0c-8fcc6a50339a/walking_solid_bg.png' });
+
+    // 5. Toggle it back ON
+    await settingsBtn.click();
+    await expect(settingsModal).toBeVisible();
+    await graphicsTab.click();
+    await removeBgToggle.click();
+    await closeSettingsBtn.click();
+    await expect(settingsModal).toBeHidden();
     await expect(centerStage).toHaveAttribute('data-remove-bg', 'true');
     await page.waitForTimeout(400);
 

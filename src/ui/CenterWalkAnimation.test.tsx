@@ -19,6 +19,12 @@ describe('CenterWalkAnimation', () => {
     expect(stage.dataset.clothes).toBe('casual');
     expect(stage.dataset.walking).toBe('false');
     expect(stage.dataset.frame).toBe('0');
+    expect(stage.style.backgroundColor).toBe('transparent');
+  });
+
+  it('renders solid background when removeBg is false', () => {
+    render(<CenterWalkAnimation isWalking={false} removeBg={false} />);
+    const stage = screen.getByTestId('center-walk-animation');
     expect(stage.style.backgroundColor).toBe('rgb(255, 255, 255)');
   });
 
