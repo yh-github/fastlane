@@ -43,7 +43,6 @@ export function handlePawnItemAction(
   }
 
   if (!nextPlayer.inventory.pawnedItems) nextPlayer.inventory.pawnedItems = [];
-  const trackCondition = !!(context.rules.advancedHomeGUI || context.rules.usePhysicalMentalConditions);
   const itemDef = context.campaign.items?.find(i => i.id === action.item.id);
   const basePrice = itemDef?.basePrice ?? action.item.purchasePrice;
   const redeemRate = context.campaign.config?.economyRules?.pawnRedeemRate ?? 0.5;
@@ -58,7 +57,7 @@ export function handlePawnItemAction(
     weekPawned: context.turn,
     ownerId: nextPlayer.id,
     purchaseSource: action.item.purchaseSource || 'socket_city',
-    ...((trackCondition || action.item.condition) ? { condition: action.item.condition || (action.item.purchaseSource === 'socket_city' ? 'new' : 'used') } : {}),
+    condition: action.item.condition || (action.item.purchaseSource === 'socket_city' ? 'new' : 'used'),
     ...(action.item.isBroken ? { isBroken: true } : {})
   };
   nextPlayer.inventory.pawnedItems.push(pawnedItem);
@@ -118,18 +117,17 @@ export function handleRedeemItemAction(
         nextPlayer.turnFlags = { ...nextPlayer.turnFlags, bookSetCompletedThisTurn: true };
       }
     } else {
-      const trackCondition = !!(context.rules.advancedHomeGUI || context.rules.usePhysicalMentalConditions);
       const existingRedeem = nextPlayer.inventory.appliances.filter(a => a.id === action.item.itemId);
-      const hasAnyNewRedeem = action.item.condition === 'new' || action.item.purchaseSource === 'socket_city' || existingRedeem.some(a => a.condition === 'new' || a.purchaseSource === 'socket_city');
+      const hasAnyNewRedeem = action.item.condition === 'new' || existingRedeem.some(a => a.condition === 'new');
       const redeemCondition: 'new' | 'used' = hasAnyNewRedeem ? 'new' : 'used';
-      if (hasAnyNewRedeem && trackCondition) {
+      if (hasAnyNewRedeem) {
         nextPlayer.inventory.appliances = nextPlayer.inventory.appliances.map(a => a.id === action.item.itemId ? { ...a, condition: 'new' as const } : a);
       }
       nextPlayer.inventory.appliances.push({
         id: action.item.itemId,
         purchasePrice: action.item.originalPrice,
         purchaseSource: action.item.purchaseSource || 'socket_city',
-        ...((trackCondition || action.item.condition) ? { condition: redeemCondition } : {}),
+        condition: redeemCondition,
         ...(action.item.isBroken ? { isBroken: true } : {})
       });
       if (!action.item.isBroken && context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
@@ -192,15 +190,14 @@ export function handleBuyPawnItemAction(
         nextPlayer.turnFlags = { ...nextPlayer.turnFlags, bookSetCompletedThisTurn: true };
       }
     } else {
-      const trackCondition = !!(context.rules.advancedHomeGUI || context.rules.usePhysicalMentalConditions);
       const existingBuy = nextPlayer.inventory.appliances.filter(a => a.id === action.item.itemId);
-      const hasAnyNewBuy = existingBuy.some(a => a.condition === 'new' || a.purchaseSource === 'socket_city');
+      const hasAnyNewBuy = existingBuy.some(a => a.condition === 'new');
       const buyCondition: 'new' | 'used' = hasAnyNewBuy ? 'new' : 'used';
       nextPlayer.inventory.appliances.push({
         id: action.item.itemId,
         purchasePrice: action.item.originalPrice,
         purchaseSource: 'pawnshop',
-        ...((trackCondition || action.item.condition) ? { condition: buyCondition } : {}),
+        condition: buyCondition,
         ...(action.item.isBroken ? { isBroken: true } : {})
       });
       if (!action.item.isBroken && context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
@@ -389,12 +386,11 @@ export function handleBuyRummageItemAction(
   } else {
     const isBroken = item.tags?.includes('broken') || (item as any).isBroken;
     if (isBroken) {
-      const trackCondition = !!(context.rules.advancedHomeGUI || context.rules.usePhysicalMentalConditions);
       nextPlayer.inventory.appliances.push({
         id: item.id,
         purchasePrice: item.basePrice || 100,
         purchaseSource: 'pawnshop',
-        ...(trackCondition ? { condition: 'used' as const } : {}),
+        condition: 'used',
         isBroken: true
       });
     } else if (item.id === 'spare_parts') {

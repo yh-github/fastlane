@@ -192,13 +192,12 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
       const source = (item.store as 'socket_city' | 'z_mart' | 'pawnshop') || 'z_mart';
       const isNew = source === 'socket_city';
       const existingItems = updated.inventory.appliances.filter(a => a.id === item.id);
-      const hasAnyNew = isNew || existingItems.some(a => a.condition === 'new' || a.purchaseSource === 'socket_city');
+      const hasAnyNew = isNew || existingItems.some(a => a.condition === 'new');
       const itemCondition: 'new' | 'used' = hasAnyNew ? 'new' : 'used';
-      const trackCondition = !!(rules?.advancedHomeGUI || rules?.usePhysicalMentalConditions);
 
       // If any copy is new, all copies of this appliance keep the 'new' condition
       const updatedAppliances = updated.inventory.appliances.map(a => {
-        if (a.id === item.id && hasAnyNew && trackCondition) {
+        if (a.id === item.id && hasAnyNew) {
           return { ...a, condition: 'new' as const };
         }
         return a;
@@ -208,7 +207,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
         id: item.id,
         purchasePrice: price,
         purchaseSource: source,
-        ...(trackCondition ? { condition: itemCondition } : {})
+        condition: itemCondition
       }];
       if (rules?.alternativeWeekends && updated.weekendDecks) {
         updated = addApplianceCardToDeck(updated, item.id);

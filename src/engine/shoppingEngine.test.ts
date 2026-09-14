@@ -85,6 +85,7 @@ describe('Shopping Engine', () => {
     expect(result.success).toBe(true);
     expect(result.updated.inventory.appliances.length).toBe(1);
     expect(result.updated.inventory.appliances[0].id).toBe('refrigerator');
+    expect(result.updated.inventory.appliances[0].condition).toBe('new');
   });
 
   it('buys a computer and gets happiness only once', () => {
@@ -93,9 +94,11 @@ describe('Shopping Engine', () => {
     // First purchase gives +3 happiness
     const result1 = buyItem(player, mockComputer);
     expect(result1.updated.happiness).toBe(53);
+    expect(result1.updated.inventory.appliances[0].condition).toBe('new');
     
-    // Second purchase gives no happiness
+    // Second purchase gives no happiness and fails because computer is already owned
     const result2 = buyItem(result1.updated, mockComputer);
+    expect(result2.success).toBe(false);
     expect(result2.updated.happiness).toBe(53); // still 53
   });
 

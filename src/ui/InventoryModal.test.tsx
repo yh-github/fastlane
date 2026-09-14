@@ -185,4 +185,86 @@ describe('InventoryModal', () => {
     expect(screen.getByText(/Workplace Innovations:/i)).toBeInTheDocument();
     expect(screen.getAllByText(/💡 3/i).length).toBeGreaterThan(0);
   });
+
+  it('hides condition badges (Brand New / Used) when helpfulUI is false', () => {
+    const campaign = createMockCampaign();
+    const player = createTestPlayer(
+      {
+        inventory: {
+          freshFoodUnits: 0,
+          fastFoodItems: [],
+          casualClothesWeeks: 4,
+          dressClothesWeeks: 0,
+          businessClothesWeeks: 0,
+          selectedClothes: 'casual',
+          appliances: [
+            { id: 'computer', purchasePrice: 1599, purchaseSource: 'socket_city', condition: 'new' },
+            { id: 'bw_tv', purchasePrice: 50, purchaseSource: 'pawnshop', condition: 'used' }
+          ],
+          books: [],
+          tickets: { baseball: 0, theatre: 0, concert: 0 },
+          lotteryTickets: 0,
+          stocks: { tBills: 0, holdings: {} },
+          pawnedItems: [],
+        },
+      },
+      campaign
+    );
+
+    render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        onAction={vi.fn()}
+        rules={{ helpfulUI: false } as any}
+      />
+    );
+
+    expect(screen.getByText(/Computer/i)).toBeInTheDocument();
+    expect(screen.getByText(/Bw Tv/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Brand New/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Used/i)).not.toBeInTheDocument();
+  });
+
+  it('displays condition badges (Brand New / Used) when helpfulUI is true', () => {
+    const campaign = createMockCampaign();
+    const player = createTestPlayer(
+      {
+        inventory: {
+          freshFoodUnits: 0,
+          fastFoodItems: [],
+          casualClothesWeeks: 4,
+          dressClothesWeeks: 0,
+          businessClothesWeeks: 0,
+          selectedClothes: 'casual',
+          appliances: [
+            { id: 'computer', purchasePrice: 1599, purchaseSource: 'socket_city', condition: 'new' },
+            { id: 'bw_tv', purchasePrice: 50, purchaseSource: 'pawnshop', condition: 'used' }
+          ],
+          books: [],
+          tickets: { baseball: 0, theatre: 0, concert: 0 },
+          lotteryTickets: 0,
+          stocks: { tBills: 0, holdings: {} },
+          pawnedItems: [],
+        },
+      },
+      campaign
+    );
+
+    render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        onAction={vi.fn()}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    expect(screen.getByText(/Brand New/i)).toBeInTheDocument();
+    expect(screen.getByText(/Used/i)).toBeInTheDocument();
+  });
 });
