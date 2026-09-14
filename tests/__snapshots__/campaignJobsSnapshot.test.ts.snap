@@ -51,7 +51,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for 1990_classic_c
     "requirements": {
       "degrees": [],
       "dependability": 10,
-      "experience": 0,
+      "experience": 10,
       "uniform": "casual",
     },
     "tags": [
@@ -628,7 +628,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
     "requirements": {
       "degrees": [],
       "dependability": 10,
-      "experience": 0,
+      "experience": 10,
       "uniform": "casual",
     },
     "tags": [
@@ -1360,7 +1360,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for qol_improved j
     "requirements": {
       "degrees": [],
       "dependability": 10,
-      "experience": 0,
+      "experience": 10,
       "uniform": "casual",
     },
     "tags": [

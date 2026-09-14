@@ -375,7 +375,7 @@ describe('BuildingInteractions', () => {
 
     const mockCampaign = {
       config: {
-        gameRules: { usePhysicalMentalConditions: true },
+        gameRules: { usePhysicalMentalConditions: true, helpfulUI: true },
         timeRules: { workSessionCost: 6 },
         statRules: { workPhysicalCost: 1, workNormalMentalCost: 0 }
       }
