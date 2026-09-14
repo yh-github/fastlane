@@ -330,7 +330,7 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
       "depMaxBonus": 0,
       "dependability": 28,
       "enrolledClasses": {},
-      "experience": 12,
+      "experience": 20,
       "goalAllotment": {
         "career": 25,
         "education": 25,

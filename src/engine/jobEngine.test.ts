@@ -12,7 +12,7 @@ describe('Job Engine', () => {
     locationId: 'burger_palace',
     baseWage: 5,
     perks: [],
-    requirements: { experience: 0, dependability: 10, degrees: [], uniform: 'casual' },
+    requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
     tags: ['always_hiring']
   };
 
@@ -40,20 +40,20 @@ describe('Job Engine', () => {
 
   describe('applyForJob', () => {
     it('always_hiring job is accepted when requirements are met', () => {
-      const player = { hoursRemaining: 20, experience: 0, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
       const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), { grantExpOnJobSwitch: true });
       expect(result.success).toBe(true);
       expect(result.updated.currentJobId).toBe('burger_cook');
       expect(result.updated.currentWage).toBe(5);
-      expect(result.updated.experience).toBe(2); // With grantExpOnJobSwitch: true
+      expect(result.updated.experience).toBe(12); // With grantExpOnJobSwitch: true
     });
 
     it('does not grant experience on job switch if grantExpOnJobSwitch is false (Advanced)', () => {
-      const player = { hoursRemaining: 20, experience: 0, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
+      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
       const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), { grantExpOnJobSwitch: false });
       expect(result.success).toBe(true);
       expect(result.updated.currentJobId).toBe('burger_cook');
-      expect(result.updated.experience).toBe(0);
+      expect(result.updated.experience).toBe(10);
     });
 
     it('always_hiring job is rejected if player does not meet hard requirements', () => {
@@ -1373,6 +1373,34 @@ describe('Job Engine', () => {
         const heavyWork = heavySummary.modes.find(m => m.id === 'work_work')!;
         expect(heavyWork.physMistakeChance).toBeCloseTo(0.10, 4);
       });
+    });
+
+    it('cook job allows experience to grow from 10 up to 20', () => {
+      let player = {
+        id: 'p_cook',
+        hoursRemaining: 60,
+        currentJobId: 'burger_cook',
+        currentWage: 4,
+        degrees: [],
+        dependability: 20,
+        experience: 10,
+        turnFlags: { hasWorked: false },
+        inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+      } as unknown as PlayerState;
+
+      // Work 10 shifts to reach cap
+      for (let i = 0; i < 10; i++) {
+        player.hoursRemaining = 60;
+        const res = workShift(player, burgerCook, 6);
+        expect(res.success).toBe(true);
+        player = res.updated;
+      }
+      expect(player.experience).toBe(20);
+
+      // Working further does not exceed 20
+      player.hoursRemaining = 60;
+      const resCapped = workShift(player, burgerCook, 6);
+      expect(resCapped.updated.experience).toBe(20);
     });
   });
 });
