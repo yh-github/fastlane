@@ -59,6 +59,8 @@ export interface PlayerState {
   id: string;
   name: string;
   isAi?: boolean;
+  /** Character index (0 = Jones, 1-4 = player characters) */
+  characterIndex?: number;
 
   // ── Time ──
   /** Hours remaining this turn (starts at 60) */
@@ -383,6 +385,7 @@ export interface PlayerConfig {
   name: string;
   isAi: boolean;
   goals: GoalAllotment;
+  characterIndex?: number;
 }
 
 // ─── Re-exports ─────────────────────────────────────────────────
