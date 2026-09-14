@@ -804,4 +804,136 @@ describe('BuildingModal Component', () => {
     expect(applyLoanBtn.textContent).toBe('📝 Apply for Loan');
     expect(applyLoanBtn.textContent).not.toMatch(/⏳|Hours|2h/i);
   });
+
+  it('renders JobBoard degree requirement badges with ✓ (green) when owned, ⏳ (orange) when studying, and ✗ (red) when missing', () => {
+    const multiDegreeJob = {
+      id: 'factory_head_engineer',
+      title: 'Head Engineer',
+      baseWage: 20,
+      locationId: 'factory',
+      requirements: {
+        dependability: 10,
+        experience: 10,
+        degrees: ['junior_college', 'trade_school', 'engineering'],
+        uniform: 'casual'
+      }
+    };
+
+    const campaignWithJob: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [multiDegreeJob as any],
+      education: [
+        { id: 'junior_college', name: 'Junior College' } as any,
+        { id: 'trade_school', name: 'Trade School' } as any,
+        { id: 'engineering', name: 'Engineering' } as any
+      ],
+      buildings: [
+        {
+          id: 'factory',
+          name: 'Factory',
+          description: 'Industrial plant',
+          archetype: 'employment'
+        } as any
+      ]
+    };
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          degrees: ['junior_college'],
+          enrolledClasses: { trade_school: 2 }
+        }}
+        campaign={campaignWithJob}
+        currentBuildingId="factory"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: true }}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Click factory location card to view jobs
+    const locationCard = screen.getByText('Factory', { selector: 'strong' });
+    fireEvent.click(locationCard);
+
+    // 1. junior_college: Owned -> ✓ and green (#2ecc71 / rgb(46, 204, 113))
+    const ownedBadge = screen.getByTestId('job-factory_head_engineer-degree-junior_college');
+    expect(ownedBadge).toBeInTheDocument();
+    expect(ownedBadge.textContent).toContain('✓ Junior College');
+    expect(ownedBadge.style.color).toBe('rgb(46, 204, 113)');
+
+    // 2. trade_school: Studying/Enrolled -> ⏳ and orange (#f59e0b / rgb(245, 158, 11))
+    const studyingBadge = screen.getByTestId('job-factory_head_engineer-degree-trade_school');
+    expect(studyingBadge).toBeInTheDocument();
+    expect(studyingBadge.textContent).toContain('⏳ Trade School');
+    expect(studyingBadge.style.color).toBe('rgb(245, 158, 11)');
+
+    // 3. engineering: Missing -> ✗ and red (#e74c3c / rgb(231, 76, 60))
+    const missingBadge = screen.getByTestId('job-factory_head_engineer-degree-engineering');
+    expect(missingBadge).toBeInTheDocument();
+    expect(missingBadge.textContent).toContain('✗ Engineering');
+    expect(missingBadge.style.color).toBe('rgb(231, 76, 60)');
+  });
+
+  it('clerk dialogue displays helpful missing degrees message when rejected for education with helpfulUI true', async () => {
+    const jobTest = {
+      id: 'factory_head_engineer',
+      title: 'Head Engineer',
+      baseWage: 20,
+      locationId: 'factory',
+      requirements: {
+        dependability: 10,
+        experience: 10,
+        degrees: ['engineering'],
+        uniform: 'casual'
+      }
+    };
+
+    const campaignWithJob: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [jobTest as any],
+      education: [{ id: 'engineering', name: 'Engineering' } as any],
+      buildings: [
+        {
+          id: 'factory',
+          name: 'Factory',
+          description: 'Industrial plant',
+          archetype: 'employment'
+        } as any
+      ]
+    };
+
+    const mockOnAction = vi.fn().mockResolvedValue({
+      key: 'action.job.rejected',
+      params: {
+        reasons: 'Not enough education: missing Engineering.',
+        missingDegrees: 'engineering'
+      }
+    });
+
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={campaignWithJob}
+        currentBuildingId="factory"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, helpfulUI: true }}
+        onAction={mockOnAction}
+        onClose={vi.fn()}
+      />
+    );
+
+    const locationCard = screen.getByText('Factory', { selector: 'strong' });
+    fireEvent.click(locationCard);
+
+    const applyBtn = screen.getByRole('button', { name: /Apply/i });
+    fireEvent.click(applyBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Not enough education: missing Engineering\./i)).toBeInTheDocument();
+    }, { timeout: 4000 });
+  });
 });

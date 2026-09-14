@@ -1,5 +1,6 @@
 import type { BuildingDef, CampaignBundle, ItemDef } from '../../engine/dataLoader';
 import { CURIO_CATALOG } from '../../engine/curioCatalog';
+import { formatDegreeName } from '../../engine/jobEngine';
 
 export function getClerkFace(id: string, archetype: string): string {
   switch (id) {
@@ -222,7 +223,22 @@ export function computeClerkResponse(
       } else if (mainLog.key === 'action.job.raiseLess') {
         return String(t('action.job.raiseLess'));
       } else if (mainLog.key === 'action.job.rejected') {
-        const reasons = mainLog.params?.reasons || t('jobBoard.missingReq');
+        let reasons = mainLog.params?.reasons || t('jobBoard.missingReq');
+        const rawDegrees = mainLog.params?.missingDegrees;
+        const missingDegreesList: string[] = typeof rawDegrees === 'string'
+          ? rawDegrees.split(',').filter(Boolean)
+          : (Array.isArray(rawDegrees) ? rawDegrees : []);
+
+        if (missingDegreesList.length > 0) {
+          const localizedDegrees = missingDegreesList
+            .map((d: string) => t(`education.${d}`, { defaultValue: formatDegreeName(d) }))
+            .join(', ');
+          const localizedMissingEducation = t('jobBoard.missingEducationWithDegrees', {
+            degrees: localizedDegrees,
+            defaultValue: `Not enough education: missing ${localizedDegrees}.`
+          });
+          reasons = reasons.replace(/Not enough education: missing [^.]+\./, localizedMissingEducation);
+        }
         return `Sorry. You didn't get the job for the following reasons:\n\n${reasons}`;
       } else if (mainLog.key === 'action.job.noOpenings') {
         return `Sorry. You didn't get the job for the following reasons:\n\nNo openings.`;

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoader';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore } from '../../engine/statMath';
+import { formatDegreeName } from '../../engine/jobEngine';
 import type { InteractionProps } from './types';
 
 /**
@@ -197,8 +198,37 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                         </span>
                       )}
                       {job.requirements.degrees.length > 0 && (
-                        <span style={{ color: missingDegrees.length > 0 ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
-                          | 🎓 {t('jobBoard.degrees')}: {job.requirements.degrees.map(d => t(`education.${d}`, { defaultValue: d })).join(', ')}
+                        <span style={{ marginInlineStart: '5px' }}>
+                          | 🎓 {t('jobBoard.degrees')}:{' '}
+                          {job.requirements.degrees.map((d, dIdx) => {
+                            const isOwned = player.degrees?.includes(d);
+                            const isStudying = !isOwned && player.enrolledClasses?.[d] !== undefined;
+                            const color = isOwned ? '#2ecc71' : isStudying ? '#f59e0b' : '#e74c3c';
+                            const icon = isOwned ? '✓' : isStudying ? '⏳' : '✗';
+                            const defaultDegreeName = campaign?.education?.find(ed => ed.id === d)?.name || formatDegreeName(d);
+                            const degreeName = t(`education.${d}`, { defaultValue: defaultDegreeName });
+                            const statusTitle = isOwned
+                              ? t('jobBoard.degreeCompleted', { defaultValue: 'Completed' })
+                              : isStudying
+                              ? t('jobBoard.degreeStudying', { defaultValue: 'Studying' })
+                              : t('jobBoard.degreeMissing', { defaultValue: 'Missing' });
+
+                            return (
+                              <span key={d}>
+                                {dIdx > 0 && <span style={{ color: '#888' }}>, </span>}
+                                <span
+                                  data-testid={`job-${job.id}-degree-${d}`}
+                                  style={{
+                                    color,
+                                    fontWeight: isOwned ? 'normal' : 'bold'
+                                  }}
+                                  title={`${degreeName} (${statusTitle})`}
+                                >
+                                  {icon} {degreeName}
+                                </span>
+                              </span>
+                            );
+                          })}
                         </span>
                       )}
                     </div>

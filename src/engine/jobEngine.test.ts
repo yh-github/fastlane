@@ -133,6 +133,36 @@ describe('Job Engine', () => {
       expect(reasons).toContain('Not enough education.');
     });
 
+    it('returns "Not enough education: missing [degrees]" when helpfulUI is true', () => {
+      const multiDegreeJob: JobDef = {
+        id: 'engineer_mgr',
+        title: 'Engineering Manager',
+        locationId: 'factory',
+        baseWage: 25,
+        perks: [],
+        requirements: {
+          experience: 10,
+          dependability: 10,
+          degrees: ['junior_college', 'engineering'],
+          uniform: 'business'
+        }
+      };
+      const player = {
+        hoursRemaining: 20,
+        experience: 10,
+        dependability: 10,
+        degrees: ['junior_college'], // Missing engineering
+        turnFlags: { jobsRejectedThisTurn: [] }
+      } as unknown as PlayerState;
+
+      const result = applyForJob(player, multiDegreeJob, 4, {}, undefined, new Random(1), { helpfulUI: true }, 5);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.job.rejected');
+      const reasons = String(result.message?.params?.reasons);
+      expect(reasons).toContain('Not enough education: missing Engineering.');
+      expect(result.message?.params?.missingDegrees).toBe('engineering');
+    });
+
     it('returns ALL rejection reasons in Advanced including Management Skill and Technical Skill', () => {
       const advExecTechJob: JobDef = {
         id: 'tech_exec_mgr',

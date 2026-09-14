@@ -813,7 +813,11 @@
     "exp": "Exp",
     "dep": "Dep",
     "degrees": "Degrees",
+    "degreeCompleted": "Completed",
+    "degreeStudying": "Studying",
+    "degreeMissing": "Missing",
     "missingReq": "You do not meet the minimum requirements for this position.",
+    "missingEducationWithDegrees": "Not enough education: missing {{degrees}}.",
     "alwaysHiring": "Always Hiring",
     "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
     "askRaiseBasic": "Ask for a Raise",
@@ -1076,6 +1080,19 @@
     "studyBtn": "Study ({{cost}}h)",
     "studyBtnBasic": "Study",
     "enrollBtn": "Enroll"
+  },
+  "education": {
+    "junior_college": "Junior College",
+    "trade_school": "Trade School",
+    "business_admin": "Business Administration",
+    "academic": "Academic",
+    "electronics": "Electronics",
+    "pre_engineering": "Pre-Engineering",
+    "graduate_school": "Graduate School",
+    "engineering": "Engineering",
+    "post_doctoral": "Post-Doctoral",
+    "research": "Research",
+    "publishing": "Publishing"
   },
   "appraisalDilemma": {
     "title": "Appraisal Dilemma",
