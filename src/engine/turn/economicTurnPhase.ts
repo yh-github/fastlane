@@ -225,26 +225,28 @@ export function processEconomicTurnPhase(
   const newEconomy = Math.max(minReading, newSim.goods.reading - 100);
   const newTrend = newSim.goods.index;
 
-  // Authentic mover headline (if no crash/boom headline)
+  // Authentic mover headline (if no crash/boom headline), or fallback to city news
   if (!currentHeadline) {
     const mover = determineNewspaperMover(newSim);
     if (mover) {
       currentHeadline = { key: mover.moverKey };
+    } else {
+      const randomHeadlines = [
+        "newspaper.random.1",
+        "newspaper.random.2",
+        "newspaper.random.3",
+        "newspaper.random.4"
+      ];
+      const headlineIdx = resolveDecision(replay, `newspaper_headline_global`, () => Math.floor(rng.next() * randomHeadlines.length));
+      currentHeadline = { key: randomHeadlines[headlineIdx] };
     }
   }
 
   // Predictive Stock Tips (if enabled for QoL / Advanced)
   if (state.rules.predictiveNewspaperStockTips) {
     const stockTip = generatePredictiveStockTip(newSim, rng, replay);
-    if (stockTip) {
-      if (currentHeadline) {
-        currentHeadline.stockTip = stockTip;
-      } else {
-        currentHeadline = {
-          key: stockTip.headlineKey,
-          stockTip,
-        };
-      }
+    if (stockTip && currentHeadline) {
+      currentHeadline.stockTip = stockTip;
     }
   }
 

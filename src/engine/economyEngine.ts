@@ -352,18 +352,28 @@ export function generatePredictiveStockTip(
     { id: 'penny_stocks', name: 'Penny Stocks', sector: sim.stocks.penny },
   ];
 
-  // Score each stock based on bounce signals and momentum
-  // high > 0 means strong upward mean reversion imminent (great buy!)
-  // low > 0 means downward correction imminent (sell/caution!)
+  // Score each stock based on valuation, bounce signals, and momentum reversal
+  // Positive score indicates undervalued/poised to surge (STRONG BUY)
+  // Negative score indicates overbought/poised for correction (STRONG SELL)
   const scored = stockList.map(s => {
     let score = 0;
-    if (s.sector.high === 2) score += 4;
-    else if (s.sector.high === 1) score += 2;
+    // Valuation relative to baseline 100 (reading < 100 is discounted, > 100 is expensive)
+    const deviation = 100 - s.sector.reading;
+    score += Math.round(deviation / 3);
 
-    if (s.sector.low === 2) score -= 4;
-    else if (s.sector.low === 1) score -= 2;
+    // Sierra bounce flags (strong mean-reversion triggers)
+    if (s.sector.high === 2) score += 6;
+    else if (s.sector.high === 1) score += 3;
 
-    score += s.sector.index;
+    if (s.sector.low === 2) score -= 6;
+    else if (s.sector.low === 1) score -= 3;
+
+    // Momentum reversal at valuation bounds:
+    // If momentum dropped sharply at or below baseline, bounce is imminent
+    if (s.sector.index <= -2 && s.sector.reading <= 100) score += 3;
+    // If momentum surged at or above baseline, peak exhaustion is imminent
+    if (s.sector.index >= 2 && s.sector.reading >= 100) score -= 3;
+
     return { ...s, score };
   });
 

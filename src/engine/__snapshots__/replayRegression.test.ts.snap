@@ -30,7 +30,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "happiness": 25,
         "wealth": 25,
       },
-      "happiness": 10,
+      "happiness": 0,
       "hasEarnedIncome": true,
       "hoursRemaining": 40,
       "id": "player_1",

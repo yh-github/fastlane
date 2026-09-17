@@ -26,6 +26,7 @@ interface BuildingModalProps {
   rules: GameRules;
   pawnShopItemsForSale?: PawnedItem[];
   economySimulation?: EconomySimulationState;
+  gameSeed?: number;
   onAction: (actionPayload: any) => Promise<any>;
   onClose: () => void;
 }
@@ -39,6 +40,7 @@ export function BuildingModal({
   rules,
   pawnShopItemsForSale,
   economySimulation,
+  gameSeed,
   onAction,
   onClose
 }: BuildingModalProps) {
@@ -118,7 +120,7 @@ export function BuildingModal({
 
   const isAdvancedWorkGUI = rules ? (rules.advancedWorkGUI ?? !!rules.usePhysicalMentalConditions) : false;
 
-  const itemsHere = getAvailableItemsForBuilding(building, campaign, turn, player.id);
+  const itemsHere = getAvailableItemsForBuilding(building, campaign, turn, player.id, gameSeed);
 
   const handleActionIntercept = async (payload: any) => {
     const actionLog = await onAction(payload);

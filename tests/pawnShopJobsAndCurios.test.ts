@@ -131,7 +131,7 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       expect(pawnRes.updatedPlayer.money).toBe(70);
     });
 
-    it('triggers appraisal dilemma with 2 choices for pawn_horologist', () => {
+    it('triggers appraisal dilemma with 3 choices for pawn_horologist and 2 choices for pawn_appraiser', () => {
       let player = makePlayer();
       player.experience = 40;
       player.dependability = 40;
@@ -145,9 +145,20 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       const horologistJob = campaign.jobs.find((j: any) => j.id === 'pawn_horologist');
       // Force roll < 0.15 for dilemma
       const rng = { next: () => 0.05 };
-      const res = workShift(player, horologistJob, 1, rules, campaign.config.statRules, 'face_time', rng as any);
-      expect(res.updated.pendingAppraisalDilemma).toBeDefined();
-      expect(res.updated.pendingAppraisalDilemma?.options.length).toBe(2);
+      const resHorologist = workShift(player, horologistJob, 1, rules, campaign.config.statRules, 'face_time', rng as any);
+      expect(resHorologist.updated.pendingAppraisalDilemma).toBeDefined();
+      expect(resHorologist.updated.pendingAppraisalDilemma?.options.length).toBe(3);
+
+      // Appraiser pulls 2 choices
+      player.currentJobId = 'pawn_appraiser';
+      const appraiserJob = campaign.jobs.find((j: any) => j.id === 'pawn_appraiser');
+      const resAppraiser = workShift(player, appraiserJob, 1, rules, campaign.config.statRules, 'face_time', rng as any);
+      expect(resAppraiser.updated.pendingAppraisalDilemma).toBeDefined();
+      expect(resAppraiser.updated.pendingAppraisalDilemma?.options.length).toBe(2);
+
+      // look_busy gives 0% chance to draw cards / trigger dilemma
+      const resLookBusy = workShift(player, horologistJob, 1, rules, campaign.config.statRules, 'look_busy', rng as any);
+      expect(resLookBusy.updated.pendingAppraisalDilemma).toBeUndefined();
     });
   });
 

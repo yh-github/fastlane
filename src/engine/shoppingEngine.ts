@@ -49,7 +49,9 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
   let mentalBonus = item.mentalBonus || 0;
   let newTurnFlags = { ...player.turnFlags };
 
-  if (item.id === 'lottery_tickets') {
+  if (item.id === 'microwave') {
+    happinessBonus = item.store === 'socket_city' ? 2 : (item.happinessBonus || 1);
+  } else if (item.id === 'lottery_tickets') {
     if (!player.turnFlags?.lotteryHappinessGranted) {
       newTurnFlags.lotteryHappinessGranted = true;
     } else {

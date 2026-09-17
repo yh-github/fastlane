@@ -266,7 +266,12 @@ export function handleRummagePawnShopAction(
   const rng = context.rng;
   const roll = rng ? rng.next() : Math.random();
 
-  const weeklyStock = getPawnShopWeeklyStock(context.campaign, context.turn, nextPlayer.id);
+  const weeklyStock = getPawnShopWeeklyStock(
+    context.campaign,
+    context.turn,
+    nextPlayer.id,
+    context.state?.gameSeed ?? context.state?.rngState
+  );
   const availableAppliances = weeklyStock.filter(item => {
     if (item.tags?.includes('broken')) {
       return !nextPlayer.inventory.appliances.some(a => a.id === item.id && a.isBroken);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlayerConfig, GoalAllotment } from '../engine/gameState';
 import type { WinCondition } from '../engine/rules';
@@ -11,11 +11,11 @@ interface SetupScreenProps {
 export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfirm }) => {
   const { t } = useTranslation();
   
-  const generateDefaultGoals = () => {
+  const generateDefaultGoals = useCallback(() => {
     const goals: GoalAllotment = {};
     winConditions.forEach(c => goals[c.stat] = 50);
     return goals;
-  };
+  }, [winConditions]);
 
   const [players, setPlayers] = useState<PlayerConfig[]>([
     {
@@ -25,6 +25,20 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
       characterIndex: 1,
     }
   ]);
+
+  useEffect(() => {
+    setPlayers(prev => prev.map(p => {
+      const updatedGoals: GoalAllotment = { ...p.goals };
+      let changed = false;
+      winConditions.forEach(c => {
+        if (updatedGoals[c.stat] === undefined) {
+          updatedGoals[c.stat] = 50;
+          changed = true;
+        }
+      });
+      return changed ? { ...p, goals: updatedGoals } : p;
+    }));
+  }, [winConditions]);
 
   const addPlayer = () => {
     if (players.length < 4) {
@@ -64,6 +78,19 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
   const isAllValid = players.every(p => {
     return p.name.trim() !== '';
   });
+
+  const handleConfirm = () => {
+    const sanitizedPlayers = players.map(p => {
+      const finalGoals: GoalAllotment = { ...p.goals };
+      winConditions.forEach(c => {
+        if (finalGoals[c.stat] === undefined) {
+          finalGoals[c.stat] = 50;
+        }
+      });
+      return { ...p, goals: finalGoals };
+    });
+    onConfirm(sanitizedPlayers);
+  };
 
   return (
     <div className="fullscreen-overlay">
@@ -150,12 +177,15 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
                   </div>
                 </div>
 
-                {winConditions.map((cond) => (
-                  <div key={`${index}-${cond.stat}`} className="setup-screen__slider-group" style={{ marginTop: '10px' }}>
-                    <label><span>{t(`setupScreen.${cond.stat}`, { defaultValue: cond.label })}</span> <span>{player.goals[cond.stat] || 0}%</span></label>
-                    <input type="range" min="0" max="100" value={player.goals[cond.stat] || 0} onChange={(e) => updateGoal(index, cond.stat, parseInt(e.target.value))} />
-                  </div>
-                ))}
+                {winConditions.map((cond) => {
+                  const goalVal = player.goals[cond.stat] ?? 50;
+                  return (
+                    <div key={`${index}-${cond.stat}`} className="setup-screen__slider-group" style={{ marginTop: '10px' }}>
+                      <label><span>{t(`setupScreen.${cond.stat}`, { defaultValue: cond.label })}</span> <span>{goalVal}%</span></label>
+                      <input type="range" min="0" max="100" value={goalVal} onChange={(e) => updateGoal(index, cond.stat, parseInt(e.target.value))} />
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
@@ -169,7 +199,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
           )}
           <button 
             className="action-panel__btn" 
-            onClick={() => onConfirm(players)}
+            onClick={handleConfirm}
             disabled={!isAllValid}
           >
             {t('setupScreen.startLife')}
