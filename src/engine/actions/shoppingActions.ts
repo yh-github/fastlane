@@ -21,10 +21,8 @@ export function handleBuyAction(
   if (baseItemDef) {
     const timeCost = baseItemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
     if (timeCost > 0 && nextPlayer.hoursRemaining < timeCost) {
-      if (!context.rules.allowPartialHours) {
-        actionLog = { key: 'action.error.notEnoughTimeBuy', params: { name: baseItemDef.name } };
-        return { nextPlayer, actionLog };
-      }
+      actionLog = { key: 'action.error.notEnoughTimeBuy', params: { name: baseItemDef.name } };
+      return { nextPlayer, actionLog };
     }
 
     // Resolve price from inventory override or fallback to old basePrice, default to 0

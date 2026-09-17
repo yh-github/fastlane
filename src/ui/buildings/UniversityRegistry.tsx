@@ -32,8 +32,8 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
           <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 10px 0', fontSize: '0.95em' }}>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
             {degreesList
-              .filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)))
-              .filter(deg => !player.degrees.includes(deg.id))
+              .filter(deg => deg.prerequisites.every(prereq => (player.degrees || []).includes(prereq)))
+              .filter(deg => !(player.degrees || []).includes(deg.id))
               .map(deg => {
                 const required = calcRequiredLessons(player, deg);
                 const hasBonus = required < deg.lessonsRequired;
@@ -58,7 +58,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                       {isEnrolled && (
                         <div style={{ marginTop: '4px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--accent-cyan)', marginBottom: '3px' }}>
-                            <span>{rules?.percentageEducation ? t('university.progress', { defaultValue: 'Progress' }) : t('university.lessons', { defaultValue: 'Lessons' })}:</span>
+                            <span>{rules?.percentageEducation ? t('university.progress', { defaultValue: 'Progress' }) : t('university.lessonsLabel', { defaultValue: 'Lessons' })}:</span>
                             <span style={{ fontWeight: 'bold' }}>
                               {rules?.percentageEducation 
                                 ? `${formatDegreeProgress(lessonsCompleted, true)} / 100%` 
@@ -159,7 +159,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                 );
               })}
           </div>
-          {degreesList.filter(deg => deg.prerequisites.every(prereq => player.degrees.includes(prereq)) && !player.degrees.includes(deg.id)).length === 0 && (
+          {degreesList.filter(deg => deg.prerequisites.every(prereq => (player.degrees || []).includes(prereq)) && !(player.degrees || []).includes(deg.id)).length === 0 && (
             <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#888' }}>{t('university.noClasses', { defaultValue: 'No classes available to take right now.' })}</p>
           )}
         </>

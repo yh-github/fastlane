@@ -854,7 +854,8 @@
       "greeting": "Welcome!",
       "buySuccess": "Thank you!",
       "insufficientFunds": "You don't have enough money."
-    }
+    },
+    "noTimeToReadNewspaper": "No time to read the newspaper."
   },
   "jobBoard": {
     "title": "Job Board: Select Location",
@@ -1128,6 +1129,7 @@
     "completed": "Completed ✓",
     "tuition": "- Tuition: ${{fee}}",
     "bonus": "★ Bonus",
+    "lessonsLabel": "Lessons",
     "lessons": "Lessons: {{completed}} / {{required}}",
     "studyBtn": "Study ({{cost}}h)",
     "studyBtnBasic": "Study",

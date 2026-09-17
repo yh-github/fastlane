@@ -12,6 +12,7 @@ import {
   HomeRelax, 
   RentOffice
 } from '../ui/BuildingInteractions';
+import { UniversityRegistry } from '../ui/buildings/UniversityRegistry';
 import { WeekendScreen } from '../ui/WeekendScreen';
 
 // Helper to flatten nested JSON translation objects into dot-notated key/value pairs
@@ -439,6 +440,32 @@ describe('Translation Interpolation & Template Verification', () => {
       expect(container.textContent).not.toContain('{{');
       expect(container.textContent).not.toContain('}}');
       expect(container.textContent).toContain('Start Week 2');
+    });
+
+    it('renders UniversityRegistry studying progress cleanly without raw {{...}} template tags in DOM', () => {
+      i18n.changeLanguage('en');
+      const mockEdu = [
+        { id: 'junior_college', name: 'Junior College Degree', baseTuitionFee: 200, lessonsRequired: 10, prerequisites: [], rewards: { happiness: 5, dependability: 5, maxDepBoost: 5, maxExpBoost: 5 } }
+      ];
+      const studyingPlayer = {
+        ...mockPlayer,
+        enrolledClasses: { junior_college: 1 },
+      };
+      const { container } = render(
+        <UniversityRegistry 
+          player={studyingPlayer} 
+          availableDegrees={mockEdu}
+          campaign={{ ...mockCampaign, education: mockEdu } as any} 
+          rules={{ helpfulUI: true } as any} 
+          onAction={vi.fn()} 
+        />
+      );
+
+      expect(container.textContent).not.toMatch(/\{\{[^}]+\}\}/);
+      expect(container.textContent).not.toContain('{{completed}}');
+      expect(container.textContent).not.toContain('{{required}}');
+      expect(container.textContent).toContain('Lessons:');
+      expect(container.textContent).toContain('1 / 10');
     });
   });
 });

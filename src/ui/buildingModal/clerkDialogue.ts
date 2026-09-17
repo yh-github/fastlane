@@ -34,9 +34,11 @@ export function getClerkFace(id: string, archetype: string): string {
 export function getPawnShopWeeklyStock(
   campaign: CampaignBundle,
   turn: number,
-  playerId: string
+  playerId: string,
+  gameSeed?: number
 ): ItemDef[] {
-  let seed = turn * 7919 + (playerId.charCodeAt(playerId.length - 1) || 0) * 104729;
+  const seedPrefix = (gameSeed ?? 0) * 10007;
+  let seed = seedPrefix + turn * 7919 + (playerId.charCodeAt(playerId.length - 1) || 0) * 104729;
   const random = () => {
     seed = (seed * 9301 + 49297) % 233280;
     return seed / 233280;
@@ -101,19 +103,25 @@ export function getAvailableItemsForBuilding(
   building: BuildingDef,
   campaign: CampaignBundle,
   turn: number,
-  playerId: string
+  playerId: string,
+  gameSeed?: number
 ): ItemDef[] {
   // Pawn Shop weekly rotating stock of ~6 items (curios, spare parts, and broken appliances)
   if (building.id === 'pawn_shop' || building.archetype === 'pawnshop') {
-    return getPawnShopWeeklyStock(campaign, turn, playerId);
+    return getPawnShopWeeklyStock(campaign, turn, playerId, gameSeed);
   }
 
   let itemsHere = (building.inventory || [])
     .map(inv => {
       const baseItem = campaign.items.find(i => i.id === inv.itemId);
       if (!baseItem) return null;
+      let happinessBonus = baseItem.happinessBonus;
+      if (baseItem.id === 'microwave') {
+        happinessBonus = building.id === 'socket_city' ? 2 : 1;
+      }
       return {
         ...baseItem,
+        happinessBonus,
         basePrice: inv.priceOverride ?? baseItem.basePrice ?? 0
       };
     })
@@ -121,7 +129,8 @@ export function getAvailableItemsForBuilding(
 
   // Z-Mart & Discount Store randomization (show 6 items consistently per week per player)
   if ((building.id === 'z_mart' || building.id === 'discount_and_pawn' || building.archetype === 'discount_and_pawn') && itemsHere.length > 6) {
-    let seed = turn * 1337 + (playerId.charCodeAt(playerId.length - 1) || 0) * 12345;
+    const seedPrefix = (gameSeed ?? 0) * 10007;
+    let seed = seedPrefix + turn * 1337 + (playerId.charCodeAt(playerId.length - 1) || 0) * 12345;
     const random = () => {
       seed = (seed * 9301 + 49297) % 233280;
       return seed / 233280;
@@ -152,6 +161,8 @@ export function computeClerkResponse(
 
   if (mainLog?.key === 'action.error.cannotWork') {
     return "No time is left to work.";
+  } else if (mainLog?.key === 'action.error.notEnoughTimeNewspaper' || (payload.type === 'buy' && payload.itemId === 'newspaper' && mainLog?.key?.startsWith?.('action.error.notEnoughTime'))) {
+    return String(t('clerkDialogs.noTimeToReadNewspaper', { defaultValue: 'No time to read the newspaper.' }));
   } else if (mainLog?.key?.startsWith?.('action.error.notEnoughTime')) {
     if (payload.type === 'enroll' || payload.type === 'study') {
       return "No time is left to go to class.";

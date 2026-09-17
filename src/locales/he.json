@@ -646,6 +646,7 @@
     "completed": "הושלם ✓",
     "tuition": "- שכר לימוד: {{fee}}$",
     "bonus": "★ בונוס",
+    "lessonsLabel": "שיעורים",
     "lessons": "שיעורים: {{completed}} / {{required}}",
     "studyBtn": "למד ({{cost}} שעות)",
     "studyBtnBasic": "למד",
@@ -808,5 +809,8 @@
       "title": "מחקר טכני",
       "desc": "פרק ובחן את המנגנון כדי להעמיק את הבנתך הטכנולוגית."
     }
+  },
+  "clerkDialogs": {
+    "noTimeToReadNewspaper": "אין זמן לקרוא את העיתון."
   }
 }

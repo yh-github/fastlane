@@ -60,7 +60,7 @@ export function processStarvation(player: PlayerState, timePenalty: number, rng:
   if (rules?.usePhysicalMentalConditions) {
     updated.physicalCondition = Math.max(0, (updated.physicalCondition || 15) - 2);
   } else {
-    updated.happiness = Math.max(10, updated.happiness - 2);
+    updated.happiness = Math.max(0, updated.happiness - 2);
   }
   
   // 25% chance of Doctor Visit
@@ -86,7 +86,7 @@ export function processDoctorVisit(player: PlayerState, timePenalty: number, rng
     const physBounce = (rules as any)?.doctorPhysicalBounceBack ?? 4;
     updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 15) + physBounce);
   } else {
-    updated.happiness = Math.max(10, updated.happiness - 4);
+    updated.happiness = Math.max(0, updated.happiness - 4);
   }
   
   // Cost: random between $30 and $200
@@ -171,10 +171,12 @@ export function processApartmentRobbery(
         if (unprotected) {
           const remAppliances = player.inventory.appliances.filter(a => a !== unprotected);
           const itemsStr = (unprotected as any).name || formatItem(unprotected.id);
-          let updated = {
+          let updated: PlayerState = {
             ...player,
             inventory: { ...player.inventory, appliances: remAppliances },
-            turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }]
+            turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }],
+            turnFlags: { ...player.turnFlags, freeNewspaper: true },
+            newspaperHeadline: { key: 'newspaper.robbery' }
           };
           updated = applyMoraleEffect(updated, -4, 'apartment_robbery', (rules || {}) as any, statRules);
           return { updated, robbed: true };
@@ -184,10 +186,12 @@ export function processApartmentRobbery(
     }
 
     const itemsStr = stolenItemNames.join(', ');
-    let updated = { 
+    let updated: PlayerState = { 
       ...player, 
       inventory: { ...player.inventory, appliances: newAppliances }, 
-      turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }] 
+      turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }],
+      turnFlags: { ...player.turnFlags, freeNewspaper: true },
+      newspaperHeadline: { key: 'newspaper.robbery' }
     };
     // -4 Happiness/Morale penalty
     updated = applyMoraleEffect(updated, -4, 'apartment_robbery', (rules || {}) as any, statRules);

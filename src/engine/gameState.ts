@@ -66,6 +66,8 @@ export interface GameState {
   phase: GamePhase;
   /** Campaign configuration reference */
   campaignId: string;
+  /** Initial game seed for run-level determinism */
+  gameSeed?: number;
   /** Seed/State for the deterministic random number generator */
   rngState: number;
   /** Game rules configuration */

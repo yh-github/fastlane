@@ -989,7 +989,7 @@ export function workShift(
       }
     }
 
-    if (isAdvanced && (job.id === 'pawn_appraiser' || job.id === 'pawn_horologist') && !updated.pendingAppraisalDilemma) {
+    if (isAdvanced && mode !== 'look_busy' && (job.id === 'pawn_appraiser' || job.id === 'pawn_horologist') && !updated.pendingAppraisalDilemma) {
       const dilemmaRoll = resolveDecision(replay, `appraisal_dilemma_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
       if (dilemmaRoll < 0.15) {
         const isHorologist = job.id === 'pawn_horologist';
@@ -1048,7 +1048,7 @@ export function workShift(
           }
         ];
 
-        // Pick 2 distinct choices
+        // Pick distinct choices: 2 for appraiser, 3 for horologist
         const roll1 = resolveDecision(replay, `dilemma_opt1_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
         const idx1 = Math.floor(roll1 * candidateOptions.length);
         const roll2 = resolveDecision(replay, `dilemma_opt2_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
@@ -1056,6 +1056,13 @@ export function workShift(
         if (idx2 >= idx1) idx2++;
 
         const chosenOptions = [candidateOptions[idx1], candidateOptions[idx2]];
+
+        if (isHorologist) {
+          const roll3 = resolveDecision(replay, `dilemma_opt3_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
+          const availableIndices = [0, 1, 2, 3, 4].filter(i => i !== idx1 && i !== idx2);
+          const idx3 = availableIndices[Math.floor(roll3 * availableIndices.length)];
+          chosenOptions.push(candidateOptions[idx3]);
+        }
 
         if (updated.isAi) {
           const cashOpt = chosenOptions.find(o => o.type === 'cash');

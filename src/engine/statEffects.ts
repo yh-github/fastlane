@@ -25,7 +25,7 @@ export function applyMoraleEffect(
   let nextPlayer = { ...player };
 
   if (!rules?.usePhysicalMentalConditions) {
-    nextPlayer.happiness = Math.max(10, Math.min(100, nextPlayer.happiness + amount));
+    nextPlayer.happiness = Math.max(0, Math.min(100, nextPlayer.happiness + amount));
   } else {
     const minMental = statRules?.minMentalCondition ?? 1;
     const maxMental = nextPlayer.mentalConditionMax || 50;

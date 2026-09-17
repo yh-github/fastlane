@@ -92,21 +92,21 @@
     "name": "Encyclopedia",
     "category": "book",
     "basePrice": 475,
-    "happinessBonus": 1
+    "happinessBonus": 0
   },
   {
     "id": "dictionary",
     "name": "Dictionary",
     "category": "book",
     "basePrice": 70,
-    "happinessBonus": 1
+    "happinessBonus": 0
   },
   {
     "id": "atlas",
     "name": "Atlas",
     "category": "book",
     "basePrice": 55,
-    "happinessBonus": 1
+    "happinessBonus": 0
   },
   {
     "id": "business_suit",

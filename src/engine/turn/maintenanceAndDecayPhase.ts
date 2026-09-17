@@ -318,9 +318,17 @@ export function processPostHealthMaintenance(
     player = applyEconomicBoom(player, campaign, economicTurnResult.newEconomy, state.turn, state.rules, campaign.config.statRules);
   }
 
-  if (economicTurnResult.currentHeadline) {
+  if (player.turnFlags.freeNewspaper && player.newspaperHeadline?.key === 'newspaper.robbery') {
+    if (economicTurnResult.crashSeverity !== 'none' || economicTurnResult.economicBoom) {
+      player.newspaperHeadline = economicTurnResult.currentHeadline;
+    } else if (economicTurnResult.currentHeadline?.stockTip) {
+      player.newspaperHeadline.stockTip = economicTurnResult.currentHeadline.stockTip;
+    }
+  } else if (economicTurnResult.currentHeadline) {
     player.newspaperHeadline = economicTurnResult.currentHeadline;
-    player.turnFlags.freeNewspaper = true;
+    if (economicTurnResult.crashSeverity !== 'none' || economicTurnResult.economicBoom) {
+      player.turnFlags.freeNewspaper = true;
+    }
   }
 
   // 17. Donations

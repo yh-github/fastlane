@@ -20,7 +20,7 @@
     "name": "Cooking Happiness",
     "requires": ["tag:stove"],
     "effects": [
-      { "type": "add_turn_happiness", "value": 1, "operation": "ADD" }
+      { "type": "add_turn_happiness", "value": 1, "operation": "MAX" }
     ]
   },
   {
@@ -28,7 +28,7 @@
     "name": "Microwave Happiness",
     "requires": ["tag:microwave"],
     "effects": [
-      { "type": "add_turn_happiness", "value": 1, "operation": "ADD" }
+      { "type": "add_turn_happiness", "value": 1, "operation": "MAX" }
     ]
   },
   {

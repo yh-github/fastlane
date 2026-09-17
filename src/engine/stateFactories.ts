@@ -11,7 +11,7 @@ import type {
   PlayerConfig
 } from './gameState';
 
-export const MIN_HAPPINESS = 10;
+export const MIN_HAPPINESS = 0;
 export const MAX_HAPPINESS = 100;
 
 export function createDefaultTurnFlags(): TurnFlags {
@@ -107,7 +107,17 @@ export function createPlayerState(
     inventory: createDefaultInventory(config),
     nakedTurns: 0,
     position: startNode,
-    goalAllotment: goals,
+    goalAllotment: (() => {
+      const finalGoals: GoalAllotment = { ...goals };
+      if (config.winConditions) {
+        for (const cond of config.winConditions) {
+          if (finalGoals[cond.stat] === undefined) {
+            finalGoals[cond.stat] = 50;
+          }
+        }
+      }
+      return finalGoals;
+    })(),
     turnFlags: createDefaultTurnFlags(),
     turnEvents: [],
     newspaperHeadline: null,
@@ -158,6 +168,7 @@ export function createInitialGameState(
     economicIndex: 0,
     economicTrend: 0,
     economySimulation: createDefaultEconomySimulationState(campaign.config.economyRules),
+    gameSeed: seed,
     rngState: seed,
     pawnShopItemsForSale: [],
     players: playersConfig.map((cfg, i) =>

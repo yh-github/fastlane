@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { type GameState, type PlayerState, createInitialGameState, recalculatePlayerEffects } from '../engine/gameState';
+import { type GameState, type PlayerState, createInitialGameState, createDefaultGoalAllotment, recalculatePlayerEffects } from '../engine/gameState';
 import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
 import { loadCampaign, type CampaignBundle } from '../engine/dataLoader';
@@ -55,7 +55,7 @@ export function useGameEngine(
       .then((bundle) => {
         setCampaign(bundle);
         const randomSeed = generateRandomSeed();
-        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost', undefined, randomSeed);
+        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: createDefaultGoalAllotment()}], 'node_low_cost', undefined, randomSeed);
         setGameState(initialState);
         replayDataRef.current = {
           version: '1.0.0', // Can be dynamically injected from package.json in future

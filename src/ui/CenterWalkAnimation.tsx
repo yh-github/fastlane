@@ -27,6 +27,12 @@ const CHAR_BG_COLORS: Record<number, string> = {
 function makeBackgroundTransparent(ctx: CanvasRenderingContext2D, width: number, height: number) {
   const imgData = ctx.getImageData(0, 0, width, height);
   const data = imgData.data;
+
+  // If already transparent (e.g. 32-bit RGBA PNG), skip flood-fill
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < 255) return;
+  }
+
   const bgR = data[0];
   const bgG = data[1];
   const bgB = data[2];
@@ -116,7 +122,9 @@ export const CenterWalkAnimation: React.FC<CenterWalkAnimationProps> = ({
   const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
 
   const clothesIdx = CLOTHES_MAP[clothesType] ?? 1;
-  const imageSrc = `/assets/chars/char=${characterIndex}_clothes=${clothesIdx}.bmp`;
+  const imageSrc = characterIndex === 3
+    ? `/assets/chars/char=${characterIndex}_clothes=${clothesIdx}.png`
+    : `/assets/chars/char=${characterIndex}_clothes=${clothesIdx}.bmp`;
   const bgColor = removeBg ? 'transparent' : (CHAR_BG_COLORS[characterIndex] || '#ffffff');
 
   // Load / switch image when character or clothes change
@@ -176,7 +184,7 @@ export const CenterWalkAnimation: React.FC<CenterWalkAnimationProps> = ({
     const sx = frameIndex * (sw + 1);
 
     ctx.clearRect(0, 0, sw, sh);
-    ctx.imageSmoothingEnabled = !pixelated;
+    ctx.imageSmoothingEnabled = !pixelated || characterIndex === 3;
     ctx.drawImage(loadedImage, sx, 0, sw, sh, 0, 0, sw, sh);
 
     if (removeBg) {
@@ -186,7 +194,7 @@ export const CenterWalkAnimation: React.FC<CenterWalkAnimationProps> = ({
         console.warn('[CenterWalkAnimation] Error making background transparent', e);
       }
     }
-  }, [frameIndex, loadedImage, pixelated, removeBg]);
+  }, [frameIndex, loadedImage, pixelated, removeBg, characterIndex]);
 
   return (
     <div
@@ -202,7 +210,7 @@ export const CenterWalkAnimation: React.FC<CenterWalkAnimationProps> = ({
     >
       <canvas
         ref={canvasRef}
-        className={`center-character-sprite ${!pixelated ? 'center-character-sprite--smooth' : ''}`}
+        className={`center-character-sprite ${!pixelated || characterIndex === 3 ? 'center-character-sprite--smooth' : ''}`}
         width={49}
         height={95}
       />
