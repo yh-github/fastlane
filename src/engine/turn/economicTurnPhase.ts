@@ -225,9 +225,9 @@ export function processEconomicTurnPhase(
   const newEconomy = Math.max(minReading, newSim.goods.reading - 100);
   const newTrend = newSim.goods.index;
 
-  // Authentic mover headline (if no crash/boom headline), or fallback to city news
+  // Authentic mover headline (if no crash/boom headline and predictive tips not active), or fallback to city news
   if (!currentHeadline) {
-    const mover = determineNewspaperMover(newSim);
+    const mover = !state.rules.predictiveNewspaperStockTips ? determineNewspaperMover(newSim) : null;
     if (mover) {
       currentHeadline = { key: mover.moverKey };
     } else {

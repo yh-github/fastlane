@@ -124,13 +124,13 @@ export function handleStudyAction(
       nextPlayer.physicalCondition = curPhys - physicalCost;
       nextPlayer.mentalCondition = curMental - mentalCost;
 
-      // Academic freedom bonus check
+      // Academic freedom bonus check: gives +1 Dep for all study actions, and +2 for overtime
       let baseDepBonus = 0;
       const currentJob = context.campaign.jobs.find(j => j.id === nextPlayer.currentJobId);
       if (currentJob?.tags?.includes('academic_freedom')) {
         if (actionCount >= overtimeThreshold) {
           baseDepBonus = 2;
-        } else if (actionCount >= grindThreshold) {
+        } else {
           baseDepBonus = 1;
         }
       }
@@ -184,7 +184,9 @@ export function handleStudyAction(
           }
         } else {
           nextPlayer.enrolledClasses[degDef.id] = (nextPlayer.enrolledClasses[degDef.id] || 0) + 1;
-          isGraduated = nextPlayer.enrolledClasses[degDef.id] >= required;
+          if (nextPlayer.enrolledClasses[degDef.id] >= required) {
+            isGraduated = true;
+          }
         }
 
         const currentDisplay = isPercentage 
@@ -197,12 +199,18 @@ export function handleStudyAction(
           delete nextPlayer.enrolledClasses[degDef.id];
           delete nextPlayer.enrolledClasses[`${degDef.id}_req`];
 
+          const prereqDepth = getPrerequisiteChainDepth(degDef.id, context.campaign.education);
           const qolReduced = context.rules.reducedDegreeStatBonus;
-          const depReward = qolReduced ? Math.min(2, degDef.rewards.dependability) : degDef.rewards.dependability;
-          const maxDepReward = qolReduced ? Math.min(2, degDef.rewards.maxDepBoost) : degDef.rewards.maxDepBoost;
+          const depReward = qolReduced ? (prereqDepth + 1) : Math.max(degDef.rewards.dependability, prereqDepth + 1);
+          const maxDepReward = qolReduced ? (prereqDepth + 1) : Math.max(degDef.rewards.maxDepBoost, prereqDepth + 1);
           const maxExpReward = qolReduced ? Math.min(2, degDef.rewards.maxExpBoost) : degDef.rewards.maxExpBoost;
 
-          nextPlayer = applyHappinessChange(nextPlayer, degDef.rewards.happiness, 'graduation', context.rules, context.campaign.config.statRules);
+          // Mental reward in Advanced: double the depths -> 2 * (depth + 1)
+          const mentalOrHappinessReward = context.rules.usePhysicalMentalConditions 
+            ? (2 * (prereqDepth + 1))
+            : degDef.rewards.happiness;
+
+          nextPlayer = applyHappinessChange(nextPlayer, mentalOrHappinessReward, 'graduation', context.rules, context.campaign.config.statRules);
           nextPlayer.degreeDepBoost += maxDepReward;
           nextPlayer.dependability = Math.min(100, nextPlayer.dependability + depReward);
           nextPlayer.degreeExpBoost += maxExpReward;

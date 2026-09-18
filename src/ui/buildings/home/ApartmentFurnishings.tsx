@@ -3,9 +3,29 @@ import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
 
+export interface ApplianceSlotDef {
+  slotId: string;
+  candidateIds: string[];
+  fallbackId: string;
+  defaultName: string;
+  emptyLabelKey?: string;
+}
+
+export const BASE_APPLIANCE_SLOTS: ApplianceSlotDef[] = [
+  { slotId: 'refrigerator', candidateIds: ['refrigerator'], fallbackId: 'refrigerator', defaultName: 'Refrigerator' },
+  { slotId: 'freezer', candidateIds: ['freezer'], fallbackId: 'freezer', defaultName: 'Freezer' },
+  { slotId: 'stove', candidateIds: ['stove'], fallbackId: 'stove', defaultName: 'Stove' },
+  { slotId: 'microwave', candidateIds: ['microwave'], fallbackId: 'microwave', defaultName: 'Microwave' },
+  { slotId: 'tv', candidateIds: ['color_tv', 'bw_tv'], fallbackId: 'color_tv', defaultName: 'TV', emptyLabelKey: 'item.tv' },
+  { slotId: 'stereo', candidateIds: ['stereo', '8track'], fallbackId: 'stereo', defaultName: 'Stereo', emptyLabelKey: 'item.stereo' },
+  { slotId: 'vcr', candidateIds: ['vcr'], fallbackId: 'vcr', defaultName: 'VCR' },
+  { slotId: 'computer', candidateIds: ['computer'], fallbackId: 'computer', defaultName: 'Computer' },
+  { slotId: 'hot_tub', candidateIds: ['hot_tub'], fallbackId: 'hot_tub', defaultName: 'Hot Tub' }
+];
+
 export const DEFAULT_APPLIANCES = [
   'refrigerator', 'freezer', 'stove', 'microwave',
-  'color_tv', 'bw_tv', 'stereo', 'vcr', 'computer', 'hot_tub'
+  'tv', 'stereo', 'vcr', 'computer', 'hot_tub'
 ];
 export const DEFAULT_BOOKS = ['dictionary', 'encyclopedia', 'atlas'];
 
@@ -48,19 +68,27 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
   }), [uniqueApplianceIds, player.inventory?.appliances]);
 
   const ownedBooks = player.inventory?.books || [];
-  const totalDurablesCount = uniqueAppliances.length + ownedBooks.length;
 
-  const allApplianceIds = useMemo(() => Array.from(new Set([
-    ...DEFAULT_APPLIANCES,
-    ...(campaign?.items?.filter(i => i.category === 'appliance').map(i => i.id) || [])
-  ])), [campaign?.items]);
+  const applianceSlots = useMemo(() => {
+    const standardCandidateIds = new Set<string>();
+    BASE_APPLIANCE_SLOTS.forEach(s => s.candidateIds.forEach(id => standardCandidateIds.add(id)));
+
+    const customSlots: ApplianceSlotDef[] = (campaign?.items || [])
+      .filter(i => i.category === 'appliance' && !standardCandidateIds.has(i.id))
+      .map(i => ({
+        slotId: i.id,
+        candidateIds: [i.id],
+        fallbackId: i.id,
+        defaultName: i.name
+      }));
+
+    return [...BASE_APPLIANCE_SLOTS, ...customSlots];
+  }, [campaign?.items]);
 
   const allBookIds = useMemo(() => Array.from(new Set([
     ...DEFAULT_BOOKS,
     ...(campaign?.items?.filter(i => i.category === 'book').map(i => i.id) || [])
   ])), [campaign?.items]);
-
-  const totalMax = allApplianceIds.length + allBookIds.length;
 
   return (
     <div 
@@ -85,9 +113,6 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         <h4 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '0.88em', display: 'flex', alignItems: 'center', gap: '6px' }}>
           🛋️ {t('homeRelax.durablesShowcase', { defaultValue: 'Apartment Furnishings & Belongings' })}
         </h4>
-        <span style={{ fontSize: '0.74rem', color: totalDurablesCount > 0 ? '#2ecc71' : '#888', fontWeight: 'bold' }}>
-          {totalDurablesCount} / {totalMax} Furnished
-        </span>
       </div>
 
       <div style={{
@@ -100,20 +125,33 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         flex: '1 1 auto'
       }}>
         {/* Appliances */}
-        {allApplianceIds.map((appDefId) => {
-          const ownedApp = uniqueAppliances.find(a => a.id === appDefId);
+        {applianceSlots.map((slot) => {
+          const ownedApp = slot.candidateIds
+            .map(cId => uniqueAppliances.find(a => a.id === cId))
+            .find(Boolean);
           const isOwned = Boolean(ownedApp);
-          const itemDef = campaign?.items?.find(i => i.id === appDefId);
-          const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : appDefId;
+          const activeItemId = ownedApp ? ownedApp.id : slot.fallbackId;
+          const itemDef = campaign?.items?.find(i => i.id === activeItemId);
+
+          let itemName = '';
+          if (isOwned) {
+            itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : activeItemId;
+          } else {
+            itemName = slot.emptyLabelKey
+              ? t(slot.emptyLabelKey, { defaultValue: slot.defaultName })
+              : (itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : slot.defaultName);
+          }
+
           const isNew = ownedApp ? (ownedApp.condition === 'new' || ownedApp.purchaseSource === 'socket_city') : false;
           const isBroken = Boolean(ownedApp?.isBroken);
+          const testId = isOwned ? `durable-card-${activeItemId}` : (slot.slotId === 'tv' ? 'durable-card-tv' : `durable-card-${slot.slotId}`);
 
           return (
             <div
-              key={appDefId}
-              data-testid={`durable-card-${appDefId}`}
+              key={slot.slotId}
+              data-testid={testId}
               onClick={() => onInspectDurable({
-                id: appDefId,
+                id: activeItemId,
                 isBook: false,
                 applianceData: ownedApp,
                 isOwned
@@ -171,7 +209,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               }}
             >
               <img
-                src={`/assets/raw_images/${appDefId}.png`}
+                src={`/assets/raw_images/${activeItemId}.png`}
                 alt={itemName}
                 style={{
                   width: '38px',

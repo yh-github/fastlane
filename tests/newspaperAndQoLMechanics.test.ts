@@ -356,3 +356,104 @@ describe('Goal Defaults and Microwave Mechanics', () => {
     expect(zMartItems[0].happinessBonus).toBe(1);
   });
 });
+
+describe('Academic Freedom and Graduation Depth Scaling', () => {
+  it('academic_freedom job grants +1 Dependability on the very first study action', () => {
+    const player = makePlayer();
+    player.currentJobId = 'researcher';
+    player.dependability = 20;
+    player.hoursRemaining = 10;
+    player.physicalCondition = 50;
+    player.mentalCondition = 50;
+
+    const studyCampaign = {
+      ...campaign,
+      jobs: [
+        { id: 'researcher', title: 'Researcher', baseWage: 20, locationId: 'university', perks: [], requirements: {} as any, tags: ['academic_freedom'] }
+      ],
+      education: [
+        { id: 'trade_school', name: 'Trade School', prerequisites: [], baseTuitionFee: 50, lessonsRequired: 10, rewards: { happiness: 5, dependability: 5, maxDepBoost: 5, maxExpBoost: 5 } }
+      ]
+    };
+
+    player.enrolledClasses = { trade_school: 1 };
+    const state = makeState(player);
+    const context = {
+      state,
+      campaign: studyCampaign,
+      economicIndex: 0,
+      rules: { ...state.rules, usePhysicalMentalConditions: true },
+      rng: new Random(1)
+    };
+
+    const next = gameReducer(player, { type: 'study', degreeId: 'trade_school' }, context);
+    // Even on action #1, academic_freedom grants +1 Dependability (20 -> 21)
+    expect(next.updatedPlayer.dependability).toBe(21);
+  });
+
+  it('graduation awards Dependability = depth + 1 and Mental = 2 * (depth + 1)', () => {
+    const studyCampaign = {
+      ...campaign,
+      education: [
+        { id: 'junior_college', name: 'Junior College', prerequisites: [], baseTuitionFee: 50, lessonsRequired: 10, rewards: { happiness: 5, dependability: 5, maxDepBoost: 5, maxExpBoost: 5 } },
+        { id: 'academic', name: 'Academic', prerequisites: ['junior_college'], baseTuitionFee: 50, lessonsRequired: 10, rewards: { happiness: 5, dependability: 5, maxDepBoost: 5, maxExpBoost: 5 } },
+        { id: 'graduate_school', name: 'Graduate School', prerequisites: ['academic'], baseTuitionFee: 50, lessonsRequired: 10, rewards: { happiness: 5, dependability: 5, maxDepBoost: 5, maxExpBoost: 5 } }
+      ]
+    };
+
+    // 1. Root degree (depth 0): Junior College -> Dep +1, Mental +2
+    const p0 = makePlayer();
+    p0.dependability = 20;
+    p0.mentalCondition = 10;
+    p0.enrolledClasses = { junior_college: 9 };
+    const s0 = makeState(p0);
+    const ctx0 = { state: s0, campaign: studyCampaign, economicIndex: 0, rules: { ...s0.rules, usePhysicalMentalConditions: true, reducedDegreeStatBonus: true }, rng: new Random(1) };
+    const res0 = gameReducer(p0, { type: 'study', degreeId: 'junior_college' }, ctx0);
+    expect(res0.updatedPlayer.degrees).toContain('junior_college');
+    expect(res0.updatedPlayer.dependability).toBe(21); // 20 + (0 + 1)
+    // 10 - mentalCost (1) + graduation Mental (2 * (0+1) = 2) = 11
+    expect(res0.updatedPlayer.mentalCondition).toBe(11);
+
+    // 2. Depth 1 degree (depth 1): Academic -> Dep +2, Mental +4
+    const p1 = makePlayer();
+    p1.degrees = ['junior_college'];
+    p1.dependability = 20;
+    p1.mentalCondition = 10;
+    p1.enrolledClasses = { academic: 9 };
+    const s1 = makeState(p1);
+    const ctx1 = { state: s1, campaign: studyCampaign, economicIndex: 0, rules: { ...s1.rules, usePhysicalMentalConditions: true, reducedDegreeStatBonus: true }, rng: new Random(1) };
+    const res1 = gameReducer(p1, { type: 'study', degreeId: 'academic' }, ctx1);
+    expect(res1.updatedPlayer.degrees).toContain('academic');
+    expect(res1.updatedPlayer.dependability).toBe(22); // 20 + (1 + 1)
+    // 10 - mentalCost (1 base + 1 depth = 2) + graduation Mental (2 * (1+1) = 4) = 12
+    expect(res1.updatedPlayer.mentalCondition).toBe(12);
+
+    // 3. Depth 2 degree (depth 2): Graduate School -> Dep +3, Mental +6
+    const p2 = makePlayer();
+    p2.degrees = ['junior_college', 'academic'];
+    p2.dependability = 20;
+    p2.mentalCondition = 10;
+    p2.enrolledClasses = { graduate_school: 9 };
+    const s2 = makeState(p2);
+    const ctx2 = { state: s2, campaign: studyCampaign, economicIndex: 0, rules: { ...s2.rules, usePhysicalMentalConditions: true, reducedDegreeStatBonus: true }, rng: new Random(1) };
+    const res2 = gameReducer(p2, { type: 'study', degreeId: 'graduate_school' }, ctx2);
+    expect(res2.updatedPlayer.degrees).toContain('graduate_school');
+    expect(res2.updatedPlayer.dependability).toBe(23); // 20 + (2 + 1)
+    // 10 - mentalCost (1 base + 2 depth = 3) + graduation Mental (2 * (2+1) = 6) = 13
+    expect(res2.updatedPlayer.mentalCondition).toBe(13);
+  });
+});
+
+describe('Newspaper Headline Selection with Stock Tips', () => {
+  it('selects random city news when predictiveNewspaperStockTips is enabled', () => {
+    const player = makePlayer();
+    const state = makeState(player);
+    state.rules.predictiveNewspaperStockTips = true;
+
+    const nextState = processTurnStart(state, campaign);
+    const headline = nextState.players[0].newspaperHeadline;
+    expect(headline?.key).toMatch(/^newspaper\.random\.\d+$/);
+    expect(headline?.stockTip).toBeDefined();
+  });
+});
+

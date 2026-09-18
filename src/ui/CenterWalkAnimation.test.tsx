@@ -140,4 +140,12 @@ describe('CenterWalkAnimation', () => {
     const canvas = stage.querySelector('canvas');
     expect(canvas).toHaveClass('center-character-sprite--smooth');
   });
+
+  it('renders character 3 with smooth styling by default', () => {
+    render(<CenterWalkAnimation characterIndex={3} isWalking={false} />);
+    const stage = screen.getByTestId('center-walk-animation');
+    expect(stage.dataset.character).toBe('3');
+    const canvas = stage.querySelector('canvas');
+    expect(canvas).toHaveClass('center-character-sprite--smooth');
+  });
 });

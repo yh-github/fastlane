@@ -1167,5 +1167,9 @@
       "title": "Technical Study",
       "desc": "Disassemble and examine the mechanism to gain technical insight."
     }
+  },
+  "item": {
+    "tv": "TV",
+    "stereo": "Stereo"
   }
 }

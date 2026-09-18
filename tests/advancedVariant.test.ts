@@ -287,29 +287,29 @@ describe('Advanced Variation Mechanics', () => {
     };
 
     let p = player;
-    // Lessons 1-3 (Normal tier): no Dep bonus
+    // Lessons 1-3 (Normal tier): +1 Dep bonus each for academic_freedom
     for (let i = 1; i <= 3; i++) {
       p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
-      expect(p.dependability).toBe(60);
+      expect(p.dependability).toBe(60 + i);
     }
 
     // Lesson 4 (Grind tier): +1 Dep bonus
     p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
-    expect(p.dependability).toBe(61);
+    expect(p.dependability).toBe(64);
 
     // Lessons 5-7 (Grind tier): +1 Dep bonus each
     for (let i = 5; i <= 7; i++) {
       p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
     }
-    expect(p.dependability).toBe(64); // 60 + 4*1 = 64
+    expect(p.dependability).toBe(67); // 60 + 7*1 = 67
 
     // Lesson 8 (Overtime tier): +2 Dep bonus
     p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
-    expect(p.dependability).toBe(66); // 64 + 2 = 66
+    expect(p.dependability).toBe(69); // 67 + 2 = 69
 
     // Lesson 9 (Overtime tier): +2 Dep bonus
     p = gameReducer(p, { type: 'study', degreeId: 'degree1' }, context).updatedPlayer;
-    expect(p.dependability).toBe(68); // 66 + 2 = 68
+    expect(p.dependability).toBe(71); // 69 + 2 = 71
 
     // Test that a regular job (clerk) does NOT get Dep bonus on study grinding
     let clerkPlayer = createPlayerState('test_clerk', 'Clerk Player', false, { lifestyle: 100 }, mockCampaign.housing[0].homeNodeId, customCampaign.config);
