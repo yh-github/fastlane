@@ -128,6 +128,8 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                                 if (hasAcademicFreedom) {
                                   depBonus = 1;
                                 }
+                              } else if (hasAcademicFreedom) {
+                                depBonus = 1;
                               }
 
                               const prereqDepth = getPrerequisiteChainDepth(deg.id, campaign.education);
@@ -137,10 +139,23 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                               const scaledPCost = roundToResolution(pCost * studyRatio, 0.5);
                               const scaledDepBonus = roundToResolution(depBonus * studyRatio, 0.5);
 
+                              const curPhys = player.physicalCondition ?? 50;
+                              const curMental = player.mentalCondition ?? 50;
+                              const physChance = (curPhys < 10 && scaledPCost > 0) ? (10 - curPhys) * 2.5 : 0;
+                              const mentalChance = (curMental < 10 && scaledMCost > 0) ? (10 - curMental) * 2.5 : 0;
+                              const totalMistakeChance = physChance + mentalChance;
+
                               return (
-                                <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-                                  (-{scaledMCost} 🧠{scaledPCost > 0 ? `, -${scaledPCost} 💪` : ''}{scaledDepBonus > 0 ? `, +${scaledDepBonus} 🤝` : ''}{studyTierLabel})
-                                </span>
+                                <>
+                                  <span style={{ fontSize: '11px', marginLeft: '5px' }}>
+                                    (-{scaledMCost} 🧠{scaledPCost > 0 ? `, -${scaledPCost} 💪` : ''}{scaledDepBonus > 0 ? `, +${scaledDepBonus} 🤝` : ''}{studyTierLabel})
+                                  </span>
+                                  {totalMistakeChance > 0 && (
+                                    <span style={{ color: '#ffb300', fontSize: '11px', marginLeft: '6px', fontWeight: 'bold' }}>
+                                      ⚠️ {totalMistakeChance.toFixed(1)}%
+                                    </span>
+                                  )}
+                                </>
                               );
                             })()}
                           </button>

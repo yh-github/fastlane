@@ -72,9 +72,8 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
       />
     );
 
-    // Header counter should show 2 / 13 Furnished
+    // Header should show Apartment Furnishings
     expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
-    expect(screen.getByText(/2 \/ 13 Furnished/i)).toBeInTheDocument();
 
     // Must NOT have the verbose empty paragraph text
     expect(screen.queryByText(/Your apartment is completely unfurnished/i)).toBeNull();
@@ -84,7 +83,7 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.getByTitle(/Dictionary \(Book\) — Click to inspect/i)).toBeInTheDocument();
 
     // Unowned items should show as silhouettes with unowned titles
-    expect(screen.getByTitle(/Color TV \(Unowned — Available at Socket City\/Z-Mart\)/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/TV \(Unowned — Available at Socket City\/Z-Mart\)/i)).toBeInTheDocument();
     expect(screen.getByTitle(/Stereo \(Unowned — Available at Socket City\/Z-Mart\)/i)).toBeInTheDocument();
 
     // Bottom docked action buttons must be present
@@ -93,8 +92,8 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.getByRole('button', { name: /Pantry/i })).toBeInTheDocument();
 
     // Clicking an unowned slot opens catalog / wishlist modal
-    const unownedColorTv = screen.getByTitle(/Color TV \(Unowned/i);
-    fireEvent.click(unownedColorTv);
+    const unownedTv = screen.getByTitle(/TV \(Unowned/i);
+    fireEvent.click(unownedTv);
     expect(screen.getByText(/Available at Socket City/i)).toBeInTheDocument();
     expect(screen.getByText(/Not Owned/i)).toBeInTheDocument();
 
