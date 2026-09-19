@@ -1,7 +1,7 @@
 import type { GameAction } from './gameReducer';
 import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
-import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
+import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, calculateTravelHours } from '../graphics/pathfinding';
 import { calcEconomyPrice, calcItemPrice } from './economyEngine';
 
 export interface ActionChoice {
@@ -193,16 +193,17 @@ export function getAvailableActions(
     }
     
     // Travel options
-    const movementCost = (campaign.config.mapRules as any)?.movementCostPerNode ?? 1;
     const entryCost = campaign.config.timeRules?.buildingEntryCost ?? 2;
     const adjacencyMap = buildAdjacencyMap(campaign.map.nodes);
+    const edgeWeights = campaign.map.edges ? buildEdgeWaypointMap(campaign.map.edges) : undefined;
     
     campaign.map.nodes.forEach(node => {
       if (node.id !== player.position && node.buildingId) {
         const bDef = campaign.buildings.find(b => b.id === node.buildingId);
-        const path = findShortestPath(adjacencyMap, player.position, node.id);
+        const path = findShortestPath(adjacencyMap, player.position, node.id, edgeWeights);
         if (path.found) {
-          const totalCost = (path.steps * movementCost) + entryCost;
+          const walkCost = calculateTravelHours(path, campaign.config.mapRules);
+          const totalCost = Math.round((walkCost + entryCost) * 10) / 10;
           const travelLabel = helpful 
             ? `Travel to and Enter ${bDef?.name} (-${totalCost}h)` 
             : `Travel to and Enter ${bDef?.name}`;

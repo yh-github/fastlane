@@ -11,6 +11,7 @@ import type {
   WinCondition,
   TimeRules,
   EconomyRules,
+  MapRules,
 } from './rules';
 
 // ─── Campaign Data Types ────────────────────────────────────────
@@ -23,7 +24,7 @@ export interface CampaignConfig {
   winConditions: WinCondition[];
   timeRules: TimeRules;
   economyRules: EconomyRules;
-  mapRules: Record<string, unknown>;
+  mapRules: MapRules;
   statRules: StatRules;
   eventRules: EventRules;
   gameRules: GameRules;
@@ -37,6 +38,7 @@ export type {
   WinCondition,
   TimeRules,
   EconomyRules,
+  MapRules,
 } from './rules';
 
 export interface BuildingDef {
@@ -147,10 +149,17 @@ export interface MapNode {
   connections: string[];
 }
 
+export interface MapEdge {
+  from: string;
+  to: string;
+  waypoints: number;
+}
+
 export interface MapData {
   width: number;
   height: number;
   nodes: MapNode[];
+  edges?: MapEdge[];
 }
 
 export interface WeekendDef {
@@ -326,6 +335,17 @@ function validateBundle(bundle: CampaignBundle) {
 
   for (const b of bundle.buildings) {
     if (!b.id || !b.name) throw new Error(`Building missing id or name`);
+  }
+
+  if (bundle.map?.edges) {
+    const nodeIds = new Set(bundle.map.nodes.map(n => n.id));
+    for (const edge of bundle.map.edges) {
+      if (!nodeIds.has(edge.from)) throw new Error(`Map edge from "${edge.from}" does not exist`);
+      if (!nodeIds.has(edge.to)) throw new Error(`Map edge to "${edge.to}" does not exist`);
+      if (typeof edge.waypoints !== 'number' || edge.waypoints <= 0) {
+        throw new Error(`Map edge "${edge.from}" -> "${edge.to}" invalid waypoints`);
+      }
+    }
   }
 }
 

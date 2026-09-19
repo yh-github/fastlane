@@ -42,7 +42,9 @@
   },
   "mapRules": {
     "allowDiagonalMovement": false,
-    "movementCostPerNode": 0.5
+    "movementCostModel": "waypoints",
+    "movementCostPerNode": 0.5,
+    "stepsPerHour": 14
   },
   "statRules": {
     "startingHappiness": 0,

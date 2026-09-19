@@ -3,7 +3,7 @@ import { type GameState, type PlayerState, createInitialGameState, createDefault
 import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
 import { loadCampaign, type CampaignBundle } from '../engine/dataLoader';
-import { buildAdjacencyMap, findShortestPath } from '../graphics/pathfinding';
+import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, getEdgeKey } from '../graphics/pathfinding';
 import { animatePlayerPath, pulsePlayer, showMapClick, animateRobberInterception } from '../graphics/mapRenderer';
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
@@ -86,6 +86,11 @@ export function useGameEngine(
     return buildAdjacencyMap(campaign.map.nodes);
   }, [campaign]);
 
+  const edgeWeights = useMemo(() => {
+    if (!campaign) return new Map<string, number>();
+    return buildEdgeWaypointMap(campaign.map.edges);
+  }, [campaign]);
+
   const addLog = useCallback((event: GameEvent, weekOverride?: number, playerId?: string) => {
     setLogs(prev => [...prev.slice(-9999), { week: weekOverride ?? gameStateRef.current?.turn ?? 1, event, playerId }]);
   }, []);
@@ -151,7 +156,7 @@ export function useGameEngine(
     if (player.position !== homeNodeId) {
       setIsAnimating(true);
       setIsTravelling(true);
-      const pathResult = findShortestPath(adjacencyMap, player.position, homeNodeId);
+      const pathResult = findShortestPath(adjacencyMap, player.position, homeNodeId, edgeWeights);
       if (pathResult.found) {
         const pathCoords = pathResult.path.map(id => {
           const node = campaign!.map.nodes.find(n => n.id === id);
@@ -220,7 +225,7 @@ export function useGameEngine(
       const activePlayer = updatedPlayers[activePlayerIndex];
 
       // If out of hours, attempting to exit/move anywhere immediately ends the turn and runs home
-      if (!activePlayer.isAi && player.hoursRemaining <= 0) {
+      if (player.hoursRemaining <= 0) {
         addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
         await endTurnSequence(updatedPlayers);
         return;
@@ -296,11 +301,22 @@ export function useGameEngine(
           setGameState(prev => prev ? { ...prev, rngState: rng.getState() } : prev);
         }
         
-        const movementCost = (campaign.config.mapRules as any)?.movementCostPerNode || 1;
         let pRef = { ...player };
         let stepsTaken = 0;
 
-        while (pRef.hoursRemaining >= movementCost) {
+        const getNextHopCost = (fromId: string, toId: string): number => {
+          const edgeKey = getEdgeKey(fromId, toId);
+          const waypoints = edgeWeights.get(edgeKey);
+          const mapRules = campaign.config.mapRules as any;
+          const model = mapRules?.movementCostModel ?? (mapRules?.stepsPerHour ? 'waypoints' : 'hops');
+          if (model === 'waypoints' && waypoints !== undefined) {
+            const stepsPerHour = mapRules?.stepsPerHour ?? 14;
+            return waypoints / stepsPerHour;
+          }
+          return mapRules?.movementCostPerNode ?? 0.5;
+        };
+
+        while (true) {
           // Check if destination was redirected while moving
           if (pendingDestinationRef.current && pendingDestinationRef.current !== targetNodeId) {
             targetNodeId = pendingDestinationRef.current;
@@ -311,7 +327,7 @@ export function useGameEngine(
             break;
           }
 
-          const pathResult = findShortestPath(adjacencyMap, pRef.position, targetNodeId);
+          const pathResult = findShortestPath(adjacencyMap, pRef.position, targetNodeId, edgeWeights);
           if (!pathResult.found || pathResult.path.length < 2) {
             break;
           }
@@ -319,6 +335,11 @@ export function useGameEngine(
           const nextNodeId = pathResult.path[1];
           const nextNode = campaign.map.nodes.find(n => n.id === nextNodeId);
           if (!nextNode) break;
+
+          const movementCost = getNextHopCost(pRef.position, nextNodeId);
+          if (pRef.hoursRemaining <= 0) {
+            break;
+          }
 
           await animatePlayerPath([{ nodeId: nextNodeId, x: nextNode.x, y: nextNode.y }], activePlayerIndex, 300);
 
@@ -332,6 +353,10 @@ export function useGameEngine(
             newPlayers[activePlayerIndex] = { ...pRef };
             return { ...prev, players: newPlayers };
           });
+
+          if (pRef.hoursRemaining <= 0) {
+            break;
+          }
         }
 
         player = { ...pRef };
@@ -378,7 +403,10 @@ export function useGameEngine(
             return { ...prev, players: updatedPlayers };
           });
           
-          if (!activePlayer.isAi && player.position === targetNodeId) {
+          if (player.hoursRemaining <= 0) {
+            addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
+            await endTurnSequence(updatedPlayers);
+          } else if (!activePlayer.isAi && player.position === targetNodeId) {
             const destNode = campaign.map.nodes.find(n => n.id === player.position);
             if (destNode && campaign.buildings.some(b => b.id === destNode.buildingId)) {
               setIsBuildingModalOpen(true);

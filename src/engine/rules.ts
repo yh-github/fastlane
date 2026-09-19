@@ -377,6 +377,13 @@ export interface TimeRules {
   socializeCost: number;
 }
 
+export interface MapRules {
+  allowDiagonalMovement?: boolean;
+  movementCostModel?: 'hops' | 'waypoints';
+  movementCostPerNode?: number;
+  stepsPerHour?: number;
+}
+
 export interface EconomyRules {
   rentGarnishRate: number;
   rentFee: number;
