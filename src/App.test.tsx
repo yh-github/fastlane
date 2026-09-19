@@ -172,7 +172,8 @@ describe('App Integration & StrictMode', () => {
     });
 
     let nextOrContinue = screen.queryByRole('button', { name: /Next|Continue/i });
-    while (nextOrContinue) {
+    let safety = 0;
+    while (nextOrContinue && safety++ < 20) {
       fireEvent.click(nextOrContinue);
       await act(async () => {
         await new Promise(r => setTimeout(r, 0));
@@ -295,5 +296,29 @@ describe('App Integration & StrictMode', () => {
 
     // The player should reach bank destination
     expect(screen.getByTestId('node-bank')).toBeInTheDocument();
+  });
+
+  it('renders the clock at the bottom center of the board when authentic curved board is active in default Top HUD', async () => {
+    render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+
+    // Title screen -> Start game
+    const newGameBtn = await screen.findByText(/New Game|titleScreen\.startGame/i);
+    fireEvent.click(newGameBtn);
+
+    // Setup screen -> Start life
+    const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
+    fireEvent.click(startGameBtn);
+
+    await screen.findByText(/Player 1 - Week/i);
+
+    // Default HUD is Top HUD
+    expect(document.querySelector('.app-container--top-hud')).toBeInTheDocument();
+
+    // Since authenticCurvedPaths is true by default, the bottom center clock is rendered on the board
+    expect(screen.getByTestId('bottom-center-clock')).toBeInTheDocument();
   });
 });

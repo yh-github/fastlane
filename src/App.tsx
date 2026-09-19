@@ -166,7 +166,9 @@ export default function App() {
   }
 
   const isAiTurn = activePlayer?.isAi || false;
-  const hudLayout: HudLayoutMode = gameState.rules.hudLayout || 'side';
+  const hudLayout: HudLayoutMode = gameState.rules.hudLayout || 'top';
+  const isAuthenticCurvedBoard = gameState.rules.authenticCurvedPaths !== false;
+  const showBottomCenterClock = Boolean(activePlayer && (isAuthenticCurvedBoard || hudLayout === 'side'));
 
   return (
     <div className={`app-container app-container--${hudLayout}-hud ${hudLayout === 'side' ? `app-container--side-${hudFoldState}` : ''}`}>
@@ -214,8 +216,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Unified Bottom Center Clock Widget in Side HUD mode */}
-        {hudLayout === 'side' && activePlayer && (
+        {/* Unified Bottom Center Clock Widget (shown when authentic curved board, or in Side HUD mode) */}
+        {showBottomCenterClock && activePlayer && (
           <div className="bottom-center-clock" data-testid="bottom-center-clock">
             <div className="clock-face">
               <div 

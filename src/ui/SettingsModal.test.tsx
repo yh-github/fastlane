@@ -129,8 +129,8 @@ describe('SettingsModal', () => {
     expect(screen.queryByText('Crisp Pixel Art')).not.toBeInTheDocument();
   });
 
-  it('toggles HUD Layout Style between side and top and stores in localStorage', () => {
-    let state = { ...dummyGameState };
+  it('toggles HUD Layout Style between top and side and stores in localStorage', () => {
+    let state = { ...dummyGameState, rules: { ...dummyGameState.rules, hudLayout: 'top' as const } };
     const setGameState = vi.fn().mockImplementation((updater) => {
       state = updater(state);
     });
@@ -146,14 +146,14 @@ describe('SettingsModal', () => {
     );
 
     expect(screen.getByText('HUD Layout Style')).toBeInTheDocument();
-    expect(screen.getByText('SIDE')).toBeInTheDocument();
+    expect(screen.getByText('TOP')).toBeInTheDocument();
 
     const hudLayoutItem = screen.getByTestId('setting-hud-layout');
     fireEvent.click(hudLayoutItem);
 
     expect(setGameState).toHaveBeenCalled();
-    expect(state.rules.hudLayout).toBe('top');
-    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'top');
+    expect(state.rules.hudLayout).toBe('side');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'side');
 
     rerender(
       <SettingsModal
@@ -162,11 +162,11 @@ describe('SettingsModal', () => {
         onClose={() => {}}
       />
     );
-    expect(screen.getByText('TOP')).toBeInTheDocument();
+    expect(screen.getByText('SIDE')).toBeInTheDocument();
 
     fireEvent.click(hudLayoutItem);
-    expect(state.rules.hudLayout).toBe('side');
-    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'side');
+    expect(state.rules.hudLayout).toBe('top');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'top');
 
     setItemSpy.mockRestore();
   });
