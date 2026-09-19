@@ -3,7 +3,7 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import type { ReplayContext } from '../replayTypes';
 import { requireConfig } from '../rules';
 import { spendHours } from '../timeManager';
-import { buildAdjacencyMap, findShortestPath } from '../../graphics/pathfinding';
+import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, calculateTravelHours } from '../../graphics/pathfinding';
 import { processStreetRobbery } from '../eventEngine';
 
 export function handleMoveAction(
@@ -21,7 +21,10 @@ export function handleMoveAction(
   }
 
   const adjacencyMap = context.campaign.map?.nodes ? buildAdjacencyMap(context.campaign.map.nodes) : new Map<string, string[]>();
-  const pathResult = context.campaign.map?.nodes ? findShortestPath(adjacencyMap, nextPlayer.position, nodeId) : { found: true, steps: 1, path: [] };
+  const edgeWeights = context.campaign.map?.edges ? buildEdgeWaypointMap(context.campaign.map.edges) : undefined;
+  const pathResult = context.campaign.map?.nodes
+    ? findShortestPath(adjacencyMap, nextPlayer.position, nodeId, edgeWeights)
+    : { found: true, steps: 1, totalWaypoints: 1, path: [] };
 
   if (pathResult.found) {
     const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
@@ -37,8 +40,8 @@ export function handleMoveAction(
       }
     }
 
-    const movementCost = (context.campaign.config.mapRules as any)?.movementCostPerNode ?? 1;
-    let requiredHours = pathResult.steps * movementCost;
+    const walkHours = calculateTravelHours(pathResult, context.campaign.config.mapRules);
+    let requiredHours = walkHours;
     
     const destNode = context.campaign.map?.nodes?.find(n => n.id === nodeId);
     if (destNode && destNode.buildingId) {
@@ -46,7 +49,7 @@ export function handleMoveAction(
       requiredHours += buildingEntryCost;
     }
 
-    if (nextPlayer.hoursRemaining >= requiredHours || context.rules.allowPartialHours) {
+    if (nextPlayer.hoursRemaining > 0) {
       nextPlayer.position = nodeId;
       nextPlayer = spendHours(nextPlayer, requiredHours);
     } else {

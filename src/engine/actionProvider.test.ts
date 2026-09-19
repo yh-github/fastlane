@@ -22,9 +22,29 @@ describe('actionProvider', () => {
 
     const travelAction = actions.find(a => a.action.type === 'move' && (a.action as any).nodeId === 'node_factory');
     expect(travelAction).toBeDefined();
-    if (state.rules.helpfulUI) {
-      expect(travelAction?.label).toContain('(-4.5h)');
-    }
+  });
+
+  it('should display authentic waypoint travel costs when helpfulUI is enabled', () => {
+    state.rules.helpfulUI = true;
+    const actions = getAvailableActions(player, state, mockCampaign, false);
+    const travelFactory = actions.find(a => a.action.type === 'move' && (a.action as any).nodeId === 'node_factory');
+    // Low-Cost Housing (1) to Factory (107) = 64 waypoints / 14 = 4.57h walk + 2.0h entry = 6.6h
+    expect(travelFactory?.label).toContain('(-6.6h)');
+
+    // Low-Cost Housing (1) to Rent Office (164) = 7 waypoints / 14 = 0.50h walk + 2.0h entry = 2.5h
+    const travelRent = actions.find(a => a.action.type === 'move' && (a.action as any).nodeId === 'node_rent');
+    expect(travelRent?.label).toContain('(-2.5h)');
+  });
+
+  it('should display legacy hop travel costs when movementCostModel is hops', () => {
+    state.rules.helpfulUI = true;
+    const legacyCampaign = structuredClone(mockCampaign);
+    legacyCampaign.config.mapRules.movementCostModel = 'hops';
+
+    const actions = getAvailableActions(player, state, legacyCampaign, false);
+    const travelFactory = actions.find(a => a.action.type === 'move' && (a.action as any).nodeId === 'node_factory');
+    // 5 hops * 0.5h = 2.5h walk + 2.0h entry = 4.5h
+    expect(travelFactory?.label).toContain('(-4.5h)');
   });
 
   it('should generate building-specific actions when inside', () => {

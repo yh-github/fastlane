@@ -3,8 +3,8 @@
 exports[`Deterministic Replay Regression > replays a real game using fastlane-replay-21-weeks.json 1`] = `
 {
   "campaignId": "The Fast Lane — Improved Version (QoL)",
-  "economicIndex": -17,
-  "economicTrend": 1,
+  "economicIndex": 32,
+  "economicTrend": 2,
   "pawnShopItemsForSale": [],
   "phase": "setup",
   "players": [
@@ -32,7 +32,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       },
       "happiness": 0,
       "hasEarnedIncome": true,
-      "hoursRemaining": 40,
+      "hoursRemaining": 30,
       "id": "player_1",
       "innovationCount": 0,
       "inventory": {
@@ -64,7 +64,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 98,
+      "money": 100,
       "nakedTurns": 1,
       "name": "Player 1",
       "newspaperHeadline": {
@@ -82,6 +82,13 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "turnEvents": [
         {
           "key": "events.starvation",
+        },
+        {
+          "key": "events.doctorVisit_reasons",
+          "params": {
+            "cost": 36,
+            "reasons": "Starvation",
+          },
         },
         {
           "key": "events.rent.due_nodenied",
@@ -107,14 +114,14 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "workMistakesThisTurn": 0,
       },
       "weekendResult": {
-        "cost": 6,
+        "cost": 7,
         "event": {
-          "key": "events.weekend.random_15",
+          "key": "events.weekend.random_23",
         },
         "happinessBonus": undefined,
         "modifications": [
           {
-            "diff": -6,
+            "diff": -7,
             "stat": "money",
           },
         ],
@@ -124,7 +131,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "xpMaxBonus": 0,
     },
   ],
-  "rngState": 221286083004,
+  "rngState": 246928004386,
   "rules": {
     "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
@@ -328,9 +335,9 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
       "currentWage": 5,
       "degrees": [],
       "depMaxBonus": 0,
-      "dependability": 28,
+      "dependability": 27,
       "enrolledClasses": {},
-      "experience": 20,
+      "experience": 19,
       "goalAllotment": {
         "career": 25,
         "education": 25,
@@ -373,7 +380,7 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 421,
+      "money": 390,
       "nakedTurns": 0,
       "name": "Player 1",
       "newspaperHeadline": {

@@ -121,19 +121,65 @@ export async function initMapRenderer(
   const edgesLayer = new Graphics();
   mapContainer.addChild(edgesLayer);
 
-  // Draw connections (neon cyan)
-  edgesLayer.setStrokeStyle({ width: 3, color: 0x00e5ff, alpha: 0.5 });
-  
+  const waypointsLayer = new Graphics();
+  mapContainer.addChild(waypointsLayer);
+
   const nodeMap = new Map(config.mapData.nodes.map(n => [n.id, n]));
 
-  // Draw all edges
+  // Build edge waypoint lookup
+  const edgeWaypointMap = new Map<string, number>();
+  if (config.mapData.edges) {
+    for (const edge of config.mapData.edges) {
+      edgeWaypointMap.set(`${edge.from}->${edge.to}`, edge.waypoints);
+      edgeWaypointMap.set(`${edge.to}->${edge.from}`, edge.waypoints);
+    }
+  }
+
+  // Draw all edges and their waypoint beads
+  const drawnEdges = new Set<string>();
   for (const node of config.mapData.nodes) {
-    for (const connId of node.connections) {
+    for (const conn of node.connections) {
+      const connId = typeof conn === 'string' ? conn : (conn as any).nodeId;
+      const pairKey = [node.id, connId].sort().join('--');
+      if (drawnEdges.has(pairKey)) continue;
+      drawnEdges.add(pairKey);
+
       const target = nodeMap.get(connId);
       if (target) {
+        // Base road connection line
+        edgesLayer.setStrokeStyle({ width: 3, color: 0x00e5ff, alpha: 0.35 });
         edgesLayer.moveTo(node.x, node.y);
         edgesLayer.lineTo(target.x, target.y);
         edgesLayer.stroke();
+
+        // Draw waypoint dots/bars
+        const waypoints = edgeWaypointMap.get(`${node.id}->${connId}`) ?? (typeof conn === 'object' && conn !== null ? (conn as any).waypoints : undefined);
+        if (waypoints && waypoints > 0) {
+          const dx = target.x - node.x;
+          const dy = target.y - node.y;
+          const edgeLength = Math.sqrt(dx * dx + dy * dy);
+
+          // Clear building circles (node radius is 44, hit area is 52)
+          const marginStart = 52;
+          const marginEnd = 52;
+          const usableLength = edgeLength - (marginStart + marginEnd);
+
+          if (usableLength > 0) {
+            const dotRadius = Math.min(3, Math.max(1.8, (usableLength / waypoints) * 0.35));
+            for (let k = 1; k <= waypoints; k++) {
+              const distAlongRoad = marginStart + ((k - 0.5) / waypoints) * usableLength;
+              const t = distAlongRoad / edgeLength;
+              const px = node.x + t * dx;
+              const py = node.y + t * dy;
+
+              // Waypoint bead: luminous cyan dot with subtle inner core
+              waypointsLayer.circle(px, py, dotRadius);
+              waypointsLayer.fill({ color: 0x00e5ff, alpha: 0.75 });
+              waypointsLayer.setStrokeStyle({ width: 1, color: 0xffffff, alpha: 0.6 });
+              waypointsLayer.stroke();
+            }
+          }
+        }
       }
     }
   }
@@ -145,13 +191,18 @@ export async function initMapRenderer(
     // Check if it's a building
     if (node.buildingId) {
       // Extended touch hit area for mobile/touch screens
-      nodeGraphic.circle(0, 0, 36);
+      nodeGraphic.circle(0, 0, 52);
       nodeGraphic.fill({ color: 0x000000, alpha: 0.001 });
 
+      // Outer subtle ambient glow ring
+      nodeGraphic.circle(0, 0, 48);
+      nodeGraphic.setStrokeStyle({ width: 1, color: 0xffb300, alpha: 0.25 });
+      nodeGraphic.stroke();
+
       // Building nodes: larger, amber glow
-      nodeGraphic.circle(0, 0, 28);
+      nodeGraphic.circle(0, 0, 44);
       nodeGraphic.fill({ color: 0x141428 });
-      nodeGraphic.setStrokeStyle({ width: 3, color: 0xffb300, alpha: 0.9 });
+      nodeGraphic.setStrokeStyle({ width: 3.5, color: 0xffb300, alpha: 0.95 });
       nodeGraphic.stroke();
       
       const buildingDef = config.buildings.find(b => b.id === node.buildingId);
@@ -161,11 +212,13 @@ export async function initMapRenderer(
         text: name,
         style: {
           fill: 0xffffff,
-          fontSize: 15,
+          fontSize: 17,
           fontWeight: 'bold',
           align: 'center',
-          stroke: { color: 0x000000, width: 3 },
-          dropShadow: { alpha: 0.9, color: 0x000000, blur: 3, distance: 1 }
+          wordWrap: true,
+          wordWrapWidth: 80,
+          stroke: { color: 0x000000, width: 3.5 },
+          dropShadow: { alpha: 0.95, color: 0x000000, blur: 4, distance: 1 }
         }
       });
       label.anchor.set(0.5, 0.5);
@@ -175,11 +228,11 @@ export async function initMapRenderer(
       
     } else {
       // Extended touch hit area for waypoints
-      nodeGraphic.circle(0, 0, 28);
+      nodeGraphic.circle(0, 0, 36);
       nodeGraphic.fill({ color: 0x000000, alpha: 0.001 });
 
       // Waypoint nodes: cyan ring
-      nodeGraphic.circle(0, 0, 16);
+      nodeGraphic.circle(0, 0, 22);
       nodeGraphic.fill({ color: 0x141428 });
       nodeGraphic.setStrokeStyle({ width: 2.5, color: 0x00e5ff });
       nodeGraphic.stroke();

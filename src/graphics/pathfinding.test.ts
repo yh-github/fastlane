@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildAdjacencyMap, findShortestPath, getReachableNodes } from './pathfinding';
+import { buildAdjacencyMap, findShortestPath, getReachableNodes, buildEdgeWaypointMap, calculateTravelHours } from './pathfinding';
 import type { MapNode } from '../engine/dataLoader';
 
 describe('Pathfinding', () => {
@@ -74,6 +74,54 @@ describe('Pathfinding', () => {
       const reachable = getReachableNodes(adj, 'node_a', 10);
       expect(reachable.has('node_isolated')).toBe(false);
       expect(reachable.has('node_e')).toBe(true);
+    });
+  });
+
+  describe('Weighted Waypoint Pathfinding & Travel Hours', () => {
+    // Dedicated triangle graph:
+    // a -> c: 50 waypoints (1 hop)
+    // a -> b: 10 waypoints (1 hop)
+    // b -> c: 15 waypoints (1 hop)
+    // Shortest hops: a -> c (1 hop)
+    // Shortest waypoints: a -> b -> c (2 hops, 25 waypoints)
+    const triangleNodes: MapNode[] = [
+      { id: 'node_a', x: 0, y: 0, connections: ['node_b', 'node_c'] },
+      { id: 'node_b', x: 10, y: 0, connections: ['node_a', 'node_c'] },
+      { id: 'node_c', x: 0, y: 10, connections: ['node_a', 'node_b'] },
+    ];
+    const triangleAdj = buildAdjacencyMap(triangleNodes);
+    const weightedEdges = [
+      { from: 'node_a', to: 'node_c', waypoints: 50 },
+      { from: 'node_a', to: 'node_b', waypoints: 10 },
+      { from: 'node_b', to: 'node_c', waypoints: 15 },
+    ];
+    const edgeWeights = buildEdgeWaypointMap(weightedEdges);
+
+    it('prefers fewer waypoints over fewer hops when edgeWeights are provided', () => {
+      const res = findShortestPath(triangleAdj, 'node_a', 'node_c', edgeWeights);
+      expect(res.found).toBe(true);
+      expect(res.path).toEqual(['node_a', 'node_b', 'node_c']);
+      expect(res.steps).toBe(2);
+      expect(res.totalWaypoints).toBe(25);
+    });
+
+    it('falls back to BFS hop-shortest path when edgeWeights are omitted', () => {
+      const res = findShortestPath(triangleAdj, 'node_a', 'node_c');
+      expect(res.found).toBe(true);
+      expect(res.path).toEqual(['node_a', 'node_c']);
+      expect(res.steps).toBe(1);
+    });
+
+    it('calculates travel hours with waypoints model', () => {
+      const pathRes = { path: ['node_a', 'node_b', 'node_c'], steps: 2, totalWaypoints: 28, found: true };
+      const hours = calculateTravelHours(pathRes, { movementCostModel: 'waypoints', stepsPerHour: 14 });
+      expect(hours).toBe(2.0); // 28 / 14 = 2.0
+    });
+
+    it('calculates travel hours with legacy hops model', () => {
+      const pathRes = { path: ['node_a', 'node_b', 'node_c'], steps: 2, totalWaypoints: 28, found: true };
+      const hours = calculateTravelHours(pathRes, { movementCostModel: 'hops', movementCostPerNode: 0.5 });
+      expect(hours).toBe(1.0); // 2 * 0.5 = 1.0
     });
   });
 });

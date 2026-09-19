@@ -38,9 +38,13 @@ vi.mock('./ui/GameMap', () => ({
 // Mock pathfinding so we definitely get a valid path
 vi.mock('./graphics/pathfinding', () => ({
   buildAdjacencyMap: () => new Map(),
+  buildEdgeWaypointMap: () => new Map(),
+  getEdgeKey: (from: string, to: string) => `${from}->${to}`,
+  calculateTravelHours: () => 0.5,
   findShortestPath: (_map: any, from: string, to: string) => ({
     found: true,
     steps: 1,
+    totalWaypoints: 7,
     path: [from || 'node_low_cost', to]
   }),
 }));

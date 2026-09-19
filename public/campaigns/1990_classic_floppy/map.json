@@ -93,5 +93,20 @@
       "buildingId": "apartment_complex",
       "connections": ["node_security", "node_low_cost"]
     }
+  ],
+  "edges": [
+    { "from": "node_low_cost", "to": "node_pawn_shop", "waypoints": 13 },
+    { "from": "node_pawn_shop", "to": "node_z_mart", "waypoints": 10 },
+    { "from": "node_z_mart", "to": "node_burger", "waypoints": 11 },
+    { "from": "node_burger", "to": "node_qt", "waypoints": 12 },
+    { "from": "node_qt", "to": "node_socket", "waypoints": 19 },
+    { "from": "node_socket", "to": "node_university", "waypoints": 9 },
+    { "from": "node_university", "to": "node_employment", "waypoints": 24 },
+    { "from": "node_employment", "to": "node_factory", "waypoints": 8 },
+    { "from": "node_factory", "to": "node_bank", "waypoints": 13 },
+    { "from": "node_bank", "to": "node_blacks_market", "waypoints": 14 },
+    { "from": "node_blacks_market", "to": "node_security", "waypoints": 17 },
+    { "from": "node_security", "to": "node_rent", "waypoints": 13 },
+    { "from": "node_rent", "to": "node_low_cost", "waypoints": 7 }
   ]
 }
