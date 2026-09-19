@@ -165,4 +165,61 @@ describe('Waypoint Travel & Distance Model', () => {
       expect(60 - result.nextPlayer.hoursRemaining).toBeCloseTo(4.5, 4);
     });
   });
+
+  describe('Authentic Curved Path Geometry & Waypoint Interpolation', () => {
+    it('defines authenticNodes for all 13 buildings with valid coordinates within 1200x800 bounds', () => {
+      expect(campaign.map.authenticNodes).toBeDefined();
+      const nodeKeys = Object.keys(campaign.map.authenticNodes);
+      expect(nodeKeys.length).toBe(13);
+
+      for (const node of campaign.map.nodes) {
+        const authCoord = campaign.map.authenticNodes[node.id];
+        expect(authCoord, `Missing authenticNodes coordinate for ${node.id}`).toBeDefined();
+        expect(authCoord.x).toBeGreaterThan(0);
+        expect(authCoord.x).toBeLessThan(1200);
+        expect(authCoord.y).toBeGreaterThan(0);
+        expect(authCoord.y).toBeLessThan(800);
+      }
+    });
+
+    it('contains polyline paths for all 13 edges accounting for all 170 SCI waypoints', () => {
+      let totalIntermediateWaypoints = 0;
+      const seenIndices = new Set<number>();
+
+      for (const edge of campaign.map.edges) {
+        expect(edge.path).toBeDefined();
+        expect(edge.path.length).toBe(edge.waypoints - 1);
+        totalIntermediateWaypoints += edge.path.length;
+
+        for (const wp of edge.path) {
+          expect(wp.index).toBeGreaterThanOrEqual(1);
+          expect(wp.index).toBeLessThanOrEqual(170);
+          expect(seenIndices.has(wp.index)).toBe(false);
+          seenIndices.add(wp.index);
+
+          expect(wp.x).toBeGreaterThan(0);
+          expect(wp.x).toBeLessThan(1200);
+          expect(wp.y).toBeGreaterThan(0);
+          expect(wp.y).toBeLessThan(800);
+        }
+      }
+
+      // 157 intermediate waypoints + 13 building nodes = 170 total
+      expect(totalIntermediateWaypoints).toBe(157);
+      expect(seenIndices.size).toBe(157);
+    });
+
+    it('verifies smooth spacing between successive waypoints along the curved perimeter', () => {
+      for (const edge of campaign.map.edges) {
+        for (let i = 0; i < edge.path.length - 1; i++) {
+          const p1 = edge.path[i];
+          const p2 = edge.path[i + 1];
+          const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+          // Scaled ~6px steps at 3.75x/4.0x average ~22.75px (min 15px, max 27.5px), never jumping unexpectedly
+          expect(dist).toBeGreaterThanOrEqual(14);
+          expect(dist).toBeLessThanOrEqual(28);
+        }
+      }
+    });
+  });
 });

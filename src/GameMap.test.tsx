@@ -83,4 +83,67 @@ describe('GameMap Character GUI Tests', () => {
       expect(marker).toHaveAttribute('data-y', '300');
     });
   });
+
+  it('positions character at authenticNodes coordinates when authenticCurvedPaths is true and reverts to schematic when false', async () => {
+    const mockCampaign = {
+      config: { name: 'test', startingMoney: 100 },
+      map: {
+        width: 1200,
+        height: 800,
+        nodes: [{ id: 'node_low_cost', x: 600, y: 100, connections: [] }],
+        authenticNodes: {
+          node_low_cost: { x: 540, y: 148 }
+        }
+      },
+      buildings: [],
+      items: [],
+      jobs: [],
+      events: []
+    } as any;
+
+    const mockPlayer = {
+      position: 'node_low_cost',
+      money: 100,
+      job: null,
+      inventory: [],
+      clothes: 'Casual'
+    } as any;
+
+    const { rerender } = render(
+      <GameMap 
+        campaign={mockCampaign} 
+        players={[mockPlayer]} 
+        activePlayerIndex={0}
+        onNodeClick={() => {}}
+        authenticCurvedPaths={true}
+      />
+    );
+
+    // With authenticCurvedPaths=true, character sits at authentic coordinate (540, 148)
+    await waitFor(() => {
+      const marker = screen.getByTestId('player-character');
+      expect(marker).toHaveAttribute('data-visible', 'true');
+      expect(marker).toHaveAttribute('data-x', '540');
+      expect(marker).toHaveAttribute('data-y', '148');
+    });
+
+    // Revert to schematic layout (authenticCurvedPaths=false)
+    rerender(
+      <GameMap 
+        campaign={mockCampaign} 
+        players={[mockPlayer]} 
+        activePlayerIndex={0}
+        onNodeClick={() => {}}
+        authenticCurvedPaths={false}
+      />
+    );
+
+    // With authenticCurvedPaths=false, character sits at schematic coordinate (600, 100)
+    await waitFor(() => {
+      const marker = screen.getByTestId('player-character');
+      expect(marker).toHaveAttribute('data-visible', 'true');
+      expect(marker).toHaveAttribute('data-x', '600');
+      expect(marker).toHaveAttribute('data-y', '100');
+    });
+  });
 });

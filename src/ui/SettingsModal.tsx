@@ -112,6 +112,26 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     });
   };
 
+  const handleToggleAuthenticCurvedPaths = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      const current = prev.rules.authenticCurvedPaths !== false;
+      const nextVal = !current;
+      try {
+        localStorage.setItem('fastlane_curved_board', nextVal ? 'true' : 'false');
+      } catch {
+        // ignore
+      }
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          authenticCurvedPaths: nextVal
+        }
+      };
+    });
+  };
+
   const handleExportReplay = () => {
     if (!replayData) return;
     const blob = new Blob([JSON.stringify(replayData, null, 2)], { type: 'application/json' });
@@ -339,6 +359,29 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                     <input 
                       type="checkbox" 
                       checked={gameState.rules.removeCharacterBg !== false} 
+                      readOnly
+                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
+                    />
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable"
+                  onClick={handleToggleAuthenticCurvedPaths}
+                  data-testid="setting-authentic-curved-paths"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.authenticCurvedPaths', { defaultValue: 'Authentic Curved Board' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.authenticCurvedPaths !== false
+                          ? t('settings.curvedBoardOn', { defaultValue: 'Authentic 1990 curved sidewalks and proportionate waypoint spacing (ON)' })
+                          : t('settings.curvedBoardOff', { defaultValue: 'Simplified schematic rectangular layout (OFF)' })}
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={gameState.rules.authenticCurvedPaths !== false} 
                       readOnly
                       style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
                     />

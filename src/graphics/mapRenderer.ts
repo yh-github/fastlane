@@ -22,6 +22,8 @@ export interface MapRendererConfig {
   assetBasePath: string;
   /** Callback fired when a node is clicked */
   onNodeClick: (nodeId: string) => void;
+  /** If true, renders authentic curved sidewalks and proportionate waypoint positions */
+  authenticCurvedPaths?: boolean;
 }
 
 export interface PlayerPosition {
@@ -124,20 +126,31 @@ export async function initMapRenderer(
   const waypointsLayer = new Graphics();
   mapContainer.addChild(waypointsLayer);
 
-  const nodeMap = new Map(config.mapData.nodes.map(n => [n.id, n]));
+  const useAuthentic = config.authenticCurvedPaths !== false && !!config.mapData.authenticNodes;
 
-  // Build edge waypoint lookup
+  const nodeMap = new Map(config.mapData.nodes.map(n => [n.id, n]));
+  const nodePositionMap = new Map<string, { x: number; y: number }>();
+  for (const node of config.mapData.nodes) {
+    const authPos = useAuthentic ? config.mapData.authenticNodes?.[node.id] : undefined;
+    nodePositionMap.set(node.id, authPos ? { x: authPos.x, y: authPos.y } : { x: node.x, y: node.y });
+  }
+
+  // Build edge waypoint lookup and edge object lookup
   const edgeWaypointMap = new Map<string, number>();
+  const edgeObjMap = new Map<string, any>();
   if (config.mapData.edges) {
     for (const edge of config.mapData.edges) {
       edgeWaypointMap.set(`${edge.from}->${edge.to}`, edge.waypoints);
       edgeWaypointMap.set(`${edge.to}->${edge.from}`, edge.waypoints);
+      edgeObjMap.set(`${edge.from}->${edge.to}`, edge);
+      edgeObjMap.set(`${edge.to}->${edge.from}`, edge);
     }
   }
 
   // Draw all edges and their waypoint beads
   const drawnEdges = new Set<string>();
   for (const node of config.mapData.nodes) {
+    const fromPos = nodePositionMap.get(node.id) || { x: node.x, y: node.y };
     for (const conn of node.connections) {
       const connId = typeof conn === 'string' ? conn : (conn as any).nodeId;
       const pairKey = [node.id, connId].sort().join('--');
@@ -145,38 +158,65 @@ export async function initMapRenderer(
       drawnEdges.add(pairKey);
 
       const target = nodeMap.get(connId);
-      if (target) {
-        // Base road connection line
-        edgesLayer.setStrokeStyle({ width: 3, color: 0x00e5ff, alpha: 0.35 });
-        edgesLayer.moveTo(node.x, node.y);
-        edgesLayer.lineTo(target.x, target.y);
-        edgesLayer.stroke();
+      const toPos = nodePositionMap.get(connId) || (target ? { x: target.x, y: target.y } : undefined);
+      if (target && toPos) {
+        const edgeObj = edgeObjMap.get(`${node.id}->${connId}`);
+        const hasPath = useAuthentic && edgeObj?.path && edgeObj.path.length > 0;
 
-        // Draw waypoint dots/bars
-        const waypoints = edgeWaypointMap.get(`${node.id}->${connId}`) ?? (typeof conn === 'object' && conn !== null ? (conn as any).waypoints : undefined);
-        if (waypoints && waypoints > 0) {
-          const dx = target.x - node.x;
-          const dy = target.y - node.y;
-          const edgeLength = Math.sqrt(dx * dx + dy * dy);
+        if (hasPath && edgeObj?.path) {
+          // Orient path in direction node -> connId
+          const pathCoords = edgeObj.from === node.id ? edgeObj.path : [...edgeObj.path].reverse();
 
-          // Clear building circles (node radius is 44, hit area is 52)
-          const marginStart = 52;
-          const marginEnd = 52;
-          const usableLength = edgeLength - (marginStart + marginEnd);
+          // Base road curved connection line
+          edgesLayer.setStrokeStyle({ width: 3.5, color: 0x00e5ff, alpha: 0.4 });
+          edgesLayer.moveTo(fromPos.x, fromPos.y);
+          for (const pt of pathCoords) {
+            edgesLayer.lineTo(pt.x, pt.y);
+          }
+          edgesLayer.lineTo(toPos.x, toPos.y);
+          edgesLayer.stroke();
 
-          if (usableLength > 0) {
-            const dotRadius = Math.min(3, Math.max(1.8, (usableLength / waypoints) * 0.35));
-            for (let k = 1; k <= waypoints; k++) {
-              const distAlongRoad = marginStart + ((k - 0.5) / waypoints) * usableLength;
-              const t = distAlongRoad / edgeLength;
-              const px = node.x + t * dx;
-              const py = node.y + t * dy;
+          // Draw authentic waypoint beads
+          const dotRadius = 3;
+          for (const pt of pathCoords) {
+            waypointsLayer.circle(pt.x, pt.y, dotRadius);
+            waypointsLayer.fill({ color: 0x00e5ff, alpha: 0.85 });
+            waypointsLayer.setStrokeStyle({ width: 1, color: 0xffffff, alpha: 0.7 });
+            waypointsLayer.stroke();
+          }
+        } else {
+          // Base road connection line
+          edgesLayer.setStrokeStyle({ width: 3, color: 0x00e5ff, alpha: 0.35 });
+          edgesLayer.moveTo(fromPos.x, fromPos.y);
+          edgesLayer.lineTo(toPos.x, toPos.y);
+          edgesLayer.stroke();
 
-              // Waypoint bead: luminous cyan dot with subtle inner core
-              waypointsLayer.circle(px, py, dotRadius);
-              waypointsLayer.fill({ color: 0x00e5ff, alpha: 0.75 });
-              waypointsLayer.setStrokeStyle({ width: 1, color: 0xffffff, alpha: 0.6 });
-              waypointsLayer.stroke();
+          // Draw waypoint dots/bars
+          const waypoints = edgeWaypointMap.get(`${node.id}->${connId}`) ?? (typeof conn === 'object' && conn !== null ? (conn as any).waypoints : undefined);
+          if (waypoints && waypoints > 0) {
+            const dx = toPos.x - fromPos.x;
+            const dy = toPos.y - fromPos.y;
+            const edgeLength = Math.sqrt(dx * dx + dy * dy);
+
+            // Clear building circles (node radius is 44, hit area is 52)
+            const marginStart = 52;
+            const marginEnd = 52;
+            const usableLength = edgeLength - (marginStart + marginEnd);
+
+            if (usableLength > 0) {
+              const dotRadius = Math.min(3, Math.max(1.8, (usableLength / waypoints) * 0.35));
+              for (let k = 1; k <= waypoints; k++) {
+                const distAlongRoad = marginStart + ((k - 0.5) / waypoints) * usableLength;
+                const t = distAlongRoad / edgeLength;
+                const px = fromPos.x + t * dx;
+                const py = fromPos.y + t * dy;
+
+                // Waypoint bead: luminous cyan dot with subtle inner core
+                waypointsLayer.circle(px, py, dotRadius);
+                waypointsLayer.fill({ color: 0x00e5ff, alpha: 0.75 });
+                waypointsLayer.setStrokeStyle({ width: 1, color: 0xffffff, alpha: 0.6 });
+                waypointsLayer.stroke();
+              }
             }
           }
         }
@@ -187,6 +227,7 @@ export async function initMapRenderer(
   // Draw nodes and make them interactive
   for (const node of config.mapData.nodes) {
     const nodeGraphic = new Graphics();
+    const pos = nodePositionMap.get(node.id) || { x: node.x, y: node.y };
     
     // Check if it's a building
     if (node.buildingId) {
@@ -238,8 +279,8 @@ export async function initMapRenderer(
       nodeGraphic.stroke();
     }
     
-    nodeGraphic.x = node.x;
-    nodeGraphic.y = node.y;
+    nodeGraphic.x = pos.x;
+    nodeGraphic.y = pos.y;
     nodeGraphic.eventMode = 'static';
     nodeGraphic.cursor = 'pointer';
     nodeGraphic.on('pointerdown', () => {

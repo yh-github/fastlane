@@ -197,7 +197,8 @@ export default function App() {
           campaign={campaign!} 
           players={gameState.players} 
           activePlayerIndex={activePlayerIndex}
-          onNodeClick={isAiTurn ? () => {} : handleNodeClick} 
+          onNodeClick={isAiTurn ? () => {} : handleNodeClick}
+          authenticCurvedPaths={gameState.rules.authenticCurvedPaths}
         />
         </div>
 

@@ -9,9 +9,10 @@ interface GameMapProps {
   players: PlayerState[];
   activePlayerIndex: number;
   onNodeClick: (nodeId: string) => void;
+  authenticCurvedPaths?: boolean;
 }
 
-export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlayerIndex, onNodeClick }) => {
+export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlayerIndex, onNodeClick, authenticCurvedPaths }) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -26,6 +27,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlaye
     if (!containerRef.current || !campaign) return;
 
     let isMounted = true;
+    setIsMapReady(false);
 
     const translatedBuildings = campaign.buildings.map(b => ({
       ...b,
@@ -37,6 +39,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlaye
       mapData: campaign.map,
       buildings: translatedBuildings,
       assetBasePath: `/campaigns/${campaign.config.name}`,
+      authenticCurvedPaths,
       onNodeClick: (nodeId) => {
         onNodeClickRef.current(nodeId);
       }
@@ -51,26 +54,33 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlaye
 
     return () => {
       isMounted = false;
+      setIsMapReady(false);
       if (cleanupRef.current) {
         cleanupRef.current();
         cleanupRef.current = null;
       }
     };
-  }, [campaign, i18n.language]);
+  }, [campaign, i18n.language, authenticCurvedPaths]);
 
   useEffect(() => {
     if (isMapReady && players.length > 0 && campaign) {
+      const useAuthentic = authenticCurvedPaths !== false && !!campaign.map.authenticNodes;
       const renderPlayers = players.map((p, index) => {
+        const authPos = useAuthentic ? campaign.map.authenticNodes?.[p.position] : undefined;
         const node = campaign.map.nodes.find(n => n.id === p.position);
         return {
-          position: { nodeId: node?.id || '', x: node?.x || 0, y: node?.y || 0 },
+          position: {
+            nodeId: p.position,
+            x: authPos ? authPos.x : (node?.x || 0),
+            y: authPos ? authPos.y : (node?.y || 0)
+          },
           index,
           isActive: index === activePlayerIndex
         };
       });
       updatePlayers(renderPlayers);
     }
-  }, [players, activePlayerIndex, campaign, isMapReady]);
+  }, [players, activePlayerIndex, campaign, isMapReady, authenticCurvedPaths]);
 
   return (
     <div

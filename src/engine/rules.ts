@@ -78,6 +78,11 @@ export interface GameRules {
   removeCharacterBg?: boolean;
 
   /**
+   * If true (default), renders the board using authentic curved sidewalks and non-straight waypoint paths from the original game.
+   */
+  authenticCurvedPaths?: boolean;
+
+  /**
    * Allows progression metrics to go beyond 100% (useful for scoring or AI optimization).
    * Classic Floppy/CD-ROM: false. QoL Improved: true.
    */
@@ -434,6 +439,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   enableAnimations: false,
   pixelatedSprites: true,
   removeCharacterBg: true,
+  authenticCurvedPaths: true,
   allowOverAchievingGoals: true,
   bypassDoctorIfBroke: true,
   relaxationDoctorThreshold: 10,
@@ -475,6 +481,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
 export const RULE_DESCRIPTIONS: Record<string, string> = {
   pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',
   removeCharacterBg: 'Renders character sprites with transparent backgrounds instead of solid colored backdrops',
+  authenticCurvedPaths: 'Renders the board using authentic curved sidewalks and non-straight waypoint paths from the original game',
   streetRobberyOnTurnEnd: 'Allows street robbery when leaving the Bank or Black Market upon ending a turn (0 hours left)',
   predictiveNewspaperStockTips: 'Enables predictive stock market tips and financial column in the weekly newspaper',
   advancedHomeGUI: 'Uses the card-based GUI and visual apartment showcase for Home',
