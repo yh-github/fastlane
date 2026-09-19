@@ -65,8 +65,8 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
   };
 
   const handleToggleHudLayout = () => {
-    const currentLayout = gameState.rules.hudLayout || 'side';
-    const nextLayout = currentLayout === 'side' ? 'top' : 'side';
+    const currentLayout = gameState.rules.hudLayout || 'top';
+    const nextLayout = currentLayout === 'top' ? 'side' : 'top';
     try {
       localStorage.setItem('fastlane_hud_layout', nextLayout);
     } catch {
@@ -268,9 +268,9 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                     <div>
                       <div style={{ fontWeight: 600 }}>{t('settings.hudLayout', { defaultValue: 'HUD Layout Style' })}</div>
                       <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                        {(gameState.rules.hudLayout || 'side') === 'side'
-                          ? t('settings.hudLayoutSide', { defaultValue: 'Side HUD (Modern widescreen & phone landscape, 2-column sidebar with folding)' })
-                          : t('settings.hudLayoutTop', { defaultValue: 'Top HUD (Classic desktop top-bar)' })}
+                        {(gameState.rules.hudLayout || 'top') === 'top'
+                          ? t('settings.hudLayoutTop', { defaultValue: 'Top HUD (Classic desktop top-bar)' })
+                          : t('settings.hudLayoutSide', { defaultValue: 'Side HUD (Modern widescreen & phone landscape, 2-column sidebar with folding)' })}
                       </div>
                     </div>
                     <span style={{ 
@@ -282,7 +282,7 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                       fontWeight: 'bold',
                       border: '1px solid var(--accent-cyan)'
                     }}>
-                      {(gameState.rules.hudLayout || 'side') === 'side' ? 'SIDE' : 'TOP'}
+                      {(gameState.rules.hudLayout || 'top') === 'top' ? 'TOP' : 'SIDE'}
                     </span>
                   </div>
                 </div>

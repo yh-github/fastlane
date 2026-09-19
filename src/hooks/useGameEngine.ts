@@ -64,8 +64,20 @@ export function useGameEngine(
         } catch {
           // ignore
         }
-        const initialRules = savedCurvedBoard !== undefined ? { authenticCurvedPaths: savedCurvedBoard } : undefined;
-        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: createDefaultGoalAllotment()}], 'node_low_cost', initialRules, randomSeed);
+        let savedHudLayout: 'side' | 'top' | undefined = undefined;
+        try {
+          const stored = localStorage.getItem('fastlane_hud_layout');
+          if (stored === 'side' || stored === 'top') {
+            savedHudLayout = stored;
+          }
+        } catch {
+          // ignore
+        }
+        const initialRules = {
+          ...(savedCurvedBoard !== undefined ? { authenticCurvedPaths: savedCurvedBoard } : {}),
+          ...(savedHudLayout !== undefined ? { hudLayout: savedHudLayout } : {})
+        };
+        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: createDefaultGoalAllotment()}], 'node_low_cost', Object.keys(initialRules).length > 0 ? initialRules : undefined, randomSeed);
         setGameState(initialState);
         replayDataRef.current = {
           version: '1.0.0', // Can be dynamically injected from package.json in future
