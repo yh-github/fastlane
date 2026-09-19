@@ -128,4 +128,47 @@ describe('SettingsModal', () => {
     fireEvent.click(graphicsHeader);
     expect(screen.queryByText('Crisp Pixel Art')).not.toBeInTheDocument();
   });
+
+  it('toggles HUD Layout Style between side and top and stores in localStorage', () => {
+    let state = { ...dummyGameState };
+    const setGameState = vi.fn().mockImplementation((updater) => {
+      state = updater(state);
+    });
+
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    const { rerender } = render(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+
+    expect(screen.getByText('HUD Layout Style')).toBeInTheDocument();
+    expect(screen.getByText('SIDE')).toBeInTheDocument();
+
+    const hudLayoutItem = screen.getByTestId('setting-hud-layout');
+    fireEvent.click(hudLayoutItem);
+
+    expect(setGameState).toHaveBeenCalled();
+    expect(state.rules.hudLayout).toBe('top');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'top');
+
+    rerender(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByText('TOP')).toBeInTheDocument();
+
+    fireEvent.click(hudLayoutItem);
+    expect(state.rules.hudLayout).toBe('side');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'side');
+
+    setItemSpy.mockRestore();
+  });
 });
+

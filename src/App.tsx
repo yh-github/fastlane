@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GoalFilter } from './utils/logCategorizer';
-import { Dashboard } from './ui/Dashboard';
+import { Dashboard, type HudFoldState, type HudLayoutMode } from './ui/Dashboard';
+import { useNavigationGuard } from './hooks/useNavigationGuard';
 import { BuildingModal } from './ui/BuildingModal';
 import { GameMap } from './ui/GameMap';
 import { TitleScreen } from './ui/TitleScreen';
@@ -30,6 +31,7 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [activeLogFilter, setActiveLogFilter] = useState<GoalFilter | null>(null);
+  const [hudFoldState, setHudFoldState] = useState<HudFoldState>('full');
 
   const { floatingAnims, triggerAnim, triggerScreenShake, removeAnim, isAnimating, setIsAnimating } = useGameAnimations();
 
@@ -51,6 +53,8 @@ export default function App() {
     setStreetRobberyNotice,
     isTravelling
   } = useGameEngine(selectedCampaignId, triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen, triggerScreenShake);
+
+  useNavigationGuard({ enabled: gameState?.phase === 'playing' });
 
   if (showTitle) {
     return <TitleScreen onStartGame={(campaignId) => {
@@ -162,9 +166,10 @@ export default function App() {
   }
 
   const isAiTurn = activePlayer?.isAi || false;
+  const hudLayout: HudLayoutMode = gameState.rules.hudLayout || 'side';
 
   return (
-    <div className="app-container">
+    <div className={`app-container app-container--${hudLayout}-hud ${hudLayout === 'side' ? `app-container--side-${hudFoldState}` : ''}`}>
       <Dashboard
         gameState={gameState}
         player={activePlayer}
@@ -178,6 +183,9 @@ export default function App() {
         onSelectLogFilter={setActiveLogFilter}
         onOpenInventory={() => setIsInventoryOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        layout={hudLayout}
+        foldState={hudFoldState}
+        onToggleFold={setHudFoldState}
       />
       <main className="game-viewport">
         <AnimationLayer 
@@ -192,8 +200,51 @@ export default function App() {
           onNodeClick={isAiTurn ? () => {} : handleNodeClick} 
         />
         </div>
+
+        {/* Dynamic Money Badge in Side HUD mode */}
+        {hudLayout === 'side' && activePlayer && (
+          <div 
+            className={`dynamic-money-badge ${isBuildingModalOpen && currentBuildingId ? 'dynamic-money-badge--in-location' : 'dynamic-money-badge--center-stage'}`} 
+            id="stat-money"
+            data-testid="stat-money"
+          >
+            <span className="dynamic-money-badge__icon">💰</span>
+            <span className="dynamic-money-badge__value">${activePlayer.money}</span>
+          </div>
+        )}
+
+        {/* Unified Bottom Center Clock Widget in Side HUD mode */}
+        {hudLayout === 'side' && activePlayer && (
+          <div className="bottom-center-clock" data-testid="bottom-center-clock">
+            <div className="clock-face">
+              <div 
+                className="clock-dial"
+                style={{
+                  background: `conic-gradient(#ff3333 0% ${((campaign!.config.timeRules.hoursPerTurn - activePlayer.hoursRemaining) / campaign!.config.timeRules.hoursPerTurn) * 100}%, #ffffff ${((campaign!.config.timeRules.hoursPerTurn - activePlayer.hoursRemaining) / campaign!.config.timeRules.hoursPerTurn) * 100}% 100%)`
+                }}
+              >
+                <div 
+                  className="clock-hand" 
+                  style={{ transform: `rotate(${(((campaign!.config.timeRules.hoursPerTurn - activePlayer.hoursRemaining) / campaign!.config.timeRules.hoursPerTurn) * 360)}deg)` }} 
+                />
+              </div>
+            </div>
+            {gameState.rules.helpfulUI && (
+              <div className="clock-digital-badge" id="hud-clock-digital">
+                ⏳ {Number(activePlayer.hoursRemaining).toFixed(1)} / {campaign!.config.timeRules.hoursPerTurn} hrs
+              </div>
+            )}
+          </div>
+        )}
+
         {gameState.rules.helpfulUI && (
-          <GameLog entries={logs} players={gameState.players} activeFilter={activeLogFilter} onSelectFilter={setActiveLogFilter} />
+          <GameLog 
+            entries={logs} 
+            players={gameState.players} 
+            activeFilter={activeLogFilter} 
+            onSelectFilter={setActiveLogFilter}
+            collapsible={hudLayout === 'side'}
+          />
         )}
         {(!isBuildingModalOpen || !currentBuildingId) && activePlayer && (
           <CenterWalkAnimation

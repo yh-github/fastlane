@@ -64,6 +64,26 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     });
   };
 
+  const handleToggleHudLayout = () => {
+    const currentLayout = gameState.rules.hudLayout || 'side';
+    const nextLayout = currentLayout === 'side' ? 'top' : 'side';
+    try {
+      localStorage.setItem('fastlane_hud_layout', nextLayout);
+    } catch {
+      // ignore
+    }
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          hudLayout: nextLayout
+        }
+      };
+    });
+  };
+
   const handleTogglePixelatedSprites = () => {
     setGameState(prev => {
       if (!prev) return prev;
@@ -216,6 +236,34 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                       readOnly
                       style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
                     />
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable"
+                  onClick={handleToggleHudLayout}
+                  data-testid="setting-hud-layout"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.hudLayout', { defaultValue: 'HUD Layout Style' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {(gameState.rules.hudLayout || 'side') === 'side'
+                          ? t('settings.hudLayoutSide', { defaultValue: 'Side HUD (Modern widescreen & phone landscape, 2-column sidebar with folding)' })
+                          : t('settings.hudLayoutTop', { defaultValue: 'Top HUD (Classic desktop top-bar)' })}
+                      </div>
+                    </div>
+                    <span style={{ 
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      background: 'rgba(0, 229, 255, 0.2)', 
+                      color: 'var(--accent-cyan)',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      border: '1px solid var(--accent-cyan)'
+                    }}>
+                      {(gameState.rules.hudLayout || 'side') === 'side' ? 'SIDE' : 'TOP'}
+                    </span>
                   </div>
                 </div>
               </div>

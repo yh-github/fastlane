@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GameEvent, PlayerState } from '../engine/gameState';
 import { isLogMatchingFilter, type GoalFilter } from '../utils/logCategorizer';
@@ -14,24 +14,27 @@ interface GameLogProps {
   players?: PlayerState[];
   activeFilter?: GoalFilter | null;
   onSelectFilter?: (filter: GoalFilter | null) => void;
+  collapsible?: boolean;
 }
 
 export const GameLog: React.FC<GameLogProps> = ({
   entries,
   players = [],
   activeFilter = null,
-  onSelectFilter
+  onSelectFilter,
+  collapsible = false
 }) => {
   const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+
   if (entries.length === 0) return null;
 
   const currentFilter: GoalFilter = activeFilter || 'all';
-
   const filteredEntries = entries.filter(e => isLogMatchingFilter(e, currentFilter));
   const colors = ['#ff4081', '#00e5ff', '#76ff03', '#ffeb3b']; // Magenta, Cyan, Light Green, Yellow
 
-  return (
-    <div className="game-log-container" style={{ width: '100%' }}>
+  const logContent = (
+    <>
       {activeFilter && (
         <div className="game-log-filters" style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -73,6 +76,47 @@ export const GameLog: React.FC<GameLogProps> = ({
           })
         )}
       </div>
+    </>
+  );
+
+  if (collapsible) {
+    return (
+      <div className="game-log-drawer-container">
+        <button
+          className="game-log-drawer-trigger"
+          onClick={() => setIsOpen(prev => !prev)}
+          title={t('gameLog.toggleLog', { defaultValue: 'Toggle Event Log' })}
+          data-testid="game-log-toggle"
+        >
+          📜 {t('gameLog.log', { defaultValue: 'Log' })}
+          {filteredEntries.length > 0 && (
+            <span className="game-log-drawer-count">{filteredEntries.length}</span>
+          )}
+        </button>
+
+        <div
+          className={`game-log-drawer-panel ${isOpen ? 'game-log-drawer-panel--open' : 'game-log-drawer-panel--closed'}`}
+          style={!isOpen ? { display: 'none' } : undefined}
+        >
+          <div className="game-log-drawer-header">
+            <span>📜 {t('gameLog.title', { defaultValue: 'Activity Log' })}</span>
+            <button
+              className="game-log-drawer-close"
+              onClick={() => setIsOpen(false)}
+              title={t('gameLog.close', { defaultValue: 'Close' })}
+            >
+              ✖
+            </button>
+          </div>
+          {logContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="game-log-container" style={{ width: '100%' }}>
+      {logContent}
     </div>
   );
 };
