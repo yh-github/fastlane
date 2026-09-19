@@ -1,8 +1,28 @@
 /**
- * economyEngine.ts — Economic index simulation and price scaling.
+ * economyEngine.ts — Economic simulation engine and price scaling.
  *
- * Handles fluctuating economy, stock prices, market crashes,
- * and rent debt garnishment.
+ * ── Economic Terminology & Architecture ─────────────────────────────────────
+ * The economy is driven by two fundamental numbers per sector:
+ *
+ * 1. `economicReading` (Price Level / Position):
+ *    - Represents how expensive goods or commodities currently are.
+ *    - In Sierra SCI bytecode, this is named `reading` (centered at baseline 100).
+ *    - In player-facing state, this is normalized as `economicReading` (or `economicIndex`),
+ *      representing the percentage offset from baseline: `reading - 100` (range -30 to +90).
+ *    - Concept: POSITION — dictates the price at cash registers and rent desks right now.
+ *
+ * 2. `economicTrend` (Momentum / Velocity):
+ *    - Represents the rate and direction of price movement (-3 to +3).
+ *    - In Sierra SCI bytecode, this was confusingly named `index`. In our engine,
+ *      we call it `economicTrend` to prevent confusion with array indices or price levels.
+ *    - Concept: VELOCITY — dictates which direction and how fast prices are moving next week.
+ *
+ * ── Hierarchical Multi-Sector Model ─────────────────────────────────────────
+ * - Tier 1: `main` (Macro Economy) — sets the national macroeconomic climate.
+ * - Tier 2: `goods` (Consumer Goods) & `investments` (Financial Climate) — coupled to `main.index`.
+ *           `goods.reading - 100` directly dictates store retail prices and rent.
+ * - Tier 3: Commodities & Stocks (Gold, Silver, Pork Bellies, Blue Chip, Penny Stocks)
+ *           coupled to `investments.index`.
  */
 
 import { type PlayerState, type SectorState, type EconomySimulationState } from './gameState';

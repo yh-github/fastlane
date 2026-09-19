@@ -170,6 +170,8 @@ export default function App() {
         player={activePlayer}
         turn={gameState.turn}
         economicIndex={gameState.economicIndex}
+        economicReading={gameState.economicReading ?? gameState.economicIndex}
+        economicTrend={gameState.economicTrend}
         hoursPerTurn={campaign!.config.timeRules.hoursPerTurn}
         campaign={campaign!}
         activeLogFilter={activeLogFilter}

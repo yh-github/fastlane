@@ -269,4 +269,43 @@ describe('Dashboard Component', () => {
     expect(physicalText).toHaveStyle('color: rgb(231, 76, 60)'); // red
     expect(physicalText).toHaveStyle('font-weight: bold');
   });
+
+  it('renders both economicReading and economicTrend in helpfulUI', () => {
+    const mockPlayer = {
+      name: 'Player 1',
+      degrees: [],
+      money: 100,
+      happiness: 50,
+      relaxation: 25,
+      dependability: 20,
+      experience: 10,
+      goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      inventory: { selectedClothes: 'casual', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = {
+      rules: {
+        helpfulUI: true,
+      },
+      economicReading: 12,
+      economicTrend: 2,
+    } as any;
+
+    render(
+      <Dashboard 
+        player={mockPlayer} 
+        gameState={mockGameState} 
+        turn={1} 
+        economicReading={12}
+        economicTrend={2}
+        hoursPerTurn={50} 
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    expect(screen.getByText(/Reading \+12/i)).toBeInTheDocument();
+    expect(screen.getByText(/Trend \+2 ↑/i)).toBeInTheDocument();
+  });
 });

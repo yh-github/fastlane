@@ -24,10 +24,28 @@ export interface GameEvent {
 }
 
 export interface SectorState {
-  index: number;      // momentum (-3 to +3, expandable)
-  reading: number;    // price level (centered at 100)
-  high: number;       // upward mean-reversion flag (0, 1, 2)
-  low: number;        // downward mean-reversion flag (0, 1, 2)
+  /**
+   * Momentum / velocity of price change (-3 to +3).
+   *
+   * Mapping to Sierra SCI bytecode:
+   * Sierra's scripts named this variable `index`. In our high-level game state,
+   * this is represented as `economicTrend`.
+   */
+  index: number;
+
+  /**
+   * Current price level, centered at baseline 100 (range: 10/70 to 190).
+   *
+   * Mapping to Sierra SCI bytecode:
+   * Sierra's scripts named this variable `reading`. In our high-level game state,
+   * the consumer goods reading offset (`reading - 100`) is represented as `economicReading` (and aliased as `economicIndex`).
+   */
+  reading: number;
+
+  /** Upward mean-reversion flag: 2 = strong bounce imminent, 1 = moderate bounce */
+  high: number;
+  /** Downward mean-reversion flag: 2 = strong correction imminent, 1 = moderate correction */
+  low: number;
   lowerRange?: number;
   upperRange?: number;
   adjustment?: number;
@@ -51,10 +69,37 @@ export interface EconomySimulationState {
 export interface GameState {
   /** Current turn (week) number, 1-indexed */
   turn: number;
-  /** Global economic index: -30 (depression) to +90 (boom) */
+
+  /**
+   * Economic Reading (Price Level):
+   * Consumer goods price level offset from baseline 100 (-30 to +90).
+   * 0 = normal baseline (100% prices), +15 = inflation (125% prices), -15 = deflation (75% prices).
+   *
+   * Mapping to Sierra SCI bytecode:
+   * Corresponds to `gdsIndex.reading - 100`. (In SCI, `reading` is centered at 100).
+   *
+   * Concept: POSITION — how expensive items and rent are right now.
+   */
+  economicReading?: number;
+
+  /**
+   * Legacy alias for `economicReading`. Kept for backwards compatibility with saved games,
+   * replay fixtures, and existing references.
+   */
   economicIndex: number;
-  /** Global economic trend/momentum: -3 to +3 */
+
+  /**
+   * Economic Trend (Momentum / Velocity):
+   * Momentum pushing the economic reading up or down each week (-3 to +3).
+   * +3 = soaring/booming rapidly, 0 = stable/stagnant, -3 = plummeting/crashing rapidly.
+   *
+   * Mapping to Sierra SCI bytecode:
+   * Corresponds to `gdsIndex.index`. (In SCI decompilation, Sierra named this momentum property `index`).
+   *
+   * Concept: VELOCITY — the rate and direction of price level changes next turn.
+   */
   economicTrend: number;
+
   /** Multi-sector authentic economy simulation state */
   economySimulation?: EconomySimulationState;
 

@@ -231,6 +231,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
     ...state,
     rngState: rng.getState(),
     economicIndex: econResult.newEconomy,
+    ...(state.economicReading !== undefined || !(replay?.inDecisions && replay.inDecisions.length > 0) ? { economicReading: econResult.newEconomy } : {}),
     economicTrend: econResult.newTrend,
     ...(econResult.newEconomySimulation !== undefined ? { economySimulation: econResult.newEconomySimulation } : {}),
     pawnShopItemsForSale: newPawnShopItemsForSale,
