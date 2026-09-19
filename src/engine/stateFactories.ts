@@ -165,6 +165,7 @@ export function createInitialGameState(
 
   return {
     turn: 0,
+    economicReading: 0,
     economicIndex: 0,
     economicTrend: 0,
     economySimulation: createDefaultEconomySimulationState(campaign.config.economyRules),

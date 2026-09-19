@@ -16,7 +16,9 @@ interface DashboardProps {
   player: PlayerState | null;
   gameState: GameState;
   turn: number;
-  economicIndex: number;
+  economicIndex?: number;
+  economicReading?: number;
+  economicTrend?: number;
   hoursPerTurn: number;
   campaign?: CampaignBundle;
   activeLogFilter?: GoalFilter | null;
@@ -30,7 +32,9 @@ export function Dashboard({
   player,
   gameState,
   turn,
-  economicIndex,
+  economicIndex = 0,
+  economicReading,
+  economicTrend,
   hoursPerTurn,
   campaign,
   activeLogFilter,
@@ -110,11 +114,29 @@ export function Dashboard({
           <h2>{player ? player.name : ''} - {t('dashboard.turn', { turn, defaultValue: `Week ${turn}` })}</h2>
           {player?.isAi && <span className="ai-badge">{t('dashboard.aiBadge', { defaultValue: 'AI' })}</span>}
           {player?.inventory?.selectedClothes === 'none' && <span style={{ background: 'red', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '8px', fontWeight: 'bold' }}>⚠️ NAKED</span>}
-          {gameState.rules.helpfulUI && (
-            <div className="dashboard-stat economy">
-              <span>{t('dashboard.economy', { index: economicIndex, defaultValue: 'Economy: {{index}}' })}</span>
-            </div>
-          )}
+          {gameState.rules.helpfulUI && (() => {
+            const readingVal = economicReading ?? gameState.economicReading ?? economicIndex;
+            const trendVal = economicTrend ?? gameState.economicTrend ?? 0;
+            const formattedReading = readingVal > 0 ? `+${readingVal}` : `${readingVal}`;
+            const trendArrow = trendVal > 0 ? '↑' : trendVal < 0 ? '↓' : '→';
+            const formattedTrend = `${trendVal > 0 ? `+${trendVal}` : `${trendVal}`} ${trendArrow}`;
+
+            return (
+              <div 
+                className="dashboard-stat economy"
+                title={t('dashboard.economyTooltip', { defaultValue: 'Economic Reading: Price level relative to baseline (higher = higher prices).\nEconomic Trend: Momentum pushing prices up or down (-3 to +3).' })}
+              >
+                <span>
+                  {t('dashboard.economy', { 
+                    reading: formattedReading, 
+                    trend: formattedTrend,
+                    index: formattedReading,
+                    defaultValue: `Economy: Reading ${formattedReading} | Trend ${formattedTrend}`
+                  })}
+                </span>
+              </div>
+            );
+          })()}
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{
