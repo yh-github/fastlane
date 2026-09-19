@@ -18,14 +18,22 @@
   --glow-amber: 0 0 10px rgba(255, 179, 0, 0.5);
 }
 
+html, body {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  touch-action: manipulation;
+}
+
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
   font-family: var(--font-main);
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
-.app-container {
+/* Classic Desktop Top HUD Layout */
+.app-container, .app-container--top-hud {
   display: grid;
   grid-template-rows: auto 1fr;
   grid-template-columns: 1fr;
@@ -33,6 +41,20 @@ body {
     "dashboard"
     "viewport";
   height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Side HUD Layout (Default Modern Widescreen & Phone Landscape) */
+.app-container--side-hud {
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "sidehud viewport";
+  height: 100vh;
+  height: 100dvh;
   min-height: 0;
   overflow: hidden;
 }
@@ -659,5 +681,433 @@ button:disabled {
   color: #000 !important;
   z-index: 100;
   position: relative;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SIDE HUD STYLES
+   ───────────────────────────────────────────────────────────── */
+
+.side-hud {
+  grid-area: sidehud;
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid var(--accent-cyan);
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  box-shadow: var(--glow-cyan);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.side-hud--full {
+  width: 250px;
+}
+
+.side-hud--compact {
+  width: 140px;
+}
+
+.side-hud--minimized {
+  width: 38px;
+  padding: 6px 4px;
+  background: rgba(10, 10, 26, 0.92);
+  border-right: 1px solid var(--accent-cyan);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.side-hud__tab-btn {
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  background: rgba(0, 229, 255, 0.15);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 4px;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.side-hud__tab-btn:hover {
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: var(--glow-cyan);
+}
+
+.side-hud__folding-header {
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.side-hud__fold-btn {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  color: var(--accent-cyan);
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.side-hud__fold-btn:hover {
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: var(--glow-cyan);
+}
+
+.side-hud__fold-btn-group {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.side-hud__columns {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.side-hud__col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 110px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 229, 255, 0.3) transparent;
+}
+
+.side-hud__col::-webkit-scrollbar {
+  width: 3px;
+}
+
+.side-hud__col::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 2px;
+}
+
+.side-hud__col-header {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 179, 0, 0.3);
+  padding-bottom: 3px;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+
+.side-hud__player-card {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.side-hud__player-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--accent-cyan);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.side-hud__turn-label {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-top: 1px;
+}
+
+.side-hud__economy {
+  font-size: 0.7rem;
+  color: var(--accent-amber);
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+.side-hud__controls-card {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.side-hud__btn {
+  padding: 6px 8px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.side-hud__btn--status {
+  flex: 1;
+  background: #f39c12;
+  color: #000;
+  border: none;
+}
+
+.side-hud__btn--status:hover {
+  background: #e67e22;
+  box-shadow: var(--glow-amber);
+}
+
+.side-hud__btn--settings {
+  background: #333;
+  color: #fff;
+  border: 1px solid var(--accent-cyan);
+}
+
+.side-hud__btn--settings:hover {
+  background: var(--accent-cyan);
+  color: #000;
+}
+
+.side-hud__badges-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 2px;
+}
+
+/* Compact StatBadges in Side HUD */
+.side-hud .stat-badge {
+  min-width: 0;
+  padding: 4px 6px;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.side-hud .stat-badge__icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.side-hud .stat-badge__value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.side-hud .stat-badge__label {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BOTTOM CENTER CLOCK
+   ───────────────────────────────────────────────────────────── */
+.bottom-center-clock {
+  position: absolute;
+  left: calc(var(--board-x, calc(50% - 600px)) + (600px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (720px * var(--board-scale, 1)));
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  z-index: 15;
+}
+
+.clock-face {
+  width: calc(44px * var(--board-scale, 1));
+  height: calc(44px * var(--board-scale, 1));
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4), inset 0 0 4px rgba(0, 0, 0, 0.8);
+  position: relative;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clock-dial {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+}
+
+.clock-hand {
+  position: absolute;
+  bottom: 50%;
+  left: calc(50% - 1.5px);
+  width: 3px;
+  height: 42%;
+  background: #ff3333;
+  transform-origin: bottom center;
+  border-radius: 1px;
+  box-shadow: 0 0 3px rgba(255, 51, 51, 0.8);
+}
+
+.clock-digital-badge {
+  background: rgba(10, 10, 26, 0.88);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: calc(12px * var(--board-scale, 1));
+  min-font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  margin-top: 3px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 0 5px rgba(0, 229, 255, 0.6);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DYNAMIC MONEY BADGE
+   ───────────────────────────────────────────────────────────── */
+.dynamic-money-badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(10, 10, 26, 0.92);
+  border: 2px solid var(--accent-amber);
+  border-radius: 8px;
+  padding: 5px 12px;
+  box-shadow: 0 0 12px rgba(255, 179, 0, 0.45);
+  z-index: 25;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: auto;
+}
+
+.dynamic-money-badge__icon {
+  font-size: 1.1rem;
+}
+
+.dynamic-money-badge__value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+
+/* Outside location: bottom-right corner of center stage */
+.dynamic-money-badge--center-stage {
+  left: calc(var(--board-x, calc(50% - 600px)) + (185px * var(--board-scale, 1)) + (830px * var(--board-scale, 1)) - (125px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (126px * var(--board-scale, 1)) + (540px * var(--board-scale, 1)) - (48px * var(--board-scale, 1)));
+}
+
+/* Inside location: bottom-right corner of the board */
+.dynamic-money-badge--in-location {
+  left: calc(var(--board-x, calc(50% - 600px)) + (1200px * var(--board-scale, 1)) - (135px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (800px * var(--board-scale, 1)) - (56px * var(--board-scale, 1)));
+  z-index: 60;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RIGHT-SIDE COLLAPSIBLE GAME LOG DRAWER
+   ───────────────────────────────────────────────────────────── */
+.game-log-drawer-container {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 35;
+}
+
+.game-log-drawer-trigger {
+  background: rgba(10, 10, 26, 0.88);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
+  transition: all 0.2s ease;
+}
+
+.game-log-drawer-trigger:hover {
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: var(--glow-cyan);
+}
+
+.game-log-drawer-count {
+  background: var(--accent-magenta);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.game-log-drawer-panel {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+  background: rgba(10, 10, 26, 0.96);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), var(--glow-cyan);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 72vh;
+}
+
+.game-log-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0, 229, 255, 0.12);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.25);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent-cyan);
+}
+
+.game-log-drawer-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.game-log-drawer-close:hover {
+  color: var(--accent-magenta);
 }
 

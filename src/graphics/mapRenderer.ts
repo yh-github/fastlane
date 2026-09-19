@@ -144,10 +144,14 @@ export async function initMapRenderer(
     
     // Check if it's a building
     if (node.buildingId) {
+      // Extended touch hit area for mobile/touch screens
+      nodeGraphic.circle(0, 0, 36);
+      nodeGraphic.fill({ color: 0x000000, alpha: 0.001 });
+
       // Building nodes: larger, amber glow
-      nodeGraphic.circle(0, 0, 24);
+      nodeGraphic.circle(0, 0, 28);
       nodeGraphic.fill({ color: 0x141428 });
-      nodeGraphic.setStrokeStyle({ width: 3, color: 0xffb300, alpha: 0.8 });
+      nodeGraphic.setStrokeStyle({ width: 3, color: 0xffb300, alpha: 0.9 });
       nodeGraphic.stroke();
       
       const buildingDef = config.buildings.find(b => b.id === node.buildingId);
@@ -155,7 +159,14 @@ export async function initMapRenderer(
       
       const label = new Text({
         text: name,
-        style: { fill: 0xffffff, fontSize: 12, fontWeight: 'bold', align: 'center', dropShadow: { alpha: 0.8, color: 0x000000, blur: 2, distance: 0 } }
+        style: {
+          fill: 0xffffff,
+          fontSize: 15,
+          fontWeight: 'bold',
+          align: 'center',
+          stroke: { color: 0x000000, width: 3 },
+          dropShadow: { alpha: 0.9, color: 0x000000, blur: 3, distance: 1 }
+        }
       });
       label.anchor.set(0.5, 0.5);
       label.x = 0;
@@ -163,10 +174,14 @@ export async function initMapRenderer(
       nodeGraphic.addChild(label);
       
     } else {
-      // Waypoint nodes: smaller, cyan
-      nodeGraphic.circle(0, 0, 15);
+      // Extended touch hit area for waypoints
+      nodeGraphic.circle(0, 0, 28);
+      nodeGraphic.fill({ color: 0x000000, alpha: 0.001 });
+
+      // Waypoint nodes: cyan ring
+      nodeGraphic.circle(0, 0, 16);
       nodeGraphic.fill({ color: 0x141428 });
-      nodeGraphic.setStrokeStyle({ width: 2, color: 0x00e5ff });
+      nodeGraphic.setStrokeStyle({ width: 2.5, color: 0x00e5ff });
       nodeGraphic.stroke();
     }
     

@@ -135,6 +135,11 @@ export interface GameRules {
   showItemImages: boolean;
 
   /**
+   * HUD layout style: 'side' (modern widescreen/mobile side wings, default) or 'top' (classic desktop top-bar).
+   */
+  hudLayout?: 'side' | 'top';
+
+  /**
    * ADVANCED: If true, apartment robberies are based on a 4-week moving average of time spent at home.
    */
   useHomeTimeRobbery: boolean;
@@ -431,6 +436,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   allowEatingSpoiledFood: true,
   reducedDegreeStatBonus: false,
   showItemImages: true,
+  hudLayout: 'side',
   maxEnrolledClasses: 4,
   turnStartAtHome: false,
   delayRobberyFoodSpoilage: false,
@@ -491,6 +497,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   allowEatingSpoiledFood: 'Allows eating spoiled or expired food',
   reducedDegreeStatBonus: 'Reduces the Dependability and Experience boost from degrees from +5 to +2',
   showItemImages: 'Displays graphical icons for items in menus and inventory',
+  hudLayout: 'HUD layout style (Side HUD default or Classic Top HUD)',
   delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',
   maskEarlyJobRejections: 'Masks low dependability rejection as "No openings" (and suppresses "Poor Work History" if other requirements are missing) during turns 1-4 (Original Floppy/CD-ROM behavior)',
   percentageEducation: 'Tracks degree progress on a 0-100% continuous progress scale',

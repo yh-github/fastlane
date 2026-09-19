@@ -35,13 +35,31 @@ export function useGameAnimations() {
       }
     }
 
+    let isTargetVisible = false;
     if (opts.targetId) {
       const el = document.getElementById(opts.targetId);
       if (el) {
         const rect = el.getBoundingClientRect();
-        endX = rect.left + rect.width / 2;
-        endY = rect.top + rect.height / 2;
+        if (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.bottom > 0 &&
+          rect.top < window.innerHeight &&
+          rect.right > 0 &&
+          rect.left < window.innerWidth
+        ) {
+          endX = rect.left + rect.width / 2;
+          endY = rect.top + rect.height / 2;
+          isTargetVisible = true;
+        }
       }
+    }
+
+    // Fallback: If target was requested but is folded/hidden,
+    // float directly upwards above the source location as an in-situ popup
+    if (opts.targetId && !isTargetVisible) {
+      endX = startX;
+      endY = startY - 70;
     }
     
     if (opts.duration) duration = opts.duration;
@@ -85,4 +103,3 @@ export function useGameAnimations() {
     setIsAnimating,
   };
 }
-
