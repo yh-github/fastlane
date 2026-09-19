@@ -149,10 +149,17 @@ export interface MapNode {
   connections: string[];
 }
 
+export interface WaypointCoord {
+  index: number;
+  x: number;
+  y: number;
+}
+
 export interface MapEdge {
   from: string;
   to: string;
   waypoints: number;
+  path?: WaypointCoord[];
 }
 
 export interface MapData {
@@ -160,6 +167,7 @@ export interface MapData {
   height: number;
   nodes: MapNode[];
   edges?: MapEdge[];
+  authenticNodes?: Record<string, { x: number; y: number }>;
 }
 
 export interface WeekendDef {

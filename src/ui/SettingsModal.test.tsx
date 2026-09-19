@@ -170,5 +170,36 @@ describe('SettingsModal', () => {
 
     setItemSpy.mockRestore();
   });
+
+  it('toggles Authentic Curved Board and stores in localStorage', () => {
+    let state = { ...dummyGameState, rules: { ...dummyGameState.rules, authenticCurvedPaths: true } };
+    const setGameState = vi.fn().mockImplementation((updater) => {
+      state = updater(state);
+    });
+
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    render(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Authentic Curved Board')).toBeInTheDocument();
+    const curvedToggle = screen.getByTestId('setting-authentic-curved-paths');
+    fireEvent.click(curvedToggle);
+
+    expect(setGameState).toHaveBeenCalled();
+    expect(state.rules.authenticCurvedPaths).toBe(false);
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_curved_board', 'false');
+
+    fireEvent.click(curvedToggle);
+    expect(state.rules.authenticCurvedPaths).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_curved_board', 'true');
+
+    setItemSpy.mockRestore();
+  });
 });
 

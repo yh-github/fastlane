@@ -55,7 +55,17 @@ export function useGameEngine(
       .then((bundle) => {
         setCampaign(bundle);
         const randomSeed = generateRandomSeed();
-        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: createDefaultGoalAllotment()}], 'node_low_cost', undefined, randomSeed);
+        let savedCurvedBoard: boolean | undefined = undefined;
+        try {
+          const stored = localStorage.getItem('fastlane_curved_board');
+          if (stored !== null) {
+            savedCurvedBoard = stored === 'true';
+          }
+        } catch {
+          // ignore
+        }
+        const initialRules = savedCurvedBoard !== undefined ? { authenticCurvedPaths: savedCurvedBoard } : undefined;
+        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: createDefaultGoalAllotment()}], 'node_low_cost', initialRules, randomSeed);
         setGameState(initialState);
         replayDataRef.current = {
           version: '1.0.0', // Can be dynamically injected from package.json in future
@@ -158,11 +168,29 @@ export function useGameEngine(
       setIsTravelling(true);
       const pathResult = findShortestPath(adjacencyMap, player.position, homeNodeId, edgeWeights);
       if (pathResult.found) {
-        const pathCoords = pathResult.path.map(id => {
-          const node = campaign!.map.nodes.find(n => n.id === id);
-          return { nodeId: id, x: node!.x, y: node!.y };
-        });
-        await animatePlayerPath(pathCoords.slice(1), activePlayerIndex, 150); // Double speed (150ms) when running home
+        const useAuthentic = (gameStateRef.current?.rules.authenticCurvedPaths !== false) && !!campaign!.map.authenticNodes;
+        const pathCoords: { nodeId: string; x: number; y: number }[] = [];
+        
+        for (let i = 0; i < pathResult.path.length - 1; i++) {
+          const u = pathResult.path[i];
+          const v = pathResult.path[i + 1];
+          const edge = campaign!.map.edges?.find(
+            e => (e.from === u && e.to === v) || (e.to === u && e.from === v)
+          );
+          if (useAuthentic && edge?.path && edge.path.length > 0) {
+            const rawWps = edge.from === u ? edge.path : [...edge.path].reverse();
+            for (const w of rawWps) {
+              pathCoords.push({ nodeId: v, x: w.x, y: w.y });
+            }
+          }
+          const targetCoord = (useAuthentic && campaign!.map.authenticNodes?.[v]) || campaign!.map.nodes.find(n => n.id === v);
+          if (targetCoord) {
+            pathCoords.push({ nodeId: v, x: targetCoord.x, y: targetCoord.y });
+          }
+        }
+        const numHops = Math.max(1, pathResult.path.length - 1);
+        const stepSpeedMs = Math.max(10, Math.round(150 / Math.max(1, pathCoords.length / numHops)));
+        await animatePlayerPath(pathCoords, activePlayerIndex, stepSpeedMs);
       }
       setIsTravelling(false);
       setIsAnimating(false);
@@ -341,7 +369,24 @@ export function useGameEngine(
             break;
           }
 
-          await animatePlayerPath([{ nodeId: nextNodeId, x: nextNode.x, y: nextNode.y }], activePlayerIndex, 300);
+          const useAuthentic = currentState.rules.authenticCurvedPaths !== false && !!campaign.map.authenticNodes;
+          const edge = campaign.map.edges?.find(
+            e => (e.from === pRef.position && e.to === nextNodeId) || (e.to === pRef.position && e.from === nextNodeId)
+          );
+
+          if (useAuthentic && edge?.path && edge.path.length > 0) {
+            const rawWaypoints = edge.from === pRef.position ? edge.path : [...edge.path].reverse();
+            const targetCoord = campaign.map.authenticNodes?.[nextNodeId] || { x: nextNode.x, y: nextNode.y };
+            const fullHopPath = [
+              ...rawWaypoints.map(w => ({ nodeId: nextNodeId, x: w.x, y: w.y })),
+              { nodeId: nextNodeId, x: targetCoord.x, y: targetCoord.y }
+            ];
+            const stepSpeedMs = Math.max(12, Math.round(300 / fullHopPath.length));
+            await animatePlayerPath(fullHopPath, activePlayerIndex, stepSpeedMs);
+          } else {
+            const targetCoord = (useAuthentic && campaign.map.authenticNodes?.[nextNodeId]) || { x: nextNode.x, y: nextNode.y };
+            await animatePlayerPath([{ nodeId: nextNodeId, x: targetCoord.x, y: targetCoord.y }], activePlayerIndex, 300);
+          }
 
           pRef = spendHours(pRef, movementCost);
           pRef.position = nextNodeId;
@@ -513,8 +558,12 @@ export function useGameEngine(
     const activePlayer = gameStateRef.current.players[activePlayerIndex];
     if (activePlayer?.isAi) return;
 
+    const useAuthentic = (gameStateRef.current?.rules.authenticCurvedPaths !== false) && !!campaign.map.authenticNodes;
+    const authPos = useAuthentic ? campaign.map.authenticNodes?.[nodeId] : undefined;
     const node = campaign.map.nodes.find(n => n.id === nodeId);
-    if (node) {
+    if (authPos) {
+      showMapClick(authPos.x, authPos.y);
+    } else if (node) {
       showMapClick(node.x, node.y);
     }
 
@@ -573,8 +622,12 @@ export function useGameEngine(
           // Pre-action visual pacing
           if (actions[0].type === 'move') {
             const moveAct = actions[0] as { type: 'move'; nodeId: string };
+            const useAuthentic = (stateSnapshot.rules.authenticCurvedPaths !== false) && !!campaign!.map.authenticNodes;
+            const authPos = useAuthentic ? campaign!.map.authenticNodes?.[moveAct.nodeId] : undefined;
             const targetNode = campaign!.map.nodes.find(n => n.id === moveAct.nodeId);
-            if (targetNode) {
+            if (authPos) {
+              showMapClick(authPos.x, authPos.y);
+            } else if (targetNode) {
               showMapClick(targetNode.x, targetNode.y);
             }
           }
