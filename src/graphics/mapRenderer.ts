@@ -35,8 +35,20 @@ export interface PlayerPosition {
 // Keep references to movable sprites/graphics
 let app: Application | null = null;
 let playerTokens: Graphics[] = [];
+let buildingLabels: Map<string, Text> = new Map();
 let testMarker: HTMLDivElement | null = null;
 let activeInstanceId = 0;
+
+function safeDestroyApp(targetApp: Application | null): void {
+  if (!targetApp) return;
+  try {
+    if ((targetApp as any).renderer) {
+      targetApp.destroy({ removeView: true }, false);
+    }
+  } catch (err) {
+    console.warn('[MapRenderer] Warning during app destroy:', err);
+  }
+}
 
 /**
  * Initialize the PixiJS renderer and load map assets.
@@ -58,20 +70,22 @@ export async function initMapRenderer(
   });
 
   if (!localApp.renderer) {
-    localApp.destroy(true);
+    safeDestroyApp(localApp);
     return () => {};
   }
 
   if (instanceId !== activeInstanceId) {
-    localApp.destroy(true, { children: true });
+    safeDestroyApp(localApp);
     return () => {};
   }
 
   if (app) {
-    app.destroy(true, { children: true });
+    safeDestroyApp(app);
+    app = null;
   }
 
   app = localApp;
+  buildingLabels.clear();
   localApp.canvas.style.position = 'absolute';
   localApp.canvas.style.top = '0';
   localApp.canvas.style.left = '0';
@@ -272,6 +286,9 @@ export async function initMapRenderer(
       label.x = 0;
       label.y = 0;
       nodeGraphic.addChild(label);
+      if (node.buildingId) {
+        buildingLabels.set(node.buildingId, label);
+      }
       
     } else {
       // Extended touch hit area for waypoints
@@ -324,11 +341,10 @@ export async function initMapRenderer(
     }
     window.removeEventListener('resize', updateBoardTransform);
     if (instanceId === activeInstanceId) {
-      if (app) {
-        app.destroy(true, { children: true });
-        app = null;
-        playerTokens = [];
-      }
+      safeDestroyApp(app);
+      app = null;
+      playerTokens = [];
+      buildingLabels.clear();
       if (testMarker) {
         testMarker.remove();
         testMarker = null;
@@ -336,6 +352,26 @@ export async function initMapRenderer(
       console.log('[MapRenderer] Destroyed');
     }
   };
+}
+
+/**
+ * Dynamically update building text labels (e.g. upon language switch)
+ * without tearing down the WebGL canvas.
+ */
+export function updateBuildingLabels(buildings: { id: string; name: string }[]): void {
+  for (const b of buildings) {
+    const label = buildingLabels.get(b.id);
+    if (label) {
+      label.text = b.name;
+    }
+  }
+}
+
+/**
+ * Read the current text label of a building (useful for tests and verification).
+ */
+export function getBuildingLabel(buildingId: string): string | undefined {
+  return buildingLabels.get(buildingId)?.text;
 }
 
 /**

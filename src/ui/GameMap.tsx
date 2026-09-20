@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { initMapRenderer, updatePlayers } from '../graphics/mapRenderer';
+import { initMapRenderer, updatePlayers, updateBuildingLabels } from '../graphics/mapRenderer';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { PlayerState } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
@@ -60,7 +60,18 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlaye
         cleanupRef.current = null;
       }
     };
-  }, [campaign, i18n.language, authenticCurvedPaths]);
+  }, [campaign, authenticCurvedPaths]);
+
+  // Dynamically update building text labels when language changes without recreating WebGL canvas
+  useEffect(() => {
+    if (isMapReady && campaign) {
+      const translatedBuildings = campaign.buildings.map(b => ({
+        id: b.id,
+        name: t(`building.${b.id}`, { defaultValue: b.name })
+      }));
+      updateBuildingLabels(translatedBuildings);
+    }
+  }, [campaign, isMapReady, i18n.language, t]);
 
   useEffect(() => {
     if (isMapReady && players.length > 0 && campaign) {
