@@ -55,7 +55,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
             color: '#10b981',
             border: '1px solid #10b981'
           }}>
-            PANTRY & STORAGE
+            {t('homeRelax.pantryStorageBanner', { defaultValue: 'PANTRY & STORAGE' })}
           </span>
 
           <span style={{
@@ -67,7 +67,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
             color: hasFridge ? '#a7f3d0' : '#fed7aa',
             boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            {hasFridge ? (hasFreezer ? '🧊 Fridge + Freezer' : '🧊 Fridge Active') : '⚠️ No Fridge'}
+            {hasFridge ? (hasFreezer ? t('homeRelax.fridgeFreezer', { defaultValue: '🧊 Fridge + Freezer' }) : t('homeRelax.fridgeActive', { defaultValue: '🧊 Fridge Active' })) : t('homeRelax.noFridge', { defaultValue: '⚠️ No Fridge' })}
           </span>
         </div>
 
@@ -107,7 +107,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
           margin: '0 0 8px',
           padding: '0 4px'
         }}>
-          "A well-stocked pantry is essential. Proper cold storage shields fresh ingredients from spoiling."
+          {t('homeRelax.pantryFluff', { defaultValue: '"A well-stocked pantry is essential. Proper cold storage shields fresh ingredients from spoiling."' })}
         </p>
       </div>
 
@@ -130,7 +130,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
                 {t('inventoryModal.freshFood', { defaultValue: 'Fresh Food' })}
               </div>
               <div style={{ fontSize: '0.68rem', color: hasFridge ? '#2ecc71' : '#e67e22' }}>
-                {hasFridge ? 'Protected from spoilage' : 'Will spoil without refrigerator'}
+                {hasFridge ? t('homeRelax.protectedFromSpoilage', { defaultValue: 'Protected from spoilage' }) : t('homeRelax.willSpoil', { defaultValue: 'Will spoil without refrigerator' })}
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
             fontWeight: 'bold',
             color: freshFoodUnits > 0 ? '#10b981' : '#ef4444'
           }}>
-            {freshFoodUnits} units
+            {t('homeRelax.freshFoodUnits', { count: freshFoodUnits, defaultValue: `${freshFoodUnits} units` })}
           </span>
         </div>
 
@@ -158,10 +158,10 @@ export const PantryCard: React.FC<PantryCardProps> = ({
               <span style={{ fontSize: '1.1rem' }}>🥫</span>
               <div>
                 <div style={{ fontSize: '0.80rem', fontWeight: 'bold', color: '#fff' }}>
-                  Canned Reserves
+                  {t('homeRelax.cannedReserves', { defaultValue: 'Canned Reserves' })}
                 </div>
                 <div style={{ fontSize: '0.68rem', color: '#38bdf8' }}>
-                  Non-perishable shelf-stable provisions
+                  {t('homeRelax.cannedReservesDesc', { defaultValue: 'Non-perishable shelf-stable provisions' })}
                 </div>
               </div>
             </div>
@@ -170,7 +170,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
               fontWeight: 'bold',
               color: '#38bdf8'
             }}>
-              {cannedFoodUnits} cans
+              {t('homeRelax.cannedUnits', { count: cannedFoodUnits, defaultValue: `${cannedFoodUnits} cans` })}
             </span>
           </div>
         )}
@@ -184,7 +184,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
             border: '1px solid rgba(255,255,255,0.08)'
           }}>
             <div style={{ fontSize: '0.72rem', color: '#bbb', fontWeight: 'bold', marginBottom: '4px' }}>
-              🍔 Fast Food Meals ({fastFoodItems.length})
+              🍔 {t('homeRelax.fastFoodMeals', { count: fastFoodItems.length, defaultValue: `Fast Food Meals (${fastFoodItems.length})` })}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
               {fastFoodItems.map((ff, idx) => {
@@ -221,7 +221,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
             color: '#fca5a5',
             textAlign: 'center'
           }}>
-            ⚠️ Pantry empty! Ending turn without food causes hunger and permanent stat decay.
+            ⚠️ {t('homeRelax.pantryEmptyDetail', { defaultValue: 'Pantry empty! Ending turn without food causes hunger and permanent stat decay.' })}
           </div>
         )}
       </div>

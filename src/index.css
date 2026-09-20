@@ -159,7 +159,7 @@ body {
 }
 
 .center-character-sprite {
-  height: 85%;
+  height: 68%;
   width: auto;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -928,7 +928,7 @@ button:disabled {
    ───────────────────────────────────────────────────────────── */
 .bottom-center-clock {
   position: absolute;
-  left: calc(var(--board-x, calc(50% - 600px)) + (600px * var(--board-scale, 1)));
+  left: calc(var(--board-x, calc(50% - 600px)) + (580px * var(--board-scale, 1)));
   top: calc(var(--board-y, calc(50% - 400px)) + (720px * var(--board-scale, 1)));
   transform: translate(-50%, -50%);
   display: flex;
@@ -951,6 +951,20 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.clock-face-number {
+  position: absolute;
+  z-index: 5;
+  font-size: clamp(11px, calc(14px * var(--board-scale, 1)), 18px);
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 4px #000, 0 1px 3px #000, 0 0 6px #000;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+  text-align: center;
+  font-family: monospace, system-ui, sans-serif;
 }
 
 .clock-dial {

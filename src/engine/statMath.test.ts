@@ -13,7 +13,9 @@ import {
   calcEducationProgress,
   STAT_REGISTRY,
   getStatFilterCategories,
-  calcSocializeParameters
+  calcSocializeParameters,
+  formatHours,
+  formatQuarterHours
 } from './statMath';
 
 describe('statMath', () => {
@@ -241,4 +243,30 @@ describe('statMath', () => {
       expect(resTime.disabledReasonKey).toBe('notEnoughTime');
     });
   });
+
+  describe('formatHours and formatQuarterHours', () => {
+    it('formatHours rounds to at most 2 decimal places and strips trailing zeros', () => {
+      expect(formatHours(6)).toBe('6');
+      expect(formatHours(5.5)).toBe('5.5');
+      expect(formatHours(5.25)).toBe('5.25');
+      expect(formatHours(5.166666666666667)).toBe('5.17');
+      expect(formatHours(2.3333333333333335)).toBe('2.33');
+      expect(formatHours(0)).toBe('0');
+      expect(formatHours(0.1)).toBe('0.1');
+    });
+
+    it('formatQuarterHours converts fractional hours to quarter characters', () => {
+      expect(formatQuarterHours(24.5)).toBe('24½');
+      expect(formatQuarterHours(24.25)).toBe('24¼');
+      expect(formatQuarterHours(24.75)).toBe('24¾');
+      expect(formatQuarterHours(24)).toBe('24');
+      expect(formatQuarterHours(0)).toBe('0');
+      expect(formatQuarterHours(0.5)).toBe('½');
+      expect(formatQuarterHours(0.25)).toBe('¼');
+      expect(formatQuarterHours(0.75)).toBe('¾');
+      expect(formatQuarterHours(24.12)).toBe('24'); // rounds to nearest quarter
+      expect(formatQuarterHours(24.38)).toBe('24½');
+    });
+  });
 });
+

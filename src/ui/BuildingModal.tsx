@@ -15,7 +15,7 @@ import {
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
 import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
-import { calcEffectiveRobberyChance } from '../engine/statMath';
+import { calcEffectiveRobberyChance, formatHours } from '../engine/statMath';
 
 interface BuildingModalProps {
   player: PlayerState | null;
@@ -342,9 +342,9 @@ export function BuildingModal({
                     marginInlineEnd: '48px',
                     marginTop: '10px'
                   }}
-                  title={isProtectedHousing ? 'Protected by Security Housing' : (isInactive ? `Inactive until Week ${willyStartWeek}` : undefined)}
+                  title={isProtectedHousing ? t('buildingModal.protectedTooltip', { defaultValue: 'Protected by Security Housing' }) : (isInactive ? t('buildingModal.inactiveTooltip', { week: willyStartWeek, defaultValue: `Inactive until Week ${willyStartWeek}` }) : undefined)}
                 >
-                  🏠 {homeTimeStr}Break-in Risk: {robberyRate}%{isProtectedHousing ? ' (Protected)' : (isInactive ? ' (Inactive)' : '')}
+                  🏠 {homeTimeStr}{t('buildingModal.breakInRisk', { defaultValue: 'Break-in Risk' })}: {robberyRate}%{isProtectedHousing ? ` (${t('buildingModal.protected', { defaultValue: 'Protected' })})` : (isInactive ? ` (${t('buildingModal.inactive', { defaultValue: 'Inactive' })})` : '')}
                 </span>
               );
             })()}
@@ -424,7 +424,7 @@ export function BuildingModal({
                 borderRadius: '4px',
                 color: '#cbd5e1'
               }}>
-                ⏳ {player.hoursRemaining}h
+                ⏳ {formatHours(player.hoursRemaining)}h
               </span>
             </button>
           </div>
@@ -472,7 +472,7 @@ export function BuildingModal({
               onClick={() => handleActionIntercept({ type: 'work', jobId: playerJobHere.id })}
               disabled={isWorkDisabled}
               title={rules?.helpfulUI 
-                ? `Work (${shiftCost}h, +$${wageEarned})` 
+                ? `Work (${formatHours(shiftCost)}h, +$${wageEarned})` 
                 : undefined}
               style={{
                 background: isWorkDisabled ? '#333' : 'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)',

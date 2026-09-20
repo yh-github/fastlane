@@ -11,10 +11,12 @@ interface SettingsModalProps {
   campaign?: CampaignBundle;
   replayData?: ReplayData | null;
   onClose: () => void;
+  onOpenLog?: () => void;
+  logCount?: number;
 }
 
-export function SettingsModal({ gameState, setGameState, campaign, replayData, onClose }: SettingsModalProps) {
-  const { t } = useTranslation();
+export function SettingsModal({ gameState, setGameState, campaign, replayData, onClose, onOpenLog, logCount }: SettingsModalProps) {
+  const { t, i18n } = useTranslation();
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
 
@@ -190,6 +192,59 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
 
             {!isInterfaceCollapsed && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
+                {/* Mid-Game Language Switcher */}
+                <div 
+                  className="interaction-item"
+                  data-testid="setting-language-toggle"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>🌐 {t('settings.language', { defaultValue: 'Language' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {t('settings.languageHelp', { defaultValue: 'Select interface language' })}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        className={`action-panel__btn ${(i18n?.language || 'en') === 'en' ? 'action-panel__btn--active' : ''}`}
+                        style={{
+                          padding: '4px 10px',
+                          fontSize: '0.8rem',
+                          background: (i18n?.language || 'en') === 'en' ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)',
+                          color: (i18n?.language || 'en') === 'en' ? '#000' : '#fff',
+                          border: '1px solid rgba(0,229,255,0.4)',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontWeight: (i18n?.language || 'en') === 'en' ? 'bold' : 'normal'
+                        }}
+                        onClick={() => i18n?.changeLanguage('en')}
+                        data-testid="btn-lang-en"
+                      >
+                        English
+                      </button>
+                      <button
+                        type="button"
+                        className={`action-panel__btn ${i18n?.language === 'he' ? 'action-panel__btn--active' : ''}`}
+                        style={{
+                          padding: '4px 10px',
+                          fontSize: '0.8rem',
+                          background: i18n?.language === 'he' ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)',
+                          color: i18n?.language === 'he' ? '#000' : '#fff',
+                          border: '1px solid rgba(0,229,255,0.4)',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontWeight: i18n?.language === 'he' ? 'bold' : 'normal'
+                        }}
+                        onClick={() => i18n?.changeLanguage('he')}
+                        data-testid="btn-lang-he"
+                      >
+                        עברית
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div 
                   className="interaction-item interaction-item--clickable"
                   onClick={handleToggleHelpfulUI}
@@ -391,7 +446,7 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
             )}
 
             {/* --- Category: Developer & Diagnostics --- */}
-            {(campaign || replayData) && (
+            {(campaign || replayData || onOpenLog) && (
               <>
                 <div
                   className="settings-category-header"
@@ -422,6 +477,33 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
 
                 {!isDeveloperCollapsed && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                    {onOpenLog && (
+                      <div 
+                        className="interaction-item interaction-item--clickable"
+                        onClick={onOpenLog}
+                        style={{ border: '1px solid rgba(0, 229, 255, 0.3)' }}
+                        data-testid="btn-open-game-log"
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>
+                            📜 {t('settings.viewGameLog', { defaultValue: 'View Game Activity Log' })}
+                          </span>
+                          {typeof logCount === 'number' && logCount > 0 && (
+                            <span style={{
+                              background: 'rgba(0, 229, 255, 0.15)',
+                              color: 'var(--accent-cyan)',
+                              fontSize: '0.75rem',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontWeight: 700
+                            }}>
+                              {logCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {campaign && (
                       <div 
                         className="interaction-item interaction-item--clickable"

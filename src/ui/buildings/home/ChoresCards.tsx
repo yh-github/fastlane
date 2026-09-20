@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatHours } from '../../../engine/statMath';
 
 interface ChoresCardsProps {
   hoursToClean: number;
@@ -78,7 +79,7 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
                 color: '#e0f2fe',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
               }}>
-                ⏳ {hoursToClean}h
+                ⏳ {formatHours(hoursToClean)}h
               </span>
             )}
           </div>
@@ -160,7 +161,7 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
               transition: 'all 0.15s ease'
             }}
           >
-            🧹 {helpfulUI ? `Clean Apartment (⏳ ${hoursToClean}h)` : t('homeRelax.cleanBasic', { defaultValue: 'Clean Apartment' })}
+            🧹 {helpfulUI ? `Clean Apartment (⏳ ${formatHours(hoursToClean)}h)` : t('homeRelax.cleanBasic', { defaultValue: 'Clean Apartment' })}
           </button>
         </div>
       </div>
@@ -209,7 +210,7 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
               color: '#f3e8ff',
               boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
             }}>
-              {helpfulUI ? `⏳ ${cleaningServiceCost}h | ` : ''}${cleaningServicePrice}
+              {helpfulUI ? `⏳ ${formatHours(cleaningServiceCost)}h | ` : ''}${cleaningServicePrice}
             </span>
           </div>
 
