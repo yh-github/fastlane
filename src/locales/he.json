@@ -36,7 +36,9 @@
     "wealth": "עושר",
     "skillTech": "טכנולוגיה",
     "skillMgmt": "ניהול",
-    "weekNumber": "שבוע #{{turn}}"
+    "weekNumber": "שבוע #{{turn}}",
+    "lifestyle": "סגנון חיים",
+    "wellbeing": "רווחה אישית"
   },
   "action": {
     "buy": "נרכש {{itemName}}",
@@ -1119,5 +1121,15 @@
         "desc": "גורם למכשיר חשמלי בבעלות השחקן להתקלקל ולדרוש תיקון בתחילת התור הבא."
       }
     }
+  },
+  "stat": {
+    "lifestyle": "סגנון חיים",
+    "wellbeing": "רווחה אישית",
+    "mentalCondition": "מצב מנטלי",
+    "physicalCondition": "כושר גופני",
+    "dependability": "אמינות",
+    "experience": "ניסיון",
+    "relaxation": "רוגע",
+    "space": "מקום"
   }
 }

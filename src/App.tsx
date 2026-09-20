@@ -235,7 +235,7 @@ export default function App() {
                   style={{ transform: `rotate(${(((campaign!.config.timeRules.hoursPerTurn - activePlayer.hoursRemaining) / campaign!.config.timeRules.hoursPerTurn) * 360)}deg)` }} 
                 />
               </div>
-              <span className="clock-face-number" data-testid="clock-face-number">
+              <span className="clock-face-number" data-testid="clock-face-number" dir="ltr">
                 {formatQuarterHours(activePlayer.hoursRemaining)}
               </span>
             </div>

@@ -14,7 +14,8 @@ export type GoalFilter =
   | 'money'
   | 'lifestyle'
   | 'mental'
-  | 'physical';
+  | 'physical'
+  | 'wellbeing';
 
 /**
   * getLogCategories — Maps a log entry to applicable goals and attributes.

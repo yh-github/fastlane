@@ -929,7 +929,7 @@ button:disabled {
 .bottom-center-clock {
   position: absolute;
   left: calc(var(--board-x, calc(50% - 600px)) + (580px * var(--board-scale, 1)));
-  top: calc(var(--board-y, calc(50% - 400px)) + (720px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (738px * var(--board-scale, 1)));
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
@@ -939,10 +939,10 @@ button:disabled {
 }
 
 .clock-face {
-  width: calc(44px * var(--board-scale, 1));
-  height: calc(44px * var(--board-scale, 1));
-  min-width: 32px;
-  min-height: 32px;
+  width: calc(58px * var(--board-scale, 1));
+  height: calc(58px * var(--board-scale, 1));
+  min-width: 42px;
+  min-height: 42px;
   border-radius: 50%;
   border: 2px solid #333;
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.4), inset 0 0 4px rgba(0, 0, 0, 0.8);
@@ -956,7 +956,7 @@ button:disabled {
 .clock-face-number {
   position: absolute;
   z-index: 5;
-  font-size: clamp(11px, calc(14px * var(--board-scale, 1)), 18px);
+  font-size: clamp(12px, calc(16px * var(--board-scale, 1)), 20px);
   font-weight: 900;
   color: #ffffff;
   text-shadow: 0 0 4px #000, 0 1px 3px #000, 0 0 6px #000;
@@ -965,6 +965,8 @@ button:disabled {
   line-height: 1;
   text-align: center;
   font-family: monospace, system-ui, sans-serif;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .clock-dial {
