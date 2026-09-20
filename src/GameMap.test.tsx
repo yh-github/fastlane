@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { GameMap } from './ui/GameMap';
+import { getBuildingLabel } from './graphics/mapRenderer';
 
 // Mock PixiJS entirely so mapRenderer can initialize headless
 vi.mock('pixi.js', () => {
@@ -24,6 +25,10 @@ vi.mock('pixi.js', () => {
   class Text {
     anchor = { set: vi.fn() };
     x = 0; y = 0;
+    text = '';
+    constructor(opts?: any) {
+      if (opts?.text) this.text = opts.text;
+    }
   }
   return { Graphics, Container, Application, Text };
 });
@@ -145,5 +150,39 @@ describe('GameMap Character GUI Tests', () => {
       expect(marker).toHaveAttribute('data-x', '600');
       expect(marker).toHaveAttribute('data-y', '100');
     });
+  });
+
+  it('updates building labels dynamically without reinitializing renderer', async () => {
+    const mockCampaign = {
+      config: { name: 'test', startingMoney: 100 },
+      map: {
+        width: 800,
+        height: 600,
+        nodes: [
+          { id: 'start', buildingId: 'blacks_market', x: 10, y: 10, connections: [] }
+        ]
+      },
+      buildings: [
+        { id: 'blacks_market', name: "Black's Market" }
+      ],
+      items: [],
+      jobs: [],
+      events: []
+    } as any;
+
+    render(
+      <GameMap 
+        campaign={mockCampaign} 
+        players={[]} 
+        activePlayerIndex={0}
+        onNodeClick={() => {}} 
+      />
+    );
+
+    await waitFor(() => {
+      expect(getBuildingLabel('blacks_market')).toBeDefined();
+    });
+
+    expect(getBuildingLabel('blacks_market')).toBe("Black's Market");
   });
 });
