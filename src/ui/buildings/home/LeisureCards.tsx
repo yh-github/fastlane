@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatHours } from '../../../engine/statMath';
 
 interface LeisureCardsProps {
   hoursToRelax: number;
@@ -105,7 +106,7 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
                 color: '#d1fae5',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
               }}>
-                ⏳ {hoursToRelax}h
+                ⏳ {formatHours(hoursToRelax)}h
               </span>
             )}
           </div>
@@ -198,7 +199,7 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
               transition: 'all 0.15s ease'
             }}
           >
-            🧘 {helpfulUI ? t('homeRelax.button', { cost: hoursToRelax, defaultValue: `Relax (${hoursToRelax}h)` }) : t('homeRelax.buttonBasic', { defaultValue: 'Relax' })}
+            🧘 {helpfulUI ? t('homeRelax.button', { cost: formatHours(hoursToRelax), defaultValue: `Relax (${formatHours(hoursToRelax)}h)` }) : t('homeRelax.buttonBasic', { defaultValue: 'Relax' })}
           </button>
         </div>
       </div>

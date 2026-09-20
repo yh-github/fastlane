@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { StockDef, CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules, EconomySimulationState } from '../../engine/gameState';
 import { calcStockPrice } from '../../engine/economyEngine';
+import { formatHours } from '../../engine/statMath';
 import { ActionReasonModal } from './ActionReasonModal';
 import type { InteractionProps } from './types';
 
@@ -559,7 +560,7 @@ export function BankInterface({
             onClick={() => onAction({ type: 'take_loan' })}
             style={{ padding: '14px', borderRadius: '8px' }}
           >
-            📝 {rules?.helpfulUI ? t('bank.applyLoan', { cost: campaign?.config.timeRules?.loanCost ?? 2, defaultValue: `Apply for Loan (Costs ⏳ ${campaign?.config.timeRules?.loanCost ?? 2} Hours)` }) : t('bank.applyLoanBasic', { defaultValue: 'Apply for Loan' })}
+            📝 {rules?.helpfulUI ? t('bank.applyLoan', { cost: formatHours(campaign?.config.timeRules?.loanCost ?? 2), defaultValue: `Apply for Loan (Costs ⏳ ${formatHours(campaign?.config.timeRules?.loanCost ?? 2)} Hours)` }) : t('bank.applyLoanBasic', { defaultValue: 'Apply for Loan' })}
           </button>
           <button 
             onClick={() => onAction({ type: 'pay_loan' })} 

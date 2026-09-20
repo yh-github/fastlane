@@ -16,9 +16,10 @@ interface InventoryModalProps {
   onAction?: (payload: any) => void;
   onClose: () => void;
   rules?: import('../engine/gameState').GameRules;
+  onOpenLog?: () => void;
 }
 
-export function InventoryModal({ player, campaign, turn, onAction, onClose, rules }: InventoryModalProps) {
+export function InventoryModal({ player, campaign, turn, onAction, onClose, rules, onOpenLog }: InventoryModalProps) {
   const { t } = useTranslation();
   const { inventory } = player;
 
@@ -295,6 +296,31 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
             <li>{t('inventoryModal.lotteryTickets', 'Lottery Tickets')}: {inventory.lotteryTickets}</li>
           </ul>
         </div>
+
+        {onOpenLog && (
+          <div style={{ marginTop: '20px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <button
+              onClick={() => {
+                onClose();
+                onOpenLog();
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: 'rgba(0, 229, 255, 0.15)',
+                border: '1px solid var(--accent-cyan, #00e5ff)',
+                color: '#fff',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                fontSize: '0.85rem',
+                cursor: 'pointer'
+              }}
+              data-testid="btn-open-log-from-status"
+            >
+              📜 {t('gameLog.title', { defaultValue: 'Activity Log' })}
+            </button>
+          </div>
+        )}
 
       </div>
     </div>

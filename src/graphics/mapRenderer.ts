@@ -95,8 +95,8 @@ export async function initMapRenderer(
       (localApp.renderer as any).resize(containerW, containerH);
     }
 
-    // Uniformly scale map to fit container if smaller, or center at 1:1 if larger
-    const scale = Math.min(1, Math.min(containerW / config.mapData.width, containerH / config.mapData.height));
+    // Uniformly scale map to fit container, taking full advantage of available space
+    const scale = Math.min(containerW / config.mapData.width, containerH / config.mapData.height);
     const boardW = config.mapData.width * scale;
     const boardH = config.mapData.height * scale;
     const boardX = (containerW - boardW) / 2;

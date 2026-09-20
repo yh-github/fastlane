@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../engine/dataLoader';
 import { type GameRules, collectItemEffects, type OwnedAppliance } from '../../engine/gameState';
 import { calcEconomyPrice } from '../../engine/economyEngine';
-import { calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap, calcSocializeParameters } from '../../engine/statMath';
+import { calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap, calcSocializeParameters, formatHours } from '../../engine/statMath';
 import { HomeApartmentView } from './home/HomeApartmentView';
 import { DurableCardModal } from './home/DurableCardModal';
 import { ApartmentFurnishings } from './home/ApartmentFurnishings';
@@ -495,7 +495,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                   fontSize: '0.85em'
                 }}
               >
-                <div>🧹 {rules?.helpfulUI ? `Clean Apartment (⏳ ${hoursToClean}h)` : t('homeRelax.cleanBasic', { defaultValue: 'Clean Apartment' })}</div>
+                <div>🧹 {rules?.helpfulUI ? `Clean Apartment (⏳ ${formatHours(hoursToClean)}h)` : t('homeRelax.cleanBasic', { defaultValue: 'Clean Apartment' })}</div>
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '1px', color: isCleanDisabled ? '#ffb3b3' : 'inherit' }}>
                   {cleanSubtext}
                 </div>
@@ -513,11 +513,11 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                   cursor: isServiceDisabled ? 'not-allowed' : 'pointer', 
                   fontWeight: 'bold', 
                   textAlign: 'left', 
-                  opacity: isServiceDisabled ? 0.65 : 1,
+                  opacity: isServiceDisabled ? 0.65 : 1, 
                   fontSize: '0.85em'
                 }}
               >
-                <div>🧼 {rules?.helpfulUI ? `Call Cleaning Service (⏳ ${cleaningServiceCost}h, $${cleaningServicePrice})` : t('homeRelax.cleaningServiceBasic', { cost: cleaningServicePrice, defaultValue: `Call Cleaning Service ($${cleaningServicePrice})` })}</div>
+                <div>🧼 {rules?.helpfulUI ? `Call Cleaning Service (⏳ ${formatHours(cleaningServiceCost)}h, $${cleaningServicePrice})` : t('homeRelax.cleaningServiceBasic', { cost: cleaningServicePrice, defaultValue: `Call Cleaning Service ($${cleaningServicePrice})` })}</div>
                 <div style={{ fontSize: '11px', opacity: 0.9, marginTop: '1px', color: isServiceDisabled ? '#ffb3b3' : 'inherit' }}>
                   {serviceSubtext}
                 </div>
@@ -569,7 +569,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
 
             {(player.inventory?.freshFoodUnits || 0) === 0 && (!player.inventory?.fastFoodItems || player.inventory.fastFoodItems.length === 0) && (
               <div style={{ padding: '4px 6px', background: 'rgba(231,76,60,0.12)', border: '1px solid rgba(231,76,60,0.3)', borderRadius: '4px', fontSize: '0.74em', color: '#ff9999' }}>
-                ⚠️ Pantry is empty! Hunger penalty on turn end.
+                ⚠️ {t('homeRelax.pantryEmptyWarning', { defaultValue: 'Pantry is empty! Hunger penalty on turn end.' })}
               </div>
             )}
           </div>
@@ -605,7 +605,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
               data-testid="btn-relax"
               onClick={handleRelaxClick}
               disabled={isRelaxDisabled}
-              title={rules?.helpfulUI ? (classicFirstBonus > 0 ? `Relax (${hoursToRelax}h) +${classicGain} 🧘 (+${classicFirstBonus} 😊)` : `Relax (${hoursToRelax}h) +${classicGain} 🧘`) : undefined}
+              title={rules?.helpfulUI ? (classicFirstBonus > 0 ? `Relax (${formatHours(hoursToRelax)}h) +${classicGain} 🧘 (+${classicFirstBonus} 😊)` : `Relax (${formatHours(hoursToRelax)}h) +${classicGain} 🧘`) : undefined}
               style={{
                 background: isRelaxDisabled ? '#333' : 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)',
                 color: isRelaxDisabled ? '#777' : '#fff',

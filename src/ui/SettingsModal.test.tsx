@@ -4,9 +4,15 @@ import { SettingsModal } from './SettingsModal';
 import { DEFAULT_GAME_RULES } from '../engine/rules';
 import type { GameState } from '../engine/gameState';
 
+const mockChangeLanguage = vi.fn();
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: any) => options?.defaultValue || key,
+    i18n: {
+      language: 'en',
+      changeLanguage: mockChangeLanguage
+    }
   }),
 }));
 
@@ -200,6 +206,43 @@ describe('SettingsModal', () => {
     expect(setItemSpy).toHaveBeenCalledWith('fastlane_curved_board', 'true');
 
     setItemSpy.mockRestore();
+  });
+
+  it('switches language when language buttons are clicked', () => {
+    render(
+      <SettingsModal
+        gameState={dummyGameState}
+        setGameState={() => {}}
+        onClose={() => {}}
+      />
+    );
+
+    const heBtn = screen.getByTestId('btn-lang-he');
+    fireEvent.click(heBtn);
+    expect(mockChangeLanguage).toHaveBeenCalledWith('he');
+
+    const enBtn = screen.getByTestId('btn-lang-en');
+    fireEvent.click(enBtn);
+    expect(mockChangeLanguage).toHaveBeenCalledWith('en');
+  });
+
+  it('triggers onOpenLog when View Game Log item is clicked in Developer category', () => {
+    const onOpenLog = vi.fn();
+    render(
+      <SettingsModal
+        gameState={dummyGameState}
+        setGameState={() => {}}
+        onClose={() => {}}
+        onOpenLog={onOpenLog}
+        logCount={5}
+      />
+    );
+
+    const logBtn = screen.getByTestId('btn-open-game-log');
+    expect(logBtn).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
+    fireEvent.click(logBtn);
+    expect(onOpenLog).toHaveBeenCalled();
   });
 });
 

@@ -4,7 +4,7 @@ import type { EducationDef, CampaignBundle } from '../../engine/dataLoader';
 import type { PlayerState, GameRules } from '../../engine/gameState';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../../engine/educationEngine';
-import { roundToResolution } from '../../engine/statMath';
+import { roundToResolution, formatHours } from '../../engine/statMath';
 import type { InteractionProps } from './types';
 
 export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees?: EducationDef[], rules?: GameRules, campaign: CampaignBundle, economicIndex?: number }) {
@@ -99,7 +99,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                             style={{ width: '100%', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1, cursor: 'pointer' }} 
                             onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
                           >
-                            🎓 {rules?.helpfulUI ? t('university.studyBtn', { cost: hoursToStudy, defaultValue: `Study (⏳ ${hoursToStudy}h)` }) : t('university.studyBtnBasic', { defaultValue: 'Study' })}
+                            🎓 {rules?.helpfulUI ? t('university.studyBtn', { cost: formatHours(hoursToStudy), defaultValue: `Study (⏳ ${formatHours(hoursToStudy)}h)` }) : t('university.studyBtnBasic', { defaultValue: 'Study' })}
                             {rules?.usePhysicalMentalConditions && rules?.helpfulUI && (() => {
                               const sRules = campaign.config.statRules;
                               const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;

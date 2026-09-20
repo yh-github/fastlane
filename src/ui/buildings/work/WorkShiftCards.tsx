@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
 import { calcWorkShiftSummary, type WorkShiftOption, type WorkMode } from '../../../engine/jobEngine';
+import { formatHours } from '../../../engine/statMath';
 import { WorkCardHelpModal } from './WorkCardHelpModal';
 
 export interface WorkShiftCardsProps {
@@ -72,7 +73,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           </span>
           {isHelpful && (
             <span style={{ fontSize: '0.72rem', color: '#a5f3fc', fontWeight: 'bold' }}>
-              ⏳ {shiftCost} hrs
+              ⏳ {formatHours(shiftCost)} hrs
             </span>
           )}
         </div>
@@ -105,7 +106,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             transition: 'all 0.15s ease'
           }}
         >
-          💼 {isHelpful ? t('workStation.workShift', { cost: shiftCost, defaultValue: `Work Shift (${shiftCost}h)` }) : t('workStation.workShiftBasic', { defaultValue: 'Work Shift' })}
+          💼 {isHelpful ? t('workStation.workShift', { cost: formatHours(shiftCost), defaultValue: `Work Shift (${formatHours(shiftCost)}h)` }) : t('workStation.workShiftBasic', { defaultValue: 'Work Shift' })}
         </button>
       </div>
     );
@@ -155,7 +156,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               💼 {t(`job.${job.id}`, { defaultValue: job.title })}
             </h3>
             <span style={{ fontSize: '0.85rem', color: 'var(--accent-cyan, #00e5ff)', fontWeight: 'bold' }}>
-              ${player.currentWage || job.baseWage}/hr{isHelpful ? ` (⏳${shiftCost}h)` : ''}
+              ${player.currentWage || job.baseWage}/hr{isHelpful ? ` (⏳${formatHours(shiftCost)}h)` : ''}
             </span>
           </div>
           {onClose && (
@@ -358,7 +359,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                   color: '#cbd5e1'
                 }}
               >
-                ⏳ {hoursToWork} hrs
+                ⏳ {formatHours(hoursToWork)} hrs
               </span>
             )}
 
@@ -739,7 +740,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               </h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
                 <span style={{ fontSize: '0.85rem', color: '#00e5ff', fontWeight: 'bold' }}>
-                  ${player.currentWage || job.baseWage}/hr{isHelpful ? ` (⏳${hoursToWork}h)` : ''} {tierLabel}
+                  ${player.currentWage || job.baseWage}/hr{isHelpful ? ` (⏳${formatHours(hoursToWork)}h)` : ''} {tierLabel}
                 </span>
                 {summary.locationInitiatives > 0 && (
                   <span style={{ fontSize: '0.74rem', color: '#f59e0b', fontWeight: 'bold', background: 'rgba(245, 158, 11, 0.15)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>

@@ -320,5 +320,7 @@ describe('App Integration & StrictMode', () => {
 
     // Since authenticCurvedPaths is true by default, the bottom center clock is rendered on the board
     expect(screen.getByTestId('bottom-center-clock')).toBeInTheDocument();
+    expect(screen.getByTestId('clock-face-number')).toBeInTheDocument();
+    expect(document.getElementById('hud-clock-digital')?.textContent).toContain('Week #1');
   });
 });

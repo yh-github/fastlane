@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoader';
 import { calcEconomyPrice } from '../../engine/economyEngine';
-import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore } from '../../engine/statMath';
+import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, formatHours } from '../../engine/statMath';
 import { formatDegreeName } from '../../engine/jobEngine';
 import type { InteractionProps } from './types';
 
@@ -248,7 +248,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                         t('jobBoard.askRaiseBasic', { defaultValue: 'Ask for a Raise' })
                       ) : isAdvanced ? (
                         <>
-                          {t('jobBoard.askRaiseAdvanced', { wage: offeredWage, cost: appCost, defaultValue: `Ask for Raise to $${offeredWage}/hr (${appCost}h, -1 🧠)` })}
+                          {t('jobBoard.askRaiseAdvanced', { wage: offeredWage, cost: formatHours(appCost), defaultValue: `Ask for Raise to $${offeredWage}/hr (${formatHours(appCost)}h, -1 🧠)` })}
                           {mentalMistakeChance > 0 && (
                             <span
                               data-testid="interview-mistake-risk"
@@ -268,7 +268,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                           )}
                         </>
                       ) : (
-                        t('jobBoard.askRaise', { wage: offeredWage, cost: appCost })
+                        t('jobBoard.askRaise', { wage: offeredWage, cost: formatHours(appCost) })
                       )}
                     </button>
                   ) : (
@@ -280,7 +280,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                       `💼 ${t('jobBoard.applyBasic', { defaultValue: 'Apply' })}`
                     ) : isAdvanced ? (
                       <>
-                        💼 {t('jobBoard.applyAdvanced', { cost: appCost, defaultValue: `Apply (${appCost}h, -1 🧠)` })}
+                        💼 {t('jobBoard.applyAdvanced', { cost: formatHours(appCost), defaultValue: `Apply (${formatHours(appCost)}h, -1 🧠)` })}
                         {mentalMistakeChance > 0 && (
                           <span
                             data-testid="interview-mistake-risk"
@@ -300,7 +300,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                         )}
                       </>
                     ) : (
-                      `💼 ${t('jobBoard.apply', { cost: appCost })}`
+                      `💼 ${t('jobBoard.apply', { cost: formatHours(appCost) })}`
                     )}
                   </button>
                 )}

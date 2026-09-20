@@ -16,7 +16,8 @@ import {
   calcMaxExperience,
   calcWellbeingScore,
   calcUsedSpace,
-  calcHousingSpaceCap
+  calcHousingSpaceCap,
+  formatHours
 } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import { useTranslation } from 'react-i18next';
@@ -456,7 +457,7 @@ export function Dashboard({
             marginRight: '10px'
           }} />
           <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#00e5ff', textShadow: '0 0 5px #00e5ff', whiteSpace: 'nowrap' }}>
-            ⏳ {Number(player.hoursRemaining).toFixed(1)} / {hoursPerTurn}{t('dashboard.hrs', { defaultValue: ' hrs' })} {t('dashboard.left', { defaultValue: 'left' })}
+            ⏳ {formatHours(player.hoursRemaining)} / {hoursPerTurn}{t('dashboard.hrs', { defaultValue: ' hrs' })} {t('dashboard.left', { defaultValue: 'left' })}
           </div>
         </div>
         <button 
