@@ -85,9 +85,9 @@ export function Dashboard({
   let totalGoals = 0;
 
   const winConditions = campaign?.config.winConditions || [
-    { stat: 'wealth', label: 'Wealth' },
     { stat: 'happiness', label: 'Happiness' },
     { stat: 'education', label: 'Education' },
+    { stat: 'wealth', label: 'Wealth' },
     { stat: 'career', label: 'Career' }
   ];
 
@@ -113,7 +113,7 @@ export function Dashboard({
     player.social || 0
   );
 
-  const currentJob = player.currentJobId ? campaign?.jobs.find(j => j.id === player.currentJobId) : null;
+  const currentJob = player.currentJobId ? campaign?.jobs?.find(j => j.id === player.currentJobId) : null;
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);
@@ -255,30 +255,38 @@ export function Dashboard({
                 icon="🏆"
                 id="stat-victory"
               />
-              <StatBadge
-                label={t('dashboard.happiness', { defaultValue: 'Happiness' })}
-                value={`${displayHappiness}/${player.goalAllotment.happiness || 0}`}
-                icon="😊"
-                id="stat-happiness"
-                isActive={activeLogFilter === 'happiness'}
-                onClick={() => handleFilterToggle('happiness')}
-              />
-              <StatBadge
-                label={t('dashboard.education', { defaultValue: 'Education' })}
-                value={`${education}/${player.goalAllotment.education || 0}`}
-                icon="🎓"
-                id="stat-education"
-                isActive={activeLogFilter === 'education'}
-                onClick={() => handleFilterToggle('education')}
-              />
-              <StatBadge
-                label={t('dashboard.wealth', { defaultValue: 'Wealth' })}
-                value={`${wealth}/${player.goalAllotment.wealth || 0}`}
-                icon="🤑"
-                id="stat-wealth"
-                isActive={activeLogFilter === 'wealth'}
-                onClick={() => handleFilterToggle('wealth')}
-              />
+              {/* Dynamic Goal Badges for Non-Career Win Conditions */}
+              {winConditions
+                .filter(cond => cond.stat !== 'career')
+                .map(cond => {
+                  let current = 0;
+                  if (cond.stat === 'wealth') current = !gameState.rules.allowOverAchievingGoals ? Math.min(wealth, player.goalAllotment.wealth || 0) : wealth;
+                  else if (cond.stat === 'education') current = !gameState.rules.allowOverAchievingGoals ? Math.min(education, player.goalAllotment.education || 0) : education;
+                  else if (cond.stat === 'happiness') current = displayHappiness as number;
+                  else if (cond.stat === 'lifestyle') current = !gameState.rules.allowOverAchievingGoals ? Math.min(lifestyle, player.goalAllotment.lifestyle || 0) : lifestyle;
+                  else if (cond.stat === 'wellbeing') current = !gameState.rules.allowOverAchievingGoals ? Math.min(wellbeing, player.goalAllotment.wellbeing || 0) : wellbeing;
+                  else current = (player as any)[cond.stat] || 0;
+
+                  const target = player.goalAllotment[cond.stat] || 0;
+                  let icon = '🎯';
+                  if (cond.stat === 'wealth') icon = '🤑';
+                  else if (cond.stat === 'education') icon = '🎓';
+                  else if (cond.stat === 'happiness') icon = '😊';
+                  else if (cond.stat === 'lifestyle') icon = (player.lifestyle || 0) > 50 ? '🧐' : '😎';
+                  else if (cond.stat === 'wellbeing') icon = '🧘';
+
+                  return (
+                    <StatBadge
+                      key={cond.stat}
+                      label={t(`dashboard.${cond.stat}`, { defaultValue: cond.label })}
+                      value={`${current}/${target}`}
+                      icon={icon}
+                      id={`stat-${cond.stat}`}
+                      isActive={activeLogFilter === cond.stat as any}
+                      onClick={() => handleFilterToggle(cond.stat as GoalFilter)}
+                    />
+                  );
+                })}
 
               {/* Health / Wellbeing stats */}
               {gameState.rules.usePhysicalMentalConditions ? (
@@ -326,34 +334,40 @@ export function Dashboard({
 
               {campaign?.config.statRules?.enableAdvancedStats && (
                 <div className="hud-advanced-stats" style={{ display: 'flex', flexDirection: 'column', gap: '3px', padding: '4px 6px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.82em', marginTop: '4px' }}>
-                  <div 
-                    style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
-                    onClick={() => handleFilterToggle('lifestyle')}
-                  >
-                    <strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}
-                  </div>
-                  <div 
-                    style={{
-                       cursor: 'pointer',
-                       opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
-                       fontWeight: isMentalCritical ? 'bold' : 'normal',
-                       color: isMentalCritical ? '#e74c3c' : (isMentalWarning ? '#e67e22' : 'inherit')
-                    }}
-                    onClick={() => handleFilterToggle('mental')}
-                  >
-                     <strong>{t('stat.mentalCondition')}:</strong> {Math.floor(player.mentalCondition || 0)}
-                  </div>
-                  <div 
-                    style={{
-                       cursor: 'pointer',
-                       opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
-                       fontWeight: isPhysicalCritical ? 'bold' : 'normal',
-                       color: isPhysicalCritical ? '#e74c3c' : (isPhysicalWarning ? '#e67e22' : 'inherit')
-                    }}
-                    onClick={() => handleFilterToggle('physical')}
-                  >
-                     <strong>{t('stat.physicalCondition')}:</strong> {Math.floor(player.physicalCondition || 0)}
-                  </div>
+                  {!campaign?.config.winConditions?.some(w => w.stat === 'lifestyle') && (
+                    <div 
+                      style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
+                      onClick={() => handleFilterToggle('lifestyle')}
+                    >
+                      <strong>{t('stat.lifestyle', { defaultValue: 'Lifestyle' })}:</strong> {Math.floor(lifestyle)}
+                    </div>
+                  )}
+                  {!gameState.rules.usePhysicalMentalConditions && (
+                    <>
+                      <div 
+                        style={{
+                           cursor: 'pointer',
+                           opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
+                           fontWeight: isMentalCritical ? 'bold' : 'normal',
+                           color: isMentalCritical ? '#e74c3c' : (isMentalWarning ? '#e67e22' : 'inherit')
+                        }}
+                        onClick={() => handleFilterToggle('mental')}
+                      >
+                         <strong>{t('stat.mentalCondition', { defaultValue: 'Mental Condition' })}:</strong> {Math.floor(player.mentalCondition || 0)}
+                      </div>
+                      <div 
+                        style={{
+                           cursor: 'pointer',
+                           opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
+                           fontWeight: isPhysicalCritical ? 'bold' : 'normal',
+                           color: isPhysicalCritical ? '#e74c3c' : (isPhysicalWarning ? '#e67e22' : 'inherit')
+                        }}
+                        onClick={() => handleFilterToggle('physical')}
+                      >
+                         <strong>{t('stat.physicalCondition', { defaultValue: 'Physical Condition' })}:</strong> {Math.floor(player.physicalCondition || 0)}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

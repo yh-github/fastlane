@@ -156,4 +156,54 @@ describe('Side HUD Layout & Folding', () => {
     fireEvent.click(expandBtn);
     expect(onToggleFold).toHaveBeenCalledWith('compact');
   });
+
+  it('in Advanced mode, Side HUD renders Lifestyle and Wellbeing win conditions instead of Happiness', () => {
+    const advancedCampaign = {
+      config: {
+        winConditions: [
+          { stat: 'wealth', target: 100, label: 'Wealth' },
+          { stat: 'lifestyle', target: 100, label: 'Lifestyle' },
+          { stat: 'education', target: 100, label: 'Education' },
+          { stat: 'career', target: 100, label: 'Career' },
+          { stat: 'wellbeing', target: 100, label: 'Well-being' }
+        ]
+      },
+      jobs: []
+    } as any;
+
+    const advPlayer = {
+      ...mockPlayer,
+      lifestyle: 42,
+      goalAllotment: {
+        wealth: 50,
+        lifestyle: 50,
+        education: 50,
+        career: 50,
+        wellbeing: 50
+      }
+    } as any;
+
+    render(
+      <Dashboard
+        player={advPlayer}
+        gameState={mockGameState}
+        campaign={advancedCampaign}
+        turn={3}
+        hoursPerTurn={30}
+        layout="side"
+        foldState="full"
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    // Should render Lifestyle and Wellbeing
+    expect(screen.getByTitle('Lifestyle')).toBeInTheDocument();
+    expect(screen.getByTitle('Well-being')).toBeInTheDocument();
+    expect(screen.getByTitle('Wealth')).toBeInTheDocument();
+    expect(screen.getByTitle('Education')).toBeInTheDocument();
+
+    // Should NOT render Happiness badge
+    expect(screen.queryByTitle('Happiness')).toBeNull();
+  });
 });

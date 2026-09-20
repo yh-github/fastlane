@@ -36,7 +36,9 @@
     "wealth": "Wealth",
     "skillTech": "Tech",
     "skillMgmt": "Mgmt",
-    "weekNumber": "Week #{{turn}}"
+    "weekNumber": "Week #{{turn}}",
+    "lifestyle": "Lifestyle",
+    "wellbeing": "Well-being"
   },
   "action": {
     "buy": "Purchased {{itemName}}",
@@ -1296,5 +1298,15 @@
     "pawn_security_guard": "Security Guard",
     "pawn_appraiser": "Counter Appraiser",
     "pawn_horologist": "Horologist"
+  },
+  "stat": {
+    "lifestyle": "Lifestyle",
+    "wellbeing": "Well-being",
+    "mentalCondition": "Mental Condition",
+    "physicalCondition": "Physical Condition",
+    "dependability": "Dependability",
+    "experience": "Experience",
+    "relaxation": "Relaxation",
+    "space": "Space"
   }
 }
