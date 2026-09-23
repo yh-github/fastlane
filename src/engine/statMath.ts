@@ -753,4 +753,71 @@ export function formatQuarterHours(hours: number): string {
   return `${whole}${fracStr}`;
 }
 
+export interface LandlordStandingBreakdown {
+  label: string;
+  value: number;
+}
+
+export function calcLandlordStanding(
+  player: PlayerState,
+  rules?: GameRules
+): { standing: number; breakdown: LandlordStandingBreakdown[] } {
+  let standing = 50;
+  const breakdown: LandlordStandingBreakdown[] = [
+    { label: 'Baseline', value: 50 }
+  ];
+
+  const extensions = player.rentExtensionsReceived || 0;
+  if (extensions > 0) {
+    const penalty = -extensions * 5;
+    standing += penalty;
+    breakdown.push({ label: `Extensions Requested (${extensions})`, value: penalty });
+  }
+
+  if (player.rentDebt > 0) {
+    standing -= 25;
+    breakdown.push({ label: 'Outstanding Rent Debt', value: -25 });
+  }
+
+  const defaults = player.timesDefaulted || 0;
+  if (defaults > 0) {
+    const penalty = -defaults * 20;
+    standing += penalty;
+    breakdown.push({ label: `Past Evictions/Defaults (${defaults})`, value: penalty });
+  }
+
+  if (rules?.trackMess && player.mess !== undefined) {
+    if (player.mess <= 3) {
+      standing += 10;
+      breakdown.push({ label: 'Clean & Tidy Apartment', value: 10 });
+    } else {
+      const messPenalty = -Math.min(30, Math.floor(player.mess * 1.5));
+      standing += messPenalty;
+      breakdown.push({ label: `Apartment Mess (${player.mess})`, value: messPenalty });
+    }
+  }
+
+  const social = player.social || 20;
+  if (social > 20) {
+    const socialBonus = Math.min(20, Math.floor((social - 20) / 4));
+    if (socialBonus > 0) {
+      standing += socialBonus;
+      breakdown.push({ label: `Social Standing (${social})`, value: socialBonus });
+    }
+  }
+
+  const dependability = player.dependability || 20;
+  if (dependability > 20) {
+    const depBonus = Math.min(10, Math.floor((dependability - 20) / 5));
+    if (depBonus > 0) {
+      standing += depBonus;
+      breakdown.push({ label: `Dependability (${dependability})`, value: depBonus });
+    }
+  }
+
+  standing = Math.max(0, Math.min(100, standing));
+  return { standing, breakdown };
+}
+
+
 

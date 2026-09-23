@@ -2,6 +2,7 @@ import type { PlayerState, GameState } from '../gameState';
 import type { CampaignBundle } from '../dataLoader';
 import { calcEconomyPrice } from '../economyEngine';
 import { applyHappinessChange } from '../statEffects';
+import { calcLandlordStanding } from '../statMath';
 
 export function processHousingAndLoanPhase(
   p: PlayerState,
@@ -17,7 +18,20 @@ export function processHousingAndLoanPhase(
       p.rentExtensionsDeniedPermanently = true; 
       const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
       const baseRent = curHousing?.baseRent ?? (p.currentHousingId === 'security' ? 475 : 325);
-      const debtAmount = state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice;
+      if (state.rules.usePhysicalMentalConditions && state.rules.fluctuatingRent) {
+        const marketRent = calcEconomyPrice(baseRent, state.economicIndex);
+        if (marketRent > p.currentRentPrice) {
+          const { standing } = calcLandlordStanding(p, state.rules);
+          if (standing < 40) {
+            const oldRent = p.currentRentPrice;
+            p.currentRentPrice = marketRent;
+            p.turnEvents.push({ key: 'events.rent.raised', params: { newRent: marketRent, oldRent } });
+          }
+        }
+      }
+      const debtAmount = state.rules.usePhysicalMentalConditions
+        ? p.currentRentPrice
+        : (state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice);
       p.rentDebt += debtAmount;
       p.rentPaidUntilWeek = state.turn + 4; 
       p.turnEvents.push({ key: 'events.rent.charged', params: { amount: debtAmount } });
