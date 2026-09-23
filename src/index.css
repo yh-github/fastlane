@@ -979,13 +979,26 @@ button:disabled {
 .clock-hand {
   position: absolute;
   bottom: 50%;
-  left: calc(50% - 1.5px);
-  width: 3px;
-  height: 42%;
-  background: #ff3333;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 44%;
+  background: #0f172a;
   transform-origin: bottom center;
   border-radius: 1px;
-  box-shadow: 0 0 3px rgba(255, 51, 51, 0.8);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+  z-index: 4;
+}
+
+.clock-hand::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0f172a;
+  border: 1px solid #ef4444;
 }
 
 .clock-digital-badge {

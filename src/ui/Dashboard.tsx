@@ -465,7 +465,7 @@ export function Dashboard({
             width: '24px',
             height: '24px',
             borderRadius: '50%',
-            background: `conic-gradient(#ff3333 0% ${((hoursPerTurn - player.hoursRemaining) / hoursPerTurn) * 100}%, white ${((hoursPerTurn - player.hoursRemaining) / hoursPerTurn) * 100}% 100%)`,
+            background: `conic-gradient(#ff3333 0%, #ff3333 ${Math.max(0, (((hoursPerTurn - player.hoursRemaining) / hoursPerTurn) * 100) - 0.25)}%, white ${Math.min(100, (((hoursPerTurn - player.hoursRemaining) / hoursPerTurn) * 100) + 0.25)}% 100%)`,
             border: '2px solid #333',
             boxShadow: 'inset 0 0 4px rgba(0,0,0,0.4)',
             marginRight: '10px'
