@@ -175,6 +175,33 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       // 15 (TV) + 0 (housing) - 2 (mess penalty: floor(4/2)) + 3 (social bonus) = 16
       expect(recalculated).toBe(16);
     });
+
+    it('VCR requires an unbroken TV to grant lifestyle value in Advanced mode', () => {
+      const player = createPlayerState('p1', 'Player 1', false, {}, 'node_low_cost', mockCampaign.config);
+      player.mess = 0;
+      player.social = 0;
+      player.inventory.appliances = [{ id: 'vcr', purchasePrice: 250, purchaseSource: 'z_mart' }];
+
+      const campaignWithVCR = {
+        ...mockCampaign,
+        items: [
+          ...mockCampaign.items,
+          { id: 'vcr', category: 'appliance', basePrice: 250, lifestyleValue: 10 },
+          { id: 'color_tv', category: 'appliance', basePrice: 400, lifestyleValue: 15 }
+        ]
+      };
+
+      // Without TV: VCR gives 0 lifestyle
+      expect(recalculateLifestyle(player, campaignWithVCR)).toBe(0);
+
+      // With broken TV: still 0 lifestyle
+      player.inventory.appliances.push({ id: 'color_tv', purchasePrice: 400, purchaseSource: 'socket_city', isBroken: true });
+      expect(recalculateLifestyle(player, campaignWithVCR)).toBe(0);
+
+      // With working TV: grants lifestyle of TV (15) + VCR (10) = 25
+      player.inventory.appliances[1].isBroken = false;
+      expect(recalculateLifestyle(player, campaignWithVCR)).toBe(25);
+    });
   });
 
   describe('4. Moving Fees & Rent Extension Penalties', () => {

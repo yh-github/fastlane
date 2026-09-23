@@ -125,6 +125,33 @@ describe('Weekend Engine', () => {
       expect(player.weekendDecks!.cheap.discardPile).not.toContain('durable_stove');
     });
 
+    it('requires an unbroken TV for durable_vcr in weekend decks', () => {
+      let player = {
+        id: 'p1',
+        money: 100,
+        inventory: { appliances: [{ id: 'vcr', purchasePrice: 250, purchaseSource: 'z_mart' }] }
+      } as unknown as PlayerState;
+
+      // Initializing deck without TV -> durable_vcr should NOT be added
+      player = initPlayerWeekendDecks(player, fullMockWeekendData, new Random(42));
+      expect(player.weekendDecks!.cheap.drawPile).not.toContain('durable_vcr');
+
+      // Adding VCR directly without TV -> not added
+      player = addApplianceCardToDeck(player, 'vcr', new Random(1));
+      expect(player.weekendDecks!.cheap.drawPile).not.toContain('durable_vcr');
+
+      // Add color_tv to inventory and deck -> durable_vcr added automatically
+      player.inventory.appliances.push({ id: 'color_tv', purchasePrice: 400, purchaseSource: 'socket_city' });
+      player = addApplianceCardToDeck(player, 'color_tv', new Random(1));
+      expect(player.weekendDecks!.cheap.drawPile).toContain('durable_color_tv');
+      expect(player.weekendDecks!.cheap.drawPile).toContain('durable_vcr');
+
+      // Remove TV -> durable_vcr removed too
+      player.inventory.appliances = player.inventory.appliances.filter(a => a.id !== 'color_tv');
+      player = removeApplianceCardFromDeck(player, 'color_tv');
+      expect(player.weekendDecks!.cheap.drawPile).not.toContain('durable_vcr');
+    });
+
     it('offers exactly two $0 cards (Rest vs Clean) when player has < $5', () => {
       const player = {
         id: 'p1',
