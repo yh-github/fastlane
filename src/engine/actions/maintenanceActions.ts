@@ -7,6 +7,7 @@ import { roundToResolution, calcMaxMess, safeDecrementPhysical, safeDecrementMen
 import { applyHappinessChange } from '../statEffects';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { removeApplianceCardFromDeck } from '../weekendEngine';
+import { ensurePlayerCurios } from '../curioCatalog';
 
 export interface DiySuccessChanceBreakdown {
   baseChance: number;
@@ -253,8 +254,8 @@ export function handleApplianceMaintenanceAction(
 
 export function handleDiscardInventoryItemAction(
   player: PlayerState,
-  action: { type: 'discard_inventory_item'; itemType: 'spare_parts' | 'knick_knacks'; count?: number },
-  _context: ReducerContext
+  action: { type: 'discard_inventory_item'; itemType: 'spare_parts' | 'knick_knacks'; count?: number; curioId?: string },
+  context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
@@ -269,11 +270,24 @@ export function handleDiscardInventoryItemAction(
       actionLog = { key: 'action.maintenance.discardSpareParts', params: { count: actualDiscard } };
     }
   } else if (action.itemType === 'knick_knacks') {
-    const current = nextPlayer.inventory.knickKnacks || 0;
-    const actualDiscard = Math.min(current, countToDiscard);
-    if (actualDiscard > 0) {
-      nextPlayer.inventory.knickKnacks = current - actualDiscard;
-      actionLog = { key: 'action.maintenance.discardKnickKnacks', params: { count: actualDiscard } };
+    const curios = ensurePlayerCurios(nextPlayer, context.state?.turn);
+    if (action.curioId) {
+      const idx = curios.findIndex(c => c.id === action.curioId);
+      if (idx !== -1) {
+        const [discarded] = curios.splice(idx, 1);
+        nextPlayer.inventory.curios = curios;
+        nextPlayer.inventory.knickKnacks = curios.length;
+        actionLog = { key: 'action.maintenance.discardKnickKnacks', params: { count: 1, name: discarded.name } };
+      }
+    } else {
+      const current = nextPlayer.inventory.knickKnacks || 0;
+      const actualDiscard = Math.min(current, countToDiscard);
+      if (actualDiscard > 0) {
+        curios.splice(0, actualDiscard);
+        nextPlayer.inventory.curios = curios;
+        nextPlayer.inventory.knickKnacks = curios.length;
+        actionLog = { key: 'action.maintenance.discardKnickKnacks', params: { count: actualDiscard } };
+      }
     }
   }
 

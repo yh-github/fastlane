@@ -341,4 +341,98 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
       option: 'throw_out'
     });
   });
+
+  it('opens CuriosFlankingWings on clicking curios shelf item and allows discarding', () => {
+    const onAction = vi.fn();
+    const curioPlayer: any = {
+      ...basePlayer,
+      inventory: {
+        ...basePlayer.inventory,
+        knickKnacks: 2,
+        curios: [
+          { id: 'curio_1', catalogId: 'curio_vintage_tin_robot', name: 'Vintage Tin Robot', acquiredWeek: 2, flavorText: 'A cute tin robot.' },
+          { id: 'curio_2', catalogId: 'curio_brass_carriage_clock', name: 'Brass Carriage Clock', acquiredWeek: 3, flavorText: 'Ticks with steady precision.' }
+        ]
+      }
+    };
+
+    render(
+      <HomeApartmentView
+        player={curioPlayer}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, spaceCapping: true } as any}
+        housingName="Low-Cost Housing"
+        actionFeedback={null}
+        durablesSpace={5}
+        totalUsedSpace={10}
+        spaceCap={10}
+        freeSpace={0}
+        overflow={0}
+        isOvercapacity={false}
+        durablesPct={50}
+        messPct={50}
+        currentMess={5}
+        maxMessHousing={50}
+        messIcon="🧹"
+        messLabel="Messy"
+        messBarColor="#f39c12"
+        messPercentage={10}
+        hoursToRelax={6}
+        isRelaxDisabled={false}
+        hasFood={true}
+        physGain={5}
+        mentalGain={10}
+        scaledMess={2}
+        classicGain={5}
+        classicFirstBonus={0}
+        onRelaxClick={vi.fn()}
+        socialParams={{}}
+        onSocializeClick={vi.fn()}
+        hoursToClean={3}
+        cleanPhysGain={2}
+        isCleanDisabled={false}
+        cleanSubtext=""
+        onCleanClick={vi.fn()}
+        cleaningServiceCost={50}
+        cleaningServicePrice={50}
+        isServiceDisabled={false}
+        serviceSubtext=""
+        onServiceClick={vi.fn()}
+        hasFridge={true}
+        hasFreezer={false}
+        onAction={onAction}
+      />
+    );
+
+    // Curios card on shelf
+    const curioShelfItem = screen.getByTestId('durable-card-knick_knack');
+    expect(curioShelfItem).toBeInTheDocument();
+
+    // Click to toggle wings
+    fireEvent.click(curioShelfItem);
+
+    // Wings should be visible
+    expect(screen.getByTestId('curios-wing-left')).toBeInTheDocument();
+    expect(screen.getByTestId('curios-wing-right')).toBeInTheDocument();
+
+    // Check curio names and flavor
+    expect(screen.getByText('Vintage Tin Robot')).toBeInTheDocument();
+    expect(screen.getByText('Brass Carriage Clock')).toBeInTheDocument();
+    expect(screen.getByText(/"A cute tin robot\."/i)).toBeInTheDocument();
+
+    // Discard button
+    const discardBtn = screen.getByTestId('btn-discard-curio-curio_1');
+    fireEvent.click(discardBtn);
+    expect(onAction).toHaveBeenCalledWith({
+      type: 'discard_inventory_item',
+      itemType: 'knick_knacks',
+      curioId: 'curio_1'
+    });
+
+    // Close button
+    const closeBtn = screen.getByTestId('btn-close-curios-wings');
+    fireEvent.click(closeBtn);
+    expect(screen.queryByTestId('curios-wing-left')).not.toBeInTheDocument();
+  });
 });
+

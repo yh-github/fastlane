@@ -31,12 +31,12 @@ export type GameAction =
   | { type: 'call_cleaning_service' }
   | { type: 'socialize_guests' }
   | { type: 'appliance_maintenance'; applianceId: string; option: 'diy' | 'repairman' | 'throw_out' }
-  | { type: 'pawn_knick_knacks'; count: number; valuePerItem: number }
+  | { type: 'pawn_knick_knacks'; count?: number; valuePerItem: number; curioId?: string }
   | { type: 'resolve_appraisal_dilemma'; choiceIndex: number }
   | { type: 'rummage_pawn_shop' }
   | { type: 'buy_rummage_item'; itemIndex?: number }
   | { type: 'buy_pawn_rummage_item'; itemIndex?: number }
-  | { type: 'discard_inventory_item'; itemType: 'spare_parts' | 'knick_knacks'; count?: number }
+  | { type: 'discard_inventory_item'; itemType: 'spare_parts' | 'knick_knacks'; count?: number; curioId?: string }
   | { type: 'renegotiate_rent' }
   | { type: 'close_rummage' }
   | { type: 'pass_pawn_rummage' };

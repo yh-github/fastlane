@@ -211,31 +211,57 @@ body {
 }
 
 .building-modal:has(.home-apartment-panel) .building-modal__content {
-  overflow-y: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 .building-modal:has(.home-apartment-panel) .building-modal__content > div {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
 }
 
 .building-modal:has(.home-basic-panel) .building-modal__content {
-  overflow-y: hidden;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
 
 .building-modal:has(.home-basic-panel) .building-modal__content > div {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 100%;
+}
+
+.building-modal__resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  z-index: 70;
+  touch-action: none;
+}
+
+.building-modal__resize-handle::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--accent-cyan);
+  border-bottom: 2px solid var(--accent-cyan);
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.building-modal__resize-handle:hover::after {
+  opacity: 1;
 }
 
 .building-modal__face {

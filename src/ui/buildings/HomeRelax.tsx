@@ -10,7 +10,7 @@ import { DurableCardModal } from './home/DurableCardModal';
 import { ApartmentFurnishings } from './home/ApartmentFurnishings';
 import type { InteractionProps } from './types';
 
-export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0 }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules, economicIndex?: number, turn?: number }) {
+export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0, turn = 1 }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules, economicIndex?: number, turn?: number }) {
   const { t } = useTranslation();
   const [showUnfedWarning, setShowUnfedWarning] = useState(false);
   const [warnedThisVisit, setWarnedThisVisit] = useState(false);
@@ -329,6 +329,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           hasFridge={hasFridge}
           hasFreezer={hasFreezer}
           economicIndex={economicIndex}
+          turn={turn}
           onAction={handleHomeAction}
         />
         {unfedWarningPortal}

@@ -50,6 +50,169 @@ export function BuildingModal({
   const [isWorkDeckOpen, setIsWorkDeckOpen] = useState(true);
   const justUpdatedMessageRef = useRef(false);
 
+  // Movable and Resizable window state
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(() => {
+    try {
+      const saved = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('fastlane_building_modal_pos') : null;
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return null;
+  });
+  const [customSize, setCustomSize] = useState<{ width: number; height: number } | null>(() => {
+    try {
+      const saved = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('fastlane_building_modal_size') : null;
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return null;
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [, setIsResizing] = useState(false);
+  const [measuredRect, setMeasuredRect] = useState<{ width: number; height: number; left: number; top: number }>({
+    width: 830,
+    height: 540,
+    left: 185,
+    top: 126
+  });
+  const [copiedNotification, setCopiedNotification] = useState(false);
+
+  // Measure rect on mount and resize
+  useEffect(() => {
+    if (!modalRef.current) return;
+    const updateRect = () => {
+      if (!modalRef.current) return;
+      const rect = modalRef.current.getBoundingClientRect();
+      const parent = modalRef.current.parentElement;
+      const parentRect = parent ? parent.getBoundingClientRect() : { left: 0, top: 0 };
+      setMeasuredRect({
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        left: Math.round(rect.left - parentRect.left),
+        top: Math.round(rect.top - parentRect.top)
+      });
+    };
+    updateRect();
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(updateRect);
+      observer.observe(modalRef.current);
+      window.addEventListener('resize', updateRect);
+      return () => {
+        observer.disconnect();
+        window.removeEventListener('resize', updateRect);
+      };
+    }
+  }, [position, customSize]);
+
+  // Handle Dragging
+  const handleHeaderPointerDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('button, a, input, textarea, .speech-bubble, [data-no-drag]')) {
+      return;
+    }
+    if (!modalRef.current) return;
+    e.preventDefault();
+    setIsDragging(true);
+
+    const startPointerX = e.clientX;
+    const startPointerY = e.clientY;
+    const rect = modalRef.current.getBoundingClientRect();
+    const startLeft = rect.left;
+    const startTop = rect.top;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = moveEvent.clientX - startPointerX;
+      const deltaY = moveEvent.clientY - startPointerY;
+      const maxLeft = window.innerWidth - rect.width - 10;
+      const maxTop = window.innerHeight - rect.height - 10;
+      const clampedX = Math.max(10, Math.min(maxLeft, startLeft + deltaX));
+      const clampedY = Math.max(10, Math.min(maxTop, startTop + deltaY));
+      setPosition({ x: clampedX, y: clampedY });
+    };
+
+    const onPointerUp = () => {
+      setIsDragging(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  };
+
+  // Handle Resizing
+  const handleResizePointerDown = (e: React.PointerEvent) => {
+    if (!modalRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+
+    const startPointerX = e.clientX;
+    const startPointerY = e.clientY;
+    const rect = modalRef.current.getBoundingClientRect();
+    const startWidth = rect.width;
+    const startHeight = rect.height;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = moveEvent.clientX - startPointerX;
+      const deltaY = moveEvent.clientY - startPointerY;
+      const newW = Math.max(420, Math.min(window.innerWidth - 20, startWidth + deltaX));
+      const newH = Math.max(360, Math.min(window.innerHeight - 20, startHeight + deltaY));
+      setCustomSize({ width: Math.round(newW), height: Math.round(newH) });
+    };
+
+    const onPointerUp = () => {
+      setIsResizing(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  };
+
+  // Sync to sessionStorage
+  useEffect(() => {
+    try {
+      if (position) {
+        sessionStorage.setItem('fastlane_building_modal_pos', JSON.stringify(position));
+      } else {
+        sessionStorage.removeItem('fastlane_building_modal_pos');
+      }
+    } catch {}
+  }, [position]);
+
+  useEffect(() => {
+    try {
+      if (customSize) {
+        sessionStorage.setItem('fastlane_building_modal_size', JSON.stringify(customSize));
+      } else {
+        sessionStorage.removeItem('fastlane_building_modal_size');
+      }
+    } catch {}
+  }, [customSize]);
+
+  const handleResetLayout = () => {
+    setPosition(null);
+    setCustomSize(null);
+    try {
+      sessionStorage.removeItem('fastlane_building_modal_pos');
+      sessionStorage.removeItem('fastlane_building_modal_size');
+    } catch {}
+  };
+
+  const handleCopyLayoutSpec = () => {
+    const spec = `width: ${measuredRect.width}px; height: ${measuredRect.height}px; left: ${measuredRect.left}px; top: ${measuredRect.top}px;`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(spec).then(() => {
+        setCopiedNotification(true);
+        setTimeout(() => setCopiedNotification(false), 2000);
+      }).catch(() => {});
+    }
+  };
+
   // Helper to pick random string if translation is an array
   const getRandomMessage = useCallback((key: string, defaultValue: string) => {
     const messages = t(key, { returnObjects: true, defaultValue });
@@ -299,12 +462,86 @@ export function BuildingModal({
   );
 
   return (
-    <div className="building-modal">
+    <div 
+      ref={modalRef}
+      className="building-modal"
+      style={{
+        ...(position ? { left: `${position.x}px`, top: `${position.y}px` } : {}),
+        ...(customSize ? { width: `${customSize.width}px`, height: `${customSize.height}px`, maxWidth: 'none', maxHeight: 'none' } : {})
+      }}
+    >
+      {/* Top Window Control Bar: Live coordinates readout and reset */}
+      <div 
+        className="building-modal__window-bar"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          position: 'absolute',
+          top: '12px',
+          right: '48px',
+          zIndex: 65,
+          userSelect: 'none'
+        }}
+      >
+        <button
+          data-testid="modal-dimension-readout"
+          onClick={handleCopyLayoutSpec}
+          title={t('buildingModal.copyCoordsTooltip', { defaultValue: 'Click to copy coordinates & dimensions to clipboard' })}
+          style={{
+            background: 'rgba(0, 0, 0, 0.5)',
+            border: '1px solid rgba(0, 229, 255, 0.4)',
+            borderRadius: '6px',
+            color: '#a5f3fc',
+            fontFamily: 'monospace',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            padding: '3px 8px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
+          }}
+        >
+          <span>📐</span>
+          <span>{`W:${measuredRect.width}px H:${measuredRect.height}px | X:${measuredRect.left}px Y:${measuredRect.top}px`}</span>
+          {copiedNotification && <span style={{ color: '#34d399', marginLeft: '4px' }}>✓ Copied!</span>}
+        </button>
+
+        {(position || customSize) && (
+          <button
+            data-testid="btn-reset-modal-layout"
+            onClick={handleResetLayout}
+            title={t('buildingModal.resetTooltip', { defaultValue: 'Reset window size and position to defaults' })}
+            style={{
+              background: 'rgba(239, 68, 68, 0.2)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '6px',
+              color: '#fca5a5',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              padding: '3px 8px',
+              cursor: 'pointer'
+            }}
+          >
+            ↺ Reset
+          </button>
+        )}
+      </div>
+
       {!player?.pendingAppraisalDilemma && (
         <button className="building-modal__close" onClick={onClose}>&times;</button>
       )}
       
-      <div className="building-modal__header">
+      <div 
+        className="building-modal__header"
+        onPointerDown={handleHeaderPointerDown}
+        style={{
+          cursor: isDragging ? 'grabbing' : 'grab'
+        }}
+        title={t('buildingModal.dragTooltip', { defaultValue: 'Click and drag header to move location window' })}
+      >
         <div className="building-modal__face" style={{ position: 'relative' }}>
           {currentFace}
           {clerkMessage && shouldShowSpeechBubble && <SpeechBubble message={clerkMessage} />}
@@ -502,6 +739,14 @@ export function BuildingModal({
           onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_appraisal_dilemma', choiceIndex: idx })}
         />
       )}
+
+      {/* Corner Resize Handle */}
+      <div 
+        className="building-modal__resize-handle"
+        data-testid="building-modal-resize-handle"
+        onPointerDown={handleResizePointerDown}
+        title={t('buildingModal.resizeTooltip', { defaultValue: 'Drag corner to resize window' })}
+      />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { applyHappinessChange, applyMentalChange } from '../statEffects';
 import { addApplianceCardToDeck, removeApplianceCardFromDeck } from '../weekendEngine';
 import { calcEconomyPrice } from '../economyEngine';
 import { spendHours } from '../timeManager';
-import { CURIO_CATALOG, RARE_TRINKET_CATALOG } from '../curioCatalog';
+import { CURIO_CATALOG, RARE_TRINKET_CATALOG, ensurePlayerCurios } from '../curioCatalog';
 import { getPawnShopWeeklyStock } from '../../ui/buildingModal/clerkDialogue';
 
 export function handlePawnItemAction(
@@ -217,22 +217,41 @@ export function handleBuyPawnItemAction(
 
 export function handlePawnKnickKnacksAction(
   player: PlayerState,
-  action: { type: 'pawn_knick_knacks'; count: number; valuePerItem: number },
-  _context: ReducerContext
+  action: { type: 'pawn_knick_knacks'; count?: number; valuePerItem: number; curioId?: string },
+  context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
 
-  const currentCount = nextPlayer.inventory.knickKnacks || 0;
-  if (currentCount <= 0 || action.count <= 0) {
+  const curios = ensurePlayerCurios(nextPlayer, context.state?.turn);
+  const currentCount = curios.length;
+  if (currentCount <= 0) {
     actionLog = { key: 'action.error.noKnickKnacksToPawn' };
     return { nextPlayer, actionLog };
   }
 
-  const sellCount = Math.min(currentCount, action.count);
+  if (action.curioId) {
+    const idx = curios.findIndex(c => c.id === action.curioId);
+    if (idx !== -1) {
+      const [sold] = curios.splice(idx, 1);
+      nextPlayer.inventory.curios = curios;
+      nextPlayer.inventory.knickKnacks = curios.length;
+      nextPlayer.money += action.valuePerItem;
+      actionLog = {
+        key: 'action.pawn.pawnedKnickKnacks',
+        params: { count: 1, totalValue: action.valuePerItem, name: sold.name }
+      };
+      return { nextPlayer, actionLog };
+    }
+  }
+
+  const requestedCount = action.count ?? 1;
+  const sellCount = Math.min(currentCount, requestedCount);
   const totalValue = sellCount * action.valuePerItem;
 
-  nextPlayer.inventory.knickKnacks = currentCount - sellCount;
+  curios.splice(0, sellCount);
+  nextPlayer.inventory.curios = curios;
+  nextPlayer.inventory.knickKnacks = curios.length;
   nextPlayer.money += totalValue;
 
   actionLog = {

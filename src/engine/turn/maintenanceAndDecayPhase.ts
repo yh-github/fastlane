@@ -5,7 +5,7 @@ import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { calcDependabilityDecay, calcWealthProgress, calcEducationProgress, calcCareerProgress, calcWellbeingScore, roundToResolution } from '../statMath';
 import { calcLiquidAssets, applyMarketCrash, applyEconomicBoom } from '../economyEngine';
 import { applyHappinessChange, applyMentalChange } from '../statEffects';
-import { CURIO_CATALOG } from '../curioCatalog';
+import { CURIO_CATALOG, ensurePlayerCurios } from '../curioCatalog';
 import { processApartmentRobbery, processDonations } from '../eventEngine';
 import { processWeekend, generateWeekendChoices, resolveWeekendChoice } from '../weekendEngine';
 import { selectAiWeekendCard } from '../aiEngine';
@@ -155,6 +155,7 @@ export function processMaintenanceAndDecayPhase(
       player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + uninspectedCurios;
     }
     player.inventory.uninspectedKnickKnacks = 0;
+    ensurePlayerCurios(player, state.turn);
   }
 
   // 6. Computer Profits
