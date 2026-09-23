@@ -208,17 +208,40 @@ describe('Turn Processor', () => {
   });
 
   describe('Happiness Bonuses', () => {
-    it('grants happiness for stove and microwave if food was eaten at home', () => {
+    it('grants +1 happiness for stove only when food was eaten', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 2;
+      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+      state.players[0].inventory.appliances.push({ id: 'stove', purchasePrice: 500, purchaseSource: 'socket_city' });
+      state.players[0].inventory.freshFoodUnits = 1;
+      state.players[0].happiness = 50;
+
+      const nextState = processTurnStart(state, mockCampaign);
+      expect(nextState.players[0].happiness).toBe(51);
+    });
+
+    it('grants +1 happiness for microwave only when food was eaten', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 2;
+      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+      state.players[0].inventory.appliances.push({ id: 'microwave', purchasePrice: 500, purchaseSource: 'socket_city' });
+      state.players[0].inventory.freshFoodUnits = 1;
+      state.players[0].happiness = 50;
+
+      const nextState = processTurnStart(state, mockCampaign);
+      expect(nextState.players[0].happiness).toBe(51);
+    });
+
+    it('grants +1 happiness (not +2) when owning both stove and microwave', () => {
       let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 2;
       state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].inventory.appliances.push({ id: 'stove', purchasePrice: 500, purchaseSource: 'socket_city' });
       state.players[0].inventory.appliances.push({ id: 'microwave', purchasePrice: 500, purchaseSource: 'socket_city' });
-      state.players[0].inventory.freshFoodUnits = 1; // So they eat at home!
+      state.players[0].inventory.freshFoodUnits = 1;
       state.players[0].happiness = 50;
 
       const nextState = processTurnStart(state, mockCampaign);
-      
       expect(nextState.players[0].happiness).toBe(51);
     });
 

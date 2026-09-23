@@ -50,7 +50,12 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
   let newTurnFlags = { ...player.turnFlags };
 
   if (item.id === 'microwave') {
-    happinessBonus = item.store === 'socket_city' ? 2 : (item.happinessBonus || 1);
+    const alreadyOwnsMicrowave = player.inventory.appliances?.some(a => a.id === 'microwave');
+    if (alreadyOwnsMicrowave) {
+      happinessBonus = 0;
+    } else {
+      happinessBonus = item.store === 'socket_city' ? 2 : (item.happinessBonus || 1);
+    }
   } else if (item.id === 'lottery_tickets') {
     if (!player.turnFlags?.lotteryHappinessGranted) {
       newTurnFlags.lotteryHappinessGranted = true;
