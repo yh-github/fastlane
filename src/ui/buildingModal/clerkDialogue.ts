@@ -37,8 +37,8 @@ export function getPawnShopWeeklyStock(
   playerId: string,
   gameSeed?: number
 ): ItemDef[] {
-  const seedPrefix = (gameSeed ?? 0) * 10007;
-  let seed = seedPrefix + turn * 7919 + (playerId.charCodeAt(playerId.length - 1) || 0) * 104729;
+  const seedPrefix = ((gameSeed ?? 0) % 233280) * 10007;
+  let seed = (seedPrefix + turn * 7919 + (playerId.charCodeAt(playerId.length - 1) || 0) * 104729) % 233280;
   const random = () => {
     seed = (seed * 9301 + 49297) % 233280;
     return seed / 233280;
@@ -129,8 +129,8 @@ export function getAvailableItemsForBuilding(
 
   // Z-Mart & Discount Store randomization (show 6 items consistently per week per player)
   if ((building.id === 'z_mart' || building.id === 'discount_and_pawn' || building.archetype === 'discount_and_pawn') && itemsHere.length > 6) {
-    const seedPrefix = (gameSeed ?? 0) * 10007;
-    let seed = seedPrefix + turn * 1337 + (playerId.charCodeAt(playerId.length - 1) || 0) * 12345;
+    const seedPrefix = ((gameSeed ?? 0) % 233280) * 10007;
+    let seed = (seedPrefix + turn * 1337 + (playerId.charCodeAt(playerId.length - 1) || 0) * 12345) % 233280;
     const random = () => {
       seed = (seed * 9301 + 49297) % 233280;
       return seed / 233280;

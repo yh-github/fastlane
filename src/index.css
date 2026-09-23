@@ -170,15 +170,15 @@ body {
   image-rendering: auto;
 }
 
-/* Building Modal */
-.building-modal {
+.building-modal,
+.building-modal--curved {
   position: absolute;
-  left: calc(var(--board-x, calc(50% - 600px)) + (185px * var(--board-scale, 1)));
-  top: calc(var(--board-y, calc(50% - 400px)) + (126px * var(--board-scale, 1)));
-  width: calc(830px * var(--board-scale, 1));
-  height: calc(540px * var(--board-scale, 1));
-  max-width: calc(830px * var(--board-scale, 1));
-  max-height: calc(540px * var(--board-scale, 1));
+  left: calc(var(--board-x, calc(50% - 600px)) + (235px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (165px * var(--board-scale, 1)));
+  width: calc(730px * var(--board-scale, 1));
+  height: calc(490px * var(--board-scale, 1));
+  max-width: calc(730px * var(--board-scale, 1));
+  max-height: calc(490px * var(--board-scale, 1));
   background: var(--panel-bg);
   backdrop-filter: blur(15px);
   border: 1px solid var(--accent-cyan);
@@ -190,6 +190,15 @@ body {
   z-index: 50;
   overflow: visible;
   box-sizing: border-box;
+}
+
+.building-modal--schematic {
+  left: calc(var(--board-x, calc(50% - 600px)) + (185px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (126px * var(--board-scale, 1)));
+  width: calc(830px * var(--board-scale, 1));
+  height: calc(540px * var(--board-scale, 1));
+  max-width: calc(830px * var(--board-scale, 1));
+  max-height: calc(540px * var(--board-scale, 1));
 }
 
 .building-modal__header {

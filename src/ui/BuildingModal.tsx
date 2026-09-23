@@ -119,17 +119,19 @@ export function BuildingModal({
     const startPointerX = e.clientX;
     const startPointerY = e.clientY;
     const rect = modalRef.current.getBoundingClientRect();
-    const startLeft = rect.left;
-    const startTop = rect.top;
+    const parent = (modalRef.current.offsetParent as HTMLElement) || modalRef.current.parentElement;
+    const parentRect = parent ? parent.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    const startLeft = rect.left - parentRect.left;
+    const startTop = rect.top - parentRect.top;
 
     const onPointerMove = (moveEvent: PointerEvent) => {
       const deltaX = moveEvent.clientX - startPointerX;
       const deltaY = moveEvent.clientY - startPointerY;
-      const maxLeft = window.innerWidth - rect.width - 10;
-      const maxTop = window.innerHeight - rect.height - 10;
+      const maxLeft = parentRect.width - rect.width - 10;
+      const maxTop = parentRect.height - rect.height - 10;
       const clampedX = Math.max(10, Math.min(maxLeft, startLeft + deltaX));
       const clampedY = Math.max(10, Math.min(maxTop, startTop + deltaY));
-      setPosition({ x: clampedX, y: clampedY });
+      setPosition({ x: Math.round(clampedX), y: Math.round(clampedY) });
     };
 
     const onPointerUp = () => {
@@ -464,7 +466,7 @@ export function BuildingModal({
   return (
     <div 
       ref={modalRef}
-      className="building-modal"
+      className={`building-modal ${rules?.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}`}
       style={{
         ...(position ? { left: `${position.x}px`, top: `${position.y}px` } : {}),
         ...(customSize ? { width: `${customSize.width}px`, height: `${customSize.height}px`, maxWidth: 'none', maxHeight: 'none' } : {})

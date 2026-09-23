@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { HomeApartmentView } from './HomeApartmentView';
 import { ApartmentMockupSandbox } from './ApartmentMockupSandbox';
 import { createMockCampaign } from '../../../engine/testFactories';
@@ -86,10 +86,11 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.getByTitle(/TV \(Unowned — Available at Socket City\/Z-Mart\)/i)).toBeInTheDocument();
     expect(screen.getByTitle(/Stereo \(Unowned — Available at Socket City\/Z-Mart\)/i)).toBeInTheDocument();
 
-    // Bottom docked action buttons must be present
-    expect(screen.getByRole('button', { name: /Leisure/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Chores/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Pantry/i })).toBeInTheDocument();
+    // Flanking action wings must be present
+    expect(screen.getByTestId('home-wing-left')).toBeInTheDocument();
+    expect(screen.getByTestId('home-wing-right')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-relax')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-clean')).toBeInTheDocument();
 
     // Clicking an unowned slot opens catalog / wishlist modal
     const unownedTv = screen.getByTitle(/TV \(Unowned/i);
@@ -145,7 +146,12 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('switches between inline card decks without hiding Space & Mess gauge, and toggles back to furnishings', () => {
+  it('renders flanking wings with Leisure (Relax, Host) and Chores (Clean, Service, Pantry) without hiding Apartment Furnishings', () => {
+    const onRelax = vi.fn();
+    const onSocialize = vi.fn();
+    const onClean = vi.fn();
+    const onService = vi.fn();
+
     render(
       <HomeApartmentView
         player={basePlayer}
@@ -175,19 +181,19 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
         scaledMess={2}
         classicGain={5}
         classicFirstBonus={0}
-        onRelaxClick={vi.fn()}
-        socialParams={{ timeCost: 4, isDisabled: false }}
-        onSocializeClick={vi.fn()}
+        onRelaxClick={onRelax}
+        socialParams={{ timeCost: 4, isDisabled: false, minReward: 4, maxReward: 8, minCashNeeded: 15, maxCashNeeded: 30, isHalfRewardExpected: false }}
+        onSocializeClick={onSocialize}
         hoursToClean={3}
         cleanPhysGain={2}
         isCleanDisabled={false}
         cleanSubtext=""
-        onCleanClick={vi.fn()}
-        cleaningServiceCost={100}
+        onCleanClick={onClean}
+        cleaningServiceCost={1}
         cleaningServicePrice={100}
         isServiceDisabled={false}
         serviceSubtext=""
-        onServiceClick={vi.fn()}
+        onServiceClick={onService}
         hasFridge={true}
         hasFreezer={false}
       />
@@ -197,43 +203,45 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
     expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
 
-    // Click Leisure
-    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
+    // Left wing has Relax and Host
+    const leftWing = screen.getByTestId('home-wing-left');
+    expect(leftWing).toBeInTheDocument();
+    expect(within(leftWing).getByTestId('btn-relax')).toBeInTheDocument();
+    expect(within(leftWing).getByTestId('btn-socialize')).toBeInTheDocument();
 
-    // Now Leisure deck is visible without redundant section title or back button, Mess gauge is STILL visible!
+    // Right wing has Clean, Service, and Pantry
+    const rightWing = screen.getByTestId('home-wing-right');
+    expect(rightWing).toBeInTheDocument();
+    expect(within(rightWing).getByTestId('btn-clean')).toBeInTheDocument();
+    expect(within(rightWing).getByTestId('btn-service')).toBeInTheDocument();
+    expect(within(rightWing).getByTestId('home-card-pantry')).toBeInTheDocument();
+
+    // Click Relax executes callback
+    fireEvent.click(within(leftWing).getByTestId('btn-relax'));
+    expect(onRelax).toHaveBeenCalled();
+
+    // Click Host executes callback
+    fireEvent.click(within(leftWing).getByTestId('btn-socialize'));
+    expect(onSocialize).toHaveBeenCalled();
+
+    // Click Clean executes callback
+    fireEvent.click(within(rightWing).getByTestId('btn-clean'));
+    expect(onClean).toHaveBeenCalled();
+
+    // Click Service executes callback
+    fireEvent.click(within(rightWing).getByTestId('btn-service'));
+    expect(onService).toHaveBeenCalled();
+
+    // Clicking '?' help button on Relax opens help modal
+    const helpButtons = screen.getAllByRole('button', { name: 'Help & Details' });
+    expect(helpButtons.length).toBeGreaterThan(0);
+    fireEvent.click(helpButtons[0]);
     expect(screen.getByText(/Relax & Recharge/i)).toBeInTheDocument();
-    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Apartment Furnishings/i)).toBeNull();
-    expect(screen.queryByText(/Leisure & Living/i)).toBeNull();
-    expect(screen.queryByRole('button', { name: /✕ Back to Furnishings/i })).toBeNull();
-
-    // Clicking active Leisure button toggles back to furnishings
-    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
-    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Got It' }));
     expect(screen.queryByText(/Relax & Recharge/i)).toBeNull();
 
-    // Click Chores
-    fireEvent.click(screen.getByRole('button', { name: /Chores/i }));
-    expect(screen.getByRole('heading', { name: /Clean Apartment/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Call Cleaning Service/i })).toBeInTheDocument();
-    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Chores & Maintenance/i)).toBeNull();
-
-    // Clicking active Chores button toggles back to furnishings
-    fireEvent.click(screen.getByRole('button', { name: /Chores/i }));
+    // Apartment Furnishings was never hidden!
     expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /Clean Apartment/i })).toBeNull();
-
-    // Switching directly from Pantry to Leisure
-    fireEvent.click(screen.getByRole('button', { name: /Pantry/i }));
-    expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
-    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Kitchen & Pantry/i)).toBeNull();
-
-    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
-    expect(screen.getByText(/Relax & Recharge/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Pantry & Food Supplies/i)).toBeNull();
-    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
   });
 
   it('renders broken appliance with badge and allows executing maintenance options', () => {
