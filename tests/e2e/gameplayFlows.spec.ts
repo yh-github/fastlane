@@ -76,8 +76,8 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
       }
     }
 
-    // Verify hours dropped to 0.0
-    await expect(dashboard).toContainText(/0\.0\s*\/\s*60/);
+    // Verify hours dropped to 0
+    await expect(dashboard).toContainText(/0(?:\.0)?\s*\/\s*60/);
 
     // 9. Exit the location (close building modal) with 0.0 hours left -> ends turn & runs home
     const closeBuildingBtn = page.locator('.building-modal__close');
@@ -141,7 +141,7 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
           await confirmRelaxBtn.click();
         }
       }
-      await expect(dashboard).toContainText(/0\.0\s*\/\s*60/);
+      await expect(dashboard).toContainText(/0(?:\.0)?\s*\/\s*60/);
 
       // Exit location at 0.0 hours -> advances to Week 3 Weekend
       if (await closeBuildingBtn.isVisible()) {

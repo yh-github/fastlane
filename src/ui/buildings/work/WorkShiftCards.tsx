@@ -676,9 +676,6 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '0.70rem', color: '#cbd5e1' }}>
-                  ⏳ {player.hoursRemaining}h left
-                </span>
                 {summary.locationInitiatives > 0 && (
                   <span
                     title={`${summary.locationInitiatives} Initiatives (+${summary.locationInitiatives * 3}% promotion standing)`}

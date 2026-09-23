@@ -224,17 +224,25 @@ export default function App() {
         {showBottomCenterClock && activePlayer && (
           <div className="bottom-center-clock" data-testid="bottom-center-clock">
             <div className="clock-face">
-              <div 
-                className="clock-dial"
-                style={{
-                  background: `conic-gradient(#ff3333 0% ${((campaign!.config.timeRules.hoursPerTurn - activePlayer.hoursRemaining) / campaign!.config.timeRules.hoursPerTurn) * 100}%, #ffffff ${((campaign!.config.timeRules.hoursPerTurn - activePlayer.hoursRemaining) / campaign!.config.timeRules.hoursPerTurn) * 100}% 100%)`
-                }}
-              >
-                <div 
-                  className="clock-hand" 
-                  style={{ transform: `rotate(${(((campaign!.config.timeRules.hoursPerTurn - activePlayer.hoursRemaining) / campaign!.config.timeRules.hoursPerTurn) * 360)}deg)` }} 
-                />
-              </div>
+              {(() => {
+                const totalHours = campaign!.config.timeRules.hoursPerTurn;
+                const spentPct = Math.max(0, Math.min(100, ((totalHours - activePlayer.hoursRemaining) / totalHours) * 100));
+                const smoothMin = Math.max(0, spentPct - 0.25);
+                const smoothMax = Math.min(100, spentPct + 0.25);
+                return (
+                  <div 
+                    className="clock-dial"
+                    style={{
+                      background: `conic-gradient(#ff3333 0%, #ff3333 ${smoothMin}%, #ffffff ${smoothMax}%, #ffffff 100%)`
+                    }}
+                  >
+                    <div 
+                      className="clock-hand" 
+                      style={{ transform: `rotate(${(spentPct / 100) * 360}deg)` }} 
+                    />
+                  </div>
+                );
+              })()}
               <span className="clock-face-number" data-testid="clock-face-number" dir="ltr">
                 {formatQuarterHours(activePlayer.hoursRemaining)}
               </span>
