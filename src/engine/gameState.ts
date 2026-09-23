@@ -346,10 +346,21 @@ export interface InventoryState {
   pawnedItems: PawnedItem[];
   /** Knick-knacks and curios displayed at home */
   knickKnacks?: number;
+  /** Tracked individual curios on display at home */
+  curios?: OwnedCurio[];
   /** Uninspected curios bought this turn, pending weekend appraisal */
   uninspectedKnickKnacks?: number;
   /** Spare parts for DIY appliance maintenance */
   spareParts?: number;
+}
+
+export interface OwnedCurio {
+  id: string;
+  catalogId: string;
+  name: string;
+  acquiredWeek: number;
+  flavorText?: string;
+  icon?: string;
 }
 
 export interface AppraisalDilemmaOption {

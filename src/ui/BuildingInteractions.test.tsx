@@ -882,5 +882,56 @@ describe('BuildingInteractions', () => {
     fireEvent.click(screen.getByText('OK'));
     expect(handleClose).toHaveBeenCalled();
   });
+
+  it('PawnShop displays curio selling impact breakdown and allows individual curio selling', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 200,
+      hoursRemaining: 10,
+      inventory: {
+        knickKnacks: 2,
+        curios: [
+          { id: 'curio_1', catalogId: 'curio_vintage_tin_robot', name: 'Vintage Tin Robot', acquiredWeek: 1 },
+          { id: 'curio_2', catalogId: 'curio_brass_carriage_clock', name: 'Brass Carriage Clock', acquiredWeek: 2 }
+        ],
+        appliances: [],
+        pawnedItems: []
+      }
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <PawnShop
+        player={mockPlayer}
+        onAction={mockOnAction}
+        economicIndex={0}
+        initialTab="pawn"
+      />
+    );
+
+    // Modifier breakdown should be visible
+    expect(screen.getByText(/Selling Impact Breakdown/i)).toBeInTheDocument();
+    expect(screen.getByText(/Curios & Knick-Knacks/i)).toBeInTheDocument();
+
+    // Toggle individual curio picker
+    const toggleBtn = screen.getByTestId('btn-toggle-curios-picker');
+    fireEvent.click(toggleBtn);
+
+    // Individual list should appear
+    expect(screen.getByTestId('pawn-individual-curios-list')).toBeInTheDocument();
+    expect(screen.getByText('Vintage Tin Robot')).toBeInTheDocument();
+
+    // Sell single curio
+    const sellBtn = screen.getByTestId('btn-sell-curio-curio_1');
+    fireEvent.click(sellBtn);
+
+    expect(mockOnAction).toHaveBeenCalledWith({
+      type: 'pawn_knick_knacks',
+      curioId: 'curio_1',
+      valuePerItem: expect.any(Number)
+    });
+  });
 });
+
 

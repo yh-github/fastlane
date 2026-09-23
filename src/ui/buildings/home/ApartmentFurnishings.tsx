@@ -39,6 +39,8 @@ export interface ApartmentFurnishingsProps {
     applianceData?: OwnedAppliance;
     isOwned?: boolean;
   }) => void;
+  onToggleCuriosWings?: () => void;
+  isCuriosWingsOpen?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -48,6 +50,8 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
   campaign,
   rules,
   onInspectDurable,
+  onToggleCuriosWings,
+  isCuriosWingsOpen,
   className,
   style
 }) => {
@@ -367,12 +371,22 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         {(rules?.pawnRummageBins !== false || (player.inventory?.knickKnacks || 0) > 0) && (
           <div
             data-testid="durable-card-knick_knack"
-            onClick={() => onInspectDurable({
-              id: 'knick_knack',
-              isBook: false,
-              isOwned: (player.inventory?.knickKnacks || 0) > 0
+            onClick={() => {
+              if (onToggleCuriosWings && (player.inventory?.knickKnacks || 0) > 0) {
+                onToggleCuriosWings();
+              } else {
+                onInspectDurable({
+                  id: 'knick_knack',
+                  isBook: false,
+                  isOwned: (player.inventory?.knickKnacks || 0) > 0
+                });
+              }
+            }}
+            title={t('homeRelax.curiosShelfTitle', {
+              count: player.inventory?.knickKnacks || 0,
+              space: (player.inventory?.knickKnacks || 0) * 2,
+              defaultValue: `Curios & Knick-Knacks\nYou have ${(player.inventory?.knickKnacks || 0)} on display (${(player.inventory?.knickKnacks || 0) * 2} space).\nClick to open Curios Console.`
             })}
-            title={`Curios & Knick-Knacks\nYou have ${(player.inventory?.knickKnacks || 0)} on display (${(player.inventory?.knickKnacks || 0) * 2} space).\nClick to inspect or discard.`}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -380,11 +394,17 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               justifyContent: 'center',
               width: '66px',
               height: '74px',
-              background: (player.inventory?.knickKnacks || 0) > 0 ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
-              border: (player.inventory?.knickKnacks || 0) > 0 ? '1.5px solid #f1c40f' : '1.5px dashed rgba(255, 255, 255, 0.2)',
+              background: (player.inventory?.knickKnacks || 0) > 0
+                ? (isCuriosWingsOpen ? 'rgba(234, 179, 8, 0.25)' : 'rgba(0, 0, 0, 0.45)')
+                : 'rgba(0, 0, 0, 0.25)',
+              border: (player.inventory?.knickKnacks || 0) > 0
+                ? (isCuriosWingsOpen ? '2px solid #facc15' : '1.5px solid #f1c40f')
+                : '1.5px dashed rgba(255, 255, 255, 0.2)',
               borderRadius: '8px',
               cursor: (player.inventory?.knickKnacks || 0) > 0 ? 'pointer' : 'default',
-              boxShadow: (player.inventory?.knickKnacks || 0) > 0 ? '0 0 8px rgba(241, 196, 15, 0.25)' : 'none',
+              boxShadow: (player.inventory?.knickKnacks || 0) > 0
+                ? (isCuriosWingsOpen ? '0 0 16px rgba(250, 204, 21, 0.6)' : '0 0 8px rgba(241, 196, 15, 0.25)')
+                : 'none',
               opacity: (player.inventory?.knickKnacks || 0) > 0 ? 1 : 0.45,
               transition: 'all 0.15s ease',
               position: 'relative',

@@ -4,6 +4,7 @@ import type { ItemDef, CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules, PawnedItem } from '../../engine/gameState';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
+import { ensurePlayerCurios, getCurioDef } from '../../engine/curioCatalog';
 import { StoreFront } from './StoreFront';
 import type { InteractionProps } from './types';
 
@@ -27,6 +28,7 @@ export function PawnShop({
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'buy' | 'pawn'>(initialTab ?? 'buy');
   const [purchasedItemKeys, setPurchasedItemKeys] = useState<Record<string, boolean>>({});
+  const [showCuriosPicker, setShowCuriosPicker] = useState(false);
 
   const pawnableAppliances = player.inventory.appliances || [];
   const pawnableBooks = (player.inventory.books || []).map(bId => {
@@ -491,33 +493,56 @@ export function PawnShop({
       {/* TAB 2: PAWN & REDEEM */}
       {activeTab === 'pawn' && (
         <div>
-          {/* Sell Knick-Knacks (Bulk Sell / Permanent) */}
+          {/* Sell Knick-Knacks (Bulk Sell / Permanent + Individual Picker) */}
           {(player.inventory.knickKnacks || 0) > 0 && (() => {
             const knickKnacksCount = player.inventory.knickKnacks || 0;
             const payoutRate = campaign?.config?.economyRules?.pawnPayoutRate ?? 0.4;
             const knickKnackVal = Math.max(1, Math.floor(calcEconomyPrice(10, economicIndex) * payoutRate));
+            const curios = ensurePlayerCurios(player, 1);
+            
+            // Calculate lifestyle impacts
+            const curLifestyle = Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacksCount)));
+            const afterSell1 = knickKnacksCount > 1 ? Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacksCount - 1))) : 0;
+            const diff1 = afterSell1 - curLifestyle;
+            const afterSell5 = knickKnacksCount > 5 ? Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacksCount - 5))) : 0;
+            const diff5 = afterSell5 - curLifestyle;
+
             return (
               <div
                 data-testid="pawn-knick-knacks-card"
                 style={{
-                  background: 'rgba(234, 179, 8, 0.08)',
-                  border: '1px solid rgba(234, 179, 8, 0.3)',
-                  borderRadius: '8px',
+                  background: 'linear-gradient(145deg, rgba(41, 37, 36, 0.4) 0%, rgba(28, 25, 23, 0.6) 100%)',
+                  border: '1.5px solid rgba(234, 179, 8, 0.4)',
+                  borderRadius: '10px',
                   padding: '12px',
                   marginBottom: '14px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '8px'
+                  gap: '10px',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.5)'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '20px' }}>🏺</span>
+                    <span style={{ fontSize: '24px' }}>🏺</span>
                     <div>
-                      <strong style={{ fontSize: '13px', color: '#facc15' }}>
-                        {t('pawnShop.curiosOnDisplay', { defaultValue: 'Curios & Knick-Knacks' })}
-                      </strong>
-                      <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <strong style={{ fontSize: '13px', color: '#facc15' }}>
+                          {t('pawnShop.curiosOnDisplay', { defaultValue: 'Curios & Knick-Knacks' })}
+                        </strong>
+                        <span style={{
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          background: 'rgba(234, 179, 8, 0.2)',
+                          color: '#facc15',
+                          border: '1px solid #facc15'
+                        }}>
+                          +{curLifestyle} Lifestyle · {knickKnacksCount * 2} Space
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#a8a29e', marginTop: '2px' }}>
                         {t('pawnShop.curioCountDesc', {
                           count: knickKnacksCount,
                           space: knickKnacksCount * 2,
@@ -526,7 +551,59 @@ export function PawnShop({
                       </div>
                     </div>
                   </div>
+
+                  {/* Toggle Individual Curios Picker */}
+                  <button
+                    data-testid="btn-toggle-curios-picker"
+                    onClick={() => setShowCuriosPicker(!showCuriosPicker)}
+                    style={{
+                      background: showCuriosPicker ? 'rgba(250, 204, 21, 0.25)' : 'rgba(255,255,255,0.06)',
+                      border: '1px solid #facc15',
+                      borderRadius: '6px',
+                      color: '#fef08a',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      padding: '4px 10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <span>{showCuriosPicker ? '✕ Hide Curios' : `🔍 Pick & Sell Individual (${curios.length})`}</span>
+                  </button>
                 </div>
+
+                {/* MODIFIER DIFF PREVIEW BANNER */}
+                <div style={{
+                  background: 'rgba(0, 0, 0, 0.35)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '6px',
+                  padding: '6px 10px',
+                  fontSize: '11px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '3px'
+                }}>
+                  <div style={{ color: '#38bdf8', fontWeight: 'bold' }}>
+                    📊 {t('pawnShop.modifierImpactTitle', { defaultValue: 'Selling Impact Breakdown' })}:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', color: '#d6d3d1' }}>
+                    <span>
+                      • <strong style={{ color: '#fef08a' }}>Sell 1:</strong> +${knickKnackVal} | -2 Space | {diff1 === 0 ? <span style={{ color: '#94a3b8' }}>Lifestyle unchanged</span> : <span style={{ color: '#f87171' }}>{diff1} Lifestyle</span>}
+                    </span>
+                    {knickKnacksCount >= 5 && (
+                      <span>
+                        • <strong style={{ color: '#fef08a' }}>Sell 5:</strong> +${knickKnackVal * 5} | -10 Space | {diff5 === 0 ? <span style={{ color: '#94a3b8' }}>Lifestyle unchanged</span> : <span style={{ color: '#f87171' }}>{diff5} Lifestyle</span>}
+                      </span>
+                    )}
+                    <span>
+                      • <strong style={{ color: '#fef08a' }}>Sell All:</strong> +${knickKnackVal * knickKnacksCount} | -{knickKnacksCount * 2} Space | <span style={{ color: '#f87171' }}>-{curLifestyle} Lifestyle (drops to 0)</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bulk Sell Buttons */}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button
                     data-action-target="pawn-knick-knack-1"
@@ -534,12 +611,13 @@ export function PawnShop({
                     style={{
                       flex: 1,
                       minWidth: '90px',
-                      padding: '6px 10px',
+                      padding: '7px 10px',
                       background: 'rgba(255,255,255,0.08)',
                       border: '1px solid #eab308',
                       borderRadius: '5px',
                       color: '#fff',
                       fontSize: '12px',
+                      fontWeight: 'bold',
                       cursor: 'pointer'
                     }}
                   >
@@ -552,12 +630,13 @@ export function PawnShop({
                       style={{
                         flex: 1,
                         minWidth: '90px',
-                        padding: '6px 10px',
+                        padding: '7px 10px',
                         background: 'rgba(255,255,255,0.08)',
                         border: '1px solid #eab308',
                         borderRadius: '5px',
                         color: '#fff',
                         fontSize: '12px',
+                        fontWeight: 'bold',
                         cursor: 'pointer'
                       }}
                     >
@@ -570,7 +649,7 @@ export function PawnShop({
                     style={{
                       flex: 1,
                       minWidth: '90px',
-                      padding: '6px 10px',
+                      padding: '7px 10px',
                       background: 'linear-gradient(145deg, rgba(234,179,8,0.3), rgba(202,138,4,0.3))',
                       border: '1px solid #facc15',
                       borderRadius: '5px',
@@ -583,6 +662,80 @@ export function PawnShop({
                     {t('pawnShop.sellAll', { count: knickKnacksCount, val: knickKnackVal * knickKnacksCount, defaultValue: `Sell All ${knickKnacksCount} (+$${knickKnackVal * knickKnacksCount})` })}
                   </button>
                 </div>
+
+                {/* EXPANDABLE INDIVIDUAL CURIOS LIST */}
+                {showCuriosPicker && (
+                  <div
+                    data-testid="pawn-individual-curios-list"
+                    style={{
+                      marginTop: '6px',
+                      padding: '8px',
+                      background: 'rgba(0,0,0,0.4)',
+                      borderRadius: '8px',
+                      border: '1px dashed rgba(250, 204, 21, 0.3)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      maxHeight: '220px',
+                      overflowY: 'auto'
+                    }}
+                  >
+                    <div style={{ fontSize: '11px', color: '#fde047', fontWeight: 'bold' }}>
+                      {t('pawnShop.selectCurioPrompt', { defaultValue: 'Select a specific curio to sell:' })}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '6px' }}>
+                      {curios.map((c) => {
+                        const def = getCurioDef(c.catalogId);
+                        const icon = c.icon || def.icon || '🏺';
+                        return (
+                          <div
+                            key={c.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: '6px',
+                              padding: '5px 8px',
+                              gap: '6px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                              <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{icon}</span>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: '11px', color: '#fff', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {c.name}
+                                </div>
+                                <div style={{ fontSize: '9px', color: '#94a3b8' }}>
+                                  Week #{c.acquiredWeek || 1}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              data-testid={`btn-sell-curio-${c.id}`}
+                              onClick={() => onAction({ type: 'pawn_knick_knacks', curioId: c.id, valuePerItem: knickKnackVal })}
+                              style={{
+                                background: 'rgba(234, 179, 8, 0.2)',
+                                border: '1px solid #facc15',
+                                borderRadius: '4px',
+                                color: '#fef08a',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                                padding: '3px 8px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
+                              }}
+                            >
+                              Sell (+${knickKnackVal})
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}

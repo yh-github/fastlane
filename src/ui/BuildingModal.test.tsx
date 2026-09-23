@@ -936,4 +936,65 @@ describe('BuildingModal Component', () => {
       expect(screen.getByText(/Not enough education: missing Engineering\./i)).toBeInTheDocument();
     }, { timeout: 4000 });
   });
+
+  it('renders live coordinate and dimension readout and supports reset', async () => {
+    // Mock navigator.clipboard
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: writeTextMock
+      }
+    });
+
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    const readout = screen.getByTestId('modal-dimension-readout');
+    expect(readout).toBeInTheDocument();
+    expect(readout.textContent).toMatch(/W:\d+px\s+H:\d+px\s+\|\s+X:\d+px\s+Y:\d+px/);
+
+    // Clicking readout triggers clipboard write
+    fireEvent.click(readout);
+    expect(writeTextMock).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByText(/Copied!/i)).toBeInTheDocument();
+    });
+
+    // Test drag handle and pointer interaction
+    const header = screen.getByText('Z-Mart', { selector: 'h2' }).closest('.building-modal__header');
+    expect(header).toBeInTheDocument();
+
+    fireEvent.pointerDown(header!, { clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { clientX: 150, clientY: 180 });
+    fireEvent.pointerUp(window);
+
+    // Reset button should now appear
+    const resetBtn = screen.getByTestId('btn-reset-modal-layout');
+    expect(resetBtn).toBeInTheDocument();
+
+    // Clicking reset button clears custom position
+    fireEvent.click(resetBtn);
+    expect(screen.queryByTestId('btn-reset-modal-layout')).not.toBeInTheDocument();
+
+    // Test resize handle
+    const resizeHandle = screen.getByTestId('building-modal-resize-handle');
+    expect(resizeHandle).toBeInTheDocument();
+
+    fireEvent.pointerDown(resizeHandle, { clientX: 200, clientY: 200 });
+    fireEvent.pointerMove(window, { clientX: 260, clientY: 280 });
+    fireEvent.pointerUp(window);
+
+    expect(screen.getByTestId('btn-reset-modal-layout')).toBeInTheDocument();
+  });
 });
+

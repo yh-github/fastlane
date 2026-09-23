@@ -9,6 +9,7 @@ import { ChoresCards } from './ChoresCards';
 import { PantryCard } from './PantryCard';
 import { DurableCardModal } from './DurableCardModal';
 import { ApartmentFurnishings } from './ApartmentFurnishings';
+import { CuriosFlankingWings } from './CuriosFlankingWings';
 
 interface HomeApartmentViewProps {
   player: PlayerState;
@@ -67,6 +68,7 @@ interface HomeApartmentViewProps {
 
   // Maintenance & Actions
   economicIndex?: number;
+  turn?: number;
   onAction?: (action: any) => void;
 }
 
@@ -75,6 +77,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   campaign,
   rules,
   economicIndex = 0,
+  turn = 1,
   onAction,
   housingName: _housingName,
   actionFeedback,
@@ -118,6 +121,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const [activeDeck, setActiveDeck] = useState<'leisure' | 'chores' | 'pantry' | null>(null);
+  const [isCuriosWingsOpen, setIsCuriosWingsOpen] = useState(false);
   const [inspectedDurable, setInspectedDurable] = useState<{
     id: string;
     isBook?: boolean;
@@ -376,7 +380,31 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           campaign={campaign}
           rules={rules}
           onInspectDurable={setInspectedDurable}
+          onToggleCuriosWings={() => setIsCuriosWingsOpen(!isCuriosWingsOpen)}
+          isCuriosWingsOpen={isCuriosWingsOpen}
         />
+      )}
+
+      {/* Flanking Curios Wings (Steals screen space from surrounding board) */}
+      {isCuriosWingsOpen && (player.inventory?.knickKnacks || 0) > 0 && (
+        modalParent ? createPortal(
+          <CuriosFlankingWings
+            player={player}
+            onAction={onAction}
+            onClose={() => setIsCuriosWingsOpen(false)}
+            turn={turn}
+            rules={rules}
+          />,
+          modalParent
+        ) : (
+          <CuriosFlankingWings
+            player={player}
+            onAction={onAction}
+            onClose={() => setIsCuriosWingsOpen(false)}
+            turn={turn}
+            rules={rules}
+          />
+        )
       )}
 
       {/* ACTION CONTROLS BAR (Leisure, Chores, Pantry) - DOCKED OVER THE BOTTOM WINDOW BORDER */}
