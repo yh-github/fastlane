@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
 import { DurableCardModal } from './DurableCardModal';
@@ -115,6 +116,8 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   hasFridge,
   hasFreezer
 }) => {
+  const { t } = useTranslation();
+  const [activeWing, setActiveWing] = useState<'leisure' | 'chores' | null>(null);
   const [isCuriosWingsOpen, setIsCuriosWingsOpen] = useState(false);
   const [inspectedDurable, setInspectedDurable] = useState<{
     id: string;
@@ -313,13 +316,86 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         </div>
       )}
 
+      {/* Action Deck Toggles: Begins folded */}
+      <div 
+        className="home-actions-toggle-bar"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '10px',
+          margin: '0 0 6px 0',
+          flexShrink: 0
+        }}
+      >
+        <button
+          type="button"
+          data-testid="toggle-wing-leisure"
+          onClick={() => setActiveWing(activeWing === 'leisure' ? null : 'leisure')}
+          style={{
+            padding: '4px 12px',
+            borderRadius: '6px',
+            border: activeWing === 'leisure' ? '1.5px solid #10b981' : '1px solid rgba(255, 255, 255, 0.15)',
+            background: activeWing === 'leisure' 
+              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 150, 105, 0.45) 100%)' 
+              : 'rgba(255, 255, 255, 0.05)',
+            color: activeWing === 'leisure' ? '#6ee7b7' : '#cbd5e1',
+            fontSize: '0.78rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: activeWing === 'leisure' ? '0 0 10px rgba(16, 185, 129, 0.4)' : 'none',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <span>🧘</span>
+          <span>{t('homeRelax.toggleLeisure', { defaultValue: 'Leisure' })}</span>
+          <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>
+            {activeWing === 'leisure' ? '◀' : '▶'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          data-testid="toggle-wing-chores"
+          onClick={() => setActiveWing(activeWing === 'chores' ? null : 'chores')}
+          style={{
+            padding: '4px 12px',
+            borderRadius: '6px',
+            border: activeWing === 'chores' ? '1.5px solid #818cf8' : '1px solid rgba(255, 255, 255, 0.15)',
+            background: activeWing === 'chores' 
+              ? 'linear-gradient(135deg, rgba(129, 140, 248, 0.35) 0%, rgba(99, 102, 241, 0.45) 100%)' 
+              : 'rgba(255, 255, 255, 0.05)',
+            color: activeWing === 'chores' ? '#c7d2fe' : '#cbd5e1',
+            fontSize: '0.78rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: activeWing === 'chores' ? '0 0 10px rgba(129, 140, 248, 0.4)' : 'none',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>
+            {activeWing === 'chores' ? '▶' : '◀'}
+          </span>
+          <span>🧹</span>
+          <span>{t('homeRelax.toggleChores', { defaultValue: 'Chores' })}</span>
+        </button>
+      </div>
+
       {/* MIDDLE CONTENT: ALWAYS APARTMENT FURNISHINGS & BELONGINGS (UNOBSTRUCTED) */}
       <ApartmentFurnishings
         player={player}
         campaign={campaign}
         rules={rules}
         onInspectDurable={setInspectedDurable}
-        onToggleCuriosWings={() => setIsCuriosWingsOpen(!isCuriosWingsOpen)}
+        onToggleCuriosWings={() => {
+          setIsCuriosWingsOpen(!isCuriosWingsOpen);
+          if (!isCuriosWingsOpen) setActiveWing(null);
+        }}
         isCuriosWingsOpen={isCuriosWingsOpen}
       />
 
@@ -346,9 +422,11 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
       )}
 
       {/* Flanking Home Action Wings: Leisure on Left, Chores & Pantry on Right */}
-      {!isCuriosWingsOpen && (
+      {!isCuriosWingsOpen && activeWing && (
         modalParent ? createPortal(
           <HomeFlankingWings
+            activeWing={activeWing}
+            onCloseWing={() => setActiveWing(null)}
             player={player}
             rules={rules}
             campaign={campaign}
@@ -379,6 +457,8 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           modalParent
         ) : (
           <HomeFlankingWings
+            activeWing={activeWing}
+            onCloseWing={() => setActiveWing(null)}
             player={player}
             rules={rules}
             campaign={campaign}

@@ -91,7 +91,7 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
           title: hasFood ? 'Pantry Sustenance' : 'Pantry Depleted (Starving)',
           desc: hasFood
             ? 'Food available in your pantry provides full recovery nutrients.'
-            : 'Without food, you recover physical and mental condition, but suffer -1 to maximum permanent stats!'
+            : `Without food, you still recover condition (+${physGain} Physical, +${mentalGain} Mental), but suffer -1 to maximum permanent stats!`
         });
         outputs.push({
           icon: '💪',
@@ -200,7 +200,7 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
       themeColor = '#c084fc';
       glowColor = 'rgba(192, 132, 252, 0.4)';
       fluff = '"Hire professional cleaners to take care of the heavy lifting. They\'ll leave your apartment sparkling clean without you breaking a sweat."';
-      rationale = 'Hiring a service instantly clears 100% of apartment mess down to zero with minimal time cost and zero physical exertion.';
+      rationale = 'Hiring a service removes 10 units of accumulated apartment mess with minimal time cost (1 hour) and zero physical exertion.';
       inputs.push({
         icon: '💵',
         title: 'Service Fee',
@@ -212,11 +212,11 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
         desc: `${cleaningServiceCost} hour to let them in and inspect`
       });
       outputs.push({
-        icon: '✨',
-        title: 'Total Mess Reset',
-        desc: 'Resets apartment mess completely to 0 (spotless condition)'
+        icon: '🧹',
+        title: '10 Mess Reduction',
+        desc: 'Removes 10 units of accumulated apartment mess.'
       });
-      tips.push('Best utilized when mess has accumulated to high levels, giving maximum value for the flat fee.');
+      tips.push('Best utilized when mess has accumulated or when you are too tired for manual cleaning.');
       tips.push('Saves physical stamina when you are too tired for manual cleaning.');
       break;
 

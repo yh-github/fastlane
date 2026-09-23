@@ -342,6 +342,9 @@ describe('BuildingInteractions', () => {
       />
     );
 
+    // Flanking action wings begin folded; open Leisure wing
+    fireEvent.click(screen.getByTestId('toggle-wing-leisure'));
+
     // Leisure actions are present in the left flanking wing
     const hostBtn = screen.getByTestId('btn-socialize');
     expect(hostBtn).not.toBeDisabled();
@@ -492,6 +495,9 @@ describe('BuildingInteractions', () => {
       />
     );
 
+    // Flanking action wings begin folded; open Leisure wing
+    fireEvent.click(screen.getByTestId('toggle-wing-leisure'));
+
     // Initial Relax card in Left Wing:
     // Phys gain: 1 + Math.floor(50/25) = 3
     // Mental gain: firstBonus (2) + 3 + mentalBonus(1) + socialMentalBonus(1) = 7
@@ -594,6 +600,9 @@ describe('BuildingInteractions', () => {
     fireEvent.click(screen.getByTitle(/Dictionary/i));
     expect(screen.getByText(/\+1 Max 🧠/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Back to Apartment|✕/i }));
+
+    // Flanking action wings begin folded; open Chores wing
+    fireEvent.click(screen.getByTestId('toggle-wing-chores'));
 
     // In Right Wing, Pantry status card is rendered
     expect(screen.getByTestId('home-card-pantry')).toBeInTheDocument();

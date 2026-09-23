@@ -72,6 +72,15 @@ export function BuildingModal({
   });
   const [isDragging, setIsDragging] = useState(false);
   const [, setIsResizing] = useState(false);
+  const [modalMargin, setModalMargin] = useState<number>(() => {
+    try {
+      const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('fastlane_building_modal_margin') : null;
+      if (saved !== null) return parseInt(saved, 10);
+    } catch {
+      // ignore
+    }
+    return 3;
+  });
   const [measuredRect, setMeasuredRect] = useState<{ width: number; height: number; left: number; top: number }>({
     width: 830,
     height: 540,
@@ -79,6 +88,18 @@ export function BuildingModal({
     top: 126
   });
   const [copiedNotification, setCopiedNotification] = useState(false);
+
+  const handleMarginChange = (delta: number) => {
+    setModalMargin(prev => {
+      const next = Math.max(-20, Math.min(30, prev + delta));
+      try {
+        localStorage.setItem('fastlane_building_modal_margin', next.toString());
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   // Measure rect on mount and resize
   useEffect(() => {
@@ -105,7 +126,7 @@ export function BuildingModal({
         window.removeEventListener('resize', updateRect);
       };
     }
-  }, [position, customSize]);
+  }, [position, customSize, modalMargin]);
 
   // Handle Dragging
   const handleHeaderPointerDown = (e: React.PointerEvent) => {
@@ -199,9 +220,11 @@ export function BuildingModal({
   const handleResetLayout = () => {
     setPosition(null);
     setCustomSize(null);
+    setModalMargin(3);
     try {
       sessionStorage.removeItem('fastlane_building_modal_pos');
       sessionStorage.removeItem('fastlane_building_modal_size');
+      localStorage.setItem('fastlane_building_modal_margin', '3');
     } catch {}
   };
 
@@ -468,11 +491,12 @@ export function BuildingModal({
       ref={modalRef}
       className={`building-modal ${rules?.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}`}
       style={{
+        '--modal-margin': `${modalMargin}px`,
         ...(position ? { left: `${position.x}px`, top: `${position.y}px` } : {}),
         ...(customSize ? { width: `${customSize.width}px`, height: `${customSize.height}px`, maxWidth: 'none', maxHeight: 'none' } : {})
-      }}
+      } as React.CSSProperties}
     >
-      {/* Top Window Control Bar: Live coordinates readout and reset */}
+      {/* Top Window Control Bar: Live coordinates readout, margin stepper and reset */}
       <div 
         className="building-modal__window-bar"
         style={{
@@ -486,6 +510,74 @@ export function BuildingModal({
           userSelect: 'none'
         }}
       >
+        {/* Margin stepper control */}
+        <div
+          data-testid="modal-margin-stepper"
+          style={{
+            background: 'rgba(0, 0, 0, 0.55)',
+            border: '1px solid rgba(0, 229, 255, 0.4)',
+            borderRadius: '6px',
+            color: '#a5f3fc',
+            fontFamily: 'monospace',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            padding: '2px 5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
+          }}
+        >
+          <span>{t('buildingModal.marginLabel', { defaultValue: 'Margin' })}:</span>
+          <button
+            type="button"
+            data-testid="btn-margin-minus"
+            onClick={() => handleMarginChange(-1)}
+            title="Decrease margin"
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              color: '#fff',
+              borderRadius: '3px',
+              width: '16px',
+              height: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              padding: 0
+            }}
+          >
+            -
+          </button>
+          <span data-testid="margin-value-display" style={{ minWidth: '22px', textAlign: 'center', color: '#38bdf8' }}>{modalMargin}px</span>
+          <button
+            type="button"
+            data-testid="btn-margin-plus"
+            onClick={() => handleMarginChange(1)}
+            title="Increase margin"
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              color: '#fff',
+              borderRadius: '3px',
+              width: '16px',
+              height: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              padding: 0
+            }}
+          >
+            +
+          </button>
+        </div>
+
         <button
           data-testid="modal-dimension-readout"
           onClick={handleCopyLayoutSpec}
@@ -511,7 +603,7 @@ export function BuildingModal({
           {copiedNotification && <span style={{ color: '#34d399', marginLeft: '4px' }}>✓ Copied!</span>}
         </button>
 
-        {(position || customSize) && (
+        {(position || customSize || modalMargin !== 3) && (
           <button
             data-testid="btn-reset-modal-layout"
             onClick={handleResetLayout}

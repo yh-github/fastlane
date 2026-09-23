@@ -497,7 +497,11 @@
     "cannedUnits": "{{count}} קופסאות",
     "fastFoodMeals": "ארוחות מזון מהיר ({{count}})",
     "pantryEmptyDetail": "המזווה ריק! סיום תור ללא אוכל יגרום לרעב ולירידה מתמדת במדדים.",
-    "pantryEmptyWarning": "המזווה ריק! סיום תור ללא אוכל יוביל לעונש רעב."
+    "pantryEmptyWarning": "המזווה ריק! סיום תור ללא אוכל יוביל לעונש רעב.",
+    "toggleLeisure": "פנאי",
+    "toggleChores": "מטלות",
+    "fold": "קיפול",
+    "pantryStable": "✓ יציב (ללא מצרכים מתכלים)"
   },
   "rentOffice": {
     "title": "משרד שכירות",
@@ -845,7 +849,8 @@
     "protected": "מוגן",
     "inactive": "לא פעיל",
     "protectedTooltip": "מוגן על ידי דיור מאובטח",
-    "inactiveTooltip": "לא פעיל עד שבוע {{week}}"
+    "inactiveTooltip": "לא פעיל עד שבוע {{week}}",
+    "marginLabel": "שוליים"
   },
   "homeDurable": {
     "maintenanceTitle": "תחזוקת מכשירי חשמל",
