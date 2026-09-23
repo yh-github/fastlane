@@ -152,7 +152,10 @@
       "closedRummage": "התרחקת מארגזי המציאות."
     },
     "callCleaningService": "הזמנת שירותי ניקיון מקצועיים (עלות: {{cost}}$)",
-    "socialize": "אירחת חברים ונפגשתם (+{{reward}} מצב נפשי, {{guests}} אורחים הגיעו)",
+    "maintenance": {
+      "discardSpareParts": "זרקת {{count}} ארגזי חלקי חילוף לפח.",
+      "discardKnickKnacks": "זרקת {{count}} חפצי נוי כדי לפנות מקום בדירה."
+    },
     "rent": {
       "paid": "שילמת {{amount}}$ שכר דירה",
       "advancePaid": "שילמת מראש {{amount}}$ על שכר דירה",
@@ -160,7 +163,11 @@
       "alreadyLiveHere": "אתה כבר גר ב-{{name}}.",
       "extensionApproved": "ארכת שכר דירה אושרה.",
       "extensionDenied": "ארכת שכר דירה נדחתה.",
-      "alreadyGranted": "הארכת שכר דירה כבר פעילה לתקופה זו."
+      "alreadyGranted": "הארכת שכר דירה כבר פעילה לתקופה זו.",
+      "renegotiateApproved": "בעל הבית הסכים למשא ומתן! שכר הדירה ירד מ-{{oldRent}}$ ל-{{newRent}}$ לחודש (מעמד: {{standing}}).",
+      "renegotiateCompromise": "בעל הבית הציע פשרה חלקית. שכר הדירה ירד מ-{{oldRent}}$ ל-{{newRent}}$ לחודש (מעמד: {{standing}}).",
+      "renegotiateDenied": "בעל הבית סירב להוריד את שכר הדירה עקב מעמדך הנמוך (מעמד: {{standing}}).",
+      "renegotiateNotCheaper": "שכר הדירה בשוק ({{marketRent}}$) אינו זול יותר מהחוזה הנוכחי שלך ({{currentRent}}$)."
     },
     "error": {
       "mustResolveDilemma": "עליך להכריע בדילמת הלקוח לפני שתוכל לעשות כל דבר אחר.",
@@ -250,6 +257,7 @@
       "due_nodenied": "זמן לשלם שכר דירה! (ארכות אינן זמינות עקב חובות עבר).",
       "evicted": "פונית מביתך!",
       "extensionExpired": "הארכה לשכר דירה פגה.",
+      "raised": "גאות כלכלית: עקב מעמדך הנמוך, בעל הבית העלה את שכר הדירה ל-{{newRent}}$ (היה {{oldRent}}$).",
       "warning": "אזהרה: חוב שכר הדירה שלך מצטבר! אם החוב יעלה על 2 חודשי שכר דירה, תפונה מביתך."
     },
     "clothes": {
@@ -509,7 +517,17 @@
     "moveIn": "עבור דירה",
     "currentApt": "נוכחי",
     "notNeeded": "אינך זקוק להארכה כעת",
-    "confirmRefund": "דמי שכירות ששולמו מראש עבור {{weeks}} שבועות בדירת {{current}} אינם ניתנים להחזר.\n\nהאם אתה בטוח שברצונך לשכור את דירת {{newApt}} כעת?"
+    "confirmRefund": "דמי שכירות ששולמו מראש עבור {{weeks}} שבועות בדירת {{current}} אינם ניתנים להחזר.\n\nהאם אתה בטוח שברצונך לשכור את דירת {{newApt}} כעת?",
+    "landlordStanding": "מעמד מול בעל הבית",
+    "marketRate": "שכר דירה בשוק",
+    "currentLeaseRate": "שכר הדירה בחוזה שלך",
+    "renegotiateBtn": "🤝 משא ומתן על החוזה",
+    "renegotiateSavings": "חיסכון של {{savings}}$ לחודש אם יאושר",
+    "standingGood": "מעמד טוב (50 ומעלה): סבירות גבוהה להורדה למחיר שוק",
+    "standingFair": "מעמד סביר (35-49): סבירות לפשרה חלקית",
+    "standingPoor": "מעמד נמוך (מתחת ל-35): בעל הבית יסרב",
+    "standingPoorWarning": "⚠️ סכנה: מעמד נמוך (מתחת ל-40) מאפשר לבעל הבית להעלות שכר דירה כשנוצרת גאות כלכלית!",
+    "marketNotLower": "שכר הדירה בחוזה ({{currentRent}}$) זהה או נמוך ממחיר השוק ({{marketRent}}$)."
   },
   "inventoryModal": {
     "title": "המלאי שלך",
@@ -776,7 +794,8 @@
     "cola": "קולה",
     "shake": "מילקשייק",
     "newspaper": "עיתון",
-    "dog_food": "בשר משומר מסתורי",
+    "dog_food": "מזון לכלבים",
+    "dog_food_advanced": "בשר משומר מסתורי",
     "8track": "נגן 8-Track",
     "capote": "ספרי טרומן קפוטה",
     "knick_knack": "חפץ נוי / ענתיקה",
