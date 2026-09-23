@@ -1402,6 +1402,17 @@ describe('Job Engine', () => {
         const heavySummary = calcWorkShiftSummary({ ...tiredPlayer, physicalCondition: 16 }, heavyJob, 6, advancedRules as any);
         const heavyWork = heavySummary.modes.find(m => m.id === 'work_work')!;
         expect(heavyWork.physMistakeChance).toBeCloseTo(0.10, 4);
+
+        // Frontline job: social threshold is 20, multiplier is 0.0125 (halved from 0.025)
+        const frontlineJob: JobDef = {
+          ...normalJob,
+          id: 'frontline_cashier',
+          tags: ['frontline_service']
+        };
+        // Player at social 12: threshold 20 -> (20 - 12) * 0.0125 = 0.10 (10%)
+        const frontlineSummary = calcWorkShiftSummary({ ...tiredPlayer, social: 12 }, frontlineJob, 6, advancedRules as any);
+        const frontlineWork = frontlineSummary.modes.find(m => m.id === 'work_work')!;
+        expect(frontlineWork.socialMistakeChance).toBeCloseTo(0.10, 4);
       });
     });
 

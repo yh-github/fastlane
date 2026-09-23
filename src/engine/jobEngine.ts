@@ -535,7 +535,7 @@ export function calcWorkShiftSummary(
                            (m.id === 'work_work' && socialMod !== 0) ||
                            (m.id === 'face_time');
     const socialChance = (isAdvanced && modifiesSocial && curSocial < socialMistakeThreshold)
-      ? Math.min(1.0, Math.max(0, (socialMistakeThreshold - curSocial) * 0.025))
+      ? Math.min(1.0, Math.max(0, (socialMistakeThreshold - curSocial) * 0.0125))
       : 0;
 
     m.physMistakeChance = physChance;
@@ -837,7 +837,7 @@ export function workShift(
                            (mode === 'face_time');
     const socialMistakeThreshold = isFrontline ? 20 : 10;
     if (isAdvanced && modifiesSocial && oldSocial < socialMistakeThreshold) {
-      const socialChance = (socialMistakeThreshold - oldSocial) * 0.025;
+      const socialChance = (socialMistakeThreshold - oldSocial) * 0.0125;
       socialMistake = resolveDecision(replay, `work_social_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < socialChance);
     }
 
