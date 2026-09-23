@@ -663,11 +663,11 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
 
       const summary = calcWorkShiftSummary(player, frontlineJob, 6, rules, campaign.config.statRules);
       const workWork = summary.modes.find(m => m.id === 'work_work');
-      // For frontline_service, social threshold is 20, so at 15 social, (20 - 15) * 2.5% = 12.5% risk!
-      expect(workWork?.socialMistakeChance).toBeCloseTo(0.125, 3);
+      // For frontline_service, social threshold is 20, so at 15 social, (20 - 15) * 1.25% = 6.25% risk!
+      expect(workWork?.socialMistakeChance).toBeCloseTo(0.0625, 3);
     });
 
-    it('rolls social mistake at (threshold - Social) * 2.5%, penalizing Social and adding mistake', () => {
+    it('rolls social mistake at (threshold - Social) * 1.25%, penalizing Social and adding mistake', () => {
       const frontlineJob = campaign.jobs.find((j: any) => hasJobTag(j, 'frontline_service'));
       let player = makePlayer();
       player.currentJobId = frontlineJob.id;
@@ -725,7 +725,7 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       const frontlineJob = campaign.jobs.find((j: any) => hasJobTag(j, 'frontline_service'));
       const summary = calcWorkShiftSummary(initialPlayer, frontlineJob, 6, rules, campaign.config.statRules);
       const workWork = summary.modes.find(m => m.id === 'work_work');
-      // With Social = 20 and threshold = 20, mistake chance is max(0, (20 - 20) * 2.5%) = 0
+      // With Social = 20 and threshold = 20, mistake chance is max(0, (20 - 20) * 1.25%) = 0
       expect(workWork?.socialMistakeChance).toBe(0);
     });
 
@@ -734,7 +734,7 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       let player = makePlayer();
       player.currentJobId = frontlineJob.id;
       player.currentWage = frontlineJob.baseWage;
-      player.social = 14; // 6 points below 20 -> 6 * 2.5% = 15% risk
+      player.social = 14; // 6 points below 20 -> 6 * 1.25% = 7.5% risk
       player.experience = 30;
       player.hoursRemaining = 10;
       player.inventory.casualClothesWeeks = 10;
@@ -742,7 +742,7 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
 
       const summary = calcWorkShiftSummary(player, frontlineJob, 6, rules, campaign.config.statRules);
       for (const mode of summary.modes) {
-        expect(mode.socialMistakeChance).toBeCloseTo(0.15, 3);
+        expect(mode.socialMistakeChance).toBeCloseTo(0.075, 3);
       }
     });
   });
