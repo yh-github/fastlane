@@ -40,8 +40,10 @@ export function initPlayerWeekendDecks(player: PlayerState, weekendData: Weekend
 
   // Owned appliances: add durable_${id} to cheap deck
   if (player.inventory?.appliances) {
+    const hasTv = player.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
     for (const app of player.inventory.appliances) {
       if (app.isBroken) continue;
+      if (app.id === 'vcr' && !hasTv) continue;
       const cardId = `durable_${app.id}`;
       if (!cheapCards.includes(cardId)) {
         cheapCards.push(cardId);
@@ -71,34 +73,62 @@ export function initPlayerWeekendDecks(player: PlayerState, weekendData: Weekend
 
 export function addApplianceCardToDeck(player: PlayerState, applianceId: string, rng?: Random): PlayerState {
   if (!player.weekendDecks) return player;
-  const cardId = `durable_${applianceId}`;
-  const cheap = { ...player.weekendDecks.cheap };
-  if (cheap.drawPile.includes(cardId) || cheap.discardPile.includes(cardId)) {
+  const hasTv = player.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+  if (applianceId === 'vcr' && !hasTv) {
     return player;
   }
-  const newDraw = [...cheap.drawPile, cardId];
-  cheap.drawPile = rng ? rng.shuffle(newDraw) : newDraw;
+  const currentDecks = { ...player.weekendDecks };
+  const cardId = `durable_${applianceId}`;
+  const cheap = { ...currentDecks.cheap };
+  if (!cheap.drawPile.includes(cardId) && !cheap.discardPile.includes(cardId)) {
+    const newDraw = [...cheap.drawPile, cardId];
+    cheap.drawPile = rng ? rng.shuffle(newDraw) : newDraw;
+    currentDecks.cheap = cheap;
+  }
+
+  // If a TV was added, check if player has an unbroken VCR that needs to be added
+  if (applianceId === 'color_tv' || applianceId === 'bw_tv') {
+    const hasVcr = player.inventory?.appliances?.some(a => a.id === 'vcr' && !a.isBroken);
+    if (hasVcr) {
+      const vcrCardId = 'durable_vcr';
+      const cheap2 = { ...currentDecks.cheap };
+      if (!cheap2.drawPile.includes(vcrCardId) && !cheap2.discardPile.includes(vcrCardId)) {
+        const newDraw2 = [...cheap2.drawPile, vcrCardId];
+        cheap2.drawPile = rng ? rng.shuffle(newDraw2) : newDraw2;
+        currentDecks.cheap = cheap2;
+      }
+    }
+  }
   return {
     ...player,
-    weekendDecks: {
-      ...player.weekendDecks,
-      cheap
-    }
+    weekendDecks: currentDecks
   };
 }
 
 export function removeApplianceCardFromDeck(player: PlayerState, applianceId: string): PlayerState {
   if (!player.weekendDecks) return player;
   const cardId = `durable_${applianceId}`;
+  const currentDecks = {
+    ...player.weekendDecks,
+    cheap: {
+      drawPile: player.weekendDecks.cheap.drawPile.filter(id => id !== cardId),
+      discardPile: player.weekendDecks.cheap.discardPile.filter(id => id !== cardId)
+    }
+  };
+  // If a TV was removed, check if player has any unbroken TV remaining. If not, remove durable_vcr too!
+  if (applianceId === 'color_tv' || applianceId === 'bw_tv') {
+    const hasTv = player.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+    if (!hasTv) {
+      const vcrCardId = 'durable_vcr';
+      currentDecks.cheap = {
+        drawPile: currentDecks.cheap.drawPile.filter(id => id !== vcrCardId),
+        discardPile: currentDecks.cheap.discardPile.filter(id => id !== vcrCardId)
+      };
+    }
+  }
   return {
     ...player,
-    weekendDecks: {
-      ...player.weekendDecks,
-      cheap: {
-        drawPile: player.weekendDecks.cheap.drawPile.filter(id => id !== cardId),
-        discardPile: player.weekendDecks.cheap.discardPile.filter(id => id !== cardId)
-      }
-    }
+    weekendDecks: currentDecks
   };
 }
 
@@ -292,6 +322,31 @@ export function generateWeekendChoices(
       }
     } else if (cardId.startsWith('durable_')) {
       const appName = cardId.replace('durable_', '');
+      if (appName === 'vcr') {
+        const hasTv = updatedPlayer.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+        if (!hasTv) {
+          const randomIdx = Math.floor(rng.next() * weekendData.randomWeekends.length);
+          const fluff = weekendData.randomWeekends[randomIdx] || 'Spent a relaxing weekend.';
+          const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
+          const targetStat = stats[Math.floor(rng.next() * stats.length)];
+          const iconMap = { mental: '🧠', social: '👥', dependability: '🤝' };
+          drawnCards.push({
+            id: `random_${randomIdx}`,
+            tier: 'cheap',
+            type: 'random',
+            eventKey: `events.weekend.random_${randomIdx}`,
+            titleKey: 'weekendScreen.card.cheapTitle',
+            fluff,
+            icon: iconMap[targetStat] || '🎲',
+            costMin: 5,
+            costMax: 20,
+            targetStat,
+            potentialBonusMin: Math.floor(5 / 25),
+            potentialBonusMax: Math.floor(20 / 25)
+          });
+          continue;
+        }
+      }
       const fluff = weekendData.durableWeekends[appName]?.text || 'Spent time with your home appliances.';
       const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
       const targetStat = stats[Math.floor(rng.next() * stats.length)];
@@ -568,6 +623,10 @@ export function processWeekend(
     
     for (const app of shuffledAppliances) {
       if (app.isBroken) continue;
+      if (app.id === 'vcr') {
+        const hasTv = newPlayer.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+        if (!hasTv) continue;
+      }
       if (weekendData.durableWeekends[app.id]) {
         if (rng.next() < 0.20) {
           const candidateEvent = { key: `events.weekend.durable_${app.id}` };
