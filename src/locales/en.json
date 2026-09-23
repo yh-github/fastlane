@@ -152,7 +152,10 @@
       "closedRummage": "Walked away from the junk bins."
     },
     "callCleaningService": "Called professional cleaning service (Cost: ${{cost}})",
-    "socialize": "Hosted friends and socialized (+{{reward}} Mental Condition, {{guests}} guests attended)",
+    "maintenance": {
+      "discardSpareParts": "Threw away {{count}} box(es) of spare parts into the garbage chute.",
+      "discardKnickKnacks": "Threw away {{count}} curio(s) to free up apartment space."
+    },
     "rent": {
       "paid": "Paid ${{amount}} towards rent",
       "advancePaid": "Paid ${{amount}} rent advance",
@@ -160,7 +163,11 @@
       "alreadyLiveHere": "You already live at {{name}}.",
       "extensionApproved": "Rent extension approved.",
       "extensionDenied": "Rent extension denied.",
-      "alreadyGranted": "Rent extension already active for this period."
+      "alreadyGranted": "Rent extension already active for this period.",
+      "renegotiateApproved": "Landlord agreed to lease renegotiation! Rent lowered from ${{oldRent}} to ${{newRent}}/mo (Standing: {{standing}}).",
+      "renegotiateCompromise": "Landlord offered a partial compromise. Rent lowered from ${{oldRent}} to ${{newRent}}/mo (Standing: {{standing}}).",
+      "renegotiateDenied": "Landlord refused to lower rent due to your poor standing (Standing: {{standing}}).",
+      "renegotiateNotCheaper": "Market rent (${{marketRent}}) is currently not cheaper than your lease (${{currentRent}})."
     },
     "error": {
       "mustResolveDilemma": "You must resolve the customer dilemma before doing anything else.",
@@ -250,6 +257,7 @@
       "due_nodenied": "Rent is due! (Rent extensions no longer available due to past rent debt).",
       "evicted": "You were evicted!",
       "extensionExpired": "Rent extension expired.",
+      "raised": "Economic surge: Due to poor standing, your landlord increased rent to ${{newRent}} (was ${{oldRent}}).",
       "warning": "Warning: Your rent debt is accumulating! If debt exceeds 2 months' rent, you will be evicted."
     },
     "clothes": {
@@ -986,7 +994,17 @@
     "currentApt": "Current",
     "moveIn": "Move In",
     "notNeeded": "You don't need an extension",
-    "confirmRefund": "Your {{weeks}} weeks of prepaid rent on your {{current}} Apartment are non-refundable.\n\nAre you sure that you want to rent a {{newApt}} at this time?"
+    "confirmRefund": "Your {{weeks}} weeks of prepaid rent on your {{current}} Apartment are non-refundable.\n\nAre you sure that you want to rent a {{newApt}} at this time?",
+    "landlordStanding": "Landlord Standing",
+    "marketRate": "Market Rent Rate",
+    "currentLeaseRate": "Your Lease Rate",
+    "renegotiateBtn": "🤝 Renegotiate Lease",
+    "renegotiateSavings": "Save ${{savings}}/mo if approved",
+    "standingGood": "Good Standing (≥50): Full market reduction likely",
+    "standingFair": "Fair Standing (35-49): Partial compromise likely",
+    "standingPoor": "Poor Standing (<35): Landlord will refuse",
+    "standingPoorWarning": "⚠️ Danger: Poor standing (<40) allows landlord to hike rent when the economy surges!",
+    "marketNotLower": "Current lease (${{currentRent}}) is at or below market rate (${{marketRent}})."
   },
   "inventoryModal": {
     "title": "Your Inventory",
@@ -1228,7 +1246,8 @@
     "cola": "Colas",
     "shake": "Shakes",
     "newspaper": "Newspaper",
-    "dog_food": "Canned Mystery Meat",
+    "dog_food": "Dog Food",
+    "dog_food_advanced": "Canned Mystery Meat",
     "8track": "8-Track Player",
     "capote": "Works of Capote",
     "knick_knack": "Curio & Knick-Knack",
