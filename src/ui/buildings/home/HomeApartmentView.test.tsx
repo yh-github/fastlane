@@ -86,10 +86,20 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.getByTitle(/TV \(Unowned — Available at Socket City\/Z-Mart\)/i)).toBeInTheDocument();
     expect(screen.getByTitle(/Stereo \(Unowned — Available at Socket City\/Z-Mart\)/i)).toBeInTheDocument();
 
-    // Flanking action wings must be present
+    // Flanking action wings begin folded to prevent overwhelming clutter
+    expect(screen.queryByTestId('home-wing-left')).toBeNull();
+    expect(screen.queryByTestId('home-wing-right')).toBeNull();
+    expect(screen.getByTestId('toggle-wing-leisure')).toBeInTheDocument();
+    expect(screen.getByTestId('toggle-wing-chores')).toBeInTheDocument();
+
+    // Toggling leisure expands Left Wing (Relax, Host)
+    fireEvent.click(screen.getByTestId('toggle-wing-leisure'));
     expect(screen.getByTestId('home-wing-left')).toBeInTheDocument();
-    expect(screen.getByTestId('home-wing-right')).toBeInTheDocument();
     expect(screen.getByTestId('btn-relax')).toBeInTheDocument();
+
+    // Toggling chores expands Right Wing (Clean, Service, Pantry)
+    fireEvent.click(screen.getByTestId('toggle-wing-chores'));
+    expect(screen.getByTestId('home-wing-right')).toBeInTheDocument();
     expect(screen.getByTestId('btn-clean')).toBeInTheDocument();
 
     // Clicking an unowned slot opens catalog / wishlist modal
@@ -199,22 +209,18 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
       />
     );
 
-    // Initial state: Durables showcase is visible, Space & Mess gauge is visible
+    // Initial state: Durables showcase is visible, Space & Mess gauge is visible, wings begin folded
     expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
     expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('home-wing-left')).toBeNull();
+    expect(screen.queryByTestId('home-wing-right')).toBeNull();
 
-    // Left wing has Relax and Host
+    // Toggle Left Wing (Leisure: Relax and Host)
+    fireEvent.click(screen.getByTestId('toggle-wing-leisure'));
     const leftWing = screen.getByTestId('home-wing-left');
     expect(leftWing).toBeInTheDocument();
     expect(within(leftWing).getByTestId('btn-relax')).toBeInTheDocument();
     expect(within(leftWing).getByTestId('btn-socialize')).toBeInTheDocument();
-
-    // Right wing has Clean, Service, and Pantry
-    const rightWing = screen.getByTestId('home-wing-right');
-    expect(rightWing).toBeInTheDocument();
-    expect(within(rightWing).getByTestId('btn-clean')).toBeInTheDocument();
-    expect(within(rightWing).getByTestId('btn-service')).toBeInTheDocument();
-    expect(within(rightWing).getByTestId('home-card-pantry')).toBeInTheDocument();
 
     // Click Relax executes callback
     fireEvent.click(within(leftWing).getByTestId('btn-relax'));
@@ -224,6 +230,22 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     fireEvent.click(within(leftWing).getByTestId('btn-socialize'));
     expect(onSocialize).toHaveBeenCalled();
 
+    // Clicking '?' help button on Relax opens help modal
+    const relaxCard = within(leftWing).getByTestId('home-card-relax');
+    const relaxHelpBtn = within(relaxCard).getByRole('button', { name: 'Help & Details' });
+    fireEvent.click(relaxHelpBtn);
+    expect(screen.getByText(/Relax & Recharge/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Got It' }));
+    expect(screen.queryByText(/Relax & Recharge/i)).toBeNull();
+
+    // Toggle Right Wing (Chores: Clean, Service, and Pantry)
+    fireEvent.click(screen.getByTestId('toggle-wing-chores'));
+    const rightWing = screen.getByTestId('home-wing-right');
+    expect(rightWing).toBeInTheDocument();
+    expect(within(rightWing).getByTestId('btn-clean')).toBeInTheDocument();
+    expect(within(rightWing).getByTestId('btn-service')).toBeInTheDocument();
+    expect(within(rightWing).getByTestId('home-card-pantry')).toBeInTheDocument();
+
     // Click Clean executes callback
     fireEvent.click(within(rightWing).getByTestId('btn-clean'));
     expect(onClean).toHaveBeenCalled();
@@ -232,13 +254,9 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     fireEvent.click(within(rightWing).getByTestId('btn-service'));
     expect(onService).toHaveBeenCalled();
 
-    // Clicking '?' help button on Relax opens help modal
-    const helpButtons = screen.getAllByRole('button', { name: 'Help & Details' });
-    expect(helpButtons.length).toBeGreaterThan(0);
-    fireEvent.click(helpButtons[0]);
-    expect(screen.getByText(/Relax & Recharge/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Got It' }));
-    expect(screen.queryByText(/Relax & Recharge/i)).toBeNull();
+    // Fold wing via close button
+    fireEvent.click(within(rightWing).getByTestId('btn-close-wing-chores'));
+    expect(screen.queryByTestId('home-wing-right')).toBeNull();
 
     // Apartment Furnishings was never hidden!
     expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();

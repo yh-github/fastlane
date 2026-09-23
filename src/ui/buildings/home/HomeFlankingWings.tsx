@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
-import { formatHours } from '../../../engine/statMath';
+import { formatHours, messGrowth } from '../../../engine/statMath';
 import { HomeCardHelpModal, type HomeActionType } from './HomeCardHelpModal';
 
 export interface HomeFlankingWingsProps {
+  activeWing?: 'leisure' | 'chores' | null;
+  onCloseWing?: () => void;
   player: PlayerState;
   rules?: GameRules;
   campaign?: CampaignBundle;
@@ -23,6 +25,8 @@ export interface HomeFlankingWingsProps {
     isDisabled: boolean;
     disabledReasonKey?: string;
     isHalfRewardExpected: boolean;
+    effectiveMinGuests?: number;
+    effectiveMaxGuests?: number;
     minReward: number;
     maxReward: number;
     minCashNeeded: number;
@@ -50,6 +54,8 @@ export interface HomeFlankingWingsProps {
 }
 
 export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
+  activeWing,
+  onCloseWing,
   player,
   rules,
   campaign,
@@ -95,9 +101,20 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
         : `$${socialParams.minCashNeeded}–$${socialParams.maxCashNeeded}`)
     : '$0';
 
+  // Mess range for Host
+  const growth = messGrowth(player.mess || 0);
+  const minGuests = socialParams?.effectiveMinGuests ?? 1;
+  const maxGuests = socialParams?.effectiveMaxGuests ?? 3;
+  const minMessAdded = minGuests * growth;
+  const maxMessAdded = maxGuests * growth;
+  const hostMessRangeStr = minMessAdded === maxMessAdded ? `+${minMessAdded}` : `+${minMessAdded}..+${maxMessAdded}`;
+
   const freshFoodUnits = player.inventory?.freshFoodUnits || 0;
   const cannedFoodUnits = player.inventory?.cannedFoodUnits || 0;
   const fastFoodCount = player.inventory?.fastFoodItems?.length || 0;
+
+  const showLeisure = activeWing === undefined ? true : activeWing === 'leisure';
+  const showChores = activeWing === undefined ? true : activeWing === 'chores';
 
   return (
     <>
@@ -127,42 +144,50 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
       {/* ─────────────────────────────────────────────────────────────
           LEFT WING: LEISURE (Relax, Host)
          ───────────────────────────────────────────────────────────── */}
-      <div
-        className="home-wing-left"
-        data-testid="home-wing-left"
-        style={{
-          position: 'absolute',
-          right: 'calc(100% + 12px)',
-          top: '10px',
-          width: 'calc(210px * var(--board-scale, 1))',
-          maxHeight: 'calc(520px * var(--board-scale, 1))',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          zIndex: 60,
-          overflowY: 'auto',
-          paddingRight: '2px'
-        }}
-      >
-        {/* Left Wing Header */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(6, 78, 59, 0.95) 0%, rgba(4, 47, 36, 0.98) 100%)',
-          border: '1px solid #10b981',
-          borderRadius: '8px',
-          padding: '5px 8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          boxShadow: '0 0 10px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(0,0,0,0.5)'
-        }}>
-          <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#a7f3d0', letterSpacing: '0.04em' }}>
-            🧘 {t('homeRelax.wingsLeisure', { defaultValue: 'Leisure' })}
-          </span>
-          <span style={{ fontSize: '0.65rem', color: '#6ee7b7', fontWeight: 'bold' }}>
-            {usePhysicalMental ? 'Rest & Vibe' : 'Happiness'}
-          </span>
-        </div>
-
+      {showLeisure && (
+        <div
+          className="home-wing-left"
+          data-testid="home-wing-left"
+          style={{
+            position: 'absolute',
+            right: 'calc(100% + 12px)',
+            top: '10px',
+            width: 'calc(210px * var(--board-scale, 1))',
+            maxHeight: 'calc(520px * var(--board-scale, 1))',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            zIndex: 60,
+            overflowY: 'auto',
+            paddingRight: '2px'
+          }}
+        >
+          {/* Close Wing Button */}
+          {onCloseWing && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2px' }}>
+              <button
+                type="button"
+                onClick={onCloseWing}
+                data-testid="btn-close-wing-leisure"
+                title={t('homeRelax.fold', { defaultValue: 'Fold' })}
+                aria-label={t('homeRelax.fold', { defaultValue: 'Fold' })}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#cbd5e1',
+                  borderRadius: '4px',
+                  fontSize: '0.68rem',
+                  cursor: 'pointer',
+                  padding: '2px 7px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px'
+                }}
+              >
+                ✕ {t('homeRelax.fold', { defaultValue: 'Fold' })}
+              </button>
+            </div>
+          )}
         {/* 1. RELAX CARD */}
         <div
           data-testid="home-card-relax"
@@ -238,8 +263,15 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                   {trackMess && scaledMess > 0 && <span style={{ color: '#f59e0b' }}>+{scaledMess} 🧹 Mess</span>}
                 </div>
               ) : (
-                <div style={{ color: '#fca5a5', fontWeight: 700, fontSize: '0.68rem' }}>
-                  ⚠️ Starving: -1 Max 💪 & 🧠!
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <div style={{ color: '#86efac', display: 'flex', flexWrap: 'wrap', gap: '4px', fontWeight: 600 }}>
+                    <span>+{physGain} 💪 Phys</span>
+                    <span>+{mentalGain} 🧠 Mental</span>
+                    {trackMess && scaledMess > 0 && <span style={{ color: '#f59e0b' }}>+{scaledMess} 🧹 Mess</span>}
+                  </div>
+                  <div style={{ color: '#fca5a5', fontWeight: 700, fontSize: '0.66rem' }}>
+                    ⚠️ Starving: -1 Max 💪 & 🧠!
+                  </div>
                 </div>
               )
             ) : (
@@ -349,7 +381,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: '0.66rem' }}>
                 <span style={{ color: '#fca5a5' }}>-1 💪 Fatigue</span>
-                <span style={{ color: '#f59e0b' }}>+Mess 🧹</span>
+                <span style={{ color: '#f59e0b' }}>{hostMessRangeStr} 🧹 Mess</span>
               </div>
             </div>
 
@@ -376,45 +408,55 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
           </div>
         )}
       </div>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
           RIGHT WING: CHORES & PANTRY (Clean, Service, Pantry)
          ───────────────────────────────────────────────────────────── */}
-      <div
-        className="home-wing-right"
-        data-testid="home-wing-right"
-        style={{
-          position: 'absolute',
-          left: 'calc(100% + 12px)',
-          top: '10px',
-          width: 'calc(210px * var(--board-scale, 1))',
-          maxHeight: 'calc(520px * var(--board-scale, 1))',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          zIndex: 60,
-          overflowY: 'auto',
-          paddingRight: '2px'
-        }}
-      >
-        {/* Right Wing Header */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-          border: '1px solid #818cf8',
-          borderRadius: '8px',
-          padding: '5px 8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          boxShadow: '0 0 10px rgba(129, 140, 248, 0.3), 0 4px 12px rgba(0,0,0,0.5)'
-        }}>
-          <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#c7d2fe', letterSpacing: '0.04em' }}>
-            🧹 {t('homeRelax.wingsChores', { defaultValue: 'Chores & Upkeep' })}
-          </span>
-          <span style={{ fontSize: '0.65rem', color: '#a5b4fc', fontWeight: 'bold' }}>
-            Clean & Stock
-          </span>
-        </div>
+      {showChores && (
+        <div
+          className="home-wing-right"
+          data-testid="home-wing-right"
+          style={{
+            position: 'absolute',
+            left: 'calc(100% + 12px)',
+            top: '10px',
+            width: 'calc(210px * var(--board-scale, 1))',
+            maxHeight: 'calc(520px * var(--board-scale, 1))',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            zIndex: 60,
+            overflowY: 'auto',
+            paddingRight: '2px'
+          }}
+        >
+          {/* Close Wing Button */}
+          {onCloseWing && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '2px' }}>
+              <button
+                type="button"
+                onClick={onCloseWing}
+                data-testid="btn-close-wing-chores"
+                title={t('homeRelax.fold', { defaultValue: 'Fold' })}
+                aria-label={t('homeRelax.fold', { defaultValue: 'Fold' })}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#cbd5e1',
+                  borderRadius: '4px',
+                  fontSize: '0.68rem',
+                  cursor: 'pointer',
+                  padding: '2px 7px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px'
+                }}
+              >
+                ✕ {t('homeRelax.fold', { defaultValue: 'Fold' })}
+              </button>
+            </div>
+          )}
 
         {/* 1. CLEAN CARD (Manual) */}
         {trackMess && (
@@ -539,6 +581,17 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span style={{
+                  background: '#075985',
+                  color: '#bae6fd',
+                  fontSize: '0.66rem',
+                  fontWeight: 800,
+                  padding: '2px 5px',
+                  borderRadius: '4px',
+                  border: '1px solid #0284c7'
+                }}>
+                  ⏳ {cleaningServiceCost}h
+                </span>
+                <span style={{
                   background: '#581c87',
                   color: '#e9d5ff',
                   fontSize: '0.66rem',
@@ -582,9 +635,9 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               fontSize: '0.70rem',
               lineHeight: 1.3
             }}>
-              <div style={{ color: '#c084fc', fontWeight: 600 }}>✨ Resets Mess to 0</div>
+              <div style={{ color: '#c084fc', fontWeight: 600 }}>🧹 -10 Mess reduction</div>
               <div style={{ color: '#94a3b8', fontSize: '0.66rem' }}>
-                {serviceSubtext || `Quick ⏳ ${cleaningServiceCost}h coordination`}
+                {serviceSubtext || `Professional cleaners (-10 🧹)`}
               </div>
             </div>
 
@@ -692,15 +745,20 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               </div>
             )}
             <div style={{
-              color: hasFridge ? '#86efac' : '#fca5a5',
+              color: hasFridge ? '#86efac' : (freshFoodUnits > 0 ? '#fca5a5' : '#94a3b8'),
               fontSize: '0.64rem',
               marginTop: '1px'
             }}>
-              {hasFridge ? '✓ Safe from spoilage' : '⚠️ Spoils at turn end'}
+              {hasFridge 
+                ? '✓ Safe from spoilage' 
+                : (freshFoodUnits > 0 
+                    ? `⚠️ ${freshFoodUnits} fresh spoils at turn end!` 
+                    : t('homeRelax.pantryStable', { defaultValue: '✓ Stable (no perishables)' }))}
             </div>
           </div>
         </div>
       </div>
+      )}
     </>
   );
 };

@@ -996,5 +996,49 @@ describe('BuildingModal Component', () => {
 
     expect(screen.getByTestId('btn-reset-modal-layout')).toBeInTheDocument();
   });
+
+  it('allows adjusting modal margin with stepper and resets to 3px default', () => {
+    localStorage.clear();
+    const { container } = render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    const marginDisplay = screen.getByTestId('margin-value-display');
+    expect(marginDisplay.textContent).toBe('3px');
+    const modal = container.querySelector('.building-modal') as HTMLElement;
+    expect(modal.style.getPropertyValue('--modal-margin')).toBe('3px');
+
+    // Click plus button -> 4px
+    const plusBtn = screen.getByTestId('btn-margin-plus');
+    fireEvent.click(plusBtn);
+    expect(marginDisplay.textContent).toBe('4px');
+    expect(modal.style.getPropertyValue('--modal-margin')).toBe('4px');
+    expect(localStorage.getItem('fastlane_building_modal_margin')).toBe('4');
+
+    // Reset button should now appear because margin !== 3
+    const resetBtn = screen.getByTestId('btn-reset-modal-layout');
+    expect(resetBtn).toBeInTheDocument();
+
+    // Click reset button -> restores to 3px
+    fireEvent.click(resetBtn);
+    expect(marginDisplay.textContent).toBe('3px');
+    expect(modal.style.getPropertyValue('--modal-margin')).toBe('3px');
+    expect(localStorage.getItem('fastlane_building_modal_margin')).toBe('3');
+
+    // Click minus button -> 2px
+    const minusBtn = screen.getByTestId('btn-margin-minus');
+    fireEvent.click(minusBtn);
+    expect(marginDisplay.textContent).toBe('2px');
+    expect(modal.style.getPropertyValue('--modal-margin')).toBe('2px');
+  });
 });
 

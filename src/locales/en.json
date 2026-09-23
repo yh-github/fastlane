@@ -948,7 +948,11 @@
     "cannedUnits": "{{count}} cans",
     "fastFoodMeals": "Fast Food Meals ({{count}})",
     "pantryEmptyDetail": "Pantry empty! Ending turn without food causes hunger and permanent stat decay.",
-    "pantryEmptyWarning": "Pantry is empty! Hunger penalty on turn end."
+    "pantryEmptyWarning": "Pantry is empty! Hunger penalty on turn end.",
+    "toggleLeisure": "Leisure",
+    "toggleChores": "Chores",
+    "fold": "Fold",
+    "pantryStable": "✓ Stable (no perishables)"
   },
   "bank": {
     "title": "Bank of Jones",
@@ -1132,7 +1136,8 @@
     "protected": "Protected",
     "inactive": "Inactive",
     "protectedTooltip": "Protected by Security Housing",
-    "inactiveTooltip": "Inactive until Week {{week}}"
+    "inactiveTooltip": "Inactive until Week {{week}}",
+    "marginLabel": "Margin"
   },
   "pawnShop": {
     "title": "Pawn Shop",
