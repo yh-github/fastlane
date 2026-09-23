@@ -354,6 +354,16 @@ describe('maintenanceActions', () => {
       );
       expect(res2.updatedPlayer.inventory.knickKnacks).toBe(0);
       expect(getLogKey(res2.actionLog)).toBe('action.maintenance.discardKnickKnacks');
+
+      // Discard uninspected knick-knacks when knickKnacks is 0
+      res2.updatedPlayer.inventory.uninspectedKnickKnacks = 2;
+      const res3 = gameReducer(
+        res2.updatedPlayer,
+        { type: 'discard_inventory_item', itemType: 'knick_knacks', count: 1 },
+        context
+      );
+      expect(res3.updatedPlayer.inventory.uninspectedKnickKnacks).toBe(1);
+      expect(getLogKey(res3.actionLog)).toBe('action.maintenance.discardKnickKnacks');
     });
   });
 });

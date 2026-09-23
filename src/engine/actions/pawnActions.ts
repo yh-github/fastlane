@@ -224,7 +224,8 @@ export function handlePawnKnickKnacksAction(
   let actionLog;
 
   const curios = ensurePlayerCurios(nextPlayer, context.state?.turn);
-  const currentCount = curios.length;
+  const uninspected = nextPlayer.inventory.uninspectedKnickKnacks || 0;
+  const currentCount = curios.length + uninspected;
   if (currentCount <= 0) {
     actionLog = { key: 'action.error.noKnickKnacksToPawn' };
     return { nextPlayer, actionLog };
@@ -249,9 +250,17 @@ export function handlePawnKnickKnacksAction(
   const sellCount = Math.min(currentCount, requestedCount);
   const totalValue = sellCount * action.valuePerItem;
 
-  curios.splice(0, sellCount);
-  nextPlayer.inventory.curios = curios;
-  nextPlayer.inventory.knickKnacks = curios.length;
+  let remaining = sellCount;
+  const fromCurios = Math.min(curios.length, remaining);
+  if (fromCurios > 0) {
+    curios.splice(0, fromCurios);
+    nextPlayer.inventory.curios = curios;
+    nextPlayer.inventory.knickKnacks = curios.length;
+    remaining -= fromCurios;
+  }
+  if (remaining > 0) {
+    nextPlayer.inventory.uninspectedKnickKnacks = Math.max(0, (nextPlayer.inventory.uninspectedKnickKnacks || 0) - remaining);
+  }
   nextPlayer.money += totalValue;
 
   actionLog = {

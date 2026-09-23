@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { HomeApartmentView } from './HomeApartmentView';
 import { ApartmentMockupSandbox } from './ApartmentMockupSandbox';
+import { DurableCardModal } from './DurableCardModal';
 import { createMockCampaign } from '../../../engine/testFactories';
 
 const mockCampaign = createMockCampaign();
@@ -459,6 +460,147 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     const closeBtn = screen.getByTestId('btn-close-curios-wings');
     fireEvent.click(closeBtn);
     expect(screen.queryByTestId('curios-wing-left')).not.toBeInTheDocument();
+  });
+
+  it('renders uninspected curios properly on shelf and opens CuriosFlankingWings', () => {
+    const onAction = vi.fn();
+    const playerWithUninspected: any = {
+      ...basePlayer,
+      inventory: {
+        ...basePlayer.inventory,
+        knickKnacks: 0,
+        uninspectedKnickKnacks: 2,
+        curios: []
+      }
+    };
+
+    render(
+      <HomeApartmentView
+        player={playerWithUninspected}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, spaceCapping: true, usePhysicalMentalConditions: true } as any}
+        housingName="Low-Cost Housing"
+        actionFeedback={null}
+        durablesSpace={5}
+        totalUsedSpace={10}
+        spaceCap={10}
+        freeSpace={0}
+        overflow={0}
+        isOvercapacity={false}
+        durablesPct={50}
+        messPct={50}
+        currentMess={5}
+        maxMessHousing={50}
+        messIcon="🧹"
+        messLabel="Messy"
+        messBarColor="#f39c12"
+        messPercentage={10}
+        hoursToRelax={6}
+        isRelaxDisabled={false}
+        hasFood={true}
+        physGain={5}
+        mentalGain={10}
+        scaledMess={2}
+        classicGain={5}
+        classicFirstBonus={0}
+        onRelaxClick={vi.fn()}
+        socialParams={{}}
+        onSocializeClick={vi.fn()}
+        hoursToClean={3}
+        cleanPhysGain={2}
+        isCleanDisabled={false}
+        cleanSubtext=""
+        onCleanClick={vi.fn()}
+        cleaningServiceCost={100}
+        cleaningServicePrice={100}
+        isServiceDisabled={false}
+        serviceSubtext=""
+        onServiceClick={vi.fn()}
+        hasFridge={true}
+        hasFreezer={false}
+        onAction={onAction}
+      />
+    );
+
+    // Curios card on shelf shows x2 📦 badge
+    const curioShelfItem = screen.getByTestId('durable-card-knick_knack');
+    expect(curioShelfItem).toBeInTheDocument();
+    expect(screen.getByText('x2 📦')).toBeInTheDocument();
+
+    // Clicking shelf toggles wings
+    fireEvent.click(curioShelfItem);
+    expect(screen.getByTestId('curios-wing-left')).toBeInTheDocument();
+    expect(screen.getByTestId('curios-wing-right')).toBeInTheDocument();
+
+    // Check uninspected curio cards
+    expect(screen.getByTestId('curio-card-uninspected_0')).toBeInTheDocument();
+    expect(screen.getByTestId('curio-card-uninspected_1')).toBeInTheDocument();
+
+    // Discard button for uninspected curio
+    const discardBtn = screen.getByTestId('btn-discard-curio-uninspected_0');
+    fireEvent.click(discardBtn);
+    expect(onAction).toHaveBeenCalledWith({
+      type: 'discard_inventory_item',
+      itemType: 'knick_knacks',
+      count: 1
+    });
+  });
+
+  it('renders DurableCardModal for curios accurately in Advanced and Classic modes', () => {
+    const onAction = vi.fn();
+    const onClose = vi.fn();
+    const playerWithCurios: any = {
+      ...basePlayer,
+      inventory: {
+        ...basePlayer.inventory,
+        knickKnacks: 1,
+        uninspectedKnickKnacks: 1,
+        curios: [{ id: 'c1', name: 'Vintage Tin Robot' }]
+      }
+    };
+
+    // 1. Advanced mode: suppresses Happiness, shows Lifestyle synergy, Turn novelty, Weekend appraisal
+    const { unmount } = render(
+      <DurableCardModal
+        durable={{ id: 'knick_knack', isBook: false, isOwned: true }}
+        player={playerWithCurios}
+        campaign={mockCampaign}
+        rules={{ usePhysicalMentalConditions: true } as any}
+        onAction={onAction}
+        onClose={onClose}
+      />
+    );
+
+    expect(screen.getByText('🏺 Curio Collection (2)')).toBeInTheDocument();
+    expect(screen.queryByText(/\+1 😊 Happiness/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Lifestyle Synergy/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 🧠 Turn Novelty/i)).toBeInTheDocument();
+    expect(screen.getByText(/🎲 Weekend Appraisal/i)).toBeInTheDocument();
+    expect(screen.getByTestId('btn-discard-knick-knacks')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('btn-discard-knick-knacks'));
+    expect(onAction).toHaveBeenCalledWith({
+      type: 'discard_inventory_item',
+      itemType: 'knick_knacks',
+      count: 1
+    });
+
+    unmount();
+
+    // 2. Classic mode: shows +1 😊 Happiness
+    render(
+      <DurableCardModal
+        durable={{ id: 'knick_knack', isBook: false, isOwned: true }}
+        player={playerWithCurios}
+        campaign={mockCampaign}
+        rules={{ usePhysicalMentalConditions: false } as any}
+        onAction={onAction}
+        onClose={onClose}
+      />
+    );
+
+    expect(screen.getByText('+1 😊 Happiness')).toBeInTheDocument();
+    expect(screen.getByText('🏺 Curio Collection')).toBeInTheDocument();
   });
 });
 

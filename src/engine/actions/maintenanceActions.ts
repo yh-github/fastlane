@@ -280,12 +280,22 @@ export function handleDiscardInventoryItemAction(
         actionLog = { key: 'action.maintenance.discardKnickKnacks', params: { count: 1, name: discarded.name } };
       }
     } else {
-      const current = nextPlayer.inventory.knickKnacks || 0;
-      const actualDiscard = Math.min(current, countToDiscard);
+      const displayed = nextPlayer.inventory.knickKnacks || 0;
+      const uninspected = nextPlayer.inventory.uninspectedKnickKnacks || 0;
+      const totalAvailable = displayed + uninspected;
+      const actualDiscard = Math.min(totalAvailable, countToDiscard);
       if (actualDiscard > 0) {
-        curios.splice(0, actualDiscard);
-        nextPlayer.inventory.curios = curios;
-        nextPlayer.inventory.knickKnacks = curios.length;
+        let remaining = actualDiscard;
+        const fromDisplayed = Math.min(curios.length, remaining);
+        if (fromDisplayed > 0) {
+          curios.splice(0, fromDisplayed);
+          nextPlayer.inventory.curios = curios;
+          nextPlayer.inventory.knickKnacks = curios.length;
+          remaining -= fromDisplayed;
+        }
+        if (remaining > 0) {
+          nextPlayer.inventory.uninspectedKnickKnacks = Math.max(0, uninspected - remaining);
+        }
         actionLog = { key: 'action.maintenance.discardKnickKnacks', params: { count: actualDiscard } };
       }
     }
