@@ -366,7 +366,13 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         {/* Knick Knacks (Curios) */}
         {(rules?.pawnRummageBins !== false || (player.inventory?.knickKnacks || 0) > 0) && (
           <div
-            title={`Curios & Knick-Knacks\nYou have ${(player.inventory?.knickKnacks || 0)} on display.`}
+            data-testid="durable-card-knick_knack"
+            onClick={() => onInspectDurable({
+              id: 'knick_knack',
+              isBook: false,
+              isOwned: (player.inventory?.knickKnacks || 0) > 0
+            })}
+            title={`Curios & Knick-Knacks\nYou have ${(player.inventory?.knickKnacks || 0)} on display (${(player.inventory?.knickKnacks || 0) * 2} space).\nClick to inspect or discard.`}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -377,7 +383,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               background: (player.inventory?.knickKnacks || 0) > 0 ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
               border: (player.inventory?.knickKnacks || 0) > 0 ? '1.5px solid #f1c40f' : '1.5px dashed rgba(255, 255, 255, 0.2)',
               borderRadius: '8px',
-              cursor: 'default',
+              cursor: (player.inventory?.knickKnacks || 0) > 0 ? 'pointer' : 'default',
               boxShadow: (player.inventory?.knickKnacks || 0) > 0 ? '0 0 8px rgba(241, 196, 15, 0.25)' : 'none',
               opacity: (player.inventory?.knickKnacks || 0) > 0 ? 1 : 0.45,
               transition: 'all 0.15s ease',
@@ -416,6 +422,70 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 border: '1px solid #d4ac0d'
               }}>
                 x{player.inventory?.knickKnacks}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Box of Spare Parts */}
+        {(rules?.pawnRummageBins !== false || (player.inventory?.spareParts || 0) > 0) && (
+          <div
+            data-testid="durable-card-spare_parts"
+            onClick={() => onInspectDurable({
+              id: 'spare_parts',
+              isBook: false,
+              isOwned: (player.inventory?.spareParts || 0) > 0
+            })}
+            title={`Box of Spare Parts\nYou have ${(player.inventory?.spareParts || 0)} boxes (${(player.inventory?.spareParts || 0) * 2} space).\nClick to inspect or discard.`}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '66px',
+              height: '74px',
+              background: (player.inventory?.spareParts || 0) > 0 ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
+              border: (player.inventory?.spareParts || 0) > 0 ? '1.5px solid #38bdf8' : '1.5px dashed rgba(255, 255, 255, 0.2)',
+              borderRadius: '8px',
+              cursor: (player.inventory?.spareParts || 0) > 0 ? 'pointer' : 'default',
+              boxShadow: (player.inventory?.spareParts || 0) > 0 ? '0 0 8px rgba(56, 189, 248, 0.25)' : 'none',
+              opacity: (player.inventory?.spareParts || 0) > 0 ? 1 : 0.45,
+              transition: 'all 0.15s ease',
+              position: 'relative',
+              padding: '4px 2px',
+              boxSizing: 'border-box'
+            }}
+          >
+            <span style={{ fontSize: '24px', filter: (player.inventory?.spareParts || 0) > 0 ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' : 'grayscale(100%) opacity(0.35)' }}>
+              ⚙️
+            </span>
+            <span style={{
+              fontSize: '0.62rem',
+              color: (player.inventory?.spareParts || 0) > 0 ? '#e2e8f0' : '#718096',
+              textAlign: 'center',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '60px',
+              marginTop: '2px'
+            }}>
+              Parts
+            </span>
+            {(player.inventory?.spareParts || 0) > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                background: '#38bdf8',
+                color: '#000',
+                fontSize: '0.55rem',
+                fontWeight: 'bold',
+                padding: '2px 5px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                border: '1px solid #0284c7'
+              }}>
+                x{player.inventory?.spareParts}
               </span>
             )}
           </div>

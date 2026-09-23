@@ -32,7 +32,9 @@ import {
   handleResolveAppraisalDilemmaAction,
   handleRummagePawnShopAction,
   handleBuyRummageItemAction,
-  handleCloseRummageAction
+  handleCloseRummageAction,
+  handleDiscardInventoryItemAction,
+  handleRenegotiateRentAction
 } from './actions';
 
 export type { GameAction, ReducerContext, ReducerResult } from './actions';
@@ -152,6 +154,12 @@ export function gameReducer(
     case 'pass_pawn_rummage':
     case 'close_rummage':
       res = handleCloseRummageAction(nextPlayer, action, context);
+      break;
+    case 'discard_inventory_item':
+      res = handleDiscardInventoryItemAction(nextPlayer, action, context);
+      break;
+    case 'renegotiate_rent':
+      res = handleRenegotiateRentAction(nextPlayer, action, context);
       break;
   }
 
