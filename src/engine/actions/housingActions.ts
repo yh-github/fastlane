@@ -1,7 +1,8 @@
 import type { PlayerState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import type { ReplayContext } from '../replayTypes';
-import { calcUsedSpace, calcMovingFee } from '../statMath';
+import { calcUsedSpace, calcMovingFee, calcLandlordStanding } from '../statMath';
+import { calcEconomyPrice } from '../economyEngine';
 import { resolveDecision } from '../replayTypes';
 import { applyHappinessChange } from '../statEffects';
 
@@ -145,3 +146,44 @@ export function handleAskRentExtensionAction(
 
   return { nextPlayer, actionLog };
 }
+
+export function handleRenegotiateRentAction(
+  player: PlayerState,
+  _action: { type: 'renegotiate_rent' },
+  context: ReducerContext
+): ActionHandlerResult {
+  let nextPlayer = structuredClone(player);
+  let actionLog;
+
+  const currentHousing = context.campaign.housing.find(h => h.id === nextPlayer.currentHousingId);
+  if (!currentHousing) {
+    return { nextPlayer, actionLog: { key: 'action.rent.noLease' } };
+  }
+
+  const marketRent = calcEconomyPrice(currentHousing.baseRent, context.economicIndex);
+  const currentRent = nextPlayer.currentRentPrice;
+
+  if (marketRent >= currentRent) {
+    actionLog = { key: 'action.rent.renegotiateNotCheaper', params: { marketRent, currentRent } };
+    return { nextPlayer, actionLog };
+  }
+
+  const { standing } = calcLandlordStanding(nextPlayer, context.rules);
+
+  if (standing >= 50) {
+    // Full reduction to market price
+    nextPlayer.currentRentPrice = marketRent;
+    actionLog = { key: 'action.rent.renegotiateApproved', params: { newRent: marketRent, oldRent: currentRent, standing } };
+  } else if (standing >= 35) {
+    // Partial compromise
+    const compromiseRent = currentRent - Math.floor((currentRent - marketRent) * 0.5);
+    nextPlayer.currentRentPrice = compromiseRent;
+    actionLog = { key: 'action.rent.renegotiateCompromise', params: { newRent: compromiseRent, oldRent: currentRent, standing } };
+  } else {
+    // Refused
+    actionLog = { key: 'action.rent.renegotiateDenied', params: { standing, currentRent } };
+  }
+
+  return { nextPlayer, actionLog };
+}
+
