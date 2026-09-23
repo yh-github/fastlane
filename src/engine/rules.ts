@@ -256,6 +256,12 @@ export interface GameRules {
    * QoL & ADVANCED: If true, the weekly newspaper includes predictive stock market tips and financial column.
    */
   predictiveNewspaperStockTips: boolean;
+
+  /**
+   * If true, entering or re-opening the current building location costs the standard building entry time (2 hours).
+   * Classic Floppy/CD-ROM: true. QoL / Advanced: false.
+   */
+  reenterCurrentLocationCost: boolean;
 }
 
 export interface EventRules {
@@ -473,12 +479,14 @@ export const DEFAULT_GAME_RULES: GameRules = {
   advancedWorkGUI: false,
   streetRobberyOnTurnEnd: true,
   predictiveNewspaperStockTips: false,
+  reenterCurrentLocationCost: true,
 };
 
 /**
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  reenterCurrentLocationCost: 'Entering or re-opening the current building location costs standard building entry time (2 hours)',
   pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',
   removeCharacterBg: 'Renders character sprites with transparent backgrounds instead of solid colored backdrops',
   authenticCurvedPaths: 'Renders the board using authentic curved sidewalks and non-straight waypoint paths from the original game',

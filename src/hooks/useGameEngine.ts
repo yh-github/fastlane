@@ -271,10 +271,21 @@ export function useGameEngine(
         return;
       }
 
-      // If we are already there, just open the modal if it's a building
+      // If we are already there, just open the modal if it's a building (charging entry cost if rule enabled)
       if (player.position === targetNodeId) {
         const destNode = campaign.map.nodes.find(n => n.id === targetNodeId);
         if (!activePlayer.isAi && campaign!.buildings.some(b => b.id === destNode?.buildingId)) {
+          if (currentState.rules.reenterCurrentLocationCost) {
+            const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
+            player = spendHours(player, entryCost);
+            updatedPlayers[activePlayerIndex] = player;
+            setGameState({ ...currentState, players: updatedPlayers });
+            if (player.hoursRemaining <= 0) {
+              addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
+              await endTurnSequence(updatedPlayers);
+              return;
+            }
+          }
           setIsBuildingModalOpen(true);
         }
         return;

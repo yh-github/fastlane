@@ -28,7 +28,7 @@ test.describe('Character Center Walking Animation E2E', () => {
     // 3. Center character animation stage should now be visible
     const centerStage = page.locator('[data-testid="center-walk-animation"]');
     await expect(centerStage).toBeVisible({ timeout: 5000 });
-    await expect(centerStage).toHaveAttribute('data-character', '1');
+    await expect(centerStage).toHaveAttribute('data-character', '0');
     await expect(centerStage).toHaveAttribute('data-clothes', 'casual');
     await expect(centerStage).toHaveAttribute('data-walking', 'false');
 

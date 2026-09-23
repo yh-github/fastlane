@@ -14,19 +14,19 @@ describe('SetupScreen Character Selector', () => {
     { stat: 'happiness', label: 'Happiness', target: 50 },
   ];
 
-  it('renders default Player 1 with Character 1 selected', () => {
+  it('renders default Player 1 with Character 0 (Jones) selected', () => {
     render(<SetupScreen winConditions={mockWinConditions} onConfirm={() => {}} />);
 
-    // Check that character selector buttons 1, 2, 3, 4, and 0 (Jones) are rendered
+    // Check that character selector buttons 0 (Jones), 1, 2, 3, 4 are rendered
+    expect(screen.getByTestId('player-0-char-0')).toBeInTheDocument();
     expect(screen.getByTestId('player-0-char-1')).toBeInTheDocument();
     expect(screen.getByTestId('player-0-char-2')).toBeInTheDocument();
     expect(screen.getByTestId('player-0-char-3')).toBeInTheDocument();
     expect(screen.getByTestId('player-0-char-4')).toBeInTheDocument();
-    expect(screen.getByTestId('player-0-char-0')).toBeInTheDocument();
 
-    // Player 1 defaults to Character 1 (has cyan border / active styling)
-    const char1Btn = screen.getByTestId('player-0-char-1');
-    expect(char1Btn.style.border).toContain('var(--accent-cyan');
+    // Player 1 defaults to Character 0 (Jones) (has cyan border / active styling)
+    const char0Btn = screen.getByTestId('player-0-char-0');
+    expect(char0Btn.style.border).toContain('var(--accent-cyan');
   });
 
   it('updates selected character when clicking a character button', () => {
@@ -60,7 +60,7 @@ describe('SetupScreen Character Selector', () => {
 
     expect(onConfirm).toHaveBeenCalled();
     const playersConfig = onConfirm.mock.calls[0][0];
-    expect(playersConfig[0].characterIndex).toBe(1);
-    expect(playersConfig[1].characterIndex).toBe(2);
+    expect(playersConfig[0].characterIndex).toBe(0);
+    expect(playersConfig[1].characterIndex).toBe(1);
   });
 });

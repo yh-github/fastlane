@@ -17,7 +17,16 @@ export function handleMoveAction(
 
   const nodeId = action.nodeId;
   if (nextPlayer.position === nodeId) {
-    return { nextPlayer };
+    const destNode = context.campaign.map?.nodes?.find(n => n.id === nodeId);
+    if (destNode && destNode.buildingId && context.rules?.reenterCurrentLocationCost) {
+      const buildingEntryCost = requireConfig(context.campaign.config.timeRules?.buildingEntryCost, 'timeRules.buildingEntryCost');
+      if (nextPlayer.hoursRemaining > 0) {
+        nextPlayer = spendHours(nextPlayer, buildingEntryCost);
+      } else {
+        actionLog = { key: 'action.error.notEnoughTime' };
+      }
+    }
+    return { nextPlayer, actionLog };
   }
 
   const adjacencyMap = context.campaign.map?.nodes ? buildAdjacencyMap(context.campaign.map.nodes) : new Map<string, string[]>();

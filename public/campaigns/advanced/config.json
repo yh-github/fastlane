@@ -37,7 +37,8 @@
     "autoEquipBestClothes": false,
     "showJobTags": true,
     "pawnRummageBins": true,
-    "predictiveNewspaperStockTips": true
+    "predictiveNewspaperStockTips": true,
+    "reenterCurrentLocationCost": false
   },
   "statRules": {
     "startingSocial": 20,
