@@ -173,7 +173,7 @@ export function createInitialGameState(
     rngState: seed,
     pawnShopItemsForSale: [],
     players: playersConfig.map((cfg, i) =>
-      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config, cfg.characterIndex ?? ((i % 4) + 1))
+      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config, cfg.characterIndex ?? (i % 5))
     ),
     phase: 'setup',
     winnerId: null,

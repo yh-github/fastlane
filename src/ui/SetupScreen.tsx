@@ -22,7 +22,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
       name: 'Player 1',
       isAi: false,
       goals: generateDefaultGoals(),
-      characterIndex: 1,
+      characterIndex: 0,
     }
   ]);
 
@@ -42,7 +42,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
 
   const addPlayer = () => {
     if (players.length < 4) {
-      const nextChar = (players.length % 4) + 1;
+      const nextChar = players.length % 5;
       setPlayers([
         ...players,
         {
@@ -134,8 +134,8 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
                     {t('setupScreen.character', { defaultValue: 'Select Character' })}
                   </label>
                   <div style={{ display: 'flex', gap: '6px', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {[1, 2, 3, 4, 0].map((charIdx) => {
-                      const isSelected = (player.characterIndex ?? ((index % 4) + 1)) === charIdx;
+                    {[0, 1, 2, 3, 4].map((charIdx) => {
+                      const isSelected = (player.characterIndex ?? (index % 5)) === charIdx;
                       const charLabel = charIdx === 0 ? 'Jones' : `${charIdx}`;
                       return (
                         <button
