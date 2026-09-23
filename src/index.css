@@ -173,12 +173,12 @@ body {
 .building-modal,
 .building-modal--curved {
   position: absolute;
-  left: calc(var(--board-x, calc(50% - 600px)) + ((235px + var(--modal-margin, 3px)) * var(--board-scale, 1)));
-  top: calc(var(--board-y, calc(50% - 400px)) + ((165px + var(--modal-margin, 3px)) * var(--board-scale, 1)));
-  width: calc((730px - (2 * var(--modal-margin, 3px))) * var(--board-scale, 1));
-  height: calc((490px - (2 * var(--modal-margin, 3px))) * var(--board-scale, 1));
-  max-width: calc((730px - (2 * var(--modal-margin, 3px))) * var(--board-scale, 1));
-  max-height: calc((490px - (2 * var(--modal-margin, 3px))) * var(--board-scale, 1));
+  left: calc(var(--board-x, calc(50% - 600px)) + (236px * var(--board-scale, 1)) + var(--modal-margin, 3px));
+  top: calc(var(--board-y, calc(50% - 400px)) + (160px * var(--board-scale, 1)) + var(--modal-margin, 3px));
+  width: calc((728px * var(--board-scale, 1)) - (2 * var(--modal-margin, 3px)));
+  height: calc((516px * var(--board-scale, 1)) - (2 * var(--modal-margin, 3px)));
+  max-width: calc((728px * var(--board-scale, 1)) - (2 * var(--modal-margin, 3px)));
+  max-height: calc((516px * var(--board-scale, 1)) - (2 * var(--modal-margin, 3px)));
   background: var(--panel-bg);
   backdrop-filter: blur(15px);
   border: 1px solid var(--accent-cyan);
@@ -193,12 +193,12 @@ body {
 }
 
 .building-modal--schematic {
-  left: calc(var(--board-x, calc(50% - 600px)) + (185px * var(--board-scale, 1)));
-  top: calc(var(--board-y, calc(50% - 400px)) + (126px * var(--board-scale, 1)));
-  width: calc(830px * var(--board-scale, 1));
-  height: calc(540px * var(--board-scale, 1));
-  max-width: calc(830px * var(--board-scale, 1));
-  max-height: calc(540px * var(--board-scale, 1));
+  left: calc(var(--board-x, calc(50% - 600px)) + (185px * var(--board-scale, 1)) + var(--modal-margin, 3px));
+  top: calc(var(--board-y, calc(50% - 400px)) + (126px * var(--board-scale, 1)) + var(--modal-margin, 3px));
+  width: calc((830px * var(--board-scale, 1)) - (2 * var(--modal-margin, 3px)));
+  height: calc((540px * var(--board-scale, 1)) - (2 * var(--modal-margin, 3px)));
+  max-width: calc((830px * var(--board-scale, 1)) - (2 * var(--modal-margin, 3px)));
+  max-height: calc((540px * var(--board-scale, 1)) - (2 * var(--modal-margin, 3px)));
 }
 
 .building-modal__header {
