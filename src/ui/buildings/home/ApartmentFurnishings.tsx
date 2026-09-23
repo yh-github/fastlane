@@ -368,84 +368,116 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         })}
 
         {/* Knick Knacks (Curios) */}
-        {(rules?.pawnRummageBins !== false || (player.inventory?.knickKnacks || 0) > 0) && (
-          <div
-            data-testid="durable-card-knick_knack"
-            onClick={() => {
-              if (onToggleCuriosWings && (player.inventory?.knickKnacks || 0) > 0) {
-                onToggleCuriosWings();
-              } else {
-                onInspectDurable({
-                  id: 'knick_knack',
-                  isBook: false,
-                  isOwned: (player.inventory?.knickKnacks || 0) > 0
-                });
-              }
-            }}
-            title={t('homeRelax.curiosShelfTitle', {
-              count: player.inventory?.knickKnacks || 0,
-              space: (player.inventory?.knickKnacks || 0) * 2,
-              defaultValue: `Curios & Knick-Knacks\nYou have ${(player.inventory?.knickKnacks || 0)} on display (${(player.inventory?.knickKnacks || 0) * 2} space).\nClick to open Curios Console.`
-            })}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '66px',
-              height: '74px',
-              background: (player.inventory?.knickKnacks || 0) > 0
-                ? (isCuriosWingsOpen ? 'rgba(234, 179, 8, 0.25)' : 'rgba(0, 0, 0, 0.45)')
-                : 'rgba(0, 0, 0, 0.25)',
-              border: (player.inventory?.knickKnacks || 0) > 0
-                ? (isCuriosWingsOpen ? '2px solid #facc15' : '1.5px solid #f1c40f')
-                : '1.5px dashed rgba(255, 255, 255, 0.2)',
-              borderRadius: '8px',
-              cursor: (player.inventory?.knickKnacks || 0) > 0 ? 'pointer' : 'default',
-              boxShadow: (player.inventory?.knickKnacks || 0) > 0
-                ? (isCuriosWingsOpen ? '0 0 16px rgba(250, 204, 21, 0.6)' : '0 0 8px rgba(241, 196, 15, 0.25)')
-                : 'none',
-              opacity: (player.inventory?.knickKnacks || 0) > 0 ? 1 : 0.45,
-              transition: 'all 0.15s ease',
-              position: 'relative',
-              padding: '4px 2px',
-              boxSizing: 'border-box'
-            }}
-          >
-            <span style={{ fontSize: '24px', filter: (player.inventory?.knickKnacks || 0) > 0 ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' : 'grayscale(100%) opacity(0.35)' }}>
-              🏺
-            </span>
-            <span style={{
-              fontSize: '0.62rem',
-              color: (player.inventory?.knickKnacks || 0) > 0 ? '#e2e8f0' : '#718096',
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: '60px',
-              marginTop: '2px'
-            }}>
-              Curios
-            </span>
-            {(player.inventory?.knickKnacks || 0) > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-4px',
-                right: '-4px',
-                background: '#f1c40f',
-                color: '#000',
-                fontSize: '0.55rem',
-                fontWeight: 'bold',
-                padding: '2px 5px',
+        {(() => {
+          const knickKnacks = player.inventory?.knickKnacks || 0;
+          const uninspected = player.inventory?.uninspectedKnickKnacks || 0;
+          const totalCurios = knickKnacks + uninspected;
+          const isOwned = totalCurios > 0;
+
+          if (rules?.pawnRummageBins === false && !isOwned) {
+            return null;
+          }
+
+          const curioTooltip = isOwned
+            ? (uninspected > 0 && knickKnacks > 0
+                ? t('homeRelax.curiosShelfMixedTitle', {
+                    total: totalCurios,
+                    knickKnacks,
+                    uninspected,
+                    space: totalCurios * 2,
+                    defaultValue: `Curios & Knick-Knacks\nYou have ${totalCurios} curios (${knickKnacks} on display, ${uninspected} pending weekend appraisal) · ${totalCurios * 2} space.\nClick to open Curios Console.`
+                  })
+                : (uninspected > 0
+                    ? t('homeRelax.curiosShelfPendingTitle', {
+                        count: uninspected,
+                        space: uninspected * 2,
+                        defaultValue: `Curios & Knick-Knacks\nYou have ${uninspected} curio(s) pending weekend appraisal (${uninspected * 2} space).\nClick to open Curios Console.`
+                      })
+                    : t('homeRelax.curiosShelfTitle', {
+                        count: knickKnacks,
+                        space: knickKnacks * 2,
+                        defaultValue: `Curios & Knick-Knacks\nYou have ${knickKnacks} on display (${knickKnacks * 2} space).\nClick to open Curios Console.`
+                      })))
+            : t('homeRelax.curiosShelfEmptyTitle', {
+                defaultValue: 'Curios Shelf\nFind curios rummaging at the Pawn Shop to build lifestyle synergy.'
+              });
+
+          return (
+            <div
+              key="knick_knack"
+              data-testid="durable-card-knick_knack"
+              onClick={() => {
+                if (onToggleCuriosWings && isOwned) {
+                  onToggleCuriosWings();
+                } else {
+                  onInspectDurable({
+                    id: 'knick_knack',
+                    isBook: false,
+                    isOwned
+                  });
+                }
+              }}
+              title={curioTooltip}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '66px',
+                height: '74px',
+                background: isOwned
+                  ? (isCuriosWingsOpen ? 'rgba(234, 179, 8, 0.25)' : 'rgba(0, 0, 0, 0.45)')
+                  : 'rgba(0, 0, 0, 0.25)',
+                border: isOwned
+                  ? (isCuriosWingsOpen ? '2px solid #facc15' : '1.5px solid #f1c40f')
+                  : '1.5px dashed rgba(255, 255, 255, 0.2)',
                 borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                border: '1px solid #d4ac0d'
-              }}>
-                x{player.inventory?.knickKnacks}
+                cursor: isOwned ? 'pointer' : 'default',
+                boxShadow: isOwned
+                  ? (isCuriosWingsOpen ? '0 0 16px rgba(250, 204, 21, 0.6)' : '0 0 8px rgba(241, 196, 15, 0.25)')
+                  : 'none',
+                opacity: isOwned ? 1 : 0.45,
+                transition: 'all 0.15s ease',
+                position: 'relative',
+                padding: '4px 2px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <span style={{ fontSize: '24px', filter: isOwned ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' : 'grayscale(100%) opacity(0.35)' }}>
+                🏺
               </span>
-            )}
-          </div>
-        )}
+              <span style={{
+                fontSize: '0.62rem',
+                color: isOwned ? '#e2e8f0' : '#718096',
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '60px',
+                marginTop: '2px'
+              }}>
+                Curios
+              </span>
+              {isOwned && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: uninspected > 0 && knickKnacks === 0 ? '#0284c7' : '#f1c40f',
+                  color: uninspected > 0 && knickKnacks === 0 ? '#fff' : '#000',
+                  fontSize: '0.55rem',
+                  fontWeight: 'bold',
+                  padding: '2px 5px',
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                  border: uninspected > 0 && knickKnacks === 0 ? '1px solid #38bdf8' : '1px solid #d4ac0d'
+                }}>
+                  {uninspected > 0 && knickKnacks === 0 ? `x${totalCurios} 📦` : (uninspected > 0 ? `x${totalCurios} (${uninspected}📦)` : `x${totalCurios}`)}
+                </span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Box of Spare Parts */}
         {(rules?.pawnRummageBins !== false || (player.inventory?.spareParts || 0) > 0) && (

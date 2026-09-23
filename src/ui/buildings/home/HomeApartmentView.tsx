@@ -332,7 +332,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
       />
 
       {/* Flanking Curios Wings (when Curios shelf toggled) */}
-      {isCuriosWingsOpen && (player.inventory?.knickKnacks || 0) > 0 && (
+      {isCuriosWingsOpen && ((player.inventory?.knickKnacks || 0) + (player.inventory?.uninspectedKnickKnacks || 0)) > 0 && (
         modalParent ? createPortal(
           <CuriosFlankingWings
             player={player}

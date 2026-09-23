@@ -494,17 +494,19 @@ export function PawnShop({
       {activeTab === 'pawn' && (
         <div>
           {/* Sell Knick-Knacks (Bulk Sell / Permanent + Individual Picker) */}
-          {(player.inventory.knickKnacks || 0) > 0 && (() => {
-            const knickKnacksCount = player.inventory.knickKnacks || 0;
+          {((player.inventory.knickKnacks || 0) + (player.inventory.uninspectedKnickKnacks || 0)) > 0 && (() => {
+            const knickKnacksOnDisplay = player.inventory.knickKnacks || 0;
+            const uninspectedCount = player.inventory.uninspectedKnickKnacks || 0;
+            const knickKnacksCount = knickKnacksOnDisplay + uninspectedCount;
             const payoutRate = campaign?.config?.economyRules?.pawnPayoutRate ?? 0.4;
             const knickKnackVal = Math.max(1, Math.floor(calcEconomyPrice(10, economicIndex) * payoutRate));
             const curios = ensurePlayerCurios(player, 1);
             
             // Calculate lifestyle impacts
-            const curLifestyle = Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacksCount)));
-            const afterSell1 = knickKnacksCount > 1 ? Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacksCount - 1))) : 0;
+            const curLifestyle = Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacksOnDisplay)));
+            const afterSell1 = knickKnacksOnDisplay > 1 ? Math.min(15, Math.floor(2.8 * Math.sqrt(Math.max(0, knickKnacksOnDisplay - 1)))) : 0;
             const diff1 = afterSell1 - curLifestyle;
-            const afterSell5 = knickKnacksCount > 5 ? Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacksCount - 5))) : 0;
+            const afterSell5 = knickKnacksOnDisplay > 5 ? Math.min(15, Math.floor(2.8 * Math.sqrt(Math.max(0, knickKnacksOnDisplay - 5)))) : 0;
             const diff5 = afterSell5 - curLifestyle;
 
             return (
@@ -543,35 +545,37 @@ export function PawnShop({
                         </span>
                       </div>
                       <div style={{ fontSize: '11px', color: '#a8a29e', marginTop: '2px' }}>
-                        {t('pawnShop.curioCountDesc', {
-                          count: knickKnacksCount,
-                          space: knickKnacksCount * 2,
-                          defaultValue: `You have ${knickKnacksCount} on display (${knickKnacksCount * 2} space). Sell value: $${knickKnackVal} each.`
-                        })}
+                        {uninspectedCount > 0 && knickKnacksOnDisplay > 0
+                          ? `You own ${knickKnacksCount} curios (${knickKnacksOnDisplay} on display, ${uninspectedCount} uninspected) · ${knickKnacksCount * 2} space. Sell value: $${knickKnackVal} each.`
+                          : (uninspectedCount > 0
+                              ? `You have ${uninspectedCount} uninspected curio(s) (${uninspectedCount * 2} space). Sell value: $${knickKnackVal} each.`
+                              : `You have ${knickKnacksOnDisplay} on display (${knickKnacksOnDisplay * 2} space). Sell value: $${knickKnackVal} each.`)}
                       </div>
                     </div>
                   </div>
 
                   {/* Toggle Individual Curios Picker */}
-                  <button
-                    data-testid="btn-toggle-curios-picker"
-                    onClick={() => setShowCuriosPicker(!showCuriosPicker)}
-                    style={{
-                      background: showCuriosPicker ? 'rgba(250, 204, 21, 0.25)' : 'rgba(255,255,255,0.06)',
-                      border: '1px solid #facc15',
-                      borderRadius: '6px',
-                      color: '#fef08a',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      padding: '4px 10px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <span>{showCuriosPicker ? '✕ Hide Curios' : `🔍 Pick & Sell Individual (${curios.length})`}</span>
-                  </button>
+                  {curios.length > 0 && (
+                    <button
+                      data-testid="btn-toggle-curios-picker"
+                      onClick={() => setShowCuriosPicker(!showCuriosPicker)}
+                      style={{
+                        background: showCuriosPicker ? 'rgba(250, 204, 21, 0.25)' : 'rgba(255,255,255,0.06)',
+                        border: '1px solid #facc15',
+                        borderRadius: '6px',
+                        color: '#fef08a',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        padding: '4px 10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <span>{showCuriosPicker ? '✕ Hide Curios' : `🔍 Pick & Sell Individual (${curios.length})`}</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* MODIFIER DIFF PREVIEW BANNER */}

@@ -39,28 +39,43 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
     : (player?.inventory.appliances.find(a => a.id === durable.id && a.isBroken) || player?.inventory.appliances.find(a => a.id === durable.id));
   const isBroken = Boolean(currentAppliance ? currentAppliance.isBroken : durable.applianceData?.isBroken);
 
-  const isOwned = durable.isOwned !== false;
+  const isSpareParts = durable.id === 'spare_parts';
+  const isCurio = durable.id === 'knick_knack' || durable.id === 'knick_knacks';
+
+  const knickKnacks = player?.inventory.knickKnacks || 0;
+  const uninspectedKnickKnacks = player?.inventory.uninspectedKnickKnacks || 0;
+  const totalCurios = knickKnacks + uninspectedKnickKnacks;
+
+  const isOwned = isCurio 
+    ? (durable.isOwned !== false && totalCurios > 0)
+    : (isSpareParts ? (durable.isOwned !== false && (player?.inventory.spareParts || 0) > 0) : durable.isOwned !== false);
   const isNew = durable.isBook 
     ? false 
     : ((currentAppliance?.condition ?? durable.applianceData?.condition) === 'new' || (currentAppliance?.purchaseSource ?? durable.applianceData?.purchaseSource) === 'socket_city');
-  const isSpareParts = durable.id === 'spare_parts';
-  const isCurio = durable.id === 'knick_knack' || durable.id === 'knick_knacks';
 
   const conditionLabel = !isOwned 
     ? '🏬 Not Owned' 
     : (isSpareParts 
-        ? '⚙️ Spare Parts' 
+        ? `⚙️ Spare Parts (${player?.inventory.spareParts || 0})` 
         : (isCurio 
-            ? '🏺 Curio' 
+            ? `🏺 Curio Collection (${totalCurios})` 
             : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable.isBook ? '📚 Book' : '📦 Used')))));
   const conditionDetail = !isOwned
     ? (durable.isBook 
         ? 'Available at Z-Mart. Purchase to study and permanently boost your cognitive reserves.'
-        : 'Available at Socket City (Brand New) or Z-Mart & Pawn Shop (Used). Furnish your home to gain its perks!')
+        : (isCurio
+            ? 'Available at Pawn Shop rummage bins. Furnish your home to gain aesthetic charm and lifestyle synergy!'
+            : (isSpareParts
+                ? 'Available at Pawn Shop rummage bins. Keep a box handy to boost your DIY appliance repair odds!'
+                : 'Available at Socket City (Brand New) or Z-Mart & Pawn Shop (Used). Furnish your home to gain its perks!')))
     : (isSpareParts
         ? `Assorted repair materials from pawn shop rummage bins. Occupies 2 space per box. You currently own ${player?.inventory.spareParts || 0} box(es).`
         : (isCurio
-            ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently have ${player?.inventory.knickKnacks || 0} on display.`
+            ? (uninspectedKnickKnacks > 0 && knickKnacks > 0
+                ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently own ${totalCurios} curio(s) (${knickKnacks} on display, ${uninspectedKnickKnacks} pending weekend appraisal).`
+                : (uninspectedKnickKnacks > 0
+                    ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently own ${uninspectedKnickKnacks} curio(s) pending weekend appraisal.`
+                    : `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently have ${knickKnacks} on display.`))
             : (isBroken
                 ? 'Broken down and in need of maintenance. Choose a repair option below to restore functionality, or throw it out.'
                 : (isNew 
@@ -140,7 +155,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   if (itemDef?.tags?.includes('computer')) {
     effectBadges.push('💻 R&D and Income Potential');
   }
-  if (itemDef?.happinessBonus && effectBadges.length === 0) {
+  if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus && effectBadges.length === 0) {
     effectBadges.push(`+${itemDef.happinessBonus} 😊 Happiness`);
   }
 
@@ -148,7 +163,16 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
     effectBadges.push('+20% to +30% DIY Repair');
   }
   if (isCurio) {
-    effectBadges.push('🏺 Curio Shelf Decor');
+    if (rules?.usePhysicalMentalConditions) {
+      const curioLifestyle = Math.min(15, Math.floor(2.8 * Math.sqrt(totalCurios || 1)));
+      effectBadges.push(`🏺 Lifestyle Synergy (+${curioLifestyle})`);
+      effectBadges.push('📈 2.8 × √Count (Max +15)');
+      effectBadges.push('+1 🧠 Turn Novelty (First Curio)');
+      effectBadges.push('🎲 Weekend Appraisal (40% Decor, 40% Mental, 20% Cash)');
+    } else {
+      effectBadges.push('+1 😊 Happiness');
+      effectBadges.push('🏺 Curio Collection');
+    }
   }
 
   const hasTv = player?.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
@@ -158,7 +182,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   }
 
   const spaceCost = isSpareParts || isCurio ? 2 : (itemDef?.space ?? 0);
-  const lifestyleVal = isVcrWithoutTv ? 0 : (itemDef?.lifestyleValue ?? 0);
+  const lifestyleVal = isVcrWithoutTv ? 0 : (isCurio ? Math.min(15, Math.floor(2.8 * Math.sqrt(totalCurios))) : (itemDef?.lifestyleValue ?? 0));
 
   if (typeof document === 'undefined') return null;
 
@@ -529,32 +553,38 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
             </div>
           )
         ) : isCurio ? (
-          (player?.inventory.knickKnacks || 0) > 0 ? (
-            <button
-              data-testid="btn-discard-knick-knacks"
-              onClick={() => {
-                onAction?.({ type: 'discard_inventory_item', itemType: 'knick_knacks', count: 1 });
-                onClose();
-              }}
-              style={{
-                width: '100%',
-                padding: '9px 12px',
-                backgroundColor: '#dc2626',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)'
-              }}
-            >
-              🗑️ Throw Away 1 Curio (Frees 2 Space)
-            </button>
+          totalCurios > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+              <button
+                data-testid="btn-discard-knick-knacks"
+                onClick={() => {
+                  onAction?.({ type: 'discard_inventory_item', itemType: 'knick_knacks', count: 1 });
+                  onClose();
+                }}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  backgroundColor: '#dc2626',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)'
+                }}
+              >
+                🗑️ Throw Away 1 Curio (Frees 2 Space)
+              </button>
+              <div style={{ fontSize: '0.70rem', color: '#94a3b8', textAlign: 'center', lineHeight: '1.3' }}>
+                {knickKnacks > 0 && <span>• {knickKnacks} on display shelf (+{Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacks)))} Lifestyle) </span>}
+                {uninspectedKnickKnacks > 0 && <span style={{ color: '#38bdf8' }}>• {uninspectedKnickKnacks} pending weekend appraisal</span>}
+              </div>
+            </div>
           ) : (
             <div style={{
               padding: '6px 10px',
