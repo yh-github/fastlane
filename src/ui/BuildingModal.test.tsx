@@ -1040,5 +1040,33 @@ describe('BuildingModal Component', () => {
     expect(marginDisplay.textContent).toBe('2px');
     expect(modal.style.getPropertyValue('--modal-margin')).toBe('2px');
   });
+
+  it('starts with clean default responsive position without waiting for reset', () => {
+    localStorage.clear();
+    sessionStorage.setItem('fastlane_building_modal_pos', JSON.stringify({ x: 999, y: 999 }));
+    sessionStorage.setItem('fastlane_building_modal_size', JSON.stringify({ width: 999, height: 999 }));
+
+    const { container } = render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    const modal = container.querySelector('.building-modal') as HTMLElement;
+    // Should NOT have inline position/size overrides from sessionStorage!
+    expect(modal.style.left).toBeFalsy();
+    expect(modal.style.top).toBeFalsy();
+    expect(modal.style.width).toBeFalsy();
+    expect(modal.style.height).toBeFalsy();
+    // Reset button should NOT be shown on clean start
+    expect(screen.queryByTestId('btn-reset-modal-layout')).toBeNull();
+  });
 });
 

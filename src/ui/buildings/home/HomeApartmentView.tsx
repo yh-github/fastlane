@@ -316,75 +316,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         </div>
       )}
 
-      {/* Action Deck Toggles: Begins folded */}
-      <div 
-        className="home-actions-toggle-bar"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '10px',
-          margin: '0 0 6px 0',
-          flexShrink: 0
-        }}
-      >
-        <button
-          type="button"
-          data-testid="toggle-wing-leisure"
-          onClick={() => setActiveWing(activeWing === 'leisure' ? null : 'leisure')}
-          style={{
-            padding: '4px 12px',
-            borderRadius: '6px',
-            border: activeWing === 'leisure' ? '1.5px solid #10b981' : '1px solid rgba(255, 255, 255, 0.15)',
-            background: activeWing === 'leisure' 
-              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 150, 105, 0.45) 100%)' 
-              : 'rgba(255, 255, 255, 0.05)',
-            color: activeWing === 'leisure' ? '#6ee7b7' : '#cbd5e1',
-            fontSize: '0.78rem',
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: activeWing === 'leisure' ? '0 0 10px rgba(16, 185, 129, 0.4)' : 'none',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <span>🧘</span>
-          <span>{t('homeRelax.toggleLeisure', { defaultValue: 'Leisure' })}</span>
-          <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>
-            {activeWing === 'leisure' ? '◀' : '▶'}
-          </span>
-        </button>
 
-        <button
-          type="button"
-          data-testid="toggle-wing-chores"
-          onClick={() => setActiveWing(activeWing === 'chores' ? null : 'chores')}
-          style={{
-            padding: '4px 12px',
-            borderRadius: '6px',
-            border: activeWing === 'chores' ? '1.5px solid #818cf8' : '1px solid rgba(255, 255, 255, 0.15)',
-            background: activeWing === 'chores' 
-              ? 'linear-gradient(135deg, rgba(129, 140, 248, 0.35) 0%, rgba(99, 102, 241, 0.45) 100%)' 
-              : 'rgba(255, 255, 255, 0.05)',
-            color: activeWing === 'chores' ? '#c7d2fe' : '#cbd5e1',
-            fontSize: '0.78rem',
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: activeWing === 'chores' ? '0 0 10px rgba(129, 140, 248, 0.4)' : 'none',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>
-            {activeWing === 'chores' ? '▶' : '◀'}
-          </span>
-          <span>🧹</span>
-          <span>{t('homeRelax.toggleChores', { defaultValue: 'Chores' })}</span>
-        </button>
-      </div>
 
       {/* MIDDLE CONTENT: ALWAYS APARTMENT FURNISHINGS & BELONGINGS (UNOBSTRUCTED) */}
       <ApartmentFurnishings
@@ -488,6 +420,96 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           />
         )
       )}
+
+      {/* Non-scrollable Leisure and Chores buttons portaled to bottom border of building-modal */}
+      {(() => {
+        const dockedActionsElement = (
+          <div 
+            className="home-docked-actions"
+            data-testid="home-docked-actions"
+            style={{
+              position: 'absolute',
+              bottom: modalParent ? '0px' : 'calc(-18px * var(--board-scale, 1))',
+              left: '50%',
+              transform: 'translate(-50%, 50%)',
+              zIndex: 70,
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'center',
+              alignItems: 'center',
+              pointerEvents: 'auto'
+            }}
+          >
+            {/* Leisure Button */}
+            <button
+              type="button"
+              data-testid="toggle-wing-leisure"
+              onClick={() => setActiveWing(activeWing === 'leisure' ? null : 'leisure')}
+              style={{
+                padding: '5px 14px',
+                borderRadius: '6px',
+                border: activeWing === 'leisure' ? '2px solid #10b981' : '1.5px solid rgba(16, 185, 129, 0.5)',
+                background: activeWing === 'leisure' 
+                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%)' 
+                  : 'linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(6, 78, 59, 0.85) 100%)',
+                color: activeWing === 'leisure' ? '#000' : '#6ee7b7',
+                fontSize: '0.80rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: activeWing === 'leisure' 
+                  ? '0 0 14px rgba(16, 185, 129, 0.8), 0 4px 10px rgba(0,0,0,0.7)' 
+                  : '0 3px 8px rgba(0,0,0,0.6)',
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <span>🧘</span>
+              <span>{t('homeRelax.btnLeisure', { defaultValue: 'Leisure' })}</span>
+              <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>
+                {activeWing === 'leisure' ? '◀' : '▶'}
+              </span>
+            </button>
+
+            {/* Chores Button */}
+            <button
+              type="button"
+              data-testid="toggle-wing-chores"
+              onClick={() => setActiveWing(activeWing === 'chores' ? null : 'chores')}
+              style={{
+                padding: '5px 14px',
+                borderRadius: '6px',
+                border: activeWing === 'chores' ? '2px solid #818cf8' : '1.5px solid rgba(129, 140, 248, 0.5)',
+                background: activeWing === 'chores' 
+                  ? 'linear-gradient(135deg, rgba(129, 140, 248, 0.95) 0%, rgba(99, 102, 241, 0.95) 100%)' 
+                  : 'linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 27, 75, 0.85) 100%)',
+                color: activeWing === 'chores' ? '#000' : '#c7d2fe',
+                fontSize: '0.80rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: activeWing === 'chores' 
+                  ? '0 0 14px rgba(129, 140, 248, 0.8), 0 4px 10px rgba(0,0,0,0.7)' 
+                  : '0 3px 8px rgba(0,0,0,0.6)',
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>
+                {activeWing === 'chores' ? '▶' : '◀'}
+              </span>
+              <span>🧹</span>
+              <span>{t('homeRelax.btnChores', { defaultValue: 'Chores' })}</span>
+            </button>
+          </div>
+        );
+
+        return modalParent ? createPortal(dockedActionsElement, modalParent) : dockedActionsElement;
+      })()}
 
       {/* DURABLE CARD INSPECTION MODAL */}
       {inspectedDurable && (

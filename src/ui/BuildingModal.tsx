@@ -52,24 +52,8 @@ export function BuildingModal({
 
   // Movable and Resizable window state
   const modalRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ x: number; y: number } | null>(() => {
-    try {
-      const saved = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('fastlane_building_modal_pos') : null;
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // ignore
-    }
-    return null;
-  });
-  const [customSize, setCustomSize] = useState<{ width: number; height: number } | null>(() => {
-    try {
-      const saved = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('fastlane_building_modal_size') : null;
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // ignore
-    }
-    return null;
-  });
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [customSize, setCustomSize] = useState<{ width: number; height: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [, setIsResizing] = useState(false);
   const [modalMargin, setModalMargin] = useState<number>(() => {
@@ -82,16 +66,26 @@ export function BuildingModal({
     return 3;
   });
   const [measuredRect, setMeasuredRect] = useState<{ width: number; height: number; left: number; top: number }>({
-    width: 830,
-    height: 540,
-    left: 185,
-    top: 126
+    width: 728,
+    height: 516,
+    left: 236,
+    top: 160
   });
   const [copiedNotification, setCopiedNotification] = useState(false);
 
+  // Clear any legacy dragged coords from sessionStorage so starting position is always correct
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem('fastlane_building_modal_pos');
+      sessionStorage.removeItem('fastlane_building_modal_size');
+    } catch {}
+  }, []);
+
   const handleMarginChange = (delta: number) => {
+    setPosition(null);
+    setCustomSize(null);
     setModalMargin(prev => {
-      const next = Math.max(-20, Math.min(30, prev + delta));
+      const next = Math.max(-20, Math.min(50, prev + delta));
       try {
         localStorage.setItem('fastlane_building_modal_margin', next.toString());
       } catch {
@@ -195,27 +189,6 @@ export function BuildingModal({
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
   };
-
-  // Sync to sessionStorage
-  useEffect(() => {
-    try {
-      if (position) {
-        sessionStorage.setItem('fastlane_building_modal_pos', JSON.stringify(position));
-      } else {
-        sessionStorage.removeItem('fastlane_building_modal_pos');
-      }
-    } catch {}
-  }, [position]);
-
-  useEffect(() => {
-    try {
-      if (customSize) {
-        sessionStorage.setItem('fastlane_building_modal_size', JSON.stringify(customSize));
-      } else {
-        sessionStorage.removeItem('fastlane_building_modal_size');
-      }
-    } catch {}
-  }, [customSize]);
 
   const handleResetLayout = () => {
     setPosition(null);
