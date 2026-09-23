@@ -3,6 +3,7 @@ import type { ItemDef, CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules } from '../../engine/gameState';
 import { calcItemPrice } from '../../engine/economyEngine';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
+import { getItemDisplayName } from '../../utils/itemUtils';
 import type { InteractionProps } from './types';
 
 export function StoreFront({ player, onAction, availableItems, economicIndex = 0, rules, campaign }: InteractionProps & { availableItems: ItemDef[], economicIndex?: number, rules?: GameRules, campaign?: CampaignBundle }) {
@@ -58,7 +59,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                   />
                 )}
                 <span style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {t(`item.${item.id}`, { defaultValue: item.name })}
+                  {getItemDisplayName(item.id, item, t, !!rules?.usePhysicalMentalConditions)}
                   {rules?.helpfulUI && alreadyOwned && <span style={{ color: '#4caf50', marginLeft: '6px', fontWeight: 'bold' }}>✓ {t('storeFront.owned', { defaultValue: 'Owned' })}</span>}
                   {rules?.spaceCapping && itemSpace > 0 && <span style={{ color: !hasSpace ? '#e74c3c' : '#00e5ff', marginLeft: '6px', fontSize: '11px' }}>📦{itemSpace}</span>}
                 </span>
