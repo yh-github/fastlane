@@ -250,3 +250,33 @@ export function handleApplianceMaintenanceAction(
 
   return { nextPlayer };
 }
+
+export function handleDiscardInventoryItemAction(
+  player: PlayerState,
+  action: { type: 'discard_inventory_item'; itemType: 'spare_parts' | 'knick_knacks'; count?: number },
+  _context: ReducerContext
+): ActionHandlerResult {
+  let nextPlayer = structuredClone(player);
+  let actionLog;
+
+  const countToDiscard = action.count ?? 1;
+
+  if (action.itemType === 'spare_parts') {
+    const current = nextPlayer.inventory.spareParts || 0;
+    const actualDiscard = Math.min(current, countToDiscard);
+    if (actualDiscard > 0) {
+      nextPlayer.inventory.spareParts = current - actualDiscard;
+      actionLog = { key: 'action.maintenance.discardSpareParts', params: { count: actualDiscard } };
+    }
+  } else if (action.itemType === 'knick_knacks') {
+    const current = nextPlayer.inventory.knickKnacks || 0;
+    const actualDiscard = Math.min(current, countToDiscard);
+    if (actualDiscard > 0) {
+      nextPlayer.inventory.knickKnacks = current - actualDiscard;
+      actionLog = { key: 'action.maintenance.discardKnickKnacks', params: { count: actualDiscard } };
+    }
+  }
+
+  return { nextPlayer, actionLog };
+}
+

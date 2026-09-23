@@ -332,5 +332,28 @@ describe('maintenanceActions', () => {
       expect(result.updatedPlayer.hoursRemaining).toBe(39);
       expect(getLogKey(result.actionLog)).toBe('action.appliance.repairmanSuccess');
     });
+
+    it('processes discard_inventory_item for spare parts and knick-knacks', () => {
+      player.inventory.spareParts = 3;
+      player.inventory.knickKnacks = 2;
+
+      // Discard 1 spare part
+      const res1 = gameReducer(
+        player,
+        { type: 'discard_inventory_item', itemType: 'spare_parts', count: 1 },
+        context
+      );
+      expect(res1.updatedPlayer.inventory.spareParts).toBe(2);
+      expect(getLogKey(res1.actionLog)).toBe('action.maintenance.discardSpareParts');
+
+      // Discard all knick-knacks
+      const res2 = gameReducer(
+        res1.updatedPlayer,
+        { type: 'discard_inventory_item', itemType: 'knick_knacks', count: 5 },
+        context
+      );
+      expect(res2.updatedPlayer.inventory.knickKnacks).toBe(0);
+      expect(getLogKey(res2.actionLog)).toBe('action.maintenance.discardKnickKnacks');
+    });
   });
 });

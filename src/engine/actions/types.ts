@@ -36,6 +36,8 @@ export type GameAction =
   | { type: 'rummage_pawn_shop' }
   | { type: 'buy_rummage_item'; itemIndex?: number }
   | { type: 'buy_pawn_rummage_item'; itemIndex?: number }
+  | { type: 'discard_inventory_item'; itemType: 'spare_parts' | 'knick_knacks'; count?: number }
+  | { type: 'renegotiate_rent' }
   | { type: 'close_rummage' }
   | { type: 'pass_pawn_rummage' };
 

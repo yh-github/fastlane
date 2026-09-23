@@ -43,18 +43,29 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   const isNew = durable.isBook 
     ? false 
     : ((currentAppliance?.condition ?? durable.applianceData?.condition) === 'new' || (currentAppliance?.purchaseSource ?? durable.applianceData?.purchaseSource) === 'socket_city');
+  const isSpareParts = durable.id === 'spare_parts';
+  const isCurio = durable.id === 'knick_knack' || durable.id === 'knick_knacks';
+
   const conditionLabel = !isOwned 
     ? '🏬 Not Owned' 
-    : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable.isBook ? '📚 Book' : '📦 Used')));
+    : (isSpareParts 
+        ? '⚙️ Spare Parts' 
+        : (isCurio 
+            ? '🏺 Curio' 
+            : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable.isBook ? '📚 Book' : '📦 Used')))));
   const conditionDetail = !isOwned
     ? (durable.isBook 
         ? 'Available at Z-Mart. Purchase to study and permanently boost your cognitive reserves.'
         : 'Available at Socket City (Brand New) or Z-Mart & Pawn Shop (Used). Furnish your home to gain its perks!')
-    : (isBroken
-        ? 'Broken down and in need of maintenance. Choose a repair option below to restore functionality, or throw it out.'
-        : (isNew 
-            ? 'Purchased brand new from Socket City. Clean and pristine working condition.'
-            : (durable.isBook ? 'Reference book in your apartment collection.' : 'Second-hand from Z-Mart or Pawn Shop. Fully functional and broken-in.')));
+    : (isSpareParts
+        ? `Assorted repair materials from pawn shop rummage bins. Occupies 2 space per box. You currently own ${player?.inventory.spareParts || 0} box(es).`
+        : (isCurio
+            ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently have ${player?.inventory.knickKnacks || 0} on display.`
+            : (isBroken
+                ? 'Broken down and in need of maintenance. Choose a repair option below to restore functionality, or throw it out.'
+                : (isNew 
+                    ? 'Purchased brand new from Socket City. Clean and pristine working condition.'
+                    : (durable.isBook ? 'Reference book in your apartment collection.' : 'Second-hand from Z-Mart or Pawn Shop. Fully functional and broken-in.')))));
 
   // Fluff descriptions for durables:
   const getFluffDescription = (id: string, isBook?: boolean): string => {
@@ -92,6 +103,11 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
         return 'A vintage 8-track magnetic tape player. Plays your favorite classic jams with humble fidelity to get the party started.';
       case 'vcr':
         return 'Pop in a video cassette for a cozy movie night. Classic Hollywood cinema right from the comfort of your own couch.';
+      case 'spare_parts':
+        return 'A box of assorted gears, fuses, and machine screws. Greatly increases your chances of successful DIY appliance repair (+20% to +30%).';
+      case 'knick_knack':
+      case 'knick_knacks':
+        return 'A unique curio or collectible trinket salvaged from the pawn shop rummage bins. Adds aesthetic charm to your apartment.';
       case 'hot_tub':
         return 'The pinnacle of home luxury. Steam away physical fatigue and mental burnout while impressing everyone who visits.';
       case 'computer':
@@ -128,8 +144,21 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
     effectBadges.push(`+${itemDef.happinessBonus} 😊 Happiness`);
   }
 
-  const spaceCost = itemDef?.space ?? 0;
-  const lifestyleVal = itemDef?.lifestyleValue ?? 0;
+  if (isSpareParts) {
+    effectBadges.push('+20% to +30% DIY Repair');
+  }
+  if (isCurio) {
+    effectBadges.push('🏺 Curio Shelf Decor');
+  }
+
+  const hasTv = player?.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+  const isVcrWithoutTv = durable.id === 'vcr' && isOwned && !hasTv;
+  if (isVcrWithoutTv) {
+    effectBadges.push('⚠️ Requires TV (Inactive)');
+  }
+
+  const spaceCost = isSpareParts || isCurio ? 2 : (itemDef?.space ?? 0);
+  const lifestyleVal = isVcrWithoutTv ? 0 : (itemDef?.lifestyleValue ?? 0);
 
   if (typeof document === 'undefined') return null;
 
@@ -458,7 +487,89 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
               </div>
             </div>
           );
-        })() : (
+        })() : isSpareParts ? (
+          (player?.inventory.spareParts || 0) > 0 ? (
+            <button
+              data-testid="btn-discard-spare-parts"
+              onClick={() => {
+                onAction?.({ type: 'discard_inventory_item', itemType: 'spare_parts', count: 1 });
+                onClose();
+              }}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)'
+              }}
+            >
+              🗑️ Throw Away 1 Box of Parts (Frees 2 Space)
+            </button>
+          ) : (
+            <div style={{
+              padding: '6px 10px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: '6px',
+              border: '1px dashed rgba(255, 255, 255, 0.1)',
+              fontSize: '0.72rem',
+              color: '#777',
+              textAlign: 'center',
+              fontStyle: 'italic'
+            }}>
+              No spare parts in inventory. Find them rummaging at the Pawn Shop.
+            </div>
+          )
+        ) : isCurio ? (
+          (player?.inventory.knickKnacks || 0) > 0 ? (
+            <button
+              data-testid="btn-discard-knick-knacks"
+              onClick={() => {
+                onAction?.({ type: 'discard_inventory_item', itemType: 'knick_knacks', count: 1 });
+                onClose();
+              }}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)'
+              }}
+            >
+              🗑️ Throw Away 1 Curio (Frees 2 Space)
+            </button>
+          ) : (
+            <div style={{
+              padding: '6px 10px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: '6px',
+              border: '1px dashed rgba(255, 255, 255, 0.1)',
+              fontSize: '0.72rem',
+              color: '#777',
+              textAlign: 'center',
+              fontStyle: 'italic'
+            }}>
+              No curios in inventory. Find them rummaging at the Pawn Shop.
+            </div>
+          )
+        ) : (
           <div style={{
             padding: '6px 10px',
             background: 'rgba(255, 255, 255, 0.03)',
