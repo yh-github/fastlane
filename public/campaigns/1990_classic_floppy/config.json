@@ -60,7 +60,8 @@
     "marketCrashDivisor": 20,
     "economicBoomStartWeek": 4,
     "economicBoomDivisor": 20,
-    "marketCrashThreshold": 60,
+    "marketCrashThreshold": 80,
+    "economicBoomThreshold": 120,
     "willyRobberyStartWeek": 1,
     "charity": {
       "maxCash": 0,

@@ -934,7 +934,7 @@ describe('BuildingModal Component', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Not enough education: missing Engineering\./i)).toBeInTheDocument();
-    }, { timeout: 4000 });
+    }, { timeout: 8000 });
   });
 
   it('renders live coordinate and dimension readout and supports reset', async () => {

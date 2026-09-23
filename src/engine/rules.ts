@@ -529,7 +529,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   spaceCapping: 'Limits inventory durables and mess according to housing tier space capacity',
 
   marketCrashDivisor: 'Divisor applied to stock market values during market crash event',
-  marketCrashThreshold: 'Minimum economic reading required for a market crash to trigger (default 60)',
+  marketCrashThreshold: 'Minimum economic reading required for a market crash to trigger (default 80)',
   marketCrashStartWeek: 'Game turn/week when stock market crash events begin (e.g. week 4 or 8)',
   economicBoomDivisor: 'Divisor determining the frequency of economic boom events (default 30 or 50)',
   economicBoomStartWeek: 'Game turn/week when economic boom events begin (e.g. week 4 or 8)',
