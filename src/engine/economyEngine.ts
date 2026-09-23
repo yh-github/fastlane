@@ -183,9 +183,17 @@ export function stepSector(
 
   // 3. Step momentum: on crash or boom apply direct shock, otherwise step toward target
   if (isCrash) {
-    newIndex = crashSeverity === 1 ? -3 : -2;
+    if (newIndex > -3) {
+      newIndex = Math.max(-3, newIndex - 3);
+    } else {
+      newIndex = -3;
+    }
   } else if (isBoom) {
-    newIndex = 2;
+    if (newIndex < 3) {
+      newIndex = Math.min(3, newIndex + 3);
+    } else {
+      newIndex = 3;
+    }
   } else {
     const targetMin = -3 - low;
     const targetMax = 3 + high;
@@ -229,10 +237,14 @@ export function stepSector(
   let newReading = sector.reading + adjustment + parentCoupling;
 
   if (isCrash) {
-    const crashDrop = crashSeverity === 1 ? 50 : crashSeverity === 2 ? 30 : 15;
-    newReading = newReading - crashDrop;
+    // Authentic Sierra SCI bytecode formula (script 107 lines 291-300):
+    // reading = Math.floor((reading * (16 + severity)) / 20)
+    // severity: 1 (major) -> * 17/20 (-15%), 2 (moderate) -> * 18/20 (-10%), 3 (minor) -> * 19/20 (-5%)
+    newReading = Math.floor((newReading * (16 + crashSeverity)) / 20);
   } else if (isBoom) {
-    newReading = newReading + 6;
+    // Authentic Sierra SCI bytecode formula (script 107 lines 305-311):
+    // reading = Math.floor((reading * 11) / 10) (+10% bump)
+    newReading = Math.floor((newReading * 11) / 10);
   }
 
   newReading = Math.max(minReading, Math.min(maxReading, newReading));

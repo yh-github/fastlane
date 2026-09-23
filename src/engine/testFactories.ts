@@ -148,7 +148,7 @@ export function createMockCampaign(overrides: MockCampaignOverrides = {}): Campa
       },
       eventRules: {
         marketCrashDivisor: 2,
-        marketCrashThreshold: 60,
+        marketCrashThreshold: 80,
         economicBoomDivisor: 50,
         willyRobberyStartWeek: 5,
         charity: {
