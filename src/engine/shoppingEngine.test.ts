@@ -115,4 +115,52 @@ describe('Shopping Engine', () => {
     const result = buyItem(player, mockClothes, rules as any);
     expect(result.updated.inventory.selectedClothes).toBe('casual');
   });
+
+  describe('Microwave Purchase Happiness', () => {
+    const socketCityMicrowave: ItemDef = {
+      id: 'microwave',
+      name: 'Microwave',
+      category: 'appliance',
+      store: 'socket_city',
+      basePrice: 330,
+      happinessBonus: 1
+    };
+
+    const zMartMicrowave: ItemDef = {
+      id: 'microwave',
+      name: 'Microwave',
+      category: 'appliance',
+      store: 'z_mart',
+      basePrice: 220,
+      happinessBonus: 1
+    };
+
+    it('grants +2 happiness when purchased at Socket City if not owned', () => {
+      const player = { money: 500, happiness: 50, inventory: { appliances: [] } } as PlayerState;
+      const result = buyItem(player, socketCityMicrowave);
+      expect(result.success).toBe(true);
+      expect(result.updated.happiness).toBe(52);
+    });
+
+    it('grants +1 happiness when purchased at Z-Mart if not owned', () => {
+      const player = { money: 500, happiness: 50, inventory: { appliances: [] } } as PlayerState;
+      const result = buyItem(player, zMartMicrowave);
+      expect(result.success).toBe(true);
+      expect(result.updated.happiness).toBe(51);
+    });
+
+    it('grants 0 happiness on subsequent microwave purchases', () => {
+      const player = {
+        money: 1000,
+        happiness: 50,
+        inventory: {
+          appliances: [{ id: 'microwave', purchasePrice: 220, purchaseSource: 'z_mart' }]
+        }
+      } as PlayerState;
+
+      const result = buyItem(player, socketCityMicrowave);
+      expect(result.success).toBe(true);
+      expect(result.updated.happiness).toBe(50); // No additional happiness
+    });
+  });
 });
