@@ -1,15 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
-import { HomeCardDeck } from './HomeCardDeck';
-import { LeisureCards } from './LeisureCards';
-import { ChoresCards } from './ChoresCards';
-import { PantryCard } from './PantryCard';
 import { DurableCardModal } from './DurableCardModal';
 import { ApartmentFurnishings } from './ApartmentFurnishings';
 import { CuriosFlankingWings } from './CuriosFlankingWings';
+import { HomeFlankingWings } from './HomeFlankingWings';
 
 interface HomeApartmentViewProps {
   player: PlayerState;
@@ -119,8 +115,6 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   hasFridge,
   hasFreezer
 }) => {
-  const { t } = useTranslation();
-  const [activeDeck, setActiveDeck] = useState<'leisure' | 'chores' | 'pantry' | null>(null);
   const [isCuriosWingsOpen, setIsCuriosWingsOpen] = useState(false);
   const [inspectedDurable, setInspectedDurable] = useState<{
     id: string;
@@ -319,73 +313,17 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         </div>
       )}
 
-      {/* MIDDLE CONTENT: EITHER ACTIVE CARD DECK OR DURABLES SHOWCASE */}
-      {activeDeck === 'leisure' ? (
-        <HomeCardDeck>
-          <LeisureCards
-            hoursToRelax={hoursToRelax}
-            isRelaxDisabled={isRelaxDisabled}
-            hasFood={hasFood}
-            physGain={physGain}
-            mentalGain={mentalGain}
-            scaledMess={scaledMess}
-            trackMess={rules?.trackMess}
-            usePhysicalMental={rules?.usePhysicalMentalConditions}
-            classicGain={classicGain}
-            classicFirstBonus={classicFirstBonus}
-            helpfulUI={rules?.helpfulUI}
-            onRelaxClick={() => {
-              onRelaxClick();
-            }}
-            socialParams={socialParams}
-            onSocializeClick={() => {
-              onSocializeClick();
-            }}
-          />
-        </HomeCardDeck>
-      ) : activeDeck === 'chores' ? (
-        <HomeCardDeck>
-          <ChoresCards
-            hoursToClean={hoursToClean}
-            cleanPhysGain={cleanPhysGain}
-            isCleanDisabled={isCleanDisabled}
-            cleanSubtext={cleanSubtext}
-            helpfulUI={rules?.helpfulUI}
-            onCleanClick={() => {
-              onCleanClick();
-            }}
-            cleaningServiceCost={cleaningServiceCost}
-            cleaningServicePrice={cleaningServicePrice}
-            isServiceDisabled={isServiceDisabled}
-            serviceSubtext={serviceSubtext}
-            onServiceClick={() => {
-              onServiceClick();
-            }}
-          />
-        </HomeCardDeck>
-      ) : activeDeck === 'pantry' ? (
-        <HomeCardDeck>
-          <PantryCard
-            freshFoodUnits={player.inventory?.freshFoodUnits || 0}
-            cannedFoodUnits={player.inventory?.cannedFoodUnits || 0}
-            fastFoodItems={player.inventory?.fastFoodItems || []}
-            hasFridge={hasFridge}
-            hasFreezer={hasFreezer}
-            campaign={campaign}
-          />
-        </HomeCardDeck>
-      ) : (
-        <ApartmentFurnishings
-          player={player}
-          campaign={campaign}
-          rules={rules}
-          onInspectDurable={setInspectedDurable}
-          onToggleCuriosWings={() => setIsCuriosWingsOpen(!isCuriosWingsOpen)}
-          isCuriosWingsOpen={isCuriosWingsOpen}
-        />
-      )}
+      {/* MIDDLE CONTENT: ALWAYS APARTMENT FURNISHINGS & BELONGINGS (UNOBSTRUCTED) */}
+      <ApartmentFurnishings
+        player={player}
+        campaign={campaign}
+        rules={rules}
+        onInspectDurable={setInspectedDurable}
+        onToggleCuriosWings={() => setIsCuriosWingsOpen(!isCuriosWingsOpen)}
+        isCuriosWingsOpen={isCuriosWingsOpen}
+      />
 
-      {/* Flanking Curios Wings (Steals screen space from surrounding board) */}
+      {/* Flanking Curios Wings (when Curios shelf toggled) */}
       {isCuriosWingsOpen && (player.inventory?.knickKnacks || 0) > 0 && (
         modalParent ? createPortal(
           <CuriosFlankingWings
@@ -407,235 +345,68 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         )
       )}
 
-      {/* ACTION CONTROLS BAR (Leisure, Chores, Pantry) - DOCKED OVER THE BOTTOM WINDOW BORDER */}
-      {modalParent ? createPortal(
-        <div 
-          className="home-docked-actions"
-          style={{
-            position: 'absolute',
-            bottom: 'calc(-26px * var(--board-scale, 1))',
-            left: 'calc(20px * var(--board-scale, 1))',
-            right: 'calc(20px * var(--board-scale, 1))',
-            zIndex: 60,
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            gap: 'calc(10px * var(--board-scale, 1))',
-            background: 'linear-gradient(180deg, rgba(14, 18, 32, 0.98) 0%, rgba(8, 10, 20, 0.99) 100%)',
-            padding: 'calc(6px * var(--board-scale, 1)) calc(12px * var(--board-scale, 1))',
-            borderRadius: 'calc(10px * var(--board-scale, 1))',
-            border: '2px solid var(--accent-cyan)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 229, 255, 0.4)',
-            backdropFilter: 'blur(12px)',
-            boxSizing: 'border-box'
-          }}
-        >
-          {/* Leisure Button */}
-          <button
-            onClick={() => setActiveDeck(activeDeck === 'leisure' ? null : 'leisure')}
-            style={{
-              padding: '8px 10px',
-              background: activeDeck === 'leisure'
-                ? 'linear-gradient(145deg, #34d399 0%, #10b981 100%)'
-                : 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
-              color: '#000',
-              border: activeDeck === 'leisure' ? '2px solid #ffffff' : '2px solid transparent',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: activeDeck === 'leisure'
-                ? '0 0 16px rgba(52, 211, 153, 0.8), 0 4px 12px rgba(0,0,0,0.7)'
-                : '0 3px 10px rgba(16, 185, 129, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transform: activeDeck === 'leisure' ? 'translateY(-2px)' : 'none',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = activeDeck === 'leisure' ? 'translateY(-2px)' : 'none'}
-          >
-            <span style={{ fontSize: '1.4rem' }}>🛋️</span>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 800 }}>{t('homeRelax.btnLeisure', { defaultValue: 'Leisure' })}</span>
-              <span style={{ fontSize: '0.65rem', color: '#064e3b', fontWeight: 'bold' }}>Relax & Socialize</span>
-            </div>
-          </button>
-
-          {/* Chores Button */}
-          <button
-            onClick={() => setActiveDeck(activeDeck === 'chores' ? null : 'chores')}
-            style={{
-              padding: '8px 10px',
-              background: activeDeck === 'chores'
-                ? 'linear-gradient(145deg, #38bdf8 0%, #0284c7 100%)'
-                : 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
-              color: '#fff',
-              border: activeDeck === 'chores' ? '2px solid #ffffff' : '2px solid transparent',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: activeDeck === 'chores'
-                ? '0 0 16px rgba(56, 189, 248, 0.8), 0 4px 12px rgba(0,0,0,0.7)'
-                : '0 3px 10px rgba(2, 132, 199, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transform: activeDeck === 'chores' ? 'translateY(-2px)' : 'none',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = activeDeck === 'chores' ? 'translateY(-2px)' : 'none'}
-          >
-            <span style={{ fontSize: '1.4rem' }}>🧹</span>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 800 }}>{t('homeRelax.btnChores', { defaultValue: 'Chores' })}</span>
-              <span style={{ fontSize: '0.65rem', color: '#e0f2fe', fontWeight: 'normal' }}>Clean & Service</span>
-            </div>
-          </button>
-
-          {/* Pantry Button */}
-          <button
-            onClick={() => setActiveDeck(activeDeck === 'pantry' ? null : 'pantry')}
-            style={{
-              padding: '8px 10px',
-              background: activeDeck === 'pantry'
-                ? 'linear-gradient(145deg, #fbbf24 0%, #f59e0b 100%)'
-                : 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
-              color: '#000',
-              border: activeDeck === 'pantry' ? '2px solid #ffffff' : '2px solid transparent',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: activeDeck === 'pantry'
-                ? '0 0 16px rgba(251, 191, 36, 0.8), 0 4px 12px rgba(0,0,0,0.7)'
-                : '0 3px 10px rgba(245, 158, 11, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transform: activeDeck === 'pantry' ? 'translateY(-2px)' : 'none',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = activeDeck === 'pantry' ? 'translateY(-2px)' : 'none'}
-          >
-            <span style={{ fontSize: '1.4rem' }}>🥫</span>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
-              <span style={{ fontSize: '0.88rem', fontWeight: 800 }}>{t('homeRelax.btnPantry', { defaultValue: 'Pantry' })}</span>
-              <span style={{ fontSize: '0.65rem', color: '#78350f', fontWeight: 'bold' }}>
-                {player.inventory?.freshFoodUnits || 0} units
-              </span>
-            </div>
-          </button>
-        </div>,
-        modalParent
-      ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: '8px',
-          flexShrink: 0,
-          marginTop: 'auto',
-          paddingTop: '6px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.12)'
-        }}>
-          {/* Leisure Button */}
-          <button
-            onClick={() => setActiveDeck(activeDeck === 'leisure' ? null : 'leisure')}
-            style={{
-              padding: '8px 6px',
-              background: activeDeck === 'leisure'
-                ? 'linear-gradient(145deg, #34d399 0%, #10b981 100%)'
-                : 'linear-gradient(145deg, #10b981 0%, #059669 100%)',
-              color: '#000',
-              border: activeDeck === 'leisure' ? '2px solid #ffffff' : '2px solid transparent',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              boxShadow: activeDeck === 'leisure'
-                ? '0 0 14px rgba(52, 211, 153, 0.8)'
-                : '0 3px 10px rgba(16, 185, 129, 0.35)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
-          >
-            <span style={{ fontSize: '1.25rem' }}>🛋️</span>
-            <span>{t('homeRelax.btnLeisure', { defaultValue: 'Leisure' })}</span>
-            <span style={{ fontSize: '0.65rem', color: '#064e3b', fontWeight: 'bold' }}>Relax & Socialize</span>
-          </button>
-
-          {/* Chores Button */}
-          <button
-            onClick={() => setActiveDeck(activeDeck === 'chores' ? null : 'chores')}
-            style={{
-              padding: '8px 6px',
-              background: activeDeck === 'chores'
-                ? 'linear-gradient(145deg, #38bdf8 0%, #0284c7 100%)'
-                : 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)',
-              color: '#fff',
-              border: activeDeck === 'chores' ? '2px solid #ffffff' : '2px solid transparent',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              boxShadow: activeDeck === 'chores'
-                ? '0 0 14px rgba(56, 189, 248, 0.8)'
-                : '0 3px 10px rgba(2, 132, 199, 0.35)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
-          >
-            <span style={{ fontSize: '1.25rem' }}>🧹</span>
-            <span>{t('homeRelax.btnChores', { defaultValue: 'Chores' })}</span>
-            <span style={{ fontSize: '0.65rem', color: '#e0f2fe', fontWeight: 'normal' }}>Clean & Service</span>
-          </button>
-
-          {/* Pantry Button */}
-          <button
-            onClick={() => setActiveDeck(activeDeck === 'pantry' ? null : 'pantry')}
-            style={{
-              padding: '8px 6px',
-              background: activeDeck === 'pantry'
-                ? 'linear-gradient(145deg, #fbbf24 0%, #f59e0b 100%)'
-                : 'linear-gradient(145deg, #f59e0b 0%, #d97706 100%)',
-              color: '#000',
-              border: activeDeck === 'pantry' ? '2px solid #ffffff' : '2px solid transparent',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              boxShadow: activeDeck === 'pantry'
-                ? '0 0 14px rgba(251, 191, 36, 0.8)'
-                : '0 3px 10px rgba(245, 158, 11, 0.35)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px',
-              transition: 'all 0.15s ease'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'none'}
-          >
-            <span style={{ fontSize: '1.25rem' }}>🥫</span>
-            <span>{t('homeRelax.btnPantry', { defaultValue: 'Pantry' })}</span>
-            <span style={{ fontSize: '0.65rem', color: '#78350f', fontWeight: 'bold' }}>
-              {player.inventory?.freshFoodUnits || 0} units
-            </span>
-          </button>
-        </div>
+      {/* Flanking Home Action Wings: Leisure on Left, Chores & Pantry on Right */}
+      {!isCuriosWingsOpen && (
+        modalParent ? createPortal(
+          <HomeFlankingWings
+            player={player}
+            rules={rules}
+            campaign={campaign}
+            hoursToRelax={hoursToRelax}
+            isRelaxDisabled={isRelaxDisabled}
+            hasFood={hasFood}
+            physGain={physGain}
+            mentalGain={mentalGain}
+            scaledMess={scaledMess}
+            classicGain={classicGain}
+            classicFirstBonus={classicFirstBonus}
+            onRelaxClick={onRelaxClick}
+            socialParams={socialParams}
+            onSocializeClick={onSocializeClick}
+            hoursToClean={hoursToClean}
+            cleanPhysGain={cleanPhysGain}
+            isCleanDisabled={isCleanDisabled}
+            cleanSubtext={cleanSubtext}
+            onCleanClick={onCleanClick}
+            cleaningServiceCost={cleaningServiceCost}
+            cleaningServicePrice={cleaningServicePrice}
+            isServiceDisabled={isServiceDisabled}
+            serviceSubtext={serviceSubtext}
+            onServiceClick={onServiceClick}
+            hasFridge={hasFridge}
+            hasFreezer={hasFreezer}
+          />,
+          modalParent
+        ) : (
+          <HomeFlankingWings
+            player={player}
+            rules={rules}
+            campaign={campaign}
+            hoursToRelax={hoursToRelax}
+            isRelaxDisabled={isRelaxDisabled}
+            hasFood={hasFood}
+            physGain={physGain}
+            mentalGain={mentalGain}
+            scaledMess={scaledMess}
+            classicGain={classicGain}
+            classicFirstBonus={classicFirstBonus}
+            onRelaxClick={onRelaxClick}
+            socialParams={socialParams}
+            onSocializeClick={onSocializeClick}
+            hoursToClean={hoursToClean}
+            cleanPhysGain={cleanPhysGain}
+            isCleanDisabled={isCleanDisabled}
+            cleanSubtext={cleanSubtext}
+            onCleanClick={onCleanClick}
+            cleaningServiceCost={cleaningServiceCost}
+            cleaningServicePrice={cleaningServicePrice}
+            isServiceDisabled={isServiceDisabled}
+            serviceSubtext={serviceSubtext}
+            onServiceClick={onServiceClick}
+            hasFridge={hasFridge}
+            hasFreezer={hasFreezer}
+          />
+        )
       )}
 
       {/* DURABLE CARD INSPECTION MODAL */}

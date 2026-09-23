@@ -15,7 +15,6 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   const isAdvanced = !!rules?.usePhysicalMentalConditions;
-  const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, 0, player.social || 0);
 
   // Group jobs by locationId
   const locations = Array.from(new Set(availableJobs.map(j => j.locationId)));
@@ -23,7 +22,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   if (!selectedLocation) {
     return (
       <div className="interaction-panel">
-        <h3>{t('jobBoard.title')} {rules?.helpfulUI && <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: 'normal' }}>({t('jobBoard.score', { defaultValue: 'Score' })}: {employabilityScore})</span>}</h3>
+        <h3>{t('jobBoard.title')}</h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
           {locations.map(loc => {
@@ -102,11 +101,6 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           {selectedLocMistakes > 0 && (
             <span style={{ color: '#ffb300', background: 'rgba(255,179,0,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ffb300' }}>
               ⚠️ {t('jobBoard.mistakesBadge', { count: selectedLocMistakes })}
-            </span>
-          )}
-          {rules?.helpfulUI && (
-            <span style={{ color: '#00e5ff', opacity: 0.9 }}>
-              ({t('jobBoard.score', { defaultValue: 'Score' })}: {locationScore})
             </span>
           )}
         </div>

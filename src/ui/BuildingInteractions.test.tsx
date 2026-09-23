@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { 
   JobBoard, 
   StockTradeRow, 
@@ -342,14 +342,12 @@ describe('BuildingInteractions', () => {
       />
     );
 
-    // Open Leisure deck in advanced mode
-    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
-
-    const socializeBtn = screen.getByRole('button', { name: /Socialize \/ Entertain Guests/i });
-    expect(socializeBtn).not.toBeDisabled();
+    // Leisure actions are present in the left flanking wing
+    const hostBtn = screen.getByTestId('btn-socialize');
+    expect(hostBtn).not.toBeDisabled();
     expect(screen.getByText(/-1 💪 Fatigue/i)).toBeInTheDocument();
 
-    fireEvent.click(socializeBtn);
+    fireEvent.click(hostBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'socialize_guests' });
   });
 
@@ -494,14 +492,11 @@ describe('BuildingInteractions', () => {
       />
     );
 
-    // Open Leisure deck in advanced mode
-    fireEvent.click(screen.getByRole('button', { name: /Leisure/i }));
-
-    // Initial Relax card:
+    // Initial Relax card in Left Wing:
     // Phys gain: 1 + Math.floor(50/25) = 3
     // Mental gain: firstBonus (2) + 3 + mentalBonus(1) + socialMentalBonus(1) = 7
     // Mess: +1
-    expect(screen.getByText(/\+3 💪 Physical/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+3 💪 Phys/i)).toBeInTheDocument();
     expect(screen.getByText(/\+7 🧠 Mental/i)).toBeInTheDocument();
     expect(screen.getByText(/\+1 🧹 Mess/i)).toBeInTheDocument();
     const relaxBtn = screen.getByTestId('btn-relax');
@@ -522,7 +517,7 @@ describe('BuildingInteractions', () => {
       />
     );
     // firstBonus becomes 0 -> Mental gain is 5
-    expect(screen.getByText(/\+3 💪 Physical/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+3 💪 Phys/i)).toBeInTheDocument();
     expect(screen.getByText(/\+5 🧠 Mental/i)).toBeInTheDocument();
 
     // When starving (0 food)
@@ -539,7 +534,7 @@ describe('BuildingInteractions', () => {
         economicIndex={0}
       />
     );
-    expect(screen.getByText(/⚠️ Starving: \+1 💪, \+1 🧠 \(-1 Max 💪 & 🧠!\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/⚠️ Starving: -1 Max 💪 & 🧠!/i)).toBeInTheDocument();
   });
 
   it('HomeRelax renders presentable Amenities & Storage section with Fresh food, fridge status, fast food, and appliances', () => {
@@ -600,13 +595,17 @@ describe('BuildingInteractions', () => {
     expect(screen.getByText(/\+1 Max 🧠/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Back to Apartment|✕/i }));
 
-    // Open Pantry card
-    fireEvent.click(screen.getByRole('button', { name: /Pantry/i }));
+    // In Right Wing, Pantry status card is rendered
+    expect(screen.getByTestId('home-card-pantry')).toBeInTheDocument();
+    expect(screen.getByText(/Fridge/i)).toBeInTheDocument();
+    expect(screen.getByText(/4/)).toBeInTheDocument(); // 4 fresh units
+    expect(screen.getByText(/Fast Food/i)).toBeInTheDocument();
+
+    // Clicking Pantry '?' help button opens Strategy Guide modal for Pantry
+    const pantryHelpBtn = within(screen.getByTestId('home-card-pantry')).getByRole('button', { name: 'Help & Details' });
+    fireEvent.click(pantryHelpBtn);
     expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
-    expect(screen.getByText(/Fridge Active/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/4 units/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Cheeseburger/i)).toBeInTheDocument();
-    expect(screen.getByText(/\+3 😊/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Got It' }));
   });
 
   it('HomeRelax renders classic amenities layout when advancedHomeGUI is disabled', () => {
