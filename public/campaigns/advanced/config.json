@@ -38,7 +38,8 @@
     "showJobTags": true,
     "pawnRummageBins": true,
     "predictiveNewspaperStockTips": true,
-    "reenterCurrentLocationCost": false
+    "reenterCurrentLocationCost": false,
+    "economicUpsideBonus": true
   },
   "statRules": {
     "startingSocial": 20,

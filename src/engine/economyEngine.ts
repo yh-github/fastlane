@@ -156,7 +156,8 @@ export function stepSector(
   crashSeverity: number,
   isBoom: boolean,
   replay?: ReplayContext,
-  sectorKey = 'sector'
+  sectorKey = 'sector',
+  enableUpsideBonus = false
 ): SectorState {
   const upwardBounceStrong = rules.upwardBounceStrongThreshold ?? 80;
   const upwardBounceModerate = rules.upwardBounceModerateThreshold ?? 90;
@@ -223,13 +224,20 @@ export function stepSector(
     return Math.floor(rng.next() * (upperRange - lowerRange + 1)) + lowerRange;
   });
 
-  // Risk penalty if roll hit lowerRange
+  // Risk penalty if roll hit lowerRange (downside risk)
   if (adjustment === lowerRange) {
     const penalty = resolveDecision(replay, `${sectorKey}_risk_penalty`, () => {
       const maxRisk = risk * Math.abs(newIndex);
       return maxRisk > 0 ? Math.floor(rng.next() * (maxRisk + 1)) : 0;
     });
     adjustment -= penalty;
+  } else if (enableUpsideBonus && adjustment === upperRange) {
+    // Intended Sierra SCI upside bonus (script 107 lines 246-265, unblocked when economicUpsideBonus is enabled)
+    const bonus = resolveDecision(replay, `${sectorKey}_risk_bonus`, () => {
+      const maxRisk = risk * Math.abs(newIndex);
+      return maxRisk > 0 ? Math.floor(rng.next() * (maxRisk + 1)) : 0;
+    });
+    adjustment += bonus;
   }
 
   // 5. Update Reading: add adjustment and parent index coupling (parentIndex / 3)
@@ -269,10 +277,12 @@ export function stepEconomySimulation(
   rng: Random,
   crashSeverity: 'none' | 'minor' | 'moderate' | 'major',
   isBoom: boolean,
-  replay?: ReplayContext
+  replay?: ReplayContext,
+  enableUpsideBonus = false
 ): EconomySimulationState {
   const crashNum = crashSeverity === 'major' ? 1 : crashSeverity === 'moderate' ? 2 : crashSeverity === 'minor' ? 3 : 0;
   const isCrash = crashNum > 0;
+  const allowUpside = enableUpsideBonus || !!rules.enableUpsideBonus;
 
   const risks = {
     main: rules.sectorRisks?.main ?? 4,
@@ -286,18 +296,18 @@ export function stepEconomySimulation(
   };
 
   // Tier 1: Main overall economy
-  const newMain = stepSector(sim.main, risks.main, 0, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_main');
+  const newMain = stepSector(sim.main, risks.main, 0, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_main', allowUpside);
 
   // Tier 2: Consumer Goods and General Investments (driven by newMain.index)
-  const newGoods = stepSector(sim.goods, risks.goods, newMain.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_goods');
-  const newInvest = stepSector(sim.investments, risks.investments, newMain.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_invest');
+  const newGoods = stepSector(sim.goods, risks.goods, newMain.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_goods', allowUpside);
+  const newInvest = stepSector(sim.investments, risks.investments, newMain.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_invest', allowUpside);
 
   // Tier 3: Commodities & Stocks (driven by newInvest.index)
-  const newGold = stepSector(sim.stocks.gold, risks.gold, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_gold');
-  const newSilver = stepSector(sim.stocks.silver, risks.silver, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_silver');
-  const newPork = stepSector(sim.stocks.pork, risks.pork, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_pork');
-  const newBlueChip = stepSector(sim.stocks.blueChip, risks.blueChip, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_blue_chip');
-  const newPenny = stepSector(sim.stocks.penny, risks.penny, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_penny');
+  const newGold = stepSector(sim.stocks.gold, risks.gold, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_gold', allowUpside);
+  const newSilver = stepSector(sim.stocks.silver, risks.silver, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_silver', allowUpside);
+  const newPork = stepSector(sim.stocks.pork, risks.pork, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_pork', allowUpside);
+  const newBlueChip = stepSector(sim.stocks.blueChip, risks.blueChip, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_blue_chip', allowUpside);
+  const newPenny = stepSector(sim.stocks.penny, risks.penny, newInvest.index, rules, rng, isCrash, crashNum, isBoom, replay, 'econ_penny', allowUpside);
 
   return {
     main: newMain,
