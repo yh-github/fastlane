@@ -85,6 +85,7 @@
     "maskEarlyJobRejections": true,
     "grantExpOnJobSwitch": true,
     "streetRobberyOnTurnEnd": true,
-    "predictiveNewspaperStockTips": false
+    "predictiveNewspaperStockTips": false,
+    "economicUpsideBonus": false
   }
 }

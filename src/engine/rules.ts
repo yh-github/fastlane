@@ -262,6 +262,13 @@ export interface GameRules {
    * Classic Floppy/CD-ROM: true. QoL / Advanced: false.
    */
   reenterCurrentLocationCost: boolean;
+
+  /**
+   * QoL & ADVANCED: Fixes authentic Sierra bytecode typo where market sectors could take downside risk penalties
+   * but never received their intended upside risk bonuses when hitting upper range.
+   * Classic Floppy/CD-ROM: false. QoL / Advanced: true.
+   */
+  economicUpsideBonus: boolean;
 }
 
 export interface EventRules {
@@ -427,6 +434,7 @@ export interface EconomyRules {
   downwardBounceStrongThreshold?: number;
   downwardBounceModerateThreshold?: number;
   sectorRisks?: Record<string, number>;
+  enableUpsideBonus?: boolean;
 }
 
 /**
@@ -480,12 +488,14 @@ export const DEFAULT_GAME_RULES: GameRules = {
   streetRobberyOnTurnEnd: true,
   predictiveNewspaperStockTips: false,
   reenterCurrentLocationCost: true,
+  economicUpsideBonus: false,
 };
 
 /**
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',
   reenterCurrentLocationCost: 'Entering or re-opening the current building location costs standard building entry time (2 hours)',
   pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',
   removeCharacterBg: 'Renders character sprites with transparent backgrounds instead of solid colored backdrops',

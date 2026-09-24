@@ -219,7 +219,8 @@ export function processEconomicTurnPhase(
   }
 
   // Step the authentic 8-sector simulation
-  const newSim = stepEconomySimulation(sim, econRules, rng, crashSeverity, economicBoom, replay);
+  const enableUpsideBonus = !!state.rules.economicUpsideBonus || !!econRules.enableUpsideBonus;
+  const newSim = stepEconomySimulation(sim, econRules, rng, crashSeverity, economicBoom, replay, enableUpsideBonus);
 
   // New economy reading and trend (Consumer Goods tier)
   const newEconomy = Math.max(minReading, newSim.goods.reading - 100);

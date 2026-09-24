@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAvailableCampaigns } from '../engine/dataLoader';
-import { RulesScreen } from './RulesScreen';
+import { RulesScreen, type TabType } from './RulesScreen';
 
 interface TitleScreenProps {
   onStartGame: (campaignId: string) => void;
@@ -13,11 +13,19 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
   const defaultCampaign = campaigns.find(c => c.id === 'advanced') || campaigns[0];
   const [selectedCampaignId, setSelectedCampaignId] = useState(defaultCampaign.id);
   const [showRules, setShowRules] = useState(false);
+  const [rulesInitialTab, setRulesInitialTab] = useState<TabType>('all-diffs');
+  const [rulesInitialDiffMode, setRulesInitialDiffMode] = useState<boolean>(true);
 
   const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId) || campaigns[0];
 
   if (showRules) {
-    return <RulesScreen onClose={() => setShowRules(false)} />;
+    return (
+      <RulesScreen 
+        onClose={() => setShowRules(false)} 
+        initialTab={rulesInitialTab}
+        initialDiffMode={rulesInitialDiffMode}
+      />
+    );
   }
 
   return (
@@ -53,11 +61,24 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
         </p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
         <button className="title-screen__btn" onClick={() => onStartGame(selectedCampaignId)}>
           {t('titleScreen.startGame')}
         </button>
-        <button className="title-screen__btn" onClick={() => setShowRules(true)} style={{ background: '#4b5563', fontSize: '1.2rem', padding: '0.75rem 1.5rem', marginTop: '0' }}>
+        <button 
+          className="title-screen__btn" 
+          onClick={() => { setRulesInitialTab('all-diffs'); setRulesInitialDiffMode(true); setShowRules(true); }} 
+          style={{ background: '#2563eb', fontSize: '1.15rem', padding: '0.75rem 1.5rem', marginTop: '0' }}
+          data-testid="btn-view-diffs"
+        >
+          View Version Differences
+        </button>
+        <button 
+          className="title-screen__btn" 
+          onClick={() => { setRulesInitialTab('rules'); setRulesInitialDiffMode(false); setShowRules(true); }} 
+          style={{ background: '#4b5563', fontSize: '1rem', padding: '0.55rem 1.25rem', marginTop: '0' }}
+          data-testid="btn-view-rules"
+        >
           View Rules Comparison
         </button>
       </div>

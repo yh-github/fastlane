@@ -382,6 +382,54 @@ describe('Economy Engine', () => {
       const steppedLow = stepSector(nearMinSector, 10, -3, defaultRules, new Random(1), false, 0, false);
       expect(steppedLow.reading).toBeGreaterThanOrEqual(defaultRules.minReading);
     });
+
+    it('does not apply upside risk bonus on upperRange roll when enableUpsideBonus is false (authentic Sierra typo)', () => {
+      const sector = {
+        index: 3,
+        reading: 100,
+        high: 0,
+        low: 0,
+        lowerRange: -3,
+        upperRange: 9,
+        adjustment: 0,
+      };
+
+      // Call 1 (target): 0.99 -> target = 3 -> newIndex stays 3
+      // Call 2 (adjustment): 0.99 -> adjustment = 9 (hit upperRange)
+      vi.spyOn(Random.prototype, 'next')
+        .mockReturnValueOnce(0.99)
+        .mockReturnValueOnce(0.99);
+
+      const stepped = stepSector(sector, 4, 0, defaultRules, new Random(1), false, 0, false, undefined, 'sector', false);
+      // Without upside bonus: adjustment stays 9, reading is 100 + 9 = 109
+      expect(stepped.adjustment).toBe(9);
+      expect(stepped.reading).toBe(109);
+    });
+
+    it('applies upside risk bonus on upperRange roll when enableUpsideBonus is true (QoL / Advanced fix)', () => {
+      const sector = {
+        index: 3,
+        reading: 100,
+        high: 0,
+        low: 0,
+        lowerRange: -3,
+        upperRange: 9,
+        adjustment: 0,
+      };
+
+      // Call 1 (target): 0.99 -> target = 3 -> newIndex stays 3
+      // Call 2 (adjustment): 0.99 -> adjustment = 9 (upperRange)
+      // Call 3 (bonus): 0.5 -> maxRisk is 4 * 3 = 12, floor(0.5 * 13) = 6 -> bonus is 6
+      vi.spyOn(Random.prototype, 'next')
+        .mockReturnValueOnce(0.99)
+        .mockReturnValueOnce(0.99)
+        .mockReturnValueOnce(0.5);
+
+      const stepped = stepSector(sector, 4, 0, defaultRules, new Random(1), false, 0, false, undefined, 'sector', true);
+      // With upside bonus: adjustment is 9 + 6 = 15, reading is 100 + 15 = 115
+      expect(stepped.adjustment).toBe(15);
+      expect(stepped.reading).toBe(115);
+    });
   });
 
   describe('stepEconomySimulation (Hierarchical 8-Sector Engine)', () => {
@@ -421,6 +469,22 @@ describe('Economy Engine', () => {
       expect(stepped.main.reading).toBeLessThan(100);
       expect(stepped.goods.reading).toBeLessThan(100);
       expect(stepped.stocks.gold.reading).toBeLessThan(100);
+    });
+
+    it('passes enableUpsideBonus flag from EconomyRules to sectors', () => {
+      const sim = createDefaultEconomySimulationState();
+      sim.main.index = 3;
+
+      // Mock roll to hit upperRange, then bonus
+      vi.spyOn(Random.prototype, 'next')
+        .mockReturnValueOnce(0.99) // main target = 3 -> newIndex stays 3
+        .mockReturnValueOnce(0.99) // main adjustment = 9 (upperRange)
+        .mockReturnValueOnce(0.5)  // main bonus = 6
+        .mockReturnValue(0.5);     // rest normal
+
+      const stepped = stepEconomySimulation(sim, { enableUpsideBonus: true }, new Random(1), 'none', false);
+      expect(stepped.main.adjustment).toBe(15);
+      expect(stepped.main.reading).toBe(115);
     });
   });
 

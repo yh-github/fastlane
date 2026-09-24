@@ -15,6 +15,7 @@
     "maskEarlyJobRejections": false,
     "preventPawnArbitrage": true,
     "predictiveNewspaperStockTips": true,
-    "reenterCurrentLocationCost": false
+    "reenterCurrentLocationCost": false,
+    "economicUpsideBonus": true
   }
 }
