@@ -15,7 +15,8 @@ import {
   getStatFilterCategories,
   calcSocializeParameters,
   formatHours,
-  formatQuarterHours
+  formatQuarterHours,
+  calcLoanAssessment
 } from './statMath';
 
 describe('statMath', () => {
@@ -266,6 +267,105 @@ describe('statMath', () => {
       expect(formatQuarterHours(0.75)).toBe('¾');
       expect(formatQuarterHours(24.12)).toBe('24'); // rounds to nearest quarter
       expect(formatQuarterHours(24.38)).toBe('24½');
+    });
+  });
+
+  describe('calcLoanAssessment', () => {
+    it('refuses unemployed players when requireJobForLoan is true', () => {
+      const player = {
+        currentJobId: null,
+        currentWage: 0,
+        money: 500,
+        bankSavings: 500,
+        loanDebt: 0,
+        timesDefaulted: 0,
+        loanPaymentDeadline: 0,
+      } as any;
+
+      const assessment = calcLoanAssessment(player, null, 1);
+      expect(assessment.eligible).toBe(false);
+      expect(assessment.approvalChance).toBe(0);
+      expect(assessment.estimatedAmount).toBe(0);
+      expect(assessment.reason).toBe('unemployed');
+    });
+
+    it('refuses players currently in default', () => {
+      const player = {
+        currentJobId: 'cook',
+        currentWage: 12,
+        money: 500,
+        bankSavings: 500,
+        loanDebt: 100,
+        timesDefaulted: 1,
+        loanPaymentDeadline: 4, // Deadline was Week 4, current turn is 5 -> in default
+      } as any;
+
+      const assessment = calcLoanAssessment(player, null, 5);
+      expect(assessment.eligible).toBe(false);
+      expect(assessment.approvalChance).toBe(0);
+      expect(assessment.estimatedAmount).toBe(0);
+      expect(assessment.reason).toBe('in_default');
+    });
+
+    it('refuses players whose liquidity is less than or equal to risk', () => {
+      const player = {
+        currentJobId: 'dishwasher',
+        currentWage: 4,
+        money: 50,
+        bankSavings: 50,
+        loanDebt: 0,
+        timesDefaulted: 0,
+        loanPaymentDeadline: 0,
+      } as any;
+
+      // Liquidity: 4 + 100/1000 = 4.1 <= Risk 5.0
+      const assessment = calcLoanAssessment(player, null, 1);
+      expect(assessment.eligible).toBe(false);
+      expect(assessment.approvalChance).toBe(0);
+      expect(assessment.estimatedAmount).toBe(0);
+      expect(assessment.reason).toBe('insufficient_liquidity');
+    });
+
+    it('approves qualified players and calculates exact loan size ($100 * (Liquidity - Risk))', () => {
+      const player = {
+        currentJobId: 'cook',
+        currentWage: 10,
+        money: 500,
+        bankSavings: 500,
+        loanDebt: 0,
+        timesDefaulted: 0,
+        loanPaymentDeadline: 0,
+      } as any;
+
+      // Liquid assets: 1000 -> Liquidity: 10 + 1.0 = 11.0. Risk: 5.0.
+      // Loan size: 100 * (11 - 5) = 600.
+      const assessment = calcLoanAssessment(player, null, 1);
+      expect(assessment.eligible).toBe(true);
+      expect(assessment.approvalChance).toBe(100);
+      expect(assessment.estimatedAmount).toBe(600);
+      expect(assessment.liquidity).toBeCloseTo(11.0);
+      expect(assessment.risk).toBe(5.0);
+    });
+
+    it('correctly incorporates past defaults and existing debt into risk factor', () => {
+      const player = {
+        currentJobId: 'manager',
+        currentWage: 20,
+        money: 1000,
+        bankSavings: 500,
+        loanDebt: 200,
+        timesDefaulted: 2,
+        loanPaymentDeadline: 8, // Deadline is Week 8, current turn is 6 (not in default)
+      } as any;
+
+      // Liquid assets: 1500 - 200 = 1300. Liquidity: 20 + 1.3 = 21.3.
+      // Risk: 5 + 2 (defaults) + 200/100 (2) + 1 (has debt) = 10.0.
+      // Loan size: floor(100 * (21.3 - 10)) = 1130.
+      const assessment = calcLoanAssessment(player, null, 6);
+      expect(assessment.eligible).toBe(true);
+      expect(assessment.approvalChance).toBe(100);
+      expect(assessment.estimatedAmount).toBe(1130);
+      expect(assessment.risk).toBe(10.0);
     });
   });
 });

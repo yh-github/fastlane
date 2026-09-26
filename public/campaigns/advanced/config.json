@@ -24,6 +24,7 @@
     "trackMess": true,
     "maskEarlyJobRejections": false,
     "percentageEducation": true,
+    "depthScaledDegreeBonus": true,
     "proportionalDivisibleActions": true,
     "conditionResolution": 0.5,
     "educationResolution": 0.1,

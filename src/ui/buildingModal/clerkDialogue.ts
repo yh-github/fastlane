@@ -160,16 +160,18 @@ export function computeClerkResponse(
   const mainLog = Array.isArray(actionLog) ? actionLog[0] : actionLog;
 
   if (mainLog?.key === 'action.error.cannotWork') {
-    return "No time is left to work.";
+    return t('action.error.cannotWork', { defaultValue: 'No time is left to work.' });
   } else if (mainLog?.key === 'action.error.notEnoughTimeNewspaper' || (payload.type === 'buy' && payload.itemId === 'newspaper' && mainLog?.key?.startsWith?.('action.error.notEnoughTime'))) {
     return String(t('clerkDialogs.noTimeToReadNewspaper', { defaultValue: 'No time to read the newspaper.' }));
   } else if (mainLog?.key?.startsWith?.('action.error.notEnoughTime')) {
     if (payload.type === 'enroll' || payload.type === 'study') {
-      return "No time is left to go to class.";
+      return t('action.error.notEnoughTimeEducation', { defaultValue: 'No time is left to go to class.' });
     } else if (payload.type === 'work') {
       return String(t(mainLog.key, mainLog.params as any));
+    } else if (payload.type === 'apply') {
+      return String(t(mainLog.key, { defaultValue: 'Not enough time for an interview.' }));
     } else {
-      return "Sorry. We're closing. You'll have to come back next week.";
+      return t('clerkDialogs.closingSoon', { defaultValue: "Sorry. We're closing. You'll have to come back next week." });
     }
   } else if (mainLog?.key?.startsWith?.('action.error.too')) {
     return String(t(mainLog.key, mainLog.params as any));
@@ -186,7 +188,7 @@ export function computeClerkResponse(
       } else if (mainLog?.key === 'action.error.notEnoughSpace') {
         return String(t('action.error.notEnoughSpace', mainLog.params));
       } else {
-        return "You do not have enough cash.";
+        return t('action.error.notEnoughMoney', { defaultValue: 'You do not have enough cash.' });
       }
     } else if (payload.type === 'pawn_item') {
       if (success) {
@@ -208,7 +210,7 @@ export function computeClerkResponse(
       } else if (mainLog?.key === 'action.error.notEnoughSpace') {
         return String(t('action.error.notEnoughSpace', mainLog.params));
       } else {
-        return "You do not have enough cash.";
+        return t('action.error.notEnoughMoney', { defaultValue: 'You do not have enough cash.' });
       }
     } else if (payload.type === 'study') {
       if (success) {
@@ -218,7 +220,7 @@ export function computeClerkResponse(
       if (success) {
         return getRandomMessage(`clerkDialogs.university.enrollSuccess`, 'Welcome to the class!');
       } else {
-        return "You do not have enough cash.";
+        return t('action.error.notEnoughMoneyTuition', { defaultValue: 'You do not have enough cash.' });
       }
     } else if (payload.type === 'apply') {
       if (mainLog.key === 'action.job.raiseSuccess') {
@@ -233,6 +235,16 @@ export function computeClerkResponse(
         return String(t('action.job.raiseSame'));
       } else if (mainLog.key === 'action.job.raiseLess') {
         return String(t('action.job.raiseLess'));
+      } else if (mainLog.key === 'action.job.interviewMistake') {
+        return String(t('action.job.interviewMistake'));
+      } else if (mainLog.key === 'action.job.noOpeningsProbation') {
+        const header = t('clerkDialogs.employment_office.rejectedHeader', {
+          defaultValue: "Sorry. You didn't get the job for the following reasons:"
+        });
+        const probationMsg = t('action.job.noOpeningsProbation', {
+          defaultValue: 'Application rejected: You were fired from this location this turn and remain on probation!'
+        });
+        return `${header}\n\n${probationMsg}`;
       } else if (mainLog.key === 'action.job.rejected') {
         let reasons = mainLog.params?.reasons || t('jobBoard.missingReq');
         const rawDegrees = mainLog.params?.missingDegrees;
@@ -250,9 +262,36 @@ export function computeClerkResponse(
           });
           reasons = reasons.replace(/Not enough education: missing [^.]+\./, localizedMissingEducation);
         }
-        return `Sorry. You didn't get the job for the following reasons:\n\n${reasons}`;
+
+        reasons = reasons
+          .replace(/Not enough experience\./g, t('jobBoard.missingExpReason', { defaultValue: 'Not enough experience.' }))
+          .replace(/Poor Work History\./g, t('jobBoard.poorWorkHistory', { defaultValue: 'Poor Work History.' }))
+          .replace(/Not enough education\./g, t('jobBoard.notEnoughEducation', { defaultValue: 'Not enough education.' }))
+          .replace(/Requires at least ([0-9.]+) Management Skill \(Skill_Mgmt\)\. Gain experience in Middle Management\./g, (_: string, req: string) =>
+            t('jobBoard.missingMgmtSkill', { reqMgmt: req, defaultValue: `Requires at least ${req} Management Skill (Skill_Mgmt). Gain experience in Middle Management.` })
+          )
+          .replace(/Requires at least ([0-9.]+) Technical Skill \(Skill_Tech\)\./g, (_: string, req: string) =>
+            t('jobBoard.missingTechSkill', { reqTech: req, defaultValue: `Requires at least ${req} Technical Skill (Skill_Tech).` })
+          )
+          .replace(/Not physically fit enough for security guard work\. Requires Physical Condition >= 30\./g,
+            t('jobBoard.missingPhysicalCondition', { defaultValue: 'Not physically fit enough for security guard work. Requires Physical Condition >= 30.' })
+          )
+          .replace(/Missing required degree: ([a-zA-Z0-9_]+)/g, (_: string, d: string) =>
+            t('jobBoard.missingDegree', { degree: t(`education.${d}`, { defaultValue: formatDegreeName(d) }), defaultValue: `Missing required degree: ${t(`education.${d}`, { defaultValue: formatDegreeName(d) })}` })
+          );
+
+        const header = t('clerkDialogs.employment_office.rejectedHeader', {
+          defaultValue: "Sorry. You didn't get the job for the following reasons:"
+        });
+        return `${header}\n\n${reasons}`;
       } else if (mainLog.key === 'action.job.noOpenings') {
-        return `Sorry. You didn't get the job for the following reasons:\n\nNo openings.`;
+        const header = t('clerkDialogs.employment_office.rejectedHeader', {
+          defaultValue: "Sorry. You didn't get the job for the following reasons:"
+        });
+        const noOpenings = t('action.job.noOpenings', {
+          defaultValue: 'No openings.'
+        });
+        return `${header}\n\n${noOpenings}`;
       }
     } else if (payload.type === 'work') {
       if (Array.isArray(actionLog)) {
@@ -267,7 +306,7 @@ export function computeClerkResponse(
       }
     } else if (payload.type === 'ask_rent_extension') {
       if (mainLog.key === 'action.rent.alreadyGranted') {
-        return "I already told you yes!";
+        return t('action.rent.alreadyGranted', { defaultValue: 'I already told you yes!' });
       } else if (mainLog.key === 'action.rent.extensionApproved') {
         return getRandomMessage(`clerkDialogs.apartment_complex.extensionApproved`, 'Sure, you can pay next week.');
       } else {
@@ -276,7 +315,7 @@ export function computeClerkResponse(
     } else if (payload.type === 'move_apartment') {
       if (mainLog.key === 'action.rent.alreadyLiveHere') {
         const aptName = mainLog.params?.name || 'apartment';
-        return `You already live at the ${aptName}!`;
+        return t('action.rent.alreadyLiveHere', { name: aptName, defaultValue: `You already live at the ${aptName}!` });
       } else if (mainLog.key === 'action.rent.moved') {
         return getRandomMessage(`clerkDialogs.apartment_complex.moved`, 'Here are your new keys. Enjoy your stay.');
       } else if (mainLog.key === 'action.error.notEnoughSpaceMove') {
@@ -286,7 +325,7 @@ export function computeClerkResponse(
         const moveKey = isLowCost ? 'moveInLowCost' : 'moveInSecurity';
         return getRandomMessage(`clerkDialogs.apartment_complex.${moveKey}`, 'Welcome.');
       } else {
-        return "You do not have enough cash.";
+        return t('action.error.notEnoughMoneyMove', { defaultValue: 'You do not have enough cash.' });
       }
     } else if (payload.type === 'bank_transaction') {
       if (success) {
@@ -296,7 +335,7 @@ export function computeClerkResponse(
           return getRandomMessage(`clerkDialogs.bank.withdrawSuccess`, 'Here is your cash.');
         }
       } else {
-        return "Transaction could not be completed.";
+        return t('action.error.cannotTransact', { defaultValue: 'Transaction could not be completed.' });
       }
     } else if (payload.type === 'stock_transaction') {
       if (success) {
@@ -306,7 +345,7 @@ export function computeClerkResponse(
           return getRandomMessage(`clerkDialogs.bank.stockSellSuccess`, 'Shares sold.');
         }
       } else {
-        return "You do not have enough funds or shares.";
+        return t('action.error.notEnoughSavings', { defaultValue: 'You do not have enough funds or shares.' });
       }
     } else if (payload.type === 'take_loan') {
       if (success) {
@@ -316,21 +355,25 @@ export function computeClerkResponse(
       }
     } else if (payload.type === 'pay_loan') {
       if (success) {
-        return t('action.loan.paidInstallment', mainLog.params) as string;
+        if (mainLog?.key === 'action.loan.paidOff') {
+          return t('action.loan.paidOff', { amount: 0, ...(mainLog.params || {}) }) as string;
+        }
+        const params = { payment: 0, principal: 0, interest: 0, ...(mainLog?.params || {}) };
+        return t('action.loan.paidInstallment', params) as string;
       } else {
-        return "You do not have enough cash.";
+        return mainLog?.key ? (t(mainLog.key, mainLog.params) as string) : (t('action.error.notEnoughMoneyPayment', { defaultValue: 'You do not have enough cash.' }) as string);
       }
     } else if (payload.type === 'pay_rent_advance') {
       if (success) {
         return getRandomMessage(`clerkDialogs.apartment_complex.rentPaidAdvance`, 'Thank you for paying your rent in advance.');
       } else {
-        return "You do not have enough cash to pay rent in advance.";
+        return t('action.error.notEnoughMoneyRentAdvance', { defaultValue: 'You do not have enough cash to pay rent in advance.' });
       }
     } else if (payload.type === 'rent_transaction') {
       if (success) {
         return getRandomMessage(`clerkDialogs.apartment_complex.rentPaid`, 'Thank you for paying your rent.');
       } else {
-        return "You do not have enough cash.";
+        return t('action.error.notEnoughMoneyRent', { defaultValue: 'You do not have enough cash.' });
       }
     }
   }

@@ -37,6 +37,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     firedLocationsThisTurn: [],
     workMistakesThisTurn: 0,
     curioNoveltyGranted: false,
+    fastFoodMealsThisTurn: 0,
   };
 }
 

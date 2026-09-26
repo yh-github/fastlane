@@ -263,6 +263,7 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
                         key={idx}
                         title={info.label}
                         aria-label={`${info.label}: ${text}`}
+                        dir="ltr"
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -273,7 +274,8 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
                           color,
                           backgroundColor: bg,
                           border,
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                          unicodeBidi: 'isolate'
                         }}
                       >
                         {text}

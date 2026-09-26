@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loadCampaign } from './dataLoader';
+import { loadCampaign, getAvailableCampaigns, loadAvailableCampaigns } from './dataLoader';
 
 describe('dataLoader', () => {
   it('should handle optional files that do not exist (fallback to HTML issue)', async () => {
@@ -30,7 +30,7 @@ describe('dataLoader', () => {
     expect(qol.config.gameRules?.strictEviction).toBe(false);
     expect(qol.config.gameRules?.showItemImages).toBe(true);
     expect(qol.config.gameRules?.bypassDoctorIfBroke).toBe(true);
-    expect(qol.config.gameRules?.reducedDegreeStatBonus).toBe(true);
+    expect(qol.config.gameRules?.reducedDegreeStatBonus).toBe(false);
     expect(qol.config.gameRules?.turnStartAtHome).toBe(false);
   });
 
@@ -46,10 +46,20 @@ describe('dataLoader', () => {
     expect(advanced.config.gameRules?.enableRelaxationDoctor).toBe(false);
     expect(advanced.config.statRules?.physicalDoctorThreshold).toBe(10);
     expect(advanced.config.statRules?.lowSpiritsThreshold).toBe(10);
-    expect(advanced.config.gameRules?.reducedDegreeStatBonus).toBe(true);
+    expect(advanced.config.gameRules?.reducedDegreeStatBonus).toBe(false);
     expect(advanced.config.gameRules?.turnStartAtHome).toBe(true);
     // Verify base items from floppy/cdrom/qol are inherited
     expect(advanced.items.length).toBeGreaterThan(0);
     expect(advanced.jobs.length).toBeGreaterThan(0);
+  });
+
+  it('loads available campaigns from campaigns.json manifest', async () => {
+    const list = getAvailableCampaigns();
+    expect(list.length).toBe(4);
+    expect(list.map(c => c.id)).toEqual(['1990_classic_floppy', '1990_classic_cdrom', 'qol_improved', 'advanced']);
+    
+    const asyncList = await loadAvailableCampaigns();
+    expect(asyncList.length).toBe(4);
+    expect(asyncList[0].id).toBe('1990_classic_floppy');
   });
 });

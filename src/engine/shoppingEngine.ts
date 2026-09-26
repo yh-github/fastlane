@@ -45,6 +45,20 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
     }
   }
 
+  if (item.subcategory === 'fast_food') {
+    const mealCount = player.turnFlags?.fastFoodMealsThisTurn || 0;
+    if (mealCount >= 1 && player.hoursRemaining !== undefined && player.hoursRemaining < 1) {
+      return {
+        updated: player,
+        success: false,
+        message: {
+          key: 'action.error.notEnoughTimeBuy',
+          params: { name: item.name }
+        }
+      };
+    }
+  }
+
   let happinessBonus = item.happinessBonus || 0;
   let mentalBonus = item.mentalBonus || 0;
   let newTurnFlags = { ...player.turnFlags };
@@ -64,6 +78,8 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
       mentalBonus = 0;
     }
   } else if (item.subcategory === 'fast_food') {
+    const mealCount = (newTurnFlags.fastFoodMealsThisTurn || 0) + 1;
+    newTurnFlags.fastFoodMealsThisTurn = mealCount;
     if (!player.turnFlags?.fastFoodHappinessGranted) {
       newTurnFlags.fastFoodHappinessGranted = true;
     } else {
@@ -173,6 +189,14 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
   switch (item.category) {
     case 'food':
       if (item.subcategory === 'fast_food') {
+        const mealCount = newTurnFlags.fastFoodMealsThisTurn || 1;
+        if (mealCount > 1 && updated.hoursRemaining !== undefined) {
+          updated.hoursRemaining = Math.max(0, updated.hoursRemaining - 1);
+        }
+        const hasExplicitSocialEffect = item.effects?.some(e => e.trigger === 'on_purchase' && e.stat === 'social');
+        if (!hasExplicitSocialEffect) {
+          updated.social = Math.min(100, (updated.social ?? 10) + 1);
+        }
         updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];
       } else if (item.subcategory === 'canned') {
         updated.inventory.cannedFoodUnits = (updated.inventory.cannedFoodUnits || 0) + (item.units || 1);

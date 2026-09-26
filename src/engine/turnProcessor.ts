@@ -48,7 +48,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       mentalDropsThisTurn: 0,
       firedLocationsThisTurn: [],
       workMistakesThisTurn: 0,
-      jobsRejectedThisTurn: []
+      jobsRejectedThisTurn: [],
+      fastFoodMealsThisTurn: 0
     };
     p.turnEvents = [];
     p.newspaperHeadline = null;

@@ -6,9 +6,15 @@ import {
   type CampaignInfo, 
   type JobDef, 
   type ItemDef, 
-  type BuildingDef
+  type BuildingDef,
+  type SynergyDef
 } from '../engine/dataLoader';
 import { DEFAULT_GAME_RULES, RULE_DESCRIPTIONS } from '../engine/rules';
+import { 
+  JOB_TAG_REGISTRY, 
+  type JobTag, 
+  getJobSpecialRequirements 
+} from '../engine/jobTags';
 
 export type TabType = 'all-diffs' | 'rules' | 'jobs' | 'items' | 'locations' | 'goals-housing';
 type SortDirection = 'asc' | 'desc';
@@ -106,6 +112,66 @@ function areBuildingsEqual(b1?: BuildingDef, b2?: BuildingDef): boolean {
     .join(';');
   if (inv1 !== inv2) return false;
   return true;
+}
+
+/**
+ * Explain synergy and special behavior of an item tag.
+ */
+function getTagSynergyDescriptions(tag: string, synergies?: SynergyDef[]): string[] {
+  const descriptions: string[] = [];
+  
+  if (synergies && synergies.length > 0) {
+    const relevant = synergies.filter(s => s.requires && s.requires.includes(`tag:${tag}`));
+    for (const syn of relevant) {
+      if (syn.description) {
+        descriptions.push(`${syn.name}: ${syn.description}`);
+      } else {
+        const effectDescs = syn.effects.map(e => {
+          switch (e.type) {
+            case 'prevent_relaxation_decay':
+              return 'Prevents natural relaxation decay from dropping below doctor threshold';
+            case 'add_turn_happiness':
+              return `${e.value > 0 ? `+${e.value}` : e.value} Happiness/turn when food eaten (shared MAX bonus with Stove/Microwave)`;
+            case 'set_food_storage':
+              return syn.requires.length > 1
+                ? `Extends food storage up to ${e.value} weeks (with Refrigerator)`
+                : `Enables food storage up to ${e.value} weeks`;
+            case 'computer_income_chance':
+              return 'Freelance computer income ($10–$150/turn) plus +3 Happiness';
+            default:
+              return `${e.type}: ${e.value}`;
+          }
+        });
+        descriptions.push(`${syn.name}: ${effectDescs.join(', ')}`);
+      }
+    }
+  }
+
+  // Fallback for standard tags if synergies not loaded
+  if (descriptions.length === 0) {
+    switch (tag) {
+      case 'hot_tub':
+        descriptions.push('Hot Tub Relaxation: Prevents natural relaxation decay from dropping below doctor threshold');
+        break;
+      case 'microwave':
+        descriptions.push('Microwave Happiness: +1 Happiness/turn when food eaten (shared MAX bonus with Stove)');
+        break;
+      case 'stove':
+        descriptions.push('Cooking Happiness: +1 Happiness/turn when food eaten (shared MAX bonus with Microwave)');
+        break;
+      case 'refrigerator':
+        descriptions.push('Base Refrigeration: Food storage up to 6 weeks');
+        break;
+      case 'freezer':
+        descriptions.push('Full Refrigeration: Food storage up to 12 weeks (with Refrigerator)');
+        break;
+      case 'computer':
+        descriptions.push('Computer Income: Freelance income ($10–$150/turn) plus +3 Happiness');
+        break;
+    }
+  }
+
+  return descriptions;
 }
 
 export const RulesScreen: React.FC<RulesScreenProps> = ({ 
@@ -579,6 +645,9 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
                         </td>
                       );
                     }
+                    const isAdvancedCampaign = !!c.bundle.config.gameRules?.usePhysicalMentalConditions;
+                    const specialReqs = getJobSpecialRequirements(job, isAdvancedCampaign);
+
                     return (
                       <td key={c.info.id} style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', verticalAlign: 'top' }}>
                         <div style={{ 
@@ -599,14 +668,63 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
                           {job.requirements.degrees && job.requirements.degrees.length > 0 && (
                             <div style={{ color: '#fbbf24' }}>🎓 {job.requirements.degrees.join(', ')}</div>
                           )}
+                          {specialReqs.length > 0 && (
+                            <div style={{ marginTop: '4px', fontSize: '11px', color: '#f472b6' }}>
+                              {specialReqs.map((sr, idx) => (
+                                <div key={idx}>⚠️ <strong>{sr.label}:</strong> {sr.detail}</div>
+                              ))}
+                            </div>
+                          )}
+                          {job.description && (
+                            <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '3px', fontStyle: 'italic' }}>
+                              📝 {job.description}
+                            </div>
+                          )}
                         </div>
                         {job.tags && job.tags.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '6px' }}>
-                            {job.tags.map(t => (
-                              <span key={t} style={{ background: '#374151', color: '#93c5fd', padding: '1px 5px', borderRadius: '3px', fontSize: '10px' }}>
-                                {t}
-                              </span>
-                            ))}
+                          <div style={{ marginTop: '6px' }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                              {job.tags.map(t => {
+                                const def = JOB_TAG_REGISTRY[t as JobTag];
+                                const tagTooltip = def ? def.descKey : t;
+                                return (
+                                  <span 
+                                    key={t} 
+                                    title={tagTooltip}
+                                    style={{ 
+                                      background: '#374151', 
+                                      color: '#93c5fd', 
+                                      padding: '1px 5px', 
+                                      borderRadius: '3px', 
+                                      fontSize: '10px',
+                                      cursor: 'help',
+                                      borderBottom: '1px dotted #60a5fa'
+                                    }}
+                                  >
+                                    {t}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                            {job.tags.map(t => {
+                              const def = JOB_TAG_REGISTRY[t as JobTag];
+                              if (!def) return null;
+                              const descText = def.descKey === 'tag.always_hiring_desc' ? 'Walk-in hiring: auto-hire if requirements met.' :
+                                def.descKey === 'tag.academic_freedom_desc' ? '+0.50 Experience bonus per shift.' :
+                                def.descKey === 'tag.heavy_physical_desc' ? '+0.5 Physical cost per shift. Overworking risks injury.' :
+                                def.descKey === 'tag.frontline_service_desc' ? 'Customer-facing: social score impacts shift earnings & tips.' :
+                                def.descKey === 'tag.middle_management_desc' ? '+1 Mental cost, Look Busy disabled. Builds Skill_Mgmt.' :
+                                def.descKey === 'tag.executive_management_desc' ? 'Requires Skill_Mgmt >= Exp/10. Builds +0.50 Skill_Mgmt/shift.' :
+                                def.descKey === 'tag.high_downtime_desc' ? 'Low fatigue accumulation, protects dependability decay.' :
+                                def.descKey === 'tag.technical_desc' ? 'Builds +0.25 Skill_Tech per shift.' :
+                                def.descKey === 'tag.look_fit_desc' ? 'Requires Physical Condition >= 30. High fitness scales hiring chance.' :
+                                def.descKey;
+                              return (
+                                <div key={t} style={{ fontSize: '10px', color: '#93c5fd', marginTop: '2px', lineHeight: '1.2' }}>
+                                  ℹ️ <strong>{t}:</strong> {descText}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                         {job.perks && job.perks.length > 0 && (
@@ -643,8 +761,10 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       filteredItemIds = filteredItemIds.filter(itemId => {
+        const allNames = selectedData.map(c => c.bundle.items?.find(i => i.id === itemId)?.name).filter(Boolean) as string[];
         const sampleItem = selectedData.map(c => c.bundle.items?.find(i => i.id === itemId)).find(Boolean);
         return itemId.toLowerCase().includes(q) || 
+          allNames.some(name => name.toLowerCase().includes(q)) ||
           (sampleItem?.name || '').toLowerCase().includes(q) ||
           (sampleItem?.category || '').toLowerCase().includes(q);
       });
@@ -722,6 +842,18 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
                 }}>
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <div style={{ fontWeight: 'bold', color: '#93c5fd' }}>{sampleItem?.name || itemId}</div>
+                    {(() => {
+                      const allNames = Array.from(new Set(
+                        selectedData.map(c => c.bundle.items?.find(i => i.id === itemId)?.name).filter(Boolean)
+                      )) as string[];
+                      const altNames = allNames.filter(n => n !== sampleItem?.name);
+                      if (altNames.length === 0) return null;
+                      return (
+                        <div style={{ fontSize: '11px', color: '#fbbf24', fontStyle: 'italic', marginTop: '2px' }}>
+                          aka {altNames.map(n => `"${n}"`).join(', ')}
+                        </div>
+                      );
+                    })()}
                     <div style={{ fontSize: '11px', fontFamily: 'monospace', color: '#888' }}>{itemId}</div>
                     {isDiffRow && selectedData.length > 1 && (
                       <span style={{ display: 'inline-block', marginTop: '4px', background: 'rgba(234, 179, 8, 0.2)', color: '#fbbf24', fontSize: '10px', padding: '1px 6px', borderRadius: '4px' }}>
@@ -749,14 +881,30 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
                         </td>
                       );
                     }
+                    const isAdvancedCampaign = !!c.bundle.config.gameRules?.usePhysicalMentalConditions;
+
                     return (
                       <td key={c.info.id} style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', verticalAlign: 'top' }}>
+                        {item.name && sampleItem?.name && item.name !== sampleItem.name && (
+                          <div style={{ 
+                            color: '#fbbf24', 
+                            fontWeight: 'bold', 
+                            fontSize: '0.85rem', 
+                            marginBottom: '4px',
+                            background: 'rgba(234, 179, 8, 0.12)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            display: 'inline-block'
+                          }}>
+                            📛 "{item.name}"
+                          </div>
+                        )}
                         <div style={{ 
                           fontWeight: 'bold', 
                           color: item.basePrice !== undefined ? '#4ade80' : '#888', 
                           fontSize: '0.95rem', 
                           marginBottom: '3px',
-                          display: 'inline-block',
+                          display: 'block',
                           background: priceDiffers ? 'rgba(74, 222, 128, 0.15)' : 'transparent',
                           padding: priceDiffers ? '1px 5px' : '0',
                           borderRadius: '4px'
@@ -764,17 +912,22 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
                           {item.basePrice !== undefined ? `$${item.basePrice}` : 'Price N/A'}
                         </div>
                         <div style={{ color: '#d1d5db', lineHeight: '1.4' }}>
-                          {item.happinessBonus !== 0 && (
-                            <div style={{ color: '#60a5fa' }}>😊 Happiness: <strong>+{item.happinessBonus}</strong></div>
+                          {!isAdvancedCampaign && item.happinessBonus !== 0 && (
+                            <div style={{ color: '#60a5fa' }}>😊 Happiness: <strong>{item.happinessBonus > 0 ? `+${item.happinessBonus}` : item.happinessBonus}</strong></div>
                           )}
                           {item.lifestyleValue !== undefined && item.lifestyleValue > 0 && (
                             <div style={{ color: '#f59e0b' }}>⭐ Lifestyle: <strong>{item.lifestyleValue}</strong></div>
                           )}
-                          {item.mentalBonus !== undefined && item.mentalBonus > 0 && (
-                            <div style={{ color: '#a78bfa' }}>🧠 Mental: <strong>+{item.mentalBonus}</strong></div>
+                          {item.mentalBonus !== undefined && item.mentalBonus !== 0 && (
+                            <div style={{ color: '#a78bfa' }}>🧠 Mental: <strong>{item.mentalBonus > 0 ? `+${item.mentalBonus}` : item.mentalBonus}</strong></div>
                           )}
                           {item.space !== undefined && (
                             <div style={{ color: '#9ca3af' }}>📦 Space: <strong>{item.space}</strong></div>
+                          )}
+                          {item.description && (
+                            <div style={{ color: '#94a3b8', fontSize: '11px', marginTop: '3px', fontStyle: 'italic' }}>
+                              📝 {item.description}
+                            </div>
                           )}
                         </div>
                         {item.effects && item.effects.length > 0 && (
@@ -785,11 +938,34 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
                           </div>
                         )}
                         {item.tags && item.tags.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
-                            {item.tags.map(t => (
-                              <span key={t} style={{ background: '#374151', color: '#cbd5e1', padding: '1px 4px', borderRadius: '3px', fontSize: '9px' }}>
-                                {t}
-                              </span>
+                          <div style={{ marginTop: '6px' }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                              {item.tags.map(t => {
+                                const synDescs = getTagSynergyDescriptions(t, c.bundle.synergies);
+                                const tooltip = synDescs.join(' | ');
+                                return (
+                                  <span 
+                                    key={t} 
+                                    title={tooltip || t}
+                                    style={{ 
+                                      background: '#374151', 
+                                      color: '#cbd5e1', 
+                                      padding: '1px 5px', 
+                                      borderRadius: '3px', 
+                                      fontSize: '10px',
+                                      cursor: synDescs.length > 0 ? 'help' : 'default',
+                                      borderBottom: synDescs.length > 0 ? '1px dotted #34d399' : 'none'
+                                    }}
+                                  >
+                                    {t}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                            {item.tags.flatMap(t => getTagSynergyDescriptions(t, c.bundle.synergies)).map((desc, idx) => (
+                              <div key={idx} style={{ fontSize: '10px', color: '#34d399', marginTop: '2px', lineHeight: '1.2' }}>
+                                ✨ {desc}
+                              </div>
                             ))}
                           </div>
                         )}

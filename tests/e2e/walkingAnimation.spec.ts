@@ -61,10 +61,10 @@ test.describe('Character Center Walking Animation E2E', () => {
     const nodeEl = page.locator('.map-container canvas');
     await expect(nodeEl).toBeVisible();
   });
-
   test('immediately updates clothes on center stage when changed via Status screen in Advanced without moving', async ({ page }) => {
     await page.goto('/');
-    // Advanced is default campaign
+    // Select Advanced campaign
+    await page.locator('select:has(option[value="advanced"])').selectOption('advanced');
     const startGameBtn = page.locator('.title-screen__btn').first();
     await startGameBtn.click();
 

@@ -136,6 +136,46 @@ describe('Education Engine', () => {
       expect(result.updated.degreeExpBoost).toBe(52);
     });
 
+    it('scales degree rewards based on prerequisite depth if depthScaledDegreeBonus is enabled', () => {
+      const rules = { depthScaledDegreeBonus: true } as any;
+
+      // 1. Root degree (0 prerequisites) -> 0 + 1 = +1
+      const rootPlayer = { 
+        hoursRemaining: 10, 
+        enrolledClasses: { 'junior_college': 7 },
+        happiness: 50, dependability: 50, degreeDepBoost: 50, degreeExpBoost: 50,
+        degrees: [],
+        inventory: { appliances: [{id: 'computer'}], books: ['dictionary', 'encyclopedia', 'atlas'] },
+      } as unknown as PlayerState;
+      const rootResult = study(rootPlayer, mockDegree, 6, rules);
+      expect(rootResult.success).toBe(true);
+      expect(rootResult.updated.dependability).toBe(51);
+      expect(rootResult.updated.degreeDepBoost).toBe(51);
+      expect(rootResult.updated.degreeExpBoost).toBe(51);
+
+      // 2. Degree with 1 prerequisite -> 1 + 1 = +2
+      const advancedDegree: EducationDef = {
+        id: 'academic',
+        name: 'Academic Degree',
+        baseTuitionFee: 100,
+        lessonsRequired: 10,
+        prerequisites: ['junior_college'],
+        rewards: { happiness: 5, dependability: 5, maxDepBoost: 5, maxExpBoost: 5 }
+      };
+      const advPlayer = { 
+        hoursRemaining: 10, 
+        enrolledClasses: { 'academic': 9 },
+        happiness: 50, dependability: 50, degreeDepBoost: 50, degreeExpBoost: 50,
+        degrees: ['junior_college'],
+        inventory: {},
+      } as unknown as PlayerState;
+      const advResult = study(advPlayer, advancedDegree, 6, rules);
+      expect(advResult.success).toBe(true);
+      expect(advResult.updated.dependability).toBe(52); // +2
+      expect(advResult.updated.degreeDepBoost).toBe(52); // +2
+      expect(advResult.updated.degreeExpBoost).toBe(52); // +2
+    });
+
     it('percentageEducation tracks continuous 0-100% progress and prorates partial sessions', () => {
       
       const rules = {

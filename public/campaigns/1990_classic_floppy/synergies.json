@@ -2,6 +2,7 @@
   {
     "id": "base_refrigeration",
     "name": "Base Refrigeration",
+    "description": "Safe food storage for up to 6 weeks.",
     "requires": ["tag:refrigerator"],
     "effects": [
       { "type": "set_food_storage", "value": 6, "operation": "MAX" }
@@ -10,6 +11,7 @@
   {
     "id": "full_refrigeration",
     "name": "Full Refrigeration",
+    "description": "Extended safe food storage up to 12 weeks with both Refrigerator and Freezer.",
     "requires": ["tag:refrigerator", "tag:freezer"],
     "effects": [
       { "type": "set_food_storage", "value": 12, "operation": "MAX" }
@@ -18,6 +20,7 @@
   {
     "id": "cooking_happiness",
     "name": "Cooking Happiness",
+    "description": "+1 Happiness per turn when food is eaten (shared MAX bonus with Microwave).",
     "requires": ["tag:stove"],
     "effects": [
       { "type": "add_turn_happiness", "value": 1, "operation": "MAX" }
@@ -26,6 +29,7 @@
   {
     "id": "microwave_happiness",
     "name": "Microwave Happiness",
+    "description": "+1 Happiness per turn when food is eaten (shared MAX bonus with Stove).",
     "requires": ["tag:microwave"],
     "effects": [
       { "type": "add_turn_happiness", "value": 1, "operation": "MAX" }
@@ -34,6 +38,7 @@
   {
     "id": "computer_income",
     "name": "Computer Income",
+    "description": "Chance to earn freelance income ($10–$150/turn) plus +3 Happiness.",
     "requires": ["tag:computer"],
     "effects": [
       { "type": "computer_income_chance", "value": 1, "operation": "MAX" }
@@ -42,6 +47,7 @@
   {
     "id": "hot_tub_relaxation",
     "name": "Hot Tub Relaxation",
+    "description": "Prevents natural relaxation decay from dropping below doctor threshold.",
     "requires": ["tag:hot_tub"],
     "effects": [
       { "type": "prevent_relaxation_decay", "value": 1, "operation": "MAX" }

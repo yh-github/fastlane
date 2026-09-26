@@ -391,7 +391,7 @@ describe('Academic Freedom and Graduation Depth Scaling', () => {
     expect(next.updatedPlayer.dependability).toBe(21);
   });
 
-  it('graduation awards Dependability = depth + 1 and Mental = 2 * (depth + 1)', () => {
+  it('graduation awards Dependability = depth + 1 and Mental = depth * 2 + 1 when depthScaledDegreeBonus is enabled', () => {
     const studyCampaign = {
       ...campaign,
       education: [
@@ -401,46 +401,46 @@ describe('Academic Freedom and Graduation Depth Scaling', () => {
       ]
     };
 
-    // 1. Root degree (depth 0): Junior College -> Dep +1, Mental +2
+    // 1. Root degree (depth 0): Junior College -> Dep +1, Mental +1
     const p0 = makePlayer();
     p0.dependability = 20;
     p0.mentalCondition = 10;
     p0.enrolledClasses = { junior_college: 9 };
     const s0 = makeState(p0);
-    const ctx0 = { state: s0, campaign: studyCampaign, economicIndex: 0, rules: { ...s0.rules, usePhysicalMentalConditions: true, reducedDegreeStatBonus: true }, rng: new Random(1) };
+    const ctx0 = { state: s0, campaign: studyCampaign, economicIndex: 0, rules: { ...s0.rules, usePhysicalMentalConditions: true, depthScaledDegreeBonus: true }, rng: new Random(1) };
     const res0 = gameReducer(p0, { type: 'study', degreeId: 'junior_college' }, ctx0);
     expect(res0.updatedPlayer.degrees).toContain('junior_college');
     expect(res0.updatedPlayer.dependability).toBe(21); // 20 + (0 + 1)
-    // 10 - mentalCost (1) + graduation Mental (2 * (0+1) = 2) = 11
-    expect(res0.updatedPlayer.mentalCondition).toBe(11);
+    // 10 - mentalCost (1) + graduation Mental (0 * 2 + 1 = 1) = 10
+    expect(res0.updatedPlayer.mentalCondition).toBe(10);
 
-    // 2. Depth 1 degree (depth 1): Academic -> Dep +2, Mental +4
+    // 2. Depth 1 degree (depth 1): Academic -> Dep +2, Mental +3
     const p1 = makePlayer();
     p1.degrees = ['junior_college'];
     p1.dependability = 20;
     p1.mentalCondition = 10;
     p1.enrolledClasses = { academic: 9 };
     const s1 = makeState(p1);
-    const ctx1 = { state: s1, campaign: studyCampaign, economicIndex: 0, rules: { ...s1.rules, usePhysicalMentalConditions: true, reducedDegreeStatBonus: true }, rng: new Random(1) };
+    const ctx1 = { state: s1, campaign: studyCampaign, economicIndex: 0, rules: { ...s1.rules, usePhysicalMentalConditions: true, depthScaledDegreeBonus: true }, rng: new Random(1) };
     const res1 = gameReducer(p1, { type: 'study', degreeId: 'academic' }, ctx1);
     expect(res1.updatedPlayer.degrees).toContain('academic');
     expect(res1.updatedPlayer.dependability).toBe(22); // 20 + (1 + 1)
-    // 10 - mentalCost (1 base + 1 depth = 2) + graduation Mental (2 * (1+1) = 4) = 12
-    expect(res1.updatedPlayer.mentalCondition).toBe(12);
+    // 10 - mentalCost (1 base + 1 depth = 2) + graduation Mental (1 * 2 + 1 = 3) = 11
+    expect(res1.updatedPlayer.mentalCondition).toBe(11);
 
-    // 3. Depth 2 degree (depth 2): Graduate School -> Dep +3, Mental +6
+    // 3. Depth 2 degree (depth 2): Graduate School -> Dep +3, Mental +5
     const p2 = makePlayer();
     p2.degrees = ['junior_college', 'academic'];
     p2.dependability = 20;
     p2.mentalCondition = 10;
     p2.enrolledClasses = { graduate_school: 9 };
     const s2 = makeState(p2);
-    const ctx2 = { state: s2, campaign: studyCampaign, economicIndex: 0, rules: { ...s2.rules, usePhysicalMentalConditions: true, reducedDegreeStatBonus: true }, rng: new Random(1) };
+    const ctx2 = { state: s2, campaign: studyCampaign, economicIndex: 0, rules: { ...s2.rules, usePhysicalMentalConditions: true, depthScaledDegreeBonus: true }, rng: new Random(1) };
     const res2 = gameReducer(p2, { type: 'study', degreeId: 'graduate_school' }, ctx2);
     expect(res2.updatedPlayer.degrees).toContain('graduate_school');
     expect(res2.updatedPlayer.dependability).toBe(23); // 20 + (2 + 1)
-    // 10 - mentalCost (1 base + 2 depth = 3) + graduation Mental (2 * (2+1) = 6) = 13
-    expect(res2.updatedPlayer.mentalCondition).toBe(13);
+    // 10 - mentalCost (1 base + 2 depth = 3) + graduation Mental (2 * 2 + 1 = 5) = 12
+    expect(res2.updatedPlayer.mentalCondition).toBe(12);
   });
 });
 

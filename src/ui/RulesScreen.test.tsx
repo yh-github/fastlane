@@ -139,4 +139,59 @@ describe('RulesScreen', () => {
     fireEvent.click(screen.getByTestId('tab-locations'));
     expect(screen.getByText('Socket City')).toBeInTheDocument();
   });
+
+  it('renders unified All Differences tab when initialTab is all-diffs', async () => {
+    render(<RulesScreen onClose={() => {}} initialTab="all-diffs" initialDiffMode={true} />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Rules Comparison Matrix')).toBeInTheDocument();
+    });
+
+    // Executive summary card
+    expect(screen.getByText(/All Version Differences/)).toBeInTheDocument();
+
+    // All category diff sections should be visible simultaneously
+    expect(screen.getByText(/Rule Differences/)).toBeInTheDocument();
+    expect(screen.getByText(/Job Differences/)).toBeInTheDocument();
+    expect(screen.getByText(/Item Differences/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Locations & Buildings/).length).toBeGreaterThan(0);
+
+    // Verify differing jobs and items are rendered directly in the diffs view
+    expect(screen.getByText('Dishwasher')).toBeInTheDocument();
+    expect(screen.getByText('Microwave')).toBeInTheDocument();
+  });
+
+  it('switches to Goals & Housing tab and renders win conditions', async () => {
+    render(<RulesScreen onClose={() => {}} />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Rules Comparison Matrix')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('tab-goals-housing'));
+    expect(screen.getByText('Win Conditions Comparison')).toBeInTheDocument();
+    expect(screen.getByText('Housing & Rent Comparison')).toBeInTheDocument();
+  });
+
+  it('filters rows with the search query input', async () => {
+    render(<RulesScreen onClose={() => {}} initialTab="jobs" />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Rules Comparison Matrix')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Dishwasher')).toBeInTheDocument();
+
+    // Type non-matching search query
+    const searchInput = screen.getByPlaceholderText('Search rows...');
+    fireEvent.change(searchInput, { target: { value: 'nonexistent_job_xyz' } });
+
+    // Job should be filtered out
+    expect(screen.queryByText('Dishwasher')).not.toBeInTheDocument();
+
+    // Clear search
+    fireEvent.change(searchInput, { target: { value: '' } });
+    expect(screen.getByText('Dishwasher')).toBeInTheDocument();
+  });
 });
+

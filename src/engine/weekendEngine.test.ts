@@ -184,23 +184,32 @@ describe('Weekend Engine', () => {
       expect(afterClean.money).toBe(2);
     });
 
-    it('guarantees 1 ticket card among 3 choices when player holds an event ticket', () => {
+    it('guarantees ticket attendance and resale cards among 3 choices when player holds an event ticket', () => {
       const player = {
         id: 'p1',
         money: 50,
+        social: 20,
         inventory: { appliances: [], tickets: { baseball: 1, theatre: 0, concert: 0 } }
       } as unknown as PlayerState;
 
       const { player: updated, cards } = generateWeekendChoices(player, 2, fullMockWeekendData, new Random(123));
       expect(cards.length).toBe(3);
       const ticketCard = cards.find(c => c.type === 'ticket');
+      const resaleCard = cards.find(c => c.type === 'ticket_resale');
       expect(ticketCard).toBeDefined();
       expect(ticketCard!.id).toBe('ticket_baseball');
+      expect(resaleCard).toBeDefined();
 
-      // Resolving ticket consumes it and rolls cost
+      // Resolving ticket consumes it and costs $0 entry fee (pre-purchased)
       const resolved = resolveWeekendChoice(updated, ticketCard!.id, new Random(1));
       expect(resolved.inventory.tickets.baseball).toBe(0);
-      expect(resolved.money).toBeLessThan(50);
+      expect(resolved.money).toBe(50);
+      expect(resolved.social).toBe(22); // +2 social
+
+      // Resolving resale grants cash profit (45 * 1.2 = 54) and consumes ticket
+      const resolvedResale = resolveWeekendChoice(updated, resaleCard!.id, new Random(1));
+      expect(resolvedResale.inventory.tickets.baseball).toBe(0);
+      expect(resolvedResale.money).toBe(104); // 50 + 54
     });
 
     it('shuffles unchosen cards back into draw pile and moves chosen card to discard pile', () => {
@@ -323,6 +332,176 @@ describe('Weekend Engine', () => {
 
       // Player maintenanceModifications should be cleared
       expect(resolved.maintenanceModifications).toBeUndefined();
+    });
+
+    describe('Advanced Weekend System Overhaul (Phases 1 & 2)', () => {
+      it('draws predominantly cheap and free cards in early game (turns 1-3)', () => {
+        const player = {
+          id: 'p1',
+          money: 500, // rich player who could afford expensive cards
+          inventory: { appliances: [], tickets: { baseball: 0, theatre: 0, concert: 0 } },
+          recentWeekendTiers: []
+        } as unknown as PlayerState;
+
+        let cheapOrFreeCount = 0;
+        let expensiveCount = 0;
+        for (let seed = 1; seed <= 20; seed++) {
+          const { cards } = generateWeekendChoices(player, 2, fullMockWeekendData, new Random(seed));
+          for (const card of cards) {
+            if (card.tier === 'cheap' || card.tier === 'free') cheapOrFreeCount++;
+            if (card.tier === 'expensive') expensiveCount++;
+          }
+        }
+        // Out of 60 drawn cards in early game, cheap & free should heavily dominate
+        expect(cheapOrFreeCount).toBeGreaterThan(45);
+        expect(expensiveCount).toBeLessThan(10);
+      });
+
+      it('enforces card variety: no 3 cards of identical type and no matching type+tier', () => {
+        const player = {
+          id: 'p1',
+          money: 200,
+          inventory: { appliances: [{ id: 'refrigerator' }], tickets: { baseball: 0, theatre: 0, concert: 0 } },
+          recentWeekendTiers: []
+        } as unknown as PlayerState;
+
+        for (let seed = 1; seed <= 30; seed++) {
+          const { cards } = generateWeekendChoices(player, 4, fullMockWeekendData, new Random(seed));
+          expect(cards.length).toBe(3);
+
+          // Check 1: No 3 cards of the exact same type
+          const types = cards.map(c => c.type);
+          const allSameType = types[0] === types[1] && types[1] === types[2];
+          expect(allSameType).toBe(false);
+
+          // Check 2: If two cards share type, they must not share tier
+          for (let i = 0; i < cards.length; i++) {
+            for (let j = i + 1; j < cards.length; j++) {
+              if (cards[i].type === cards[j].type) {
+                expect(cards[i].tier).not.toBe(cards[j].tier);
+              }
+            }
+          }
+        }
+      });
+
+      it('allows solvent players to draw and resolve free cards (park walk, porch chat)', () => {
+        const player = {
+          id: 'p1',
+          money: 300,
+          social: 20,
+          physicalCondition: 35,
+          physicalConditionMax: 50,
+          inventory: { appliances: [], tickets: { baseball: 0, theatre: 0, concert: 0 } },
+          offeredWeekendCards: [
+            {
+              id: 'free_park_walk',
+              tier: 'free',
+              type: 'walk',
+              eventKey: 'events.weekend.free_park_walk',
+              titleKey: 'weekendScreen.card.parkWalkTitle',
+              fluff: 'Walk in park',
+              icon: '🌳',
+              costMin: 0,
+              costMax: 0,
+              targetStat: 'physical',
+              potentialBonusMin: 1,
+              potentialBonusMax: 1
+            },
+            {
+              id: 'free_porch_chat',
+              tier: 'free',
+              type: 'chat',
+              eventKey: 'events.weekend.free_porch_chat',
+              titleKey: 'weekendScreen.card.porchChatTitle',
+              fluff: 'Chat on porch',
+              icon: '🗣️',
+              costMin: 0,
+              costMax: 0,
+              targetStat: 'social',
+              potentialBonusMin: 1,
+              potentialBonusMax: 1
+            }
+          ]
+        } as unknown as PlayerState;
+
+        // Resolve park walk: +1 physical condition
+        const resWalk = resolveWeekendChoice(player, 'free_park_walk', new Random(1), { usePhysicalMentalConditions: true } as any);
+        expect(resWalk.physicalCondition).toBe(36);
+        expect(resWalk.money).toBe(300); // Free ($0)
+
+        // Resolve porch chat: +1 social
+        const resChat = resolveWeekendChoice(player, 'free_porch_chat', new Random(1), { usePhysicalMentalConditions: true } as any);
+        expect(resChat.social).toBe(21);
+        expect(resChat.money).toBe(300); // Free ($0)
+      });
+
+      it('scales ticket rewards by ticket quantity and differentiates by price tier', () => {
+        // Theatre (30 base): 2 tickets = +2 Mental, +2 Social
+        const playerTheatre = {
+          id: 'p1',
+          money: 100,
+          inventory: { appliances: [], tickets: { baseball: 0, theatre: 2, concert: 0 } }
+        } as unknown as PlayerState;
+
+        const { cards: theatreCards } = generateWeekendChoices(playerTheatre, 4, fullMockWeekendData, new Random(1));
+        const theatreCard = theatreCards.find(c => c.type === 'ticket')!;
+        expect(theatreCard.potentialBonusMin).toBe(2); // Mental
+        expect(theatreCard.potentialSecondaryBonusMin).toBe(2); // Social
+
+        // Baseball (45 base): 3+ tickets = +3 Mental, +4 Social
+        const playerBaseball = {
+          id: 'p2',
+          money: 100,
+          inventory: { appliances: [], tickets: { baseball: 3, theatre: 0, concert: 0 } }
+        } as unknown as PlayerState;
+
+        const { cards: bbCards } = generateWeekendChoices(playerBaseball, 4, fullMockWeekendData, new Random(1));
+        const bbCard = bbCards.find(c => c.type === 'ticket')!;
+        expect(bbCard.potentialBonusMin).toBe(3); // Mental
+        expect(bbCard.potentialSecondaryBonusMin).toBe(4); // Social
+      });
+
+      it('clears all held tickets from inventory even when skipping the event for another card', () => {
+        const player = {
+          id: 'p1',
+          money: 100,
+          mentalCondition: 40,
+          mentalConditionMax: 80,
+          inventory: { appliances: [], tickets: { baseball: 2, theatre: 0, concert: 0 } }
+        } as unknown as PlayerState;
+
+        const { player: withChoices, cards } = generateWeekendChoices(player, 4, fullMockWeekendData, new Random(42));
+        expect(withChoices.inventory.tickets.baseball).toBe(2);
+
+        // Player decides to pick the 3rd card (not the ticket or resale card)
+        const altCard = cards.find(c => c.type !== 'ticket' && c.type !== 'ticket_resale') || cards[2];
+        const resolved = resolveWeekendChoice(withChoices, altCard.id, new Random(1), { usePhysicalMentalConditions: true } as any);
+
+        // All event tickets expired because the weekend passed!
+        expect(resolved.inventory.tickets.baseball).toBe(0);
+        expect(resolved.inventory.tickets.theatre).toBe(0);
+        expect(resolved.inventory.tickets.concert).toBe(0);
+      });
+
+      it('biases appearance probability towards recently chosen tiers (lifestyle momentum)', () => {
+        const player = {
+          id: 'p1',
+          money: 300,
+          inventory: { appliances: [], tickets: { baseball: 0, theatre: 0, concert: 0 } },
+          recentWeekendTiers: ['expensive', 'expensive', 'expensive']
+        } as unknown as PlayerState;
+
+        let expensiveCount = 0;
+        for (let seed = 1; seed <= 30; seed++) {
+          const { cards } = generateWeekendChoices(player, 8, fullMockWeekendData, new Random(seed));
+          for (const card of cards) {
+            if (card.tier === 'expensive') expensiveCount++;
+          }
+        }
+        // With strong momentum on turn 8, expensive cards should appear very frequently
+        expect(expensiveCount).toBeGreaterThan(25);
+      });
     });
   });
 });

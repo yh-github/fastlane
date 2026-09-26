@@ -14,6 +14,8 @@ import {
 } from '../ui/BuildingInteractions';
 import { UniversityRegistry } from '../ui/buildings/UniversityRegistry';
 import { WeekendScreen } from '../ui/WeekendScreen';
+import { computeClerkResponse } from '../ui/buildingModal/clerkDialogue';
+import { handlePayLoanAction } from '../engine/actions/financeActions';
 
 // Helper to flatten nested JSON translation objects into dot-notated key/value pairs
 function flattenTranslations(obj: Record<string, any>, prefix = ''): { key: string; value: string }[] {
@@ -466,6 +468,172 @@ describe('Translation Interpolation & Template Verification', () => {
       expect(container.textContent).not.toContain('{{required}}');
       expect(container.textContent).toContain('Lessons:');
       expect(container.textContent).toContain('1 / 10');
+    });
+  });
+
+  describe('Clerk Dialogue and Loan Payment Interpolation (Literal Braces Prevention)', () => {
+    const mockBuildingDef = {
+      id: 'bank',
+      name: 'Bank of Jones',
+      description: 'Bank',
+      archetype: 'bank'
+    } as any;
+
+    const mockEmploymentDef = {
+      id: 'employment_office',
+      name: 'Employment Office',
+      description: 'Employment Office',
+      archetype: 'employment'
+    } as any;
+
+    it('verifies computeClerkResponse handles pay_loan for paidOff without literal { or } in en and he', () => {
+      // Test in English
+      i18n.changeLanguage('en');
+      const responseEn = computeClerkResponse(
+        { type: 'pay_loan' },
+        { key: 'action.loan.paidOff', params: { amount: 30 } },
+        mockBuildingDef,
+        i18n.t,
+        (_key, fallback) => fallback
+      );
+      expect(responseEn).toBe('Paid off the remaining loan ($30)');
+      expect(responseEn).not.toContain('{');
+      expect(responseEn).not.toContain('}');
+
+      // Test in Hebrew
+      i18n.changeLanguage('he');
+      const responseHe = computeClerkResponse(
+        { type: 'pay_loan' },
+        { key: 'action.loan.paidOff', params: { amount: 30 } },
+        mockBuildingDef,
+        i18n.t,
+        (_key, fallback) => fallback
+      );
+      expect(responseHe).toBe('שילמת את יתרת ההלוואה (30$)');
+      expect(responseHe).not.toContain('{');
+      expect(responseHe).not.toContain('}');
+    });
+
+    it('verifies computeClerkResponse handles pay_loan for paidInstallment without literal { or } in en and he', () => {
+      // Test in English
+      i18n.changeLanguage('en');
+      const responseEn = computeClerkResponse(
+        { type: 'pay_loan' },
+        { key: 'action.loan.paidInstallment', params: { payment: 50, principal: 45, interest: 5 } },
+        mockBuildingDef,
+        i18n.t,
+        (_key, fallback) => fallback
+      );
+      expect(responseEn).toBe('Made a loan payment of $50 (Principal: $45, Interest: $5)');
+      expect(responseEn).not.toContain('{');
+      expect(responseEn).not.toContain('}');
+
+      // Test in Hebrew
+      i18n.changeLanguage('he');
+      const responseHe = computeClerkResponse(
+        { type: 'pay_loan' },
+        { key: 'action.loan.paidInstallment', params: { payment: 50, principal: 45, interest: 5 } },
+        mockBuildingDef,
+        i18n.t,
+        (_key, fallback) => fallback
+      );
+      expect(responseHe).toBe('שילמת תשלום הלוואה של 50$ (קרן: 45$, ריבית: 5$)');
+      expect(responseHe).not.toContain('{');
+      expect(responseHe).not.toContain('}');
+    });
+
+    it('guarantees handlePayLoanAction output fed into computeClerkResponse never leaks literal { or }', () => {
+      const mockContext = {
+        campaign: {
+          config: {
+            economyRules: {
+              loanPaymentAmount: 50,
+              loanPrincipalAmount: 45,
+              loanInterestAmount: 5
+            }
+          }
+        }
+      } as any;
+
+      // Case 1: Partial remaining loan debt (loan debt < 50)
+      const playerWithSmallDebt = {
+        id: 'p1',
+        money: 200,
+        loanDebt: 30,
+        loanPaymentDeadline: 4
+      } as any;
+
+      const resultPaidOff = handlePayLoanAction(playerWithSmallDebt, { type: 'pay_loan' }, mockContext);
+      ['en', 'he'].forEach(lang => {
+        i18n.changeLanguage(lang);
+        const text = computeClerkResponse(
+          { type: 'pay_loan' },
+          resultPaidOff.actionLog,
+          mockBuildingDef,
+          i18n.t,
+          (_k, d) => d
+        );
+        expect(text).not.toContain('{');
+        expect(text).not.toContain('}');
+      });
+
+      // Case 2: Standard installment
+      const playerWithLargeDebt = {
+        id: 'p1',
+        money: 200,
+        loanDebt: 500,
+        loanPaymentDeadline: 4
+      } as any;
+
+      const resultInstallment = handlePayLoanAction(playerWithLargeDebt, { type: 'pay_loan' }, mockContext);
+      ['en', 'he'].forEach(lang => {
+        i18n.changeLanguage(lang);
+        const text = computeClerkResponse(
+          { type: 'pay_loan' },
+          resultInstallment.actionLog,
+          mockBuildingDef,
+          i18n.t,
+          (_k, d) => d
+        );
+        expect(text).not.toContain('{');
+        expect(text).not.toContain('}');
+      });
+    });
+
+    it('verifies Employment Office rejection responses are translated in Hebrew and contain no literal { or }', () => {
+      i18n.changeLanguage('he');
+      const rejectionLog = {
+        key: 'action.job.rejected',
+        params: {
+          reasons: 'Not enough experience. Poor Work History.',
+          missingDegrees: ''
+        }
+      };
+      const text = computeClerkResponse(
+        { type: 'apply', jobId: 'mechanic' },
+        rejectionLog,
+        mockEmploymentDef,
+        i18n.t,
+        (_k, d) => d
+      );
+      expect(text).toContain('מצטערים. לא קיבלת את העבודה מהסיבות הבאות:');
+      expect(text).toContain('אין מספיק ניסיון.');
+      expect(text).toContain('היסטוריית עבודה לקויה (אמינות נמוכה).');
+      expect(text).not.toContain('{');
+      expect(text).not.toContain('}');
+
+      const noOpeningsLog = { key: 'action.job.noOpenings' };
+      const noOpeningsText = computeClerkResponse(
+        { type: 'apply', jobId: 'mechanic' },
+        noOpeningsLog,
+        mockEmploymentDef,
+        i18n.t,
+        (_k, d) => d
+      );
+      expect(noOpeningsText).toContain('מצטערים. לא קיבלת את העבודה מהסיבות הבאות:');
+      expect(noOpeningsText).toContain('אין משרות פנויות לתפקיד זה.');
+      expect(noOpeningsText).not.toContain('{');
+      expect(noOpeningsText).not.toContain('}');
     });
   });
 });

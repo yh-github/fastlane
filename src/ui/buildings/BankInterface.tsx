@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { StockDef, CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules, EconomySimulationState } from '../../engine/gameState';
 import { calcStockPrice } from '../../engine/economyEngine';
-import { formatHours } from '../../engine/statMath';
+import { formatHours, calcLoanAssessment } from '../../engine/statMath';
 import { ActionReasonModal } from './ActionReasonModal';
 import type { InteractionProps } from './types';
 
@@ -404,6 +404,7 @@ export function BankInterface({
   const [reasonMsg, setReasonMsg] = useState<string | null>(null);
 
   const loanPaymentAmount = campaign?.config?.economyRules?.loanPaymentAmount ?? 50;
+  const assessment = calcLoanAssessment(player, campaign, turn, rules);
 
   const canDeposit = player.money > 0;
   const canWithdraw = player.bankSavings > 0;
@@ -456,8 +457,18 @@ export function BankInterface({
           </div>
         )}
         {tab === 'loans' && (
-          <div>
-            <strong>{t('bank.debt', { defaultValue: 'Debt:' })}</strong> ${player.loanDebt || 0}
+          <div style={{ display: 'flex', gap: '15px' }}>
+            <div>
+              <strong>{t('bank.debt', { defaultValue: 'Debt:' })}</strong> ${player.loanDebt || 0}
+            </div>
+            {player.loanDebt > 0 && player.loanPaymentDeadline > 0 && (
+              <div>
+                <strong>Due:</strong> Week {player.loanPaymentDeadline}
+                {player.loanPaymentDeadline < turn && (
+                  <span style={{ color: '#ef4444', fontWeight: 'bold', marginLeft: '6px' }}>(OVERDUE)</span>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -555,19 +566,70 @@ export function BankInterface({
       )}
 
       {tab === 'loans' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '10px' }}>
-          <button 
-            onClick={() => onAction({ type: 'take_loan' })}
-            style={{ padding: '14px', borderRadius: '8px' }}
-          >
-            📝 {rules?.helpfulUI ? t('bank.applyLoan', { cost: formatHours(campaign?.config.timeRules?.loanCost ?? 2), defaultValue: `Apply for Loan (Costs ⏳ ${formatHours(campaign?.config.timeRules?.loanCost ?? 2)} Hours)` }) : t('bank.applyLoanBasic', { defaultValue: 'Apply for Loan' })}
-          </button>
-          <button 
-            onClick={() => onAction({ type: 'pay_loan' })} 
-            style={{ padding: '14px', borderRadius: '8px' }}
-          >
-            {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanPaymentAmount} or remainder)` })}
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '10px' }}>
+          {rules?.helpfulUI && (
+            <div 
+              data-testid="helpful-loan-assessment"
+              style={{
+                background: assessment.eligible ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                border: `1px solid ${assessment.eligible ? 'rgba(34, 197, 94, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                borderRadius: '8px',
+                padding: '14px 16px',
+                fontSize: '13px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '14px', color: assessment.eligible ? '#4ade80' : '#f87171' }}>
+                  📊 Approval Chance: {assessment.approvalChance}% ({assessment.eligible ? 'Approved' : 'Refused'})
+                </span>
+                <span style={{ fontWeight: 'bold', fontSize: '15px', color: assessment.eligible ? '#38bdf8' : '#9ca3af' }}>
+                  Likely Loan: ${assessment.estimatedAmount}
+                </span>
+              </div>
+              <div style={{ color: '#e5e7eb', marginBottom: '8px' }}>
+                {assessment.reasonText}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '12px', color: '#9ca3af', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
+                <span>💼 Wage: ${player.currentWage}/hr</span>
+                <span>💧 Liquidity Score: {assessment.liquidity.toFixed(2)}</span>
+                <span>⚠️ Risk Factor: {assessment.risk.toFixed(2)}</span>
+                {player.timesDefaulted > 0 && (
+                  <span style={{ color: '#f87171' }}>🚨 Past Defaults: {player.timesDefaulted}</span>
+                )}
+                <span>📅 Terms: ${loanPaymentAmount}/mo on Week 4</span>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <button 
+              onClick={() => onAction({ type: 'take_loan' })}
+              style={{ 
+                padding: '14px', 
+                borderRadius: '8px',
+                border: rules?.helpfulUI && !assessment.eligible ? '1px solid rgba(239, 68, 68, 0.5)' : undefined
+              }}
+            >
+              📝 {rules?.helpfulUI 
+                ? (assessment.eligible 
+                    ? `Apply for Loan (+$${assessment.estimatedAmount}) (⏳ ${formatHours(campaign?.config?.timeRules?.loanCost ?? 2)})` 
+                    : `Apply for Loan (Refused) (⏳ ${formatHours(campaign?.config?.timeRules?.loanCost ?? 2)})`)
+                : t('bank.applyLoanBasic', { defaultValue: 'Apply for Loan' })
+              }
+            </button>
+            <button 
+              onClick={() => onAction({ type: 'pay_loan' })} 
+              disabled={player.loanDebt <= 0}
+              style={{ 
+                padding: '14px', 
+                borderRadius: '8px',
+                opacity: player.loanDebt <= 0 ? 0.5 : 1,
+                cursor: player.loanDebt <= 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanPaymentAmount} or remainder)` })}
+            </button>
+          </div>
         </div>
       )}
     </div>

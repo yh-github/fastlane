@@ -196,6 +196,7 @@ describe('gameReducer', () => {
       player.money = 0;
       player.bankSavings = 0;
       player.currentWage = 20; // Good liquidity
+      player.currentJobId = 'office_clerk';
       player.hoursRemaining = 40;
       const result = gameReducer(player, { type: 'take_loan' }, context);
       expect(result.updatedPlayer.money).toBeGreaterThan(0);

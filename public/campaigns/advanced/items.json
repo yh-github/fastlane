@@ -163,6 +163,7 @@
     "subcategory": "canned",
     "basePrice": 18,
     "mentalBonus": -2.5,
+    "description": "Suspicious cheap canned meat. Lowers mental spirits and permanently reduces max physical fitness upon consumption.",
     "effects": [
       { "trigger": "on_purchase", "stat": "physical_max", "value": -3 }
     ]

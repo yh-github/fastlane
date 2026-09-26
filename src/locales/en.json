@@ -73,6 +73,7 @@
     "job": {
       "worked": "Worked at {{title}} and earned ${{wagesEarned}}{{stats}}",
       "gotJob": "You got the job as {{title}}!",
+      "hired": "You got the job as {{title}}!",
       "rejected": "Your application was rejected: {{reasons}}",
       "noOpenings": "No openings for this position.",
       "needClothes": "You need {{req}} to work here.",
@@ -214,7 +215,9 @@
       "noLoan": "You don't have a loan.",
       "notEnoughMoney": "Not enough money.",
       "alreadyOwnComputer": "You already own a computer.",
-      "maxEnrolledClasses": "You cannot enroll in more than {{max}} classes at once."
+      "maxEnrolledClasses": "You cannot enroll in more than {{max}} classes at once.",
+      "cannotTransact": "Transaction could not be completed.",
+      "notEnoughTimeEducation": "No time is left to go to class."
     }
   },
   "events": {
@@ -440,7 +443,10 @@
       "applianceTitle": "Home Comfort",
       "ticket_baseball": "Live Baseball Game",
       "ticket_theatre": "Theatre Show",
-      "ticket_concert": "Rock Concert"
+      "ticket_concert": "Rock Concert",
+      "parkWalkTitle": "City Park Walk & Jog",
+      "porchChatTitle": "Stoop Chat with Neighbors",
+      "ticketResaleTitle": "Scalp / Resell Tickets"
     }
   },
   "tag": {
@@ -820,7 +826,8 @@
         "Welcome to ACNE Employment. No matter how bad your skills are, we have a job to match!"
       ],
       "buySuccess": "Congratulations on your new job!",
-      "insufficientFunds": "I'm sorry, but you don't meet the requirements for that position."
+      "insufficientFunds": "I'm sorry, but you don't meet the requirements for that position.",
+      "rejectedHeader": "Sorry. You didn't get the job for the following reasons:"
     },
     "university": {
       "greeting": [
@@ -867,7 +874,8 @@
       "buySuccess": "Thank you!",
       "insufficientFunds": "You don't have enough money."
     },
-    "noTimeToReadNewspaper": "No time to read the newspaper."
+    "noTimeToReadNewspaper": "No time to read the newspaper.",
+    "closingSoon": "Sorry. We're closing. You'll have to come back next week."
   },
   "jobBoard": {
     "title": "Job Board: Select Location",
@@ -882,6 +890,13 @@
     "degreeStudying": "Studying",
     "degreeMissing": "Missing",
     "missingReq": "You do not meet the minimum requirements for this position.",
+    "missingExpReason": "Not enough experience.",
+    "poorWorkHistory": "Poor Work History.",
+    "notEnoughEducation": "Not enough education.",
+    "missingDegree": "Missing required degree: {{degree}}",
+    "missingMgmtSkill": "Requires at least {{reqMgmt}}.00 Management Skill (Skill_Mgmt). Gain experience in Middle Management.",
+    "missingTechSkill": "Requires at least {{reqTech}}.00 Technical Skill (Skill_Tech).",
+    "missingPhysicalCondition": "Not physically fit enough for security guard work. Requires Physical Condition >= 30.",
     "missingEducationWithDegrees": "Not enough education: missing {{degrees}}.",
     "alwaysHiring": "Always Hiring",
     "askRaise": "Ask for Raise to ${{wage}}/hr ({{cost}}h)",
@@ -1082,7 +1097,13 @@
     "close": "Close",
     "language": "Language",
     "languageHelp": "Select interface language",
-    "viewGameLog": "View Activity Log"
+    "viewGameLog": "View Activity Log",
+    "showWindowPositionSize": "Show Window Position & Size",
+    "showWindowPositionSizeOn": "Displays coordinate and dimension overlay on location windows (ON)",
+    "showWindowPositionSizeOff": "Hidden window coordinate and dimension overlay (OFF)",
+    "allowWindowMoveResize": "Move & Resize Location Windows",
+    "allowWindowMoveResizeOn": "Header dragging and corner resize handle enabled (ON)",
+    "allowWindowMoveResizeOff": "Fixed location window position and size (OFF)"
   },
   "debug": {
     "modalTitle": "Debug Events & Economy",

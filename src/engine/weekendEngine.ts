@@ -21,7 +21,73 @@ function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney
 // ALTERNATIVE WEEKEND DECK ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
 
+export const FREE_WEEKEND_CARDS: Record<string, WeekendCard> = {
+  free_stay_home: {
+    id: 'free_stay_home',
+    tier: 'free',
+    type: 'rest',
+    eventKey: 'events.weekend.free_stay_home',
+    titleKey: 'weekendScreen.card.stayHomeTitle',
+    fluff: 'You stayed home all weekend, resting in bed and letting the dishes pile up.',
+    icon: '🛋️',
+    costMin: 0,
+    costMax: 0,
+    targetStat: 'mental',
+    potentialBonusMin: 1,
+    potentialBonusMax: 1,
+    secondaryStat: 'mess',
+    potentialSecondaryBonusMin: 2,
+    potentialSecondaryBonusMax: 2
+  },
+  free_deep_clean: {
+    id: 'free_deep_clean',
+    tier: 'free',
+    type: 'clean',
+    eventKey: 'events.weekend.free_deep_clean',
+    titleKey: 'weekendScreen.card.deepCleanTitle',
+    fluff: 'You spent the entire weekend scrubbing every floor and surface until your apartment was spotless.',
+    icon: '🧹',
+    costMin: 0,
+    costMax: 0,
+    targetStat: 'mess',
+    potentialBonusMin: 8,
+    potentialBonusMax: 12,
+    secondaryStat: 'physical',
+    potentialSecondaryBonusMin: -1,
+    potentialSecondaryBonusMax: -1
+  },
+  free_park_walk: {
+    id: 'free_park_walk',
+    tier: 'free',
+    type: 'walk',
+    eventKey: 'events.weekend.free_park_walk',
+    titleKey: 'weekendScreen.card.parkWalkTitle',
+    fluff: 'You took long refreshing walks and did light exercises in the city park.',
+    icon: '🌳',
+    costMin: 0,
+    costMax: 0,
+    targetStat: 'physical',
+    potentialBonusMin: 1,
+    potentialBonusMax: 1
+  },
+  free_porch_chat: {
+    id: 'free_porch_chat',
+    tier: 'free',
+    type: 'chat',
+    eventKey: 'events.weekend.free_porch_chat',
+    titleKey: 'weekendScreen.card.porchChatTitle',
+    fluff: 'You sat on the front porch and spent hours chatting with neighbors and passersby.',
+    icon: '🗣️',
+    costMin: 0,
+    costMax: 0,
+    targetStat: 'social',
+    potentialBonusMin: 1,
+    potentialBonusMax: 1
+  }
+};
+
 export function initPlayerWeekendDecks(player: PlayerState, weekendData: WeekendDef, rng: Random): PlayerState {
+  const freeCards = ['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat'];
   const cheapCards: string[] = [];
   const mediumCards: string[] = [];
   const expensiveCards: string[] = [];
@@ -54,6 +120,10 @@ export function initPlayerWeekendDecks(player: PlayerState, weekendData: Weekend
   return {
     ...player,
     weekendDecks: {
+      free: {
+        drawPile: rng.shuffle([...freeCards]),
+        discardPile: []
+      },
       cheap: {
         drawPile: rng.shuffle([...cheapCards]),
         discardPile: []
@@ -67,7 +137,8 @@ export function initPlayerWeekendDecks(player: PlayerState, weekendData: Weekend
         discardPile: []
       }
     },
-    recentWeekendTiers: player.recentWeekendTiers ? [...player.recentWeekendTiers] : []
+    recentWeekendTiers: player.recentWeekendTiers ? [...player.recentWeekendTiers] : [],
+    recentWeekendPicks: player.recentWeekendPicks ? [...player.recentWeekendPicks] : []
   };
 }
 
@@ -132,6 +203,196 @@ export function removeApplianceCardFromDeck(player: PlayerState, applianceId: st
   };
 }
 
+function buildTicketCards(
+  heldTicketType: 'baseball' | 'theatre' | 'concert',
+  ticketCount: number,
+  weekendData: WeekendDef
+): { attendCard: WeekendCard; resaleCard: WeekendCard } {
+  let mental = 1;
+  let social = 1;
+  const basePrice = heldTicketType === 'theatre' ? 30 : heldTicketType === 'concert' ? 40 : 45;
+
+  if (heldTicketType === 'theatre') {
+    if (ticketCount === 1) { mental = 1; social = 1; }
+    else if (ticketCount === 2) { mental = 2; social = 2; }
+    else { mental = 2; social = 3; }
+  } else if (heldTicketType === 'concert') {
+    if (ticketCount === 1) { mental = 2; social = 1; }
+    else if (ticketCount === 2) { mental = 2; social = 3; }
+    else { mental = 3; social = 4; }
+  } else {
+    // baseball
+    if (ticketCount === 1) { mental = 2; social = 2; }
+    else if (ticketCount === 2) { mental = 3; social = 3; }
+    else { mental = 3; social = 4; }
+  }
+
+  const ticketIcons: Record<string, string> = {
+    baseball: '⚾',
+    theatre: '🎭',
+    concert: '🎸'
+  };
+
+  const attendCard: WeekendCard = {
+    id: `ticket_${heldTicketType}`,
+    tier: 'medium',
+    type: 'ticket',
+    eventKey: `events.weekend.ticket_${heldTicketType}`,
+    titleKey: `weekendScreen.card.ticket_${heldTicketType}`,
+    fluff: weekendData.ticketWeekends?.[heldTicketType]?.text || 'Enjoyed an exciting live event with your tickets!',
+    icon: ticketIcons[heldTicketType] || '🎟️',
+    costMin: 0,
+    costMax: 0,
+    targetStat: 'mental',
+    potentialBonusMin: mental,
+    potentialBonusMax: mental,
+    secondaryStat: 'social',
+    potentialSecondaryBonusMin: social,
+    potentialSecondaryBonusMax: social,
+    ticketCount
+  };
+
+  const resaleProfit = Math.round(ticketCount * basePrice * 1.20);
+  const resaleCard: WeekendCard = {
+    id: `ticket_resale_${heldTicketType}`,
+    tier: 'free',
+    type: 'ticket_resale',
+    eventKey: `events.weekend.ticket_resale_${heldTicketType}`,
+    titleKey: 'weekendScreen.card.ticketResaleTitle',
+    fluff: 'You stood outside the venue and sold your tickets to desperate fans for a quick profit.',
+    icon: '💵',
+    costMin: 0,
+    costMax: 0,
+    potentialBonusMin: 0,
+    potentialBonusMax: 0,
+    resalePayout: resaleProfit,
+    ticketCount
+  };
+
+  return { attendCard, resaleCard };
+}
+
+function buildCardFromId(
+  cardId: string,
+  tier: WeekendDeckTier,
+  weekendData: WeekendDef,
+  player: PlayerState,
+  rng: Random
+): WeekendCard {
+  if (tier === 'free' || cardId.startsWith('free_') || cardId.startsWith('broke_')) {
+    if (cardId === 'broke_stay_home') return { ...FREE_WEEKEND_CARDS.free_stay_home, id: 'broke_stay_home', eventKey: 'events.weekend.broke_rest' };
+    if (cardId === 'broke_deep_clean') return { ...FREE_WEEKEND_CARDS.free_deep_clean, id: 'broke_deep_clean', eventKey: 'events.weekend.broke_clean' };
+    if (FREE_WEEKEND_CARDS[cardId]) {
+      return { ...FREE_WEEKEND_CARDS[cardId] };
+    }
+    return { ...FREE_WEEKEND_CARDS.free_stay_home };
+  }
+
+  let costMin = 5;
+  let costMax = 20;
+  let bonusMin = 1;
+  let bonusMax = 2;
+  if (tier === 'medium') {
+    costMin = 15;
+    costMax = 55;
+    bonusMin = 2;
+    bonusMax = 3;
+  } else if (tier === 'expensive') {
+    costMin = 50;
+    costMax = 100;
+    bonusMin = 3;
+    bonusMax = 5;
+  }
+
+  if (cardId.startsWith('random_')) {
+    const idx = parseInt(cardId.replace('random_', ''), 10);
+    const fluff = weekendData.randomWeekends?.[idx] || 'Spent a relaxing weekend.';
+    const isSpecial = idx === 41;
+
+    if (isSpecial) {
+      const bonus = Math.floor(rng.next() * 3) + 2;
+      return {
+        id: cardId,
+        tier,
+        type: 'random',
+        eventKey: `events.weekend.random_${idx}`,
+        titleKey: 'weekendScreen.card.specialTitle',
+        fluff,
+        icon: '✨',
+        costMin,
+        costMax,
+        targetStat: 'mental',
+        potentialBonusMin: 2,
+        potentialBonusMax: 4,
+        isSpecial: true,
+        specialBonus: bonus
+      };
+    }
+
+    const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
+    const targetStat = stats[Math.floor(rng.next() * stats.length)];
+    const iconMap = { mental: '🧠', social: '👥', dependability: '🤝' };
+
+    return {
+      id: cardId,
+      tier,
+      type: 'random',
+      eventKey: `events.weekend.random_${idx}`,
+      titleKey: `weekendScreen.card.${tier}Title`,
+      fluff,
+      icon: iconMap[targetStat] || '🎲',
+      costMin,
+      costMax,
+      targetStat,
+      potentialBonusMin: bonusMin,
+      potentialBonusMax: bonusMax
+    };
+  }
+
+  if (cardId.startsWith('durable_')) {
+    const appName = cardId.replace('durable_', '');
+    if (appName === 'vcr') {
+      const hasTv = player.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+      if (!hasTv) {
+        return buildCardFromId('random_0', 'cheap', weekendData, player, rng);
+      }
+    }
+    const fluff = weekendData.durableWeekends?.[appName]?.text || 'Spent time with your home appliances.';
+    const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
+    const targetStat = stats[Math.floor(rng.next() * stats.length)];
+
+    return {
+      id: cardId,
+      tier: 'cheap',
+      type: 'durable',
+      eventKey: `events.weekend.durable_${appName}`,
+      titleKey: 'weekendScreen.card.applianceTitle',
+      fluff,
+      icon: '🏠',
+      costMin: 5,
+      costMax: 20,
+      targetStat,
+      potentialBonusMin: 1,
+      potentialBonusMax: 2
+    };
+  }
+
+  return {
+    id: cardId,
+    tier,
+    type: 'random',
+    eventKey: `events.weekend.random_0`,
+    titleKey: `weekendScreen.card.cheapTitle`,
+    fluff: 'Spent a relaxing weekend.',
+    icon: '🎲',
+    costMin,
+    costMax,
+    targetStat: 'mental',
+    potentialBonusMin: bonusMin,
+    potentialBonusMax: bonusMax
+  };
+}
+
 export function generateWeekendChoices(
   player: PlayerState,
   _turnNumber: number,
@@ -139,6 +400,12 @@ export function generateWeekendChoices(
   rng: Random
 ): { player: PlayerState; cards: WeekendCard[] } {
   let updatedPlayer = player.weekendDecks ? { ...player } : initPlayerWeekendDecks(player, weekendData, rng);
+  if (!updatedPlayer.weekendDecks!.free) {
+    updatedPlayer.weekendDecks!.free = {
+      drawPile: rng.shuffle(['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat']),
+      discardPile: []
+    };
+  }
   const decks = updatedPlayer.weekendDecks!;
 
   // 1. Broke players (money < 5): Offer exactly two $0 cards
@@ -177,11 +444,10 @@ export function generateWeekendChoices(
     return { player: updatedPlayer, cards: brokeCards };
   }
 
-  // 2. Normal / Solvents (money >= 5): 3 choices
+  // 2. Solvent players (money >= 5): 3 choices
   const drawnCards: WeekendCard[] = [];
-  const chosenCardIds: { id: string; tier: WeekendDeckTier }[] = [];
 
-  // 2a. Ticket guarantee: If holding ticket, guarantee 1 ticket card
+  // 2a. Ticket guarantee: If holding ticket, guarantee attend and resale cards
   const tickets = updatedPlayer.inventory.tickets;
   let heldTicketType: 'baseball' | 'theatre' | 'concert' | null = null;
   if (tickets.baseball > 0 && weekendData.ticketWeekends.baseball) heldTicketType = 'baseball';
@@ -189,183 +455,112 @@ export function generateWeekendChoices(
   else if (tickets.concert > 0 && weekendData.ticketWeekends.concert) heldTicketType = 'concert';
 
   if (heldTicketType) {
-    const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
-    const statIdx = Math.floor(rng.next() * stats.length);
-    const targetStat = stats[statIdx];
-    const ticketIcons: Record<string, string> = {
-      baseball: '⚾',
-      theatre: '🎭',
-      concert: '🎸'
-    };
-
-    drawnCards.push({
-      id: `ticket_${heldTicketType}`,
-      tier: 'medium',
-      type: 'ticket',
-      eventKey: `events.weekend.ticket_${heldTicketType}`,
-      titleKey: `weekendScreen.card.ticket_${heldTicketType}`,
-      fluff: weekendData.ticketWeekends[heldTicketType]?.text || 'Enjoyed an exciting live event with your ticket!',
-      icon: ticketIcons[heldTicketType] || '🎟️',
-      costMin: 15,
-      costMax: 55,
-      targetStat,
-      potentialBonusMin: Math.floor(15 / 25),
-      potentialBonusMax: Math.floor(55 / 25)
-    });
+    const ticketCount = tickets[heldTicketType];
+    const { attendCard, resaleCard } = buildTicketCards(heldTicketType, ticketCount, weekendData);
+    drawnCards.push(attendCard);
+    drawnCards.push(resaleCard);
   }
 
-  // 2b. Draw remaining cards from decks
   const slotsNeeded = 3 - drawnCards.length;
 
-  // Determine affordable tiers
-  const affordableTiers: WeekendDeckTier[] = ['cheap'];
-  if (updatedPlayer.money >= 15) affordableTiers.push('medium');
-  if (updatedPlayer.money >= 50) affordableTiers.push('expensive');
+  const getTierWeights = (): { tier: WeekendDeckTier; weight: number }[] => {
+    let base: Record<WeekendDeckTier, number>;
+    if (_turnNumber <= 3) {
+      base = { cheap: 4.0, free: 2.0, medium: 1.0, expensive: 0.1 };
+    } else if (_turnNumber <= 7) {
+      base = { cheap: 2.5, medium: 2.5, free: 1.5, expensive: 1.0 };
+    } else {
+      base = { expensive: 2.5, medium: 2.0, cheap: 1.5, free: 1.0 };
+    }
 
-  // Calculate weights based on recent choices (bias towards last 3 choices)
-  const recentPicks = updatedPlayer.recentWeekendTiers || [];
+    const affordable: WeekendDeckTier[] = ['free'];
+    if (updatedPlayer.money >= 5) affordable.push('cheap');
+    if (updatedPlayer.money >= 15) affordable.push('medium');
+    if (updatedPlayer.money >= 50) affordable.push('expensive');
 
-  for (let slot = 0; slot < slotsNeeded; slot++) {
-    // Build weights for affordable tiers
-    const tierWeights: { tier: WeekendDeckTier; weight: number }[] = affordableTiers.map(t => {
-      let w = 1.0;
-      for (const pick of recentPicks) {
-        if (pick === t) w += 1.0;
-      }
+    const recentTiers = updatedPlayer.recentWeekendTiers || [];
+    return affordable.map(t => {
+      let w = base[t];
+      const picks = recentTiers.filter(rt => rt === t).length;
+      w *= (1 + picks * 0.75);
       return { tier: t, weight: w };
     });
+  };
 
-    const totalWeight = tierWeights.reduce((sum, tw) => sum + tw.weight, 0);
-    let r = rng.next() * totalWeight;
-    let selectedTier: WeekendDeckTier = affordableTiers[0];
-    for (const tw of tierWeights) {
-      if (r <= tw.weight) {
-        selectedTier = tw.tier;
-        break;
-      }
-      r -= tw.weight;
-    }
+  for (let slot = 0; slot < slotsNeeded; slot++) {
+    let candidateCard: WeekendCard | null = null;
+    let attempts = 0;
+    const maxAttempts = 35;
 
-    // Draw card from selected tier
-    const deck = decks[selectedTier];
-    if (deck.drawPile.length === 0) {
-      if (deck.discardPile.length > 0) {
-        deck.drawPile = rng.shuffle([...deck.discardPile]);
-        deck.discardPile = [];
-      } else {
-        // Fallback to cheap deck if this deck is completely exhausted
-        selectedTier = 'cheap';
-        if (decks.cheap.drawPile.length === 0 && decks.cheap.discardPile.length > 0) {
-          decks.cheap.drawPile = rng.shuffle([...decks.cheap.discardPile]);
-          decks.cheap.discardPile = [];
+    while (attempts < maxAttempts) {
+      attempts++;
+      const tierWeights = getTierWeights();
+      const totalWeight = tierWeights.reduce((sum, tw) => sum + tw.weight, 0);
+      let r = rng.next() * totalWeight;
+      let selectedTier: WeekendDeckTier = tierWeights[0].tier;
+      for (const tw of tierWeights) {
+        if (r <= tw.weight) {
+          selectedTier = tw.tier;
+          break;
         }
+        r -= tw.weight;
       }
-    }
 
-    const cardId = deck.drawPile.pop() || 'random_0';
-    chosenCardIds.push({ id: cardId, tier: selectedTier });
-
-    // Determine cost range
-    let costMin = 5;
-    let costMax = 20;
-    if (selectedTier === 'medium') {
-      costMin = 15;
-      costMax = 55;
-    } else if (selectedTier === 'expensive') {
-      costMin = 50;
-      costMax = 100;
-    }
-
-    // Parse card
-    if (cardId.startsWith('random_')) {
-      const idx = parseInt(cardId.replace('random_', ''), 10);
-      const fluff = weekendData.randomWeekends[idx] || 'Spent a relaxing weekend.';
-      const isSpecial = idx === 41; // Special #42 event
-
-      if (isSpecial) {
-        const bonus = Math.floor(rng.next() * 3) + 2; // 2, 3, or 4
-        drawnCards.push({
-          id: cardId,
-          tier: selectedTier,
-          type: 'random',
-          eventKey: `events.weekend.random_${idx}`,
-          titleKey: 'weekendScreen.card.specialTitle',
-          fluff,
-          icon: '✨',
-          costMin,
-          costMax,
-          targetStat: 'mental',
-          potentialBonusMin: 2,
-          potentialBonusMax: 4,
-          isSpecial: true,
-          specialBonus: bonus
-        });
-      } else {
-        const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
-        const targetStat = stats[Math.floor(rng.next() * stats.length)];
-        const iconMap = { mental: '🧠', social: '👥', dependability: '🤝' };
-
-        drawnCards.push({
-          id: cardId,
-          tier: selectedTier,
-          type: 'random',
-          eventKey: `events.weekend.random_${idx}`,
-          titleKey: `weekendScreen.card.${selectedTier}Title`,
-          fluff,
-          icon: iconMap[targetStat] || '🎲',
-          costMin,
-          costMax,
-          targetStat,
-          potentialBonusMin: Math.floor(costMin / 25),
-          potentialBonusMax: Math.floor(costMax / 25)
-        });
-      }
-    } else if (cardId.startsWith('durable_')) {
-      const appName = cardId.replace('durable_', '');
-      if (appName === 'vcr') {
-        const hasTv = updatedPlayer.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
-        if (!hasTv) {
-          const randomIdx = Math.floor(rng.next() * weekendData.randomWeekends.length);
-          const fluff = weekendData.randomWeekends[randomIdx] || 'Spent a relaxing weekend.';
-          const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
-          const targetStat = stats[Math.floor(rng.next() * stats.length)];
-          const iconMap = { mental: '🧠', social: '👥', dependability: '🤝' };
-          drawnCards.push({
-            id: `random_${randomIdx}`,
-            tier: 'cheap',
-            type: 'random',
-            eventKey: `events.weekend.random_${randomIdx}`,
-            titleKey: 'weekendScreen.card.cheapTitle',
-            fluff,
-            icon: iconMap[targetStat] || '🎲',
-            costMin: 5,
-            costMax: 20,
-            targetStat,
-            potentialBonusMin: Math.floor(5 / 25),
-            potentialBonusMax: Math.floor(20 / 25)
-          });
+      const deck = decks[selectedTier];
+      if (!deck || deck.drawPile.length === 0) {
+        if (deck && deck.discardPile.length > 0) {
+          deck.drawPile = rng.shuffle([...deck.discardPile]);
+          deck.discardPile = [];
+        } else {
           continue;
         }
       }
-      const fluff = weekendData.durableWeekends[appName]?.text || 'Spent time with your home appliances.';
-      const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
-      const targetStat = stats[Math.floor(rng.next() * stats.length)];
 
-      drawnCards.push({
-        id: cardId,
-        tier: 'cheap',
-        type: 'durable',
-        eventKey: `events.weekend.durable_${appName}`,
-        titleKey: 'weekendScreen.card.applianceTitle',
-        fluff,
-        icon: '🏠',
-        costMin: 5,
-        costMax: 20,
-        targetStat,
-        potentialBonusMin: Math.floor(5 / 25),
-        potentialBonusMax: Math.floor(20 / 25)
-      });
+      const cardId = deck.drawPile.pop();
+      if (!cardId) continue;
+
+      const card = buildCardFromId(cardId, selectedTier, weekendData, updatedPlayer, rng);
+
+      // Constraint 1: Never duplicate card id
+      if (drawnCards.some(c => c.id === card.id)) {
+        deck.drawPile.unshift(cardId);
+        continue;
+      }
+
+      if (attempts < 25) {
+        // Constraint 2: Never 3 cards of the exact same type
+        if (drawnCards.length >= 2) {
+          const type0 = drawnCards[0].type;
+          const allSameTypeSoFar = drawnCards.every(c => c.type === type0);
+          if (allSameTypeSoFar && card.type === type0) {
+            deck.drawPile.unshift(cardId);
+            continue;
+          }
+        }
+
+        // Constraint 3: If two cards share the same type, they cannot share the same tier
+        const sameTypeCard = drawnCards.find(c => c.type === card.type);
+        if (sameTypeCard && sameTypeCard.tier === card.tier) {
+          deck.drawPile.unshift(cardId);
+          continue;
+        }
+      }
+
+      candidateCard = card;
+      break;
     }
+
+    if (!candidateCard) {
+      const fallbackDeck = decks.cheap.drawPile.length > 0 ? decks.cheap : (decks.free || decks.cheap);
+      if (fallbackDeck.drawPile.length === 0 && fallbackDeck.discardPile.length > 0) {
+        fallbackDeck.drawPile = rng.shuffle([...fallbackDeck.discardPile]);
+        fallbackDeck.discardPile = [];
+      }
+      const cardId = fallbackDeck.drawPile.pop() || 'random_0';
+      candidateCard = buildCardFromId(cardId, 'cheap', weekendData, updatedPlayer, rng);
+    }
+
+    drawnCards.push(candidateCard);
   }
 
   updatedPlayer.offeredWeekendCards = drawnCards;
@@ -389,6 +584,39 @@ function mergeWeekendModifications(
     }
   }
   return merged.filter(m => m.diff !== 0);
+}
+
+function maintainDecksOnChoice(
+  player: PlayerState,
+  chosenCard: WeekendCard,
+  allCards: WeekendCard[],
+  rng: Random
+): void {
+  if (player.weekendDecks) {
+    const chosenTier = chosenCard.tier;
+    if (chosenTier && player.weekendDecks[chosenTier]) {
+      player.weekendDecks[chosenTier].discardPile.push(chosenCard.id);
+    }
+
+    for (const other of allCards) {
+      if (other.id !== chosenCard.id && other.type !== 'ticket' && other.type !== 'ticket_resale') {
+        const oTier = other.tier;
+        if (oTier && player.weekendDecks[oTier]) {
+          player.weekendDecks[oTier].drawPile.push(other.id);
+          player.weekendDecks[oTier].drawPile = rng.shuffle([...player.weekendDecks[oTier].drawPile]);
+        }
+      }
+    }
+  }
+
+  const currentRecent = player.recentWeekendTiers || [];
+  player.recentWeekendTiers = [...currentRecent, chosenCard.tier].slice(-4);
+  const currentPicks = player.recentWeekendPicks || [];
+  player.recentWeekendPicks = [...currentPicks, {
+    tier: chosenCard.tier,
+    type: chosenCard.type,
+    targetStat: chosenCard.targetStat
+  }].slice(-4);
 }
 
 export function resolveWeekendChoice(
@@ -415,8 +643,8 @@ export function resolveWeekendChoice(
 
   const modifications: StatModification[] = [];
 
-  // Handle Broke Cards
-  if (card.id === 'broke_stay_home') {
+  // 1. Handle Broke / Free Stay Home
+  if (card.id === 'broke_stay_home' || card.id === 'free_stay_home') {
     const mentalBonus = 1;
     const messIncrease = 2;
 
@@ -434,6 +662,13 @@ export function resolveWeekendChoice(
       modifications.push({ stat: 'mess', diff: messIncrease });
     }
 
+    // Expire all tickets
+    if (updatedPlayer.inventory?.tickets) {
+      updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
+    }
+
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+
     const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
     updatedPlayer.maintenanceModifications = undefined;
 
@@ -448,8 +683,9 @@ export function resolveWeekendChoice(
     return updatedPlayer;
   }
 
-  if (card.id === 'broke_deep_clean') {
-    const physicalCost = 2;
+  // 2. Handle Broke / Free Deep Clean
+  if (card.id === 'broke_deep_clean' || card.id === 'free_deep_clean') {
+    const physicalCost = card.id === 'broke_deep_clean' ? 2 : 1;
     const messReduction = 10;
 
     if (rules?.usePhysicalMentalConditions) {
@@ -468,6 +704,13 @@ export function resolveWeekendChoice(
       }
     }
 
+    // Expire all tickets
+    if (updatedPlayer.inventory?.tickets) {
+      updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
+    }
+
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+
     const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
     updatedPlayer.maintenanceModifications = undefined;
 
@@ -481,15 +724,127 @@ export function resolveWeekendChoice(
     return updatedPlayer;
   }
 
-  // Normal Card / Ticket Resolution
-  if (card.type === 'ticket') {
-    const ticketType = card.id.replace('ticket_', '') as 'baseball' | 'theatre' | 'concert';
-    if (updatedPlayer.inventory.tickets[ticketType] > 0) {
-      updatedPlayer.inventory.tickets[ticketType]--;
+  // 3. Handle Free Park Walk
+  if (card.id === 'free_park_walk') {
+    const physicalGain = 1;
+    if (rules?.usePhysicalMentalConditions) {
+      const maxPhys = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+      updatedPlayer.physicalCondition = Math.min(maxPhys, (updatedPlayer.physicalCondition ?? 50) + physicalGain);
+      modifications.push({ stat: 'physical', diff: physicalGain });
     }
+
+    if (updatedPlayer.inventory?.tickets) {
+      updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
+    }
+
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+
+    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
+    updatedPlayer.maintenanceModifications = undefined;
+
+    updatedPlayer.weekendResult = {
+      event: { key: card.eventKey },
+      cost: 0,
+      modifications: finalMods,
+      chosenCard: card
+    };
+    updatedPlayer.offeredWeekendCards = undefined;
+    return updatedPlayer;
   }
 
-  // Roll actual cost
+  // 4. Handle Free Porch Chat
+  if (card.id === 'free_porch_chat') {
+    const socialGain = 1;
+    updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + socialGain);
+    modifications.push({ stat: 'social', diff: socialGain });
+
+    if (updatedPlayer.inventory?.tickets) {
+      updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
+    }
+
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+
+    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
+    updatedPlayer.maintenanceModifications = undefined;
+
+    updatedPlayer.weekendResult = {
+      event: { key: card.eventKey },
+      cost: 0,
+      modifications: finalMods,
+      chosenCard: card
+    };
+    updatedPlayer.offeredWeekendCards = undefined;
+    return updatedPlayer;
+  }
+
+  // 5. Handle Ticket Resale
+  if (card.type === 'ticket_resale') {
+    const payout = card.resalePayout || 0;
+    updatedPlayer.money += payout;
+    if (payout > 0) {
+      modifications.push({ stat: 'money', diff: payout });
+    }
+
+    if (updatedPlayer.inventory?.tickets) {
+      updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
+    }
+
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+
+    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
+    updatedPlayer.maintenanceModifications = undefined;
+
+    updatedPlayer.weekendResult = {
+      event: { key: card.eventKey },
+      cost: 0,
+      modifications: finalMods,
+      chosenCard: card
+    };
+    updatedPlayer.offeredWeekendCards = undefined;
+    return updatedPlayer;
+  }
+
+  // 6. Handle Ticket Event Attendance
+  if (card.type === 'ticket') {
+    const mentalBonus = card.potentialBonusMin;
+    const socialBonus = card.potentialSecondaryBonusMin || 0;
+
+    if (rules?.usePhysicalMentalConditions) {
+      const maxMental = updatedPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
+      updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + mentalBonus);
+      modifications.push({ stat: 'mental', diff: mentalBonus });
+    } else {
+      updatedPlayer = applyHappinessChange(updatedPlayer, mentalBonus, 'weekend_bonus', rules || ({} as any), statRules);
+      modifications.push({ stat: 'happiness', diff: mentalBonus });
+    }
+
+    if (socialBonus > 0) {
+      updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + socialBonus);
+      modifications.push({ stat: 'social', diff: socialBonus });
+    }
+
+    // Expire all tickets
+    if (updatedPlayer.inventory?.tickets) {
+      updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
+    }
+
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+
+    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
+    updatedPlayer.maintenanceModifications = undefined;
+
+    updatedPlayer.weekendResult = {
+      event: { key: card.eventKey },
+      cost: 0,
+      happinessBonus: mentalBonus,
+      modifications: finalMods,
+      chosenCard: card
+    };
+    updatedPlayer.offeredWeekendCards = undefined;
+    return updatedPlayer;
+  }
+
+  // 7. Regular / Paid Cards
   const rawCost = Math.floor(rng.next() * (card.costMax - card.costMin + 1)) + card.costMin;
   const cost = Math.min(rawCost, updatedPlayer.money);
   updatedPlayer.money -= cost;
@@ -497,7 +852,6 @@ export function resolveWeekendChoice(
     modifications.push({ stat: 'money', diff: -cost });
   }
 
-  // Stat Modifier: floor(cost / 25)
   let happinessBonus: number | undefined = undefined;
 
   if (card.isSpecial) {
@@ -511,7 +865,17 @@ export function resolveWeekendChoice(
       modifications.push({ stat: 'happiness', diff: happinessBonus });
     }
   } else {
-    const bonusModifier = Math.floor(cost / 25);
+    let bonusModifier = card.potentialBonusMin;
+    if (card.potentialBonusMax > card.potentialBonusMin) {
+      if (card.tier === 'cheap') {
+        bonusModifier = cost >= 15 ? 2 : 1;
+      } else if (card.tier === 'medium') {
+        bonusModifier = cost >= 40 ? 3 : 2;
+      } else if (card.tier === 'expensive') {
+        bonusModifier = Math.max(3, Math.min(5, Math.floor(cost / 20)));
+      }
+    }
+
     if (bonusModifier > 0 && card.targetStat) {
       if (card.targetStat === 'mental') {
         if (rules?.usePhysicalMentalConditions) {
@@ -529,36 +893,27 @@ export function resolveWeekendChoice(
       } else if (card.targetStat === 'social') {
         updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + bonusModifier);
         modifications.push({ stat: 'social', diff: bonusModifier });
-      }
-    }
-  }
-
-  // Deck maintenance:
-  // Move chosen card to discard pile
-  // Shuffle unchosen cards back into their draw piles immediately
-  if (updatedPlayer.weekendDecks && card.type !== 'ticket') {
-    const tier = card.tier as WeekendDeckTier;
-    if (updatedPlayer.weekendDecks[tier]) {
-      updatedPlayer.weekendDecks[tier].discardPile.push(card.id);
-    }
-
-    // Return unchosen cards back to draw pile and shuffle immediately
-    for (const otherCard of cards) {
-      if (otherCard.id !== card.id && otherCard.type !== 'ticket') {
-        const oTier = otherCard.tier as WeekendDeckTier;
-        if (updatedPlayer.weekendDecks[oTier]) {
-          updatedPlayer.weekendDecks[oTier].drawPile.push(otherCard.id);
-          updatedPlayer.weekendDecks[oTier].drawPile = rng.shuffle([...updatedPlayer.weekendDecks[oTier].drawPile]);
+      } else if (card.targetStat === 'physical') {
+        if (rules?.usePhysicalMentalConditions) {
+          const maxPhysical = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+          updatedPlayer.physicalCondition = Math.min(maxPhysical, (updatedPlayer.physicalCondition ?? 50) + bonusModifier);
+          modifications.push({ stat: 'physical', diff: bonusModifier });
         }
       }
     }
   }
 
-  // Update lifestyle momentum history (track last 3 tiers)
-  if (card.tier === 'cheap' || card.tier === 'medium' || card.tier === 'expensive') {
-    const currentRecent = updatedPlayer.recentWeekendTiers || [];
-    updatedPlayer.recentWeekendTiers = [...currentRecent, card.tier].slice(-3);
+  // Any unused tickets expire
+  if (updatedPlayer.inventory?.tickets) {
+    updatedPlayer.inventory.tickets = {
+      baseball: 0,
+      theatre: 0,
+      concert: 0
+    };
   }
+
+  // Maintain decks
+  maintainDecksOnChoice(updatedPlayer, card, cards, rng);
 
   // Clamp limits if needed
   if (rules?.usePhysicalMentalConditions) {

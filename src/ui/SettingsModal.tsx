@@ -100,6 +100,32 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     });
   };
 
+  const handleToggleShowWindowPositionSize = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          showWindowPositionSize: !prev.rules.showWindowPositionSize
+        }
+      };
+    });
+  };
+
+  const handleToggleAllowWindowMoveResize = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          allowWindowMoveResize: !prev.rules.allowWindowMoveResize
+        }
+      };
+    });
+  };
+
   const handleToggleRemoveCharacterBg = () => {
     setGameState(prev => {
       if (!prev) return prev;
@@ -339,6 +365,52 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                     }}>
                       {(gameState.rules.hudLayout || 'top') === 'top' ? 'TOP' : 'SIDE'}
                     </span>
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable"
+                  onClick={handleToggleShowWindowPositionSize}
+                  data-testid="setting-show-window-position-size"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.showWindowPositionSize', { defaultValue: 'Show Window Position & Size' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.showWindowPositionSize 
+                          ? t('settings.showWindowPositionSizeOn', { defaultValue: 'Displays coordinate and dimension overlay on location windows (ON)' })
+                          : t('settings.showWindowPositionSizeOff', { defaultValue: 'Hidden window coordinate and dimension overlay (OFF)' })}
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={!!gameState.rules.showWindowPositionSize} 
+                      readOnly
+                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
+                    />
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable"
+                  onClick={handleToggleAllowWindowMoveResize}
+                  data-testid="setting-allow-window-move-resize"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.allowWindowMoveResize', { defaultValue: 'Move & Resize Location Windows' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.allowWindowMoveResize 
+                          ? t('settings.allowWindowMoveResizeOn', { defaultValue: 'Header dragging and corner resize handle enabled (ON)' })
+                          : t('settings.allowWindowMoveResizeOff', { defaultValue: 'Fixed location window position and size (OFF)' })}
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={!!gameState.rules.allowWindowMoveResize} 
+                      readOnly
+                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
+                    />
                   </div>
                 </div>
               </div>

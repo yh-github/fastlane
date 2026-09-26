@@ -73,6 +73,7 @@
     "job": {
       "worked": "עבדת ב{{title}} והרווחת {{wagesEarned}}${{stats}}",
       "gotJob": "קיבלת את העבודה בתור {{title}}!",
+      "hired": "קיבלת את העבודה בתור {{title}}!",
       "rejected": "בקשתך לעבודה נדחתה: {{reasons}}",
       "noOpenings": "אין משרות פנויות לתפקיד זה.",
       "needClothes": "אתה צריך {{req}} כדי לעבוד כאן.",
@@ -214,7 +215,9 @@
       "noLoan": "אין לך הלוואה.",
       "notEnoughMoney": "אין מספיק כסף.",
       "alreadyOwnComputer": "כבר יש בבעלותך מחשב.",
-      "maxEnrolledClasses": "אינך יכול להירשם ליותר מ-{{max}} קורסים בו-זמנית."
+      "maxEnrolledClasses": "אינך יכול להירשם ליותר מ-{{max}} קורסים בו-זמנית.",
+      "cannotTransact": "לא ניתן להשלים את הפעולה.",
+      "notEnoughTimeEducation": "לא נותר זמן ללכת לשיעור."
     }
   },
   "events": {
@@ -370,7 +373,10 @@
       "applianceTitle": "נוחות ביתית",
       "ticket_baseball": "משחק בייסבול",
       "ticket_theatre": "הצגת תיאטרון",
-      "ticket_concert": "הופעת רוק"
+      "ticket_concert": "הופעת רוק",
+      "parkWalkTitle": "הליכה וריצה בפארק",
+      "porchChatTitle": "שיחה במרפסת עם שכנים",
+      "ticketResaleTitle": "ספסרות / מכירת כרטיסים"
     },
     "physStatus": "מצב גופני",
     "mentalStatus": "מצב נפשי",
@@ -431,6 +437,13 @@
     "degreeStudying": "בלימודים",
     "degreeMissing": "חסר",
     "missingReq": "אינך עומד בדרישות המינימום למשרה זו.",
+    "missingExpReason": "אין מספיק ניסיון.",
+    "poorWorkHistory": "היסטוריית עבודה לקויה (אמינות נמוכה).",
+    "notEnoughEducation": "אין מספיק השכלה.",
+    "missingDegree": "חסר תואר נדרש: {{degree}}",
+    "missingMgmtSkill": "נדרשת לפחות {{reqMgmt}}.00 מיומנות ניהול. צבור ניסיון בניהול דרג ביניים.",
+    "missingTechSkill": "נדרשת לפחות {{reqTech}}.00 מיומנות טכנולוגית (Skill_Tech).",
+    "missingPhysicalCondition": "כושר גופני אינו מספיק לעבודת אבטחה. דרוש כושר גופני 30 לפחות.",
     "missingEducationWithDegrees": "השכלה לא מספקת: חסר {{degrees}}.",
     "alwaysHiring": "גיוס מובטח",
     "askRaise": "בקש העלאה ל-{{wage}}$/שעה ({{cost}} שעות)",
@@ -1057,7 +1070,8 @@
         "ברוכים הבאים ללשכת התעסוקה. לא משנה מה הכישורים שלך, יש לנו עבודה שתתאים!"
       ],
       "buySuccess": "ברכות לרגל קבלת העבודה החדשה!",
-      "insufficientFunds": "מצטערים, אינך עומד בדרישות הסף לתפקיד זה."
+      "insufficientFunds": "מצטערים, אינך עומד בדרישות הסף לתפקיד זה.",
+      "rejectedHeader": "מצטערים. לא קיבלת את העבודה מהסיבות הבאות:"
     },
     "university": {
       "greeting": [
@@ -1081,7 +1095,8 @@
       "buySuccess": "תודה רבה!",
       "insufficientFunds": "אין לך מספיק כסף."
     },
-    "noTimeToReadNewspaper": "אין זמן לקרוא את העיתון."
+    "noTimeToReadNewspaper": "אין זמן לקרוא את העיתון.",
+    "closingSoon": "מצטערים. אנחנו סוגרים. תצטרך לחזור בשבוע הבא."
   },
   "buildingDesc": {
     "low_cost_housing": "דירת ההתחלה שלך. חשופה לפריצות של וילי הפראי.",
@@ -1107,6 +1122,12 @@
     "overachieve": "אפשר השגת-יתר ביעדים",
     "debugEvents": "ניפוי אירועים וכלכלה",
     "viewGameLog": "הצג יומן פעילות",
+    "showWindowPositionSize": "הצגת מיקום וגודל חלון",
+    "showWindowPositionSizeOn": "מציג סרגל מידות וקואורדינטות בחלונות המבנים (מופעל)",
+    "showWindowPositionSizeOff": "סרגל מידות וקואורדינטות מוסתר (כבוי)",
+    "allowWindowMoveResize": "הזזה ושינוי גודל חלונות",
+    "allowWindowMoveResizeOn": "גרירת כותרת ושינוי גודל מפינת החלון מופעלים (מופעל)",
+    "allowWindowMoveResizeOff": "מיקום וגודל חלון נעולים כברירת מחדל (כבוי)",
     "close": "סגור"
   },
   "debug": {

@@ -10,7 +10,7 @@ interface TitleScreenProps {
 export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
   const { t, i18n } = useTranslation();
   const campaigns = getAvailableCampaigns();
-  const defaultCampaign = campaigns.find(c => c.id === 'advanced') || campaigns[0];
+  const defaultCampaign = campaigns.find(c => c.id === 'qol_improved') || campaigns[0];
   const [selectedCampaignId, setSelectedCampaignId] = useState(defaultCampaign.id);
   const [showRules, setShowRules] = useState(false);
   const [rulesInitialTab, setRulesInitialTab] = useState<TabType>('all-diffs');
@@ -72,14 +72,6 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
           data-testid="btn-view-diffs"
         >
           View Version Differences
-        </button>
-        <button 
-          className="title-screen__btn" 
-          onClick={() => { setRulesInitialTab('rules'); setRulesInitialDiffMode(false); setShowRules(true); }} 
-          style={{ background: '#4b5563', fontSize: '1rem', padding: '0.55rem 1.25rem', marginTop: '0' }}
-          data-testid="btn-view-rules"
-        >
-          View Rules Comparison
         </button>
       </div>
     </div>

@@ -221,4 +221,44 @@ export function isExecutiveManagementJob(job: JobDef | undefined | null): boolea
   return hasJobTag(job, 'executive_management');
 }
 
+export interface JobSpecialRequirement {
+  label: string;
+  detail: string;
+}
+
+/**
+ * Returns special qualification requirements for a job (e.g. Management skill, Fitness, Tech skill)
+ * which are enforced by game systems in Advanced edition.
+ */
+export function getJobSpecialRequirements(job: JobDef | undefined | null, isAdvanced: boolean): JobSpecialRequirement[] {
+  if (!job || !isAdvanced) return [];
+  const reqs: JobSpecialRequirement[] = [];
+
+  if (isExecutiveManagementJob(job)) {
+    const minMgmt = Math.floor((job.requirements?.experience ?? 0) / 10);
+    reqs.push({
+      label: 'Management Skill',
+      detail: `Skill_Mgmt >= ${minMgmt}.00 (gain via Middle Mgmt)`
+    });
+  }
+
+  const reqTech = (job.requirements as any)?.techSkill ?? (job.requirements as any)?.skillTech;
+  if (hasJobTag(job, 'technical') && reqTech !== undefined) {
+    reqs.push({
+      label: 'Technical Skill',
+      detail: `Skill_Tech >= ${reqTech}.00`
+    });
+  }
+
+  if (hasJobTag(job, 'look_fit')) {
+    reqs.push({
+      label: 'Physical Fitness',
+      detail: 'Physical Condition >= 30'
+    });
+  }
+
+  return reqs;
+}
+
+
 

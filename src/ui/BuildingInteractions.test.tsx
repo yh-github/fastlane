@@ -251,6 +251,87 @@ describe('BuildingInteractions', () => {
     expect(screen.getByText(/Owned:\s*10/i)).toBeInTheDocument();
   });
 
+  it('BankInterface Loans tab displays helpfulUI pre-approval chance, likely amount, and metrics breakdown', () => {
+    const mockOnAction = vi.fn();
+
+    // 1. Unemployed player -> 0% approval chance, Refused
+    const unemployedPlayer = {
+      id: 'p1',
+      money: 100,
+      bankSavings: 100,
+      currentJobId: null,
+      currentWage: 0,
+      loanDebt: 0,
+      timesDefaulted: 0,
+      loanPaymentDeadline: 0,
+    } as any;
+
+    const { rerender } = render(
+      <BankInterface 
+        player={unemployedPlayer} 
+        rules={{ helpfulUI: true } as any} 
+        onAction={mockOnAction} 
+      />
+    );
+
+    // Switch to Loans tab
+    fireEvent.click(screen.getByText(/^Loans$|bank\.tabLoans/i));
+
+    expect(screen.getByTestId('helpful-loan-assessment')).toBeInTheDocument();
+    expect(screen.getByText(/Approval Chance:\s*0%\s*\(Refused\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unemployed/i)).toBeInTheDocument();
+    expect(screen.getByText(/Apply for Loan \(Refused\)/i)).toBeInTheDocument();
+
+    // 2. Employed player with good wage -> 100% approval chance, shows calculated amount
+    const employedPlayer = {
+      id: 'p1',
+      money: 500,
+      bankSavings: 500,
+      currentJobId: 'cook',
+      currentWage: 10,
+      loanDebt: 0,
+      timesDefaulted: 0,
+      loanPaymentDeadline: 0,
+    } as any;
+
+    rerender(
+      <BankInterface 
+        player={employedPlayer} 
+        rules={{ helpfulUI: true } as any} 
+        onAction={mockOnAction} 
+      />
+    );
+
+    expect(screen.getByText(/Approval Chance:\s*100%\s*\(Approved\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Likely Loan:\s*\$600/i)).toBeInTheDocument();
+    expect(screen.getByText(/Apply for Loan \(\+\$600\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Wage:\s*\$10\/hr/i)).toBeInTheDocument();
+
+    // 3. Player with overdue loan debt -> displays overdue indicator
+    const delinquentPlayer = {
+      id: 'p1',
+      money: 200,
+      bankSavings: 0,
+      currentJobId: 'cook',
+      currentWage: 10,
+      loanDebt: 300,
+      timesDefaulted: 1,
+      loanPaymentDeadline: 4,
+    } as any;
+
+    rerender(
+      <BankInterface 
+        player={delinquentPlayer} 
+        turn={5}
+        rules={{ helpfulUI: true } as any} 
+        onAction={mockOnAction} 
+      />
+    );
+
+    expect(screen.getByText(/\(OVERDUE\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Account in default/i)).toBeInTheDocument();
+  });
+
   it('HomeRelax displays dynamic economy price for Cleaning Service and softly disables with reason when broke or clean', () => {
     const mockPlayer = {
       id: 'p1',

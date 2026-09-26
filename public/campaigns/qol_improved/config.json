@@ -11,7 +11,7 @@
     "allowOverAchievingGoals": true,
     "bypassDoctorIfBroke": true,
     "delayBookSetCredit": false,
-    "reducedDegreeStatBonus": true,
+    "reducedDegreeStatBonus": false,
     "maskEarlyJobRejections": false,
     "preventPawnArbitrage": true,
     "predictiveNewspaperStockTips": true,

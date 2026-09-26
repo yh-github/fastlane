@@ -470,132 +470,134 @@ export function BuildingModal({
       } as React.CSSProperties}
     >
       {/* Top Window Control Bar: Live coordinates readout, margin stepper and reset */}
-      <div 
-        className="building-modal__window-bar"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          position: 'absolute',
-          top: '12px',
-          right: '48px',
-          zIndex: 65,
-          userSelect: 'none'
-        }}
-      >
-        {/* Margin stepper control */}
-        <div
-          data-testid="modal-margin-stepper"
+      {rules?.showWindowPositionSize && (
+        <div 
+          className="building-modal__window-bar"
           style={{
-            background: 'rgba(0, 0, 0, 0.55)',
-            border: '1px solid rgba(0, 229, 255, 0.4)',
-            borderRadius: '6px',
-            color: '#a5f3fc',
-            fontFamily: 'monospace',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            padding: '2px 5px',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
+            gap: '6px',
+            position: 'absolute',
+            top: '12px',
+            right: '48px',
+            zIndex: 65,
+            userSelect: 'none'
           }}
         >
-          <span>{t('buildingModal.marginLabel', { defaultValue: 'Margin' })}:</span>
-          <button
-            type="button"
-            data-testid="btn-margin-minus"
-            onClick={() => handleMarginChange(-1)}
-            title="Decrease margin"
+          {/* Margin stepper control */}
+          <div
+            data-testid="modal-margin-stepper"
             style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              color: '#fff',
-              borderRadius: '3px',
-              width: '16px',
-              height: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '11px',
-              fontWeight: 'bold',
-              padding: 0
-            }}
-          >
-            -
-          </button>
-          <span data-testid="margin-value-display" style={{ minWidth: '22px', textAlign: 'center', color: '#38bdf8' }}>{modalMargin}px</span>
-          <button
-            type="button"
-            data-testid="btn-margin-plus"
-            onClick={() => handleMarginChange(1)}
-            title="Increase margin"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              color: '#fff',
-              borderRadius: '3px',
-              width: '16px',
-              height: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '11px',
-              fontWeight: 'bold',
-              padding: 0
-            }}
-          >
-            +
-          </button>
-        </div>
-
-        <button
-          data-testid="modal-dimension-readout"
-          onClick={handleCopyLayoutSpec}
-          title={t('buildingModal.copyCoordsTooltip', { defaultValue: 'Click to copy coordinates & dimensions to clipboard' })}
-          style={{
-            background: 'rgba(0, 0, 0, 0.5)',
-            border: '1px solid rgba(0, 229, 255, 0.4)',
-            borderRadius: '6px',
-            color: '#a5f3fc',
-            fontFamily: 'monospace',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            padding: '3px 8px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
-          }}
-        >
-          <span>📐</span>
-          <span>{`W:${measuredRect.width}px H:${measuredRect.height}px | X:${measuredRect.left}px Y:${measuredRect.top}px`}</span>
-          {copiedNotification && <span style={{ color: '#34d399', marginLeft: '4px' }}>✓ Copied!</span>}
-        </button>
-
-        {(position || customSize || modalMargin !== 3) && (
-          <button
-            data-testid="btn-reset-modal-layout"
-            onClick={handleResetLayout}
-            title={t('buildingModal.resetTooltip', { defaultValue: 'Reset window size and position to defaults' })}
-            style={{
-              background: 'rgba(239, 68, 68, 0.2)',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
+              background: 'rgba(0, 0, 0, 0.55)',
+              border: '1px solid rgba(0, 229, 255, 0.4)',
               borderRadius: '6px',
-              color: '#fca5a5',
+              color: '#a5f3fc',
+              fontFamily: 'monospace',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              padding: '2px 5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
+            }}
+          >
+            <span>{t('buildingModal.marginLabel', { defaultValue: 'Margin' })}:</span>
+            <button
+              type="button"
+              data-testid="btn-margin-minus"
+              onClick={() => handleMarginChange(-1)}
+              title="Decrease margin"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                color: '#fff',
+                borderRadius: '3px',
+                width: '16px',
+                height: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 'bold',
+                padding: 0
+              }}
+            >
+              -
+            </button>
+            <span data-testid="margin-value-display" style={{ minWidth: '22px', textAlign: 'center', color: '#38bdf8' }}>{modalMargin}px</span>
+            <button
+              type="button"
+              data-testid="btn-margin-plus"
+              onClick={() => handleMarginChange(1)}
+              title="Increase margin"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                color: '#fff',
+                borderRadius: '3px',
+                width: '16px',
+                height: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: 'bold',
+                padding: 0
+              }}
+            >
+              +
+            </button>
+          </div>
+
+          <button
+            data-testid="modal-dimension-readout"
+            onClick={handleCopyLayoutSpec}
+            title={t('buildingModal.copyCoordsTooltip', { defaultValue: 'Click to copy coordinates & dimensions to clipboard' })}
+            style={{
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: '1px solid rgba(0, 229, 255, 0.4)',
+              borderRadius: '6px',
+              color: '#a5f3fc',
+              fontFamily: 'monospace',
               fontSize: '10px',
               fontWeight: 'bold',
               padding: '3px 8px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.5)'
             }}
           >
-            ↺ Reset
+            <span>📐</span>
+            <span>{`W:${measuredRect.width}px H:${measuredRect.height}px | X:${measuredRect.left}px Y:${measuredRect.top}px`}</span>
+            {copiedNotification && <span style={{ color: '#34d399', marginLeft: '4px' }}>✓ Copied!</span>}
           </button>
-        )}
-      </div>
+
+          {(position || customSize || modalMargin !== 3) && (
+            <button
+              data-testid="btn-reset-modal-layout"
+              onClick={handleResetLayout}
+              title={t('buildingModal.resetTooltip', { defaultValue: 'Reset window size and position to defaults' })}
+              style={{
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                borderRadius: '6px',
+                color: '#fca5a5',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                padding: '3px 8px',
+                cursor: 'pointer'
+              }}
+            >
+              ↺ Reset
+            </button>
+          )}
+        </div>
+      )}
 
       {!player?.pendingAppraisalDilemma && (
         <button className="building-modal__close" onClick={onClose}>&times;</button>
@@ -603,11 +605,11 @@ export function BuildingModal({
       
       <div 
         className="building-modal__header"
-        onPointerDown={handleHeaderPointerDown}
+        onPointerDown={rules?.allowWindowMoveResize ? handleHeaderPointerDown : undefined}
         style={{
-          cursor: isDragging ? 'grabbing' : 'grab'
+          cursor: rules?.allowWindowMoveResize ? (isDragging ? 'grabbing' : 'grab') : 'default'
         }}
-        title={t('buildingModal.dragTooltip', { defaultValue: 'Click and drag header to move location window' })}
+        title={rules?.allowWindowMoveResize ? t('buildingModal.dragTooltip', { defaultValue: 'Click and drag header to move location window' }) : undefined}
       >
         <div className="building-modal__face" style={{ position: 'relative' }}>
           {currentFace}
@@ -808,12 +810,14 @@ export function BuildingModal({
       )}
 
       {/* Corner Resize Handle */}
-      <div 
-        className="building-modal__resize-handle"
-        data-testid="building-modal-resize-handle"
-        onPointerDown={handleResizePointerDown}
-        title={t('buildingModal.resizeTooltip', { defaultValue: 'Drag corner to resize window' })}
-      />
+      {rules?.allowWindowMoveResize && (
+        <div 
+          className="building-modal__resize-handle"
+          data-testid="building-modal-resize-handle"
+          onPointerDown={handleResizePointerDown}
+          title={t('buildingModal.resizeTooltip', { defaultValue: 'Drag corner to resize window' })}
+        />
+      )}
     </div>
   );
 }
