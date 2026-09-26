@@ -619,12 +619,12 @@ export function BankInterface({
             </button>
             <button 
               onClick={() => onAction({ type: 'pay_loan' })} 
-              disabled={player.loanDebt <= 0}
+              disabled={(player.loanDebt || 0) <= 0}
               style={{ 
                 padding: '14px', 
                 borderRadius: '8px',
-                opacity: player.loanDebt <= 0 ? 0.5 : 1,
-                cursor: player.loanDebt <= 0 ? 'not-allowed' : 'pointer'
+                opacity: (player.loanDebt || 0) <= 0 ? 0.5 : 1,
+                cursor: (player.loanDebt || 0) <= 0 ? 'not-allowed' : 'pointer'
               }}
             >
               {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanPaymentAmount} or remainder)` })}

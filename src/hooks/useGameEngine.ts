@@ -91,6 +91,8 @@ export function useGameEngine(
         setStatus('ready');
         if (initialState && initialState.rules.turnStartAtHome && !initialState.players[0].isAi) {
           setIsBuildingModalOpen(true);
+        } else {
+          setIsBuildingModalOpen(false);
         }
         if (initialState && initialState.players[0].turnFlags.freeNewspaper) {
           setIsNewspaperModalOpen(true);

@@ -70,6 +70,8 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
     } else {
       happinessBonus = item.store === 'socket_city' ? 2 : (item.happinessBonus || 1);
     }
+  } else if (item.id === 'dress_clothes') {
+    happinessBonus = item.store === 'qt_clothing' ? 1 : (item.store === 'z_mart' ? 0 : (item.happinessBonus || 0));
   } else if (item.id === 'lottery_tickets') {
     if (!player.turnFlags?.lotteryHappinessGranted) {
       newTurnFlags.lotteryHappinessGranted = true;
