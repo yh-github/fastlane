@@ -4,7 +4,7 @@ import type { ReplayContext } from '../replayTypes';
 import { calcUsedSpace, calcMovingFee, calcLandlordStanding } from '../statMath';
 import { calcEconomyPrice } from '../economyEngine';
 import { resolveDecision } from '../replayTypes';
-import { applyHappinessChange } from '../statEffects';
+import { applyHappinessChange, applyMentalChange } from '../statEffects';
 
 export function handleRentTransactionAction(
   player: PlayerState,
@@ -18,6 +18,7 @@ export function handleRentTransactionAction(
     nextPlayer.money -= action.amount;
     nextPlayer.rentDebt = 0;
     nextPlayer.turnFlags.rentPaidThisTurn = true;
+    nextPlayer.rentPaymentsMade = (nextPlayer.rentPaymentsMade || 0) + 1;
     // Actually extend the rentPaidUntilWeek counter
     if (nextPlayer.rentPaidUntilWeek <= context.turn) {
       // If they were behind, paying resets them to end of current month
@@ -63,6 +64,7 @@ export function handleMoveApartmentAction(
         nextPlayer.rentPaidUntilWeek = context.turn + 4; // Pay for a month
         nextPlayer.rentExtensionActive = false;
         nextPlayer.turnFlags.rentPaidThisTurn = true;
+        nextPlayer.rentPaymentsMade = (nextPlayer.rentPaymentsMade || 0) + 1;
         if (context.rules.trackMess) {
           nextPlayer.mess = 3 + nextPlayer.inventory.appliances.length;
         }
@@ -88,6 +90,7 @@ export function handlePayRentAdvanceAction(
     nextPlayer.rentPaidUntilWeek += 4;
     nextPlayer.rentExtensionActive = false;
     nextPlayer.turnFlags.rentPaidThisTurn = true;
+    nextPlayer.rentPaymentsMade = (nextPlayer.rentPaymentsMade || 0) + 1;
     actionLog = { key: 'action.rent.advancePaid', params: { amount: action.amount } };
   } else {
     actionLog = { key: 'action.error.notEnoughMoneyRentAdvance' };
@@ -118,6 +121,7 @@ export function handleAskRentExtensionAction(
     return { nextPlayer, actionLog };
   }
   nextPlayer.turnFlags.askedForExtension = true;
+  nextPlayer.rentExtensionsAsked = (nextPlayer.rentExtensionsAsked || 0) + 1;
   let approved = false;
   if (nextPlayer.rentExtensionsReceived === 0) {
     approved = true;
@@ -168,19 +172,36 @@ export function handleRenegotiateRentAction(
     return { nextPlayer, actionLog };
   }
 
-  const { standing } = calcLandlordStanding(nextPlayer, context.rules);
+  if (nextPlayer.hoursRemaining < 1) {
+    actionLog = { key: 'action.error.notEnoughHours' };
+    return { nextPlayer, actionLog };
+  }
+
+  // Costs 1 hour
+  nextPlayer.hoursRemaining -= 1;
+
+  // Costs 2 Mental Condition upfront
+  nextPlayer = applyMentalChange(nextPlayer, -2, context.campaign?.config?.statRules);
+
+  // Asking lowers standing whether you get it or not
+  nextPlayer.rentRenegotiationsAsked = (nextPlayer.rentRenegotiationsAsked || 0) + 1;
+
+  const { standing } = calcLandlordStanding(nextPlayer, context.rules, context.turn);
 
   if (standing >= 50) {
-    // Full reduction to market price
+    // Full reduction to market price; gain 1 mental (net -1)
     nextPlayer.currentRentPrice = marketRent;
+    nextPlayer = applyMentalChange(nextPlayer, 1, context.campaign?.config?.statRules);
     actionLog = { key: 'action.rent.renegotiateApproved', params: { newRent: marketRent, oldRent: currentRent, standing } };
   } else if (standing >= 35) {
-    // Partial compromise
+    // Partial compromise; gain 1 mental (net -1)
     const compromiseRent = currentRent - Math.floor((currentRent - marketRent) * 0.5);
     nextPlayer.currentRentPrice = compromiseRent;
+    nextPlayer = applyMentalChange(nextPlayer, 1, context.campaign?.config?.statRules);
     actionLog = { key: 'action.rent.renegotiateCompromise', params: { newRent: compromiseRent, oldRent: currentRent, standing } };
   } else {
-    // Refused
+    // Refused; lose 1 more mental (net -3)
+    nextPlayer = applyMentalChange(nextPlayer, -1, context.campaign?.config?.statRules);
     actionLog = { key: 'action.rent.renegotiateDenied', params: { standing, currentRent } };
   }
 

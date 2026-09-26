@@ -184,6 +184,8 @@ export interface PlayerState {
   raisesAtCurrentJob: number;
   /** Whether the player has earned any income/wages this game (activates wealth goal progress) */
   hasEarnedIncome?: boolean;
+  /** Bad luck protection bonus for job openings (0 to 30) */
+  noOpeningBonus?: number;
 
   // ── Housing ──
   /** Current housing tier ID */
@@ -198,6 +200,12 @@ export interface PlayerState {
   rentExtensionsReceived: number;
   /** Whether rent extensions are permanently denied (due to previous debt) */
   rentExtensionsDeniedPermanently: boolean;
+  /** Total on-time or advance rent payments made */
+  rentPaymentsMade?: number;
+  /** Number of times player asked for rent extension */
+  rentExtensionsAsked?: number;
+  /** Number of times player asked to renegotiate rent */
+  rentRenegotiationsAsked?: number;
 
   // ── Education ──
   /** IDs of completed degrees */

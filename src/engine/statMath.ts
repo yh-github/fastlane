@@ -760,18 +760,59 @@ export interface LandlordStandingBreakdown {
 
 export function calcLandlordStanding(
   player: PlayerState,
-  rules?: GameRules
+  rules?: GameRules,
+  currentTurn?: number
 ): { standing: number; breakdown: LandlordStandingBreakdown[] } {
-  let standing = 50;
+  let baseline = 50;
+  let baselineLabel = 'Baseline';
+  if (player.currentHousingId === 'penthouse') {
+    baseline = 75;
+    baselineLabel = 'Penthouse Luxury Baseline';
+  } else if (player.currentHousingId === 'security') {
+    baseline = 60;
+    baselineLabel = 'Security Apartment Baseline';
+  } else if (player.currentHousingId === 'street') {
+    baseline = 20;
+    baselineLabel = 'Homelessness Baseline';
+  }
+
+  let standing = baseline;
   const breakdown: LandlordStandingBreakdown[] = [
-    { label: 'Baseline', value: 50 }
+    { label: baselineLabel, value: baseline }
   ];
 
-  const extensions = player.rentExtensionsReceived || 0;
-  if (extensions > 0) {
-    const penalty = -extensions * 5;
+  // Bonus for successful rent payments (+3 each, capped at +15)
+  const payments = player.rentPaymentsMade || 0;
+  if (payments > 0) {
+    const paymentBonus = Math.min(15, payments * 3);
+    standing += paymentBonus;
+    breakdown.push({ label: `Payment History (${payments})`, value: paymentBonus });
+  }
+
+  // Bonus for paying ahead (+5 per 4-week month in advance, capped at +15)
+  const turn = currentTurn !== undefined ? currentTurn : 1;
+  const weeksAhead = Math.max(0, (player.rentPaidUntilWeek || 0) - turn);
+  const monthsAhead = Math.floor(weeksAhead / 4);
+  if (monthsAhead >= 1) {
+    const advanceBonus = Math.min(15, monthsAhead * 5);
+    standing += advanceBonus;
+    breakdown.push({ label: `Paid in Advance (${monthsAhead} mo)`, value: advanceBonus });
+  }
+
+  // Penalty for asking concessions: extensions (-5 each)
+  const extensionsAsked = player.rentExtensionsAsked ?? player.rentExtensionsReceived ?? 0;
+  if (extensionsAsked > 0) {
+    const penalty = -extensionsAsked * 5;
     standing += penalty;
-    breakdown.push({ label: `Extensions Requested (${extensions})`, value: penalty });
+    breakdown.push({ label: `Extensions Requested (${extensionsAsked})`, value: penalty });
+  }
+
+  // Penalty for asking concessions: rent renegotiations (-5 each)
+  const renegotiationsAsked = player.rentRenegotiationsAsked ?? 0;
+  if (renegotiationsAsked > 0) {
+    const penalty = -renegotiationsAsked * 5;
+    standing += penalty;
+    breakdown.push({ label: `Rent Reductions Requested (${renegotiationsAsked})`, value: penalty });
   }
 
   if (player.rentDebt > 0) {
