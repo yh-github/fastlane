@@ -129,6 +129,12 @@ export interface GameRules {
   reducedDegreeStatBonus: boolean;
 
   /**
+   * ADVANCED: If true, graduation rewards for current Dependability, Max Dependability, and Max Experience
+   * scale with prerequisite chain depth: +(depth + 1) instead of the flat +5 bonus.
+   */
+  depthScaledDegreeBonus: boolean;
+
+  /**
    * Maximum number of courses a player can be concurrently enrolled in.
    * Classic Floppy/CD-ROM: 4.
    */
@@ -269,6 +275,16 @@ export interface GameRules {
    * Classic Floppy/CD-ROM: false. QoL / Advanced: true.
    */
   economicUpsideBonus: boolean;
+
+  /**
+   * Shows coordinate and dimension readout toolbar on building location windows.
+   */
+  showWindowPositionSize: boolean;
+
+  /**
+   * Allows dragging header and resizing corner handle on building location windows.
+   */
+  allowWindowMoveResize: boolean;
 }
 
 export interface EventRules {
@@ -462,6 +478,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   delayBookSetCredit: true,
   allowEatingSpoiledFood: true,
   reducedDegreeStatBonus: false,
+  depthScaledDegreeBonus: false,
   showItemImages: true,
   hudLayout: 'top',
   maxEnrolledClasses: 4,
@@ -489,12 +506,16 @@ export const DEFAULT_GAME_RULES: GameRules = {
   predictiveNewspaperStockTips: false,
   reenterCurrentLocationCost: true,
   economicUpsideBonus: false,
+  showWindowPositionSize: false,
+  allowWindowMoveResize: false,
 };
 
 /**
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  showWindowPositionSize: 'Shows coordinate, dimension, and margin tools on building location windows',
+  allowWindowMoveResize: 'Allows dragging window headers to move and corner handles to resize location windows',
   economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',
   reenterCurrentLocationCost: 'Entering or re-opening the current building location costs standard building entry time (2 hours)',
   pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',
@@ -528,6 +549,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   delayBookSetCredit: 'Requires waiting until next turn for 3-book set lesson discount',
   allowEatingSpoiledFood: 'Allows eating spoiled or expired food',
   reducedDegreeStatBonus: 'Reduces the Dependability and Experience boost from degrees from +5 to +2',
+  depthScaledDegreeBonus: 'Scales graduation Dependability and Max Experience bonuses by prerequisite depth: +(depth + 1) instead of flat +5',
   showItemImages: 'Displays graphical icons for items in menus and inventory',
   hudLayout: 'HUD layout style (Classic Top HUD default or Modern Side HUD)',
   delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',

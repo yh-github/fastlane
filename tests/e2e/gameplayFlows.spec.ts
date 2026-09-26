@@ -10,7 +10,8 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
     const titleLogo = page.locator('.title-screen__logo');
     await expect(titleLogo).toBeVisible({ timeout: 5000 });
 
-    // 2. Start game from Title Screen
+    // 2. Start game from Title Screen (select Advanced campaign)
+    await page.locator('select:has(option[value="advanced"])').selectOption('advanced');
     const startGameBtn = page.locator('.title-screen__btn').first();
     await startGameBtn.click();
 

@@ -51,7 +51,9 @@ export function StreetRobberyModal({ lostAmount, location, onClose }: StreetRobb
           marginBottom: '24px',
           fontWeight: 'bold',
           fontSize: '1.2em',
-          color: '#ff7675'
+          color: '#ff7675',
+          direction: 'ltr',
+          unicodeBidi: 'isolate'
         }}>
           Loss: -${lostAmount}
         </div>

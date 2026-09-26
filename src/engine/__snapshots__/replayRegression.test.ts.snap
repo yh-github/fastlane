@@ -78,6 +78,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "rentExtensionsDeniedPermanently": true,
       "rentExtensionsReceived": 0,
       "rentPaidUntilWeek": 20,
+      "social": 15,
       "timesDefaulted": 0,
       "turnEvents": [
         {
@@ -99,6 +100,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "caffeineDebt": 0,
         "drinkHappinessGranted": false,
         "fastFoodHappinessGranted": false,
+        "fastFoodMealsThisTurn": 0,
         "firedLocationsThisTurn": [],
         "freeNewspaper": false,
         "freshFoodHappinessGranted": false,
@@ -239,6 +241,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "rentExtensionsDeniedPermanently": false,
       "rentExtensionsReceived": 0,
       "rentPaidUntilWeek": 8,
+      "social": 11,
       "timesDefaulted": 0,
       "turnEvents": [
         {
@@ -253,6 +256,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "caffeineDebt": 0,
         "drinkHappinessGranted": false,
         "fastFoodHappinessGranted": false,
+        "fastFoodMealsThisTurn": 0,
         "firedLocationsThisTurn": [],
         "freeNewspaper": false,
         "freshFoodHappinessGranted": false,
@@ -394,6 +398,7 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
       "rentExtensionsDeniedPermanently": false,
       "rentExtensionsReceived": 0,
       "rentPaidUntilWeek": 4,
+      "social": 11,
       "timesDefaulted": 0,
       "turnEvents": [],
       "turnFlags": {
@@ -401,6 +406,7 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
         "caffeineDebt": 0,
         "drinkHappinessGranted": false,
         "fastFoodHappinessGranted": false,
+        "fastFoodMealsThisTurn": 0,
         "firedLocationsThisTurn": [],
         "freeNewspaper": false,
         "freshFoodHappinessGranted": false,

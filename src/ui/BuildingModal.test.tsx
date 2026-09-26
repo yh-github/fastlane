@@ -953,7 +953,7 @@ describe('BuildingModal Component', () => {
         currentBuildingId="z_mart"
         turn={1}
         economicIndex={0}
-        rules={mockRules}
+        rules={{ ...mockRules, showWindowPositionSize: true, allowWindowMoveResize: true }}
         onAction={vi.fn().mockResolvedValue({})}
         onClose={vi.fn()}
       />
@@ -997,6 +997,25 @@ describe('BuildingModal Component', () => {
     expect(screen.getByTestId('btn-reset-modal-layout')).toBeInTheDocument();
   });
 
+  it('hides layout toolbar and resize handle by default when settings are off', () => {
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, showWindowPositionSize: false, allowWindowMoveResize: false }}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId('modal-dimension-readout')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('modal-margin-stepper')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('building-modal-resize-handle')).not.toBeInTheDocument();
+  });
+
   it('allows adjusting modal margin with stepper and resets to 3px default', () => {
     localStorage.clear();
     const { container } = render(
@@ -1006,7 +1025,7 @@ describe('BuildingModal Component', () => {
         currentBuildingId="z_mart"
         turn={1}
         economicIndex={0}
-        rules={mockRules}
+        rules={{ ...mockRules, showWindowPositionSize: true, allowWindowMoveResize: true }}
         onAction={vi.fn().mockResolvedValue({})}
         onClose={vi.fn()}
       />

@@ -163,4 +163,53 @@ describe('Shopping Engine', () => {
       expect(result.updated.happiness).toBe(50); // No additional happiness
     });
   });
+
+  describe('Fast Food Social & Time Cost', () => {
+    it('grants +1 Social and costs 0 hours on first fast food purchase of the turn', () => {
+      const player = {
+        money: 100,
+        social: 15,
+        hoursRemaining: 30,
+        inventory: { fastFoodItems: [] },
+        turnFlags: { fastFoodMealsThisTurn: 0 }
+      } as unknown as PlayerState;
+
+      const result = buyItem(player, mockBurger);
+      expect(result.success).toBe(true);
+      expect(result.updated.social).toBe(16); // +1 Social
+      expect(result.updated.hoursRemaining).toBe(30); // 0 hours spent on 1st buy
+      expect(result.updated.turnFlags.fastFoodMealsThisTurn).toBe(1);
+    });
+
+    it('grants +1 Social and consumes 1 hour on 2nd fast food purchase of the turn', () => {
+      const player = {
+        money: 100,
+        social: 16,
+        hoursRemaining: 30,
+        inventory: { fastFoodItems: [{ itemId: 'cheeseburger' }] },
+        turnFlags: { fastFoodMealsThisTurn: 1 }
+      } as unknown as PlayerState;
+
+      const result = buyItem(player, mockBurger);
+      expect(result.success).toBe(true);
+      expect(result.updated.social).toBe(17); // +1 Social
+      expect(result.updated.hoursRemaining).toBe(29); // 1 hour spent on 2nd buy
+      expect(result.updated.turnFlags.fastFoodMealsThisTurn).toBe(2);
+    });
+
+    it('fails to buy 2nd fast food if player has 0 hours remaining', () => {
+      const player = {
+        money: 100,
+        social: 16,
+        hoursRemaining: 0,
+        inventory: { fastFoodItems: [{ itemId: 'cheeseburger' }] },
+        turnFlags: { fastFoodMealsThisTurn: 1 }
+      } as unknown as PlayerState;
+
+      const result = buyItem(player, mockBurger);
+      expect(result.success).toBe(false);
+      expect(result.message.key).toBe('action.error.notEnoughTimeBuy');
+      expect(result.updated.money).toBe(100);
+    });
+  });
 });

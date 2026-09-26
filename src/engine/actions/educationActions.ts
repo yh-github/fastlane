@@ -200,14 +200,28 @@ export function handleStudyAction(
           delete nextPlayer.enrolledClasses[`${degDef.id}_req`];
 
           const prereqDepth = getPrerequisiteChainDepth(degDef.id, context.campaign.education);
-          const qolReduced = context.rules.reducedDegreeStatBonus;
-          const depReward = qolReduced ? (prereqDepth + 1) : Math.max(degDef.rewards.dependability, prereqDepth + 1);
-          const maxDepReward = qolReduced ? (prereqDepth + 1) : Math.max(degDef.rewards.maxDepBoost, prereqDepth + 1);
-          const maxExpReward = qolReduced ? Math.min(2, degDef.rewards.maxExpBoost) : degDef.rewards.maxExpBoost;
+          let depReward: number;
+          let maxDepReward: number;
+          let maxExpReward: number;
 
-          // Mental reward in Advanced: double the depths -> 2 * (depth + 1)
+          if (context.rules.depthScaledDegreeBonus) {
+            const scaledBonus = prereqDepth + 1;
+            depReward = scaledBonus;
+            maxDepReward = scaledBonus;
+            maxExpReward = scaledBonus;
+          } else if (context.rules.reducedDegreeStatBonus) {
+            depReward = Math.min(2, degDef.rewards.dependability);
+            maxDepReward = Math.min(2, degDef.rewards.maxDepBoost);
+            maxExpReward = Math.min(2, degDef.rewards.maxExpBoost);
+          } else {
+            depReward = degDef.rewards.dependability;
+            maxDepReward = degDef.rewards.maxDepBoost;
+            maxExpReward = degDef.rewards.maxExpBoost;
+          }
+
+          // Mental reward in Advanced: (prereqDepth * 2 + 1)
           const mentalOrHappinessReward = context.rules.usePhysicalMentalConditions 
-            ? (2 * (prereqDepth + 1))
+            ? (prereqDepth * 2 + 1)
             : degDef.rewards.happiness;
 
           nextPlayer = applyHappinessChange(nextPlayer, mentalOrHappinessReward, 'graduation', context.rules, context.campaign.config.statRules);

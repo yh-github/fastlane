@@ -162,13 +162,32 @@ export function study(player: PlayerState, degree: EducationDef, timeCost: numbe
     delete updated.enrolledClasses[`${degree.id}_req`];
 
     // Apply rewards
-    const qolReduced = rules?.reducedDegreeStatBonus;
-    
-    const depReward = qolReduced ? Math.min(2, degree.rewards.dependability) : degree.rewards.dependability;
-    const maxDepReward = qolReduced ? Math.min(2, degree.rewards.maxDepBoost) : degree.rewards.maxDepBoost;
-    const maxExpReward = qolReduced ? Math.min(2, degree.rewards.maxExpBoost) : degree.rewards.maxExpBoost;
+    let depReward: number;
+    let maxDepReward: number;
+    let maxExpReward: number;
 
-    updated = applyHappinessChange(updated, degree.rewards.happiness, 'graduation', rules || ({} as any));
+    const prereqDepth = degree.prerequisites?.length || 0;
+
+    if (rules?.depthScaledDegreeBonus) {
+      const scaledBonus = prereqDepth + 1;
+      depReward = scaledBonus;
+      maxDepReward = scaledBonus;
+      maxExpReward = scaledBonus;
+    } else if (rules?.reducedDegreeStatBonus) {
+      depReward = Math.min(2, degree.rewards.dependability);
+      maxDepReward = Math.min(2, degree.rewards.maxDepBoost);
+      maxExpReward = Math.min(2, degree.rewards.maxExpBoost);
+    } else {
+      depReward = degree.rewards.dependability;
+      maxDepReward = degree.rewards.maxDepBoost;
+      maxExpReward = degree.rewards.maxExpBoost;
+    }
+
+    const mentalOrHappinessReward = rules?.usePhysicalMentalConditions
+      ? (prereqDepth * 2 + 1)
+      : degree.rewards.happiness;
+
+    updated = applyHappinessChange(updated, mentalOrHappinessReward, 'graduation', rules || ({} as any));
     updated.degreeDepBoost += maxDepReward;
     updated.dependability = Math.min(100, updated.dependability + depReward);
     

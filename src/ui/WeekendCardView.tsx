@@ -69,25 +69,43 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
   })();
 
   const formatCostRange = () => {
+    if (card.type === 'ticket_resale') {
+      return `+$${card.resalePayout || 0}`;
+    }
     if (card.costMax === 0) return '$0';
     if (card.costMin === card.costMax) return `$${card.costMin}`;
     return `$${card.costMin} – $${card.costMax}`;
   };
 
   const formatBonusText = () => {
+    if (card.type === 'ticket_resale') {
+      return `+$${card.resalePayout || 0} Cash (Resale Profit)`;
+    }
     if (card.isSpecial) {
       return `+${card.potentialBonusMin}..+${card.potentialBonusMax} 🧠`;
     }
     if (card.type === 'clean') {
-      return `-8..-12 🧹, -2 💪`;
+      return `-8..-12 🧹, -1 💪`;
     }
     if (card.type === 'rest') {
       return `+1 🧠, +2 🧹`;
     }
+    if (card.type === 'walk') {
+      return `+1 💪 (${t('weekendScreen.physical', { defaultValue: 'Physical' })})`;
+    }
+    if (card.type === 'chat') {
+      return `+1 👥 (${t('weekendScreen.social', { defaultValue: 'Social' })})`;
+    }
+    if (card.type === 'ticket' && card.secondaryStat) {
+      const p1 = card.potentialBonusMin;
+      const p2 = card.potentialSecondaryBonusMin;
+      const countNote = card.ticketCount && card.ticketCount > 1 ? ` (${card.ticketCount} Tickets)` : '';
+      return `+${p1} 🧠, +${p2} 👥${countNote}`;
+    }
     if (!card.targetStat || card.potentialBonusMax === 0) {
       return t('weekendScreen.noBonusStat', { defaultValue: 'No extra bonus' });
     }
-    const statIcon = card.targetStat === 'mental' ? '🧠' : card.targetStat === 'social' ? '👥' : '🤝';
+    const statIcon = card.targetStat === 'mental' ? '🧠' : card.targetStat === 'social' ? '👥' : card.targetStat === 'physical' ? '💪' : '🤝';
     const statLabel = t(`weekendScreen.${card.targetStat}`, { defaultValue: card.targetStat });
     return `+${card.potentialBonusMin}..+${card.potentialBonusMax} ${statIcon} (${statLabel})`;
   };

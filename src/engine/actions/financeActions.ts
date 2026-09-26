@@ -3,6 +3,7 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import { requireConfig } from '../rules';
 import { spendHours } from '../timeManager';
 import { applyHappinessChange } from '../statEffects';
+import { calcLoanAssessment } from '../statMath';
 
 export function handleBankTransactionAction(
   player: PlayerState,
@@ -116,32 +117,20 @@ export function handleTakeLoanAction(
   }
   nextPlayer = spendHours(nextPlayer, timeCost);
   
-  const liquidAssets = nextPlayer.money + nextPlayer.bankSavings - (nextPlayer.loanDebt || 0);
-  const liquidity = nextPlayer.currentWage + (liquidAssets / 1000);
-  let risk = 5;
-  if (nextPlayer.timesDefaulted > 0 || (nextPlayer.loanDebt || 0) > 0) {
-    risk = 5 + nextPlayer.timesDefaulted + ((nextPlayer.loanDebt || 0) / 100) + ((nextPlayer.loanDebt || 0) > 0 ? 1 : 0);
-  }
-  const maxLoan = 100 * Math.max(0, liquidity - risk);
-  const isDefaulted = nextPlayer.loanPaymentDeadline > 0 && nextPlayer.loanPaymentDeadline < context.turn;
+  const assessment = calcLoanAssessment(nextPlayer, context.campaign, context.turn, context.rules);
 
-  if (isDefaulted || liquidity <= risk || (context.rules.requireJobForLoan && nextPlayer.currentJobId === null)) {
+  if (!assessment.eligible || assessment.estimatedAmount <= 0) {
     actionLog = { key: 'action.loan.refused' };
     nextPlayer = applyHappinessChange(nextPlayer, -1, 'loan_refused', context.rules, context.campaign.config.statRules);
   } else {
-    const loanSize = Math.floor(maxLoan);
-    if (loanSize > 0) {
-      if ((nextPlayer.loanDebt || 0) === 0) {
-        nextPlayer.loanPaymentDeadline = Math.floor((context.turn - 1) / 4) * 4 + 4; // Week 4 of current month
-      }
-      nextPlayer.money += loanSize;
-      nextPlayer.loanDebt = (nextPlayer.loanDebt || 0) + loanSize;
-      nextPlayer = applyHappinessChange(nextPlayer, 5, 'loan_approved', context.rules, context.campaign.config.statRules);
-      actionLog = { key: 'action.loan.approved', params: { loanSize } };
-    } else {
-      actionLog = { key: 'action.loan.refused' };
-      nextPlayer = applyHappinessChange(nextPlayer, -1, 'loan_refused', context.rules, context.campaign.config.statRules);
+    const loanSize = assessment.estimatedAmount;
+    if ((nextPlayer.loanDebt || 0) === 0) {
+      nextPlayer.loanPaymentDeadline = Math.floor((context.turn - 1) / 4) * 4 + 4; // Week 4 of current month
     }
+    nextPlayer.money += loanSize;
+    nextPlayer.loanDebt = (nextPlayer.loanDebt || 0) + loanSize;
+    nextPlayer = applyHappinessChange(nextPlayer, 5, 'loan_approved', context.rules, context.campaign.config.statRules);
+    actionLog = { key: 'action.loan.approved', params: { loanSize } };
   }
 
   return { nextPlayer, actionLog };

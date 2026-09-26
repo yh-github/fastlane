@@ -3,6 +3,7 @@ import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, calculateTravelHours } from '../graphics/pathfinding';
 import { calcEconomyPrice, calcItemPrice } from './economyEngine';
+import { calcLoanAssessment } from './statMath';
 
 export interface ActionChoice {
   label: string;
@@ -69,7 +70,15 @@ export function getAvailableActions(
       const withdrawLabel = helpful ? `Withdraw $100` : `Withdraw Money`;
       options.push({ label: withdrawLabel, action: { type: 'bank_transaction', amount: -100 } });
       
-      options.push({ label: "Take Loan", action: { type: 'take_loan' } });
+      if (helpful) {
+        const assessment = calcLoanAssessment(player, campaign, state.turn, state.rules);
+        const takeLoanLabel = assessment.eligible
+          ? `Take Loan (+$${assessment.estimatedAmount})`
+          : `Take Loan (Refused)`;
+        options.push({ label: takeLoanLabel, action: { type: 'take_loan' } });
+      } else {
+        options.push({ label: "Take Loan", action: { type: 'take_loan' } });
+      }
       
       if (player.loanDebt > 0) {
         const payLoanLabel = helpful ? `Pay Loan (-$${campaign.config.economyRules.loanPaymentAmount})` : `Pay Loan`;

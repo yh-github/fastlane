@@ -697,6 +697,28 @@ button:disabled {
   border-right: 9px solid #13132c;
 }
 
+[dir="rtl"] .speech-bubble {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: 16px;
+  transform-origin: right 30px;
+}
+
+[dir="rtl"] .speech-bubble-tail {
+  left: auto;
+  right: -12px;
+  border-right: none;
+  border-left: 12px solid var(--accent-cyan);
+}
+
+[dir="rtl"] .speech-bubble-tail::after {
+  left: auto;
+  right: 3px;
+  border-right: none;
+  border-left: 9px solid #13132c;
+}
+
 @keyframes popIn {
   from {
     transform: scale(0.8);

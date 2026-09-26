@@ -13,6 +13,7 @@ import type {
   EconomyRules,
   MapRules,
 } from './rules';
+import defaultCampaigns from '../campaigns/campaigns.json';
 
 // ─── Campaign Data Types ────────────────────────────────────────
 
@@ -65,6 +66,7 @@ export interface JobDef {
   requirements: JobRequirements;
   perks: string[];
   tags?: string[];
+  description?: string;
 }
 
 export type EffectTrigger = 'turn_start' | 'on_relax' | 'on_socialize' | 'continuous' | 'on_purchase';
@@ -192,6 +194,7 @@ export function getStoreForItem(campaign: { buildings: BuildingDef[] }, itemId: 
 export interface SynergyDef {
   id: string;
   name: string;
+  description?: string;
   requires: string[];
   effects: SynergyEffect[];
 }
@@ -452,30 +455,27 @@ export interface CampaignInfo {
   description: string;
 }
 
+let availableCampaignsCache: CampaignInfo[] = defaultCampaigns;
+
+export async function loadAvailableCampaigns(): Promise<CampaignInfo[]> {
+  try {
+    const res = await fetch('/campaigns/campaigns.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        availableCampaignsCache = data;
+        return data;
+      }
+    }
+  } catch {
+    // fallback to cache
+  }
+  return availableCampaignsCache;
+}
+
 /**
- * List available campaigns (hardcoded for now, as there's no backend to list folders).
+ * List available campaigns from the master catalog manifest.
  */
 export function getAvailableCampaigns(): CampaignInfo[] {
-  return [
-    {
-      id: '1990_classic_floppy',
-      name: 'Classic 1990 (Floppy)',
-      description: 'The original harsh rules: early robberies, low charity threshold, tough entry-level jobs.'
-    },
-    {
-      id: '1990_classic_cdrom',
-      name: 'Classic 1990 (CD-ROM)',
-      description: 'More forgiving rules with entry-level jobs, delayed robberies, and higher charity bounds.'
-    },
-    {
-      id: 'qol_improved',
-      name: 'QoL Improved',
-      description: 'Based on CD-ROM but adds helpful UI elements and strict eviction logic.'
-    },
-    {
-      id: 'advanced',
-      name: 'Advanced Edition (Recommended)',
-      description: 'Testing hub for new sub-systems and advanced modular game mechanics.'
-    }
-  ];
+  return availableCampaignsCache;
 }

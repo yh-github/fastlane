@@ -269,15 +269,17 @@ export interface PlayerState {
 
   // ── Alternative Weekend Card System ──
   weekendDecks?: {
+    free?: WeekendDeckState;
     cheap: WeekendDeckState;
     medium: WeekendDeckState;
     expensive: WeekendDeckState;
   };
   recentWeekendTiers?: WeekendDeckTier[];
+  recentWeekendPicks?: Array<{ tier: WeekendDeckTier; type: string; targetStat?: string }>;
   offeredWeekendCards?: WeekendCard[];
 }
 
-export type WeekendDeckTier = 'cheap' | 'medium' | 'expensive';
+export type WeekendDeckTier = 'free' | 'cheap' | 'medium' | 'expensive';
 
 export interface WeekendDeckState {
   drawPile: string[];
@@ -286,8 +288,8 @@ export interface WeekendDeckState {
 
 export interface WeekendCard {
   id: string;
-  tier: 'free' | 'cheap' | 'medium' | 'expensive';
-  type: 'random' | 'durable' | 'ticket' | 'clean' | 'rest';
+  tier: WeekendDeckTier;
+  type: 'random' | 'durable' | 'ticket' | 'ticket_resale' | 'clean' | 'rest' | 'walk' | 'chat';
   eventKey: string;
   fluff: string;
   titleKey: string;
@@ -297,6 +299,11 @@ export interface WeekendCard {
   targetStat?: 'mental' | 'social' | 'dependability' | 'physical' | 'mess';
   potentialBonusMin: number;
   potentialBonusMax: number;
+  secondaryStat?: 'mental' | 'social' | 'dependability' | 'physical' | 'mess';
+  potentialSecondaryBonusMin?: number;
+  potentialSecondaryBonusMax?: number;
+  resalePayout?: number;
+  ticketCount?: number;
   isSpecial?: boolean;
   specialBonus?: number;
 }
@@ -471,6 +478,8 @@ export interface TurnFlags {
   workMistakesThisTurn?: number;
   /** Whether curio purchase novelty mental bonus (+1) was already granted this turn */
   curioNoveltyGranted?: boolean;
+  /** Number of fast food meals purchased this turn (first is free of time, subsequent cost 1 hour) */
+  fastFoodMealsThisTurn?: number;
 }
 
 export interface PlayerConfig {

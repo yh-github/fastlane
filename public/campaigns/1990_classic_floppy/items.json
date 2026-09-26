@@ -5,6 +5,7 @@
     "category": "appliance",
     "basePrice": 650,
     "happinessBonus": 1,
+    "description": "Safe food storage for up to 6 weeks.",
     "tags": [
       "refrigerator"
     ]
@@ -15,6 +16,7 @@
     "category": "appliance",
     "basePrice": 513,
     "happinessBonus": 2,
+    "description": "Extends food storage to 12 weeks when paired with Refrigerator.",
     "tags": [
       "freezer"
     ]
@@ -25,6 +27,7 @@
     "category": "appliance",
     "basePrice": 490,
     "happinessBonus": 1,
+    "description": "+1 Happiness/turn when food is eaten (shared MAX bonus with Microwave).",
     "tags": [
       "stove"
     ]
@@ -56,6 +59,7 @@
     "category": "appliance",
     "basePrice": 220,
     "happinessBonus": 1,
+    "description": "+1 Happiness/turn when food is eaten (shared MAX bonus with Stove).",
     "tags": [
       "microwave"
     ]
@@ -66,6 +70,7 @@
     "category": "appliance",
     "basePrice": 1255,
     "happinessBonus": 3,
+    "description": "Prevents natural relaxation decay from dropping below doctor threshold.",
     "tags": [
       "hot_tub"
     ]
@@ -76,6 +81,7 @@
     "category": "appliance",
     "basePrice": 1599,
     "happinessBonus": 3,
+    "description": "Chance to earn freelance income ($10–$150/turn) plus +3 Happiness.",
     "tags": [
       "computer"
     ]
