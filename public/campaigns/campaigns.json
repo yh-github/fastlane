@@ -2,17 +2,17 @@
   {
     "id": "1990_classic_floppy",
     "name": "Classic 1990 (Floppy)",
-    "description": "The original harsh rules: early robberies, low charity threshold, tough entry-level jobs."
+    "description": "The original harsh and buggy rules."
   },
   {
     "id": "1990_classic_cdrom",
-    "name": "Classic 1990 (CD-ROM)",
-    "description": "More forgiving rules with entry-level jobs, delayed robberies, and higher charity bounds."
+    "name": "Classic 1992 (CD-ROM)",
+    "description": "More forgiving rules with entry-level jobs, delayed robberies, and higher donation bounds."
   },
   {
     "id": "qol_improved",
     "name": "QoL Improved (Recommended)",
-    "description": "Based on CD-ROM but adds helpful UI elements and strict eviction logic."
+    "description": "Based on the CD-ROM version, but adds helpful UI elements, bug fixes, and other Quality of Life improvements."
   },
   {
     "id": "advanced",
