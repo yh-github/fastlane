@@ -151,6 +151,10 @@ describe('Translation Interpolation & Template Verification', () => {
       expect(payAdvance).toBe('Pay Rent Advance ($300 / mo)');
       expect(payAdvance).not.toContain('{{');
 
+      const rentClosed = i18n.t('rentOffice.closed', { week: 8 });
+      expect(rentClosed).toBe('The Rent Office is closed. Come back during Week 8 to pay your rent or move to a new apartment.');
+      expect(rentClosed).not.toContain('{{');
+
       // Weekend Screen
       const startWeek = i18n.t('weekendScreen.startWeek', { turn: 2 });
       expect(startWeek).toBe('Start Week 2');
@@ -205,6 +209,10 @@ describe('Translation Interpolation & Template Verification', () => {
       const makePayment = i18n.t('bank.makePayment', { amount: 50 });
       expect(makePayment).toBe('שלם הלוואה (50$ או שארית)');
       expect(makePayment).not.toContain('{{');
+
+      const rentClosed = i18n.t('rentOffice.closed', { week: 8 });
+      expect(rentClosed).toBe('משרד השכירות סגור. חזור במהלך שבוע 8 כדי לשלם שכר דירה או לעבור לדירה חדשה.');
+      expect(rentClosed).not.toContain('{{');
     });
   });
 

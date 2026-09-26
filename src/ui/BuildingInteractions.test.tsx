@@ -888,6 +888,40 @@ describe('BuildingInteractions', () => {
     expect(screen.getByText(/Security Apartments/i)).toBeInTheDocument();
   });
 
+  it('RentOffice renders dynamic upcoming week when closed', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 1000,
+      hoursRemaining: 10,
+      currentHousingId: 'low_cost',
+      currentRentPrice: 300,
+      rentPaidUntilWeek: 8,
+      rentDebt: 0,
+      turnFlags: { rentPaidThisTurn: false },
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const mockCampaign = {
+      housing: [
+        { id: 'low_cost', name: 'Low Cost Housing', baseRent: 300, isRobberyImmune: false }
+      ],
+      jobs: [],
+      config: { timeRules: { moveApartmentCost: 4 } }
+    } as any;
+
+    render(
+      <RentOffice
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        turn={5}
+        economicIndex={0}
+      />
+    );
+
+    expect(screen.getByText(/Come back during Week 8/i)).toBeInTheDocument();
+  });
+
   it('PawnShop renders pawn and redeem interface and handles pawn actions', () => {
     const mockPlayer = {
       id: 'p1',

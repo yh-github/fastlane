@@ -206,25 +206,60 @@ export function removeApplianceCardFromDeck(player: PlayerState, applianceId: st
 function buildTicketCards(
   heldTicketType: 'baseball' | 'theatre' | 'concert',
   ticketCount: number,
-  weekendData: WeekendDef
+  weekendData: WeekendDef,
+  rng?: Random
 ): { attendCard: WeekendCard; resaleCard: WeekendCard } {
   let mental = 1;
   let social = 1;
+  let costMin = 15;
+  let costMax = 35;
+  let tier: WeekendDeckTier = 'medium';
+
   const basePrice = heldTicketType === 'theatre' ? 30 : heldTicketType === 'concert' ? 40 : 45;
 
   if (heldTicketType === 'theatre') {
-    if (ticketCount === 1) { mental = 1; social = 1; }
-    else if (ticketCount === 2) { mental = 2; social = 2; }
-    else { mental = 2; social = 3; }
+    if (ticketCount === 1) {
+      mental = 1; social = 1;
+      costMin = 15; costMax = 35;
+      tier = 'medium';
+    } else if (ticketCount === 2) {
+      mental = 2; social = 2;
+      costMin = 30; costMax = 55;
+      tier = 'medium';
+    } else {
+      mental = 2; social = 3;
+      costMin = 50; costMax = 85;
+      tier = 'expensive';
+    }
   } else if (heldTicketType === 'concert') {
-    if (ticketCount === 1) { mental = 2; social = 1; }
-    else if (ticketCount === 2) { mental = 2; social = 3; }
-    else { mental = 3; social = 4; }
+    if (ticketCount === 1) {
+      mental = 2; social = 1;
+      costMin = 20; costMax = 45;
+      tier = 'medium';
+    } else if (ticketCount === 2) {
+      mental = 2; social = 3;
+      costMin = 45; costMax = 80;
+      tier = 'expensive';
+    } else {
+      mental = 3; social = 4;
+      costMin = 60; costMax = 100;
+      tier = 'expensive';
+    }
   } else {
     // baseball
-    if (ticketCount === 1) { mental = 2; social = 2; }
-    else if (ticketCount === 2) { mental = 3; social = 3; }
-    else { mental = 3; social = 4; }
+    if (ticketCount === 1) {
+      mental = 2; social = 2;
+      costMin = 25; costMax = 50;
+      tier = 'medium';
+    } else if (ticketCount === 2) {
+      mental = 3; social = 3;
+      costMin = 50; costMax = 90;
+      tier = 'expensive';
+    } else {
+      mental = 3; social = 4;
+      costMin = 65; costMax = 100;
+      tier = 'expensive';
+    }
   }
 
   const ticketIcons: Record<string, string> = {
@@ -235,14 +270,14 @@ function buildTicketCards(
 
   const attendCard: WeekendCard = {
     id: `ticket_${heldTicketType}`,
-    tier: 'medium',
+    tier,
     type: 'ticket',
     eventKey: `events.weekend.ticket_${heldTicketType}`,
     titleKey: `weekendScreen.card.ticket_${heldTicketType}`,
     fluff: weekendData.ticketWeekends?.[heldTicketType]?.text || 'Enjoyed an exciting live event with your tickets!',
     icon: ticketIcons[heldTicketType] || '🎟️',
-    costMin: 0,
-    costMax: 0,
+    costMin,
+    costMax,
     targetStat: 'mental',
     potentialBonusMin: mental,
     potentialBonusMax: mental,
@@ -252,14 +287,25 @@ function buildTicketCards(
     ticketCount
   };
 
-  const resaleProfit = Math.round(ticketCount * basePrice * 1.20);
+  const roll = rng ? rng.next() : Math.random();
+  // Multiplier between 0.60 and 1.40 (profit not guaranteed)
+  const multiplier = 0.60 + roll * 0.80;
+  const resaleProfit = Math.max(5, Math.round(ticketCount * basePrice * multiplier));
+
+  let resaleFluff = 'You found buyers outside the venue and sold your tickets for cash.';
+  if (multiplier < 0.9) {
+    resaleFluff = 'Demand was cold outside the venue. You had to let your tickets go below face value.';
+  } else if (multiplier > 1.15) {
+    resaleFluff = 'Desperate fans outside the venue paid a hefty premium for your tickets!';
+  }
+
   const resaleCard: WeekendCard = {
     id: `ticket_resale_${heldTicketType}`,
     tier: 'free',
     type: 'ticket_resale',
     eventKey: `events.weekend.ticket_resale_${heldTicketType}`,
     titleKey: 'weekendScreen.card.ticketResaleTitle',
-    fluff: 'You stood outside the venue and sold your tickets to desperate fans for a quick profit.',
+    fluff: resaleFluff,
     icon: '💵',
     costMin: 0,
     costMax: 0,
@@ -408,8 +454,15 @@ export function generateWeekendChoices(
   }
   const decks = updatedPlayer.weekendDecks!;
 
-  // 1. Broke players (money < 5): Offer exactly two $0 cards
-  if (updatedPlayer.money < 5) {
+  // Check tickets before broke check so broke players holding tickets can scalp them
+  const tickets = updatedPlayer.inventory?.tickets || { baseball: 0, theatre: 0, concert: 0 };
+  let heldTicketType: 'baseball' | 'theatre' | 'concert' | null = null;
+  if (tickets.baseball > 0 && weekendData.ticketWeekends?.baseball) heldTicketType = 'baseball';
+  else if (tickets.theatre > 0 && weekendData.ticketWeekends?.theatre) heldTicketType = 'theatre';
+  else if (tickets.concert > 0 && weekendData.ticketWeekends?.concert) heldTicketType = 'concert';
+
+  // 1. Broke players without tickets (money < 5): Offer exactly two $0 cards
+  if (updatedPlayer.money < 5 && !heldTicketType) {
     const brokeCards: WeekendCard[] = [
       {
         id: 'broke_stay_home',
@@ -444,19 +497,13 @@ export function generateWeekendChoices(
     return { player: updatedPlayer, cards: brokeCards };
   }
 
-  // 2. Solvent players (money >= 5): 3 choices
+  // 2. Solvent players (or players with tickets): 3 choices
   const drawnCards: WeekendCard[] = [];
 
   // 2a. Ticket guarantee: If holding ticket, guarantee attend and resale cards
-  const tickets = updatedPlayer.inventory.tickets;
-  let heldTicketType: 'baseball' | 'theatre' | 'concert' | null = null;
-  if (tickets.baseball > 0 && weekendData.ticketWeekends.baseball) heldTicketType = 'baseball';
-  else if (tickets.theatre > 0 && weekendData.ticketWeekends.theatre) heldTicketType = 'theatre';
-  else if (tickets.concert > 0 && weekendData.ticketWeekends.concert) heldTicketType = 'concert';
-
   if (heldTicketType) {
     const ticketCount = tickets[heldTicketType];
-    const { attendCard, resaleCard } = buildTicketCards(heldTicketType, ticketCount, weekendData);
+    const { attendCard, resaleCard } = buildTicketCards(heldTicketType, ticketCount, weekendData, rng);
     drawnCards.push(attendCard);
     drawnCards.push(resaleCard);
   }
@@ -806,6 +853,15 @@ export function resolveWeekendChoice(
 
   // 6. Handle Ticket Event Attendance
   if (card.type === 'ticket') {
+    const rawCost = card.costMax > card.costMin
+      ? Math.floor(rng.next() * (card.costMax - card.costMin + 1)) + card.costMin
+      : (card.costMin || 0);
+    const cost = Math.min(rawCost, updatedPlayer.money);
+    updatedPlayer.money -= cost;
+    if (cost > 0) {
+      modifications.push({ stat: 'money', diff: -cost });
+    }
+
     const mentalBonus = card.potentialBonusMin;
     const socialBonus = card.potentialSecondaryBonusMin || 0;
 
@@ -835,7 +891,7 @@ export function resolveWeekendChoice(
 
     updatedPlayer.weekendResult = {
       event: { key: card.eventKey },
-      cost: 0,
+      cost,
       happinessBonus: mentalBonus,
       modifications: finalMods,
       chosenCard: card
