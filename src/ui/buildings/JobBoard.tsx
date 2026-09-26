@@ -103,6 +103,11 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
               ⚠️ {t('jobBoard.mistakesBadge', { count: selectedLocMistakes })}
             </span>
           )}
+          {isAdvanced && (player.noOpeningBonus || 0) > 0 && (
+            <span style={{ color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid #10b981' }}>
+              🍀 {t('jobBoard.noOpeningBonusBadge', { bonus: player.noOpeningBonus, defaultValue: `Persistence Bonus (+${player.noOpeningBonus}%)` })}
+            </span>
+          )}
         </div>
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px' }}>
@@ -125,14 +130,17 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
           const isLookFit = isAdvanced && job.tags?.includes('look_fit');
           const missingPhysical = isLookFit && ((player.physicalCondition ?? 50) < 30);
-          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt || missingPhysical;
+          const isHeavyPhysical = isAdvanced && job.tags?.includes('heavy_physical');
+          const heavyMinPhys = campaign.config.statRules?.heavyPhysicalMinRequirement ?? 21;
+          const missingHeavyPhys = isHeavyPhysical && ((player.physicalCondition ?? 50) < heavyMinPhys);
+          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt || missingPhysical || missingHeavyPhys;
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
           const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
           const appCost = campaign.config.timeRules?.jobApplicationCost ?? 4;
           const curMental = player.mentalCondition ?? 50;
           const mentalMistakeChance = isAdvanced && curMental < 10 ? Math.round((10 - curMental) * 2.5 * 10) / 10 : 0;
           
-          const jobScore = isAlwaysHiring ? (hasMissingReqs ? 0 : 100) : (isAdvanced
+          const baseJobScore = isAlwaysHiring ? (hasMissingReqs ? 0 : 100) : (isAdvanced
             ? calcAdvancedJobEmployabilityScore({
                 dependability: player.dependability || 0,
                 experience: player.experience || 0,
@@ -154,6 +162,9 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 isLookFit
               })
             : locationScore);
+          const jobScore = isAdvanced && !isAlwaysHiring && (player.noOpeningBonus || 0) > 0
+            ? Math.min(99, baseJobScore + (player.noOpeningBonus || 0))
+            : baseJobScore;
           
           return (
             <div key={job.id} className="interaction-item" style={{ margin: 0, padding: '12px', border: '1px solid #444', borderRadius: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -189,6 +200,11 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                       {isExecMgmt && (
                         <span style={{ color: missingMgmt ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
                           | 👔 {t('dashboard.skillMgmt', { defaultValue: 'Mgmt' })}: {reqMgmt}.00
+                        </span>
+                      )}
+                      {isHeavyPhysical && (
+                        <span style={{ color: missingHeavyPhys ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
+                          | 💪 {t('stats.physical', { defaultValue: 'Physical' })}: {heavyMinPhys}
                         </span>
                       )}
                       {job.requirements.degrees.length > 0 && (

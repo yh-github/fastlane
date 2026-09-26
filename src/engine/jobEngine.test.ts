@@ -232,6 +232,105 @@ describe('Job Engine', () => {
       expect(result.success).toBe(true);
       expect(result.updated.dependability).toBe(10);
     });
+
+    it('rejects application to heavy_physical job if physical condition < heavyPhysicalMinRequirement', () => {
+      const heavyJob: JobDef = {
+        id: 'factory_heavy',
+        title: 'Heavy Laborer',
+        locationId: 'factory',
+        baseWage: 12,
+        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+        tags: ['heavy_physical'],
+        perks: []
+      };
+      const weakPlayer = {
+        hoursRemaining: 20,
+        experience: 10,
+        dependability: 20,
+        degrees: [],
+        physicalCondition: 15,
+        turnFlags: { jobsRejectedThisTurn: [] }
+      } as unknown as PlayerState;
+      const res = applyForJob(
+        weakPlayer,
+        heavyJob,
+        4,
+        {},
+        undefined,
+        new Random(1),
+        { usePhysicalMentalConditions: true },
+        1,
+        undefined,
+        { heavyPhysicalMinRequirement: 21 } as any
+      );
+      expect(res.success).toBe(false);
+      expect(res.message?.params?.reasons).toContain('Requires at least 21 Physical Condition');
+    });
+
+    it('accumulates employability bonus on "No opening" rejection (+10% if unemployed, +5% if employed) and resets on hire', () => {
+      const normalJob: JobDef = {
+        id: 'clerk',
+        title: 'Clerk',
+        locationId: 'store',
+        baseWage: 10,
+        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+        perks: []
+      };
+      const replayFail = {
+        inDecisions: [
+          { type: 'job_apply_luck', result: 99 },
+          { type: 'job_apply_luck', result: 99 },
+          { type: 'job_apply_luck', result: 99 }
+        ],
+        outDecisions: []
+      };
+      const unemployedPlayer = {
+        id: 'p1',
+        currentJobId: null,
+        hoursRemaining: 20,
+        experience: 10,
+        dependability: 20,
+        degrees: [],
+        physicalCondition: 50,
+        mentalCondition: 50,
+        turnFlags: { jobsRejectedThisTurn: [] }
+      } as unknown as PlayerState;
+
+      // 1st rejection while unemployed: +10%
+      let res = applyForJob(unemployedPlayer, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
+      expect(res.success).toBe(false);
+      expect(res.updated.noOpeningBonus).toBe(10);
+
+      // 2nd rejection while unemployed: +10% -> 20%
+      res.updated.turnFlags.jobsRejectedThisTurn = [];
+      res = applyForJob(res.updated, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
+      expect(res.success).toBe(false);
+      expect(res.updated.noOpeningBonus).toBe(20);
+
+      // Now with roll = 1, they succeed and get hired -> noOpeningBonus resets to 0
+      const replaySuccess = {
+        inDecisions: [{ type: 'job_apply_luck', result: 1 }],
+        outDecisions: []
+      };
+      res.updated.turnFlags.jobsRejectedThisTurn = [];
+      const successRes = applyForJob(res.updated, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replaySuccess);
+      expect(successRes.success).toBe(true);
+      expect(successRes.updated.noOpeningBonus).toBe(0);
+
+      // While employed, rejection only gives +5%
+      const otherJob: JobDef = {
+        id: 'other_clerk',
+        title: 'Other Clerk',
+        locationId: 'other_store',
+        baseWage: 10,
+        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+        perks: []
+      };
+      successRes.updated.turnFlags.jobsRejectedThisTurn = [];
+      const employedRes = applyForJob(successRes.updated, otherJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
+      expect(employedRes.success).toBe(false);
+      expect(employedRes.updated.noOpeningBonus).toBe(5);
+    });
   });
 
   describe('calcWorkShiftSummary', () => {

@@ -79,6 +79,7 @@
     "cleanPhysicalCost": 1,
     "initialPhysicalMax": 100,
     "globalMaxPhysicalCondition": 100,
+    "heavyPhysicalMinRequirement": 21,
     "mentalMaxBaseValue": 86,
     "mentalMaxDegreeBonus": 1
   }

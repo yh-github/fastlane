@@ -373,6 +373,7 @@ export interface StatRules {
   starvationMaxPhysicalPenalty: number;
   lowSpiritsMentalBounceBack: number;
   globalMaxPhysicalCondition: number;
+  heavyPhysicalMinRequirement?: number;
   mentalMaxBaseValue: number;
   mentalMaxDegreeBonus: number;
   
