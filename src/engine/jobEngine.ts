@@ -208,6 +208,15 @@ export function applyForJob(
     }
   }
 
+  const isHeavyPhysical = isAdvanced && hasJobTag(job, 'heavy_physical');
+  if (isHeavyPhysical) {
+    const minPhys = statRules?.heavyPhysicalMinRequirement ?? 21;
+    const phys = updated.physicalCondition ?? 50;
+    if (phys < minPhys) {
+      rejectionReasons.push(msg('job_apply_missing_physical_heavy', `Requires at least ${minPhys} Physical Condition for heavy physical labor.`, { minPhys }));
+    }
+  }
+
   // Clothing is intentionally NOT checked here, as per game rules.
   // The workplace checks clothes during workShift.
 
@@ -239,6 +248,9 @@ export function applyForJob(
     updated.innovationCount = 0;
     updated.depMaxBonus = 0;
     updated.xpMaxBonus = 0;
+    if (isAdvanced) {
+      updated.noOpeningBonus = 0;
+    }
     
     if (updated.dependability < 10) {
       updated.dependability = 10;
@@ -280,6 +292,9 @@ export function applyForJob(
       physicalCondition: updated.physicalCondition ?? 50,
       isLookFit: isLookFit
     });
+    if (updated.noOpeningBonus) {
+      employability = Math.min(99, employability + updated.noOpeningBonus);
+    }
   } else {
     employability = calcEmployabilityScore(
       updated.dependability,
@@ -296,6 +311,10 @@ export function applyForJob(
   if (roll > employability) {
     if (!updated.turnFlags.jobsRejectedThisTurn) updated.turnFlags.jobsRejectedThisTurn = [];
     updated.turnFlags.jobsRejectedThisTurn.push(job.id);
+    if (isAdvanced) {
+      const increment = updated.currentJobId === null ? 10 : 5;
+      updated.noOpeningBonus = Math.min(30, (updated.noOpeningBonus || 0) + increment);
+    }
     if (isProbation) {
       return { updated, success: false, message: { key: 'action.job.noOpeningsProbation' } };
     }
@@ -309,6 +328,9 @@ export function applyForJob(
   updated.innovationCount = 0;
   updated.depMaxBonus = 0;
   updated.xpMaxBonus = 0;
+  if (isAdvanced) {
+    updated.noOpeningBonus = 0;
+  }
   
   // Anti-frustration feature: reset dependability to 10 when getting a new job if it's too low
   if (updated.dependability < 10) {
