@@ -187,7 +187,7 @@ describe('Weekend Engine', () => {
     it('guarantees ticket attendance and resale cards among 3 choices when player holds an event ticket', () => {
       const player = {
         id: 'p1',
-        money: 50,
+        money: 100,
         social: 20,
         inventory: { appliances: [], tickets: { baseball: 1, theatre: 0, concert: 0 } }
       } as unknown as PlayerState;
@@ -198,18 +198,49 @@ describe('Weekend Engine', () => {
       const resaleCard = cards.find(c => c.type === 'ticket_resale');
       expect(ticketCard).toBeDefined();
       expect(ticketCard!.id).toBe('ticket_baseball');
+      expect(ticketCard!.costMin).toBeGreaterThan(0);
+      expect(ticketCard!.costMax).toBeGreaterThanOrEqual(ticketCard!.costMin);
+      expect(ticketCard!.tier).toBe('medium');
       expect(resaleCard).toBeDefined();
 
-      // Resolving ticket consumes it and costs $0 entry fee (pre-purchased)
+      // Resolving ticket consumes it and requires money (concessions/incidentals)
       const resolved = resolveWeekendChoice(updated, ticketCard!.id, new Random(1));
       expect(resolved.inventory.tickets.baseball).toBe(0);
-      expect(resolved.money).toBe(50);
+      expect(resolved.money).toBeLessThan(100);
+      expect(resolved.weekendResult?.cost).toBeGreaterThan(0);
       expect(resolved.social).toBe(22); // +2 social
 
-      // Resolving resale grants cash profit (45 * 1.2 = 54) and consumes ticket
+      // Resolving resale grants cash and consumes ticket
       const resolvedResale = resolveWeekendChoice(updated, resaleCard!.id, new Random(1));
       expect(resolvedResale.inventory.tickets.baseball).toBe(0);
-      expect(resolvedResale.money).toBe(104); // 50 + 54
+      expect(resolvedResale.money).toBe(100 + resaleCard!.resalePayout!);
+    });
+
+    it('randomizes ticket resale payout so profit is not guaranteed', () => {
+      const player = {
+        id: 'p1',
+        money: 100,
+        inventory: { appliances: [], tickets: { baseball: 1, theatre: 0, concert: 0 } }
+      } as unknown as PlayerState;
+
+      const payouts: number[] = [];
+      for (let seed = 1; seed <= 30; seed++) {
+        const { cards } = generateWeekendChoices(player, 2, fullMockWeekendData, new Random(seed));
+        const resaleCard = cards.find(c => c.type === 'ticket_resale');
+        if (resaleCard?.resalePayout) {
+          payouts.push(resaleCard.resalePayout);
+        }
+      }
+
+      // Baseball ticket base price is 45
+      const hasBelowFaceValue = payouts.some(p => p < 45);
+      const hasAboveFaceValue = payouts.some(p => p > 45);
+      expect(hasBelowFaceValue).toBe(true);
+      expect(hasAboveFaceValue).toBe(true);
+      // Ensure variation across seeds
+      const minPayout = Math.min(...payouts);
+      const maxPayout = Math.max(...payouts);
+      expect(maxPayout).toBeGreaterThan(minPayout);
     });
 
     it('shuffles unchosen cards back into draw pile and moves chosen card to discard pile', () => {

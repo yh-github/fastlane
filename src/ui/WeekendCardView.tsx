@@ -79,7 +79,7 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
 
   const formatBonusText = () => {
     if (card.type === 'ticket_resale') {
-      return `+$${card.resalePayout || 0} Cash (Resale Profit)`;
+      return `+$${card.resalePayout || 0} Cash`;
     }
     if (card.isSpecial) {
       return `+${card.potentialBonusMin}..+${card.potentialBonusMax} 🧠`;

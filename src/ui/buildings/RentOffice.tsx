@@ -18,6 +18,10 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const isJobHere = !!(player.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
   const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || (isJobHere && !!rules?.allowEmployedRentPayment);
 
+  const nextWeek4 = Math.floor(turn / 4) * 4 + 4;
+  const nextRentDueWeek = player.rentPaidUntilWeek > turn ? player.rentPaidUntilWeek : nextWeek4;
+  const nextOpenWeek = Math.min(nextWeek4, nextRentDueWeek);
+
   const availableHousingList = (campaign?.housing || [
     { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, spaceCap: 100 },
     { id: 'security', name: 'Security Apartments', baseRent: 475, spaceCap: 250 }
@@ -46,7 +50,10 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
       
       {!isOpen ? (
         <div style={{ padding: '10px', backgroundColor: '#555', borderRadius: '4px', fontStyle: 'italic' }}>
-          {t('rentOffice.closed')}
+          {t('rentOffice.closed', {
+            week: nextOpenWeek,
+            defaultValue: `The Rent Office is closed. Come back during Week ${nextOpenWeek} to pay your rent or move to a new apartment.`
+          })}
         </div>
       ) : (
         <>

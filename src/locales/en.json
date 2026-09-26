@@ -1002,7 +1002,7 @@
     "title": "Rent Office",
     "current": "Current Residence",
     "homeless": "Homeless",
-    "closed": "The Rent Office is closed. Come back during Week 4 to pay your rent or move to a new apartment.",
+    "closed": "The Rent Office is closed. Come back during Week {{week}} to pay your rent or move to a new apartment.",
     "rentDue": "Rent Due: ${{amount}}",
     "payRentDebt": "Pay Garnishment Balance",
     "paidUntil": "Rent Paid Until: Week {{week}}",
