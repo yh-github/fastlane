@@ -107,7 +107,9 @@
       "appraisalChoiceCash": "Pocketed a quick appraisal commission of +${{amount}}.",
       "appraisalChoiceStanding": "Enhanced your appraisal reputation (+{{dep}} Dep).",
       "appraisalChoiceSpareParts": "Acquired a salvage box of spare parts.",
+      "appraisalChoiceSparePartsAutoPawn": "No room in apartment! Sold spare parts for scrap (+${{amount}}).",
       "appraisalChoiceCurio": "Acquired an uninspected curio for your shelf.",
+      "appraisalChoiceCurioAutoPawn": "No room in apartment! Sold curio on the spot for scrap (+${{amount}}).",
       "appraisalChoiceSkill": "Studied the intricate mechanism (+{{tech}} Tech Skill)."
     },
     "workModal": {
@@ -217,7 +219,8 @@
       "alreadyOwnComputer": "You already own a computer.",
       "maxEnrolledClasses": "You cannot enroll in more than {{max}} classes at once.",
       "cannotTransact": "Transaction could not be completed.",
-      "notEnoughTimeEducation": "No time is left to go to class."
+      "notEnoughTimeEducation": "No time is left to go to class.",
+      "notEnoughHours": "No time is left to renegotiate rent."
     }
   },
   "events": {

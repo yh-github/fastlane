@@ -241,6 +241,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "rentExtensionsDeniedPermanently": false,
       "rentExtensionsReceived": 0,
       "rentPaidUntilWeek": 8,
+      "rentPaymentsMade": 1,
       "social": 11,
       "timesDefaulted": 0,
       "turnEvents": [

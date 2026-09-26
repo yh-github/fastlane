@@ -361,7 +361,12 @@ export function computeClerkResponse(
         const params = { payment: 0, principal: 0, interest: 0, ...(mainLog?.params || {}) };
         return t('action.loan.paidInstallment', params) as string;
       } else {
-        return mainLog?.key ? (t(mainLog.key, mainLog.params) as string) : (t('action.error.notEnoughMoneyPayment', { defaultValue: 'You do not have enough cash.' }) as string);
+        if (mainLog?.key === 'action.error.noLoan') {
+          return t('action.error.noLoan', { defaultValue: "You don't have a loan." }) as string;
+        }
+        return mainLog?.key 
+          ? (t(mainLog.key, { defaultValue: mainLog.key === 'action.error.notEnoughMoneyPayment' ? 'Not enough money for payment.' : undefined, ...(mainLog.params || {}) }) as string) 
+          : (t('action.error.noLoan', { defaultValue: "You don't have a loan." }) as string);
       }
     } else if (payload.type === 'pay_rent_advance') {
       if (success) {
@@ -374,6 +379,10 @@ export function computeClerkResponse(
         return getRandomMessage(`clerkDialogs.apartment_complex.rentPaid`, 'Thank you for paying your rent.');
       } else {
         return t('action.error.notEnoughMoneyRent', { defaultValue: 'You do not have enough cash.' });
+      }
+    } else if (payload.type === 'renegotiate_rent') {
+      if (mainLog?.key) {
+        return String(t(mainLog.key, { ...(mainLog.params || {}) }));
       }
     }
   }
