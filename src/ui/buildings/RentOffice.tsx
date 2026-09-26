@@ -27,7 +27,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const marketRent = currentHousing
     ? calcEconomyPrice(currentHousing.baseRent, economicIndex)
     : player.currentRentPrice;
-  const landlordStandingInfo = isAdvanced ? calcLandlordStanding(player, rules) : null;
+  const landlordStandingInfo = isAdvanced ? calcLandlordStanding(player, rules, turn) : null;
 
   const rentAdvanceCost = rules?.fluctuatingRent && currentHousing && !isAdvanced
     ? calcEconomyPrice(currentHousing.baseRent, economicIndex)
@@ -133,9 +133,15 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                     <button
                       data-testid="btn-renegotiate-rent"
                       onClick={() => onAction({ type: 'renegotiate_rent' })}
-                      style={{ width: '100%', backgroundColor: '#2980b9' }}
+                      disabled={player.hoursRemaining < 1}
+                      style={{
+                        width: '100%',
+                        backgroundColor: player.hoursRemaining < 1 ? '#555' : '#2980b9',
+                        cursor: player.hoursRemaining < 1 ? 'not-allowed' : 'pointer',
+                        opacity: player.hoursRemaining < 1 ? 0.6 : 1
+                      }}
                     >
-                      {t('rentOffice.renegotiateBtn')}
+                      {t('rentOffice.renegotiateBtn')} (⏳ 1 hr, -2 {t('stats.mental', { defaultValue: 'Mental' })})
                     </button>
                     <div style={{ fontSize: '10px', color: '#888', marginTop: '4px' }}>
                       {(landlordStandingInfo?.standing ?? 0) >= 50
