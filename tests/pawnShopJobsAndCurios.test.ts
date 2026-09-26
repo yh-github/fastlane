@@ -131,6 +131,54 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       expect(pawnRes.updatedPlayer.money).toBe(70);
     });
 
+    it('auto-pawns curio or spare parts on the spot when apartment space is full', () => {
+      let player = makePlayer();
+      player.currentHousingId = 'low_cost';
+      // Low cost space cap is 100. Fill inventory knickKnacks up so space is full.
+      // Knickknacks take 2 space each. 50 knickknacks = 100 space (capped/full)
+      player.inventory.knickKnacks = 50;
+      player.money = 50;
+
+      player.pendingAppraisalDilemma = {
+        itemTitle: 'Vintage Clock',
+        options: [
+          { type: 'item', title: 'Curio', description: 'Side deal', itemType: 'knick_knack' },
+          { type: 'item', title: 'Spare Parts', description: 'Salvage parts', itemType: 'spare_parts' }
+        ]
+      };
+
+      const context: any = {
+        campaign,
+        rules,
+        turn: 1,
+        economicIndex: 0,
+        rng: new Random(123),
+        state: { rules, players: [player] }
+      };
+
+      // Selecting Curio when space is full auto-pawns for $15
+      const resCurio = gameReducer(player, { type: 'resolve_appraisal_dilemma', choiceIndex: 0 }, context);
+      expect(resCurio.updatedPlayer.money).toBe(65);
+      expect(resCurio.updatedPlayer.inventory.uninspectedKnickKnacks ?? 0).toBe(0);
+      expect((resCurio.actionLog as any)?.key).toBe('action.job.appraisalChoiceCurioAutoPawn');
+      expect((resCurio.actionLog as any)?.params?.amount).toBe(15);
+      expect(resCurio.updatedPlayer.pendingAppraisalDilemma).toBeNull();
+
+      // Selecting Spare Parts when space is full auto-pawns for $10
+      player.pendingAppraisalDilemma = {
+        itemTitle: 'Vintage Clock',
+        options: [
+          { type: 'item', title: 'Spare Parts', description: 'Salvage parts', itemType: 'spare_parts' }
+        ]
+      };
+      const resParts = gameReducer(player, { type: 'resolve_appraisal_dilemma', choiceIndex: 0 }, context);
+      expect(resParts.updatedPlayer.money).toBe(60);
+      expect(resParts.updatedPlayer.inventory.spareParts ?? 0).toBe(0);
+      expect((resParts.actionLog as any)?.key).toBe('action.job.appraisalChoiceSparePartsAutoPawn');
+      expect((resParts.actionLog as any)?.params?.amount).toBe(10);
+      expect(resParts.updatedPlayer.pendingAppraisalDilemma).toBeNull();
+    });
+
     it('triggers appraisal dilemma with 3 choices for pawn_horologist and 2 choices for pawn_appraiser', () => {
       let player = makePlayer();
       player.experience = 40;

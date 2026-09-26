@@ -3,6 +3,7 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import type { ReplayContext } from '../replayTypes';
 import { requireConfig } from '../rules';
 import { applyForJob, workShift } from '../jobEngine';
+import { calcUsedSpace, calcHousingSpaceCap } from '../statMath';
 
 export function handleApplyAction(
   player: PlayerState,
@@ -68,7 +69,7 @@ export function handleWorkAction(
 export function handleResolveAppraisalDilemmaAction(
   player: PlayerState,
   action: { type: 'resolve_appraisal_dilemma'; choiceIndex: number },
-  _context: ReducerContext
+  context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
@@ -92,12 +93,29 @@ export function handleResolveAppraisalDilemmaAction(
     }
     actionLog = { key: 'action.job.appraisalChoiceStanding', params: { dep: choice.depAmount ?? 0, mental: choice.mentalAmount ?? 0 } };
   } else if (choice.type === 'item') {
+    const isSpaceCapped = !!context.rules?.spaceCapping;
+    const usedSpace = calcUsedSpace(nextPlayer, context.campaign, true);
+    const spaceCap = calcHousingSpaceCap(nextPlayer, context.campaign);
+    const hasSpace = !isSpaceCapped || (usedSpace + 2 <= spaceCap);
+
     if (choice.itemType === 'spare_parts') {
-      nextPlayer.inventory.spareParts = (nextPlayer.inventory.spareParts || 0) + 1;
-      actionLog = { key: 'action.job.appraisalChoiceSpareParts' };
+      if (hasSpace) {
+        nextPlayer.inventory.spareParts = (nextPlayer.inventory.spareParts || 0) + 1;
+        actionLog = { key: 'action.job.appraisalChoiceSpareParts' };
+      } else {
+        // Auto-pawn on the spot for $10 scrap cash
+        nextPlayer.money += 10;
+        actionLog = { key: 'action.job.appraisalChoiceSparePartsAutoPawn', params: { amount: 10 } };
+      }
     } else {
-      nextPlayer.inventory.uninspectedKnickKnacks = (nextPlayer.inventory.uninspectedKnickKnacks || 0) + 1;
-      actionLog = { key: 'action.job.appraisalChoiceCurio' };
+      if (hasSpace) {
+        nextPlayer.inventory.uninspectedKnickKnacks = (nextPlayer.inventory.uninspectedKnickKnacks || 0) + 1;
+        actionLog = { key: 'action.job.appraisalChoiceCurio' };
+      } else {
+        // Auto-pawn on the spot for $15 scrap cash
+        nextPlayer.money += 15;
+        actionLog = { key: 'action.job.appraisalChoiceCurioAutoPawn', params: { amount: 15 } };
+      }
     }
   } else if (choice.type === 'skill') {
     if (choice.techSkillAmount) {
