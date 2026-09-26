@@ -164,6 +164,42 @@ describe('Shopping Engine', () => {
     });
   });
 
+  describe('Clothes Purchase Happiness at QT Clothing', () => {
+    const qtDressClothes: ItemDef = {
+      id: 'dress_clothes',
+      name: 'Dress Clothes',
+      category: 'clothes',
+      subcategory: 'dress',
+      store: 'qt_clothing',
+      basePrice: 125,
+      happinessBonus: 0
+    };
+
+    const zMartDressClothes: ItemDef = {
+      id: 'dress_clothes',
+      name: 'Dress Clothes',
+      category: 'clothes',
+      subcategory: 'dress',
+      store: 'z_mart',
+      basePrice: 90,
+      happinessBonus: 0
+    };
+
+    it('grants +1 happiness when dress clothes are bought at QT Clothing', () => {
+      const player = { money: 500, happiness: 50, inventory: { dressClothesWeeks: 0 } } as unknown as PlayerState;
+      const result = buyItem(player, qtDressClothes);
+      expect(result.success).toBe(true);
+      expect(result.updated.happiness).toBe(51);
+    });
+
+    it('grants 0 happiness when dress clothes are bought at Z-Mart', () => {
+      const player = { money: 500, happiness: 50, inventory: { dressClothesWeeks: 0 } } as unknown as PlayerState;
+      const result = buyItem(player, zMartDressClothes);
+      expect(result.success).toBe(true);
+      expect(result.updated.happiness).toBe(50);
+    });
+  });
+
   describe('Fast Food Social & Time Cost', () => {
     it('grants +1 Social and costs 0 hours on first fast food purchase of the turn', () => {
       const player = {

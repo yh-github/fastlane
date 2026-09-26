@@ -63,6 +63,7 @@ export default function App() {
   if (showTitle) {
     return <TitleScreen onStartGame={(campaignId) => {
       setSelectedCampaignId(campaignId);
+      setIsBuildingModalOpen(false);
       setShowTitle(false);
     }} />;
   }
@@ -89,6 +90,8 @@ export default function App() {
           setGameState(firstTurnState);
           if (firstTurnState.rules.turnStartAtHome && !firstTurnState.players[0].isAi) {
             setIsBuildingModalOpen(true);
+          } else {
+            setIsBuildingModalOpen(false);
           }
           addLog({ key: 'Game started. Good luck!' }, firstTurnState.turn);
         }} 
@@ -108,6 +111,7 @@ export default function App() {
           const randomSeed = generateRandomSeed();
           setGameState(createInitialGameState(campaign!, [{name: 'Player 1', isAi: false, goals: createDefaultGoalAllotment()}], 'node_low_cost', undefined, randomSeed));
           setShowTitle(true);
+          setIsBuildingModalOpen(false);
           setLogs([]);
           setActivePlayerIndex(0);
         }}
