@@ -805,6 +805,8 @@ export function BuildingModal({
       {player?.pendingAppraisalDilemma && (
         <AppraisalDilemmaModal
           dilemma={player.pendingAppraisalDilemma}
+          player={player}
+          campaign={campaign}
           onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_appraisal_dilemma', choiceIndex: idx })}
         />
       )}

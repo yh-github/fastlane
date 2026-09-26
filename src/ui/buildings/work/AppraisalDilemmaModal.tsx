@@ -1,13 +1,21 @@
 import { useTranslation } from 'react-i18next';
-import type { AppraisalDilemmaState } from '../../../engine/gameState';
+import type { AppraisalDilemmaState, PlayerState } from '../../../engine/gameState';
+import type { CampaignBundle } from '../../../engine/dataLoader';
+import { calcUsedSpace, calcHousingSpaceCap } from '../../../engine/statMath';
 
 interface AppraisalDilemmaModalProps {
   dilemma: AppraisalDilemmaState;
   onSelectOption: (index: number) => void;
+  player?: PlayerState;
+  campaign?: CampaignBundle;
 }
 
-export function AppraisalDilemmaModal({ dilemma, onSelectOption }: AppraisalDilemmaModalProps) {
+export function AppraisalDilemmaModal({ dilemma, onSelectOption, player, campaign }: AppraisalDilemmaModalProps) {
   const { t } = useTranslation();
+
+  const hasSpace = player && campaign
+    ? (calcUsedSpace(player, campaign, true) + 2 <= calcHousingSpaceCap(player, campaign))
+    : true;
 
   return (
     <div
@@ -64,6 +72,7 @@ export function AppraisalDilemmaModal({ dilemma, onSelectOption }: AppraisalDile
             let icon = '💵';
             let borderColor = '#22c55e';
             let rewardText = `+$${opt.cashAmount}`;
+            let isItemFull = false;
 
             if (opt.type === 'standing') {
               icon = '⭐';
@@ -71,8 +80,14 @@ export function AppraisalDilemmaModal({ dilemma, onSelectOption }: AppraisalDile
               rewardText = `+${opt.depAmount || 0} Dep`;
             } else if (opt.type === 'item') {
               icon = opt.itemType === 'spare_parts' ? '⚙️' : '🏺';
-              borderColor = '#a855f7';
-              rewardText = opt.itemType === 'spare_parts' ? '1x Spare Parts' : '1x Knick-Knack';
+              if (hasSpace) {
+                borderColor = '#a855f7';
+                rewardText = opt.itemType === 'spare_parts' ? '1x Spare Parts' : '1x Knick-Knack';
+              } else {
+                isItemFull = true;
+                borderColor = '#f59e0b';
+                rewardText = opt.itemType === 'spare_parts' ? 'Auto-Pawn (+$10)' : 'Auto-Pawn (+$15)';
+              }
             } else if (opt.type === 'skill') {
               icon = '🔬';
               borderColor = '#f59e0b';
@@ -112,6 +127,11 @@ export function AppraisalDilemmaModal({ dilemma, onSelectOption }: AppraisalDile
                 </div>
                 <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: '1.3', flex: 1 }}>
                   {t(`appraisalDilemma.option_${opt.type}.desc`, opt.description)}
+                  {isItemFull && (
+                    <div style={{ color: '#f59e0b', fontSize: '0.75rem', marginTop: '6px', fontWeight: 'bold' }}>
+                      ⚠️ {t('appraisalDilemma.apartmentFullNotice', { defaultValue: 'Apartment Full — Will auto-pawn for scrap cash' })}
+                    </div>
+                  )}
                 </div>
                 <div
                   style={{
