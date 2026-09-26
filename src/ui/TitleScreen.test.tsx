@@ -2,12 +2,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { TitleScreen } from './TitleScreen';
 
+const mockCampaigns = [
+  { id: '1990_classic_floppy', name: 'Classic 1990 (Floppy)', description: 'Floppy campaign' },
+  { id: 'qol_improved', name: 'QoL Improved (Recommended)', description: 'QoL campaign' },
+  { id: 'advanced', name: 'Advanced Edition', description: 'Advanced campaign' },
+];
+
 vi.mock('../engine/dataLoader', () => ({
-  getAvailableCampaigns: () => [
-    { id: '1990_classic_floppy', name: 'Classic 1990 (Floppy)', description: 'Floppy campaign' },
-    { id: 'qol_improved', name: 'QoL Improved (Recommended)', description: 'QoL campaign' },
-    { id: 'advanced', name: 'Advanced Edition', description: 'Advanced campaign' },
-  ],
+  getAvailableCampaigns: () => mockCampaigns,
+  loadAvailableCampaigns: async () => mockCampaigns,
   loadCampaign: async (id: string) => ({
     info: { id, name: id },
     config: {

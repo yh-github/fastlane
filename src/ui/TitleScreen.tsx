@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getAvailableCampaigns } from '../engine/dataLoader';
+import { getAvailableCampaigns, loadAvailableCampaigns, type CampaignInfo } from '../engine/dataLoader';
 import { RulesScreen, type TabType } from './RulesScreen';
 
 interface TitleScreenProps {
@@ -9,12 +9,16 @@ interface TitleScreenProps {
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
   const { t, i18n } = useTranslation();
-  const campaigns = getAvailableCampaigns();
+  const [campaigns, setCampaigns] = useState<CampaignInfo[]>(getAvailableCampaigns());
   const defaultCampaign = campaigns.find(c => c.id === 'qol_improved') || campaigns[0];
   const [selectedCampaignId, setSelectedCampaignId] = useState(defaultCampaign.id);
   const [showRules, setShowRules] = useState(false);
   const [rulesInitialTab, setRulesInitialTab] = useState<TabType>('all-diffs');
   const [rulesInitialDiffMode, setRulesInitialDiffMode] = useState<boolean>(true);
+
+  useEffect(() => {
+    loadAvailableCampaigns().then(setCampaigns);
+  }, []);
 
   const selectedCampaign = campaigns.find(c => c.id === selectedCampaignId) || campaigns[0];
 
