@@ -13,7 +13,7 @@ import type {
   EconomyRules,
   MapRules,
 } from './rules';
-import defaultCampaigns from '../campaigns/campaigns.json';
+import defaultCampaigns from '../../public/campaigns/campaigns.json';
 
 // ─── Campaign Data Types ────────────────────────────────────────
 
