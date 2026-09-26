@@ -104,7 +104,9 @@
       "appraisalChoiceCash": "שלשלת לכיס עמלת שמאות מהירה של +${{amount}}.",
       "appraisalChoiceStanding": "חיזקת את המוניטין המקצועי שלך (+{{dep}} אמינות).",
       "appraisalChoiceSpareParts": "השגת ארגז חלקי חילוף שימושיים.",
+      "appraisalChoiceSparePartsAutoPawn": "אין מקום בדירה! חלקי החילוף נמכרו במקום כגרוטאות (+${{amount}}).",
       "appraisalChoiceCurio": "השגת פריט ענתיקה לא בדוק למדף שלך.",
+      "appraisalChoiceCurioAutoPawn": "אין מקום בדירה! הפריט העתיק נמכר במקום כגרוטאות (+${{amount}}).",
       "appraisalChoiceSkill": "חקרת את המנגנון המורכב (+{{tech}} מיומנות טכנולוגיה).",
       "raiseSame": "למה אתה מבקש את אותו השכר בדיוק?",
       "raiseLess": "למה אתה מבקש פחות כסף?",
@@ -217,7 +219,8 @@
       "alreadyOwnComputer": "כבר יש בבעלותך מחשב.",
       "maxEnrolledClasses": "אינך יכול להירשם ליותר מ-{{max}} קורסים בו-זמנית.",
       "cannotTransact": "לא ניתן להשלים את הפעולה.",
-      "notEnoughTimeEducation": "לא נותר זמן ללכת לשיעור."
+      "notEnoughTimeEducation": "לא נותר זמן ללכת לשיעור.",
+      "notEnoughHours": "לא נותר זמן למשא ומתן על שכר הדירה."
     }
   },
   "events": {

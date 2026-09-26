@@ -633,7 +633,6 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
     },
     "tags": [
       "always_hiring",
-      "heavy_physical",
     ],
     "title": "Cook",
   },
