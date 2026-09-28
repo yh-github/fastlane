@@ -68,13 +68,13 @@ export function handleWorkAction(
 
 export function handleResolveAppraisalDilemmaAction(
   player: PlayerState,
-  action: { type: 'resolve_appraisal_dilemma'; choiceIndex: number },
+  action: { type: 'resolve_appraisal_dilemma' | 'resolve_mini_game'; choiceIndex: number },
   context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
 
-  const dilemma = nextPlayer.pendingAppraisalDilemma;
+  const dilemma = nextPlayer.pendingMiniGame || nextPlayer.pendingAppraisalDilemma;
   if (!dilemma || !dilemma.options[action.choiceIndex]) {
     return { nextPlayer, actionLog };
   }
@@ -127,6 +127,7 @@ export function handleResolveAppraisalDilemmaAction(
     actionLog = { key: 'action.job.appraisalChoiceSkill', params: { tech: choice.techSkillAmount ?? 0 } };
   }
 
+  nextPlayer.pendingMiniGame = null;
   nextPlayer.pendingAppraisalDilemma = null;
   return { nextPlayer, actionLog };
 }

@@ -16,8 +16,9 @@ export function getAvailableActions(
   campaign: CampaignBundle, 
   isInside: boolean
 ): ActionChoice[] {
-  if (player.pendingAppraisalDilemma) {
-    return player.pendingAppraisalDilemma.options.map((opt, idx) => ({
+  const miniGame = player.pendingMiniGame || player.pendingAppraisalDilemma;
+  if (miniGame) {
+    return miniGame.options.map((opt, idx) => ({
       label: `Dilemma: ${opt.title}`,
       action: { type: 'resolve_appraisal_dilemma', choiceIndex: idx }
     }));

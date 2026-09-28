@@ -282,8 +282,12 @@ export function BuildingModal({
   const isAdvancedWorkGUI = rules ? (rules.advancedWorkGUI ?? !!rules.usePhysicalMentalConditions) : false;
 
   const itemsHere = getAvailableItemsForBuilding(building, campaign, turn, player.id, gameSeed);
+  const hasPendingMiniGame = !!(player?.pendingMiniGame || player?.pendingAppraisalDilemma);
 
   const handleActionIntercept = async (payload: any) => {
+    if (hasPendingMiniGame && payload.type !== 'resolve_appraisal_dilemma' && payload.type !== 'resolve_mini_game') {
+      return;
+    }
     const actionLog = await onAction(payload);
     const nextMsg = computeClerkResponse(payload, actionLog, building, t, getRandomMessage);
     if (nextMsg) {
@@ -599,7 +603,7 @@ export function BuildingModal({
         </div>
       )}
 
-      {!player?.pendingAppraisalDilemma && (
+      {!hasPendingMiniGame && (
         <button className="building-modal__close" onClick={onClose}>&times;</button>
       )}
       
@@ -691,23 +695,29 @@ export function BuildingModal({
             <button
               data-testid="btn-toggle-work"
               data-action-target={`work-${playerJobHere.id}`}
-              onClick={() => setIsWorkDeckOpen(!isWorkDeckOpen)}
+              onClick={() => !hasPendingMiniGame && setIsWorkDeckOpen(!isWorkDeckOpen)}
+              disabled={hasPendingMiniGame}
               style={{
                 width: '100%',
                 maxWidth: '520px',
                 padding: '9px 16px',
-                background: isWorkDeckOpen
-                  ? 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)'
-                  : 'linear-gradient(145deg, #059669 0%, #047857 100%)',
-                color: '#fff',
-                border: isWorkDeckOpen ? '2px solid #38bdf8' : '2px solid #34d399',
+                background: hasPendingMiniGame
+                  ? '#333'
+                  : (isWorkDeckOpen
+                    ? 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)'
+                    : 'linear-gradient(145deg, #059669 0%, #047857 100%)'),
+                color: hasPendingMiniGame ? '#777' : '#fff',
+                border: hasPendingMiniGame ? '2px solid #555' : (isWorkDeckOpen ? '2px solid #38bdf8' : '2px solid #34d399'),
                 borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '0.92rem',
-                cursor: 'pointer',
-                boxShadow: isWorkDeckOpen
-                  ? '0 0 14px rgba(56, 189, 248, 0.4), 0 3px 10px rgba(0,0,0,0.5)'
-                  : '0 0 14px rgba(52, 211, 153, 0.4), 0 3px 10px rgba(0,0,0,0.5)',
+                cursor: hasPendingMiniGame ? 'not-allowed' : 'pointer',
+                opacity: hasPendingMiniGame ? 0.6 : 1,
+                boxShadow: hasPendingMiniGame
+                  ? 'none'
+                  : (isWorkDeckOpen
+                    ? '0 0 14px rgba(56, 189, 248, 0.4), 0 3px 10px rgba(0,0,0,0.5)'
+                    : '0 0 14px rgba(52, 211, 153, 0.4), 0 3px 10px rgba(0,0,0,0.5)'),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -738,7 +748,7 @@ export function BuildingModal({
       </div>
 
       {/* Flanking Radial Work Cards (Steals screen space from surrounding board, 0% obstruction of store!) - Advanced GUI */}
-      {playerJobHere && isAdvancedWorkGUI && isWorkDeckOpen && (
+      {playerJobHere && isAdvancedWorkGUI && isWorkDeckOpen && !hasPendingMiniGame && (
         <WorkStation
           player={player}
           onAction={handleActionIntercept}
@@ -753,7 +763,7 @@ export function BuildingModal({
       {/* Non-scrollable WORK button on bottom border for Basic mode */}
       {playerJobHere && !isAdvancedWorkGUI && (() => {
         const shiftCost = campaign?.config?.timeRules?.workSessionCost ?? 6;
-        const isWorkDisabled = rules?.allowPartialHours ? player.hoursRemaining <= 0 : player.hoursRemaining < shiftCost;
+        const isWorkDisabled = hasPendingMiniGame || (rules?.allowPartialHours ? player.hoursRemaining <= 0 : player.hoursRemaining < shiftCost);
         const actualHoursWorked = rules?.allowPartialHours && player.hoursRemaining < shiftCost ? player.hoursRemaining : shiftCost;
         const wageEarned = Math.floor((player.currentWage || playerJobHere.baseWage) * actualHoursWorked);
 
@@ -802,12 +812,12 @@ export function BuildingModal({
         );
       })()}
 
-      {player?.pendingAppraisalDilemma && (
+      {hasPendingMiniGame && (
         <AppraisalDilemmaModal
-          dilemma={player.pendingAppraisalDilemma}
+          dilemma={(player.pendingMiniGame || player.pendingAppraisalDilemma)!}
           player={player}
           campaign={campaign}
-          onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_appraisal_dilemma', choiceIndex: idx })}
+          onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_mini_game', choiceIndex: idx })}
         />
       )}
 

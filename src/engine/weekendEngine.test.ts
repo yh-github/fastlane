@@ -204,11 +204,12 @@ describe('Weekend Engine', () => {
       expect(resaleCard).toBeDefined();
 
       // Resolving ticket consumes it and requires money (concessions/incidentals)
-      const resolved = resolveWeekendChoice(updated, ticketCard!.id, new Random(1));
+      const resolved = resolveWeekendChoice(updated, ticketCard!.id, new Random(1), { trackSocial: true } as any);
       expect(resolved.inventory.tickets.baseball).toBe(0);
       expect(resolved.money).toBeLessThan(100);
       expect(resolved.weekendResult?.cost).toBeGreaterThan(0);
-      expect(resolved.social).toBe(22); // +2 social
+      expect(resolved.social).toBeGreaterThanOrEqual(21);
+      expect(resolved.social).toBeLessThanOrEqual(23);
 
       // Resolving resale grants cash and consumes ticket
       const resolvedResale = resolveWeekendChoice(updated, resaleCard!.id, new Random(1));
@@ -315,7 +316,7 @@ describe('Weekend Engine', () => {
       } as unknown as PlayerState;
 
       // Cost 75 -> floor(75 / 25) = 3 social bonus
-      const resolved = resolveWeekendChoice(player, 'random_38', new Random(1), { usePhysicalMentalConditions: true } as any);
+      const resolved = resolveWeekendChoice(player, 'random_38', new Random(1), { usePhysicalMentalConditions: true, trackSocial: true } as any);
       expect(resolved.money).toBe(25); // 100 - 75
       expect(resolved.social).toBe(23); // 20 + 3
       expect(resolved.recentWeekendTiers).toContain('expensive');
@@ -462,13 +463,13 @@ describe('Weekend Engine', () => {
         expect(resWalk.money).toBe(300); // Free ($0)
 
         // Resolve porch chat: +1 social
-        const resChat = resolveWeekendChoice(player, 'free_porch_chat', new Random(1), { usePhysicalMentalConditions: true } as any);
+        const resChat = resolveWeekendChoice(player, 'free_porch_chat', new Random(1), { usePhysicalMentalConditions: true, trackSocial: true } as any);
         expect(resChat.social).toBe(21);
         expect(resChat.money).toBe(300); // Free ($0)
       });
 
       it('scales ticket rewards by ticket quantity and differentiates by price tier', () => {
-        // Theatre (30 base): 2 tickets = +2 Mental, +2 Social
+        // Theatre (30 base): 2 tickets = base 2 Mental, 2 Social (range min 1, max 3)
         const playerTheatre = {
           id: 'p1',
           money: 100,
@@ -477,10 +478,12 @@ describe('Weekend Engine', () => {
 
         const { cards: theatreCards } = generateWeekendChoices(playerTheatre, 4, fullMockWeekendData, new Random(1));
         const theatreCard = theatreCards.find(c => c.type === 'ticket')!;
-        expect(theatreCard.potentialBonusMin).toBe(2); // Mental
-        expect(theatreCard.potentialSecondaryBonusMin).toBe(2); // Social
+        expect(theatreCard.potentialBonusMin).toBe(1); // Mental min
+        expect(theatreCard.potentialBonusMax).toBe(3); // Mental max
+        expect(theatreCard.potentialSecondaryBonusMin).toBe(1); // Social min
+        expect(theatreCard.potentialSecondaryBonusMax).toBe(3); // Social max
 
-        // Baseball (45 base): 3+ tickets = +3 Mental, +4 Social
+        // Baseball (45 base): 3+ tickets = base 3 Mental, 4 Social (Mental min 2, max 4; Social min 3, max 5)
         const playerBaseball = {
           id: 'p2',
           money: 100,
@@ -489,8 +492,10 @@ describe('Weekend Engine', () => {
 
         const { cards: bbCards } = generateWeekendChoices(playerBaseball, 4, fullMockWeekendData, new Random(1));
         const bbCard = bbCards.find(c => c.type === 'ticket')!;
-        expect(bbCard.potentialBonusMin).toBe(3); // Mental
-        expect(bbCard.potentialSecondaryBonusMin).toBe(4); // Social
+        expect(bbCard.potentialBonusMin).toBe(2); // Mental min
+        expect(bbCard.potentialBonusMax).toBe(4); // Mental max
+        expect(bbCard.potentialSecondaryBonusMin).toBe(3); // Social min
+        expect(bbCard.potentialSecondaryBonusMax).toBe(5); // Social max
       });
 
       it('clears all held tickets from inventory even when skipping the event for another card', () => {

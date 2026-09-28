@@ -19,6 +19,7 @@ export function handleRentTransactionAction(
     nextPlayer.rentDebt = 0;
     nextPlayer.turnFlags.rentPaidThisTurn = true;
     nextPlayer.rentPaymentsMade = (nextPlayer.rentPaymentsMade || 0) + 1;
+    nextPlayer.rentPaymentsAtCurrentRate = (nextPlayer.rentPaymentsAtCurrentRate || 0) + 1;
     // Actually extend the rentPaidUntilWeek counter
     if (nextPlayer.rentPaidUntilWeek <= context.turn) {
       // If they were behind, paying resets them to end of current month
@@ -65,6 +66,7 @@ export function handleMoveApartmentAction(
         nextPlayer.rentExtensionActive = false;
         nextPlayer.turnFlags.rentPaidThisTurn = true;
         nextPlayer.rentPaymentsMade = (nextPlayer.rentPaymentsMade || 0) + 1;
+        nextPlayer.rentPaymentsAtCurrentRate = 1;
         if (context.rules.trackMess) {
           nextPlayer.mess = 3 + nextPlayer.inventory.appliances.length;
         }
@@ -91,6 +93,7 @@ export function handlePayRentAdvanceAction(
     nextPlayer.rentExtensionActive = false;
     nextPlayer.turnFlags.rentPaidThisTurn = true;
     nextPlayer.rentPaymentsMade = (nextPlayer.rentPaymentsMade || 0) + 1;
+    nextPlayer.rentPaymentsAtCurrentRate = (nextPlayer.rentPaymentsAtCurrentRate || 0) + 1;
     actionLog = { key: 'action.rent.advancePaid', params: { amount: action.amount } };
   } else {
     actionLog = { key: 'action.error.notEnoughMoneyRentAdvance' };
@@ -172,6 +175,11 @@ export function handleRenegotiateRentAction(
     return { nextPlayer, actionLog };
   }
 
+  if ((nextPlayer.rentPaymentsAtCurrentRate || 0) < 1) {
+    actionLog = { key: 'action.rent.mustPayFirst' };
+    return { nextPlayer, actionLog };
+  }
+
   if (nextPlayer.hoursRemaining < 1) {
     actionLog = { key: 'action.error.notEnoughHours' };
     return { nextPlayer, actionLog };
@@ -191,12 +199,14 @@ export function handleRenegotiateRentAction(
   if (standing >= 50) {
     // Full reduction to market price; gain 1 mental (net -1)
     nextPlayer.currentRentPrice = marketRent;
+    nextPlayer.rentPaymentsAtCurrentRate = 0;
     nextPlayer = applyMentalChange(nextPlayer, 1, context.campaign?.config?.statRules);
     actionLog = { key: 'action.rent.renegotiateApproved', params: { newRent: marketRent, oldRent: currentRent, standing } };
   } else if (standing >= 35) {
     // Partial compromise; gain 1 mental (net -1)
     const compromiseRent = currentRent - Math.floor((currentRent - marketRent) * 0.5);
     nextPlayer.currentRentPrice = compromiseRent;
+    nextPlayer.rentPaymentsAtCurrentRate = 0;
     nextPlayer = applyMentalChange(nextPlayer, 1, context.campaign?.config?.statRules);
     actionLog = { key: 'action.rent.renegotiateCompromise', params: { newRent: compromiseRent, oldRent: currentRent, standing } };
   } else {

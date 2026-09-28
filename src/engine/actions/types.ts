@@ -33,6 +33,7 @@ export type GameAction =
   | { type: 'appliance_maintenance'; applianceId: string; option: 'diy' | 'repairman' | 'throw_out' }
   | { type: 'pawn_knick_knacks'; count?: number; valuePerItem: number; curioId?: string }
   | { type: 'resolve_appraisal_dilemma'; choiceIndex: number }
+  | { type: 'resolve_mini_game'; choiceIndex: number }
   | { type: 'rummage_pawn_shop' }
   | { type: 'buy_rummage_item'; itemIndex?: number }
   | { type: 'buy_pawn_rummage_item'; itemIndex?: number }

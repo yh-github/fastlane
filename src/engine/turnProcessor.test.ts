@@ -575,6 +575,7 @@ describe('Turn Processor', () => {
       let state = createTestGameState(mockCampaign, [{ name: 'Player1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }], 'node_low_cost');
       state.turn = 1;
       state.rules.usePhysicalMentalConditions = true;
+      state.rules.trackSocial = true;
       state.players[0].dependability = 50;
       state.players[0].social = 51; // Decays by -1 at turn start to 50 -> Offset = floor(50/25) = 2
       state.players[0].currentJobId = 'sales_manager';

@@ -45,6 +45,7 @@ const mockCampaign: CampaignBundle = {
     gameRules: {
       usePhysicalMentalConditions: true,
       trackMess: true,
+      trackSocial: true,
       spaceCapping: true,
       turnStartAtHome: true,
       conditionResolution: 0.5

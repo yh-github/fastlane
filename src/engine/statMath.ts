@@ -763,13 +763,13 @@ export function calcLandlordStanding(
   rules?: GameRules,
   currentTurn?: number
 ): { standing: number; breakdown: LandlordStandingBreakdown[] } {
-  let baseline = 50;
+  let baseline = 35;
   let baselineLabel = 'Baseline';
   if (player.currentHousingId === 'penthouse') {
-    baseline = 75;
+    baseline = 70;
     baselineLabel = 'Penthouse Luxury Baseline';
   } else if (player.currentHousingId === 'security') {
-    baseline = 60;
+    baseline = 55;
     baselineLabel = 'Security Apartment Baseline';
   } else if (player.currentHousingId === 'street') {
     baseline = 20;
@@ -828,9 +828,9 @@ export function calcLandlordStanding(
   }
 
   if (rules?.trackMess && player.mess !== undefined) {
-    if (player.mess <= 3) {
-      standing += 10;
-      breakdown.push({ label: 'Clean & Tidy Apartment', value: 10 });
+    if (player.mess <= 2) {
+      standing += 5;
+      breakdown.push({ label: 'Clean & Tidy Apartment', value: 5 });
     } else {
       const messPenalty = -Math.min(30, Math.floor(player.mess * 1.5));
       standing += messPenalty;
@@ -838,18 +838,20 @@ export function calcLandlordStanding(
     }
   }
 
-  const social = player.social || 20;
-  if (social > 20) {
-    const socialBonus = Math.min(20, Math.floor((social - 20) / 4));
-    if (socialBonus > 0) {
-      standing += socialBonus;
-      breakdown.push({ label: `Social Standing (${social})`, value: socialBonus });
+  if (rules?.trackSocial && player.social !== undefined) {
+    const social = player.social;
+    if (social > 25) {
+      const socialBonus = Math.min(15, Math.floor((social - 25) / 5));
+      if (socialBonus > 0) {
+        standing += socialBonus;
+        breakdown.push({ label: `Social Standing (${social})`, value: socialBonus });
+      }
     }
   }
 
-  const dependability = player.dependability || 20;
-  if (dependability > 20) {
-    const depBonus = Math.min(10, Math.floor((dependability - 20) / 5));
+  const dependability = player.dependability || 0;
+  if (dependability > 25) {
+    const depBonus = Math.min(10, Math.floor((dependability - 25) / 5));
     if (depBonus > 0) {
       standing += depBonus;
       breakdown.push({ label: `Dependability (${dependability})`, value: depBonus });

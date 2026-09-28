@@ -33,6 +33,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     bookSetCompletedThisTurn: false,
     lotteryHappinessGranted: false,
     ticketHappinessGranted: false,
+    ticketBonusCount: 0,
     mentalDropsThisTurn: 0,
     firedLocationsThisTurn: [],
     workMistakesThisTurn: 0,
@@ -100,6 +101,7 @@ export function createPlayerState(
     currentHousingId: 'low_cost',
     currentRentPrice: 325, // Default base for low_cost
     rentPaidUntilWeek: 4,
+    rentPaymentsAtCurrentRate: 0,
     rentExtensionActive: false,
     rentExtensionsReceived: 0,
     rentExtensionsDeniedPermanently: false,
@@ -126,7 +128,7 @@ export function createPlayerState(
     ...(config.gameRules?.usePhysicalMentalConditions ? (() => {
       const startMess = config.gameRules?.trackMess ? 3 : 0;
       const startSocial = config.statRules?.startingSocial ?? 9;
-      const initMaxMental = calcMaxMental(startMess, startSocial, 0, undefined, config.statRules);
+      const initMaxMental = calcMaxMental(startMess, config.gameRules?.trackSocial ? startSocial : 0, 0, undefined, config.statRules);
       const initMaxPhys = config.statRules?.initialPhysicalMax ?? 50;
       return {
         physicalConditionMax: initMaxPhys,
@@ -134,7 +136,7 @@ export function createPlayerState(
         physicalCondition: config.statRules?.startingPhysicalCondition ?? initMaxPhys,
         mentalConditionMax: initMaxMental,
         mentalCondition: config.statRules?.startingMentalCondition ?? initMaxMental,
-        social: startSocial,
+        ...(config.gameRules?.trackSocial ? { social: startSocial } : {}),
         resilienceBonus: 0,
         lifestyle: 0,
         mistakesByLocation: {},

@@ -279,11 +279,11 @@ function buildTicketCards(
     costMin,
     costMax,
     targetStat: 'mental',
-    potentialBonusMin: mental,
-    potentialBonusMax: mental,
+    potentialBonusMin: Math.max(1, mental - 1),
+    potentialBonusMax: mental + 1,
     secondaryStat: 'social',
-    potentialSecondaryBonusMin: social,
-    potentialSecondaryBonusMax: social,
+    potentialSecondaryBonusMin: Math.max(1, social - 1),
+    potentialSecondaryBonusMax: social + 1,
     ticketCount
   };
 
@@ -802,8 +802,10 @@ export function resolveWeekendChoice(
   // 4. Handle Free Porch Chat
   if (card.id === 'free_porch_chat') {
     const socialGain = 1;
-    updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + socialGain);
-    modifications.push({ stat: 'social', diff: socialGain });
+    if (rules?.trackSocial) {
+      updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + socialGain);
+      modifications.push({ stat: 'social', diff: socialGain });
+    }
 
     if (updatedPlayer.inventory?.tickets) {
       updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
@@ -862,8 +864,14 @@ export function resolveWeekendChoice(
       modifications.push({ stat: 'money', diff: -cost });
     }
 
-    const mentalBonus = card.potentialBonusMin;
-    const socialBonus = card.potentialSecondaryBonusMin || 0;
+    const mentalBonus = (card.potentialBonusMax && card.potentialBonusMax > card.potentialBonusMin)
+      ? Math.floor(rng.next() * (card.potentialBonusMax - card.potentialBonusMin + 1)) + card.potentialBonusMin
+      : card.potentialBonusMin;
+    const secMin = card.potentialSecondaryBonusMin || 0;
+    const secMax = card.potentialSecondaryBonusMax || secMin;
+    const socialBonus = (secMax > secMin)
+      ? Math.floor(rng.next() * (secMax - secMin + 1)) + secMin
+      : secMin;
 
     if (rules?.usePhysicalMentalConditions) {
       const maxMental = updatedPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
@@ -874,7 +882,7 @@ export function resolveWeekendChoice(
       modifications.push({ stat: 'happiness', diff: mentalBonus });
     }
 
-    if (socialBonus > 0) {
+    if (rules?.trackSocial && socialBonus > 0) {
       updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + socialBonus);
       modifications.push({ stat: 'social', diff: socialBonus });
     }
@@ -947,8 +955,10 @@ export function resolveWeekendChoice(
         updatedPlayer.dependability = Math.min(100, (updatedPlayer.dependability || 20) + bonusModifier);
         modifications.push({ stat: 'dependability', diff: bonusModifier });
       } else if (card.targetStat === 'social') {
-        updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + bonusModifier);
-        modifications.push({ stat: 'social', diff: bonusModifier });
+        if (rules?.trackSocial) {
+          updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + bonusModifier);
+          modifications.push({ stat: 'social', diff: bonusModifier });
+        }
       } else if (card.targetStat === 'physical') {
         if (rules?.usePhysicalMentalConditions) {
           const maxPhysical = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;

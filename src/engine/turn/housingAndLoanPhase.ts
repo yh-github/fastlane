@@ -25,6 +25,7 @@ export function processHousingAndLoanPhase(
           if (standing < 40) {
             const oldRent = p.currentRentPrice;
             p.currentRentPrice = marketRent;
+            p.rentPaymentsAtCurrentRate = 0;
             p.turnEvents.push({ key: 'events.rent.raised', params: { newRent: marketRent, oldRent } });
           }
         }
@@ -43,6 +44,7 @@ export function processHousingAndLoanPhase(
           if (p.currentHousingId !== 'low_cost') {
             p.currentHousingId = 'low_cost';
             p.currentRentPrice = 325;
+            p.rentPaymentsAtCurrentRate = 0;
             p.turnEvents.push({ key: 'events.rent.evicted' });
           }
         } else if (p.rentDebt > monthRent) {
@@ -51,10 +53,16 @@ export function processHousingAndLoanPhase(
       }
     }
   } else if (p.rentPaidUntilWeek <= state.turn + 1) { 
+    const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
+    const baseRent = curHousing?.baseRent ?? (p.currentHousingId === 'security' ? 475 : 325);
+    const rentAmount = state.rules.usePhysicalMentalConditions
+      ? p.currentRentPrice
+      : (state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice);
+    const debtAmount = p.rentDebt || 0;
     if (p.rentExtensionsDeniedPermanently) {
-      p.turnEvents.push({ key: 'events.rent.due_nodenied' });
+      p.turnEvents.push({ key: 'events.rent.due_nodenied', params: { amount: rentAmount, debt: debtAmount } });
     } else {
-      p.turnEvents.push({ key: 'events.rent.due' });
+      p.turnEvents.push({ key: 'events.rent.due', params: { amount: rentAmount, debt: debtAmount } });
     }
   }
 

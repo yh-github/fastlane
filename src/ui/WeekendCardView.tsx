@@ -97,10 +97,14 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
       return `+1 👥 (${t('weekendScreen.social', { defaultValue: 'Social' })})`;
     }
     if (card.type === 'ticket' && card.secondaryStat) {
-      const p1 = card.potentialBonusMin;
-      const p2 = card.potentialSecondaryBonusMin;
+      const p1 = (card.potentialBonusMax !== undefined && card.potentialBonusMax !== card.potentialBonusMin)
+        ? `+${card.potentialBonusMin}..+${card.potentialBonusMax}`
+        : `+${card.potentialBonusMin}`;
+      const p2 = (card.potentialSecondaryBonusMax !== undefined && card.potentialSecondaryBonusMax !== card.potentialSecondaryBonusMin)
+        ? `+${card.potentialSecondaryBonusMin}..+${card.potentialSecondaryBonusMax}`
+        : `+${card.potentialSecondaryBonusMin}`;
       const countNote = card.ticketCount && card.ticketCount > 1 ? ` (${card.ticketCount} Tickets)` : '';
-      return `+${p1} 🧠, +${p2} 👥${countNote}`;
+      return `${p1} 🧠, ${p2} 👥${countNote}`;
     }
     if (!card.targetStat || card.potentialBonusMax === 0) {
       return t('weekendScreen.noBonusStat', { defaultValue: 'No extra bonus' });
