@@ -206,6 +206,8 @@ export interface PlayerState {
   rentExtensionsAsked?: number;
   /** Number of times player asked to renegotiate rent */
   rentRenegotiationsAsked?: number;
+  /** Number of rent payments made at the current rent rate (must be >= 1 to renegotiate) */
+  rentPaymentsAtCurrentRate?: number;
 
   // ── Education ──
   /** IDs of completed degrees */
@@ -269,8 +271,10 @@ export interface PlayerState {
   skillTech?: number;
   skillMgmt?: number;
 
-  /** Pending appraisal dilemma options when working as Counter Appraiser */
-  pendingAppraisalDilemma?: AppraisalDilemmaState | null;
+  /** Pending mini-game encounter state (e.g. Pawn Shop appraisal dilemma) */
+  pendingMiniGame?: MiniGameState | null;
+  /** @deprecated Backwards-compatible alias for pendingMiniGame */
+  pendingAppraisalDilemma?: MiniGameState | null;
 
   /** Pending rummaged pawn shop items offered for 1-item purchase */
   pendingPawnRummage?: ItemDef[] | null;
@@ -378,7 +382,7 @@ export interface OwnedCurio {
   icon?: string;
 }
 
-export interface AppraisalDilemmaOption {
+export interface MiniGameOption {
   type: 'cash' | 'standing' | 'item' | 'skill';
   title: string;
   description: string;
@@ -389,10 +393,16 @@ export interface AppraisalDilemmaOption {
   itemType?: 'knick_knack' | 'spare_parts';
 }
 
-export interface AppraisalDilemmaState {
-  itemTitle: string;
-  options: AppraisalDilemmaOption[];
+export type AppraisalDilemmaOption = MiniGameOption;
+
+export interface MiniGameState {
+  gameType?: string;
+  itemTitle?: string;
+  title?: string;
+  options: MiniGameOption[];
 }
+
+export type AppraisalDilemmaState = MiniGameState;
 
 export interface FastFoodEntry {
   itemId: string;
@@ -478,6 +488,8 @@ export interface TurnFlags {
   lotteryHappinessGranted?: boolean;
   /** Whether ticket happiness bonus (+2) was already granted this turn */
   ticketHappinessGranted?: boolean;
+  /** Number of ticket purchases granting mental bonus this turn (capped up to 4) */
+  ticketBonusCount?: number;
   /** Total mental condition drops this turn */
   mentalDropsThisTurn?: number;
   /** Locations the player was fired from this turn (causes probation penalty) */

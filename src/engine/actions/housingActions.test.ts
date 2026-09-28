@@ -23,19 +23,19 @@ describe('Housing Actions & Rent Renegotiation', () => {
 
   it('calculates Landlord Standing score with penalties and bonuses', () => {
     let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
-    // Baseline: 50, start mess is 3 (clean bonus +10) -> 60
+    // Baseline: 35, start mess is 3 (mess penalty -4) -> 31
     const standingInitial = calcLandlordStanding(player, { usePhysicalMentalConditions: true, trackMess: true } as any);
-    expect(standingInitial.standing).toBe(60);
+    expect(standingInitial.standing).toBe(31);
 
     // Extensions penalty
     player.rentExtensionsReceived = 2; // -10
     const standingWithExtensions = calcLandlordStanding(player, { usePhysicalMentalConditions: true, trackMess: true } as any);
-    expect(standingWithExtensions.standing).toBe(50);
+    expect(standingWithExtensions.standing).toBe(21);
 
     // Mess penalty
     player.mess = 10; // no clean bonus (+0), -15 mess penalty
     const standingMess = calcLandlordStanding(player, { usePhysicalMentalConditions: true, trackMess: true } as any);
-    expect(standingMess.standing).toBe(25); // 50 - 10 - 15 = 25
+    expect(standingMess.standing).toBe(10); // 35 - 10 - 15 = 10
 
     // Debt penalty
     player.rentDebt = 100; // -25
@@ -46,7 +46,9 @@ describe('Housing Actions & Rent Renegotiation', () => {
   it('approves full rent reduction to market rent when standing >= 50', () => {
     let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
     player.currentRentPrice = 300;
-    player.mess = 2; // clean bonus -> standing 60
+    player.rentPaymentsAtCurrentRate = 1;
+    player.rentPaymentsMade = 5; // +15 payment bonus
+    player.mess = 2; // clean bonus +5 -> standing: 35 + 15 + 5 = 55 (>= 50)
 
     // Economic index is negative -> market rent drops to e.g. 240
     const context: ReducerContext = {
@@ -68,7 +70,9 @@ describe('Housing Actions & Rent Renegotiation', () => {
   it('offers partial compromise when 35 <= standing < 50', () => {
     let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
     player.currentRentPrice = 300;
-    player.mess = 6; // mess penalty: -9, baseline 50 -> standing 41
+    player.rentPaymentsAtCurrentRate = 1;
+    player.rentPaymentsMade = 4; // +12 payment bonus
+    player.mess = 3; // mess penalty -4 -> standing before ask: 35 + 12 - 4 = 43; after ask penalty (-5): 38 (35 <= standing < 50)
 
     const context: ReducerContext = {
       campaign: dummyCampaign,
@@ -89,8 +93,9 @@ describe('Housing Actions & Rent Renegotiation', () => {
   it('denies rent reduction when standing < 35', () => {
     let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
     player.currentRentPrice = 300;
+    player.rentPaymentsAtCurrentRate = 1;
     player.rentExtensionsReceived = 4; // -20
-    player.mess = 10; // -15 -> standing 15
+    player.mess = 10; // -15 -> standing 0 (< 35)
 
     const context: ReducerContext = {
       campaign: dummyCampaign,
@@ -105,6 +110,27 @@ describe('Housing Actions & Rent Renegotiation', () => {
     expect(res.nextPlayer.currentRentPrice).toBe(300); // Unchanged
     expect(res.actionLog).toMatchObject({
       key: 'action.rent.renegotiateDenied'
+    });
+  });
+
+  it('blocks rent renegotiation if player has not paid rent at current rate yet', () => {
+    let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+    player.currentRentPrice = 300;
+    player.rentPaymentsAtCurrentRate = 0;
+
+    const context: ReducerContext = {
+      campaign: dummyCampaign,
+      rules: { usePhysicalMentalConditions: true, trackMess: true } as any,
+      turn: 4,
+      economicIndex: -20,
+      rng: new Random(1),
+      state: {} as any
+    };
+
+    const res = handleRenegotiateRentAction(player, { type: 'renegotiate_rent' }, context);
+    expect(res.nextPlayer.currentRentPrice).toBe(300);
+    expect(res.actionLog).toMatchObject({
+      key: 'action.rent.mustPayFirst'
     });
   });
 });

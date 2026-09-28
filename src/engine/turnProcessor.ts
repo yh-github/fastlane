@@ -83,9 +83,12 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         p.mess = Math.min(maxMess, (p.mess || 0) + growth);
       }
       if (state.rules.usePhysicalMentalConditions) {
-        const minSocial = campaign.config.statRules?.minSocial ?? 1;
-        p.social = Math.max(minSocial, (p.social ?? 9) - 1);
-        p.mentalConditionMax = calcMaxMental(p.mess || 0, p.social ?? 9, p.resilienceBonus || 0, p, campaign.config.statRules, campaign);
+        if (state.rules.trackSocial) {
+          const minSocial = campaign.config.statRules?.minSocial ?? 1;
+          p.social = Math.max(minSocial, (p.social ?? 9) - 1);
+        }
+        const currentSocial = state.rules.trackSocial ? (p.social ?? 9) : 0;
+        p.mentalConditionMax = calcMaxMental(p.mess || 0, currentSocial, p.resilienceBonus || 0, p, campaign.config.statRules, campaign);
         if (p.mentalCondition !== undefined && p.mentalCondition > p.mentalConditionMax) {
           p.mentalCondition = p.mentalConditionMax;
         }
@@ -142,9 +145,11 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
         if (physDiff !== 0) {
           maintenanceMods.push({ stat: 'physical', diff: physDiff });
         }
-        const socDiff = (p.social ?? 0) - preTurnStats.social;
-        if (socDiff !== 0) {
-          maintenanceMods.push({ stat: 'social', diff: socDiff });
+        if (state.rules.trackSocial) {
+          const socDiff = (p.social ?? 0) - preTurnStats.social;
+          if (socDiff !== 0) {
+            maintenanceMods.push({ stat: 'social', diff: socDiff });
+          }
         }
       } else {
         const hapDiff = p.happiness - preTurnStats.happiness;

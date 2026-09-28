@@ -1,4 +1,4 @@
-import { type PlayerState, type GameRules, type GameEvent, type AppraisalDilemmaOption } from './gameState';
+import { type PlayerState, type GameRules, type GameEvent, type MiniGameOption, type MiniGameState } from './gameState';
 import { spendHours } from './timeManager';
 import { processRentDebt } from './economyEngine';
 import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, roundToResolution } from './statMath';
@@ -1011,7 +1011,7 @@ export function workShift(
       }
     }
 
-    if (isAdvanced && mode !== 'look_busy' && (job.id === 'pawn_appraiser' || job.id === 'pawn_horologist') && !updated.pendingAppraisalDilemma) {
+    if (isAdvanced && mode !== 'look_busy' && (job.id === 'pawn_appraiser' || job.id === 'pawn_horologist') && !updated.pendingMiniGame && !updated.pendingAppraisalDilemma) {
       const dilemmaRoll = resolveDecision(replay, `appraisal_dilemma_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
       if (dilemmaRoll < 0.15) {
         const isHorologist = job.id === 'pawn_horologist';
@@ -1035,7 +1035,7 @@ export function workShift(
 
         const cashAmount = 18 + Math.floor(resolveDecision(replay, `appraisal_cash_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random())) * 15);
 
-        const candidateOptions: AppraisalDilemmaOption[] = [
+        let candidateOptions: MiniGameOption[] = [
           {
             type: 'cash',
             title: isHorologist ? 'Quick Escapement Adjustment' : 'Fast Cash Commission',
@@ -1070,6 +1070,10 @@ export function workShift(
           }
         ];
 
+        if ((updated.skillTech || 0) >= 10) {
+          candidateOptions = candidateOptions.filter(o => o.type !== 'skill');
+        }
+
         // Pick distinct choices: 2 for appraiser, 3 for horologist
         const roll1 = resolveDecision(replay, `dilemma_opt1_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
         const idx1 = Math.floor(roll1 * candidateOptions.length);
@@ -1079,9 +1083,9 @@ export function workShift(
 
         const chosenOptions = [candidateOptions[idx1], candidateOptions[idx2]];
 
-        if (isHorologist) {
+        if (isHorologist && candidateOptions.length > 2) {
           const roll3 = resolveDecision(replay, `dilemma_opt3_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()));
-          const availableIndices = [0, 1, 2, 3, 4].filter(i => i !== idx1 && i !== idx2);
+          const availableIndices = candidateOptions.map((_, i) => i).filter(i => i !== idx1 && i !== idx2);
           const idx3 = availableIndices[Math.floor(roll3 * availableIndices.length)];
           chosenOptions.push(candidateOptions[idx3]);
         }
@@ -1102,12 +1106,16 @@ export function workShift(
           } else if (chosenOptions[0].type === 'skill') {
             updated.skillTech = Math.min(10, (updated.skillTech || 0) + (chosenOptions[0].techSkillAmount || 0.25));
           }
+          updated.pendingMiniGame = null;
           updated.pendingAppraisalDilemma = null;
         } else {
-          updated.pendingAppraisalDilemma = {
+          const miniGameState: MiniGameState = {
+            gameType: 'appraisal_dilemma',
             itemTitle,
             options: chosenOptions
           };
+          updated.pendingMiniGame = miniGameState;
+          updated.pendingAppraisalDilemma = miniGameState;
           messages.push({ key: 'action.job.appraisalDilemmaTriggered' });
         }
       }

@@ -22,7 +22,8 @@ describe('Shopping Engine', () => {
     subcategory: 'fast_food',
     store: 'monolith_burgers',
     basePrice: 89,
-    happinessBonus: 1
+    happinessBonus: 1,
+    effects: [{ trigger: 'on_purchase', stat: 'social', value: 1 }]
   };
 
   const mockAppliance: ItemDef = {
@@ -201,7 +202,23 @@ describe('Shopping Engine', () => {
   });
 
   describe('Fast Food Social & Time Cost', () => {
-    it('grants +1 Social and costs 0 hours on first fast food purchase of the turn', () => {
+    it('grants +1 Social and costs 0 hours on first fast food purchase of the turn when trackSocial is enabled', () => {
+      const player = {
+        money: 100,
+        social: 15,
+        hoursRemaining: 30,
+        inventory: { fastFoodItems: [] },
+        turnFlags: { fastFoodMealsThisTurn: 0 }
+      } as unknown as PlayerState;
+
+      const result = buyItem(player, mockBurger, { trackSocial: true });
+      expect(result.success).toBe(true);
+      expect(result.updated.social).toBe(16); // +1 Social
+      expect(result.updated.hoursRemaining).toBe(30); // 0 hours spent on 1st buy
+      expect(result.updated.turnFlags.fastFoodMealsThisTurn).toBe(1);
+    });
+
+    it('does NOT track social when trackSocial is disabled (base mode)', () => {
       const player = {
         money: 100,
         social: 15,
@@ -212,9 +229,8 @@ describe('Shopping Engine', () => {
 
       const result = buyItem(player, mockBurger);
       expect(result.success).toBe(true);
-      expect(result.updated.social).toBe(16); // +1 Social
-      expect(result.updated.hoursRemaining).toBe(30); // 0 hours spent on 1st buy
-      expect(result.updated.turnFlags.fastFoodMealsThisTurn).toBe(1);
+      expect(result.updated.social).toBe(15); // Unchanged in base mode
+      expect(result.updated.hoursRemaining).toBe(30);
     });
 
     it('grants +1 Social and consumes 1 hour on 2nd fast food purchase of the turn', () => {
@@ -226,7 +242,7 @@ describe('Shopping Engine', () => {
         turnFlags: { fastFoodMealsThisTurn: 1 }
       } as unknown as PlayerState;
 
-      const result = buyItem(player, mockBurger);
+      const result = buyItem(player, mockBurger, { trackSocial: true });
       expect(result.success).toBe(true);
       expect(result.updated.social).toBe(17); // +1 Social
       expect(result.updated.hoursRemaining).toBe(29); // 1 hour spent on 2nd buy
@@ -242,7 +258,7 @@ describe('Shopping Engine', () => {
         turnFlags: { fastFoodMealsThisTurn: 1 }
       } as unknown as PlayerState;
 
-      const result = buyItem(player, mockBurger);
+      const result = buyItem(player, mockBurger, { trackSocial: true });
       expect(result.success).toBe(false);
       expect(result.message.key).toBe('action.error.notEnoughTimeBuy');
       expect(result.updated.money).toBe(100);

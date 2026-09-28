@@ -22,6 +22,7 @@
     "usePhysicalMentalConditions": true,
     "turnStartAtHome": true,
     "trackMess": true,
+    "trackSocial": true,
     "maskEarlyJobRejections": false,
     "percentageEducation": true,
     "depthScaledDegreeBonus": true,

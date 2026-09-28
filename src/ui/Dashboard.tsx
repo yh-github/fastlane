@@ -313,7 +313,9 @@ export function Dashboard({
                     isActive={activeLogFilter === 'mental'}
                     onClick={() => handleFilterToggle('mental')}
                   />
-                  <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
+                  {gameState.rules.trackSocial && (
+                    <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
+                  )}
                   {gameState.rules.trackMess && (
                     <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
                   )}
@@ -591,7 +593,9 @@ export function Dashboard({
               isActive={activeLogFilter === 'mental'} 
               onClick={() => handleFilterToggle('mental')} 
             />
-            <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
+            {gameState.rules.trackSocial && (
+              <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
+            )}
             {gameState.rules.trackMess && (
               <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
             )}

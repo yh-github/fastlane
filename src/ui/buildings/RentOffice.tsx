@@ -137,24 +137,38 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                     <div style={{ fontSize: '11px', color: '#2ecc71', marginBottom: '4px' }}>
                       💰 {t('rentOffice.renegotiateSavings', { savings: player.currentRentPrice - marketRent })}
                     </div>
-                    <button
-                      data-testid="btn-renegotiate-rent"
-                      onClick={() => onAction({ type: 'renegotiate_rent' })}
-                      disabled={player.hoursRemaining < 1}
-                      style={{
-                        width: '100%',
-                        backgroundColor: player.hoursRemaining < 1 ? '#555' : '#2980b9',
-                        cursor: player.hoursRemaining < 1 ? 'not-allowed' : 'pointer',
-                        opacity: player.hoursRemaining < 1 ? 0.6 : 1
-                      }}
-                    >
-                      {t('rentOffice.renegotiateBtn')} (⏳ 1 hr, -2 {t('stats.mental', { defaultValue: 'Mental' })})
-                    </button>
-                    <div style={{ fontSize: '10px', color: '#888', marginTop: '4px' }}>
-                      {(landlordStandingInfo?.standing ?? 0) >= 50
-                        ? t('rentOffice.standingGood')
-                        : ((landlordStandingInfo?.standing ?? 0) >= 35 ? t('rentOffice.standingFair') : t('rentOffice.standingPoor'))}
-                    </div>
+                    {(() => {
+                      const mustPayFirst = (player.rentPaymentsAtCurrentRate || 0) < 1;
+                      const isDisabled = player.hoursRemaining < 1 || mustPayFirst;
+                      return (
+                        <>
+                          <button
+                            data-testid="btn-renegotiate-rent"
+                            onClick={() => onAction({ type: 'renegotiate_rent' })}
+                            disabled={isDisabled}
+                            style={{
+                              width: '100%',
+                              backgroundColor: isDisabled ? '#555' : '#2980b9',
+                              cursor: isDisabled ? 'not-allowed' : 'pointer',
+                              opacity: isDisabled ? 0.6 : 1
+                            }}
+                          >
+                            {t('rentOffice.renegotiateBtn')} (⏳ 1 hr, -2 {t('stats.mental', { defaultValue: 'Mental' })})
+                          </button>
+                          {mustPayFirst ? (
+                            <div style={{ fontSize: '10px', color: '#e74c3c', marginTop: '4px' }}>
+                              ⚠️ {t('rentOffice.mustPayFirst')}
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: '10px', color: '#888', marginTop: '4px' }}>
+                              {(landlordStandingInfo?.standing ?? 0) >= 50
+                                ? t('rentOffice.standingGood')
+                                : ((landlordStandingInfo?.standing ?? 0) >= 35 ? t('rentOffice.standingFair') : t('rentOffice.standingPoor'))}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div style={{ fontSize: '11px', color: '#888', marginTop: '6px' }}>

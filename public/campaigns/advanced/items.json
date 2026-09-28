@@ -113,12 +113,30 @@
     "lifestyleValue": 2
   },
   {
+    "id": "hamburger",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
+  },
+  {
     "id": "cheeseburger",
-    "mentalBonus": 1
+    "mentalBonus": 1,
+    "effects": [
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
   },
   {
     "id": "astro_chicken",
-    "mentalBonus": 2
+    "mentalBonus": 2,
+    "effects": [
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "fries",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
   },
   {
     "id": "food_1week",
@@ -138,15 +156,15 @@
   },
   {
     "id": "baseball_tickets",
-    "mentalBonus": 2
+    "mentalBonus": 1
   },
   {
     "id": "theatre_tickets",
-    "mentalBonus": 2
+    "mentalBonus": 1
   },
   {
     "id": "concert_tickets",
-    "mentalBonus": 2
+    "mentalBonus": 1
   },
   {
     "id": "cola",

@@ -54,7 +54,8 @@ export function gameReducer(
   };
 
   // If there's a pending dilemma, block all other actions until resolved
-  if (player.pendingAppraisalDilemma && action.type !== 'resolve_appraisal_dilemma') {
+  const hasPendingMiniGame = player.pendingMiniGame || player.pendingAppraisalDilemma;
+  if (hasPendingMiniGame && action.type !== 'resolve_appraisal_dilemma' && action.type !== 'resolve_mini_game') {
     return {
       updatedPlayer: nextPlayer,
       actionLog: { key: 'action.error.mustResolveDilemma' }
@@ -142,6 +143,7 @@ export function gameReducer(
       res = handlePawnKnickKnacksAction(nextPlayer, action, context);
       break;
     case 'resolve_appraisal_dilemma':
+    case 'resolve_mini_game':
       res = handleResolveAppraisalDilemmaAction(nextPlayer, action, context);
       break;
     case 'rummage_pawn_shop':

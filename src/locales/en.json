@@ -170,7 +170,8 @@
       "renegotiateApproved": "Landlord agreed to lease renegotiation! Rent lowered from ${{oldRent}} to ${{newRent}}/mo (Standing: {{standing}}).",
       "renegotiateCompromise": "Landlord offered a partial compromise. Rent lowered from ${{oldRent}} to ${{newRent}}/mo (Standing: {{standing}}).",
       "renegotiateDenied": "Landlord refused to lower rent due to your poor standing (Standing: {{standing}}).",
-      "renegotiateNotCheaper": "Market rent (${{marketRent}}) is currently not cheaper than your lease (${{currentRent}})."
+      "renegotiateNotCheaper": "Market rent (${{marketRent}}) is currently not cheaper than your lease (${{currentRent}}).",
+      "mustPayFirst": "You must pay rent at least once at your current rate before you can renegotiate."
     },
     "error": {
       "mustResolveDilemma": "You must resolve the customer dilemma before doing anything else.",
@@ -259,8 +260,8 @@
     },
     "rent": {
       "charged": "Rent overdue! ${{amount}} added to rent debt (wages will be garnished).",
-      "due": "Rent is due.",
-      "due_nodenied": "Rent is due! (Rent extensions no longer available due to past rent debt).",
+      "due": "Rent is due: ${{amount}} to pay, ${{debt}} owed.",
+      "due_nodenied": "Rent is due: ${{amount}} to pay, ${{debt}} owed (Rent extensions no longer available due to past rent debt).",
       "evicted": "You were evicted!",
       "extensionExpired": "Rent extension expired.",
       "raised": "Economic surge: Due to poor standing, your landlord increased rent to ${{newRent}} (was ${{oldRent}}).",
@@ -1031,13 +1032,15 @@
     "standingFair": "Fair Standing (35-49): Partial compromise likely",
     "standingPoor": "Poor Standing (<35): Landlord will refuse",
     "standingPoorWarning": "⚠️ Danger: Poor standing (<40) allows landlord to hike rent when the economy surges!",
-    "marketNotLower": "Current lease (${{currentRent}}) is at or below market rate (${{marketRent}})."
+    "marketNotLower": "Current lease (${{currentRent}}) is at or below market rate (${{marketRent}}).",
+    "mustPayFirst": "Must pay at least once at current rate before renegotiating"
   },
   "inventoryModal": {
     "title": "Your Inventory",
     "food": "Food",
     "freshFood": "Fresh Food",
     "fastFood": "Fast Food",
+    "cannedFood": "Canned Food",
     "units": "units",
     "meals": "meals",
     "clothes": "Clothes",

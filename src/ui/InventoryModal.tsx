@@ -152,6 +152,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.food', 'Food')}</h3>
           <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
             <li>{t('inventoryModal.freshFood', 'Fresh Food')}: {inventory.freshFoodUnits} {t('inventoryModal.units', 'units')}</li>
+            <li>{t('inventoryModal.cannedFood', 'Canned Food')}: {inventory.cannedFoodUnits || 0} {t('inventoryModal.units', 'units')}</li>
             <li>{t('inventoryModal.fastFood', 'Fast Food')}: {inventory.fastFoodItems.length} {t('inventoryModal.meals', 'meals')}</li>
           </ul>
         </div>

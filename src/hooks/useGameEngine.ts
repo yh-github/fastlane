@@ -582,6 +582,7 @@ export function useGameEngine(
     if (!gameStateRef.current || !campaign) return;
     const activePlayer = gameStateRef.current.players[activePlayerIndex];
     if (activePlayer?.isAi) return;
+    if (activePlayer?.pendingMiniGame || activePlayer?.pendingAppraisalDilemma) return;
 
     const useAuthentic = (gameStateRef.current?.rules.authenticCurvedPaths !== false) && !!campaign.map.authenticNodes;
     const authPos = useAuthentic ? campaign.map.authenticNodes?.[nodeId] : undefined;

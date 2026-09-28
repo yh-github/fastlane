@@ -107,11 +107,24 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
       mentalBonus = 0;
     }
   } else if (item.category === 'ticket' && item.id !== 'lottery_tickets') {
-    if (!player.turnFlags?.ticketHappinessGranted) {
-      newTurnFlags.ticketHappinessGranted = true;
+    if (rules?.usePhysicalMentalConditions) {
+      const currentBonusCount = player.turnFlags?.ticketBonusCount ?? 0;
+      if (currentBonusCount < 4) {
+        newTurnFlags.ticketBonusCount = currentBonusCount + 1;
+        newTurnFlags.ticketHappinessGranted = true;
+        mentalBonus = item.mentalBonus ?? 1;
+        happinessBonus = 0;
+      } else {
+        happinessBonus = 0;
+        mentalBonus = 0;
+      }
     } else {
-      happinessBonus = 0;
-      mentalBonus = 0;
+      if (!player.turnFlags?.ticketHappinessGranted) {
+        newTurnFlags.ticketHappinessGranted = true;
+      } else {
+        happinessBonus = 0;
+        mentalBonus = 0;
+      }
     }
   } else if (item.id === 'knick_knack' || item.subcategory === 'curio' || item.tags?.includes('curio')) {
     if (!player.turnFlags?.curioNoveltyGranted) {
@@ -148,18 +161,18 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
   // Generic on_purchase item effects
   for (const effect of item.effects || []) {
     if (effect.trigger === 'on_purchase') {
-      if (effect.stat === 'physical_max') {
+      if (effect.stat === 'physical_max' && rules?.usePhysicalMentalConditions) {
         const minPhys = updated.minPhysicalCondition ?? 1;
         updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) + effect.value);
         updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
-      } else if (effect.stat === 'physical') {
+      } else if (effect.stat === 'physical' && rules?.usePhysicalMentalConditions) {
         const maxPhys = updated.physicalConditionMax ?? 50;
         const minPhys = updated.minPhysicalCondition ?? 1;
         updated.physicalCondition = Math.max(minPhys, Math.min(maxPhys, (updated.physicalCondition ?? 50) + effect.value));
-      } else if (effect.stat === 'mental_max') {
+      } else if (effect.stat === 'mental_max' && rules?.usePhysicalMentalConditions) {
         updated.mentalConditionMax = Math.max(10, (updated.mentalConditionMax ?? 50) + effect.value);
         updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition ?? 50);
-      } else if (effect.stat === 'mental') {
+      } else if (effect.stat === 'mental' && rules?.usePhysicalMentalConditions) {
         updated = applyMentalChange(updated, effect.value);
       } else if (effect.stat === 'happiness') {
         if (rules) {
@@ -167,9 +180,9 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
         } else {
           updated.happiness = Math.max(0, Math.min(100, updated.happiness + effect.value));
         }
-      } else if (effect.stat === 'mess') {
+      } else if (effect.stat === 'mess' && rules?.trackMess) {
         updated.mess = Math.max(0, (updated.mess || 0) + effect.value);
-      } else if (effect.stat === 'social') {
+      } else if (effect.stat === 'social' && rules?.trackSocial) {
         updated.social = Math.max(0, (updated.social || 0) + effect.value);
       }
     }
@@ -194,10 +207,6 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
         const mealCount = newTurnFlags.fastFoodMealsThisTurn || 1;
         if (mealCount > 1 && updated.hoursRemaining !== undefined) {
           updated.hoursRemaining = Math.max(0, updated.hoursRemaining - 1);
-        }
-        const hasExplicitSocialEffect = item.effects?.some(e => e.trigger === 'on_purchase' && e.stat === 'social');
-        if (!hasExplicitSocialEffect) {
-          updated.social = Math.min(100, (updated.social ?? 10) + 1);
         }
         updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];
       } else if (item.subcategory === 'canned') {
@@ -285,7 +294,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
   if (!rules?.usePhysicalMentalConditions && happinessBonus !== 0) {
     messageParams.happinessBonus = happinessBonus;
   }
-  if (mentalBonus !== 0) {
+  if (rules?.usePhysicalMentalConditions && mentalBonus !== 0) {
     messageParams.mentalBonus = mentalBonus;
   }
   return { updated, success: true, message: { key: 'action.buy', params: messageParams } };

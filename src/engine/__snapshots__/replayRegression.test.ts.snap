@@ -78,7 +78,6 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "rentExtensionsDeniedPermanently": true,
       "rentExtensionsReceived": 0,
       "rentPaidUntilWeek": 20,
-      "social": 15,
       "timesDefaulted": 0,
       "turnEvents": [
         {
@@ -93,6 +92,10 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         },
         {
           "key": "events.rent.due_nodenied",
+          "params": {
+            "amount": 325,
+            "debt": 1300,
+          },
         },
       ],
       "turnFlags": {
@@ -241,8 +244,8 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "rentExtensionsDeniedPermanently": false,
       "rentExtensionsReceived": 0,
       "rentPaidUntilWeek": 8,
+      "rentPaymentsAtCurrentRate": 1,
       "rentPaymentsMade": 1,
-      "social": 11,
       "timesDefaulted": 0,
       "turnEvents": [
         {
@@ -399,7 +402,6 @@ exports[`Deterministic Replay Regression > replays bug 1785246627881 (apartment 
       "rentExtensionsDeniedPermanently": false,
       "rentExtensionsReceived": 0,
       "rentPaidUntilWeek": 4,
-      "social": 11,
       "timesDefaulted": 0,
       "turnEvents": [],
       "turnFlags": {

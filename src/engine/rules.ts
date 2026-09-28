@@ -176,6 +176,11 @@ export interface GameRules {
   trackMess: boolean;
 
   /**
+   * ADVANCED: If true, tracks Social standing stat (gained from gatherings, fast food, frontline service, etc.).
+   */
+  trackSocial: boolean;
+
+  /**
    * If true, stolen refrigerators/freezers don't cause immediate food rot on the turn of theft (1-week grace period).
    */
   delayRobberyFoodSpoilage: boolean;
@@ -497,6 +502,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   usePhysicalMentalConditions: false,
   minEconomicReading: -90,
   trackMess: false,
+  trackSocial: false,
   percentageEducation: false,
   proportionalDivisibleActions: false,
   conditionResolution: 0.5,
@@ -578,6 +584,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   usePhysicalMentalConditions: 'Splits relaxation into detailed Physical and Mental conditions',
   turnStartAtHome: 'Forces the player to start their turn inside their apartment',
   trackMess: 'Enables tracking and cleaning of apartment mess',
+  trackSocial: 'Tracks Social standing stat (gained from gatherings, fast food, frontline service, etc.)',
 
   maxEnrolledClasses: 'Maximum number of courses a player can be concurrently enrolled in (set to 999 or high number for unlimited)',
 

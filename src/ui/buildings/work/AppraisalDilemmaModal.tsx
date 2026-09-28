@@ -28,7 +28,7 @@ export function AppraisalDilemmaModal({ dilemma, onSelectOption, player, campaig
         right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        zIndex: 9999,
+        zIndex: 90,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
