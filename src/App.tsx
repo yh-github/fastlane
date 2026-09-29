@@ -214,7 +214,6 @@ export default function App() {
           }
         }}
         onOpenInventory={handleOpenInventory}
-        onOpenLog={handleOpenLog}
         onOpenSettings={() => setIsSettingsOpen(true)}
         layout={effectiveHudLayout}
         foldState={hudFoldState}

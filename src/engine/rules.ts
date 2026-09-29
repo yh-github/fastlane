@@ -367,6 +367,7 @@ export interface StatRules {
   cleanPhysicalCost: number;
   // Advanced feature bundle configuration
   initialPhysicalMax: number;
+  maxRelaxation?: number;
   initialMinPhysical: number;
   globalPhysicalMin: number;
   minMaxPhysical: number;

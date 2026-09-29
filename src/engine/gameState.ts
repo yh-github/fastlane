@@ -174,6 +174,8 @@ export interface PlayerState {
   degreeDepBoost: number;
   /** Relaxation: hidden stat. Affects robbery chance at home. */
   relaxation: number;
+  /** Maximum relaxation ceiling (defaults to 50 in base rules if not specified) */
+  relaxationMax?: number;
 
   // ── Employment & Income ──
   /** Current job ID (null if unemployed) */
