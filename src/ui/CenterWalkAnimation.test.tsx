@@ -148,4 +148,20 @@ describe('CenterWalkAnimation', () => {
     const canvas = stage.querySelector('canvas');
     expect(canvas).toHaveClass('center-character-sprite--smooth');
   });
+
+  it('triggers onClick when walking avatar is clicked or activated with keyboard', () => {
+    const onClick = vi.fn();
+    render(<CenterWalkAnimation isWalking={false} onClick={onClick} />);
+    const avatar = screen.getByTestId('center-character-avatar');
+    expect(avatar).toBeInTheDocument();
+    expect(avatar).toHaveClass('center-character-sprite--clickable');
+
+    // Click
+    avatar.click();
+    expect(onClick).toHaveBeenCalledTimes(1);
+
+    // Keyboard Enter
+    avatar.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(onClick).toHaveBeenCalledTimes(2);
+  });
 });

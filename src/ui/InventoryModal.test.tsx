@@ -64,7 +64,7 @@ describe('InventoryModal', () => {
     expect(screen.getByText(/Dictionary/i)).toBeInTheDocument();
 
     // Close button
-    fireEvent.click(screen.getByText('✖'));
+    fireEvent.click(screen.getByRole('button', { name: /close/i }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -266,5 +266,27 @@ describe('InventoryModal', () => {
 
     expect(screen.getByText(/Brand New/i)).toBeInTheDocument();
     expect(screen.getByText(/Used/i)).toBeInTheDocument();
+  });
+
+  it('scrolls to clothes section and applies highlight when scrollToSection is "clothes"', () => {
+    const campaign = createMockCampaign();
+    const player = createTestPlayer({}, campaign);
+    const scrollIntoViewMock = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+    render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        scrollToSection="clothes"
+      />
+    );
+
+    const clothesSection = screen.getByTestId('status-section-clothes');
+    expect(clothesSection).toBeInTheDocument();
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+    expect(clothesSection).toHaveClass('status-section--highlighted');
   });
 });

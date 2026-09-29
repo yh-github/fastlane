@@ -31,8 +31,9 @@ export interface DashboardProps {
   campaign?: CampaignBundle;
   activeLogFilter?: GoalFilter | null;
   onSelectLogFilter?: (filter: GoalFilter | null) => void;
-  onOpenInventory: () => void;
+  onOpenInventory: (section?: string) => void;
   onOpenSettings: () => void;
+  onOpenLog?: () => void;
   layout?: HudLayoutMode;
   foldState?: HudFoldState;
   onToggleFold?: (nextState: HudFoldState) => void;
@@ -148,6 +149,7 @@ export function Dashboard({
   onSelectLogFilter,
   onOpenInventory,
   onOpenSettings,
+  onOpenLog,
   layout = gameState?.rules?.hudLayout || 'top',
   foldState = 'full',
   onToggleFold
@@ -161,6 +163,9 @@ export function Dashboard({
       onSelectLogFilter(null);
     } else {
       onSelectLogFilter(filter);
+      if (onOpenLog) {
+        onOpenLog();
+      }
     }
   };
 
@@ -248,7 +253,24 @@ export function Dashboard({
             <div className="side-hud__player-card">
               <h2 className="side-hud__player-title">{player ? player.name : ''} - {t('dashboard.turn', { turn, defaultValue: `Week ${turn}` })}</h2>
               {player.isAi && <span className="ai-badge">{t('dashboard.aiBadge', { defaultValue: 'AI' })}</span>}
-              {player.inventory?.selectedClothes === 'none' && <span className="naked-badge">⚠️ NAKED</span>}
+              {player.inventory?.selectedClothes === 'none' && (
+                <span 
+                  className="naked-badge" 
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onOpenInventory('clothes')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onOpenInventory('clothes');
+                    }
+                  }}
+                  title={t('dashboard.nakedWarningTooltip', { defaultValue: 'Click to view clothes in Status' })}
+                  data-testid="naked-warning-badge"
+                >
+                  ⚠️ NAKED
+                </span>
+              )}
               {gameState.rules.helpfulUI && (
                 <div 
                   className="side-hud__economy"
@@ -269,11 +291,22 @@ export function Dashboard({
             <div className="side-hud__controls-card">
               <button
                 id="btn-inventory"
-                onClick={onOpenInventory}
+                onClick={() => onOpenInventory()}
                 className="side-hud__btn side-hud__btn--status"
               >
                 📊 {t('dashboard.status', { defaultValue: 'Status' })}
               </button>
+              {onOpenLog && (
+                <button
+                  id="btn-hud-log"
+                  onClick={onOpenLog}
+                  className="side-hud__btn side-hud__btn--log"
+                  title={t('gameLog.title', { defaultValue: 'Activity Log' })}
+                  data-testid="btn-hud-log"
+                >
+                  📜
+                </button>
+              )}
               <button
                 id="btn-settings"
                 onClick={onOpenSettings}
@@ -330,7 +363,25 @@ export function Dashboard({
         <div className="dashboard-player-info">
           <h2>{player ? player.name : ''} - {t('dashboard.turn', { turn, defaultValue: `Week ${turn}` })}</h2>
           {player?.isAi && <span className="ai-badge">{t('dashboard.aiBadge', { defaultValue: 'AI' })}</span>}
-          {player?.inventory?.selectedClothes === 'none' && <span style={{ background: 'red', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '8px', fontWeight: 'bold' }}>⚠️ NAKED</span>}
+          {player?.inventory?.selectedClothes === 'none' && (
+            <span 
+              className="naked-badge"
+              role="button"
+              tabIndex={0}
+              onClick={() => onOpenInventory('clothes')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpenInventory('clothes');
+                }
+              }}
+              style={{ marginLeft: '8px' }}
+              title={t('dashboard.nakedWarningTooltip', { defaultValue: 'Click to view clothes in Status' })}
+              data-testid="naked-warning-badge"
+            >
+              ⚠️ NAKED
+            </span>
+          )}
           {gameState.rules.helpfulUI && (
             <div 
               className="dashboard-stat economy"
@@ -363,7 +414,7 @@ export function Dashboard({
         </div>
         <button 
           id="btn-inventory"
-          onClick={onOpenInventory}
+          onClick={() => onOpenInventory()}
           style={{
             padding: '8px 12px', marginRight: '10px',
             backgroundColor: '#f39c12', color: '#000', border: 'none', borderRadius: '4px',
@@ -372,6 +423,21 @@ export function Dashboard({
         >
           📊 {t('dashboard.status', { defaultValue: 'Status' })}
         </button>
+        {onOpenLog && (
+          <button 
+            id="btn-hud-log"
+            onClick={onOpenLog}
+            style={{
+              padding: '8px 12px', marginRight: '10px',
+              backgroundColor: '#2c3e50', color: '#fff', border: '1px solid var(--accent-cyan)', borderRadius: '4px',
+              fontWeight: 'bold', cursor: 'pointer'
+            }}
+            title={t('gameLog.title', { defaultValue: 'Activity Log' })}
+            data-testid="btn-hud-log"
+          >
+            📜
+          </button>
+        )}
         <button 
           id="btn-settings"
           onClick={onOpenSettings}
