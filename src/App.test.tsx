@@ -299,6 +299,9 @@ describe('App Integration & StrictMode', () => {
   });
 
   it('renders the clock at the bottom center of the board when authentic curved board is active in default Top HUD', async () => {
+    window.innerWidth = 600;
+    window.innerHeight = 800;
+
     render(
       <React.StrictMode>
         <App />

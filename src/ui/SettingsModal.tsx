@@ -67,8 +67,9 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
   };
 
   const handleToggleHudLayout = () => {
-    const currentLayout = gameState.rules.hudLayout || 'top';
-    const nextLayout = currentLayout === 'top' ? 'side' : 'top';
+    const currentLayout = gameState.rules.hudLayout || 'auto';
+    const nextLayout: 'auto' | 'side' | 'top' =
+      currentLayout === 'auto' ? 'top' : currentLayout === 'top' ? 'side' : 'auto';
     try {
       localStorage.setItem('fastlane_hud_layout', nextLayout);
     } catch {
@@ -81,6 +82,19 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
         rules: {
           ...prev.rules,
           hudLayout: nextLayout
+        }
+      };
+    });
+  };
+
+  const handleToggleUseSkills = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          useSkills: !prev.rules.useSkills
         }
       };
     });
@@ -349,7 +363,9 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                     <div>
                       <div style={{ fontWeight: 600 }}>{t('settings.hudLayout', { defaultValue: 'HUD Layout Style' })}</div>
                       <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                        {(gameState.rules.hudLayout || 'top') === 'top'
+                        {(gameState.rules.hudLayout || 'auto') === 'auto'
+                          ? t('settings.hudLayoutAuto', { defaultValue: 'Auto (Landscape: Side HUD, Portrait: Top HUD)' })
+                          : gameState.rules.hudLayout === 'top'
                           ? t('settings.hudLayoutTop', { defaultValue: 'Top HUD (Classic desktop top-bar)' })
                           : t('settings.hudLayoutSide', { defaultValue: 'Side HUD (Modern widescreen & phone landscape, 2-column sidebar with folding)' })}
                       </div>
@@ -363,8 +379,31 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                       fontWeight: 'bold',
                       border: '1px solid var(--accent-cyan)'
                     }}>
-                      {(gameState.rules.hudLayout || 'top') === 'top' ? 'TOP' : 'SIDE'}
+                      {(gameState.rules.hudLayout || 'auto').toUpperCase()}
                     </span>
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable"
+                  onClick={handleToggleUseSkills}
+                  data-testid="setting-use-skills"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.useSkills', { defaultValue: 'Management & Technical Skills' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.useSkills
+                          ? t('settings.useSkillsOn', { defaultValue: 'Tracks Management & Technical skills with job bonuses (ON)' })
+                          : t('settings.useSkillsOff', { defaultValue: 'Skills disabled (OFF)' })}
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={!!gameState.rules.useSkills} 
+                      readOnly
+                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
+                    />
                   </div>
                 </div>
 

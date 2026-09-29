@@ -64,10 +64,10 @@ export function useGameEngine(
         } catch {
           // ignore
         }
-        let savedHudLayout: 'side' | 'top' | undefined = undefined;
+        let savedHudLayout: 'auto' | 'side' | 'top' | undefined = undefined;
         try {
           const stored = localStorage.getItem('fastlane_hud_layout');
-          if (stored === 'side' || stored === 'top') {
+          if (stored === 'auto' || stored === 'side' || stored === 'top') {
             savedHudLayout = stored;
           }
         } catch {

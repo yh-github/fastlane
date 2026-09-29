@@ -135,8 +135,8 @@ describe('SettingsModal', () => {
     expect(screen.queryByText('Crisp Pixel Art')).not.toBeInTheDocument();
   });
 
-  it('toggles HUD Layout Style between top and side and stores in localStorage', () => {
-    let state = { ...dummyGameState, rules: { ...dummyGameState.rules, hudLayout: 'top' as const } };
+  it('cycles HUD Layout Style through auto -> top -> side -> auto and stores in localStorage', () => {
+    let state = { ...dummyGameState, rules: { ...dummyGameState.rules, hudLayout: 'auto' as const } };
     const setGameState = vi.fn().mockImplementation((updater) => {
       state = updater(state);
     });
@@ -152,12 +152,25 @@ describe('SettingsModal', () => {
     );
 
     expect(screen.getByText('HUD Layout Style')).toBeInTheDocument();
-    expect(screen.getByText('TOP')).toBeInTheDocument();
+    expect(screen.getByText('AUTO')).toBeInTheDocument();
 
     const hudLayoutItem = screen.getByTestId('setting-hud-layout');
     fireEvent.click(hudLayoutItem);
 
     expect(setGameState).toHaveBeenCalled();
+    expect(state.rules.hudLayout).toBe('top');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'top');
+
+    rerender(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByText('TOP')).toBeInTheDocument();
+
+    fireEvent.click(hudLayoutItem);
     expect(state.rules.hudLayout).toBe('side');
     expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'side');
 
@@ -171,10 +184,43 @@ describe('SettingsModal', () => {
     expect(screen.getByText('SIDE')).toBeInTheDocument();
 
     fireEvent.click(hudLayoutItem);
-    expect(state.rules.hudLayout).toBe('top');
-    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'top');
+    expect(state.rules.hudLayout).toBe('auto');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_hud_layout', 'auto');
 
     setItemSpy.mockRestore();
+  });
+
+  it('toggles Management & Technical Skills rule', () => {
+    let state = { ...dummyGameState, rules: { ...dummyGameState.rules, useSkills: false } };
+    const setGameState = vi.fn().mockImplementation((updater) => {
+      state = updater(state);
+    });
+
+    const { rerender } = render(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+
+    const skillsToggle = screen.getByTestId('setting-use-skills');
+    expect(skillsToggle).toBeInTheDocument();
+
+    fireEvent.click(skillsToggle);
+    expect(setGameState).toHaveBeenCalled();
+    expect(state.rules.useSkills).toBe(true);
+
+    rerender(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+
+    fireEvent.click(skillsToggle);
+    expect(state.rules.useSkills).toBe(false);
   });
 
   it('toggles Authentic Curved Board and stores in localStorage', () => {

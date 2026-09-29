@@ -136,8 +136,9 @@ export function getAvailableActions(
         // Filter jobs: Show jobs player qualifies for, OR is only slightly underqualified for (1 tier higher)
         // Close enough = missing at most 1 degree, and within 20 points of exp/dep
         const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d)).length;
-        const isTechnical = !!state.rules?.usePhysicalMentalConditions && job.tags?.includes('technical');
-        const isManagement = !!state.rules?.usePhysicalMentalConditions && (job.tags?.includes('middle_management') || job.tags?.includes('executive_management'));
+        const useSkills = state.rules?.useSkills !== undefined ? state.rules.useSkills : !!state.rules?.usePhysicalMentalConditions;
+        const isTechnical = useSkills && job.tags?.includes('technical');
+        const isManagement = useSkills && (job.tags?.includes('middle_management') || job.tags?.includes('executive_management'));
         const techSkill = isTechnical ? (player.skillTech || 0) : 0;
         const mgmtSkill = isManagement ? (player.skillMgmt || 0) : 0;
         const effectiveExp = player.experience + techSkill + mgmtSkill;
