@@ -408,9 +408,25 @@ describe('App Integration & StrictMode', () => {
       });
     }
 
-    // Open log via HUD log button
-    const hudLogBtn = screen.getByTestId('btn-hud-log');
-    fireEvent.click(hudLogBtn);
+    // Open Status window via HUD Status button
+    const statusBtn = document.getElementById('btn-inventory')!;
+    fireEvent.click(statusBtn);
+
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    // Wait for status modal to open
+    const statusModal = await screen.findByTestId('inventory-modal');
+    expect(statusModal).toBeInTheDocument();
+
+    // Click View Activity Log button at bottom of status modal
+    const openLogBtn = screen.getByTestId('btn-open-log-from-status');
+    fireEvent.click(openLogBtn);
+
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 0));
+    });
 
     await act(async () => {
       await new Promise(r => setTimeout(r, 0));

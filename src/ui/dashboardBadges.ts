@@ -244,10 +244,12 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     }
   } else {
     if (rules.helpfulUI) {
+      const relaxationMax = player.relaxationMax ?? campaign?.config?.statRules?.maxRelaxation ?? campaign?.config?.statRules?.initialPhysicalMax ?? 50;
+      const displayRelaxation = relaxationMax ? `${player.relaxation}/${relaxationMax}` : `${player.relaxation}`;
       lifeBadges.push({
         id: 'stat-relaxation',
         label: t('dashboard.relaxation', { defaultValue: 'Relaxation' }),
-        value: player.relaxation,
+        value: displayRelaxation,
         icon: '🧘',
         danger: Boolean(
           rules.enableRelaxationDoctor &&

@@ -33,7 +33,6 @@ export interface DashboardProps {
   onSelectLogFilter?: (filter: GoalFilter | null) => void;
   onOpenInventory: (section?: string) => void;
   onOpenSettings: () => void;
-  onOpenLog?: () => void;
   layout?: HudLayoutMode;
   foldState?: HudFoldState;
   onToggleFold?: (nextState: HudFoldState) => void;
@@ -149,7 +148,6 @@ export function Dashboard({
   onSelectLogFilter,
   onOpenInventory,
   onOpenSettings,
-  onOpenLog,
   layout = gameState?.rules?.hudLayout || 'top',
   foldState = 'full',
   onToggleFold
@@ -163,9 +161,6 @@ export function Dashboard({
       onSelectLogFilter(null);
     } else {
       onSelectLogFilter(filter);
-      if (onOpenLog) {
-        onOpenLog();
-      }
     }
   };
 
@@ -296,17 +291,6 @@ export function Dashboard({
               >
                 📊 {t('dashboard.status', { defaultValue: 'Status' })}
               </button>
-              {onOpenLog && (
-                <button
-                  id="btn-hud-log"
-                  onClick={onOpenLog}
-                  className="side-hud__btn side-hud__btn--log"
-                  title={t('gameLog.title', { defaultValue: 'Activity Log' })}
-                  data-testid="btn-hud-log"
-                >
-                  📜
-                </button>
-              )}
               <button
                 id="btn-settings"
                 onClick={onOpenSettings}
@@ -423,21 +407,6 @@ export function Dashboard({
         >
           📊 {t('dashboard.status', { defaultValue: 'Status' })}
         </button>
-        {onOpenLog && (
-          <button 
-            id="btn-hud-log"
-            onClick={onOpenLog}
-            style={{
-              padding: '8px 12px', marginRight: '10px',
-              backgroundColor: '#2c3e50', color: '#fff', border: '1px solid var(--accent-cyan)', borderRadius: '4px',
-              fontWeight: 'bold', cursor: 'pointer'
-            }}
-            title={t('gameLog.title', { defaultValue: 'Activity Log' })}
-            data-testid="btn-hud-log"
-          >
-            📜
-          </button>
-        )}
         <button 
           id="btn-settings"
           onClick={onOpenSettings}
