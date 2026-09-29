@@ -14,7 +14,7 @@ test.describe('Character Center Walking Animation E2E', () => {
     await startLifeBtn.click();
 
     // 2. Wait for map / board to load
-    const dashboard = page.locator('.dashboard');
+    const dashboard = page.locator('.dashboard, .side-hud');
     await expect(dashboard).toBeVisible({ timeout: 5000 });
 
     // Close initial home modal if open
@@ -89,7 +89,7 @@ test.describe('Character Center Walking Animation E2E', () => {
     const inventoryBtn = page.locator('#btn-inventory');
     await inventoryBtn.click();
 
-    const inventoryModal = page.locator('.building-modal-overlay');
+    const inventoryModal = page.locator('[data-testid="inventory-modal"]');
     await expect(inventoryModal).toBeVisible();
 
     // Select clothes dropdown (change to 'none' / Naked)
@@ -97,7 +97,7 @@ test.describe('Character Center Walking Animation E2E', () => {
     await clothesSelect.selectOption('none');
 
     // Close Status modal
-    const closeInvBtn = page.locator('.building-modal-content button').first();
+    const closeInvBtn = inventoryModal.locator('[data-testid="status-modal-close"]');
     await closeInvBtn.click();
     await expect(inventoryModal).toBeHidden();
 

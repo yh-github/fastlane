@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
 import { useTranslation } from 'react-i18next';
@@ -17,11 +18,25 @@ interface InventoryModalProps {
   onClose: () => void;
   rules?: import('../engine/gameState').GameRules;
   onOpenLog?: () => void;
+  scrollToSection?: string | null;
 }
 
-export function InventoryModal({ player, campaign, turn, onAction, onClose, rules, onOpenLog }: InventoryModalProps) {
+export function InventoryModal({ player, campaign, turn, onAction, onClose, rules, onOpenLog, scrollToSection }: InventoryModalProps) {
   const { t } = useTranslation();
   const { inventory } = player;
+
+  const clothesRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [highlightClothes, setHighlightClothes] = useState(false);
+
+  useEffect(() => {
+    if (scrollToSection === 'clothes' && clothesRef.current) {
+      clothesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setHighlightClothes(true);
+      const timer = setTimeout(() => setHighlightClothes(false), 2200);
+      return () => clearTimeout(timer);
+    }
+  }, [scrollToSection]);
 
   const currentJob = campaign?.jobs.find(j => j.id === player.currentJobId);
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
@@ -38,28 +53,31 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
   const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0, player.innovationCount || 0) : null;
 
   return (
-    <div className="building-modal-overlay" style={{
-      position: 'absolute', top: 0, insetInlineStart: 0, insetInlineEnd: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 900,
-      display: 'flex', justifyContent: 'center', alignItems: 'center'
-    }}>
-      <div className="building-modal-content" style={{
-        backgroundColor: '#2c3e50', padding: '20px', borderRadius: '8px',
-        width: '400px', maxWidth: '90%', maxHeight: '80%', overflowY: 'auto',
-        color: '#fff', border: '2px solid #34495e', position: 'relative'
-      }}>
-        <button 
-          onClick={onClose}
-          style={{
-            position: 'absolute', top: '10px', insetInlineEnd: '10px',
-            background: 'none', border: 'none', color: '#aaa', cursor: 'pointer',
-            fontSize: '1.2em'
-          }}
-        >
-          ✖
-        </button>
-        
-        <h2 style={{ marginTop: 0, borderBottom: '1px solid #555', paddingBottom: '10px' }}>{t('statusModal.title', 'Your Status')}</h2>
+    <div 
+      className={`building-modal ${rules?.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}`}
+      style={{ zIndex: 55, display: 'flex', flexDirection: 'column' }}
+      data-testid="inventory-modal"
+    >
+      <button 
+        className="building-modal__close"
+        onClick={onClose}
+        aria-label="Close"
+        data-testid="status-modal-close"
+      >
+        &times;
+      </button>
+
+      <div className="building-modal__header">
+        <div className="building-modal__face">📊</div>
+        <div className="building-modal__title-group">
+          <h2>{t('statusModal.title', 'Your Status')}</h2>
+        </div>
+      </div>
+
+      <div 
+        className="building-modal__content building-modal-content"
+        ref={contentRef}
+      >
 
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>Overview</h3>
@@ -157,7 +175,13 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
+        <div 
+          ref={clothesRef}
+          id="status-section-clothes"
+          data-testid="status-section-clothes"
+          className={highlightClothes ? 'status-section--highlighted' : ''}
+          style={{ marginBottom: '20px', borderRadius: '8px', padding: highlightClothes ? '8px' : '0', transition: 'all 0.3s ease' }}
+        >
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.clothes', 'Clothes')}</h3>
           <div style={{ marginBottom: '10px' }}>
             <label style={{ marginInlineEnd: '10px' }}>{t('inventoryModal.wearing', 'Wearing:')}</label>

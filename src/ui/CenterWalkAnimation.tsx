@@ -7,6 +7,7 @@ export interface CenterWalkAnimationProps {
   frameDurationMs?: number;
   pixelated?: boolean;
   removeBg?: boolean;
+  onClick?: () => void;
 }
 
 const CLOTHES_MAP: Record<string, number> = {
@@ -116,6 +117,7 @@ export const CenterWalkAnimation: React.FC<CenterWalkAnimationProps> = ({
   frameDurationMs = 150,
   pixelated = true,
   removeBg = true,
+  onClick,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [frameIndex, setFrameIndex] = useState(0);
@@ -210,9 +212,21 @@ export const CenterWalkAnimation: React.FC<CenterWalkAnimationProps> = ({
     >
       <canvas
         ref={canvasRef}
-        className={`center-character-sprite ${!pixelated || characterIndex === 3 ? 'center-character-sprite--smooth' : ''}`}
+        className={`center-character-sprite ${!pixelated || characterIndex === 3 ? 'center-character-sprite--smooth' : ''} ${onClick ? 'center-character-sprite--clickable' : ''}`}
         width={49}
         height={95}
+        onClick={onClick}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        onKeyDown={onClick ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        } : undefined}
+        title={onClick ? 'Click to view Status' : undefined}
+        aria-label={onClick ? 'Player Character - View Status' : undefined}
+        data-testid="center-character-avatar"
       />
     </div>
   );

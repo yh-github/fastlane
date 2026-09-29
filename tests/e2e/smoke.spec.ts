@@ -27,7 +27,7 @@ test.describe('Headless E2E Smoke Test', () => {
     await startLifeBtn.click();
 
     // 4. Verify HUD Dashboard money badge loaded and visible
-    const moneyBadge = page.locator('#stat-money');
+    const moneyBadge = page.locator('.stat-badge, .dynamic-money-badge').first();
     await expect(moneyBadge).toBeVisible({ timeout: 5000 });
 
     // 5. Open Status/Inventory modal
@@ -35,12 +35,12 @@ test.describe('Headless E2E Smoke Test', () => {
     await expect(statusBtn).toBeVisible();
     await statusBtn.click();
 
-    // Verify status modal overlay opened
-    const statusModal = page.locator('.building-modal-overlay');
+    // Verify status modal opened
+    const statusModal = page.locator('[data-testid="inventory-modal"]');
     await expect(statusModal).toBeVisible();
 
     // Close modal by clicking close button
-    const closeBtn = page.locator('.building-modal-content button').first();
+    const closeBtn = statusModal.locator('[data-testid="status-modal-close"]');
     await closeBtn.click();
     await expect(statusModal).toBeHidden();
 

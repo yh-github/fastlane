@@ -35,9 +35,21 @@ export default function App() {
   const [isNewspaperModalOpen, setIsNewspaperModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [inventoryScrollSection, setInventoryScrollSection] = useState<string | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [activeLogFilter, setActiveLogFilter] = useState<GoalFilter | null>(null);
   const [hudFoldState, setHudFoldState] = useState<HudFoldState>('full');
+
+  const handleOpenInventory = (section?: string) => {
+    setInventoryScrollSection(section || null);
+    setIsLogModalOpen(false);
+    setIsInventoryOpen(true);
+  };
+
+  const handleOpenLog = () => {
+    setIsInventoryOpen(false);
+    setIsLogModalOpen(true);
+  };
 
   const { floatingAnims, triggerAnim, triggerScreenShake, removeAnim, isAnimating, setIsAnimating } = useGameAnimations();
 
@@ -195,8 +207,14 @@ export default function App() {
         hoursPerTurn={campaign!.config.timeRules.hoursPerTurn}
         campaign={campaign!}
         activeLogFilter={activeLogFilter}
-        onSelectLogFilter={setActiveLogFilter}
-        onOpenInventory={() => setIsInventoryOpen(true)}
+        onSelectLogFilter={(filter) => {
+          setActiveLogFilter(filter);
+          if (filter) {
+            handleOpenLog();
+          }
+        }}
+        onOpenInventory={handleOpenInventory}
+        onOpenLog={handleOpenLog}
         onOpenSettings={() => setIsSettingsOpen(true)}
         layout={effectiveHudLayout}
         foldState={hudFoldState}
@@ -212,7 +230,11 @@ export default function App() {
           campaign={campaign!} 
           players={gameState.players} 
           activePlayerIndex={activePlayerIndex}
-          onNodeClick={isAiTurn ? () => {} : handleNodeClick}
+          onNodeClick={isAiTurn ? () => {} : (nodeId) => {
+            setIsInventoryOpen(false);
+            setIsLogModalOpen(false);
+            handleNodeClick(nodeId);
+          }}
           authenticCurvedPaths={gameState.rules.authenticCurvedPaths}
         />
         </div>
@@ -271,13 +293,14 @@ export default function App() {
             onSelectFilter={setActiveLogFilter}
           />
         </div>
-        {(!isBuildingModalOpen || !currentBuildingId) && activePlayer && (
+        {(!isBuildingModalOpen || !currentBuildingId) && !isInventoryOpen && !isLogModalOpen && activePlayer && (
           <CenterWalkAnimation
             characterIndex={activePlayer.characterIndex ?? 0}
             clothesType={activePlayer.inventory?.selectedClothes || 'casual'}
             isWalking={isTravelling}
             pixelated={gameState.rules.pixelatedSprites ?? true}
             removeBg={gameState.rules.removeCharacterBg ?? true}
+            onClick={() => handleOpenInventory()}
           />
         )}
         {isBuildingModalOpen && currentBuildingId && (
@@ -315,9 +338,13 @@ export default function App() {
             campaign={campaign!}
             turn={gameState.turn}
             onAction={handleAction}
-            onClose={() => setIsInventoryOpen(false)}
+            onClose={() => {
+              setIsInventoryOpen(false);
+              setInventoryScrollSection(null);
+            }}
             rules={gameState.rules}
-            onOpenLog={() => setIsLogModalOpen(true)}
+            onOpenLog={handleOpenLog}
+            scrollToSection={inventoryScrollSection}
           />
         )}
 
@@ -328,21 +355,32 @@ export default function App() {
             campaign={campaign!}
             replayData={replayData}
             onClose={() => setIsSettingsOpen(false)} 
-            onOpenLog={() => setIsLogModalOpen(true)}
+            onOpenLog={handleOpenLog}
             logCount={logs.length}
           />
         )}
 
         {isLogModalOpen && (
-          <div className="fullscreen-overlay" style={{ zIndex: 10000 }}>
-            <div className="building-modal" style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
-              <button className="building-modal__close" onClick={() => setIsLogModalOpen(false)}>×</button>
-              <div className="building-modal__header">
-                <div className="building-modal__face">📜</div>
-                <div className="building-modal__title-group">
-                  <h2>{t('gameLog.title', { defaultValue: 'Activity Log' })}</h2>
-                </div>
+          <div 
+            className={`building-modal ${gameState.rules.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}`}
+            style={{ zIndex: 55, display: 'flex', flexDirection: 'column' }}
+            data-testid="log-window"
+          >
+            <button 
+              className="building-modal__close" 
+              onClick={() => setIsLogModalOpen(false)}
+              aria-label="Close"
+              data-testid="log-modal-close"
+            >
+              &times;
+            </button>
+            <div className="building-modal__header">
+              <div className="building-modal__face">📜</div>
+              <div className="building-modal__title-group">
+                <h2>{t('gameLog.title', { defaultValue: 'Activity Log' })}</h2>
               </div>
+            </div>
+            <div className="building-modal__content building-modal-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
                 <GameLog 
                   entries={logs} 
@@ -350,11 +388,6 @@ export default function App() {
                   activeFilter={activeLogFilter} 
                   onSelectFilter={setActiveLogFilter}
                 />
-              </div>
-              <div style={{ marginTop: '12px' }}>
-                <button className="action-panel__btn" onClick={() => setIsLogModalOpen(false)}>
-                  {t('settings.close', { defaultValue: 'Close' })}
-                </button>
               </div>
             </div>
           </div>

@@ -326,4 +326,114 @@ describe('App Integration & StrictMode', () => {
     expect(screen.getByTestId('clock-face-number')).toBeInTheDocument();
     expect(document.getElementById('hud-clock-digital')?.textContent).toContain('Week #1');
   });
+
+  it('clicking on the walking avatar opens the status window in a non-blocking building-modal', async () => {
+    render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+
+    // Title screen -> Start game
+    const newGameBtn = await screen.findByText(/New Game|titleScreen\.startGame/i);
+    fireEvent.click(newGameBtn);
+
+    // Setup screen -> Start life
+    const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
+    fireEvent.click(startGameBtn);
+
+    await screen.findByText(/Player 1 - Week/i);
+
+    // Close any initial home modal
+    const closeBtn = document.querySelector('.building-modal__close');
+    if (closeBtn) {
+      fireEvent.click(closeBtn);
+      await act(async () => {
+        await new Promise(r => setTimeout(r, 0));
+      });
+    }
+
+    // Walking avatar is visible on center stage
+    const avatar = await screen.findByTestId('center-character-avatar');
+    expect(avatar).toBeInTheDocument();
+
+    // Click walking avatar
+    fireEvent.click(avatar);
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    // Verify Status window is open and uses .building-modal class (same size & position as location window)
+    const statusModal = screen.getByTestId('inventory-modal');
+    expect(statusModal).toBeInTheDocument();
+    expect(statusModal).toHaveClass('building-modal');
+    expect(document.querySelector('.building-modal-overlay')).toBeNull(); // No blocking overlay!
+    expect(screen.getByText('Your Status')).toBeInTheDocument();
+
+    // Close Status window
+    const statusCloseBtn = statusModal.querySelector('.building-modal__close');
+    expect(statusCloseBtn).toBeInTheDocument();
+    fireEvent.click(statusCloseBtn!);
+
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    expect(screen.queryByTestId('inventory-modal')).not.toBeInTheDocument();
+  });
+
+  it('opens Activity Log in a non-blocking building-modal without fullscreen overlay, allowing HUD filtering', async () => {
+    render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+
+    // Title screen -> Start game
+    const newGameBtn = await screen.findByText(/New Game|titleScreen\.startGame/i);
+    fireEvent.click(newGameBtn);
+
+    // Setup screen -> Start life
+    const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
+    fireEvent.click(startGameBtn);
+
+    await screen.findByText(/Player 1 - Week/i);
+
+    // Close any initial home modal
+    const closeBtn = document.querySelector('.building-modal__close');
+    if (closeBtn) {
+      fireEvent.click(closeBtn);
+      await act(async () => {
+        await new Promise(r => setTimeout(r, 0));
+      });
+    }
+
+    // Open log via HUD log button
+    const hudLogBtn = screen.getByTestId('btn-hud-log');
+    fireEvent.click(hudLogBtn);
+
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    // Verify Log window is open in .building-modal
+    const logWindow = screen.getByTestId('log-window');
+    expect(logWindow).toBeInTheDocument();
+    expect(logWindow).toHaveClass('building-modal');
+    expect(document.querySelector('.fullscreen-overlay')).toBeNull(); // No blocking overlay!
+
+    // Verify the HUD is still visible and interactive
+    expect(screen.getByText(/Player 1 - Week/i)).toBeInTheDocument();
+
+    // Close Log window
+    const logCloseBtn = logWindow.querySelector('.building-modal__close');
+    expect(logCloseBtn).toBeInTheDocument();
+    fireEvent.click(logCloseBtn!);
+
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    expect(screen.queryByTestId('log-window')).not.toBeInTheDocument();
+  });
 });

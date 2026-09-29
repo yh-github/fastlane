@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Dashboard } from './Dashboard';
 import type { PlayerState } from '../engine/gameState';
@@ -307,5 +307,79 @@ describe('Dashboard Component', () => {
 
     expect(screen.getByText(/Reading \+12/i)).toBeInTheDocument();
     expect(screen.getByText(/Trend \+2 ↑/i)).toBeInTheDocument();
+  });
+
+  it('triggers onOpenInventory with "clothes" when clicking NAKED warning badge in Side HUD', () => {
+    const onOpenInventory = vi.fn();
+    const mockPlayer = {
+      name: 'Player 1',
+      degrees: [],
+      money: 100,
+      happiness: 50,
+      relaxation: 25,
+      dependability: 20,
+      experience: 10,
+      goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      inventory: { selectedClothes: 'none', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = {
+      rules: { hudLayout: 'side' }
+    } as any;
+
+    render(
+      <Dashboard 
+        player={mockPlayer} 
+        gameState={mockGameState} 
+        turn={1} 
+        hoursPerTurn={50} 
+        onOpenInventory={onOpenInventory}
+        onOpenSettings={() => {}}
+        layout="side"
+      />
+    );
+
+    const nakedBadge = screen.getByTestId('naked-warning-badge');
+    expect(nakedBadge).toBeInTheDocument();
+    fireEvent.click(nakedBadge);
+    expect(onOpenInventory).toHaveBeenCalledWith('clothes');
+  });
+
+  it('triggers onOpenInventory with "clothes" when clicking NAKED warning badge in Top HUD', () => {
+    const onOpenInventory = vi.fn();
+    const mockPlayer = {
+      name: 'Player 1',
+      degrees: [],
+      money: 100,
+      happiness: 50,
+      relaxation: 25,
+      dependability: 20,
+      experience: 10,
+      goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      inventory: { selectedClothes: 'none', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = {
+      rules: { hudLayout: 'top' }
+    } as any;
+
+    render(
+      <Dashboard 
+        player={mockPlayer} 
+        gameState={mockGameState} 
+        turn={1} 
+        hoursPerTurn={50} 
+        onOpenInventory={onOpenInventory}
+        onOpenSettings={() => {}}
+        layout="top"
+      />
+    );
+
+    const nakedBadge = screen.getByTestId('naked-warning-badge');
+    expect(nakedBadge).toBeInTheDocument();
+    fireEvent.click(nakedBadge);
+    expect(onOpenInventory).toHaveBeenCalledWith('clothes');
   });
 });

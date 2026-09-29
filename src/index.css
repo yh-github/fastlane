@@ -170,6 +170,49 @@ body {
   image-rendering: auto;
 }
 
+.center-character-sprite--clickable {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.center-character-sprite--clickable:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.8));
+}
+
+.naked-badge {
+  background: #ef4444;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+}
+
+.naked-badge:hover {
+  background: #dc2626;
+  transform: scale(1.06);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+}
+
+@keyframes clothes-highlight-pulse {
+  0% { box-shadow: 0 0 0 rgba(0, 229, 255, 0); background-color: rgba(0, 229, 255, 0.05); }
+  50% { box-shadow: 0 0 15px rgba(0, 229, 255, 0.6); background-color: rgba(0, 229, 255, 0.15); }
+  100% { box-shadow: 0 0 0 rgba(0, 229, 255, 0); background-color: transparent; }
+}
+
+.status-section--highlighted {
+  border-radius: 8px;
+  animation: clothes-highlight-pulse 2s ease-in-out;
+}
+
 .building-modal,
 .building-modal--curved {
   position: absolute;
