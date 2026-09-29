@@ -206,4 +206,108 @@ describe('Side HUD Layout & Folding', () => {
     // Should NOT render Happiness badge
     expect(screen.queryByTitle('Happiness')).toBeNull();
   });
+
+  it('in base mode (helpfulUI: true, useSkills: false), neither Side HUD nor Top HUD renders Mgmt/Tech skill badges', () => {
+    const baseGameState = {
+      rules: {
+        helpfulUI: true,
+        useSkills: false,
+        usePhysicalMentalConditions: false,
+        hudLayout: 'side' as const
+      },
+      turn: 1,
+      economicIndex: 0
+    } as any;
+
+    const { rerender } = render(
+      <Dashboard
+        player={mockPlayer}
+        gameState={baseGameState}
+        turn={1}
+        hoursPerTurn={30}
+        layout="side"
+        foldState="full"
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    // Side HUD has Career, Employability, Dep, Exp, but NOT Mgmt or Tech
+    const careerCol = screen.getByTestId('side-hud-full').querySelector('.side-hud__col--career');
+    expect(careerCol).toBeInTheDocument();
+    expect(careerCol!.querySelector('#stat-career')).toBeInTheDocument();
+    expect(careerCol!.querySelector('#stat-employability')).toBeInTheDocument();
+    expect(careerCol!.querySelector('#stat-dependability')).toBeInTheDocument();
+    expect(careerCol!.querySelector('#stat-experience')).toBeInTheDocument();
+    expect(careerCol!.querySelector('#stat-skill-mgmt')).toBeNull();
+    expect(careerCol!.querySelector('#stat-skill-tech')).toBeNull();
+
+    // Rerender as Top HUD: also must NOT render Mgmt or Tech
+    rerender(
+      <Dashboard
+        player={mockPlayer}
+        gameState={baseGameState}
+        turn={1}
+        hoursPerTurn={30}
+        layout="top"
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    expect(screen.queryByTitle('Mgmt')).toBeNull();
+    expect(screen.queryByTitle('Tech')).toBeNull();
+  });
+
+  it('auto layout detects landscape (side HUD) vs portrait (top HUD)', () => {
+    const autoGameState = {
+      rules: {
+        helpfulUI: true,
+        hudLayout: 'auto' as const
+      },
+      turn: 1,
+      economicIndex: 0
+    } as any;
+
+    // Simulate landscape viewport
+    window.innerWidth = 1024;
+    window.innerHeight = 768;
+
+    const { rerender } = render(
+      <Dashboard
+        player={mockPlayer}
+        gameState={autoGameState}
+        turn={1}
+        hoursPerTurn={30}
+        layout="auto"
+        foldState="full"
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    // Should resolve to Side HUD
+    expect(screen.getByTestId('side-hud-full')).toBeInTheDocument();
+
+    // Simulate portrait viewport
+    window.innerWidth = 400;
+    window.innerHeight = 800;
+
+    rerender(
+      <Dashboard
+        player={mockPlayer}
+        gameState={autoGameState}
+        turn={1}
+        hoursPerTurn={30}
+        layout="auto"
+        foldState="full"
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    // Should resolve to Top HUD (no side HUD testid)
+    expect(screen.queryByTestId('side-hud-full')).toBeNull();
+    expect(screen.getByText(/hrs left/i)).toBeInTheDocument();
+  });
 });

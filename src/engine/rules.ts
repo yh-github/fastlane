@@ -146,9 +146,9 @@ export interface GameRules {
   showItemImages: boolean;
 
   /**
-   * HUD layout style: 'side' (modern widescreen/mobile side wings, default) or 'top' (classic desktop top-bar).
+   * HUD layout style: 'auto' (automatic detection based on screen orientation), 'side' (modern 2-column sidebar), or 'top' (classic desktop top-bar).
    */
-  hudLayout?: 'side' | 'top';
+  hudLayout?: 'auto' | 'side' | 'top';
 
   /**
    * ADVANCED: If true, apartment robberies are based on a 4-week moving average of time spent at home.
@@ -159,6 +159,11 @@ export interface GameRules {
    * ADVANCED: If true, the game tracks Physical and Mental Condition separately instead of a single Relaxation stat.
    */
   usePhysicalMentalConditions: boolean;
+
+  /**
+   * ADVANCED: If true, tracks Management and Technical skills that boost dependability and experience in management and technical roles.
+   */
+  useSkills?: boolean;
 
   /**
    * The lowest possible value the economic index (reading) can reach.
@@ -486,7 +491,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   reducedDegreeStatBonus: false,
   depthScaledDegreeBonus: false,
   showItemImages: true,
-  hudLayout: 'top',
+  hudLayout: 'auto',
   maxEnrolledClasses: 4,
   turnStartAtHome: false,
   delayRobberyFoodSpoilage: false,
@@ -558,7 +563,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   reducedDegreeStatBonus: 'Reduces the Dependability and Experience boost from degrees from +5 to +2',
   depthScaledDegreeBonus: 'Scales graduation Dependability and Max Experience bonuses by prerequisite depth: +(depth + 1) instead of flat +5',
   showItemImages: 'Displays graphical icons for items in menus and inventory',
-  hudLayout: 'HUD layout style (Classic Top HUD default or Modern Side HUD)',
+  hudLayout: 'HUD layout style (Auto-detect based on screen orientation, Top HUD, or Side HUD)',
   delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',
   maskEarlyJobRejections: 'Masks low dependability rejection as "No openings" (and suppresses "Poor Work History" if other requirements are missing) during turns 1-4 (Original Floppy/CD-ROM behavior)',
   percentageEducation: 'Tracks degree progress on a 0-100% continuous progress scale',
@@ -582,6 +587,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   
   useHomeTimeRobbery: 'Uses a moving average of time spent at home for robbery chances instead of relaxation',
   usePhysicalMentalConditions: 'Splits relaxation into detailed Physical and Mental conditions',
+  useSkills: 'Enables Management and Technical skill tracking and job performance bonuses',
   turnStartAtHome: 'Forces the player to start their turn inside their apartment',
   trackMess: 'Enables tracking and cleaning of apartment mess',
   trackSocial: 'Tracks Social standing stat (gained from gatherings, fast food, frontline service, etc.)',

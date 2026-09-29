@@ -1109,7 +1109,14 @@
     "showWindowPositionSizeOff": "Hidden window coordinate and dimension overlay (OFF)",
     "allowWindowMoveResize": "Move & Resize Location Windows",
     "allowWindowMoveResizeOn": "Header dragging and corner resize handle enabled (ON)",
-    "allowWindowMoveResizeOff": "Fixed location window position and size (OFF)"
+    "allowWindowMoveResizeOff": "Fixed location window position and size (OFF)",
+    "hudLayout": "HUD Layout Style",
+    "hudLayoutAuto": "Auto (Landscape: Side HUD, Portrait: Top HUD)",
+    "hudLayoutTop": "Top HUD (Classic desktop top-bar)",
+    "hudLayoutSide": "Side HUD (Modern widescreen & phone landscape, 2-column sidebar with folding)",
+    "useSkills": "Management & Technical Skills",
+    "useSkillsOn": "Tracks Management & Technical skills with job bonuses (ON)",
+    "useSkillsOff": "Skills disabled (OFF)"
   },
   "debug": {
     "modalTitle": "Debug Events & Economy",

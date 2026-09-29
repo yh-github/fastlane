@@ -127,8 +127,9 @@ export function applyForJob(
 
     const localInitiatives = (updated.initiativesByLocation?.[job.locationId] || 0) + (updated.innovationCount || 0);
     const effectiveRaises = Math.max(0, updated.raisesAtCurrentJob - localInitiatives);
-    const isTechnical = isAdvanced && hasJobTag(job, 'technical');
-    const isManagement = isAdvanced && isManagementJob(job);
+    const useSkills = rules?.useSkills !== undefined ? rules.useSkills : isAdvanced;
+    const isTechnical = useSkills && hasJobTag(job, 'technical');
+    const isManagement = useSkills && isManagementJob(job);
     const effectiveDep = updated.dependability + (isTechnical ? (updated.skillTech || 0) : 0) + (isManagement ? (updated.skillMgmt || 0) : 0);
     const reqDep = job.requirements.dependability + (effectiveRaises * 5);
     if (effectiveDep >= reqDep) {
@@ -148,9 +149,10 @@ export function applyForJob(
   // Regular job application logic: Check hard requirements first
   const rejectionReasons: string[] = [];
 
-  const isTechnical = isAdvanced && hasJobTag(job, 'technical');
-  const isManagement = isAdvanced && isManagementJob(job);
-  const isExecutive = isAdvanced && isExecutiveManagementJob(job);
+  const useSkills = rules?.useSkills !== undefined ? rules.useSkills : isAdvanced;
+  const isTechnical = useSkills && hasJobTag(job, 'technical');
+  const isManagement = useSkills && isManagementJob(job);
+  const isExecutive = useSkills && isExecutiveManagementJob(job);
   const isFrontline = hasJobTag(job, 'frontline_service');
 
   const techSkill = isTechnical ? (updated.skillTech || 0) : 0;
@@ -440,9 +442,10 @@ export function calcWorkShiftSummary(
   const workWorkDepGain = roundToResolution(1 * workRatio, 0.5);
   const workWorkExpGain = roundToResolution(1 * expMult * workRatio, 0.5);
   const socialGainText = socialMod > 0 ? `, +${socialMod} 👥` : (socialMod < 0 ? `, ${socialMod} 👥` : '');
-  const isTech = isAdvanced && hasJobTag(job, 'technical');
-  const isMiddleMgmt = isAdvanced && hasJobTag(job, 'middle_management');
-  const isExecMgmt = isAdvanced && hasJobTag(job, 'executive_management');
+  const useSkills = rules?.useSkills !== undefined ? rules.useSkills : isAdvanced;
+  const isTech = useSkills && hasJobTag(job, 'technical');
+  const isMiddleMgmt = useSkills && hasJobTag(job, 'middle_management');
+  const isExecMgmt = useSkills && hasJobTag(job, 'executive_management');
   const isMgmt = isMiddleMgmt || isExecMgmt;
 
   const techGain = isTech ? roundToResolution(workWorkExpGain * 0.25, 0.05) : 0;
@@ -605,8 +608,9 @@ export function workShift(
   }
   
   const isAdvanced = !!rules?.usePhysicalMentalConditions;
-  const isTechnical = isAdvanced && hasJobTag(job, 'technical');
-  const isManagement = isAdvanced && isManagementJob(job);
+  const useSkills = rules?.useSkills !== undefined ? rules.useSkills : isAdvanced;
+  const isTechnical = useSkills && hasJobTag(job, 'technical');
+  const isManagement = useSkills && isManagementJob(job);
   const effectiveDep = player.dependability + (isTechnical ? (player.skillTech || 0) : 0) + (isManagement ? (player.skillMgmt || 0) : 0);
   
   // Dependability firing & warning checks
@@ -928,7 +932,9 @@ export function workShift(
         const isMiddleMgmt = hasJobTag(job, 'middle_management');
         const mgmtGain = isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25);
         const standingGain = isExecMgmt ? 2 : 1;
-        updated.skillMgmt = Math.min(10, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
+        if (useSkills) {
+          updated.skillMgmt = Math.min(10, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
+        }
 
         // Clear 1 location mistake if any exist
         const curLocMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
@@ -951,11 +957,11 @@ export function workShift(
           updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + baseDepGain, 0.5));
         }
 
-        if (hasJobTag(job, 'technical')) {
+        if (useSkills && hasJobTag(job, 'technical')) {
           updated.skillTech = Math.min(10, roundToResolution((updated.skillTech || 0) + 0.25, 0.05));
         }
 
-        messages.push({ key: 'action.job.initiativeSuccess', params: { skillMgmt: updated.skillMgmt } });
+        messages.push({ key: 'action.job.initiativeSuccess', params: { skillMgmt: updated.skillMgmt ?? 0 } });
       } else {
         // Normal stat growth for other modes
         if (baseDepGain > 0 && updated.dependability < effectiveMaxDep) {
@@ -972,19 +978,19 @@ export function workShift(
         updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
       }
 
-      if (hasJobTag(job, 'technical')) {
+      if (useSkills && hasJobTag(job, 'technical')) {
         const techGain = roundToResolution(expGain * 0.25, 0.05);
         if (techGain > 0) {
           updated.skillTech = Math.min(10, roundToResolution((updated.skillTech || 0) + techGain, 0.05));
         }
       }
 
-      if (hasJobTag(job, 'middle_management')) {
+      if (useSkills && hasJobTag(job, 'middle_management')) {
         const mgmtGain = roundToResolution(expGain * 0.25, 0.05);
         if (mgmtGain > 0) {
           updated.skillMgmt = Math.min(10, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
         }
-      } else if (hasJobTag(job, 'executive_management')) {
+      } else if (useSkills && hasJobTag(job, 'executive_management')) {
         const mgmtGain = roundToResolution(expGain * 0.50, 0.05);
         if (mgmtGain > 0) {
           updated.skillMgmt = Math.min(10, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));

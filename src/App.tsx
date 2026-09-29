@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { GoalFilter } from './utils/logCategorizer';
-import { Dashboard, type HudFoldState, type HudLayoutMode } from './ui/Dashboard';
+import { Dashboard, type HudFoldState } from './ui/Dashboard';
 import { useNavigationGuard } from './hooks/useNavigationGuard';
 import { BuildingModal } from './ui/BuildingModal';
 import { GameMap } from './ui/GameMap';
@@ -24,9 +24,11 @@ import { StreetRobberyModal } from './ui/StreetRobberyModal';
 import { useTranslation } from 'react-i18next';
 import { formatQuarterHours } from './engine/statMath';
 import { CenterWalkAnimation } from './ui/CenterWalkAnimation';
+import { useIsLandscape } from './hooks/useScreenOrientation';
 
 export default function App() {
   const { t } = useTranslation();
+  const isLandscape = useIsLandscape();
   const [showTitle, setShowTitle] = useState(true);
   const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
@@ -174,12 +176,15 @@ export default function App() {
   }
 
   const isAiTurn = activePlayer?.isAi || false;
-  const hudLayout: HudLayoutMode = gameState.rules.hudLayout || 'top';
+  const hudSetting = gameState.rules.hudLayout || 'auto';
+  const effectiveHudLayout: 'side' | 'top' = hudSetting === 'auto'
+    ? (isLandscape ? 'side' : 'top')
+    : hudSetting;
   const isAuthenticCurvedBoard = gameState.rules.authenticCurvedPaths !== false;
-  const showBottomCenterClock = Boolean(activePlayer && (isAuthenticCurvedBoard || hudLayout === 'side'));
+  const showBottomCenterClock = Boolean(activePlayer && (isAuthenticCurvedBoard || effectiveHudLayout === 'side'));
 
   return (
-    <div className={`app-container app-container--${hudLayout}-hud ${hudLayout === 'side' ? `app-container--side-${hudFoldState}` : ''}`}>
+    <div className={`app-container app-container--${effectiveHudLayout}-hud ${effectiveHudLayout === 'side' ? `app-container--side-${hudFoldState}` : ''}`}>
       <Dashboard
         gameState={gameState}
         player={activePlayer}
@@ -193,7 +198,7 @@ export default function App() {
         onSelectLogFilter={setActiveLogFilter}
         onOpenInventory={() => setIsInventoryOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        layout={hudLayout}
+        layout={effectiveHudLayout}
         foldState={hudFoldState}
         onToggleFold={setHudFoldState}
       />
@@ -213,7 +218,7 @@ export default function App() {
         </div>
 
         {/* Dynamic Money Badge in Side HUD mode */}
-        {hudLayout === 'side' && activePlayer && (
+        {effectiveHudLayout === 'side' && activePlayer && (
           <div 
             className={`dynamic-money-badge ${isBuildingModalOpen && currentBuildingId ? 'dynamic-money-badge--in-location' : 'dynamic-money-badge--center-stage'}`} 
             id="stat-money"

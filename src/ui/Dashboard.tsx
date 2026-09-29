@@ -8,26 +8,19 @@
 import React from 'react';
 import { type PlayerState, type GameState } from '../engine/gameState';
 import {
-  calcEducationProgress,
-  calcCareerProgress,
-  calcWealthProgress,
-  calcEmployabilityScore,
-  calcMaxDependability,
-  calcMaxExperience,
-  calcWellbeingScore,
   calcUsedSpace,
   calcHousingSpaceCap,
   formatHours
 } from '../engine/statMath';
-import { calcLiquidAssets } from '../engine/economyEngine';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../engine/dataLoader';
+import { buildDashboardBadges } from './dashboardBadges';
 import type { GoalFilter } from '../utils/logCategorizer';
 
-export type HudLayoutMode = 'side' | 'top';
+export type HudLayoutMode = 'auto' | 'side' | 'top';
 export type HudFoldState = 'full' | 'compact' | 'minimized';
 
-interface DashboardProps {
+export interface DashboardProps {
   player: PlayerState | null;
   gameState: GameState;
   turn: number;
@@ -43,6 +36,103 @@ interface DashboardProps {
   layout?: HudLayoutMode;
   foldState?: HudFoldState;
   onToggleFold?: (nextState: HudFoldState) => void;
+}
+
+interface AdvancedStatsStripProps {
+  campaign?: CampaignBundle;
+  gameState: GameState;
+  player: PlayerState;
+  lifestyle: number;
+  isMentalCritical: boolean;
+  isMentalWarning: boolean;
+  isPhysicalCritical: boolean;
+  isPhysicalWarning: boolean;
+  activeLogFilter?: GoalFilter | null;
+  onFilterToggle: (filter: GoalFilter) => void;
+  t: (key: string, options?: any) => string;
+}
+
+function AdvancedStatsStrip({
+  campaign,
+  gameState,
+  player,
+  lifestyle,
+  isMentalCritical,
+  isMentalWarning,
+  isPhysicalCritical,
+  isPhysicalWarning,
+  activeLogFilter,
+  onFilterToggle,
+  t,
+}: AdvancedStatsStripProps) {
+  if (!campaign?.config.statRules?.enableAdvancedStats) return null;
+
+  return (
+    <div
+      className="hud-advanced-stats"
+      style={{
+        display: 'flex',
+        gap: '15px',
+        flexWrap: 'wrap',
+        padding: '5px 10px',
+        backgroundColor: '#eef',
+        borderRadius: '4px',
+        fontSize: '0.9em',
+        marginTop: '6px',
+      }}
+    >
+      {!campaign?.config.winConditions?.some((w) => w.stat === 'lifestyle') && (
+        <div
+          style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
+          onClick={() => onFilterToggle('lifestyle')}
+        >
+          <strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}
+        </div>
+      )}
+      <div
+        style={{
+          cursor: 'pointer',
+          opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
+          fontWeight: isMentalCritical ? 'bold' : 'normal',
+          color: isMentalCritical ? '#e74c3c' : isMentalWarning ? '#e67e22' : 'inherit',
+        }}
+        onClick={() => onFilterToggle('mental')}
+      >
+        <strong>{t('stat.mentalCondition')}:</strong>{' '}
+        {Math.floor(player.mentalCondition || 0)}
+      </div>
+      <div
+        style={{
+          cursor: 'pointer',
+          opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
+          fontWeight: isPhysicalCritical ? 'bold' : 'normal',
+          color: isPhysicalCritical ? '#e74c3c' : isPhysicalWarning ? '#e67e22' : 'inherit',
+        }}
+        onClick={() => onFilterToggle('physical')}
+      >
+        <strong>{t('stat.physicalCondition')}:</strong>{' '}
+        {Math.floor(player.physicalCondition || 0)}
+      </div>
+      {gameState.rules.spaceCapping && (
+        <div
+          title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess || 0} space`}
+          style={{
+            fontWeight:
+              calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign)
+                ? 'bold'
+                : 'normal',
+            color:
+              calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign)
+                ? '#e74c3c'
+                : 'inherit',
+          }}
+        >
+          <strong>📦 {t('stat.space', 'Space')}:</strong>{' '}
+          {calcUsedSpace(player, campaign, true)}/{calcHousingSpaceCap(player, campaign)}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function Dashboard({
@@ -65,70 +155,6 @@ export function Dashboard({
   const { t } = useTranslation();
   if (!player) return <header className="dashboard">{t('dashboard.loading')}</header>;
 
-  const education = calcEducationProgress(player.degrees.length);
-  const career = calcCareerProgress(player.dependability, player.currentJobId !== null);
-  const hasEarnedIncome = player.hasEarnedIncome ?? (turn > 1 || !!player.turnFlags?.hasWorked);
-  const wealth = calcWealthProgress(calcLiquidAssets(player, campaign, economicIndex, turn, gameState?.economySimulation), hasEarnedIncome);
-  const lifestyle = player.lifestyle || 0;
-  const wellbeing = calcWellbeingScore(player.physicalCondition ?? 50, player.mentalCondition ?? 25);
-
-  const statValues: Record<string, number> = {
-    wealth,
-    happiness: player.happiness,
-    education,
-    career,
-    lifestyle,
-    wellbeing,
-  };
-
-  let totalPoints = 0;
-  let totalGoals = 0;
-
-  const winConditions = campaign?.config.winConditions || [
-    { stat: 'happiness', label: 'Happiness' },
-    { stat: 'education', label: 'Education' },
-    { stat: 'wealth', label: 'Wealth' },
-    { stat: 'career', label: 'Career' }
-  ];
-
-  for (const cond of winConditions) {
-    const target = player.goalAllotment[cond.stat] || 0;
-    const current = statValues[cond.stat] || 0;
-    const cappedCurrent = Math.min(current, target);
-    totalGoals += target;
-    totalPoints += cappedCurrent;
-  }
-
-  const victoryPercent = totalGoals > 0 ? Math.floor((totalPoints / totalGoals) * 100) : 0;
-
-  const displayHappiness = !gameState.rules.allowOverAchievingGoals 
-    ? Math.min(player.happiness, player.goalAllotment.happiness || 0)
-    : player.happiness;
-
-  const employabilityScore = calcEmployabilityScore(
-    player.dependability || 0,
-    player.experience || 0,
-    player.degrees?.length || 0,
-    0,
-    player.social || 0
-  );
-
-  const currentJob = player.currentJobId ? campaign?.jobs?.find(j => j.id === player.currentJobId) : null;
-  const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
-  const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
-  const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);
-  const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
-
-  const mentalThreshold = campaign?.config?.statRules?.mentalWarningThreshold ?? campaign?.config?.statRules?.lowSpiritsThreshold ?? 10;
-  const mentalVal = player.mentalCondition || 0;
-  const isMentalCritical = mentalVal <= mentalThreshold;
-  const isMentalWarning = mentalVal <= mentalThreshold * 2;
-
-  const physicalThreshold = campaign?.config?.statRules?.physicalWarningThreshold ?? campaign?.config?.statRules?.physicalDoctorThreshold ?? 10;
-  const physicalVal = player.physicalCondition || 0;
-  const isPhysicalCritical = physicalVal <= physicalThreshold;
-  const isPhysicalWarning = physicalVal <= physicalThreshold * 2;
-
   const handleFilterToggle = (filter: GoalFilter) => {
     if (!onSelectLogFilter) return;
     if (activeLogFilter === filter) {
@@ -138,16 +164,34 @@ export function Dashboard({
     }
   };
 
+  const isLandscape = typeof window !== 'undefined' && window.innerWidth > window.innerHeight;
+  const currentHudSetting = layout ?? gameState?.rules?.hudLayout ?? 'top';
+  const effectiveLayout: 'side' | 'top' = currentHudSetting === 'auto'
+    ? (isLandscape ? 'side' : 'top')
+    : currentHudSetting;
+
   const readingVal = economicReading ?? gameState.economicReading ?? economicIndex;
   const trendVal = economicTrend ?? gameState.economicTrend ?? 0;
   const formattedReading = readingVal > 0 ? `+${readingVal}` : `${readingVal}`;
   const trendArrow = trendVal > 0 ? '↑' : trendVal < 0 ? '↓' : '→';
   const formattedTrend = `${trendVal > 0 ? `+${trendVal}` : `${trendVal}`} ${trendArrow}`;
 
+  const { lifeBadges, careerBadges, allBadges, stats } = buildDashboardBadges({
+    player,
+    rules: gameState.rules,
+    gameState,
+    campaign,
+    turn,
+    economicIndex,
+    activeLogFilter,
+    onFilterToggle: handleFilterToggle,
+    t,
+  });
+
   // ─────────────────────────────────────────────────────────────
-  // 1. SIDE HUD (Modern default)
+  // 1. SIDE HUD (Modern Widescreen / Phone Landscape)
   // ─────────────────────────────────────────────────────────────
-  if (layout === 'side') {
+  if (effectiveLayout === 'side') {
     if (foldState === 'minimized') {
       return (
         <aside className="side-hud side-hud--minimized" data-testid="side-hud-minimized">
@@ -241,137 +285,23 @@ export function Dashboard({
             </div>
 
             <div className="side-hud__badges-group">
-              <StatBadge
-                label={t('dashboard.money', { defaultValue: 'Money' })}
-                value={`$${player.money}`}
-                icon="💰"
-                id="stat-money"
-                isActive={activeLogFilter === 'money'}
-                onClick={() => handleFilterToggle('money')}
+              {lifeBadges.map((badge) => (
+                <StatBadge key={badge.id} {...badge} />
+              ))}
+
+              <AdvancedStatsStrip
+                campaign={campaign}
+                gameState={gameState}
+                player={player}
+                lifestyle={stats.lifestyle}
+                isMentalCritical={stats.isMentalCritical}
+                isMentalWarning={stats.isMentalWarning}
+                isPhysicalCritical={stats.isPhysicalCritical}
+                isPhysicalWarning={stats.isPhysicalWarning}
+                activeLogFilter={activeLogFilter}
+                onFilterToggle={handleFilterToggle}
+                t={t}
               />
-              <StatBadge
-                label={t('dashboard.victory', { defaultValue: 'Victory' })}
-                value={`${victoryPercent}%`}
-                icon="🏆"
-                id="stat-victory"
-              />
-              {/* Dynamic Goal Badges for Non-Career Win Conditions */}
-              {winConditions
-                .filter(cond => cond.stat !== 'career')
-                .map(cond => {
-                  let current = 0;
-                  if (cond.stat === 'wealth') current = !gameState.rules.allowOverAchievingGoals ? Math.min(wealth, player.goalAllotment.wealth || 0) : wealth;
-                  else if (cond.stat === 'education') current = !gameState.rules.allowOverAchievingGoals ? Math.min(education, player.goalAllotment.education || 0) : education;
-                  else if (cond.stat === 'happiness') current = displayHappiness as number;
-                  else if (cond.stat === 'lifestyle') current = !gameState.rules.allowOverAchievingGoals ? Math.min(lifestyle, player.goalAllotment.lifestyle || 0) : lifestyle;
-                  else if (cond.stat === 'wellbeing') current = !gameState.rules.allowOverAchievingGoals ? Math.min(wellbeing, player.goalAllotment.wellbeing || 0) : wellbeing;
-                  else current = (player as any)[cond.stat] || 0;
-
-                  const target = player.goalAllotment[cond.stat] || 0;
-                  let icon = '🎯';
-                  if (cond.stat === 'wealth') icon = '🤑';
-                  else if (cond.stat === 'education') icon = '🎓';
-                  else if (cond.stat === 'happiness') icon = '😊';
-                  else if (cond.stat === 'lifestyle') icon = (player.lifestyle || 0) > 50 ? '🧐' : '😎';
-                  else if (cond.stat === 'wellbeing') icon = '🧘';
-
-                  return (
-                    <StatBadge
-                      key={cond.stat}
-                      label={t(`dashboard.${cond.stat}`, { defaultValue: cond.label })}
-                      value={`${current}/${target}`}
-                      icon={icon}
-                      id={`stat-${cond.stat}`}
-                      isActive={activeLogFilter === cond.stat as any}
-                      onClick={() => handleFilterToggle(cond.stat as GoalFilter)}
-                    />
-                  );
-                })}
-
-              {/* Health / Wellbeing stats */}
-              {gameState.rules.usePhysicalMentalConditions ? (
-                <>
-                  <StatBadge
-                    label={t('dashboard.physical', { defaultValue: 'Physical' })}
-                    value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`}
-                    icon="💪"
-                    id="stat-physical"
-                    danger={isPhysicalCritical}
-                    warning={!isPhysicalCritical && isPhysicalWarning}
-                    badge={(player.physicalConditionMax !== undefined && player.physicalConditionMax < 50) ? `Max ${player.physicalConditionMax} ↓` : undefined}
-                    isActive={activeLogFilter === 'physical'}
-                    onClick={() => handleFilterToggle('physical')}
-                  />
-                  <StatBadge
-                    label={t('dashboard.mental', { defaultValue: 'Mental' })}
-                    value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`}
-                    icon="🧠"
-                    id="stat-mental"
-                    danger={isMentalCritical}
-                    warning={!isMentalCritical && isMentalWarning}
-                    badge={(player.mentalConditionMax !== undefined && player.mentalConditionMax < 50) ? `Max ${player.mentalConditionMax} ↓` : undefined}
-                    isActive={activeLogFilter === 'mental'}
-                    onClick={() => handleFilterToggle('mental')}
-                  />
-                  {gameState.rules.trackSocial && (
-                    <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
-                  )}
-                  {gameState.rules.trackMess && (
-                    <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
-                  )}
-                </>
-              ) : (
-                gameState.rules.helpfulUI && (
-                  <StatBadge
-                    label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })}
-                    value={player.relaxation}
-                    icon="🧘"
-                    id="stat-relaxation"
-                    danger={gameState.rules.enableRelaxationDoctor && player.relaxation <= (gameState.rules.relaxationDoctorThreshold ?? 10)}
-                    isActive={activeLogFilter === 'relaxation'}
-                    onClick={() => handleFilterToggle('relaxation')}
-                  />
-                )
-              )}
-
-              {campaign?.config.statRules?.enableAdvancedStats && (
-                <div className="hud-advanced-stats" style={{ display: 'flex', flexDirection: 'column', gap: '3px', padding: '4px 6px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.82em', marginTop: '4px' }}>
-                  {!campaign?.config.winConditions?.some(w => w.stat === 'lifestyle') && (
-                    <div 
-                      style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
-                      onClick={() => handleFilterToggle('lifestyle')}
-                    >
-                      <strong>{t('stat.lifestyle', { defaultValue: 'Lifestyle' })}:</strong> {Math.floor(lifestyle)}
-                    </div>
-                  )}
-                  {!gameState.rules.usePhysicalMentalConditions && (
-                    <>
-                      <div 
-                        style={{
-                           cursor: 'pointer',
-                           opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
-                           fontWeight: isMentalCritical ? 'bold' : 'normal',
-                           color: isMentalCritical ? '#e74c3c' : (isMentalWarning ? '#e67e22' : 'inherit')
-                        }}
-                        onClick={() => handleFilterToggle('mental')}
-                      >
-                         <strong>{t('stat.mentalCondition', { defaultValue: 'Mental Condition' })}:</strong> {Math.floor(player.mentalCondition || 0)}
-                      </div>
-                      <div 
-                        style={{
-                           cursor: 'pointer',
-                           opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
-                           fontWeight: isPhysicalCritical ? 'bold' : 'normal',
-                           color: isPhysicalCritical ? '#e74c3c' : (isPhysicalWarning ? '#e67e22' : 'inherit')
-                        }}
-                        onClick={() => handleFilterToggle('physical')}
-                      >
-                         <strong>{t('stat.physicalCondition', { defaultValue: 'Physical Condition' })}:</strong> {Math.floor(player.physicalCondition || 0)}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
@@ -380,54 +310,9 @@ export function Dashboard({
             <div className="side-hud__col side-hud__col--career">
               <div className="side-hud__col-header">💼 {t('dashboard.career', { defaultValue: 'Career' })}</div>
               <div className="side-hud__badges-group">
-                <StatBadge
-                  label={t('dashboard.career', { defaultValue: 'Career' })}
-                  value={`${career}/${player.goalAllotment.career || 0}`}
-                  icon="💼"
-                  id="stat-career"
-                  isActive={activeLogFilter === 'career'}
-                  onClick={() => handleFilterToggle('career')}
-                />
-                {gameState.rules.helpfulUI && (
-                  <>
-                    <StatBadge
-                      label={t('dashboard.employability', { defaultValue: 'Employability' })}
-                      value={`${employabilityScore}%`}
-                      icon="👨‍💼"
-                      id="stat-employability"
-                      isActive={activeLogFilter === 'employability'}
-                      onClick={() => handleFilterToggle('employability')}
-                    />
-                    <StatBadge
-                      label={t('dashboard.dependability', { defaultValue: 'Dependability' })}
-                      value={`${player.dependability}/${maxDep}`}
-                      icon="🤝"
-                      id="stat-dependability"
-                      isActive={activeLogFilter === 'dependability'}
-                      onClick={() => handleFilterToggle('dependability')}
-                    />
-                    <StatBadge
-                      label={t('dashboard.experience', { defaultValue: 'Experience' })}
-                      value={`${player.experience}/${maxExp}`}
-                      icon="👌"
-                      id="stat-experience"
-                      isActive={activeLogFilter === 'experience'}
-                      onClick={() => handleFilterToggle('experience')}
-                    />
-                    <StatBadge
-                      label={t('dashboard.skillMgmt', { defaultValue: 'Mgmt' })}
-                      value={`${(player.skillMgmt ?? 0).toFixed(1)}/10`}
-                      icon="👔"
-                      id="stat-skill-mgmt"
-                    />
-                    <StatBadge
-                      label={t('dashboard.skillTech', { defaultValue: 'Tech' })}
-                      value={`${(player.skillTech ?? 0).toFixed(1)}/10`}
-                      icon="🔧"
-                      id="stat-skill-tech"
-                    />
-                  </>
-                )}
+                {careerBadges.map((badge) => (
+                  <StatBadge key={badge.id} {...badge} />
+                ))}
               </div>
             </div>
           )}
@@ -437,7 +322,7 @@ export function Dashboard({
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 2. TOP HUD (Classic Desktop)
+  // 2. TOP HUD (Classic Desktop / Phone Portrait)
   // ─────────────────────────────────────────────────────────────
   return (
     <header className="dashboard">
@@ -501,49 +386,19 @@ export function Dashboard({
         </button>
       </div>
 
-      {campaign?.config.statRules?.enableAdvancedStats && (
-        <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
-          <div 
-            style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
-            onClick={() => handleFilterToggle('lifestyle')}
-          >
-            <strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}
-          </div>
-          <div 
-            style={{
-               cursor: 'pointer',
-               opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
-               fontWeight: isMentalCritical ? 'bold' : 'normal',
-               color: isMentalCritical ? '#e74c3c' : (isMentalWarning ? '#e67e22' : 'inherit')
-            }}
-            onClick={() => handleFilterToggle('mental')}
-          >
-             <strong>{t('stat.mentalCondition')}:</strong> {Math.floor(player.mentalCondition || 0)}
-          </div>
-          <div 
-            style={{
-               cursor: 'pointer',
-               opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
-               fontWeight: isPhysicalCritical ? 'bold' : 'normal',
-               color: isPhysicalCritical ? '#e74c3c' : (isPhysicalWarning ? '#e67e22' : 'inherit')
-            }}
-            onClick={() => handleFilterToggle('physical')}
-          >
-             <strong>{t('stat.physicalCondition')}:</strong> {Math.floor(player.physicalCondition || 0)}
-          </div>
-          {gameState.rules.spaceCapping && (
-            <div 
-              title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess || 0} space`}
-              style={{
-                fontWeight: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? 'bold' : 'normal',
-                color: calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign) ? '#e74c3c' : 'inherit'
-              }}
-            >
-              <strong>📦 {t('stat.space', 'Space')}:</strong> {calcUsedSpace(player, campaign, true)}/{calcHousingSpaceCap(player, campaign)}
-            </div>
-          )}
-        </div>
-      )}
+      <AdvancedStatsStrip
+        campaign={campaign}
+        gameState={gameState}
+        player={player}
+        lifestyle={stats.lifestyle}
+        isMentalCritical={stats.isMentalCritical}
+        isMentalWarning={stats.isMentalWarning}
+        isPhysicalCritical={stats.isPhysicalCritical}
+        isPhysicalWarning={stats.isPhysicalWarning}
+        activeLogFilter={activeLogFilter}
+        onFilterToggle={handleFilterToggle}
+        t={t}
+      />
 
       {(gameState.rules as any).showDetailedStats && !campaign?.config.statRules?.enableAdvancedStats && (
         <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
@@ -558,98 +413,9 @@ export function Dashboard({
       )}
 
       <div className="dashboard__stats" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', minHeight: '44px' }}>
-        <StatBadge label={t('dashboard.money', { defaultValue: 'Money' })} value={`$${player.money}`} icon="💰" id="stat-money" isActive={activeLogFilter === 'money'} onClick={() => handleFilterToggle('money')} />
-        {gameState.rules.helpfulUI && (
-          <>
-            {!gameState.rules.usePhysicalMentalConditions && (
-              <StatBadge label={t('dashboard.relaxation', { defaultValue: 'Relaxation' })} value={player.relaxation} icon="🧘" id="stat-relaxation" danger={gameState.rules.enableRelaxationDoctor && player.relaxation <= (gameState.rules.relaxationDoctorThreshold ?? 10)} isActive={activeLogFilter === 'relaxation'} onClick={() => handleFilterToggle('relaxation')} />
-            )}
-            <StatBadge label={t('dashboard.dependability', { defaultValue: 'Dependability' })} value={`${player.dependability}/${maxDep}`} icon="🤝" id="stat-dependability" isActive={activeLogFilter === 'dependability'} onClick={() => handleFilterToggle('dependability')} />
-            <StatBadge label={t('dashboard.experience', { defaultValue: 'Experience' })} value={`${player.experience}/${maxExp}`} icon="👌" id="stat-experience" isActive={activeLogFilter === 'experience'} onClick={() => handleFilterToggle('experience')} />
-            <StatBadge label={t('dashboard.employability', { defaultValue: 'Employability' })} value={`${employabilityScore}%`} icon="👨‍💼" id="stat-employability" isActive={activeLogFilter === 'employability'} onClick={() => handleFilterToggle('employability')} />
-          </>
-        )}
-        {gameState.rules.usePhysicalMentalConditions && (
-          <>
-            <StatBadge 
-              label={t('dashboard.physical', { defaultValue: 'Physical' })} 
-              value={`${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`} 
-              icon="💪" 
-              id="stat-physical" 
-              danger={isPhysicalCritical}
-              warning={!isPhysicalCritical && isPhysicalWarning}
-              badge={(player.physicalConditionMax !== undefined && player.physicalConditionMax < 50) ? `Max ${player.physicalConditionMax} ↓` : undefined}
-              isActive={activeLogFilter === 'physical'} 
-              onClick={() => handleFilterToggle('physical')} 
-            />
-            <StatBadge 
-              label={t('dashboard.mental', { defaultValue: 'Mental' })} 
-              value={`${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`} 
-              icon="🧠" 
-              id="stat-mental" 
-              danger={isMentalCritical}
-              warning={!isMentalCritical && isMentalWarning}
-              badge={(player.mentalConditionMax !== undefined && player.mentalConditionMax < 50) ? `Max ${player.mentalConditionMax} ↓` : undefined}
-              isActive={activeLogFilter === 'mental'} 
-              onClick={() => handleFilterToggle('mental')} 
-            />
-            {gameState.rules.trackSocial && (
-              <StatBadge label={t('dashboard.social', { defaultValue: 'Social' })} value={`${player.social ?? 9}/99`} icon="👥" id="stat-social" />
-            )}
-            {gameState.rules.trackMess && (
-              <StatBadge label={t('dashboard.mess', { defaultValue: 'Mess' })} value={`${player.mess ?? 0}`} icon="🧹" id="stat-mess" />
-            )}
-            <StatBadge 
-              label={t('dashboard.skillTech', { defaultValue: 'Tech' })} 
-              value={`${(player.skillTech ?? 0).toFixed(2)}/10`} 
-              icon="🔧" 
-              id="stat-skill-tech" 
-            />
-            <StatBadge 
-              label={t('dashboard.skillMgmt', { defaultValue: 'Mgmt' })} 
-              value={`${(player.skillMgmt ?? 0).toFixed(2)}/10`} 
-              icon="👔" 
-              id="stat-skill-mgmt" 
-            />
-          </>
-        )}
-        <StatBadge label={t('dashboard.victory', { defaultValue: 'Victory' })} value={`${victoryPercent}%`} icon="🏆" id="stat-victory" />
-        {(campaign?.config.winConditions || [
-          { stat: 'happiness', label: 'Happiness' },
-          { stat: 'education', label: 'Education' },
-          { stat: 'career', label: 'Career' },
-          { stat: 'wealth', label: 'Wealth' }
-        ]).map(cond => {
-          let current = 0;
-          if (cond.stat === 'wealth') current = !gameState.rules.allowOverAchievingGoals ? Math.min(wealth, player.goalAllotment.wealth) : wealth;
-          else if (cond.stat === 'education') current = !gameState.rules.allowOverAchievingGoals ? Math.min(education, player.goalAllotment.education) : education;
-          else if (cond.stat === 'career') current = !gameState.rules.allowOverAchievingGoals ? Math.min(career, player.goalAllotment.career) : career;
-          else if (cond.stat === 'happiness') current = displayHappiness as number;
-          else if (cond.stat === 'lifestyle') current = !gameState.rules.allowOverAchievingGoals ? Math.min(lifestyle, player.goalAllotment.lifestyle || 0) : lifestyle;
-          else if (cond.stat === 'wellbeing') current = !gameState.rules.allowOverAchievingGoals ? Math.min(wellbeing, player.goalAllotment.wellbeing || 0) : wellbeing;
-          else current = (player as any)[cond.stat] || 0;
-
-          const target = player.goalAllotment[cond.stat] || 0;
-          let icon = '🎯';
-          if (cond.stat === 'wealth') icon = '🤑';
-          else if (cond.stat === 'education') icon = '🎓';
-          else if (cond.stat === 'career') icon = '💼';
-          else if (cond.stat === 'happiness') icon = '😊';
-          else if (cond.stat === 'lifestyle') icon = (player.lifestyle || 0) > 50 ? '🧐' : '😎';
-          else if (cond.stat === 'wellbeing') icon = '🧘';
-
-          return (
-            <StatBadge 
-              key={cond.stat}
-              label={t(`dashboard.${cond.stat}`, { defaultValue: cond.label })} 
-              value={`${current}/${target}`} 
-              icon={icon} 
-              id={`stat-${cond.stat}`} 
-              isActive={activeLogFilter === cond.stat as any} 
-              onClick={() => handleFilterToggle(cond.stat as GoalFilter)} 
-            />
-          );
-        })}
+        {allBadges.map((badge) => (
+          <StatBadge key={badge.id} {...badge} />
+        ))}
       </div>
     </header>
   );
