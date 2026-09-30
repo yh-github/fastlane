@@ -23,6 +23,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "depMaxBonus": 0,
       "dependability": 0,
       "enrolledClasses": {},
+      "enrolledCredits": 0,
       "experience": 20,
       "goalAllotment": {
         "career": 25,

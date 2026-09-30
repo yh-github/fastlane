@@ -519,7 +519,11 @@
     "toggleLeisure": "פנאי",
     "toggleChores": "מטלות",
     "fold": "קיפול",
-    "pantryStable": "✓ יציב (ללא מצרכים מתכלים)"
+    "pantryStable": "✓ יציב (ללא מצרכים מתכלים)",
+    "pantryTitle": "מזווה ואספקת מזון",
+    "pantryPillTooltip": "מזווה ואספקת מזון",
+    "messDetailsTitle": "פירוט שטח ולכלוך בדירה",
+    "messClickDetails": "לחץ לצפייה בפירוט שטח ולכלוך בדירה"
   },
   "rentOffice": {
     "title": "משרד שכירות",

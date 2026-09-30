@@ -55,7 +55,7 @@ export function calculateStatDiffsAndAnimate(
   if (relaxDiff !== 0) {
     diffStr.push(`${relaxDiff > 0 ? '+' : ''}${relaxDiff} Relaxation`);
     if (rules.enableAnimations) {
-      triggerAnim('text', `${relaxDiff > 0 ? '+' : ''}${relaxDiff} 🧘`, { targetId: 'stat-relaxation', customClass: relaxDiff > 0 ? 'anim-positive' : 'anim-negative' });
+      triggerAnim('text', `${relaxDiff > 0 ? '+' : ''}${relaxDiff} 🛌`, { targetId: 'stat-relaxation', customClass: relaxDiff > 0 ? 'anim-positive' : 'anim-negative' });
     }
   }
   if (depDiff !== 0) {

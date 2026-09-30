@@ -74,7 +74,7 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
   switch (action) {
     case 'relax':
       title = t('homeRelax.relaxTitle', { defaultValue: 'Relax & Recharge' });
-      icon = '🧘';
+      icon = '🛌';
       badge = 'LEISURE';
       themeColor = '#34d399';
       glowColor = 'rgba(52, 211, 153, 0.4)';

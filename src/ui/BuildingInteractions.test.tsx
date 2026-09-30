@@ -753,8 +753,8 @@ describe('BuildingInteractions', () => {
       />
     );
 
-    // Verify Showcase headers
-    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    // Verify Showcase
+    expect(screen.getByTestId('apartment-furnishings')).toBeInTheDocument();
 
     // Verify Durables shown in showcase
     expect(screen.getByText(/Refrigerator/i)).toBeInTheDocument();
@@ -827,8 +827,16 @@ describe('BuildingInteractions', () => {
       />
     );
 
-    // Verify Furnishings and Pantry headers in classic mode
-    expect(screen.getByText(/Apartment Furnishings & Belongings/i)).toBeInTheDocument();
+    // Verify Furnishings and Pantry in classic mode
+    expect(screen.getByTestId('apartment-furnishings')).toBeInTheDocument();
+
+    // Verify Pantry Pill Badge and click to view modal
+    const pantryPill = screen.getByTestId('pantry-pill-badge');
+    expect(pantryPill).toBeInTheDocument();
+    expect(pantryPill).toHaveTextContent('4');
+    fireEvent.click(pantryPill);
+
+    expect(screen.getByTestId('pantry-details-modal')).toBeInTheDocument();
     expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
     expect(screen.getByText(/Refrigerator Active/i)).toBeInTheDocument();
 

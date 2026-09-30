@@ -36,7 +36,7 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
       case 'happiness':
         return { icon: '😊', label: t('weekendScreen.happiness', { defaultValue: 'Happiness' }) };
       case 'relaxation':
-        return { icon: '🧘', label: t('weekendScreen.relaxation', { defaultValue: 'Relaxation' }) };
+        return { icon: '🛌', label: t('weekendScreen.relaxation', { defaultValue: 'Relaxation' }) };
       default:
         return { icon: '', label: stat };
     }
@@ -81,7 +81,7 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
       <div className="weekend-screen weekend-screen--selection" style={{
         position: 'absolute', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
         backgroundColor: 'rgba(5, 8, 15, 0.95)', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', color: 'white', zIndex: 1000, overflowY: 'auto', padding: '30px 16px',
+        alignItems: 'center', color: 'white', zIndex: 40, overflowY: 'auto', padding: '30px 16px',
         boxSizing: 'border-box'
       }}>
         <h1 style={{ color: '#00e5ff', textShadow: '0 0 12px #00e5ff', margin: '0 0 8px', textAlign: 'center' }}>
@@ -168,7 +168,7 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
     <div className="weekend-screen weekend-screen--summary" style={{
       position: 'absolute', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
       backgroundColor: 'rgba(0, 0, 0, 0.90)', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', color: 'white', zIndex: 1000, overflowY: 'auto', padding: '40px 20px',
+      alignItems: 'center', color: 'white', zIndex: 40, overflowY: 'auto', padding: '40px 20px',
       boxSizing: 'border-box'
     }}>
       <h1 style={{ color: '#00e5ff', textShadow: '0 0 10px #00e5ff' }}>{t('weekendScreen.title')}</h1>

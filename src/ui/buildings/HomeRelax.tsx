@@ -14,6 +14,8 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const { t } = useTranslation();
   const [showUnfedWarning, setShowUnfedWarning] = useState(false);
   const [warnedThisVisit, setWarnedThisVisit] = useState(false);
+  const [showMessDetails, setShowMessDetails] = useState(false);
+  const [showPantryPopup, setShowPantryPopup] = useState(false);
   const [actionFeedback, setActionFeedback] = useState<{ message: string; isError: boolean } | null>(null);
   const [inspectedDurable, setInspectedDurable] = useState<{
     id: string;
@@ -374,49 +376,35 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '24px' }}>
         {/* Unified Space & Mess Status Overview (Only if trackMess or spaceCapping is active) */}
         {(rules?.trackMess || rules?.spaceCapping) && (
-          <div className="mess-visual-card" style={{ 
-            marginBottom: '4px', 
-            padding: '8px 12px', 
-            background: 'linear-gradient(135deg, rgba(20,20,35,0.85) 0%, rgba(35,35,55,0.85) 100%)', 
-            borderRadius: '6px',
-            border: isOvercapacity ? '1px solid #e74c3c' : `1px solid ${messBarColor}`,
-            boxShadow: isOvercapacity ? '0 0 10px rgba(231,76,60,0.4)' : `0 0 8px ${messBarColor}22`
-          }}>
-            {/* Header Row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '0.85em', color: '#00e5ff' }}>
-                🛋️ Durables: {durablesSpace} space
-              </span>
-              <span style={{ fontWeight: 'bold', fontSize: '0.85em', textAlign: 'center' }}>
-                {rules?.spaceCapping ? (
-                  isOvercapacity ? (
-                    <span style={{ color: '#e74c3c', background: 'rgba(231,76,60,0.2)', padding: '1px 6px', borderRadius: '3px' }}>
-                      ⚠️ OVERCROWDED (+{overflow})
-                    </span>
-                  ) : freeSpace === 0 ? (
-                    <span style={{ color: '#f39c12' }}>FULL (0 free)</span>
-                  ) : (
-                    <span style={{ color: '#2ecc71' }}>{freeSpace} free space</span>
-                  )
-                ) : null}
-              </span>
-              <span style={{ fontWeight: 'bold', fontSize: '0.85em', color: messBarColor }}>
-                {messIcon} Mess: {currentMess} <span style={{ fontSize: '0.85em', opacity: 0.9 }}>({messLabel})</span>
-              </span>
-            </div>
-
-            {/* Opposing Gauge Bar */}
+          <div 
+            className="mess-visual-card"
+            data-testid="compact-mess-bar"
+            onClick={() => setShowMessDetails(true)}
+            style={{ 
+              marginBottom: '4px', 
+              padding: '6px 10px', 
+              background: 'linear-gradient(135deg, rgba(20,20,35,0.85) 0%, rgba(35,35,55,0.85) 100%)', 
+              borderRadius: '6px',
+              border: isOvercapacity ? '1px solid #e74c3c' : `1px solid ${messBarColor}`,
+              boxShadow: isOvercapacity ? '0 0 10px rgba(231,76,60,0.4)' : `0 0 8px ${messBarColor}22`,
+              cursor: 'pointer'
+            }}
+            title={t('homeRelax.messClickDetails', { defaultValue: 'Click to view apartment space and mess breakdown' })}
+          >
             {rules?.spaceCapping ? (
               <div 
                 style={{ 
                   width: '100%', 
-                  height: '12px', 
+                  height: '20px', 
                   backgroundColor: 'rgba(255,255,255,0.08)', 
                   borderRadius: '6px', 
                   overflow: 'hidden',
-                  position: 'relative'
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0 8px'
                 }}
-                title={`Durables: ${durablesSpace} space | Mess: ${currentMess} space | Free: ${freeSpace} space${overflow > 0 ? ` (⚠️ ${overflow} space overcrowded!)` : ''}`}
               >
                 <div style={{
                   position: 'absolute',
@@ -441,37 +429,47 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                   transition: 'width 0.3s ease',
                   zIndex: 2
                 }} />
+                <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                  🛋️ {durablesSpace} space
+                </span>
+                <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: isOvercapacity ? '#ff6b6b' : '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                  {isOvercapacity ? `⚠️ OVERCROWDED (+${overflow})` : freeSpace === 0 ? 'FULL' : `${freeSpace} free`}
+                </span>
+                <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                  {messIcon} {currentMess} ({messLabel})
+                </span>
               </div>
             ) : (
-              <div style={{ width: '100%', height: '8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ 
+                width: '100%', 
+                height: '20px', 
+                backgroundColor: 'rgba(255,255,255,0.1)', 
+                borderRadius: '6px', 
+                overflow: 'hidden',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 8px'
+              }}>
                 <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
                   width: `${messPercentage}%`,
-                  height: '100%',
                   backgroundColor: messBarColor,
-                  transition: 'width 0.5s ease-in-out, background-color 0.5s ease'
+                  transition: 'width 0.5s ease-in-out, background-color 0.5s ease',
+                  zIndex: 1
                 }} />
+                <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                  {messIcon} Mess: {currentMess}
+                </span>
+                <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                  {messLabel}
+                </span>
               </div>
             )}
-
-            {/* Subtext Footer */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '0.72em', color: '#aaa', flexWrap: 'wrap', gap: '4px' }}>
-              {rules?.spaceCapping ? (
-                <>
-                  <span style={{ color: '#00e5ff' }}>0 (Start)</span>
-                  <span>
-                    Capacity: <strong>{spaceCap} space</strong>
-                    {overflow > 0 && <span style={{ color: '#e74c3c', marginLeft: '4px' }}>(Total: {totalUsedSpace})</span>}
-                  </span>
-                  <span style={{ color: messBarColor }}>Max Mess: {maxMessHousing}</span>
-                </>
-              ) : (
-                <>
-                  <span>0 (Spotless)</span>
-                  <span>Social limit: 25</span>
-                  <span>Max: {maxMessHousing}</span>
-                </>
-              )}
-            </div>
           </div>
         )}
 
@@ -527,52 +525,37 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           </div>
         )}
 
-        {/* Food & Pantry Card (Only when helpfulUI is active) */}
+        {/* Food & Pantry Pill Badge (Only when helpfulUI is active) */}
         {rules?.helpfulUI && (
-          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '4px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
-              <strong style={{ color: '#2ecc71', fontSize: '0.82em', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                🥫 {t('homeRelax.pantryTitle', { defaultValue: 'Pantry & Food Supplies' })}
-              </strong>
-              <span style={{ fontSize: '0.74em', color: hasFridge ? '#2ecc71' : '#e67e22', fontWeight: 'bold' }}>
-                {hasFridge ? (hasFreezer ? '🧊 Refrigerator + Freezer' : '🧊 Refrigerator Active') : '⚠️ No Fridge'}
-              </span>
-            </div>
-
-            {/* Fresh Food & Fast Food Summary */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.25)', padding: '4px 8px', borderRadius: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1em' }}>🥗</span>
-                <span style={{ fontSize: '0.8em', color: '#fff' }}>{t('inventoryModal.freshFood', { defaultValue: 'Fresh Food' })}</span>
-              </div>
-              <span style={{ fontSize: '0.85em', fontWeight: 'bold', color: (player.inventory?.freshFoodUnits || 0) > 0 ? '#2ecc71' : '#e74c3c' }}>
-                {player.inventory?.freshFoodUnits || 0} {t('inventoryModal.units', { defaultValue: 'units' })}
-              </span>
-            </div>
-
-            {/* Fast Food Items */}
-            {player.inventory?.fastFoodItems && player.inventory.fastFoodItems.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '45px', overflowY: 'auto' }}>
-                {player.inventory.fastFoodItems.map((ff, idx) => {
-                  const itemDef = campaign?.items?.find(i => i.id === ff.itemId);
-                  const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : ff.itemId;
-                  return (
-                    <span 
-                      key={idx} 
-                      style={{ fontSize: '0.74em', background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '3px', border: '1px solid rgba(255,255,255,0.06)' }}
-                    >
-                      🍔 {itemName} {ff.happinessBonus > 0 && <span style={{ color: '#f1c40f' }}>+{ff.happinessBonus} 😊</span>}
-                    </span>
-                  );
-                })}
-              </div>
-            ) : null}
-
-            {(player.inventory?.freshFoodUnits || 0) === 0 && (!player.inventory?.fastFoodItems || player.inventory.fastFoodItems.length === 0) && (
-              <div style={{ padding: '4px 6px', background: 'rgba(231,76,60,0.12)', border: '1px solid rgba(231,76,60,0.3)', borderRadius: '4px', fontSize: '0.74em', color: '#ff9999' }}>
-                ⚠️ {t('homeRelax.pantryEmptyWarning', { defaultValue: 'Pantry is empty! Hunger penalty on turn end.' })}
-              </div>
-            )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', margin: '2px 0' }}>
+            <button
+              type="button"
+              data-testid="pantry-pill-badge"
+              onClick={() => setShowPantryPopup(true)}
+              title={t('homeRelax.pantryPillTooltip', { defaultValue: 'Pantry & Food Supplies' })}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: (player.inventory?.freshFoodUnits || 0) > 0 ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)',
+                border: `1px solid ${(player.inventory?.freshFoodUnits || 0) > 0 ? 'rgba(46, 204, 113, 0.4)' : 'rgba(231, 76, 60, 0.4)'}`,
+                color: (player.inventory?.freshFoodUnits || 0) > 0 ? '#2ecc71' : '#ff7675',
+                borderRadius: '16px',
+                padding: '3px 10px',
+                fontSize: '0.82rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>🥗</span>
+              <span>{player.inventory?.freshFoodUnits || 0}</span>
+              {(player.inventory?.fastFoodItems?.length || 0) > 0 && (
+                <span style={{ fontSize: '0.72rem', color: '#f1c40f', marginLeft: '2px' }}>
+                  🍔 {player.inventory?.fastFoodItems?.length}
+                </span>
+              )}
+            </button>
           </div>
         )}
 
@@ -606,7 +589,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
               data-testid="btn-relax"
               onClick={handleRelaxClick}
               disabled={isRelaxDisabled}
-              title={rules?.helpfulUI ? (classicFirstBonus > 0 ? `Relax (${formatHours(hoursToRelax)}h) +${classicGain} 🧘 (+${classicFirstBonus} 😊)` : `Relax (${formatHours(hoursToRelax)}h) +${classicGain} 🧘`) : undefined}
+              title={rules?.helpfulUI ? (classicFirstBonus > 0 ? `Relax (${formatHours(hoursToRelax)}h) +${classicGain} 🛌 (+${classicFirstBonus} 😊)` : `Relax (${formatHours(hoursToRelax)}h) +${classicGain} 🛌`) : undefined}
               style={{
                 background: isRelaxDisabled ? '#333' : 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)',
                 color: isRelaxDisabled ? '#777' : '#fff',
@@ -632,6 +615,187 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
       })()}
 
       {unfedWarningPortal}
+
+      {showMessDetails && (
+        <div 
+          data-testid="mess-details-popup"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(5, 5, 16, 0.95)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            zIndex: 100,
+            borderRadius: '12px',
+            textAlign: 'center',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🧹</div>
+          <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem' }}>
+            {t('homeRelax.messDetailsTitle', { defaultValue: 'Apartment Space & Mess Breakdown' })}
+          </h3>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '18px',
+            maxWidth: '340px',
+            width: '100%',
+            fontSize: '0.85rem',
+            textAlign: 'start',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
+              <span style={{ color: '#94a3b8' }}>Apartment:</span>
+              <span style={{ fontWeight: 'bold' }}>{housingDef?.name || housingName || player.currentHousingId}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>Capacity:</span>
+              <span style={{ fontWeight: 'bold' }}>{spaceCap} space</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#00e5ff' }}>Durables Space:</span>
+              <span style={{ fontWeight: 'bold', color: '#00e5ff' }}>{durablesSpace} space</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: messBarColor }}>Current Mess:</span>
+              <span style={{ fontWeight: 'bold', color: messBarColor }}>{currentMess} space ({messLabel})</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>Free Space:</span>
+              <span style={{ fontWeight: 'bold', color: isOvercapacity ? '#e74c3c' : '#2ecc71' }}>
+                {isOvercapacity ? `⚠️ Overcrowded (+${overflow})` : `${freeSpace} space`}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>Max Mess Allowed:</span>
+              <span style={{ fontWeight: 'bold' }}>{maxMessHousing}</span>
+            </div>
+            <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '4px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '4px' }}>
+              Mess reduces your relaxation rate and penalizes social visits if it exceeds 25. Clean DIY or hire a cleaning service.
+            </div>
+          </div>
+          <button
+            type="button"
+            className="action-panel__btn"
+            data-testid="btn-close-mess-popup"
+            onClick={() => setShowMessDetails(false)}
+            style={{
+              backgroundColor: 'var(--accent-cyan, #00e5ff)',
+              color: '#000',
+              padding: '6px 20px',
+              fontWeight: 'bold',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            {t('buildingModal.close', { defaultValue: 'Close' })}
+          </button>
+        </div>
+      )}
+
+      {showPantryPopup && (
+        <div 
+          data-testid="pantry-details-modal"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(5, 5, 16, 0.95)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            zIndex: 100,
+            borderRadius: '12px',
+            textAlign: 'center',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div style={{ fontSize: '2rem', marginBottom: '6px' }}>🥫</div>
+          <h3 style={{ margin: '0 0 10px', color: '#2ecc71', fontSize: '1.2rem' }}>
+            {t('homeRelax.pantryTitle', { defaultValue: 'Pantry & Food Supplies' })}
+          </h3>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '18px',
+            maxWidth: '340px',
+            width: '100%',
+            fontSize: '0.85rem',
+            textAlign: 'start',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '6px' }}>
+              <span style={{ color: '#94a3b8' }}>Appliance Status:</span>
+              <span style={{ fontWeight: 'bold', color: hasFridge ? '#2ecc71' : '#e67e22' }}>
+                {hasFridge ? (hasFreezer ? '🧊 Refrigerator + Freezer' : '🧊 Refrigerator Active') : '⚠️ No Fridge'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
+                <span>🥗</span> {t('inventoryModal.freshFood', { defaultValue: 'Fresh Food' })}:
+              </span>
+              <span style={{ fontWeight: 'bold', color: (player.inventory?.freshFoodUnits || 0) > 0 ? '#2ecc71' : '#e74c3c' }}>
+                {player.inventory?.freshFoodUnits || 0} {t('inventoryModal.units', { defaultValue: 'units' })}
+              </span>
+            </div>
+            {player.inventory?.fastFoodItems && player.inventory.fastFoodItems.length > 0 && (
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '6px' }}>
+                <div style={{ color: '#94a3b8', marginBottom: '4px', fontSize: '0.8rem' }}>Fast Food:</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {player.inventory.fastFoodItems.map((ff, idx) => {
+                    const itemDef = campaign?.items?.find(i => i.id === ff.itemId);
+                    const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : ff.itemId;
+                    return (
+                      <span 
+                        key={idx} 
+                        style={{ fontSize: '0.78em', background: 'rgba(0,0,0,0.3)', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.08)' }}
+                      >
+                        🍔 {itemName} {ff.happinessBonus > 0 && <span style={{ color: '#f1c40f' }}>+{ff.happinessBonus} 😊</span>}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {(player.inventory?.freshFoodUnits || 0) === 0 && (!player.inventory?.fastFoodItems || player.inventory.fastFoodItems.length === 0) && (
+              <div style={{ padding: '6px 8px', background: 'rgba(231,76,60,0.12)', border: '1px solid rgba(231,76,60,0.3)', borderRadius: '4px', fontSize: '0.78em', color: '#ff9999' }}>
+                ⚠️ {t('homeRelax.pantryEmptyWarning', { defaultValue: 'Pantry is empty! Hunger penalty on turn end.' })}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            className="action-panel__btn"
+            data-testid="btn-close-pantry-popup"
+            onClick={() => setShowPantryPopup(false)}
+            style={{
+              backgroundColor: '#2ecc71',
+              color: '#000',
+              padding: '6px 20px',
+              fontWeight: 'bold',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            {t('buildingModal.close', { defaultValue: 'Close' })}
+          </button>
+        </div>
+      )}
 
       {/* DURABLE CARD INSPECTION MODAL */}
       {inspectedDurable && (

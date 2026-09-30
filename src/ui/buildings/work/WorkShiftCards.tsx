@@ -123,6 +123,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
+            maxHeight: 'calc(520px * var(--board-scale, 1))',
+            overflowY: 'auto',
+            scrollbarWidth: 'thin',
             zIndex: 60
           }}
         >
@@ -587,6 +590,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
+              maxHeight: 'calc(520px * var(--board-scale, 1))',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
               zIndex: 60
             }}
           >
@@ -662,6 +668,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
+              maxHeight: 'calc(520px * var(--board-scale, 1))',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
               zIndex: 60
             }}
           >

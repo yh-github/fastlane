@@ -972,7 +972,11 @@
     "toggleLeisure": "Leisure",
     "toggleChores": "Chores",
     "fold": "Fold",
-    "pantryStable": "✓ Stable (no perishables)"
+    "pantryStable": "✓ Stable (no perishables)",
+    "pantryTitle": "Pantry & Food Supplies",
+    "pantryPillTooltip": "Pantry & Food Supplies",
+    "messDetailsTitle": "Apartment Space & Mess Breakdown",
+    "messClickDetails": "Click to view apartment space and mess breakdown"
   },
   "bank": {
     "title": "Bank of Jones",
