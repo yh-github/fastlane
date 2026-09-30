@@ -290,4 +290,90 @@ describe('Modal Escape and Card Popups', () => {
     expect(screen.getByText('🧊 Preserves up to 6 Fresh Food/turn')).toBeInTheDocument();
     expect(screen.getByText(/Prevents fresh grocery spoilage for up to 6 food units/i)).toBeInTheDocument();
   });
+
+  it('hides Space readout when spaceCapping is false, removes fake effects, and shows computer study credits and books synergy', () => {
+    const handleClose = vi.fn();
+    const rulesWithoutSpace: GameRules = {
+      ...baseRules,
+      spaceCapping: false,
+      usePhysicalMentalConditions: false,
+    };
+
+    const campaignWithTechAndBooks: CampaignBundle = {
+      ...mockCampaign,
+      items: [
+        { id: 'computer', name: 'Computer', tags: ['computer'], basePrice: 1599, happinessBonus: 3 },
+        { id: 'dictionary', name: 'Dictionary', category: 'book', basePrice: 70 },
+        { id: 'encyclopedia', name: 'Encyclopedia', category: 'book', basePrice: 475 },
+        { id: 'atlas', name: 'Atlas', category: 'book', basePrice: 55 },
+        { id: 'color_tv', name: 'Color TV', category: 'appliance', basePrice: 349, happinessBonus: 1 },
+        { id: 'vcr', name: 'VCR', category: 'appliance', basePrice: 250, happinessBonus: 1 }
+      ]
+    } as any;
+
+    const { rerender } = render(
+      <DurableCardModal
+        durable={{ id: 'computer', isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithTechAndBooks}
+        rules={rulesWithoutSpace}
+        onClose={handleClose}
+      />
+    );
+
+    // 1. Space: NOT shown when spaceCapping is off
+    expect(screen.queryByText(/space/i)).not.toBeInTheDocument();
+
+    // 2. Computer: Shows bonus credit when studying and freelance income
+    expect(screen.getByText('🎓 Bonus Study Credit (-1 Lesson)')).toBeInTheDocument();
+    expect(screen.getByText('💻 Freelance Income ($10–$150/turn chance)')).toBeInTheDocument();
+    expect(screen.getByText('🎁 One-time: +3 😊 on buy')).toBeInTheDocument();
+    expect(screen.getByText(/bonus credit when studying for university degrees/i)).toBeInTheDocument();
+
+    // 3. Advanced-only Mental stat: NOT shown in Base version
+    expect(screen.queryByText(/Max 🧠/i)).not.toBeInTheDocument();
+
+    // 4. Books: Reference Library synergy
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'dictionary', isBook: true, isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithTechAndBooks}
+        rules={rulesWithoutSpace}
+        onClose={handleClose}
+      />
+    );
+
+    // Book synergy badge and narrative
+    expect(screen.getByText(/3-Book Synergy: -1 Lesson/i)).toBeInTheDocument();
+    expect(screen.getByText(/Part of the 3-book Reference Library \(Dictionary, Encyclopedia, Atlas\)/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Max 🧠/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/space/i)).not.toBeInTheDocument();
+
+    // 5. TV and VCR: No fake effects like "Enables VCR & TV viewing" or "Plays Video Tapes"
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'color_tv', isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithTechAndBooks}
+        rules={rulesWithoutSpace}
+        onClose={handleClose}
+      />
+    );
+    expect(screen.queryByText(/Enables VCR/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Plays Video Tapes/i)).not.toBeInTheDocument();
+    expect(screen.getByText('🎁 One-time: +1 😊 on buy')).toBeInTheDocument();
+
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'vcr', isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithTechAndBooks}
+        rules={rulesWithoutSpace}
+        onClose={handleClose}
+      />
+    );
+    expect(screen.queryByText(/Plays Video Tapes/i)).not.toBeInTheDocument();
+    expect(screen.getByText('🎁 One-time: +1 😊 on buy')).toBeInTheDocument();
+  });
 });

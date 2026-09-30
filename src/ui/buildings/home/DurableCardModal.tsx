@@ -87,6 +87,12 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
     ? false 
     : ((currentAppliance?.condition ?? durable.applianceData?.condition) === 'new' || (currentAppliance?.purchaseSource ?? durable.applianceData?.purchaseSource) === 'socket_city');
 
+  const hasAllBooks = Boolean(
+    player?.inventory?.books?.includes('dictionary') &&
+    player?.inventory?.books?.includes('encyclopedia') &&
+    player?.inventory?.books?.includes('atlas')
+  );
+
   const conditionLabel = !isOwned 
     ? '🏬 Not Owned' 
     : (isSpareParts 
@@ -96,20 +102,28 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
             : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable.isBook ? '📚 Book' : '📦 Used')))));
   const conditionDetail = !isOwned
     ? (durable.isBook 
-        ? 'Available at Z-Mart. Purchase to study and permanently boost your cognitive reserves.'
+        ? 'Available at Socket City / Z-Mart. Reference literature for your apartment.'
         : (isCurio
-            ? 'Available at Pawn Shop rummage bins. Furnish your home to gain aesthetic charm and lifestyle synergy!'
+            ? 'Available at Pawn Shop rummage bins. Furnish your home shelves to gain aesthetic charm!'
             : (isSpareParts
                 ? 'Available at Pawn Shop rummage bins. Keep a box handy to boost your DIY appliance repair odds!'
                 : 'Available at Socket City (Brand New) or Z-Mart & Pawn Shop (Used). Furnish your home to gain its perks!')))
     : (isSpareParts
-        ? `Assorted repair materials from pawn shop rummage bins. Occupies 2 space per box. You currently own ${player?.inventory.spareParts || 0} box(es).`
+        ? (rules?.spaceCapping 
+            ? `Assorted repair materials from pawn shop rummage bins. Occupies 2 space per box. You currently own ${player?.inventory.spareParts || 0} box(es).`
+            : `Assorted repair materials from pawn shop rummage bins. You currently own ${player?.inventory.spareParts || 0} box(es).`)
         : (isCurio
-            ? (uninspectedKnickKnacks > 0 && knickKnacks > 0
-                ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently own ${totalCurios} curio(s) (${knickKnacks} on display, ${uninspectedKnickKnacks} pending weekend appraisal).`
-                : (uninspectedKnickKnacks > 0
-                    ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently own ${uninspectedKnickKnacks} curio(s) pending weekend appraisal.`
-                    : `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently have ${knickKnacks} on display.`))
+            ? (rules?.spaceCapping
+                ? (uninspectedKnickKnacks > 0 && knickKnacks > 0
+                    ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently own ${totalCurios} curio(s) (${knickKnacks} on display, ${uninspectedKnickKnacks} pending weekend appraisal).`
+                    : (uninspectedKnickKnacks > 0
+                        ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently own ${uninspectedKnickKnacks} curio(s) pending weekend appraisal.`
+                        : `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently have ${knickKnacks} on display.`))
+                : (uninspectedKnickKnacks > 0 && knickKnacks > 0
+                    ? `Curios & knick-knacks salvaged from pawn shop bins. You currently own ${totalCurios} curio(s) (${knickKnacks} on display, ${uninspectedKnickKnacks} pending weekend appraisal).`
+                    : (uninspectedKnickKnacks > 0
+                        ? `Curios & knick-knacks salvaged from pawn shop bins. You currently own ${uninspectedKnickKnacks} curio(s) pending weekend appraisal.`
+                        : `Curios & knick-knacks salvaged from pawn shop bins. You currently have ${knickKnacks} on display.`)))
             : (isBroken
                 ? 'Broken down and in need of maintenance. Choose a repair option below to restore functionality, or throw it out.'
                 : (isNew 
@@ -119,18 +133,30 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   // Gameplay descriptions for durables:
   const getGameplayDescription = (id: string, isBook?: boolean): string => {
     if (isBook) {
-      switch (id) {
-        case 'encyclopedia':
-          return 'Comprehensive reference set. Permanently increases your Max Mental capacity (+2) and improves exam study.';
-        case 'dictionary':
-          return 'Vocabulary and definitions reference. Permanently increases your Max Mental capacity (+1) and improves exam study.';
-        case 'atlas':
-          return 'Detailed world cartography. Permanently increases your Max Mental capacity (+1) and improves exam study.';
-        case 'capote':
-          return 'Anthology of literary prose. Permanently increases your Max Mental capacity (+1) and improves exam study.';
-        default:
-          return 'Engaging reference literature. Permanently expands your Max Mental capacity and improves study efficiency.';
+      const isRefBook = id === 'dictionary' || id === 'encyclopedia' || id === 'atlas';
+      const synergyText = 'Part of the 3-book Reference Library (Dictionary, Encyclopedia, Atlas): owning all 3 grants a bonus study credit (-1 lesson required) for university degrees.';
+
+      if (id === 'dictionary') {
+        return rules?.usePhysicalMentalConditions
+          ? `Language and vocabulary reference. ${synergyText} Continuously increases Max Mental capacity (+1).`
+          : `Language and vocabulary reference. ${synergyText}`;
       }
+      if (id === 'encyclopedia') {
+        return rules?.usePhysicalMentalConditions
+          ? `Comprehensive general knowledge reference set. ${synergyText} Continuously increases Max Mental capacity (+1).`
+          : `Comprehensive general knowledge reference set. ${synergyText}`;
+      }
+      if (id === 'atlas') {
+        return rules?.usePhysicalMentalConditions
+          ? `World maps and geopolitical cartography. ${synergyText} Continuously increases Max Mental capacity (+1).`
+          : `World maps and geopolitical cartography. ${synergyText}`;
+      }
+      if (id === 'capote') {
+        return rules?.usePhysicalMentalConditions
+          ? 'Literary prose anthology. Continuously increases Max Mental capacity (+1).'
+          : 'Literary prose anthology. Reference literature for your home collection.';
+      }
+      return isRefBook ? synergyText : 'Reference literature for your home apartment.';
     }
 
     switch (id) {
@@ -139,28 +165,47 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
       case 'freezer':
         return 'Expands food preservation capacity from 6 up to 12 units per turn. Requires an active Refrigerator to function; does not prevent spoilage on its own.';
       case 'stove':
-        return 'Cook hot meals at home. Awards +1 Happiness every turn you eat food (shared bonus with Microwave). Restores +1 Physical when relaxing.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Cook hot meals at home. Awards +1 Happiness every turn you eat food (shared bonus with Microwave). Restores +1 Physical when relaxing.'
+          : 'Cook hot meals at home. Awards +1 Happiness every turn you eat food (shared bonus with Microwave).';
       case 'microwave':
-        return 'Quickly reheat meals. Awards +1 Happiness every turn you eat food (shared bonus with Stove). Restores +1 Physical when relaxing and +1 Social when socializing.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Quickly reheat meals. Awards +1 Happiness every turn you eat food (shared bonus with Stove). Restores +1 Physical when relaxing and +1 Social when socializing.'
+          : 'Quickly reheat meals. Awards +1 Happiness every turn you eat food (shared bonus with Stove).';
       case 'color_tv':
-        return 'Color television display. Required to operate a VCR. Boosts guest social visits (+1 to +2 Social) and apartment lifestyle.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Color television set. Boosts guest socializing (+2 Social) and enhances apartment lifestyle.'
+          : 'Color television set. Living room entertainment for your apartment.';
       case 'bw_tv':
-        return 'Vintage black-and-white television. Required to operate a VCR. Boosts guest social visits (+1 Social) and apartment lifestyle.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Vintage black-and-white television. Boosts guest socializing (+1 Social) and enables VCR socializing synergy.'
+          : 'Vintage black-and-white television. Affordable living room entertainment.';
       case 'vcr':
-        return 'Play video tapes at home. Requires a working TV (Color or B&W) in your apartment to function; inactive without one.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Home video cassette recorder. Pairs with an active TV (Color or B&W) to boost weekend socializing (+1 Social) and lifestyle.'
+          : 'Home video cassette recorder for movie playback.';
       case 'stereo':
-        return 'Home stereo audio system. Boosts guest social visits (+1 Social) and apartment lifestyle.';
       case '8track':
-        return 'Vintage 8-track magnetic tape player. Boosts guest social visits (+1 Social) and apartment lifestyle.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Home audio music player. Boosts guest socializing (+1 Social) and elevates apartment lifestyle.'
+          : 'Home audio music player. Plays music throughout your apartment.';
       case 'computer':
-        return 'Personal microcomputer workstation. Offers a chance each turn to earn freelance income ($10–$150) and +3 Happiness. Continuously boosts Max Mental.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Personal microcomputer workstation. Awards a bonus credit when studying for university degrees (-1 lesson required), expands Max Mental (+3), and offers a chance each turn for freelance income ($10–$150).'
+          : 'Personal microcomputer workstation. Awards a bonus credit when studying for university degrees (-1 lesson required), plus a chance each turn for freelance income ($10–$150).';
       case 'hot_tub':
-        return 'Pinnacle home luxury. Prevents natural relaxation decay from dropping into critical medical illness. Grants major apartment lifestyle prestige.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Pinnacle home luxury. Prevents relaxation decay from dropping to dangerously low levels, restores condition each turn, and adds major lifestyle prestige.'
+          : 'Pinnacle home luxury. Prevents natural relaxation decay from dropping below critical medical illness threshold.';
       case 'spare_parts':
-        return 'Kept in your apartment to boost DIY appliance repair success rates by +20% to +30%. Occupies 2 space per box.';
+        return rules?.spaceCapping
+          ? 'Assorted machine parts from pawn shop rummage bins. Kept in your apartment to boost DIY appliance repair success rates by +20% to +30%. Occupies 2 space per box.'
+          : 'Assorted machine parts from pawn shop rummage bins. Kept in your apartment to boost DIY appliance repair success rates by +20% to +30%.';
       case 'knick_knack':
       case 'knick_knacks':
-        return 'Collectibles salvaged from pawn shop rummage bins. Furnishes aesthetic charm (+2.8 × √Count, max +15) and triggers weekend appraisal events.';
+        return rules?.usePhysicalMentalConditions
+          ? 'Collectibles salvaged from pawn shop rummage bins. Furnishes aesthetic charm (+2.8 × √Count, max +15) and triggers weekend appraisal events.'
+          : 'Collectibles salvaged from pawn shop rummage bins. Unique knick-knacks for your home shelves.';
       default:
         return 'A quality piece of home furnishings that elevates your standard of living and makes your apartment feel like home.';
     }
@@ -178,7 +223,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
     effectBadges.push({ label: '🧊 Preserves up to 6 Fresh Food/turn' });
   } else if (durable.id === 'freezer') {
     effectBadges.push({ label: '🧊 Stores up to 12 Food (Needs Refrigerator)' });
-    if (itemDef?.happinessBonus) {
+    if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
       effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
     }
   } else if (durable.id === 'stove') {
@@ -186,11 +231,25 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   } else if (durable.id === 'microwave') {
     effectBadges.push({ label: '⚡ +1 😊/turn when eating' });
   } else if (durable.id === 'computer') {
-    effectBadges.push({ label: '💻 Freelance income ($10–$150/turn chance)' });
+    effectBadges.push({ label: '🎓 Bonus Study Credit (-1 Lesson)' });
+    effectBadges.push({ label: '💻 Freelance Income ($10–$150/turn chance)' });
+    if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
+      effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
+    }
   } else if (durable.id === 'hot_tub') {
     effectBadges.push({ label: '🛁 Prevents relaxation collapse' });
-  } else if (durable.id === 'color_tv' || durable.id === 'bw_tv') {
-    effectBadges.push({ label: '📺 Enables VCR & TV viewing' });
+    if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
+      effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
+    }
+  }
+
+  // Reference book 3-book set synergy (Dictionary, Encyclopedia, Atlas):
+  if (durable.isBook && (durable.id === 'dictionary' || durable.id === 'encyclopedia' || durable.id === 'atlas')) {
+    effectBadges.push({
+      label: hasAllBooks 
+        ? '📚 3-Book Synergy: -1 Lesson (Active)' 
+        : '📚 3-Book Synergy: -1 Lesson (Needs All 3)'
+    });
   }
 
   // Stat triggers from effects list:
@@ -210,18 +269,15 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
     }
   }
 
-  // Books permanent stat boost (only add if not already defined in item effects):
-  if (durable.isBook && !effectBadges.some(b => b.label.includes('Max 🧠'))) {
-    const mentalVal = durable.id === 'encyclopedia' ? 2 : 1;
-    effectBadges.push({ label: `📚 +${mentalVal} Max 🧠 Permanent` });
-  }
-
-  // Fallback one-time happiness bonus for classic items not covered above:
+  // Fallback one-time happiness bonus for classic items in Base mode:
   if (
+    !rules?.usePhysicalMentalConditions &&
     itemDef?.happinessBonus &&
     durable.id !== 'freezer' &&
     durable.id !== 'stove' &&
     durable.id !== 'microwave' &&
+    durable.id !== 'computer' &&
+    durable.id !== 'hot_tub' &&
     !effectBadges.some(b => b.isOneTime)
   ) {
     effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
@@ -245,12 +301,8 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
 
   const hasTv = player?.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
   const isVcrWithoutTv = durable.id === 'vcr' && isOwned && !hasTv;
-  if (durable.id === 'vcr') {
-    if (isVcrWithoutTv) {
-      effectBadges.push({ label: '⚠️ Requires TV (Inactive)' });
-    } else {
-      effectBadges.push({ label: '📼 Plays Video Tapes' });
-    }
+  if (durable.id === 'vcr' && isVcrWithoutTv && rules?.usePhysicalMentalConditions) {
+    effectBadges.push({ label: '⚠️ Requires TV (Inactive)' });
   }
 
   const spaceCost = isSpareParts || isCurio
@@ -421,10 +473,23 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
           flexDirection: 'column',
           gap: '5px'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#aaa', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '3px' }}>
-            <span>Space: <strong style={{ color: '#00e5ff' }}>{spaceCost} space</strong></span>
-            {lifestyleVal > 0 && <span>Lifestyle: <strong style={{ color: '#f1c40f' }}>+{lifestyleVal}</strong></span>}
-          </div>
+          {(Boolean(rules?.spaceCapping) || Boolean(lifestyleVal > 0 && rules?.usePhysicalMentalConditions)) && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '0.75rem',
+              color: '#aaa',
+              borderBottom: effectBadges.length > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+              paddingBottom: '3px'
+            }}>
+              {rules?.spaceCapping ? (
+                <span>Space: <strong style={{ color: '#00e5ff' }}>{spaceCost} space</strong></span>
+              ) : <span />}
+              {lifestyleVal > 0 && rules?.usePhysicalMentalConditions && (
+                <span>Lifestyle: <strong style={{ color: '#f1c40f' }}>+{lifestyleVal}</strong></span>
+              )}
+            </div>
+          )}
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '2px' }}>
             {effectBadges.map((badge, idx) => (
