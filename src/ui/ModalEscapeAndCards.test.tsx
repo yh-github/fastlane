@@ -1,0 +1,232 @@
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { BuildingModal } from './BuildingModal';
+import { DurableCardModal } from './buildings/home/DurableCardModal';
+import { ApartmentFurnishings } from './buildings/home/ApartmentFurnishings';
+import type { PlayerState, GameRules } from '../engine/gameState';
+import type { CampaignBundle } from '../engine/dataLoader';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: any) => {
+      if (options?.defaultValue) return options.defaultValue;
+      return key;
+    }
+  }),
+}));
+
+describe('Modal Escape and Card Popups', () => {
+  const baseRules: GameRules = {
+    helpfulUI: true,
+    advancedHomeGUI: false,
+    usePhysicalMentalConditions: false,
+    trackMess: true,
+    spaceCapping: true,
+  } as any;
+
+  const mockPlayer: PlayerState = {
+    id: 'p1',
+    name: 'Player 1',
+    cash: 500,
+    currentLocationId: 'low_cost_housing',
+    currentHousingId: 'low_cost_housing',
+    relaxation: 10,
+    hoursRemaining: 50,
+    rentPaidUntilWeek: 8,
+    turnFlags: {} as any,
+    inventory: {
+      appliances: [
+        { id: 'refrigerator', condition: 'used', isBroken: false }
+      ],
+      freshFoodUnits: 3,
+      fastFoodItems: [],
+      spareParts: 0,
+      knickKnacks: 0,
+      uninspectedKnickKnacks: 0,
+      books: []
+    }
+  } as any;
+
+  const mockCampaign: CampaignBundle = {
+    buildings: [
+      { id: 'low_cost_housing', name: 'Low-Cost Housing', archetype: 'home', cost: 0, interactions: [] }
+    ],
+    items: [
+      { id: 'refrigerator', name: 'Refrigerator', tags: ['refrigerator'], cost: 300, space: 2 },
+      { id: 'freezer', name: 'Freezer', tags: ['freezer'], cost: 250, space: 2 }
+    ],
+    housing: [
+      { id: 'low_cost_housing', name: 'Low-Cost Housing', rent: 100, spaceCapacity: 10, homeNodeId: 'node_home' }
+    ],
+    map: {
+      nodes: [
+        { id: 'node_home', buildingId: 'low_cost_housing' }
+      ]
+    },
+    config: {
+      eventRules: { willyRobberyStartWeek: 4 },
+      timeRules: { weekendStartTime: 120 }
+    }
+  } as any;
+
+  it('renders burglary and pantry pill badges in header when base home and helpfulUI', () => {
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="low_cost_housing"
+        turn={5}
+        economicIndex={0}
+        rules={baseRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    const burglaryBadge = screen.getByTestId('home-burglary-badge');
+    expect(burglaryBadge).toBeInTheDocument();
+
+    const pantryBadge = screen.getByTestId('pantry-pill-badge');
+    expect(pantryBadge).toBeInTheDocument();
+    expect(pantryBadge).toHaveTextContent('3');
+  });
+
+  it('opens floating break-in modal on click and closes via Esc key without closing BuildingModal', () => {
+    const handleClose = vi.fn();
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="low_cost_housing"
+        turn={5}
+        economicIndex={0}
+        rules={baseRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={handleClose}
+      />
+    );
+
+    // Open break-in details
+    fireEvent.click(screen.getByTestId('home-burglary-badge'));
+    const breakInModal = screen.getByTestId('home-breakin-details-modal');
+    expect(breakInModal).toBeInTheDocument();
+    expect(screen.getByText(/Break-in Risk Details/i)).toBeInTheDocument();
+
+    // Pressing Esc closes the break-in modal, not the parent BuildingModal
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('home-breakin-details-modal')).not.toBeInTheDocument();
+    expect(handleClose).not.toHaveBeenCalled();
+  });
+
+  it('opens floating pantry modal on click and closes via Esc key without closing BuildingModal', () => {
+    const handleClose = vi.fn();
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="low_cost_housing"
+        turn={5}
+        economicIndex={0}
+        rules={baseRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={handleClose}
+      />
+    );
+
+    // Open pantry modal
+    fireEvent.click(screen.getByTestId('pantry-pill-badge'));
+    const pantryModal = screen.getByTestId('pantry-details-modal');
+    expect(pantryModal).toBeInTheDocument();
+    expect(screen.getByText(/Pantry & Food Supplies/i)).toBeInTheDocument();
+    expect(screen.getByText(/Refrigerator Active/i)).toBeInTheDocument();
+
+    // Pressing Esc closes the pantry modal
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('pantry-details-modal')).not.toBeInTheDocument();
+    expect(handleClose).not.toHaveBeenCalled();
+  });
+
+  it('closes break-in modal when clicking on its semi-transparent backdrop', () => {
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="low_cost_housing"
+        turn={5}
+        economicIndex={0}
+        rules={baseRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('home-burglary-badge'));
+    const backdrop = screen.getByTestId('home-breakin-details-modal');
+    expect(backdrop).toBeInTheDocument();
+
+    fireEvent.click(backdrop);
+    expect(screen.queryByTestId('home-breakin-details-modal')).not.toBeInTheDocument();
+  });
+
+  it('closes pantry modal when clicking on its semi-transparent backdrop', () => {
+    render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="low_cost_housing"
+        turn={5}
+        economicIndex={0}
+        rules={baseRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('pantry-pill-badge'));
+    const backdrop = screen.getByTestId('pantry-details-modal');
+    expect(backdrop).toBeInTheDocument();
+
+    fireEvent.click(backdrop);
+    expect(screen.queryByTestId('pantry-details-modal')).not.toBeInTheDocument();
+  });
+
+  it('closes DurableCardModal when Esc key is pressed', () => {
+    const handleClose = vi.fn();
+    render(
+      <DurableCardModal
+        durable={{ id: 'refrigerator', isOwned: true }}
+        player={mockPlayer}
+        campaign={mockCampaign}
+        rules={baseRules}
+        onClose={handleClose}
+      />
+    );
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders unowned durables clearly visible with grayed out styling and responsive sizing', () => {
+    render(
+      <ApartmentFurnishings
+        player={mockPlayer}
+        campaign={mockCampaign}
+        rules={baseRules}
+        onInspectDurable={vi.fn()}
+      />
+    );
+
+    // Freezer is unowned
+    const unownedCard = screen.getByTestId('durable-card-freezer');
+    expect(unownedCard).toBeInTheDocument();
+
+    // Check that card container has opacity 0.8 (not 0.45)
+    expect(unownedCard).toHaveStyle({ opacity: '0.8' });
+
+    // Check that unowned image exists and has grayscale styling with brightness
+    const unownedImg = screen.getByAltText('Freezer');
+    expect(unownedImg).toBeInTheDocument();
+    expect(unownedImg.style.filter).toContain('grayscale(100%)');
+    expect(unownedImg.style.filter).toContain('brightness(1.2)');
+  });
+});

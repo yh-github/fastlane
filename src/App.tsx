@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { GoalFilter } from './utils/logCategorizer';
 import { Dashboard, type HudFoldState } from './ui/Dashboard';
 import { useNavigationGuard } from './hooks/useNavigationGuard';
@@ -73,6 +73,68 @@ export default function App() {
   } = useGameEngine(selectedCampaignId, triggerAnim, setIsAnimating, isAnimating, setIsBuildingModalOpen, setIsNewspaperModalOpen, triggerScreenShake);
 
   useNavigationGuard({ enabled: gameState?.phase === 'playing' });
+
+  // Global Esc key closes top active window/modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (streetRobberyNotice) {
+          if (streetRobberyNotice.onConfirm) {
+            streetRobberyNotice.onConfirm();
+          } else {
+            setStreetRobberyNotice(null);
+          }
+          return;
+        }
+        if (isSettingsOpen) {
+          setIsSettingsOpen(false);
+          return;
+        }
+        if (isInventoryOpen) {
+          setIsInventoryOpen(false);
+          setInventoryScrollSection(null);
+          return;
+        }
+        if (isLogModalOpen) {
+          setIsLogModalOpen(false);
+          return;
+        }
+        if (isNewspaperModalOpen) {
+          setIsNewspaperModalOpen(false);
+          return;
+        }
+        const activeP = gameState?.players?.[activePlayerIndex] || null;
+        const currentBldId = (activeP && campaign) 
+          ? (campaign.map.nodes.find(n => n.id === activeP.position)?.buildingId || null)
+          : null;
+        const isWknd = Boolean(activeP && !activeP.turnFlags?.hasSeenWeekend && (gameState?.turn ?? 0) > 1);
+
+        if (isBuildingModalOpen && currentBldId && !isWknd) {
+          setIsBuildingModalOpen(false);
+          if (activeP && activeP.hoursRemaining <= 0) {
+            handleAction({ type: 'end-turn' });
+          }
+          return;
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    streetRobberyNotice,
+    setStreetRobberyNotice,
+    isSettingsOpen,
+    isInventoryOpen,
+    setInventoryScrollSection,
+    isLogModalOpen,
+    isNewspaperModalOpen,
+    isBuildingModalOpen,
+    setIsBuildingModalOpen,
+    campaign,
+    gameState,
+    activePlayerIndex,
+    handleAction
+  ]);
 
   if (showTitle) {
     return <TitleScreen onStartGame={(campaignId) => {
@@ -163,6 +225,7 @@ export default function App() {
     : hudSetting;
   const isAuthenticCurvedBoard = gameState.rules.authenticCurvedPaths !== false;
   const showBottomCenterClock = Boolean(activePlayer && (isAuthenticCurvedBoard || effectiveHudLayout === 'side'));
+
 
   return (
     <div className={`app-container app-container--${effectiveHudLayout}-hud ${effectiveHudLayout === 'side' ? `app-container--side-${hudFoldState}` : ''}`}>

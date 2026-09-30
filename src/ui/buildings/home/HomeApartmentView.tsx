@@ -127,6 +127,26 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   } | null>(null);
   const [showMessDetails, setShowMessDetails] = useState(false);
 
+  // Esc key closes internal sub-popups first
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showMessDetails) {
+          e.stopImmediatePropagation();
+          setShowMessDetails(false);
+          return;
+        }
+        if (inspectedDurable) {
+          e.stopImmediatePropagation();
+          setInspectedDurable(null);
+          return;
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [showMessDetails, inspectedDurable]);
+
   const panelRef = useRef<HTMLDivElement>(null);
   const [modalParent, setModalParent] = useState<HTMLElement | null>(null);
 
@@ -334,87 +354,126 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'rgba(5, 5, 16, 0.95)',
+            background: 'rgba(0, 0, 0, 0.65)',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '24px',
+            padding: '16px',
             zIndex: 100,
             borderRadius: '12px',
-            textAlign: 'center',
-            backdropFilter: 'blur(4px)'
+            backdropFilter: 'blur(3px)'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowMessDetails(false);
+            }
           }}
         >
-          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🧹</div>
-          <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem' }}>
-            {t('homeRelax.messDetailsTitle', { defaultValue: 'Apartment Space & Mess Breakdown' })}
-          </h3>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            marginBottom: '18px',
-            maxWidth: '340px',
-            width: '100%',
-            fontSize: '0.85rem',
-            textAlign: 'start',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
-              <span style={{ color: '#94a3b8' }}>Apartment:</span>
-              <span style={{ fontWeight: 'bold' }}>{housingName || player.currentHousingId}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#94a3b8' }}>Capacity:</span>
-              <span style={{ fontWeight: 'bold' }}>{spaceCap} space</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#94a3b8' }}>Total Used:</span>
-              <span style={{ fontWeight: 'bold' }}>{totalUsedSpace} / {spaceCap}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#00e5ff' }}>Durables Space:</span>
-              <span style={{ fontWeight: 'bold', color: '#00e5ff' }}>{durablesSpace} space</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: messBarColor }}>Current Mess:</span>
-              <span style={{ fontWeight: 'bold', color: messBarColor }}>{currentMess} space ({messLabel})</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#94a3b8' }}>Free Space:</span>
-              <span style={{ fontWeight: 'bold', color: isOvercapacity ? '#e74c3c' : '#2ecc71' }}>
-                {isOvercapacity ? `⚠️ Overcrowded (+${overflow})` : `${freeSpace} space`}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#94a3b8' }}>Max Mess Allowed:</span>
-              <span style={{ fontWeight: 'bold' }}>{maxMessHousing}</span>
-            </div>
-            <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '4px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '4px' }}>
-              Mess reduces your relaxation rate and penalizes social visits if it exceeds 25. Clean DIY or hire a cleaning service.
-            </div>
-          </div>
-          <button
-            type="button"
-            className="action-panel__btn"
-            data-testid="btn-close-mess-popup"
-            onClick={() => setShowMessDetails(false)}
+          <div
             style={{
-              backgroundColor: 'var(--accent-cyan, #00e5ff)',
-              color: '#000',
-              padding: '6px 20px',
-              fontWeight: 'bold',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer'
+              background: 'linear-gradient(145deg, #131b2e 0%, #1e293b 100%)',
+              border: '2px solid #38bdf8',
+              boxShadow: '0 16px 36px rgba(0, 0, 0, 0.85), 0 0 24px rgba(56, 189, 248, 0.25)',
+              borderRadius: '14px',
+              padding: '20px 22px',
+              maxWidth: '380px',
+              width: '92%',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              position: 'relative'
             }}
           >
-            {t('buildingModal.close', { defaultValue: 'Close' })}
-          </button>
+            <button
+              type="button"
+              onClick={() => setShowMessDetails(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '12px',
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                fontSize: '18px',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                lineHeight: 1
+              }}
+              aria-label={t('buildingModal.close', { defaultValue: 'Close' })}
+            >
+              ✕
+            </button>
+            <div style={{ fontSize: '2rem', marginBottom: '6px' }}>🧹</div>
+            <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem', fontWeight: 800 }}>
+              {t('homeRelax.messDetailsTitle', { defaultValue: 'Apartment Space & Mess Breakdown' })}
+            </h3>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              marginBottom: '16px',
+              maxWidth: '340px',
+              width: '100%',
+              fontSize: '0.85rem',
+              textAlign: 'start',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
+                <span style={{ color: '#94a3b8' }}>Apartment:</span>
+                <span style={{ fontWeight: 'bold' }}>{housingName || player.currentHousingId}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Capacity:</span>
+                <span style={{ fontWeight: 'bold' }}>{spaceCap} space</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Total Used:</span>
+                <span style={{ fontWeight: 'bold' }}>{totalUsedSpace} / {spaceCap}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#00e5ff' }}>Durables Space:</span>
+                <span style={{ fontWeight: 'bold', color: '#00e5ff' }}>{durablesSpace} space</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: messBarColor }}>Current Mess:</span>
+                <span style={{ fontWeight: 'bold', color: messBarColor }}>{currentMess} space ({messLabel})</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Free Space:</span>
+                <span style={{ fontWeight: 'bold', color: isOvercapacity ? '#e74c3c' : '#2ecc71' }}>
+                  {isOvercapacity ? `⚠️ Overcrowded (+${overflow})` : `${freeSpace} space`}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Max Mess Allowed:</span>
+                <span style={{ fontWeight: 'bold' }}>{maxMessHousing}</span>
+              </div>
+              <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '4px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '4px' }}>
+                Mess reduces your relaxation rate and penalizes social visits if it exceeds 25. Clean DIY or hire a cleaning service.
+              </div>
+            </div>
+            <button
+              type="button"
+              className="action-panel__btn"
+              data-testid="btn-close-mess-popup"
+              onClick={() => setShowMessDetails(false)}
+              style={{
+                backgroundColor: 'var(--accent-cyan, #00e5ff)',
+                color: '#000',
+                padding: '6px 20px',
+                fontWeight: 'bold',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              {t('buildingModal.close', { defaultValue: 'Close' })}
+            </button>
+          </div>
         </div>
       )}
 

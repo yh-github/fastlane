@@ -118,7 +118,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(66px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(66px, calc(78px * var(--board-scale, 1)), 96px), 1fr))',
         gap: '8px',
         justifyItems: 'center',
         overflowY: 'auto',
@@ -165,20 +165,20 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '66px',
-                height: '74px',
+                width: 'clamp(66px, calc(78px * var(--board-scale, 1)), 96px)',
+                height: 'clamp(74px, calc(88px * var(--board-scale, 1)), 110px)',
                 background: isOwned 
                   ? (isBroken ? 'rgba(239, 68, 68, 0.22)' : 'rgba(0, 0, 0, 0.45)') 
-                  : 'rgba(0, 0, 0, 0.25)',
+                  : 'rgba(255, 255, 255, 0.05)',
                 border: isOwned 
                   ? (isBroken ? '1.5px solid #ef4444' : `1.5px solid ${isNew ? '#2ecc71' : '#3498db'}`)
-                  : '1.5px dashed rgba(255, 255, 255, 0.2)',
+                  : '1.5px dashed rgba(255, 255, 255, 0.35)',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 boxShadow: isOwned 
                   ? (isBroken ? '0 0 10px rgba(239, 68, 68, 0.5)' : (isNew ? '0 0 8px rgba(46, 204, 113, 0.25)' : '0 0 8px rgba(52, 152, 219, 0.25)'))
                   : 'none',
-                opacity: isOwned ? 1 : 0.45,
+                opacity: isOwned ? 1 : 0.8,
                 transition: 'all 0.15s ease',
                 position: 'relative',
                 padding: '4px 2px',
@@ -193,7 +193,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                       ? '0 0 12px rgba(46, 204, 113, 0.5)' 
                       : '0 0 12px rgba(52, 152, 219, 0.5)');
                 } else {
-                  e.currentTarget.style.opacity = '0.8';
+                  e.currentTarget.style.opacity = '1';
                 }
               }}
               onMouseLeave={(e) => {
@@ -205,7 +205,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                       ? '0 0 8px rgba(46, 204, 113, 0.25)' 
                       : '0 0 8px rgba(52, 152, 219, 0.25)');
                 } else {
-                  e.currentTarget.style.opacity = '0.45';
+                  e.currentTarget.style.opacity = '0.8';
                 }
               }}
             >
@@ -213,25 +213,25 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 src={`/assets/raw_images/${activeItemId}.png`}
                 alt={itemName}
                 style={{
-                  width: '38px',
-                  height: '38px',
+                  width: 'clamp(38px, calc(48px * var(--board-scale, 1)), 60px)',
+                  height: 'clamp(38px, calc(48px * var(--board-scale, 1)), 60px)',
                   objectFit: 'contain',
                   filter: isOwned 
                     ? (isBroken ? 'drop-shadow(0 2px 4px rgba(239,68,68,0.8)) sepia(30%)' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))') 
-                    : 'grayscale(100%) opacity(0.35) brightness(0.6)'
+                    : 'grayscale(100%) brightness(1.2) contrast(0.9) drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
                 }}
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
               <span style={{
-                fontSize: '0.62rem',
-                color: isOwned ? '#e2e8f0' : '#718096',
+                fontSize: 'clamp(0.62rem, calc(0.72rem * var(--board-scale, 1)), 0.82rem)',
+                color: isOwned ? '#e2e8f0' : '#94a3b8',
                 textAlign: 'center',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                maxWidth: '60px',
+                maxWidth: 'clamp(60px, calc(72px * var(--board-scale, 1)), 90px)',
                 marginTop: '2px'
               }}>
                 {itemName}
@@ -293,14 +293,14 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '66px',
-                height: '74px',
-                background: isOwned ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
-                border: isOwned ? '1.5px solid #9b59b6' : '1.5px dashed rgba(255, 255, 255, 0.2)',
+                width: 'clamp(66px, calc(78px * var(--board-scale, 1)), 96px)',
+                height: 'clamp(74px, calc(88px * var(--board-scale, 1)), 110px)',
+                background: isOwned ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.05)',
+                border: isOwned ? '1.5px solid #9b59b6' : '1.5px dashed rgba(255, 255, 255, 0.35)',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 boxShadow: isOwned ? '0 0 8px rgba(155, 89, 182, 0.25)' : 'none',
-                opacity: isOwned ? 1 : 0.45,
+                opacity: isOwned ? 1 : 0.8,
                 transition: 'all 0.15s ease',
                 position: 'relative',
                 padding: '4px 2px',
@@ -311,7 +311,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 if (isOwned) {
                   e.currentTarget.style.boxShadow = '0 0 12px rgba(155, 89, 182, 0.5)';
                 } else {
-                  e.currentTarget.style.opacity = '0.8';
+                  e.currentTarget.style.opacity = '1';
                 }
               }}
               onMouseLeave={(e) => {
@@ -319,7 +319,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 if (isOwned) {
                   e.currentTarget.style.boxShadow = '0 0 8px rgba(155, 89, 182, 0.25)';
                 } else {
-                  e.currentTarget.style.opacity = '0.45';
+                  e.currentTarget.style.opacity = '0.8';
                 }
               }}
             >
@@ -327,25 +327,25 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 src={`/assets/raw_images/${bId}.png`}
                 alt={bookName}
                 style={{
-                  width: '38px',
-                  height: '38px',
+                  width: 'clamp(38px, calc(48px * var(--board-scale, 1)), 60px)',
+                  height: 'clamp(38px, calc(48px * var(--board-scale, 1)), 60px)',
                   objectFit: 'contain',
                   filter: isOwned 
                     ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' 
-                    : 'grayscale(100%) opacity(0.35) brightness(0.6)'
+                    : 'grayscale(100%) brightness(1.2) contrast(0.9) drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
                 }}
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
               <span style={{
-                fontSize: '0.62rem',
-                color: isOwned ? '#e2e8f0' : '#718096',
+                fontSize: 'clamp(0.62rem, calc(0.72rem * var(--board-scale, 1)), 0.82rem)',
+                color: isOwned ? '#e2e8f0' : '#94a3b8',
                 textAlign: 'center',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                maxWidth: '60px',
+                maxWidth: 'clamp(60px, calc(72px * var(--board-scale, 1)), 90px)',
                 marginTop: '2px'
               }}>
                 {bookName}

@@ -13,6 +13,7 @@ import {
   PawnShop 
 } from './BuildingInteractions';
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
+import { PantryDetailsModal } from './buildings/home/PantryDetailsModal';
 import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 import { calcEffectiveRobberyChance, formatHours } from '../engine/statMath';
@@ -49,6 +50,7 @@ export function BuildingModal({
   const [activeTab, setActiveTab] = useState<'shop' | 'pawn'>('shop');
   const [isWorkDeckOpen, setIsWorkDeckOpen] = useState(true);
   const [isBreakInModalOpen, setIsBreakInModalOpen] = useState(false);
+  const [isPantryModalOpen, setIsPantryModalOpen] = useState(false);
   const justUpdatedMessageRef = useRef(false);
 
   // Movable and Resizable window state
@@ -81,6 +83,26 @@ export function BuildingModal({
       sessionStorage.removeItem('fastlane_building_modal_size');
     } catch {}
   }, []);
+
+  // Esc key closes internal sub-popups first
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isBreakInModalOpen) {
+          e.stopImmediatePropagation();
+          setIsBreakInModalOpen(false);
+          return;
+        }
+        if (isPantryModalOpen) {
+          e.stopImmediatePropagation();
+          setIsPantryModalOpen(false);
+          return;
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isBreakInModalOpen, isPantryModalOpen]);
 
   const handleMarginChange = (delta: number) => {
     setPosition(null);
@@ -625,31 +647,64 @@ export function BuildingModal({
             <h2>{t(`building.${building.id}`, { defaultValue: building.name })}</h2>
             {rules?.helpfulUI && building.archetype === 'home' && livesHere && (() => {
               const robberyRate = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
+              const isBaseHome = !rules?.advancedHomeGUI && !rules?.usePhysicalMentalConditions;
+              const freshUnits = player.inventory?.freshFoodUnits || 0;
+              const fastFoodCount = player.inventory?.fastFoodItems?.length || 0;
 
               return (
-                <button 
-                  type="button"
-                  data-testid="home-burglary-badge"
-                  onClick={() => setIsBreakInModalOpen(true)}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    background: 'rgba(0, 229, 255, 0.1)',
-                    border: '1px solid var(--accent-cyan, #00e5ff)',
-                    color: 'var(--accent-cyan, #00e5ff)',
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    marginInlineEnd: '48px',
-                    marginTop: '10px',
-                    cursor: 'pointer'
-                  }}
-                  title={t('buildingModal.clickForBreakInCalc', { defaultValue: 'Click to view break-in calculation' })}
-                >
-                  🔓 {robberyRate}%
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginInlineEnd: '48px', marginTop: '10px' }}>
+                  <button 
+                    type="button"
+                    data-testid="home-burglary-badge"
+                    onClick={() => setIsBreakInModalOpen(true)}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      background: 'rgba(0, 229, 255, 0.1)',
+                      border: '1px solid var(--accent-cyan, #00e5ff)',
+                      color: 'var(--accent-cyan, #00e5ff)',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'pointer'
+                    }}
+                    title={t('buildingModal.clickForBreakInCalc', { defaultValue: 'Click to view break-in calculation' })}
+                  >
+                    🔓 {robberyRate}%
+                  </button>
+
+                  {isBaseHome && (
+                    <button
+                      type="button"
+                      data-testid="pantry-pill-badge"
+                      onClick={() => setIsPantryModalOpen(true)}
+                      title={t('homeRelax.pantryPillTooltip', { defaultValue: 'Pantry & Food Supplies' })}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        background: freshUnits > 0 ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)',
+                        border: `1px solid ${freshUnits > 0 ? 'rgba(46, 204, 113, 0.5)' : 'rgba(231, 76, 60, 0.5)'}`,
+                        color: freshUnits > 0 ? '#2ecc71' : '#ff7675',
+                        borderRadius: '12px',
+                        padding: '2px 8px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <span>🥗</span>
+                      <span>{freshUnits}</span>
+                      {fastFoodCount > 0 && (
+                        <span style={{ fontSize: '11px', color: '#f1c40f', marginLeft: '2px' }}>
+                          🍔 {fastFoodCount}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </div>
               );
             })()}
           </div>
@@ -832,104 +887,152 @@ export function BuildingModal({
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(5, 5, 16, 0.95)',
+              background: 'rgba(0, 0, 0, 0.65)',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '24px',
+              padding: '16px',
               zIndex: 100,
               borderRadius: '12px',
-              textAlign: 'center',
-              backdropFilter: 'blur(4px)'
+              backdropFilter: 'blur(3px)'
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setIsBreakInModalOpen(false);
+              }
             }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🔓</div>
-            <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem' }}>
-              {t('buildingModal.breakInTitle', { defaultValue: 'Break-in Risk Details' })}
-            </h3>
-            <p style={{ color: '#e2e8f0', fontSize: '0.88rem', marginBottom: '16px', maxWidth: '340px', lineHeight: 1.45 }}>
-              {isProtectedHousing
-                ? t('buildingModal.breakInFluffSecure', { defaultValue: 'Security apartments and Penthouses have building security and are immune to Wild Willy robberies.' })
-                : t('buildingModal.breakInFluffLowCost', { defaultValue: 'Low-Cost Housing is your starting apartment. It is subject to Wild Willy robberies.' })}
-            </p>
-
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              padding: '12px 16px',
-              marginBottom: '18px',
-              maxWidth: '340px',
-              width: '100%',
-              fontSize: '0.85rem',
-              textAlign: 'start',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
-                <span style={{ color: '#94a3b8' }}>{t('buildingModal.breakInCurrentRisk', { defaultValue: 'Current Risk' })}:</span>
-                <span style={{ fontWeight: 'bold', color: isProtectedHousing || isInactive ? '#22c55e' : '#f59e0b' }}>
-                  {robberyRate}%
-                </span>
-              </div>
-
-              {isProtectedHousing ? (
-                <div style={{ color: '#22c55e', fontSize: '0.8rem' }}>
-                  🛡️ {t('buildingModal.breakInProtectedStatus', { defaultValue: 'Protected: No burglary risk in this residence.' })}
-                </div>
-              ) : isInactive ? (
-                <div style={{ color: '#38bdf8', fontSize: '0.8rem' }}>
-                  ⏳ {t('buildingModal.breakInInactiveStatus', { week: willyStartWeek, defaultValue: `Inactive: Burglaries begin on Week ${willyStartWeek}.` })}
-                </div>
-              ) : rules?.useHomeTimeRobbery ? (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>{t('buildingModal.breakInAvgHomeTime', { hours: Math.round(meanHome), defaultValue: `Avg Home Time: ${Math.round(meanHome)}h/wk` })}</span>
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
-                    Formula: 1 / (11 + Mean Home Time)
-                  </div>
-                  <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '2px' }}>
-                    {t('buildingModal.breakInTip', { defaultValue: 'Spending more hours at home raises your mean home time and lowers your burglary risk.' })}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>{t('buildingModal.breakInRelaxLevel', { level: player.relaxation ?? 0, defaultValue: `Relaxation: ${player.relaxation ?? 0}%` })}</span>
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
-                    Formula: 1 / (Relaxation + 1)
-                  </div>
-                  <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '2px' }}>
-                    {t('buildingModal.breakInTipRelax', { defaultValue: 'Maintaining higher relaxation decreases your break-in vulnerability.' })}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <button
-              type="button"
-              className="action-panel__btn"
-              data-testid="btn-close-breakin-modal"
-              onClick={() => setIsBreakInModalOpen(false)}
+            <div
               style={{
-                backgroundColor: 'var(--accent-cyan, #00e5ff)',
-                color: '#000',
-                padding: '6px 20px',
-                fontWeight: 'bold',
-                borderRadius: '6px',
-                border: 'none',
-                cursor: 'pointer'
+                background: 'linear-gradient(145deg, #09152b 0%, #112240 100%)',
+                border: '2px solid var(--accent-cyan, #00e5ff)',
+                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 229, 255, 0.25)',
+                borderRadius: '14px',
+                padding: '20px 22px',
+                maxWidth: '380px',
+                width: '92%',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                position: 'relative'
               }}
             >
-              {t('buildingModal.close', { defaultValue: 'Close' })}
-            </button>
+              <button
+                type="button"
+                onClick={() => setIsBreakInModalOpen(false)}
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '12px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  lineHeight: 1
+                }}
+                aria-label={t('buildingModal.close', { defaultValue: 'Close' })}
+              >
+                ✕
+              </button>
+
+              <div style={{ fontSize: '2rem', marginBottom: '6px' }}>🔓</div>
+              <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem', fontWeight: 800 }}>
+                {t('buildingModal.breakInTitle', { defaultValue: 'Break-in Risk Details' })}
+              </h3>
+              <p style={{ color: '#e2e8f0', fontSize: '0.86rem', marginBottom: '14px', maxWidth: '340px', lineHeight: 1.45 }}>
+                {isProtectedHousing
+                  ? t('buildingModal.breakInFluffSecure', { defaultValue: 'Security apartments and Penthouses have building security and are immune to Wild Willy robberies.' })
+                  : t('buildingModal.breakInFluffLowCost', { defaultValue: 'Low-Cost Housing is your starting apartment. It is subject to Wild Willy robberies.' })}
+              </p>
+
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '16px',
+                maxWidth: '340px',
+                width: '100%',
+                fontSize: '0.85rem',
+                textAlign: 'start',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
+                  <span style={{ color: '#94a3b8' }}>{t('buildingModal.breakInCurrentRisk', { defaultValue: 'Current Risk' })}:</span>
+                  <span style={{ fontWeight: 'bold', color: isProtectedHousing || isInactive ? '#22c55e' : '#f59e0b' }}>
+                    {robberyRate}%
+                  </span>
+                </div>
+
+                {isProtectedHousing ? (
+                  <div style={{ color: '#22c55e', fontSize: '0.8rem' }}>
+                    🛡️ {t('buildingModal.breakInProtectedStatus', { defaultValue: 'Protected: No burglary risk in this residence.' })}
+                  </div>
+                ) : isInactive ? (
+                  <div style={{ color: '#38bdf8', fontSize: '0.8rem' }}>
+                    ⏳ {t('buildingModal.breakInInactiveStatus', { week: willyStartWeek, defaultValue: `Inactive: Burglaries begin on Week ${willyStartWeek}.` })}
+                  </div>
+                ) : rules?.useHomeTimeRobbery ? (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8' }}>{t('buildingModal.breakInAvgHomeTime', { hours: Math.round(meanHome), defaultValue: `Avg Home Time: ${Math.round(meanHome)}h/wk` })}</span>
+                    </div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
+                      Formula: 1 / (11 + Mean Home Time)
+                    </div>
+                    <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '2px' }}>
+                      {t('buildingModal.breakInTip', { defaultValue: 'Spending more hours at home raises your mean home time and lowers your burglary risk.' })}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8' }}>{t('buildingModal.breakInRelaxLevel', { level: player.relaxation ?? 0, defaultValue: `Relaxation: ${player.relaxation ?? 0}%` })}</span>
+                    </div>
+                    <div style={{ color: '#94a3b8', fontSize: '0.78rem' }}>
+                      Formula: 1 / (Relaxation + 1)
+                    </div>
+                    <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '2px' }}>
+                      {t('buildingModal.breakInTipRelax', { defaultValue: 'Maintaining higher relaxation decreases your break-in vulnerability.' })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="action-panel__btn"
+                data-testid="btn-close-breakin-modal"
+                onClick={() => setIsBreakInModalOpen(false)}
+                style={{
+                  backgroundColor: 'var(--accent-cyan, #00e5ff)',
+                  color: '#000',
+                  padding: '6px 20px',
+                  fontWeight: 'bold',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {t('buildingModal.close', { defaultValue: 'Close' })}
+              </button>
+            </div>
           </div>
         );
       })()}
+
+      {isPantryModalOpen && player && (
+        <PantryDetailsModal
+          player={player}
+          campaign={campaign || undefined}
+          onClose={() => setIsPantryModalOpen(false)}
+        />
+      )}
 
       {/* Corner Resize Handle */}
       {rules?.allowWindowMoveResize && (
