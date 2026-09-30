@@ -103,8 +103,8 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         background: 'linear-gradient(180deg, rgba(16, 20, 36, 0.9) 0%, rgba(10, 12, 22, 0.95) 100%)',
         borderRadius: '10px',
         border: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: '10px 12px',
-        marginBottom: '8px',
+        padding: 'clamp(4px, 1.2vh, 8px) clamp(6px, 1.5vw, 10px)',
+        marginBottom: '4px',
         boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)',
         flex: '1 1 auto',
         minHeight: 0,
@@ -116,15 +116,18 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
       }}
     >
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(66px, calc(78px * var(--board-scale, 1)), 96px), 1fr))',
-        gap: '8px',
-        justifyItems: 'center',
-        overflowY: 'auto',
-        padding: '2px',
-        flex: '1 1 auto'
-      }}>
+      <div 
+        className="apartment-furnishings-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(54px, 1fr))',
+          gap: '4px',
+          justifyItems: 'center',
+          overflowY: 'auto',
+          padding: '2px',
+          flex: '1 1 auto'
+        }}
+      >
         {/* Appliances */}
         {applianceSlots.map((slot) => {
           const ownedApp = slot.candidateIds
@@ -151,6 +154,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
             <div
               key={slot.slotId}
               data-testid={testId}
+              className="durable-card-item"
               onClick={() => onInspectDurable({
                 id: activeItemId,
                 isBook: false,
@@ -165,8 +169,8 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 'clamp(66px, calc(78px * var(--board-scale, 1)), 96px)',
-                height: 'clamp(74px, calc(88px * var(--board-scale, 1)), 110px)',
+                width: '58px',
+                height: '62px',
                 background: isOwned 
                   ? (isBroken ? 'rgba(239, 68, 68, 0.22)' : 'rgba(0, 0, 0, 0.45)') 
                   : 'rgba(255, 255, 255, 0.05)',
@@ -212,9 +216,10 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               <img
                 src={`/assets/raw_images/${activeItemId}.png`}
                 alt={itemName}
+                className="durable-card-item__img"
                 style={{
-                  width: 'clamp(38px, calc(48px * var(--board-scale, 1)), 60px)',
-                  height: 'clamp(38px, calc(48px * var(--board-scale, 1)), 60px)',
+                  width: '32px',
+                  height: '32px',
                   objectFit: 'contain',
                   filter: isOwned 
                     ? (isBroken ? 'drop-shadow(0 2px 4px rgba(239,68,68,0.8)) sepia(30%)' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))') 
@@ -224,16 +229,19 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
-              <span style={{
-                fontSize: 'clamp(0.62rem, calc(0.72rem * var(--board-scale, 1)), 0.82rem)',
-                color: isOwned ? '#e2e8f0' : '#94a3b8',
-                textAlign: 'center',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: 'clamp(60px, calc(72px * var(--board-scale, 1)), 90px)',
-                marginTop: '2px'
-              }}>
+              <span 
+                className="durable-card-item__label"
+                style={{
+                  fontSize: '0.60rem',
+                  color: isOwned ? '#e2e8f0' : '#94a3b8',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '52px',
+                  marginTop: '2px'
+                }}
+              >
                 {itemName}
               </span>
               {isOwned && (
@@ -280,6 +288,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
             <div
               key={bId}
               data-testid={`durable-card-${bId}`}
+              className="durable-card-item"
               onClick={() => onInspectDurable({
                 id: bId,
                 isBook: true,
@@ -293,8 +302,8 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 'clamp(66px, calc(78px * var(--board-scale, 1)), 96px)',
-                height: 'clamp(74px, calc(88px * var(--board-scale, 1)), 110px)',
+                width: '58px',
+                height: '62px',
                 background: isOwned ? 'rgba(0, 0, 0, 0.45)' : 'rgba(255, 255, 255, 0.05)',
                 border: isOwned ? '1.5px solid #9b59b6' : '1.5px dashed rgba(255, 255, 255, 0.35)',
                 borderRadius: '8px',
@@ -326,9 +335,10 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               <img
                 src={`/assets/raw_images/${bId}.png`}
                 alt={bookName}
+                className="durable-card-item__img"
                 style={{
-                  width: 'clamp(38px, calc(48px * var(--board-scale, 1)), 60px)',
-                  height: 'clamp(38px, calc(48px * var(--board-scale, 1)), 60px)',
+                  width: '32px',
+                  height: '32px',
                   objectFit: 'contain',
                   filter: isOwned 
                     ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' 
@@ -338,16 +348,19 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
-              <span style={{
-                fontSize: 'clamp(0.62rem, calc(0.72rem * var(--board-scale, 1)), 0.82rem)',
-                color: isOwned ? '#e2e8f0' : '#94a3b8',
-                textAlign: 'center',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: 'clamp(60px, calc(72px * var(--board-scale, 1)), 90px)',
-                marginTop: '2px'
-              }}>
+              <span 
+                className="durable-card-item__label"
+                style={{
+                  fontSize: '0.60rem',
+                  color: isOwned ? '#e2e8f0' : '#94a3b8',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '52px',
+                  marginTop: '2px'
+                }}
+              >
                 {bookName}
               </span>
               {isOwned && (
@@ -403,6 +416,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
             <div
               key="knick_knack"
               data-testid="durable-card-knick_knack"
+              className="durable-card-item"
               onClick={() => {
                 if (onToggleCuriosWings && isOwned) {
                   onToggleCuriosWings();
@@ -420,8 +434,8 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '66px',
-                height: '74px',
+                width: '58px',
+                height: '62px',
                 background: isOwned
                   ? (isCuriosWingsOpen ? 'rgba(234, 179, 8, 0.25)' : 'rgba(0, 0, 0, 0.45)')
                   : 'rgba(0, 0, 0, 0.25)',
@@ -440,19 +454,22 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 boxSizing: 'border-box'
               }}
             >
-              <span style={{ fontSize: '24px', filter: isOwned ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' : 'grayscale(100%) opacity(0.35)' }}>
+              <span style={{ fontSize: '20px', filter: isOwned ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' : 'grayscale(100%) opacity(0.35)' }}>
                 🏺
               </span>
-              <span style={{
-                fontSize: '0.62rem',
-                color: isOwned ? '#e2e8f0' : '#718096',
-                textAlign: 'center',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '60px',
-                marginTop: '2px'
-              }}>
+              <span 
+                className="durable-card-item__label"
+                style={{
+                  fontSize: '0.60rem',
+                  color: isOwned ? '#e2e8f0' : '#718096',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '52px',
+                  marginTop: '2px'
+                }}
+              >
                 Curios
               </span>
               {isOwned && (
@@ -480,6 +497,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         {(rules?.pawnRummageBins !== false || (player.inventory?.spareParts || 0) > 0) && (
           <div
             data-testid="durable-card-spare_parts"
+            className="durable-card-item"
             onClick={() => onInspectDurable({
               id: 'spare_parts',
               isBook: false,
@@ -491,8 +509,8 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '66px',
-              height: '74px',
+              width: '58px',
+              height: '62px',
               background: (player.inventory?.spareParts || 0) > 0 ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
               border: (player.inventory?.spareParts || 0) > 0 ? '1.5px solid #38bdf8' : '1.5px dashed rgba(255, 255, 255, 0.2)',
               borderRadius: '8px',
@@ -505,19 +523,22 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               boxSizing: 'border-box'
             }}
           >
-            <span style={{ fontSize: '24px', filter: (player.inventory?.spareParts || 0) > 0 ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' : 'grayscale(100%) opacity(0.35)' }}>
+            <span style={{ fontSize: '20px', filter: (player.inventory?.spareParts || 0) > 0 ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))' : 'grayscale(100%) opacity(0.35)' }}>
               ⚙️
             </span>
-            <span style={{
-              fontSize: '0.62rem',
-              color: (player.inventory?.spareParts || 0) > 0 ? '#e2e8f0' : '#718096',
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: '60px',
-              marginTop: '2px'
-            }}>
+            <span 
+              className="durable-card-item__label"
+              style={{
+                fontSize: '0.60rem',
+                color: (player.inventory?.spareParts || 0) > 0 ? '#e2e8f0' : '#718096',
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '52px',
+                marginTop: '2px'
+              }}
+            >
               Parts
             </span>
             {(player.inventory?.spareParts || 0) > 0 && (

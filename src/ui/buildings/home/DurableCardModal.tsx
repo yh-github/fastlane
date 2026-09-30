@@ -21,6 +21,28 @@ interface DurableCardModalProps {
   onClose: () => void;
 }
 
+const DEFAULT_APPLIANCE_SPACE: Record<string, number> = {
+  refrigerator: 40,
+  freezer: 30,
+  stove: 40,
+  microwave: 20,
+  color_tv: 20,
+  bw_tv: 20,
+  tv: 20,
+  stereo: 20,
+  '8track': 20,
+  vcr: 10,
+  computer: 30,
+  hot_tub: 50,
+  encyclopedia: 20,
+  dictionary: 10,
+  atlas: 10,
+  capote: 10,
+  spare_parts: 2,
+  knick_knack: 2,
+  knick_knacks: 2
+};
+
 export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   durable,
   player,
@@ -94,106 +116,146 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
                     ? 'Purchased brand new from Socket City. Clean and pristine working condition.'
                     : (durable.isBook ? 'Reference book in your apartment collection.' : 'Second-hand from Z-Mart or Pawn Shop. Fully functional and broken-in.')))));
 
-  // Fluff descriptions for durables:
-  const getFluffDescription = (id: string, isBook?: boolean): string => {
+  // Gameplay descriptions for durables:
+  const getGameplayDescription = (id: string, isBook?: boolean): string => {
     if (isBook) {
       switch (id) {
         case 'encyclopedia':
-          return 'Volumes of comprehensive human knowledge and history. Browsing its entries permanently expands your mental capacity.';
+          return 'Comprehensive reference set. Permanently increases your Max Mental capacity (+2) and improves exam study.';
         case 'dictionary':
-          return 'Mastery over language, definitions, and rhetoric. Enhances your cognitive precision and maximum intellect.';
+          return 'Vocabulary and definitions reference. Permanently increases your Max Mental capacity (+1) and improves exam study.';
         case 'atlas':
-          return 'Detailed cartography and geopolitical charts of the world. Expands your worldview and cognitive reserves.';
+          return 'Detailed world cartography. Permanently increases your Max Mental capacity (+1) and improves exam study.';
         case 'capote':
-          return "An anthology of Truman Capote's literary masterpieces. Engaging and provocative prose that expands your cognitive capacity.";
+          return 'Anthology of literary prose. Permanently increases your Max Mental capacity (+1) and improves exam study.';
         default:
-          return 'Engaging literature and reference material. Reading sharpens your mind and grants permanent cognitive capacity.';
+          return 'Engaging reference literature. Permanently expands your Max Mental capacity and improves study efficiency.';
       }
     }
 
     switch (id) {
       case 'refrigerator':
-        return 'Keeps your groceries crisp, fresh, and safe from spoilage. Essential for staying well-fed without running out for fast food every night.';
+        return 'Prevents fresh grocery spoilage for up to 6 food units at turn end. Without a refrigerator, unpreserved food rots into mess.';
       case 'freezer':
-        return 'Sub-zero preservation giving you unmatched food security. Keep plenty of backup provisions stored away safely.';
+        return 'Expands food preservation capacity from 6 up to 12 units per turn. Requires an active Refrigerator to function; does not prevent spoilage on its own.';
       case 'stove':
-        return 'A hot home-cooked meal works wonders after a grueling day on the clock. Restores extra physical energy when you relax.';
+        return 'Cook hot meals at home. Awards +1 Happiness every turn you eat food (shared bonus with Microwave). Restores +1 Physical when relaxing.';
       case 'microwave':
-        return 'Warm up a hearty meal in sixty seconds flat. Quick, ultra-convenient sustenance for the busy urban climber.';
+        return 'Quickly reheat meals. Awards +1 Happiness every turn you eat food (shared bonus with Stove). Restores +1 Physical when relaxing and +1 Social when socializing.';
       case 'color_tv':
-        return 'Vibrant late-night sitcoms, weekend sports, and entertainment. The living room centerpiece that charms any guest you host.';
+        return 'Color television display. Required to operate a VCR. Boosts guest social visits (+1 to +2 Social) and apartment lifestyle.';
       case 'bw_tv':
-        return 'A vintage cathode-ray television. Humble black-and-white broadcasts that still bring people together for an evening show.';
-      case 'stereo':
-        return 'Crank the volume and fill the apartment with your favorite tunes. Sets an upbeat, festive mood whenever you entertain.';
-      case '8track':
-        return 'A vintage 8-track magnetic tape player. Plays your favorite classic jams with humble fidelity to get the party started.';
+        return 'Vintage black-and-white television. Required to operate a VCR. Boosts guest social visits (+1 Social) and apartment lifestyle.';
       case 'vcr':
-        return 'Pop in a video cassette for a cozy movie night. Classic Hollywood cinema right from the comfort of your own couch.';
+        return 'Play video tapes at home. Requires a working TV (Color or B&W) in your apartment to function; inactive without one.';
+      case 'stereo':
+        return 'Home stereo audio system. Boosts guest social visits (+1 Social) and apartment lifestyle.';
+      case '8track':
+        return 'Vintage 8-track magnetic tape player. Boosts guest social visits (+1 Social) and apartment lifestyle.';
+      case 'computer':
+        return 'Personal microcomputer workstation. Offers a chance each turn to earn freelance income ($10–$150) and +3 Happiness. Continuously boosts Max Mental.';
+      case 'hot_tub':
+        return 'Pinnacle home luxury. Prevents natural relaxation decay from dropping into critical medical illness. Grants major apartment lifestyle prestige.';
       case 'spare_parts':
-        return 'A box of assorted gears, fuses, and machine screws. Greatly increases your chances of successful DIY appliance repair (+20% to +30%).';
+        return 'Kept in your apartment to boost DIY appliance repair success rates by +20% to +30%. Occupies 2 space per box.';
       case 'knick_knack':
       case 'knick_knacks':
-        return 'A unique curio or collectible trinket salvaged from the pawn shop rummage bins. Adds aesthetic charm to your apartment.';
-      case 'hot_tub':
-        return 'The pinnacle of home luxury. Steam away physical fatigue and mental burnout while impressing everyone who visits.';
-      case 'computer':
-        return 'High-performance microcomputer workstation. Expands your intellectual horizons and unlocks greater mental potential.';
+        return 'Collectibles salvaged from pawn shop rummage bins. Furnishes aesthetic charm (+2.8 × √Count, max +15) and triggers weekend appraisal events.';
       default:
         return 'A quality piece of home furnishings that elevates your standard of living and makes your apartment feel like home.';
     }
   };
 
   // Compile mechanical effects:
-  const effectBadges: string[] = [];
+  interface EffectBadge {
+    label: string;
+    isOneTime?: boolean;
+  }
+  const effectBadges: EffectBadge[] = [];
+
+  // Core gameplay appliance mechanics:
+  if (durable.id === 'refrigerator') {
+    effectBadges.push({ label: '🧊 Preserves up to 6 Fresh Food/turn' });
+  } else if (durable.id === 'freezer') {
+    effectBadges.push({ label: '🧊 Stores up to 12 Food (Needs Refrigerator)' });
+    if (itemDef?.happinessBonus) {
+      effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
+    }
+  } else if (durable.id === 'stove') {
+    effectBadges.push({ label: '🍳 +1 😊/turn when eating' });
+  } else if (durable.id === 'microwave') {
+    effectBadges.push({ label: '⚡ +1 😊/turn when eating' });
+  } else if (durable.id === 'computer') {
+    effectBadges.push({ label: '💻 Freelance income ($10–$150/turn chance)' });
+  } else if (durable.id === 'hot_tub') {
+    effectBadges.push({ label: '🛁 Prevents relaxation collapse' });
+  } else if (durable.id === 'color_tv' || durable.id === 'bw_tv') {
+    effectBadges.push({ label: '📺 Enables VCR & TV viewing' });
+  }
+
+  // Stat triggers from effects list:
   if (itemDef?.effects) {
     for (const eff of itemDef.effects) {
       if (eff.trigger === 'on_relax') {
-        if (eff.stat === 'physical') effectBadges.push(`+${eff.value} 💪 On Relax`);
-        else if (eff.stat === 'mental') effectBadges.push(`+${eff.value} 🧠 On Relax`);
-        else if (eff.stat === 'mess') effectBadges.push(`+${eff.value} 🧹 Mess On Relax`);
+        if (eff.stat === 'physical') effectBadges.push({ label: `+${eff.value} 💪 On Relax` });
+        else if (eff.stat === 'mental') effectBadges.push({ label: `+${eff.value} 🧠 On Relax` });
+        else if (eff.stat === 'mess') effectBadges.push({ label: `+${eff.value} 🧹 Mess On Relax` });
       } else if (eff.trigger === 'on_socialize') {
-        if (eff.stat === 'social') effectBadges.push(`+${eff.value} 👥 On Socialize`);
+        if (eff.stat === 'social') effectBadges.push({ label: `+${eff.value} 👥 On Socialize` });
       } else if (eff.trigger === 'continuous' && eff.stat === 'mental_max') {
-        effectBadges.push(`+${eff.value} Max 🧠 (Continuous)`);
+        effectBadges.push({ label: `+${eff.value} Max 🧠 (Continuous)` });
       } else if (eff.trigger === 'turn_start') {
-        effectBadges.push(`+${eff.value} ${eff.stat === 'physical' ? '💪' : '🧠'} Every Turn`);
+        effectBadges.push({ label: `+${eff.value} ${eff.stat === 'physical' ? '💪' : '🧠'} Every Turn` });
       }
     }
   }
-  if (itemDef?.tags?.includes('refrigerator')) {
-    effectBadges.push('🧊 Preserves Fresh Food');
+
+  // Books permanent stat boost (only add if not already defined in item effects):
+  if (durable.isBook && !effectBadges.some(b => b.label.includes('Max 🧠'))) {
+    const mentalVal = durable.id === 'encyclopedia' ? 2 : 1;
+    effectBadges.push({ label: `📚 +${mentalVal} Max 🧠 Permanent` });
   }
-  if (itemDef?.tags?.includes('computer')) {
-    effectBadges.push('💻 R&D and Income Potential');
-  }
-  if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus && effectBadges.length === 0) {
-    effectBadges.push(`+${itemDef.happinessBonus} 😊 Happiness`);
+
+  // Fallback one-time happiness bonus for classic items not covered above:
+  if (
+    itemDef?.happinessBonus &&
+    durable.id !== 'freezer' &&
+    durable.id !== 'stove' &&
+    durable.id !== 'microwave' &&
+    !effectBadges.some(b => b.isOneTime)
+  ) {
+    effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
   }
 
   if (isSpareParts) {
-    effectBadges.push('+20% to +30% DIY Repair');
+    effectBadges.push({ label: '+20% to +30% DIY Repair' });
   }
   if (isCurio) {
     if (rules?.usePhysicalMentalConditions) {
       const curioLifestyle = Math.min(15, Math.floor(2.8 * Math.sqrt(totalCurios || 1)));
-      effectBadges.push(`🏺 Lifestyle Synergy (+${curioLifestyle})`);
-      effectBadges.push('📈 2.8 × √Count (Max +15)');
-      effectBadges.push('+1 🧠 Turn Novelty (First Curio)');
-      effectBadges.push('🎲 Weekend Appraisal (40% Decor, 40% Mental, 20% Cash)');
+      effectBadges.push({ label: `🏺 Lifestyle Synergy (+${curioLifestyle})` });
+      effectBadges.push({ label: '📈 2.8 × √Count (Max +15)' });
+      effectBadges.push({ label: '+1 🧠 Turn Novelty (First Curio)' });
+      effectBadges.push({ label: '🎲 Weekend Appraisal (Decor/Mental/Cash)' });
     } else {
-      effectBadges.push('+1 😊 Happiness');
-      effectBadges.push('🏺 Curio Collection');
+      effectBadges.push({ label: '+1 😊 Happiness' });
+      effectBadges.push({ label: '🏺 Curio Collection' });
     }
   }
 
   const hasTv = player?.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
   const isVcrWithoutTv = durable.id === 'vcr' && isOwned && !hasTv;
-  if (isVcrWithoutTv) {
-    effectBadges.push('⚠️ Requires TV (Inactive)');
+  if (durable.id === 'vcr') {
+    if (isVcrWithoutTv) {
+      effectBadges.push({ label: '⚠️ Requires TV (Inactive)' });
+    } else {
+      effectBadges.push({ label: '📼 Plays Video Tapes' });
+    }
   }
 
-  const spaceCost = isSpareParts || isCurio ? 2 : (itemDef?.space ?? 0);
+  const spaceCost = isSpareParts || isCurio
+    ? 2
+    : ((itemDef?.space && itemDef.space > 0) ? itemDef.space : (DEFAULT_APPLIANCE_SPACE[durable.id] ?? (durable.isBook ? 10 : 20)));
   const lifestyleVal = isVcrWithoutTv ? 0 : (isCurio ? Math.min(15, Math.floor(2.8 * Math.sqrt(totalCurios))) : (itemDef?.lifestyleValue ?? 0));
 
   if (typeof document === 'undefined') return null;
@@ -209,12 +271,12 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+        backgroundColor: 'rgba(0, 0, 0, 0.55)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 10000,
-        padding: '16px',
+        padding: '12px',
         boxSizing: 'border-box'
       }}
     >
@@ -223,8 +285,10 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '340px',
-          borderRadius: '16px',
+          maxWidth: '320px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          borderRadius: '14px',
           border: isBroken
             ? '2px solid #ef4444'
             : `2px solid ${isNew ? '#2ecc71' : '#3498db'}`,
@@ -234,22 +298,47 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
               ? '0 0 25px rgba(46, 204, 113, 0.4), 0 10px 30px rgba(0,0,0,0.8)' 
               : '0 0 25px rgba(52, 152, 219, 0.4), 0 10px 30px rgba(0,0,0,0.8)'),
           background: 'linear-gradient(165deg, #161b2e 0%, #0d111d 100%)',
-          padding: '20px',
+          padding: '12px 14px',
           color: '#fff',
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
-          gap: '14px'
+          gap: '8px'
         }}
       >
+        {/* Top-Right Dismiss Button */}
+        <button
+          type="button"
+          data-testid="btn-close-durable-card"
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '10px',
+            background: 'transparent',
+            border: 'none',
+            color: '#94a3b8',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            padding: '4px',
+            lineHeight: 1,
+            zIndex: 10
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#ffffff')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+        >
+          ✕
+        </button>
         {/* Top Badges */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '22px' }}>
           <span style={{
-            fontSize: '0.72rem',
+            fontSize: '0.68rem',
             fontWeight: 'bold',
             letterSpacing: '0.08em',
-            padding: '3px 8px',
-            borderRadius: '6px',
+            padding: '2px 6px',
+            borderRadius: '5px',
             backgroundColor: durable.isBook ? 'rgba(155, 89, 182, 0.2)' : 'rgba(52, 152, 219, 0.2)',
             color: durable.isBook ? '#d7bde2' : '#aed6f1',
             border: `1px solid ${durable.isBook ? '#9b59b6' : '#3498db'}`
@@ -258,10 +347,10 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
           </span>
 
           <span style={{
-            fontSize: '0.75rem',
+            fontSize: '0.70rem',
             fontWeight: 'bold',
-            padding: '3px 10px',
-            borderRadius: '12px',
+            padding: '2px 8px',
+            borderRadius: '10px',
             backgroundColor: isBroken
               ? 'rgba(239, 68, 68, 0.25)'
               : (isNew ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.2)'),
@@ -279,8 +368,8 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '100px',
-          borderRadius: '12px',
+          height: '56px',
+          borderRadius: '8px',
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)'
@@ -289,10 +378,10 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
             src={`/assets/raw_images/${durable.id}.png`} 
             alt={itemName}
             style={{ 
-              maxWidth: '80px', 
-              maxHeight: '80px', 
+              maxWidth: '48px', 
+              maxHeight: '48px', 
               objectFit: 'contain',
-              filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.7))'
+              filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.7))'
             }}
             onError={(e) => { 
               (e.target as HTMLImageElement).style.display = 'none'; 
@@ -302,38 +391,37 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
 
         {/* Title */}
         <div style={{ textAlign: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff', fontWeight: 'bold' }}>
+          <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontWeight: 'bold' }}>
             {itemName}
           </h3>
-          <div style={{ fontSize: '0.78rem', color: '#888', marginTop: '3px' }}>
+          <div style={{ fontSize: '0.72rem', color: '#888', marginTop: '2px' }}>
             {conditionDetail}
           </div>
         </div>
 
-        {/* Fluff Narrative */}
+        {/* Gameplay Mechanic Narrative */}
         <p style={{
-          fontSize: '0.84rem',
-          lineHeight: '1.45',
+          fontSize: '0.76rem',
+          lineHeight: '1.35',
           color: '#cbd5e1',
-          fontStyle: 'italic',
           textAlign: 'center',
           margin: 0,
-          padding: '0 4px'
+          padding: '0 2px'
         }}>
-          "{getFluffDescription(durable.id, durable.isBook)}"
+          {getGameplayDescription(durable.id, durable.isBook)}
         </p>
 
         {/* Specs & Effect Chips */}
         <div style={{
           background: 'rgba(0, 0, 0, 0.35)',
-          padding: '10px 12px',
-          borderRadius: '8px',
+          padding: '8px 10px',
+          borderRadius: '6px',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '6px'
+          gap: '5px'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#aaa', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#aaa', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '3px' }}>
             <span>Space: <strong style={{ color: '#00e5ff' }}>{spaceCost} space</strong></span>
             {lifestyleVal > 0 && <span>Lifestyle: <strong style={{ color: '#f1c40f' }}>+{lifestyleVal}</strong></span>}
           </div>
@@ -343,21 +431,23 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
               <span 
                 key={idx}
                 style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.70rem',
                   fontWeight: 'bold',
-                  color: isBroken ? '#94a3b8' : '#2ecc71',
+                  color: isBroken ? '#94a3b8' : (badge.isOneTime ? '#facc15' : '#2ecc71'),
                   textDecoration: isBroken ? 'line-through' : 'none',
-                  background: isBroken ? 'rgba(148, 163, 184, 0.1)' : 'rgba(46, 204, 113, 0.12)',
-                  border: `1px solid ${isBroken ? 'rgba(148, 163, 184, 0.25)' : 'rgba(46, 204, 113, 0.3)'}`,
+                  background: isBroken 
+                    ? 'rgba(148, 163, 184, 0.1)' 
+                    : (badge.isOneTime ? 'rgba(250, 204, 21, 0.12)' : 'rgba(46, 204, 113, 0.12)'),
+                  border: `1px solid ${isBroken ? 'rgba(148, 163, 184, 0.25)' : (badge.isOneTime ? 'rgba(250, 204, 21, 0.3)' : 'rgba(46, 204, 113, 0.3)')}`,
                   borderRadius: '4px',
-                  padding: '2px 6px'
+                  padding: '2px 5px'
                 }}
               >
-                {badge}
+                {badge.label}
               </span>
             ))}
             {isBroken && effectBadges.length > 0 && (
-              <div style={{ fontSize: '0.70rem', color: '#f87171', fontStyle: 'italic', width: '100%', marginTop: '2px' }}>
+              <div style={{ fontSize: '0.68rem', color: '#f87171', fontStyle: 'italic', width: '100%', marginTop: '2px' }}>
                 ⚠️ Inactive while broken
               </div>
             )}
@@ -611,34 +701,22 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
               No curios in inventory. Find them rummaging at the Pawn Shop.
             </div>
           )
-        ) : (
-          <div style={{
-            padding: '6px 10px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            borderRadius: '6px',
-            border: '1px dashed rgba(255, 255, 255, 0.1)',
-            fontSize: '0.72rem',
-            color: '#777',
-            textAlign: 'center',
-            fontStyle: 'italic'
-          }}>
-            ⚡ Interactive durable actions coming in a future update
-          </div>
-        )}
+        ) : null}
 
         {/* Close Button */}
         <button
           onClick={onClose}
           style={{
-            padding: '10px',
+            padding: '7px 12px',
             backgroundColor: '#334155',
             color: '#fff',
             border: 'none',
-            borderRadius: '8px',
+            borderRadius: '6px',
             fontWeight: 'bold',
-            fontSize: '0.85rem',
+            fontSize: '0.78rem',
             cursor: 'pointer',
-            transition: 'background-color 0.2s'
+            transition: 'background-color 0.2s',
+            marginTop: '2px'
           }}
         >
           ✕ Back to Apartment

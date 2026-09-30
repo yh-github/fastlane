@@ -228,5 +228,66 @@ describe('Modal Escape and Card Popups', () => {
     expect(unownedImg).toBeInTheDocument();
     expect(unownedImg.style.filter).toContain('grayscale(100%)');
     expect(unownedImg.style.filter).toContain('brightness(1.2)');
+
+    // Check that responsive CSS classes are applied
+    expect(unownedCard).toHaveClass('durable-card-item');
+    expect(unownedImg).toHaveClass('durable-card-item__img');
+  });
+
+  it('displays real space fallback, clear gameplay mechanics, and one-time badges in DurableCardModal', () => {
+    const handleClose = vi.fn();
+    const campaignWithoutItemSpace: CampaignBundle = {
+      ...mockCampaign,
+      items: [
+        { id: 'freezer', name: 'Freezer', tags: ['freezer'], cost: 250, happinessBonus: 2 },
+        { id: 'refrigerator', name: 'Refrigerator', tags: ['refrigerator'], cost: 300 }
+      ]
+    } as any;
+
+    const { rerender } = render(
+      <DurableCardModal
+        durable={{ id: 'freezer', isOwned: false }}
+        player={mockPlayer}
+        campaign={campaignWithoutItemSpace}
+        rules={baseRules}
+        onClose={handleClose}
+      />
+    );
+
+    // Space: Should NOT show 0 space even if space is not in campaign JSON; falls back to 30 space
+    expect(screen.getByText(/30 space/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\b0 space/i)).not.toBeInTheDocument();
+
+    // Gameplay narrative: Mentions requiring a Refrigerator to expand capacity to 12
+    expect(screen.getByText(/Requires an active Refrigerator to function/i)).toBeInTheDocument();
+    expect(screen.getByText(/Expands food preservation capacity from 6 up to 12 units/i)).toBeInTheDocument();
+
+    // Effect chips: Distinctly labels one-time bonus vs food preservation
+    expect(screen.getByText('🧊 Stores up to 12 Food (Needs Refrigerator)')).toBeInTheDocument();
+    expect(screen.getByText('🎁 One-time: +2 😊 on buy')).toBeInTheDocument();
+
+    // Placeholder removal: "Interactive durable actions coming in a future update" is gone
+    expect(screen.queryByText(/Interactive durable actions coming in a future update/i)).not.toBeInTheDocument();
+
+    // Top-right close button works
+    const closeBtn = screen.getByTestId('btn-close-durable-card');
+    expect(closeBtn).toBeInTheDocument();
+    fireEvent.click(closeBtn);
+    expect(handleClose).toHaveBeenCalledTimes(1);
+
+    // Rerender for Refrigerator
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'refrigerator', isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithoutItemSpace}
+        rules={baseRules}
+        onClose={handleClose}
+      />
+    );
+
+    expect(screen.getByText(/40 space/i)).toBeInTheDocument();
+    expect(screen.getByText('🧊 Preserves up to 6 Fresh Food/turn')).toBeInTheDocument();
+    expect(screen.getByText(/Prevents fresh grocery spoilage for up to 6 food units/i)).toBeInTheDocument();
   });
 });

@@ -1240,3 +1240,25 @@ button:disabled {
   color: var(--accent-magenta);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   RESPONSIVE DURABLE SHOWCASE: ONLY ENLARGE WHEN ROOM PERMITS
+   ───────────────────────────────────────────────────────────── */
+@media (min-height: 680px) and (min-width: 950px) {
+  .apartment-furnishings-grid {
+    grid-template-columns: repeat(auto-fill, minmax(clamp(68px, calc(78px * var(--board-scale, 1)), 90px), 1fr)) !important;
+    gap: 8px !important;
+  }
+  .durable-card-item {
+    width: clamp(68px, calc(78px * var(--board-scale, 1)), 90px) !important;
+    height: clamp(76px, calc(88px * var(--board-scale, 1)), 104px) !important;
+  }
+  .durable-card-item__img {
+    width: clamp(38px, calc(46px * var(--board-scale, 1)), 56px) !important;
+    height: clamp(38px, calc(46px * var(--board-scale, 1)), 56px) !important;
+  }
+  .durable-card-item__label {
+    font-size: clamp(0.64rem, calc(0.72rem * var(--board-scale, 1)), 0.82rem) !important;
+    max-width: clamp(62px, calc(74px * var(--board-scale, 1)), 86px) !important;
+  }
+}
+
