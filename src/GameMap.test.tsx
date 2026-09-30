@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { GameMap } from './ui/GameMap';
-import { getBuildingLabel } from './graphics/mapRenderer';
+import { getBuildingLabel, getBuildingLabelStyle } from './graphics/mapRenderer';
 
 // Mock PixiJS entirely so mapRenderer can initialize headless
 vi.mock('pixi.js', () => {
@@ -13,6 +13,7 @@ vi.mock('pixi.js', () => {
   class Container {
     x = 0; y = 0;
     children: any[] = [ { addChild: vi.fn() } ];
+    scale = { set: vi.fn() };
     addChild() {}
   }
   class Application {
@@ -26,8 +27,10 @@ vi.mock('pixi.js', () => {
     anchor = { set: vi.fn() };
     x = 0; y = 0;
     text = '';
+    style: any = {};
     constructor(opts?: any) {
       if (opts?.text) this.text = opts.text;
+      if (opts?.style) this.style = opts.style;
     }
   }
   return { Graphics, Container, Application, Text };
@@ -184,5 +187,8 @@ describe('GameMap Character GUI Tests', () => {
     });
 
     expect(getBuildingLabel('blacks_market')).toBe("Black's Market");
+    const style = getBuildingLabelStyle('blacks_market');
+    expect(style?.fontSize).toBe(20);
+    expect(style?.wordWrapWidth).toBe(84);
   });
 });
