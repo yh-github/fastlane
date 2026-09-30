@@ -50,8 +50,6 @@ export function PawnShop({
 
   return (
     <div className="interaction-panel pawn-shop-panel">
-      <h3>{t('pawnShop.title', { defaultValue: 'Pawn Shop' })}</h3>
-
       {/* Primary Navigation Tabs: Prevent accidental selling */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
         <button
@@ -319,7 +317,7 @@ export function PawnShop({
               <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 10px 0', fontSize: '0.95em' }}>
                 🏷️ {t('pawnShop.weeklyStockTitle', { defaultValue: 'Weekly Pawn & Curio Stock' })}
               </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
                 {availableItems.map((item, idx) => {
                   const slotKey = `${item.id}_${item.name}_${idx}`;
                   const isBroken = item.tags?.includes('broken') || (item as any).isBroken;

@@ -427,7 +427,6 @@ export function BankInterface({
   
   return (
     <div className="interaction-panel">
-      <h3>{t('bank.title', { defaultValue: 'Bank of Jones' })}</h3>
       <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
         <button onClick={() => setTab('banking')} style={{ fontWeight: tab === 'banking' ? 'bold' : 'normal' }}>{t('bank.tabBanking', { defaultValue: 'Bank' })}</button>
         {(!campaign || !campaign.stocks || campaign.stocks.length > 0) && (

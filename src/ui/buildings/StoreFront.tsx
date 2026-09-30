@@ -13,8 +13,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
 
   return (
     <div className="interaction-panel">
-      <h3 style={{ marginBottom: '12px' }}>{t('storeFront.title')}</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
         {availableItems.map(item => {
           const adjustedPrice = calcItemPrice(item, economicIndex);
           const canAfford = player.money >= adjustedPrice;
