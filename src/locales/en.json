@@ -1116,7 +1116,12 @@
     "hudLayoutSide": "Side HUD (Modern widescreen & phone landscape, 2-column sidebar with folding)",
     "useSkills": "Management & Technical Skills",
     "useSkillsOn": "Tracks Management & Technical skills with job bonuses (ON)",
-    "useSkillsOff": "Skills disabled (OFF)"
+    "useSkillsOff": "Skills disabled (OFF)",
+    "quitGame": "Quit Game",
+    "quitConfirmTitle": "Quit Current Game?",
+    "quitConfirmMsg": "Are you sure you want to quit? Current game progress will be lost.",
+    "confirmQuit": "Yes, Quit",
+    "cancel": "Cancel"
   },
   "debug": {
     "modalTitle": "Debug Events & Economy",

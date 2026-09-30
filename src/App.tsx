@@ -356,6 +356,17 @@ export default function App() {
             onClose={() => setIsSettingsOpen(false)} 
             onOpenLog={handleOpenLog}
             logCount={logs.length}
+            onQuitGame={() => {
+              const randomSeed = generateRandomSeed();
+              setGameState(createInitialGameState(campaign!, [{name: 'Player 1', isAi: false, goals: createDefaultGoalAllotment()}], 'node_low_cost', undefined, randomSeed));
+              setShowTitle(true);
+              setIsBuildingModalOpen(false);
+              setIsSettingsOpen(false);
+              setIsInventoryOpen(false);
+              setIsLogModalOpen(false);
+              setLogs([]);
+              setActivePlayerIndex(0);
+            }}
           />
         )}
 
