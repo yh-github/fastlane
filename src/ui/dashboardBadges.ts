@@ -250,7 +250,7 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
         id: 'stat-relaxation',
         label: t('dashboard.relaxation', { defaultValue: 'Relaxation' }),
         value: displayRelaxation,
-        icon: '🧘',
+        icon: '🛌',
         danger: Boolean(
           rules.enableRelaxationDoctor &&
             player.relaxation <= (rules.relaxationDoctorThreshold ?? 10)

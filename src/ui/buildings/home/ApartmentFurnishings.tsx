@@ -97,6 +97,8 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
   return (
     <div 
       className={`apartment-furnishings-showcase ${className || ''}`}
+      data-testid="apartment-furnishings"
+      aria-label={t('homeRelax.durablesShowcase', { defaultValue: 'Apartment Furnishings & Belongings' })}
       style={{
         background: 'linear-gradient(180deg, rgba(16, 20, 36, 0.9) 0%, rgba(10, 12, 22, 0.95) 100%)',
         borderRadius: '10px',
@@ -113,11 +115,6 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         ...style
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexShrink: 0 }}>
-        <h4 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '0.88em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          🛋️ {t('homeRelax.durablesShowcase', { defaultValue: 'Apartment Furnishings & Belongings' })}
-        </h4>
-      </div>
 
       <div style={{
         display: 'grid',

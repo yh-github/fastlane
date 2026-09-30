@@ -123,7 +123,7 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
             border: '1px solid rgba(255, 255, 255, 0.1)',
             fontSize: '1.8rem'
           }}>
-            <span role="img" aria-label="Relax">🧘</span>
+            <span role="img" aria-label="Relax">🛌</span>
           </div>
 
           {/* Title */}
@@ -174,7 +174,7 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
               )
             ) : (
               <div style={{ color: '#85ffb5', textAlign: 'center', fontWeight: 'bold' }}>
-                +{classicGain} 🧘 Relaxation {classicFirstBonus && classicFirstBonus > 0 ? `(+${classicFirstBonus} 😊)` : ''}
+                +{classicGain} 🛌 Relaxation {classicFirstBonus && classicFirstBonus > 0 ? `(+${classicFirstBonus} 😊)` : ''}
               </div>
             )}
           </div>
@@ -199,7 +199,7 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
               transition: 'all 0.15s ease'
             }}
           >
-            🧘 {helpfulUI ? t('homeRelax.button', { cost: formatHours(hoursToRelax), defaultValue: `Relax (${formatHours(hoursToRelax)}h)` }) : t('homeRelax.buttonBasic', { defaultValue: 'Relax' })}
+            🛌 {helpfulUI ? t('homeRelax.button', { cost: formatHours(hoursToRelax), defaultValue: `Relax (${formatHours(hoursToRelax)}h)` }) : t('homeRelax.buttonBasic', { defaultValue: 'Relax' })}
           </button>
         </div>
       </div>

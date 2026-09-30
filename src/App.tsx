@@ -154,38 +154,7 @@ export default function App() {
     );
   }
 
-  if (activePlayer && !activePlayer.turnFlags.hasSeenWeekend && gameState.turn > 1) {
-    return (
-      <WeekendScreen
-        player={activePlayer}
-        turn={gameState.turn}
-        rules={gameState.rules}
-        onSelectCard={(cardId: string) => {
-          const rng = new Random(gameState.rngState);
-          const resolvedPlayer = resolveWeekendChoice(activePlayer, cardId, rng, gameState.rules, campaign?.config.statRules);
-          const newPlayers = [...gameState.players];
-          newPlayers[activePlayerIndex] = resolvedPlayer;
-          setGameState({
-            ...gameState,
-            players: newPlayers,
-            rngState: rng.getState()
-          });
-          if (resolvedPlayer.weekendResult) {
-            addLog({ key: `Weekend: ${resolvedPlayer.name} selected activity.` }, gameState.turn, activePlayer.id);
-          }
-        }}
-        onStartWeek={() => {
-          const newPlayers = [...gameState.players];
-          newPlayers[activePlayerIndex] = {
-            ...activePlayer,
-            turnFlags: { ...activePlayer.turnFlags, hasSeenWeekend: true }
-          };
-          setGameState({ ...gameState, players: newPlayers });
-          addLog({ key: `Week ${gameState.turn} begins for ${activePlayer.name}.` }, gameState.turn, activePlayer.id);
-        }}
-      />
-    );
-  }
+  const isWeekend = Boolean(activePlayer && !activePlayer.turnFlags.hasSeenWeekend && gameState.turn > 1);
 
   const isAiTurn = activePlayer?.isAi || false;
   const hudSetting = gameState.rules.hudLayout || 'auto';
@@ -220,6 +189,36 @@ export default function App() {
         onToggleFold={setHudFoldState}
       />
       <main className="game-viewport">
+        {isWeekend && activePlayer && (
+          <WeekendScreen
+            player={activePlayer}
+            turn={gameState.turn}
+            rules={gameState.rules}
+            onSelectCard={(cardId: string) => {
+              const rng = new Random(gameState.rngState);
+              const resolvedPlayer = resolveWeekendChoice(activePlayer, cardId, rng, gameState.rules, campaign?.config.statRules);
+              const newPlayers = [...gameState.players];
+              newPlayers[activePlayerIndex] = resolvedPlayer;
+              setGameState({
+                ...gameState,
+                players: newPlayers,
+                rngState: rng.getState()
+              });
+              if (resolvedPlayer.weekendResult) {
+                addLog({ key: `Weekend: ${resolvedPlayer.name} selected activity.` }, gameState.turn, activePlayer.id);
+              }
+            }}
+            onStartWeek={() => {
+              const newPlayers = [...gameState.players];
+              newPlayers[activePlayerIndex] = {
+                ...activePlayer,
+                turnFlags: { ...activePlayer.turnFlags, hasSeenWeekend: true }
+              };
+              setGameState({ ...gameState, players: newPlayers });
+              addLog({ key: `Week ${gameState.turn} begins for ${activePlayer.name}.` }, gameState.turn, activePlayer.id);
+            }}
+          />
+        )}
         <AnimationLayer 
           animations={floatingAnims} 
           onAnimationComplete={removeAnim} 
@@ -302,7 +301,7 @@ export default function App() {
             onClick={() => handleOpenInventory()}
           />
         )}
-        {isBuildingModalOpen && currentBuildingId && (
+        {isBuildingModalOpen && currentBuildingId && !isWeekend && (
           <BuildingModal
             player={gameState.players[activePlayerIndex]}
             campaign={campaign!}

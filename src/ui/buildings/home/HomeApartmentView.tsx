@@ -76,7 +76,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   economicIndex = 0,
   turn = 1,
   onAction,
-  housingName: _housingName,
+  housingName,
   actionFeedback,
   durablesSpace,
   totalUsedSpace,
@@ -125,6 +125,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
     applianceData?: OwnedAppliance;
     isOwned?: boolean;
   } | null>(null);
+  const [showMessDetails, setShowMessDetails] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [modalParent, setModalParent] = useState<HTMLElement | null>(null);
@@ -213,63 +214,53 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
 
       {/* Space & Mess Opposing Gauge Bar - Fixed / Always Visible */}
       {(rules?.trackMess || rules?.spaceCapping) && (
-        <div className="mess-visual-card" style={{ 
-          marginBottom: '8px', 
-          padding: '8px 12px', 
-          background: 'linear-gradient(135deg, rgba(20,20,35,0.95) 0%, rgba(35,35,55,0.95) 100%)', 
-          borderRadius: '8px',
-          border: isOvercapacity ? '1px solid #e74c3c' : `1px solid ${messBarColor}`,
-          boxShadow: isOvercapacity ? '0 0 10px rgba(231,76,60,0.4)' : `0 0 8px ${messBarColor}22`,
-          flexShrink: 0,
-          position: 'sticky',
-          top: 0,
-          zIndex: 20
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '0.85em', color: '#00e5ff' }}>
-              🛋️ Durables: {durablesSpace} space
-            </span>
-            <span style={{ fontWeight: 'bold', fontSize: '0.85em', textAlign: 'center' }}>
-              {rules?.spaceCapping ? (
-                isOvercapacity ? (
-                  <span style={{ color: '#e74c3c', background: 'rgba(231,76,60,0.2)', padding: '1px 6px', borderRadius: '3px' }}>
-                    ⚠️ OVERCROWDED (+{overflow})
-                  </span>
-                ) : freeSpace === 0 ? (
-                  <span style={{ color: '#f39c12' }}>FULL (0 free)</span>
-                ) : (
-                  <span style={{ color: '#2ecc71' }}>{freeSpace} free space</span>
-                )
-              ) : null}
-            </span>
-            <span style={{ fontWeight: 'bold', fontSize: '0.85em', color: messBarColor }}>
-              {messIcon} Mess: {currentMess} <span style={{ fontSize: '0.85em', opacity: 0.9 }}>({messLabel})</span>
-            </span>
-          </div>
-
+        <div 
+          className="mess-visual-card" 
+          data-testid="compact-mess-bar"
+          onClick={() => setShowMessDetails(true)}
+          style={{ 
+            marginBottom: '8px', 
+            padding: '4px 8px', 
+            background: 'linear-gradient(135deg, rgba(20,20,35,0.95) 0%, rgba(35,35,55,0.95) 100%)', 
+            borderRadius: '8px',
+            border: isOvercapacity ? '1px solid #e74c3c' : `1px solid ${messBarColor}`,
+            boxShadow: isOvercapacity ? '0 0 10px rgba(231,76,60,0.4)' : `0 0 8px ${messBarColor}22`,
+            flexShrink: 0,
+            position: 'sticky',
+            top: 0,
+            zIndex: 20,
+            cursor: 'pointer'
+          }}
+          title={t('homeRelax.messClickDetails', { defaultValue: 'Click to view apartment space and mess breakdown' })}
+        >
           {rules?.spaceCapping ? (
             <div 
               style={{ 
                 width: '100%', 
-                height: '12px', 
+                height: '22px', 
                 backgroundColor: 'rgba(255,255,255,0.08)', 
                 borderRadius: '6px', 
                 overflow: 'hidden',
-                position: 'relative'
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 8px'
               }}
-              title={`Durables: ${durablesSpace} space | Mess: ${currentMess} space | Free: ${freeSpace} space${overflow > 0 ? ` (⚠️ ${overflow} space overcrowded!)` : ''}`}
             >
+              {/* Durables progress background */}
               <div style={{
                 position: 'absolute',
                 left: 0,
                 top: 0,
                 bottom: 0,
                 width: `${durablesPct}%`,
-                backgroundColor: '#00e5ff',
+                backgroundColor: 'rgba(0, 229, 255, 0.45)',
                 transition: 'width 0.3s ease',
                 zIndex: 1
               }} />
 
+              {/* Mess progress background */}
               <div style={{
                 position: 'absolute',
                 right: 0,
@@ -283,36 +274,147 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                 transition: 'width 0.3s ease',
                 zIndex: 2
               }} />
+
+              {/* Text overlays directly on the bar */}
+              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                🛋️ {durablesSpace} space
+              </span>
+              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', textAlign: 'center', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                {isOvercapacity ? (
+                  <span style={{ color: '#fff', background: '#e74c3c', padding: '1px 5px', borderRadius: '3px' }}>
+                    ⚠️ +{overflow}
+                  </span>
+                ) : freeSpace === 0 ? (
+                  <span style={{ color: '#f39c12' }}>FULL</span>
+                ) : (
+                  <span style={{ color: '#2ecc71' }}>{freeSpace} free</span>
+                )}
+              </span>
+              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                {messIcon} {currentMess} ({messLabel})
+              </span>
             </div>
           ) : (
-            <div style={{ width: '100%', height: '8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{ 
+              width: '100%', 
+              height: '20px', 
+              backgroundColor: 'rgba(255,255,255,0.1)', 
+              borderRadius: '6px', 
+              overflow: 'hidden',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 8px'
+            }}>
               <div style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                bottom: 0,
                 width: `${messPercentage}%`,
-                height: '100%',
                 backgroundColor: messBarColor,
-                transition: 'width 0.5s ease-in-out, background-color 0.5s ease'
+                transition: 'width 0.5s ease-in-out, background-color 0.5s ease',
+                zIndex: 1
               }} />
+              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                {messIcon} Mess: {currentMess}
+              </span>
+              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
+                {messLabel}
+              </span>
             </div>
           )}
+        </div>
+      )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '0.72em', color: '#aaa', flexWrap: 'wrap', gap: '4px' }}>
-            {rules?.spaceCapping ? (
-              <>
-                <span style={{ color: '#00e5ff' }}>0 (Start)</span>
-                <span>
-                  Capacity: <strong>{spaceCap} space</strong>
-                  {overflow > 0 && <span style={{ color: '#e74c3c', marginLeft: '4px' }}>(Total: {totalUsedSpace})</span>}
-                </span>
-                <span style={{ color: messBarColor }}>Max Mess: {maxMessHousing}</span>
-              </>
-            ) : (
-              <>
-                <span>0 (Spotless)</span>
-                <span>Social limit: 25</span>
-                <span>Max: {maxMessHousing}</span>
-              </>
-            )}
+      {showMessDetails && (
+        <div 
+          data-testid="mess-details-popup"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(5, 5, 16, 0.95)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            zIndex: 100,
+            borderRadius: '12px',
+            textAlign: 'center',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🧹</div>
+          <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem' }}>
+            {t('homeRelax.messDetailsTitle', { defaultValue: 'Apartment Space & Mess Breakdown' })}
+          </h3>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '18px',
+            maxWidth: '340px',
+            width: '100%',
+            fontSize: '0.85rem',
+            textAlign: 'start',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '4px' }}>
+              <span style={{ color: '#94a3b8' }}>Apartment:</span>
+              <span style={{ fontWeight: 'bold' }}>{housingName || player.currentHousingId}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>Capacity:</span>
+              <span style={{ fontWeight: 'bold' }}>{spaceCap} space</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>Total Used:</span>
+              <span style={{ fontWeight: 'bold' }}>{totalUsedSpace} / {spaceCap}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#00e5ff' }}>Durables Space:</span>
+              <span style={{ fontWeight: 'bold', color: '#00e5ff' }}>{durablesSpace} space</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: messBarColor }}>Current Mess:</span>
+              <span style={{ fontWeight: 'bold', color: messBarColor }}>{currentMess} space ({messLabel})</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>Free Space:</span>
+              <span style={{ fontWeight: 'bold', color: isOvercapacity ? '#e74c3c' : '#2ecc71' }}>
+                {isOvercapacity ? `⚠️ Overcrowded (+${overflow})` : `${freeSpace} space`}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>Max Mess Allowed:</span>
+              <span style={{ fontWeight: 'bold' }}>{maxMessHousing}</span>
+            </div>
+            <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '4px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '4px' }}>
+              Mess reduces your relaxation rate and penalizes social visits if it exceeds 25. Clean DIY or hire a cleaning service.
+            </div>
           </div>
+          <button
+            type="button"
+            className="action-panel__btn"
+            data-testid="btn-close-mess-popup"
+            onClick={() => setShowMessDetails(false)}
+            style={{
+              backgroundColor: 'var(--accent-cyan, #00e5ff)',
+              color: '#000',
+              padding: '6px 20px',
+              fontWeight: 'bold',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            {t('buildingModal.close', { defaultValue: 'Close' })}
+          </button>
         </div>
       )}
 

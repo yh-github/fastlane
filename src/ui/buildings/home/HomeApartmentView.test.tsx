@@ -73,8 +73,8 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
       />
     );
 
-    // Header should show Apartment Furnishings
-    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    // Apartment Furnishings showcase is rendered
+    expect(screen.getByTestId('apartment-furnishings')).toBeInTheDocument();
 
     // Must NOT have the verbose empty paragraph text
     expect(screen.queryByText(/Your apartment is completely unfurnished/i)).toBeNull();
@@ -211,8 +211,8 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     );
 
     // Initial state: Durables showcase is visible, Space & Mess gauge is visible, wings begin folded
-    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
-    expect(screen.getByText(/🧹 Mess: 5/i)).toBeInTheDocument();
+    expect(screen.getByTestId('apartment-furnishings')).toBeInTheDocument();
+    expect(screen.getByTestId('compact-mess-bar')).toHaveTextContent(/🧹\s*5/);
     expect(screen.queryByTestId('home-wing-left')).toBeNull();
     expect(screen.queryByTestId('home-wing-right')).toBeNull();
 
@@ -260,7 +260,7 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.queryByTestId('home-wing-right')).toBeNull();
 
     // Apartment Furnishings was never hidden!
-    expect(screen.getByText(/Apartment Furnishings/i)).toBeInTheDocument();
+    expect(screen.getByTestId('apartment-furnishings')).toBeInTheDocument();
   });
 
   it('renders broken appliance with badge and allows executing maintenance options', () => {

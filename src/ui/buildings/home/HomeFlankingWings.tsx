@@ -205,7 +205,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
           {/* Card Top Row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '1rem' }}>🧘</span>
+              <span style={{ fontSize: '1rem' }}>🛌</span>
               <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
                 {t('homeRelax.buttonBasic', { defaultValue: 'Relax' })}
               </span>
@@ -276,7 +276,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               )
             ) : (
               <div style={{ color: '#86efac', fontWeight: 600 }}>
-                +{classicGain} 🧘 Relaxation
+                +{classicGain} 🛌 Relaxation
               </div>
             )}
           </div>
