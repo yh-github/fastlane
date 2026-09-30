@@ -382,7 +382,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
         flexDirection: 'column', 
         minHeight: 0, 
         position: 'relative',
-        paddingBottom: modalParent ? '26px' : '0'
+        paddingBottom: 0
       }}
     >
       {actionFeedback && (

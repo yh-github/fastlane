@@ -721,7 +721,7 @@ export function BuildingModal({
         }}
       >
         {/* Full-width shop / services content */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: '1 1 auto', minHeight: 0, height: '100%', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: building.archetype === 'home' ? '0px' : '14px', flex: '1 1 auto', minHeight: 0, height: '100%', overflowY: 'auto' }}>
           {renderBuildingServices()}
         </div>
 
