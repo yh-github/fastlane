@@ -373,10 +373,11 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   return (
     <div 
       ref={panelRef}
-      className="interaction-panel home-basic-panel" 
+      className="home-basic-panel" 
       style={{ 
         width: '100%', 
         height: '100%', 
+        flex: '1 1 auto',
         display: 'flex', 
         flexDirection: 'column', 
         minHeight: 0, 
@@ -404,7 +405,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
       )}
 
       {/* Main scrollable area */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '24px' }}>
+      <div style={{ flex: '1 1 auto', height: '100%', minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {/* Unified Space & Mess Status Overview (Only if trackMess or spaceCapping is active) */}
         {(rules?.trackMess || rules?.spaceCapping) && (
           <div 
