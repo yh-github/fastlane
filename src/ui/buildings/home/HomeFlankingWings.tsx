@@ -72,12 +72,12 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
   hoursToClean,
   cleanPhysGain,
   isCleanDisabled,
-  cleanSubtext,
+  cleanSubtext: _cleanSubtext,
   onCleanClick,
   cleaningServiceCost,
   cleaningServicePrice,
   isServiceDisabled,
-  serviceSubtext,
+  serviceSubtext: _serviceSubtext,
   onServiceClick,
   hasFridge,
   hasFreezer
@@ -108,6 +108,19 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
   const minMessAdded = minGuests * growth;
   const maxMessAdded = maxGuests * growth;
   const hostMessRangeStr = minMessAdded === maxMessAdded ? `+${minMessAdded}` : `+${minMessAdded}..+${maxMessAdded}`;
+
+  // Clean reduction range for DIY Clean
+  const cleanRatio = hoursToClean / 3;
+  const minCleanReduction = (rules?.proportionalDivisibleActions && hoursToClean < 3)
+    ? Math.max(1, Math.round(2 * cleanRatio))
+    : 2;
+  const maxCleanReduction = (rules?.proportionalDivisibleActions && hoursToClean < 3)
+    ? Math.max(1, Math.round(6 * cleanRatio))
+    : 6;
+  const cleanMessRangeStr = minCleanReduction === maxCleanReduction
+    ? `-${minCleanReduction}`
+    : `-${minCleanReduction}..-${maxCleanReduction}`;
+  const canAffordService = player.money >= cleaningServicePrice;
 
   const freshFoodUnits = player.inventory?.freshFoodUnits || 0;
   const cannedFoodUnits = player.inventory?.cannedFoodUnits || 0;
@@ -458,7 +471,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
             </div>
           )}
 
-        {/* 1. CLEAN CARD (Manual) */}
+        {/* 1. CLEAN CARD (Manual DIY) */}
         {trackMess && (
           <div
             data-testid="home-card-clean"
@@ -478,7 +491,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span style={{ fontSize: '1rem' }}>🧹</span>
                 <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
-                  {t('homeRelax.btnClean', { defaultValue: 'Clean' })}
+                  {t('homeRelax.diyCleanTitle', { defaultValue: 'DIY Clean' })}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -524,11 +537,24 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               borderRadius: '6px',
               padding: '5px 6px',
               fontSize: '0.70rem',
-              lineHeight: 1.3
+              lineHeight: 1.3,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '3px'
             }}>
-              <div style={{ color: '#86efac', fontWeight: 600 }}>🧹 Reduces Mess</div>
-              <div style={{ color: '#fca5a5', fontSize: '0.66rem' }}>
-                {cleanSubtext || `-${cleanPhysGain} 💪 Effort`}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600 }}>
+                <span style={{ color: '#86efac' }}>{cleanMessRangeStr} 🧹 Mess</span>
+                <span style={{ color: '#38bdf8' }}>$0 Free</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.66rem' }}>
+                {usePhysicalMental ? (
+                  <span style={{ color: '#fca5a5' }}>-{cleanPhysGain} 💪 Fatigue</span>
+                ) : (
+                  <span style={{ color: '#94a3b8' }}>0 💪 Fatigue</span>
+                )}
+                <span style={{ color: '#94a3b8' }}>
+                  {t('homeRelax.manualLabor', { defaultValue: 'Manual Labor' })}
+                </span>
               </div>
             </div>
 
@@ -538,6 +564,13 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               data-action-target="clean"
               onClick={onCleanClick}
               disabled={isCleanDisabled}
+              title={
+                (player.mess || 0) <= 0
+                  ? t('action.error.alreadyClean', { defaultValue: 'Apartment is already spotless' })
+                  : isCleanDisabled
+                  ? t('action.error.notEnoughTimeClean', { defaultValue: 'Not enough time or exhausted' })
+                  : undefined
+              }
               style={{
                 padding: '6px 8px',
                 borderRadius: '6px',
@@ -576,7 +609,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span style={{ fontSize: '1rem' }}>✨</span>
                 <span style={{ fontWeight: 800, fontSize: '0.82rem', color: '#fff' }}>
-                  {t('homeRelax.btnHireService', { defaultValue: 'Service' })}
+                  {t('homeRelax.proServiceTitle', { defaultValue: 'Pro Service' })}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -590,17 +623,6 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                   border: '1px solid #0284c7'
                 }}>
                   ⏳ {cleaningServiceCost}h
-                </span>
-                <span style={{
-                  background: '#581c87',
-                  color: '#e9d5ff',
-                  fontSize: '0.66rem',
-                  fontWeight: 800,
-                  padding: '2px 5px',
-                  borderRadius: '4px',
-                  border: '1px solid #7e22ce'
-                }}>
-                  ${cleaningServicePrice}
                 </span>
                 <button
                   type="button"
@@ -633,11 +655,22 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               borderRadius: '6px',
               padding: '5px 6px',
               fontSize: '0.70rem',
-              lineHeight: 1.3
+              lineHeight: 1.3,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '3px'
             }}>
-              <div style={{ color: '#c084fc', fontWeight: 600 }}>🧹 -10 Mess reduction</div>
-              <div style={{ color: '#94a3b8', fontSize: '0.66rem' }}>
-                {serviceSubtext || `Professional cleaners (-10 🧹)`}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600 }}>
+                <span style={{ color: '#c084fc' }}>-10 🧹 Mess</span>
+                <span style={{ color: canAffordService ? '#f87171' : '#ef4444', fontWeight: 700 }}>
+                  -${cleaningServicePrice}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.66rem' }}>
+                <span style={{ color: '#86efac' }}>0 💪 Fatigue</span>
+                <span style={{ color: '#94a3b8' }}>
+                  {t('homeRelax.proCleaners', { defaultValue: 'Pro Cleaners' })}
+                </span>
               </div>
             </div>
 
@@ -647,6 +680,13 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               data-action-target="service"
               onClick={onServiceClick}
               disabled={isServiceDisabled}
+              title={
+                (player.mess || 0) <= 0
+                  ? t('action.error.alreadyClean', { defaultValue: 'Apartment is already spotless' })
+                  : isServiceDisabled
+                  ? t('action.error.cannotAffordService', { defaultValue: 'Not enough time or funds' })
+                  : undefined
+              }
               style={{
                 padding: '6px 8px',
                 borderRadius: '6px',

@@ -186,8 +186,8 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
       }
       outputs.push({
         icon: '🧹',
-        title: 'Mess Reduction',
-        desc: 'Significantly reduces clutter and dirty dishes'
+        title: 'Mess Reduction (2 to 6)',
+        desc: 'Cleans 2 to 6 units of accumulated apartment clutter and dirty dishes.'
       });
       tips.push('Clean regularly to avoid pest infestations and moving penalty fees.');
       tips.push('If low on stamina, consider hiring a cleaning service instead.');
