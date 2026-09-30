@@ -662,7 +662,7 @@ export function BuildingModal({
           display: 'flex', 
           flexDirection: 'column', 
           minHeight: 0,
-          paddingBottom: (playerJobHere && !isAdvancedWorkGUI) ? '20px' : '0'
+          paddingBottom: ((playerJobHere && !isAdvancedWorkGUI) || building.archetype === 'education') ? '20px' : '0'
         }}
       >
         {/* Full-width shop / services content */}

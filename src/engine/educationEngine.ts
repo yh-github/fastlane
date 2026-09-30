@@ -31,15 +31,17 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef, econom
     return { updated: player, success: false, message: { key: 'action.error.maxEnrolledClasses', params: { max: maxAllowed } } };
   }
 
+  const hasCredit = (player.enrolledCredits || 0) > 0;
   const tuitionFee = calcEconomyPrice(degree.baseTuitionFee, economicIndex);
 
-  if (player.money < tuitionFee) {
+  if (!hasCredit && player.money < tuitionFee) {
     return { updated: player, success: false, message: { key: 'action.error.notEnoughMoneyTuition' } };
   }
 
   let updated = { 
     ...player, 
-    money: player.money - tuitionFee,
+    money: hasCredit ? player.money : player.money - tuitionFee,
+    enrolledCredits: hasCredit ? Math.max(0, (player.enrolledCredits || 0) - 1) : (player.enrolledCredits || 0),
     enrolledClasses: { 
       ...(player.enrolledClasses || {}), 
       [degree.id]: 0,
@@ -48,6 +50,25 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef, econom
   };
 
   return { updated, success: true, message: { key: 'action.education.enrolled', params: { name: degree.name } } };
+}
+
+export function buyEducationCredit(player: PlayerState, baseTuitionFee: number = 50, economicIndex: number = 0): EducationResult {
+  const tuitionFee = calcEconomyPrice(baseTuitionFee, economicIndex);
+  if (player.money < tuitionFee) {
+    return { updated: player, success: false, message: { key: 'action.error.notEnoughMoneyTuition' } };
+  }
+
+  const updated: PlayerState = {
+    ...player,
+    money: player.money - tuitionFee,
+    enrolledCredits: (player.enrolledCredits || 0) + 1
+  };
+
+  return {
+    updated,
+    success: true,
+    message: { key: 'action.education.creditPurchased', params: { credits: updated.enrolledCredits ?? 1 } }
+  };
 }
 
 export function calcRequiredLessons(player: PlayerState, degree: EducationDef, rules?: GameRules): number {

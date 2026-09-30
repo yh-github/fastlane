@@ -66,6 +66,7 @@
     },
     "education": {
       "enrolled": "Enrolled in {{name}}",
+      "creditPurchased": "Purchased university enrollment credit. Available credits: {{credits}}",
       "graduated": "Graduated with {{name}}!{{stats}}",
       "studied": "Studied for {{name}} ({{current}}/{{required}}){{stats}}",
       "mistake": "Made a mistake studying {{name}} ({{type}})! Lost lesson progress{{stats}}"
@@ -1234,13 +1235,20 @@
     "title": "University Registry",
     "available": "Available Degrees",
     "completed": "Completed ✓",
-    "tuition": "- Tuition: ${{fee}}",
+    "tuition": "Tuition: ${{fee}}",
     "bonus": "★ Bonus",
     "lessonsLabel": "Lessons",
     "lessons": "Lessons: {{completed}} / {{required}}",
     "studyBtn": "Study ({{cost}}h)",
     "studyBtnBasic": "Study",
-    "enrollBtn": "Enroll"
+    "enrollBtn": "Enroll",
+    "bottomEnrollBtn": "ENROLL",
+    "enrollCreditsBanner": "Enrolled Class Credits: {{count}}. Select an eligible class below.",
+    "chooseClassBtn": "Choose Class",
+    "enrollConfirmTitle": "University Enrollment",
+    "enrollConfirmMsg": "Enroll in university course for ${{fee}}? You will receive 1 course credit to choose any eligible class.",
+    "confirmEnroll": "Enroll (${{fee}})",
+    "availableStatus": "Available"
   },
   "education": {
     "junior_college": "Junior College",

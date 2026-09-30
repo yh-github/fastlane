@@ -6,6 +6,7 @@ import {
   handleApplyAction,
   handleWorkAction,
   handleBuyAction,
+  handleBuyEducationCreditAction,
   handleEnrollAction,
   handleStudyAction,
   handleRelaxAction,
@@ -72,6 +73,9 @@ export function gameReducer(
       break;
     case 'buy':
       res = handleBuyAction(nextPlayer, action, context);
+      break;
+    case 'buy_education_credit':
+      res = handleBuyEducationCreditAction(nextPlayer, action, context);
       break;
     case 'enroll':
       res = handleEnrollAction(nextPlayer, action, context);

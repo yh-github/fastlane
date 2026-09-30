@@ -216,6 +216,8 @@ export interface PlayerState {
   degrees: string[];
   /** Classes currently being studied (mapped to lessons completed) */
   enrolledClasses: Record<string, number>;
+  /** Number of prepaid enrollment credits available to enroll in classes */
+  enrolledCredits?: number;
 
   // ── Inventory ──
   inventory: InventoryState;
