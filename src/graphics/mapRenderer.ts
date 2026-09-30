@@ -97,6 +97,30 @@ export async function initMapRenderer(
   const mapContainer = new Container();
   localApp.stage.addChild(mapContainer);
 
+  const useAuthentic = config.authenticCurvedPaths !== false && !!config.mapData.authenticNodes;
+
+  const nodeMap = new Map(config.mapData.nodes.map(n => [n.id, n]));
+  const nodePositionMap = new Map<string, { x: number; y: number }>();
+  for (const node of config.mapData.nodes) {
+    const authPos = useAuthentic ? config.mapData.authenticNodes?.[node.id] : undefined;
+    nodePositionMap.set(node.id, authPos ? { x: authPos.x, y: authPos.y } : { x: node.x, y: node.y });
+  }
+
+  // Calculate visual vertical center of board elements to achieve true vertical centering
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const node of config.mapData.nodes) {
+    const pos = nodePositionMap.get(node.id) || { x: node.x, y: node.y };
+    const radius = node.buildingId ? 44 : 22;
+    minY = Math.min(minY, pos.y - radius);
+    maxY = Math.max(maxY, pos.y + radius);
+  }
+  if (useAuthentic) {
+    maxY = Math.max(maxY, 785);
+  }
+  const visualCenterY = (isFinite(minY) && isFinite(maxY)) ? (minY + maxY) / 2 : config.mapData.height / 2;
+  const verticalOffset = config.mapData.height / 2 - visualCenterY;
+
   const updateBoardTransform = () => {
     if (!config.container || !localApp.renderer) return;
     const containerW = config.container.clientWidth;
@@ -114,7 +138,7 @@ export async function initMapRenderer(
     const boardW = config.mapData.width * scale;
     const boardH = config.mapData.height * scale;
     const boardX = (containerW - boardW) / 2;
-    const boardY = (containerH - boardH) / 2;
+    const boardY = (containerH - boardH) / 2 + verticalOffset * scale;
 
     mapContainer.scale.set(scale);
     mapContainer.x = boardX;
@@ -145,15 +169,6 @@ export async function initMapRenderer(
 
   const waypointsLayer = new Graphics();
   mapContainer.addChild(waypointsLayer);
-
-  const useAuthentic = config.authenticCurvedPaths !== false && !!config.mapData.authenticNodes;
-
-  const nodeMap = new Map(config.mapData.nodes.map(n => [n.id, n]));
-  const nodePositionMap = new Map<string, { x: number; y: number }>();
-  for (const node of config.mapData.nodes) {
-    const authPos = useAuthentic ? config.mapData.authenticNodes?.[node.id] : undefined;
-    nodePositionMap.set(node.id, authPos ? { x: authPos.x, y: authPos.y } : { x: node.x, y: node.y });
-  }
 
   // Build edge waypoint lookup and edge object lookup
   const edgeWaypointMap = new Map<string, number>();
@@ -273,11 +288,12 @@ export async function initMapRenderer(
         text: name,
         style: {
           fill: 0xffffff,
-          fontSize: 17,
+          fontSize: 20,
+          lineHeight: 22,
           fontWeight: 'bold',
           align: 'center',
           wordWrap: true,
-          wordWrapWidth: 80,
+          wordWrapWidth: 84,
           stroke: { color: 0x000000, width: 3.5 },
           dropShadow: { alpha: 0.95, color: 0x000000, blur: 4, distance: 1 }
         }
@@ -372,6 +388,13 @@ export function updateBuildingLabels(buildings: { id: string; name: string }[]):
  */
 export function getBuildingLabel(buildingId: string): string | undefined {
   return buildingLabels.get(buildingId)?.text;
+}
+
+/**
+ * Read the current text style of a building label (useful for tests and verification).
+ */
+export function getBuildingLabelStyle(buildingId: string): any {
+  return (buildingLabels.get(buildingId) as any)?.style;
 }
 
 /**
