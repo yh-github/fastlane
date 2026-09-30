@@ -13,12 +13,14 @@ interface SettingsModalProps {
   onClose: () => void;
   onOpenLog?: () => void;
   logCount?: number;
+  onQuitGame?: () => void;
 }
 
-export function SettingsModal({ gameState, setGameState, campaign, replayData, onClose, onOpenLog, logCount }: SettingsModalProps) {
+export function SettingsModal({ gameState, setGameState, campaign, replayData, onClose, onOpenLog, logCount, onQuitGame }: SettingsModalProps) {
   const { t, i18n } = useTranslation();
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
 
   const toggleCategory = (catId: string) => {
     setCollapsedCategories(prev => ({
@@ -647,17 +649,86 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+          <div style={{ display: 'flex', gap: '10px', marginTop: 'auto', flexWrap: 'wrap', alignItems: 'center' }}>
             {replayData && (
               <button className="action-panel__btn" onClick={handleExportReplay}>
                 Export Replay
               </button>
             )}
-            <button className="action-panel__btn" onClick={onClose}>
+            {onQuitGame && (
+              <button 
+                className="action-panel__btn" 
+                data-testid="btn-quit-game"
+                onClick={() => setShowQuitConfirm(true)}
+                style={{
+                  backgroundColor: '#dc2626',
+                  borderColor: '#ef4444',
+                  color: '#fff'
+                }}
+              >
+                🚪 {t('settings.quitGame', { defaultValue: 'Quit Game' })}
+              </button>
+            )}
+            <button className="action-panel__btn" onClick={onClose} style={{ marginInlineStart: 'auto' }}>
               {t('settings.close', { defaultValue: 'Close' })}
             </button>
           </div>
         </div>
+
+        {showQuitConfirm && (
+          <div 
+            data-testid="quit-confirm-dialog"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(5, 5, 16, 0.95)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px',
+              zIndex: 100,
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>⚠️</div>
+            <h3 style={{ margin: '0 0 8px', color: '#ff6b6b' }}>
+              {t('settings.quitConfirmTitle', { defaultValue: 'Quit Current Game?' })}
+            </h3>
+            <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '20px', maxWidth: '320px', lineHeight: 1.4 }}>
+              {t('settings.quitConfirmMsg', { defaultValue: 'Are you sure you want to quit? Current game progress will be lost.' })}
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="action-panel__btn"
+                data-testid="btn-confirm-quit"
+                onClick={() => {
+                  setShowQuitConfirm(false);
+                  onClose();
+                  onQuitGame?.();
+                }}
+                style={{
+                  backgroundColor: '#dc2626',
+                  borderColor: '#ef4444',
+                  color: '#fff',
+                  padding: '8px 18px',
+                  fontWeight: 'bold'
+                }}
+              >
+                {t('settings.confirmQuit', { defaultValue: 'Yes, Quit' })}
+              </button>
+              <button
+                className="action-panel__btn"
+                data-testid="btn-cancel-quit"
+                onClick={() => setShowQuitConfirm(false)}
+                style={{ padding: '8px 18px' }}
+              >
+                {t('settings.cancel', { defaultValue: 'Cancel' })}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {isDebugModalOpen && campaign && (

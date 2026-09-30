@@ -290,5 +290,39 @@ describe('SettingsModal', () => {
     fireEvent.click(logBtn);
     expect(onOpenLog).toHaveBeenCalled();
   });
+
+  it('shows Quit button when onQuitGame is provided, opens confirmation dialog, and triggers onQuitGame on confirmation', () => {
+    const onQuitGame = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <SettingsModal
+        gameState={dummyGameState}
+        setGameState={() => {}}
+        onClose={onClose}
+        onQuitGame={onQuitGame}
+      />
+    );
+
+    const quitBtn = screen.getByTestId('btn-quit-game');
+    expect(quitBtn).toBeInTheDocument();
+
+    // Clicking quit button opens confirmation dialog
+    fireEvent.click(quitBtn);
+    expect(screen.getByTestId('quit-confirm-dialog')).toBeInTheDocument();
+    expect(onQuitGame).not.toHaveBeenCalled();
+
+    // Clicking cancel closes confirmation dialog without quitting
+    const cancelBtn = screen.getByTestId('btn-cancel-quit');
+    fireEvent.click(cancelBtn);
+    expect(screen.queryByTestId('quit-confirm-dialog')).not.toBeInTheDocument();
+    expect(onQuitGame).not.toHaveBeenCalled();
+
+    // Clicking confirm executes onQuitGame and onClose
+    fireEvent.click(quitBtn);
+    const confirmBtn = screen.getByTestId('btn-confirm-quit');
+    fireEvent.click(confirmBtn);
+    expect(onQuitGame).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
 
