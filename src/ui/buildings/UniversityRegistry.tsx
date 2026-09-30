@@ -16,8 +16,6 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
 
   return (
     <div className="interaction-panel">
-      <h3>{t('university.title', { defaultValue: 'University Registry' })}</h3>
-
       <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
         <button onClick={() => setTab('available')} style={{ fontWeight: tab === 'available' ? 'bold' : 'normal', background: tab === 'available' ? '#4aa' : '#333' }}>
           {t('university.tabAvailable', { defaultValue: 'Available Classes' })}

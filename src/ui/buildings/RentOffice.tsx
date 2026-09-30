@@ -45,7 +45,6 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
 
   return (
     <div className="interaction-panel">
-      <h3>{t('rentOffice.title')}</h3>
       <p style={{ fontSize: '12px', marginBottom: '12px' }}>🏠 {t('rentOffice.current')}: {currentHousing ? t(`housing.${currentHousing.id}`, { defaultValue: currentHousing.name }) : t('rentOffice.homeless')}</p>
       
       {!isOpen ? (

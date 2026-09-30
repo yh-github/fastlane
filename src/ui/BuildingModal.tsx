@@ -659,7 +659,6 @@ export function BuildingModal({
               );
             })()}
           </div>
-          <p>{t(`buildingDesc.${building.id}`, { defaultValue: building.description })}</p>
         </div>
       </div>
 
