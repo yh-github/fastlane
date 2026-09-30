@@ -869,7 +869,19 @@
     "inactive": "לא פעיל",
     "protectedTooltip": "מוגן על ידי דיור מאובטח",
     "inactiveTooltip": "לא פעיל עד שבוע {{week}}",
-    "marginLabel": "שוליים"
+    "marginLabel": "שוליים",
+    "breakInTitle": "פרטי סיכון פריצה",
+    "breakInFluffLowCost": "דיור מוזל הוא דירת הפתיחה שלך. הוא חשוף לפריצות של וילי הפראי.",
+    "breakInFluffSecure": "דירות מאובטחות ופנטהאוזים כוללים אבטחה בבניין וחסינים מפני וילי הפראי.",
+    "breakInCurrentRisk": "סיכון נוכחי",
+    "breakInProtectedStatus": "מוגן: אין סיכון לפריצה בדירה זו.",
+    "breakInInactiveStatus": "לא פעיל: פריצות מתחילות בשבוע {{week}}.",
+    "breakInAvgHomeTime": "זמן בית ממוצע: {{hours}} ש'/שבוע",
+    "breakInRelaxLevel": "רמת מנוחה: {{level}}%",
+    "breakInTip": "בילוי שעות נוספות בבית מעלה את הנוכחות הממוצעת ומפחית את סיכון הפריצה.",
+    "breakInTipRelax": "שמירה על רמת מנוחה גבוהה מקטינה את הפגיעות לפריצות.",
+    "clickForBreakInCalc": "לחץ לצפייה בחישוב הפריצה",
+    "close": "סגור"
   },
   "homeDurable": {
     "maintenanceTitle": "תחזוקת מכשירי חשמל",
