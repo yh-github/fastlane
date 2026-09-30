@@ -2,11 +2,22 @@ import type { PlayerState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import type { ReplayContext } from '../replayTypes';
 import { requireConfig } from '../rules';
-import { enrollInDegree, study, calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../educationEngine';
+import { enrollInDegree, buyEducationCredit, study, calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../educationEngine';
 import { spendHours } from '../timeManager';
 import { roundToResolution } from '../statMath';
 import { resolveDecision } from '../replayTypes';
 import { applyHappinessChange } from '../statEffects';
+
+export function handleBuyEducationCreditAction(
+  player: PlayerState,
+  action: { type: 'buy_education_credit'; baseFee?: number },
+  context: ReducerContext
+): ActionHandlerResult {
+  let nextPlayer = structuredClone(player);
+  const baseTuition = action.baseFee ?? context.campaign.education?.[0]?.baseTuitionFee ?? 50;
+  const result = buyEducationCredit(nextPlayer, baseTuition, context.economicIndex);
+  return { nextPlayer: result.updated, actionLog: result.message };
+}
 
 export function handleEnrollAction(
   player: PlayerState,
@@ -17,7 +28,7 @@ export function handleEnrollAction(
   let actionLog;
   const degDef = context.campaign.education.find(d => d.id === action.degreeId);
   if (degDef) {
-    const result = enrollInDegree(nextPlayer, degDef, context.economicIndex);
+    const result = enrollInDegree(nextPlayer, degDef, context.economicIndex, context.rules);
     nextPlayer = result.updated;
     actionLog = result.message;
   }

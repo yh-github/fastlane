@@ -537,6 +537,95 @@ describe('BuildingInteractions', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'study', degreeId: 'trade_school' });
   });
 
+  it('UniversityRegistry handles dedicated bottom ENROLL button, confirmation dialog, and class selection with credits', () => {
+    const mockPlayerNoCredits = {
+      name: 'Tester',
+      money: 500,
+      hoursRemaining: 50,
+      degrees: [],
+      enrolledClasses: {},
+      enrolledCredits: 0,
+      inventory: {}
+    } as any;
+
+    const mockCampaign = {
+      degrees: [
+        {
+          id: 'trade_school',
+          name: 'Trade School',
+          baseTuitionFee: 100,
+          lessonsRequired: 10,
+          prerequisites: [],
+          rewards: { dependability: 5, happiness: 10, maxDepBoost: 5, maxExpBoost: 5 }
+        }
+      ],
+      config: {
+        timeRules: { studySessionCost: 6 },
+        statRules: {}
+      }
+    } as any;
+
+    const mockOnAction = vi.fn();
+
+    const { unmount } = render(
+      <UniversityRegistry
+        player={mockPlayerNoCredits}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    // Verify dedicated bottom ENROLL button is present
+    const enrollBtn = screen.getByTestId('btn-enroll');
+    expect(enrollBtn).toBeInTheDocument();
+    expect(enrollBtn.textContent).toContain('ENROLL');
+
+    // Individual class card should NOT have an enroll button when credits === 0
+    expect(screen.queryByTestId('choose-class-trade_school')).not.toBeInTheDocument();
+    expect(screen.getByText('Available')).toBeInTheDocument();
+
+    // Click ENROLL button opens confirmation dialog
+    fireEvent.click(enrollBtn);
+    expect(screen.getByTestId('enroll-confirm-dialog')).toBeInTheDocument();
+    expect(screen.getByText(/Enroll in university course/i)).toBeInTheDocument();
+
+    // Click confirm in dialog
+    const confirmBtn = screen.getByTestId('btn-confirm-enroll');
+    fireEvent.click(confirmBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy_education_credit', baseFee: 100 });
+    expect(screen.queryByTestId('enroll-confirm-dialog')).not.toBeInTheDocument();
+
+    unmount();
+
+    // Render with 1 credit:
+    const mockPlayerWithCredits = {
+      ...mockPlayerNoCredits,
+      enrolledCredits: 1
+    };
+
+    render(
+      <UniversityRegistry
+        player={mockPlayerWithCredits}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    // Verify credits banner is displayed
+    expect(screen.getByTestId('enrolled-credits-banner')).toBeInTheDocument();
+    expect(screen.getByText(/Enrolled Class Credits: 1/i)).toBeInTheDocument();
+
+    // Verify class card now has "Choose Class" button
+    const chooseClassBtn = screen.getByTestId('choose-class-trade_school');
+    expect(chooseClassBtn).toBeInTheDocument();
+    expect(chooseClassBtn.textContent).toContain('Choose Class');
+
+    fireEvent.click(chooseClassBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'enroll', degreeId: 'trade_school' });
+  });
+
   it('HomeRelax dynamically updates Relax button with exact runtime gains based on conditions, mental condition bonus, first-turn bonus, mess, social, and appliances', () => {
     const mockPlayer = {
       id: 'p1',

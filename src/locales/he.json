@@ -66,6 +66,7 @@
     },
     "education": {
       "enrolled": "נרשמת ל{{name}}",
+      "creditPurchased": "נרכשה נקודת זכות להרשמה לאוניברסיטה. נקודות זמינות: {{credits}}",
       "graduated": "סיימת בהצטיינות {{name}}!{{stats}}",
       "studied": "למדת עבור {{name}} ({{current}}/{{required}}){{stats}}",
       "mistake": "שגית במהלך הלימודים ב-{{name}} ({{type}})! ההתקדמות נמחקה{{stats}}"
@@ -719,13 +720,20 @@
     "title": "רישום אוניברסיטאי",
     "available": "תארים זמינים",
     "completed": "הושלם ✓",
-    "tuition": "- שכר לימוד: {{fee}}$",
+    "tuition": "שכר לימוד: {{fee}}$",
     "bonus": "★ בונוס",
     "lessonsLabel": "שיעורים",
     "lessons": "שיעורים: {{completed}} / {{required}}",
     "studyBtn": "למד ({{cost}} שעות)",
     "studyBtnBasic": "למד",
-    "enrollBtn": "הירשם"
+    "enrollBtn": "הירשם",
+    "bottomEnrollBtn": "הרשמה",
+    "enrollCreditsBanner": "נקודות הרשמה לקורסים: {{count}}. בחר קורס זמין מטה.",
+    "chooseClassBtn": "בחר קורס",
+    "enrollConfirmTitle": "הרשמה לאוניברסיטה",
+    "enrollConfirmMsg": "האם להירשם לאוניברסיטה בעלות של ${{fee}}? תקבל נקודת זכות אחת לבחירת כל קורס זמין.",
+    "confirmEnroll": "הירשם (${{fee}})",
+    "availableStatus": "זמין"
   },
   "job": {
     "zmart_clerk": "פקיד",

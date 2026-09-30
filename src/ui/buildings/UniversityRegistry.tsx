@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { EducationDef, CampaignBundle } from '../../engine/dataLoader';
 import type { PlayerState, GameRules } from '../../engine/gameState';
@@ -10,9 +11,16 @@ import type { InteractionProps } from './types';
 export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees?: EducationDef[], rules?: GameRules, campaign: CampaignBundle, economicIndex?: number }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<'available'|'tree'>('available');
+  const [showEnrollConfirm, setShowEnrollConfirm] = useState(false);
 
   const degreesList: EducationDef[] = availableDegrees || campaign?.education || (campaign as any)?.degrees || [];
   const rootDegrees = degreesList.filter((d: EducationDef) => d.prerequisites.length === 0);
+
+  const baseTuitionFee = degreesList[0]?.baseTuitionFee ?? 50;
+  const tuitionFee = calcEconomyPrice(baseTuitionFee, economicIndex);
+  const canAffordEnroll = player.money >= tuitionFee;
+  const enrolledCredits = player.enrolledCredits ?? 0;
+  const modalParent = typeof document !== 'undefined' ? document.querySelector('.building-modal') : null;
 
   return (
     <div className="interaction-panel">
@@ -27,6 +35,28 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
 
       {tab === 'available' && (
         <>
+          {enrolledCredits > 0 && (
+            <div 
+              data-testid="enrolled-credits-banner"
+              style={{
+                background: 'rgba(52, 152, 219, 0.15)',
+                border: '1px solid #3498db',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '0.88rem',
+                color: '#38bdf8'
+              }}
+            >
+              <span>🎓</span>
+              <span>
+                {t('university.enrollCreditsBanner', { count: enrolledCredits, defaultValue: `Enrolled Class Credits: ${enrolledCredits}. Select an eligible class below.` })}
+              </span>
+            </div>
+          )}
           <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 10px 0', fontSize: '0.95em' }}>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
             {degreesList
@@ -158,14 +188,35 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                             })()}
                           </button>
                         );
-                      })() : (
+                      })() : enrolledCredits > 0 ? (
                         <button 
-                          style={{ width: '100%', background: '#2ecc71', color: '#000', cursor: 'pointer' }} 
-                          onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
+                          data-testid={`choose-class-${deg.id}`}
                           data-action-target={`enroll-${deg.id}`}
+                          style={{ 
+                            width: '100%', 
+                            background: 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)', 
+                            color: '#000', 
+                            fontWeight: 'bold',
+                            border: '1px solid #2ecc71',
+                            borderRadius: '4px',
+                            padding: '6px 12px',
+                            cursor: 'pointer' 
+                          }} 
+                          onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
                         >
-                          🎓 {t('university.enrollBtn', { defaultValue: 'Enroll' })} (${tuitionFee})
+                          🎓 {t('university.chooseClassBtn', { defaultValue: 'Choose Class' })}
                         </button>
+                      ) : (
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#94a3b8',
+                          padding: '6px 0',
+                          textAlign: 'center',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          borderRadius: '4px'
+                        }}>
+                          {t('university.availableStatus', { defaultValue: 'Available' })}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -185,6 +236,116 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
           ))}
         </div>
       )}
+
+      {/* Dedicated Docked Bottom ENROLL button */}
+      {(() => {
+        const enrollDockElement = (
+          <div 
+            className="university-enroll-bottom-dock"
+            data-testid="dock-enroll"
+            style={{
+              position: 'absolute',
+              bottom: modalParent ? '0px' : 'calc(-18px * var(--board-scale, 1))',
+              left: '50%',
+              transform: 'translate(-50%, 50%)',
+              zIndex: 60,
+              display: 'flex',
+              justifyContent: 'center',
+              pointerEvents: 'auto'
+            }}
+          >
+            <button
+              data-testid="btn-enroll"
+              onClick={() => setShowEnrollConfirm(true)}
+              disabled={!canAffordEnroll}
+              title={t('university.tuition', { fee: tuitionFee, defaultValue: `Tuition: $${tuitionFee}` })}
+              style={{
+                background: !canAffordEnroll ? '#333' : 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)',
+                color: !canAffordEnroll ? '#777' : '#000',
+                border: !canAffordEnroll ? '2px solid #555' : '2px solid #2ecc71',
+                boxShadow: !canAffordEnroll ? 'none' : '0 4px 10px rgba(0,0,0,0.8), 0 0 10px rgba(46,204,113,0.5)',
+                padding: '4px 18px',
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                fontSize: '0.92rem',
+                letterSpacing: '1px',
+                cursor: !canAffordEnroll ? 'not-allowed' : 'pointer',
+                textTransform: 'uppercase',
+                minWidth: 'auto',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              🎓 {t('university.bottomEnrollBtn', { defaultValue: 'ENROLL' })} (${tuitionFee})
+            </button>
+          </div>
+        );
+
+        return modalParent ? createPortal(enrollDockElement, modalParent) : enrollDockElement;
+      })()}
+
+      {/* Confirmation Dialog for University Enrollment */}
+      {showEnrollConfirm && (() => {
+        const confirmDialog = (
+          <div 
+            data-testid="enroll-confirm-dialog"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(5, 5, 16, 0.95)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px',
+              zIndex: 100,
+              borderRadius: '12px',
+              textAlign: 'center',
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>🎓</div>
+            <h3 style={{ margin: '0 0 8px', color: 'var(--accent-cyan, #00e5ff)' }}>
+              {t('university.enrollConfirmTitle', { defaultValue: 'University Enrollment' })}
+            </h3>
+            <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '20px', maxWidth: '320px', lineHeight: 1.4 }}>
+              {t('university.enrollConfirmMsg', { fee: tuitionFee, defaultValue: `Enroll in university course for $${tuitionFee}? You will receive 1 course credit to choose any eligible class.` })}
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="action-panel__btn"
+                data-testid="btn-confirm-enroll"
+                onClick={() => {
+                  setShowEnrollConfirm(false);
+                  onAction({ type: 'buy_education_credit', baseFee: baseTuitionFee });
+                }}
+                disabled={!canAffordEnroll}
+                style={{
+                  backgroundColor: canAffordEnroll ? '#2ecc71' : '#555',
+                  borderColor: canAffordEnroll ? '#27ae60' : '#444',
+                  color: canAffordEnroll ? '#000' : '#888',
+                  padding: '8px 18px',
+                  fontWeight: 'bold',
+                  cursor: canAffordEnroll ? 'pointer' : 'not-allowed'
+                }}
+              >
+                {t('university.confirmEnroll', { fee: tuitionFee, defaultValue: `Enroll ($${tuitionFee})` })}
+              </button>
+              <button
+                className="action-panel__btn"
+                data-testid="btn-cancel-enroll"
+                onClick={() => setShowEnrollConfirm(false)}
+                style={{
+                  padding: '8px 18px'
+                }}
+              >
+                {t('settings.cancel', { defaultValue: 'Cancel' })}
+              </button>
+            </div>
+          </div>
+        );
+
+        return modalParent ? createPortal(confirmDialog, modalParent) : confirmDialog;
+      })()}
     </div>
   );
 }

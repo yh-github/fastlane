@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { enrollInDegree, study, formatDegreeProgress, getPrerequisiteChainDepth } from './educationEngine';
+import { enrollInDegree, buyEducationCredit, study, formatDegreeProgress, getPrerequisiteChainDepth } from './educationEngine';
 import type { PlayerState } from './gameState';
 import type { EducationDef } from './dataLoader';
 
@@ -50,11 +50,37 @@ describe('Education Engine', () => {
       expect(result.updated.enrolledClasses['junior_college']).toBe(0);
     });
 
+    it('consumes pre-paid enrolledCredit without deducting money', () => {
+      const player = { degrees: [], money: 20, enrolledCredits: 1, enrolledClasses: {} } as PlayerState;
+      const result = enrollInDegree(player, mockDegree);
+      expect(result.success).toBe(true);
+      expect(result.updated.money).toBe(20);
+      expect(result.updated.enrolledCredits).toBe(0);
+      expect(result.updated.enrolledClasses['junior_college']).toBe(0);
+    });
+
     it('fails if max enrolled classes limit is reached', () => {
       const player = { degrees: [], money: 500, enrolledClasses: { 'c1': 0, 'c2': 0, 'c3': 0, 'c4': 0 } } as PlayerState;
       const result = enrollInDegree(player, mockDegree);
       expect(result.success).toBe(false);
       expect(result.message?.key).toBe('action.error.maxEnrolledClasses');
+    });
+  });
+
+  describe('buyEducationCredit', () => {
+    it('fails if insufficient funds', () => {
+      const player = { money: 30, enrolledCredits: 0 } as PlayerState;
+      const result = buyEducationCredit(player, 50);
+      expect(result.success).toBe(false);
+      expect(result.message?.key).toBe('action.error.notEnoughMoneyTuition');
+    });
+
+    it('succeeds, deducts tuition fee, and increments enrolledCredits', () => {
+      const player = { money: 100, enrolledCredits: 0 } as PlayerState;
+      const result = buyEducationCredit(player, 50);
+      expect(result.success).toBe(true);
+      expect(result.updated.money).toBe(50);
+      expect(result.updated.enrolledCredits).toBe(1);
     });
   });
 
