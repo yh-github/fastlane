@@ -243,6 +243,25 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     fireEvent.click(screen.getByTestId('toggle-wing-chores'));
     const rightWing = screen.getByTestId('home-wing-right');
     expect(rightWing).toBeInTheDocument();
+
+    // Verify DIY Clean card content
+    const cleanCard = within(rightWing).getByTestId('home-card-clean');
+    expect(cleanCard).toHaveTextContent('DIY Clean');
+    expect(cleanCard).toHaveTextContent('-2..-6 🧹 Mess');
+    expect(cleanCard).toHaveTextContent('$0 Free');
+    expect(cleanCard).toHaveTextContent('-2 💪 Fatigue');
+    expect(cleanCard).toHaveTextContent('Manual Labor');
+    expect(within(cleanCard).getByTestId('btn-clean')).toHaveTextContent('Clean');
+
+    // Verify Pro Service card content
+    const serviceCard = within(rightWing).getByTestId('home-card-service');
+    expect(serviceCard).toHaveTextContent('Pro Service');
+    expect(serviceCard).toHaveTextContent('-10 🧹 Mess');
+    expect(serviceCard).toHaveTextContent('-$100');
+    expect(serviceCard).toHaveTextContent('0 💪 Fatigue');
+    expect(serviceCard).toHaveTextContent('Pro Cleaners');
+    expect(within(serviceCard).getByTestId('btn-service')).toHaveTextContent('Hire Service');
+
     expect(within(rightWing).getByTestId('btn-clean')).toBeInTheDocument();
     expect(within(rightWing).getByTestId('btn-service')).toBeInTheDocument();
     expect(within(rightWing).getByTestId('home-card-pantry')).toBeInTheDocument();
