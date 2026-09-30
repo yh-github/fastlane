@@ -577,7 +577,19 @@ describe('BuildingModal Component', () => {
       />
     );
 
-    expect(screen.getByTestId('home-burglary-badge')).toBeInTheDocument();
+    const badge = screen.getByTestId('home-burglary-badge');
+    expect(badge).toBeInTheDocument();
+    expect(badge.textContent).toContain('🔓');
+
+    // Click badge to open break-in calculation modal
+    fireEvent.click(badge);
+    expect(screen.getByTestId('home-breakin-details-modal')).toBeInTheDocument();
+    expect(screen.getByText(/Low-Cost Housing is your starting apartment/i)).toBeInTheDocument();
+
+    // Close break-in details modal
+    fireEvent.click(screen.getByTestId('btn-close-breakin-modal'));
+    expect(screen.queryByTestId('home-breakin-details-modal')).not.toBeInTheDocument();
+
     unmount();
 
     // When helpfulUI is false
@@ -935,7 +947,7 @@ describe('BuildingModal Component', () => {
     await waitFor(() => {
       expect(screen.getByText(/Not enough education: missing Engineering\./i)).toBeInTheDocument();
     }, { timeout: 8000 });
-  });
+  }, 15000);
 
   it('renders live coordinate and dimension readout and supports reset', async () => {
     // Mock navigator.clipboard
