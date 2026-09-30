@@ -262,30 +262,54 @@ body {
   min-height: 0;
 }
 
-.building-modal:has(.home-apartment-panel) .building-modal__content {
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.building-modal:has(.home-apartment-panel) .building-modal__content > div {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
+.building-modal:has(.home-apartment-panel) .building-modal__content,
 .building-modal:has(.home-basic-panel) .building-modal__content {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
 }
 
+.building-modal:has(.home-apartment-panel) .building-modal__content > div,
 .building-modal:has(.home-basic-panel) .building-modal__content > div {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
+}
+
+.home-basic-panel {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.apartment-furnishings-showcase {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.apartment-furnishings-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  align-content: start !important;
 }
 
 .building-modal__resize-handle {

@@ -376,4 +376,31 @@ describe('Modal Escape and Card Popups', () => {
     expect(screen.queryByText(/Plays Video Tapes/i)).not.toBeInTheDocument();
     expect(screen.getByText('🎁 One-time: +1 😊 on buy')).toBeInTheDocument();
   });
+
+  it('renders ApartmentFurnishings with seamless full-height expansion and no restrictive inner box styling', () => {
+    const { container } = render(
+      <ApartmentFurnishings
+        player={mockPlayer}
+        campaign={mockCampaign}
+        rules={baseRules}
+        onInspectDurable={vi.fn()}
+      />
+    );
+
+    const showcase = screen.getByTestId('apartment-furnishings');
+    expect(showcase).toBeInTheDocument();
+
+    // Verify seamless transparent styling without restrictive inner borders/padding
+    expect(showcase.style.background).toBe('transparent');
+    expect(showcase.style.borderStyle === 'none' || showcase.style.border === 'none' || !showcase.style.border).toBe(true);
+    expect(showcase.style.height).toBe('100%');
+    expect(showcase.style.flex).toBe('1 1 auto');
+
+    // Verify grid has full-height expansion and start alignment
+    const grid = container.querySelector('.apartment-furnishings-grid') as HTMLElement;
+    expect(grid).toBeInTheDocument();
+    expect(grid.style.height).toBe('100%');
+    expect(grid.style.flex).toBe('1 1 auto');
+    expect(grid.style.alignContent).toBe('start');
+  });
 });

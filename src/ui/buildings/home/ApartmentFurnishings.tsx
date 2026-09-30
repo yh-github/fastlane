@@ -100,13 +100,14 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
       data-testid="apartment-furnishings"
       aria-label={t('homeRelax.durablesShowcase', { defaultValue: 'Apartment Furnishings & Belongings' })}
       style={{
-        background: 'linear-gradient(180deg, rgba(16, 20, 36, 0.9) 0%, rgba(10, 12, 22, 0.95) 100%)',
-        borderRadius: '10px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: 'clamp(4px, 1.2vh, 8px) clamp(6px, 1.5vw, 10px)',
-        marginBottom: '4px',
-        boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)',
+        background: 'transparent',
+        borderRadius: '0',
+        border: 'none',
+        padding: '0',
+        margin: '0',
+        boxShadow: 'none',
         flex: '1 1 auto',
+        height: '100%',
         minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
@@ -120,12 +121,15 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
         className="apartment-furnishings-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(54px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(58px, 1fr))',
           gap: '4px',
           justifyItems: 'center',
+          alignContent: 'start',
           overflowY: 'auto',
           padding: '2px',
-          flex: '1 1 auto'
+          flex: '1 1 auto',
+          minHeight: 0,
+          height: '100%'
         }}
       >
         {/* Appliances */}
