@@ -280,7 +280,8 @@ body {
   height: 100%;
 }
 
-.home-basic-panel {
+.home-basic-panel,
+.home-apartment-panel {
   background: transparent !important;
   border: none !important;
   padding: 0 !important;

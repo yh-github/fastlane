@@ -199,7 +199,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   return (
     <div 
       ref={panelRef}
-      className="interaction-panel home-apartment-panel" 
+      className="home-apartment-panel" 
       style={{ 
         width: '100%', 
         height: '100%',
@@ -209,7 +209,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         flexDirection: 'column',
         boxSizing: 'border-box',
         position: 'relative',
-        paddingBottom: modalParent ? '34px' : '0'
+        paddingBottom: 0
       }}
     >
 
