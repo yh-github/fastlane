@@ -1,0 +1,237 @@
+(script 115)
+
+(string
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+)
+
+
+// EXPORTED procedure #0 ()
+(procedure proc_002b
+  002b:3f 2d             link 2d // (var $2d)
+  002d:87 01              lap param1 
+  002f:18                 not 
+  0030:2e 0005             bt code_0038 
+  0033:8f 02              lsp param2 
+  0035:35 00              ldi 0 
+  0037:22                 lt? 
+
+        code_0038
+  0038:30 0015            bnt code_0050 
+  003b:39 04            pushi 4 // $4 x
+  003d:5a 0000 0113       lea 0 113 
+  0042:36                push 
+  0043:39 73            pushi 73 // $73 isEmpty
+  0045:76               push0 
+  0046:8f 02              lsp param2 
+  0048:43 48 08         callk Format 8 
+
+  004b:a5 2c              sat temp44 
+  004d:32 00dc            jmp code_012c 
+
+        code_0050
+  0050:35 00              ldi 0 
+  0052:a3 01              sal local1 
+  0054:35 00              ldi 0 
+  0056:a5 2a              sat temp42 
+  0058:34 7ffe            ldi 7ffe 
+  005b:a5 29              sat temp41 
+
+        code_005d
+  005d:7a               push2 
+  005e:8d 29              lst temp41 
+  0060:35 0a              ldi a 
+  0062:0a                 mod 
+  0063:36                push 
+  0064:87 01              lap param1 
+  0066:06                 mul 
+  0067:36                push 
+  0068:8f 02              lsp param2 
+  006a:35 0a              ldi a 
+  006c:0a                 mod 
+  006d:36                push 
+  006e:40 ff9c 04        call proc_000e 4 
+
+  0072:a5 00              sat temp0 
+  0074:8f 02              lsp param2 
+  0076:35 0a              ldi a 
+  0078:08                 div 
+  0079:a7 02              sap param2 
+  007b:8d 29              lst temp41 
+  007d:35 0a              ldi a 
+  007f:08                 div 
+  0080:a5 29              sat temp41 
+  0082:39 03            pushi 3 // $3 y
+  0084:5b 04 01           lea 4 1 
+  0087:36                push 
+  0088:8d 2a              lst temp42 
+  008a:8d 00              lst temp0 
+  008c:35 30              ldi 30 
+  008e:02                 add 
+  008f:36                push 
+  0090:43 62 06         callk StrAt 6 
+
+  0093:c5 2a              +at temp42 
+  0095:8f 02              lsp param2 
+  0097:35 00              ldi 0 
+  0099:1a                 eq? 
+  009a:30 ffc0            bnt code_005d 
+  009d:8d 29              lst temp41 
+  009f:35 00              ldi 0 
+  00a1:1a                 eq? 
+  00a2:30 ffb8            bnt code_005d 
+  00a5:83 01              lal local1 
+  00a7:30 0017            bnt code_00c1 
+  00aa:a7 02              sap param2 
+  00ac:35 00              ldi 0 
+  00ae:a7 01              sap param1 
+  00b0:35 00              ldi 0 
+  00b2:a5 29              sat temp41 
+  00b4:35 00              ldi 0 
+  00b6:a3 01              sal local1 
+  00b8:32 ffa2            jmp code_005d 
+  00bb:32 0003            jmp code_00c1 
+  00be:32 ff9c            jmp code_005d 
+
+        code_00c1
+  00c1:39 03            pushi 3 // $3 y
+  00c3:5b 04 01           lea 4 1 
+  00c6:36                push 
+  00c7:8d 2a              lst temp42 
+  00c9:76               push0 
+  00ca:43 62 06         callk StrAt 6 
+
+  00cd:78               push1 
+  00ce:5b 04 01           lea 4 1 
+  00d1:36                push 
+  00d2:43 46 02         callk StrLen 2 
+
+  00d5:36                push 
+  00d6:35 01              ldi 1 
+  00d8:04                 sub 
+  00d9:a5 2b              sat temp43 
+  00db:a5 2a              sat temp42 
+
+        code_00dd
+  00dd:8d 2a              lst temp42 
+  00df:35 00              ldi 0 
+  00e1:20                 ge? 
+  00e2:30 0022            bnt code_0107 
+  00e5:7a               push2 
+  00e6:5b 04 01           lea 4 1 
+  00e9:36                push 
+  00ea:8d 2a              lst temp42 
+  00ec:43 62 04         callk StrAt 4 
+
+  00ef:a5 00              sat temp0 
+  00f1:39 03            pushi 3 // $3 y
+  00f3:5b 04 15           lea 4 15 
+  00f6:36                push 
+  00f7:8d 2b              lst temp43 
+  00f9:85 2a              lat temp42 
+  00fb:04                 sub 
+  00fc:36                push 
+  00fd:8d 00              lst temp0 
+  00ff:43 62 06         callk StrAt 6 
+
+  0102:e5 2a              -at temp42 
+  0104:32 ffd6            jmp code_00dd 
+
+        code_0107
+  0107:39 03            pushi 3 // $3 y
+  0109:5b 04 15           lea 4 15 
+  010c:36                push 
+  010d:8d 2b              lst temp43 
+  010f:35 01              ldi 1 
+  0111:02                 add 
+  0112:36                push 
+  0113:76               push0 
+  0114:43 62 06         callk StrAt 6 
+
+  0117:7a               push2 
+  0118:5a 0000 0113       lea 0 113 
+  011d:36                push 
+  011e:5b 04 15           lea 4 15 
+  0121:36                push 
+  0122:43 47 04         callk StrCpy 4 
+
+  0125:5a 0000 0113       lea 0 113 
+  012a:a5 2c              sat temp44 
+
+        code_012c
+  012c:85 2c              lat temp44 
+  012e:48                 ret 
+)
+
+// EXPORTED procedure #1 ()
+(procedure proc_012f
+  012f:3f 05             link 5 // (var $5)
+  0131:35 00              ldi 0 
+  0133:a5 04              sat temp4 
+  0135:a5 03              sat temp3 
+  0137:35 00              ldi 0 
+  0139:a5 01              sat temp1 
+  013b:38 017b          pushi 17b // $17b shares
+  013e:76               push0 
+  013f:87 01              lap param1 
+  0141:4a 04             send 4 
+
+  0143:a5 02              sat temp2 
+  0145:35 00              ldi 0 
+  0147:a5 00              sat temp0 
+
+        code_0149
+  0149:8d 00              lst temp0 
+  014b:87 02              lap param2 
+  014d:22                 lt? 
+  014e:30 001c            bnt code_016d 
+  0151:39 04            pushi 4 // $4 x
+  0153:8d 03              lst temp3 
+  0155:8d 04              lst temp4 
+  0157:8d 01              lst temp1 
+  0159:8d 02              lst temp2 
+  015b:45 0c 08         callb procedure_000c 8 //  
+
+  015e:80 01c6            lag  
+  0161:a5 03              sat temp3 
+  0163:80 01c7            lag  
+  0166:a5 04              sat temp4 
+  0168:c5 00              +at temp0 
+  016a:32 ffdc            jmp code_0149 
+
+        code_016d
+  016d:85 03              lat temp3 
+  016f:a0 01c6            sag  
+  0172:85 04              lat temp4 
+  0174:a0 01c7            sag  
+  0177:48                 ret 
+)
+
+
+(procedure proc_000e
+  000e:3f 01             link 1 // (var $1)
+  0010:8f 01              lsp param1 
+  0012:87 02              lap param2 
+  0014:02                 add 
+  0015:36                push 
+  0016:83 01              lal local1 
+  0018:02                 add 
+  0019:a5 00              sat temp0 
+  001b:36                push 
+  001c:35 0a              ldi a 
+  001e:0a                 mod 
+  001f:a3 00              sal local0 
+  0021:8d 00              lst temp0 
+  0023:35 0a              ldi a 
+  0025:08                 div 
+  0026:a3 01              sal local1 
+  0028:83 00              lal local0 
+  002a:48                 ret 
+)
+

@@ -1,0 +1,78 @@
+(script 764)
+
+(string
+    string_009c "rightsWin"
+    string_00a6 "noticeRoom"
+    string_00b1 ""
+)
+
+(said
+)
+
+(local
+)
+
+// 000e
+(instance rightsWin of SysWindow
+    (properties
+        top $0
+        left $0
+        bottom $0
+        right $0
+        color $0
+        back $7
+        priority $ffff
+        window $0
+        type $0
+        title $0
+        hMargin $4
+        vMargin $4
+        brTop $0
+        brLeft $0
+        brBottom $be
+        brRight $140
+        animateObj $0
+    )
+)
+
+// 0076
+(instance publicnoticeRoom of Rm
+    (properties
+        script $0
+        number $0
+        timer $0
+        picture $0
+        style $1
+        controls $0
+    )
+    (method (init) // method_0046
+  0046:39 66            pushi 66 // $66 init
+  0048:76               push0 
+  0049:59 01            &rest 1 
+  004b:57 2a 04         super Rm 4 
+
+  004e:39 08            pushi 8 // $8 underBits
+  0050:38 02fc          pushi 2fc // $2fc sel_764
+  0053:76               push0 
+  0054:39 1e            pushi 1e // $1e mode
+  0056:78               push1 
+  0057:39 46            pushi 46 // $46 width
+  0059:38 012c          pushi 12c // $12c playing
+  005c:39 23            pushi 23 // $23 window
+  005e:72 ffb3          lofsa $0014 // rightsWin
+  0061:36                push 
+  0062:47 ff 00 10      calle ff procedure_0000 10 //  
+
+  0066:38 00fc          pushi fc // $fc newRoom
+  0069:78               push1 
+  006a:7a               push2 
+  006b:81 02              lag  
+  006d:4a 06             send 6 
+
+  006f:48                 ret 
+    )
+
+)
+
+
+

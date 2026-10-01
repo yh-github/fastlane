@@ -1,0 +1,403 @@
+(script 100)
+
+(string
+    string_02bc "MyWindow"
+    string_02c5 ""
+)
+
+(said
+)
+
+(local
+)
+
+// 0242
+(class MyWindow of SysWindow
+    (properties
+        top $0
+        left $0
+        bottom $0
+        right $0
+        color $c8
+        back $29
+        priority $32
+        window $0
+        type $81
+        title $0
+        hMargin $4
+        vMargin $4
+        brTop $0
+        brLeft $0
+        brBottom $be
+        brRight $140
+        animateObj $0
+        underBits $0
+        view $64
+        vColor $64
+        pPort $0
+    )
+    (method (dispose) // method_01fd
+  01fd:78               push1 
+  01fe:76               push0 
+  01ff:43 15 02         callk SetPort 2 
+
+  0202:7a               push2 
+  0203:39 08            pushi 8 // $8 underBits
+  0205:67 2a             pTos underBits 
+  0207:43 6c 04         callk Graph 4 
+
+  020a:39 06            pushi 6 // $6 loop
+  020c:39 0c            pushi c // $c nsRight
+  020e:67 08             pTos top 
+  0210:35 08              ldi 8 
+  0212:04                 sub 
+  0213:36                push 
+  0214:67 0a             pTos left 
+  0216:35 08              ldi 8 
+  0218:04                 sub 
+  0219:36                push 
+  021a:67 0c             pTos bottom 
+  021c:35 08              ldi 8 
+  021e:02                 add 
+  021f:36                push 
+  0220:67 0e             pTos right 
+  0222:35 08              ldi 8 
+  0224:02                 add 
+  0225:36                push 
+  0226:78               push1 
+  0227:43 6c 0c         callk Graph c 
+
+  022a:78               push1 
+  022b:67 30             pTos pPort 
+  022d:43 15 02         callk SetPort 2 
+
+  0230:78               push1 
+  0231:67 16             pTos window 
+  0233:43 16 02         callk DisposeWindow 2 
+
+  0236:78               push1 
+  0237:7c            pushSelf 
+  0238:43 05 02         callk DisposeClone 2 
+
+  023b:48                 ret 
+    )
+
+    (method (open) // method_0004
+  0004:3f 09             link 9 // (var $9)
+  0006:39 03            pushi 3 // $3 y
+  0008:67 2c             pTos view 
+  000a:76               push0 
+  000b:76               push0 
+  000c:43 10 06         callk CelHigh 6 
+
+  000f:a5 07              sat temp7 
+  0011:39 03            pushi 3 // $3 y
+  0013:67 2c             pTos view 
+  0015:76               push0 
+  0016:78               push1 
+  0017:43 10 06         callk CelHigh 6 
+
+  001a:a5 05              sat temp5 
+  001c:39 03            pushi 3 // $3 y
+  001e:67 2c             pTos view 
+  0020:78               push1 
+  0021:76               push0 
+  0022:43 10 06         callk CelHigh 6 
+
+  0025:a5 06              sat temp6 
+  0027:39 03            pushi 3 // $3 y
+  0029:67 2c             pTos view 
+  002b:76               push0 
+  002c:76               push0 
+  002d:43 0f 06         callk CelWide 6 
+
+  0030:a5 08              sat temp8 
+  0032:76               push0 
+  0033:43 14 00         callk GetPort 0 
+
+  0036:65 30             aTop pPort 
+  0038:78               push1 
+  0039:76               push0 
+  003a:43 15 02         callk SetPort 2 
+
+  003d:67 08             pTos top 
+  003f:35 08              ldi 8 
+  0041:04                 sub 
+  0042:a5 01              sat temp1 
+  0044:67 0a             pTos left 
+  0046:35 08              ldi 8 
+  0048:04                 sub 
+  0049:a5 02              sat temp2 
+  004b:67 0c             pTos bottom 
+  004d:35 08              ldi 8 
+  004f:02                 add 
+  0050:a5 03              sat temp3 
+  0052:67 0e             pTos right 
+  0054:35 08              ldi 8 
+  0056:02                 add 
+  0057:a5 04              sat temp4 
+  0059:35 01              ldi 1 
+  005b:a5 00              sat temp0 
+  005d:39 06            pushi 6 // $6 loop
+  005f:39 07            pushi 7 // $7 cel
+  0061:8d 01              lst temp1 
+  0063:8d 02              lst temp2 
+  0065:8d 03              lst temp3 
+  0067:8d 04              lst temp4 
+  0069:36                push 
+  006a:43 6c 0c         callk Graph c 
+
+  006d:65 2a             aTop underBits 
+  006f:39 08            pushi 8 // $8 underBits
+  0071:39 0b            pushi b // $b nsBottom
+  0073:8d 01              lst temp1 
+  0075:8d 02              lst temp2 
+  0077:8d 03              lst temp3 
+  0079:8d 04              lst temp4 
+  007b:8d 00              lst temp0 
+  007d:67 12             pTos back 
+  007f:67 14             pTos priority 
+  0081:43 6c 10         callk Graph 10 
+
+  0084:39 06            pushi 6 // $6 loop
+  0086:67 2c             pTos view 
+  0088:76               push0 
+  0089:76               push0 
+  008a:8d 02              lst temp2 
+  008c:8d 01              lst temp1 
+  008e:39 ff            pushi ff // $ff changeScore
+  0090:43 11 0c         callk DrawCel c 
+
+  0093:39 06            pushi 6 // $6 loop
+  0095:67 2c             pTos view 
+  0097:76               push0 
+  0098:78               push1 
+  0099:8d 02              lst temp2 
+  009b:8d 03              lst temp3 
+  009d:85 05              lat temp5 
+  009f:04                 sub 
+  00a0:36                push 
+  00a1:39 ff            pushi ff // $ff changeScore
+  00a3:43 11 0c         callk DrawCel c 
+
+  00a6:39 06            pushi 6 // $6 loop
+  00a8:67 2c             pTos view 
+  00aa:78               push1 
+  00ab:76               push0 
+  00ac:8d 04              lst temp4 
+  00ae:85 06              lat temp6 
+  00b0:04                 sub 
+  00b1:36                push 
+  00b2:8d 01              lst temp1 
+  00b4:39 ff            pushi ff // $ff changeScore
+  00b6:43 11 0c         callk DrawCel c 
+
+  00b9:39 06            pushi 6 // $6 loop
+  00bb:67 2c             pTos view 
+  00bd:78               push1 
+  00be:7a               push2 
+  00bf:8d 04              lst temp4 
+  00c1:85 06              lat temp6 
+  00c3:04                 sub 
+  00c4:36                push 
+  00c5:8d 03              lst temp3 
+  00c7:85 05              lat temp5 
+  00c9:04                 sub 
+  00ca:36                push 
+  00cb:39 ff            pushi ff // $ff changeScore
+  00cd:43 11 0c         callk DrawCel c 
+
+  00d0:39 08            pushi 8 // $8 underBits
+  00d2:39 04            pushi 4 // $4 x
+  00d4:8d 01              lst temp1 
+  00d6:8d 02              lst temp2 
+  00d8:85 08              lat temp8 
+  00da:02                 add 
+  00db:36                push 
+  00dc:8d 01              lst temp1 
+  00de:8d 04              lst temp4 
+  00e0:85 08              lat temp8 
+  00e2:04                 sub 
+  00e3:36                push 
+  00e4:67 2e             pTos vColor 
+  00e6:39 ff            pushi ff // $ff changeScore
+  00e8:3c                 dup 
+  00e9:43 6c 10         callk Graph 10 
+
+  00ec:39 08            pushi 8 // $8 underBits
+  00ee:39 04            pushi 4 // $4 x
+  00f0:8d 01              lst temp1 
+  00f2:35 02              ldi 2 
+  00f4:02                 add 
+  00f5:36                push 
+  00f6:8d 02              lst temp2 
+  00f8:85 08              lat temp8 
+  00fa:02                 add 
+  00fb:36                push 
+  00fc:8d 01              lst temp1 
+  00fe:35 02              ldi 2 
+  0100:02                 add 
+  0101:36                push 
+  0102:8d 04              lst temp4 
+  0104:85 08              lat temp8 
+  0106:04                 sub 
+  0107:36                push 
+  0108:67 2e             pTos vColor 
+  010a:39 ff            pushi ff // $ff changeScore
+  010c:3c                 dup 
+  010d:43 6c 10         callk Graph 10 
+
+  0110:39 08            pushi 8 // $8 underBits
+  0112:39 04            pushi 4 // $4 x
+  0114:8d 03              lst temp3 
+  0116:35 01              ldi 1 
+  0118:04                 sub 
+  0119:36                push 
+  011a:8d 02              lst temp2 
+  011c:85 08              lat temp8 
+  011e:02                 add 
+  011f:36                push 
+  0120:8d 03              lst temp3 
+  0122:35 01              ldi 1 
+  0124:04                 sub 
+  0125:36                push 
+  0126:8d 04              lst temp4 
+  0128:85 08              lat temp8 
+  012a:04                 sub 
+  012b:36                push 
+  012c:67 2e             pTos vColor 
+  012e:39 ff            pushi ff // $ff changeScore
+  0130:3c                 dup 
+  0131:43 6c 10         callk Graph 10 
+
+  0134:39 08            pushi 8 // $8 underBits
+  0136:39 04            pushi 4 // $4 x
+  0138:8d 03              lst temp3 
+  013a:35 03              ldi 3 
+  013c:04                 sub 
+  013d:36                push 
+  013e:8d 02              lst temp2 
+  0140:85 08              lat temp8 
+  0142:02                 add 
+  0143:36                push 
+  0144:8d 03              lst temp3 
+  0146:35 03              ldi 3 
+  0148:04                 sub 
+  0149:36                push 
+  014a:8d 04              lst temp4 
+  014c:85 08              lat temp8 
+  014e:04                 sub 
+  014f:36                push 
+  0150:67 2e             pTos vColor 
+  0152:39 ff            pushi ff // $ff changeScore
+  0154:3c                 dup 
+  0155:43 6c 10         callk Graph 10 
+
+  0158:39 08            pushi 8 // $8 underBits
+  015a:39 04            pushi 4 // $4 x
+  015c:8d 01              lst temp1 
+  015e:85 07              lat temp7 
+  0160:02                 add 
+  0161:36                push 
+  0162:8d 02              lst temp2 
+  0164:8d 03              lst temp3 
+  0166:85 07              lat temp7 
+  0168:04                 sub 
+  0169:36                push 
+  016a:8d 02              lst temp2 
+  016c:67 2e             pTos vColor 
+  016e:39 ff            pushi ff // $ff changeScore
+  0170:3c                 dup 
+  0171:43 6c 10         callk Graph 10 
+
+  0174:39 08            pushi 8 // $8 underBits
+  0176:39 04            pushi 4 // $4 x
+  0178:8d 01              lst temp1 
+  017a:85 07              lat temp7 
+  017c:02                 add 
+  017d:36                push 
+  017e:8d 02              lst temp2 
+  0180:35 02              ldi 2 
+  0182:02                 add 
+  0183:36                push 
+  0184:8d 03              lst temp3 
+  0186:85 07              lat temp7 
+  0188:04                 sub 
+  0189:36                push 
+  018a:8d 02              lst temp2 
+  018c:35 02              ldi 2 
+  018e:02                 add 
+  018f:36                push 
+  0190:67 2e             pTos vColor 
+  0192:39 ff            pushi ff // $ff changeScore
+  0194:3c                 dup 
+  0195:43 6c 10         callk Graph 10 
+
+  0198:39 08            pushi 8 // $8 underBits
+  019a:39 04            pushi 4 // $4 x
+  019c:8d 01              lst temp1 
+  019e:85 07              lat temp7 
+  01a0:02                 add 
+  01a1:36                push 
+  01a2:8d 04              lst temp4 
+  01a4:35 01              ldi 1 
+  01a6:04                 sub 
+  01a7:36                push 
+  01a8:8d 03              lst temp3 
+  01aa:85 07              lat temp7 
+  01ac:04                 sub 
+  01ad:36                push 
+  01ae:8d 04              lst temp4 
+  01b0:35 01              ldi 1 
+  01b2:04                 sub 
+  01b3:36                push 
+  01b4:67 2e             pTos vColor 
+  01b6:39 ff            pushi ff // $ff changeScore
+  01b8:3c                 dup 
+  01b9:43 6c 10         callk Graph 10 
+
+  01bc:39 08            pushi 8 // $8 underBits
+  01be:39 04            pushi 4 // $4 x
+  01c0:8d 01              lst temp1 
+  01c2:85 07              lat temp7 
+  01c4:02                 add 
+  01c5:36                push 
+  01c6:8d 04              lst temp4 
+  01c8:35 03              ldi 3 
+  01ca:04                 sub 
+  01cb:36                push 
+  01cc:8d 03              lst temp3 
+  01ce:85 07              lat temp7 
+  01d0:04                 sub 
+  01d1:36                push 
+  01d2:8d 04              lst temp4 
+  01d4:35 03              ldi 3 
+  01d6:04                 sub 
+  01d7:36                push 
+  01d8:67 2e             pTos vColor 
+  01da:39 ff            pushi ff // $ff changeScore
+  01dc:3c                 dup 
+  01dd:43 6c 10         callk Graph 10 
+
+  01e0:39 06            pushi 6 // $6 loop
+  01e2:39 0c            pushi c // $c nsRight
+  01e4:8d 01              lst temp1 
+  01e6:8d 02              lst temp2 
+  01e8:8d 03              lst temp3 
+  01ea:8d 04              lst temp4 
+  01ec:78               push1 
+  01ed:43 6c 0c         callk Graph c 
+
+  01f0:34 0081            ldi 81 
+  01f3:65 18             aTop type 
+  01f5:38 00a3          pushi a3 // $a3 open
+  01f8:76               push0 
+  01f9:57 24 04         super SysWindow 4 
+
+  01fc:48                 ret 
+    )
+
+)
+
+
+

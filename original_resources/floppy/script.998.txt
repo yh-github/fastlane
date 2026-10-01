@@ -1,0 +1,1121 @@
+(script 998)
+
+(string
+    string_07be "Feature"
+    string_07c6 "View"
+    string_07cb "Prop"
+    string_07d0 "Act"
+)
+
+(said
+)
+
+(local
+)
+
+// 001a
+(class Feature of Obj
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+    )
+    (method (dispose) // method_0004
+  0004:39 67            pushi 67 // $67 dispose
+  0006:76               push0 
+  0007:57 00 04         super Obj 4 
+
+  000a:48                 ret 
+    )
+
+    (method (handleEvent) // method_000b
+  000b:39 4c            pushi 4c // $4c claimed
+  000d:76               push0 
+  000e:87 01              lap param1 
+  0010:4a 04             send 4 
+
+  0012:48                 ret 
+  0013:00                bnot 
+    )
+
+)
+
+// 0220
+(class View of Feature
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $0
+        loop $0
+        cel $0
+        priority $0
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_0050
+  0050:67 1c             pTos signal 
+  0052:34 7fff            ldi 7fff 
+  0055:12                 and 
+  0056:65 1c             aTop signal 
+  0058:67 1c             pTos signal 
+  005a:34 4000            ldi 4000 
+  005d:14                  or 
+  005e:65 1c             aTop signal 
+  0060:39 72            pushi 72 // $72 contains
+  0062:78               push1 
+  0063:7c            pushSelf 
+  0064:81 05              lag  
+  0066:4a 06             send 6 
+
+  0068:18                 not 
+  0069:30 0012            bnt code_007e 
+  006c:35 00              ldi 0 
+  006e:65 2c             aTop lsRight 
+  0070:65 2a             aTop lsBottom 
+  0072:65 28             aTop lsLeft 
+  0074:65 26             aTop lsTop 
+  0076:67 1c             pTos signal 
+  0078:34 ff77            ldi ff77 
+  007b:12                 and 
+  007c:65 1c             aTop signal 
+
+        code_007e
+  007e:39 6e            pushi 6e // $6e add
+  0080:78               push1 
+  0081:7c            pushSelf 
+  0082:81 05              lag  
+  0084:4a 06             send 6 
+
+  0086:48                 ret 
+    )
+
+    (method (dispose) // method_00b2
+  00b2:38 00d1          pushi d1 // $d1 startUpd
+  00b5:76               push0 
+  00b6:38 0095          pushi 95 // $95 hide
+  00b9:76               push0 
+  00ba:54 08             self 8 
+
+  00bc:67 1c             pTos signal 
+  00be:34 8000            ldi 8000 
+  00c1:14                  or 
+  00c2:65 1c             aTop signal 
+  00c4:48                 ret 
+    )
+
+    (method (showSelf) // method_0212
+  0212:48                 ret 
+    )
+
+    (method (posn) // method_0087
+  0087:8f 00              lsp paramTotal 
+  0089:35 01              ldi 1 
+  008b:20                 ge? 
+  008c:30 001c            bnt code_00ab 
+  008f:87 01              lap param1 
+  0091:65 0a             aTop x 
+  0093:8f 00              lsp paramTotal 
+  0095:35 02              ldi 2 
+  0097:20                 ge? 
+  0098:30 0010            bnt code_00ab 
+  009b:87 02              lap param2 
+  009d:65 08             aTop y 
+  009f:8f 00              lsp paramTotal 
+  00a1:35 03              ldi 3 
+  00a3:20                 ge? 
+  00a4:30 0004            bnt code_00ab 
+  00a7:87 03              lap param3 
+  00a9:65 0c             aTop z 
+
+        code_00ab
+  00ab:38 00d0          pushi d0 // $d0 forceUpd
+  00ae:76               push0 
+  00af:54 04             self 4 
+
+  00b1:48                 ret 
+    )
+
+    (method (stopUpd) // method_0106
+  0106:67 1c             pTos signal 
+  0108:35 01              ldi 1 
+  010a:14                  or 
+  010b:65 1c             aTop signal 
+  010d:67 1c             pTos signal 
+  010f:35 fd              ldi fd 
+  0111:12                 and 
+  0112:65 1c             aTop signal 
+  0114:48                 ret 
+    )
+
+    (method (forceUpd) // method_0115
+  0115:67 1c             pTos signal 
+  0117:35 40              ldi 40 
+  0119:14                  or 
+  011a:65 1c             aTop signal 
+  011c:48                 ret 
+    )
+
+    (method (startUpd) // method_011d
+  011d:67 1c             pTos signal 
+  011f:35 02              ldi 2 
+  0121:14                  or 
+  0122:65 1c             aTop signal 
+  0124:67 1c             pTos signal 
+  0126:35 fe              ldi fe 
+  0128:12                 and 
+  0129:65 1c             aTop signal 
+  012b:48                 ret 
+    )
+
+    (method (setPri) // method_012c
+  012c:8f 00              lsp paramTotal 
+  012e:35 00              ldi 0 
+  0130:1a                 eq? 
+  0131:30 000a            bnt code_013e 
+  0134:67 1c             pTos signal 
+  0136:35 10              ldi 10 
+  0138:14                  or 
+  0139:65 1c             aTop signal 
+  013b:32 001d            jmp code_015b 
+
+        code_013e
+  013e:8f 01              lsp param1 
+  0140:35 ff              ldi ff 
+  0142:1a                 eq? 
+  0143:30 000a            bnt code_0150 
+  0146:67 1c             pTos signal 
+  0148:35 ef              ldi ef 
+  014a:12                 and 
+  014b:65 1c             aTop signal 
+  014d:32 000b            jmp code_015b 
+
+        code_0150
+  0150:87 01              lap param1 
+  0152:65 18             aTop priority 
+  0154:67 1c             pTos signal 
+  0156:35 10              ldi 10 
+  0158:14                  or 
+  0159:65 1c             aTop signal 
+
+        code_015b
+  015b:38 00d0          pushi d0 // $d0 forceUpd
+  015e:76               push0 
+  015f:54 04             self 4 
+
+  0161:48                 ret 
+    )
+
+    (method (setLoop) // method_0162
+  0162:8f 00              lsp paramTotal 
+  0164:35 00              ldi 0 
+  0166:1a                 eq? 
+  0167:30 000b            bnt code_0175 
+  016a:67 1c             pTos signal 
+  016c:34 0800            ldi 800 
+  016f:14                  or 
+  0170:65 1c             aTop signal 
+  0172:32 001f            jmp code_0194 
+
+        code_0175
+  0175:8f 01              lsp param1 
+  0177:35 ff              ldi ff 
+  0179:1a                 eq? 
+  017a:30 000b            bnt code_0188 
+  017d:67 1c             pTos signal 
+  017f:34 f7ff            ldi f7ff 
+  0182:12                 and 
+  0183:65 1c             aTop signal 
+  0185:32 000c            jmp code_0194 
+
+        code_0188
+  0188:87 01              lap param1 
+  018a:65 14             aTop loop 
+  018c:67 1c             pTos signal 
+  018e:34 0800            ldi 800 
+  0191:14                  or 
+  0192:65 1c             aTop signal 
+
+        code_0194
+  0194:38 00d0          pushi d0 // $d0 forceUpd
+  0197:76               push0 
+  0198:54 04             self 4 
+
+  019a:48                 ret 
+    )
+
+    (method (setCel) // method_019b
+  019b:8f 00              lsp paramTotal 
+  019d:35 00              ldi 0 
+  019f:1a                 eq? 
+  01a0:30 000b            bnt code_01ae 
+  01a3:67 1c             pTos signal 
+  01a5:34 1000            ldi 1000 
+  01a8:14                  or 
+  01a9:65 1c             aTop signal 
+  01ab:32 0034            jmp code_01e2 
+
+        code_01ae
+  01ae:8f 01              lsp param1 
+  01b0:35 ff              ldi ff 
+  01b2:1a                 eq? 
+  01b3:30 000b            bnt code_01c1 
+  01b6:67 1c             pTos signal 
+  01b8:34 efff            ldi efff 
+  01bb:12                 and 
+  01bc:65 1c             aTop signal 
+  01be:32 0021            jmp code_01e2 
+
+        code_01c1
+  01c1:67 1c             pTos signal 
+  01c3:34 1000            ldi 1000 
+  01c6:14                  or 
+  01c7:65 1c             aTop signal 
+  01c9:8f 01              lsp param1 
+  01cb:38 00b6          pushi b6 // $b6 lastCel
+  01ce:76               push0 
+  01cf:54 04             self 4 
+
+  01d1:20                 ge? 
+  01d2:30 0009            bnt code_01de 
+  01d5:38 00b6          pushi b6 // $b6 lastCel
+  01d8:76               push0 
+  01d9:54 04             self 4 
+
+  01db:32 0002            jmp code_01e0 
+
+        code_01de
+  01de:87 01              lap param1 
+
+        code_01e0
+  01e0:65 16             aTop cel 
+
+        code_01e2
+  01e2:38 00d0          pushi d0 // $d0 forceUpd
+  01e5:76               push0 
+  01e6:54 04             self 4 
+
+  01e8:48                 ret 
+    )
+
+    (method (ignoreActors) // method_01e9
+  01e9:48                 ret 
+    )
+
+    (method (hide) // method_00c5
+  00c5:67 1c             pTos signal 
+  00c7:35 08              ldi 8 
+  00c9:14                  or 
+  00ca:65 1c             aTop signal 
+  00cc:48                 ret 
+    )
+
+    (method (show) // method_00cd
+  00cd:67 1c             pTos signal 
+  00cf:35 f7              ldi f7 
+  00d1:12                 and 
+  00d2:65 1c             aTop signal 
+  00d4:48                 ret 
+    )
+
+    (method (delete) // method_00d5
+  00d5:67 1c             pTos signal 
+  00d7:34 8000            ldi 8000 
+  00da:12                 and 
+  00db:30 0027            bnt code_0105 
+  00de:67 1c             pTos signal 
+  00e0:34 7fff            ldi 7fff 
+  00e3:12                 and 
+  00e4:65 1c             aTop signal 
+  00e6:39 54            pushi 54 // $54 delete
+  00e8:78               push1 
+  00e9:7c            pushSelf 
+  00ea:81 05              lag  
+  00ec:4a 06             send 6 
+
+  00ee:63 1a             pToa underBits 
+  00f0:30 000c            bnt code_00ff 
+  00f3:7a               push2 
+  00f4:38 0085          pushi 85 // $85 register2
+  00f7:36                push 
+  00f8:43 01 04         callk UnLoad 4 
+
+  00fb:35 00              ldi 0 
+  00fd:65 1a             aTop underBits 
+
+        code_00ff
+  00ff:39 67            pushi 67 // $67 dispose
+  0101:76               push0 
+  0102:57 1c 04         super Feature 4 
+
+
+        code_0105
+  0105:48                 ret 
+    )
+
+    (method (addToPic) // method_01ea
+  01ea:39 72            pushi 72 // $72 contains
+  01ec:78               push1 
+  01ed:7c            pushSelf 
+  01ee:81 05              lag  
+  01f0:4a 06             send 6 
+
+  01f2:18                 not 
+  01f3:30 0005            bnt code_01fb 
+  01f6:39 66            pushi 66 // $66 init
+  01f8:76               push0 
+  01f9:54 04             self 4 
+
+
+        code_01fb
+  01fb:39 11            pushi 11 // $11 signal
+  01fd:78               push1 
+  01fe:67 1c             pTos signal 
+  0200:34 8021            ldi 8021 
+  0203:14                  or 
+  0204:36                push 
+  0205:54 06             self 6 
+
+  0207:48                 ret 
+    )
+
+    (method (lastCel) // method_0208
+  0208:78               push1 
+  0209:7c            pushSelf 
+  020a:43 0e 02         callk NumCels 2 
+
+  020d:36                push 
+  020e:35 01              ldi 1 
+  0210:04                 sub 
+  0211:48                 ret 
+    )
+
+    (method (isExtra) // method_0213
+  0213:3f 01             link 1 // (var $1)
+  0215:35 01              ldi 1 
+  0217:48                 ret 
+    )
+
+    (method (motionCue) // method_0218
+  0218:48                 ret 
+  0219:00                bnot 
+    )
+
+)
+
+// 03d0
+(class Prop of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $0
+        loop $0
+        cel $0
+        priority $0
+        underBits $0
+        signal $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+        cycleSpeed $0
+        script $0
+        cycler $0
+        timer $0
+        ticksToDo $0
+    )
+    (method (doit) // method_02e2
+  02e2:3f 01             link 1 // (var $1)
+  02e4:67 1c             pTos signal 
+  02e6:34 8000            ldi 8000 
+  02e9:12                 and 
+  02ea:30 0001            bnt code_02ee 
+  02ed:48                 ret 
+
+        code_02ee
+  02ee:63 38             pToa script 
+  02f0:30 0005            bnt code_02f8 
+  02f3:39 3c            pushi 3c // $3c doit
+  02f5:76               push0 
+  02f6:4a 04             send 4 
+
+
+        code_02f8
+  02f8:67 1c             pTos signal 
+  02fa:35 04              ldi 4 
+  02fc:12                 and 
+  02fd:30 000a            bnt code_030a 
+  0300:67 1c             pTos signal 
+  0302:35 02              ldi 2 
+  0304:12                 and 
+  0305:18                 not 
+  0306:30 0001            bnt code_030a 
+  0309:48                 ret 
+
+        code_030a
+  030a:63 3a             pToa cycler 
+  030c:30 0005            bnt code_0314 
+  030f:39 3c            pushi 3c // $3c doit
+  0311:76               push0 
+  0312:4a 04             send 4 
+
+
+        code_0314
+  0314:48                 ret 
+    )
+
+    (method (handleEvent) // method_0315
+  0315:63 38             pToa script 
+  0317:30 0007            bnt code_0321 
+  031a:39 7c            pushi 7c // $7c handleEvent
+  031c:78               push1 
+  031d:8f 01              lsp param1 
+  031f:4a 06             send 6 
+
+
+        code_0321
+  0321:39 4c            pushi 4c // $4c claimed
+  0323:76               push0 
+  0324:87 01              lap param1 
+  0326:4a 04             send 4 
+
+  0328:48                 ret 
+    )
+
+    (method (delete) // method_0361
+  0361:67 1c             pTos signal 
+  0363:34 8000            ldi 8000 
+  0366:12                 and 
+  0367:30 001c            bnt code_0386 
+  036a:38 0088          pushi 88 // $88 setScript
+  036d:78               push1 
+  036e:76               push0 
+  036f:38 00d8          pushi d8 // $d8 setCycle
+  0372:78               push1 
+  0373:76               push0 
+  0374:54 0c             self c 
+
+  0376:63 3c             pToa timer 
+  0378:30 0005            bnt code_0380 
+  037b:39 67            pushi 67 // $67 dispose
+  037d:76               push0 
+  037e:4a 04             send 4 
+
+
+        code_0380
+  0380:39 54            pushi 54 // $54 delete
+  0382:76               push0 
+  0383:57 1d 04         super View 4 
+
+
+        code_0386
+  0386:48                 ret 
+    )
+
+    (method (motionCue) // method_03b3
+  03b3:63 3a             pToa cycler 
+  03b5:30 0011            bnt code_03c9 
+  03b8:38 00ad          pushi ad // $ad completed
+  03bb:76               push0 
+  03bc:4a 04             send 4 
+
+  03be:30 0008            bnt code_03c9 
+  03c1:38 00b2          pushi b2 // $b2 motionCue
+  03c4:76               push0 
+  03c5:63 3a             pToa cycler 
+  03c7:4a 04             send 4 
+
+
+        code_03c9
+  03c9:48                 ret 
+    )
+
+    (method (setCycle) // method_0329
+  0329:63 3a             pToa cycler 
+  032b:30 0005            bnt code_0333 
+  032e:39 67            pushi 67 // $67 dispose
+  0330:76               push0 
+  0331:4a 04             send 4 
+
+
+        code_0333
+  0333:87 01              lap param1 
+  0335:30 0024            bnt code_035c 
+  0338:67 1c             pTos signal 
+  033a:34 efff            ldi efff 
+  033d:12                 and 
+  033e:65 1c             aTop signal 
+  0340:38 00d1          pushi d1 // $d1 startUpd
+  0343:76               push0 
+  0344:54 04             self 4 
+
+  0346:39 65            pushi 65 // $65 new
+  0348:76               push0 
+  0349:87 01              lap param1 
+  034b:4a 04             send 4 
+
+  034d:65 3a             aTop cycler 
+  034f:39 66            pushi 66 // $66 init
+  0351:78               push1 
+  0352:7c            pushSelf 
+  0353:59 02            &rest 2 
+  0355:63 3a             pToa cycler 
+  0357:4a 06             send 6 
+
+  0359:32 0004            jmp code_0360 
+
+        code_035c
+  035c:35 00              ldi 0 
+  035e:65 3a             aTop cycler 
+
+        code_0360
+  0360:48                 ret 
+    )
+
+    (method (setScript) // method_0393
+  0393:78               push1 
+  0394:67 38             pTos script 
+  0396:43 06 02         callk IsObject 2 
+
+  0399:30 0007            bnt code_03a3 
+  039c:39 67            pushi 67 // $67 dispose
+  039e:76               push0 
+  039f:63 38             pToa script 
+  03a1:4a 04             send 4 
+
+
+        code_03a3
+  03a3:87 01              lap param1 
+  03a5:65 38             aTop script 
+  03a7:30 0008            bnt code_03b2 
+  03aa:39 66            pushi 66 // $66 init
+  03ac:78               push1 
+  03ad:7c            pushSelf 
+  03ae:59 02            &rest 2 
+  03b0:4a 06             send 6 
+
+
+        code_03b2
+  03b2:48                 ret 
+    )
+
+    (method (cue) // method_0387
+  0387:63 38             pToa script 
+  0389:30 0006            bnt code_0392 
+  038c:38 0087          pushi 87 // $87 cue
+  038f:76               push0 
+  0390:4a 04             send 4 
+
+
+        code_0392
+  0392:48                 ret 
+    )
+
+)
+
+// 06b0
+(class Act of Prop
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $0
+        loop $0
+        cel $0
+        priority $0
+        underBits $0
+        signal $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+        cycleSpeed $0
+        script $0
+        cycler $0
+        timer $0
+        ticksToDo $0
+        illegalBits $8000
+        xLast $0
+        yLast $0
+        xStep $3
+        moveSpeed $0
+        blocks $0
+        baseSetter $0
+        mover $0
+        looper $0
+        viewer $0
+        avoider $0
+    )
+    (method (init) // method_047a
+  047a:39 66            pushi 66 // $66 init
+  047c:76               push0 
+  047d:57 1e 04         super Prop 4 
+
+  0480:63 0a             pToa x 
+  0482:65 42             aTop xLast 
+  0484:63 08             pToa y 
+  0486:65 44             aTop yLast 
+  0488:48                 ret 
+    )
+
+    (method (doit) // method_0489
+  0489:3f 03             link 3 // (var $3)
+  048b:67 1c             pTos signal 
+  048d:34 8000            ldi 8000 
+  0490:12                 and 
+  0491:30 0001            bnt code_0495 
+  0494:48                 ret 
+
+        code_0495
+  0495:67 1c             pTos signal 
+  0497:34 fbff            ldi fbff 
+  049a:12                 and 
+  049b:65 1c             aTop signal 
+  049d:63 38             pToa script 
+  049f:30 0005            bnt code_04a7 
+  04a2:39 3c            pushi 3c // $3c doit
+  04a4:76               push0 
+  04a5:4a 04             send 4 
+
+
+        code_04a7
+  04a7:67 1c             pTos signal 
+  04a9:35 04              ldi 4 
+  04ab:12                 and 
+  04ac:30 000a            bnt code_04b9 
+  04af:67 1c             pTos signal 
+  04b1:35 02              ldi 2 
+  04b3:12                 and 
+  04b4:18                 not 
+  04b5:30 0001            bnt code_04b9 
+  04b8:48                 ret 
+
+        code_04b9
+  04b9:63 52             pToa viewer 
+  04bb:30 0006            bnt code_04c4 
+  04be:39 3c            pushi 3c // $3c doit
+  04c0:78               push1 
+  04c1:7c            pushSelf 
+  04c2:4a 06             send 6 
+
+
+        code_04c4
+  04c4:63 4e             pToa mover 
+  04c6:30 0005            bnt code_04ce 
+  04c9:39 3c            pushi 3c // $3c doit
+  04cb:76               push0 
+  04cc:4a 04             send 4 
+
+
+        code_04ce
+  04ce:63 3a             pToa cycler 
+  04d0:30 000f            bnt code_04e2 
+  04d3:63 30             pToa brLeft 
+  04d5:a5 01              sat temp1 
+  04d7:63 34             pToa brRight 
+  04d9:a5 02              sat temp2 
+  04db:39 3c            pushi 3c // $3c doit
+  04dd:76               push0 
+  04de:63 3a             pToa cycler 
+  04e0:4a 04             send 4 
+
+
+        code_04e2
+  04e2:63 0a             pToa x 
+  04e4:65 42             aTop xLast 
+  04e6:63 08             pToa y 
+  04e8:65 44             aTop yLast 
+  04ea:48                 ret 
+    )
+
+    (method (posn) // method_04eb
+  04eb:38 00ce          pushi ce // $ce posn
+  04ee:7a               push2 
+  04ef:8f 01              lsp param1 
+  04f1:8f 02              lsp param2 
+  04f3:59 03            &rest 3 
+  04f5:57 1e 08         super Prop 8 
+
+  04f8:87 01              lap param1 
+  04fa:65 42             aTop xLast 
+  04fc:87 02              lap param2 
+  04fe:65 44             aTop yLast 
+  0500:48                 ret 
+    )
+
+    (method (delete) // method_057a
+  057a:67 1c             pTos signal 
+  057c:34 8000            ldi 8000 
+  057f:12                 and 
+  0580:30 0031            bnt code_05b4 
+  0583:67 4e             pTos mover 
+  0585:35 ff              ldi ff 
+  0587:1c                 ne? 
+  0588:30 0007            bnt code_0592 
+  058b:38 00dd          pushi dd // $dd setMotion
+  058e:78               push1 
+  058f:76               push0 
+  0590:54 06             self 6 
+
+
+        code_0592
+  0592:63 50             pToa looper 
+  0594:30 0009            bnt code_05a0 
+  0597:39 67            pushi 67 // $67 dispose
+  0599:76               push0 
+  059a:4a 04             send 4 
+
+  059c:35 00              ldi 0 
+  059e:65 50             aTop looper 
+
+        code_05a0
+  05a0:63 52             pToa viewer 
+  05a2:30 0009            bnt code_05ae 
+  05a5:39 67            pushi 67 // $67 dispose
+  05a7:76               push0 
+  05a8:4a 04             send 4 
+
+  05aa:35 00              ldi 0 
+  05ac:65 52             aTop viewer 
+
+        code_05ae
+  05ae:39 54            pushi 54 // $54 delete
+  05b0:76               push0 
+  05b1:57 1e 04         super Prop 4 
+
+
+        code_05b4
+  05b4:48                 ret 
+    )
+
+    (method (motionCue) // method_068c
+  068c:63 4e             pToa mover 
+  068e:30 0011            bnt code_06a2 
+  0691:38 00ad          pushi ad // $ad completed
+  0694:76               push0 
+  0695:4a 04             send 4 
+
+  0697:30 0008            bnt code_06a2 
+  069a:38 00b2          pushi b2 // $b2 motionCue
+  069d:76               push0 
+  069e:63 4e             pToa mover 
+  06a0:4a 04             send 4 
+
+
+        code_06a2
+  06a2:38 00b2          pushi b2 // $b2 motionCue
+  06a5:76               push0 
+  06a6:57 1e 04         super Prop 4 
+
+  06a9:48                 ret 
+    )
+
+    (method (setMotion) // method_0501
+  0501:3f 28             link 28 // (var $28)
+  0503:63 4e             pToa mover 
+  0505:30 000e            bnt code_0516 
+  0508:36                push 
+  0509:35 ff              ldi ff 
+  050b:1c                 ne? 
+  050c:30 0007            bnt code_0516 
+  050f:39 67            pushi 67 // $67 dispose
+  0511:76               push0 
+  0512:63 4e             pToa mover 
+  0514:4a 04             send 4 
+
+
+        code_0516
+  0516:87 01              lap param1 
+  0518:30 002f            bnt code_054a 
+  051b:38 00d1          pushi d1 // $d1 startUpd
+  051e:76               push0 
+  051f:54 04             self 4 
+
+  0521:7a               push2 
+  0522:76               push0 
+  0523:87 01              lap param1 
+  0525:4a 04             send 4 
+
+  0527:36                push 
+  0528:34 8000            ldi 8000 
+  052b:12                 and 
+  052c:30 000a            bnt code_0539 
+  052f:39 65            pushi 65 // $65 new
+  0531:76               push0 
+  0532:87 01              lap param1 
+  0534:4a 04             send 4 
+
+  0536:32 0002            jmp code_053b 
+
+        code_0539
+  0539:87 01              lap param1 
+
+        code_053b
+  053b:65 4e             aTop mover 
+  053d:39 66            pushi 66 // $66 init
+  053f:78               push1 
+  0540:7c            pushSelf 
+  0541:59 02            &rest 2 
+  0543:63 4e             pToa mover 
+  0545:4a 06             send 6 
+
+  0547:32 0004            jmp code_054e 
+
+        code_054a
+  054a:35 00              ldi 0 
+  054c:65 4e             aTop mover 
+
+        code_054e
+  054e:48                 ret 
+    )
+
+    (method (setAvoider) // method_054f
+  054f:48                 ret 
+    )
+
+    (method (ignoreHorizon) // method_05b5
+  05b5:48                 ret 
+    )
+
+    (method (observeControl) // method_05b6
+  05b6:3f 01             link 1 // (var $1)
+  05b8:48                 ret 
+    )
+
+    (method (ignoreControl) // method_05b9
+  05b9:3f 01             link 1 // (var $1)
+  05bb:48                 ret 
+    )
+
+    (method (observeBlocks) // method_05bc
+  05bc:48                 ret 
+    )
+
+    (method (ignoreBlocks) // method_05bd
+  05bd:48                 ret 
+    )
+
+    (method (isStopped) // method_0550
+  0550:78               push1 
+  0551:67 4e             pTos mover 
+  0553:43 06 02         callk IsObject 2 
+
+  0556:18                 not 
+  0557:2e 0018             bt code_0572 
+  055a:67 0a             pTos x 
+  055c:63 42             pToa xLast 
+  055e:1a                 eq? 
+  055f:30 0010            bnt code_0572 
+  0562:67 08             pTos y 
+  0564:63 44             pToa yLast 
+  0566:1a                 eq? 
+  0567:30 0008            bnt code_0572 
+  056a:38 00e9          pushi e9 // $e9 triedToMove
+  056d:76               push0 
+  056e:63 4e             pToa mover 
+  0570:4a 04             send 4 
+
+
+        code_0572
+  0572:48                 ret 
+    )
+
+    (method (isBlocked) // method_0573
+  0573:67 1c             pTos signal 
+  0575:34 0400            ldi 400 
+  0578:12                 and 
+  0579:48                 ret 
+    )
+
+    (method (findPosn) // method_05dd
+  05dd:3f 05             link 5 // (var $5)
+  05df:48                 ret 
+    )
+
+    (method (inRect) // method_05e0
+  05e0:8f 01              lsp param1 
+  05e2:63 0a             pToa x 
+  05e4:24                 le? 
+  05e5:30 0015            bnt code_05fd 
+  05e8:67 0a             pTos x 
+  05ea:87 03              lap param3 
+  05ec:22                 lt? 
+  05ed:30 000d            bnt code_05fd 
+  05f0:8f 02              lsp param2 
+  05f2:63 08             pToa y 
+  05f4:24                 le? 
+  05f5:30 0005            bnt code_05fd 
+  05f8:67 08             pTos y 
+  05fa:87 04              lap param4 
+  05fc:22                 lt? 
+
+        code_05fd
+  05fd:48                 ret 
+    )
+
+    (method (onControl) // method_05fe
+  05fe:87 00              lap paramTotal 
+  0600:30 0013            bnt code_0616 
+  0603:87 01              lap param1 
+  0605:30 000e            bnt code_0616 
+  0608:39 03            pushi 3 // $3 y
+  060a:39 04            pushi 4 // $4 x
+  060c:67 0a             pTos x 
+  060e:67 08             pTos y 
+  0610:43 4e 06         callk OnControl 6 
+
+  0613:32 000f            jmp code_0625 
+
+        code_0616
+  0616:39 05            pushi 5 // $5 view
+  0618:39 04            pushi 4 // $4 x
+  061a:67 30             pTos brLeft 
+  061c:67 2e             pTos brTop 
+  061e:67 34             pTos brRight 
+  0620:67 32             pTos brBottom 
+  0622:43 4e 0a         callk OnControl a 
+
+
+        code_0625
+  0625:48                 ret 
+    )
+
+    (method (distanceTo) // method_05be
+  05be:39 05            pushi 5 // $5 view
+  05c0:67 0a             pTos x 
+  05c2:67 08             pTos y 
+  05c4:39 04            pushi 4 // $4 x
+  05c6:76               push0 
+  05c7:87 01              lap param1 
+  05c9:4a 04             send 4 
+
+  05cb:36                push 
+  05cc:39 03            pushi 3 // $3 y
+  05ce:76               push0 
+  05cf:87 01              lap param1 
+  05d1:4a 04             send 4 
+
+  05d3:36                push 
+  05d4:89 33              lsg  
+  05d6:43 40 0a         callk GetDistance a 
+
+  05d9:48                 ret 
+    )
+
+    (method (canBeHere) // method_05da
+  05da:35 01              ldi 1 
+  05dc:48                 ret 
+    )
+
+    (method (setStep) // method_0626
+  0626:8f 00              lsp paramTotal 
+  0628:35 01              ldi 1 
+  062a:20                 ge? 
+  062b:30 000c            bnt code_063a 
+  062e:8f 01              lsp param1 
+  0630:35 ff              ldi ff 
+  0632:1c                 ne? 
+  0633:30 0004            bnt code_063a 
+  0636:87 01              lap param1 
+  0638:65 46             aTop xStep 
+
+        code_063a
+  063a:8f 00              lsp paramTotal 
+  063c:35 02              ldi 2 
+  063e:20                 ge? 
+  063f:30 000c            bnt code_064e 
+  0642:8f 02              lsp param2 
+  0644:35 ff              ldi ff 
+  0646:1c                 ne? 
+  0647:30 0004            bnt code_064e 
+  064a:87 02              lap param2 
+  064c:65 10             aTop yStep 
+
+        code_064e
+  064e:63 4e             pToa mover 
+  0650:30 0035            bnt code_0688 
+  0653:39 ff            pushi ff // $ff changeScore
+  0655:1c                 ne? 
+  0656:30 002f            bnt code_0688 
+  0659:39 6b            pushi 6b // $6b isMemberOf
+  065b:78               push1 
+  065c:51 1a            class MoveTo 
+  065e:36                push 
+  065f:63 4e             pToa mover 
+  0661:4a 06             send 6 
+
+  0663:30 0022            bnt code_0688 
+  0666:38 00dd          pushi dd // $dd setMotion
+  0669:39 04            pushi 4 // $4 x
+  066b:51 1a            class MoveTo 
+  066d:36                push 
+  066e:39 04            pushi 4 // $4 x
+  0670:76               push0 
+  0671:63 4e             pToa mover 
+  0673:4a 04             send 4 
+
+  0675:36                push 
+  0676:39 03            pushi 3 // $3 y
+  0678:76               push0 
+  0679:63 4e             pToa mover 
+  067b:4a 04             send 4 
+
+  067d:36                push 
+  067e:39 2d            pushi 2d // $2d client
+  0680:76               push0 
+  0681:63 4e             pToa mover 
+  0683:4a 04             send 4 
+
+  0685:36                push 
+  0686:54 0c             self c 
+
+
+        code_0688
+  0688:48                 ret 
+    )
+
+    (method (setDirection) // method_0689
+  0689:3f 01             link 1 // (var $1)
+  068b:48                 ret 
+    )
+
+)
+
+
+

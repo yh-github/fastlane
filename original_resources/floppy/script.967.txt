@@ -1,0 +1,181 @@
+(script 967)
+
+(string
+    string_015a "DCIcon"
+    string_0161 ""
+)
+
+(said
+)
+
+(local
+)
+
+// 00b0
+(class publicDCIcon of DIcon
+    (properties
+        type $4
+        state $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $0
+        loop $0
+        cel $0
+        priority $ffff
+        cycler $0
+        cycleSpeed $6
+        signal $0
+        ticksToDo $0
+    )
+    (method (dispose) // method_0038
+  0038:63 38             pToa cycler 
+  003a:30 0009            bnt code_0046 
+  003d:39 67            pushi 67 // $67 dispose
+  003f:76               push0 
+  0040:4a 04             send 4 
+
+  0042:35 00              ldi 0 
+  0044:65 38             aTop cycler 
+
+        code_0046
+  0046:39 67            pushi 67 // $67 dispose
+  0048:76               push0 
+  0049:57 0c 04         super DIcon 4 
+
+  004c:48                 ret 
+    )
+
+    (method (draw) // method_0057
+  0057:38 012a          pushi 12a // $12a setPort
+  005a:76               push0 
+  005b:54 04             self 4 
+
+  005d:78               push1 
+  005e:7c            pushSelf 
+  005f:43 17 02         callk DrawControl 2 
+
+  0062:38 012b          pushi 12b // $12b resetPort
+  0065:76               push0 
+  0066:54 04             self 4 
+
+  0068:48                 ret 
+    )
+
+    (method (cycle) // method_000c
+  000c:3f 02             link 2 // (var $2)
+  000e:63 38             pToa cycler 
+  0010:30 0024            bnt code_0037 
+  0013:63 34             pToa cel 
+  0015:a5 00              sat temp0 
+  0017:63 32             pToa loop 
+  0019:a5 01              sat temp1 
+  001b:39 3c            pushi 3c // $3c doit
+  001d:76               push0 
+  001e:63 38             pToa cycler 
+  0020:4a 04             send 4 
+
+  0022:67 34             pTos cel 
+  0024:85 00              lat temp0 
+  0026:1c                 ne? 
+  0027:2e 0005             bt code_002f 
+  002a:67 32             pTos loop 
+  002c:85 01              lat temp1 
+  002e:1c                 ne? 
+
+        code_002f
+  002f:30 0005            bnt code_0037 
+  0032:39 53            pushi 53 // $53 draw
+  0034:76               push0 
+  0035:54 04             self 4 
+
+
+        code_0037
+  0037:48                 ret 
+    )
+
+    (method (motionCue) // method_0092
+  0092:63 38             pToa cycler 
+  0094:30 0011            bnt code_00a8 
+  0097:38 00ad          pushi ad // $ad completed
+  009a:76               push0 
+  009b:4a 04             send 4 
+
+  009d:30 0008            bnt code_00a8 
+  00a0:38 00b2          pushi b2 // $b2 motionCue
+  00a3:76               push0 
+  00a4:63 38             pToa cycler 
+  00a6:4a 04             send 4 
+
+
+        code_00a8
+  00a8:48                 ret 
+  00a9:00                bnot 
+    )
+
+    (method (lastCel) // method_004d
+  004d:78               push1 
+  004e:7c            pushSelf 
+  004f:43 0e 02         callk NumCels 2 
+
+  0052:36                push 
+  0053:35 01              ldi 1 
+  0055:04                 sub 
+  0056:48                 ret 
+    )
+
+    (method (cue) // method_0069
+  0069:5c              selfID 
+  006a:48                 ret 
+    )
+
+    (method (setCycle) // method_006b
+  006b:63 38             pToa cycler 
+  006d:30 0005            bnt code_0075 
+  0070:39 67            pushi 67 // $67 dispose
+  0072:76               push0 
+  0073:4a 04             send 4 
+
+
+        code_0075
+  0075:35 00              ldi 0 
+  0077:65 38             aTop cycler 
+  0079:87 01              lap param1 
+  007b:30 0013            bnt code_0091 
+  007e:39 65            pushi 65 // $65 new
+  0080:76               push0 
+  0081:4a 04             send 4 
+
+  0083:65 38             aTop cycler 
+  0085:39 66            pushi 66 // $66 init
+  0087:7a               push2 
+  0088:7c            pushSelf 
+  0089:8f 02              lsp param2 
+  008b:59 03            &rest 3 
+  008d:63 38             pToa cycler 
+  008f:4a 08             send 8 
+
+
+        code_0091
+  0091:48                 ret 
+    )
+
+)
+
+
+

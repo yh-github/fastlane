@@ -1,0 +1,190 @@
+(script 103)
+
+(string
+    string_0160 "FwdCount"
+    string_0169 "RdmC"
+)
+
+(said
+)
+
+(local
+)
+
+// 0078
+(class FwdCount of Cycle
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+        count $0
+    )
+    (method (init) // method_0004
+  0004:39 66            pushi 66 // $66 init
+  0006:78               push1 
+  0007:8f 01              lsp param1 
+  0009:57 13 06         super Cycle 6 
+
+  000c:8f 00              lsp paramTotal 
+  000e:35 02              ldi 2 
+  0010:20                 ge? 
+  0011:30 0015            bnt code_0029 
+  0014:87 02              lap param2 
+  0016:65 0a             aTop caller 
+  0018:8f 00              lsp paramTotal 
+  001a:35 03              ldi 3 
+  001c:20                 ge? 
+  001d:30 0005            bnt code_0025 
+  0020:87 03              lap param3 
+  0022:32 0002            jmp code_0027 
+
+        code_0025
+  0025:35 00              ldi 0 
+
+        code_0027
+  0027:65 16             aTop count 
+
+        code_0029
+  0029:48                 ret 
+    )
+
+    (method (doit) // method_002a
+  002a:3f 01             link 1 // (var $1)
+  002c:38 00b0          pushi b0 // $b0 nextCel
+  002f:76               push0 
+  0030:54 04             self 4 
+
+  0032:a5 00              sat temp0 
+  0034:36                push 
+  0035:38 00b6          pushi b6 // $b6 lastCel
+  0038:76               push0 
+  0039:63 08             pToa client 
+  003b:4a 04             send 4 
+
+  003d:1e                 gt? 
+  003e:30 0009            bnt code_004a 
+  0041:38 00b1          pushi b1 // $b1 cycleDone
+  0044:76               push0 
+  0045:54 04             self 4 
+
+  0047:32 0009            jmp code_0053 
+
+        code_004a
+  004a:39 07            pushi 7 // $7 cel
+  004c:78               push1 
+  004d:8d 00              lst temp0 
+  004f:63 08             pToa client 
+  0051:4a 06             send 6 
+
+
+        code_0053
+  0053:48                 ret 
+    )
+
+    (method (cycleDone) // method_0054
+  0054:39 07            pushi 7 // $7 cel
+  0056:78               push1 
+  0057:76               push0 
+  0058:63 08             pToa client 
+  005a:4a 06             send 6 
+
+  005c:63 16             pToa count 
+  005e:30 0010            bnt code_0071 
+  0061:6d 16            dpToa count 
+  0063:18                 not 
+  0064:30 000a            bnt code_0071 
+  0067:35 01              ldi 1 
+  0069:65 10             aTop completed 
+  006b:38 00b2          pushi b2 // $b2 motionCue
+  006e:76               push0 
+  006f:54 04             self 4 
+
+
+        code_0071
+  0071:48                 ret 
+    )
+
+)
+
+// 0112
+(class RdmC of FwdCount
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+        count $0
+        prevCel $ffff
+    )
+    (method (doit) // method_00c2
+  00c2:3f 01             link 1 // (var $1)
+  00c4:38 00b0          pushi b0 // $b0 nextCel
+  00c7:76               push0 
+  00c8:54 04             self 4 
+
+  00ca:a5 00              sat temp0 
+  00cc:67 16             pTos count 
+  00ce:35 00              ldi 0 
+  00d0:22                 lt? 
+  00d1:30 0009            bnt code_00dd 
+  00d4:38 00b1          pushi b1 // $b1 cycleDone
+  00d7:76               push0 
+  00d8:54 04             self 4 
+
+  00da:32 0009            jmp code_00e6 
+
+        code_00dd
+  00dd:39 07            pushi 7 // $7 cel
+  00df:78               push1 
+  00e0:8d 00              lst temp0 
+  00e2:63 08             pToa client 
+  00e4:4a 06             send 6 
+
+
+        code_00e6
+  00e6:48                 ret 
+    )
+
+    (method (cycleDone) // method_00e7
+  00e7:39 07            pushi 7 // $7 cel
+  00e9:78               push1 
+  00ea:76               push0 
+  00eb:63 08             pToa client 
+  00ed:4a 06             send 6 
+
+  00ef:35 01              ldi 1 
+  00f1:65 10             aTop completed 
+  00f3:38 00b2          pushi b2 // $b2 motionCue
+  00f6:76               push0 
+  00f7:54 04             self 4 
+
+  00f9:48                 ret 
+    )
+
+    (method (changeCel) // method_00fa
+  00fa:6d 16            dpToa count 
+  00fc:7a               push2 
+  00fd:76               push0 
+  00fe:38 00b6          pushi b6 // $b6 lastCel
+  0101:76               push0 
+  0102:63 08             pToa client 
+  0104:4a 04             send 4 
+
+  0106:36                push 
+  0107:43 3c 04         callk Random 4 
+
+  010a:48                 ret 
+  010b:00                bnot 
+    )
+
+)
+
+
+

@@ -1,0 +1,818 @@
+(script 992)
+
+(string
+    string_061c "Cycle"
+    string_0622 "Fwd"
+    string_0626 "Walk"
+    string_062b "CT"
+    string_062e "End"
+    string_0632 "Beg"
+    string_0636 "Motion"
+    string_063d "MoveTo"
+)
+
+(said
+)
+
+(local
+)
+
+// 00ee
+(class Cycle of Obj
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+    )
+    (method (init) // method_0004
+  0004:87 01              lap param1 
+  0006:65 08             aTop client 
+  0008:38 00ae          pushi ae // $ae ticksToDo
+  000b:76               push0 
+  000c:63 08             pToa client 
+  000e:4a 04             send 4 
+
+  0010:65 12             aTop ticksToDo 
+  0012:35 00              ldi 0 
+  0014:65 0e             aTop cycleCnt 
+  0016:76               push0 
+  0017:43 42 00         callk GetTime 0 
+
+  001a:65 14             aTop lastTime 
+  001c:48                 ret 
+    )
+
+    (method (nextCel) // method_001d
+  001d:63 12             pToa ticksToDo 
+  001f:30 0055            bnt code_0077 
+  0022:36                push 
+  0023:63 14             pToa lastTime 
+  0025:02                 add 
+  0026:36                push 
+  0027:76               push0 
+  0028:43 42 00         callk GetTime 0 
+
+  002b:2a                ult? 
+  002c:2e 0013             bt code_0042 
+  002f:67 14             pTos lastTime 
+  0031:76               push0 
+  0032:43 42 00         callk GetTime 0 
+
+  0035:26                ugt? 
+  0036:30 0034            bnt code_006d 
+  0039:67 12             pTos ticksToDo 
+  003b:63 14             pToa lastTime 
+  003d:02                 add 
+  003e:36                push 
+  003f:63 14             pToa lastTime 
+  0041:26                ugt? 
+
+        code_0042
+  0042:30 0028            bnt code_006d 
+  0045:39 11            pushi 11 // $11 signal
+  0047:76               push0 
+  0048:63 08             pToa client 
+  004a:4a 04             send 4 
+
+  004c:36                push 
+  004d:34 1000            ldi 1000 
+  0050:12                 and 
+  0051:30 000a            bnt code_005e 
+  0054:39 07            pushi 7 // $7 cel
+  0056:76               push0 
+  0057:63 08             pToa client 
+  0059:4a 04             send 4 
+
+  005b:32 0056            jmp code_00b4 
+
+        code_005e
+  005e:76               push0 
+  005f:43 42 00         callk GetTime 0 
+
+  0062:65 14             aTop lastTime 
+  0064:38 00b3          pushi b3 // $b3 changeCel
+  0067:76               push0 
+  0068:54 04             self 4 
+
+  006a:32 0047            jmp code_00b4 
+
+        code_006d
+  006d:39 07            pushi 7 // $7 cel
+  006f:76               push0 
+  0070:63 08             pToa client 
+  0072:4a 04             send 4 
+
+  0074:32 003d            jmp code_00b4 
+
+        code_0077
+  0077:6b 0e            ipToa cycleCnt 
+  0079:67 0e             pTos cycleCnt 
+  007b:38 00b4          pushi b4 // $b4 cycleSpeed
+  007e:76               push0 
+  007f:63 08             pToa client 
+  0081:4a 04             send 4 
+
+  0083:24                 le? 
+  0084:30 000a            bnt code_0091 
+  0087:39 07            pushi 7 // $7 cel
+  0089:76               push0 
+  008a:63 08             pToa client 
+  008c:4a 04             send 4 
+
+  008e:32 0023            jmp code_00b4 
+
+        code_0091
+  0091:35 00              ldi 0 
+  0093:65 0e             aTop cycleCnt 
+  0095:39 11            pushi 11 // $11 signal
+  0097:76               push0 
+  0098:63 08             pToa client 
+  009a:4a 04             send 4 
+
+  009c:36                push 
+  009d:34 1000            ldi 1000 
+  00a0:12                 and 
+  00a1:30 000a            bnt code_00ae 
+  00a4:39 07            pushi 7 // $7 cel
+  00a6:76               push0 
+  00a7:63 08             pToa client 
+  00a9:4a 04             send 4 
+
+  00ab:32 0006            jmp code_00b4 
+
+        code_00ae
+  00ae:38 00b3          pushi b3 // $b3 changeCel
+  00b1:76               push0 
+  00b2:54 04             self 4 
+
+
+        code_00b4
+  00b4:48                 ret 
+    )
+
+    (method (cycleDone) // method_00c1
+  00c1:48                 ret 
+    )
+
+    (method (motionCue) // method_00c2
+  00c2:38 00b5          pushi b5 // $b5 cycler
+  00c5:78               push1 
+  00c6:76               push0 
+  00c7:63 08             pToa client 
+  00c9:4a 06             send 6 
+
+  00cb:63 10             pToa completed 
+  00cd:30 0011            bnt code_00e1 
+  00d0:78               push1 
+  00d1:67 0a             pTos caller 
+  00d3:43 06 02         callk IsObject 2 
+
+  00d6:30 0008            bnt code_00e1 
+  00d9:38 0087          pushi 87 // $87 cue
+  00dc:76               push0 
+  00dd:63 0a             pToa caller 
+  00df:4a 04             send 4 
+
+
+        code_00e1
+  00e1:39 67            pushi 67 // $67 dispose
+  00e3:76               push0 
+  00e4:54 04             self 4 
+
+  00e6:48                 ret 
+  00e7:00                bnot 
+    )
+
+    (method (changeCel) // method_00b5
+  00b5:39 07            pushi 7 // $7 cel
+  00b7:76               push0 
+  00b8:63 08             pToa client 
+  00ba:4a 04             send 4 
+
+  00bc:36                push 
+  00bd:63 0c             pToa cycleDir 
+  00bf:02                 add 
+  00c0:48                 ret 
+    )
+
+)
+
+// 0176
+(class Fwd of Cycle
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+    )
+    (method (doit) // method_013c
+  013c:3f 01             link 1 // (var $1)
+  013e:38 00b0          pushi b0 // $b0 nextCel
+  0141:76               push0 
+  0142:54 04             self 4 
+
+  0144:a5 00              sat temp0 
+  0146:36                push 
+  0147:38 00b6          pushi b6 // $b6 lastCel
+  014a:76               push0 
+  014b:63 08             pToa client 
+  014d:4a 04             send 4 
+
+  014f:1e                 gt? 
+  0150:30 0009            bnt code_015c 
+  0153:38 00b1          pushi b1 // $b1 cycleDone
+  0156:76               push0 
+  0157:54 04             self 4 
+
+  0159:32 0009            jmp code_0165 
+
+        code_015c
+  015c:39 07            pushi 7 // $7 cel
+  015e:78               push1 
+  015f:8d 00              lst temp0 
+  0161:63 08             pToa client 
+  0163:4a 06             send 6 
+
+
+        code_0165
+  0165:48                 ret 
+    )
+
+    (method (cycleDone) // method_0166
+  0166:39 07            pushi 7 // $7 cel
+  0168:78               push1 
+  0169:76               push0 
+  016a:63 08             pToa client 
+  016c:4a 06             send 6 
+
+  016e:48                 ret 
+  016f:00                bnot 
+    )
+
+)
+
+// 01d4
+(class Walk of Fwd
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+    )
+    (method (doit) // method_01b8
+  01b8:3f 01             link 1 // (var $1)
+  01ba:38 00b7          pushi b7 // $b7 isStopped
+  01bd:76               push0 
+  01be:63 08             pToa client 
+  01c0:4a 04             send 4 
+
+  01c2:18                 not 
+  01c3:30 0006            bnt code_01cc 
+  01c6:39 3c            pushi 3c // $3c doit
+  01c8:76               push0 
+  01c9:57 14 04         super Fwd 4 
+
+
+        code_01cc
+  01cc:48                 ret 
+  01cd:00                bnot 
+    )
+
+)
+
+// 02c0
+(class CT of Cycle
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+        endCel $0
+    )
+    (method (init) // method_0212
+  0212:3f 01             link 1 // (var $1)
+  0214:39 66            pushi 66 // $66 init
+  0216:78               push1 
+  0217:8f 01              lsp param1 
+  0219:57 13 06         super Cycle 6 
+
+  021c:87 03              lap param3 
+  021e:65 0c             aTop cycleDir 
+  0220:8f 00              lsp paramTotal 
+  0222:35 04              ldi 4 
+  0224:20                 ge? 
+  0225:30 0004            bnt code_022c 
+  0228:87 04              lap param4 
+  022a:65 0a             aTop caller 
+
+        code_022c
+  022c:38 00b6          pushi b6 // $b6 lastCel
+  022f:76               push0 
+  0230:63 08             pToa client 
+  0232:4a 04             send 4 
+
+  0234:a5 00              sat temp0 
+  0236:8f 02              lsp param2 
+  0238:1e                 gt? 
+  0239:30 0005            bnt code_0241 
+  023c:85 00              lat temp0 
+  023e:32 0002            jmp code_0243 
+
+        code_0241
+  0241:87 02              lap param2 
+
+        code_0243
+  0243:65 16             aTop endCel 
+  0245:48                 ret 
+    )
+
+    (method (doit) // method_0246
+  0246:3f 02             link 2 // (var $2)
+  0248:38 00b6          pushi b6 // $b6 lastCel
+  024b:76               push0 
+  024c:63 08             pToa client 
+  024e:4a 04             send 4 
+
+  0250:a5 01              sat temp1 
+  0252:67 16             pTos endCel 
+  0254:1e                 gt? 
+  0255:30 0004            bnt code_025c 
+  0258:85 01              lat temp1 
+  025a:65 16             aTop endCel 
+
+        code_025c
+  025c:38 00b0          pushi b0 // $b0 nextCel
+  025f:76               push0 
+  0260:54 04             self 4 
+
+  0262:a5 00              sat temp0 
+  0264:39 07            pushi 7 // $7 cel
+  0266:78               push1 
+  0267:36                push 
+  0268:85 01              lat temp1 
+  026a:1e                 gt? 
+  026b:30 0005            bnt code_0273 
+  026e:35 00              ldi 0 
+  0270:32 000f            jmp code_0282 
+
+        code_0273
+  0273:8d 00              lst temp0 
+  0275:35 00              ldi 0 
+  0277:22                 lt? 
+  0278:30 0005            bnt code_0280 
+  027b:85 01              lat temp1 
+  027d:32 0002            jmp code_0282 
+
+        code_0280
+  0280:85 00              lat temp0 
+
+        code_0282
+  0282:36                push 
+  0283:63 08             pToa client 
+  0285:4a 06             send 6 
+
+  0287:67 0e             pTos cycleCnt 
+  0289:35 00              ldi 0 
+  028b:1a                 eq? 
+  028c:30 0013            bnt code_02a2 
+  028f:67 16             pTos endCel 
+  0291:39 07            pushi 7 // $7 cel
+  0293:76               push0 
+  0294:63 08             pToa client 
+  0296:4a 04             send 4 
+
+  0298:1a                 eq? 
+  0299:30 0006            bnt code_02a2 
+  029c:38 00b1          pushi b1 // $b1 cycleDone
+  029f:76               push0 
+  02a0:54 04             self 4 
+
+
+        code_02a2
+  02a2:48                 ret 
+    )
+
+    (method (cycleDone) // method_02a3
+  02a3:35 01              ldi 1 
+  02a5:65 10             aTop completed 
+  02a7:63 0a             pToa caller 
+  02a9:30 0007            bnt code_02b3 
+  02ac:35 01              ldi 1 
+  02ae:a1 3a              sag  
+  02b0:32 0006            jmp code_02b9 
+
+        code_02b3
+  02b3:38 00b2          pushi b2 // $b2 motionCue
+  02b6:76               push0 
+  02b7:54 04             self 4 
+
+
+        code_02b9
+  02b9:48                 ret 
+    )
+
+)
+
+// 0334
+(class End of CT
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+        endCel $0
+    )
+    (method (init) // method_030a
+  030a:39 66            pushi 66 // $66 init
+  030c:39 04            pushi 4 // $4 x
+  030e:8f 01              lsp param1 
+  0310:38 00b6          pushi b6 // $b6 lastCel
+  0313:76               push0 
+  0314:87 01              lap param1 
+  0316:4a 04             send 4 
+
+  0318:36                push 
+  0319:78               push1 
+  031a:8f 00              lsp paramTotal 
+  031c:35 02              ldi 2 
+  031e:20                 ge? 
+  031f:30 0005            bnt code_0327 
+  0322:87 02              lap param2 
+  0324:32 0002            jmp code_0329 
+
+        code_0327
+  0327:35 00              ldi 0 
+
+        code_0329
+  0329:36                push 
+  032a:57 16 0c         super CT c 
+
+  032d:48                 ret 
+    )
+
+)
+
+// 039a
+(class Beg of CT
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+        endCel $0
+    )
+    (method (init) // method_0376
+  0376:39 66            pushi 66 // $66 init
+  0378:39 04            pushi 4 // $4 x
+  037a:8f 01              lsp param1 
+  037c:76               push0 
+  037d:39 ff            pushi ff // $ff changeScore
+  037f:8f 00              lsp paramTotal 
+  0381:35 02              ldi 2 
+  0383:20                 ge? 
+  0384:30 0005            bnt code_038c 
+  0387:87 02              lap param2 
+  0389:32 0002            jmp code_038e 
+
+        code_038c
+  038c:35 00              ldi 0 
+
+        code_038e
+  038e:36                push 
+  038f:57 16 0c         super CT c 
+
+  0392:48                 ret 
+  0393:00                bnot 
+    )
+
+)
+
+// 0502
+(class Motion of Obj
+    (properties
+        client $0
+        caller $0
+        x $0
+        y $0
+        dx $0
+        dy $0
+        b-moveCnt $0
+        b-i1 $0
+        b-i2 $0
+        b-di $0
+        b-xAxis $0
+        b-incr $0
+        completed $0
+        xLast $0
+        yLast $0
+    )
+    (method (init) // method_03dc
+  03dc:3f 04             link 4 // (var $4)
+  03de:8f 00              lsp paramTotal 
+  03e0:35 01              ldi 1 
+  03e2:20                 ge? 
+  03e3:30 0028            bnt code_040e 
+  03e6:87 01              lap param1 
+  03e8:65 08             aTop client 
+  03ea:8f 00              lsp paramTotal 
+  03ec:35 02              ldi 2 
+  03ee:20                 ge? 
+  03ef:30 001c            bnt code_040e 
+  03f2:87 02              lap param2 
+  03f4:65 0c             aTop x 
+  03f6:8f 00              lsp paramTotal 
+  03f8:35 03              ldi 3 
+  03fa:20                 ge? 
+  03fb:30 0010            bnt code_040e 
+  03fe:87 03              lap param3 
+  0400:65 0e             aTop y 
+  0402:8f 00              lsp paramTotal 
+  0404:35 04              ldi 4 
+  0406:20                 ge? 
+  0407:30 0004            bnt code_040e 
+  040a:87 04              lap param4 
+  040c:65 0a             aTop caller 
+
+        code_040e
+  040e:35 00              ldi 0 
+  0410:65 20             aTop completed 
+  0412:65 14             aTop b-moveCnt 
+  0414:65 22             aTop xLast 
+  0416:65 24             aTop yLast 
+  0418:38 00b9          pushi b9 // $b9 xLast
+  041b:78               push1 
+  041c:76               push0 
+  041d:38 00ba          pushi ba // $ba yLast
+  0420:78               push1 
+  0421:76               push0 
+  0422:63 08             pToa client 
+  0424:4a 0c             send c 
+
+  0426:38 00b5          pushi b5 // $b5 cycler
+  0429:76               push0 
+  042a:63 08             pToa client 
+  042c:4a 04             send 4 
+
+  042e:a5 03              sat temp3 
+  0430:30 0007            bnt code_043a 
+  0433:38 00ac          pushi ac // $ac cycleCnt
+  0436:78               push1 
+  0437:76               push0 
+  0438:4a 06             send 6 
+
+
+        code_043a
+  043a:39 3a            pushi 3a // $3a heading
+  043c:78               push1 
+  043d:39 04            pushi 4 // $4 x
+  043f:3c                 dup 
+  0440:76               push0 
+  0441:63 08             pToa client 
+  0443:4a 04             send 4 
+
+  0445:36                push 
+  0446:39 03            pushi 3 // $3 y
+  0448:76               push0 
+  0449:63 08             pToa client 
+  044b:4a 04             send 4 
+
+  044d:36                push 
+  044e:67 0c             pTos x 
+  0450:67 0e             pTos y 
+  0452:43 3f 08         callk GetAngle 8 
+
+  0455:36                push 
+  0456:63 08             pToa client 
+  0458:4a 06             send 6 
+
+  045a:39 3e            pushi 3e // $3e looper
+  045c:76               push0 
+  045d:63 08             pToa client 
+  045f:4a 04             send 4 
+
+  0461:30 0016            bnt code_047a 
+  0464:39 3c            pushi 3c // $3c doit
+  0466:7a               push2 
+  0467:67 08             pTos client 
+  0469:39 3a            pushi 3a // $3a heading
+  046b:76               push0 
+  046c:63 08             pToa client 
+  046e:4a 04             send 4 
+
+  0470:36                push 
+  0471:39 3e            pushi 3e // $3e looper
+  0473:76               push0 
+  0474:63 08             pToa client 
+  0476:4a 04             send 4 
+
+  0478:4a 08             send 8 
+
+
+        code_047a
+  047a:78               push1 
+  047b:7c            pushSelf 
+  047c:43 4f 02         callk InitBresen 2 
+
+  047f:48                 ret 
+    )
+
+    (method (doit) // method_04a8
+  04a8:3f 06             link 6 // (var $6)
+  04aa:78               push1 
+  04ab:7c            pushSelf 
+  04ac:43 50 02         callk DoBresen 2 
+
+  04af:38 00b9          pushi b9 // $b9 xLast
+  04b2:78               push1 
+  04b3:67 22             pTos xLast 
+  04b5:38 00ba          pushi ba // $ba yLast
+  04b8:78               push1 
+  04b9:67 24             pTos yLast 
+  04bb:63 08             pToa client 
+  04bd:4a 0c             send c 
+
+  04bf:48                 ret 
+    )
+
+    (method (moveDone) // method_04c0
+  04c0:35 01              ldi 1 
+  04c2:65 20             aTop completed 
+  04c4:63 0a             pToa caller 
+  04c6:30 0007            bnt code_04d0 
+  04c9:35 01              ldi 1 
+  04cb:a1 3a              sag  
+  04cd:32 0006            jmp code_04d6 
+
+        code_04d0
+  04d0:38 00b2          pushi b2 // $b2 motionCue
+  04d3:76               push0 
+  04d4:54 04             self 4 
+
+
+        code_04d6
+  04d6:48                 ret 
+    )
+
+    (method (setTarget) // method_049a
+  049a:87 00              lap paramTotal 
+  049c:30 0008            bnt code_04a7 
+  049f:87 01              lap param1 
+  04a1:65 0c             aTop x 
+  04a3:87 02              lap param2 
+  04a5:65 0e             aTop y 
+
+        code_04a7
+  04a7:48                 ret 
+    )
+
+    (method (onTarget) // method_0480
+  0480:39 04            pushi 4 // $4 x
+  0482:76               push0 
+  0483:63 08             pToa client 
+  0485:4a 04             send 4 
+
+  0487:36                push 
+  0488:63 0c             pToa x 
+  048a:1a                 eq? 
+  048b:30 000b            bnt code_0499 
+  048e:39 03            pushi 3 // $3 y
+  0490:76               push0 
+  0491:63 08             pToa client 
+  0493:4a 04             send 4 
+
+  0495:36                push 
+  0496:63 0e             pToa y 
+  0498:1a                 eq? 
+
+        code_0499
+  0499:48                 ret 
+    )
+
+    (method (motionCue) // method_04d7
+  04d7:39 3b            pushi 3b // $3b mover
+  04d9:78               push1 
+  04da:76               push0 
+  04db:63 08             pToa client 
+  04dd:4a 06             send 6 
+
+  04df:63 20             pToa completed 
+  04e1:30 0011            bnt code_04f5 
+  04e4:78               push1 
+  04e5:67 0a             pTos caller 
+  04e7:43 06 02         callk IsObject 2 
+
+  04ea:30 0008            bnt code_04f5 
+  04ed:38 0087          pushi 87 // $87 cue
+  04f0:76               push0 
+  04f1:63 0a             pToa caller 
+  04f3:4a 04             send 4 
+
+
+        code_04f5
+  04f5:39 67            pushi 67 // $67 dispose
+  04f7:76               push0 
+  04f8:54 04             self 4 
+
+  04fa:48                 ret 
+  04fb:00                bnot 
+    )
+
+)
+
+// 05ba
+(class MoveTo of Motion
+    (properties
+        client $0
+        caller $0
+        x $0
+        y $0
+        dx $0
+        dy $0
+        b-moveCnt $0
+        b-i1 $0
+        b-i2 $0
+        b-di $0
+        b-xAxis $0
+        b-incr $0
+        completed $0
+        xLast $0
+        yLast $0
+    )
+    (method (init) // method_0574
+  0574:39 66            pushi 66 // $66 init
+  0576:76               push0 
+  0577:59 01            &rest 1 
+  0579:57 19 04         super Motion 4 
+
+  057c:48                 ret 
+    )
+
+    (method (onTarget) // method_057d
+  057d:78               push1 
+  057e:39 04            pushi 4 // $4 x
+  0580:76               push0 
+  0581:63 08             pToa client 
+  0583:4a 04             send 4 
+
+  0585:36                push 
+  0586:63 0c             pToa x 
+  0588:04                 sub 
+  0589:36                push 
+  058a:43 3d 02         callk Abs 2 
+
+  058d:36                push 
+  058e:39 36            pushi 36 // $36 xStep
+  0590:76               push0 
+  0591:63 08             pToa client 
+  0593:4a 04             send 4 
+
+  0595:24                 le? 
+  0596:30 0019            bnt code_05b2 
+  0599:78               push1 
+  059a:39 03            pushi 3 // $3 y
+  059c:76               push0 
+  059d:63 08             pToa client 
+  059f:4a 04             send 4 
+
+  05a1:36                push 
+  05a2:63 0e             pToa y 
+  05a4:04                 sub 
+  05a5:36                push 
+  05a6:43 3d 02         callk Abs 2 
+
+  05a9:36                push 
+  05aa:39 37            pushi 37 // $37 yStep
+  05ac:76               push0 
+  05ad:63 08             pToa client 
+  05af:4a 04             send 4 
+
+  05b1:24                 le? 
+
+        code_05b2
+  05b2:48                 ret 
+  05b3:00                bnot 
+    )
+
+)
+
+
+

@@ -1,0 +1,55 @@
+(script 102)
+
+(string
+    string_0064 "WList"
+)
+
+(said
+)
+
+(local
+)
+
+// 0032
+(class WList of List
+    (properties
+        elements $0
+        size $0
+        registerX $0
+        registerY $0
+    )
+    (method (empty) // method_0004
+  0004:3f 01             link 1 // (var $1)
+  0006:63 0a             pToa size 
+  0008:30 0020            bnt code_002b 
+  000b:36                push 
+  000c:35 01              ldi 1 
+  000e:04                 sub 
+  000f:a5 00              sat temp0 
+
+        code_0011
+  0011:8d 00              lst temp0 
+  0013:35 00              ldi 0 
+  0015:20                 ge? 
+  0016:30 0012            bnt code_002b 
+  0019:39 54            pushi 54 // $54 delete
+  001b:78               push1 
+  001c:39 43            pushi 43 // $43 at
+  001e:78               push1 
+  001f:8d 00              lst temp0 
+  0021:54 06             self 6 
+
+  0023:36                push 
+  0024:54 06             self 6 
+
+  0026:e5 00              -at temp0 
+  0028:32 ffe6            jmp code_0011 
+
+        code_002b
+  002b:48                 ret 
+    )
+
+)
+
+
+

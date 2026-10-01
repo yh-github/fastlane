@@ -1,0 +1,909 @@
+(script 107)
+
+(string
+    string_0698 "EconomicIndex"
+    string_06a6 "mainI"
+    string_06ac "investIndex"
+    string_06b8 "gdsIndex"
+    string_06c1 "gldIndex"
+    string_06ca "silIndex"
+    string_06d3 "prkIndex"
+    string_06dc "bcIndex"
+    string_06e4 "penIndex"
+    string_06ed "economicIndex"
+    string_06fb ""
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+)
+
+// 021e
+(class EconomicIndex of Obj
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $4
+        headline $0
+    )
+    (method (init) // method_0044
+  0044:87 01              lap param1 
+  0046:65 08             aTop index 
+  0048:87 02              lap param2 
+  004a:65 0a             aTop reading 
+  004c:80 0175            lag  
+  004f:30 0023            bnt code_0075 
+  0052:67 08             pTos index 
+  0054:35 fd              ldi fd 
+  0056:1e                 gt? 
+  0057:30 0016            bnt code_0070 
+  005a:67 08             pTos index 
+  005c:35 03              ldi 3 
+  005e:04                 sub 
+  005f:65 08             aTop index 
+  0061:67 08             pTos index 
+  0063:35 fd              ldi fd 
+  0065:22                 lt? 
+  0066:30 0032            bnt code_009b 
+  0069:35 fd              ldi fd 
+  006b:65 08             aTop index 
+  006d:32 002b            jmp code_009b 
+
+        code_0070
+  0070:6d 08            dpToa index 
+  0072:32 0026            jmp code_009b 
+
+        code_0075
+  0075:80 01bc            lag  
+  0078:30 0020            bnt code_009b 
+  007b:67 08             pTos index 
+  007d:35 03              ldi 3 
+  007f:22                 lt? 
+  0080:30 0016            bnt code_0099 
+  0083:67 08             pTos index 
+  0085:35 03              ldi 3 
+  0087:02                 add 
+  0088:65 08             aTop index 
+  008a:67 08             pTos index 
+  008c:35 03              ldi 3 
+  008e:1e                 gt? 
+  008f:30 0009            bnt code_009b 
+  0092:35 03              ldi 3 
+  0094:65 08             aTop index 
+  0096:32 0002            jmp code_009b 
+
+        code_0099
+  0099:6b 08            ipToa index 
+
+        code_009b
+  009b:35 00              ldi 0 
+  009d:65 0c             aTop high 
+  009f:67 0a             pTos reading 
+  00a1:35 50              ldi 50 
+  00a3:22                 lt? 
+  00a4:30 0007            bnt code_00ae 
+  00a7:35 02              ldi 2 
+  00a9:65 0c             aTop high 
+  00ab:32 000c            jmp code_00ba 
+
+        code_00ae
+  00ae:67 0a             pTos reading 
+  00b0:35 5a              ldi 5a 
+  00b2:22                 lt? 
+  00b3:30 0004            bnt code_00ba 
+  00b6:35 01              ldi 1 
+  00b8:65 0c             aTop high 
+
+        code_00ba
+  00ba:35 00              ldi 0 
+  00bc:65 0e             aTop low 
+  00be:67 0a             pTos reading 
+  00c0:34 00a0            ldi a0 
+  00c3:1e                 gt? 
+  00c4:30 0007            bnt code_00ce 
+  00c7:35 02              ldi 2 
+  00c9:65 0e             aTop low 
+  00cb:32 000d            jmp code_00db 
+
+        code_00ce
+  00ce:67 0a             pTos reading 
+  00d0:34 0082            ldi 82 
+  00d3:1e                 gt? 
+  00d4:30 0004            bnt code_00db 
+  00d7:35 01              ldi 1 
+  00d9:65 0e             aTop low 
+
+        code_00db
+  00db:7a               push2 
+  00dc:39 64            pushi 64 // $64 moveDone
+  00de:39 fd            pushi fd // $fd write
+  00e0:63 0e             pToa low 
+  00e2:04                 sub 
+  00e3:02                 add 
+  00e4:36                push 
+  00e5:39 64            pushi 64 // $64 moveDone
+  00e7:39 03            pushi 3 // $3 y
+  00e9:63 0c             pToa high 
+  00eb:02                 add 
+  00ec:02                 add 
+  00ed:36                push 
+  00ee:43 3c 04         callk Random 4 
+
+  00f1:a0 0229            sag  
+  00f4:36                push 
+  00f5:35 64              ldi 64 
+  00f7:04                 sub 
+  00f8:a0 0229            sag  
+  00fb:36                push 
+  00fc:63 08             pToa index 
+  00fe:22                 lt? 
+  00ff:30 0017            bnt code_0119 
+  0102:6d 08            dpToa index 
+  0104:67 08             pTos index 
+  0106:39 fd            pushi fd // $fd write
+  0108:63 0e             pToa low 
+  010a:04                 sub 
+  010b:22                 lt? 
+  010c:30 0027            bnt code_0136 
+  010f:39 fd            pushi fd // $fd write
+  0111:63 0e             pToa low 
+  0113:04                 sub 
+  0114:65 08             aTop index 
+  0116:32 001d            jmp code_0136 
+
+        code_0119
+  0119:88 0229            lsg  
+  011c:63 08             pToa index 
+  011e:1e                 gt? 
+  011f:30 0014            bnt code_0136 
+  0122:6b 08            ipToa index 
+  0124:67 08             pTos index 
+  0126:39 03            pushi 3 // $3 y
+  0128:63 0c             pToa high 
+  012a:02                 add 
+  012b:1e                 gt? 
+  012c:30 0007            bnt code_0136 
+  012f:39 03            pushi 3 // $3 y
+  0131:63 0c             pToa high 
+  0133:02                 add 
+  0134:65 08             aTop index 
+
+        code_0136
+  0136:35 fd              ldi fd 
+  0138:65 10             aTop lowerRange 
+  013a:35 03              ldi 3 
+  013c:65 12             aTop upperRange 
+  013e:67 08             pTos index 
+  0140:35 00              ldi 0 
+  0142:22                 lt? 
+  0143:30 000c            bnt code_0152 
+  0146:39 fd            pushi fd // $fd write
+  0148:7a               push2 
+  0149:63 08             pToa index 
+  014b:06                 mul 
+  014c:02                 add 
+  014d:65 10             aTop lowerRange 
+  014f:32 0011            jmp code_0163 
+
+        code_0152
+  0152:67 08             pTos index 
+  0154:35 00              ldi 0 
+  0156:1e                 gt? 
+  0157:30 0009            bnt code_0163 
+  015a:39 03            pushi 3 // $3 y
+  015c:7a               push2 
+  015d:63 08             pToa index 
+  015f:06                 mul 
+  0160:02                 add 
+  0161:65 12             aTop upperRange 
+
+        code_0163
+  0163:7a               push2 
+  0164:39 64            pushi 64 // $64 moveDone
+  0166:63 10             pToa lowerRange 
+  0168:02                 add 
+  0169:36                push 
+  016a:39 64            pushi 64 // $64 moveDone
+  016c:63 12             pToa upperRange 
+  016e:02                 add 
+  016f:36                push 
+  0170:43 3c 04         callk Random 4 
+
+  0173:65 14             aTop adjustment 
+  0175:67 14             pTos adjustment 
+  0177:35 64              ldi 64 
+  0179:04                 sub 
+  017a:65 14             aTop adjustment 
+  017c:67 14             pTos adjustment 
+  017e:63 10             pToa lowerRange 
+  0180:1a                 eq? 
+  0181:30 0017            bnt code_019b 
+  0184:67 14             pTos adjustment 
+  0186:7a               push2 
+  0187:76               push0 
+  0188:67 16             pTos risk 
+  018a:78               push1 
+  018b:67 08             pTos index 
+  018d:43 3d 02         callk Abs 2 
+
+  0190:06                 mul 
+  0191:36                push 
+  0192:43 3c 04         callk Random 4 
+
+  0195:04                 sub 
+  0196:65 14             aTop adjustment 
+  0198:32 001c            jmp code_01b7 
+
+        code_019b
+  019b:67 14             pTos adjustment 
+  019d:63 10             pToa lowerRange 
+  019f:1a                 eq? 
+  01a0:30 0014            bnt code_01b7 
+  01a3:67 14             pTos adjustment 
+  01a5:7a               push2 
+  01a6:76               push0 
+  01a7:67 16             pTos risk 
+  01a9:78               push1 
+  01aa:67 08             pTos index 
+  01ac:43 3d 02         callk Abs 2 
+
+  01af:06                 mul 
+  01b0:36                push 
+  01b1:43 3c 04         callk Random 4 
+
+  01b4:02                 add 
+  01b5:65 14             aTop adjustment 
+
+        code_01b7
+  01b7:48                 ret 
+    )
+
+    (method (doit) // method_01b8
+  01b8:3f 01             link 1 // (var $1)
+  01ba:87 00              lap paramTotal 
+  01bc:30 0005            bnt code_01c4 
+  01bf:87 01              lap param1 
+  01c1:32 0002            jmp code_01c6 
+
+        code_01c4
+  01c4:35 00              ldi 0 
+
+        code_01c6
+  01c6:a5 00              sat temp0 
+  01c8:67 0a             pTos reading 
+  01ca:67 14             pTos adjustment 
+  01cc:8f 01              lsp param1 
+  01ce:35 03              ldi 3 
+  01d0:08                 div 
+  01d1:02                 add 
+  01d2:02                 add 
+  01d3:65 0a             aTop reading 
+  01d5:80 0175            lag  
+  01d8:30 000f            bnt code_01ea 
+  01db:67 0a             pTos reading 
+  01dd:39 10            pushi 10 // $10 lsRight
+  01df:02                 add 
+  01e0:06                 mul 
+  01e1:36                push 
+  01e2:35 14              ldi 14 
+  01e4:08                 div 
+  01e5:65 0a             aTop reading 
+  01e7:32 0011            jmp code_01fb 
+
+        code_01ea
+  01ea:80 01bc            lag  
+  01ed:30 000b            bnt code_01fb 
+  01f0:67 0a             pTos reading 
+  01f2:35 0b              ldi b 
+  01f4:06                 mul 
+  01f5:36                push 
+  01f6:35 0a              ldi a 
+  01f8:08                 div 
+  01f9:65 0a             aTop reading 
+
+        code_01fb
+  01fb:67 0a             pTos reading 
+  01fd:35 46              ldi 46 
+  01ff:22                 lt? 
+  0200:30 0004            bnt code_0207 
+  0203:35 46              ldi 46 
+  0205:65 0a             aTop reading 
+
+        code_0207
+  0207:67 0a             pTos reading 
+  0209:34 00be            ldi be 
+  020c:1e                 gt? 
+  020d:30 0005            bnt code_0215 
+  0210:34 00be            ldi be 
+  0213:65 0a             aTop reading 
+
+        code_0215
+  0215:63 0a             pToa reading 
+  0217:48                 ret 
+    )
+
+)
+
+// 026a
+(instance mainI of EconomicIndex
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $4
+        headline $14
+    )
+)
+
+// 0294
+(instance investIndex of EconomicIndex
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $4
+        headline $12
+    )
+)
+
+// 02be
+(instance gdsIndex of EconomicIndex
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $4
+        headline $14
+    )
+)
+
+// 02e8
+(instance gldIndex of EconomicIndex
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $2
+        headline $5
+    )
+)
+
+// 0312
+(instance silIndex of EconomicIndex
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $2
+        headline $7
+    )
+)
+
+// 033c
+(instance prkIndex of EconomicIndex
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $4
+        headline $9
+    )
+)
+
+// 0366
+(instance bcIndex of EconomicIndex
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $1
+        headline $b
+    )
+)
+
+// 0390
+(instance penIndex of EconomicIndex
+    (properties
+        index $0
+        reading $0
+        high $0
+        low $0
+        lowerRange $0
+        upperRange $0
+        adjustment $0
+        risk $a
+        headline $d
+    )
+)
+
+// 067e
+(instance publiceconomicIndex of Obj
+    (properties
+    )
+    (method (doit) // method_03b8
+  03b8:35 00              ldi 0 
+  03ba:a0 01bc            sag  
+  03bd:35 00              ldi 0 
+  03bf:a0 0175            sag  
+  03c2:88 0133            lsg  
+  03c5:35 50              ldi 50 
+  03c7:20                 ge? 
+  03c8:30 0029            bnt code_03f4 
+  03cb:88 0174            lsg  
+  03ce:35 08              ldi 8 
+  03d0:20                 ge? 
+  03d1:30 0020            bnt code_03f4 
+  03d4:7a               push2 
+  03d5:76               push0 
+  03d6:88 0176            lsg  
+  03d9:35 1e              ldi 1e 
+  03db:06                 mul 
+  03dc:36                push 
+  03dd:43 3c 04         callk Random 4 
+
+  03e0:18                 not 
+  03e1:30 0010            bnt code_03f4 
+  03e4:7a               push2 
+  03e5:78               push1 
+  03e6:39 03            pushi 3 // $3 y
+  03e8:43 3c 04         callk Random 4 
+
+  03eb:a0 0175            sag  
+  03ee:a0 019f            sag  
+  03f1:32 0022            jmp code_0416 
+
+        code_03f4
+  03f4:88 0174            lsg  
+  03f7:35 08              ldi 8 
+  03f9:20                 ge? 
+  03fa:30 0019            bnt code_0416 
+  03fd:88 0133            lsg  
+  0400:35 78              ldi 78 
+  0402:24                 le? 
+  0403:30 0010            bnt code_0416 
+  0406:7a               push2 
+  0407:76               push0 
+  0408:88 0176            lsg  
+  040b:35 1e              ldi 1e 
+  040d:06                 mul 
+  040e:36                push 
+  040f:43 3c 04         callk Random 4 
+
+  0412:18                 not 
+  0413:a0 01bc            sag  
+
+        code_0416
+  0416:39 6a            pushi 6a // $6a init
+  0418:7a               push2 
+  0419:88 013b            lsg  
+  041c:88 0133            lsg  
+  041f:39 3c            pushi 3c // $3c doit
+  0421:76               push0 
+  0422:72 0270          lofsa $0270 // mainI
+  0425:4a 0c             send c 
+
+  0427:a0 0133            sag  
+  042a:38 018c          pushi 18c // $18c index
+  042d:76               push0 
+  042e:72 0270          lofsa $0270 // mainI
+  0431:4a 04             send 4 
+
+  0433:a0 013b            sag  
+  0436:72 0270          lofsa $0270 // mainI
+  0439:a3 01              sal local1 
+  043b:a3 00              sal local0 
+  043d:39 6a            pushi 6a // $6a init
+  043f:7a               push2 
+  0440:88 013c            lsg  
+  0443:88 0134            lsg  
+  0446:39 3c            pushi 3c // $3c doit
+  0448:78               push1 
+  0449:88 013b            lsg  
+  044c:72 029a          lofsa $029a // investIndex
+  044f:4a 0e             send e 
+
+  0451:a0 0134            sag  
+  0454:38 018c          pushi 18c // $18c index
+  0457:76               push0 
+  0458:72 029a          lofsa $029a // investIndex
+  045b:4a 04             send 4 
+
+  045d:a0 013c            sag  
+  0460:78               push1 
+  0461:72 029a          lofsa $029a // investIndex
+  0464:36                push 
+  0465:40 fba5 02        call proc_000e 2 
+
+  0469:39 6a            pushi 6a // $6a init
+  046b:7a               push2 
+  046c:88 013d            lsg  
+  046f:88 0135            lsg  
+  0472:39 3c            pushi 3c // $3c doit
+  0474:78               push1 
+  0475:88 013b            lsg  
+  0478:72 02c4          lofsa $02c4 // gdsIndex
+  047b:4a 0e             send e 
+
+  047d:a0 0135            sag  
+  0480:38 018c          pushi 18c // $18c index
+  0483:76               push0 
+  0484:72 02c4          lofsa $02c4 // gdsIndex
+  0487:4a 04             send 4 
+
+  0489:a0 013d            sag  
+  048c:78               push1 
+  048d:72 02c4          lofsa $02c4 // gdsIndex
+  0490:36                push 
+  0491:40 fb79 02        call proc_000e 2 
+
+  0495:39 6a            pushi 6a // $6a init
+  0497:7a               push2 
+  0498:88 013e            lsg  
+  049b:88 0136            lsg  
+  049e:39 3c            pushi 3c // $3c doit
+  04a0:78               push1 
+  04a1:88 013c            lsg  
+  04a4:72 02ee          lofsa $02ee // gldIndex
+  04a7:4a 0e             send e 
+
+  04a9:a0 0136            sag  
+  04ac:38 018c          pushi 18c // $18c index
+  04af:76               push0 
+  04b0:72 02ee          lofsa $02ee // gldIndex
+  04b3:4a 04             send 4 
+
+  04b5:a0 013e            sag  
+  04b8:78               push1 
+  04b9:72 02ee          lofsa $02ee // gldIndex
+  04bc:36                push 
+  04bd:40 fb4d 02        call proc_000e 2 
+
+  04c1:39 6a            pushi 6a // $6a init
+  04c3:7a               push2 
+  04c4:88 013f            lsg  
+  04c7:88 0137            lsg  
+  04ca:39 3c            pushi 3c // $3c doit
+  04cc:78               push1 
+  04cd:88 013c            lsg  
+  04d0:72 0318          lofsa $0318 // silIndex
+  04d3:4a 0e             send e 
+
+  04d5:a0 0137            sag  
+  04d8:38 018c          pushi 18c // $18c index
+  04db:76               push0 
+  04dc:72 0318          lofsa $0318 // silIndex
+  04df:4a 04             send 4 
+
+  04e1:a0 013f            sag  
+  04e4:78               push1 
+  04e5:72 0318          lofsa $0318 // silIndex
+  04e8:36                push 
+  04e9:40 fb21 02        call proc_000e 2 
+
+  04ed:39 6a            pushi 6a // $6a init
+  04ef:7a               push2 
+  04f0:88 0140            lsg  
+  04f3:88 0138            lsg  
+  04f6:39 3c            pushi 3c // $3c doit
+  04f8:78               push1 
+  04f9:88 013c            lsg  
+  04fc:72 0342          lofsa $0342 // prkIndex
+  04ff:4a 0e             send e 
+
+  0501:a0 0138            sag  
+  0504:38 018c          pushi 18c // $18c index
+  0507:76               push0 
+  0508:72 0342          lofsa $0342 // prkIndex
+  050b:4a 04             send 4 
+
+  050d:a0 0140            sag  
+  0510:78               push1 
+  0511:72 0342          lofsa $0342 // prkIndex
+  0514:36                push 
+  0515:40 faf5 02        call proc_000e 2 
+
+  0519:39 6a            pushi 6a // $6a init
+  051b:7a               push2 
+  051c:88 0141            lsg  
+  051f:88 0139            lsg  
+  0522:39 3c            pushi 3c // $3c doit
+  0524:78               push1 
+  0525:88 013c            lsg  
+  0528:72 036c          lofsa $036c // bcIndex
+  052b:4a 0e             send e 
+
+  052d:a0 0139            sag  
+  0530:38 018c          pushi 18c // $18c index
+  0533:76               push0 
+  0534:72 036c          lofsa $036c // bcIndex
+  0537:4a 04             send 4 
+
+  0539:a0 0141            sag  
+  053c:78               push1 
+  053d:72 036c          lofsa $036c // bcIndex
+  0540:36                push 
+  0541:40 fac9 02        call proc_000e 2 
+
+  0545:39 6a            pushi 6a // $6a init
+  0547:7a               push2 
+  0548:88 0142            lsg  
+  054b:88 013a            lsg  
+  054e:39 3c            pushi 3c // $3c doit
+  0550:78               push1 
+  0551:88 013c            lsg  
+  0554:72 0396          lofsa $0396 // penIndex
+  0557:4a 0e             send e 
+
+  0559:a0 013a            sag  
+  055c:38 018c          pushi 18c // $18c index
+  055f:76               push0 
+  0560:72 0396          lofsa $0396 // penIndex
+  0563:4a 04             send 4 
+
+  0565:a0 0142            sag  
+  0568:78               push1 
+  0569:72 0396          lofsa $0396 // penIndex
+  056c:36                push 
+  056d:40 fa9d 02        call proc_000e 2 
+
+  0571:39 6b            pushi 6b // $6b dispose
+  0573:76               push0 
+  0574:72 0270          lofsa $0270 // mainI
+  0577:4a 04             send 4 
+
+  0579:39 6b            pushi 6b // $6b dispose
+  057b:76               push0 
+  057c:72 029a          lofsa $029a // investIndex
+  057f:4a 04             send 4 
+
+  0581:39 6b            pushi 6b // $6b dispose
+  0583:76               push0 
+  0584:72 02c4          lofsa $02c4 // gdsIndex
+  0587:4a 04             send 4 
+
+  0589:39 6b            pushi 6b // $6b dispose
+  058b:76               push0 
+  058c:72 02ee          lofsa $02ee // gldIndex
+  058f:4a 04             send 4 
+
+  0591:39 6b            pushi 6b // $6b dispose
+  0593:76               push0 
+  0594:72 0318          lofsa $0318 // silIndex
+  0597:4a 04             send 4 
+
+  0599:39 6b            pushi 6b // $6b dispose
+  059b:76               push0 
+  059c:72 0342          lofsa $0342 // prkIndex
+  059f:4a 04             send 4 
+
+  05a1:39 6b            pushi 6b // $6b dispose
+  05a3:76               push0 
+  05a4:72 036c          lofsa $036c // bcIndex
+  05a7:4a 04             send 4 
+
+  05a9:39 6b            pushi 6b // $6b dispose
+  05ab:76               push0 
+  05ac:72 0396          lofsa $0396 // penIndex
+  05af:4a 04             send 4 
+
+  05b1:80 019f            lag  
+  05b4:18                 not 
+  05b5:30 00b4            bnt code_066c 
+  05b8:78               push1 
+  05b9:38 018c          pushi 18c // $18c index
+  05bc:76               push0 
+  05bd:83 01              lal local1 
+  05bf:4a 04             send 4 
+
+  05c1:36                push 
+  05c2:43 3d 02         callk Abs 2 
+
+  05c5:36                push 
+  05c6:78               push1 
+  05c7:38 018c          pushi 18c // $18c index
+  05ca:76               push0 
+  05cb:83 00              lal local0 
+  05cd:4a 04             send 4 
+
+  05cf:36                push 
+  05d0:43 3d 02         callk Abs 2 
+
+  05d3:1e                 gt? 
+  05d4:30 004e            bnt code_0625 
+  05d7:78               push1 
+  05d8:38 018c          pushi 18c // $18c index
+  05db:76               push0 
+  05dc:83 01              lal local1 
+  05de:4a 04             send 4 
+
+  05e0:36                push 
+  05e1:43 3d 02         callk Abs 2 
+
+  05e4:36                push 
+  05e5:35 03              ldi 3 
+  05e7:20                 ge? 
+  05e8:30 0007            bnt code_05f2 
+  05eb:7a               push2 
+  05ec:76               push0 
+  05ed:39 03            pushi 3 // $3 y
+  05ef:43 3c 04         callk Random 4 
+
+
+        code_05f2
+  05f2:2e 001b             bt code_0610 
+  05f5:78               push1 
+  05f6:38 018c          pushi 18c // $18c index
+  05f9:76               push0 
+  05fa:83 01              lal local1 
+  05fc:4a 04             send 4 
+
+  05fe:36                push 
+  05ff:43 3d 02         callk Abs 2 
+
+  0602:36                push 
+  0603:35 02              ldi 2 
+  0605:1a                 eq? 
+  0606:30 0063            bnt code_066c 
+  0609:7a               push2 
+  060a:76               push0 
+  060b:7a               push2 
+  060c:43 3c 04         callk Random 4 
+
+  060f:18                 not 
+
+        code_0610
+  0610:30 0059            bnt code_066c 
+  0613:38 01f0          pushi 1f0 // $1f0 headline
+  0616:76               push0 
+  0617:83 01              lal local1 
+  0619:4a 04             send 4 
+
+  061b:36                push 
+  061c:35 01              ldi 1 
+  061e:02                 add 
+  061f:a0 019f            sag  
+  0622:32 0047            jmp code_066c 
+
+        code_0625
+  0625:78               push1 
+  0626:38 018c          pushi 18c // $18c index
+  0629:76               push0 
+  062a:83 00              lal local0 
+  062c:4a 04             send 4 
+
+  062e:36                push 
+  062f:43 3d 02         callk Abs 2 
+
+  0632:36                push 
+  0633:35 03              ldi 3 
+  0635:20                 ge? 
+  0636:30 0007            bnt code_0640 
+  0639:7a               push2 
+  063a:76               push0 
+  063b:39 03            pushi 3 // $3 y
+  063d:43 3c 04         callk Random 4 
+
+
+        code_0640
+  0640:2e 001b             bt code_065e 
+  0643:78               push1 
+  0644:38 018c          pushi 18c // $18c index
+  0647:76               push0 
+  0648:83 00              lal local0 
+  064a:4a 04             send 4 
+
+  064c:36                push 
+  064d:43 3d 02         callk Abs 2 
+
+  0650:36                push 
+  0651:35 02              ldi 2 
+  0653:1a                 eq? 
+  0654:30 0015            bnt code_066c 
+  0657:7a               push2 
+  0658:76               push0 
+  0659:7a               push2 
+  065a:43 3c 04         callk Random 4 
+
+  065d:18                 not 
+
+        code_065e
+  065e:30 000b            bnt code_066c 
+  0661:38 01f0          pushi 1f0 // $1f0 headline
+  0664:76               push0 
+  0665:83 00              lal local0 
+  0667:4a 04             send 4 
+
+  0669:a0 019f            sag  
+
+        code_066c
+  066c:39 6b            pushi 6b // $6b dispose
+  066e:76               push0 
+  066f:54 04             self 4 
+
+  0671:78               push1 
+  0672:39 6b            pushi 6b // $6b dispose
+  0674:43 03 02         callk DisposeScript 2 
+
+  0677:48                 ret 
+    )
+
+)
+
+
+
+(procedure proc_000e
+  000e:38 018c          pushi 18c // $18c index
+  0011:76               push0 
+  0012:87 01              lap param1 
+  0014:4a 04             send 4 
+
+  0016:36                push 
+  0017:38 018c          pushi 18c // $18c index
+  001a:76               push0 
+  001b:83 01              lal local1 
+  001d:4a 04             send 4 
+
+  001f:22                 lt? 
+  0020:30 0007            bnt code_002a 
+  0023:87 01              lap param1 
+  0025:a3 01              sal local1 
+  0027:32 0019            jmp code_0043 
+
+        code_002a
+  002a:38 018c          pushi 18c // $18c index
+  002d:76               push0 
+  002e:87 01              lap param1 
+  0030:4a 04             send 4 
+
+  0032:36                push 
+  0033:38 018c          pushi 18c // $18c index
+  0036:76               push0 
+  0037:83 00              lal local0 
+  0039:4a 04             send 4 
+
+  003b:1e                 gt? 
+  003c:30 0004            bnt code_0043 
+  003f:87 01              lap param1 
+  0041:a3 00              sal local0 
+
+        code_0043
+  0043:48                 ret 
+)
+

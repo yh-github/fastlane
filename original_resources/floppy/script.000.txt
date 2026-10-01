@@ -1,0 +1,2216 @@
+(script 0)
+
+(string
+    string_0926 "version"
+    string_092e "jones"
+    string_0934 "bubbleWindow"
+    string_0941 "invisibleWindow"
+    string_0951 "Turn Music Off"
+    string_0960 "Turn Music On"
+    string_096e "aSong"
+    string_0974 "Turn Sound Effects Off"
+    string_098b "Turn Sound Effects On"
+    string_09a1 "aSoundEffect"
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+    local2 = $0000
+    local3 = $0006
+    local4 = $0000
+    local5 = $0000
+    local6 = $0000
+    local7 = $0000
+    local8 = $0000
+    local9 = $0000
+    local10 = $0000
+    local11 = $0000
+    local12 = $0000
+    local13 = $0000
+    local14 = $0000
+    local15 = $0000
+    local16 = $0000
+    local17 = $0007
+    local18 = $0000
+    local19 = $0000
+    local20 = $03e7
+    local21 = $03e5
+    local22 = $0001
+    local23 = $0004
+    local24 = $0000
+    local25 = $0000
+    local26 = $0001
+    local27 = $000c
+    local28 = $0926
+    local29 = $0000
+    local30 = $0000
+    local31 = $0000
+    local32 = $0000
+    local33 = $0000
+    local34 = $0000
+    local35 = $0000
+    local36 = $0000
+    local37 = $0000
+    local38 = $0000
+    local39 = $0000
+    local40 = $0000
+    local41 = $0000
+    local42 = $0000
+    local43 = $0000
+    local44 = $0000
+    local45 = $0000
+    local46 = $0000
+    local47 = $0000
+    local48 = $0000
+    local49 = $0000
+    local50 = $000a
+    local51 = $0000
+    local52 = $0000
+    local53 = $0000
+    local54 = $0000
+    local55 = $0000
+    local56 = $0000
+    local57 = $ffff
+    local58 = $0000
+    local59 = $0000
+    local60 = $0028
+    local61 = $00bd
+    local62 = $013f
+    local63 = $0000
+    local64 = $0004
+    local65 = $0000
+    local66 = $0000
+    local67 = $0000
+    local68 = $0000
+    local69 = $0000
+    local70 = $0000
+    local71 = $0000
+    local72 = $0000
+    local73 = $0000
+    local74 = $0000
+    local75 = $0000
+    local76 = $0003
+    local77 = $0000
+    local78 = $0000
+    local79 = $0000
+    local80 = $0000
+    local81 = $0000
+    local82 = $0000
+    local83 = $0000
+    local84 = $0000
+    local85 = $0000
+    local86 = $0000
+    local87 = $0000
+    local88 = $0000
+    local89 = $0000
+    local90 = $0000
+    local91 = $0000
+    local92 = $0000
+    local93 = $0000
+    local94 = $0000
+    local95 = $0000
+    local96 = $0000
+    local97 = $0000
+    local98 = $0000
+    local99 = $0000
+    local100 = $0000
+    local101 = $0000
+    local102 = $0000
+    local103 = $0000
+    local104 = $0000
+    local105 = $0000
+    local106 = $0000
+    local107 = $0000
+    local108 = $0000
+    local109 = $0000
+    local110 = $0000
+    local111 = $0000
+    local112 = $0000
+    local113 = $0000
+    local114 = $0000
+    local115 = $0000
+    local116 = $0000
+    local117 = $0000
+    local118 = $0000
+    local119 = $0000
+    local120 = $0000
+    local121 = $0000
+    local122 = $0000
+    local123 = $0000
+    local124 = $0000
+    local125 = $0000
+    local126 = $0000
+    local127 = $0000
+    local128 = $0000
+    local129 = $0000
+    local130 = $0000
+    local131 = $0000
+    local132 = $0000
+    local133 = $0000
+    local134 = $0000
+    local135 = $0000
+    local136 = $0000
+    local137 = $0000
+    local138 = $0000
+    local139 = $0000
+    local140 = $0000
+    local141 = $0000
+    local142 = $0000
+    local143 = $0000
+    local144 = $0000
+    local145 = $0000
+    local146 = $0000
+    local147 = $0000
+    local148 = $0000
+    local149 = $0000
+    local150 = $0000
+    local151 = $0000
+    local152 = $0000
+    local153 = $0000
+    local154 = $0000
+    local155 = $0000
+    local156 = $0000
+    local157 = $0000
+    local158 = $0000
+    local159 = $0000
+    local160 = $0000
+    local161 = $0000
+    local162 = $0000
+    local163 = $0000
+    local164 = $0000
+    local165 = $0000
+    local166 = $0000
+    local167 = $0000
+    local168 = $0000
+    local169 = $0000
+    local170 = $0000
+    local171 = $0000
+    local172 = $0000
+    local173 = $0000
+    local174 = $0000
+    local175 = $0000
+    local176 = $0000
+    local177 = $0000
+    local178 = $0000
+    local179 = $0000
+    local180 = $0000
+    local181 = $0000
+    local182 = $0000
+    local183 = $0000
+    local184 = $0000
+    local185 = $0000
+    local186 = $0000
+    local187 = $0000
+    local188 = $0000
+    local189 = $0000
+    local190 = $0000
+    local191 = $0000
+    local192 = $0000
+    local193 = $0000
+    local194 = $0000
+    local195 = $0000
+    local196 = $0000
+    local197 = $0000
+    local198 = $0000
+    local199 = $0000
+    local200 = $0000
+    local201 = $0000
+    local202 = $0000
+    local203 = $0000
+    local204 = $0000
+    local205 = $0000
+    local206 = $0000
+    local207 = $0000
+    local208 = $0000
+    local209 = $0000
+    local210 = $0000
+    local211 = $0000
+    local212 = $0000
+    local213 = $0000
+    local214 = $0000
+    local215 = $0000
+    local216 = $0000
+    local217 = $0000
+    local218 = $0000
+    local219 = $0000
+    local220 = $0000
+    local221 = $0000
+    local222 = $0000
+    local223 = $0000
+    local224 = $0000
+    local225 = $0000
+    local226 = $0000
+    local227 = $0000
+    local228 = $0000
+    local229 = $0000
+    local230 = $0000
+    local231 = $0000
+    local232 = $0000
+    local233 = $0000
+    local234 = $0000
+    local235 = $0000
+    local236 = $0000
+    local237 = $0000
+    local238 = $0000
+    local239 = $0000
+    local240 = $0000
+    local241 = $0000
+    local242 = $0000
+    local243 = $0000
+    local244 = $0000
+    local245 = $0000
+    local246 = $0000
+    local247 = $0000
+    local248 = $0000
+    local249 = $0000
+    local250 = $0000
+    local251 = $0000
+    local252 = $0000
+    local253 = $0000
+    local254 = $0000
+    local255 = $0000
+    local256 = $0000
+    local257 = $0000
+    local258 = $0000
+    local259 = $0000
+    local260 = $0000
+    local261 = $0000
+    local262 = $0000
+    local263 = $0000
+    local264 = $0000
+    local265 = $0000
+    local266 = $0000
+    local267 = $0000
+    local268 = $0000
+    local269 = $0000
+    local270 = $0000
+    local271 = $0000
+    local272 = $0000
+    local273 = $0000
+    local274 = $0000
+    local275 = $0000
+    local276 = $0000
+    local277 = $0000
+    local278 = $0000
+    local279 = $0000
+    local280 = $0000
+    local281 = $0000
+    local282 = $0000
+    local283 = $0000
+    local284 = $0000
+    local285 = $0000
+    local286 = $0000
+    local287 = $0000
+    local288 = $0000
+    local289 = $0000
+    local290 = $0000
+    local291 = $0000
+    local292 = $0000
+    local293 = $0000
+    local294 = $0000
+    local295 = $0000
+    local296 = $0000
+    local297 = $0000
+    local298 = $0000
+    local299 = $0000
+    local300 = $0000
+    local301 = $0000
+    local302 = $0000
+    local303 = $0000
+    local304 = $0000
+    local305 = $0000
+    local306 = $0000
+    local307 = $0064
+    local308 = $0064
+    local309 = $0064
+    local310 = $0064
+    local311 = $0064
+    local312 = $0064
+    local313 = $0064
+    local314 = $0064
+    local315 = $0000
+    local316 = $0000
+    local317 = $0000
+    local318 = $0000
+    local319 = $0000
+    local320 = $0000
+    local321 = $0000
+    local322 = $0000
+    local323 = $0000
+    local324 = $0000
+    local325 = $0000
+    local326 = $0000
+    local327 = $0000
+    local328 = $0000
+    local329 = $0000
+    local330 = $0000
+    local331 = $0000
+    local332 = $0000
+    local333 = $0000
+    local334 = $0000
+    local335 = $0000
+    local336 = $0000
+    local337 = $0000
+    local338 = $0000
+    local339 = $0000
+    local340 = $0000
+    local341 = $0000
+    local342 = $0000
+    local343 = $0000
+    local344 = $0000
+    local345 = $0000
+    local346 = $0000
+    local347 = $0000
+    local348 = $0000
+    local349 = $0000
+    local350 = $0000
+    local351 = $0000
+    local352 = $0000
+    local353 = $0000
+    local354 = $0000
+    local355 = $0000
+    local356 = $0000
+    local357 = $0000
+    local358 = $0000
+    local359 = $0000
+    local360 = $0000
+    local361 = $0000
+    local362 = $0000
+    local363 = $0000
+    local364 = $0000
+    local365 = $0000
+    local366 = $0000
+    local367 = $0000
+    local368 = $0000
+    local369 = $0000
+    local370 = $0000
+    local371 = $0000
+    local372 = $0001
+    local373 = $0000
+    local374 = $0000
+    local375 = $0000
+    local376 = $0000
+    local377 = $0000
+    local378 = $0000
+    local379 = $0000
+    local380 = $0000
+    local381 = $0000
+    local382 = $0000
+    local383 = $0000
+    local384 = $0000
+    local385 = $0000
+    local386 = $0000
+    local387 = $0000
+    local388 = $0000
+    local389 = $0000
+    local390 = $0000
+    local391 = $0000
+    local392 = $0000
+    local393 = $0000
+    local394 = $0000
+    local395 = $0000
+    local396 = $0000
+    local397 = $0000
+    local398 = $0000
+    local399 = $0000
+    local400 = $0000
+    local401 = $ffff
+    local402 = $0000
+    local403 = $0000
+    local404 = $0000
+    local405 = $0000
+    local406 = $0000
+    local407 = $0000
+    local408 = $0000
+    local409 = $0000
+    local410 = $0000
+    local411 = $0000
+    local412 = $0000
+    local413 = $0000
+    local414 = $0000
+    local415 = $0000
+    local416 = $0000
+    local417 = $0000
+    local418 = $0000
+    local419 = $0000
+    local420 = $0000
+    local421 = $0000
+    local422 = $0000
+    local423 = $0000
+    local424 = $0000
+    local425 = $0000
+    local426 = $0005
+    local427 = $0001
+    local428 = $0000
+    local429 = $0000
+    local430 = $0000
+    local431 = $0000
+    local432 = $0000
+    local433 = $0000
+    local434 = $0000
+    local435 = $0000
+    local436 = $0000
+    local437 = $0000
+    local438 = $0000
+    local439 = $0000
+    local440 = $0000
+    local441 = $0000
+    local442 = $0000
+    local443 = $0000
+    local444 = $0000
+    local445 = $0000
+    local446 = $0000
+    local447 = $0001
+    local448 = $0000
+    local449 = $0000
+    local450 = $0000
+    local451 = $0000
+    local452 = $0000
+    local453 = $0000
+    local454 = $0000
+    local455 = $0000
+    local456 = $0000
+    local457 = $0000
+    local458 = $0000
+    local459 = $0000
+    local460 = $0000
+    local461 = $0000
+    local462 = $0000
+    local463 = $0000
+    local464 = $0000
+    local465 = $0000
+    local466 = $0000
+    local467 = $0000
+    local468 = $0000
+    local469 = $0000
+    local470 = $0000
+    local471 = $0000
+    local472 = $0000
+    local473 = $0000
+    local474 = $0000
+    local475 = $0014
+    local476 = $0000
+    local477 = $0000
+    local478 = $0000
+    local479 = $0000
+    local480 = $0000
+    local481 = $0000
+    local482 = $0000
+    local483 = $0000
+    local484 = $0000
+    local485 = $0000
+    local486 = $0000
+    local487 = $0000
+    local488 = $0000
+    local489 = $0000
+    local490 = $0000
+    local491 = $0000
+    local492 = $0000
+    local493 = $0000
+    local494 = $0000
+    local495 = $0000
+    local496 = $0000
+    local497 = $0000
+    local498 = $0000
+    local499 = $0000
+    local500 = $0000
+    local501 = $ffff
+    local502 = $0000
+    local503 = $0000
+    local504 = $0000
+    local505 = $0000
+    local506 = $0000
+    local507 = $0000
+    local508 = $0000
+    local509 = $0001
+    local510 = $0001
+    local511 = $0000
+    local512 = $0007
+    local513 = $0000
+    local514 = $0000
+    local515 = $0000
+    local516 = $0000
+    local517 = $0000
+    local518 = $0000
+    local519 = $0000
+    local520 = $000c
+    local521 = $0000
+    local522 = $0000
+    local523 = $0000
+    local524 = $0000
+    local525 = $0000
+    local526 = $0000
+    local527 = $0000
+    local528 = $0000
+    local529 = $0000
+    local530 = $0000
+    local531 = $0000
+    local532 = $0000
+    local533 = $0000
+    local534 = $0000
+    local535 = $0000
+    local536 = $0000
+    local537 = $0000
+    local538 = $0000
+    local539 = $0000
+    local540 = $0000
+    local541 = $0000
+    local542 = $0000
+    local543 = $0000
+    local544 = $0000
+    local545 = $0000
+    local546 = $0000
+    local547 = $0000
+    local548 = $0000
+    local549 = $0000
+    local550 = $0000
+    local551 = $0000
+    local552 = $0000
+    local553 = $0000
+    local554 = $0000
+    local555 = $0000
+    local556 = $0000
+    local557 = $0000
+    local558 = $0000
+    local559 = $0000
+    local560 = $0000
+    local561 = $0000
+    local562 = $0000
+    local563 = $0000
+    local564 = $0000
+    local565 = $0000
+    local566 = $0000
+    local567 = $0000
+    local568 = $0000
+    local569 = $0000
+    local570 = $0000
+    local571 = $0000
+    local572 = $0000
+    local573 = $0000
+    local574 = $0000
+    local575 = $0000
+    local576 = $0000
+    local577 = $0000
+    local578 = $0000
+    local579 = $0000
+    local580 = $0000
+    local581 = $0000
+    local582 = $0000
+    local583 = $0000
+    local584 = $0000
+    local585 = $0000
+    local586 = $0000
+    local587 = $0000
+    local588 = $0000
+    local589 = $0000
+    local590 = $0000
+    local591 = $0000
+    local592 = $0000
+    local593 = $0000
+    local594 = $0000
+    local595 = $0000
+    local596 = $0000
+    local597 = $0000
+    local598 = $0000
+    local599 = $0000
+    local600 = $0000
+    local601 = $0000
+    local602 = $0000
+    local603 = $0000
+    local604 = $0000
+    local605 = $0000
+    local606 = $0000
+    local607 = $0000
+    local608 = $0000
+    local609 = $0000
+    local610 = $0000
+    local611 = $0000
+    local612 = $0000
+    local613 = $0000
+    local614 = $0000
+    local615 = $0000
+    local616 = $0000
+    local617 = $0000
+    local618 = $0000
+    local619 = $0000
+    local620 = $0000
+    local621 = $0000
+    local622 = $0000
+    local623 = $0000
+    local624 = $0000
+    local625 = $0000
+    local626 = $0000
+    local627 = $0000
+    local628 = $0000
+    local629 = $0000
+    local630 = $0000
+    local631 = $0000
+    local632 = $0000
+    local633 = $0000
+    local634 = $0000
+    local635 = $0000
+    local636 = $0000
+    local637 = $0000
+    local638 = $0000
+    local639 = $0000
+    local640 = $0000
+    local641 = $0000
+    local642 = $0000
+    local643 = $0000
+    local644 = $0000
+    local645 = $0000
+    local646 = $0000
+    local647 = $0000
+    local648 = $0000
+    local649 = $0000
+    local650 = $0000
+    local651 = $0000
+    local652 = $0000
+    local653 = $0000
+    local654 = $0000
+    local655 = $0000
+    local656 = $0000
+    local657 = $0000
+    local658 = $0000
+    local659 = $0000
+    local660 = $0000
+    local661 = $0000
+    local662 = $0000
+    local663 = $0000
+    local664 = $0000
+    local665 = $0000
+    local666 = $0000
+    local667 = $0000
+    local668 = $0000
+    local669 = $0000
+    local670 = $0000
+    local671 = $0000
+    local672 = $0000
+    local673 = $0000
+    local674 = $0000
+    local675 = $0000
+    local676 = $0000
+    local677 = $0000
+    local678 = $0000
+    local679 = $0000
+    local680 = $0000
+    local681 = $0000
+    local682 = $0000
+    local683 = $0000
+    local684 = $0000
+    local685 = $0000
+    local686 = $0000
+    local687 = $0000
+    local688 = $0000
+    local689 = $0000
+    local690 = $0000
+    local691 = $0000
+    local692 = $0000
+    local693 = $0000
+    local694 = $0000
+    local695 = $0000
+    local696 = $0000
+    local697 = $0000
+    local698 = $0000
+    local699 = $0000
+    local700 = $0000
+    local701 = $0000
+    local702 = $0000
+    local703 = $0000
+    local704 = $0000
+    local705 = $0000
+    local706 = $0000
+    local707 = $0000
+    local708 = $0000
+    local709 = $0000
+    local710 = $0000
+    local711 = $0000
+    local712 = $0000
+    local713 = $0000
+    local714 = $0000
+    local715 = $0000
+    local716 = $0000
+    local717 = $0000
+    local718 = $0000
+    local719 = $0000
+    local720 = $0000
+    local721 = $0000
+    local722 = $0000
+    local723 = $0000
+    local724 = $0000
+    local725 = $0000
+    local726 = $0000
+    local727 = $0000
+    local728 = $0000
+    local729 = $0000
+    local730 = $0000
+    local731 = $0000
+    local732 = $0000
+    local733 = $0000
+    local734 = $0000
+    local735 = $0000
+    local736 = $0000
+    local737 = $0000
+    local738 = $0000
+    local739 = $0000
+    local740 = $0000
+    local741 = $0000
+    local742 = $0000
+    local743 = $0000
+    local744 = $0000
+    local745 = $0000
+    local746 = $0000
+    local747 = $0000
+    local748 = $0000
+    local749 = $0000
+    local750 = $a600
+)
+
+// 01c0
+(instance publicjones of Game
+    (properties
+        script $0
+        parseLang $1
+        printLang $1
+        subtitleLang $0
+    )
+    (method (init) // method_002e
+  002e:3f 01             link 1 // (var $1)
+  0030:7a               push2 
+  0031:76               push0 
+  0032:88 0208            lsg  
+  0035:43 2d 04         callk DoSound 4 
+
+  0038:78               push1 
+  0039:39 03            pushi 3 // $3 y
+  003b:43 2d 02         callk DoSound 2 
+
+  003e:36                push 
+  003f:35 03              ldi 3 
+  0041:24                 le? 
+  0042:30 0014            bnt code_0059 
+  0045:39 2b            pushi 2b // $2b number
+  0047:78               push1 
+  0048:39 64            pushi 64 // $64 moveDone
+  004a:72 07db          lofsa $0828 // aSong
+  004d:4a 06             send 6 
+
+  004f:39 2b            pushi 2b // $2b number
+  0051:78               push1 
+  0052:39 64            pushi 64 // $64 moveDone
+  0054:72 0895          lofsa $08ec // aSoundEffect
+  0057:4a 06             send 6 
+
+
+        code_0059
+  0059:78               push1 
+  005a:7a               push2 
+  005b:43 6c 02         callk Graph 2 
+
+  005e:36                push 
+  005f:35 10              ldi 10 
+  0061:1a                 eq? 
+  0062:30 0005            bnt code_006a 
+  0065:35 00              ldi 0 
+  0067:32 0002            jmp code_006c 
+
+        code_006a
+  006a:35 01              ldi 1 
+
+        code_006c
+  006c:a0 0217            sag  
+  006f:78               push1 
+  0070:7a               push2 
+  0071:43 6c 02         callk Graph 2 
+
+  0074:36                push 
+  0075:35 02              ldi 2 
+  0077:1a                 eq? 
+  0078:30 0005            bnt code_0080 
+  007b:35 01              ldi 1 
+  007d:32 0002            jmp code_0082 
+
+        code_0080
+  0080:35 00              ldi 0 
+
+        code_0082
+  0082:a0 0228            sag  
+  0085:78               push1 
+  0086:76               push0 
+  0087:40 0644 02        call proc_06cf 2 
+
+  008b:35 01              ldi 1 
+  008d:a0 01ab            sag  
+  0090:35 00              ldi 0 
+  0092:a1 1c              sag  
+  0094:39 03            pushi 3 // $3 y
+  0096:76               push0 
+  0097:72 088c          lofsa $0926 // version
+  009a:36                push 
+  009b:78               push1 
+  009c:43 74 06         callk FileIO 6 
+
+  009f:a0 021a            sag  
+  00a2:30 001c            bnt code_00c1 
+  00a5:39 04            pushi 4 // $4 x
+  00a7:39 05            pushi 5 // $5 view
+  00a9:5a 0000 021b       lea 0 21b 
+  00ae:36                push 
+  00af:39 0a            pushi a // $a nsLeft
+  00b1:88 021a            lsg  
+  00b4:43 74 08         callk FileIO 8 
+
+  00b7:a1 1c              sag  
+  00b9:7a               push2 
+  00ba:78               push1 
+  00bb:88 021a            lsg  
+  00be:43 74 04         callk FileIO 4 
+
+
+        code_00c1
+  00c1:72 017c          lofsa $0240 // invisibleWindow
+  00c4:a1 3b              sag  
+  00c6:72 0129          lofsa $01f2 // bubbleWindow
+  00c9:a0 0173            sag  
+  00cc:38 00ec          pushi ec // $ec controls
+  00cf:78               push1 
+  00d0:78               push1 
+  00d1:51 20            class User 
+  00d3:4a 06             send 6 
+
+  00d5:38 0101          pushi 101 // $101 setSpeed
+  00d8:78               push1 
+  00d9:76               push0 
+  00da:81 01              lag  
+  00dc:4a 06             send 6 
+
+  00de:76               push0 
+  00df:43 14 00         callk GetPort 0 
+
+  00e2:a1 50              sag  
+  00e4:39 66            pushi 66 // $66 init
+  00e6:76               push0 
+  00e7:57 28 04         super Game 4 
+
+  00ea:39 04            pushi 4 // $4 x
+  00ec:89 13              lsg  
+  00ee:78               push1 
+  00ef:38 013f          pushi 13f // $13f wearing
+  00f2:38 00c7          pushi c7 // $c7 nonBumps
+  00f5:43 28 08         callk SetCursor 8 
+
+  00f8:72 072d          lofsa $0828 // aSong
+  00fb:a0 01dd            sag  
+  00fe:38 008d          pushi 8d // $8d owner
+  0101:78               push1 
+  0102:7c            pushSelf 
+  0103:39 66            pushi 66 // $66 init
+  0105:76               push0 
+  0106:72 07e3          lofsa $08ec // aSoundEffect
+  0109:a0 01dc            sag  
+  010c:4a 0a             send a 
+
+  010e:76               push0 
+  010f:43 2c 00         callk GameIsRestarting 0 
+
+  0112:30 0044            bnt code_0159 
+  0115:7a               push2 
+  0116:38 0084          pushi 84 // $84 caller
+  0119:39 07            pushi 7 // $7 cel
+  011b:43 01 04         callk UnLoad 4 
+
+  011e:7a               push2 
+  011f:38 0084          pushi 84 // $84 caller
+  0122:39 08            pushi 8 // $8 underBits
+  0124:43 01 04         callk UnLoad 4 
+
+  0127:7a               push2 
+  0128:38 0084          pushi 84 // $84 caller
+  012b:39 1f            pushi 1f // $1f style
+  012d:43 01 04         callk UnLoad 4 
+
+  0130:7a               push2 
+  0131:38 0084          pushi 84 // $84 caller
+  0134:39 06            pushi 6 // $6 loop
+  0136:43 01 04         callk UnLoad 4 
+
+  0139:7a               push2 
+  013a:38 0084          pushi 84 // $84 caller
+  013d:39 17            pushi 17 // $17 name
+  013f:43 01 04         callk UnLoad 4 
+
+  0142:38 008e          pushi 8e // $8e playBed
+  0145:7a               push2 
+  0146:39 0a            pushi a // $a nsLeft
+  0148:39 ff            pushi ff // $ff changeScore
+  014a:80 01dd            lag  
+  014d:4a 08             send 8 
+
+  014f:38 00fc          pushi fc // $fc newRoom
+  0152:78               push1 
+  0153:78               push1 
+  0154:54 06             self 6 
+
+  0156:32 0009            jmp code_0162 
+
+        code_0159
+  0159:38 00fc          pushi fc // $fc newRoom
+  015c:78               push1 
+  015d:38 02fc          pushi 2fc // $2fc sel_764
+  0160:54 06             self 6 
+
+
+        code_0162
+  0162:48                 ret 
+    )
+
+    (method (doit) // method_0163
+  0163:39 3c            pushi 3c // $3c doit
+  0165:76               push0 
+  0166:57 28 04         super Game 4 
+
+  0169:80 0210            lag  
+  016c:30 0014            bnt code_0183 
+  016f:80 01f6            lag  
+  0172:18                 not 
+  0173:30 000d            bnt code_0183 
+  0176:35 00              ldi 0 
+  0178:a0 0210            sag  
+  017b:38 00fe          pushi fe // $fe restart
+  017e:76               push0 
+  017f:81 01              lag  
+  0181:4a 04             send 4 
+
+
+        code_0183
+  0183:80 0211            lag  
+  0186:30 0013            bnt code_019c 
+  0189:80 01f6            lag  
+  018c:18                 not 
+  018d:30 000c            bnt code_019c 
+  0190:35 00              ldi 0 
+  0192:a0 0211            sag  
+  0195:39 4f            pushi 4f // $4f restore
+  0197:76               push0 
+  0198:81 01              lag  
+  019a:4a 04             send 4 
+
+
+        code_019c
+  019c:35 00              ldi 0 
+  019e:a1 3a              sag  
+  01a0:80 0215            lag  
+  01a3:30 0007            bnt code_01ad 
+  01a6:39 66            pushi 66 // $66 init
+  01a8:76               push0 
+  01a9:81 02              lag  
+  01ab:4a 04             send 4 
+
+
+        code_01ad
+  01ad:48                 ret 
+    )
+
+    (method (replay) // method_01ae
+  01ae:72 008f          lofsa $0240 // invisibleWindow
+  01b1:a1 3b              sag  
+  01b3:39 41            pushi 41 // $41 replay
+  01b5:76               push0 
+  01b6:57 28 04         super Game 4 
+
+  01b9:48                 ret 
+    )
+
+)
+
+// 01ec
+(instance publicbubbleWindow of BubbleWindow
+    (properties
+        top $0
+        left $0
+        bottom $0
+        right $0
+        color $0
+        back $7
+        priority $f
+        window $0
+        type $81
+        title $0
+        hMargin $4
+        vMargin $4
+        brTop $0
+        brLeft $0
+        brBottom $be
+        brRight $140
+        animateObj $0
+        underBits $0
+        view $0
+        vColor $0
+        tailUnderbits $0
+        tailLeft $0
+        tailTop $0
+        tailBottom $0
+        tailRight $0
+        tNum $0
+        pPort $0
+    )
+)
+
+// 023a
+(instance publicinvisibleWindow of InvisibleWindow
+    (properties
+        top $0
+        left $0
+        bottom $0
+        right $0
+        color $0
+        back $ffff
+        priority $ffff
+        window $0
+        type $81
+        title $0
+        hMargin $4
+        vMargin $4
+        brTop $0
+        brLeft $0
+        brBottom $be
+        brRight $140
+        animateObj $0
+        underBits $0
+        -oldPort- $0
+    )
+)
+
+// 0822
+(instance aSong of Sound
+    (properties
+        nodePtr $0
+        handle $0
+        number $6
+        vol $7f
+        priority $0
+        loop $1
+        signal $0
+        prevSignal $0
+        dataInc $0
+        min $0
+        sec $0
+        frame $0
+        client $0
+        owner $ffff
+        soundOn $1
+        nextNumber $0
+        nextLoop $ffff
+    )
+    (method (cue) // method_078d
+  078d:63 24             pToa soundOn 
+  078f:30 0007            bnt code_0799 
+  0792:38 0090          pushi 90 // $90 pause
+  0795:78               push1 
+  0796:76               push0 
+  0797:54 06             self 6 
+
+
+        code_0799
+  0799:8f 00              lsp paramTotal 
+  079b:35 02              ldi 2 
+  079d:20                 ge? 
+  079e:30 0022            bnt code_07c3 
+  07a1:87 02              lap param2 
+  07a3:30 001d            bnt code_07c3 
+  07a6:8f 02              lsp param2 
+  07a8:35 0a              ldi a 
+  07aa:1a                 eq? 
+  07ab:30 0009            bnt code_07b7 
+  07ae:7a               push2 
+  07af:38 0084          pushi 84 // $84 caller
+  07b2:39 06            pushi 6 // $6 loop
+  07b4:43 01 04         callk UnLoad 4 
+
+
+        code_07b7
+  07b7:39 06            pushi 6 // $6 loop
+  07b9:78               push1 
+  07ba:8f 03              lsp param3 
+  07bc:39 2a            pushi 2a // $2a play
+  07be:78               push1 
+  07bf:8f 02              lsp param2 
+  07c1:54 0c             self c 
+
+
+        code_07c3
+  07c3:48                 ret 
+    )
+
+    (method (toggle) // method_07c4
+  07c4:78               push1 
+  07c5:63 24             pToa soundOn 
+  07c7:04                 sub 
+  07c8:65 24             aTop soundOn 
+  07ca:30 0028            bnt code_07f5 
+  07cd:39 03            pushi 3 // $3 y
+  07cf:38 0308          pushi 308 // $308 sel_776
+  07d2:39 6e            pushi 6e // $6e add
+  07d4:72 017a          lofsa $0951 // Turn Music Off
+  07d7:36                push 
+  07d8:43 5c 06         callk SetMenu 6 
+
+  07db:35 7f              ldi 7f 
+  07dd:65 0e             aTop vol 
+  07df:38 0086          pushi 86 // $86 changeState
+  07e2:76               push0 
+  07e3:54 04             self 4 
+
+  07e5:39 04            pushi 4 // $4 x
+  07e7:76               push0 
+  07e8:76               push0 
+  07e9:39 19            pushi 19 // $19 time
+  07eb:88 01aa            lsg  
+  07ee:47 ff 00 08      calle ff procedure_0000 8 //  
+
+  07f2:32 0025            jmp code_081a 
+
+        code_07f5
+  07f5:39 03            pushi 3 // $3 y
+  07f7:38 0308          pushi 308 // $308 sel_776
+  07fa:39 6e            pushi 6e // $6e add
+  07fc:72 0161          lofsa $0960 // Turn Music On
+  07ff:36                push 
+  0800:43 5c 06         callk SetMenu 6 
+
+  0803:35 00              ldi 0 
+  0805:65 0e             aTop vol 
+  0807:38 0086          pushi 86 // $86 changeState
+  080a:76               push0 
+  080b:54 04             self 4 
+
+  080d:39 04            pushi 4 // $4 x
+  080f:76               push0 
+  0810:78               push1 
+  0811:39 19            pushi 19 // $19 time
+  0813:88 01aa            lsg  
+  0816:47 ff 00 08      calle ff procedure_0000 8 //  
+
+
+        code_081a
+  081a:48                 ret 
+  081b:00                bnot 
+    )
+
+)
+
+// 08e6
+(instance aSoundEffect of Sound
+    (properties
+        nodePtr $0
+        handle $0
+        number $6
+        vol $7f
+        priority $1
+        loop $1
+        signal $0
+        prevSignal $0
+        dataInc $0
+        min $0
+        sec $0
+        frame $0
+        client $0
+        owner $ffff
+        soundOn $1
+        nextNumber $0
+        nextLoop $ffff
+    )
+    (method (cue) // method_0862
+  0862:63 24             pToa soundOn 
+  0864:30 0007            bnt code_086e 
+  0867:38 0090          pushi 90 // $90 pause
+  086a:78               push1 
+  086b:76               push0 
+  086c:54 06             self 6 
+
+
+        code_086e
+  086e:8f 00              lsp paramTotal 
+  0870:35 02              ldi 2 
+  0872:20                 ge? 
+  0873:30 0011            bnt code_0887 
+  0876:87 02              lap param2 
+  0878:30 000c            bnt code_0887 
+  087b:39 06            pushi 6 // $6 loop
+  087d:78               push1 
+  087e:8f 03              lsp param3 
+  0880:39 2a            pushi 2a // $2a play
+  0882:78               push1 
+  0883:8f 02              lsp param2 
+  0885:54 0c             self c 
+
+
+        code_0887
+  0887:48                 ret 
+    )
+
+    (method (toggle) // method_0888
+  0888:78               push1 
+  0889:63 24             pToa soundOn 
+  088b:04                 sub 
+  088c:65 24             aTop soundOn 
+  088e:30 0028            bnt code_08b9 
+  0891:39 03            pushi 3 // $3 y
+  0893:38 0309          pushi 309 // $309 sel_777
+  0896:39 6e            pushi 6e // $6e add
+  0898:72 00d9          lofsa $0974 // Turn Sound Effects Off
+  089b:36                push 
+  089c:43 5c 06         callk SetMenu 6 
+
+  089f:35 7f              ldi 7f 
+  08a1:65 0e             aTop vol 
+  08a3:38 0086          pushi 86 // $86 changeState
+  08a6:76               push0 
+  08a7:54 04             self 4 
+
+  08a9:39 04            pushi 4 // $4 x
+  08ab:76               push0 
+  08ac:7a               push2 
+  08ad:39 19            pushi 19 // $19 time
+  08af:88 01aa            lsg  
+  08b2:47 ff 00 08      calle ff procedure_0000 8 //  
+
+  08b6:32 0026            jmp code_08df 
+
+        code_08b9
+  08b9:39 03            pushi 3 // $3 y
+  08bb:38 0309          pushi 309 // $309 sel_777
+  08be:39 6e            pushi 6e // $6e add
+  08c0:72 00c8          lofsa $098b // Turn Sound Effects On
+  08c3:36                push 
+  08c4:43 5c 06         callk SetMenu 6 
+
+  08c7:35 00              ldi 0 
+  08c9:65 0e             aTop vol 
+  08cb:38 0086          pushi 86 // $86 changeState
+  08ce:76               push0 
+  08cf:54 04             self 4 
+
+  08d1:39 04            pushi 4 // $4 x
+  08d3:76               push0 
+  08d4:39 03            pushi 3 // $3 y
+  08d6:39 19            pushi 19 // $19 time
+  08d8:88 01aa            lsg  
+  08db:47 ff 00 08      calle ff procedure_0000 8 //  
+
+
+        code_08df
+  08df:48                 ret 
+    )
+
+)
+
+
+// EXPORTED procedure #1 ()
+(procedure proc_0276
+  0276:7a               push2 
+  0277:39 1b            pushi 1b // $1b elements
+  0279:76               push0 
+  027a:81 05              lag  
+  027c:4a 04             send 4 
+
+  027e:36                push 
+  027f:76               push0 
+  0280:43 0b 04         callk Animate 4 
+
+  0283:48                 ret 
+)
+
+// EXPORTED procedure #2 ()
+(procedure proc_0284
+  0284:3f 02             link 2 // (var $2)
+  0286:8f 00              lsp paramTotal 
+  0288:35 02              ldi 2 
+  028a:04                 sub 
+  028b:a7 00              sap paramTotal 
+  028d:35 00              ldi 0 
+  028f:a5 00              sat temp0 
+
+        code_0291
+  0291:8d 00              lst temp0 
+  0293:87 00              lap paramTotal 
+  0295:24                 le? 
+  0296:30 0017            bnt code_02b0 
+  0299:85 00              lat temp0 
+  029b:97 02             lapi param2 
+  029d:a5 01              sat temp1 
+  029f:87 01              lap param1 
+  02a1:30 0007            bnt code_02ab 
+  02a4:7a               push2 
+  02a5:36                push 
+  02a6:8d 01              lst temp1 
+  02a8:43 00 04         callk Load 4 
+
+
+        code_02ab
+  02ab:c5 00              +at temp0 
+  02ad:32 ffe1            jmp code_0291 
+
+        code_02b0
+  02b0:48                 ret 
+)
+
+// EXPORTED procedure #3 ()
+(procedure proc_02b1
+  02b1:3f 02             link 2 // (var $2)
+  02b3:8f 01              lsp param1 
+  02b5:35 00              ldi 0 
+  02b7:1e                 gt? 
+  02b8:30 007c            bnt code_0337 
+  02bb:35 00              ldi 0 
+  02bd:a5 00              sat temp0 
+
+        code_02bf
+  02bf:8d 00              lst temp0 
+  02c1:8f 01              lsp param1 
+  02c3:35 06              ldi 6 
+  02c5:08                 div 
+  02c6:22                 lt? 
+  02c7:30 006d            bnt code_0337 
+  02ca:78               push1 
+  02cb:39 06            pushi 6 // $6 loop
+  02cd:43 41 02         callk Wait 2 
+
+  02d0:39 65            pushi 65 // $65 new
+  02d2:76               push0 
+  02d3:51 07            class Event 
+  02d5:4a 04             send 4 
+
+  02d7:a5 01              sat temp1 
+  02d9:39 7c            pushi 7c // $7c handleEvent
+  02db:78               push1 
+  02dc:36                push 
+  02dd:51 12            class MenuBar 
+  02df:4a 06             send 6 
+
+  02e1:39 22            pushi 22 // $22 type
+  02e3:76               push0 
+  02e4:85 01              lat temp1 
+  02e6:4a 04             send 4 
+
+  02e8:36                push 
+  02e9:35 02              ldi 2 
+  02eb:1a                 eq? 
+  02ec:30 000b            bnt code_02fa 
+  02ef:39 03            pushi 3 // $3 y
+  02f1:76               push0 
+  02f2:85 01              lat temp1 
+  02f4:4a 04             send 4 
+
+  02f6:36                push 
+  02f7:35 0a              ldi a 
+  02f9:20                 ge? 
+
+        code_02fa
+  02fa:2e 0019             bt code_0316 
+  02fd:39 22            pushi 22 // $22 type
+  02ff:76               push0 
+  0300:85 01              lat temp1 
+  0302:4a 04             send 4 
+
+  0304:36                push 
+  0305:35 04              ldi 4 
+  0307:1a                 eq? 
+  0308:30 0018            bnt code_0323 
+  030b:39 28            pushi 28 // $28 message
+  030d:76               push0 
+  030e:85 01              lat temp1 
+  0310:4a 04             send 4 
+
+  0312:36                push 
+  0313:35 0d              ldi d 
+  0315:1a                 eq? 
+
+        code_0316
+  0316:30 000a            bnt code_0323 
+  0319:39 67            pushi 67 // $67 dispose
+  031b:76               push0 
+  031c:85 01              lat temp1 
+  031e:4a 04             send 4 
+
+  0320:32 0014            jmp code_0337 
+
+        code_0323
+  0323:39 67            pushi 67 // $67 dispose
+  0325:76               push0 
+  0326:85 01              lat temp1 
+  0328:4a 04             send 4 
+
+  032a:81 04              lag  
+  032c:30 0003            bnt code_0332 
+  032f:32 0005            jmp code_0337 
+
+        code_0332
+  0332:c5 00              +at temp0 
+  0334:32 ff88            jmp code_02bf 
+
+        code_0337
+  0337:48                 ret 
+)
+
+// EXPORTED procedure #6 ()
+(procedure proc_0338
+  0338:88 0197            lsg  
+  033b:87 01              lap param1 
+  033d:1a                 eq? 
+  033e:2e 000f             bt code_0350 
+  0341:88 0199            lsg  
+  0344:87 01              lap param1 
+  0346:1a                 eq? 
+  0347:2e 0006             bt code_0350 
+  034a:88 019a            lsg  
+  034d:87 01              lap param1 
+  034f:1a                 eq? 
+
+        code_0350
+  0350:48                 ret 
+)
+
+// EXPORTED procedure #7 ()
+(procedure proc_0351
+  0351:39 03            pushi 3 // $3 y
+  0353:38 0201          pushi 201 // $201 sel_513
+  0356:39 70            pushi 70 // $70 firstTrue
+  0358:76               push0 
+  0359:43 5c 06         callk SetMenu 6 
+
+  035c:48                 ret 
+)
+
+// EXPORTED procedure #8 ()
+(procedure proc_035d
+  035d:39 03            pushi 3 // $3 y
+  035f:38 0201          pushi 201 // $201 sel_513
+  0362:39 70            pushi 70 // $70 firstTrue
+  0364:78               push1 
+  0365:43 5c 06         callk SetMenu 6 
+
+  0368:48                 ret 
+)
+
+// EXPORTED procedure #9 ()
+(procedure proc_0369
+  0369:3f 04             link 4 // (var $4)
+  036b:35 00              ldi 0 
+  036d:a5 00              sat temp0 
+
+        code_036f
+  036f:8d 00              lst temp0 
+  0371:39 59            pushi 59 // $59 size
+  0373:76               push0 
+  0374:87 01              lap param1 
+  0376:4a 04             send 4 
+
+  0378:22                 lt? 
+  0379:30 009d            bnt code_0419 
+  037c:39 43            pushi 43 // $43 at
+  037e:78               push1 
+  037f:8d 00              lst temp0 
+  0381:87 01              lap param1 
+  0383:4a 06             send 6 
+
+  0385:a5 01              sat temp1 
+  0387:39 20            pushi 20 // $20 state
+  0389:76               push0 
+  038a:4a 04             send 4 
+
+  038c:36                push 
+  038d:35 01              ldi 1 
+  038f:12                 and 
+  0390:30 0081            bnt code_0414 
+  0393:39 6e            pushi 6e // $6e add
+  0395:78               push1 
+  0396:8d 01              lst temp1 
+  0398:87 02              lap param2 
+  039a:4a 06             send 6 
+
+  039c:38 012d          pushi 12d // $12d keyMouseX
+  039f:78               push1 
+  03a0:39 0a            pushi a // $a nsLeft
+  03a2:76               push0 
+  03a3:85 01              lat temp1 
+  03a5:4a 04             send 4 
+
+  03a7:36                push 
+  03a8:39 0c            pushi c // $c nsRight
+  03aa:76               push0 
+  03ab:85 01              lat temp1 
+  03ad:4a 04             send 4 
+
+  03af:02                 add 
+  03b0:36                push 
+  03b1:35 02              ldi 2 
+  03b3:08                 div 
+  03b4:36                push 
+  03b5:8f 00              lsp paramTotal 
+  03b7:35 04              ldi 4 
+  03b9:20                 ge? 
+  03ba:30 0010            bnt code_03cd 
+  03bd:38 00a6          pushi a6 // $a6 left
+  03c0:76               push0 
+  03c1:39 23            pushi 23 // $23 window
+  03c3:76               push0 
+  03c4:87 01              lap param1 
+  03c6:4a 04             send 4 
+
+  03c8:4a 04             send 4 
+
+  03ca:32 0007            jmp code_03d4 
+
+        code_03cd
+  03cd:39 0a            pushi a // $a nsLeft
+  03cf:76               push0 
+  03d0:87 01              lap param1 
+  03d2:4a 04             send 4 
+
+
+        code_03d4
+  03d4:02                 add 
+  03d5:36                push 
+  03d6:38 012f          pushi 12f // $12f keyMouseY
+  03d9:78               push1 
+  03da:39 09            pushi 9 // $9 nsTop
+  03dc:76               push0 
+  03dd:85 01              lat temp1 
+  03df:4a 04             send 4 
+
+  03e1:36                push 
+  03e2:39 0b            pushi b // $b nsBottom
+  03e4:76               push0 
+  03e5:85 01              lat temp1 
+  03e7:4a 04             send 4 
+
+  03e9:02                 add 
+  03ea:36                push 
+  03eb:35 02              ldi 2 
+  03ed:08                 div 
+  03ee:36                push 
+  03ef:8f 00              lsp paramTotal 
+  03f1:35 04              ldi 4 
+  03f3:20                 ge? 
+  03f4:30 0010            bnt code_0407 
+  03f7:38 00a5          pushi a5 // $a5 top
+  03fa:76               push0 
+  03fb:39 23            pushi 23 // $23 window
+  03fd:76               push0 
+  03fe:87 01              lap param1 
+  0400:4a 04             send 4 
+
+  0402:4a 04             send 4 
+
+  0404:32 0007            jmp code_040e 
+
+        code_0407
+  0407:39 09            pushi 9 // $9 nsTop
+  0409:76               push0 
+  040a:87 01              lap param1 
+  040c:4a 04             send 4 
+
+
+        code_040e
+  040e:02                 add 
+  040f:36                push 
+  0410:85 01              lat temp1 
+  0412:4a 0c             send c 
+
+
+        code_0414
+  0414:c5 00              +at temp0 
+  0416:32 ff56            jmp code_036f 
+
+        code_0419
+  0419:80 01bf            lag  
+  041c:30 0023            bnt code_0442 
+  041f:38 0102          pushi 102 // $102 setCursor
+  0422:78               push1 
+  0423:8f 00              lsp paramTotal 
+  0425:35 03              ldi 3 
+  0427:20                 ge? 
+  0428:30 000a            bnt code_0435 
+  042b:87 03              lap param3 
+  042d:30 0005            bnt code_0435 
+  0430:87 03              lap param3 
+  0432:32 0008            jmp code_043d 
+
+        code_0435
+  0435:39 43            pushi 43 // $43 at
+  0437:78               push1 
+  0438:76               push0 
+  0439:87 02              lap param2 
+  043b:4a 06             send 6 
+
+
+        code_043d
+  043d:36                push 
+  043e:51 30            class KeyMouse 
+  0440:4a 06             send 6 
+
+
+        code_0442
+  0442:38 0125          pushi 125 // $125 curItem
+  0445:78               push1 
+  0446:8f 00              lsp paramTotal 
+  0448:35 03              ldi 3 
+  044a:20                 ge? 
+  044b:30 000a            bnt code_0458 
+  044e:87 03              lap param3 
+  0450:30 0005            bnt code_0458 
+  0453:87 03              lap param3 
+  0455:32 0008            jmp code_0460 
+
+        code_0458
+  0458:39 43            pushi 43 // $43 at
+  045a:78               push1 
+  045b:76               push0 
+  045c:87 02              lap param2 
+  045e:4a 06             send 6 
+
+
+        code_0460
+  0460:36                push 
+  0461:51 30            class KeyMouse 
+  0463:4a 06             send 6 
+
+  0465:48                 ret 
+)
+
+// EXPORTED procedure #10 ()
+(procedure proc_0466
+  0466:3f 01             link 1 // (var $1)
+  0468:8f 01              lsp param1 
+  046a:38 0175          pushi 175 // $175 cash
+  046d:76               push0 
+  046e:80 012e            lag  
+  0471:4a 04             send 4 
+
+  0473:02                 add 
+  0474:a5 00              sat temp0 
+  0476:8f 01              lsp param1 
+  0478:35 00              ldi 0 
+  047a:22                 lt? 
+  047b:30 0036            bnt code_04b4 
+  047e:38 0176          pushi 176 // $176 cashHi
+  0481:76               push0 
+  0482:80 012e            lag  
+  0485:4a 04             send 4 
+
+  0487:30 0052            bnt code_04dc 
+  048a:8d 00              lst temp0 
+  048c:35 00              ldi 0 
+  048e:22                 lt? 
+  048f:30 004a            bnt code_04dc 
+  0492:38 0176          pushi 176 // $176 cashHi
+  0495:78               push1 
+  0496:38 0176          pushi 176 // $176 cashHi
+  0499:76               push0 
+  049a:80 012e            lag  
+  049d:4a 04             send 4 
+
+  049f:36                push 
+  04a0:35 01              ldi 1 
+  04a2:04                 sub 
+  04a3:36                push 
+  04a4:80 012e            lag  
+  04a7:4a 06             send 6 
+
+  04a9:8d 00              lst temp0 
+  04ab:34 7fff            ldi 7fff 
+  04ae:02                 add 
+  04af:a5 00              sat temp0 
+  04b1:32 0028            jmp code_04dc 
+
+        code_04b4
+  04b4:8d 00              lst temp0 
+  04b6:34 7fff            ldi 7fff 
+  04b9:28                uge? 
+  04ba:30 001f            bnt code_04dc 
+  04bd:38 0176          pushi 176 // $176 cashHi
+  04c0:78               push1 
+  04c1:38 0176          pushi 176 // $176 cashHi
+  04c4:76               push0 
+  04c5:80 012e            lag  
+  04c8:4a 04             send 4 
+
+  04ca:36                push 
+  04cb:35 01              ldi 1 
+  04cd:02                 add 
+  04ce:36                push 
+  04cf:80 012e            lag  
+  04d2:4a 06             send 6 
+
+  04d4:8d 00              lst temp0 
+  04d6:34 7fff            ldi 7fff 
+  04d9:04                 sub 
+  04da:a5 00              sat temp0 
+
+        code_04dc
+  04dc:38 0175          pushi 175 // $175 cash
+  04df:78               push1 
+  04e0:8d 00              lst temp0 
+  04e2:80 012e            lag  
+  04e5:4a 06             send 6 
+
+  04e7:38 0177          pushi 177 // $177 monStat
+  04ea:78               push1 
+  04eb:38 0178          pushi 178 // $178 lqAssHi
+  04ee:76               push0 
+  04ef:80 012e            lag  
+  04f2:4a 04             send 4 
+
+  04f4:30 0005            bnt code_04fc 
+  04f7:35 64              ldi 64 
+  04f9:32 000d            jmp code_0509 
+
+        code_04fc
+  04fc:38 0179          pushi 179 // $179 lqAss
+  04ff:76               push0 
+  0500:80 012e            lag  
+  0503:4a 04             send 4 
+
+  0505:36                push 
+  0506:35 64              ldi 64 
+  0508:08                 div 
+
+        code_0509
+  0509:36                push 
+  050a:80 012e            lag  
+  050d:4a 06             send 6 
+
+  050f:38 0177          pushi 177 // $177 monStat
+  0512:76               push0 
+  0513:80 012e            lag  
+  0516:4a 04             send 4 
+
+  0518:36                push 
+  0519:35 64              ldi 64 
+  051b:1e                 gt? 
+  051c:30 000b            bnt code_052a 
+  051f:38 0177          pushi 177 // $177 monStat
+  0522:78               push1 
+  0523:39 64            pushi 64 // $64 moveDone
+  0525:80 012e            lag  
+  0528:4a 06             send 6 
+
+
+        code_052a
+  052a:38 0177          pushi 177 // $177 monStat
+  052d:76               push0 
+  052e:80 012e            lag  
+  0531:4a 04             send 4 
+
+  0533:36                push 
+  0534:35 00              ldi 0 
+  0536:22                 lt? 
+  0537:30 000a            bnt code_0544 
+  053a:38 0177          pushi 177 // $177 monStat
+  053d:78               push1 
+  053e:76               push0 
+  053f:80 012e            lag  
+  0542:4a 06             send 6 
+
+
+        code_0544
+  0544:48                 ret 
+)
+
+// EXPORTED procedure #11 ()
+(procedure proc_0545
+  0545:3f 02             link 2 // (var $2)
+  0547:87 00              lap paramTotal 
+  0549:30 0005            bnt code_0551 
+  054c:87 01              lap param1 
+  054e:32 0003            jmp code_0554 
+
+        code_0551
+  0551:80 012e            lag  
+
+        code_0554
+  0554:a5 01              sat temp1 
+  0556:38 0176          pushi 176 // $176 cashHi
+  0559:76               push0 
+  055a:4a 04             send 4 
+
+  055c:30 0006            bnt code_0565 
+  055f:34 7fff            ldi 7fff 
+  0562:32 001c            jmp code_0581 
+
+        code_0565
+  0565:38 0175          pushi 175 // $175 cash
+  0568:76               push0 
+  0569:85 01              lat temp1 
+  056b:4a 04             send 4 
+
+  056d:36                push 
+  056e:35 00              ldi 0 
+  0570:22                 lt? 
+  0571:30 0005            bnt code_0579 
+  0574:35 00              ldi 0 
+  0576:32 0008            jmp code_0581 
+
+        code_0579
+  0579:38 0175          pushi 175 // $175 cash
+  057c:76               push0 
+  057d:85 01              lat temp1 
+  057f:4a 04             send 4 
+
+
+        code_0581
+  0581:48                 ret 
+)
+
+// EXPORTED procedure #12 ()
+(procedure proc_0582
+  0582:8f 02              lsp param2 
+  0584:87 04              lap param4 
+  0586:02                 add 
+  0587:a0 01c7            sag  
+  058a:35 00              ldi 0 
+  058c:a0 01c6            sag  
+  058f:8f 02              lsp param2 
+  0591:35 00              ldi 0 
+  0593:22                 lt? 
+  0594:2e 0005             bt code_059c 
+  0597:8f 04              lsp param4 
+  0599:35 00              ldi 0 
+  059b:22                 lt? 
+
+        code_059c
+  059c:30 0025            bnt code_05c4 
+  059f:88 01c7            lsg  
+  05a2:35 00              ldi 0 
+  05a4:22                 lt? 
+  05a5:30 0035            bnt code_05dd 
+  05a8:87 01              lap param1 
+  05aa:2e 0002             bt code_05af 
+  05ad:87 03              lap param3 
+
+        code_05af
+  05af:30 002b            bnt code_05dd 
+  05b2:88 01c7            lsg  
+  05b5:34 8000            ldi 8000 
+  05b8:02                 add 
+  05b9:a0 01c7            sag  
+  05bc:35 ff              ldi ff 
+  05be:a0 01c6            sag  
+  05c1:32 0019            jmp code_05dd 
+
+        code_05c4
+  05c4:88 01c7            lsg  
+  05c7:34 7fff            ldi 7fff 
+  05ca:28                uge? 
+  05cb:30 000f            bnt code_05dd 
+  05ce:35 01              ldi 1 
+  05d0:a0 01c6            sag  
+  05d3:88 01c7            lsg  
+  05d6:34 8000            ldi 8000 
+  05d9:02                 add 
+  05da:a0 01c7            sag  
+
+        code_05dd
+  05dd:88 01c6            lsg  
+  05e0:8f 01              lsp param1 
+  05e2:87 03              lap param3 
+  05e4:02                 add 
+  05e5:02                 add 
+  05e6:a0 01c6            sag  
+  05e9:48                 ret 
+)
+
+// EXPORTED procedure #13 ()
+(procedure proc_05ea
+  05ea:3f 02             link 2 // (var $2)
+  05ec:8f 00              lsp paramTotal 
+  05ee:35 02              ldi 2 
+  05f0:22                 lt? 
+  05f1:30 0006            bnt code_05fa 
+  05f4:80 012e            lag  
+  05f7:32 0002            jmp code_05fc 
+
+        code_05fa
+  05fa:87 02              lap param2 
+
+        code_05fc
+  05fc:a5 01              sat temp1 
+  05fe:38 017a          pushi 17a // $17a hapStat
+  0601:76               push0 
+  0602:4a 04             send 4 
+
+  0604:36                push 
+  0605:87 01              lap param1 
+  0607:02                 add 
+  0608:a5 00              sat temp0 
+  060a:36                push 
+  060b:35 64              ldi 64 
+  060d:1e                 gt? 
+  060e:30 0004            bnt code_0615 
+  0611:35 64              ldi 64 
+  0613:a5 00              sat temp0 
+
+        code_0615
+  0615:8d 00              lst temp0 
+  0617:35 00              ldi 0 
+  0619:22                 lt? 
+  061a:30 0004            bnt code_0621 
+  061d:35 00              ldi 0 
+  061f:a5 00              sat temp0 
+
+        code_0621
+  0621:38 017a          pushi 17a // $17a hapStat
+  0624:78               push1 
+  0625:8d 00              lst temp0 
+  0627:85 01              lat temp1 
+  0629:4a 06             send 6 
+
+  062b:48                 ret 
+)
+
+// EXPORTED procedure #14 ()
+(procedure proc_062c
+  062c:3f 01             link 1 // (var $1)
+  062e:80 01ab            lag  
+  0631:30 0027            bnt code_065b 
+  0634:39 7b            pushi 7b // $7b indexOf
+  0636:78               push1 
+  0637:88 012e            lsg  
+  063a:7a               push2 
+  063b:78               push1 
+  063c:7a               push2 
+  063d:43 02 04         callk ScriptID 4 
+
+  0640:4a 06             send 6 
+
+  0642:36                push 
+  0643:35 0d              ldi d 
+  0645:06                 mul 
+  0646:36                push 
+  0647:80 0190            lag  
+  064a:02                 add 
+  064b:a5 00              sat temp0 
+  064d:90 02b2           lagi  
+  0650:18                 not 
+  0651:30 0007            bnt code_065b 
+  0654:78               push1 
+  0655:85 00              lat temp0 
+  0657:b0 02b2           sagi  
+  065a:48                 ret 
+
+        code_065b
+  065b:35 00              ldi 0 
+  065d:48                 ret 
+)
+
+// EXPORTED procedure #15 ()
+(procedure proc_065e
+  065e:3f 01             link 1 // (var $1)
+  0660:87 01              lap param1 
+  0662:30 005a            bnt code_06bf 
+  0665:39 6b            pushi 6b // $6b isMemberOf
+  0667:78               push1 
+  0668:51 10            class Dialog 
+  066a:36                push 
+  066b:87 01              lap param1 
+  066d:4a 06             send 6 
+
+  066f:30 004d            bnt code_06bf 
+  0672:35 00              ldi 0 
+  0674:a5 00              sat temp0 
+
+        code_0676
+  0676:8d 00              lst temp0 
+  0678:39 59            pushi 59 // $59 size
+  067a:76               push0 
+  067b:87 01              lap param1 
+  067d:4a 04             send 4 
+
+  067f:22                 lt? 
+  0680:30 003c            bnt code_06bf 
+  0683:39 6a            pushi 6a // $6a isKindOf
+  0685:78               push1 
+  0686:51 31            class ErasableDIcon 
+  0688:36                push 
+  0689:39 43            pushi 43 // $43 at
+  068b:78               push1 
+  068c:8d 00              lst temp0 
+  068e:87 01              lap param1 
+  0690:4a 06             send 6 
+
+  0692:4a 06             send 6 
+
+  0694:30 0023            bnt code_06ba 
+  0697:39 20            pushi 20 // $20 state
+  0699:76               push0 
+  069a:39 43            pushi 43 // $43 at
+  069c:78               push1 
+  069d:8d 00              lst temp0 
+  069f:87 01              lap param1 
+  06a1:4a 06             send 6 
+
+  06a3:4a 04             send 4 
+
+  06a5:36                push 
+  06a6:35 01              ldi 1 
+  06a8:12                 and 
+  06a9:30 000e            bnt code_06ba 
+  06ac:8f 02              lsp param2 
+  06ae:76               push0 
+  06af:39 43            pushi 43 // $43 at
+  06b1:78               push1 
+  06b2:8d 00              lst temp0 
+  06b4:87 01              lap param1 
+  06b6:4a 06             send 6 
+
+  06b8:4a 04             send 4 
+
+
+        code_06ba
+  06ba:c5 00              +at temp0 
+  06bc:32 ffb7            jmp code_0676 
+
+        code_06bf
+  06bf:48                 ret 
+)
+
+// EXPORTED procedure #16 ()
+(procedure proc_06c0
+  06c0:39 06            pushi 6 // $6 loop
+  06c2:76               push0 
+  06c3:76               push0 
+  06c4:8f 01              lsp param1 
+  06c6:39 45            pushi 45 // $45 done
+  06c8:39 2d            pushi 2d // $2d client
+  06ca:78               push1 
+  06cb:43 11 0c         callk DrawCel c 
+
+  06ce:48                 ret 
+)
+
+// EXPORTED procedure #17 ()
+(procedure proc_06cf
+  06cf:80 0201            lag  
+  06d2:a0 0202            sag  
+  06d5:8f 01              lsp param1 
+  06d7:3c                 dup 
+  06d8:35 01              ldi 1 
+  06da:1a                 eq? 
+  06db:30 0028            bnt code_0706 
+  06de:80 0217            lag  
+  06e1:30 0005            bnt code_06e9 
+  06e4:35 79              ldi 79 
+  06e6:32 0002            jmp code_06eb 
+
+        code_06e9
+  06e9:35 0a              ldi a 
+
+        code_06eb
+  06eb:a0 0200            sag  
+  06ee:80 0217            lag  
+  06f1:30 0005            bnt code_06f9 
+  06f4:35 1b              ldi 1b 
+  06f6:32 0002            jmp code_06fb 
+
+        code_06f9
+  06f9:35 00              ldi 0 
+
+        code_06fb
+  06fb:a0 01ff            sag  
+  06fe:35 06              ldi 6 
+  0700:a0 0201            sag  
+  0703:32 0085            jmp code_078b 
+
+        code_0706
+  0706:3c                 dup 
+  0707:35 02              ldi 2 
+  0709:1a                 eq? 
+  070a:30 0028            bnt code_0735 
+  070d:80 0217            lag  
+  0710:30 0005            bnt code_0718 
+  0713:35 77              ldi 77 
+  0715:32 0002            jmp code_071a 
+
+        code_0718
+  0718:35 0b              ldi b 
+
+        code_071a
+  071a:a0 0200            sag  
+  071d:80 0217            lag  
+  0720:30 0005            bnt code_0728 
+  0723:35 1a              ldi 1a 
+  0725:32 0002            jmp code_072a 
+
+        code_0728
+  0728:35 01              ldi 1 
+
+        code_072a
+  072a:a0 01ff            sag  
+  072d:35 07              ldi 7 
+  072f:a0 0201            sag  
+  0732:32 0056            jmp code_078b 
+
+        code_0735
+  0735:3c                 dup 
+  0736:35 03              ldi 3 
+  0738:1a                 eq? 
+  0739:30 0029            bnt code_0765 
+  073c:80 0217            lag  
+  073f:30 0006            bnt code_0748 
+  0742:34 0088            ldi 88 
+  0745:32 0002            jmp code_074a 
+
+        code_0748
+  0748:35 0f              ldi f 
+
+        code_074a
+  074a:a0 0200            sag  
+  074d:80 0217            lag  
+  0750:30 0005            bnt code_0758 
+  0753:35 1c              ldi 1c 
+  0755:32 0002            jmp code_075a 
+
+        code_0758
+  0758:35 08              ldi 8 
+
+        code_075a
+  075a:a0 01ff            sag  
+  075d:35 08              ldi 8 
+  075f:a0 0201            sag  
+  0762:32 0026            jmp code_078b 
+
+        code_0765
+  0765:80 0217            lag  
+  0768:30 0006            bnt code_0771 
+  076b:34 0080            ldi 80 
+  076e:32 0002            jmp code_0773 
+
+        code_0771
+  0771:35 0e              ldi e 
+
+        code_0773
+  0773:a0 0200            sag  
+  0776:80 0217            lag  
+  0779:30 0005            bnt code_0781 
+  077c:35 3f              ldi 3f 
+  077e:32 0002            jmp code_0783 
+
+        code_0781
+  0781:35 04              ldi 4 
+
+        code_0783
+  0783:a0 01ff            sag  
+  0786:35 05              ldi 5 
+  0788:a0 0201            sag  
+
+        code_078b
+  078b:3a                toss 
+  078c:48                 ret 
+)
+
+

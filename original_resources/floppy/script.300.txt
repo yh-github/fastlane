@@ -1,0 +1,3892 @@
+(script 300)
+
+(string
+    string_19ca "WhereShouldIGo"
+    string_19d9 ""
+)
+
+(said
+)
+
+(local
+)
+
+// 175a
+(instance publicWhereShouldIGo of Obj
+    (properties
+    )
+    (method (doit) // method_0047
+  0047:3f 01             link 1 // (var $1)
+  0049:38 017a          pushi 17a // $17a hapStat
+  004c:76               push0 
+  004d:87 01              lap param1 
+  004f:4a 04             send 4 
+
+  0051:36                push 
+  0052:38 0197          pushi 197 // $197 hapGoal
+  0055:76               push0 
+  0056:87 01              lap param1 
+  0058:4a 04             send 4 
+
+  005a:20                 ge? 
+  005b:a0 0226            sag  
+  005e:35 00              ldi 0 
+  0060:a0 0227            sag  
+  0063:38 0177          pushi 177 // $177 monStat
+  0066:76               push0 
+  0067:87 01              lap param1 
+  0069:4a 04             send 4 
+
+  006b:36                push 
+  006c:38 0196          pushi 196 // $196 monGoal
+  006f:76               push0 
+  0070:87 01              lap param1 
+  0072:4a 04             send 4 
+
+  0074:22                 lt? 
+  0075:30 0044            bnt code_00bc 
+  0078:38 017a          pushi 17a // $17a hapStat
+  007b:76               push0 
+  007c:87 01              lap param1 
+  007e:4a 04             send 4 
+
+  0080:36                push 
+  0081:38 0197          pushi 197 // $197 hapGoal
+  0084:76               push0 
+  0085:87 01              lap param1 
+  0087:4a 04             send 4 
+
+  0089:20                 ge? 
+  008a:30 002f            bnt code_00bc 
+  008d:38 019a          pushi 19a // $19a eduStat
+  0090:76               push0 
+  0091:87 01              lap param1 
+  0093:4a 04             send 4 
+
+  0095:36                push 
+  0096:38 0198          pushi 198 // $198 eduGoal
+  0099:76               push0 
+  009a:87 01              lap param1 
+  009c:4a 04             send 4 
+
+  009e:20                 ge? 
+  009f:30 001a            bnt code_00bc 
+  00a2:38 019b          pushi 19b // $19b carStat
+  00a5:76               push0 
+  00a6:87 01              lap param1 
+  00a8:4a 04             send 4 
+
+  00aa:36                push 
+  00ab:38 0199          pushi 199 // $199 carGoal
+  00ae:76               push0 
+  00af:87 01              lap param1 
+  00b1:4a 04             send 4 
+
+  00b3:20                 ge? 
+  00b4:30 0005            bnt code_00bc 
+  00b7:35 01              ldi 1 
+  00b9:a0 0227            sag  
+
+        code_00bc
+  00bc:88 0190            lsg  
+  00bf:35 00              ldi 0 
+  00c1:22                 lt? 
+  00c2:2e 0006             bt code_00cb 
+  00c5:88 0190            lsg  
+  00c8:35 0b              ldi b 
+  00ca:1e                 gt? 
+
+        code_00cb
+  00cb:30 0005            bnt code_00d3 
+  00ce:35 00              ldi 0 
+  00d0:a0 0190            sag  
+
+        code_00d3
+  00d3:35 00              ldi 0 
+  00d5:a0 0193            sag  
+  00d8:35 00              ldi 0 
+  00da:a0 0197            sag  
+  00dd:35 00              ldi 0 
+  00df:a0 0199            sag  
+  00e2:35 00              ldi 0 
+  00e4:a0 019a            sag  
+  00e7:35 01              ldi 1 
+  00e9:a0 0198            sag  
+  00ec:38 01a5          pushi 1a5 // $1a5 bankBalHi
+  00ef:76               push0 
+  00f0:87 01              lap param1 
+  00f2:4a 04             send 4 
+
+  00f4:30 0006            bnt code_00fd 
+  00f7:34 07d0            ldi 7d0 
+  00fa:32 0008            jmp code_0105 
+
+        code_00fd
+  00fd:38 01a4          pushi 1a4 // $1a4 bankBal
+  0100:76               push0 
+  0101:87 01              lap param1 
+  0103:4a 04             send 4 
+
+
+        code_0105
+  0105:a0 01f3            sag  
+  0108:38 0172          pushi 172 // $172 objectAtIndexQuan
+  010b:78               push1 
+  010c:39 15            pushi 15 // $15 brBottom
+  010e:38 0142          pushi 142 // $142 durables
+  0111:76               push0 
+  0112:87 01              lap param1 
+  0114:4a 04             send 4 
+
+  0116:4a 06             send 6 
+
+  0118:30 0005            bnt code_0120 
+  011b:35 03              ldi 3 
+  011d:32 0002            jmp code_0122 
+
+        code_0120
+  0120:35 0a              ldi a 
+
+        code_0122
+  0122:a0 01f2            sag  
+  0125:38 01ac          pushi 1ac // $1ac uniform
+  0128:76               push0 
+  0129:87 01              lap param1 
+  012b:4a 04             send 4 
+
+  012d:36                push 
+  012e:3c                 dup 
+  012f:35 22              ldi 22 
+  0131:1a                 eq? 
+  0132:30 0006            bnt code_013b 
+  0135:34 0127            ldi 127 
+  0138:32 0015            jmp code_0150 
+
+        code_013b
+  013b:3c                 dup 
+  013c:35 23              ldi 23 
+  013e:1a                 eq? 
+  013f:30 0005            bnt code_0147 
+  0142:35 7d              ldi 7d 
+  0144:32 0009            jmp code_0150 
+
+        code_0147
+  0147:3c                 dup 
+  0148:35 24              ldi 24 
+  014a:1a                 eq? 
+  014b:30 0002            bnt code_0150 
+  014e:35 49              ldi 49 
+
+        code_0150
+  0150:3a                toss 
+  0151:a0 01e9            sag  
+  0154:7a               push2 
+  0155:88 0135            lsg  
+  0158:36                push 
+  0159:47 6d 00 04      calle 6d procedure_0000 4 //  
+
+  015d:a0 019c            sag  
+  0160:88 01f2            lsg  
+  0163:35 03              ldi 3 
+  0165:1a                 eq? 
+  0166:30 0005            bnt code_016e 
+  0169:35 37              ldi 37 
+  016b:32 0002            jmp code_0170 
+
+        code_016e
+  016e:35 41              ldi 41 
+
+        code_0170
+  0170:a0 01ea            sag  
+  0173:7a               push2 
+  0174:88 0135            lsg  
+  0177:36                push 
+  0178:47 6d 00 04      calle 6d procedure_0000 4 //  
+
+  017c:a0 01eb            sag  
+  017f:38 0171          pushi 171 // $171 objectAtIndex
+  0182:78               push1 
+  0183:7a               push2 
+  0184:38 0140          pushi 140 // $140 consumables
+  0187:76               push0 
+  0188:87 01              lap param1 
+  018a:4a 04             send 4 
+
+  018c:4a 06             send 6 
+
+  018e:a0 019b            sag  
+  0191:30 0006            bnt code_019a 
+  0194:38 0161          pushi 161 // $161 quantity
+  0197:76               push0 
+  0198:4a 04             send 4 
+
+
+        code_019a
+  019a:2e 005a             bt code_01f7 
+  019d:38 0171          pushi 171 // $171 objectAtIndex
+  01a0:78               push1 
+  01a1:39 03            pushi 3 // $3 y
+  01a3:38 0140          pushi 140 // $140 consumables
+  01a6:76               push0 
+  01a7:87 01              lap param1 
+  01a9:4a 04             send 4 
+
+  01ab:4a 06             send 6 
+
+  01ad:a0 019b            sag  
+  01b0:30 0006            bnt code_01b9 
+  01b3:38 0161          pushi 161 // $161 quantity
+  01b6:76               push0 
+  01b7:4a 04             send 4 
+
+
+        code_01b9
+  01b9:2e 003b             bt code_01f7 
+  01bc:38 0171          pushi 171 // $171 objectAtIndex
+  01bf:78               push1 
+  01c0:39 04            pushi 4 // $4 x
+  01c2:38 0140          pushi 140 // $140 consumables
+  01c5:76               push0 
+  01c6:87 01              lap param1 
+  01c8:4a 04             send 4 
+
+  01ca:4a 06             send 6 
+
+  01cc:a0 019b            sag  
+  01cf:30 0006            bnt code_01d8 
+  01d2:38 0161          pushi 161 // $161 quantity
+  01d5:76               push0 
+  01d6:4a 04             send 4 
+
+
+        code_01d8
+  01d8:2e 001c             bt code_01f7 
+  01db:38 0171          pushi 171 // $171 objectAtIndex
+  01de:78               push1 
+  01df:39 05            pushi 5 // $5 view
+  01e1:38 0140          pushi 140 // $140 consumables
+  01e4:76               push0 
+  01e5:87 01              lap param1 
+  01e7:4a 04             send 4 
+
+  01e9:4a 06             send 6 
+
+  01eb:a0 019b            sag  
+  01ee:30 0011            bnt code_0202 
+  01f1:38 0161          pushi 161 // $161 quantity
+  01f4:76               push0 
+  01f5:4a 04             send 4 
+
+
+        code_01f7
+  01f7:30 0008            bnt code_0202 
+  01fa:35 01              ldi 1 
+  01fc:a0 019b            sag  
+  01ff:32 001e            jmp code_0220 
+
+        code_0202
+  0202:38 0171          pushi 171 // $171 objectAtIndex
+  0205:78               push1 
+  0206:78               push1 
+  0207:38 0140          pushi 140 // $140 consumables
+  020a:76               push0 
+  020b:87 01              lap param1 
+  020d:4a 04             send 4 
+
+  020f:4a 06             send 6 
+
+  0211:a0 019b            sag  
+  0214:30 0006            bnt code_021d 
+  0217:38 0161          pushi 161 // $161 quantity
+  021a:76               push0 
+  021b:4a 04             send 4 
+
+
+        code_021d
+  021d:a0 019b            sag  
+
+        code_0220
+  0220:35 00              ldi 0 
+  0222:a0 01f0            sag  
+  0225:a0 01f1            sag  
+  0228:a0 01e6            sag  
+  022b:39 59            pushi 59 // $59 size
+  022d:76               push0 
+  022e:38 0142          pushi 142 // $142 durables
+  0231:76               push0 
+  0232:87 01              lap param1 
+  0234:4a 04             send 4 
+
+  0236:4a 04             send 4 
+
+  0238:30 00de            bnt code_0319 
+  023b:35 00              ldi 0 
+  023d:a5 00              sat temp0 
+
+        code_023f
+  023f:8d 00              lst temp0 
+  0241:39 59            pushi 59 // $59 size
+  0243:76               push0 
+  0244:38 0142          pushi 142 // $142 durables
+  0247:76               push0 
+  0248:87 01              lap param1 
+  024a:4a 04             send 4 
+
+  024c:4a 04             send 4 
+
+  024e:22                 lt? 
+  024f:30 00c7            bnt code_0319 
+  0252:38 0161          pushi 161 // $161 quantity
+  0255:76               push0 
+  0256:39 43            pushi 43 // $43 at
+  0258:78               push1 
+  0259:8d 00              lst temp0 
+  025b:38 0142          pushi 142 // $142 durables
+  025e:76               push0 
+  025f:87 01              lap param1 
+  0261:4a 04             send 4 
+
+  0263:4a 06             send 6 
+
+  0265:4a 04             send 4 
+
+  0267:30 002d            bnt code_0297 
+  026a:88 01e6            lsg  
+  026d:7a               push2 
+  026e:88 0135            lsg  
+  0271:38 0165          pushi 165 // $165 pricePaid
+  0274:76               push0 
+  0275:39 43            pushi 43 // $43 at
+  0277:78               push1 
+  0278:8d 00              lst temp0 
+  027a:38 0142          pushi 142 // $142 durables
+  027d:76               push0 
+  027e:87 01              lap param1 
+  0280:4a 04             send 4 
+
+  0282:4a 06             send 6 
+
+  0284:4a 04             send 4 
+
+  0286:36                push 
+  0287:47 6d 00 04      calle 6d procedure_0000 4 //  
+
+  028b:36                push 
+  028c:35 04              ldi 4 
+  028e:06                 mul 
+  028f:36                push 
+  0290:35 0a              ldi a 
+  0292:08                 div 
+  0293:02                 add 
+  0294:a0 01e6            sag  
+
+        code_0297
+  0297:38 0164          pushi 164 // $164 attributes
+  029a:76               push0 
+  029b:39 43            pushi 43 // $43 at
+  029d:78               push1 
+  029e:8d 00              lst temp0 
+  02a0:38 0142          pushi 142 // $142 durables
+  02a3:76               push0 
+  02a4:87 01              lap param1 
+  02a6:4a 04             send 4 
+
+  02a8:4a 06             send 6 
+
+  02aa:4a 04             send 4 
+
+  02ac:36                push 
+  02ad:35 18              ldi 18 
+  02af:12                 and 
+  02b0:30 0061            bnt code_0314 
+  02b3:88 01f0            lsg  
+  02b6:38 016e          pushi 16e // $16e redemptionPrice
+  02b9:76               push0 
+  02ba:39 43            pushi 43 // $43 at
+  02bc:78               push1 
+  02bd:8d 00              lst temp0 
+  02bf:38 0142          pushi 142 // $142 durables
+  02c2:76               push0 
+  02c3:87 01              lap param1 
+  02c5:4a 04             send 4 
+
+  02c7:4a 06             send 6 
+
+  02c9:4a 04             send 4 
+
+  02cb:02                 add 
+  02cc:a0 01f0            sag  
+  02cf:80 01f1            lag  
+  02d2:18                 not 
+  02d3:30 0009            bnt code_02df 
+  02d6:80 01f0            lag  
+  02d9:a0 01f1            sag  
+  02dc:32 0035            jmp code_0314 
+
+        code_02df
+  02df:38 016e          pushi 16e // $16e redemptionPrice
+  02e2:76               push0 
+  02e3:39 43            pushi 43 // $43 at
+  02e5:78               push1 
+  02e6:8d 00              lst temp0 
+  02e8:38 0142          pushi 142 // $142 durables
+  02eb:76               push0 
+  02ec:87 01              lap param1 
+  02ee:4a 04             send 4 
+
+  02f0:4a 06             send 6 
+
+  02f2:4a 04             send 4 
+
+  02f4:36                push 
+  02f5:80 01f1            lag  
+  02f8:22                 lt? 
+  02f9:30 0018            bnt code_0314 
+  02fc:38 016e          pushi 16e // $16e redemptionPrice
+  02ff:76               push0 
+  0300:39 43            pushi 43 // $43 at
+  0302:78               push1 
+  0303:8d 00              lst temp0 
+  0305:38 0142          pushi 142 // $142 durables
+  0308:76               push0 
+  0309:87 01              lap param1 
+  030b:4a 04             send 4 
+
+  030d:4a 06             send 6 
+
+  030f:4a 04             send 4 
+
+  0311:a0 01f1            sag  
+
+        code_0314
+  0314:c5 00              +at temp0 
+  0316:32 ff26            jmp code_023f 
+
+        code_0319
+  0319:39 08            pushi 8 // $8 underBits
+  031b:38 01a8          pushi 1a8 // $1a8 wage
+  031e:76               push0 
+  031f:87 01              lap param1 
+  0321:4a 04             send 4 
+
+  0323:06                 mul 
+  0324:a0 01ec            sag  
+  0327:88 01f4            lsg  
+  032a:35 01              ldi 1 
+  032c:1a                 eq? 
+  032d:30 0004            bnt code_0334 
+  0330:76               push0 
+  0331:43 53 00         callk SetDebug 0 
+
+
+        code_0334
+  0334:38 01a8          pushi 1a8 // $1a8 wage
+  0337:76               push0 
+  0338:87 01              lap param1 
+  033a:4a 04             send 4 
+
+  033c:18                 not 
+  033d:30 0014            bnt code_0354 
+  0340:80 0192            lag  
+  0343:18                 not 
+  0344:30 000d            bnt code_0354 
+  0347:35 01              ldi 1 
+  0349:a0 0193            sag  
+  034c:35 03              ldi 3 
+  034e:a0 0197            sag  
+  0351:35 06              ldi 6 
+  0353:48                 ret 
+
+        code_0354
+  0354:88 01f4            lsg  
+  0357:35 02              ldi 2 
+  0359:1a                 eq? 
+  035a:30 0004            bnt code_0361 
+  035d:76               push0 
+  035e:43 53 00         callk SetDebug 0 
+
+
+        code_0361
+  0361:80 0195            lag  
+  0364:18                 not 
+  0365:30 0367            bnt code_06cf 
+  0368:88 0174            lsg  
+  036b:35 04              ldi 4 
+  036d:0a                 mod 
+  036e:18                 not 
+  036f:2e 0009             bt code_037b 
+  0372:38 0192          pushi 192 // $192 leaveOpen
+  0375:76               push0 
+  0376:80 012e            lag  
+  0379:4a 04             send 4 
+
+
+        code_037b
+  037b:30 0351            bnt code_06cf 
+  037e:88 01f4            lsg  
+  0381:35 03              ldi 3 
+  0383:1a                 eq? 
+  0384:30 0004            bnt code_038b 
+  0387:76               push0 
+  0388:43 53 00         callk SetDebug 0 
+
+
+        code_038b
+  038b:80 019b            lag  
+  038e:18                 not 
+  038f:30 0044            bnt code_03d6 
+  0392:38 013e          pushi 13e // $13e weeksOfClothing
+  0395:76               push0 
+  0396:87 01              lap param1 
+  0398:4a 04             send 4 
+
+  039a:36                push 
+  039b:35 01              ldi 1 
+  039d:1e                 gt? 
+  039e:30 0035            bnt code_03d6 
+  03a1:78               push1 
+  03a2:8f 01              lsp param1 
+  03a4:45 0b 02         callb procedure_000b 2 //  
+
+  03a7:36                push 
+  03a8:38 01ae          pushi 1ae // $1ae curRent
+  03ab:76               push0 
+  03ac:87 01              lap param1 
+  03ae:4a 04             send 4 
+
+  03b0:36                push 
+  03b1:80 01eb            lag  
+  03b4:02                 add 
+  03b5:20                 ge? 
+  03b6:30 001d            bnt code_03d6 
+  03b9:35 02              ldi 2 
+  03bb:a0 0193            sag  
+  03be:35 07              ldi 7 
+  03c0:a0 0197            sag  
+  03c3:35 02              ldi 2 
+  03c5:a0 0199            sag  
+  03c8:39 03            pushi 3 // $3 y
+  03ca:88 0190            lsg  
+  03cd:78               push1 
+  03ce:88 01f2            lsg  
+  03d1:40 14f1 06        call proc_18c6 6 
+
+  03d5:48                 ret 
+
+        code_03d6
+  03d6:88 01f4            lsg  
+  03d9:35 04              ldi 4 
+  03db:1a                 eq? 
+  03dc:30 0004            bnt code_03e3 
+  03df:76               push0 
+  03e0:43 53 00         callk SetDebug 0 
+
+
+        code_03e3
+  03e3:38 013e          pushi 13e // $13e weeksOfClothing
+  03e6:76               push0 
+  03e7:87 01              lap param1 
+  03e9:4a 04             send 4 
+
+  03eb:36                push 
+  03ec:35 01              ldi 1 
+  03ee:24                 le? 
+  03ef:30 00c4            bnt code_04b6 
+  03f2:88 01f4            lsg  
+  03f5:35 05              ldi 5 
+  03f7:1a                 eq? 
+  03f8:30 0004            bnt code_03ff 
+  03fb:76               push0 
+  03fc:43 53 00         callk SetDebug 0 
+
+
+        code_03ff
+  03ff:80 019b            lag  
+  0402:18                 not 
+  0403:30 0041            bnt code_0447 
+  0406:78               push1 
+  0407:8f 01              lsp param1 
+  0409:45 0b 02         callb procedure_000b 2 //  
+
+  040c:36                push 
+  040d:38 01ae          pushi 1ae // $1ae curRent
+  0410:76               push0 
+  0411:87 01              lap param1 
+  0413:4a 04             send 4 
+
+  0415:36                push 
+  0416:80 019c            lag  
+  0419:02                 add 
+  041a:36                push 
+  041b:80 01eb            lag  
+  041e:02                 add 
+  041f:20                 ge? 
+  0420:30 0024            bnt code_0447 
+  0423:35 03              ldi 3 
+  0425:a0 0193            sag  
+  0428:35 07              ldi 7 
+  042a:a0 0197            sag  
+  042d:35 02              ldi 2 
+  042f:a0 0199            sag  
+  0432:35 0b              ldi b 
+  0434:a0 019a            sag  
+  0437:39 04            pushi 4 // $4 x
+  0439:88 0190            lsg  
+  043c:78               push1 
+  043d:88 01f2            lsg  
+  0440:39 09            pushi 9 // $9 nsTop
+  0442:40 1480 08        call proc_18c6 8 
+
+  0446:48                 ret 
+
+        code_0447
+  0447:88 01f4            lsg  
+  044a:35 06              ldi 6 
+  044c:1a                 eq? 
+  044d:30 0004            bnt code_0454 
+  0450:76               push0 
+  0451:43 53 00         callk SetDebug 0 
+
+
+        code_0454
+  0454:80 019b            lag  
+  0457:30 0034            bnt code_048e 
+  045a:78               push1 
+  045b:8f 01              lsp param1 
+  045d:45 0b 02         callb procedure_000b 2 //  
+
+  0460:36                push 
+  0461:38 01ae          pushi 1ae // $1ae curRent
+  0464:76               push0 
+  0465:87 01              lap param1 
+  0467:4a 04             send 4 
+
+  0469:36                push 
+  046a:80 019c            lag  
+  046d:02                 add 
+  046e:20                 ge? 
+  046f:30 001c            bnt code_048e 
+  0472:35 04              ldi 4 
+  0474:a0 0193            sag  
+  0477:35 07              ldi 7 
+  0479:a0 0197            sag  
+  047c:35 0b              ldi b 
+  047e:a0 0199            sag  
+  0481:39 03            pushi 3 // $3 y
+  0483:88 0190            lsg  
+  0486:78               push1 
+  0487:39 09            pushi 9 // $9 nsTop
+  0489:40 1439 06        call proc_18c6 6 
+
+  048d:48                 ret 
+
+        code_048e
+  048e:88 01f4            lsg  
+  0491:35 07              ldi 7 
+  0493:1a                 eq? 
+  0494:30 0004            bnt code_049b 
+  0497:76               push0 
+  0498:43 53 00         callk SetDebug 0 
+
+
+        code_049b
+  049b:78               push1 
+  049c:8f 01              lsp param1 
+  049e:45 0b 02         callb procedure_000b 2 //  
+
+  04a1:36                push 
+  04a2:80 019c            lag  
+  04a5:20                 ge? 
+  04a6:30 000d            bnt code_04b6 
+  04a9:35 05              ldi 5 
+  04ab:a0 0193            sag  
+  04ae:35 0b              ldi b 
+  04b0:a0 0197            sag  
+  04b3:35 09              ldi 9 
+  04b5:48                 ret 
+
+        code_04b6
+  04b6:88 01f4            lsg  
+  04b9:35 08              ldi 8 
+  04bb:1a                 eq? 
+  04bc:30 0004            bnt code_04c3 
+  04bf:76               push0 
+  04c0:43 53 00         callk SetDebug 0 
+
+
+        code_04c3
+  04c3:80 019b            lag  
+  04c6:18                 not 
+  04c7:30 002f            bnt code_04f9 
+  04ca:78               push1 
+  04cb:8f 01              lsp param1 
+  04cd:45 0b 02         callb procedure_000b 2 //  
+
+  04d0:36                push 
+  04d1:38 01ae          pushi 1ae // $1ae curRent
+  04d4:76               push0 
+  04d5:87 01              lap param1 
+  04d7:4a 04             send 4 
+
+  04d9:22                 lt? 
+  04da:30 001c            bnt code_04f9 
+  04dd:78               push1 
+  04de:8f 01              lsp param1 
+  04e0:45 0b 02         callb procedure_000b 2 //  
+
+  04e3:36                push 
+  04e4:80 01eb            lag  
+  04e7:20                 ge? 
+  04e8:30 000e            bnt code_04f9 
+  04eb:35 06              ldi 6 
+  04ed:a0 0193            sag  
+  04f0:35 02              ldi 2 
+  04f2:a0 0197            sag  
+  04f5:80 01f2            lag  
+  04f8:48                 ret 
+
+        code_04f9
+  04f9:88 01f4            lsg  
+  04fc:35 09              ldi 9 
+  04fe:1a                 eq? 
+  04ff:30 0004            bnt code_0506 
+  0502:76               push0 
+  0503:43 53 00         callk SetDebug 0 
+
+
+        code_0506
+  0506:78               push1 
+  0507:8f 01              lsp param1 
+  0509:45 0b 02         callb procedure_000b 2 //  
+
+  050c:36                push 
+  050d:38 01ae          pushi 1ae // $1ae curRent
+  0510:76               push0 
+  0511:87 01              lap param1 
+  0513:4a 04             send 4 
+
+  0515:20                 ge? 
+  0516:30 000d            bnt code_0526 
+  0519:35 07              ldi 7 
+  051b:a0 0193            sag  
+  051e:35 07              ldi 7 
+  0520:a0 0197            sag  
+  0523:35 01              ldi 1 
+  0525:48                 ret 
+
+        code_0526
+  0526:88 01f4            lsg  
+  0529:35 0a              ldi a 
+  052b:1a                 eq? 
+  052c:30 0004            bnt code_0533 
+  052f:76               push0 
+  0530:43 53 00         callk SetDebug 0 
+
+
+        code_0533
+  0533:38 01a8          pushi 1a8 // $1a8 wage
+  0536:76               push0 
+  0537:87 01              lap param1 
+  0539:4a 04             send 4 
+
+  053b:30 008b            bnt code_05c9 
+  053e:38 0174          pushi 174 // $174 dressedForWork
+  0541:76               push0 
+  0542:87 01              lap param1 
+  0544:4a 04             send 4 
+
+  0546:30 0080            bnt code_05c9 
+  0549:39 03            pushi 3 // $3 y
+  054b:88 0190            lsg  
+  054e:38 0173          pushi 173 // $173 worksAt
+  0551:76               push0 
+  0552:87 01              lap param1 
+  0554:4a 04             send 4 
+
+  0556:36                push 
+  0557:78               push1 
+  0558:40 1218 06        call proc_1774 6 
+
+  055c:a0 01e7            sag  
+  055f:38 01ae          pushi 1ae // $1ae curRent
+  0562:76               push0 
+  0563:87 01              lap param1 
+  0565:4a 04             send 4 
+
+  0567:36                push 
+  0568:78               push1 
+  0569:8f 01              lsp param1 
+  056b:45 0b 02         callb procedure_000b 2 //  
+
+  056e:04                 sub 
+  056f:a0 01ee            sag  
+  0572:36                push 
+  0573:80 01ec            lag  
+  0576:08                 div 
+  0577:a0 01ed            sag  
+  057a:88 01ee            lsg  
+  057d:80 01ec            lag  
+  0580:0a                 mod 
+  0581:30 0003            bnt code_0587 
+  0584:c0 01ed            +ag  
+
+        code_0587
+  0587:88 01ed            lsg  
+  058a:35 00              ldi 0 
+  058c:24                 le? 
+  058d:30 0005            bnt code_0595 
+  0590:35 01              ldi 1 
+  0592:a0 01ed            sag  
+
+        code_0595
+  0595:88 01e7            lsg  
+  0598:39 06            pushi 6 // $6 loop
+  059a:80 01ed            lag  
+  059d:06                 mul 
+  059e:36                push 
+  059f:80 01db            lag  
+  05a2:06                 mul 
+  05a3:02                 add 
+  05a4:a0 01e8            sag  
+  05a7:78               push1 
+  05a8:36                push 
+  05a9:40 1248 02        call proc_17f5 2 
+
+  05ad:30 0019            bnt code_05c9 
+  05b0:35 08              ldi 8 
+  05b2:a0 0193            sag  
+  05b5:35 01              ldi 1 
+  05b7:a0 0197            sag  
+  05ba:80 01ed            lag  
+  05bd:a0 0198            sag  
+  05c0:38 0173          pushi 173 // $173 worksAt
+  05c3:76               push0 
+  05c4:87 01              lap param1 
+  05c6:4a 04             send 4 
+
+  05c8:48                 ret 
+
+        code_05c9
+  05c9:88 01f4            lsg  
+  05cc:35 0b              ldi b 
+  05ce:1a                 eq? 
+  05cf:30 0004            bnt code_05d6 
+  05d2:76               push0 
+  05d3:43 53 00         callk SetDebug 0 
+
+
+        code_05d6
+  05d6:39 03            pushi 3 // $3 y
+  05d8:88 0190            lsg  
+  05db:39 04            pushi 4 // $4 x
+  05dd:78               push1 
+  05de:40 1192 06        call proc_1774 6 
+
+  05e2:a0 01e7            sag  
+  05e5:a0 01e8            sag  
+  05e8:78               push1 
+  05e9:8f 01              lsp param1 
+  05eb:45 0b 02         callb procedure_000b 2 //  
+
+  05ee:36                push 
+  05ef:80 01f3            lag  
+  05f2:02                 add 
+  05f3:36                push 
+  05f4:38 01ae          pushi 1ae // $1ae curRent
+  05f7:76               push0 
+  05f8:87 01              lap param1 
+  05fa:4a 04             send 4 
+
+  05fc:22                 lt? 
+  05fd:30 000c            bnt code_060c 
+  0600:88 01e7            lsg  
+  0603:7a               push2 
+  0604:80 01db            lag  
+  0607:06                 mul 
+  0608:02                 add 
+  0609:a0 01e8            sag  
+
+        code_060c
+  060c:7a               push2 
+  060d:8f 01              lsp param1 
+  060f:38 01ae          pushi 1ae // $1ae curRent
+  0612:76               push0 
+  0613:87 01              lap param1 
+  0615:4a 04             send 4 
+
+  0617:36                push 
+  0618:40 f9f0 04        call proc_000c 4 
+
+  061c:30 0023            bnt code_0642 
+  061f:78               push1 
+  0620:88 01e8            lsg  
+  0623:40 11ce 02        call proc_17f5 2 
+
+  0627:30 0018            bnt code_0642 
+  062a:35 09              ldi 9 
+  062c:a0 0193            sag  
+  062f:38 01ae          pushi 1ae // $1ae curRent
+  0632:76               push0 
+  0633:87 01              lap param1 
+  0635:4a 04             send 4 
+
+  0637:a0 0198            sag  
+  063a:35 11              ldi 11 
+  063c:a0 0197            sag  
+  063f:35 04              ldi 4 
+  0641:48                 ret 
+
+        code_0642
+  0642:88 01f4            lsg  
+  0645:35 0c              ldi c 
+  0647:1a                 eq? 
+  0648:30 0004            bnt code_064f 
+  064b:76               push0 
+  064c:43 53 00         callk SetDebug 0 
+
+
+        code_064f
+  064f:38 01b0          pushi 1b0 // $1b0 triedExt
+  0652:76               push0 
+  0653:87 01              lap param1 
+  0655:4a 04             send 4 
+
+  0657:18                 not 
+  0658:30 0030            bnt code_068b 
+  065b:78               push1 
+  065c:8f 01              lsp param1 
+  065e:45 0b 02         callb procedure_000b 2 //  
+
+  0661:36                push 
+  0662:39 03            pushi 3 // $3 y
+  0664:39 08            pushi 8 // $8 underBits
+  0666:38 01a8          pushi 1a8 // $1a8 wage
+  0669:76               push0 
+  066a:87 01              lap param1 
+  066c:4a 04             send 4 
+
+  066e:06                 mul 
+  066f:06                 mul 
+  0670:02                 add 
+  0671:36                push 
+  0672:38 01ae          pushi 1ae // $1ae curRent
+  0675:76               push0 
+  0676:87 01              lap param1 
+  0678:4a 04             send 4 
+
+  067a:20                 ge? 
+  067b:30 000d            bnt code_068b 
+  067e:35 0a              ldi a 
+  0680:a0 0193            sag  
+  0683:35 08              ldi 8 
+  0685:a0 0197            sag  
+  0688:35 01              ldi 1 
+  068a:48                 ret 
+
+        code_068b
+  068b:88 01f4            lsg  
+  068e:35 0d              ldi d 
+  0690:1a                 eq? 
+  0691:30 0004            bnt code_0698 
+  0694:76               push0 
+  0695:43 53 00         callk SetDebug 0 
+
+
+        code_0698
+  0698:88 01e6            lsg  
+  069b:78               push1 
+  069c:8f 01              lsp param1 
+  069e:45 0b 02         callb procedure_000b 2 //  
+
+  06a1:02                 add 
+  06a2:36                push 
+  06a3:38 01ae          pushi 1ae // $1ae curRent
+  06a6:76               push0 
+  06a7:87 01              lap param1 
+  06a9:4a 04             send 4 
+
+  06ab:20                 ge? 
+  06ac:30 0020            bnt code_06cf 
+  06af:35 0b              ldi b 
+  06b1:a0 0193            sag  
+  06b4:35 09              ldi 9 
+  06b6:a0 0197            sag  
+  06b9:38 01ae          pushi 1ae // $1ae curRent
+  06bc:76               push0 
+  06bd:87 01              lap param1 
+  06bf:4a 04             send 4 
+
+  06c1:36                push 
+  06c2:78               push1 
+  06c3:8f 01              lsp param1 
+  06c5:45 0b 02         callb procedure_000b 2 //  
+
+  06c8:04                 sub 
+  06c9:a0 0198            sag  
+  06cc:35 0c              ldi c 
+  06ce:48                 ret 
+
+        code_06cf
+  06cf:88 01f4            lsg  
+  06d2:35 0e              ldi e 
+  06d4:1a                 eq? 
+  06d5:30 0004            bnt code_06dc 
+  06d8:76               push0 
+  06d9:43 53 00         callk SetDebug 0 
+
+
+        code_06dc
+  06dc:38 013e          pushi 13e // $13e weeksOfClothing
+  06df:76               push0 
+  06e0:87 01              lap param1 
+  06e2:4a 04             send 4 
+
+  06e4:36                push 
+  06e5:35 01              ldi 1 
+  06e7:24                 le? 
+  06e8:2e 0009             bt code_06f4 
+  06eb:38 0174          pushi 174 // $174 dressedForWork
+  06ee:76               push0 
+  06ef:87 01              lap param1 
+  06f1:4a 04             send 4 
+
+  06f3:18                 not 
+
+        code_06f4
+  06f4:30 0432            bnt code_0b29 
+  06f7:88 01f4            lsg  
+  06fa:35 0f              ldi f 
+  06fc:1a                 eq? 
+  06fd:30 0004            bnt code_0704 
+  0700:76               push0 
+  0701:43 53 00         callk SetDebug 0 
+
+
+        code_0704
+  0704:38 013e          pushi 13e // $13e weeksOfClothing
+  0707:76               push0 
+  0708:87 01              lap param1 
+  070a:4a 04             send 4 
+
+  070c:18                 not 
+  070d:30 00aa            bnt code_07ba 
+  0710:88 01f4            lsg  
+  0713:35 10              ldi 10 
+  0715:1a                 eq? 
+  0716:30 0004            bnt code_071d 
+  0719:76               push0 
+  071a:43 53 00         callk SetDebug 0 
+
+
+        code_071d
+  071d:78               push1 
+  071e:8f 01              lsp param1 
+  0720:45 0b 02         callb procedure_000b 2 //  
+
+  0723:36                push 
+  0724:80 019c            lag  
+  0727:22                 lt? 
+  0728:30 0020            bnt code_074b 
+  072b:7a               push2 
+  072c:8f 01              lsp param1 
+  072e:88 019c            lsg  
+  0731:40 f8d7 04        call proc_000c 4 
+
+  0735:30 0013            bnt code_074b 
+  0738:35 0c              ldi c 
+  073a:a0 0193            sag  
+  073d:80 019c            lag  
+  0740:a0 0198            sag  
+  0743:35 11              ldi 11 
+  0745:a0 0197            sag  
+  0748:35 04              ldi 4 
+  074a:48                 ret 
+
+        code_074b
+  074b:88 01f4            lsg  
+  074e:35 11              ldi 11 
+  0750:1a                 eq? 
+  0751:30 0004            bnt code_0758 
+  0754:76               push0 
+  0755:43 53 00         callk SetDebug 0 
+
+
+        code_0758
+  0758:78               push1 
+  0759:8f 01              lsp param1 
+  075b:45 0b 02         callb procedure_000b 2 //  
+
+  075e:36                push 
+  075f:80 019c            lag  
+  0762:22                 lt? 
+  0763:30 002c            bnt code_0792 
+  0766:88 01e6            lsg  
+  0769:78               push1 
+  076a:8f 01              lsp param1 
+  076c:45 0b 02         callb procedure_000b 2 //  
+
+  076f:02                 add 
+  0770:36                push 
+  0771:80 019c            lag  
+  0774:20                 ge? 
+  0775:30 001a            bnt code_0792 
+  0778:35 0d              ldi d 
+  077a:a0 0193            sag  
+  077d:35 09              ldi 9 
+  077f:a0 0197            sag  
+  0782:88 019c            lsg  
+  0785:78               push1 
+  0786:8f 01              lsp param1 
+  0788:45 0b 02         callb procedure_000b 2 //  
+
+  078b:04                 sub 
+  078c:a0 0198            sag  
+  078f:35 0c              ldi c 
+  0791:48                 ret 
+
+        code_0792
+  0792:88 01f4            lsg  
+  0795:35 12              ldi 12 
+  0797:1a                 eq? 
+  0798:30 0004            bnt code_079f 
+  079b:76               push0 
+  079c:43 53 00         callk SetDebug 0 
+
+
+        code_079f
+  079f:78               push1 
+  07a0:8f 01              lsp param1 
+  07a2:45 0b 02         callb procedure_000b 2 //  
+
+  07a5:36                push 
+  07a6:80 019c            lag  
+  07a9:20                 ge? 
+  07aa:30 000d            bnt code_07ba 
+  07ad:35 0e              ldi e 
+  07af:a0 0193            sag  
+  07b2:35 0b              ldi b 
+  07b4:a0 0197            sag  
+  07b7:35 09              ldi 9 
+  07b9:48                 ret 
+
+        code_07ba
+  07ba:88 01f4            lsg  
+  07bd:35 13              ldi 13 
+  07bf:1a                 eq? 
+  07c0:30 0004            bnt code_07c7 
+  07c3:76               push0 
+  07c4:43 53 00         callk SetDebug 0 
+
+
+        code_07c7
+  07c7:80 019b            lag  
+  07ca:18                 not 
+  07cb:30 0030            bnt code_07fe 
+  07ce:78               push1 
+  07cf:8f 01              lsp param1 
+  07d1:45 0b 02         callb procedure_000b 2 //  
+
+  07d4:36                push 
+  07d5:88 01eb            lsg  
+  07d8:80 019c            lag  
+  07db:02                 add 
+  07dc:20                 ge? 
+  07dd:30 001e            bnt code_07fe 
+  07e0:35 10              ldi 10 
+  07e2:a0 0193            sag  
+  07e5:35 02              ldi 2 
+  07e7:a0 0197            sag  
+  07ea:35 0b              ldi b 
+  07ec:a0 0199            sag  
+  07ef:39 03            pushi 3 // $3 y
+  07f1:88 0190            lsg  
+  07f4:88 01f2            lsg  
+  07f7:39 09            pushi 9 // $9 nsTop
+  07f9:40 10c9 06        call proc_18c6 6 
+
+  07fd:48                 ret 
+
+        code_07fe
+  07fe:88 01f4            lsg  
+  0801:35 14              ldi 14 
+  0803:1a                 eq? 
+  0804:30 0004            bnt code_080b 
+  0807:76               push0 
+  0808:43 53 00         callk SetDebug 0 
+
+
+        code_080b
+  080b:38 0174          pushi 174 // $174 dressedForWork
+  080e:76               push0 
+  080f:87 01              lap param1 
+  0811:4a 04             send 4 
+
+  0813:30 023e            bnt code_0a54 
+  0816:80 019b            lag  
+  0819:18                 not 
+  081a:30 0237            bnt code_0a54 
+  081d:78               push1 
+  081e:8f 01              lsp param1 
+  0820:45 0b 02         callb procedure_000b 2 //  
+
+  0823:36                push 
+  0824:88 01eb            lsg  
+  0827:80 019c            lag  
+  082a:02                 add 
+  082b:22                 lt? 
+  082c:30 0225            bnt code_0a54 
+  082f:78               push1 
+  0830:8f 01              lsp param1 
+  0832:45 0b 02         callb procedure_000b 2 //  
+
+  0835:36                push 
+  0836:80 019c            lag  
+  0839:20                 ge? 
+  083a:30 0217            bnt code_0a54 
+  083d:88 01f4            lsg  
+  0840:35 15              ldi 15 
+  0842:1a                 eq? 
+  0843:30 0004            bnt code_084a 
+  0846:76               push0 
+  0847:43 53 00         callk SetDebug 0 
+
+
+        code_084a
+  084a:38 01a8          pushi 1a8 // $1a8 wage
+  084d:76               push0 
+  084e:87 01              lap param1 
+  0850:4a 04             send 4 
+
+  0852:30 00bf            bnt code_0914 
+  0855:39 03            pushi 3 // $3 y
+  0857:38 0173          pushi 173 // $173 worksAt
+  085a:76               push0 
+  085b:87 01              lap param1 
+  085d:4a 04             send 4 
+
+  085f:36                push 
+  0860:39 09            pushi 9 // $9 nsTop
+  0862:88 01f2            lsg  
+  0865:40 105d 06        call proc_18c6 6 
+
+  0869:a5 00              sat temp0 
+  086b:36                push 
+  086c:35 09              ldi 9 
+  086e:1a                 eq? 
+  086f:30 0009            bnt code_087b 
+  0872:80 01f2            lag  
+  0875:a0 01ef            sag  
+  0878:32 0005            jmp code_0880 
+
+        code_087b
+  087b:35 09              ldi 9 
+  087d:a0 01ef            sag  
+
+        code_0880
+  0880:39 04            pushi 4 // $4 x
+  0882:88 0190            lsg  
+  0885:38 0173          pushi 173 // $173 worksAt
+  0888:76               push0 
+  0889:87 01              lap param1 
+  088b:4a 04             send 4 
+
+  088d:36                push 
+  088e:8d 00              lst temp0 
+  0890:88 01ef            lsg  
+  0893:40 0edd 08        call proc_1774 8 
+
+  0897:a0 01e7            sag  
+  089a:88 01eb            lsg  
+  089d:80 019c            lag  
+  08a0:02                 add 
+  08a1:36                push 
+  08a2:78               push1 
+  08a3:8f 01              lsp param1 
+  08a5:45 0b 02         callb procedure_000b 2 //  
+
+  08a8:04                 sub 
+  08a9:a0 01ee            sag  
+  08ac:36                push 
+  08ad:80 01ec            lag  
+  08b0:08                 div 
+  08b1:a0 01ed            sag  
+  08b4:88 01ee            lsg  
+  08b7:80 01ec            lag  
+  08ba:0a                 mod 
+  08bb:30 0003            bnt code_08c1 
+  08be:c0 01ed            +ag  
+
+        code_08c1
+  08c1:88 01ed            lsg  
+  08c4:35 00              ldi 0 
+  08c6:24                 le? 
+  08c7:30 0005            bnt code_08cf 
+  08ca:35 01              ldi 1 
+  08cc:a0 01ed            sag  
+
+        code_08cf
+  08cf:88 01e7            lsg  
+  08d2:39 06            pushi 6 // $6 loop
+  08d4:80 01ed            lag  
+  08d7:06                 mul 
+  08d8:36                push 
+  08d9:80 01db            lag  
+  08dc:06                 mul 
+  08dd:02                 add 
+  08de:a0 01e8            sag  
+  08e1:78               push1 
+  08e2:36                push 
+  08e3:40 0f0e 02        call proc_17f5 2 
+
+  08e7:30 002a            bnt code_0914 
+  08ea:35 11              ldi 11 
+  08ec:a0 0193            sag  
+  08ef:80 01ed            lag  
+  08f2:a0 0198            sag  
+  08f5:35 01              ldi 1 
+  08f7:a0 0197            sag  
+  08fa:35 0b              ldi b 
+  08fc:a0 0199            sag  
+  08ff:39 03            pushi 3 // $3 y
+  0901:88 0190            lsg  
+  0904:38 0173          pushi 173 // $173 worksAt
+  0907:76               push0 
+  0908:87 01              lap param1 
+  090a:4a 04             send 4 
+
+  090c:36                push 
+  090d:39 09            pushi 9 // $9 nsTop
+  090f:40 0fb3 06        call proc_18c6 6 
+
+  0913:48                 ret 
+
+        code_0914
+  0914:88 01f4            lsg  
+  0917:35 16              ldi 16 
+  0919:1a                 eq? 
+  091a:30 0004            bnt code_0921 
+  091d:76               push0 
+  091e:43 53 00         callk SetDebug 0 
+
+
+        code_0921
+  0921:39 03            pushi 3 // $3 y
+  0923:39 04            pushi 4 // $4 x
+  0925:39 09            pushi 9 // $9 nsTop
+  0927:88 01f2            lsg  
+  092a:40 0f98 06        call proc_18c6 6 
+
+  092e:a5 00              sat temp0 
+  0930:36                push 
+  0931:35 09              ldi 9 
+  0933:1a                 eq? 
+  0934:30 0009            bnt code_0940 
+  0937:80 01f2            lag  
+  093a:a0 01ef            sag  
+  093d:32 0005            jmp code_0945 
+
+        code_0940
+  0940:35 09              ldi 9 
+  0942:a0 01ef            sag  
+
+        code_0945
+  0945:39 04            pushi 4 // $4 x
+  0947:88 0190            lsg  
+  094a:39 04            pushi 4 // $4 x
+  094c:8d 00              lst temp0 
+  094e:88 01ef            lsg  
+  0951:40 0e1f 08        call proc_1774 8 
+
+  0955:a0 01e7            sag  
+  0958:a0 01e8            sag  
+  095b:78               push1 
+  095c:8f 01              lsp param1 
+  095e:45 0b 02         callb procedure_000b 2 //  
+
+  0961:36                push 
+  0962:80 01f3            lag  
+  0965:02                 add 
+  0966:36                push 
+  0967:88 019c            lsg  
+  096a:80 01eb            lag  
+  096d:02                 add 
+  096e:22                 lt? 
+  096f:30 000c            bnt code_097e 
+  0972:88 01e7            lsg  
+  0975:7a               push2 
+  0976:80 01db            lag  
+  0979:06                 mul 
+  097a:02                 add 
+  097b:a0 01e8            sag  
+
+        code_097e
+  097e:78               push1 
+  097f:88 01e8            lsg  
+  0982:40 0e6f 02        call proc_17f5 2 
+
+  0986:30 0039            bnt code_09c2 
+  0989:7a               push2 
+  098a:8f 01              lsp param1 
+  098c:88 019c            lsg  
+  098f:80 01eb            lag  
+  0992:02                 add 
+  0993:36                push 
+  0994:40 f674 04        call proc_000c 4 
+
+  0998:30 0027            bnt code_09c2 
+  099b:35 12              ldi 12 
+  099d:a0 0193            sag  
+  09a0:88 019c            lsg  
+  09a3:80 01eb            lag  
+  09a6:02                 add 
+  09a7:a0 0198            sag  
+  09aa:35 11              ldi 11 
+  09ac:a0 0197            sag  
+  09af:35 0b              ldi b 
+  09b1:a0 0199            sag  
+  09b4:39 03            pushi 3 // $3 y
+  09b6:88 0190            lsg  
+  09b9:39 04            pushi 4 // $4 x
+  09bb:39 09            pushi 9 // $9 nsTop
+  09bd:40 0f05 06        call proc_18c6 6 
+
+  09c1:48                 ret 
+
+        code_09c2
+  09c2:88 01f4            lsg  
+  09c5:35 17              ldi 17 
+  09c7:1a                 eq? 
+  09c8:30 0004            bnt code_09cf 
+  09cb:76               push0 
+  09cc:43 53 00         callk SetDebug 0 
+
+
+        code_09cf
+  09cf:39 03            pushi 3 // $3 y
+  09d1:39 0c            pushi c // $c nsRight
+  09d3:39 09            pushi 9 // $9 nsTop
+  09d5:88 01f2            lsg  
+  09d8:40 0eea 06        call proc_18c6 6 
+
+  09dc:a5 00              sat temp0 
+  09de:36                push 
+  09df:35 09              ldi 9 
+  09e1:1a                 eq? 
+  09e2:30 0009            bnt code_09ee 
+  09e5:80 01f2            lag  
+  09e8:a0 01ef            sag  
+  09eb:32 0005            jmp code_09f3 
+
+        code_09ee
+  09ee:35 09              ldi 9 
+  09f0:a0 01ef            sag  
+
+        code_09f3
+  09f3:39 04            pushi 4 // $4 x
+  09f5:88 0190            lsg  
+  09f8:39 0c            pushi c // $c nsRight
+  09fa:8d 00              lst temp0 
+  09fc:88 01ef            lsg  
+  09ff:40 0d71 08        call proc_1774 8 
+
+  0a03:a0 01e7            sag  
+  0a06:78               push1 
+  0a07:36                push 
+  0a08:40 0de9 02        call proc_17f5 2 
+
+  0a0c:30 0045            bnt code_0a54 
+  0a0f:88 01e6            lsg  
+  0a12:78               push1 
+  0a13:8f 01              lsp param1 
+  0a15:45 0b 02         callb procedure_000b 2 //  
+
+  0a18:02                 add 
+  0a19:36                push 
+  0a1a:88 019c            lsg  
+  0a1d:80 01eb            lag  
+  0a20:02                 add 
+  0a21:20                 ge? 
+  0a22:30 002f            bnt code_0a54 
+  0a25:35 13              ldi 13 
+  0a27:a0 0193            sag  
+  0a2a:35 09              ldi 9 
+  0a2c:a0 0197            sag  
+  0a2f:88 019c            lsg  
+  0a32:80 01eb            lag  
+  0a35:02                 add 
+  0a36:36                push 
+  0a37:78               push1 
+  0a38:8f 01              lsp param1 
+  0a3a:45 0b 02         callb procedure_000b 2 //  
+
+  0a3d:04                 sub 
+  0a3e:a0 0198            sag  
+  0a41:35 0b              ldi b 
+  0a43:a0 0199            sag  
+  0a46:39 03            pushi 3 // $3 y
+  0a48:88 0190            lsg  
+  0a4b:39 0c            pushi c // $c nsRight
+  0a4d:39 09            pushi 9 // $9 nsTop
+  0a4f:40 0e73 06        call proc_18c6 6 
+
+  0a53:48                 ret 
+
+        code_0a54
+  0a54:88 01f4            lsg  
+  0a57:35 18              ldi 18 
+  0a59:1a                 eq? 
+  0a5a:30 0004            bnt code_0a61 
+  0a5d:76               push0 
+  0a5e:43 53 00         callk SetDebug 0 
+
+
+        code_0a61
+  0a61:78               push1 
+  0a62:8f 01              lsp param1 
+  0a64:45 0b 02         callb procedure_000b 2 //  
+
+  0a67:36                push 
+  0a68:80 019c            lag  
+  0a6b:20                 ge? 
+  0a6c:30 000d            bnt code_0a7c 
+  0a6f:35 14              ldi 14 
+  0a71:a0 0193            sag  
+  0a74:35 0b              ldi b 
+  0a76:a0 0197            sag  
+  0a79:35 09              ldi 9 
+  0a7b:48                 ret 
+
+        code_0a7c
+  0a7c:88 01f4            lsg  
+  0a7f:35 19              ldi 19 
+  0a81:1a                 eq? 
+  0a82:30 0004            bnt code_0a89 
+  0a85:76               push0 
+  0a86:43 53 00         callk SetDebug 0 
+
+
+        code_0a89
+  0a89:78               push1 
+  0a8a:8f 01              lsp param1 
+  0a8c:45 0b 02         callb procedure_000b 2 //  
+
+  0a8f:36                push 
+  0a90:80 019c            lag  
+  0a93:22                 lt? 
+  0a94:30 0021            bnt code_0ab8 
+  0a97:7a               push2 
+  0a98:8f 01              lsp param1 
+  0a9a:88 019c            lsg  
+  0a9d:40 f56b 04        call proc_000c 4 
+
+  0aa1:30 0014            bnt code_0ab8 
+  0aa4:34 00dc            ldi dc 
+  0aa7:a0 0193            sag  
+  0aaa:80 019c            lag  
+  0aad:a0 0198            sag  
+  0ab0:35 11              ldi 11 
+  0ab2:a0 0197            sag  
+  0ab5:35 04              ldi 4 
+  0ab7:48                 ret 
+
+        code_0ab8
+  0ab8:88 01f4            lsg  
+  0abb:35 1a              ldi 1a 
+  0abd:1a                 eq? 
+  0abe:30 0004            bnt code_0ac5 
+  0ac1:76               push0 
+  0ac2:43 53 00         callk SetDebug 0 
+
+
+        code_0ac5
+  0ac5:78               push1 
+  0ac6:8f 01              lsp param1 
+  0ac8:45 0b 02         callb procedure_000b 2 //  
+
+  0acb:36                push 
+  0acc:80 019c            lag  
+  0acf:22                 lt? 
+  0ad0:30 002d            bnt code_0b00 
+  0ad3:88 01e6            lsg  
+  0ad6:78               push1 
+  0ad7:8f 01              lsp param1 
+  0ad9:45 0b 02         callb procedure_000b 2 //  
+
+  0adc:02                 add 
+  0add:36                push 
+  0ade:80 019c            lag  
+  0ae1:20                 ge? 
+  0ae2:30 001b            bnt code_0b00 
+  0ae5:34 00dd            ldi dd 
+  0ae8:a0 0193            sag  
+  0aeb:35 09              ldi 9 
+  0aed:a0 0197            sag  
+  0af0:88 019c            lsg  
+  0af3:78               push1 
+  0af4:8f 01              lsp param1 
+  0af6:45 0b 02         callb procedure_000b 2 //  
+
+  0af9:04                 sub 
+  0afa:a0 0198            sag  
+  0afd:35 0c              ldi c 
+  0aff:48                 ret 
+
+        code_0b00
+  0b00:88 01f4            lsg  
+  0b03:35 1b              ldi 1b 
+  0b05:1a                 eq? 
+  0b06:30 0004            bnt code_0b0d 
+  0b09:76               push0 
+  0b0a:43 53 00         callk SetDebug 0 
+
+
+        code_0b0d
+  0b0d:78               push1 
+  0b0e:8f 01              lsp param1 
+  0b10:45 0b 02         callb procedure_000b 2 //  
+
+  0b13:36                push 
+  0b14:80 019c            lag  
+  0b17:20                 ge? 
+  0b18:30 000e            bnt code_0b29 
+  0b1b:34 00de            ldi de 
+  0b1e:a0 0193            sag  
+  0b21:35 0b              ldi b 
+  0b23:a0 0197            sag  
+  0b26:35 09              ldi 9 
+  0b28:48                 ret 
+
+        code_0b29
+  0b29:88 01f4            lsg  
+  0b2c:35 1c              ldi 1c 
+  0b2e:1a                 eq? 
+  0b2f:30 0004            bnt code_0b36 
+  0b32:76               push0 
+  0b33:43 53 00         callk SetDebug 0 
+
+
+        code_0b36
+  0b36:80 019b            lag  
+  0b39:18                 not 
+  0b3a:30 03b4            bnt code_0ef1 
+  0b3d:88 01f4            lsg  
+  0b40:35 1d              ldi 1d 
+  0b42:1a                 eq? 
+  0b43:30 0004            bnt code_0b4a 
+  0b46:76               push0 
+  0b47:43 53 00         callk SetDebug 0 
+
+
+        code_0b4a
+  0b4a:78               push1 
+  0b4b:8f 01              lsp param1 
+  0b4d:45 0b 02         callb procedure_000b 2 //  
+
+  0b50:36                push 
+  0b51:80 01eb            lag  
+  0b54:22                 lt? 
+  0b55:30 0161            bnt code_0cb9 
+  0b58:88 01f4            lsg  
+  0b5b:35 1e              ldi 1e 
+  0b5d:1a                 eq? 
+  0b5e:30 0004            bnt code_0b65 
+  0b61:76               push0 
+  0b62:43 53 00         callk SetDebug 0 
+
+
+        code_0b65
+  0b65:38 01a8          pushi 1a8 // $1a8 wage
+  0b68:76               push0 
+  0b69:87 01              lap param1 
+  0b6b:4a 04             send 4 
+
+  0b6d:30 0087            bnt code_0bf7 
+  0b70:38 0174          pushi 174 // $174 dressedForWork
+  0b73:76               push0 
+  0b74:87 01              lap param1 
+  0b76:4a 04             send 4 
+
+  0b78:30 007c            bnt code_0bf7 
+  0b7b:39 03            pushi 3 // $3 y
+  0b7d:88 0190            lsg  
+  0b80:38 0173          pushi 173 // $173 worksAt
+  0b83:76               push0 
+  0b84:87 01              lap param1 
+  0b86:4a 04             send 4 
+
+  0b88:36                push 
+  0b89:88 01f2            lsg  
+  0b8c:40 0be4 06        call proc_1774 6 
+
+  0b90:a0 01e7            sag  
+  0b93:88 01eb            lsg  
+  0b96:78               push1 
+  0b97:8f 01              lsp param1 
+  0b99:45 0b 02         callb procedure_000b 2 //  
+
+  0b9c:04                 sub 
+  0b9d:a0 01ee            sag  
+  0ba0:36                push 
+  0ba1:80 01ec            lag  
+  0ba4:08                 div 
+  0ba5:a0 01ed            sag  
+  0ba8:88 01ee            lsg  
+  0bab:80 01ec            lag  
+  0bae:0a                 mod 
+  0baf:30 0003            bnt code_0bb5 
+  0bb2:c0 01ed            +ag  
+
+        code_0bb5
+  0bb5:88 01ed            lsg  
+  0bb8:35 00              ldi 0 
+  0bba:24                 le? 
+  0bbb:30 0005            bnt code_0bc3 
+  0bbe:35 01              ldi 1 
+  0bc0:a0 01ed            sag  
+
+        code_0bc3
+  0bc3:88 01e7            lsg  
+  0bc6:39 06            pushi 6 // $6 loop
+  0bc8:80 01ed            lag  
+  0bcb:06                 mul 
+  0bcc:36                push 
+  0bcd:80 01db            lag  
+  0bd0:06                 mul 
+  0bd1:02                 add 
+  0bd2:a0 01e8            sag  
+  0bd5:78               push1 
+  0bd6:36                push 
+  0bd7:40 0c1a 02        call proc_17f5 2 
+
+  0bdb:30 0019            bnt code_0bf7 
+  0bde:35 15              ldi 15 
+  0be0:a0 0193            sag  
+  0be3:80 01ed            lag  
+  0be6:a0 0198            sag  
+  0be9:35 01              ldi 1 
+  0beb:a0 0197            sag  
+  0bee:38 0173          pushi 173 // $173 worksAt
+  0bf1:76               push0 
+  0bf2:87 01              lap param1 
+  0bf4:4a 04             send 4 
+
+  0bf6:48                 ret 
+
+        code_0bf7
+  0bf7:88 01f4            lsg  
+  0bfa:35 1f              ldi 1f 
+  0bfc:1a                 eq? 
+  0bfd:30 0004            bnt code_0c04 
+  0c00:76               push0 
+  0c01:43 53 00         callk SetDebug 0 
+
+
+        code_0c04
+  0c04:39 03            pushi 3 // $3 y
+  0c06:88 0190            lsg  
+  0c09:39 04            pushi 4 // $4 x
+  0c0b:88 01f2            lsg  
+  0c0e:40 0b62 06        call proc_1774 6 
+
+  0c12:a0 01e7            sag  
+  0c15:a0 01e8            sag  
+  0c18:78               push1 
+  0c19:8f 01              lsp param1 
+  0c1b:45 0b 02         callb procedure_000b 2 //  
+
+  0c1e:36                push 
+  0c1f:80 01f3            lag  
+  0c22:02                 add 
+  0c23:36                push 
+  0c24:80 01eb            lag  
+  0c27:22                 lt? 
+  0c28:30 000c            bnt code_0c37 
+  0c2b:88 01e7            lsg  
+  0c2e:7a               push2 
+  0c2f:80 01db            lag  
+  0c32:06                 mul 
+  0c33:02                 add 
+  0c34:a0 01e8            sag  
+
+        code_0c37
+  0c37:78               push1 
+  0c38:88 01e8            lsg  
+  0c3b:40 0bb6 02        call proc_17f5 2 
+
+  0c3f:30 0020            bnt code_0c62 
+  0c42:7a               push2 
+  0c43:8f 01              lsp param1 
+  0c45:88 01eb            lsg  
+  0c48:40 f3c0 04        call proc_000c 4 
+
+  0c4c:30 0013            bnt code_0c62 
+  0c4f:35 16              ldi 16 
+  0c51:a0 0193            sag  
+  0c54:80 01eb            lag  
+  0c57:a0 0198            sag  
+  0c5a:35 11              ldi 11 
+  0c5c:a0 0197            sag  
+  0c5f:35 04              ldi 4 
+  0c61:48                 ret 
+
+        code_0c62
+  0c62:88 01f4            lsg  
+  0c65:35 20              ldi 20 
+  0c67:1a                 eq? 
+  0c68:30 0004            bnt code_0c6f 
+  0c6b:76               push0 
+  0c6c:43 53 00         callk SetDebug 0 
+
+
+        code_0c6f
+  0c6f:39 03            pushi 3 // $3 y
+  0c71:88 0190            lsg  
+  0c74:39 0c            pushi c // $c nsRight
+  0c76:88 01f2            lsg  
+  0c79:40 0af7 06        call proc_1774 6 
+
+  0c7d:a0 01e7            sag  
+  0c80:78               push1 
+  0c81:36                push 
+  0c82:40 0b6f 02        call proc_17f5 2 
+
+  0c86:30 0030            bnt code_0cb9 
+  0c89:80 01e6            lag  
+  0c8c:30 002a            bnt code_0cb9 
+  0c8f:36                push 
+  0c90:78               push1 
+  0c91:8f 01              lsp param1 
+  0c93:45 0b 02         callb procedure_000b 2 //  
+
+  0c96:02                 add 
+  0c97:36                push 
+  0c98:80 01eb            lag  
+  0c9b:20                 ge? 
+  0c9c:30 001a            bnt code_0cb9 
+  0c9f:35 17              ldi 17 
+  0ca1:a0 0193            sag  
+  0ca4:35 09              ldi 9 
+  0ca6:a0 0197            sag  
+  0ca9:88 01eb            lsg  
+  0cac:78               push1 
+  0cad:8f 01              lsp param1 
+  0caf:45 0b 02         callb procedure_000b 2 //  
+
+  0cb2:04                 sub 
+  0cb3:a0 0198            sag  
+  0cb6:35 0c              ldi c 
+  0cb8:48                 ret 
+
+        code_0cb9
+  0cb9:88 01f4            lsg  
+  0cbc:35 21              ldi 21 
+  0cbe:1a                 eq? 
+  0cbf:30 0004            bnt code_0cc6 
+  0cc2:76               push0 
+  0cc3:43 53 00         callk SetDebug 0 
+
+
+        code_0cc6
+  0cc6:80 0149            lag  
+  0cc9:30 00e8            bnt code_0db4 
+  0ccc:78               push1 
+  0ccd:8f 01              lsp param1 
+  0ccf:45 0b 02         callb procedure_000b 2 //  
+
+  0cd2:36                push 
+  0cd3:34 05dc            ldi 5dc 
+  0cd6:1e                 gt? 
+  0cd7:30 00da            bnt code_0db4 
+  0cda:88 01f2            lsg  
+  0cdd:35 03              ldi 3 
+  0cdf:1a                 eq? 
+  0ce0:30 00d1            bnt code_0db4 
+  0ce3:38 01a8          pushi 1a8 // $1a8 wage
+  0ce6:76               push0 
+  0ce7:87 01              lap param1 
+  0ce9:4a 04             send 4 
+
+  0ceb:30 0028            bnt code_0d16 
+  0cee:38 0174          pushi 174 // $174 dressedForWork
+  0cf1:76               push0 
+  0cf2:87 01              lap param1 
+  0cf4:4a 04             send 4 
+
+  0cf6:30 001d            bnt code_0d16 
+  0cf9:39 04            pushi 4 // $4 x
+  0cfb:88 0190            lsg  
+  0cfe:38 0173          pushi 173 // $173 worksAt
+  0d01:76               push0 
+  0d02:87 01              lap param1 
+  0d04:4a 04             send 4 
+
+  0d06:36                push 
+  0d07:39 04            pushi 4 // $4 x
+  0d09:88 01f2            lsg  
+  0d0c:40 0b3f 08        call proc_184f 8 
+
+  0d10:a0 01e7            sag  
+  0d13:32 0011            jmp code_0d27 
+
+        code_0d16
+  0d16:39 03            pushi 3 // $3 y
+  0d18:88 0190            lsg  
+  0d1b:39 04            pushi 4 // $4 x
+  0d1d:88 01f2            lsg  
+  0d20:40 0af3 06        call proc_1817 6 
+
+  0d24:a0 01e7            sag  
+
+        code_0d27
+  0d27:88 01e7            lsg  
+  0d2a:80 01db            lag  
+  0d2d:02                 add 
+  0d2e:a0 01e7            sag  
+  0d31:36                push 
+  0d32:38 01a8          pushi 1a8 // $1a8 wage
+  0d35:76               push0 
+  0d36:87 01              lap param1 
+  0d38:4a 04             send 4 
+
+  0d3a:30 0009            bnt code_0d46 
+  0d3d:39 12            pushi 12 // $12 illegalBits
+  0d3f:80 01db            lag  
+  0d42:06                 mul 
+  0d43:32 0002            jmp code_0d48 
+
+        code_0d46
+  0d46:35 00              ldi 0 
+
+        code_0d48
+  0d48:02                 add 
+  0d49:a0 01e8            sag  
+  0d4c:78               push1 
+  0d4d:36                push 
+  0d4e:40 0aa3 02        call proc_17f5 2 
+
+  0d52:30 005f            bnt code_0db4 
+  0d55:38 01a8          pushi 1a8 // $1a8 wage
+  0d58:76               push0 
+  0d59:87 01              lap param1 
+  0d5b:4a 04             send 4 
+
+  0d5d:30 0046            bnt code_0da6 
+  0d60:38 0174          pushi 174 // $174 dressedForWork
+  0d63:76               push0 
+  0d64:87 01              lap param1 
+  0d66:4a 04             send 4 
+
+  0d68:30 003b            bnt code_0da6 
+  0d6b:38 0173          pushi 173 // $173 worksAt
+  0d6e:76               push0 
+  0d6f:87 01              lap param1 
+  0d71:4a 04             send 4 
+
+  0d73:36                push 
+  0d74:35 03              ldi 3 
+  0d76:1c                 ne? 
+  0d77:30 002c            bnt code_0da6 
+  0d7a:35 18              ldi 18 
+  0d7c:a0 0193            sag  
+  0d7f:35 01              ldi 1 
+  0d81:a0 0197            sag  
+  0d84:35 03              ldi 3 
+  0d86:a0 0198            sag  
+  0d89:35 12              ldi 12 
+  0d8b:a0 0199            sag  
+  0d8e:39 03            pushi 3 // $3 y
+  0d90:88 0190            lsg  
+  0d93:38 0173          pushi 173 // $173 worksAt
+  0d96:76               push0 
+  0d97:87 01              lap param1 
+  0d99:4a 04             send 4 
+
+  0d9b:36                push 
+  0d9c:39 04            pushi 4 // $4 x
+  0d9e:40 0b24 06        call proc_18c6 6 
+
+  0da2:48                 ret 
+  0da3:32 000e            jmp code_0db4 
+
+        code_0da6
+  0da6:34 00e0            ldi e0 
+  0da9:a0 0193            sag  
+  0dac:35 12              ldi 12 
+  0dae:a0 0197            sag  
+  0db1:35 04              ldi 4 
+  0db3:48                 ret 
+
+        code_0db4
+  0db4:88 01f4            lsg  
+  0db7:35 22              ldi 22 
+  0db9:1a                 eq? 
+  0dba:30 0004            bnt code_0dc1 
+  0dbd:76               push0 
+  0dbe:43 53 00         callk SetDebug 0 
+
+
+        code_0dc1
+  0dc1:80 0149            lag  
+  0dc4:30 00b5            bnt code_0e7c 
+  0dc7:78               push1 
+  0dc8:8f 01              lsp param1 
+  0dca:45 0b 02         callb procedure_000b 2 //  
+
+  0dcd:36                push 
+  0dce:80 01eb            lag  
+  0dd1:20                 ge? 
+  0dd2:30 00a7            bnt code_0e7c 
+  0dd5:38 01a8          pushi 1a8 // $1a8 wage
+  0dd8:76               push0 
+  0dd9:87 01              lap param1 
+  0ddb:4a 04             send 4 
+
+  0ddd:30 0031            bnt code_0e11 
+  0de0:38 0174          pushi 174 // $174 dressedForWork
+  0de3:76               push0 
+  0de4:87 01              lap param1 
+  0de6:4a 04             send 4 
+
+  0de8:30 0026            bnt code_0e11 
+  0deb:39 03            pushi 3 // $3 y
+  0ded:88 0190            lsg  
+  0df0:38 0173          pushi 173 // $173 worksAt
+  0df3:76               push0 
+  0df4:87 01              lap param1 
+  0df6:4a 04             send 4 
+
+  0df8:36                push 
+  0df9:88 01f2            lsg  
+  0dfc:40 0974 06        call proc_1774 6 
+
+  0e00:a0 01e7            sag  
+  0e03:36                push 
+  0e04:39 12            pushi 12 // $12 illegalBits
+  0e06:80 01db            lag  
+  0e09:06                 mul 
+  0e0a:02                 add 
+  0e0b:a0 01e8            sag  
+  0e0e:32 000e            jmp code_0e1f 
+
+        code_0e11
+  0e11:7a               push2 
+  0e12:88 0190            lsg  
+  0e15:88 01f2            lsg  
+  0e18:40 0958 04        call proc_1774 4 
+
+  0e1c:a0 01e8            sag  
+
+        code_0e1f
+  0e1f:78               push1 
+  0e20:88 01e8            lsg  
+  0e23:40 09ce 02        call proc_17f5 2 
+
+  0e27:30 0052            bnt code_0e7c 
+  0e2a:38 01a8          pushi 1a8 // $1a8 wage
+  0e2d:76               push0 
+  0e2e:87 01              lap param1 
+  0e30:4a 04             send 4 
+
+  0e32:30 0038            bnt code_0e6d 
+  0e35:38 0174          pushi 174 // $174 dressedForWork
+  0e38:76               push0 
+  0e39:87 01              lap param1 
+  0e3b:4a 04             send 4 
+
+  0e3d:30 002d            bnt code_0e6d 
+  0e40:35 19              ldi 19 
+  0e42:a0 0193            sag  
+  0e45:35 01              ldi 1 
+  0e47:a0 0197            sag  
+  0e4a:35 03              ldi 3 
+  0e4c:a0 0198            sag  
+  0e4f:35 02              ldi 2 
+  0e51:a0 0199            sag  
+  0e54:39 03            pushi 3 // $3 y
+  0e56:88 0190            lsg  
+  0e59:38 0173          pushi 173 // $173 worksAt
+  0e5c:76               push0 
+  0e5d:87 01              lap param1 
+  0e5f:4a 04             send 4 
+
+  0e61:36                push 
+  0e62:88 01f2            lsg  
+  0e65:40 0a5d 06        call proc_18c6 6 
+
+  0e69:48                 ret 
+  0e6a:32 000f            jmp code_0e7c 
+
+        code_0e6d
+  0e6d:34 00e1            ldi e1 
+  0e70:a0 0193            sag  
+  0e73:35 02              ldi 2 
+  0e75:a0 0197            sag  
+  0e78:80 01f2            lag  
+  0e7b:48                 ret 
+
+        code_0e7c
+  0e7c:88 01f4            lsg  
+  0e7f:35 23              ldi 23 
+  0e81:1a                 eq? 
+  0e82:30 0004            bnt code_0e89 
+  0e85:76               push0 
+  0e86:43 53 00         callk SetDebug 0 
+
+
+        code_0e89
+  0e89:39 03            pushi 3 // $3 y
+  0e8b:88 0190            lsg  
+  0e8e:39 04            pushi 4 // $4 x
+  0e90:39 03            pushi 3 // $3 y
+  0e92:40 08de 06        call proc_1774 6 
+
+  0e96:a0 01e7            sag  
+  0e99:88 01f2            lsg  
+  0e9c:35 03              ldi 3 
+  0e9e:1a                 eq? 
+  0e9f:30 0026            bnt code_0ec8 
+  0ea2:78               push1 
+  0ea3:8f 01              lsp param1 
+  0ea5:45 0b 02         callb procedure_000b 2 //  
+
+  0ea8:36                push 
+  0ea9:34 05dc            ldi 5dc 
+  0eac:1e                 gt? 
+  0ead:30 0018            bnt code_0ec8 
+  0eb0:78               push1 
+  0eb1:88 01e7            lsg  
+  0eb4:40 093d 02        call proc_17f5 2 
+
+  0eb8:30 000d            bnt code_0ec8 
+  0ebb:35 1a              ldi 1a 
+  0ebd:a0 0193            sag  
+  0ec0:35 12              ldi 12 
+  0ec2:a0 0197            sag  
+  0ec5:35 04              ldi 4 
+  0ec7:48                 ret 
+
+        code_0ec8
+  0ec8:88 01f4            lsg  
+  0ecb:35 24              ldi 24 
+  0ecd:1a                 eq? 
+  0ece:30 0004            bnt code_0ed5 
+  0ed1:76               push0 
+  0ed2:43 53 00         callk SetDebug 0 
+
+
+        code_0ed5
+  0ed5:78               push1 
+  0ed6:8f 01              lsp param1 
+  0ed8:45 0b 02         callb procedure_000b 2 //  
+
+  0edb:36                push 
+  0edc:80 01eb            lag  
+  0edf:20                 ge? 
+  0ee0:30 000e            bnt code_0ef1 
+  0ee3:35 1b              ldi 1b 
+  0ee5:a0 0193            sag  
+  0ee8:35 02              ldi 2 
+  0eea:a0 0197            sag  
+  0eed:80 01f2            lag  
+  0ef0:48                 ret 
+
+        code_0ef1
+  0ef1:88 01f4            lsg  
+  0ef4:35 25              ldi 25 
+  0ef6:1a                 eq? 
+  0ef7:30 0004            bnt code_0efe 
+  0efa:76               push0 
+  0efb:43 53 00         callk SetDebug 0 
+
+
+        code_0efe
+  0efe:38 01ab          pushi 1ab // $1ab raisesGiven
+  0f01:76               push0 
+  0f02:87 01              lap param1 
+  0f04:4a 04             send 4 
+
+  0f06:36                push 
+  0f07:35 02              ldi 2 
+  0f09:22                 lt? 
+  0f0a:30 0058            bnt code_0f65 
+  0f0d:38 01b8          pushi 1b8 // $1b8 dependibility
+  0f10:76               push0 
+  0f11:87 01              lap param1 
+  0f13:4a 04             send 4 
+
+  0f15:36                push 
+  0f16:38 01b9          pushi 1b9 // $1b9 minDepend
+  0f19:76               push0 
+  0f1a:87 01              lap param1 
+  0f1c:4a 04             send 4 
+
+  0f1e:36                push 
+  0f1f:35 0a              ldi a 
+  0f21:02                 add 
+  0f22:36                push 
+  0f23:39 05            pushi 5 // $5 view
+  0f25:38 01ab          pushi 1ab // $1ab raisesGiven
+  0f28:76               push0 
+  0f29:87 01              lap param1 
+  0f2b:4a 04             send 4 
+
+  0f2d:06                 mul 
+  0f2e:02                 add 
+  0f2f:20                 ge? 
+  0f30:30 0032            bnt code_0f65 
+  0f33:7a               push2 
+  0f34:88 0135            lsg  
+  0f37:38 01a9          pushi 1a9 // $1a9 baseWage
+  0f3a:76               push0 
+  0f3b:87 01              lap param1 
+  0f3d:4a 04             send 4 
+
+  0f3f:36                push 
+  0f40:47 6d 00 04      calle 6d procedure_0000 4 //  
+
+  0f44:36                push 
+  0f45:38 01a8          pushi 1a8 // $1a8 wage
+  0f48:76               push0 
+  0f49:87 01              lap param1 
+  0f4b:4a 04             send 4 
+
+  0f4d:1e                 gt? 
+  0f4e:30 0014            bnt code_0f65 
+  0f51:80 0192            lag  
+  0f54:18                 not 
+  0f55:30 000d            bnt code_0f65 
+  0f58:35 1c              ldi 1c 
+  0f5a:a0 0193            sag  
+  0f5d:35 04              ldi 4 
+  0f5f:a0 0197            sag  
+  0f62:35 06              ldi 6 
+  0f64:48                 ret 
+
+        code_0f65
+  0f65:88 01f4            lsg  
+  0f68:35 26              ldi 26 
+  0f6a:1a                 eq? 
+  0f6b:30 0004            bnt code_0f72 
+  0f6e:76               push0 
+  0f6f:43 53 00         callk SetDebug 0 
+
+
+        code_0f72
+  0f72:38 01bc          pushi 1bc // $1bc notEnoughEd
+  0f75:76               push0 
+  0f76:87 01              lap param1 
+  0f78:4a 04             send 4 
+
+  0f7a:18                 not 
+  0f7b:30 0068            bnt code_0fe6 
+  0f7e:38 01ba          pushi 1ba // $1ba experience
+  0f81:76               push0 
+  0f82:87 01              lap param1 
+  0f84:4a 04             send 4 
+
+  0f86:36                push 
+  0f87:38 01bb          pushi 1bb // $1bb maxExperience
+  0f8a:76               push0 
+  0f8b:87 01              lap param1 
+  0f8d:4a 04             send 4 
+
+  0f8f:20                 ge? 
+  0f90:30 0053            bnt code_0fe6 
+  0f93:38 01b8          pushi 1b8 // $1b8 dependibility
+  0f96:76               push0 
+  0f97:87 01              lap param1 
+  0f99:4a 04             send 4 
+
+  0f9b:36                push 
+  0f9c:38 01b9          pushi 1b9 // $1b9 minDepend
+  0f9f:76               push0 
+  0fa0:87 01              lap param1 
+  0fa2:4a 04             send 4 
+
+  0fa4:36                push 
+  0fa5:35 0a              ldi a 
+  0fa7:02                 add 
+  0fa8:20                 ge? 
+  0fa9:30 003a            bnt code_0fe6 
+  0fac:80 0192            lag  
+  0faf:18                 not 
+  0fb0:30 0033            bnt code_0fe6 
+  0fb3:38 01bb          pushi 1bb // $1bb maxExperience
+  0fb6:76               push0 
+  0fb7:87 01              lap param1 
+  0fb9:4a 04             send 4 
+
+  0fbb:36                push 
+  0fbc:35 50              ldi 50 
+  0fbe:22                 lt? 
+  0fbf:30 0024            bnt code_0fe6 
+  0fc2:7a               push2 
+  0fc3:88 0135            lsg  
+  0fc6:39 19            pushi 19 // $19 time
+  0fc8:47 6d 00 04      calle 6d procedure_0000 4 //  
+
+  0fcc:36                push 
+  0fcd:38 01a8          pushi 1a8 // $1a8 wage
+  0fd0:76               push0 
+  0fd1:87 01              lap param1 
+  0fd3:4a 04             send 4 
+
+  0fd5:1e                 gt? 
+  0fd6:30 000d            bnt code_0fe6 
+  0fd9:35 1d              ldi 1d 
+  0fdb:a0 0193            sag  
+  0fde:35 05              ldi 5 
+  0fe0:a0 0197            sag  
+  0fe3:35 06              ldi 6 
+  0fe5:48                 ret 
+
+        code_0fe6
+  0fe6:88 01f4            lsg  
+  0fe9:35 27              ldi 27 
+  0feb:1a                 eq? 
+  0fec:30 0004            bnt code_0ff3 
+  0fef:76               push0 
+  0ff0:43 53 00         callk SetDebug 0 
+
+
+        code_0ff3
+  0ff3:38 01bc          pushi 1bc // $1bc notEnoughEd
+  0ff6:76               push0 
+  0ff7:87 01              lap param1 
+  0ff9:4a 04             send 4 
+
+  0ffb:18                 not 
+  0ffc:30 00fb            bnt code_10fa 
+  0fff:35 01              ldi 1 
+  1001:a0 01ed            sag  
+  1004:38 01ba          pushi 1ba // $1ba experience
+  1007:76               push0 
+  1008:87 01              lap param1 
+  100a:4a 04             send 4 
+
+  100c:36                push 
+  100d:38 01bb          pushi 1bb // $1bb maxExperience
+  1010:76               push0 
+  1011:87 01              lap param1 
+  1013:4a 04             send 4 
+
+  1015:22                 lt? 
+  1016:30 0015            bnt code_102e 
+  1019:38 01bb          pushi 1bb // $1bb maxExperience
+  101c:76               push0 
+  101d:87 01              lap param1 
+  101f:4a 04             send 4 
+
+  1021:36                push 
+  1022:38 01ba          pushi 1ba // $1ba experience
+  1025:76               push0 
+  1026:87 01              lap param1 
+  1028:4a 04             send 4 
+
+  102a:04                 sub 
+  102b:a0 01ed            sag  
+
+        code_102e
+  102e:38 01b8          pushi 1b8 // $1b8 dependibility
+  1031:76               push0 
+  1032:87 01              lap param1 
+  1034:4a 04             send 4 
+
+  1036:36                push 
+  1037:38 01b9          pushi 1b9 // $1b9 minDepend
+  103a:76               push0 
+  103b:87 01              lap param1 
+  103d:4a 04             send 4 
+
+  103f:36                push 
+  1040:35 0a              ldi a 
+  1042:02                 add 
+  1043:22                 lt? 
+  1044:30 0037            bnt code_107e 
+  1047:38 01b9          pushi 1b9 // $1b9 minDepend
+  104a:76               push0 
+  104b:87 01              lap param1 
+  104d:4a 04             send 4 
+
+  104f:36                push 
+  1050:35 0a              ldi a 
+  1052:02                 add 
+  1053:36                push 
+  1054:38 01b8          pushi 1b8 // $1b8 dependibility
+  1057:76               push0 
+  1058:87 01              lap param1 
+  105a:4a 04             send 4 
+
+  105c:04                 sub 
+  105d:36                push 
+  105e:80 01ed            lag  
+  1061:22                 lt? 
+  1062:30 0019            bnt code_107e 
+  1065:38 01b9          pushi 1b9 // $1b9 minDepend
+  1068:76               push0 
+  1069:87 01              lap param1 
+  106b:4a 04             send 4 
+
+  106d:36                push 
+  106e:35 0a              ldi a 
+  1070:02                 add 
+  1071:36                push 
+  1072:38 01b8          pushi 1b8 // $1b8 dependibility
+  1075:76               push0 
+  1076:87 01              lap param1 
+  1078:4a 04             send 4 
+
+  107a:04                 sub 
+  107b:a0 01ed            sag  
+
+        code_107e
+  107e:80 0192            lag  
+  1081:18                 not 
+  1082:30 0075            bnt code_10fa 
+  1085:38 01a8          pushi 1a8 // $1a8 wage
+  1088:76               push0 
+  1089:87 01              lap param1 
+  108b:4a 04             send 4 
+
+  108d:30 006a            bnt code_10fa 
+  1090:38 0174          pushi 174 // $174 dressedForWork
+  1093:76               push0 
+  1094:87 01              lap param1 
+  1096:4a 04             send 4 
+
+  1098:30 005f            bnt code_10fa 
+  109b:39 03            pushi 3 // $3 y
+  109d:88 0190            lsg  
+  10a0:38 0173          pushi 173 // $173 worksAt
+  10a3:76               push0 
+  10a4:87 01              lap param1 
+  10a6:4a 04             send 4 
+
+  10a8:36                push 
+  10a9:39 06            pushi 6 // $6 loop
+  10ab:40 06c5 06        call proc_1774 6 
+
+  10af:a0 01e7            sag  
+  10b2:36                push 
+  10b3:39 06            pushi 6 // $6 loop
+  10b5:80 01ed            lag  
+  10b8:06                 mul 
+  10b9:36                push 
+  10ba:80 01db            lag  
+  10bd:06                 mul 
+  10be:02                 add 
+  10bf:36                push 
+  10c0:39 08            pushi 8 // $8 underBits
+  10c2:80 01db            lag  
+  10c5:06                 mul 
+  10c6:02                 add 
+  10c7:a0 01e8            sag  
+  10ca:78               push1 
+  10cb:36                push 
+  10cc:40 0725 02        call proc_17f5 2 
+
+  10d0:30 0027            bnt code_10fa 
+  10d3:35 1e              ldi 1e 
+  10d5:a0 0193            sag  
+  10d8:35 01              ldi 1 
+  10da:a0 0197            sag  
+  10dd:88 01ed            lsg  
+  10e0:35 00              ldi 0 
+  10e2:24                 le? 
+  10e3:30 0005            bnt code_10eb 
+  10e6:35 01              ldi 1 
+  10e8:a0 01ed            sag  
+
+        code_10eb
+  10eb:80 01ed            lag  
+  10ee:a0 0198            sag  
+  10f1:38 0173          pushi 173 // $173 worksAt
+  10f4:76               push0 
+  10f5:87 01              lap param1 
+  10f7:4a 04             send 4 
+
+  10f9:48                 ret 
+
+        code_10fa
+  10fa:88 01f4            lsg  
+  10fd:35 28              ldi 28 
+  10ff:1a                 eq? 
+  1100:30 0004            bnt code_1107 
+  1103:76               push0 
+  1104:43 53 00         callk SetDebug 0 
+
+
+        code_1107
+  1107:80 0149            lag  
+  110a:30 025b            bnt code_1368 
+  110d:38 01a8          pushi 1a8 // $1a8 wage
+  1110:76               push0 
+  1111:87 01              lap param1 
+  1113:4a 04             send 4 
+
+  1115:30 0250            bnt code_1368 
+  1118:38 0174          pushi 174 // $174 dressedForWork
+  111b:76               push0 
+  111c:87 01              lap param1 
+  111e:4a 04             send 4 
+
+  1120:30 0245            bnt code_1368 
+  1123:88 01f4            lsg  
+  1126:35 29              ldi 29 
+  1128:1a                 eq? 
+  1129:30 0004            bnt code_1130 
+  112c:76               push0 
+  112d:43 53 00         callk SetDebug 0 
+
+
+        code_1130
+  1130:80 0227            lag  
+  1133:18                 not 
+  1134:30 0068            bnt code_119f 
+  1137:80 01f0            lag  
+  113a:30 0062            bnt code_119f 
+  113d:78               push1 
+  113e:8f 01              lsp param1 
+  1140:45 0b 02         callb procedure_000b 2 //  
+
+  1143:36                push 
+  1144:80 01f1            lag  
+  1147:20                 ge? 
+  1148:30 0054            bnt code_119f 
+  114b:39 03            pushi 3 // $3 y
+  114d:88 0190            lsg  
+  1150:39 0c            pushi c // $c nsRight
+  1152:38 0173          pushi 173 // $173 worksAt
+  1155:76               push0 
+  1156:87 01              lap param1 
+  1158:4a 04             send 4 
+
+  115a:36                push 
+  115b:40 0615 06        call proc_1774 6 
+
+  115f:a0 01e7            sag  
+  1162:36                push 
+  1163:39 12            pushi 12 // $12 illegalBits
+  1165:80 01db            lag  
+  1168:06                 mul 
+  1169:02                 add 
+  116a:a0 01e8            sag  
+  116d:78               push1 
+  116e:36                push 
+  116f:40 0682 02        call proc_17f5 2 
+
+  1173:30 0029            bnt code_119f 
+  1176:35 1f              ldi 1f 
+  1178:a0 0193            sag  
+  117b:35 01              ldi 1 
+  117d:a0 0197            sag  
+  1180:35 03              ldi 3 
+  1182:a0 0198            sag  
+  1185:35 0a              ldi a 
+  1187:a0 0199            sag  
+  118a:39 03            pushi 3 // $3 y
+  118c:88 0190            lsg  
+  118f:38 0173          pushi 173 // $173 worksAt
+  1192:76               push0 
+  1193:87 01              lap param1 
+  1195:4a 04             send 4 
+
+  1197:36                push 
+  1198:39 0c            pushi c // $c nsRight
+  119a:40 0728 06        call proc_18c6 6 
+
+  119e:48                 ret 
+
+        code_119f
+  119f:88 01f4            lsg  
+  11a2:35 2a              ldi 2a 
+  11a4:1a                 eq? 
+  11a5:30 0004            bnt code_11ac 
+  11a8:76               push0 
+  11a9:43 53 00         callk SetDebug 0 
+
+
+        code_11ac
+  11ac:38 01a6          pushi 1a6 // $1a6 relax
+  11af:76               push0 
+  11b0:87 01              lap param1 
+  11b2:4a 04             send 4 
+
+  11b4:36                push 
+  11b5:35 0a              ldi a 
+  11b7:1a                 eq? 
+  11b8:30 0013            bnt code_11ce 
+  11bb:35 20              ldi 20 
+  11bd:a0 0193            sag  
+  11c0:35 06              ldi 6 
+  11c2:a0 0197            sag  
+  11c5:38 0183          pushi 183 // $183 livesAt
+  11c8:76               push0 
+  11c9:87 01              lap param1 
+  11cb:4a 04             send 4 
+
+  11cd:48                 ret 
+
+        code_11ce
+  11ce:88 01f4            lsg  
+  11d1:35 2b              ldi 2b 
+  11d3:1a                 eq? 
+  11d4:30 0004            bnt code_11db 
+  11d7:76               push0 
+  11d8:43 53 00         callk SetDebug 0 
+
+
+        code_11db
+  11db:38 01a6          pushi 1a6 // $1a6 relax
+  11de:76               push0 
+  11df:87 01              lap param1 
+  11e1:4a 04             send 4 
+
+  11e3:36                push 
+  11e4:35 11              ldi 11 
+  11e6:22                 lt? 
+  11e7:30 0030            bnt code_121a 
+  11ea:35 21              ldi 21 
+  11ec:a0 0193            sag  
+  11ef:35 01              ldi 1 
+  11f1:a0 0197            sag  
+  11f4:35 03              ldi 3 
+  11f6:a0 0198            sag  
+  11f9:35 06              ldi 6 
+  11fb:a0 0199            sag  
+  11fe:39 03            pushi 3 // $3 y
+  1200:88 0190            lsg  
+  1203:38 0173          pushi 173 // $173 worksAt
+  1206:76               push0 
+  1207:87 01              lap param1 
+  1209:4a 04             send 4 
+
+  120b:36                push 
+  120c:38 0183          pushi 183 // $183 livesAt
+  120f:76               push0 
+  1210:87 01              lap param1 
+  1212:4a 04             send 4 
+
+  1214:36                push 
+  1215:40 06ad 06        call proc_18c6 6 
+
+  1219:48                 ret 
+
+        code_121a
+  121a:88 01f4            lsg  
+  121d:35 2c              ldi 2c 
+  121f:1a                 eq? 
+  1220:30 0004            bnt code_1227 
+  1223:76               push0 
+  1224:43 53 00         callk SetDebug 0 
+
+
+        code_1227
+  1227:39 03            pushi 3 // $3 y
+  1229:88 0190            lsg  
+  122c:39 07            pushi 7 // $7 cel
+  122e:38 0173          pushi 173 // $173 worksAt
+  1231:76               push0 
+  1232:87 01              lap param1 
+  1234:4a 04             send 4 
+
+  1236:36                push 
+  1237:40 05dc 06        call proc_1817 6 
+
+  123b:a0 01e7            sag  
+  123e:36                push 
+  123f:39 12            pushi 12 // $12 illegalBits
+  1241:80 01db            lag  
+  1244:06                 mul 
+  1245:02                 add 
+  1246:a0 01e8            sag  
+  1249:7a               push2 
+  124a:76               push0 
+  124b:78               push1 
+  124c:43 3c 04         callk Random 4 
+
+  124f:30 007e            bnt code_12d0 
+  1252:78               push1 
+  1253:88 01e8            lsg  
+  1256:40 059b 02        call proc_17f5 2 
+
+  125a:30 0073            bnt code_12d0 
+  125d:35 22              ldi 22 
+  125f:a0 0193            sag  
+  1262:35 01              ldi 1 
+  1264:a0 0197            sag  
+  1267:35 03              ldi 3 
+  1269:a0 0198            sag  
+  126c:38 01cb          pushi 1cb // $1cb numDegrees
+  126f:76               push0 
+  1270:87 01              lap param1 
+  1272:4a 04             send 4 
+
+  1274:36                push 
+  1275:35 0b              ldi b 
+  1277:1c                 ne? 
+  1278:30 0046            bnt code_12c1 
+  127b:38 01b5          pushi 1b5 // $1b5 enrollments
+  127e:76               push0 
+  127f:87 01              lap param1 
+  1281:4a 04             send 4 
+
+  1283:36                push 
+  1284:38 01cb          pushi 1cb // $1cb numDegrees
+  1287:76               push0 
+  1288:87 01              lap param1 
+  128a:4a 04             send 4 
+
+  128c:1e                 gt? 
+  128d:2e 000b             bt code_129b 
+  1290:78               push1 
+  1291:8f 01              lsp param1 
+  1293:45 0b 02         callb procedure_000b 2 //  
+
+  1296:36                push 
+  1297:34 0190            ldi 190 
+  129a:1e                 gt? 
+
+        code_129b
+  129b:30 0023            bnt code_12c1 
+  129e:35 10              ldi 10 
+  12a0:a0 0199            sag  
+  12a3:88 01e8            lsg  
+  12a6:35 64              ldi 64 
+  12a8:02                 add 
+  12a9:a0 019a            sag  
+  12ac:39 03            pushi 3 // $3 y
+  12ae:88 0190            lsg  
+  12b1:38 0173          pushi 173 // $173 worksAt
+  12b4:76               push0 
+  12b5:87 01              lap param1 
+  12b7:4a 04             send 4 
+
+  12b9:36                push 
+  12ba:39 07            pushi 7 // $7 cel
+  12bc:40 0606 06        call proc_18c6 6 
+
+  12c0:48                 ret 
+
+        code_12c1
+  12c1:34 014e            ldi 14e 
+  12c4:a0 0193            sag  
+  12c7:38 0173          pushi 173 // $173 worksAt
+  12ca:76               push0 
+  12cb:87 01              lap param1 
+  12cd:4a 04             send 4 
+
+  12cf:48                 ret 
+
+        code_12d0
+  12d0:88 01f4            lsg  
+  12d3:35 2d              ldi 2d 
+  12d5:1a                 eq? 
+  12d6:30 0004            bnt code_12dd 
+  12d9:76               push0 
+  12da:43 53 00         callk SetDebug 0 
+
+
+        code_12dd
+  12dd:39 03            pushi 3 // $3 y
+  12df:88 0190            lsg  
+  12e2:39 08            pushi 8 // $8 underBits
+  12e4:38 0173          pushi 173 // $173 worksAt
+  12e7:76               push0 
+  12e8:87 01              lap param1 
+  12ea:4a 04             send 4 
+
+  12ec:36                push 
+  12ed:40 0526 06        call proc_1817 6 
+
+  12f1:a0 01e7            sag  
+  12f4:36                push 
+  12f5:39 12            pushi 12 // $12 illegalBits
+  12f7:80 01db            lag  
+  12fa:06                 mul 
+  12fb:02                 add 
+  12fc:a0 01e8            sag  
+  12ff:78               push1 
+  1300:8f 01              lsp param1 
+  1302:45 0b 02         callb procedure_000b 2 //  
+
+  1305:36                push 
+  1306:34 05dc            ldi 5dc 
+  1309:1e                 gt? 
+  130a:30 0043            bnt code_1350 
+  130d:78               push1 
+  130e:88 01e8            lsg  
+  1311:40 04e0 02        call proc_17f5 2 
+
+  1315:30 0038            bnt code_1350 
+  1318:76               push0 
+  1319:40 05e4 00        call proc_1901 0 
+
+  131d:30 0030            bnt code_1350 
+  1320:80 0226            lag  
+  1323:18                 not 
+  1324:30 0029            bnt code_1350 
+  1327:35 23              ldi 23 
+  1329:a0 0193            sag  
+  132c:35 01              ldi 1 
+  132e:a0 0197            sag  
+  1331:35 03              ldi 3 
+  1333:a0 0198            sag  
+  1336:35 0f              ldi f 
+  1338:a0 0199            sag  
+  133b:39 03            pushi 3 // $3 y
+  133d:88 0190            lsg  
+  1340:38 0173          pushi 173 // $173 worksAt
+  1343:76               push0 
+  1344:87 01              lap param1 
+  1346:4a 04             send 4 
+
+  1348:36                push 
+  1349:39 08            pushi 8 // $8 underBits
+  134b:40 0577 06        call proc_18c6 6 
+
+  134f:48                 ret 
+
+        code_1350
+  1350:35 24              ldi 24 
+  1352:a0 0193            sag  
+  1355:35 03              ldi 3 
+  1357:a0 0198            sag  
+  135a:35 01              ldi 1 
+  135c:a0 0197            sag  
+  135f:38 0173          pushi 173 // $173 worksAt
+  1362:76               push0 
+  1363:87 01              lap param1 
+  1365:4a 04             send 4 
+
+  1367:48                 ret 
+
+        code_1368
+  1368:88 01f4            lsg  
+  136b:35 2e              ldi 2e 
+  136d:1a                 eq? 
+  136e:30 0004            bnt code_1375 
+  1371:76               push0 
+  1372:43 53 00         callk SetDebug 0 
+
+
+        code_1375
+  1375:38 01a6          pushi 1a6 // $1a6 relax
+  1378:76               push0 
+  1379:87 01              lap param1 
+  137b:4a 04             send 4 
+
+  137d:36                push 
+  137e:35 11              ldi 11 
+  1380:22                 lt? 
+  1381:30 0027            bnt code_13ab 
+  1384:7a               push2 
+  1385:88 0190            lsg  
+  1388:38 0183          pushi 183 // $183 livesAt
+  138b:76               push0 
+  138c:87 01              lap param1 
+  138e:4a 04             send 4 
+
+  1390:36                push 
+  1391:40 0460 04        call proc_17f5 4 
+
+  1395:30 0013            bnt code_13ab 
+  1398:35 25              ldi 25 
+  139a:a0 0193            sag  
+  139d:35 06              ldi 6 
+  139f:a0 0197            sag  
+  13a2:38 0183          pushi 183 // $183 livesAt
+  13a5:76               push0 
+  13a6:87 01              lap param1 
+  13a8:4a 04             send 4 
+
+  13aa:48                 ret 
+
+        code_13ab
+  13ab:88 01f4            lsg  
+  13ae:35 2f              ldi 2f 
+  13b0:1a                 eq? 
+  13b1:30 0004            bnt code_13b8 
+  13b4:76               push0 
+  13b5:43 53 00         callk SetDebug 0 
+
+
+        code_13b8
+  13b8:80 0227            lag  
+  13bb:18                 not 
+  13bc:30 0034            bnt code_13f3 
+  13bf:80 01f0            lag  
+  13c2:30 002e            bnt code_13f3 
+  13c5:78               push1 
+  13c6:8f 01              lsp param1 
+  13c8:45 0b 02         callb procedure_000b 2 //  
+
+  13cb:36                push 
+  13cc:80 01f1            lag  
+  13cf:20                 ge? 
+  13d0:30 0020            bnt code_13f3 
+  13d3:78               push1 
+  13d4:7a               push2 
+  13d5:88 0190            lsg  
+  13d8:39 0c            pushi c // $c nsRight
+  13da:40 0396 04        call proc_1774 4 
+
+  13de:36                push 
+  13df:40 0412 02        call proc_17f5 2 
+
+  13e3:30 000d            bnt code_13f3 
+  13e6:35 26              ldi 26 
+  13e8:a0 0193            sag  
+  13eb:35 0a              ldi a 
+  13ed:a0 0197            sag  
+  13f0:35 0c              ldi c 
+  13f2:48                 ret 
+
+        code_13f3
+  13f3:88 01f4            lsg  
+  13f6:35 30              ldi 30 
+  13f8:1a                 eq? 
+  13f9:30 0004            bnt code_1400 
+  13fc:76               push0 
+  13fd:43 53 00         callk SetDebug 0 
+
+
+        code_1400
+  1400:80 0227            lag  
+  1403:18                 not 
+  1404:30 0068            bnt code_146f 
+  1407:78               push1 
+  1408:8f 01              lsp param1 
+  140a:45 0b 02         callb procedure_000b 2 //  
+
+  140d:36                push 
+  140e:34 0320            ldi 320 
+  1411:1e                 gt? 
+  1412:30 005a            bnt code_146f 
+  1415:80 0194            lag  
+  1418:18                 not 
+  1419:30 0053            bnt code_146f 
+  141c:7a               push2 
+  141d:76               push0 
+  141e:7a               push2 
+  141f:43 3c 04         callk Random 4 
+
+  1422:18                 not 
+  1423:30 0049            bnt code_146f 
+  1426:38 0172          pushi 172 // $172 objectAtIndexQuan
+  1429:78               push1 
+  142a:39 21            pushi 21 // $21 font
+  142c:38 0142          pushi 142 // $142 durables
+  142f:76               push0 
+  1430:87 01              lap param1 
+  1432:4a 04             send 4 
+
+  1434:4a 06             send 6 
+
+  1436:18                 not 
+  1437:2e 0025             bt code_145f 
+  143a:38 0172          pushi 172 // $172 objectAtIndexQuan
+  143d:78               push1 
+  143e:39 20            pushi 20 // $20 state
+  1440:38 0142          pushi 142 // $142 durables
+  1443:76               push0 
+  1444:87 01              lap param1 
+  1446:4a 04             send 4 
+
+  1448:4a 06             send 6 
+
+  144a:18                 not 
+  144b:2e 0011             bt code_145f 
+  144e:38 0172          pushi 172 // $172 objectAtIndexQuan
+  1451:78               push1 
+  1452:39 1f            pushi 1f // $1f style
+  1454:38 0142          pushi 142 // $142 durables
+  1457:76               push0 
+  1458:87 01              lap param1 
+  145a:4a 04             send 4 
+
+  145c:4a 06             send 6 
+
+  145e:18                 not 
+
+        code_145f
+  145f:30 000d            bnt code_146f 
+  1462:35 27              ldi 27 
+  1464:a0 0193            sag  
+  1467:35 0c              ldi c 
+  1469:a0 0197            sag  
+  146c:35 0b              ldi b 
+  146e:48                 ret 
+
+        code_146f
+  146f:88 01f4            lsg  
+  1472:35 31              ldi 31 
+  1474:1a                 eq? 
+  1475:30 0004            bnt code_147c 
+  1478:76               push0 
+  1479:43 53 00         callk SetDebug 0 
+
+
+        code_147c
+  147c:78               push1 
+  147d:8f 01              lsp param1 
+  147f:45 0b 02         callb procedure_000b 2 //  
+
+  1482:36                push 
+  1483:34 0320            ldi 320 
+  1486:1e                 gt? 
+  1487:30 0029            bnt code_14b3 
+  148a:7a               push2 
+  148b:76               push0 
+  148c:78               push1 
+  148d:43 3c 04         callk Random 4 
+
+  1490:30 0020            bnt code_14b3 
+  1493:76               push0 
+  1494:40 0469 00        call proc_1901 0 
+
+  1498:30 0018            bnt code_14b3 
+  149b:80 0226            lag  
+  149e:18                 not 
+  149f:30 0011            bnt code_14b3 
+  14a2:35 28              ldi 28 
+  14a4:a0 0193            sag  
+  14a7:35 0f              ldi f 
+  14a9:a0 0197            sag  
+  14ac:35 08              ldi 8 
+  14ae:48                 ret 
+  14af:80 0226            lag  
+  14b2:18                 not 
+
+        code_14b3
+  14b3:88 01f4            lsg  
+  14b6:35 32              ldi 32 
+  14b8:1a                 eq? 
+  14b9:30 0004            bnt code_14c0 
+  14bc:76               push0 
+  14bd:43 53 00         callk SetDebug 0 
+
+
+        code_14c0
+  14c0:78               push1 
+  14c1:8f 01              lsp param1 
+  14c3:45 0b 02         callb procedure_000b 2 //  
+
+  14c6:36                push 
+  14c7:34 05dc            ldi 5dc 
+  14ca:1e                 gt? 
+  14cb:30 0016            bnt code_14e4 
+  14ce:88 01f2            lsg  
+  14d1:35 03              ldi 3 
+  14d3:1a                 eq? 
+  14d4:30 000d            bnt code_14e4 
+  14d7:35 29              ldi 29 
+  14d9:a0 0193            sag  
+  14dc:35 12              ldi 12 
+  14de:a0 0197            sag  
+  14e1:35 04              ldi 4 
+  14e3:48                 ret 
+
+        code_14e4
+  14e4:88 01f4            lsg  
+  14e7:35 33              ldi 33 
+  14e9:1a                 eq? 
+  14ea:30 0004            bnt code_14f1 
+  14ed:76               push0 
+  14ee:43 53 00         callk SetDebug 0 
+
+
+        code_14f1
+  14f1:78               push1 
+  14f2:8f 01              lsp param1 
+  14f4:45 0b 02         callb procedure_000b 2 //  
+
+  14f7:36                push 
+  14f8:34 02ee            ldi 2ee 
+  14fb:1e                 gt? 
+  14fc:2e 0007             bt code_1506 
+  14ff:88 01f3            lsg  
+  1502:34 02ee            ldi 2ee 
+  1505:1e                 gt? 
+
+        code_1506
+  1506:30 0045            bnt code_154e 
+  1509:88 013b            lsg  
+  150c:35 00              ldi 0 
+  150e:1e                 gt? 
+  150f:30 003c            bnt code_154e 
+  1512:88 0134            lsg  
+  1515:39 50            pushi 50 // $50 title
+  1517:88 013b            lsg  
+  151a:35 0f              ldi f 
+  151c:06                 mul 
+  151d:02                 add 
+  151e:22                 lt? 
+  151f:30 002c            bnt code_154e 
+  1522:80 01e5            lag  
+  1525:18                 not 
+  1526:30 0025            bnt code_154e 
+  1529:35 2a              ldi 2a 
+  152b:a0 0193            sag  
+  152e:78               push1 
+  152f:8f 01              lsp param1 
+  1531:45 0b 02         callb procedure_000b 2 //  
+
+  1534:36                push 
+  1535:34 02ee            ldi 2ee 
+  1538:22                 lt? 
+  1539:30 000a            bnt code_1546 
+  153c:35 16              ldi 16 
+  153e:a0 0197            sag  
+  1541:35 0a              ldi a 
+  1543:a0 0198            sag  
+
+        code_1546
+  1546:35 13              ldi 13 
+  1548:a0 0199            sag  
+  154b:35 04              ldi 4 
+  154d:48                 ret 
+
+        code_154e
+  154e:88 01f4            lsg  
+  1551:35 34              ldi 34 
+  1553:1a                 eq? 
+  1554:30 0004            bnt code_155b 
+  1557:76               push0 
+  1558:43 53 00         callk SetDebug 0 
+
+
+        code_155b
+  155b:38 01a2          pushi 1a2 // $1a2 invAss
+  155e:76               push0 
+  155f:87 01              lap param1 
+  1561:4a 04             send 4 
+
+  1563:36                push 
+  1564:38 017b          pushi 17b // $17b shares
+  1567:76               push0 
+  1568:39 43            pushi 43 // $43 at
+  156a:78               push1 
+  156b:76               push0 
+  156c:38 0193          pushi 193 // $193 investments
+  156f:76               push0 
+  1570:87 01              lap param1 
+  1572:4a 04             send 4 
+
+  1574:4a 06             send 6 
+
+  1576:4a 04             send 4 
+
+  1578:36                push 
+  1579:38 015b          pushi 15b // $15b basePrice
+  157c:76               push0 
+  157d:39 43            pushi 43 // $43 at
+  157f:78               push1 
+  1580:76               push0 
+  1581:38 0193          pushi 193 // $193 investments
+  1584:76               push0 
+  1585:87 01              lap param1 
+  1587:4a 04             send 4 
+
+  1589:4a 06             send 6 
+
+  158b:4a 04             send 4 
+
+  158d:06                 mul 
+  158e:04                 sub 
+  158f:30 0022            bnt code_15b4 
+  1592:88 013b            lsg  
+  1595:35 ff              ldi ff 
+  1597:22                 lt? 
+  1598:30 0019            bnt code_15b4 
+  159b:80 01f7            lag  
+  159e:18                 not 
+  159f:30 0012            bnt code_15b4 
+  15a2:35 2b              ldi 2b 
+  15a4:a0 0193            sag  
+  15a7:35 ff              ldi ff 
+  15a9:a0 0198            sag  
+  15ac:35 14              ldi 14 
+  15ae:a0 0197            sag  
+  15b1:35 04              ldi 4 
+  15b3:48                 ret 
+
+        code_15b4
+  15b4:88 01f4            lsg  
+  15b7:35 35              ldi 35 
+  15b9:1a                 eq? 
+  15ba:30 0004            bnt code_15c1 
+  15bd:76               push0 
+  15be:43 53 00         callk SetDebug 0 
+
+
+        code_15c1
+  15c1:38 01cb          pushi 1cb // $1cb numDegrees
+  15c4:76               push0 
+  15c5:87 01              lap param1 
+  15c7:4a 04             send 4 
+
+  15c9:36                push 
+  15ca:35 0b              ldi b 
+  15cc:1c                 ne? 
+  15cd:30 005f            bnt code_162f 
+  15d0:78               push1 
+  15d1:7a               push2 
+  15d2:88 0190            lsg  
+  15d5:39 07            pushi 7 // $7 cel
+  15d7:40 0199 04        call proc_1774 4 
+
+  15db:36                push 
+  15dc:40 0215 02        call proc_17f5 2 
+
+  15e0:30 004c            bnt code_162f 
+  15e3:38 01b5          pushi 1b5 // $1b5 enrollments
+  15e6:76               push0 
+  15e7:87 01              lap param1 
+  15e9:4a 04             send 4 
+
+  15eb:36                push 
+  15ec:38 01cb          pushi 1cb // $1cb numDegrees
+  15ef:76               push0 
+  15f0:87 01              lap param1 
+  15f2:4a 04             send 4 
+
+  15f4:1e                 gt? 
+  15f5:2e 0027             bt code_161f 
+  15f8:78               push1 
+  15f9:8f 01              lsp param1 
+  15fb:45 0b 02         callb procedure_000b 2 //  
+
+  15fe:36                push 
+  15ff:34 0190            ldi 190 
+  1602:1e                 gt? 
+  1603:30 0029            bnt code_162f 
+  1606:80 0227            lag  
+  1609:18                 not 
+  160a:30 0007            bnt code_1614 
+  160d:7a               push2 
+  160e:76               push0 
+  160f:39 03            pushi 3 // $3 y
+  1611:43 3c 04         callk Random 4 
+
+
+        code_1614
+  1614:2e 0008             bt code_161f 
+  1617:38 01bc          pushi 1bc // $1bc notEnoughEd
+  161a:76               push0 
+  161b:87 01              lap param1 
+  161d:4a 04             send 4 
+
+
+        code_161f
+  161f:30 000d            bnt code_162f 
+  1622:35 2c              ldi 2c 
+  1624:a0 0193            sag  
+  1627:35 10              ldi 10 
+  1629:a0 0199            sag  
+  162c:35 07              ldi 7 
+  162e:48                 ret 
+
+        code_162f
+  162f:88 01f4            lsg  
+  1632:35 36              ldi 36 
+  1634:1a                 eq? 
+  1635:30 0004            bnt code_163c 
+  1638:76               push0 
+  1639:43 53 00         callk SetDebug 0 
+
+
+        code_163c
+  163c:38 01a8          pushi 1a8 // $1a8 wage
+  163f:76               push0 
+  1640:87 01              lap param1 
+  1642:4a 04             send 4 
+
+  1644:30 003d            bnt code_1684 
+  1647:38 0174          pushi 174 // $174 dressedForWork
+  164a:76               push0 
+  164b:87 01              lap param1 
+  164d:4a 04             send 4 
+
+  164f:30 0032            bnt code_1684 
+  1652:78               push1 
+  1653:7a               push2 
+  1654:88 0190            lsg  
+  1657:38 0173          pushi 173 // $173 worksAt
+  165a:76               push0 
+  165b:87 01              lap param1 
+  165d:4a 04             send 4 
+
+  165f:36                push 
+  1660:40 0110 04        call proc_1774 4 
+
+  1664:36                push 
+  1665:40 018c 02        call proc_17f5 2 
+
+  1669:30 0018            bnt code_1684 
+  166c:35 2e              ldi 2e 
+  166e:a0 0193            sag  
+  1671:35 03              ldi 3 
+  1673:a0 0198            sag  
+  1676:35 01              ldi 1 
+  1678:a0 0197            sag  
+  167b:38 0173          pushi 173 // $173 worksAt
+  167e:76               push0 
+  167f:87 01              lap param1 
+  1681:4a 04             send 4 
+
+  1683:48                 ret 
+
+        code_1684
+  1684:88 01f4            lsg  
+  1687:35 37              ldi 37 
+  1689:1a                 eq? 
+  168a:30 0004            bnt code_1691 
+  168d:76               push0 
+  168e:43 53 00         callk SetDebug 0 
+
+
+        code_1691
+  1691:88 0190            lsg  
+  1694:35 07              ldi 7 
+  1696:1a                 eq? 
+  1697:30 0053            bnt code_16ed 
+  169a:88 0143            lsg  
+  169d:35 06              ldi 6 
+  169f:02                 add 
+  16a0:36                push 
+  16a1:35 3c              ldi 3c 
+  16a3:20                 ge? 
+  16a4:30 0046            bnt code_16ed 
+  16a7:38 01cb          pushi 1cb // $1cb numDegrees
+  16aa:76               push0 
+  16ab:87 01              lap param1 
+  16ad:4a 04             send 4 
+
+  16af:36                push 
+  16b0:35 0b              ldi b 
+  16b2:1c                 ne? 
+  16b3:30 0037            bnt code_16ed 
+  16b6:38 01b5          pushi 1b5 // $1b5 enrollments
+  16b9:76               push0 
+  16ba:87 01              lap param1 
+  16bc:4a 04             send 4 
+
+  16be:36                push 
+  16bf:38 01cb          pushi 1cb // $1cb numDegrees
+  16c2:76               push0 
+  16c3:87 01              lap param1 
+  16c5:4a 04             send 4 
+
+  16c7:1e                 gt? 
+  16c8:2e 000b             bt code_16d6 
+  16cb:78               push1 
+  16cc:8f 01              lsp param1 
+  16ce:45 0b 02         callb procedure_000b 2 //  
+
+  16d1:36                push 
+  16d2:34 0190            ldi 190 
+  16d5:1e                 gt? 
+
+        code_16d6
+  16d6:30 0014            bnt code_16ed 
+  16d9:80 0227            lag  
+  16dc:18                 not 
+  16dd:30 000d            bnt code_16ed 
+  16e0:35 2f              ldi 2f 
+  16e2:a0 0193            sag  
+  16e5:35 10              ldi 10 
+  16e7:a0 0199            sag  
+  16ea:35 07              ldi 7 
+  16ec:48                 ret 
+
+        code_16ed
+  16ed:88 01f4            lsg  
+  16f0:35 38              ldi 38 
+  16f2:1a                 eq? 
+  16f3:30 0004            bnt code_16fa 
+  16f6:76               push0 
+  16f7:43 53 00         callk SetDebug 0 
+
+
+        code_16fa
+  16fa:38 0173          pushi 173 // $173 worksAt
+  16fd:76               push0 
+  16fe:87 01              lap param1 
+  1700:4a 04             send 4 
+
+  1702:30 002f            bnt code_1734 
+  1705:88 0190            lsg  
+  1708:38 0173          pushi 173 // $173 worksAt
+  170b:76               push0 
+  170c:87 01              lap param1 
+  170e:4a 04             send 4 
+
+  1710:1a                 eq? 
+  1711:30 0020            bnt code_1734 
+  1714:88 0143            lsg  
+  1717:35 06              ldi 6 
+  1719:02                 add 
+  171a:36                push 
+  171b:35 3c              ldi 3c 
+  171d:20                 ge? 
+  171e:30 0013            bnt code_1734 
+  1721:35 30              ldi 30 
+  1723:a0 0193            sag  
+  1726:35 01              ldi 1 
+  1728:a0 0197            sag  
+  172b:38 0173          pushi 173 // $173 worksAt
+  172e:76               push0 
+  172f:87 01              lap param1 
+  1731:4a 04             send 4 
+
+  1733:48                 ret 
+
+        code_1734
+  1734:88 01f4            lsg  
+  1737:35 39              ldi 39 
+  1739:1a                 eq? 
+  173a:30 0004            bnt code_1741 
+  173d:76               push0 
+  173e:43 53 00         callk SetDebug 0 
+
+
+        code_1741
+  1741:35 31              ldi 31 
+  1743:a0 0193            sag  
+  1746:35 06              ldi 6 
+  1748:a0 0197            sag  
+  174b:38 0183          pushi 183 // $183 livesAt
+  174e:76               push0 
+  174f:87 01              lap param1 
+  1751:4a 04             send 4 
+
+  1753:48                 ret 
+    )
+
+)
+
+
+
+(procedure proc_000c
+  000c:38 0178          pushi 178 // $178 lqAssHi
+  000f:76               push0 
+  0010:87 01              lap param1 
+  0012:4a 04             send 4 
+
+  0014:2e 002f             bt code_0046 
+  0017:38 0179          pushi 179 // $179 lqAss
+  001a:76               push0 
+  001b:87 01              lap param1 
+  001d:4a 04             send 4 
+
+  001f:36                push 
+  0020:87 02              lap param2 
+  0022:20                 ge? 
+  0023:2e 0020             bt code_0046 
+  0026:38 0179          pushi 179 // $179 lqAss
+  0029:76               push0 
+  002a:87 01              lap param1 
+  002c:4a 04             send 4 
+
+  002e:36                push 
+  002f:38 01ad          pushi 1ad // $1ad rentOwed
+  0032:76               push0 
+  0033:87 01              lap param1 
+  0035:4a 04             send 4 
+
+  0037:02                 add 
+  0038:36                push 
+  0039:38 01b1          pushi 1b1 // $1b1 loanBal
+  003c:76               push0 
+  003d:87 01              lap param1 
+  003f:4a 04             send 4 
+
+  0041:02                 add 
+  0042:36                push 
+  0043:87 02              lap param2 
+  0045:20                 ge? 
+
+        code_0046
+  0046:48                 ret 
+)
+
+(procedure proc_1774
+  1774:3f 05             link 5 // (var $5)
+  1776:35 00              ldi 0 
+  1778:a5 00              sat temp0 
+  177a:a5 04              sat temp4 
+
+        code_177c
+  177c:8d 04              lst temp4 
+  177e:8f 00              lsp paramTotal 
+  1780:35 01              ldi 1 
+  1782:04                 sub 
+  1783:22                 lt? 
+  1784:30 005b            bnt code_17e2 
+  1787:38 017d          pushi 17d // $17d index
+  178a:76               push0 
+  178b:39 43            pushi 43 // $43 at
+  178d:78               push1 
+  178e:85 04              lat temp4 
+  1790:9f 01             lspi param1 
+  1792:80 012d            lag  
+  1795:4a 06             send 6 
+
+  1797:4a 04             send 4 
+
+  1799:a5 02              sat temp2 
+  179b:38 017d          pushi 17d // $17d index
+  179e:76               push0 
+  179f:39 43            pushi 43 // $43 at
+  17a1:78               push1 
+  17a2:85 04              lat temp4 
+  17a4:9f 02             lspi param2 
+  17a6:80 012d            lag  
+  17a9:4a 06             send 6 
+
+  17ab:4a 04             send 4 
+
+  17ad:a5 03              sat temp3 
+  17af:8d 02              lst temp2 
+  17b1:1e                 gt? 
+  17b2:30 000a            bnt code_17bf 
+  17b5:8d 02              lst temp2 
+  17b7:85 03              lat temp3 
+  17b9:04                 sub 
+  17ba:a5 01              sat temp1 
+  17bc:32 0007            jmp code_17c6 
+
+        code_17bf
+  17bf:8d 03              lst temp3 
+  17c1:85 02              lat temp2 
+  17c3:04                 sub 
+  17c4:a5 01              sat temp1 
+
+        code_17c6
+  17c6:8d 01              lst temp1 
+  17c8:35 55              ldi 55 
+  17ca:1e                 gt? 
+  17cb:30 0008            bnt code_17d6 
+  17ce:38 00aa          pushi aa // $aa vMargin
+  17d1:85 01              lat temp1 
+  17d3:04                 sub 
+  17d4:a5 01              sat temp1 
+
+        code_17d6
+  17d6:8d 00              lst temp0 
+  17d8:85 01              lat temp1 
+  17da:02                 add 
+  17db:a5 00              sat temp0 
+  17dd:c5 04              +at temp4 
+  17df:32 ff9a            jmp code_177c 
+
+        code_17e2
+  17e2:8d 00              lst temp0 
+  17e4:8f 00              lsp paramTotal 
+  17e6:35 01              ldi 1 
+  17e8:04                 sub 
+  17e9:36                push 
+  17ea:88 01db            lsg  
+  17ed:35 02              ldi 2 
+  17ef:06                 mul 
+  17f0:06                 mul 
+  17f1:02                 add 
+  17f2:a5 00              sat temp0 
+  17f4:48                 ret 
+)
+
+(procedure proc_17f5
+  17f5:3f 01             link 1 // (var $1)
+  17f7:88 0143            lsg  
+  17fa:88 0144            lsg  
+  17fd:87 01              lap param1 
+  17ff:02                 add 
+  1800:36                push 
+  1801:80 01db            lag  
+  1804:08                 div 
+  1805:02                 add 
+  1806:36                push 
+  1807:35 3c              ldi 3c 
+  1809:20                 ge? 
+  180a:30 0006            bnt code_1813 
+  180d:35 00              ldi 0 
+  180f:48                 ret 
+  1810:32 0003            jmp code_1816 
+
+        code_1813
+  1813:35 01              ldi 1 
+  1815:48                 ret 
+
+        code_1816
+  1816:48                 ret 
+)
+
+(procedure proc_1817
+  1817:3f 02             link 2 // (var $2)
+  1819:39 03            pushi 3 // $3 y
+  181b:35 00              ldi 0 
+  181d:9f 01             lspi param1 
+  181f:35 01              ldi 1 
+  1821:9f 01             lspi param1 
+  1823:35 02              ldi 2 
+  1825:9f 01             lspi param1 
+  1827:40 ff49 06        call proc_1774 6 
+
+  182b:a5 00              sat temp0 
+  182d:39 03            pushi 3 // $3 y
+  182f:35 00              ldi 0 
+  1831:9f 01             lspi param1 
+  1833:35 02              ldi 2 
+  1835:9f 01             lspi param1 
+  1837:35 01              ldi 1 
+  1839:9f 01             lspi param1 
+  183b:40 ff35 06        call proc_1774 6 
+
+  183f:a5 01              sat temp1 
+  1841:8d 00              lst temp0 
+  1843:22                 lt? 
+  1844:30 0005            bnt code_184c 
+  1847:85 00              lat temp0 
+  1849:32 0002            jmp code_184e 
+
+        code_184c
+  184c:85 01              lat temp1 
+
+        code_184e
+  184e:48                 ret 
+)
+
+(procedure proc_184f
+  184f:3f 05             link 5 // (var $5)
+  1851:35 01              ldi 1 
+  1853:a5 02              sat temp2 
+  1855:34 03e8            ldi 3e8 
+  1858:a5 00              sat temp0 
+
+        code_185a
+  185a:8d 02              lst temp2 
+  185c:87 00              lap paramTotal 
+  185e:22                 lt? 
+  185f:30 0061            bnt code_18c3 
+  1862:35 01              ldi 1 
+  1864:a5 03              sat temp3 
+
+        code_1866
+  1866:8d 03              lst temp3 
+  1868:87 00              lap paramTotal 
+  186a:22                 lt? 
+  186b:30 0050            bnt code_18be 
+  186e:35 01              ldi 1 
+  1870:a5 04              sat temp4 
+
+        code_1872
+  1872:8d 04              lst temp4 
+  1874:87 00              lap paramTotal 
+  1876:22                 lt? 
+  1877:30 003f            bnt code_18b9 
+  187a:8d 02              lst temp2 
+  187c:85 03              lat temp3 
+  187e:1c                 ne? 
+  187f:30 0032            bnt code_18b4 
+  1882:60               pprev 
+  1883:85 04              lat temp4 
+  1885:1c                 ne? 
+  1886:30 002b            bnt code_18b4 
+  1889:8d 03              lst temp3 
+  188b:85 04              lat temp4 
+  188d:1c                 ne? 
+  188e:30 0023            bnt code_18b4 
+  1891:39 04            pushi 4 // $4 x
+  1893:35 00              ldi 0 
+  1895:9f 01             lspi param1 
+  1897:85 02              lat temp2 
+  1899:9f 01             lspi param1 
+  189b:85 03              lat temp3 
+  189d:9f 01             lspi param1 
+  189f:85 04              lat temp4 
+  18a1:9f 01             lspi param1 
+  18a3:40 fecd 08        call proc_1774 8 
+
+  18a7:a5 01              sat temp1 
+  18a9:36                push 
+  18aa:85 00              lat temp0 
+  18ac:22                 lt? 
+  18ad:30 0004            bnt code_18b4 
+  18b0:85 01              lat temp1 
+  18b2:a5 00              sat temp0 
+
+        code_18b4
+  18b4:c5 04              +at temp4 
+  18b6:32 ffb9            jmp code_1872 
+
+        code_18b9
+  18b9:c5 03              +at temp3 
+  18bb:32 ffa8            jmp code_1866 
+
+        code_18be
+  18be:c5 02              +at temp2 
+  18c0:32 ff97            jmp code_185a 
+
+        code_18c3
+  18c3:85 00              lat temp0 
+  18c5:48                 ret 
+)
+
+(procedure proc_18c6
+  18c6:3f 04             link 4 // (var $4)
+  18c8:34 03e8            ldi 3e8 
+  18cb:a5 01              sat temp1 
+  18cd:35 01              ldi 1 
+  18cf:a5 00              sat temp0 
+
+        code_18d1
+  18d1:8d 00              lst temp0 
+  18d3:87 00              lap paramTotal 
+  18d5:22                 lt? 
+  18d6:30 0025            bnt code_18fe 
+  18d9:7a               push2 
+  18da:35 00              ldi 0 
+  18dc:9f 01             lspi param1 
+  18de:85 00              lat temp0 
+  18e0:9f 01             lspi param1 
+  18e2:40 fe8e 04        call proc_1774 4 
+
+  18e6:a5 02              sat temp2 
+  18e8:36                push 
+  18e9:85 01              lat temp1 
+  18eb:22                 lt? 
+  18ec:30 000a            bnt code_18f9 
+  18ef:85 00              lat temp0 
+  18f1:97 01             lapi param1 
+  18f3:a5 03              sat temp3 
+  18f5:85 02              lat temp2 
+  18f7:a5 01              sat temp1 
+
+        code_18f9
+  18f9:c5 00              +at temp0 
+  18fb:32 ffd3            jmp code_18d1 
+
+        code_18fe
+  18fe:85 03              lat temp3 
+  1900:48                 ret 
+)
+
+(procedure proc_1901
+  1901:3f 01             link 1 // (var $1)
+  1903:80 01e4            lag  
+  1906:18                 not 
+  1907:30 00ba            bnt code_19c4 
+  190a:38 0172          pushi 172 // $172 objectAtIndexQuan
+  190d:78               push1 
+  190e:39 15            pushi 15 // $15 brBottom
+  1910:38 0142          pushi 142 // $142 durables
+  1913:76               push0 
+  1914:80 012e            lag  
+  1917:4a 04             send 4 
+
+  1919:4a 06             send 6 
+
+  191b:18                 not 
+  191c:2e 00a5             bt code_19c4 
+  191f:38 0172          pushi 172 // $172 objectAtIndexQuan
+  1922:78               push1 
+  1923:39 16            pushi 16 // $16 brRight
+  1925:38 0142          pushi 142 // $142 durables
+  1928:76               push0 
+  1929:80 012e            lag  
+  192c:4a 04             send 4 
+
+  192e:4a 06             send 6 
+
+  1930:18                 not 
+  1931:2e 0090             bt code_19c4 
+  1934:38 0172          pushi 172 // $172 objectAtIndexQuan
+  1937:78               push1 
+  1938:39 17            pushi 17 // $17 name
+  193a:38 0142          pushi 142 // $142 durables
+  193d:76               push0 
+  193e:80 012e            lag  
+  1941:4a 04             send 4 
+
+  1943:4a 06             send 6 
+
+  1945:18                 not 
+  1946:2e 007b             bt code_19c4 
+  1949:38 0172          pushi 172 // $172 objectAtIndexQuan
+  194c:78               push1 
+  194d:39 18            pushi 18 // $18 key
+  194f:38 0142          pushi 142 // $142 durables
+  1952:76               push0 
+  1953:80 012e            lag  
+  1956:4a 04             send 4 
+
+  1958:4a 06             send 6 
+
+  195a:18                 not 
+  195b:2e 0066             bt code_19c4 
+  195e:38 0172          pushi 172 // $172 objectAtIndexQuan
+  1961:78               push1 
+  1962:39 19            pushi 19 // $19 time
+  1964:38 0142          pushi 142 // $142 durables
+  1967:76               push0 
+  1968:80 012e            lag  
+  196b:4a 04             send 4 
+
+  196d:4a 06             send 6 
+
+  196f:18                 not 
+  1970:2e 0051             bt code_19c4 
+  1973:38 0172          pushi 172 // $172 objectAtIndexQuan
+  1976:78               push1 
+  1977:39 1a            pushi 1a // $1a text
+  1979:38 0142          pushi 142 // $142 durables
+  197c:76               push0 
+  197d:80 012e            lag  
+  1980:4a 04             send 4 
+
+  1982:4a 06             send 6 
+
+  1984:18                 not 
+  1985:2e 003c             bt code_19c4 
+  1988:38 0172          pushi 172 // $172 objectAtIndexQuan
+  198b:78               push1 
+  198c:39 1b            pushi 1b // $1b elements
+  198e:38 0142          pushi 142 // $142 durables
+  1991:76               push0 
+  1992:80 012e            lag  
+  1995:4a 04             send 4 
+
+  1997:4a 06             send 6 
+
+  1999:18                 not 
+  199a:2e 0027             bt code_19c4 
+  199d:38 0172          pushi 172 // $172 objectAtIndexQuan
+  19a0:78               push1 
+  19a1:39 1c            pushi 1c // $1c color
+  19a3:38 0142          pushi 142 // $142 durables
+  19a6:76               push0 
+  19a7:80 012e            lag  
+  19aa:4a 04             send 4 
+
+  19ac:4a 06             send 6 
+
+  19ae:18                 not 
+  19af:2e 0012             bt code_19c4 
+  19b2:38 0172          pushi 172 // $172 objectAtIndexQuan
+  19b5:78               push1 
+  19b6:39 1d            pushi 1d // $1d back
+  19b8:38 0142          pushi 142 // $142 durables
+  19bb:76               push0 
+  19bc:80 012e            lag  
+  19bf:4a 04             send 4 
+
+  19c1:4a 06             send 6 
+
+  19c3:18                 not 
+
+        code_19c4
+  19c4:48                 ret 
+  19c5:00                bnot 
+)
+

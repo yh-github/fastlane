@@ -1,0 +1,202 @@
+(script 110)
+
+(string
+    string_018c "DialogScript"
+    string_0199 ""
+)
+
+(said
+)
+
+(local
+)
+
+// 013a
+(class DialogScript of Script
+    (properties
+        client $0
+        state $ffff
+        start $0
+        timer $0
+        cycles $0
+        seconds $0
+        lastSeconds $0
+        register $0
+        script $0
+        caller $0
+        register2 $0
+    )
+    (method (cue) // method_012c
+  012c:6b 0a            ipToa state 
+  012e:35 01              ldi 1 
+  0130:65 16             aTop register 
+  0132:48                 ret 
+  0133:00                bnot 
+    )
+
+    (method (handleEvent) // method_0004
+  0004:67 0a             pTos state 
+  0006:3c                 dup 
+  0007:35 00              ldi 0 
+  0009:1a                 eq? 
+  000a:30 0007            bnt code_0014 
+  000d:35 0a              ldi a 
+  000f:65 10             aTop cycles 
+  0011:32 0116            jmp code_012a 
+
+        code_0014
+  0014:3c                 dup 
+  0015:35 01              ldi 1 
+  0017:1a                 eq? 
+  0018:30 004b            bnt code_0066 
+  001b:35 ff              ldi ff 
+  001d:a0 0191            sag  
+  0020:88 0143            lsg  
+  0023:35 3c              ldi 3c 
+  0025:22                 lt? 
+  0026:30 0101            bnt code_012a 
+  0029:88 0197            lsg  
+  002c:35 01              ldi 1 
+  002e:1a                 eq? 
+  002f:30 00f8            bnt code_012a 
+  0032:80 0198            lag  
+  0035:30 00f2            bnt code_012a 
+  0038:38 0173          pushi 173 // $173 worksAt
+  003b:76               push0 
+  003c:80 012e            lag  
+  003f:4a 04             send 4 
+
+  0041:36                push 
+  0042:80 0190            lag  
+  0045:1a                 eq? 
+  0046:30 00e1            bnt code_012a 
+  0049:87 02              lap param2 
+  004b:30 00dc            bnt code_012a 
+  004e:39 28            pushi 28 // $28 message
+  0050:78               push1 
+  0051:39 77            pushi 77 // $77 prev
+  0053:87 01              lap param1 
+  0055:4a 06             send 6 
+
+  0057:e0 0198            -ag  
+  005a:30 0002            bnt code_005f 
+  005d:6d 0a            dpToa state 
+
+        code_005f
+  005f:35 0a              ldi a 
+  0061:65 10             aTop cycles 
+  0063:32 00c4            jmp code_012a 
+
+        code_0066
+  0066:3c                 dup 
+  0067:35 0a              ldi a 
+  0069:1a                 eq? 
+  006a:30 0079            bnt code_00e6 
+  006d:35 00              ldi 0 
+  006f:a0 0197            sag  
+  0072:88 0143            lsg  
+  0075:35 3c              ldi 3c 
+  0077:22                 lt? 
+  0078:30 0044            bnt code_00bf 
+  007b:88 0197            lsg  
+  007e:35 01              ldi 1 
+  0080:1c                 ne? 
+  0081:30 003b            bnt code_00bf 
+  0084:38 0173          pushi 173 // $173 worksAt
+  0087:76               push0 
+  0088:80 012e            lag  
+  008b:4a 04             send 4 
+
+  008d:36                push 
+  008e:80 0190            lag  
+  0091:1a                 eq? 
+  0092:30 002a            bnt code_00bf 
+  0095:80 0149            lag  
+  0098:30 0024            bnt code_00bf 
+  009b:87 02              lap param2 
+  009d:30 001f            bnt code_00bf 
+  00a0:38 0174          pushi 174 // $174 dressedForWork
+  00a3:76               push0 
+  00a4:80 012e            lag  
+  00a7:4a 04             send 4 
+
+  00a9:30 0013            bnt code_00bf 
+  00ac:35 01              ldi 1 
+  00ae:a0 0197            sag  
+  00b1:35 03              ldi 3 
+  00b3:a0 0198            sag  
+  00b6:80 0227            lag  
+  00b9:30 0003            bnt code_00bf 
+  00bc:c0 0198            +ag  
+
+        code_00bf
+  00bf:88 0197            lsg  
+  00c2:35 01              ldi 1 
+  00c4:1a                 eq? 
+  00c5:30 0062            bnt code_012a 
+  00c8:80 0198            lag  
+  00cb:30 005c            bnt code_012a 
+  00ce:39 28            pushi 28 // $28 message
+  00d0:78               push1 
+  00d1:39 77            pushi 77 // $77 prev
+  00d3:87 01              lap param1 
+  00d5:4a 06             send 6 
+
+  00d7:e0 0198            -ag  
+  00da:30 0002            bnt code_00df 
+  00dd:6d 0a            dpToa state 
+
+        code_00df
+  00df:35 0a              ldi a 
+  00e1:65 10             aTop cycles 
+  00e3:32 0044            jmp code_012a 
+
+        code_00e6
+  00e6:3c                 dup 
+  00e7:35 13              ldi 13 
+  00e9:1a                 eq? 
+  00ea:30 002d            bnt code_011a 
+  00ed:39 3c            pushi 3c // $3c doit
+  00ef:78               push1 
+  00f0:88 012e            lsg  
+  00f3:7a               push2 
+  00f4:38 012c          pushi 12c // $12c playing
+  00f7:76               push0 
+  00f8:43 02 04         callk ScriptID 4 
+
+  00fb:4a 06             send 6 
+
+  00fd:a0 0191            sag  
+  0100:88 0143            lsg  
+  0103:35 3c              ldi 3c 
+  0105:22                 lt? 
+  0106:30 0021            bnt code_012a 
+  0109:88 0191            lsg  
+  010c:80 0190            lag  
+  010f:1a                 eq? 
+  0110:30 0017            bnt code_012a 
+  0113:35 00              ldi 0 
+  0115:65 0a             aTop state 
+  0117:32 0010            jmp code_012a 
+
+        code_011a
+  011a:3c                 dup 
+  011b:35 14              ldi 14 
+  011d:1a                 eq? 
+  011e:30 0009            bnt code_012a 
+  0121:39 28            pushi 28 // $28 message
+  0123:78               push1 
+  0124:39 78            pushi 78 // $78 addToFront
+  0126:87 01              lap param1 
+  0128:4a 06             send 6 
+
+
+        code_012a
+  012a:3a                toss 
+  012b:48                 ret 
+    )
+
+)
+
+
+

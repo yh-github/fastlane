@@ -1,0 +1,246 @@
+(script 996)
+
+(string
+    string_0172 "Enter input"
+    string_017e "User"
+    string_0183 ""
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+    local2 = $0000
+    local3 = $0000
+    local4 = $0000
+    local5 = $0000
+    local6 = $0000
+    local7 = $0000
+    local8 = $0000
+    local9 = $0000
+    local10 = $0000
+    local11 = $0000
+    local12 = $0000
+    local13 = $0000
+    local14 = $0000
+    local15 = $0000
+    local16 = $0000
+    local17 = $0000
+    local18 = $0000
+    local19 = $0000
+    local20 = $0000
+    local21 = $0000
+    local22 = $0000
+    local23 = $0000
+)
+
+// 0114
+(class User of Obj
+    (properties
+        alterEgo $0
+        canInput $0
+        controls $0
+        echo $20
+        prevDir $0
+        prompt $172
+        inputLineAddr $0
+        x $ffff
+        y $ffff
+        blocks $1
+        mapKeyToDir $1
+    )
+    (method (init) // method_0004
+  0004:87 00              lap paramTotal 
+  0006:30 0005            bnt code_000e 
+  0009:87 01              lap param1 
+  000b:32 0003            jmp code_0011 
+
+        code_000e
+  000e:5b 02 00           lea 2 0 
+
+        code_0011
+  0011:65 14             aTop inputLineAddr 
+  0013:8f 00              lsp paramTotal 
+  0015:35 02              ldi 2 
+  0017:1a                 eq? 
+  0018:30 0005            bnt code_0020 
+  001b:87 02              lap param2 
+  001d:32 0002            jmp code_0022 
+
+        code_0020
+  0020:35 2d              ldi 2d 
+
+        code_0022
+  0022:a3 17              sal local23 
+  0024:48                 ret 
+    )
+
+    (method (doit) // method_0025
+  0025:3f 03             link 3 // (var $3)
+  0027:39 65            pushi 65 // $65 new
+  0029:76               push0 
+  002a:51 07            class Event 
+  002c:4a 04             send 4 
+
+  002e:a5 00              sat temp0 
+  0030:39 22            pushi 22 // $22 type
+  0032:76               push0 
+  0033:4a 04             send 4 
+
+  0035:30 006f            bnt code_00a7 
+  0038:85 00              lat temp0 
+  003a:a1 18              sag  
+  003c:39 22            pushi 22 // $22 type
+  003e:76               push0 
+  003f:85 00              lat temp0 
+  0041:4a 04             send 4 
+
+  0043:a5 01              sat temp1 
+  0045:63 1c             pToa mapKeyToDir 
+  0047:30 0006            bnt code_0050 
+  004a:78               push1 
+  004b:8d 00              lst temp0 
+  004d:43 1f 02         callk MapKeyToDir 2 
+
+
+        code_0050
+  0050:51 12            class MenuBar 
+  0052:30 0009            bnt code_005e 
+  0055:39 7c            pushi 7c // $7c handleEvent
+  0057:78               push1 
+  0058:8d 00              lst temp0 
+  005a:51 12            class MenuBar 
+  005c:4a 06             send 6 
+
+
+        code_005e
+  005e:80 020f            lag  
+  0061:30 002c            bnt code_0090 
+  0064:39 4c            pushi 4c // $4c claimed
+  0066:76               push0 
+  0067:85 00              lat temp0 
+  0069:4a 04             send 4 
+
+  006b:18                 not 
+  006c:30 0021            bnt code_0090 
+  006f:39 22            pushi 22 // $22 type
+  0071:76               push0 
+  0072:85 00              lat temp0 
+  0074:4a 04             send 4 
+
+  0076:36                push 
+  0077:35 04              ldi 4 
+  0079:1a                 eq? 
+  007a:2e 000b             bt code_0088 
+  007d:39 22            pushi 22 // $22 type
+  007f:76               push0 
+  0080:85 00              lat temp0 
+  0082:4a 04             send 4 
+
+  0084:36                push 
+  0085:35 01              ldi 1 
+  0087:1a                 eq? 
+
+        code_0088
+  0088:30 0005            bnt code_0090 
+  008b:35 01              ldi 1 
+  008d:a0 0210            sag  
+
+        code_0090
+  0090:63 0c             pToa controls 
+  0092:30 0009            bnt code_009e 
+  0095:39 7c            pushi 7c // $7c handleEvent
+  0097:78               push1 
+  0098:8d 00              lst temp0 
+  009a:81 01              lag  
+  009c:4a 06             send 6 
+
+
+        code_009e
+  009e:39 7c            pushi 7c // $7c handleEvent
+  00a0:78               push1 
+  00a1:8d 00              lst temp0 
+  00a3:81 05              lag  
+  00a5:4a 06             send 6 
+
+
+        code_00a7
+  00a7:39 67            pushi 67 // $67 dispose
+  00a9:76               push0 
+  00aa:85 00              lat temp0 
+  00ac:4a 04             send 4 
+
+  00ae:35 00              ldi 0 
+  00b0:a1 18              sag  
+  00b2:48                 ret 
+    )
+
+    (method (canControl) // method_00b8
+  00b8:3f 01             link 1 // (var $1)
+  00ba:87 00              lap paramTotal 
+  00bc:30 0049            bnt code_0108 
+  00bf:63 0c             pToa controls 
+  00c1:a5 00              sat temp0 
+  00c3:87 01              lap param1 
+  00c5:65 0c             aTop controls 
+  00c7:35 00              ldi 0 
+  00c9:65 10             aTop prevDir 
+  00cb:80 012e            lag  
+  00ce:30 0018            bnt code_00e9 
+  00d1:38 012c          pushi 12c // $12c playing
+  00d4:76               push0 
+  00d5:4a 04             send 4 
+
+  00d7:36                push 
+  00d8:35 1d              ldi 1d 
+  00da:1a                 eq? 
+  00db:30 000b            bnt code_00e9 
+  00de:80 0218            lag  
+  00e1:18                 not 
+  00e2:30 0004            bnt code_00e9 
+  00e5:35 00              ldi 0 
+  00e7:65 0c             aTop controls 
+
+        code_00e9
+  00e9:8d 00              lst temp0 
+  00eb:63 0c             pToa controls 
+  00ed:1c                 ne? 
+  00ee:30 0017            bnt code_0108 
+  00f1:38 0102          pushi 102 // $102 setCursor
+  00f4:78               push1 
+  00f5:63 0c             pToa controls 
+  00f7:30 0006            bnt code_0100 
+  00fa:34 03e7            ldi 3e7 
+  00fd:32 0003            jmp code_0103 
+
+        code_0100
+  0100:34 03e5            ldi 3e5 
+
+        code_0103
+  0103:36                push 
+  0104:81 01              lag  
+  0106:4a 06             send 6 
+
+
+        code_0108
+  0108:63 0c             pToa controls 
+  010a:48                 ret 
+    )
+
+    (method (getInput) // method_00b3
+  00b3:3f 02             link 2 // (var $2)
+  00b5:35 01              ldi 1 
+  00b7:48                 ret 
+    )
+
+    (method (said) // method_010b
+  010b:35 01              ldi 1 
+  010d:48                 ret 
+    )
+
+)
+
+
+

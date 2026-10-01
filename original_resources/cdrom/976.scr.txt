@@ -1,0 +1,420 @@
+(script 976)
+
+(string
+    string_02ca "Sync"
+    string_02cf "MouthSync"
+    string_02d9 ""
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+    local2 = $0000
+    local3 = $0000
+    local4 = $0000
+    local5 = $0000
+    local6 = $0000
+    local7 = $0000
+    local8 = $0000
+    local9 = $0000
+    local10 = $0000
+    local11 = $0000
+)
+
+// 00ea
+(class Sync of Obj
+    (properties
+        syncTime $ffff
+        syncCue $ffff
+        prevCue $ffff
+        syncNum $ffff
+    )
+    (method (syncStart) // method_0004
+  0004:78               push1 
+  0005:39 03            pushi 3 // $3 y
+  0007:43 2d 02         callk DoSound 2 
+
+  000a:36                push 
+  000b:35 01              ldi 1 
+  000d:1a                 eq? 
+  000e:30 000d            bnt code_001e 
+  0011:38 0094          pushi 94 // $94 pause
+  0014:78               push1 
+  0015:78               push1 
+  0016:80 01dd            lag  
+  0019:4a 06             send 6 
+
+  001b:32 002b            jmp code_0049 
+
+        code_001e
+  001e:38 0095          pushi 95 // $95 fade
+  0021:39 04            pushi 4 // $4 x
+  0023:88 0208            lsg  
+  0026:35 0a              ldi a 
+  0028:04                 sub 
+  0029:36                push 
+  002a:35 00              ldi 0 
+  002c:20                 ge? 
+  002d:30 000d            bnt code_003d 
+  0030:88 0208            lsg  
+  0033:35 0a              ldi a 
+  0035:04                 sub 
+  0036:36                push 
+  0037:35 08              ldi 8 
+  0039:06                 mul 
+  003a:32 0002            jmp code_003f 
+
+        code_003d
+  003d:35 00              ldi 0 
+
+        code_003f
+  003f:36                push 
+  0040:7a               push2 
+  0041:39 05            pushi 5 // $5 view
+  0043:76               push0 
+  0044:80 01dd            lag  
+  0047:4a 0c             send c 
+
+
+        code_0049
+  0049:76               push0 
+  004a:43 0a 00         callk PicNotValid 0 
+
+  004d:a0 022a            sag  
+  0050:78               push1 
+  0051:76               push0 
+  0052:43 0a 02         callk PicNotValid 2 
+
+  0055:39 03            pushi 3 // $3 y
+  0057:76               push0 
+  0058:7c            pushSelf 
+  0059:8f 01              lsp param1 
+  005b:43 76 06         callk kernel_118 6 
+
+  005e:67 0a             pTos syncCue 
+  0060:35 ff              ldi ff 
+  0062:1c                 ne? 
+  0063:30 0008            bnt code_006e 
+  0066:63 0a             pToa syncCue 
+  0068:65 0c             aTop prevCue 
+  006a:35 00              ldi 0 
+  006c:65 08             aTop syncTime 
+
+        code_006e
+  006e:35 01              ldi 1 
+  0070:a0 022d            sag  
+  0073:48                 ret 
+    )
+
+    (method (syncCheck) // method_0074
+  0074:67 0a             pTos syncCue 
+  0076:35 ff              ldi ff 
+  0078:1c                 ne? 
+  0079:30 001a            bnt code_0096 
+  007c:67 08             pTos syncTime 
+  007e:88 022f            lsg  
+  0081:78               push1 
+  0082:39 06            pushi 6 // $6 loop
+  0084:43 75 02         callk kernel_117 2 
+
+  0087:02                 add 
+  0088:2c                ule? 
+  0089:30 000a            bnt code_0096 
+  008c:63 0a             pToa syncCue 
+  008e:65 0c             aTop prevCue 
+  0090:7a               push2 
+  0091:78               push1 
+  0092:7c            pushSelf 
+  0093:43 76 04         callk kernel_118 4 
+
+
+        code_0096
+  0096:48                 ret 
+    )
+
+    (method (syncStop) // method_0097
+  0097:35 ff              ldi ff 
+  0099:65 0c             aTop prevCue 
+  009b:78               push1 
+  009c:7a               push2 
+  009d:43 76 02         callk kernel_118 2 
+
+  00a0:78               push1 
+  00a1:88 022a            lsg  
+  00a4:43 0a 02         callk PicNotValid 2 
+
+  00a7:35 00              ldi 0 
+  00a9:a0 022d            sag  
+  00ac:80 022b            lag  
+  00af:30 0031            bnt code_00e3 
+  00b2:39 0b            pushi b // $b nsBottom
+  00b4:38 03d0          pushi 3d0 // $3d0 sel_976
+  00b7:76               push0 
+  00b8:8b 0b              lsl local11 
+  00ba:88 022c            lsg  
+  00bd:35 00              ldi 0 
+  00bf:9b 00             lsli local0 
+  00c1:35 01              ldi 1 
+  00c3:9b 00             lsli local0 
+  00c5:35 02              ldi 2 
+  00c7:9b 00             lsli local0 
+  00c9:35 03              ldi 3 
+  00cb:9b 00             lsli local0 
+  00cd:35 04              ldi 4 
+  00cf:9b 00             lsli local0 
+  00d1:35 05              ldi 5 
+  00d3:9b 00             lsli local0 
+  00d5:35 06              ldi 6 
+  00d7:9b 00             lsli local0 
+  00d9:47 ff 04 16      calle ff procedure_0004 16 //  
+
+  00dd:78               push1 
+  00de:39 0a            pushi a // $a nsLeft
+  00e0:43 75 02         callk kernel_117 2 
+
+
+        code_00e3
+  00e3:48                 ret 
+    )
+
+)
+
+// 0284
+(class MouthSync of Cycle
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+    )
+    (method (init) // method_0124
+  0124:3f 01             link 1 // (var $1)
+  0126:87 02              lap param2 
+  0128:a3 0b              sal local11 
+  012a:35 00              ldi 0 
+  012c:a0 022c            sag  
+  012f:65 08             aTop client 
+  0131:65 0a             aTop caller 
+  0133:39 6a            pushi 6a // $6a init
+  0135:78               push1 
+  0136:8f 01              lsp param1 
+  0138:57 13 06         super Cycle 6 
+
+  013b:35 00              ldi 0 
+  013d:a3 0a              sal local10 
+  013f:35 00              ldi 0 
+  0141:a5 00              sat temp0 
+
+        code_0143
+  0143:8d 00              lst temp0 
+  0145:35 0a              ldi a 
+  0147:22                 lt? 
+  0148:30 000a            bnt code_0155 
+  014b:76               push0 
+  014c:85 00              lat temp0 
+  014e:b3 00             sali local0 
+  0150:c5 00              +at temp0 
+  0152:32 ffee            jmp code_0143 
+
+        code_0155
+  0155:80 022e            lag  
+  0158:30 000b            bnt code_0166 
+  015b:38 014a          pushi 14a // $14a syncStop
+  015e:76               push0 
+  015f:4a 04             send 4 
+
+  0161:35 00              ldi 0 
+  0163:a0 022e            sag  
+
+        code_0166
+  0166:35 01              ldi 1 
+  0168:65 12             aTop ticksToDo 
+  016a:38 0148          pushi 148 // $148 syncStart
+  016d:78               push1 
+  016e:8f 02              lsp param2 
+  0170:80 0258            lag  
+  0173:a0 022e            sag  
+  0176:4a 06             send 6 
+
+  0178:48                 ret 
+    )
+
+    (method (doit) // method_0179
+  0179:3f 02             link 2 // (var $2)
+  017b:39 3c            pushi 3c // $3c doit
+  017d:76               push0 
+  017e:57 13 04         super Cycle 4 
+
+  0181:80 022e            lag  
+  0184:30 0092            bnt code_0219 
+  0187:78               push1 
+  0188:39 06            pushi 6 // $6 loop
+  018a:43 75 02         callk kernel_117 2 
+
+  018d:36                push 
+  018e:35 ff              ldi ff 
+  0190:1a                 eq? 
+  0191:30 0007            bnt code_019b 
+  0194:38 008b          pushi 8b // $8b cue
+  0197:76               push0 
+  0198:54 04             self 4 
+
+  019a:48                 ret 
+
+        code_019b
+  019b:38 0146          pushi 146 // $146 prevCue
+  019e:76               push0 
+  019f:80 022e            lag  
+  01a2:4a 04             send 4 
+
+  01a4:36                push 
+  01a5:35 ff              ldi ff 
+  01a7:1c                 ne? 
+  01a8:30 006e            bnt code_0219 
+  01ab:35 00              ldi 0 
+  01ad:a5 01              sat temp1 
+
+        code_01af
+  01af:38 0144          pushi 144 // $144 syncTime
+  01b2:76               push0 
+  01b3:80 022e            lag  
+  01b6:4a 04             send 4 
+
+  01b8:a5 00              sat temp0 
+  01ba:38 0149          pushi 149 // $149 syncCheck
+  01bd:76               push0 
+  01be:80 022e            lag  
+  01c1:4a 04             send 4 
+
+  01c3:8d 00              lst temp0 
+  01c5:38 0144          pushi 144 // $144 syncTime
+  01c8:76               push0 
+  01c9:80 022e            lag  
+  01cc:4a 04             send 4 
+
+  01ce:1a                 eq? 
+  01cf:30 0003            bnt code_01d5 
+  01d2:32 0030            jmp code_0205 
+
+        code_01d5
+  01d5:39 07            pushi 7 // $7 cel
+  01d7:78               push1 
+  01d8:39 0f            pushi f // $f lsBottom
+  01da:38 0146          pushi 146 // $146 prevCue
+  01dd:76               push0 
+  01de:80 022e            lag  
+  01e1:4a 04             send 4 
+
+  01e3:12                 and 
+  01e4:36                push 
+  01e5:63 08             pToa client 
+  01e7:4a 06             send 6 
+
+  01e9:c5 01              +at temp1 
+  01eb:36                push 
+  01ec:35 01              ldi 1 
+  01ee:1e                 gt? 
+  01ef:30 ffbd            bnt code_01af 
+  01f2:8b 0a              lsl local10 
+  01f4:35 0a              ldi a 
+  01f6:22                 lt? 
+  01f7:30 ffb5            bnt code_01af 
+  01fa:8d 00              lst temp0 
+  01fc:83 0a              lal local10 
+  01fe:b3 00             sali local0 
+  0200:c3 0a              +al local10 
+  0202:32 ffaa            jmp code_01af 
+
+        code_0205
+  0205:8d 01              lst temp1 
+  0207:35 01              ldi 1 
+  0209:1e                 gt? 
+  020a:30 000c            bnt code_0219 
+  020d:88 022c            lsg  
+  0210:8d 01              lst temp1 
+  0212:35 01              ldi 1 
+  0214:04                 sub 
+  0215:02                 add 
+  0216:a0 022c            sag  
+
+        code_0219
+  0219:48                 ret 
+    )
+
+    (method (cue) // method_021a
+  021a:80 022e            lag  
+  021d:30 005d            bnt code_027d 
+  0220:38 014a          pushi 14a // $14a syncStop
+  0223:76               push0 
+  0224:4a 04             send 4 
+
+  0226:35 00              ldi 0 
+  0228:a0 022e            sag  
+  022b:63 0a             pToa caller 
+  022d:30 003b            bnt code_026b 
+  0230:78               push1 
+  0231:39 03            pushi 3 // $3 y
+  0233:43 2d 02         callk DoSound 2 
+
+  0236:36                push 
+  0237:35 01              ldi 1 
+  0239:1a                 eq? 
+  023a:30 000d            bnt code_024a 
+  023d:38 0094          pushi 94 // $94 pause
+  0240:78               push1 
+  0241:76               push0 
+  0242:80 01dd            lag  
+  0245:4a 06             send 6 
+
+  0247:32 0015            jmp code_025f 
+
+        code_024a
+  024a:38 0095          pushi 95 // $95 fade
+  024d:39 04            pushi 4 // $4 x
+  024f:88 0208            lsg  
+  0252:35 08              ldi 8 
+  0254:06                 mul 
+  0255:36                push 
+  0256:7a               push2 
+  0257:39 05            pushi 5 // $5 view
+  0259:76               push0 
+  025a:80 01dd            lag  
+  025d:4a 0c             send c 
+
+
+        code_025f
+  025f:38 008b          pushi 8b // $8b cue
+  0262:76               push0 
+  0263:63 0a             pToa caller 
+  0265:4a 04             send 4 
+
+  0267:35 00              ldi 0 
+  0269:65 0a             aTop caller 
+
+        code_026b
+  026b:63 08             pToa client 
+  026d:30 000d            bnt code_027d 
+  0270:39 07            pushi 7 // $7 cel
+  0272:78               push1 
+  0273:76               push0 
+  0274:39 53            pushi 53 // $53 draw
+  0276:76               push0 
+  0277:4a 0a             send a 
+
+  0279:35 00              ldi 0 
+  027b:65 08             aTop client 
+
+        code_027d
+  027d:48                 ret 
+    )
+
+)
+
+
+

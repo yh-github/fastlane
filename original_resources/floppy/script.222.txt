@@ -1,0 +1,662 @@
+(script 222)
+
+(string
+    string_0520 "dialogKeyMouse"
+    string_052f "bankJobs"
+    string_0538 "background"
+    string_0543 "Bank Jobs Available:"
+    string_0558 "jobsAvailable"
+    string_0566 "Janitor            |"
+    string_057b "janitor"
+    string_0583 "Teller              ||"
+    string_059a "teller"
+    string_05a1 "Assistant Manager  "
+    string_05b5 "assistManager"
+    string_05c3 "Manager           |"
+    string_05d7 "manager"
+    string_05df "Investment Broker  |||"
+    string_05f6 "broker"
+    string_05fd "exitButton"
+)
+
+(said
+)
+
+(local
+)
+
+// 000e
+(instance dialogKeyMouse of Set
+    (properties
+        elements $0
+        size $0
+    )
+)
+
+// 01ae
+(instance publicbankJobs of Dialog
+    (properties
+        elements $0
+        size $0
+        text $0
+        window $0
+        theItem $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $77
+        nsRight $b8
+        time $0
+        busy $0
+        seconds $0
+        lastSeconds $0
+        client $0
+        agent $0
+        script $0
+        menuBarOK $1
+        tail $0
+        standard $0
+        keyMouseList $0
+        prevDialog $0
+        prevTalker $0
+        aTimeClock $0
+    )
+    (method (init) // method_0028
+  0028:3f 02             link 2 // (var $2)
+  002a:80 0206            lag  
+  002d:18                 not 
+  002e:30 00c7            bnt code_00f8 
+  0031:38 0090          pushi 90 // $90 pause
+  0034:78               push1 
+  0035:76               push0 
+  0036:80 01dd            lag  
+  0039:4a 06             send 6 
+
+  003b:80 019d            lag  
+  003e:65 32             aTop prevTalker 
+  0040:35 00              ldi 0 
+  0042:a0 019d            sag  
+  0045:78               push1 
+  0046:7a               push2 
+  0047:45 11 02         callb procedure_0011 2 //  
+
+  004a:72 ffc7          lofsa $0014 // dialogKeyMouse
+  004d:65 2e             aTop keyMouseList 
+  004f:80 01f6            lag  
+  0052:65 30             aTop prevDialog 
+  0054:5c              selfID 
+  0055:a0 01f6            sag  
+  0058:87 01              lap param1 
+  005a:65 22             aTop client 
+  005c:35 04              ldi 4 
+  005e:a0 01a3            sag  
+  0061:38 012c          pushi 12c // $12c playing
+  0064:76               push0 
+  0065:80 012e            lag  
+  0068:4a 04             send 4 
+
+  006a:36                push 
+  006b:35 1d              ldi 1d 
+  006d:1a                 eq? 
+  006e:30 0013            bnt code_0084 
+  0071:38 0088          pushi 88 // $88 setScript
+  0074:7a               push2 
+  0075:51 4d            class JobScript 
+  0077:36                push 
+  0078:39 ff            pushi ff // $ff changeScore
+  007a:54 08             self 8 
+
+  007c:38 0087          pushi 87 // $87 cue
+  007f:76               push0 
+  0080:51 4d            class JobScript 
+  0082:4a 04             send 4 
+
+
+        code_0084
+  0084:39 23            pushi 23 // $23 window
+  0086:78               push1 
+  0087:89 3b              lsg  
+  0089:39 6e            pushi 6e // $6e add
+  008b:39 08            pushi 8 // $8 underBits
+  008d:72 016e          lofsa $01fe // background
+  0090:36                push 
+  0091:72 01b2          lofsa $0246 // jobsAvailable
+  0094:36                push 
+  0095:72 01fe          lofsa $0296 // janitor
+  0098:36                push 
+  0099:72 026a          lofsa $0306 // teller
+  009c:36                push 
+  009d:72 02d6          lofsa $0376 // assistManager
+  00a0:36                push 
+  00a1:72 0342          lofsa $03e6 // manager
+  00a4:36                push 
+  00a5:72 03ae          lofsa $0456 // broker
+  00a8:36                push 
+  00a9:72 0430          lofsa $04dc // exitButton
+  00ac:36                push 
+  00ad:39 6f            pushi 6f // $6f eachElementDo
+  00af:78               push1 
+  00b0:39 66            pushi 66 // $66 init
+  00b2:39 6f            pushi 6f // $6f eachElementDo
+  00b4:78               push1 
+  00b5:38 0099          pushi 99 // $99 setSize
+  00b8:38 009b          pushi 9b // $9b moveTo
+  00bb:7a               push2 
+  00bc:39 0a            pushi a // $a nsLeft
+  00be:76               push0 
+  00bf:63 22             pToa client 
+  00c1:4a 04             send 4 
+
+  00c3:36                push 
+  00c4:39 09            pushi 9 // $9 nsTop
+  00c6:76               push0 
+  00c7:63 22             pToa client 
+  00c9:4a 04             send 4 
+
+  00cb:36                push 
+  00cc:38 00a3          pushi a3 // $a3 open
+  00cf:7a               push2 
+  00d0:76               push0 
+  00d1:39 0f            pushi f // $f lsBottom
+  00d3:54 36             self 36 
+
+  00d5:38 0125          pushi 125 // $125 curItem
+  00d8:76               push0 
+  00d9:51 30            class KeyMouse 
+  00db:4a 04             send 4 
+
+  00dd:a5 01              sat temp1 
+  00df:39 03            pushi 3 // $3 y
+  00e1:7c            pushSelf 
+  00e2:67 2e             pTos keyMouseList 
+  00e4:72 01af          lofsa $0296 // janitor
+  00e7:36                push 
+  00e8:45 09 06         callb procedure_0009 6 //  
+
+  00eb:38 0129          pushi 129 // $129 setList
+  00ee:78               push1 
+  00ef:67 2e             pTos keyMouseList 
+  00f1:51 30            class KeyMouse 
+  00f3:4a 06             send 6 
+
+  00f5:32 000f            jmp code_0107 
+
+        code_00f8
+  00f8:38 0102          pushi 102 // $102 setCursor
+  00fb:78               push1 
+  00fc:67 10             pTos theItem 
+  00fe:51 30            class KeyMouse 
+  0100:4a 06             send 6 
+
+  0102:35 01              ldi 1 
+  0104:a0 0207            sag  
+
+        code_0107
+  0107:39 3c            pushi 3c // $3c doit
+  0109:7a               push2 
+  010a:76               push0 
+  010b:76               push0 
+  010c:54 08             self 8 
+
+  010e:a5 00              sat temp0 
+  0110:78               push1 
+  0111:36                push 
+  0112:43 06 02         callk IsObject 2 
+
+  0115:30 0011            bnt code_0129 
+  0118:39 72            pushi 72 // $72 contains
+  011a:78               push1 
+  011b:8d 00              lst temp0 
+  011d:54 06             self 6 
+
+  011f:30 000b            bnt code_012d 
+  0122:35 00              ldi 0 
+  0124:a5 00              sat temp0 
+  0126:32 0004            jmp code_012d 
+
+        code_0129
+  0129:35 01              ldi 1 
+  012b:a5 00              sat temp0 
+
+        code_012d
+  012d:38 0129          pushi 129 // $129 setList
+  0130:78               push1 
+  0131:63 30             pToa prevDialog 
+  0133:30 0009            bnt code_013f 
+  0136:38 0138          pushi 138 // $138 keyMouseList
+  0139:76               push0 
+  013a:4a 04             send 4 
+
+  013c:32 0003            jmp code_0142 
+
+        code_013f
+  013f:80 01b0            lag  
+
+        code_0142
+  0142:36                push 
+  0143:51 30            class KeyMouse 
+  0145:4a 06             send 6 
+
+  0147:38 0125          pushi 125 // $125 curItem
+  014a:78               push1 
+  014b:8d 01              lst temp1 
+  014d:51 30            class KeyMouse 
+  014f:4a 06             send 6 
+
+  0151:80 01bf            lag  
+  0154:30 000a            bnt code_0161 
+  0157:38 0102          pushi 102 // $102 setCursor
+  015a:78               push1 
+  015b:8d 01              lst temp1 
+  015d:51 30            class KeyMouse 
+  015f:4a 06             send 6 
+
+
+        code_0161
+  0161:39 75            pushi 75 // $75 release
+  0163:76               push0 
+  0164:63 2e             pToa keyMouseList 
+  0166:4a 04             send 4 
+
+  0168:39 67            pushi 67 // $67 dispose
+  016a:76               push0 
+  016b:63 2e             pToa keyMouseList 
+  016d:4a 04             send 4 
+
+  016f:63 30             pToa prevDialog 
+  0171:a0 01f6            sag  
+  0174:7a               push2 
+  0175:7c            pushSelf 
+  0176:38 0123          pushi 123 // $123 erase
+  0179:45 0f 04         callb procedure_000f 4 //  
+
+  017c:39 67            pushi 67 // $67 dispose
+  017e:76               push0 
+  017f:54 04             self 4 
+
+  0181:78               push1 
+  0182:76               push0 
+  0183:45 11 02         callb procedure_0011 2 //  
+
+  0186:63 32             pToa prevTalker 
+  0188:a0 019d            sag  
+  018b:80 0207            lag  
+  018e:30 000d            bnt code_019e 
+  0191:39 53            pushi 53 // $53 draw
+  0193:76               push0 
+  0194:80 01f6            lag  
+  0197:4a 04             send 4 
+
+  0199:76               push0 
+  019a:47 ce 01 00      calle ce procedure_0001 0 //  
+
+
+        code_019e
+  019e:85 00              lat temp0 
+  01a0:78               push1 
+  01a1:38 00de          pushi de // $de setAvoider
+  01a4:43 03 02         callk DisposeScript 2 
+
+  01a7:48                 ret 
+    )
+
+)
+
+// 01f8
+(instance background of DIcon
+    (properties
+        type $4
+        state $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $2c2
+        loop $0
+        cel $1
+        priority $ffff
+    )
+)
+
+// 0240
+(instance jobsAvailable of WButton
+    (properties
+        type $0
+        state $0
+        nsTop $1e
+        nsLeft $2d
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $543
+        font $0
+        theFont $a
+        textColor $0
+        backColor $ffff
+        shadowColor $6b
+        flashColor $64
+        width $0
+    )
+)
+
+// 0290
+(instance janitor of JobDItem
+    (properties
+        type $0
+        state $23
+        nsTop $2d
+        nsLeft $19
+        nsBottom $0
+        nsRight $0
+        key $1
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $566
+        font $0
+        theFont $a
+        textColor $0
+        backColor $ffff
+        shadowColor $6b
+        flashColor $64
+        width $0
+        price $0
+        indexNum $2b
+        typeOfGoods $0
+        units $1
+        theSign $ffff
+        basePrice $6
+        fixedPrice $0
+        theDurable $0
+        visitTime $4
+        celNum $0
+        dependibility $14
+        experience $14
+        education $0
+        education2 $0
+        jobNum $1a
+        uniform $24
+    )
+)
+
+// 0300
+(instance teller of JobDItem
+    (properties
+        type $0
+        state $23
+        nsTop $37
+        nsLeft $19
+        nsBottom $0
+        nsRight $0
+        key $2
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $583
+        font $0
+        theFont $a
+        textColor $0
+        backColor $ffff
+        shadowColor $6b
+        flashColor $64
+        width $0
+        price $0
+        indexNum $3a
+        typeOfGoods $0
+        units $1
+        theSign $ffff
+        basePrice $a
+        fixedPrice $0
+        theDurable $0
+        visitTime $4
+        celNum $0
+        dependibility $28
+        experience $28
+        education $e
+        education2 $0
+        jobNum $1b
+        uniform $23
+    )
+)
+
+// 0370
+(instance assistManager of JobDItem
+    (properties
+        type $0
+        state $23
+        nsTop $41
+        nsLeft $19
+        nsBottom $0
+        nsRight $0
+        key $3
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $5a1
+        font $0
+        theFont $a
+        textColor $0
+        backColor $ffff
+        shadowColor $6b
+        flashColor $64
+        width $0
+        price $0
+        indexNum $2d
+        typeOfGoods $0
+        units $1
+        theSign $ffff
+        basePrice $e
+        fixedPrice $0
+        theDurable $0
+        visitTime $4
+        celNum $0
+        dependibility $32
+        experience $32
+        education $f
+        education2 $0
+        jobNum $1c
+        uniform $22
+    )
+)
+
+// 03e0
+(instance manager of JobDItem
+    (properties
+        type $0
+        state $23
+        nsTop $4b
+        nsLeft $19
+        nsBottom $0
+        nsRight $0
+        key $4
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $5c3
+        font $0
+        theFont $a
+        textColor $0
+        backColor $ffff
+        shadowColor $6b
+        flashColor $64
+        width $0
+        price $0
+        indexNum $2e
+        typeOfGoods $0
+        units $1
+        theSign $ffff
+        basePrice $13
+        fixedPrice $0
+        theDurable $0
+        visitTime $4
+        celNum $0
+        dependibility $3c
+        experience $3c
+        education $f
+        education2 $0
+        jobNum $1d
+        uniform $22
+    )
+)
+
+// 0450
+(instance broker of JobDItem
+    (properties
+        type $0
+        state $23
+        nsTop $55
+        nsLeft $19
+        nsBottom $0
+        nsRight $0
+        key $5
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $5df
+        font $0
+        theFont $a
+        textColor $0
+        backColor $ffff
+        shadowColor $6b
+        flashColor $64
+        width $0
+        price $0
+        indexNum $3b
+        typeOfGoods $0
+        units $1
+        theSign $ffff
+        basePrice $16
+        fixedPrice $0
+        theDurable $0
+        visitTime $4
+        celNum $0
+        dependibility $46
+        experience $46
+        education $f
+        education2 $10
+        jobNum $1e
+        uniform $22
+    )
+)
+
+// 04d6
+(instance exitButton of ErasableDIcon
+    (properties
+        type $4
+        state $63
+        nsTop $6c
+        nsLeft $8f
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $fa
+        loop $0
+        cel $0
+        priority $ffff
+    )
+    (method (doit) // method_04be
+  04be:3f 01             link 1 // (var $1)
+  04c0:39 3c            pushi 3c // $3c doit
+  04c2:76               push0 
+  04c3:57 31 04         super ErasableDIcon 4 
+
+  04c6:a5 00              sat temp0 
+  04c8:35 fe              ldi fe 
+  04ca:a0 01b1            sag  
+  04cd:85 00              lat temp0 
+  04cf:48                 ret 
+    )
+
+)
+
+
+

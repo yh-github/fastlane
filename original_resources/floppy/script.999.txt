@@ -1,0 +1,1388 @@
+(script 999)
+
+(string
+    string_08cc "Obj"
+    string_08d0 "Code"
+    string_08d5 "Collect"
+    string_08dd "List"
+    string_08e2 "Set"
+    string_08e6 "EventHandler"
+    string_08f3 "Script"
+    string_08fa "Event"
+)
+
+(said
+)
+
+(local
+)
+
+// 010e
+(class Obj of 
+    (properties
+    )
+    (method (new) // method_007f
+  007f:78               push1 
+  0080:7c            pushSelf 
+  0081:43 04 02         callk Clone 2 
+
+  0084:48                 ret 
+    )
+
+    (method (init) // method_0085
+  0085:48                 ret 
+    )
+
+    (method (doit) // method_0086
+  0086:5c              selfID 
+  0087:48                 ret 
+    )
+
+    (method (dispose) // method_0088
+  0088:78               push1 
+  0089:7c            pushSelf 
+  008a:43 05 02         callk DisposeClone 2 
+
+  008d:48                 ret 
+    )
+
+    (method (showStr) // method_008e
+  008e:7a               push2 
+  008f:8f 01              lsp param1 
+  0091:67 06             pTos name 
+  0093:43 47 04         callk StrCpy 4 
+
+  0096:48                 ret 
+    )
+
+    (method (showSelf) // method_0097
+  0097:3f c8             link c8 // (var $c8)
+  0099:78               push1 
+  009a:39 68            pushi 68 // $68 showStr
+  009c:78               push1 
+  009d:5b 04 00           lea 4 0 
+  00a0:36                push 
+  00a1:54 06             self 6 
+
+  00a3:36                push 
+  00a4:47 ff 00 02      calle ff procedure_0000 2 //  
+
+  00a8:48                 ret 
+    )
+
+    (method (perform) // method_00a9
+  00a9:39 3c            pushi 3c // $3c doit
+  00ab:78               push1 
+  00ac:7c            pushSelf 
+  00ad:59 02            &rest 2 
+  00af:87 01              lap param1 
+  00b1:4a 06             send 6 
+
+  00b3:48                 ret 
+    )
+
+    (method (isKindOf) // method_00de
+  00de:3f 01             link 1 // (var $1)
+  00e0:78               push1 
+  00e1:76               push0 
+  00e2:54 04             self 4 
+
+  00e4:a5 00              sat temp0 
+  00e6:67 00             pTos species 
+  00e8:76               push0 
+  00e9:76               push0 
+  00ea:87 01              lap param1 
+  00ec:4a 04             send 4 
+
+  00ee:1a                 eq? 
+  00ef:2e 0012             bt code_0104 
+  00f2:78               push1 
+  00f3:8d 00              lst temp0 
+  00f5:43 06 02         callk IsObject 2 
+
+  00f8:30 0009            bnt code_0104 
+  00fb:39 6a            pushi 6a // $6a isKindOf
+  00fd:78               push1 
+  00fe:8f 01              lsp param1 
+  0100:85 00              lat temp0 
+  0102:4a 06             send 6 
+
+
+        code_0104
+  0104:48                 ret 
+    )
+
+    (method (isMemberOf) // method_00bc
+  00bc:7a               push2 
+  00bd:76               push0 
+  00be:87 01              lap param1 
+  00c0:4a 04             send 4 
+
+  00c2:36                push 
+  00c3:34 8000            ldi 8000 
+  00c6:12                 and 
+  00c7:30 0013            bnt code_00dd 
+  00ca:67 04             pTos -info- 
+  00cc:34 8000            ldi 8000 
+  00cf:12                 and 
+  00d0:18                 not 
+  00d1:30 0009            bnt code_00dd 
+  00d4:67 00             pTos species 
+  00d6:76               push0 
+  00d7:76               push0 
+  00d8:87 01              lap param1 
+  00da:4a 04             send 4 
+
+  00dc:1a                 eq? 
+
+        code_00dd
+  00dd:48                 ret 
+    )
+
+    (method (respondsTo) // method_00b4
+  00b4:7a               push2 
+  00b5:7c            pushSelf 
+  00b6:8f 01              lsp param1 
+  00b8:43 07 04         callk RespondsTo 4 
+
+  00bb:48                 ret 
+    )
+
+    (method (yourself) // method_0105
+  0105:5c              selfID 
+  0106:48                 ret 
+  0107:00                bnot 
+    )
+
+)
+
+// 0160
+(class Code of Obj
+    (properties
+    )
+    (method (doit) // method_0158
+  0158:48                 ret 
+  0159:00                bnot 
+    )
+
+)
+
+// 031c
+(class Collect of Obj
+    (properties
+        elements $0
+        size $0
+    )
+    (method (dispose) // method_0203
+  0203:63 08             pToa elements 
+  0205:30 000d            bnt code_0215 
+  0208:39 6f            pushi 6f // $6f eachElementDo
+  020a:78               push1 
+  020b:39 67            pushi 67 // $67 dispose
+  020d:54 06             self 6 
+
+  020f:78               push1 
+  0210:67 08             pTos elements 
+  0212:43 2f 02         callk DisposeList 2 
+
+
+        code_0215
+  0215:35 00              ldi 0 
+  0217:65 08             aTop elements 
+  0219:65 0a             aTop size 
+  021b:39 67            pushi 67 // $67 dispose
+  021d:76               push0 
+  021e:57 00 04         super Obj 4 
+
+  0221:48                 ret 
+    )
+
+    (method (showStr) // method_0182
+  0182:39 05            pushi 5 // $5 view
+  0184:8f 01              lsp param1 
+  0186:38 03e7          pushi 3e7 // $3e7 sel_999
+  0189:76               push0 
+  018a:67 06             pTos name 
+  018c:67 0a             pTos size 
+  018e:43 48 0a         callk Format a 
+
+  0191:48                 ret 
+    )
+
+    (method (showSelf) // method_0192
+  0192:3f 28             link 28 // (var $28)
+  0194:78               push1 
+  0195:39 68            pushi 68 // $68 showStr
+  0197:78               push1 
+  0198:5b 04 00           lea 4 0 
+  019b:36                push 
+  019c:54 06             self 6 
+
+  019e:36                push 
+  019f:47 ff 00 02      calle ff procedure_0000 2 //  
+
+  01a3:39 6f            pushi 6f // $6f eachElementDo
+  01a5:78               push1 
+  01a6:39 69            pushi 69 // $69 showSelf
+  01a8:54 06             self 6 
+
+  01aa:48                 ret 
+    )
+
+    (method (add) // method_01ab
+  01ab:3f 03             link 3 // (var $3)
+  01ad:63 08             pToa elements 
+  01af:18                 not 
+  01b0:30 0006            bnt code_01b9 
+  01b3:76               push0 
+  01b4:43 2e 00         callk NewList 0 
+
+  01b7:65 08             aTop elements 
+
+        code_01b9
+  01b9:35 00              ldi 0 
+  01bb:a5 01              sat temp1 
+
+        code_01bd
+  01bd:8d 01              lst temp1 
+  01bf:87 00              lap paramTotal 
+  01c1:22                 lt? 
+  01c2:30 0018            bnt code_01dd 
+  01c5:7a               push2 
+  01c6:67 08             pTos elements 
+  01c8:7a               push2 
+  01c9:85 01              lat temp1 
+  01cb:9f 01             lspi param1 
+  01cd:9f 01             lspi param1 
+  01cf:43 30 04         callk NewNode 4 
+
+  01d2:36                push 
+  01d3:43 39 04         callk AddToEnd 4 
+
+  01d6:6b 0a            ipToa size 
+  01d8:c5 01              +at temp1 
+  01da:32 ffe0            jmp code_01bd 
+
+        code_01dd
+  01dd:5c              selfID 
+  01de:48                 ret 
+    )
+
+    (method (delete) // method_01df
+  01df:3f 01             link 1 // (var $1)
+  01e1:35 00              ldi 0 
+  01e3:a5 00              sat temp0 
+
+        code_01e5
+  01e5:8d 00              lst temp0 
+  01e7:87 00              lap paramTotal 
+  01e9:22                 lt? 
+  01ea:30 0014            bnt code_0201 
+  01ed:7a               push2 
+  01ee:67 08             pTos elements 
+  01f0:85 00              lat temp0 
+  01f2:9f 01             lspi param1 
+  01f4:43 3b 04         callk DeleteKey 4 
+
+  01f7:30 0002            bnt code_01fc 
+  01fa:6d 0a            dpToa size 
+
+        code_01fc
+  01fc:c5 00              +at temp0 
+  01fe:32 ffe4            jmp code_01e5 
+
+        code_0201
+  0201:5c              selfID 
+  0202:48                 ret 
+    )
+
+    (method (eachElementDo) // method_0248
+  0248:3f 03             link 3 // (var $3)
+  024a:78               push1 
+  024b:67 08             pTos elements 
+  024d:43 31 02         callk FirstNode 2 
+
+  0250:a5 00              sat temp0 
+
+        code_0252
+  0252:85 00              lat temp0 
+  0254:30 0029            bnt code_0280 
+  0257:78               push1 
+  0258:36                push 
+  0259:43 34 02         callk NextNode 2 
+
+  025c:a5 01              sat temp1 
+  025e:78               push1 
+  025f:78               push1 
+  0260:8d 00              lst temp0 
+  0262:43 36 02         callk NodeValue 2 
+
+  0265:a5 02              sat temp2 
+  0267:36                push 
+  0268:43 06 02         callk IsObject 2 
+
+  026b:18                 not 
+  026c:30 0001            bnt code_0270 
+  026f:48                 ret 
+
+        code_0270
+  0270:8f 01              lsp param1 
+  0272:76               push0 
+  0273:59 02            &rest 2 
+  0275:85 02              lat temp2 
+  0277:4a 04             send 4 
+
+  0279:85 01              lat temp1 
+  027b:a5 00              sat temp0 
+  027d:32 ffd2            jmp code_0252 
+
+        code_0280
+  0280:48                 ret 
+    )
+
+    (method (firstTrue) // method_0281
+  0281:3f 03             link 3 // (var $3)
+  0283:78               push1 
+  0284:67 08             pTos elements 
+  0286:43 31 02         callk FirstNode 2 
+
+  0289:a5 00              sat temp0 
+
+        code_028b
+  028b:85 00              lat temp0 
+  028d:30 0023            bnt code_02b3 
+  0290:78               push1 
+  0291:36                push 
+  0292:43 34 02         callk NextNode 2 
+
+  0295:a5 01              sat temp1 
+  0297:78               push1 
+  0298:8d 00              lst temp0 
+  029a:43 36 02         callk NodeValue 2 
+
+  029d:a5 02              sat temp2 
+  029f:8f 01              lsp param1 
+  02a1:76               push0 
+  02a2:59 02            &rest 2 
+  02a4:4a 04             send 4 
+
+  02a6:30 0003            bnt code_02ac 
+  02a9:85 02              lat temp2 
+  02ab:48                 ret 
+
+        code_02ac
+  02ac:85 01              lat temp1 
+  02ae:a5 00              sat temp0 
+  02b0:32 ffd8            jmp code_028b 
+
+        code_02b3
+  02b3:35 00              ldi 0 
+  02b5:48                 ret 
+    )
+
+    (method (allTrue) // method_02b6
+  02b6:3f 03             link 3 // (var $3)
+  02b8:78               push1 
+  02b9:67 08             pTos elements 
+  02bb:43 31 02         callk FirstNode 2 
+
+  02be:a5 00              sat temp0 
+
+        code_02c0
+  02c0:85 00              lat temp0 
+  02c2:30 0024            bnt code_02e9 
+  02c5:78               push1 
+  02c6:36                push 
+  02c7:43 34 02         callk NextNode 2 
+
+  02ca:a5 01              sat temp1 
+  02cc:78               push1 
+  02cd:8d 00              lst temp0 
+  02cf:43 36 02         callk NodeValue 2 
+
+  02d2:a5 02              sat temp2 
+  02d4:8f 01              lsp param1 
+  02d6:76               push0 
+  02d7:59 02            &rest 2 
+  02d9:4a 04             send 4 
+
+  02db:18                 not 
+  02dc:30 0003            bnt code_02e2 
+  02df:35 00              ldi 0 
+  02e1:48                 ret 
+
+        code_02e2
+  02e2:85 01              lat temp1 
+  02e4:a5 00              sat temp0 
+  02e6:32 ffd7            jmp code_02c0 
+
+        code_02e9
+  02e9:35 01              ldi 1 
+  02eb:48                 ret 
+    )
+
+    (method (contains) // method_023f
+  023f:7a               push2 
+  0240:67 08             pTos elements 
+  0242:8f 01              lsp param1 
+  0244:43 3a 04         callk FindKey 4 
+
+  0247:48                 ret 
+    )
+
+    (method (isEmpty) // method_0230
+  0230:67 08             pTos elements 
+  0232:35 00              ldi 0 
+  0234:1a                 eq? 
+  0235:2e 0006             bt code_023e 
+  0238:78               push1 
+  0239:67 08             pTos elements 
+  023b:43 33 02         callk EmptyList 2 
+
+
+        code_023e
+  023e:48                 ret 
+    )
+
+    (method (first) // method_0222
+  0222:78               push1 
+  0223:67 08             pTos elements 
+  0225:43 31 02         callk FirstNode 2 
+
+  0228:48                 ret 
+    )
+
+    (method (next) // method_0229
+  0229:78               push1 
+  022a:8f 01              lsp param1 
+  022c:43 34 02         callk NextNode 2 
+
+  022f:48                 ret 
+    )
+
+    (method (release) // method_02ec
+  02ec:3f 02             link 2 // (var $2)
+  02ee:78               push1 
+  02ef:67 08             pTos elements 
+  02f1:43 31 02         callk FirstNode 2 
+
+  02f4:a5 00              sat temp0 
+
+        code_02f6
+  02f6:85 00              lat temp0 
+  02f8:30 001a            bnt code_0315 
+  02fb:78               push1 
+  02fc:36                push 
+  02fd:43 34 02         callk NextNode 2 
+
+  0300:a5 01              sat temp1 
+  0302:39 54            pushi 54 // $54 delete
+  0304:78               push1 
+  0305:78               push1 
+  0306:8d 00              lst temp0 
+  0308:43 36 02         callk NodeValue 2 
+
+  030b:36                push 
+  030c:54 06             self 6 
+
+  030e:85 01              lat temp1 
+  0310:a5 00              sat temp0 
+  0312:32 ffe1            jmp code_02f6 
+
+        code_0315
+  0315:48                 ret 
+    )
+
+)
+
+// 049a
+(class List of Collect
+    (properties
+        elements $0
+        size $0
+    )
+    (method (showStr) // method_0376
+  0376:39 05            pushi 5 // $5 view
+  0378:8f 01              lsp param1 
+  037a:38 03e7          pushi 3e7 // $3e7 sel_999
+  037d:78               push1 
+  037e:67 06             pTos name 
+  0380:67 0a             pTos size 
+  0382:43 48 0a         callk Format a 
+
+  0385:48                 ret 
+    )
+
+    (method (at) // method_0386
+  0386:3f 01             link 1 // (var $1)
+  0388:78               push1 
+  0389:67 08             pTos elements 
+  038b:43 31 02         callk FirstNode 2 
+
+  038e:a5 00              sat temp0 
+
+        code_0390
+  0390:87 01              lap param1 
+  0392:30 0012            bnt code_03a7 
+  0395:85 00              lat temp0 
+  0397:30 000d            bnt code_03a7 
+  039a:e7 01              -ap param1 
+  039c:78               push1 
+  039d:8d 00              lst temp0 
+  039f:43 34 02         callk NextNode 2 
+
+  03a2:a5 00              sat temp0 
+  03a4:32 ffe9            jmp code_0390 
+
+        code_03a7
+  03a7:78               push1 
+  03a8:8d 00              lst temp0 
+  03aa:43 36 02         callk NodeValue 2 
+
+  03ad:48                 ret 
+    )
+
+    (method (last) // method_03ae
+  03ae:78               push1 
+  03af:67 08             pTos elements 
+  03b1:43 32 02         callk LastNode 2 
+
+  03b4:48                 ret 
+    )
+
+    (method (prev) // method_03b5
+  03b5:78               push1 
+  03b6:8f 01              lsp param1 
+  03b8:43 35 02         callk PrevNode 2 
+
+  03bb:48                 ret 
+    )
+
+    (method (addToFront) // method_03bc
+  03bc:3f 01             link 1 // (var $1)
+  03be:63 08             pToa elements 
+  03c0:18                 not 
+  03c1:30 0006            bnt code_03ca 
+  03c4:76               push0 
+  03c5:43 2e 00         callk NewList 0 
+
+  03c8:65 08             aTop elements 
+
+        code_03ca
+  03ca:8f 00              lsp paramTotal 
+  03cc:35 01              ldi 1 
+  03ce:04                 sub 
+  03cf:a5 00              sat temp0 
+
+        code_03d1
+  03d1:76               push0 
+  03d2:85 00              lat temp0 
+  03d4:24                 le? 
+  03d5:30 0018            bnt code_03f0 
+  03d8:7a               push2 
+  03d9:67 08             pTos elements 
+  03db:7a               push2 
+  03dc:85 00              lat temp0 
+  03de:9f 01             lspi param1 
+  03e0:9f 01             lspi param1 
+  03e2:43 30 04         callk NewNode 4 
+
+  03e5:36                push 
+  03e6:43 38 04         callk AddToFront 4 
+
+  03e9:6b 0a            ipToa size 
+  03eb:e5 00              -at temp0 
+  03ed:32 ffe1            jmp code_03d1 
+
+        code_03f0
+  03f0:5c              selfID 
+  03f1:48                 ret 
+    )
+
+    (method (addToEnd) // method_03f2
+  03f2:3f 01             link 1 // (var $1)
+  03f4:63 08             pToa elements 
+  03f6:18                 not 
+  03f7:30 0006            bnt code_0400 
+  03fa:76               push0 
+  03fb:43 2e 00         callk NewList 0 
+
+  03fe:65 08             aTop elements 
+
+        code_0400
+  0400:35 00              ldi 0 
+  0402:a5 00              sat temp0 
+
+        code_0404
+  0404:8d 00              lst temp0 
+  0406:87 00              lap paramTotal 
+  0408:22                 lt? 
+  0409:30 0018            bnt code_0424 
+  040c:7a               push2 
+  040d:67 08             pTos elements 
+  040f:7a               push2 
+  0410:85 00              lat temp0 
+  0412:9f 01             lspi param1 
+  0414:9f 01             lspi param1 
+  0416:43 30 04         callk NewNode 4 
+
+  0419:36                push 
+  041a:43 39 04         callk AddToEnd 4 
+
+  041d:6b 0a            ipToa size 
+  041f:c5 00              +at temp0 
+  0421:32 ffe0            jmp code_0404 
+
+        code_0424
+  0424:5c              selfID 
+  0425:48                 ret 
+    )
+
+    (method (addAfter) // method_0426
+  0426:3f 03             link 3 // (var $3)
+  0428:7a               push2 
+  0429:67 08             pTos elements 
+  042b:8f 01              lsp param1 
+  042d:43 3a 04         callk FindKey 4 
+
+  0430:a5 02              sat temp2 
+  0432:30 002b            bnt code_0460 
+  0435:e7 00              -ap paramTotal 
+  0437:35 00              ldi 0 
+  0439:a5 00              sat temp0 
+
+        code_043b
+  043b:8d 00              lst temp0 
+  043d:87 00              lap paramTotal 
+  043f:22                 lt? 
+  0440:30 001d            bnt code_0460 
+  0443:39 03            pushi 3 // $3 y
+  0445:67 08             pTos elements 
+  0447:8d 02              lst temp2 
+  0449:7a               push2 
+  044a:85 00              lat temp0 
+  044c:9f 02             lspi param2 
+  044e:9f 02             lspi param2 
+  0450:43 30 04         callk NewNode 4 
+
+  0453:36                push 
+  0454:43 37 06         callk AddAfter 6 
+
+  0457:a5 02              sat temp2 
+  0459:6b 0a            ipToa size 
+  045b:c5 00              +at temp0 
+  045d:32 ffdb            jmp code_043b 
+
+        code_0460
+  0460:5c              selfID 
+  0461:48                 ret 
+    )
+
+    (method (indexOf) // method_0462
+  0462:3f 02             link 2 // (var $2)
+  0464:35 00              ldi 0 
+  0466:a5 00              sat temp0 
+  0468:78               push1 
+  0469:67 08             pTos elements 
+  046b:43 31 02         callk FirstNode 2 
+
+  046e:a5 01              sat temp1 
+
+        code_0470
+  0470:85 01              lat temp1 
+  0472:30 001b            bnt code_0490 
+  0475:8f 01              lsp param1 
+  0477:78               push1 
+  0478:36                push 
+  0479:43 36 02         callk NodeValue 2 
+
+  047c:1a                 eq? 
+  047d:30 0003            bnt code_0483 
+  0480:85 00              lat temp0 
+  0482:48                 ret 
+
+        code_0483
+  0483:c5 00              +at temp0 
+  0485:78               push1 
+  0486:8d 01              lst temp1 
+  0488:43 34 02         callk NextNode 2 
+
+  048b:a5 01              sat temp1 
+  048d:32 ffe0            jmp code_0470 
+
+        code_0490
+  0490:35 ff              ldi ff 
+  0492:48                 ret 
+  0493:00                bnot 
+    )
+
+)
+
+// 0536
+(class Set of List
+    (properties
+        elements $0
+        size $0
+    )
+    (method (showStr) // method_04e0
+  04e0:39 05            pushi 5 // $5 view
+  04e2:8f 01              lsp param1 
+  04e4:38 03e7          pushi 3e7 // $3e7 sel_999
+  04e7:7a               push2 
+  04e8:67 06             pTos name 
+  04ea:67 0a             pTos size 
+  04ec:43 48 0a         callk Format a 
+
+  04ef:48                 ret 
+    )
+
+    (method (add) // method_04f0
+  04f0:3f 03             link 3 // (var $3)
+  04f2:63 08             pToa elements 
+  04f4:18                 not 
+  04f5:30 0006            bnt code_04fe 
+  04f8:76               push0 
+  04f9:43 2e 00         callk NewList 0 
+
+  04fc:65 08             aTop elements 
+
+        code_04fe
+  04fe:35 00              ldi 0 
+  0500:a5 01              sat temp1 
+
+        code_0502
+  0502:8d 01              lst temp1 
+  0504:87 00              lap paramTotal 
+  0506:22                 lt? 
+  0507:30 0025            bnt code_052f 
+  050a:85 01              lat temp1 
+  050c:97 01             lapi param1 
+  050e:a5 02              sat temp2 
+  0510:39 72            pushi 72 // $72 contains
+  0512:78               push1 
+  0513:36                push 
+  0514:54 06             self 6 
+
+  0516:18                 not 
+  0517:30 0010            bnt code_052a 
+  051a:7a               push2 
+  051b:67 08             pTos elements 
+  051d:7a               push2 
+  051e:8d 02              lst temp2 
+  0520:3c                 dup 
+  0521:43 30 04         callk NewNode 4 
+
+  0524:36                push 
+  0525:43 39 04         callk AddToEnd 4 
+
+  0528:6b 0a            ipToa size 
+
+        code_052a
+  052a:c5 01              +at temp1 
+  052c:32 ffd3            jmp code_0502 
+
+        code_052f
+  052f:48                 ret 
+    )
+
+)
+
+// 05b6
+(class EventHandler of Set
+    (properties
+        elements $0
+        size $0
+    )
+    (method (handleEvent) // method_0564
+  0564:3f 03             link 3 // (var $3)
+  0566:78               push1 
+  0567:67 08             pTos elements 
+  0569:43 31 02         callk FirstNode 2 
+
+  056c:a5 00              sat temp0 
+
+        code_056e
+  056e:85 00              lat temp0 
+  0570:30 0034            bnt code_05a7 
+  0573:39 4c            pushi 4c // $4c claimed
+  0575:76               push0 
+  0576:87 01              lap param1 
+  0578:4a 04             send 4 
+
+  057a:18                 not 
+  057b:30 0029            bnt code_05a7 
+  057e:78               push1 
+  057f:8d 00              lst temp0 
+  0581:43 34 02         callk NextNode 2 
+
+  0584:a5 01              sat temp1 
+  0586:78               push1 
+  0587:78               push1 
+  0588:8d 00              lst temp0 
+  058a:43 36 02         callk NodeValue 2 
+
+  058d:a5 02              sat temp2 
+  058f:36                push 
+  0590:43 06 02         callk IsObject 2 
+
+  0593:18                 not 
+  0594:2e 0010             bt code_05a7 
+  0597:39 7c            pushi 7c // $7c handleEvent
+  0599:78               push1 
+  059a:8f 01              lsp param1 
+  059c:85 02              lat temp2 
+  059e:4a 06             send 6 
+
+  05a0:85 01              lat temp1 
+  05a2:a5 00              sat temp0 
+  05a4:32 ffc7            jmp code_056e 
+
+        code_05a7
+  05a7:39 4c            pushi 4c // $4c claimed
+  05a9:76               push0 
+  05aa:87 01              lap param1 
+  05ac:4a 04             send 4 
+
+  05ae:48                 ret 
+  05af:00                bnot 
+    )
+
+)
+
+// 06fc
+(class Script of Obj
+    (properties
+        client $0
+        state $ffff
+        start $0
+        timer $0
+        cycles $0
+        seconds $0
+        lastSeconds $0
+        register $0
+        script $0
+        caller $0
+        register2 $0
+    )
+    (method (init) // method_0623
+  0623:35 00              ldi 0 
+  0625:65 1c             aTop register2 
+  0627:65 16             aTop register 
+  0629:8f 00              lsp paramTotal 
+  062b:35 01              ldi 1 
+  062d:20                 ge? 
+  062e:30 0028            bnt code_0659 
+  0631:87 01              lap param1 
+  0633:65 08             aTop client 
+  0635:8f 00              lsp paramTotal 
+  0637:35 02              ldi 2 
+  0639:20                 ge? 
+  063a:30 001c            bnt code_0659 
+  063d:87 02              lap param2 
+  063f:65 1a             aTop caller 
+  0641:8f 00              lsp paramTotal 
+  0643:35 03              ldi 3 
+  0645:20                 ge? 
+  0646:30 0010            bnt code_0659 
+  0649:87 03              lap param3 
+  064b:65 16             aTop register 
+  064d:8f 00              lsp paramTotal 
+  064f:35 04              ldi 4 
+  0651:20                 ge? 
+  0652:30 0004            bnt code_0659 
+  0655:87 04              lap param4 
+  0657:65 1c             aTop register2 
+
+        code_0659
+  0659:38 0086          pushi 86 // $86 changeState
+  065c:78               push1 
+  065d:67 0c             pTos start 
+  065f:54 06             self 6 
+
+  0661:48                 ret 
+    )
+
+    (method (doit) // method_05e0
+  05e0:3f 01             link 1 // (var $1)
+  05e2:63 18             pToa script 
+  05e4:30 0005            bnt code_05ec 
+  05e7:39 3c            pushi 3c // $3c doit
+  05e9:76               push0 
+  05ea:4a 04             send 4 
+
+
+        code_05ec
+  05ec:63 10             pToa cycles 
+  05ee:30 000f            bnt code_0600 
+  05f1:6d 10            dpToa cycles 
+  05f3:18                 not 
+  05f4:30 002b            bnt code_0622 
+  05f7:38 0087          pushi 87 // $87 cue
+  05fa:76               push0 
+  05fb:54 04             self 4 
+
+  05fd:32 0022            jmp code_0622 
+
+        code_0600
+  0600:63 12             pToa seconds 
+  0602:30 001d            bnt code_0622 
+  0605:78               push1 
+  0606:78               push1 
+  0607:43 42 02         callk GetTime 2 
+
+  060a:a5 00              sat temp0 
+  060c:67 14             pTos lastSeconds 
+  060e:1c                 ne? 
+  060f:30 0010            bnt code_0622 
+  0612:85 00              lat temp0 
+  0614:65 14             aTop lastSeconds 
+  0616:6d 12            dpToa seconds 
+  0618:18                 not 
+  0619:30 0006            bnt code_0622 
+  061c:38 0087          pushi 87 // $87 cue
+  061f:76               push0 
+  0620:54 04             self 4 
+
+
+        code_0622
+  0622:48                 ret 
+    )
+
+    (method (dispose) // method_0662
+  0662:78               push1 
+  0663:67 18             pTos script 
+  0665:43 06 02         callk IsObject 2 
+
+  0668:30 0007            bnt code_0672 
+  066b:39 67            pushi 67 // $67 dispose
+  066d:76               push0 
+  066e:63 18             pToa script 
+  0670:4a 04             send 4 
+
+
+        code_0672
+  0672:78               push1 
+  0673:67 0e             pTos timer 
+  0675:43 06 02         callk IsObject 2 
+
+  0678:30 0007            bnt code_0682 
+  067b:39 67            pushi 67 // $67 dispose
+  067d:76               push0 
+  067e:63 0e             pToa timer 
+  0680:4a 04             send 4 
+
+
+        code_0682
+  0682:78               push1 
+  0683:67 08             pTos client 
+  0685:43 06 02         callk IsObject 2 
+
+  0688:30 0009            bnt code_0694 
+  068b:38 0083          pushi 83 // $83 script
+  068e:78               push1 
+  068f:76               push0 
+  0690:63 08             pToa client 
+  0692:4a 06             send 6 
+
+
+        code_0694
+  0694:78               push1 
+  0695:67 1a             pTos caller 
+  0697:43 06 02         callk IsObject 2 
+
+  069a:30 000a            bnt code_06a7 
+  069d:38 0087          pushi 87 // $87 cue
+  06a0:78               push1 
+  06a1:67 16             pTos register 
+  06a3:63 1a             pToa caller 
+  06a5:4a 06             send 6 
+
+
+        code_06a7
+  06a7:39 67            pushi 67 // $67 dispose
+  06a9:76               push0 
+  06aa:57 00 04         super Obj 4 
+
+  06ad:48                 ret 
+    )
+
+    (method (changeState) // method_06ae
+  06ae:87 01              lap param1 
+  06b0:65 0a             aTop state 
+  06b2:48                 ret 
+    )
+
+    (method (cue) // method_06b3
+  06b3:38 0086          pushi 86 // $86 changeState
+  06b6:78               push1 
+  06b7:67 0a             pTos state 
+  06b9:35 01              ldi 1 
+  06bb:02                 add 
+  06bc:36                push 
+  06bd:59 01            &rest 1 
+  06bf:54 06             self 6 
+
+  06c1:48                 ret 
+    )
+
+    (method (handleEvent) // method_06e2
+  06e2:63 18             pToa script 
+  06e4:30 0007            bnt code_06ee 
+  06e7:39 7c            pushi 7c // $7c handleEvent
+  06e9:78               push1 
+  06ea:8f 01              lsp param1 
+  06ec:4a 06             send 6 
+
+
+        code_06ee
+  06ee:39 4c            pushi 4c // $4c claimed
+  06f0:76               push0 
+  06f1:87 01              lap param1 
+  06f3:4a 04             send 4 
+
+  06f5:48                 ret 
+    )
+
+    (method (setScript) // method_06c2
+  06c2:78               push1 
+  06c3:67 18             pTos script 
+  06c5:43 06 02         callk IsObject 2 
+
+  06c8:30 0007            bnt code_06d2 
+  06cb:39 67            pushi 67 // $67 dispose
+  06cd:76               push0 
+  06ce:63 18             pToa script 
+  06d0:4a 04             send 4 
+
+
+        code_06d2
+  06d2:87 01              lap param1 
+  06d4:65 18             aTop script 
+  06d6:30 0008            bnt code_06e1 
+  06d9:39 66            pushi 66 // $66 init
+  06db:78               push1 
+  06dc:7c            pushSelf 
+  06dd:59 02            &rest 2 
+  06df:4a 06             send 6 
+
+
+        code_06e1
+  06e1:48                 ret 
+    )
+
+)
+
+// 0886
+(class Event of Obj
+    (properties
+        type $0
+        message $0
+        modifiers $0
+        y $0
+        x $0
+        claimed $0
+        port $0
+    )
+    (method (new) // method_0762
+  0762:3f 02             link 2 // (var $2)
+  0764:39 65            pushi 65 // $65 new
+  0766:76               push0 
+  0767:57 00 04         super Obj 4 
+
+  076a:a5 00              sat temp0 
+  076c:7a               push2 
+  076d:87 00              lap paramTotal 
+  076f:30 0005            bnt code_0777 
+  0772:87 01              lap param1 
+  0774:32 0003            jmp code_077a 
+
+        code_0777
+  0777:34 7fff            ldi 7fff 
+
+        code_077a
+  077a:36                push 
+  077b:8d 00              lst temp0 
+  077d:43 1c 04         callk GetEvent 4 
+
+  0780:39 22            pushi 22 // $22 type
+  0782:76               push0 
+  0783:85 00              lat temp0 
+  0785:4a 04             send 4 
+
+  0787:36                push 
+  0788:34 0100            ldi 100 
+  078b:1a                 eq? 
+  078c:30 0022            bnt code_07b1 
+  078f:39 22            pushi 22 // $22 type
+  0791:78               push1 
+  0792:39 04            pushi 4 // $4 x
+  0794:39 28            pushi 28 // $28 message
+  0796:78               push1 
+  0797:39 40            pushi 40 // $40 modifiers
+  0799:76               push0 
+  079a:85 00              lat temp0 
+  079c:4a 04             send 4 
+
+  079e:36                push 
+  079f:35 03              ldi 3 
+  07a1:12                 and 
+  07a2:30 0005            bnt code_07aa 
+  07a5:35 1b              ldi 1b 
+  07a7:32 0002            jmp code_07ac 
+
+        code_07aa
+  07aa:35 0d              ldi d 
+
+        code_07ac
+  07ac:36                push 
+  07ad:85 00              lat temp0 
+  07af:4a 0c             send c 
+
+
+        code_07b1
+  07b1:39 22            pushi 22 // $22 type
+  07b3:76               push0 
+  07b4:85 00              lat temp0 
+  07b6:4a 04             send 4 
+
+  07b8:36                push 
+  07b9:35 02              ldi 2 
+  07bb:1a                 eq? 
+  07bc:2e 000b             bt code_07ca 
+  07bf:39 22            pushi 22 // $22 type
+  07c1:76               push0 
+  07c2:85 00              lat temp0 
+  07c4:4a 04             send 4 
+
+  07c6:36                push 
+  07c7:35 01              ldi 1 
+  07c9:1a                 eq? 
+
+        code_07ca
+  07ca:30 0005            bnt code_07d2 
+  07cd:35 00              ldi 0 
+  07cf:a0 01bf            sag  
+
+        code_07d2
+  07d2:39 22            pushi 22 // $22 type
+  07d4:76               push0 
+  07d5:85 00              lat temp0 
+  07d7:4a 04             send 4 
+
+  07d9:36                push 
+  07da:35 04              ldi 4 
+  07dc:1a                 eq? 
+  07dd:30 0005            bnt code_07e5 
+  07e0:35 01              ldi 1 
+  07e2:a0 01bf            sag  
+
+        code_07e5
+  07e5:85 00              lat temp0 
+  07e7:48                 ret 
+    )
+
+    (method (localize) // method_07e8
+  07e8:3f 02             link 2 // (var $2)
+  07ea:76               push0 
+  07eb:43 14 00         callk GetPort 0 
+
+  07ee:a5 00              sat temp0 
+  07f0:87 00              lap paramTotal 
+  07f2:30 0005            bnt code_07fa 
+  07f5:87 01              lap param1 
+  07f7:32 0002            jmp code_07fc 
+
+        code_07fa
+  07fa:85 00              lat temp0 
+
+        code_07fc
+  07fc:a5 01              sat temp1 
+  07fe:63 14             pToa port 
+  0800:18                 not 
+  0801:30 000e            bnt code_0812 
+  0804:78               push1 
+  0805:8d 01              lst temp1 
+  0807:43 15 02         callk SetPort 2 
+
+  080a:78               push1 
+  080b:7c            pushSelf 
+  080c:43 1d 02         callk GlobalToLocal 2 
+
+  080f:32 0032            jmp code_0844 
+
+        code_0812
+  0812:85 01              lat temp1 
+  0814:18                 not 
+  0815:30 000e            bnt code_0826 
+  0818:78               push1 
+  0819:67 14             pTos port 
+  081b:43 15 02         callk SetPort 2 
+
+  081e:78               push1 
+  081f:7c            pushSelf 
+  0820:43 1e 02         callk LocalToGlobal 2 
+
+  0823:32 001e            jmp code_0844 
+
+        code_0826
+  0826:67 14             pTos port 
+  0828:85 01              lat temp1 
+  082a:1c                 ne? 
+  082b:30 0016            bnt code_0844 
+  082e:78               push1 
+  082f:67 14             pTos port 
+  0831:43 15 02         callk SetPort 2 
+
+  0834:78               push1 
+  0835:7c            pushSelf 
+  0836:43 1e 02         callk LocalToGlobal 2 
+
+  0839:78               push1 
+  083a:8d 01              lst temp1 
+  083c:43 15 02         callk SetPort 2 
+
+  083f:78               push1 
+  0840:7c            pushSelf 
+  0841:43 1d 02         callk GlobalToLocal 2 
+
+
+        code_0844
+  0844:78               push1 
+  0845:8d 00              lst temp0 
+  0847:43 15 02         callk SetPort 2 
+
+  084a:85 01              lat temp1 
+  084c:65 14             aTop port 
+  084e:48                 ret 
+    )
+
+    (method (globalize) // method_084f
+  084f:3f 01             link 1 // (var $1)
+  0851:76               push0 
+  0852:43 14 00         callk GetPort 0 
+
+  0855:a5 00              sat temp0 
+  0857:67 14             pTos port 
+  0859:1a                 eq? 
+  085a:30 0008            bnt code_0865 
+  085d:78               push1 
+  085e:7c            pushSelf 
+  085f:43 1e 02         callk LocalToGlobal 2 
+
+  0862:32 0015            jmp code_087a 
+
+        code_0865
+  0865:63 14             pToa port 
+  0867:30 0010            bnt code_087a 
+  086a:78               push1 
+  086b:36                push 
+  086c:43 15 02         callk SetPort 2 
+
+  086f:78               push1 
+  0870:7c            pushSelf 
+  0871:43 1e 02         callk LocalToGlobal 2 
+
+  0874:78               push1 
+  0875:8d 00              lst temp0 
+  0877:43 15 02         callk SetPort 2 
+
+
+        code_087a
+  087a:35 00              ldi 0 
+  087c:65 14             aTop port 
+  087e:48                 ret 
+  087f:00                bnot 
+    )
+
+)
+
+
+// EXPORTED procedure #0 ()
+(procedure proc_000e
+  000e:8f 01              lsp param1 
+  0010:35 00              ldi 0 
+  0012:22                 lt? 
+  0013:30 0005            bnt code_001b 
+  0016:35 ff              ldi ff 
+  0018:32 0005            jmp code_0020 
+
+        code_001b
+  001b:8f 01              lsp param1 
+  001d:35 00              ldi 0 
+  001f:1e                 gt? 
+
+        code_0020
+  0020:48                 ret 
+)
+
+// EXPORTED procedure #1 ()
+(procedure proc_0021
+  0021:8f 01              lsp param1 
+  0023:8f 02              lsp param2 
+  0025:8f 01              lsp param1 
+  0027:87 02              lap param2 
+  0029:08                 div 
+  002a:06                 mul 
+  002b:04                 sub 
+  002c:a7 01              sap param1 
+  002e:36                push 
+  002f:35 00              ldi 0 
+  0031:22                 lt? 
+  0032:30 0007            bnt code_003c 
+  0035:8f 01              lsp param1 
+  0037:87 02              lap param2 
+  0039:02                 add 
+  003a:a7 01              sap param1 
+
+        code_003c
+  003c:87 01              lap param1 
+  003e:48                 ret 
+  003f:8f 01              lsp param1 
+  0041:8f 00              lsp paramTotal 
+  0043:35 06              ldi 6 
+  0045:22                 lt? 
+  0046:30 000a            bnt code_0053 
+  0049:39 04            pushi 4 // $4 x
+  004b:76               push0 
+  004c:87 05              lap param5 
+  004e:4a 04             send 4 
+
+  0050:32 0002            jmp code_0055 
+
+        code_0053
+  0053:87 05              lap param5 
+
+        code_0055
+  0055:24                 le? 
+  0056:30 0025            bnt code_007e 
+  0059:60               pprev 
+  005a:87 03              lap param3 
+  005c:24                 le? 
+  005d:30 001e            bnt code_007e 
+  0060:8f 02              lsp param2 
+  0062:8f 00              lsp paramTotal 
+  0064:35 06              ldi 6 
+  0066:22                 lt? 
+  0067:30 000a            bnt code_0074 
+  006a:39 03            pushi 3 // $3 y
+  006c:76               push0 
+  006d:87 05              lap param5 
+  006f:4a 04             send 4 
+
+  0071:32 0002            jmp code_0076 
+
+        code_0074
+  0074:87 06              lap param6 
+
+        code_0076
+  0076:24                 le? 
+  0077:30 0004            bnt code_007e 
+  007a:60               pprev 
+  007b:87 04              lap param4 
+  007d:24                 le? 
+
+        code_007e
+  007e:48                 ret 
+)
+
+

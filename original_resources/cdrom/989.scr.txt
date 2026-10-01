@@ -1,0 +1,465 @@
+(script 989)
+
+(string
+    string_02dc "Sound"
+)
+
+(said
+)
+
+(local
+)
+
+// 0242
+(class Sound of Obj
+    (properties
+        nodePtr $0
+        handle $0
+        number $0
+        vol $7f
+        priority $0
+        loop $1
+        signal $0
+        prevSignal $0
+        dataInc $0
+        min $0
+        sec $0
+        frame $0
+        client $0
+        owner $0
+        soundOn $1
+        nextNumber $0
+        nextLoop $ffff
+    )
+    (method (new) // method_0004
+  0004:38 0091          pushi 91 // $91 owner
+  0007:78               push1 
+  0008:87 00              lap paramTotal 
+  000a:30 0005            bnt code_0012 
+  000d:87 01              lap param1 
+  000f:32 0002            jmp code_0014 
+
+        code_0012
+  0012:35 00              ldi 0 
+
+        code_0014
+  0014:36                push 
+  0015:39 71            pushi 71 // $71 yourself
+  0017:76               push0 
+  0018:39 69            pushi 69 // $69 new
+  001a:76               push0 
+  001b:57 00 04         super Obj 4 
+
+  001e:4a 0a             send a 
+
+  0020:48                 ret 
+    )
+
+    (method (init) // method_0021
+  0021:35 00              ldi 0 
+  0023:65 14             aTop signal 
+  0025:65 16             aTop prevSignal 
+  0027:39 72            pushi 72 // $72 add
+  0029:78               push1 
+  002a:7c            pushSelf 
+  002b:81 08              lag  
+  002d:4a 06             send 6 
+
+  002f:7a               push2 
+  0030:39 06            pushi 6 // $6 loop
+  0032:7c            pushSelf 
+  0033:43 2d 04         callk DoSound 4 
+
+  0036:48                 ret 
+    )
+
+    (method (dispose) // method_020b
+  020b:87 00              lap paramTotal 
+  020d:30 000a            bnt code_021a 
+  0210:87 01              lap param1 
+  0212:18                 not 
+  0213:30 0004            bnt code_021a 
+  0216:35 00              ldi 0 
+  0218:65 20             aTop client 
+
+        code_021a
+  021a:39 54            pushi 54 // $54 delete
+  021c:78               push1 
+  021d:7c            pushSelf 
+  021e:81 08              lag  
+  0220:4a 06             send 6 
+
+  0222:63 08             pToa nodePtr 
+  0224:30 000b            bnt code_0232 
+  0227:7a               push2 
+  0228:39 07            pushi 7 // $7 cel
+  022a:7c            pushSelf 
+  022b:43 2d 04         callk DoSound 4 
+
+  022e:35 00              ldi 0 
+  0230:65 08             aTop nodePtr 
+
+        code_0232
+  0232:39 6b            pushi 6b // $6b dispose
+  0234:76               push0 
+  0235:57 00 04         super Obj 4 
+
+  0238:48                 ret 
+    )
+
+    (method (play) // method_0037
+  0037:35 7f              ldi 7f 
+  0039:65 0e             aTop vol 
+  003b:8f 00              lsp paramTotal 
+  003d:35 03              ldi 3 
+  003f:20                 ge? 
+  0040:30 0005            bnt code_0048 
+  0043:87 03              lap param3 
+  0045:32 0002            jmp code_004a 
+
+        code_0048
+  0048:35 00              ldi 0 
+
+        code_004a
+  004a:65 26             aTop nextNumber 
+  004c:8f 00              lsp paramTotal 
+  004e:35 04              ldi 4 
+  0050:20                 ge? 
+  0051:30 0005            bnt code_0059 
+  0054:87 04              lap param4 
+  0056:32 0002            jmp code_005b 
+
+        code_0059
+  0059:35 ff              ldi ff 
+
+        code_005b
+  005b:65 28             aTop nextLoop 
+  005d:8f 00              lsp paramTotal 
+  005f:35 01              ldi 1 
+  0061:20                 ge? 
+  0062:30 000c            bnt code_0071 
+  0065:8f 01              lsp param1 
+  0067:35 00              ldi 0 
+  0069:20                 ge? 
+  006a:30 0004            bnt code_0071 
+  006d:87 01              lap param1 
+  006f:65 0c             aTop number 
+
+        code_0071
+  0071:63 12             pToa loop 
+  0073:18                 not 
+  0074:30 0004            bnt code_007b 
+  0077:35 01              ldi 1 
+  0079:65 12             aTop loop 
+
+        code_007b
+  007b:8f 00              lsp paramTotal 
+  007d:35 02              ldi 2 
+  007f:20                 ge? 
+  0080:30 0005            bnt code_0088 
+  0083:87 02              lap param2 
+  0085:32 0002            jmp code_008a 
+
+        code_0088
+  0088:35 00              ldi 0 
+
+        code_008a
+  008a:65 20             aTop client 
+  008c:39 6a            pushi 6a // $6a init
+  008e:76               push0 
+  008f:54 04             self 4 
+
+  0091:63 24             pToa soundOn 
+  0093:30 0009            bnt code_009f 
+  0096:39 03            pushi 3 // $3 y
+  0098:39 08            pushi 8 // $8 underBits
+  009a:7c            pushSelf 
+  009b:76               push0 
+  009c:43 2d 06         callk DoSound 6 
+
+
+        code_009f
+  009f:48                 ret 
+    )
+
+    (method (playBed) // method_00a0
+  00a0:35 7f              ldi 7f 
+  00a2:65 0e             aTop vol 
+  00a4:8f 00              lsp paramTotal 
+  00a6:35 03              ldi 3 
+  00a8:20                 ge? 
+  00a9:30 0005            bnt code_00b1 
+  00ac:87 03              lap param3 
+  00ae:32 0002            jmp code_00b3 
+
+        code_00b1
+  00b1:35 00              ldi 0 
+
+        code_00b3
+  00b3:65 26             aTop nextNumber 
+  00b5:8f 00              lsp paramTotal 
+  00b7:35 04              ldi 4 
+  00b9:20                 ge? 
+  00ba:30 0005            bnt code_00c2 
+  00bd:87 04              lap param4 
+  00bf:32 0002            jmp code_00c4 
+
+        code_00c2
+  00c2:35 ff              ldi ff 
+
+        code_00c4
+  00c4:65 28             aTop nextLoop 
+  00c6:8f 00              lsp paramTotal 
+  00c8:35 01              ldi 1 
+  00ca:20                 ge? 
+  00cb:30 000c            bnt code_00da 
+  00ce:8f 01              lsp param1 
+  00d0:35 00              ldi 0 
+  00d2:20                 ge? 
+  00d3:30 0004            bnt code_00da 
+  00d6:87 01              lap param1 
+  00d8:65 0c             aTop number 
+
+        code_00da
+  00da:63 12             pToa loop 
+  00dc:18                 not 
+  00dd:30 0004            bnt code_00e4 
+  00e0:35 01              ldi 1 
+  00e2:65 12             aTop loop 
+
+        code_00e4
+  00e4:8f 00              lsp paramTotal 
+  00e6:35 02              ldi 2 
+  00e8:20                 ge? 
+  00e9:30 0005            bnt code_00f1 
+  00ec:87 02              lap param2 
+  00ee:32 0002            jmp code_00f3 
+
+        code_00f1
+  00f1:35 00              ldi 0 
+
+        code_00f3
+  00f3:65 20             aTop client 
+  00f5:39 6a            pushi 6a // $6a init
+  00f7:76               push0 
+  00f8:54 04             self 4 
+
+  00fa:63 24             pToa soundOn 
+  00fc:30 0009            bnt code_0108 
+  00ff:39 03            pushi 3 // $3 y
+  0101:39 08            pushi 8 // $8 underBits
+  0103:7c            pushSelf 
+  0104:78               push1 
+  0105:43 2d 06         callk DoSound 6 
+
+
+        code_0108
+  0108:48                 ret 
+    )
+
+    (method (stop) // method_0109
+  0109:35 00              ldi 0 
+  010b:65 26             aTop nextNumber 
+  010d:87 00              lap paramTotal 
+  010f:30 000a            bnt code_011c 
+  0112:87 01              lap param1 
+  0114:18                 not 
+  0115:30 0004            bnt code_011c 
+  0118:35 00              ldi 0 
+  011a:65 20             aTop client 
+
+        code_011c
+  011c:63 08             pToa nodePtr 
+  011e:30 0007            bnt code_0128 
+  0121:7a               push2 
+  0122:39 09            pushi 9 // $9 nsTop
+  0124:7c            pushSelf 
+  0125:43 2d 04         callk DoSound 4 
+
+
+        code_0128
+  0128:48                 ret 
+    )
+
+    (method (pause) // method_0129
+  0129:87 00              lap paramTotal 
+  012b:18                 not 
+  012c:30 0004            bnt code_0133 
+  012f:35 01              ldi 1 
+  0131:a7 01              sap param1 
+
+        code_0133
+  0133:39 03            pushi 3 // $3 y
+  0135:39 0a            pushi a // $a nsLeft
+  0137:39 6f            pushi 6f // $6f isMemberOf
+  0139:78               push1 
+  013a:51 08            class Sound 
+  013c:36                push 
+  013d:54 06             self 6 
+
+  013f:30 0004            bnt code_0146 
+  0142:5c              selfID 
+  0143:32 0002            jmp code_0148 
+
+        code_0146
+  0146:35 00              ldi 0 
+
+        code_0148
+  0148:36                push 
+  0149:8f 01              lsp param1 
+  014b:43 2d 06         callk DoSound 6 
+
+  014e:48                 ret 
+    )
+
+    (method (fade) // method_014f
+  014f:35 00              ldi 0 
+  0151:65 26             aTop nextNumber 
+  0153:8f 00              lsp paramTotal 
+  0155:35 04              ldi 4 
+  0157:1e                 gt? 
+  0158:30 0009            bnt code_0164 
+  015b:87 05              lap param5 
+  015d:30 0004            bnt code_0164 
+  0160:35 00              ldi 0 
+  0162:65 20             aTop client 
+
+        code_0164
+  0164:8f 00              lsp paramTotal 
+  0166:35 01              ldi 1 
+  0168:1a                 eq? 
+  0169:30 0012            bnt code_017e 
+  016c:39 06            pushi 6 // $6 loop
+  016e:39 0b            pushi b // $b nsBottom
+  0170:7c            pushSelf 
+  0171:8f 01              lsp param1 
+  0173:39 19            pushi 19 // $19 time
+  0175:39 0a            pushi a // $a nsLeft
+  0177:78               push1 
+  0178:43 2d 0c         callk DoSound c 
+
+  017b:32 0029            jmp code_01a7 
+
+        code_017e
+  017e:8f 00              lsp paramTotal 
+  0180:35 02              ldi 2 
+  0182:20                 ge? 
+  0183:30 0013            bnt code_0199 
+  0186:39 06            pushi 6 // $6 loop
+  0188:39 0b            pushi b // $b nsBottom
+  018a:7c            pushSelf 
+  018b:8f 01              lsp param1 
+  018d:8f 02              lsp param2 
+  018f:8f 03              lsp param3 
+  0191:8f 04              lsp param4 
+  0193:43 2d 0c         callk DoSound c 
+
+  0196:32 000e            jmp code_01a7 
+
+        code_0199
+  0199:39 06            pushi 6 // $6 loop
+  019b:39 0b            pushi b // $b nsBottom
+  019d:7c            pushSelf 
+  019e:76               push0 
+  019f:39 19            pushi 19 // $19 time
+  01a1:39 0a            pushi a // $a nsLeft
+  01a3:78               push1 
+  01a4:43 2d 0c         callk DoSound c 
+
+
+        code_01a7
+  01a7:48                 ret 
+    )
+
+    (method (send) // method_01a8
+  01a8:78               push1 
+  01a9:87 01              lap param1 
+  01ab:24                 le? 
+  01ac:30 0015            bnt code_01c4 
+  01af:60               pprev 
+  01b0:35 0f              ldi f 
+  01b2:24                 le? 
+  01b3:30 000e            bnt code_01c4 
+  01b6:39 05            pushi 5 // $5 view
+  01b8:39 12            pushi 12 // $12 illegalBits
+  01ba:7c            pushSelf 
+  01bb:8f 01              lsp param1 
+  01bd:8f 02              lsp param2 
+  01bf:8f 03              lsp param3 
+  01c1:43 2d 0a         callk DoSound a 
+
+
+        code_01c4
+  01c4:48                 ret 
+    )
+
+    (method (changeState) // method_01c5
+  01c5:7a               push2 
+  01c6:39 14            pushi 14 // $14 brLeft
+  01c8:7c            pushSelf 
+  01c9:43 2d 04         callk DoSound 4 
+
+  01cc:48                 ret 
+    )
+
+    (method (check) // method_01cd
+  01cd:7a               push2 
+  01ce:39 11            pushi 11 // $11 signal
+  01d0:7c            pushSelf 
+  01d1:43 2d 04         callk DoSound 4 
+
+  01d4:63 14             pToa signal 
+  01d6:30 001d            bnt code_01f6 
+  01d9:65 16             aTop prevSignal 
+  01db:35 00              ldi 0 
+  01dd:65 14             aTop signal 
+  01df:78               push1 
+  01e0:67 20             pTos client 
+  01e2:43 06 02         callk IsObject 2 
+
+  01e5:30 000e            bnt code_01f6 
+  01e8:38 008b          pushi 8b // $8b cue
+  01eb:39 03            pushi 3 // $3 y
+  01ed:7c            pushSelf 
+  01ee:67 26             pTos nextNumber 
+  01f0:67 28             pTos nextLoop 
+  01f2:63 20             pToa client 
+  01f4:4a 0a             send a 
+
+
+        code_01f6
+  01f6:48                 ret 
+    )
+
+    (method (clean) // method_01f7
+  01f7:63 22             pToa owner 
+  01f9:18                 not 
+  01fa:2e 0005             bt code_0202 
+  01fd:67 22             pTos owner 
+  01ff:87 01              lap param1 
+  0201:1a                 eq? 
+
+        code_0202
+  0202:30 0005            bnt code_020a 
+  0205:39 6b            pushi 6b // $6b dispose
+  0207:76               push0 
+  0208:54 04             self 4 
+
+
+        code_020a
+  020a:48                 ret 
+    )
+
+    (method (cue) // method_0239
+  0239:48                 ret 
+    )
+
+    (method (toggle) // method_023a
+  023a:48                 ret 
+  023b:00                bnot 
+    )
+
+)
+
+
+

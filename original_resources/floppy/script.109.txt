@@ -1,0 +1,103 @@
+(script 109)
+
+(string
+)
+
+(said
+)
+
+(local
+)
+
+
+// EXPORTED procedure #0 ()
+(procedure proc_000c
+  000c:3f 03             link 3 // (var $3)
+  000e:8f 01              lsp param1 
+  0010:35 64              ldi 64 
+  0012:22                 lt? 
+  0013:30 0013            bnt code_0029 
+  0016:8f 01              lsp param1 
+  0018:39 64            pushi 64 // $64 moveDone
+  001a:87 01              lap param1 
+  001c:04                 sub 
+  001d:36                push 
+  001e:35 02              ldi 2 
+  0020:06                 mul 
+  0021:36                push 
+  0022:35 03              ldi 3 
+  0024:08                 div 
+  0025:04                 sub 
+  0026:32 000f            jmp code_0038 
+
+        code_0029
+  0029:8f 01              lsp param1 
+  002b:3c                 dup 
+  002c:35 64              ldi 64 
+  002e:04                 sub 
+  002f:36                push 
+  0030:35 02              ldi 2 
+  0032:06                 mul 
+  0033:36                push 
+  0034:35 03              ldi 3 
+  0036:08                 div 
+  0037:02                 add 
+
+        code_0038
+  0038:a5 00              sat temp0 
+  003a:36                push 
+  003b:35 32              ldi 32 
+  003d:22                 lt? 
+  003e:30 0004            bnt code_0045 
+  0041:35 32              ldi 32 
+  0043:a5 00              sat temp0 
+
+        code_0045
+  0045:8f 02              lsp param2 
+  0047:8d 00              lst temp0 
+  0049:35 0a              ldi a 
+  004b:08                 div 
+  004c:06                 mul 
+  004d:36                push 
+  004e:35 00              ldi 0 
+  0050:22                 lt? 
+  0051:30 0006            bnt code_005a 
+  0054:34 7fff            ldi 7fff 
+  0057:32 0008            jmp code_0062 
+
+        code_005a
+  005a:8f 02              lsp param2 
+  005c:8d 00              lst temp0 
+  005e:35 0a              ldi a 
+  0060:08                 div 
+  0061:06                 mul 
+
+        code_0062
+  0062:a5 02              sat temp2 
+  0064:36                push 
+  0065:35 0a              ldi a 
+  0067:08                 div 
+  0068:36                push 
+  0069:8f 02              lsp param2 
+  006b:8d 00              lst temp0 
+  006d:35 0a              ldi a 
+  006f:0a                 mod 
+  0070:06                 mul 
+  0071:36                push 
+  0072:35 64              ldi 64 
+  0074:08                 div 
+  0075:02                 add 
+  0076:a5 01              sat temp1 
+  0078:36                push 
+  0079:35 01              ldi 1 
+  007b:22                 lt? 
+  007c:30 0004            bnt code_0083 
+  007f:35 01              ldi 1 
+  0081:a5 01              sat temp1 
+
+        code_0083
+  0083:85 01              lat temp1 
+  0085:48                 ret 
+)
+
+
