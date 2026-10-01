@@ -670,7 +670,7 @@ export function BuildingModal({
                       gap: '4px',
                       cursor: 'pointer'
                     }}
-                    title={t('buildingModal.clickForBreakInCalc', { defaultValue: 'Click to view break-in calculation' })}
+                    title={t('buildingModal.clickForBreakInCalc', { defaultValue: 'Click to view burglary calculation' })}
                   >
                     🔓 {robberyRate}%
                   </button>
@@ -940,12 +940,12 @@ export function BuildingModal({
 
               <div style={{ fontSize: '2rem', marginBottom: '6px' }}>🔓</div>
               <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem', fontWeight: 800 }}>
-                {t('buildingModal.breakInTitle', { defaultValue: 'Break-in Risk Details' })}
+                {t('buildingModal.breakInTitle', { defaultValue: 'Burglary Risk Details' })}
               </h3>
               <p style={{ color: '#e2e8f0', fontSize: '0.86rem', marginBottom: '14px', maxWidth: '340px', lineHeight: 1.45 }}>
                 {isProtectedHousing
-                  ? t('buildingModal.breakInFluffSecure', { defaultValue: 'Security apartments and Penthouses have building security and are immune to Wild Willy robberies.' })
-                  : t('buildingModal.breakInFluffLowCost', { defaultValue: 'Low-Cost Housing is your starting apartment. It is subject to Wild Willy robberies.' })}
+                  ? t('buildingModal.breakInFluffSecure', { defaultValue: 'Security apartments and Penthouses have building security and are immune to Wild Willy burglaries.' })
+                  : t('buildingModal.breakInFluffLowCost', { defaultValue: 'Low-Cost Housing is your starting apartment. It is subject to Wild Willy burglaries.' })}
               </p>
 
               <div style={{
@@ -998,7 +998,7 @@ export function BuildingModal({
                       Formula: 1 / (Relaxation + 1)
                     </div>
                     <div style={{ color: '#cbd5e1', fontSize: '0.78rem', fontStyle: 'italic', marginTop: '2px' }}>
-                      {t('buildingModal.breakInTipRelax', { defaultValue: 'Maintaining higher relaxation decreases your break-in vulnerability.' })}
+                      {t('buildingModal.breakInTipRelax', { defaultValue: 'Maintaining higher relaxation decreases your burglary vulnerability.' })}
                     </div>
                   </>
                 )}

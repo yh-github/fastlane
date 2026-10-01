@@ -110,7 +110,7 @@ describe('Modal Escape and Card Popups', () => {
     fireEvent.click(screen.getByTestId('home-burglary-badge'));
     const breakInModal = screen.getByTestId('home-breakin-details-modal');
     expect(breakInModal).toBeInTheDocument();
-    expect(screen.getByText(/Break-in Risk Details/i)).toBeInTheDocument();
+    expect(screen.getByText(/Burglary Risk Details/i)).toBeInTheDocument();
 
     // Pressing Esc closes the break-in modal, not the parent BuildingModal
     fireEvent.keyDown(window, { key: 'Escape' });

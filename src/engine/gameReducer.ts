@@ -177,6 +177,14 @@ export function gameReducer(
     }
   }
 
+  // If a player interacted at a building location, track that they were inside it
+  if (action.type !== 'move') {
+    const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
+    if (currentBuilding && nextPlayer.turnFlags) {
+      nextPlayer.turnFlags.enteredBuildingThisTurn = currentBuilding;
+    }
+  }
+
   // Always sync active effects after an action
   nextPlayer = recalculatePlayerEffects(nextPlayer, context.campaign);
 
