@@ -37,7 +37,8 @@ export function handleMoveAction(
 
   if (pathResult.found) {
     const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
-    if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
+    const wasInside = nextPlayer.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null;
+    if (wasInside && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
       const preRobberyMoney = nextPlayer.money;
       const isForced = !!context.state.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === nextPlayer.id || !e.playerId));
       nextPlayer = processStreetRobbery(nextPlayer, currentBuilding, context.turn, context.rng, context.campaign, replayContext, isForced);
@@ -47,6 +48,7 @@ export function handleMoveAction(
       if (nextPlayer.money < preRobberyMoney) {
         actionLog = { key: 'log.robbery' };
       }
+      delete nextPlayer.turnFlags?.enteredBuildingThisTurn;
     }
 
     const walkHours = calculateTravelHours(pathResult, context.campaign.config.mapRules);
@@ -61,6 +63,13 @@ export function handleMoveAction(
     if (nextPlayer.hoursRemaining > 0) {
       nextPlayer.position = nodeId;
       nextPlayer = spendHours(nextPlayer, requiredHours);
+      if (nextPlayer.turnFlags) {
+        if (destNode?.buildingId) {
+          nextPlayer.turnFlags.enteredBuildingThisTurn = destNode.buildingId;
+        } else {
+          delete nextPlayer.turnFlags.enteredBuildingThisTurn;
+        }
+      }
     } else {
       actionLog = { key: 'action.error.notEnoughTime' };
     }

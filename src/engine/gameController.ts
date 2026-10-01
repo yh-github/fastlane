@@ -117,7 +117,17 @@ export function processControllerAction(
   switch (action.type) {
     case 'enter_building': {
       const entryCost = campaign.config.timeRules.buildingEntryCost || 2
-      const updatedPlayer = spendHours(player, entryCost)
+      let updatedPlayer = spendHours(player, entryCost)
+      const currentBuilding = campaign.map?.nodes?.find(n => n.id === player.position)?.buildingId
+      if (updatedPlayer.turnFlags && currentBuilding) {
+        updatedPlayer = {
+          ...updatedPlayer,
+          turnFlags: {
+            ...updatedPlayer.turnFlags,
+            enteredBuildingThisTurn: currentBuilding,
+          }
+        }
+      }
       const newState = updatePlayerInState(state, playerIndex, updatedPlayer)
       return {
         state: newState,
@@ -127,8 +137,58 @@ export function processControllerAction(
     }
 
     case 'exit_building': {
+      const currentBuilding = campaign.map?.nodes?.find(n => n.id === player.position)?.buildingId
+      let updatedPlayer = player
+      let outDecisions: EngineDecision[] = []
+      const replayContext: ReplayContext = { inDecisions: inEngineDecisions, outDecisions }
+
+      // In Classic mode (reenterCurrentLocationCost: true), exiting the building triggers the street mugging check outside Bank/Market
+      if (
+        state.rules.reenterCurrentLocationCost &&
+        (currentBuilding === 'bank' || currentBuilding === 'blacks_market') &&
+        (insideBuilding || player.turnFlags?.enteredBuildingThisTurn === currentBuilding)
+      ) {
+        const streetRobberyOnTurnEnd = state.rules.streetRobberyOnTurnEnd ?? true
+        const canBeRobbed = player.hoursRemaining > 0 || (player.hoursRemaining <= 0 && streetRobberyOnTurnEnd)
+        if (canBeRobbed) {
+          const rng = new Random(state.rngState)
+          const isForced = !!state.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId))
+          updatedPlayer = processStreetRobbery(player, currentBuilding, state.turn, rng, campaign, replayContext, isForced)
+          let nextDebugQueue = state.debugQueue
+          if (isForced && nextDebugQueue) {
+            nextDebugQueue = nextDebugQueue.filter(e => !(e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId)))
+          }
+          if (updatedPlayer.turnFlags?.enteredBuildingThisTurn) {
+            const { enteredBuildingThisTurn, ...restFlags } = updatedPlayer.turnFlags
+            updatedPlayer = {
+              ...updatedPlayer,
+              turnFlags: restFlags
+            }
+          }
+          return {
+            state: {
+              ...state,
+              rngState: rng.getState(),
+              debugQueue: nextDebugQueue,
+              players: state.players.map((p, i) => i === playerIndex ? updatedPlayer : p)
+            },
+            insideBuilding: false,
+            turnAdvanced: false,
+            outEngineDecisions: outDecisions
+          }
+        }
+      }
+
+      if (state.rules.reenterCurrentLocationCost && updatedPlayer.turnFlags?.enteredBuildingThisTurn) {
+        const { enteredBuildingThisTurn, ...restFlags } = updatedPlayer.turnFlags
+        updatedPlayer = {
+          ...updatedPlayer,
+          turnFlags: restFlags
+        }
+      }
+
       return {
-        state,
+        state: updatedPlayer === player ? state : updatePlayerInState(state, playerIndex, updatedPlayer),
         insideBuilding: false,
         turnAdvanced: false,
       }
@@ -139,22 +199,22 @@ export function processControllerAction(
       const replayContext: ReplayContext = { inDecisions: inEngineDecisions, outDecisions }
       let currentState = state
       const streetRobberyOnTurnEnd = state.rules.streetRobberyOnTurnEnd ?? true
-      if (streetRobberyOnTurnEnd) {
-        const currentBuilding = campaign.map?.nodes?.find(n => n.id === player.position)?.buildingId
-        if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
-          const rng = new Random(state.rngState)
-          const isForced = !!state.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId))
-          const updatedPlayer = processStreetRobbery(player, currentBuilding, state.turn, rng, campaign, replayContext, isForced)
-          let nextDebugQueue = state.debugQueue
-          if (isForced && nextDebugQueue) {
-            nextDebugQueue = nextDebugQueue.filter(e => !(e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId)))
-          }
-          currentState = {
-            ...state,
-            rngState: rng.getState(),
-            debugQueue: nextDebugQueue,
-            players: state.players.map((p, i) => i === playerIndex ? updatedPlayer : p)
-          }
+      const currentBuilding = campaign.map?.nodes?.find(n => n.id === player.position)?.buildingId
+      const wasInside = insideBuilding || (player.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null)
+
+      if (streetRobberyOnTurnEnd && wasInside && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
+        const rng = new Random(state.rngState)
+        const isForced = !!state.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId))
+        const updatedPlayer = processStreetRobbery(player, currentBuilding, state.turn, rng, campaign, replayContext, isForced)
+        let nextDebugQueue = state.debugQueue
+        if (isForced && nextDebugQueue) {
+          nextDebugQueue = nextDebugQueue.filter(e => !(e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId)))
+        }
+        currentState = {
+          ...state,
+          rngState: rng.getState(),
+          debugQueue: nextDebugQueue,
+          players: state.players.map((p, i) => i === playerIndex ? updatedPlayer : p)
         }
       }
       const newState = processTurnStart(currentState, campaign, replayContext)
@@ -395,6 +455,7 @@ export function getControllerActions(
  * Replace a single player in the state, returning a new state object.
  */
 function updatePlayerInState(state: GameState, playerIndex: number, player: PlayerState): GameState {
+  if (state.players[playerIndex] === player) return state
   const newPlayers = [...state.players]
   newPlayers[playerIndex] = player
   return { ...state, players: newPlayers }

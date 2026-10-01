@@ -297,7 +297,7 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                       <div style={{ fontWeight: 600 }}>{t('settings.helpfulUI', { defaultValue: 'Helpful Interface' })}</div>
                       <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
                         {gameState.rules.helpfulUI 
-                          ? t('settings.helpfulUIOn', { defaultValue: 'Displays exact prices, wage estimates, and break-in risk (ON)' })
+                          ? t('settings.helpfulUIOn', { defaultValue: 'Displays exact prices, wage estimates, and burglary risk (ON)' })
                           : t('settings.helpfulUIOff', { defaultValue: 'Authentic minimal information (OFF)' })}
                       </div>
                     </div>

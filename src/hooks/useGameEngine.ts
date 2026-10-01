@@ -123,15 +123,15 @@ export function useGameEngine(
     let player = updatedPlayers[activePlayerIndex];
     const housingDef = campaign!.housing.find(h => h.id === player.currentHousingId);
     const homeNodeId = housingDef ? housingDef.homeNodeId : 'node_low_cost';
-
+    const currentBuilding = campaign!.map.nodes.find(n => n.id === player.position)?.buildingId;
+    const wasInside = player.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null;
     setIsBuildingModalOpen(false);
 
     const currentState = gameStateRef.current!;
     const streetRobberyOnTurnEnd = currentState.rules.streetRobberyOnTurnEnd ?? true;
-    const currentBuilding = campaign!.map.nodes.find(n => n.id === player.position)?.buildingId;
     const turnEndDecisions: EngineDecision[] = [];
 
-    if (streetRobberyOnTurnEnd && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
+    if (streetRobberyOnTurnEnd && wasInside && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
       const preRobberyMoney = player.money;
       const rng = new Random(currentState.rngState);
       const replayCtx: ReplayContext = { outDecisions: turnEndDecisions };
@@ -260,6 +260,70 @@ export function useGameEngine(
       return;
     }
 
+    if (payload.type === 'exit_building') {
+      let updatedPlayers = [...currentState.players];
+      let player = { ...updatedPlayers[activePlayerIndex] };
+      const currentBuilding = campaign.map.nodes.find(n => n.id === player.position)?.buildingId;
+      const wasInside = player.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null;
+      setIsBuildingModalOpen(false);
+
+      if (
+        currentState.rules.reenterCurrentLocationCost &&
+        wasInside &&
+        (currentBuilding === 'bank' || currentBuilding === 'blacks_market')
+      ) {
+        const streetRobberyOnTurnEnd = currentState.rules.streetRobberyOnTurnEnd ?? true;
+        const canBeRobbed = player.hoursRemaining > 0 || (player.hoursRemaining <= 0 && streetRobberyOnTurnEnd);
+        if (canBeRobbed) {
+          const preRobberyMoney = player.money;
+          const rng = new Random(currentState.rngState);
+          const outDecisions: EngineDecision[] = [];
+          const replayCtx: ReplayContext = { outDecisions };
+          const isForced = !!currentState.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId));
+          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced);
+
+          if (isForced) {
+            setGameState(prev => prev ? {
+              ...prev,
+              debugQueue: (prev.debugQueue || []).filter(e => !(e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId)))
+            } : prev);
+          }
+
+          delete player.turnFlags?.enteredBuildingThisTurn;
+          updatedPlayers[activePlayerIndex] = player;
+
+          if (player.money < preRobberyMoney) {
+            const lostAmount = preRobberyMoney - player.money;
+            addLog({ key: 'log.robbery' }, undefined, player.id);
+            if (currentState.rules.enableAnimations) {
+              const diff = player.money - preRobberyMoney;
+              triggerAnim('text', `${diff} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
+            }
+            player.newspaperHeadline = { key: 'newspaper.robbery' };
+            await animateRobberInterception(activePlayerIndex);
+            if (!player.isAi) {
+              await new Promise<void>(resolve => {
+                setStreetRobberyNotice({
+                  lostAmount,
+                  location: currentBuilding || '',
+                  onConfirm: () => {
+                    setStreetRobberyNotice(null);
+                    resolve();
+                  }
+                });
+              });
+            }
+          }
+          setGameState(prev => prev ? { ...prev, rngState: rng.getState(), players: updatedPlayers } : prev);
+        }
+      } else if (currentState.rules.reenterCurrentLocationCost && player.turnFlags?.enteredBuildingThisTurn) {
+        delete player.turnFlags.enteredBuildingThisTurn;
+        updatedPlayers[activePlayerIndex] = player;
+        setGameState(prev => prev ? { ...prev, players: updatedPlayers } : prev);
+      }
+      return;
+    }
+
     if (payload.type === 'move') {
       let targetNodeId = payload.nodeId;
       let updatedPlayers = [...currentState.players];
@@ -280,6 +344,9 @@ export function useGameEngine(
           if (currentState.rules.reenterCurrentLocationCost) {
             const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
             player = spendHours(player, entryCost);
+            if (player.turnFlags && destNode?.buildingId) {
+              player.turnFlags = { ...player.turnFlags, enteredBuildingThisTurn: destNode.buildingId };
+            }
             updatedPlayers[activePlayerIndex] = player;
             setGameState({ ...currentState, players: updatedPlayers });
             if (player.hoursRemaining <= 0) {
@@ -287,6 +354,9 @@ export function useGameEngine(
               await endTurnSequence(updatedPlayers);
               return;
             }
+          }
+          if (player.turnFlags && destNode?.buildingId) {
+            player.turnFlags = { ...player.turnFlags, enteredBuildingThisTurn: destNode.buildingId };
           }
           setIsBuildingModalOpen(true);
         }
@@ -301,7 +371,8 @@ export function useGameEngine(
 
       try {
         const currentBuilding = campaign.map.nodes.find(n => n.id === player.position)?.buildingId;
-        if (currentBuilding === 'bank' || currentBuilding === 'blacks_market') {
+        const wasInside = player.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null;
+        if (wasInside && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
           const preRobberyMoney = player.money;
           const rng = new Random(currentState.rngState);
           const outDecisions: EngineDecision[] = [];
@@ -315,6 +386,8 @@ export function useGameEngine(
               debugQueue: (prev.debugQueue || []).filter(e => !(e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId)))
             } : prev);
           }
+
+          delete player.turnFlags?.enteredBuildingThisTurn;
           
           if (replayDataRef.current) {
             if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
@@ -465,6 +538,9 @@ export function useGameEngine(
           if (destNode && destNode.buildingId && player.position === targetNodeId) {
             const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
             player = spendHours(player, entryCost);
+            if (player.turnFlags) {
+              player.turnFlags = { ...player.turnFlags, enteredBuildingThisTurn: destNode.buildingId };
+            }
             updatedPlayers[activePlayerIndex] = player;
           }
 

@@ -472,6 +472,8 @@ export interface TurnFlags {
   askedForExtension: boolean;
   /** Whether the player paid rent or moved this turn (keeps the Rent Office open in the UI) */
   rentPaidThisTurn: boolean;
+  /** Building ID entered or interacted with this turn (for departure street mugging checks) */
+  enteredBuildingThisTurn?: string;
   /** Whether the player receives a free newspaper this turn due to an event */
   freeNewspaper: boolean;
   /** Whether the player has read the newspaper this turn */

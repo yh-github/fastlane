@@ -113,6 +113,8 @@ export default function App() {
           setIsBuildingModalOpen(false);
           if (activeP && activeP.hoursRemaining <= 0) {
             handleAction({ type: 'end-turn' });
+          } else if (activeP && gameState?.rules?.reenterCurrentLocationCost) {
+            handleAction({ type: 'exit_building' });
           }
           return;
         }
@@ -381,6 +383,8 @@ export default function App() {
               const p = gameState.players[activePlayerIndex];
               if (p && p.hoursRemaining <= 0) {
                 handleAction({ type: 'end-turn' });
+              } else if (p && gameState.rules.reenterCurrentLocationCost) {
+                handleAction({ type: 'exit_building' });
               }
             }}
           />
