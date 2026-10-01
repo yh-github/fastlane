@@ -1,0 +1,454 @@
+(script 106)
+
+(string
+    string_0376 "Goods"
+    string_037c "Consumable"
+    string_0387 "Durable"
+    string_038f "Educational"
+    string_039b "ListOfGoods"
+    string_03a7 "Consumables"
+    string_03b3 "Durables"
+    string_03bc "Education"
+)
+
+(said
+)
+
+(local
+)
+
+// 0006
+(class Goods of Obj
+    (properties
+        quantity $1
+        attributes $1
+        pricePaid $0
+        indexNum $0
+    )
+)
+
+// 0042
+(class Consumable of Goods
+    (properties
+        quantity $1
+        attributes $81
+        pricePaid $0
+        indexNum $0
+    )
+    (method (doit) // method_0034
+  0034:63 08             pToa quantity 
+  0036:30 0002            bnt code_003b 
+  0039:6d 08            dpToa quantity 
+
+        code_003b
+  003b:48                 ret 
+    )
+
+)
+
+// 0076
+(class Durable of Goods
+    (properties
+        quantity $1
+        attributes $45
+        pricePaid $0
+        indexNum $0
+        redemptionPrice $0
+    )
+)
+
+// 00aa
+(class Educational of Goods
+    (properties
+        quantity $1
+        attributes $1
+        pricePaid $0
+        indexNum $0
+        unitsToGraduate $a
+    )
+)
+
+// 0290
+(class ListOfGoods of List
+    (properties
+        elements $0
+        size $0
+    )
+    (method (recieve) // method_00dd
+  00dd:3f 02             link 2 // (var $2)
+  00df:8f 00              lsp paramTotal 
+  00e1:35 02              ldi 2 
+  00e3:20                 ge? 
+  00e4:30 0005            bnt code_00ec 
+  00e7:87 02              lap param2 
+  00e9:32 0002            jmp code_00ee 
+
+        code_00ec
+  00ec:35 01              ldi 1 
+
+        code_00ee
+  00ee:a5 01              sat temp1 
+  00f0:38 016f          pushi 16f // $16f hasType
+  00f3:7a               push2 
+  00f4:8f 01              lsp param1 
+  00f6:36                push 
+  00f7:54 08             self 8 
+
+  00f9:a5 00              sat temp0 
+  00fb:18                 not 
+  00fc:30 001f            bnt code_011e 
+  00ff:39 6e            pushi 6e // $6e add
+  0101:78               push1 
+  0102:38 0157          pushi 157 // $157 indexNum
+  0105:78               push1 
+  0106:8f 01              lsp param1 
+  0108:38 0161          pushi 161 // $161 quantity
+  010b:78               push1 
+  010c:8d 01              lst temp1 
+  010e:39 6d            pushi 6d // $6d yourself
+  0110:76               push0 
+  0111:38 0170          pushi 170 // $170 newGoods
+  0114:76               push0 
+  0115:54 04             self 4 
+
+  0117:4a 10             send 10 
+
+  0119:a5 00              sat temp0 
+  011b:36                push 
+  011c:54 06             self 6 
+
+
+        code_011e
+  011e:85 00              lat temp0 
+  0120:48                 ret 
+    )
+
+    (method (hasType) // method_0121
+  0121:3f 01             link 1 // (var $1)
+  0123:35 00              ldi 0 
+  0125:a5 00              sat temp0 
+
+        code_0127
+  0127:8d 00              lst temp0 
+  0129:63 0a             pToa size 
+  012b:22                 lt? 
+  012c:30 0040            bnt code_016f 
+  012f:38 0157          pushi 157 // $157 indexNum
+  0132:76               push0 
+  0133:39 43            pushi 43 // $43 at
+  0135:78               push1 
+  0136:8d 00              lst temp0 
+  0138:54 06             self 6 
+
+  013a:4a 04             send 4 
+
+  013c:36                push 
+  013d:87 01              lap param1 
+  013f:1a                 eq? 
+  0140:30 0027            bnt code_016a 
+  0143:38 0161          pushi 161 // $161 quantity
+  0146:78               push1 
+  0147:38 0161          pushi 161 // $161 quantity
+  014a:76               push0 
+  014b:39 43            pushi 43 // $43 at
+  014d:78               push1 
+  014e:8d 00              lst temp0 
+  0150:54 06             self 6 
+
+  0152:4a 04             send 4 
+
+  0154:36                push 
+  0155:87 02              lap param2 
+  0157:02                 add 
+  0158:36                push 
+  0159:39 43            pushi 43 // $43 at
+  015b:78               push1 
+  015c:8d 00              lst temp0 
+  015e:54 06             self 6 
+
+  0160:4a 06             send 6 
+
+  0162:39 43            pushi 43 // $43 at
+  0164:78               push1 
+  0165:8d 00              lst temp0 
+  0167:54 06             self 6 
+
+  0169:48                 ret 
+
+        code_016a
+  016a:c5 00              +at temp0 
+  016c:32 ffb8            jmp code_0127 
+
+        code_016f
+  016f:35 00              ldi 0 
+  0171:48                 ret 
+    )
+
+    (method (pack) // method_0172
+  0172:3f 03             link 3 // (var $3)
+  0174:7a               push2 
+  0175:78               push1 
+  0176:78               push1 
+  0177:43 02 04         callk ScriptID 4 
+
+  017a:a5 01              sat temp1 
+  017c:35 00              ldi 0 
+  017e:a5 00              sat temp0 
+
+        code_0180
+  0180:8d 00              lst temp0 
+  0182:63 0a             pToa size 
+  0184:22                 lt? 
+  0185:30 0043            bnt code_01cb 
+  0188:38 0164          pushi 164 // $164 attributes
+  018b:76               push0 
+  018c:39 43            pushi 43 // $43 at
+  018e:78               push1 
+  018f:8d 00              lst temp0 
+  0191:54 06             self 6 
+
+  0193:4a 04             send 4 
+
+  0195:36                push 
+  0196:35 01              ldi 1 
+  0198:12                 and 
+  0199:30 002a            bnt code_01c6 
+  019c:39 65            pushi 65 // $65 new
+  019e:76               push0 
+  019f:39 43            pushi 43 // $43 at
+  01a1:78               push1 
+  01a2:8d 00              lst temp0 
+  01a4:54 06             self 6 
+
+  01a6:4a 04             send 4 
+
+  01a8:a5 02              sat temp2 
+  01aa:38 0164          pushi 164 // $164 attributes
+  01ad:78               push1 
+  01ae:38 0164          pushi 164 // $164 attributes
+  01b1:76               push0 
+  01b2:4a 04             send 4 
+
+  01b4:36                push 
+  01b5:35 fe              ldi fe 
+  01b7:12                 and 
+  01b8:36                push 
+  01b9:85 02              lat temp2 
+  01bb:4a 06             send 6 
+
+  01bd:39 6e            pushi 6e // $6e add
+  01bf:78               push1 
+  01c0:8d 02              lst temp2 
+  01c2:85 01              lat temp1 
+  01c4:4a 06             send 6 
+
+
+        code_01c6
+  01c6:c5 00              +at temp0 
+  01c8:32 ffb5            jmp code_0180 
+
+        code_01cb
+  01cb:67 0a             pTos size 
+  01cd:35 01              ldi 1 
+  01cf:04                 sub 
+  01d0:a5 00              sat temp0 
+
+        code_01d2
+  01d2:8d 00              lst temp0 
+  01d4:35 00              ldi 0 
+  01d6:20                 ge? 
+  01d7:30 002f            bnt code_0209 
+  01da:38 0164          pushi 164 // $164 attributes
+  01dd:76               push0 
+  01de:39 43            pushi 43 // $43 at
+  01e0:78               push1 
+  01e1:8d 00              lst temp0 
+  01e3:54 06             self 6 
+
+  01e5:4a 04             send 4 
+
+  01e7:36                push 
+  01e8:35 01              ldi 1 
+  01ea:12                 and 
+  01eb:30 0016            bnt code_0204 
+  01ee:39 54            pushi 54 // $54 delete
+  01f0:78               push1 
+  01f1:39 43            pushi 43 // $43 at
+  01f3:78               push1 
+  01f4:8d 00              lst temp0 
+  01f6:54 06             self 6 
+
+  01f8:a5 02              sat temp2 
+  01fa:36                push 
+  01fb:54 06             self 6 
+
+  01fd:39 67            pushi 67 // $67 dispose
+  01ff:76               push0 
+  0200:85 02              lat temp2 
+  0202:4a 04             send 4 
+
+
+        code_0204
+  0204:e5 00              -at temp0 
+  0206:32 ffc9            jmp code_01d2 
+
+        code_0209
+  0209:39 59            pushi 59 // $59 size
+  020b:76               push0 
+  020c:85 01              lat temp1 
+  020e:4a 04             send 4 
+
+  0210:30 0025            bnt code_0238 
+  0213:35 00              ldi 0 
+  0215:a5 00              sat temp0 
+
+        code_0217
+  0217:8d 00              lst temp0 
+  0219:39 59            pushi 59 // $59 size
+  021b:76               push0 
+  021c:85 01              lat temp1 
+  021e:4a 04             send 4 
+
+  0220:22                 lt? 
+  0221:30 0014            bnt code_0238 
+  0224:39 6e            pushi 6e // $6e add
+  0226:78               push1 
+  0227:39 43            pushi 43 // $43 at
+  0229:78               push1 
+  022a:8d 00              lst temp0 
+  022c:85 01              lat temp1 
+  022e:4a 06             send 6 
+
+  0230:36                push 
+  0231:54 06             self 6 
+
+  0233:c5 00              +at temp0 
+  0235:32 ffdf            jmp code_0217 
+
+        code_0238
+  0238:39 75            pushi 75 // $75 release
+  023a:76               push0 
+  023b:85 01              lat temp1 
+  023d:4a 04             send 4 
+
+  023f:48                 ret 
+    )
+
+    (method (newGoods) // method_00dc
+  00dc:48                 ret 
+    )
+
+    (method (objectAtIndex) // method_0240
+  0240:3f 01             link 1 // (var $1)
+  0242:35 00              ldi 0 
+  0244:a5 00              sat temp0 
+
+        code_0246
+  0246:8d 00              lst temp0 
+  0248:63 0a             pToa size 
+  024a:22                 lt? 
+  024b:30 0021            bnt code_026f 
+  024e:38 0157          pushi 157 // $157 indexNum
+  0251:76               push0 
+  0252:39 43            pushi 43 // $43 at
+  0254:78               push1 
+  0255:8d 00              lst temp0 
+  0257:54 06             self 6 
+
+  0259:4a 04             send 4 
+
+  025b:36                push 
+  025c:87 01              lap param1 
+  025e:1a                 eq? 
+  025f:30 0008            bnt code_026a 
+  0262:39 43            pushi 43 // $43 at
+  0264:78               push1 
+  0265:8d 00              lst temp0 
+  0267:54 06             self 6 
+
+  0269:48                 ret 
+
+        code_026a
+  026a:c5 00              +at temp0 
+  026c:32 ffd7            jmp code_0246 
+
+        code_026f
+  026f:35 00              ldi 0 
+  0271:48                 ret 
+    )
+
+    (method (objectAtIndexQuan) // method_0272
+  0272:3f 01             link 1 // (var $1)
+  0274:38 0171          pushi 171 // $171 objectAtIndex
+  0277:78               push1 
+  0278:8f 01              lsp param1 
+  027a:54 06             self 6 
+
+  027c:a5 00              sat temp0 
+  027e:30 0007            bnt code_0288 
+  0281:38 0161          pushi 161 // $161 quantity
+  0284:76               push0 
+  0285:4a 04             send 4 
+
+  0287:48                 ret 
+
+        code_0288
+  0288:48                 ret 
+  0289:00                bnot 
+    )
+
+)
+
+// 02dc
+(class Consumables of ListOfGoods
+    (properties
+        elements $0
+        size $0
+    )
+    (method (newGoods) // method_02ce
+  02ce:39 65            pushi 65 // $65 new
+  02d0:76               push0 
+  02d1:51 3d            class Consumable 
+  02d3:4a 04             send 4 
+
+  02d5:48                 ret 
+    )
+
+)
+
+// 0314
+(class Durables of ListOfGoods
+    (properties
+        elements $0
+        size $0
+    )
+    (method (newGoods) // method_0306
+  0306:39 65            pushi 65 // $65 new
+  0308:76               push0 
+  0309:51 3e            class Durable 
+  030b:4a 04             send 4 
+
+  030d:48                 ret 
+    )
+
+)
+
+// 034c
+(class Education of ListOfGoods
+    (properties
+        elements $0
+        size $0
+    )
+    (method (newGoods) // method_033e
+  033e:39 65            pushi 65 // $65 new
+  0340:76               push0 
+  0341:51 3f            class Educational 
+  0343:4a 04             send 4 
+
+  0345:48                 ret 
+    )
+
+)
+
+
+

@@ -1,0 +1,197 @@
+(script 764)
+
+(string
+    string_015c "noticeRoom"
+    string_0167 "fred"
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+    local2 = $00a0
+    local3 = $0064
+)
+
+// 00cc
+(instance publicnoticeRoom of Rm
+    (properties
+        script $0
+        number $0
+        timer $0
+        picture $0
+        style $1
+        controls $0
+    )
+    (method (init) // method_000e
+  000e:39 6a            pushi 6a // $6a init
+  0010:76               push0 
+  0011:59 01            &rest 1 
+  0013:57 2a 04         super Rm 4 
+
+  0016:7a               push2 
+  0017:39 07            pushi 7 // $7 cel
+  0019:38 2b11          pushi 2b11 // $2b11 sel_11025
+  001c:43 75 04         callk kernel_117 4 
+
+
+        code_001f
+  001f:76               push0 
+  0020:43 42 00         callk GetTime 0 
+
+  0023:36                push 
+  0024:34 fc00            ldi fc00 
+  0027:26                ugt? 
+  0028:30 0003            bnt code_002e 
+  002b:32 fff1            jmp code_001f 
+
+        code_002e
+  002e:39 05            pushi 5 // $5 view
+  0030:78               push1 
+  0031:76               push0 
+  0032:38 00d6          pushi d6 // $d6 setLoop
+  0035:78               push1 
+  0036:39 0d            pushi d // $d lsTop
+  0038:39 12            pushi 12 // $12 illegalBits
+  003a:78               push1 
+  003b:76               push0 
+  003c:38 00d2          pushi d2 // $d2 posn
+  003f:7a               push2 
+  0040:39 05            pushi 5 // $5 view
+  0042:39 63            pushi 63 // $63 perform
+  0044:38 00eb          pushi eb // $eb setStep
+  0047:7a               push2 
+  0048:78               push1 
+  0049:78               push1 
+  004a:38 00e1          pushi e1 // $e1 setMotion
+  004d:39 03            pushi 3 // $3 y
+  004f:51 1a            class MoveTo 
+  0051:36                push 
+  0052:38 012c          pushi 12c // $12c listOfCoords
+  0055:39 64            pushi 64 // $64 moveDone
+  0057:38 00dc          pushi dc // $dc setCycle
+  005a:78               push1 
+  005b:51 14            class Fwd 
+  005d:36                push 
+  005e:39 6a            pushi 6a // $6a init
+  0060:76               push0 
+  0061:72 00fe          lofsa $00fe // fred
+  0064:4a 36             send 36 
+
+  0066:35 00              ldi 0 
+  0068:a3 01              sal local1 
+  006a:48                 ret 
+    )
+
+    (method (doit) // method_006b
+  006b:39 3c            pushi 3c // $3c doit
+  006d:76               push0 
+  006e:57 2a 04         super Rm 4 
+
+  0071:c3 01              +al local1 
+  0073:36                push 
+  0074:35 01              ldi 1 
+  0076:1a                 eq? 
+  0077:30 0009            bnt code_0083 
+  007a:39 3c            pushi 3c // $3c doit
+  007c:76               push0 
+  007d:43 42 00         callk GetTime 0 
+
+  0080:02                 add 
+  0081:a3 00              sal local0 
+
+        code_0083
+  0083:8b 00              lsl local0 
+  0085:76               push0 
+  0086:43 42 00         callk GetTime 0 
+
+  0089:2a                ult? 
+  008a:30 0038            bnt code_00c5 
+  008d:8b 01              lsl local1 
+  008f:83 03              lal local3 
+  0091:22                 lt? 
+  0092:30 000d            bnt code_00a2 
+  0095:35 01              ldi 1 
+  0097:a0 0237            sag  
+  009a:35 03              ldi 3 
+  009c:a0 0216            sag  
+  009f:32 001a            jmp code_00bc 
+
+        code_00a2
+  00a2:8b 01              lsl local1 
+  00a4:83 02              lal local2 
+  00a6:22                 lt? 
+  00a7:30 000d            bnt code_00b7 
+  00aa:35 02              ldi 2 
+  00ac:a0 0237            sag  
+  00af:35 01              ldi 1 
+  00b1:a0 0216            sag  
+  00b4:32 0005            jmp code_00bc 
+
+        code_00b7
+  00b7:35 03              ldi 3 
+  00b9:a0 0237            sag  
+
+        code_00bc
+  00bc:38 0100          pushi 100 // $100 newRoom
+  00bf:78               push1 
+  00c0:7a               push2 
+  00c1:81 02              lag  
+  00c3:4a 06             send 6 
+
+
+        code_00c5
+  00c5:48                 ret 
+    )
+
+)
+
+// 00f8
+(instance fred of Act
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $0
+        loop $0
+        cel $0
+        priority $0
+        underBits $0
+        signal $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+        cycleSpeed $0
+        script $0
+        cycler $0
+        timer $0
+        ticksToDo $0
+        illegalBits $8000
+        xLast $0
+        yLast $0
+        xStep $3
+        moveSpeed $0
+        blocks $0
+        baseSetter $0
+        mover $0
+        looper $0
+        viewer $0
+        avoider $0
+    )
+)
+
+
+

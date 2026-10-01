@@ -1,0 +1,1361 @@
+(script 237)
+
+(string
+    string_0938 "dialogKeyMouse"
+    string_0947 "select4"
+    string_094f "background"
+    string_095a " Would you like to\n\nchallenge Jones?"
+    string_097f "questionText1"
+    string_098d "    Would you\n\n   like Jones to:"
+    string_09ae "questionText2"
+    string_09bc "yesButton"
+    string_09c6 "noButton"
+    string_09cf "takeItEasy"
+    string_09da "playFair"
+    string_09e3 "goForBroke"
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+)
+
+// 03c2
+(instance dialogKeyMouse of Set
+    (properties
+        elements $0
+        size $0
+    )
+)
+
+// 04c0
+(instance publicselect4 of Dialog
+    (properties
+        elements $0
+        size $0
+        text $0
+        window $0
+        theItem $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $77
+        nsRight $b8
+        time $0
+        busy $0
+        seconds $0
+        lastSeconds $0
+        client $0
+        agent $0
+        script $0
+        menuBarOK $1
+        tail $0
+        standard $0
+        keyMouseList $0
+        prevDialog $0
+        prevTalker $0
+        aTimeClock $0
+    )
+    (method (init) // method_03dc
+  03dc:3f 01             link 1 // (var $1)
+  03de:78               push1 
+  03df:76               push0 
+  03e0:45 11 02         callb procedure_0011 2 //  
+
+  03e3:72 ffe2          lofsa $03c8 // dialogKeyMouse
+  03e6:65 2e             aTop keyMouseList 
+  03e8:80 01f6            lag  
+  03eb:65 30             aTop prevDialog 
+  03ed:5c              selfID 
+  03ee:a0 01f6            sag  
+  03f1:35 00              ldi 0 
+  03f3:65 22             aTop client 
+  03f5:a0 019d            sag  
+  03f8:76               push0 
+  03f9:45 07 00         callb procedure_0007 0 //  
+
+  03fc:39 23            pushi 23 // $23 window
+  03fe:78               push1 
+  03ff:89 3b              lsg  
+  0401:39 6e            pushi 6e // $6e add
+  0403:39 04            pushi 4 // $4 x
+  0405:72 0108          lofsa $0510 // background
+  0408:36                push 
+  0409:72 0374          lofsa $0780 // yesButton
+  040c:36                push 
+  040d:72 03bc          lofsa $07cc // noButton
+  0410:36                push 
+  0411:72 01a2          lofsa $05b6 // questionText1
+  0414:36                push 
+  0415:39 6f            pushi 6f // $6f eachElementDo
+  0417:7a               push2 
+  0418:39 66            pushi 66 // $66 init
+  041a:78               push1 
+  041b:39 6f            pushi 6f // $6f eachElementDo
+  041d:78               push1 
+  041e:38 0099          pushi 99 // $99 setSize
+  0421:38 009b          pushi 9b // $9b moveTo
+  0424:7a               push2 
+  0425:39 45            pushi 45 // $45 done
+  0427:39 2c            pushi 2c // $2c nodePtr
+  0429:38 00a3          pushi a3 // $a3 open
+  042c:39 07            pushi 7 // $7 cel
+  042e:76               push0 
+  042f:39 0f            pushi f // $f lsBottom
+  0431:76               push0 
+  0432:76               push0 
+  0433:76               push0 
+  0434:76               push0 
+  0435:78               push1 
+  0436:54 3a             self 3a 
+
+  0438:38 0129          pushi 129 // $129 setList
+  043b:78               push1 
+  043c:67 2e             pTos keyMouseList 
+  043e:51 30            class KeyMouse 
+  0440:4a 06             send 6 
+
+  0442:39 03            pushi 3 // $3 y
+  0444:7c            pushSelf 
+  0445:67 2e             pTos keyMouseList 
+  0447:72 0336          lofsa $0780 // yesButton
+  044a:36                push 
+  044b:45 09 06         callb procedure_0009 6 //  
+
+  044e:38 00f2          pushi f2 // $f2 canControl
+  0451:78               push1 
+  0452:78               push1 
+  0453:51 20            class User 
+  0455:4a 06             send 6 
+
+  0457:39 3c            pushi 3c // $3c doit
+  0459:7a               push2 
+  045a:76               push0 
+  045b:76               push0 
+  045c:54 08             self 8 
+
+  045e:a5 00              sat temp0 
+  0460:78               push1 
+  0461:36                push 
+  0462:43 06 02         callk IsObject 2 
+
+  0465:30 0011            bnt code_0479 
+  0468:39 72            pushi 72 // $72 contains
+  046a:78               push1 
+  046b:8d 00              lst temp0 
+  046d:54 06             self 6 
+
+  046f:30 000b            bnt code_047d 
+  0472:35 00              ldi 0 
+  0474:a5 00              sat temp0 
+  0476:32 0004            jmp code_047d 
+
+        code_0479
+  0479:35 01              ldi 1 
+  047b:a5 00              sat temp0 
+
+        code_047d
+  047d:38 0129          pushi 129 // $129 setList
+  0480:78               push1 
+  0481:63 30             pToa prevDialog 
+  0483:30 0009            bnt code_048f 
+  0486:38 0138          pushi 138 // $138 keyMouseList
+  0489:76               push0 
+  048a:4a 04             send 4 
+
+  048c:32 0003            jmp code_0492 
+
+        code_048f
+  048f:80 01b0            lag  
+
+        code_0492
+  0492:36                push 
+  0493:51 30            class KeyMouse 
+  0495:4a 06             send 6 
+
+  0497:39 75            pushi 75 // $75 release
+  0499:76               push0 
+  049a:63 2e             pToa keyMouseList 
+  049c:4a 04             send 4 
+
+  049e:63 30             pToa prevDialog 
+  04a0:a0 01f6            sag  
+  04a3:39 67            pushi 67 // $67 dispose
+  04a5:76               push0 
+  04a6:63 2e             pToa keyMouseList 
+  04a8:4a 04             send 4 
+
+  04aa:39 67            pushi 67 // $67 dispose
+  04ac:76               push0 
+  04ad:54 04             self 4 
+
+  04af:85 00              lat temp0 
+  04b1:78               push1 
+  04b2:38 00ed          pushi ed // $ed echo
+  04b5:43 03 02         callk DisposeScript 2 
+
+  04b8:48                 ret 
+  04b9:00                bnot 
+    )
+
+)
+
+// 050a
+(instance background of DIcon
+    (properties
+        type $4
+        state $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $b
+        loop $0
+        cel $0
+        priority $c
+    )
+)
+
+// 05b0
+(instance questionText1 of DText
+    (properties
+        type $2
+        state $0
+        nsTop $1c
+        nsLeft $37
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $95a
+        font $1
+        mode $0
+    )
+    (method (draw) // method_0550
+  0550:3f 1e             link 1e // (var $1e)
+  0552:83 00              lal local0 
+  0554:18                 not 
+  0555:30 0051            bnt code_05a9 
+  0558:c3 00              +al local0 
+  055a:38 012a          pushi 12a // $12a setPort
+  055d:76               push0 
+  055e:54 04             self 4 
+
+  0560:39 0c            pushi c // $c nsRight
+  0562:39 04            pushi 4 // $4 x
+  0564:5b 04 00           lea 4 0 
+  0567:36                push 
+  0568:38 00ed          pushi ed // $ed echo
+  056b:76               push0 
+  056c:67 30             pTos text 
+  056e:43 48 08         callk Format 8 
+
+  0571:36                push 
+  0572:39 69            pushi 69 // $69 showSelf
+  0574:76               push0 
+  0575:39 64            pushi 64 // $64 moveDone
+  0577:67 0e             pTos nsLeft 
+  0579:67 0c             pTos nsTop 
+  057b:39 66            pushi 66 // $66 init
+  057d:80 0217            lag  
+  0580:30 0006            bnt code_0589 
+  0583:34 0080            ldi 80 
+  0586:32 0002            jmp code_058b 
+
+        code_0589
+  0589:35 0e              ldi e 
+
+        code_058b
+  058b:36                push 
+  058c:39 67            pushi 67 // $67 dispose
+  058e:80 0217            lag  
+  0591:30 0005            bnt code_0599 
+  0594:35 4f              ldi 4f 
+  0596:32 0002            jmp code_059b 
+
+        code_0599
+  0599:35 09              ldi 9 
+
+        code_059b
+  059b:36                push 
+  059c:39 6a            pushi 6a // $6a isKindOf
+  059e:39 7d            pushi 7d // $7d start
+  05a0:43 1b 18         callk Display 18 
+
+  05a3:38 012b          pushi 12b // $12b resetPort
+  05a6:76               push0 
+  05a7:54 04             self 4 
+
+
+        code_05a9
+  05a9:48                 ret 
+    )
+
+)
+
+// 0658
+(instance questionText2 of DText
+    (properties
+        type $2
+        state $0
+        nsTop $1c
+        nsLeft $37
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $98d
+        font $1
+        mode $0
+    )
+    (method (draw) // method_05f8
+  05f8:3f 1e             link 1e // (var $1e)
+  05fa:83 01              lal local1 
+  05fc:18                 not 
+  05fd:30 0051            bnt code_0651 
+  0600:c3 01              +al local1 
+  0602:38 012a          pushi 12a // $12a setPort
+  0605:76               push0 
+  0606:54 04             self 4 
+
+  0608:39 0c            pushi c // $c nsRight
+  060a:39 04            pushi 4 // $4 x
+  060c:5b 04 00           lea 4 0 
+  060f:36                push 
+  0610:38 00ed          pushi ed // $ed echo
+  0613:76               push0 
+  0614:67 30             pTos text 
+  0616:43 48 08         callk Format 8 
+
+  0619:36                push 
+  061a:39 69            pushi 69 // $69 showSelf
+  061c:76               push0 
+  061d:39 64            pushi 64 // $64 moveDone
+  061f:67 0e             pTos nsLeft 
+  0621:67 0c             pTos nsTop 
+  0623:39 66            pushi 66 // $66 init
+  0625:80 0217            lag  
+  0628:30 0006            bnt code_0631 
+  062b:34 0080            ldi 80 
+  062e:32 0002            jmp code_0633 
+
+        code_0631
+  0631:35 0e              ldi e 
+
+        code_0633
+  0633:36                push 
+  0634:39 67            pushi 67 // $67 dispose
+  0636:80 0217            lag  
+  0639:30 0005            bnt code_0641 
+  063c:35 4f              ldi 4f 
+  063e:32 0002            jmp code_0643 
+
+        code_0641
+  0641:35 09              ldi 9 
+
+        code_0643
+  0643:36                push 
+  0644:39 6a            pushi 6a // $6a isKindOf
+  0646:39 7d            pushi 7d // $7d start
+  0648:43 1b 18         callk Display 18 
+
+  064b:38 012b          pushi 12b // $12b resetPort
+  064e:76               push0 
+  064f:54 04             self 4 
+
+
+        code_0651
+  0651:48                 ret 
+    )
+
+)
+
+// 077a
+(instance yesButton of ErasableDIcon
+    (properties
+        type $4
+        state $41
+        nsTop $3e
+        nsLeft $50
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $a
+        loop $3
+        cel $0
+        priority $d
+    )
+    (method (doit) // method_06a0
+  06a0:3f 01             link 1 // (var $1)
+  06a2:39 3c            pushi 3c // $3c doit
+  06a4:76               push0 
+  06a5:57 31 04         super ErasableDIcon 4 
+
+  06a8:a5 00              sat temp0 
+  06aa:35 02              ldi 2 
+  06ac:a0 0176            sag  
+  06af:35 04              ldi 4 
+  06b1:a0 01fb            sag  
+  06b4:38 012c          pushi 12c // $12c playing
+  06b7:78               push1 
+  06b8:39 1d            pushi 1d // $1d back
+  06ba:39 43            pushi 43 // $43 at
+  06bc:78               push1 
+  06bd:78               push1 
+  06be:7a               push2 
+  06bf:78               push1 
+  06c0:7a               push2 
+  06c1:43 02 04         callk ScriptID 4 
+
+  06c4:4a 06             send 6 
+
+  06c6:4a 06             send 6 
+
+  06c8:38 0123          pushi 123 // $123 erase
+  06cb:7a               push2 
+  06cc:67 00             pTos species 
+  06ce:76               push0 
+  06cf:54 08             self 8 
+
+  06d1:38 0123          pushi 123 // $123 erase
+  06d4:76               push0 
+  06d5:72 00f4          lofsa $07cc // noButton
+  06d8:4a 04             send 4 
+
+  06da:39 54            pushi 54 // $54 delete
+  06dc:39 03            pushi 3 // $3 y
+  06de:72 fed5          lofsa $05b6 // questionText1
+  06e1:36                push 
+  06e2:7c            pushSelf 
+  06e3:72 00e6          lofsa $07cc // noButton
+  06e6:36                push 
+  06e7:39 6e            pushi 6e // $6e add
+  06e9:39 04            pushi 4 // $4 x
+  06eb:72 ff70          lofsa $065e // questionText2
+  06ee:36                push 
+  06ef:72 013a          lofsa $082c // takeItEasy
+  06f2:36                push 
+  06f3:72 019a          lofsa $0890 // playFair
+  06f6:36                push 
+  06f7:72 01fa          lofsa $08f4 // goForBroke
+  06fa:36                push 
+  06fb:72 fdc8          lofsa $04c6 // select4
+  06fe:4a 16             send 16 
+
+  0700:38 0097          pushi 97 // $97 select
+  0703:78               push1 
+  0704:78               push1 
+  0705:72 0188          lofsa $0890 // playFair
+  0708:4a 06             send 6 
+
+  070a:38 00a1          pushi a1 // $a1 theItem
+  070d:78               push1 
+  070e:72 017f          lofsa $0890 // playFair
+  0711:36                push 
+  0712:72 fdb1          lofsa $04c6 // select4
+  0715:4a 06             send 6 
+
+  0717:39 66            pushi 66 // $66 init
+  0719:78               push1 
+  071a:78               push1 
+  071b:38 0099          pushi 99 // $99 setSize
+  071e:76               push0 
+  071f:39 53            pushi 53 // $53 draw
+  0721:76               push0 
+  0722:72 0107          lofsa $082c // takeItEasy
+  0725:4a 0e             send e 
+
+  0727:39 66            pushi 66 // $66 init
+  0729:78               push1 
+  072a:78               push1 
+  072b:38 0099          pushi 99 // $99 setSize
+  072e:76               push0 
+  072f:39 53            pushi 53 // $53 draw
+  0731:76               push0 
+  0732:72 015b          lofsa $0890 // playFair
+  0735:4a 0e             send e 
+
+  0737:39 66            pushi 66 // $66 init
+  0739:78               push1 
+  073a:78               push1 
+  073b:38 0099          pushi 99 // $99 setSize
+  073e:76               push0 
+  073f:39 53            pushi 53 // $53 draw
+  0741:76               push0 
+  0742:72 01af          lofsa $08f4 // goForBroke
+  0745:4a 0e             send e 
+
+  0747:39 66            pushi 66 // $66 init
+  0749:78               push1 
+  074a:78               push1 
+  074b:38 0099          pushi 99 // $99 setSize
+  074e:76               push0 
+  074f:39 53            pushi 53 // $53 draw
+  0751:76               push0 
+  0752:72 ff09          lofsa $065e // questionText2
+  0755:4a 0e             send e 
+
+  0757:39 75            pushi 75 // $75 release
+  0759:76               push0 
+  075a:72 fc6b          lofsa $03c8 // dialogKeyMouse
+  075d:4a 04             send 4 
+
+  075f:39 03            pushi 3 // $3 y
+  0761:72 fd62          lofsa $04c6 // select4
+  0764:36                push 
+  0765:72 fc60          lofsa $03c8 // dialogKeyMouse
+  0768:36                push 
+  0769:72 0124          lofsa $0890 // playFair
+  076c:36                push 
+  076d:45 09 06         callb procedure_0009 6 //  
+
+  0770:85 00              lat temp0 
+  0772:48                 ret 
+  0773:00                bnot 
+    )
+
+)
+
+// 07c6
+(instance noButton of ErasableDIcon
+    (properties
+        type $4
+        state $63
+        nsTop $57
+        nsLeft $50
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $a
+        loop $3
+        cel $1
+        priority $d
+    )
+)
+
+// 0826
+(instance takeItEasy of ErasableDIcon
+    (properties
+        type $4
+        state $23
+        nsTop $39
+        nsLeft $43
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $a
+        loop $2
+        cel $0
+        priority $d
+    )
+    (method (doit) // method_080c
+  080c:3f 01             link 1 // (var $1)
+  080e:39 3c            pushi 3c // $3c doit
+  0810:76               push0 
+  0811:57 31 04         super ErasableDIcon 4 
+
+  0814:a5 00              sat temp0 
+  0816:78               push1 
+  0817:39 0a            pushi a // $a nsLeft
+  0819:40 f7ef 02        call proc_000c 2 
+
+  081d:85 00              lat temp0 
+  081f:48                 ret 
+    )
+
+)
+
+// 088a
+(instance playFair of ErasableDIcon
+    (properties
+        type $4
+        state $23
+        nsTop $4a
+        nsLeft $43
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $a
+        loop $2
+        cel $1
+        priority $d
+    )
+    (method (doit) // method_0870
+  0870:3f 01             link 1 // (var $1)
+  0872:39 3c            pushi 3c // $3c doit
+  0874:76               push0 
+  0875:57 31 04         super ErasableDIcon 4 
+
+  0878:a5 00              sat temp0 
+  087a:78               push1 
+  087b:76               push0 
+  087c:40 f78c 02        call proc_000c 2 
+
+  0880:85 00              lat temp0 
+  0882:48                 ret 
+  0883:00                bnot 
+    )
+
+)
+
+// 08ee
+(instance goForBroke of ErasableDIcon
+    (properties
+        type $4
+        state $23
+        nsTop $5b
+        nsLeft $43
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $a
+        loop $2
+        cel $2
+        priority $d
+    )
+    (method (doit) // method_08d4
+  08d4:3f 01             link 1 // (var $1)
+  08d6:39 3c            pushi 3c // $3c doit
+  08d8:76               push0 
+  08d9:57 31 04         super ErasableDIcon 4 
+
+  08dc:a5 00              sat temp0 
+  08de:78               push1 
+  08df:39 f6            pushi f6 // $f6 waitApogeeX
+  08e1:40 f727 02        call proc_000c 2 
+
+  08e5:85 00              lat temp0 
+  08e7:48                 ret 
+    )
+
+)
+
+
+
+(procedure proc_000c
+  000c:3f 08             link 8 // (var $8)
+  000e:39 43            pushi 43 // $43 at
+  0010:78               push1 
+  0011:76               push0 
+  0012:7a               push2 
+  0013:78               push1 
+  0014:7a               push2 
+  0015:43 02 04         callk ScriptID 4 
+
+  0018:4a 06             send 6 
+
+  001a:a5 00              sat temp0 
+  001c:38 0196          pushi 196 // $196 monGoal
+  001f:76               push0 
+  0020:4a 04             send 4 
+
+  0022:36                push 
+  0023:38 0197          pushi 197 // $197 hapGoal
+  0026:76               push0 
+  0027:85 00              lat temp0 
+  0029:4a 04             send 4 
+
+  002b:02                 add 
+  002c:36                push 
+  002d:38 0198          pushi 198 // $198 eduGoal
+  0030:76               push0 
+  0031:85 00              lat temp0 
+  0033:4a 04             send 4 
+
+  0035:02                 add 
+  0036:36                push 
+  0037:38 0199          pushi 199 // $199 carGoal
+  003a:76               push0 
+  003b:85 00              lat temp0 
+  003d:4a 04             send 4 
+
+  003f:02                 add 
+  0040:a5 02              sat temp2 
+  0042:39 43            pushi 43 // $43 at
+  0044:78               push1 
+  0045:78               push1 
+  0046:7a               push2 
+  0047:78               push1 
+  0048:7a               push2 
+  0049:43 02 04         callk ScriptID 4 
+
+  004c:4a 06             send 6 
+
+  004e:a5 01              sat temp1 
+  0050:38 01c9          pushi 1c9 // $1c9 playingAsJones
+  0053:78               push1 
+  0054:78               push1 
+  0055:4a 06             send 6 
+
+  0057:38 0196          pushi 196 // $196 monGoal
+  005a:78               push1 
+  005b:38 0196          pushi 196 // $196 monGoal
+  005e:76               push0 
+  005f:85 00              lat temp0 
+  0061:4a 04             send 4 
+
+  0063:36                push 
+  0064:87 01              lap param1 
+  0066:02                 add 
+  0067:36                push 
+  0068:85 01              lat temp1 
+  006a:4a 06             send 6 
+
+  006c:38 0196          pushi 196 // $196 monGoal
+  006f:76               push0 
+  0070:85 01              lat temp1 
+  0072:4a 04             send 4 
+
+  0074:36                push 
+  0075:35 64              ldi 64 
+  0077:1e                 gt? 
+  0078:30 000a            bnt code_0085 
+  007b:38 0196          pushi 196 // $196 monGoal
+  007e:78               push1 
+  007f:39 64            pushi 64 // $64 moveDone
+  0081:85 01              lat temp1 
+  0083:4a 06             send 6 
+
+
+        code_0085
+  0085:38 0196          pushi 196 // $196 monGoal
+  0088:76               push0 
+  0089:85 01              lat temp1 
+  008b:4a 04             send 4 
+
+  008d:36                push 
+  008e:35 0a              ldi a 
+  0090:22                 lt? 
+  0091:30 000a            bnt code_009e 
+  0094:38 0196          pushi 196 // $196 monGoal
+  0097:78               push1 
+  0098:39 0a            pushi a // $a nsLeft
+  009a:85 01              lat temp1 
+  009c:4a 06             send 6 
+
+
+        code_009e
+  009e:8d 02              lst temp2 
+  00a0:39 04            pushi 4 // $4 x
+  00a2:87 01              lap param1 
+  00a4:06                 mul 
+  00a5:02                 add 
+  00a6:a5 03              sat temp3 
+  00a8:36                push 
+  00a9:35 28              ldi 28 
+  00ab:22                 lt? 
+  00ac:30 0004            bnt code_00b3 
+  00af:35 28              ldi 28 
+  00b1:a5 03              sat temp3 
+
+        code_00b3
+  00b3:8d 03              lst temp3 
+  00b5:34 0190            ldi 190 
+  00b8:1e                 gt? 
+  00b9:30 0005            bnt code_00c1 
+  00bc:34 0190            ldi 190 
+  00bf:a5 03              sat temp3 
+
+        code_00c1
+  00c1:8d 03              lst temp3 
+  00c3:38 0196          pushi 196 // $196 monGoal
+  00c6:76               push0 
+  00c7:85 01              lat temp1 
+  00c9:4a 04             send 4 
+
+  00cb:04                 sub 
+  00cc:a5 03              sat temp3 
+  00ce:36                push 
+  00cf:35 1e              ldi 1e 
+  00d1:08                 div 
+  00d2:36                push 
+  00d3:35 02              ldi 2 
+  00d5:04                 sub 
+  00d6:a5 05              sat temp5 
+  00d8:36                push 
+  00d9:35 01              ldi 1 
+  00db:22                 lt? 
+  00dc:30 0004            bnt code_00e3 
+  00df:35 01              ldi 1 
+  00e1:a5 05              sat temp5 
+
+        code_00e3
+  00e3:8d 03              lst temp3 
+  00e5:35 1e              ldi 1e 
+  00e7:08                 div 
+  00e8:36                push 
+  00e9:35 02              ldi 2 
+  00eb:02                 add 
+  00ec:a5 06              sat temp6 
+  00ee:36                push 
+  00ef:35 0a              ldi a 
+  00f1:1e                 gt? 
+  00f2:30 0004            bnt code_00f9 
+  00f5:35 0a              ldi a 
+  00f7:a5 06              sat temp6 
+
+        code_00f9
+  00f9:38 0197          pushi 197 // $197 hapGoal
+  00fc:78               push1 
+  00fd:7a               push2 
+  00fe:8d 05              lst temp5 
+  0100:8d 06              lst temp6 
+  0102:43 3c 04         callk Random 4 
+
+  0105:36                push 
+  0106:35 0a              ldi a 
+  0108:06                 mul 
+  0109:36                push 
+  010a:85 01              lat temp1 
+  010c:4a 06             send 6 
+
+  010e:38 0198          pushi 198 // $198 eduGoal
+  0111:78               push1 
+  0112:7a               push2 
+  0113:8d 05              lst temp5 
+  0115:8d 06              lst temp6 
+  0117:43 3c 04         callk Random 4 
+
+  011a:36                push 
+  011b:35 0a              ldi a 
+  011d:06                 mul 
+  011e:36                push 
+  011f:85 01              lat temp1 
+  0121:4a 06             send 6 
+
+  0123:8d 03              lst temp3 
+  0125:38 0197          pushi 197 // $197 hapGoal
+  0128:76               push0 
+  0129:85 01              lat temp1 
+  012b:4a 04             send 4 
+
+  012d:04                 sub 
+  012e:a5 03              sat temp3 
+  0130:36                push 
+  0131:38 0198          pushi 198 // $198 eduGoal
+  0134:76               push0 
+  0135:85 01              lat temp1 
+  0137:4a 04             send 4 
+
+  0139:04                 sub 
+  013a:a5 03              sat temp3 
+  013c:39 0a            pushi a // $a nsLeft
+  013e:24                 le? 
+  013f:30 0014            bnt code_0156 
+  0142:60               pprev 
+  0143:35 64              ldi 64 
+  0145:24                 le? 
+  0146:30 000d            bnt code_0156 
+  0149:38 0199          pushi 199 // $199 carGoal
+  014c:78               push1 
+  014d:8d 03              lst temp3 
+  014f:85 01              lat temp1 
+  0151:4a 06             send 6 
+
+  0153:32 0260            jmp code_03b6 
+
+        code_0156
+  0156:8d 03              lst temp3 
+  0158:35 64              ldi 64 
+  015a:1e                 gt? 
+  015b:30 0128            bnt code_0286 
+  015e:8d 03              lst temp3 
+  0160:35 64              ldi 64 
+  0162:04                 sub 
+  0163:a5 07              sat temp7 
+  0165:38 0199          pushi 199 // $199 carGoal
+  0168:78               push1 
+  0169:39 64            pushi 64 // $64 moveDone
+  016b:85 01              lat temp1 
+  016d:4a 06             send 6 
+
+
+        code_016f
+  016f:85 07              lat temp7 
+  0171:30 0112            bnt code_0286 
+  0174:7a               push2 
+  0175:76               push0 
+  0176:39 04            pushi 4 // $4 x
+  0178:43 3c 04         callk Random 4 
+
+  017b:36                push 
+  017c:3c                 dup 
+  017d:35 00              ldi 0 
+  017f:1a                 eq? 
+  0180:30 002e            bnt code_01b1 
+  0183:38 0196          pushi 196 // $196 monGoal
+  0186:76               push0 
+  0187:85 01              lat temp1 
+  0189:4a 04             send 4 
+
+  018b:36                push 
+  018c:35 64              ldi 64 
+  018e:22                 lt? 
+  018f:30 00f0            bnt code_0282 
+  0192:8d 07              lst temp7 
+  0194:35 0a              ldi a 
+  0196:04                 sub 
+  0197:a5 07              sat temp7 
+  0199:38 0196          pushi 196 // $196 monGoal
+  019c:78               push1 
+  019d:38 0196          pushi 196 // $196 monGoal
+  01a0:76               push0 
+  01a1:85 01              lat temp1 
+  01a3:4a 04             send 4 
+
+  01a5:36                push 
+  01a6:35 0a              ldi a 
+  01a8:02                 add 
+  01a9:36                push 
+  01aa:85 01              lat temp1 
+  01ac:4a 06             send 6 
+
+  01ae:32 00d1            jmp code_0282 
+
+        code_01b1
+  01b1:3c                 dup 
+  01b2:35 01              ldi 1 
+  01b4:1a                 eq? 
+  01b5:30 002e            bnt code_01e6 
+  01b8:38 0197          pushi 197 // $197 hapGoal
+  01bb:76               push0 
+  01bc:85 01              lat temp1 
+  01be:4a 04             send 4 
+
+  01c0:36                push 
+  01c1:35 64              ldi 64 
+  01c3:22                 lt? 
+  01c4:30 00bb            bnt code_0282 
+  01c7:8d 07              lst temp7 
+  01c9:35 0a              ldi a 
+  01cb:04                 sub 
+  01cc:a5 07              sat temp7 
+  01ce:38 0197          pushi 197 // $197 hapGoal
+  01d1:78               push1 
+  01d2:38 0197          pushi 197 // $197 hapGoal
+  01d5:76               push0 
+  01d6:85 01              lat temp1 
+  01d8:4a 04             send 4 
+
+  01da:36                push 
+  01db:35 0a              ldi a 
+  01dd:02                 add 
+  01de:36                push 
+  01df:85 01              lat temp1 
+  01e1:4a 06             send 6 
+
+  01e3:32 009c            jmp code_0282 
+
+        code_01e6
+  01e6:3c                 dup 
+  01e7:35 02              ldi 2 
+  01e9:1a                 eq? 
+  01ea:30 002e            bnt code_021b 
+  01ed:38 0197          pushi 197 // $197 hapGoal
+  01f0:76               push0 
+  01f1:85 01              lat temp1 
+  01f3:4a 04             send 4 
+
+  01f5:36                push 
+  01f6:35 64              ldi 64 
+  01f8:22                 lt? 
+  01f9:30 0086            bnt code_0282 
+  01fc:8d 07              lst temp7 
+  01fe:35 0a              ldi a 
+  0200:04                 sub 
+  0201:a5 07              sat temp7 
+  0203:38 0197          pushi 197 // $197 hapGoal
+  0206:78               push1 
+  0207:38 0197          pushi 197 // $197 hapGoal
+  020a:76               push0 
+  020b:85 01              lat temp1 
+  020d:4a 04             send 4 
+
+  020f:36                push 
+  0210:35 0a              ldi a 
+  0212:02                 add 
+  0213:36                push 
+  0214:85 01              lat temp1 
+  0216:4a 06             send 6 
+
+  0218:32 0067            jmp code_0282 
+
+        code_021b
+  021b:3c                 dup 
+  021c:35 03              ldi 3 
+  021e:1a                 eq? 
+  021f:30 002e            bnt code_0250 
+  0222:38 0198          pushi 198 // $198 eduGoal
+  0225:76               push0 
+  0226:85 01              lat temp1 
+  0228:4a 04             send 4 
+
+  022a:36                push 
+  022b:35 64              ldi 64 
+  022d:22                 lt? 
+  022e:30 0051            bnt code_0282 
+  0231:8d 07              lst temp7 
+  0233:35 0a              ldi a 
+  0235:04                 sub 
+  0236:a5 07              sat temp7 
+  0238:38 0198          pushi 198 // $198 eduGoal
+  023b:78               push1 
+  023c:38 0198          pushi 198 // $198 eduGoal
+  023f:76               push0 
+  0240:85 01              lat temp1 
+  0242:4a 04             send 4 
+
+  0244:36                push 
+  0245:35 0a              ldi a 
+  0247:02                 add 
+  0248:36                push 
+  0249:85 01              lat temp1 
+  024b:4a 06             send 6 
+
+  024d:32 0032            jmp code_0282 
+
+        code_0250
+  0250:3c                 dup 
+  0251:35 04              ldi 4 
+  0253:1a                 eq? 
+  0254:30 002b            bnt code_0282 
+  0257:38 0198          pushi 198 // $198 eduGoal
+  025a:76               push0 
+  025b:85 01              lat temp1 
+  025d:4a 04             send 4 
+
+  025f:36                push 
+  0260:35 64              ldi 64 
+  0262:22                 lt? 
+  0263:30 001c            bnt code_0282 
+  0266:8d 07              lst temp7 
+  0268:35 0a              ldi a 
+  026a:04                 sub 
+  026b:a5 07              sat temp7 
+  026d:38 0198          pushi 198 // $198 eduGoal
+  0270:78               push1 
+  0271:38 0198          pushi 198 // $198 eduGoal
+  0274:76               push0 
+  0275:85 01              lat temp1 
+  0277:4a 04             send 4 
+
+  0279:36                push 
+  027a:35 0a              ldi a 
+  027c:02                 add 
+  027d:36                push 
+  027e:85 01              lat temp1 
+  0280:4a 06             send 6 
+
+
+        code_0282
+  0282:3a                toss 
+  0283:32 fee9            jmp code_016f 
+
+        code_0286
+  0286:8d 03              lst temp3 
+  0288:35 0a              ldi a 
+  028a:22                 lt? 
+  028b:30 0128            bnt code_03b6 
+  028e:39 0a            pushi a // $a nsLeft
+  0290:85 03              lat temp3 
+  0292:04                 sub 
+  0293:a5 07              sat temp7 
+  0295:38 0199          pushi 199 // $199 carGoal
+  0298:78               push1 
+  0299:39 0a            pushi a // $a nsLeft
+  029b:85 01              lat temp1 
+  029d:4a 06             send 6 
+
+
+        code_029f
+  029f:85 07              lat temp7 
+  02a1:30 0112            bnt code_03b6 
+  02a4:7a               push2 
+  02a5:76               push0 
+  02a6:39 04            pushi 4 // $4 x
+  02a8:43 3c 04         callk Random 4 
+
+  02ab:36                push 
+  02ac:3c                 dup 
+  02ad:35 00              ldi 0 
+  02af:1a                 eq? 
+  02b0:30 002e            bnt code_02e1 
+  02b3:38 0196          pushi 196 // $196 monGoal
+  02b6:76               push0 
+  02b7:85 01              lat temp1 
+  02b9:4a 04             send 4 
+
+  02bb:36                push 
+  02bc:35 0a              ldi a 
+  02be:1e                 gt? 
+  02bf:30 00f0            bnt code_03b2 
+  02c2:8d 07              lst temp7 
+  02c4:35 0a              ldi a 
+  02c6:04                 sub 
+  02c7:a5 07              sat temp7 
+  02c9:38 0196          pushi 196 // $196 monGoal
+  02cc:78               push1 
+  02cd:38 0196          pushi 196 // $196 monGoal
+  02d0:76               push0 
+  02d1:85 01              lat temp1 
+  02d3:4a 04             send 4 
+
+  02d5:36                push 
+  02d6:35 0a              ldi a 
+  02d8:04                 sub 
+  02d9:36                push 
+  02da:85 01              lat temp1 
+  02dc:4a 06             send 6 
+
+  02de:32 00d1            jmp code_03b2 
+
+        code_02e1
+  02e1:3c                 dup 
+  02e2:35 01              ldi 1 
+  02e4:1a                 eq? 
+  02e5:30 002e            bnt code_0316 
+  02e8:38 0197          pushi 197 // $197 hapGoal
+  02eb:76               push0 
+  02ec:85 01              lat temp1 
+  02ee:4a 04             send 4 
+
+  02f0:36                push 
+  02f1:35 0a              ldi a 
+  02f3:1e                 gt? 
+  02f4:30 00bb            bnt code_03b2 
+  02f7:8d 07              lst temp7 
+  02f9:35 0a              ldi a 
+  02fb:04                 sub 
+  02fc:a5 07              sat temp7 
+  02fe:38 0197          pushi 197 // $197 hapGoal
+  0301:78               push1 
+  0302:38 0197          pushi 197 // $197 hapGoal
+  0305:76               push0 
+  0306:85 01              lat temp1 
+  0308:4a 04             send 4 
+
+  030a:36                push 
+  030b:35 0a              ldi a 
+  030d:04                 sub 
+  030e:36                push 
+  030f:85 01              lat temp1 
+  0311:4a 06             send 6 
+
+  0313:32 009c            jmp code_03b2 
+
+        code_0316
+  0316:3c                 dup 
+  0317:35 02              ldi 2 
+  0319:1a                 eq? 
+  031a:30 002e            bnt code_034b 
+  031d:38 0197          pushi 197 // $197 hapGoal
+  0320:76               push0 
+  0321:85 01              lat temp1 
+  0323:4a 04             send 4 
+
+  0325:36                push 
+  0326:35 0a              ldi a 
+  0328:1e                 gt? 
+  0329:30 0086            bnt code_03b2 
+  032c:8d 07              lst temp7 
+  032e:35 0a              ldi a 
+  0330:04                 sub 
+  0331:a5 07              sat temp7 
+  0333:38 0197          pushi 197 // $197 hapGoal
+  0336:78               push1 
+  0337:38 0197          pushi 197 // $197 hapGoal
+  033a:76               push0 
+  033b:85 01              lat temp1 
+  033d:4a 04             send 4 
+
+  033f:36                push 
+  0340:35 0a              ldi a 
+  0342:04                 sub 
+  0343:36                push 
+  0344:85 01              lat temp1 
+  0346:4a 06             send 6 
+
+  0348:32 0067            jmp code_03b2 
+
+        code_034b
+  034b:3c                 dup 
+  034c:35 03              ldi 3 
+  034e:1a                 eq? 
+  034f:30 002e            bnt code_0380 
+  0352:38 0198          pushi 198 // $198 eduGoal
+  0355:76               push0 
+  0356:85 01              lat temp1 
+  0358:4a 04             send 4 
+
+  035a:36                push 
+  035b:35 0a              ldi a 
+  035d:1e                 gt? 
+  035e:30 0051            bnt code_03b2 
+  0361:8d 07              lst temp7 
+  0363:35 0a              ldi a 
+  0365:04                 sub 
+  0366:a5 07              sat temp7 
+  0368:38 0198          pushi 198 // $198 eduGoal
+  036b:78               push1 
+  036c:38 0198          pushi 198 // $198 eduGoal
+  036f:76               push0 
+  0370:85 01              lat temp1 
+  0372:4a 04             send 4 
+
+  0374:36                push 
+  0375:35 0a              ldi a 
+  0377:04                 sub 
+  0378:36                push 
+  0379:85 01              lat temp1 
+  037b:4a 06             send 6 
+
+  037d:32 0032            jmp code_03b2 
+
+        code_0380
+  0380:3c                 dup 
+  0381:35 04              ldi 4 
+  0383:1a                 eq? 
+  0384:30 002b            bnt code_03b2 
+  0387:38 0198          pushi 198 // $198 eduGoal
+  038a:76               push0 
+  038b:85 01              lat temp1 
+  038d:4a 04             send 4 
+
+  038f:36                push 
+  0390:35 0a              ldi a 
+  0392:1e                 gt? 
+  0393:30 001c            bnt code_03b2 
+  0396:8d 07              lst temp7 
+  0398:35 0a              ldi a 
+  039a:04                 sub 
+  039b:a5 07              sat temp7 
+  039d:38 0198          pushi 198 // $198 eduGoal
+  03a0:78               push1 
+  03a1:38 0198          pushi 198 // $198 eduGoal
+  03a4:76               push0 
+  03a5:85 01              lat temp1 
+  03a7:4a 04             send 4 
+
+  03a9:36                push 
+  03aa:35 0a              ldi a 
+  03ac:04                 sub 
+  03ad:36                push 
+  03ae:85 01              lat temp1 
+  03b0:4a 06             send 6 
+
+
+        code_03b2
+  03b2:3a                toss 
+  03b3:32 fee9            jmp code_029f 
+
+        code_03b6
+  03b6:85 01              lat temp1 
+  03b8:a0 012e            sag  
+  03bb:48                 ret 
+)
+

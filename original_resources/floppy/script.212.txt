@@ -1,0 +1,4487 @@
+(script 212)
+
+(string
+    string_1bec "boughtItem"
+    string_1bf7 "notEnoughCash"
+    string_1c05 "FCue"
+    string_1c0a "redeemable"
+    string_1c15 "dialogKeyMouse"
+    string_1c24 "pawnShop"
+    string_1c2d "background"
+    string_1c38 "pawnButton"
+    string_1c43 "redeemButton"
+    string_1c50 "buyButton"
+    string_1c5a "exitButton"
+    string_1c65 "theTalker"
+    string_1c6f "Pawnable Items"
+    string_1c7e "pawnMessage"
+    string_1c8a "Take It"
+    string_1c92 "Leave It"
+    string_1c9b "pawn"
+    string_1ca0 "pawnSelector"
+    string_1cad "donePawning"
+    string_1cb9 "doneRedeeming"
+    string_1cc7 "doneBuying"
+    string_1cd2 "Buyable Items"
+    string_1ce0 "buyMessage"
+    string_1ceb "Redeemable Items"
+    string_1cfc "redeemMessage"
+    string_1d0a "                             "
+    string_1d28 "aRedeemableItem"
+    string_1d38 "items"
+    string_1d3e "computerScript"
+    string_1d4d ""
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+    local2 = $0000
+    local3 = $0000
+    local4 = $0000
+    local5 = $0000
+    local6 = $0000
+    local7 = $0000
+    local8 = $0000
+    local9 = $0000
+    local10 = $0000
+    local11 = $0000
+    local12 = $0000
+    local13 = $0000
+    local14 = $0000
+    local15 = $0000
+    local16 = $0000
+    local17 = $0000
+    local18 = $0000
+    local19 = $0000
+    local20 = $0000
+    local21 = $0000
+    local22 = $0000
+    local23 = $0000
+    local24 = $0000
+    local25 = $0000
+    local26 = $0000
+    local27 = $0000
+    local28 = $0000
+    local29 = $0000
+    local30 = $0000
+    local31 = $0000
+    local32 = $0000
+    local33 = $0000
+    local34 = $0000
+    local35 = $0000
+    local36 = $0000
+    local37 = $0000
+    local38 = $0000
+    local39 = $0000
+    local40 = $0000
+    local41 = $0000
+    local42 = $0000
+    local43 = $0000
+    local44 = $0000
+    local45 = $0000
+    local46 = $0000
+    local47 = $0000
+    local48 = $0000
+    local49 = $0000
+    local50 = $0000
+    local51 = $0000
+    local52 = $0000
+    local53 = $0000
+    local54 = $0000
+    local55 = $0000
+    local56 = $0000
+    local57 = $0000
+    local58 = $0000
+    local59 = $0000
+    local60 = $0000
+    local61 = $0000
+    local62 = $0000
+    local63 = $0000
+    local64 = $0000
+    local65 = $0000
+    local66 = $0000
+    local67 = $0000
+    local68 = $0000
+    local69 = $0000
+    local70 = $0000
+    local71 = $0000
+    local72 = $0000
+    local73 = $0000
+    local74 = $0000
+    local75 = $0000
+    local76 = $0000
+    local77 = $0000
+    local78 = $0000
+    local79 = $0000
+    local80 = $0000
+    local81 = $0000
+    local82 = $0000
+    local83 = $0000
+    local84 = $0000
+    local85 = $0000
+    local86 = $0000
+    local87 = $0000
+    local88 = $0000
+    local89 = $0000
+    local90 = $0000
+    local91 = $0000
+    local92 = $0000
+    local93 = $0000
+    local94 = $0000
+    local95 = $0000
+    local96 = $0000
+    local97 = $0000
+    local98 = $0000
+    local99 = $0000
+    local100 = $0000
+    local101 = $0000
+    local102 = $0000
+    local103 = $0000
+    local104 = $0000
+    local105 = $0000
+    local106 = $0000
+    local107 = $0000
+    local108 = $0000
+    local109 = $0000
+    local110 = $0000
+    local111 = $0000
+    local112 = $0000
+    local113 = $0000
+    local114 = $0000
+    local115 = $0000
+    local116 = $0000
+    local117 = $0000
+    local118 = $0000
+    local119 = $0000
+    local120 = $0000
+    local121 = $0000
+    local122 = $0000
+    local123 = $0000
+    local124 = $0000
+    local125 = $0000
+    local126 = $0000
+    local127 = $0000
+    local128 = $0000
+    local129 = $0000
+    local130 = $0000
+    local131 = $0000
+    local132 = $0000
+    local133 = $0000
+    local134 = $0000
+    local135 = $0000
+    local136 = $0000
+    local137 = $0000
+    local138 = $0000
+    local139 = $0000
+    local140 = $0000
+    local141 = $0000
+    local142 = $0000
+    local143 = $0000
+    local144 = $0000
+    local145 = $0000
+    local146 = $0000
+    local147 = $0000
+    local148 = $0000
+    local149 = $0000
+    local150 = $0000
+    local151 = $0000
+    local152 = $0000
+    local153 = $0000
+    local154 = $0000
+    local155 = $0000
+    local156 = $0000
+    local157 = $0000
+    local158 = $0000
+    local159 = $0000
+    local160 = $0000
+    local161 = $0000
+    local162 = $0000
+    local163 = $0000
+    local164 = $0000
+    local165 = $0000
+    local166 = $0000
+    local167 = $0000
+    local168 = $0000
+    local169 = $0000
+    local170 = $0000
+    local171 = $0000
+    local172 = $0000
+    local173 = $0000
+    local174 = $0000
+    local175 = $0000
+    local176 = $0000
+    local177 = $0000
+    local178 = $0000
+    local179 = $0000
+    local180 = $0000
+    local181 = $0000
+    local182 = $0000
+    local183 = $0000
+    local184 = $0000
+    local185 = $0000
+    local186 = $0000
+    local187 = $0000
+    local188 = $0000
+    local189 = $0000
+    local190 = $0000
+    local191 = $0000
+    local192 = $0000
+    local193 = $0000
+    local194 = $0000
+    local195 = $0000
+    local196 = $0000
+    local197 = $0000
+    local198 = $0000
+    local199 = $0000
+    local200 = $0000
+    local201 = $0000
+    local202 = $0000
+    local203 = $0000
+    local204 = $0000
+    local205 = $0000
+    local206 = $0000
+    local207 = $0000
+    local208 = $0000
+    local209 = $0000
+    local210 = $0000
+    local211 = $0000
+    local212 = $0000
+    local213 = $0000
+    local214 = $0000
+    local215 = $0000
+    local216 = $0000
+    local217 = $0000
+    local218 = $0000
+    local219 = $0000
+    local220 = $0000
+    local221 = $0000
+    local222 = $0000
+    local223 = $0000
+    local224 = $0000
+    local225 = $0000
+    local226 = $0000
+    local227 = $0000
+    local228 = $0000
+    local229 = $0000
+    local230 = $0000
+    local231 = $0000
+    local232 = $0000
+    local233 = $0000
+    local234 = $0000
+    local235 = $0000
+    local236 = $0000
+    local237 = $0000
+    local238 = $0000
+    local239 = $0000
+    local240 = $0000
+    local241 = $0000
+    local242 = $0000
+    local243 = $0000
+    local244 = $0000
+    local245 = $0000
+    local246 = $0000
+    local247 = $0000
+    local248 = $0000
+    local249 = $0000
+    local250 = $0000
+    local251 = $0000
+    local252 = $0000
+    local253 = $0000
+    local254 = $0000
+    local255 = $0000
+    local256 = $0000
+    local257 = $0000
+    local258 = $0000
+    local259 = $0000
+    local260 = $0000
+    local261 = $0000
+    local262 = $0000
+    local263 = $0000
+    local264 = $0000
+    local265 = $0000
+    local266 = $0000
+    local267 = $0000
+    local268 = $0000
+    local269 = $0000
+    local270 = $0000
+    local271 = $0000
+    local272 = $0000
+    local273 = $0000
+    local274 = $0000
+    local275 = $0000
+    local276 = $0000
+    local277 = $0000
+    local278 = $0000
+    local279 = $0000
+    local280 = $0000
+    local281 = $0000
+    local282 = $0000
+    local283 = $0000
+    local284 = $0000
+    local285 = $0000
+    local286 = $0000
+    local287 = $0000
+    local288 = $0000
+    local289 = $0000
+    local290 = $0000
+    local291 = $0000
+    local292 = $0000
+    local293 = $0000
+    local294 = $0000
+    local295 = $0000
+    local296 = $0000
+    local297 = $0000
+    local298 = $0000
+    local299 = $0000
+    local300 = $0000
+    local301 = $0000
+    local302 = $0000
+    local303 = $0000
+    local304 = $0000
+    local305 = $0000
+    local306 = $0000
+    local307 = $0000
+    local308 = $0000
+    local309 = $0000
+    local310 = $0000
+    local311 = $0000
+    local312 = $0000
+    local313 = $0000
+    local314 = $0000
+    local315 = $0000
+    local316 = $0000
+    local317 = $0000
+    local318 = $0000
+    local319 = $0000
+    local320 = $0000
+    local321 = $0000
+    local322 = $0000
+    local323 = $0000
+    local324 = $0000
+    local325 = $0000
+    local326 = $0000
+    local327 = $0000
+    local328 = $0000
+    local329 = $0000
+    local330 = $0000
+    local331 = $0000
+    local332 = $0000
+    local333 = $0000
+    local334 = $0000
+    local335 = $0000
+    local336 = $0000
+    local337 = $0000
+    local338 = $0000
+    local339 = $0000
+    local340 = $0000
+    local341 = $0000
+    local342 = $0000
+    local343 = $0000
+    local344 = $0000
+    local345 = $0000
+    local346 = $0000
+    local347 = $0000
+    local348 = $0000
+    local349 = $0000
+    local350 = $0000
+    local351 = $0000
+    local352 = $0000
+    local353 = $0000
+    local354 = $0000
+    local355 = $0000
+    local356 = $0000
+    local357 = $0000
+    local358 = $0000
+    local359 = $0000
+    local360 = $0000
+    local361 = $0000
+    local362 = $0000
+    local363 = $0000
+    local364 = $0000
+    local365 = $0000
+    local366 = $0000
+    local367 = $0000
+    local368 = $0000
+    local369 = $0000
+    local370 = $0000
+    local371 = $0000
+    local372 = $0000
+    local373 = $0000
+    local374 = $0000
+    local375 = $0000
+    local376 = $0000
+    local377 = $0000
+    local378 = $0000
+    local379 = $0000
+    local380 = $0000
+    local381 = $0000
+    local382 = $0000
+    local383 = $0000
+    local384 = $0000
+    local385 = $0000
+    local386 = $0000
+    local387 = $0000
+    local388 = $0000
+    local389 = $0000
+    local390 = $0000
+    local391 = $0000
+    local392 = $0000
+    local393 = $0000
+    local394 = $0000
+    local395 = $0000
+    local396 = $0000
+    local397 = $0000
+    local398 = $0000
+    local399 = $0000
+    local400 = $0000
+    local401 = $0000
+    local402 = $0000
+    local403 = $0000
+    local404 = $0000
+    local405 = $0000
+    local406 = $0000
+    local407 = $0000
+    local408 = $0000
+    local409 = $0000
+    local410 = $0000
+    local411 = $0000
+    local412 = $0000
+    local413 = $0000
+    local414 = $0000
+    local415 = $0000
+    local416 = $0000
+    local417 = $0000
+    local418 = $0000
+    local419 = $0000
+    local420 = $0000
+    local421 = $0000
+    local422 = $0000
+    local423 = $0000
+    local424 = $0000
+    local425 = $0005
+    local426 = $0000
+    local427 = $0000
+    local428 = $0000
+    local429 = $ffff
+)
+
+// 012c
+(instance boughtItem of Obj
+    (properties
+    )
+    (method (doit) // method_00ea
+  00ea:3f 01             link 1 // (var $1)
+
+        code_00ec
+  00ec:8a 01ad            lsl local429 
+  00ef:7a               push2 
+  00f0:39 08            pushi 8 // $8 underBits
+  00f2:39 0f            pushi f // $f lsBottom
+  00f4:43 3c 04         callk Random 4 
+
+  00f7:a5 00              sat temp0 
+  00f9:1a                 eq? 
+  00fa:30 0005            bnt code_0102 
+  00fd:35 01              ldi 1 
+  00ff:32 ffea            jmp code_00ec 
+
+        code_0102
+  0102:85 00              lat temp0 
+  0104:a2 01ad            sal local429 
+  0107:39 09            pushi 9 // $9 nsTop
+  0109:38 00d4          pushi d4 // $d4 ignoreActors
+  010c:36                push 
+  010d:38 0136          pushi 136 // $136 tail
+  0110:88 019d            lsg  
+  0113:88 01b8            lsg  
+  0116:88 01b9            lsg  
+  0119:88 01ba            lsg  
+  011c:39 19            pushi 19 // $19 time
+  011e:88 01aa            lsg  
+  0121:47 ff 00 12      calle ff procedure_0000 12 //  
+
+  0125:48                 ret 
+    )
+
+)
+
+// 017a
+(instance notEnoughCash of Obj
+    (properties
+    )
+    (method (doit) // method_0146
+  0146:39 66            pushi 66 // $66 init
+  0148:78               push1 
+  0149:39 10            pushi 10 // $10 lsRight
+  014b:80 019d            lag  
+  014e:4a 06             send 6 
+
+  0150:39 0b            pushi b // $b nsBottom
+  0152:38 00d4          pushi d4 // $d4 ignoreActors
+  0155:39 10            pushi 10 // $10 lsRight
+  0157:38 0136          pushi 136 // $136 tail
+  015a:88 019d            lsg  
+  015d:88 01b8            lsg  
+  0160:88 01b9            lsg  
+  0163:88 01ba            lsg  
+  0166:39 46            pushi 46 // $46 width
+  0168:3c                 dup 
+  0169:39 19            pushi 19 // $19 time
+  016b:88 01aa            lsg  
+  016e:47 ff 00 16      calle ff procedure_0000 16 //  
+
+  0172:48                 ret 
+  0173:00                bnot 
+    )
+
+)
+
+// 01cc
+(class FCue of Cycle
+    (properties
+        client $0
+        caller $0
+        cycleDir $1
+        cycleCnt $0
+        completed $0
+        ticksToDo $0
+        lastTime $0
+        cycleSpeed $0
+    )
+    (method (init) // method_0194
+  0194:39 66            pushi 66 // $66 init
+  0196:78               push1 
+  0197:8f 01              lsp param1 
+  0199:57 13 06         super Cycle 6 
+
+  019c:87 02              lap param2 
+  019e:65 0a             aTop caller 
+  01a0:48                 ret 
+    )
+
+    (method (doit) // method_01a1
+  01a1:39 07            pushi 7 // $7 cel
+  01a3:76               push0 
+  01a4:63 08             pToa client 
+  01a6:4a 04             send 4 
+
+  01a8:36                push 
+  01a9:38 00b0          pushi b0 // $b0 nextCel
+  01ac:76               push0 
+  01ad:54 04             self 4 
+
+  01af:1c                 ne? 
+  01b0:30 0006            bnt code_01b9 
+  01b3:38 00b1          pushi b1 // $b1 cycleDone
+  01b6:76               push0 
+  01b7:54 04             self 4 
+
+
+        code_01b9
+  01b9:48                 ret 
+    )
+
+    (method (cycleDone) // method_01ba
+  01ba:35 01              ldi 1 
+  01bc:65 10             aTop completed 
+  01be:38 00b2          pushi b2 // $b2 motionCue
+  01c1:76               push0 
+  01c2:54 04             self 4 
+
+  01c4:48                 ret 
+  01c5:00                bnot 
+    )
+
+)
+
+// 0b48
+(instance dialogKeyMouse of Set
+    (properties
+        elements $0
+        size $0
+    )
+)
+
+// 0db2
+(instance publicpawnShop of Dialog
+    (properties
+        elements $0
+        size $0
+        text $0
+        window $0
+        theItem $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $77
+        nsRight $b8
+        time $0
+        busy $0
+        seconds $0
+        lastSeconds $0
+        client $0
+        agent $0
+        script $0
+        menuBarOK $1
+        tail $0
+        standard $0
+        keyMouseList $0
+        prevDialog $0
+        prevTalker $0
+        aTimeClock $0
+    )
+    (method (init) // method_0b62
+  0b62:3f 03             link 3 // (var $3)
+  0b64:80 0206            lag  
+  0b67:18                 not 
+  0b68:30 0176            bnt code_0ce1 
+  0b6b:7a               push2 
+  0b6c:38 0083          pushi 83 // $83 script
+  0b6f:38 00d4          pushi d4 // $d4 ignoreActors
+  0b72:43 00 04         callk Load 4 
+
+  0b75:78               push1 
+  0b76:7a               push2 
+  0b77:45 11 02         callb procedure_0011 2 //  
+
+  0b7a:72 ffd1          lofsa $0b4e // dialogKeyMouse
+  0b7d:65 2e             aTop keyMouseList 
+  0b7f:80 01f6            lag  
+  0b82:65 30             aTop prevDialog 
+  0b84:39 1c            pushi 1c // $1c color
+  0b86:78               push1 
+  0b87:76               push0 
+  0b88:39 1d            pushi 1d // $1d back
+  0b8a:78               push1 
+  0b8b:80 0217            lag  
+  0b8e:30 0005            bnt code_0b96 
+  0b91:35 52              ldi 52 
+  0b93:32 0002            jmp code_0b98 
+
+        code_0b96
+  0b96:35 03              ldi 3 
+
+        code_0b98
+  0b98:36                push 
+  0b99:81 3b              lag  
+  0b9b:4a 0c             send c 
+
+  0b9d:5c              selfID 
+  0b9e:a0 01f6            sag  
+  0ba1:35 07              ldi 7 
+  0ba3:a0 01b8            sag  
+  0ba6:35 6e              ldi 6e 
+  0ba8:a0 01b9            sag  
+  0bab:35 4e              ldi 4e 
+  0bad:a0 01ba            sag  
+  0bb0:88 0216            lsg  
+  0bb3:35 02              ldi 2 
+  0bb5:22                 lt? 
+  0bb6:30 0010            bnt code_0bc9 
+  0bb9:7a               push2 
+  0bba:38 0080          pushi 80 // $80 seconds
+  0bbd:39 05            pushi 5 // $5 view
+  0bbf:76               push0 
+  0bc0:72 0597          lofsa $115a // theTalker
+  0bc3:4a 04             send 4 
+
+  0bc5:36                push 
+  0bc6:43 00 04         callk Load 4 
+
+
+        code_0bc9
+  0bc9:88 0216            lsg  
+  0bcc:35 02              ldi 2 
+  0bce:22                 lt? 
+  0bcf:30 0010            bnt code_0be2 
+  0bd2:7a               push2 
+  0bd3:38 0080          pushi 80 // $80 seconds
+  0bd6:39 05            pushi 5 // $5 view
+  0bd8:76               push0 
+  0bd9:72 0dc8          lofsa $19a4 // items
+  0bdc:4a 04             send 4 
+
+  0bde:36                push 
+  0bdf:43 00 04         callk Load 4 
+
+
+        code_0be2
+  0be2:72 f59b          lofsa $0180 // notEnoughCash
+  0be5:a0 01a8            sag  
+  0be8:72 f547          lofsa $0132 // boughtItem
+  0beb:a0 01a9            sag  
+  0bee:72 0db3          lofsa $19a4 // items
+  0bf1:a0 01b2            sag  
+  0bf4:35 00              ldi 0 
+  0bf6:a3 00              sal local0 
+  0bf8:87 01              lap param1 
+  0bfa:65 22             aTop client 
+  0bfc:39 3c            pushi 3c // $3c doit
+  0bfe:78               push1 
+  0bff:7a               push2 
+  0c00:80 01a1            lag  
+  0c03:4a 06             send 6 
+
+  0c05:35 0c              ldi c 
+  0c07:a0 0190            sag  
+  0c0a:72 054d          lofsa $115a // theTalker
+  0c0d:a0 019d            sag  
+  0c10:38 012c          pushi 12c // $12c playing
+  0c13:76               push0 
+  0c14:80 012e            lag  
+  0c17:4a 04             send 4 
+
+  0c19:36                push 
+  0c1a:35 1d              ldi 1d 
+  0c1c:1a                 eq? 
+  0c1d:30 0013            bnt code_0c33 
+  0c20:38 0088          pushi 88 // $88 setScript
+  0c23:78               push1 
+  0c24:72 0f97          lofsa $1bbe // computerScript
+  0c27:36                push 
+  0c28:54 06             self 6 
+
+  0c2a:38 0087          pushi 87 // $87 cue
+  0c2d:76               push0 
+  0c2e:72 0f8d          lofsa $1bbe // computerScript
+  0c31:4a 04             send 4 
+
+
+        code_0c33
+  0c33:39 6e            pushi 6e // $6e add
+  0c35:39 03            pushi 3 // $3 y
+  0c37:72 01cc          lofsa $0e06 // background
+  0c3a:36                push 
+  0c3b:72 051c          lofsa $115a // theTalker
+  0c3e:36                push 
+  0c3f:72 04d0          lofsa $1112 // exitButton
+  0c42:36                push 
+  0c43:54 0a             self a 
+
+  0c45:39 23            pushi 23 // $23 window
+  0c47:78               push1 
+  0c48:89 3b              lsg  
+  0c4a:39 6f            pushi 6f // $6f eachElementDo
+  0c4c:7a               push2 
+  0c4d:39 66            pushi 66 // $66 init
+  0c4f:78               push1 
+  0c50:39 6f            pushi 6f // $6f eachElementDo
+  0c52:78               push1 
+  0c53:38 0099          pushi 99 // $99 setSize
+  0c56:38 009b          pushi 9b // $9b moveTo
+  0c59:7a               push2 
+  0c5a:39 45            pushi 45 // $45 done
+  0c5c:39 2c            pushi 2c // $2c nodePtr
+  0c5e:38 00a3          pushi a3 // $a3 open
+  0c61:7a               push2 
+  0c62:76               push0 
+  0c63:39 0f            pushi f // $f lsBottom
+  0c65:54 24             self 24 
+
+  0c67:39 6e            pushi 6e // $6e add
+  0c69:78               push1 
+  0c6a:72 0d37          lofsa $19a4 // items
+  0c6d:36                push 
+  0c6e:54 06             self 6 
+
+  0c70:76               push0 
+  0c71:40 f845 00        call proc_04ba 0 
+
+  0c75:38 008e          pushi 8e // $8e playBed
+  0c78:78               push1 
+  0c79:39 32            pushi 32 // $32 b-i2
+  0c7b:80 01dd            lag  
+  0c7e:4a 06             send 6 
+
+  0c80:38 0099          pushi 99 // $99 setSize
+  0c83:76               push0 
+  0c84:39 4d            pushi 4d // $4d value
+  0c86:78               push1 
+  0c87:38 0175          pushi 175 // $175 cash
+  0c8a:76               push0 
+  0c8b:80 012e            lag  
+  0c8e:4a 04             send 4 
+
+  0c90:36                push 
+  0c91:35 01              ldi 1 
+  0c93:04                 sub 
+  0c94:36                push 
+  0c95:39 53            pushi 53 // $53 draw
+  0c97:76               push0 
+  0c98:80 0131            lag  
+  0c9b:4a 0e             send e 
+
+  0c9d:38 00f2          pushi f2 // $f2 canControl
+  0ca0:78               push1 
+  0ca1:78               push1 
+  0ca2:51 20            class User 
+  0ca4:4a 06             send 6 
+
+  0ca6:76               push0 
+  0ca7:45 0e 00         callb procedure_000e 0 //  
+
+  0caa:30 003e            bnt code_0ceb 
+  0cad:39 66            pushi 66 // $66 init
+  0caf:76               push0 
+  0cb0:80 019d            lag  
+  0cb3:4a 04             send 4 
+
+  0cb5:39 0b            pushi b // $b nsBottom
+  0cb7:38 00d4          pushi d4 // $d4 ignoreActors
+  0cba:7a               push2 
+  0cbb:76               push0 
+  0cbc:39 07            pushi 7 // $7 cel
+  0cbe:43 3c 04         callk Random 4 
+
+  0cc1:36                push 
+  0cc2:38 0136          pushi 136 // $136 tail
+  0cc5:88 019d            lsg  
+  0cc8:88 01b8            lsg  
+  0ccb:88 01b9            lsg  
+  0cce:88 01ba            lsg  
+  0cd1:39 46            pushi 46 // $46 width
+  0cd3:39 64            pushi 64 // $64 moveDone
+  0cd5:39 19            pushi 19 // $19 time
+  0cd7:88 01aa            lsg  
+  0cda:47 ff 00 16      calle ff procedure_0000 16 //  
+
+  0cde:32 000a            jmp code_0ceb 
+
+        code_0ce1
+  0ce1:38 0102          pushi 102 // $102 setCursor
+  0ce4:78               push1 
+  0ce5:67 10             pTos theItem 
+  0ce7:51 30            class KeyMouse 
+  0ce9:4a 06             send 6 
+
+
+        code_0ceb
+  0ceb:35 00              ldi 0 
+  0ced:a0 0206            sag  
+  0cf0:39 3c            pushi 3c // $3c doit
+  0cf2:7a               push2 
+  0cf3:76               push0 
+  0cf4:76               push0 
+  0cf5:54 08             self 8 
+
+  0cf7:a5 02              sat temp2 
+  0cf9:78               push1 
+  0cfa:36                push 
+  0cfb:43 06 02         callk IsObject 2 
+
+  0cfe:30 0011            bnt code_0d12 
+  0d01:39 72            pushi 72 // $72 contains
+  0d03:78               push1 
+  0d04:8d 02              lst temp2 
+  0d06:54 06             self 6 
+
+  0d08:30 000b            bnt code_0d16 
+  0d0b:35 00              ldi 0 
+  0d0d:a5 02              sat temp2 
+  0d0f:32 0004            jmp code_0d16 
+
+        code_0d12
+  0d12:35 01              ldi 1 
+  0d14:a5 02              sat temp2 
+
+        code_0d16
+  0d16:63 30             pToa prevDialog 
+  0d18:a0 01f6            sag  
+  0d1b:7a               push2 
+  0d1c:7c            pushSelf 
+  0d1d:38 0123          pushi 123 // $123 erase
+  0d20:45 0f 04         callb procedure_000f 4 //  
+
+  0d23:38 0091          pushi 91 // $91 fade
+  0d26:76               push0 
+  0d27:80 01dd            lag  
+  0d2a:4a 04             send 4 
+
+  0d2c:38 0129          pushi 129 // $129 setList
+  0d2f:78               push1 
+  0d30:63 30             pToa prevDialog 
+  0d32:30 0009            bnt code_0d3e 
+  0d35:38 0138          pushi 138 // $138 keyMouseList
+  0d38:76               push0 
+  0d39:4a 04             send 4 
+
+  0d3b:32 0003            jmp code_0d41 
+
+        code_0d3e
+  0d3e:80 01b0            lag  
+
+        code_0d41
+  0d41:36                push 
+  0d42:51 30            class KeyMouse 
+  0d44:4a 06             send 6 
+
+  0d46:39 75            pushi 75 // $75 release
+  0d48:76               push0 
+  0d49:39 67            pushi 67 // $67 dispose
+  0d4b:76               push0 
+  0d4c:63 2e             pToa keyMouseList 
+  0d4e:4a 08             send 8 
+
+  0d50:39 67            pushi 67 // $67 dispose
+  0d52:76               push0 
+  0d53:54 04             self 4 
+
+  0d55:39 08            pushi 8 // $8 underBits
+  0d57:39 0b            pushi b // $b nsBottom
+  0d59:67 12             pTos nsTop 
+  0d5b:35 01              ldi 1 
+  0d5d:02                 add 
+  0d5e:36                push 
+  0d5f:67 14             pTos nsLeft 
+  0d61:67 16             pTos nsBottom 
+  0d63:35 01              ldi 1 
+  0d65:04                 sub 
+  0d66:36                push 
+  0d67:67 18             pTos nsRight 
+  0d69:35 03              ldi 3 
+  0d6b:04                 sub 
+  0d6c:36                push 
+  0d6d:7a               push2 
+  0d6e:76               push0 
+  0d6f:76               push0 
+  0d70:43 6c 10         callk Graph 10 
+
+  0d73:78               push1 
+  0d74:76               push0 
+  0d75:45 11 02         callb procedure_0011 2 //  
+
+  0d78:85 02              lat temp2 
+  0d7a:78               push1 
+  0d7b:38 00d4          pushi d4 // $d4 ignoreActors
+  0d7e:43 03 02         callk DisposeScript 2 
+
+  0d81:48                 ret 
+    )
+
+    (method (draw) // method_0d82
+  0d82:39 53            pushi 53 // $53 draw
+  0d84:76               push0 
+  0d85:57 10 04         super Dialog 4 
+
+  0d88:80 0206            lag  
+  0d8b:30 001d            bnt code_0dab 
+  0d8e:38 0099          pushi 99 // $99 setSize
+  0d91:76               push0 
+  0d92:39 4d            pushi 4d // $4d value
+  0d94:78               push1 
+  0d95:38 0175          pushi 175 // $175 cash
+  0d98:76               push0 
+  0d99:80 012e            lag  
+  0d9c:4a 04             send 4 
+
+  0d9e:36                push 
+  0d9f:35 01              ldi 1 
+  0da1:04                 sub 
+  0da2:36                push 
+  0da3:39 53            pushi 53 // $53 draw
+  0da5:76               push0 
+  0da6:80 0131            lag  
+  0da9:4a 0e             send e 
+
+
+        code_0dab
+  0dab:48                 ret 
+    )
+
+)
+
+// 0e00
+(instance background of DIcon
+    (properties
+        type $4
+        state $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $2c8
+        loop $0
+        cel $0
+        priority $ffff
+    )
+)
+
+// 0f34
+(instance pawnButton of DIcon
+    (properties
+        type $4
+        state $41
+        nsTop $28
+        nsLeft $4c
+        nsBottom $0
+        nsRight $0
+        key $1
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $2c8
+        loop $1
+        cel $0
+        priority $e
+    )
+    (method (doit) // method_0e46
+  0e46:3f 03             link 3 // (var $3)
+  0e48:39 2a            pushi 2a // $2a play
+  0e4a:78               push1 
+  0e4b:39 17            pushi 17 // $17 name
+  0e4d:80 01dc            lag  
+  0e50:4a 06             send 6 
+
+  0e52:35 00              ldi 0 
+  0e54:a5 01              sat temp1 
+  0e56:39 59            pushi 59 // $59 size
+  0e58:76               push0 
+  0e59:38 0142          pushi 142 // $142 durables
+  0e5c:76               push0 
+  0e5d:80 012e            lag  
+  0e60:4a 04             send 4 
+
+  0e62:4a 04             send 4 
+
+  0e64:30 005f            bnt code_0ec6 
+  0e67:35 00              ldi 0 
+  0e69:a5 02              sat temp2 
+
+        code_0e6b
+  0e6b:8d 02              lst temp2 
+  0e6d:39 59            pushi 59 // $59 size
+  0e6f:76               push0 
+  0e70:38 0142          pushi 142 // $142 durables
+  0e73:76               push0 
+  0e74:80 012e            lag  
+  0e77:4a 04             send 4 
+
+  0e79:4a 04             send 4 
+
+  0e7b:22                 lt? 
+  0e7c:30 0047            bnt code_0ec6 
+  0e7f:38 0164          pushi 164 // $164 attributes
+  0e82:76               push0 
+  0e83:39 43            pushi 43 // $43 at
+  0e85:78               push1 
+  0e86:8d 02              lst temp2 
+  0e88:38 0142          pushi 142 // $142 durables
+  0e8b:76               push0 
+  0e8c:80 012e            lag  
+  0e8f:4a 04             send 4 
+
+  0e91:4a 06             send 6 
+
+  0e93:4a 04             send 4 
+
+  0e95:36                push 
+  0e96:35 38              ldi 38 
+  0e98:12                 and 
+  0e99:18                 not 
+  0e9a:2e 001a             bt code_0eb7 
+  0e9d:38 0161          pushi 161 // $161 quantity
+  0ea0:76               push0 
+  0ea1:39 43            pushi 43 // $43 at
+  0ea3:78               push1 
+  0ea4:8d 02              lst temp2 
+  0ea6:38 0142          pushi 142 // $142 durables
+  0ea9:76               push0 
+  0eaa:80 012e            lag  
+  0ead:4a 04             send 4 
+
+  0eaf:4a 06             send 6 
+
+  0eb1:4a 04             send 4 
+
+  0eb3:36                push 
+  0eb4:35 01              ldi 1 
+  0eb6:1e                 gt? 
+
+        code_0eb7
+  0eb7:30 0007            bnt code_0ec1 
+  0eba:35 01              ldi 1 
+  0ebc:a5 01              sat temp1 
+  0ebe:32 0005            jmp code_0ec6 
+
+        code_0ec1
+  0ec1:c5 02              +at temp2 
+  0ec3:32 ffa5            jmp code_0e6b 
+
+        code_0ec6
+  0ec6:85 01              lat temp1 
+  0ec8:30 002f            bnt code_0efa 
+  0ecb:38 0097          pushi 97 // $97 select
+  0ece:78               push1 
+  0ecf:76               push0 
+  0ed0:54 06             self 6 
+
+  0ed2:38 0097          pushi 97 // $97 select
+  0ed5:78               push1 
+  0ed6:78               push1 
+  0ed7:72 0238          lofsa $1112 // exitButton
+  0eda:4a 06             send 6 
+
+  0edc:38 00a1          pushi a1 // $a1 theItem
+  0edf:78               push1 
+  0ee0:72 022f          lofsa $1112 // exitButton
+  0ee3:36                push 
+  0ee4:72 fed1          lofsa $0db8 // pawnShop
+  0ee7:4a 06             send 6 
+
+  0ee9:76               push0 
+  0eea:40 f638 00        call proc_0526 0 
+
+  0eee:76               push0 
+  0eef:40 f672 00        call proc_0565 0 
+
+  0ef3:35 01              ldi 1 
+  0ef5:a3 00              sal local0 
+  0ef7:32 002c            jmp code_0f26 
+
+        code_0efa
+  0efa:39 66            pushi 66 // $66 init
+  0efc:78               push1 
+  0efd:39 10            pushi 10 // $10 lsRight
+  0eff:80 019d            lag  
+  0f02:4a 06             send 6 
+
+  0f04:39 0b            pushi b // $b nsBottom
+  0f06:38 00d4          pushi d4 // $d4 ignoreActors
+  0f09:39 14            pushi 14 // $14 brLeft
+  0f0b:38 0136          pushi 136 // $136 tail
+  0f0e:88 019d            lsg  
+  0f11:88 01b8            lsg  
+  0f14:88 01b9            lsg  
+  0f17:88 01ba            lsg  
+  0f1a:39 46            pushi 46 // $46 width
+  0f1c:3c                 dup 
+  0f1d:39 19            pushi 19 // $19 time
+  0f1f:88 01aa            lsg  
+  0f22:47 ff 00 16      calle ff procedure_0000 16 //  
+
+
+        code_0f26
+  0f26:39 3c            pushi 3c // $3c doit
+  0f28:76               push0 
+  0f29:57 0c 04         super DIcon 4 
+
+  0f2c:48                 ret 
+  0f2d:00                bnot 
+    )
+
+)
+
+// 0ffa
+(instance redeemButton of DIcon
+    (properties
+        type $4
+        state $41
+        nsTop $3c
+        nsLeft $4c
+        nsBottom $0
+        nsRight $0
+        key $2
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $2c8
+        loop $1
+        cel $1
+        priority $e
+    )
+    (method (doit) // method_0f7e
+  0f7e:3f 01             link 1 // (var $1)
+  0f80:39 2a            pushi 2a // $2a play
+  0f82:78               push1 
+  0f83:39 17            pushi 17 // $17 name
+  0f85:80 01dc            lag  
+  0f88:4a 06             send 6 
+
+  0f8a:76               push0 
+  0f8b:40 f2f7 00        call proc_0286 0 
+
+  0f8f:30 002f            bnt code_0fc1 
+  0f92:38 0097          pushi 97 // $97 select
+  0f95:78               push1 
+  0f96:76               push0 
+  0f97:54 06             self 6 
+
+  0f99:38 0097          pushi 97 // $97 select
+  0f9c:78               push1 
+  0f9d:78               push1 
+  0f9e:72 0171          lofsa $1112 // exitButton
+  0fa1:4a 06             send 6 
+
+  0fa3:38 00a1          pushi a1 // $a1 theItem
+  0fa6:78               push1 
+  0fa7:72 0168          lofsa $1112 // exitButton
+  0faa:36                push 
+  0fab:72 fe0a          lofsa $0db8 // pawnShop
+  0fae:4a 06             send 6 
+
+  0fb0:76               push0 
+  0fb1:40 f571 00        call proc_0526 0 
+
+  0fb5:76               push0 
+  0fb6:40 f69e 00        call proc_0658 0 
+
+  0fba:35 02              ldi 2 
+  0fbc:a3 00              sal local0 
+  0fbe:32 002c            jmp code_0fed 
+
+        code_0fc1
+  0fc1:39 66            pushi 66 // $66 init
+  0fc3:78               push1 
+  0fc4:39 10            pushi 10 // $10 lsRight
+  0fc6:80 019d            lag  
+  0fc9:4a 06             send 6 
+
+  0fcb:39 0b            pushi b // $b nsBottom
+  0fcd:38 00d4          pushi d4 // $d4 ignoreActors
+  0fd0:39 15            pushi 15 // $15 brBottom
+  0fd2:38 0136          pushi 136 // $136 tail
+  0fd5:88 019d            lsg  
+  0fd8:88 01b8            lsg  
+  0fdb:88 01b9            lsg  
+  0fde:88 01ba            lsg  
+  0fe1:39 46            pushi 46 // $46 width
+  0fe3:3c                 dup 
+  0fe4:39 19            pushi 19 // $19 time
+  0fe6:88 01aa            lsg  
+  0fe9:47 ff 00 16      calle ff procedure_0000 16 //  
+
+
+        code_0fed
+  0fed:39 3c            pushi 3c // $3c doit
+  0fef:76               push0 
+  0ff0:57 0c 04         super DIcon 4 
+
+  0ff3:48                 ret 
+    )
+
+)
+
+// 10c0
+(instance buyButton of DIcon
+    (properties
+        type $4
+        state $41
+        nsTop $50
+        nsLeft $4c
+        nsBottom $0
+        nsRight $0
+        key $3
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $2c8
+        loop $1
+        cel $2
+        priority $e
+    )
+    (method (doit) // method_1044
+  1044:3f 01             link 1 // (var $1)
+  1046:39 2a            pushi 2a // $2a play
+  1048:78               push1 
+  1049:39 17            pushi 17 // $17 name
+  104b:80 01dc            lag  
+  104e:4a 06             send 6 
+
+  1050:76               push0 
+  1051:40 f1c1 00        call proc_0216 0 
+
+  1055:30 002f            bnt code_1087 
+  1058:38 0097          pushi 97 // $97 select
+  105b:78               push1 
+  105c:76               push0 
+  105d:54 06             self 6 
+
+  105f:38 0097          pushi 97 // $97 select
+  1062:78               push1 
+  1063:78               push1 
+  1064:72 00ab          lofsa $1112 // exitButton
+  1067:4a 06             send 6 
+
+  1069:38 00a1          pushi a1 // $a1 theItem
+  106c:78               push1 
+  106d:72 00a2          lofsa $1112 // exitButton
+  1070:36                push 
+  1071:72 fd44          lofsa $0db8 // pawnShop
+  1074:4a 06             send 6 
+
+  1076:76               push0 
+  1077:40 f4ab 00        call proc_0526 0 
+
+  107b:76               push0 
+  107c:40 f80e 00        call proc_088e 0 
+
+  1080:35 03              ldi 3 
+  1082:a3 00              sal local0 
+  1084:32 002c            jmp code_10b3 
+
+        code_1087
+  1087:39 66            pushi 66 // $66 init
+  1089:78               push1 
+  108a:39 10            pushi 10 // $10 lsRight
+  108c:80 019d            lag  
+  108f:4a 06             send 6 
+
+  1091:39 0b            pushi b // $b nsBottom
+  1093:38 00d4          pushi d4 // $d4 ignoreActors
+  1096:39 16            pushi 16 // $16 brRight
+  1098:38 0136          pushi 136 // $136 tail
+  109b:88 019d            lsg  
+  109e:88 01b8            lsg  
+  10a1:88 01b9            lsg  
+  10a4:88 01ba            lsg  
+  10a7:39 46            pushi 46 // $46 width
+  10a9:3c                 dup 
+  10aa:39 19            pushi 19 // $19 time
+  10ac:88 01aa            lsg  
+  10af:47 ff 00 16      calle ff procedure_0000 16 //  
+
+
+        code_10b3
+  10b3:39 3c            pushi 3c // $3c doit
+  10b5:76               push0 
+  10b6:57 0c 04         super DIcon 4 
+
+  10b9:48                 ret 
+    )
+
+)
+
+// 110c
+(instance exitButton of ErasableDIcon
+    (properties
+        type $4
+        state $63
+        nsTop $6c
+        nsLeft $8f
+        nsBottom $0
+        nsRight $0
+        key $78
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $fa
+        loop $d
+        cel $0
+        priority $f
+    )
+)
+
+// 1154
+(instance theTalker of Talker
+    (properties
+        type $4
+        state $0
+        nsTop $1
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $16a
+        loop $0
+        cel $0
+        priority $e
+        cycler $0
+        cycleSpeed $a
+        signal $0
+        ticksToDo $0
+    )
+)
+
+// 11a4
+(instance pawnMessage of WButton
+    (properties
+        type $0
+        state $40
+        nsTop $1b
+        nsLeft $5f
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $1c6f
+        font $0
+        theFont $a
+        textColor $1a
+        backColor $ffff
+        shadowColor $41
+        flashColor $64
+        width $0
+    )
+)
+
+// 13ae
+(instance pawn of ErasableDIcon
+    (properties
+        type $4
+        state $41
+        nsTop $6c
+        nsLeft $4d
+        nsBottom $0
+        nsRight $0
+        key $5
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $fa
+        loop $6
+        cel $0
+        priority $ffff
+    )
+    (method (doit) // method_11f2
+  11f2:3f 02             link 2 // (var $2)
+  11f4:39 3c            pushi 3c // $3c doit
+  11f6:76               push0 
+  11f7:57 31 04         super ErasableDIcon 4 
+
+  11fa:a5 00              sat temp0 
+  11fc:76               push0 
+  11fd:40 f22d 00        call proc_042e 0 
+
+  1201:36                push 
+  1202:35 06              ldi 6 
+  1204:20                 ge? 
+  1205:30 0030            bnt code_1238 
+  1208:39 66            pushi 66 // $66 init
+  120a:78               push1 
+  120b:39 10            pushi 10 // $10 lsRight
+  120d:80 019d            lag  
+  1210:4a 06             send 6 
+
+  1212:39 0b            pushi b // $b nsBottom
+  1214:38 00d4          pushi d4 // $d4 ignoreActors
+  1217:39 17            pushi 17 // $17 name
+  1219:38 0136          pushi 136 // $136 tail
+  121c:88 019d            lsg  
+  121f:88 01b8            lsg  
+  1222:88 01b9            lsg  
+  1225:88 01ba            lsg  
+  1228:39 46            pushi 46 // $46 width
+  122a:39 5a            pushi 5a // $5a points
+  122c:39 19            pushi 19 // $19 time
+  122e:88 01aa            lsg  
+  1231:47 ff 00 16      calle ff procedure_0000 16 //  
+
+  1235:85 00              lat temp0 
+  1237:48                 ret 
+
+        code_1238
+  1238:76               push0 
+  1239:40 f13e 00        call proc_037b 0 
+
+  123d:a3 02              sal local2 
+  123f:30 0162            bnt code_13a4 
+  1242:36                push 
+  1243:35 ff              ldi ff 
+  1245:1a                 eq? 
+  1246:30 003a            bnt code_1283 
+  1249:39 66            pushi 66 // $66 init
+  124b:78               push1 
+  124c:39 10            pushi 10 // $10 lsRight
+  124e:80 019d            lag  
+  1251:4a 06             send 6 
+
+  1253:39 0a            pushi a // $a nsLeft
+  1255:39 03            pushi 3 // $3 y
+  1257:5b 00 64           lea 0 64 
+  125a:36                push 
+  125b:38 00d4          pushi d4 // $d4 ignoreActors
+  125e:39 18            pushi 18 // $18 key
+  1260:43 48 06         callk Format 6 
+
+  1263:36                push 
+  1264:38 0136          pushi 136 // $136 tail
+  1267:88 019d            lsg  
+  126a:88 01b8            lsg  
+  126d:88 01b9            lsg  
+  1270:88 01ba            lsg  
+  1273:39 46            pushi 46 // $46 width
+  1275:39 5a            pushi 5a // $5a points
+  1277:39 19            pushi 19 // $19 time
+  1279:88 01aa            lsg  
+  127c:47 ff 00 14      calle ff procedure_0000 14 //  
+
+  1280:85 00              lat temp0 
+  1282:48                 ret 
+
+        code_1283
+  1283:7a               push2 
+  1284:88 0135            lsg  
+  1287:38 0165          pushi 165 // $165 pricePaid
+  128a:76               push0 
+  128b:83 02              lal local2 
+  128d:4a 04             send 4 
+
+  128f:36                push 
+  1290:47 6d 00 04      calle 6d procedure_0000 4 //  
+
+  1294:36                push 
+  1295:35 04              ldi 4 
+  1297:06                 mul 
+  1298:36                push 
+  1299:35 0a              ldi a 
+  129b:08                 div 
+  129c:a3 01              sal local1 
+  129e:39 66            pushi 66 // $66 init
+  12a0:78               push1 
+  12a1:39 10            pushi 10 // $10 lsRight
+  12a3:80 019d            lag  
+  12a6:4a 06             send 6 
+
+  12a8:38 012c          pushi 12c // $12c playing
+  12ab:76               push0 
+  12ac:80 012e            lag  
+  12af:4a 04             send 4 
+
+  12b1:36                push 
+  12b2:35 1d              ldi 1d 
+  12b4:1a                 eq? 
+  12b5:2e 0047             bt code_12ff 
+  12b8:39 0f            pushi f // $f lsBottom
+  12ba:39 06            pushi 6 // $6 loop
+  12bc:5b 00 64           lea 0 64 
+  12bf:36                push 
+  12c0:38 00d4          pushi d4 // $d4 ignoreActors
+  12c3:39 19            pushi 19 // $19 time
+  12c5:8b 01              lsl local1 
+  12c7:38 02bc          pushi 2bc // $2bc sel_700
+  12ca:38 0157          pushi 157 // $157 indexNum
+  12cd:76               push0 
+  12ce:83 02              lal local2 
+  12d0:4a 04             send 4 
+
+  12d2:36                push 
+  12d3:43 48 0c         callk Format c 
+
+  12d6:36                push 
+  12d7:39 51            pushi 51 // $51 button
+  12d9:72 09ae          lofsa $1c8a // Take It
+  12dc:36                push 
+  12dd:78               push1 
+  12de:39 51            pushi 51 // $51 button
+  12e0:72 09af          lofsa $1c92 // Leave It
+  12e3:36                push 
+  12e4:76               push0 
+  12e5:38 0136          pushi 136 // $136 tail
+  12e8:88 019d            lsg  
+  12eb:88 01b8            lsg  
+  12ee:88 01b9            lsg  
+  12f1:88 01ba            lsg  
+  12f4:39 46            pushi 46 // $46 width
+  12f6:39 6b            pushi 6b // $6b isMemberOf
+  12f8:38 0137          pushi 137 // $137 standard
+  12fb:47 ff 00 1e      calle ff procedure_0000 1e //  
+
+
+        code_12ff
+  12ff:30 0098            bnt code_139a 
+  1302:39 2a            pushi 2a // $2a play
+  1304:78               push1 
+  1305:39 17            pushi 17 // $17 name
+  1307:80 01dc            lag  
+  130a:4a 06             send 6 
+
+  130c:78               push1 
+  130d:39 ff            pushi ff // $ff changeScore
+  130f:45 0d 02         callb procedure_000d 2 //  
+
+  1312:38 0164          pushi 164 // $164 attributes
+  1315:78               push1 
+  1316:38 0164          pushi 164 // $164 attributes
+  1319:76               push0 
+  131a:83 02              lal local2 
+  131c:4a 04             send 4 
+
+  131e:36                push 
+  131f:35 18              ldi 18 
+  1321:14                  or 
+  1322:36                push 
+  1323:38 016e          pushi 16e // $16e redemptionPrice
+  1326:78               push1 
+  1327:38 0165          pushi 165 // $165 pricePaid
+  132a:76               push0 
+  132b:83 02              lal local2 
+  132d:4a 04             send 4 
+
+  132f:36                push 
+  1330:35 02              ldi 2 
+  1332:08                 div 
+  1333:36                push 
+  1334:38 0161          pushi 161 // $161 quantity
+  1337:78               push1 
+  1338:38 0161          pushi 161 // $161 quantity
+  133b:76               push0 
+  133c:83 02              lal local2 
+  133e:4a 04             send 4 
+
+  1340:36                push 
+  1341:35 01              ldi 1 
+  1343:04                 sub 
+  1344:36                push 
+  1345:83 02              lal local2 
+  1347:4a 12             send 12 
+
+  1349:38 0157          pushi 157 // $157 indexNum
+  134c:76               push0 
+  134d:83 02              lal local2 
+  134f:4a 04             send 4 
+
+  1351:36                push 
+  1352:35 15              ldi 15 
+  1354:1a                 eq? 
+  1355:30 0024            bnt code_137c 
+  1358:38 0171          pushi 171 // $171 objectAtIndex
+  135b:78               push1 
+  135c:78               push1 
+  135d:38 0140          pushi 140 // $140 consumables
+  1360:76               push0 
+  1361:80 012e            lag  
+  1364:4a 04             send 4 
+
+  1366:4a 06             send 6 
+
+  1368:a5 01              sat temp1 
+  136a:30 000f            bnt code_137c 
+  136d:78               push1 
+  136e:39 ff            pushi ff // $ff changeScore
+  1370:45 0d 02         callb procedure_000d 2 //  
+
+  1373:38 0161          pushi 161 // $161 quantity
+  1376:78               push1 
+  1377:76               push0 
+  1378:85 01              lat temp1 
+  137a:4a 06             send 6 
+
+
+        code_137c
+  137c:76               push0 
+  137d:40 ef47 00        call proc_02c8 0 
+
+  1381:39 53            pushi 53 // $53 draw
+  1383:76               push0 
+  1384:72 0079          lofsa $1400 // pawnSelector
+  1387:4a 04             send 4 
+
+  1389:78               push1 
+  138a:8b 01              lsl local1 
+  138c:45 0a 02         callb procedure_000a 2 //  
+
+  138f:39 3c            pushi 3c // $3c doit
+  1391:76               push0 
+  1392:80 0131            lag  
+  1395:4a 04             send 4 
+
+  1397:32 000a            jmp code_13a4 
+
+        code_139a
+  139a:39 2a            pushi 2a // $2a play
+  139c:78               push1 
+  139d:39 17            pushi 17 // $17 name
+  139f:80 01dc            lag  
+  13a2:4a 06             send 6 
+
+
+        code_13a4
+  13a4:85 00              lat temp0 
+  13a6:48                 ret 
+  13a7:00                bnot 
+    )
+
+)
+
+// 13fa
+(instance pawnSelector of DSelector
+    (properties
+        type $6
+        state $40
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        font $4
+        x $12
+        y $4
+        text $0
+        cursor $0
+        brTop $0
+        mark $0
+    )
+)
+
+// 1486
+(instance donePawning of ErasableDIcon
+    (properties
+        type $4
+        state $41
+        nsTop $6c
+        nsLeft $6e
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $fa
+        loop $2
+        cel $0
+        priority $ffff
+    )
+    (method (doit) // method_1446
+  1446:3f 01             link 1 // (var $1)
+  1448:39 3c            pushi 3c // $3c doit
+  144a:76               push0 
+  144b:57 31 04         super ErasableDIcon 4 
+
+  144e:a5 00              sat temp0 
+  1450:38 0097          pushi 97 // $97 select
+  1453:78               push1 
+  1454:76               push0 
+  1455:54 06             self 6 
+
+  1457:38 0097          pushi 97 // $97 select
+  145a:78               push1 
+  145b:78               push1 
+  145c:72 fcb3          lofsa $1112 // exitButton
+  145f:4a 06             send 6 
+
+  1461:38 00a1          pushi a1 // $a1 theItem
+  1464:78               push1 
+  1465:72 fcaa          lofsa $1112 // exitButton
+  1468:36                push 
+  1469:72 f94c          lofsa $0db8 // pawnShop
+  146c:4a 06             send 6 
+
+  146e:76               push0 
+  146f:40 f194 00        call proc_0607 0 
+
+  1473:76               push0 
+  1474:40 f042 00        call proc_04ba 0 
+
+  1478:35 00              ldi 0 
+  147a:a3 00              sal local0 
+  147c:85 00              lat temp0 
+  147e:48                 ret 
+  147f:00                bnot 
+    )
+
+)
+
+// 1510
+(instance doneRedeeming of ErasableDIcon
+    (properties
+        type $4
+        state $41
+        nsTop $6c
+        nsLeft $6e
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $fa
+        loop $2
+        cel $0
+        priority $ffff
+    )
+    (method (doit) // method_14d0
+  14d0:3f 01             link 1 // (var $1)
+  14d2:39 3c            pushi 3c // $3c doit
+  14d4:76               push0 
+  14d5:57 31 04         super ErasableDIcon 4 
+
+  14d8:a5 00              sat temp0 
+  14da:38 0097          pushi 97 // $97 select
+  14dd:78               push1 
+  14de:76               push0 
+  14df:54 06             self 6 
+
+  14e1:38 0097          pushi 97 // $97 select
+  14e4:78               push1 
+  14e5:78               push1 
+  14e6:72 fc29          lofsa $1112 // exitButton
+  14e9:4a 06             send 6 
+
+  14eb:38 00a1          pushi a1 // $a1 theItem
+  14ee:78               push1 
+  14ef:72 fc20          lofsa $1112 // exitButton
+  14f2:36                push 
+  14f3:72 f8c2          lofsa $0db8 // pawnShop
+  14f6:4a 06             send 6 
+
+  14f8:76               push0 
+  14f9:40 f311 00        call proc_080e 0 
+
+  14fd:76               push0 
+  14fe:40 efb8 00        call proc_04ba 0 
+
+  1502:35 00              ldi 0 
+  1504:a3 00              sal local0 
+  1506:85 00              lat temp0 
+  1508:48                 ret 
+  1509:00                bnot 
+    )
+
+)
+
+// 159a
+(instance doneBuying of ErasableDIcon
+    (properties
+        type $4
+        state $41
+        nsTop $6c
+        nsLeft $6e
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $fa
+        loop $2
+        cel $0
+        priority $ffff
+    )
+    (method (doit) // method_155a
+  155a:3f 01             link 1 // (var $1)
+  155c:39 3c            pushi 3c // $3c doit
+  155e:76               push0 
+  155f:57 31 04         super ErasableDIcon 4 
+
+  1562:a5 00              sat temp0 
+  1564:38 0097          pushi 97 // $97 select
+  1567:78               push1 
+  1568:76               push0 
+  1569:54 06             self 6 
+
+  156b:38 0097          pushi 97 // $97 select
+  156e:78               push1 
+  156f:78               push1 
+  1570:72 fb9f          lofsa $1112 // exitButton
+  1573:4a 06             send 6 
+
+  1575:38 00a1          pushi a1 // $a1 theItem
+  1578:78               push1 
+  1579:72 fb96          lofsa $1112 // exitButton
+  157c:36                push 
+  157d:72 f838          lofsa $0db8 // pawnShop
+  1580:4a 06             send 6 
+
+  1582:76               push0 
+  1583:40 f53b 00        call proc_0ac2 0 
+
+  1587:76               push0 
+  1588:40 ef2e 00        call proc_04ba 0 
+
+  158c:35 00              ldi 0 
+  158e:a3 00              sal local0 
+  1590:85 00              lat temp0 
+  1592:48                 ret 
+  1593:00                bnot 
+    )
+
+)
+
+// 15e6
+(instance buyMessage of WButton
+    (properties
+        type $0
+        state $40
+        nsTop $19
+        nsLeft $5d
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $1cd2
+        font $0
+        theFont $a
+        textColor $1a
+        backColor $ffff
+        shadowColor $41
+        flashColor $64
+        width $0
+    )
+)
+
+// 1636
+(instance redeemMessage of WButton
+    (properties
+        type $0
+        state $40
+        nsTop $19
+        nsLeft $5b
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $1ceb
+        font $0
+        theFont $a
+        textColor $1a
+        backColor $ffff
+        shadowColor $41
+        flashColor $64
+        width $0
+    )
+)
+
+// 18ae
+(instance aRedeemableItem of CostDItem
+    (properties
+        type $0
+        state $41
+        nsTop $0
+        nsLeft $4
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        text $1d0a
+        font $0
+        theFont $a
+        textColor $1a
+        backColor $ffff
+        shadowColor $41
+        flashColor $64
+        width $0
+        price $0
+        indexNum $0
+        typeOfGoods $0
+        units $1
+        theSign $ffff
+        basePrice $0
+        fixedPrice $0
+        theDurable $0
+        visitTime $0
+        celNum $0
+    )
+    (method (doit) // method_1687
+  1687:3f 01             link 1 // (var $1)
+  1689:38 0157          pushi 157 // $157 indexNum
+  168c:76               push0 
+  168d:63 4e             pToa theDurable 
+  168f:4a 04             send 4 
+
+  1691:36                push 
+  1692:35 15              ldi 15 
+  1694:04                 sub 
+  1695:65 52             aTop celNum 
+  1697:76               push0 
+  1698:45 0b 00         callb procedure_000b 0 //  
+
+  169b:36                push 
+  169c:63 40             pToa price 
+  169e:20                 ge? 
+  169f:a0 01a0            sag  
+  16a2:30 004b            bnt code_16f0 
+  16a5:78               push1 
+  16a6:67 48             pTos theSign 
+  16a8:63 40             pToa price 
+  16aa:06                 mul 
+  16ab:36                push 
+  16ac:45 0a 02         callb procedure_000a 2 //  
+
+  16af:39 3c            pushi 3c // $3c doit
+  16b1:76               push0 
+  16b2:80 0131            lag  
+  16b5:4a 04             send 4 
+
+  16b7:80 01b2            lag  
+  16ba:30 001b            bnt code_16d8 
+  16bd:78               push1 
+  16be:36                push 
+  16bf:43 06 02         callk IsObject 2 
+
+  16c2:30 0013            bnt code_16d8 
+  16c5:88 0216            lsg  
+  16c8:35 02              ldi 2 
+  16ca:22                 lt? 
+  16cb:30 000a            bnt code_16d8 
+  16ce:39 3c            pushi 3c // $3c doit
+  16d0:78               push1 
+  16d1:67 52             pTos celNum 
+  16d3:80 01b2            lag  
+  16d6:4a 06             send 6 
+
+
+        code_16d8
+  16d8:80 01a9            lag  
+  16db:30 002a            bnt code_1708 
+  16de:80 01ab            lag  
+  16e1:30 0024            bnt code_1708 
+  16e4:39 3c            pushi 3c // $3c doit
+  16e6:78               push1 
+  16e7:7c            pushSelf 
+  16e8:80 01a9            lag  
+  16eb:4a 06             send 6 
+
+  16ed:32 0018            jmp code_1708 
+
+        code_16f0
+  16f0:80 019d            lag  
+  16f3:30 0007            bnt code_16fd 
+  16f6:39 07            pushi 7 // $7 cel
+  16f8:78               push1 
+  16f9:39 06            pushi 6 // $6 loop
+  16fb:4a 06             send 6 
+
+
+        code_16fd
+  16fd:80 01a8            lag  
+  1700:30 0005            bnt code_1708 
+  1703:39 3c            pushi 3c // $3c doit
+  1705:76               push0 
+  1706:4a 04             send 4 
+
+
+        code_1708
+  1708:80 01a0            lag  
+  170b:30 0175            bnt code_1883 
+  170e:38 0123          pushi 123 // $123 erase
+  1711:76               push0 
+  1712:54 04             self 4 
+
+  1714:38 0164          pushi 164 // $164 attributes
+  1717:78               push1 
+  1718:38 0164          pushi 164 // $164 attributes
+  171b:76               push0 
+  171c:63 4e             pToa theDurable 
+  171e:4a 04             send 4 
+
+  1720:36                push 
+  1721:35 c7              ldi c7 
+  1723:12                 and 
+  1724:36                push 
+  1725:63 4e             pToa theDurable 
+  1727:4a 06             send 6 
+
+  1729:80 01bf            lag  
+  172c:30 002d            bnt code_175c 
+  172f:38 0097          pushi 97 // $97 select
+  1732:78               push1 
+  1733:76               push0 
+  1734:54 06             self 6 
+
+  1736:38 0097          pushi 97 // $97 select
+  1739:78               push1 
+  173a:78               push1 
+  173b:72 f9d4          lofsa $1112 // exitButton
+  173e:4a 06             send 6 
+
+  1740:38 00a1          pushi a1 // $a1 theItem
+  1743:78               push1 
+  1744:72 f9cb          lofsa $1112 // exitButton
+  1747:36                push 
+  1748:72 f66d          lofsa $0db8 // pawnShop
+  174b:4a 06             send 6 
+
+  174d:38 0102          pushi 102 // $102 setCursor
+  1750:78               push1 
+  1751:72 f9be          lofsa $1112 // exitButton
+  1754:36                push 
+  1755:51 30            class KeyMouse 
+  1757:4a 06             send 6 
+
+  1759:32 0009            jmp code_1765 
+
+        code_175c
+  175c:38 009f          pushi 9f // $9f advance
+  175f:76               push0 
+  1760:72 f655          lofsa $0db8 // pawnShop
+  1763:4a 04             send 4 
+
+
+        code_1765
+  1765:39 54            pushi 54 // $54 delete
+  1767:78               push1 
+  1768:7c            pushSelf 
+  1769:38 0124          pushi 124 // $124 listOfCoords
+  176c:76               push0 
+  176d:51 30            class KeyMouse 
+  176f:4a 04             send 4 
+
+  1771:4a 06             send 6 
+
+  1773:38 0125          pushi 125 // $125 curItem
+  1776:78               push1 
+  1777:38 00a1          pushi a1 // $a1 theItem
+  177a:76               push0 
+  177b:72 f63a          lofsa $0db8 // pawnShop
+  177e:4a 04             send 4 
+
+  1780:36                push 
+  1781:51 30            class KeyMouse 
+  1783:4a 06             send 6 
+
+  1785:8b 00              lsl local0 
+  1787:35 02              ldi 2 
+  1789:1a                 eq? 
+  178a:30 0021            bnt code_17ae 
+  178d:39 54            pushi 54 // $54 delete
+  178f:78               push1 
+  1790:7c            pushSelf 
+  1791:72 f624          lofsa $0db8 // pawnShop
+  1794:4a 06             send 6 
+
+  1796:38 0161          pushi 161 // $161 quantity
+  1799:78               push1 
+  179a:38 0161          pushi 161 // $161 quantity
+  179d:76               push0 
+  179e:63 4e             pToa theDurable 
+  17a0:4a 04             send 4 
+
+  17a2:36                push 
+  17a3:35 01              ldi 1 
+  17a5:02                 add 
+  17a6:36                push 
+  17a7:63 4e             pToa theDurable 
+  17a9:4a 06             send 6 
+
+  17ab:32 00d0            jmp code_187e 
+
+        code_17ae
+  17ae:39 54            pushi 54 // $54 delete
+  17b0:78               push1 
+  17b1:7c            pushSelf 
+  17b2:72 f603          lofsa $0db8 // pawnShop
+  17b5:4a 06             send 6 
+
+  17b7:35 00              ldi 0 
+  17b9:a5 00              sat temp0 
+
+        code_17bb
+  17bb:8d 00              lst temp0 
+  17bd:39 59            pushi 59 // $59 size
+  17bf:76               push0 
+  17c0:7a               push2 
+  17c1:78               push1 
+  17c2:7a               push2 
+  17c3:43 02 04         callk ScriptID 4 
+
+  17c6:4a 04             send 4 
+
+  17c8:22                 lt? 
+  17c9:30 00b2            bnt code_187e 
+  17cc:39 72            pushi 72 // $72 contains
+  17ce:78               push1 
+  17cf:67 4e             pTos theDurable 
+  17d1:38 0142          pushi 142 // $142 durables
+  17d4:76               push0 
+  17d5:39 43            pushi 43 // $43 at
+  17d7:78               push1 
+  17d8:8d 00              lst temp0 
+  17da:7a               push2 
+  17db:78               push1 
+  17dc:7a               push2 
+  17dd:43 02 04         callk ScriptID 4 
+
+  17e0:4a 06             send 6 
+
+  17e2:4a 04             send 4 
+
+  17e4:4a 06             send 6 
+
+  17e6:30 0090            bnt code_1879 
+  17e9:38 0161          pushi 161 // $161 quantity
+  17ec:76               push0 
+  17ed:63 4e             pToa theDurable 
+  17ef:4a 04             send 4 
+
+  17f1:18                 not 
+  17f2:30 001a            bnt code_180f 
+  17f5:39 54            pushi 54 // $54 delete
+  17f7:78               push1 
+  17f8:67 4e             pTos theDurable 
+  17fa:38 0142          pushi 142 // $142 durables
+  17fd:76               push0 
+  17fe:39 43            pushi 43 // $43 at
+  1800:78               push1 
+  1801:8d 00              lst temp0 
+  1803:7a               push2 
+  1804:78               push1 
+  1805:7a               push2 
+  1806:43 02 04         callk ScriptID 4 
+
+  1809:4a 06             send 6 
+
+  180b:4a 04             send 4 
+
+  180d:4a 06             send 6 
+
+
+        code_180f
+  180f:38 016f          pushi 16f // $16f hasType
+  1812:7a               push2 
+  1813:38 0157          pushi 157 // $157 indexNum
+  1816:76               push0 
+  1817:63 4e             pToa theDurable 
+  1819:4a 04             send 4 
+
+  181b:36                push 
+  181c:78               push1 
+  181d:38 0142          pushi 142 // $142 durables
+  1820:76               push0 
+  1821:80 012e            lag  
+  1824:4a 04             send 4 
+
+  1826:4a 08             send 8 
+
+  1828:18                 not 
+  1829:30 0052            bnt code_187e 
+  182c:38 0161          pushi 161 // $161 quantity
+  182f:76               push0 
+  1830:63 4e             pToa theDurable 
+  1832:4a 04             send 4 
+
+  1834:36                push 
+  1835:35 00              ldi 0 
+  1837:1a                 eq? 
+  1838:30 001c            bnt code_1857 
+  183b:38 0161          pushi 161 // $161 quantity
+  183e:78               push1 
+  183f:78               push1 
+  1840:63 4e             pToa theDurable 
+  1842:4a 06             send 6 
+
+  1844:39 6e            pushi 6e // $6e add
+  1846:78               push1 
+  1847:67 4e             pTos theDurable 
+  1849:38 0142          pushi 142 // $142 durables
+  184c:76               push0 
+  184d:80 012e            lag  
+  1850:4a 04             send 4 
+
+  1852:4a 06             send 6 
+
+  1854:32 0027            jmp code_187e 
+
+        code_1857
+  1857:39 6e            pushi 6e // $6e add
+  1859:78               push1 
+  185a:38 0161          pushi 161 // $161 quantity
+  185d:78               push1 
+  185e:78               push1 
+  185f:39 6d            pushi 6d // $6d yourself
+  1861:76               push0 
+  1862:78               push1 
+  1863:67 4e             pTos theDurable 
+  1865:43 04 02         callk Clone 2 
+
+  1868:4a 0a             send a 
+
+  186a:36                push 
+  186b:38 0142          pushi 142 // $142 durables
+  186e:76               push0 
+  186f:80 012e            lag  
+  1872:4a 04             send 4 
+
+  1874:4a 06             send 6 
+
+  1876:32 0005            jmp code_187e 
+
+        code_1879
+  1879:c5 00              +at temp0 
+  187b:32 ff3d            jmp code_17bb 
+
+        code_187e
+  187e:39 67            pushi 67 // $67 dispose
+  1880:76               push0 
+  1881:54 04             self 4 
+
+
+        code_1883
+  1883:35 00              ldi 0 
+  1885:48                 ret 
+    )
+
+    (method (doFormat) // method_1886
+  1886:63 40             pToa price 
+  1888:30 0012            bnt code_189d 
+  188b:39 05            pushi 5 // $5 view
+  188d:8f 01              lsp param1 
+  188f:38 00d4          pushi d4 // $d4 ignoreActors
+  1892:39 1a            pushi 1a // $1a text
+  1894:67 30             pTos text 
+  1896:36                push 
+  1897:43 48 0a         callk Format a 
+
+  189a:32 0009            jmp code_18a6 
+
+        code_189d
+  189d:38 0152          pushi 152 // $152 doFormat
+  18a0:78               push1 
+  18a1:8f 01              lsp param1 
+  18a3:57 37 06         super CostDItem 6 
+
+
+        code_18a6
+  18a6:48                 ret 
+  18a7:00                bnot 
+    )
+
+)
+
+// 199e
+(instance items of DCIcon
+    (properties
+        type $4
+        state $40
+        nsTop $38
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $2c4
+        loop $1
+        cel $d
+        priority $e
+        cycler $0
+        cycleSpeed $64
+        signal $0
+        ticksToDo $0
+    )
+    (method (doit) // method_1918
+  1918:88 0216            lsg  
+  191b:35 02              ldi 2 
+  191d:22                 lt? 
+  191e:30 0029            bnt code_194a 
+  1921:80 01a0            lag  
+  1924:30 0023            bnt code_194a 
+  1927:39 07            pushi 7 // $7 cel
+  1929:78               push1 
+  192a:8f 01              lsp param1 
+  192c:39 66            pushi 66 // $66 init
+  192e:76               push0 
+  192f:38 0099          pushi 99 // $99 setSize
+  1932:76               push0 
+  1933:39 53            pushi 53 // $53 draw
+  1935:76               push0 
+  1936:38 00d8          pushi d8 // $d8 setCycle
+  1939:7a               push2 
+  193a:51 51            class FCue 
+  193c:36                push 
+  193d:7c            pushSelf 
+  193e:54 1a             self 1a 
+
+  1940:38 00ac          pushi ac // $ac cycleCnt
+  1943:78               push1 
+  1944:39 ce            pushi ce // $ce posn
+  1946:63 38             pToa cycler 
+  1948:4a 06             send 6 
+
+
+        code_194a
+  194a:48                 ret 
+    )
+
+    (method (setSize) // method_1984
+  1984:88 0216            lsg  
+  1987:35 02              ldi 2 
+  1989:22                 lt? 
+  198a:30 0009            bnt code_1996 
+  198d:38 0099          pushi 99 // $99 setSize
+  1990:76               push0 
+  1991:59 01            &rest 1 
+  1993:57 32 04         super DCIcon 4 
+
+
+        code_1996
+  1996:48                 ret 
+  1997:00                bnot 
+    )
+
+    (method (draw) // method_1972
+  1972:88 0216            lsg  
+  1975:35 02              ldi 2 
+  1977:22                 lt? 
+  1978:30 0008            bnt code_1983 
+  197b:39 53            pushi 53 // $53 draw
+  197d:76               push0 
+  197e:59 01            &rest 1 
+  1980:57 32 04         super DCIcon 4 
+
+
+        code_1983
+  1983:48                 ret 
+    )
+
+    (method (cue) // method_194b
+  194b:88 0216            lsg  
+  194e:35 02              ldi 2 
+  1950:22                 lt? 
+  1951:30 000a            bnt code_195e 
+  1954:39 07            pushi 7 // $7 cel
+  1956:78               push1 
+  1957:39 0d            pushi d // $d lsTop
+  1959:39 53            pushi 53 // $53 draw
+  195b:76               push0 
+  195c:54 0a             self a 
+
+
+        code_195e
+  195e:48                 ret 
+    )
+
+    (method (setCycle) // method_195f
+  195f:88 0216            lsg  
+  1962:35 02              ldi 2 
+  1964:22                 lt? 
+  1965:30 0009            bnt code_1971 
+  1968:38 00d8          pushi d8 // $d8 setCycle
+  196b:76               push0 
+  196c:59 01            &rest 1 
+  196e:57 32 04         super DCIcon 4 
+
+
+        code_1971
+  1971:48                 ret 
+    )
+
+)
+
+// 1bb8
+(instance computerScript of DialogScript
+    (properties
+        client $0
+        state $ffff
+        start $0
+        timer $0
+        cycles $0
+        seconds $0
+        lastSeconds $0
+        register $0
+        script $0
+        caller $0
+        register2 $0
+    )
+    (method (cue) // method_1b85
+  1b85:8b 00              lsl local0 
+  1b87:3c                 dup 
+  1b88:35 00              ldi 0 
+  1b8a:1a                 eq? 
+  1b8b:30 0006            bnt code_1b94 
+  1b8e:c2 01aa            +al local426 
+  1b91:32 0017            jmp code_1bab 
+
+        code_1b94
+  1b94:3c                 dup 
+  1b95:35 01              ldi 1 
+  1b97:1a                 eq? 
+  1b98:30 0006            bnt code_1ba1 
+  1b9b:c2 01ab            +al local427 
+  1b9e:32 000a            jmp code_1bab 
+
+        code_1ba1
+  1ba1:3c                 dup 
+  1ba2:35 02              ldi 2 
+  1ba4:1a                 eq? 
+  1ba5:30 0003            bnt code_1bab 
+  1ba8:c2 01ac            +al local428 
+
+        code_1bab
+  1bab:3a                toss 
+  1bac:35 01              ldi 1 
+  1bae:65 16             aTop register 
+  1bb0:48                 ret 
+  1bb1:00                bnot 
+    )
+
+    (method (handleEvent) // method_1a00
+  1a00:3f 01             link 1 // (var $1)
+  1a02:63 16             pToa register 
+  1a04:30 017d            bnt code_1b84 
+  1a07:35 00              ldi 0 
+  1a09:65 16             aTop register 
+  1a0b:39 22            pushi 22 // $22 type
+  1a0d:78               push1 
+  1a0e:39 04            pushi 4 // $4 x
+  1a10:3c                 dup 
+  1a11:78               push1 
+  1a12:38 00a0          pushi a0 // $a0 retreat
+  1a15:39 03            pushi 3 // $3 y
+  1a17:78               push1 
+  1a18:39 64            pushi 64 // $64 moveDone
+  1a1a:87 01              lap param1 
+  1a1c:4a 12             send 12 
+
+  1a1e:35 01              ldi 1 
+  1a20:65 10             aTop cycles 
+  1a22:8b 00              lsl local0 
+  1a24:3c                 dup 
+  1a25:35 00              ldi 0 
+  1a27:1a                 eq? 
+  1a28:30 0063            bnt code_1a8e 
+  1a2b:8a 01aa            lsl local426 
+  1a2e:3c                 dup 
+  1a2f:35 02              ldi 2 
+  1a31:1a                 eq? 
+  1a32:30 0020            bnt code_1a55 
+  1a35:78               push1 
+  1a36:39 09            pushi 9 // $9 nsTop
+  1a38:45 06 02         callb procedure_0006 2 //  
+
+  1a3b:30 004c            bnt code_1a8a 
+  1a3e:35 3c              ldi 3c 
+  1a40:65 10             aTop cycles 
+  1a42:39 28            pushi 28 // $28 message
+  1a44:78               push1 
+  1a45:39 18            pushi 18 // $18 key
+  1a47:76               push0 
+  1a48:72 f4ef          lofsa $0f3a // pawnButton
+  1a4b:4a 04             send 4 
+
+  1a4d:36                push 
+  1a4e:87 01              lap param1 
+  1a50:4a 06             send 6 
+
+  1a52:32 0035            jmp code_1a8a 
+
+        code_1a55
+  1a55:3c                 dup 
+  1a56:35 03              ldi 3 
+  1a58:1a                 eq? 
+  1a59:30 0020            bnt code_1a7c 
+  1a5c:78               push1 
+  1a5d:39 0a            pushi a // $a nsLeft
+  1a5f:45 06 02         callb procedure_0006 2 //  
+
+  1a62:30 0025            bnt code_1a8a 
+  1a65:35 3c              ldi 3c 
+  1a67:65 10             aTop cycles 
+  1a69:39 28            pushi 28 // $28 message
+  1a6b:78               push1 
+  1a6c:39 18            pushi 18 // $18 key
+  1a6e:76               push0 
+  1a6f:72 f58e          lofsa $1000 // redeemButton
+  1a72:4a 04             send 4 
+
+  1a74:36                push 
+  1a75:87 01              lap param1 
+  1a77:4a 06             send 6 
+
+  1a79:32 000e            jmp code_1a8a 
+
+        code_1a7c
+  1a7c:82 01aa            lal local426 
+  1a7f:65 0a             aTop state 
+  1a81:39 7c            pushi 7c // $7c handleEvent
+  1a83:7a               push2 
+  1a84:8f 01              lsp param1 
+  1a86:76               push0 
+  1a87:57 44 08         super DialogScript 8 
+
+
+        code_1a8a
+  1a8a:3a                toss 
+  1a8b:32 00f5            jmp code_1b83 
+
+        code_1a8e
+  1a8e:3c                 dup 
+  1a8f:35 01              ldi 1 
+  1a91:1a                 eq? 
+  1a92:30 0078            bnt code_1b0d 
+  1a95:8a 01ab            lsl local427 
+  1a98:3c                 dup 
+  1a99:35 02              ldi 2 
+  1a9b:1a                 eq? 
+  1a9c:30 0007            bnt code_1aa6 
+  1a9f:35 3c              ldi 3c 
+  1aa1:65 10             aTop cycles 
+  1aa3:32 0063            jmp code_1b09 
+
+        code_1aa6
+  1aa6:3c                 dup 
+  1aa7:35 03              ldi 3 
+  1aa9:1a                 eq? 
+  1aaa:30 0012            bnt code_1abf 
+  1aad:38 009f          pushi 9f // $9f advance
+  1ab0:78               push1 
+  1ab1:8b 03              lsl local3 
+  1ab3:72 f94a          lofsa $1400 // pawnSelector
+  1ab6:4a 06             send 6 
+
+  1ab8:35 3c              ldi 3c 
+  1aba:65 10             aTop cycles 
+  1abc:32 004a            jmp code_1b09 
+
+        code_1abf
+  1abf:3c                 dup 
+  1ac0:35 04              ldi 4 
+  1ac2:1a                 eq? 
+  1ac3:30 0035            bnt code_1afb 
+  1ac6:76               push0 
+  1ac7:40 e963 00        call proc_042e 0 
+
+  1acb:36                push 
+  1acc:35 06              ldi 6 
+  1ace:22                 lt? 
+  1acf:30 0037            bnt code_1b09 
+  1ad2:39 28            pushi 28 // $28 message
+  1ad4:78               push1 
+  1ad5:39 18            pushi 18 // $18 key
+  1ad7:76               push0 
+  1ad8:72 f8d9          lofsa $13b4 // pawn
+  1adb:4a 04             send 4 
+
+  1add:36                push 
+  1ade:87 01              lap param1 
+  1ae0:4a 06             send 6 
+
+  1ae2:35 3c              ldi 3c 
+  1ae4:65 10             aTop cycles 
+  1ae6:88 0198            lsg  
+  1ae9:83 01              lal local1 
+  1aeb:04                 sub 
+  1aec:a0 0198            sag  
+  1aef:36                push 
+  1af0:35 00              ldi 0 
+  1af2:1e                 gt? 
+  1af3:30 0013            bnt code_1b09 
+  1af6:6d 0a            dpToa state 
+  1af8:32 000e            jmp code_1b09 
+
+        code_1afb
+  1afb:82 01ab            lal local427 
+  1afe:65 0a             aTop state 
+  1b00:39 7c            pushi 7c // $7c handleEvent
+  1b02:7a               push2 
+  1b03:8f 01              lsp param1 
+  1b05:76               push0 
+  1b06:57 44 08         super DialogScript 8 
+
+
+        code_1b09
+  1b09:3a                toss 
+  1b0a:32 0076            jmp code_1b83 
+
+        code_1b0d
+  1b0d:3c                 dup 
+  1b0e:35 02              ldi 2 
+  1b10:1a                 eq? 
+  1b11:30 006f            bnt code_1b83 
+  1b14:8a 01ac            lsl local428 
+  1b17:3c                 dup 
+  1b18:35 02              ldi 2 
+  1b1a:1a                 eq? 
+  1b1b:30 0056            bnt code_1b74 
+  1b1e:39 43            pushi 43 // $43 at
+  1b20:78               push1 
+  1b21:39 59            pushi 59 // $59 size
+  1b23:76               push0 
+  1b24:72 f291          lofsa $0db8 // pawnShop
+  1b27:4a 04             send 4 
+
+  1b29:36                push 
+  1b2a:78               push1 
+  1b2b:82 01a8            lal local424 
+  1b2e:02                 add 
+  1b2f:04                 sub 
+  1b30:36                push 
+  1b31:72 f284          lofsa $0db8 // pawnShop
+  1b34:4a 06             send 6 
+
+  1b36:a5 00              sat temp0 
+  1b38:39 18            pushi 18 // $18 key
+  1b3a:76               push0 
+  1b3b:4a 04             send 4 
+
+  1b3d:36                push 
+  1b3e:34 00c7            ldi c7 
+  1b41:1a                 eq? 
+  1b42:30 0029            bnt code_1b6e 
+  1b45:6d 0a            dpToa state 
+  1b47:76               push0 
+  1b48:45 0b 00         callb procedure_000b 0 //  
+
+  1b4b:36                push 
+  1b4c:38 0156          pushi 156 // $156 price
+  1b4f:76               push0 
+  1b50:85 00              lat temp0 
+  1b52:4a 04             send 4 
+
+  1b54:20                 ge? 
+  1b55:30 0016            bnt code_1b6e 
+  1b58:39 18            pushi 18 // $18 key
+  1b5a:78               push1 
+  1b5b:39 0c            pushi c // $c nsRight
+  1b5d:85 00              lat temp0 
+  1b5f:4a 06             send 6 
+
+  1b61:39 28            pushi 28 // $28 message
+  1b63:78               push1 
+  1b64:39 0c            pushi c // $c nsRight
+  1b66:87 01              lap param1 
+  1b68:4a 06             send 6 
+
+  1b6a:35 3c              ldi 3c 
+  1b6c:65 10             aTop cycles 
+
+        code_1b6e
+  1b6e:c2 01a8            +al local424 
+  1b71:32 000e            jmp code_1b82 
+
+        code_1b74
+  1b74:82 01ac            lal local428 
+  1b77:65 0a             aTop state 
+  1b79:39 7c            pushi 7c // $7c handleEvent
+  1b7b:7a               push2 
+  1b7c:8f 01              lsp param1 
+  1b7e:76               push0 
+  1b7f:57 44 08         super DialogScript 8 
+
+
+        code_1b82
+  1b82:3a                toss 
+
+        code_1b83
+  1b83:3a                toss 
+
+        code_1b84
+  1b84:48                 ret 
+    )
+
+)
+
+
+
+(procedure proc_0216
+  0216:3f 02             link 2 // (var $2)
+  0218:35 00              ldi 0 
+  021a:a5 00              sat temp0 
+
+        code_021c
+  021c:8d 00              lst temp0 
+  021e:39 59            pushi 59 // $59 size
+  0220:76               push0 
+  0221:7a               push2 
+  0222:78               push1 
+  0223:7a               push2 
+  0224:43 02 04         callk ScriptID 4 
+
+  0227:4a 04             send 4 
+
+  0229:22                 lt? 
+  022a:30 0056            bnt code_0283 
+  022d:35 00              ldi 0 
+  022f:a5 01              sat temp1 
+
+        code_0231
+  0231:8d 01              lst temp1 
+  0233:39 59            pushi 59 // $59 size
+  0235:76               push0 
+  0236:38 0142          pushi 142 // $142 durables
+  0239:76               push0 
+  023a:39 43            pushi 43 // $43 at
+  023c:78               push1 
+  023d:8d 00              lst temp0 
+  023f:7a               push2 
+  0240:78               push1 
+  0241:7a               push2 
+  0242:43 02 04         callk ScriptID 4 
+
+  0245:4a 06             send 6 
+
+  0247:4a 04             send 4 
+
+  0249:4a 04             send 4 
+
+  024b:22                 lt? 
+  024c:30 002f            bnt code_027e 
+  024f:38 0164          pushi 164 // $164 attributes
+  0252:76               push0 
+  0253:39 43            pushi 43 // $43 at
+  0255:78               push1 
+  0256:8d 01              lst temp1 
+  0258:38 0142          pushi 142 // $142 durables
+  025b:76               push0 
+  025c:39 43            pushi 43 // $43 at
+  025e:78               push1 
+  025f:8d 00              lst temp0 
+  0261:7a               push2 
+  0262:78               push1 
+  0263:7a               push2 
+  0264:43 02 04         callk ScriptID 4 
+
+  0267:4a 06             send 6 
+
+  0269:4a 04             send 4 
+
+  026b:4a 06             send 6 
+
+  026d:4a 04             send 4 
+
+  026f:36                push 
+  0270:35 20              ldi 20 
+  0272:12                 and 
+  0273:30 0003            bnt code_0279 
+  0276:35 01              ldi 1 
+  0278:48                 ret 
+
+        code_0279
+  0279:c5 01              +at temp1 
+  027b:32 ffb3            jmp code_0231 
+
+        code_027e
+  027e:c5 00              +at temp0 
+  0280:32 ff99            jmp code_021c 
+
+        code_0283
+  0283:35 00              ldi 0 
+  0285:48                 ret 
+)
+
+(procedure proc_0286
+  0286:3f 01             link 1 // (var $1)
+  0288:35 00              ldi 0 
+  028a:a5 00              sat temp0 
+
+        code_028c
+  028c:8d 00              lst temp0 
+  028e:39 59            pushi 59 // $59 size
+  0290:76               push0 
+  0291:38 0142          pushi 142 // $142 durables
+  0294:76               push0 
+  0295:80 012e            lag  
+  0298:4a 04             send 4 
+
+  029a:4a 04             send 4 
+
+  029c:22                 lt? 
+  029d:30 0025            bnt code_02c5 
+  02a0:38 0164          pushi 164 // $164 attributes
+  02a3:76               push0 
+  02a4:39 43            pushi 43 // $43 at
+  02a6:78               push1 
+  02a7:8d 00              lst temp0 
+  02a9:38 0142          pushi 142 // $142 durables
+  02ac:76               push0 
+  02ad:80 012e            lag  
+  02b0:4a 04             send 4 
+
+  02b2:4a 06             send 6 
+
+  02b4:4a 04             send 4 
+
+  02b6:36                push 
+  02b7:35 18              ldi 18 
+  02b9:12                 and 
+  02ba:30 0003            bnt code_02c0 
+  02bd:35 01              ldi 1 
+  02bf:48                 ret 
+
+        code_02c0
+  02c0:c5 00              +at temp0 
+  02c2:32 ffc7            jmp code_028c 
+
+        code_02c5
+  02c5:35 00              ldi 0 
+  02c7:48                 ret 
+)
+
+(procedure proc_02c8
+  02c8:3f 21             link 21 // (var $21)
+  02ca:38 0142          pushi 142 // $142 durables
+  02cd:76               push0 
+  02ce:80 012e            lag  
+  02d1:4a 04             send 4 
+
+  02d3:a5 20              sat temp32 
+  02d5:35 00              ldi 0 
+  02d7:a3 03              sal local3 
+  02d9:35 00              ldi 0 
+  02db:a5 1f              sat temp31 
+
+        code_02dd
+  02dd:8d 1f              lst temp31 
+  02df:34 012c            ldi 12c 
+  02e2:22                 lt? 
+  02e3:30 000a            bnt code_02f0 
+  02e6:76               push0 
+  02e7:85 1f              lat temp31 
+  02e9:b3 04             sali local4 
+  02eb:c5 1f              +at temp31 
+  02ed:32 ffed            jmp code_02dd 
+
+        code_02f0
+  02f0:39 03            pushi 3 // $3 y
+  02f2:5b 02 04           lea 2 4 
+  02f5:36                push 
+  02f6:38 00d4          pushi d4 // $d4 ignoreActors
+  02f9:39 11            pushi 11 // $11 signal
+  02fb:43 48 06         callk Format 6 
+
+  02fe:39 59            pushi 59 // $59 size
+  0300:76               push0 
+  0301:85 20              lat temp32 
+  0303:4a 04             send 4 
+
+  0305:30 0072            bnt code_037a 
+  0308:35 00              ldi 0 
+  030a:a5 1f              sat temp31 
+
+        code_030c
+  030c:8d 1f              lst temp31 
+  030e:39 59            pushi 59 // $59 size
+  0310:76               push0 
+  0311:85 20              lat temp32 
+  0313:4a 04             send 4 
+
+  0315:22                 lt? 
+  0316:30 0061            bnt code_037a 
+  0319:38 0164          pushi 164 // $164 attributes
+  031c:76               push0 
+  031d:39 43            pushi 43 // $43 at
+  031f:78               push1 
+  0320:8d 1f              lst temp31 
+  0322:85 20              lat temp32 
+  0324:4a 06             send 6 
+
+  0326:4a 04             send 4 
+
+  0328:36                push 
+  0329:35 38              ldi 38 
+  032b:12                 and 
+  032c:18                 not 
+  032d:2e 001a             bt code_034a 
+  0330:38 0161          pushi 161 // $161 quantity
+  0333:76               push0 
+  0334:39 43            pushi 43 // $43 at
+  0336:78               push1 
+  0337:8d 1f              lst temp31 
+  0339:38 0142          pushi 142 // $142 durables
+  033c:76               push0 
+  033d:80 012e            lag  
+  0340:4a 04             send 4 
+
+  0342:4a 06             send 6 
+
+  0344:4a 04             send 4 
+
+  0346:36                push 
+  0347:35 01              ldi 1 
+  0349:1e                 gt? 
+
+        code_034a
+  034a:30 0028            bnt code_0375 
+  034d:39 05            pushi 5 // $5 view
+  034f:78               push1 
+  0350:5b 02 04           lea 2 4 
+  0353:36                push 
+  0354:43 43 02         callk StrEnd 2 
+
+  0357:36                push 
+  0358:38 00d4          pushi d4 // $d4 ignoreActors
+  035b:39 12            pushi 12 // $12 illegalBits
+  035d:38 02bc          pushi 2bc // $2bc sel_700
+  0360:38 0157          pushi 157 // $157 indexNum
+  0363:76               push0 
+  0364:39 43            pushi 43 // $43 at
+  0366:78               push1 
+  0367:8d 1f              lst temp31 
+  0369:85 20              lat temp32 
+  036b:4a 06             send 6 
+
+  036d:4a 04             send 4 
+
+  036f:36                push 
+  0370:43 48 0a         callk Format a 
+
+  0373:c3 03              +al local3 
+
+        code_0375
+  0375:c5 1f              +at temp31 
+  0377:32 ff92            jmp code_030c 
+
+        code_037a
+  037a:48                 ret 
+)
+
+(procedure proc_037b
+  037b:3f 02             link 2 // (var $2)
+  037d:35 00              ldi 0 
+  037f:a5 01              sat temp1 
+  0381:a5 00              sat temp0 
+
+        code_0383
+  0383:8d 00              lst temp0 
+  0385:39 59            pushi 59 // $59 size
+  0387:76               push0 
+  0388:38 0142          pushi 142 // $142 durables
+  038b:76               push0 
+  038c:80 012e            lag  
+  038f:4a 04             send 4 
+
+  0391:4a 04             send 4 
+
+  0393:22                 lt? 
+  0394:30 0094            bnt code_042b 
+  0397:38 0164          pushi 164 // $164 attributes
+  039a:76               push0 
+  039b:39 43            pushi 43 // $43 at
+  039d:78               push1 
+  039e:8d 00              lst temp0 
+  03a0:38 0142          pushi 142 // $142 durables
+  03a3:76               push0 
+  03a4:80 012e            lag  
+  03a7:4a 04             send 4 
+
+  03a9:4a 06             send 6 
+
+  03ab:4a 04             send 4 
+
+  03ad:36                push 
+  03ae:35 38              ldi 38 
+  03b0:12                 and 
+  03b1:18                 not 
+  03b2:2e 001a             bt code_03cf 
+  03b5:38 0161          pushi 161 // $161 quantity
+  03b8:76               push0 
+  03b9:39 43            pushi 43 // $43 at
+  03bb:78               push1 
+  03bc:8d 00              lst temp0 
+  03be:38 0142          pushi 142 // $142 durables
+  03c1:76               push0 
+  03c2:80 012e            lag  
+  03c5:4a 04             send 4 
+
+  03c7:4a 06             send 6 
+
+  03c9:4a 04             send 4 
+
+  03cb:36                push 
+  03cc:35 01              ldi 1 
+  03ce:1e                 gt? 
+
+        code_03cf
+  03cf:30 0052            bnt code_0424 
+  03d2:39 7b            pushi 7b // $7b indexOf
+  03d4:78               push1 
+  03d5:39 24            pushi 24 // $24 cursor
+  03d7:76               push0 
+  03d8:72 1025          lofsa $1400 // pawnSelector
+  03db:4a 04             send 4 
+
+  03dd:36                push 
+  03de:72 101f          lofsa $1400 // pawnSelector
+  03e1:4a 06             send 6 
+
+  03e3:36                push 
+  03e4:8d 00              lst temp0 
+  03e6:85 01              lat temp1 
+  03e8:04                 sub 
+  03e9:1a                 eq? 
+  03ea:30 0039            bnt code_0426 
+  03ed:38 0164          pushi 164 // $164 attributes
+  03f0:76               push0 
+  03f1:39 43            pushi 43 // $43 at
+  03f3:78               push1 
+  03f4:8d 00              lst temp0 
+  03f6:38 0142          pushi 142 // $142 durables
+  03f9:76               push0 
+  03fa:80 012e            lag  
+  03fd:4a 04             send 4 
+
+  03ff:4a 06             send 6 
+
+  0401:4a 04             send 4 
+
+  0403:36                push 
+  0404:35 38              ldi 38 
+  0406:12                 and 
+  0407:30 0006            bnt code_0410 
+  040a:35 ff              ldi ff 
+  040c:48                 ret 
+  040d:32 0016            jmp code_0426 
+
+        code_0410
+  0410:39 43            pushi 43 // $43 at
+  0412:78               push1 
+  0413:8d 00              lst temp0 
+  0415:38 0142          pushi 142 // $142 durables
+  0418:76               push0 
+  0419:80 012e            lag  
+  041c:4a 04             send 4 
+
+  041e:4a 06             send 6 
+
+  0420:48                 ret 
+  0421:32 0002            jmp code_0426 
+
+        code_0424
+  0424:c5 01              +at temp1 
+
+        code_0426
+  0426:c5 00              +at temp0 
+  0428:32 ff58            jmp code_0383 
+
+        code_042b
+  042b:35 00              ldi 0 
+  042d:48                 ret 
+)
+
+(procedure proc_042e
+  042e:3f 03             link 3 // (var $3)
+  0430:35 00              ldi 0 
+  0432:a5 00              sat temp0 
+  0434:a5 01              sat temp1 
+
+        code_0436
+  0436:8d 01              lst temp1 
+  0438:39 59            pushi 59 // $59 size
+  043a:76               push0 
+  043b:7a               push2 
+  043c:78               push1 
+  043d:7a               push2 
+  043e:43 02 04         callk ScriptID 4 
+
+  0441:4a 04             send 4 
+
+  0443:22                 lt? 
+  0444:30 0070            bnt code_04b7 
+  0447:39 59            pushi 59 // $59 size
+  0449:76               push0 
+  044a:38 0142          pushi 142 // $142 durables
+  044d:76               push0 
+  044e:39 43            pushi 43 // $43 at
+  0450:78               push1 
+  0451:8d 01              lst temp1 
+  0453:7a               push2 
+  0454:78               push1 
+  0455:7a               push2 
+  0456:43 02 04         callk ScriptID 4 
+
+  0459:4a 06             send 6 
+
+  045b:4a 04             send 4 
+
+  045d:4a 04             send 4 
+
+  045f:30 0050            bnt code_04b2 
+  0462:35 00              ldi 0 
+  0464:a5 02              sat temp2 
+
+        code_0466
+  0466:8d 02              lst temp2 
+  0468:39 59            pushi 59 // $59 size
+  046a:76               push0 
+  046b:38 0142          pushi 142 // $142 durables
+  046e:76               push0 
+  046f:39 43            pushi 43 // $43 at
+  0471:78               push1 
+  0472:8d 01              lst temp1 
+  0474:7a               push2 
+  0475:78               push1 
+  0476:7a               push2 
+  0477:43 02 04         callk ScriptID 4 
+
+  047a:4a 06             send 6 
+
+  047c:4a 04             send 4 
+
+  047e:4a 04             send 4 
+
+  0480:22                 lt? 
+  0481:30 002e            bnt code_04b2 
+  0484:38 0164          pushi 164 // $164 attributes
+  0487:76               push0 
+  0488:39 43            pushi 43 // $43 at
+  048a:78               push1 
+  048b:8d 02              lst temp2 
+  048d:38 0142          pushi 142 // $142 durables
+  0490:76               push0 
+  0491:39 43            pushi 43 // $43 at
+  0493:78               push1 
+  0494:8d 01              lst temp1 
+  0496:7a               push2 
+  0497:78               push1 
+  0498:7a               push2 
+  0499:43 02 04         callk ScriptID 4 
+
+  049c:4a 06             send 6 
+
+  049e:4a 04             send 4 
+
+  04a0:4a 06             send 6 
+
+  04a2:4a 04             send 4 
+
+  04a4:36                push 
+  04a5:35 38              ldi 38 
+  04a7:12                 and 
+  04a8:30 0002            bnt code_04ad 
+  04ab:c5 00              +at temp0 
+
+        code_04ad
+  04ad:c5 02              +at temp2 
+  04af:32 ffb4            jmp code_0466 
+
+        code_04b2
+  04b2:c5 01              +at temp1 
+  04b4:32 ff7f            jmp code_0436 
+
+        code_04b7
+  04b7:85 00              lat temp0 
+  04b9:48                 ret 
+)
+
+(procedure proc_04ba
+  04ba:39 6e            pushi 6e // $6e add
+  04bc:39 03            pushi 3 // $3 y
+  04be:72 0a79          lofsa $0f3a // pawnButton
+  04c1:36                push 
+  04c2:72 0b3b          lofsa $1000 // redeemButton
+  04c5:36                push 
+  04c6:72 0bfd          lofsa $10c6 // buyButton
+  04c9:36                push 
+  04ca:72 08eb          lofsa $0db8 // pawnShop
+  04cd:4a 0a             send a 
+
+  04cf:39 66            pushi 66 // $66 init
+  04d1:76               push0 
+  04d2:38 0099          pushi 99 // $99 setSize
+  04d5:76               push0 
+  04d6:39 53            pushi 53 // $53 draw
+  04d8:76               push0 
+  04d9:72 0a5e          lofsa $0f3a // pawnButton
+  04dc:4a 0c             send c 
+
+  04de:39 66            pushi 66 // $66 init
+  04e0:76               push0 
+  04e1:38 0099          pushi 99 // $99 setSize
+  04e4:76               push0 
+  04e5:39 53            pushi 53 // $53 draw
+  04e7:76               push0 
+  04e8:72 0b15          lofsa $1000 // redeemButton
+  04eb:4a 0c             send c 
+
+  04ed:39 66            pushi 66 // $66 init
+  04ef:76               push0 
+  04f0:38 0099          pushi 99 // $99 setSize
+  04f3:76               push0 
+  04f4:39 53            pushi 53 // $53 draw
+  04f6:76               push0 
+  04f7:72 0bcc          lofsa $10c6 // buyButton
+  04fa:4a 0c             send c 
+
+  04fc:39 03            pushi 3 // $3 y
+  04fe:72 08b7          lofsa $0db8 // pawnShop
+  0501:36                push 
+  0502:38 0138          pushi 138 // $138 keyMouseList
+  0505:76               push0 
+  0506:72 08af          lofsa $0db8 // pawnShop
+  0509:4a 04             send 4 
+
+  050b:36                push 
+  050c:72 0a2b          lofsa $0f3a // pawnButton
+  050f:36                push 
+  0510:45 09 06         callb procedure_0009 6 //  
+
+  0513:38 0129          pushi 129 // $129 setList
+  0516:78               push1 
+  0517:38 0138          pushi 138 // $138 keyMouseList
+  051a:76               push0 
+  051b:72 089a          lofsa $0db8 // pawnShop
+  051e:4a 04             send 4 
+
+  0520:36                push 
+  0521:51 30            class KeyMouse 
+  0523:4a 06             send 6 
+
+  0525:48                 ret 
+)
+
+(procedure proc_0526
+  0526:38 0123          pushi 123 // $123 erase
+  0529:76               push0 
+  052a:72 0a0d          lofsa $0f3a // pawnButton
+  052d:4a 04             send 4 
+
+  052f:38 0123          pushi 123 // $123 erase
+  0532:76               push0 
+  0533:72 0aca          lofsa $1000 // redeemButton
+  0536:4a 04             send 4 
+
+  0538:38 0123          pushi 123 // $123 erase
+  053b:76               push0 
+  053c:72 0b87          lofsa $10c6 // buyButton
+  053f:4a 04             send 4 
+
+  0541:39 75            pushi 75 // $75 release
+  0543:76               push0 
+  0544:38 0138          pushi 138 // $138 keyMouseList
+  0547:76               push0 
+  0548:72 086d          lofsa $0db8 // pawnShop
+  054b:4a 04             send 4 
+
+  054d:4a 04             send 4 
+
+  054f:39 54            pushi 54 // $54 delete
+  0551:39 03            pushi 3 // $3 y
+  0553:72 09e4          lofsa $0f3a // pawnButton
+  0556:36                push 
+  0557:72 0aa6          lofsa $1000 // redeemButton
+  055a:36                push 
+  055b:72 0b68          lofsa $10c6 // buyButton
+  055e:36                push 
+  055f:72 0856          lofsa $0db8 // pawnShop
+  0562:4a 0a             send a 
+
+  0564:48                 ret 
+)
+
+(procedure proc_0565
+  0565:39 6e            pushi 6e // $6e add
+  0567:39 04            pushi 4 // $4 x
+  0569:72 0c3e          lofsa $11aa // pawnMessage
+  056c:36                push 
+  056d:72 0e44          lofsa $13b4 // pawn
+  0570:36                push 
+  0571:72 0e8c          lofsa $1400 // pawnSelector
+  0574:36                push 
+  0575:72 0f14          lofsa $148c // donePawning
+  0578:36                push 
+  0579:72 083c          lofsa $0db8 // pawnShop
+  057c:4a 0c             send c 
+
+  057e:76               push0 
+  057f:40 fd45 00        call proc_02c8 0 
+
+  0583:39 21            pushi 21 // $21 font
+  0585:78               push1 
+  0586:89 17              lsg  
+  0588:39 1a            pushi 1a // $1a text
+  058a:78               push1 
+  058b:5b 02 04           lea 2 4 
+  058e:36                push 
+  058f:38 0099          pushi 99 // $99 setSize
+  0592:76               push0 
+  0593:38 009b          pushi 9b // $9b moveTo
+  0596:7a               push2 
+  0597:39 47            pushi 47 // $47 wordFail
+  0599:39 28            pushi 28 // $28 message
+  059b:72 0e62          lofsa $1400 // pawnSelector
+  059e:4a 18             send 18 
+
+  05a0:39 66            pushi 66 // $66 init
+  05a2:76               push0 
+  05a3:38 0099          pushi 99 // $99 setSize
+  05a6:76               push0 
+  05a7:39 53            pushi 53 // $53 draw
+  05a9:76               push0 
+  05aa:72 0bfd          lofsa $11aa // pawnMessage
+  05ad:4a 0c             send c 
+
+  05af:39 66            pushi 66 // $66 init
+  05b1:76               push0 
+  05b2:38 0099          pushi 99 // $99 setSize
+  05b5:76               push0 
+  05b6:39 53            pushi 53 // $53 draw
+  05b8:78               push1 
+  05b9:78               push1 
+  05ba:72 0e43          lofsa $1400 // pawnSelector
+  05bd:4a 0e             send e 
+
+  05bf:39 66            pushi 66 // $66 init
+  05c1:76               push0 
+  05c2:38 0099          pushi 99 // $99 setSize
+  05c5:76               push0 
+  05c6:39 53            pushi 53 // $53 draw
+  05c8:76               push0 
+  05c9:72 0de8          lofsa $13b4 // pawn
+  05cc:4a 0c             send c 
+
+  05ce:39 66            pushi 66 // $66 init
+  05d0:76               push0 
+  05d1:38 0099          pushi 99 // $99 setSize
+  05d4:76               push0 
+  05d5:39 53            pushi 53 // $53 draw
+  05d7:76               push0 
+  05d8:72 0eb1          lofsa $148c // donePawning
+  05db:4a 0c             send c 
+
+  05dd:39 03            pushi 3 // $3 y
+  05df:72 07d6          lofsa $0db8 // pawnShop
+  05e2:36                push 
+  05e3:38 0138          pushi 138 // $138 keyMouseList
+  05e6:76               push0 
+  05e7:72 07ce          lofsa $0db8 // pawnShop
+  05ea:4a 04             send 4 
+
+  05ec:36                push 
+  05ed:72 0dc4          lofsa $13b4 // pawn
+  05f0:36                push 
+  05f1:45 09 06         callb procedure_0009 6 //  
+
+  05f4:38 0129          pushi 129 // $129 setList
+  05f7:78               push1 
+  05f8:38 0138          pushi 138 // $138 keyMouseList
+  05fb:76               push0 
+  05fc:72 07b9          lofsa $0db8 // pawnShop
+  05ff:4a 04             send 4 
+
+  0601:36                push 
+  0602:51 30            class KeyMouse 
+  0604:4a 06             send 6 
+
+  0606:48                 ret 
+)
+
+(procedure proc_0607
+  0607:38 0123          pushi 123 // $123 erase
+  060a:76               push0 
+  060b:72 0b9c          lofsa $11aa // pawnMessage
+  060e:4a 04             send 4 
+
+  0610:38 0123          pushi 123 // $123 erase
+  0613:76               push0 
+  0614:72 0d9d          lofsa $13b4 // pawn
+  0617:4a 04             send 4 
+
+  0619:38 0097          pushi 97 // $97 select
+  061c:78               push1 
+  061d:76               push0 
+  061e:38 0123          pushi 123 // $123 erase
+  0621:76               push0 
+  0622:72 0ddb          lofsa $1400 // pawnSelector
+  0625:4a 0a             send a 
+
+  0627:38 0123          pushi 123 // $123 erase
+  062a:76               push0 
+  062b:72 0e5e          lofsa $148c // donePawning
+  062e:4a 04             send 4 
+
+  0630:39 75            pushi 75 // $75 release
+  0632:76               push0 
+  0633:38 0138          pushi 138 // $138 keyMouseList
+  0636:76               push0 
+  0637:72 077e          lofsa $0db8 // pawnShop
+  063a:4a 04             send 4 
+
+  063c:4a 04             send 4 
+
+  063e:39 54            pushi 54 // $54 delete
+  0640:39 04            pushi 4 // $4 x
+  0642:72 0b65          lofsa $11aa // pawnMessage
+  0645:36                push 
+  0646:72 0d6b          lofsa $13b4 // pawn
+  0649:36                push 
+  064a:72 0db3          lofsa $1400 // pawnSelector
+  064d:36                push 
+  064e:72 0e3b          lofsa $148c // donePawning
+  0651:36                push 
+  0652:72 0763          lofsa $0db8 // pawnShop
+  0655:4a 0c             send c 
+
+  0657:48                 ret 
+)
+
+(procedure proc_0658
+  0658:3f 06             link 6 // (var $6)
+  065a:39 6e            pushi 6e // $6e add
+  065c:78               push1 
+  065d:72 0fdc          lofsa $163c // redeemMessage
+  0660:36                push 
+  0661:72 0754          lofsa $0db8 // pawnShop
+  0664:4a 06             send 6 
+
+  0666:39 7b            pushi 7b // $7b indexOf
+  0668:78               push1 
+  0669:72 0aa6          lofsa $1112 // exitButton
+  066c:36                push 
+  066d:72 0748          lofsa $0db8 // pawnShop
+  0670:4a 06             send 6 
+
+  0672:a5 02              sat temp2 
+  0674:39 7a            pushi 7a // $7a addAfter
+  0676:7a               push2 
+  0677:39 43            pushi 43 // $43 at
+  0679:78               push1 
+  067a:36                push 
+  067b:35 01              ldi 1 
+  067d:04                 sub 
+  067e:36                push 
+  067f:72 0736          lofsa $0db8 // pawnShop
+  0682:4a 06             send 6 
+
+  0684:36                push 
+  0685:72 0e8e          lofsa $1516 // doneRedeeming
+  0688:36                push 
+  0689:72 072c          lofsa $0db8 // pawnShop
+  068c:4a 08             send 8 
+
+  068e:39 66            pushi 66 // $66 init
+  0690:76               push0 
+  0691:38 0099          pushi 99 // $99 setSize
+  0694:76               push0 
+  0695:39 53            pushi 53 // $53 draw
+  0697:76               push0 
+  0698:72 0fa1          lofsa $163c // redeemMessage
+  069b:4a 0c             send c 
+
+  069d:39 66            pushi 66 // $66 init
+  069f:76               push0 
+  06a0:38 0099          pushi 99 // $99 setSize
+  06a3:76               push0 
+  06a4:39 53            pushi 53 // $53 draw
+  06a6:76               push0 
+  06a7:72 0e6c          lofsa $1516 // doneRedeeming
+  06aa:4a 0c             send c 
+
+  06ac:35 00              ldi 0 
+  06ae:a5 05              sat temp5 
+  06b0:35 00              ldi 0 
+  06b2:a5 03              sat temp3 
+  06b4:a5 00              sat temp0 
+
+        code_06b6
+  06b6:8d 00              lst temp0 
+  06b8:39 59            pushi 59 // $59 size
+  06ba:76               push0 
+  06bb:38 0142          pushi 142 // $142 durables
+  06be:76               push0 
+  06bf:80 012e            lag  
+  06c2:4a 04             send 4 
+
+  06c4:4a 04             send 4 
+
+  06c6:22                 lt? 
+  06c7:30 0117            bnt code_07e1 
+  06ca:38 0164          pushi 164 // $164 attributes
+  06cd:76               push0 
+  06ce:39 43            pushi 43 // $43 at
+  06d0:78               push1 
+  06d1:8d 00              lst temp0 
+  06d3:38 0142          pushi 142 // $142 durables
+  06d6:76               push0 
+  06d7:80 012e            lag  
+  06da:4a 04             send 4 
+
+  06dc:4a 06             send 6 
+
+  06de:4a 04             send 4 
+
+  06e0:36                push 
+  06e1:35 18              ldi 18 
+  06e3:12                 and 
+  06e4:30 00f5            bnt code_07dc 
+  06e7:39 05            pushi 5 // $5 view
+  06e9:8d 03              lst temp3 
+  06eb:35 0a              ldi a 
+  06ed:06                 mul 
+  06ee:5a 0012 016c       lea 12 16c 
+  06f3:36                push 
+  06f4:38 00d4          pushi d4 // $d4 ignoreActors
+  06f7:39 13            pushi 13 // $13 brTop
+  06f9:38 02bc          pushi 2bc // $2bc sel_700
+  06fc:38 0157          pushi 157 // $157 indexNum
+  06ff:76               push0 
+  0700:39 43            pushi 43 // $43 at
+  0702:78               push1 
+  0703:8d 00              lst temp0 
+  0705:38 0142          pushi 142 // $142 durables
+  0708:76               push0 
+  0709:80 012e            lag  
+  070c:4a 04             send 4 
+
+  070e:4a 06             send 6 
+
+  0710:4a 04             send 4 
+
+  0712:36                push 
+  0713:43 48 0a         callk Format a 
+
+  0716:39 6e            pushi 6e // $6e add
+  0718:78               push1 
+  0719:38 0156          pushi 156 // $156 price
+  071c:78               push1 
+  071d:38 016e          pushi 16e // $16e redemptionPrice
+  0720:76               push0 
+  0721:39 43            pushi 43 // $43 at
+  0723:78               push1 
+  0724:8d 00              lst temp0 
+  0726:38 0142          pushi 142 // $142 durables
+  0729:76               push0 
+  072a:80 012e            lag  
+  072d:4a 04             send 4 
+
+  072f:4a 06             send 6 
+
+  0731:4a 04             send 4 
+
+  0733:36                push 
+  0734:39 1a            pushi 1a // $1a text
+  0736:78               push1 
+  0737:8d 03              lst temp3 
+  0739:35 0a              ldi a 
+  073b:06                 mul 
+  073c:5a 0012 016c       lea 12 16c 
+  0741:36                push 
+  0742:39 0a            pushi a // $a nsLeft
+  0744:78               push1 
+  0745:39 4e            pushi 4e // $4e save
+  0747:39 09            pushi 9 // $9 nsTop
+  0749:78               push1 
+  074a:39 28            pushi 28 // $28 message
+  074c:39 0a            pushi a // $a nsLeft
+  074e:85 03              lat temp3 
+  0750:06                 mul 
+  0751:02                 add 
+  0752:36                push 
+  0753:38 0157          pushi 157 // $157 indexNum
+  0756:78               push1 
+  0757:38 0157          pushi 157 // $157 indexNum
+  075a:76               push0 
+  075b:39 43            pushi 43 // $43 at
+  075d:78               push1 
+  075e:8d 00              lst temp0 
+  0760:38 0142          pushi 142 // $142 durables
+  0763:76               push0 
+  0764:80 012e            lag  
+  0767:4a 04             send 4 
+
+  0769:4a 06             send 6 
+
+  076b:4a 04             send 4 
+
+  076d:36                push 
+  076e:38 015c          pushi 15c // $15c fixedPrice
+  0771:78               push1 
+  0772:78               push1 
+  0773:38 015d          pushi 15d // $15d theDurable
+  0776:78               push1 
+  0777:39 43            pushi 43 // $43 at
+  0779:78               push1 
+  077a:8d 00              lst temp0 
+  077c:38 0142          pushi 142 // $142 durables
+  077f:76               push0 
+  0780:80 012e            lag  
+  0783:4a 04             send 4 
+
+  0785:4a 06             send 6 
+
+  0787:36                push 
+  0788:39 18            pushi 18 // $18 key
+  078a:78               push1 
+  078b:38 00c7          pushi c7 // $c7 nonBumps
+  078e:38 015f          pushi 15f // $15f celNum
+  0791:78               push1 
+  0792:38 0157          pushi 157 // $157 indexNum
+  0795:76               push0 
+  0796:39 43            pushi 43 // $43 at
+  0798:78               push1 
+  0799:8d 00              lst temp0 
+  079b:38 0142          pushi 142 // $142 durables
+  079e:76               push0 
+  079f:80 012e            lag  
+  07a2:4a 04             send 4 
+
+  07a4:4a 06             send 6 
+
+  07a6:4a 04             send 4 
+
+  07a8:36                push 
+  07a9:35 15              ldi 15 
+  07ab:04                 sub 
+  07ac:36                push 
+  07ad:39 6d            pushi 6d // $6d yourself
+  07af:76               push0 
+  07b0:39 65            pushi 65 // $65 new
+  07b2:76               push0 
+  07b3:72 10fe          lofsa $18b4 // aRedeemableItem
+  07b6:4a 04             send 4 
+
+  07b8:4a 3a             send 3a 
+
+  07ba:a5 04              sat temp4 
+  07bc:36                push 
+  07bd:72 05f8          lofsa $0db8 // pawnShop
+  07c0:4a 06             send 6 
+
+  07c2:85 05              lat temp5 
+  07c4:18                 not 
+  07c5:30 0004            bnt code_07cc 
+  07c8:85 04              lat temp4 
+  07ca:a5 05              sat temp5 
+
+        code_07cc
+  07cc:39 66            pushi 66 // $66 init
+  07ce:76               push0 
+  07cf:38 0099          pushi 99 // $99 setSize
+  07d2:76               push0 
+  07d3:39 53            pushi 53 // $53 draw
+  07d5:76               push0 
+  07d6:85 04              lat temp4 
+  07d8:4a 0c             send c 
+
+  07da:c5 03              +at temp3 
+
+        code_07dc
+  07dc:c5 00              +at temp0 
+  07de:32 fed5            jmp code_06b6 
+
+        code_07e1
+  07e1:39 03            pushi 3 // $3 y
+  07e3:72 05d2          lofsa $0db8 // pawnShop
+  07e6:36                push 
+  07e7:38 0138          pushi 138 // $138 keyMouseList
+  07ea:76               push0 
+  07eb:72 05ca          lofsa $0db8 // pawnShop
+  07ee:4a 04             send 4 
+
+  07f0:36                push 
+  07f1:8d 05              lst temp5 
+  07f3:45 09 06         callb procedure_0009 6 //  
+
+  07f6:38 0129          pushi 129 // $129 setList
+  07f9:78               push1 
+  07fa:38 0138          pushi 138 // $138 keyMouseList
+  07fd:76               push0 
+  07fe:72 05b7          lofsa $0db8 // pawnShop
+  0801:4a 04             send 4 
+
+  0803:36                push 
+  0804:51 30            class KeyMouse 
+  0806:4a 06             send 6 
+
+  0808:35 00              ldi 0 
+  080a:a2 01a8            sal local424 
+  080d:48                 ret 
+)
+
+(procedure proc_080e
+  080e:3f 02             link 2 // (var $2)
+  0810:38 0123          pushi 123 // $123 erase
+  0813:76               push0 
+  0814:72 0e25          lofsa $163c // redeemMessage
+  0817:4a 04             send 4 
+
+  0819:38 0123          pushi 123 // $123 erase
+  081c:76               push0 
+  081d:72 0cf6          lofsa $1516 // doneRedeeming
+  0820:4a 04             send 4 
+
+  0822:39 75            pushi 75 // $75 release
+  0824:76               push0 
+  0825:38 0138          pushi 138 // $138 keyMouseList
+  0828:76               push0 
+  0829:72 058c          lofsa $0db8 // pawnShop
+  082c:4a 04             send 4 
+
+  082e:4a 04             send 4 
+
+  0830:39 54            pushi 54 // $54 delete
+  0832:7a               push2 
+  0833:72 0e06          lofsa $163c // redeemMessage
+  0836:36                push 
+  0837:72 0cdc          lofsa $1516 // doneRedeeming
+  083a:36                push 
+  083b:72 057a          lofsa $0db8 // pawnShop
+  083e:4a 08             send 8 
+
+  0840:39 59            pushi 59 // $59 size
+  0842:76               push0 
+  0843:72 0572          lofsa $0db8 // pawnShop
+  0846:4a 04             send 4 
+
+  0848:36                push 
+  0849:35 01              ldi 1 
+  084b:04                 sub 
+  084c:a5 00              sat temp0 
+
+        code_084e
+  084e:8d 00              lst temp0 
+  0850:35 00              ldi 0 
+  0852:20                 ge? 
+  0853:30 0037            bnt code_088d 
+  0856:39 43            pushi 43 // $43 at
+  0858:78               push1 
+  0859:8d 00              lst temp0 
+  085b:72 055a          lofsa $0db8 // pawnShop
+  085e:4a 06             send 6 
+
+  0860:a5 01              sat temp1 
+  0862:39 6b            pushi 6b // $6b isMemberOf
+  0864:78               push1 
+  0865:51 37            class CostDItem 
+  0867:36                push 
+  0868:85 01              lat temp1 
+  086a:4a 06             send 6 
+
+  086c:30 0019            bnt code_0888 
+  086f:38 0123          pushi 123 // $123 erase
+  0872:76               push0 
+  0873:85 01              lat temp1 
+  0875:4a 04             send 4 
+
+  0877:39 54            pushi 54 // $54 delete
+  0879:78               push1 
+  087a:8d 01              lst temp1 
+  087c:72 0539          lofsa $0db8 // pawnShop
+  087f:4a 06             send 6 
+
+  0881:39 67            pushi 67 // $67 dispose
+  0883:76               push0 
+  0884:85 01              lat temp1 
+  0886:4a 04             send 4 
+
+
+        code_0888
+  0888:e5 00              -at temp0 
+  088a:32 ffc1            jmp code_084e 
+
+        code_088d
+  088d:48                 ret 
+)
+
+(procedure proc_088e
+  088e:3f 07             link 7 // (var $7)
+  0890:39 6e            pushi 6e // $6e add
+  0892:78               push1 
+  0893:72 0d56          lofsa $15ec // buyMessage
+  0896:36                push 
+  0897:72 051e          lofsa $0db8 // pawnShop
+  089a:4a 06             send 6 
+
+  089c:39 7b            pushi 7b // $7b indexOf
+  089e:78               push1 
+  089f:72 0870          lofsa $1112 // exitButton
+  08a2:36                push 
+  08a3:72 0512          lofsa $0db8 // pawnShop
+  08a6:4a 06             send 6 
+
+  08a8:a5 02              sat temp2 
+  08aa:39 7a            pushi 7a // $7a addAfter
+  08ac:7a               push2 
+  08ad:39 43            pushi 43 // $43 at
+  08af:78               push1 
+  08b0:36                push 
+  08b1:35 01              ldi 1 
+  08b3:04                 sub 
+  08b4:36                push 
+  08b5:72 0500          lofsa $0db8 // pawnShop
+  08b8:4a 06             send 6 
+
+  08ba:36                push 
+  08bb:72 0ce2          lofsa $15a0 // doneBuying
+  08be:36                push 
+  08bf:72 04f6          lofsa $0db8 // pawnShop
+  08c2:4a 08             send 8 
+
+  08c4:39 66            pushi 66 // $66 init
+  08c6:76               push0 
+  08c7:38 0099          pushi 99 // $99 setSize
+  08ca:76               push0 
+  08cb:39 53            pushi 53 // $53 draw
+  08cd:76               push0 
+  08ce:72 0d1b          lofsa $15ec // buyMessage
+  08d1:4a 0c             send c 
+
+  08d3:39 66            pushi 66 // $66 init
+  08d5:76               push0 
+  08d6:38 0099          pushi 99 // $99 setSize
+  08d9:76               push0 
+  08da:39 53            pushi 53 // $53 draw
+  08dc:76               push0 
+  08dd:72 0cc0          lofsa $15a0 // doneBuying
+  08e0:4a 0c             send c 
+
+  08e2:35 00              ldi 0 
+  08e4:a5 06              sat temp6 
+  08e6:35 00              ldi 0 
+  08e8:a5 04              sat temp4 
+  08ea:a5 03              sat temp3 
+
+        code_08ec
+  08ec:8d 03              lst temp3 
+  08ee:39 59            pushi 59 // $59 size
+  08f0:76               push0 
+  08f1:7a               push2 
+  08f2:78               push1 
+  08f3:7a               push2 
+  08f4:43 02 04         callk ScriptID 4 
+
+  08f7:4a 04             send 4 
+
+  08f9:22                 lt? 
+  08fa:30 019d            bnt code_0a9a 
+  08fd:35 00              ldi 0 
+  08ff:a5 00              sat temp0 
+
+        code_0901
+  0901:8d 00              lst temp0 
+  0903:39 59            pushi 59 // $59 size
+  0905:76               push0 
+  0906:38 0142          pushi 142 // $142 durables
+  0909:76               push0 
+  090a:39 43            pushi 43 // $43 at
+  090c:78               push1 
+  090d:8d 03              lst temp3 
+  090f:7a               push2 
+  0910:78               push1 
+  0911:7a               push2 
+  0912:43 02 04         callk ScriptID 4 
+
+  0915:4a 06             send 6 
+
+  0917:4a 04             send 4 
+
+  0919:4a 04             send 4 
+
+  091b:22                 lt? 
+  091c:30 0176            bnt code_0a95 
+  091f:38 0164          pushi 164 // $164 attributes
+  0922:76               push0 
+  0923:39 43            pushi 43 // $43 at
+  0925:78               push1 
+  0926:8d 00              lst temp0 
+  0928:38 0142          pushi 142 // $142 durables
+  092b:76               push0 
+  092c:39 43            pushi 43 // $43 at
+  092e:78               push1 
+  092f:8d 03              lst temp3 
+  0931:7a               push2 
+  0932:78               push1 
+  0933:7a               push2 
+  0934:43 02 04         callk ScriptID 4 
+
+  0937:4a 06             send 6 
+
+  0939:4a 04             send 4 
+
+  093b:4a 06             send 6 
+
+  093d:4a 04             send 4 
+
+  093f:36                push 
+  0940:35 20              ldi 20 
+  0942:12                 and 
+  0943:30 014a            bnt code_0a90 
+  0946:39 05            pushi 5 // $5 view
+  0948:8d 04              lst temp4 
+  094a:35 0a              ldi a 
+  094c:06                 mul 
+  094d:5a 0012 0130       lea 12 130 
+  0952:36                push 
+  0953:38 00d4          pushi d4 // $d4 ignoreActors
+  0956:39 13            pushi 13 // $13 brTop
+  0958:38 02bc          pushi 2bc // $2bc sel_700
+  095b:38 0157          pushi 157 // $157 indexNum
+  095e:76               push0 
+  095f:39 43            pushi 43 // $43 at
+  0961:78               push1 
+  0962:8d 00              lst temp0 
+  0964:38 0142          pushi 142 // $142 durables
+  0967:76               push0 
+  0968:39 43            pushi 43 // $43 at
+  096a:78               push1 
+  096b:8d 03              lst temp3 
+  096d:7a               push2 
+  096e:78               push1 
+  096f:7a               push2 
+  0970:43 02 04         callk ScriptID 4 
+
+  0973:4a 06             send 6 
+
+  0975:4a 04             send 4 
+
+  0977:4a 06             send 6 
+
+  0979:4a 04             send 4 
+
+  097b:36                push 
+  097c:43 48 0a         callk Format a 
+
+  097f:39 6e            pushi 6e // $6e add
+  0981:78               push1 
+  0982:39 17            pushi 17 // $17 name
+  0984:78               push1 
+  0985:72 1282          lofsa $1c0a // redeemable
+  0988:36                push 
+  0989:38 0156          pushi 156 // $156 price
+  098c:78               push1 
+  098d:38 016e          pushi 16e // $16e redemptionPrice
+  0990:76               push0 
+  0991:39 43            pushi 43 // $43 at
+  0993:78               push1 
+  0994:8d 00              lst temp0 
+  0996:38 0142          pushi 142 // $142 durables
+  0999:76               push0 
+  099a:39 43            pushi 43 // $43 at
+  099c:78               push1 
+  099d:8d 03              lst temp3 
+  099f:7a               push2 
+  09a0:78               push1 
+  09a1:7a               push2 
+  09a2:43 02 04         callk ScriptID 4 
+
+  09a5:4a 06             send 6 
+
+  09a7:4a 04             send 4 
+
+  09a9:4a 06             send 6 
+
+  09ab:4a 04             send 4 
+
+  09ad:36                push 
+  09ae:39 1a            pushi 1a // $1a text
+  09b0:78               push1 
+  09b1:8d 04              lst temp4 
+  09b3:35 0a              ldi a 
+  09b5:06                 mul 
+  09b6:5a 0012 0130       lea 12 130 
+  09bb:36                push 
+  09bc:39 0a            pushi a // $a nsLeft
+  09be:78               push1 
+  09bf:39 4e            pushi 4e // $4e save
+  09c1:39 09            pushi 9 // $9 nsTop
+  09c3:78               push1 
+  09c4:39 28            pushi 28 // $28 message
+  09c6:39 0a            pushi a // $a nsLeft
+  09c8:85 04              lat temp4 
+  09ca:06                 mul 
+  09cb:02                 add 
+  09cc:36                push 
+  09cd:38 0157          pushi 157 // $157 indexNum
+  09d0:78               push1 
+  09d1:38 0157          pushi 157 // $157 indexNum
+  09d4:76               push0 
+  09d5:39 43            pushi 43 // $43 at
+  09d7:78               push1 
+  09d8:8d 00              lst temp0 
+  09da:38 0142          pushi 142 // $142 durables
+  09dd:76               push0 
+  09de:39 43            pushi 43 // $43 at
+  09e0:78               push1 
+  09e1:8d 03              lst temp3 
+  09e3:7a               push2 
+  09e4:78               push1 
+  09e5:7a               push2 
+  09e6:43 02 04         callk ScriptID 4 
+
+  09e9:4a 06             send 6 
+
+  09eb:4a 04             send 4 
+
+  09ed:4a 06             send 6 
+
+  09ef:4a 04             send 4 
+
+  09f1:36                push 
+  09f2:38 015c          pushi 15c // $15c fixedPrice
+  09f5:78               push1 
+  09f6:78               push1 
+  09f7:38 015d          pushi 15d // $15d theDurable
+  09fa:78               push1 
+  09fb:39 43            pushi 43 // $43 at
+  09fd:78               push1 
+  09fe:8d 00              lst temp0 
+  0a00:38 0142          pushi 142 // $142 durables
+  0a03:76               push0 
+  0a04:39 43            pushi 43 // $43 at
+  0a06:78               push1 
+  0a07:8d 03              lst temp3 
+  0a09:7a               push2 
+  0a0a:78               push1 
+  0a0b:7a               push2 
+  0a0c:43 02 04         callk ScriptID 4 
+
+  0a0f:4a 06             send 6 
+
+  0a11:4a 04             send 4 
+
+  0a13:4a 06             send 6 
+
+  0a15:36                push 
+  0a16:38 015f          pushi 15f // $15f celNum
+  0a19:78               push1 
+  0a1a:38 0157          pushi 157 // $157 indexNum
+  0a1d:76               push0 
+  0a1e:39 43            pushi 43 // $43 at
+  0a20:78               push1 
+  0a21:8d 00              lst temp0 
+  0a23:38 0142          pushi 142 // $142 durables
+  0a26:76               push0 
+  0a27:39 43            pushi 43 // $43 at
+  0a29:78               push1 
+  0a2a:8d 03              lst temp3 
+  0a2c:7a               push2 
+  0a2d:78               push1 
+  0a2e:7a               push2 
+  0a2f:43 02 04         callk ScriptID 4 
+
+  0a32:4a 06             send 6 
+
+  0a34:4a 04             send 4 
+
+  0a36:4a 06             send 6 
+
+  0a38:4a 04             send 4 
+
+  0a3a:36                push 
+  0a3b:35 15              ldi 15 
+  0a3d:04                 sub 
+  0a3e:36                push 
+  0a3f:39 6d            pushi 6d // $6d yourself
+  0a41:76               push0 
+  0a42:39 65            pushi 65 // $65 new
+  0a44:76               push0 
+  0a45:72 0e6c          lofsa $18b4 // aRedeemableItem
+  0a48:4a 04             send 4 
+
+  0a4a:4a 3a             send 3a 
+
+  0a4c:a5 05              sat temp5 
+  0a4e:36                push 
+  0a4f:72 0366          lofsa $0db8 // pawnShop
+  0a52:4a 06             send 6 
+
+  0a54:85 06              lat temp6 
+  0a56:18                 not 
+  0a57:30 0004            bnt code_0a5e 
+  0a5a:85 05              lat temp5 
+  0a5c:a5 06              sat temp6 
+
+        code_0a5e
+  0a5e:39 66            pushi 66 // $66 init
+  0a60:76               push0 
+  0a61:38 0099          pushi 99 // $99 setSize
+  0a64:76               push0 
+  0a65:39 53            pushi 53 // $53 draw
+  0a67:76               push0 
+  0a68:85 05              lat temp5 
+  0a6a:4a 0c             send c 
+
+  0a6c:38 0164          pushi 164 // $164 attributes
+  0a6f:78               push1 
+  0a70:38 0164          pushi 164 // $164 attributes
+  0a73:76               push0 
+  0a74:38 015d          pushi 15d // $15d theDurable
+  0a77:76               push0 
+  0a78:85 05              lat temp5 
+  0a7a:4a 04             send 4 
+
+  0a7c:4a 04             send 4 
+
+  0a7e:36                push 
+  0a7f:34 0100            ldi 100 
+  0a82:14                  or 
+  0a83:36                push 
+  0a84:38 015d          pushi 15d // $15d theDurable
+  0a87:76               push0 
+  0a88:85 05              lat temp5 
+  0a8a:4a 04             send 4 
+
+  0a8c:4a 06             send 6 
+
+  0a8e:c5 04              +at temp4 
+
+        code_0a90
+  0a90:c5 00              +at temp0 
+  0a92:32 fe6c            jmp code_0901 
+
+        code_0a95
+  0a95:c5 03              +at temp3 
+  0a97:32 fe52            jmp code_08ec 
+
+        code_0a9a
+  0a9a:39 03            pushi 3 // $3 y
+  0a9c:72 0319          lofsa $0db8 // pawnShop
+  0a9f:36                push 
+  0aa0:38 0138          pushi 138 // $138 keyMouseList
+  0aa3:76               push0 
+  0aa4:72 0311          lofsa $0db8 // pawnShop
+  0aa7:4a 04             send 4 
+
+  0aa9:36                push 
+  0aaa:8d 06              lst temp6 
+  0aac:45 09 06         callb procedure_0009 6 //  
+
+  0aaf:38 0129          pushi 129 // $129 setList
+  0ab2:78               push1 
+  0ab3:38 0138          pushi 138 // $138 keyMouseList
+  0ab6:76               push0 
+  0ab7:72 02fe          lofsa $0db8 // pawnShop
+  0aba:4a 04             send 4 
+
+  0abc:36                push 
+  0abd:51 30            class KeyMouse 
+  0abf:4a 06             send 6 
+
+  0ac1:48                 ret 
+)
+
+(procedure proc_0ac2
+  0ac2:3f 02             link 2 // (var $2)
+  0ac4:38 0123          pushi 123 // $123 erase
+  0ac7:76               push0 
+  0ac8:72 0b21          lofsa $15ec // buyMessage
+  0acb:4a 04             send 4 
+
+  0acd:38 0123          pushi 123 // $123 erase
+  0ad0:76               push0 
+  0ad1:72 0acc          lofsa $15a0 // doneBuying
+  0ad4:4a 04             send 4 
+
+  0ad6:39 75            pushi 75 // $75 release
+  0ad8:76               push0 
+  0ad9:38 0138          pushi 138 // $138 keyMouseList
+  0adc:76               push0 
+  0add:72 02d8          lofsa $0db8 // pawnShop
+  0ae0:4a 04             send 4 
+
+  0ae2:4a 04             send 4 
+
+  0ae4:39 54            pushi 54 // $54 delete
+  0ae6:7a               push2 
+  0ae7:72 0b02          lofsa $15ec // buyMessage
+  0aea:36                push 
+  0aeb:72 0ab2          lofsa $15a0 // doneBuying
+  0aee:36                push 
+  0aef:72 02c6          lofsa $0db8 // pawnShop
+  0af2:4a 08             send 8 
+
+  0af4:39 59            pushi 59 // $59 size
+  0af6:76               push0 
+  0af7:72 02be          lofsa $0db8 // pawnShop
+  0afa:4a 04             send 4 
+
+  0afc:36                push 
+  0afd:35 01              ldi 1 
+  0aff:04                 sub 
+  0b00:a5 00              sat temp0 
+
+        code_0b02
+  0b02:8d 00              lst temp0 
+  0b04:35 00              ldi 0 
+  0b06:20                 ge? 
+  0b07:30 0037            bnt code_0b41 
+  0b0a:39 43            pushi 43 // $43 at
+  0b0c:78               push1 
+  0b0d:8d 00              lst temp0 
+  0b0f:72 02a6          lofsa $0db8 // pawnShop
+  0b12:4a 06             send 6 
+
+  0b14:a5 01              sat temp1 
+  0b16:39 6b            pushi 6b // $6b isMemberOf
+  0b18:78               push1 
+  0b19:51 37            class CostDItem 
+  0b1b:36                push 
+  0b1c:85 01              lat temp1 
+  0b1e:4a 06             send 6 
+
+  0b20:30 0019            bnt code_0b3c 
+  0b23:38 0123          pushi 123 // $123 erase
+  0b26:76               push0 
+  0b27:85 01              lat temp1 
+  0b29:4a 04             send 4 
+
+  0b2b:39 54            pushi 54 // $54 delete
+  0b2d:78               push1 
+  0b2e:8d 01              lst temp1 
+  0b30:72 0285          lofsa $0db8 // pawnShop
+  0b33:4a 06             send 6 
+
+  0b35:39 67            pushi 67 // $67 dispose
+  0b37:76               push0 
+  0b38:85 01              lat temp1 
+  0b3a:4a 04             send 4 
+
+
+        code_0b3c
+  0b3c:e5 00              -at temp0 
+  0b3e:32 ffc1            jmp code_0b02 
+
+        code_0b41
+  0b41:48                 ret 
+)
+

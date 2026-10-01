@@ -1,0 +1,1703 @@
+(script 2)
+
+(string
+    string_0c10 "introRoom"
+    string_0c1a "introDuction"
+    string_0c27 "voiceTalentList"
+    string_0c37 "littlepic1"
+    string_0c42 "littlename1"
+    string_0c4e "littlepic2"
+    string_0c59 "littlename2"
+    string_0c65 "littlepic3"
+    string_0c70 "littlename3"
+    string_0c7c "littlepic4"
+    string_0c87 "littlename4top"
+    string_0c96 "littlename4bot"
+    string_0ca5 "littlepic5"
+    string_0cb0 "littlename5top"
+    string_0cbf "littlename5bot"
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+    local2 = $0000
+)
+
+// 00a6
+(instance publicintroRoom of Rm
+    (properties
+        script $0
+        number $0
+        timer $0
+        picture $0
+        style $ffff
+        controls $0
+    )
+    (method (init) // method_000e
+  000e:35 02              ldi 2 
+  0010:65 10             aTop style 
+  0012:39 6a            pushi 6a // $6a init
+  0014:76               push0 
+  0015:57 2a 04         super Rm 4 
+
+  0018:38 008c          pushi 8c // $8c setScript
+  001b:78               push1 
+  001c:72 070c          lofsa $070c // introDuction
+  001f:36                push 
+  0020:54 06             self 6 
+
+  0022:48                 ret 
+    )
+
+    (method (handleEvent) // method_0023
+  0023:39 4c            pushi 4c // $4c claimed
+  0025:76               push0 
+  0026:87 01              lap param1 
+  0028:4a 04             send 4 
+
+  002a:18                 not 
+  002b:30 0070            bnt code_009e 
+  002e:39 22            pushi 22 // $22 type
+  0030:76               push0 
+  0031:87 01              lap param1 
+  0033:4a 04             send 4 
+
+  0035:30 0066            bnt code_009e 
+  0038:39 4c            pushi 4c // $4c claimed
+  003a:78               push1 
+  003b:78               push1 
+  003c:87 01              lap param1 
+  003e:4a 06             send 6 
+
+  0040:39 22            pushi 22 // $22 type
+  0042:76               push0 
+  0043:87 01              lap param1 
+  0045:4a 04             send 4 
+
+  0047:36                push 
+  0048:35 01              ldi 1 
+  004a:12                 and 
+  004b:2e 000b             bt code_0059 
+  004e:39 22            pushi 22 // $22 type
+  0050:76               push0 
+  0051:87 01              lap param1 
+  0053:4a 04             send 4 
+
+  0055:36                push 
+  0056:35 04              ldi 4 
+  0058:12                 and 
+
+        code_0059
+  0059:30 0042            bnt code_009e 
+  005c:39 03            pushi 3 // $3 y
+  005e:76               push0 
+  005f:87 01              lap param1 
+  0061:4a 04             send 4 
+
+  0063:36                push 
+  0064:35 0a              ldi a 
+  0066:1e                 gt? 
+  0067:30 0034            bnt code_009e 
+  006a:83 00              lal local0 
+  006c:30 0006            bnt code_0075 
+  006f:38 0099          pushi 99 // $99 hide
+  0072:76               push0 
+  0073:4a 04             send 4 
+
+
+        code_0075
+  0075:83 01              lal local1 
+  0077:30 0006            bnt code_0080 
+  007a:38 0099          pushi 99 // $99 hide
+  007d:76               push0 
+  007e:4a 04             send 4 
+
+
+        code_0080
+  0080:83 02              lal local2 
+  0082:30 0006            bnt code_008b 
+  0085:38 0099          pushi 99 // $99 hide
+  0088:76               push0 
+  0089:4a 04             send 4 
+
+
+        code_008b
+  008b:76               push0 
+  008c:45 01 00         callb procedure_0001 0 //  
+
+  008f:39 20            pushi 20 // $20 state
+  0091:78               push1 
+  0092:39 14            pushi 14 // $14 brLeft
+  0094:38 0084          pushi 84 // $84 seconds
+  0097:78               push1 
+  0098:78               push1 
+  0099:72 070c          lofsa $070c // introDuction
+  009c:4a 0c             send c 
+
+
+        code_009e
+  009e:48                 ret 
+  009f:00                bnot 
+    )
+
+)
+
+// 0706
+(instance introDuction of Script
+    (properties
+        client $0
+        state $ffff
+        start $0
+        timer $0
+        cycles $0
+        seconds $0
+        lastSeconds $0
+        register $0
+        script $0
+        caller $0
+        register2 $0
+    )
+    (method (changeState) // method_00d0
+  00d0:3f 01             link 1 // (var $1)
+  00d2:87 01              lap param1 
+  00d4:65 0a             aTop state 
+  00d6:36                push 
+  00d7:3c                 dup 
+  00d8:35 00              ldi 0 
+  00da:1a                 eq? 
+  00db:30 0028            bnt code_0106 
+  00de:7a               push2 
+  00df:76               push0 
+  00e0:39 03            pushi 3 // $3 y
+  00e2:43 08 04         callk DrawPic 4 
+
+  00e5:38 0092          pushi 92 // $92 playBed
+  00e8:39 04            pushi 4 // $4 x
+  00ea:39 2b            pushi 2b // $2b number
+  00ec:76               push0 
+  00ed:80 01dd            lag  
+  00f0:4a 04             send 4 
+
+  00f2:36                push 
+  00f3:88 01dd            lsg  
+  00f6:39 0a            pushi a // $a nsLeft
+  00f8:39 ff            pushi ff // $ff close
+  00fa:80 01dd            lag  
+  00fd:4a 0c             send c 
+
+  00ff:35 04              ldi 4 
+  0101:65 12             aTop seconds 
+  0103:32 05f8            jmp code_06fe 
+
+        code_0106
+  0106:3c                 dup 
+  0107:35 01              ldi 1 
+  0109:1a                 eq? 
+  010a:30 003b            bnt code_0148 
+  010d:72 0776          lofsa $0776 // littlepic1
+  0110:a3 00              sal local0 
+  0112:72 07da          lofsa $07da // littlename1
+  0115:a3 01              sal local1 
+  0117:7a               push2 
+  0118:78               push1 
+  0119:7a               push2 
+  011a:43 08 04         callk DrawPic 4 
+
+  011d:38 00d6          pushi d6 // $d6 setLoop
+  0120:78               push1 
+  0121:76               push0 
+  0122:38 00d7          pushi d7 // $d7 setCel
+  0125:78               push1 
+  0126:76               push0 
+  0127:39 6a            pushi 6a // $6a init
+  0129:76               push0 
+  012a:72 0776          lofsa $0776 // littlepic1
+  012d:4a 10             send 10 
+
+  012f:38 00d6          pushi d6 // $d6 setLoop
+  0132:78               push1 
+  0133:76               push0 
+  0134:38 00d7          pushi d7 // $d7 setCel
+  0137:78               push1 
+  0138:78               push1 
+  0139:39 6a            pushi 6a // $6a init
+  013b:76               push0 
+  013c:72 07da          lofsa $07da // littlename1
+  013f:4a 10             send 10 
+
+  0141:35 04              ldi 4 
+  0143:65 12             aTop seconds 
+  0145:32 05b6            jmp code_06fe 
+
+        code_0148
+  0148:3c                 dup 
+  0149:35 02              ldi 2 
+  014b:1a                 eq? 
+  014c:30 002b            bnt code_017a 
+  014f:7a               push2 
+  0150:78               push1 
+  0151:7a               push2 
+  0152:43 08 04         callk DrawPic 4 
+
+  0155:38 00d6          pushi d6 // $d6 setLoop
+  0158:78               push1 
+  0159:78               push1 
+  015a:38 00d7          pushi d7 // $d7 setCel
+  015d:78               push1 
+  015e:76               push0 
+  015f:72 0776          lofsa $0776 // littlepic1
+  0162:4a 0c             send c 
+
+  0164:38 00d6          pushi d6 // $d6 setLoop
+  0167:78               push1 
+  0168:78               push1 
+  0169:38 00d7          pushi d7 // $d7 setCel
+  016c:78               push1 
+  016d:78               push1 
+  016e:72 07da          lofsa $07da // littlename1
+  0171:4a 0c             send c 
+
+  0173:35 03              ldi 3 
+  0175:65 12             aTop seconds 
+  0177:32 0584            jmp code_06fe 
+
+        code_017a
+  017a:3c                 dup 
+  017b:35 03              ldi 3 
+  017d:1a                 eq? 
+  017e:30 002b            bnt code_01ac 
+  0181:7a               push2 
+  0182:78               push1 
+  0183:7a               push2 
+  0184:43 08 04         callk DrawPic 4 
+
+  0187:38 00d6          pushi d6 // $d6 setLoop
+  018a:78               push1 
+  018b:7a               push2 
+  018c:38 00d7          pushi d7 // $d7 setCel
+  018f:78               push1 
+  0190:76               push0 
+  0191:72 0776          lofsa $0776 // littlepic1
+  0194:4a 0c             send c 
+
+  0196:38 00d6          pushi d6 // $d6 setLoop
+  0199:78               push1 
+  019a:7a               push2 
+  019b:38 00d7          pushi d7 // $d7 setCel
+  019e:78               push1 
+  019f:78               push1 
+  01a0:72 07da          lofsa $07da // littlename1
+  01a3:4a 0c             send c 
+
+  01a5:35 03              ldi 3 
+  01a7:65 12             aTop seconds 
+  01a9:32 0552            jmp code_06fe 
+
+        code_01ac
+  01ac:3c                 dup 
+  01ad:35 04              ldi 4 
+  01af:1a                 eq? 
+  01b0:30 0065            bnt code_0218 
+  01b3:39 6b            pushi 6b // $6b dispose
+  01b5:76               push0 
+  01b6:72 0776          lofsa $0776 // littlepic1
+  01b9:4a 04             send 4 
+
+  01bb:39 6b            pushi 6b // $6b dispose
+  01bd:76               push0 
+  01be:72 07da          lofsa $07da // littlename1
+  01c1:4a 04             send 4 
+
+  01c3:7a               push2 
+  01c4:38 0080          pushi 80 // $80 handleEvent
+  01c7:78               push1 
+  01c8:43 01 04         callk UnLoad 4 
+
+  01cb:7a               push2 
+  01cc:38 0081          pushi 81 // $81 start
+  01cf:78               push1 
+  01d0:43 01 04         callk UnLoad 4 
+
+  01d3:72 0840          lofsa $0840 // littlepic2
+  01d6:a3 00              sal local0 
+  01d8:72 08a4          lofsa $08a4 // littlename2
+  01db:a3 01              sal local1 
+  01dd:7a               push2 
+  01de:7a               push2 
+  01df:39 03            pushi 3 // $3 y
+  01e1:43 08 04         callk DrawPic 4 
+
+  01e4:38 00d6          pushi d6 // $d6 setLoop
+  01e7:78               push1 
+  01e8:76               push0 
+  01e9:38 00d7          pushi d7 // $d7 setCel
+  01ec:78               push1 
+  01ed:76               push0 
+  01ee:39 6a            pushi 6a // $6a init
+  01f0:76               push0 
+  01f1:72 0840          lofsa $0840 // littlepic2
+  01f4:4a 10             send 10 
+
+  01f6:38 0099          pushi 99 // $99 hide
+  01f9:76               push0 
+  01fa:72 07da          lofsa $07da // littlename1
+  01fd:4a 04             send 4 
+
+  01ff:38 00d6          pushi d6 // $d6 setLoop
+  0202:78               push1 
+  0203:76               push0 
+  0204:38 00d7          pushi d7 // $d7 setCel
+  0207:78               push1 
+  0208:78               push1 
+  0209:39 6a            pushi 6a // $6a init
+  020b:76               push0 
+  020c:72 08a4          lofsa $08a4 // littlename2
+  020f:4a 10             send 10 
+
+  0211:35 04              ldi 4 
+  0213:65 12             aTop seconds 
+  0215:32 04e6            jmp code_06fe 
+
+        code_0218
+  0218:3c                 dup 
+  0219:35 05              ldi 5 
+  021b:1a                 eq? 
+  021c:30 002c            bnt code_024b 
+  021f:7a               push2 
+  0220:7a               push2 
+  0221:39 03            pushi 3 // $3 y
+  0223:43 08 04         callk DrawPic 4 
+
+  0226:38 00d6          pushi d6 // $d6 setLoop
+  0229:78               push1 
+  022a:78               push1 
+  022b:38 00d7          pushi d7 // $d7 setCel
+  022e:78               push1 
+  022f:76               push0 
+  0230:72 0840          lofsa $0840 // littlepic2
+  0233:4a 0c             send c 
+
+  0235:38 00d6          pushi d6 // $d6 setLoop
+  0238:78               push1 
+  0239:78               push1 
+  023a:38 00d7          pushi d7 // $d7 setCel
+  023d:78               push1 
+  023e:78               push1 
+  023f:72 08a4          lofsa $08a4 // littlename2
+  0242:4a 0c             send c 
+
+  0244:35 03              ldi 3 
+  0246:65 12             aTop seconds 
+  0248:32 04b3            jmp code_06fe 
+
+        code_024b
+  024b:3c                 dup 
+  024c:35 06              ldi 6 
+  024e:1a                 eq? 
+  024f:30 002c            bnt code_027e 
+  0252:7a               push2 
+  0253:7a               push2 
+  0254:39 03            pushi 3 // $3 y
+  0256:43 08 04         callk DrawPic 4 
+
+  0259:38 00d6          pushi d6 // $d6 setLoop
+  025c:78               push1 
+  025d:7a               push2 
+  025e:38 00d7          pushi d7 // $d7 setCel
+  0261:78               push1 
+  0262:76               push0 
+  0263:72 0840          lofsa $0840 // littlepic2
+  0266:4a 0c             send c 
+
+  0268:38 00d6          pushi d6 // $d6 setLoop
+  026b:78               push1 
+  026c:7a               push2 
+  026d:38 00d7          pushi d7 // $d7 setCel
+  0270:78               push1 
+  0271:78               push1 
+  0272:72 08a4          lofsa $08a4 // littlename2
+  0275:4a 0c             send c 
+
+  0277:35 02              ldi 2 
+  0279:65 12             aTop seconds 
+  027b:32 0480            jmp code_06fe 
+
+        code_027e
+  027e:3c                 dup 
+  027f:35 07              ldi 7 
+  0281:1a                 eq? 
+  0282:30 0065            bnt code_02ea 
+  0285:39 6b            pushi 6b // $6b dispose
+  0287:76               push0 
+  0288:72 0840          lofsa $0840 // littlepic2
+  028b:4a 04             send 4 
+
+  028d:39 6b            pushi 6b // $6b dispose
+  028f:76               push0 
+  0290:72 08a4          lofsa $08a4 // littlename2
+  0293:4a 04             send 4 
+
+  0295:7a               push2 
+  0296:38 0080          pushi 80 // $80 handleEvent
+  0299:7a               push2 
+  029a:43 01 04         callk UnLoad 4 
+
+  029d:7a               push2 
+  029e:38 0081          pushi 81 // $81 start
+  02a1:7a               push2 
+  02a2:43 01 04         callk UnLoad 4 
+
+  02a5:72 090a          lofsa $090a // littlepic3
+  02a8:a3 00              sal local0 
+  02aa:72 096e          lofsa $096e // littlename3
+  02ad:a3 01              sal local1 
+  02af:7a               push2 
+  02b0:39 03            pushi 3 // $3 y
+  02b2:7a               push2 
+  02b3:43 08 04         callk DrawPic 4 
+
+  02b6:38 00d6          pushi d6 // $d6 setLoop
+  02b9:78               push1 
+  02ba:76               push0 
+  02bb:38 00d7          pushi d7 // $d7 setCel
+  02be:78               push1 
+  02bf:76               push0 
+  02c0:39 6a            pushi 6a // $6a init
+  02c2:76               push0 
+  02c3:72 090a          lofsa $090a // littlepic3
+  02c6:4a 10             send 10 
+
+  02c8:38 0099          pushi 99 // $99 hide
+  02cb:76               push0 
+  02cc:72 08a4          lofsa $08a4 // littlename2
+  02cf:4a 04             send 4 
+
+  02d1:38 00d6          pushi d6 // $d6 setLoop
+  02d4:78               push1 
+  02d5:76               push0 
+  02d6:38 00d7          pushi d7 // $d7 setCel
+  02d9:78               push1 
+  02da:78               push1 
+  02db:39 6a            pushi 6a // $6a init
+  02dd:76               push0 
+  02de:72 096e          lofsa $096e // littlename3
+  02e1:4a 10             send 10 
+
+  02e3:35 04              ldi 4 
+  02e5:65 12             aTop seconds 
+  02e7:32 0414            jmp code_06fe 
+
+        code_02ea
+  02ea:3c                 dup 
+  02eb:35 08              ldi 8 
+  02ed:1a                 eq? 
+  02ee:30 003b            bnt code_032c 
+  02f1:7a               push2 
+  02f2:39 03            pushi 3 // $3 y
+  02f4:7a               push2 
+  02f5:43 08 04         callk DrawPic 4 
+
+  02f8:38 00d6          pushi d6 // $d6 setLoop
+  02fb:78               push1 
+  02fc:76               push0 
+  02fd:38 00d7          pushi d7 // $d7 setCel
+  0300:78               push1 
+  0301:76               push0 
+  0302:39 6a            pushi 6a // $6a init
+  0304:76               push0 
+  0305:72 090a          lofsa $090a // littlepic3
+  0308:4a 10             send 10 
+
+  030a:38 0099          pushi 99 // $99 hide
+  030d:76               push0 
+  030e:72 08a4          lofsa $08a4 // littlename2
+  0311:4a 04             send 4 
+
+  0313:38 00d6          pushi d6 // $d6 setLoop
+  0316:78               push1 
+  0317:76               push0 
+  0318:38 00d7          pushi d7 // $d7 setCel
+  031b:78               push1 
+  031c:7a               push2 
+  031d:39 6a            pushi 6a // $6a init
+  031f:76               push0 
+  0320:72 096e          lofsa $096e // littlename3
+  0323:4a 10             send 10 
+
+  0325:35 04              ldi 4 
+  0327:65 12             aTop seconds 
+  0329:32 03d2            jmp code_06fe 
+
+        code_032c
+  032c:3c                 dup 
+  032d:35 09              ldi 9 
+  032f:1a                 eq? 
+  0330:30 002c            bnt code_035f 
+  0333:7a               push2 
+  0334:39 03            pushi 3 // $3 y
+  0336:7a               push2 
+  0337:43 08 04         callk DrawPic 4 
+
+  033a:38 00d6          pushi d6 // $d6 setLoop
+  033d:78               push1 
+  033e:78               push1 
+  033f:38 00d7          pushi d7 // $d7 setCel
+  0342:78               push1 
+  0343:76               push0 
+  0344:72 090a          lofsa $090a // littlepic3
+  0347:4a 0c             send c 
+
+  0349:38 00d6          pushi d6 // $d6 setLoop
+  034c:78               push1 
+  034d:78               push1 
+  034e:38 00d7          pushi d7 // $d7 setCel
+  0351:78               push1 
+  0352:78               push1 
+  0353:72 096e          lofsa $096e // littlename3
+  0356:4a 0c             send c 
+
+  0358:35 03              ldi 3 
+  035a:65 12             aTop seconds 
+  035c:32 039f            jmp code_06fe 
+
+        code_035f
+  035f:3c                 dup 
+  0360:35 0a              ldi a 
+  0362:1a                 eq? 
+  0363:30 001d            bnt code_0383 
+  0366:7a               push2 
+  0367:39 03            pushi 3 // $3 y
+  0369:7a               push2 
+  036a:43 08 04         callk DrawPic 4 
+
+  036d:38 00d6          pushi d6 // $d6 setLoop
+  0370:78               push1 
+  0371:78               push1 
+  0372:38 00d7          pushi d7 // $d7 setCel
+  0375:78               push1 
+  0376:7a               push2 
+  0377:72 096e          lofsa $096e // littlename3
+  037a:4a 0c             send c 
+
+  037c:35 03              ldi 3 
+  037e:65 12             aTop seconds 
+  0380:32 037b            jmp code_06fe 
+
+        code_0383
+  0383:3c                 dup 
+  0384:35 0b              ldi b 
+  0386:1a                 eq? 
+  0387:30 002c            bnt code_03b6 
+  038a:7a               push2 
+  038b:39 03            pushi 3 // $3 y
+  038d:7a               push2 
+  038e:43 08 04         callk DrawPic 4 
+
+  0391:38 00d6          pushi d6 // $d6 setLoop
+  0394:78               push1 
+  0395:7a               push2 
+  0396:38 00d7          pushi d7 // $d7 setCel
+  0399:78               push1 
+  039a:76               push0 
+  039b:72 090a          lofsa $090a // littlepic3
+  039e:4a 0c             send c 
+
+  03a0:38 00d6          pushi d6 // $d6 setLoop
+  03a3:78               push1 
+  03a4:7a               push2 
+  03a5:38 00d7          pushi d7 // $d7 setCel
+  03a8:78               push1 
+  03a9:78               push1 
+  03aa:72 096e          lofsa $096e // littlename3
+  03ad:4a 0c             send c 
+
+  03af:35 03              ldi 3 
+  03b1:65 12             aTop seconds 
+  03b3:32 0348            jmp code_06fe 
+
+        code_03b6
+  03b6:3c                 dup 
+  03b7:35 0c              ldi c 
+  03b9:1a                 eq? 
+  03ba:30 001d            bnt code_03da 
+  03bd:7a               push2 
+  03be:39 03            pushi 3 // $3 y
+  03c0:7a               push2 
+  03c1:43 08 04         callk DrawPic 4 
+
+  03c4:38 00d6          pushi d6 // $d6 setLoop
+  03c7:78               push1 
+  03c8:7a               push2 
+  03c9:38 00d7          pushi d7 // $d7 setCel
+  03cc:78               push1 
+  03cd:7a               push2 
+  03ce:72 096e          lofsa $096e // littlename3
+  03d1:4a 0c             send c 
+
+  03d3:35 02              ldi 2 
+  03d5:65 12             aTop seconds 
+  03d7:32 0324            jmp code_06fe 
+
+        code_03da
+  03da:3c                 dup 
+  03db:35 0d              ldi d 
+  03dd:1a                 eq? 
+  03de:30 0076            bnt code_0457 
+  03e1:39 6b            pushi 6b // $6b dispose
+  03e3:76               push0 
+  03e4:72 090a          lofsa $090a // littlepic3
+  03e7:4a 04             send 4 
+
+  03e9:39 6b            pushi 6b // $6b dispose
+  03eb:76               push0 
+  03ec:72 096e          lofsa $096e // littlename3
+  03ef:4a 04             send 4 
+
+  03f1:7a               push2 
+  03f2:38 0080          pushi 80 // $80 handleEvent
+  03f5:39 03            pushi 3 // $3 y
+  03f7:43 01 04         callk UnLoad 4 
+
+  03fa:7a               push2 
+  03fb:38 0081          pushi 81 // $81 start
+  03fe:39 03            pushi 3 // $3 y
+  0400:43 01 04         callk UnLoad 4 
+
+  0403:72 09d4          lofsa $09d4 // littlepic4
+  0406:a3 00              sal local0 
+  0408:72 0a38          lofsa $0a38 // littlename4top
+  040b:a3 01              sal local1 
+  040d:72 0a9e          lofsa $0a9e // littlename4bot
+  0410:a3 02              sal local2 
+  0412:7a               push2 
+  0413:39 04            pushi 4 // $4 x
+  0415:39 03            pushi 3 // $3 y
+  0417:43 08 04         callk DrawPic 4 
+
+  041a:38 00d6          pushi d6 // $d6 setLoop
+  041d:78               push1 
+  041e:76               push0 
+  041f:38 00d7          pushi d7 // $d7 setCel
+  0422:78               push1 
+  0423:76               push0 
+  0424:39 6a            pushi 6a // $6a init
+  0426:76               push0 
+  0427:72 09d4          lofsa $09d4 // littlepic4
+  042a:4a 10             send 10 
+
+  042c:38 00d6          pushi d6 // $d6 setLoop
+  042f:78               push1 
+  0430:76               push0 
+  0431:38 00d7          pushi d7 // $d7 setCel
+  0434:78               push1 
+  0435:78               push1 
+  0436:39 6a            pushi 6a // $6a init
+  0438:76               push0 
+  0439:72 0a38          lofsa $0a38 // littlename4top
+  043c:4a 10             send 10 
+
+  043e:38 00d6          pushi d6 // $d6 setLoop
+  0441:78               push1 
+  0442:76               push0 
+  0443:38 00d7          pushi d7 // $d7 setCel
+  0446:78               push1 
+  0447:7a               push2 
+  0448:39 6a            pushi 6a // $6a init
+  044a:76               push0 
+  044b:72 0a9e          lofsa $0a9e // littlename4bot
+  044e:4a 10             send 10 
+
+  0450:35 03              ldi 3 
+  0452:65 12             aTop seconds 
+  0454:32 02a7            jmp code_06fe 
+
+        code_0457
+  0457:3c                 dup 
+  0458:35 0e              ldi e 
+  045a:1a                 eq? 
+  045b:30 0042            bnt code_04a0 
+  045e:7a               push2 
+  045f:39 04            pushi 4 // $4 x
+  0461:39 03            pushi 3 // $3 y
+  0463:43 08 04         callk DrawPic 4 
+
+  0466:38 00d6          pushi d6 // $d6 setLoop
+  0469:78               push1 
+  046a:78               push1 
+  046b:38 00d7          pushi d7 // $d7 setCel
+  046e:78               push1 
+  046f:76               push0 
+  0470:72 09d4          lofsa $09d4 // littlepic4
+  0473:4a 0c             send c 
+
+  0475:38 00d6          pushi d6 // $d6 setLoop
+  0478:78               push1 
+  0479:78               push1 
+  047a:38 00d7          pushi d7 // $d7 setCel
+  047d:78               push1 
+  047e:78               push1 
+  047f:39 6a            pushi 6a // $6a init
+  0481:76               push0 
+  0482:72 0a38          lofsa $0a38 // littlename4top
+  0485:4a 10             send 10 
+
+  0487:38 00d6          pushi d6 // $d6 setLoop
+  048a:78               push1 
+  048b:78               push1 
+  048c:38 00d7          pushi d7 // $d7 setCel
+  048f:78               push1 
+  0490:7a               push2 
+  0491:39 6a            pushi 6a // $6a init
+  0493:76               push0 
+  0494:72 0a9e          lofsa $0a9e // littlename4bot
+  0497:4a 10             send 10 
+
+  0499:35 02              ldi 2 
+  049b:65 12             aTop seconds 
+  049d:32 025e            jmp code_06fe 
+
+        code_04a0
+  04a0:3c                 dup 
+  04a1:35 0f              ldi f 
+  04a3:1a                 eq? 
+  04a4:30 0042            bnt code_04e9 
+  04a7:7a               push2 
+  04a8:39 04            pushi 4 // $4 x
+  04aa:39 03            pushi 3 // $3 y
+  04ac:43 08 04         callk DrawPic 4 
+
+  04af:38 00d6          pushi d6 // $d6 setLoop
+  04b2:78               push1 
+  04b3:7a               push2 
+  04b4:38 00d7          pushi d7 // $d7 setCel
+  04b7:78               push1 
+  04b8:76               push0 
+  04b9:72 09d4          lofsa $09d4 // littlepic4
+  04bc:4a 0c             send c 
+
+  04be:38 00d6          pushi d6 // $d6 setLoop
+  04c1:78               push1 
+  04c2:7a               push2 
+  04c3:38 00d7          pushi d7 // $d7 setCel
+  04c6:78               push1 
+  04c7:78               push1 
+  04c8:39 6a            pushi 6a // $6a init
+  04ca:76               push0 
+  04cb:72 0a38          lofsa $0a38 // littlename4top
+  04ce:4a 10             send 10 
+
+  04d0:38 00d6          pushi d6 // $d6 setLoop
+  04d3:78               push1 
+  04d4:7a               push2 
+  04d5:38 00d7          pushi d7 // $d7 setCel
+  04d8:78               push1 
+  04d9:7a               push2 
+  04da:39 6a            pushi 6a // $6a init
+  04dc:76               push0 
+  04dd:72 0a9e          lofsa $0a9e // littlename4bot
+  04e0:4a 10             send 10 
+
+  04e2:35 02              ldi 2 
+  04e4:65 12             aTop seconds 
+  04e6:32 0215            jmp code_06fe 
+
+        code_04e9
+  04e9:3c                 dup 
+  04ea:35 10              ldi 10 
+  04ec:1a                 eq? 
+  04ed:30 007d            bnt code_056d 
+  04f0:39 6b            pushi 6b // $6b dispose
+  04f2:76               push0 
+  04f3:72 09d4          lofsa $09d4 // littlepic4
+  04f6:4a 04             send 4 
+
+  04f8:39 6b            pushi 6b // $6b dispose
+  04fa:76               push0 
+  04fb:72 0a38          lofsa $0a38 // littlename4top
+  04fe:4a 04             send 4 
+
+  0500:39 6b            pushi 6b // $6b dispose
+  0502:76               push0 
+  0503:72 0a9e          lofsa $0a9e // littlename4bot
+  0506:4a 04             send 4 
+
+  0508:7a               push2 
+  0509:38 0080          pushi 80 // $80 handleEvent
+  050c:39 04            pushi 4 // $4 x
+  050e:43 01 04         callk UnLoad 4 
+
+  0511:7a               push2 
+  0512:38 0081          pushi 81 // $81 start
+  0515:39 04            pushi 4 // $4 x
+  0517:43 01 04         callk UnLoad 4 
+
+  051a:72 0b04          lofsa $0b04 // littlepic5
+  051d:a3 00              sal local0 
+  051f:72 0b68          lofsa $0b68 // littlename5top
+  0522:a3 01              sal local1 
+  0524:72 0bce          lofsa $0bce // littlename5bot
+  0527:a3 02              sal local2 
+  0529:7a               push2 
+  052a:39 05            pushi 5 // $5 view
+  052c:7a               push2 
+  052d:43 08 04         callk DrawPic 4 
+
+  0530:38 00d6          pushi d6 // $d6 setLoop
+  0533:78               push1 
+  0534:76               push0 
+  0535:38 00d7          pushi d7 // $d7 setCel
+  0538:78               push1 
+  0539:76               push0 
+  053a:39 6a            pushi 6a // $6a init
+  053c:76               push0 
+  053d:72 0b04          lofsa $0b04 // littlepic5
+  0540:4a 10             send 10 
+
+  0542:38 00d6          pushi d6 // $d6 setLoop
+  0545:78               push1 
+  0546:76               push0 
+  0547:38 00d7          pushi d7 // $d7 setCel
+  054a:78               push1 
+  054b:78               push1 
+  054c:39 6a            pushi 6a // $6a init
+  054e:76               push0 
+  054f:72 0b68          lofsa $0b68 // littlename5top
+  0552:4a 10             send 10 
+
+  0554:38 00d6          pushi d6 // $d6 setLoop
+  0557:78               push1 
+  0558:76               push0 
+  0559:38 00d7          pushi d7 // $d7 setCel
+  055c:78               push1 
+  055d:7a               push2 
+  055e:39 6a            pushi 6a // $6a init
+  0560:76               push0 
+  0561:72 0bce          lofsa $0bce // littlename5bot
+  0564:4a 10             send 10 
+
+  0566:35 03              ldi 3 
+  0568:65 12             aTop seconds 
+  056a:32 0191            jmp code_06fe 
+
+        code_056d
+  056d:3c                 dup 
+  056e:35 11              ldi 11 
+  0570:1a                 eq? 
+  0571:30 0041            bnt code_05b5 
+  0574:7a               push2 
+  0575:39 05            pushi 5 // $5 view
+  0577:7a               push2 
+  0578:43 08 04         callk DrawPic 4 
+
+  057b:38 00d6          pushi d6 // $d6 setLoop
+  057e:78               push1 
+  057f:78               push1 
+  0580:38 00d7          pushi d7 // $d7 setCel
+  0583:78               push1 
+  0584:76               push0 
+  0585:72 0b04          lofsa $0b04 // littlepic5
+  0588:4a 0c             send c 
+
+  058a:38 00d6          pushi d6 // $d6 setLoop
+  058d:78               push1 
+  058e:78               push1 
+  058f:38 00d7          pushi d7 // $d7 setCel
+  0592:78               push1 
+  0593:78               push1 
+  0594:39 6a            pushi 6a // $6a init
+  0596:76               push0 
+  0597:72 0b68          lofsa $0b68 // littlename5top
+  059a:4a 10             send 10 
+
+  059c:38 00d6          pushi d6 // $d6 setLoop
+  059f:78               push1 
+  05a0:78               push1 
+  05a1:38 00d7          pushi d7 // $d7 setCel
+  05a4:78               push1 
+  05a5:7a               push2 
+  05a6:39 6a            pushi 6a // $6a init
+  05a8:76               push0 
+  05a9:72 0bce          lofsa $0bce // littlename5bot
+  05ac:4a 10             send 10 
+
+  05ae:35 02              ldi 2 
+  05b0:65 12             aTop seconds 
+  05b2:32 0149            jmp code_06fe 
+
+        code_05b5
+  05b5:3c                 dup 
+  05b6:35 12              ldi 12 
+  05b8:1a                 eq? 
+  05b9:30 002f            bnt code_05eb 
+  05bc:38 0099          pushi 99 // $99 hide
+  05bf:76               push0 
+  05c0:72 0b68          lofsa $0b68 // littlename5top
+  05c3:4a 04             send 4 
+
+  05c5:38 0099          pushi 99 // $99 hide
+  05c8:76               push0 
+  05c9:72 0bce          lofsa $0bce // littlename5bot
+  05cc:4a 04             send 4 
+
+  05ce:7a               push2 
+  05cf:39 05            pushi 5 // $5 view
+  05d1:7a               push2 
+  05d2:43 08 04         callk DrawPic 4 
+
+  05d5:38 00d6          pushi d6 // $d6 setLoop
+  05d8:78               push1 
+  05d9:7a               push2 
+  05da:38 00d7          pushi d7 // $d7 setCel
+  05dd:78               push1 
+  05de:76               push0 
+  05df:72 0b04          lofsa $0b04 // littlepic5
+  05e2:4a 0c             send c 
+
+  05e4:35 02              ldi 2 
+  05e6:65 12             aTop seconds 
+  05e8:32 0113            jmp code_06fe 
+
+        code_05eb
+  05eb:3c                 dup 
+  05ec:35 13              ldi 13 
+  05ee:1a                 eq? 
+  05ef:30 00c4            bnt code_06b6 
+  05f2:39 6b            pushi 6b // $6b dispose
+  05f4:76               push0 
+  05f5:72 0b04          lofsa $0b04 // littlepic5
+  05f8:4a 04             send 4 
+
+  05fa:39 6b            pushi 6b // $6b dispose
+  05fc:76               push0 
+  05fd:72 0b68          lofsa $0b68 // littlename5top
+  0600:4a 04             send 4 
+
+  0602:39 6b            pushi 6b // $6b dispose
+  0604:76               push0 
+  0605:72 0bce          lofsa $0bce // littlename5bot
+  0608:4a 04             send 4 
+
+  060a:35 00              ldi 0 
+  060c:a3 01              sal local1 
+  060e:a3 00              sal local0 
+  0610:76               push0 
+  0611:45 01 00         callb procedure_0001 0 //  
+
+  0614:7a               push2 
+  0615:39 05            pushi 5 // $5 view
+  0617:7a               push2 
+  0618:43 08 04         callk DrawPic 4 
+
+  061b:35 00              ldi 0 
+  061d:a5 00              sat temp0 
+
+        code_061f
+  061f:8d 00              lst temp0 
+  0621:35 0c              ldi c 
+  0623:22                 lt? 
+  0624:30 004b            bnt code_0672 
+  0627:39 72            pushi 72 // $72 add
+  0629:78               push1 
+  062a:39 05            pushi 5 // $5 view
+  062c:78               push1 
+  062d:39 05            pushi 5 // $5 view
+  062f:38 00d6          pushi d6 // $d6 setLoop
+  0632:78               push1 
+  0633:39 04            pushi 4 // $4 x
+  0635:39 3f            pushi 3f // $3f priority
+  0637:78               push1 
+  0638:39 05            pushi 5 // $5 view
+  063a:39 07            pushi 7 // $7 cel
+  063c:78               push1 
+  063d:8d 00              lst temp0 
+  063f:38 00d2          pushi d2 // $d2 posn
+  0642:7a               push2 
+  0643:38 00a0          pushi a0 // $a0 setMark
+  0646:8d 00              lst temp0 
+  0648:35 0f              ldi f 
+  064a:06                 mul 
+  064b:36                push 
+  064c:35 1e              ldi 1e 
+  064e:02                 add 
+  064f:36                push 
+  0650:38 00d3          pushi d3 // $d3 stopUpd
+  0653:76               push0 
+  0654:39 6a            pushi 6a // $6a init
+  0656:76               push0 
+  0657:38 00da          pushi da // $da addToPic
+  065a:76               push0 
+  065b:39 71            pushi 71 // $71 yourself
+  065d:76               push0 
+  065e:39 69            pushi 69 // $69 new
+  0660:76               push0 
+  0661:51 1d            class View 
+  0663:4a 04             send 4 
+
+  0665:4a 30             send 30 
+
+  0667:36                push 
+  0668:72 073e          lofsa $073e // voiceTalentList
+  066b:4a 06             send 6 
+
+  066d:c5 00              +at temp0 
+  066f:32 ffad            jmp code_061f 
+
+        code_0672
+  0672:39 72            pushi 72 // $72 add
+  0674:78               push1 
+  0675:39 05            pushi 5 // $5 view
+  0677:78               push1 
+  0678:39 05            pushi 5 // $5 view
+  067a:38 00d6          pushi d6 // $d6 setLoop
+  067d:78               push1 
+  067e:39 03            pushi 3 // $3 y
+  0680:39 3f            pushi 3f // $3f priority
+  0682:78               push1 
+  0683:39 05            pushi 5 // $5 view
+  0685:39 07            pushi 7 // $7 cel
+  0687:78               push1 
+  0688:76               push0 
+  0689:38 00d2          pushi d2 // $d2 posn
+  068c:7a               push2 
+  068d:38 00a0          pushi a0 // $a0 setMark
+  0690:39 0b            pushi b // $b nsBottom
+  0692:38 00d3          pushi d3 // $d3 stopUpd
+  0695:76               push0 
+  0696:39 6a            pushi 6a // $6a init
+  0698:76               push0 
+  0699:38 00da          pushi da // $da addToPic
+  069c:76               push0 
+  069d:39 71            pushi 71 // $71 yourself
+  069f:76               push0 
+  06a0:39 69            pushi 69 // $69 new
+  06a2:76               push0 
+  06a3:51 1d            class View 
+  06a5:4a 04             send 4 
+
+  06a7:4a 30             send 30 
+
+  06a9:36                push 
+  06aa:72 073e          lofsa $073e // voiceTalentList
+  06ad:4a 06             send 6 
+
+  06af:35 06              ldi 6 
+  06b1:65 12             aTop seconds 
+  06b3:32 0048            jmp code_06fe 
+
+        code_06b6
+  06b6:3c                 dup 
+  06b7:35 14              ldi 14 
+  06b9:1a                 eq? 
+  06ba:30 001a            bnt code_06d7 
+  06bd:39 6b            pushi 6b // $6b dispose
+  06bf:76               push0 
+  06c0:72 073e          lofsa $073e // voiceTalentList
+  06c3:4a 04             send 4 
+
+  06c5:7a               push2 
+  06c6:39 05            pushi 5 // $5 view
+  06c8:7a               push2 
+  06c9:43 08 04         callk DrawPic 4 
+
+  06cc:76               push0 
+  06cd:45 01 00         callb procedure_0001 0 //  
+
+  06d0:35 01              ldi 1 
+  06d2:65 10             aTop cycles 
+  06d4:32 0027            jmp code_06fe 
+
+        code_06d7
+  06d7:3c                 dup 
+  06d8:35 15              ldi 15 
+  06da:1a                 eq? 
+  06db:30 0010            bnt code_06ee 
+  06de:39 73            pushi 73 // $73 eachElementDo
+  06e0:78               push1 
+  06e1:39 6b            pushi 6b // $6b dispose
+  06e3:81 05              lag  
+  06e5:4a 06             send 6 
+
+  06e7:35 01              ldi 1 
+  06e9:65 10             aTop cycles 
+  06eb:32 0010            jmp code_06fe 
+
+        code_06ee
+  06ee:3c                 dup 
+  06ef:35 16              ldi 16 
+  06f1:1a                 eq? 
+  06f2:30 0009            bnt code_06fe 
+  06f5:38 0100          pushi 100 // $100 newRoom
+  06f8:78               push1 
+  06f9:78               push1 
+  06fa:81 02              lag  
+  06fc:4a 06             send 6 
+
+
+        code_06fe
+  06fe:3a                toss 
+  06ff:48                 ret 
+    )
+
+)
+
+// 0738
+(instance voiceTalentList of List
+    (properties
+        elements $0
+        size $0
+    )
+)
+
+// 0770
+(instance littlepic1 of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $1
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_0752
+  0752:38 00d2          pushi d2 // $d2 posn
+  0755:7a               push2 
+  0756:38 00a2          pushi a2 // $a2 checkState
+  0759:38 00a0          pushi a0 // $a0 setMark
+  075c:38 00d3          pushi d3 // $d3 stopUpd
+  075f:76               push0 
+  0760:54 0c             self c 
+
+  0762:39 6a            pushi 6a // $6a init
+  0764:76               push0 
+  0765:57 1d 04         super View 4 
+
+  0768:48                 ret 
+  0769:00                bnot 
+    )
+
+)
+
+// 07d4
+(instance littlename1 of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $1
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_07b8
+  07b8:38 00d2          pushi d2 // $d2 posn
+  07bb:7a               push2 
+  07bc:38 00a0          pushi a0 // $a0 setMark
+  07bf:39 38            pushi 38 // $38 moveSpeed
+  07c1:38 00d3          pushi d3 // $d3 stopUpd
+  07c4:76               push0 
+  07c5:54 0c             self c 
+
+  07c7:39 6a            pushi 6a // $6a init
+  07c9:76               push0 
+  07ca:57 1d 04         super View 4 
+
+  07cd:48                 ret 
+    )
+
+)
+
+// 083a
+(instance littlepic2 of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $2
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_081c
+  081c:38 00d2          pushi d2 // $d2 posn
+  081f:7a               push2 
+  0820:38 00a2          pushi a2 // $a2 checkState
+  0823:38 00a0          pushi a0 // $a0 setMark
+  0826:38 00d3          pushi d3 // $d3 stopUpd
+  0829:76               push0 
+  082a:54 0c             self c 
+
+  082c:39 6a            pushi 6a // $6a init
+  082e:76               push0 
+  082f:57 1d 04         super View 4 
+
+  0832:48                 ret 
+  0833:00                bnot 
+    )
+
+)
+
+// 089e
+(instance littlename2 of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $2
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_0882
+  0882:38 00d2          pushi d2 // $d2 posn
+  0885:7a               push2 
+  0886:38 00a0          pushi a0 // $a0 setMark
+  0889:39 38            pushi 38 // $38 moveSpeed
+  088b:38 00d3          pushi d3 // $d3 stopUpd
+  088e:76               push0 
+  088f:54 0c             self c 
+
+  0891:39 6a            pushi 6a // $6a init
+  0893:76               push0 
+  0894:57 1d 04         super View 4 
+
+  0897:48                 ret 
+    )
+
+)
+
+// 0904
+(instance littlepic3 of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $3
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_08e6
+  08e6:38 00d2          pushi d2 // $d2 posn
+  08e9:7a               push2 
+  08ea:38 00a2          pushi a2 // $a2 checkState
+  08ed:38 00a0          pushi a0 // $a0 setMark
+  08f0:38 00d3          pushi d3 // $d3 stopUpd
+  08f3:76               push0 
+  08f4:54 0c             self c 
+
+  08f6:39 6a            pushi 6a // $6a init
+  08f8:76               push0 
+  08f9:57 1d 04         super View 4 
+
+  08fc:48                 ret 
+  08fd:00                bnot 
+    )
+
+)
+
+// 0968
+(instance littlename3 of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $3
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_094c
+  094c:38 00d2          pushi d2 // $d2 posn
+  094f:7a               push2 
+  0950:38 00a0          pushi a0 // $a0 setMark
+  0953:39 38            pushi 38 // $38 moveSpeed
+  0955:38 00d3          pushi d3 // $d3 stopUpd
+  0958:76               push0 
+  0959:54 0c             self c 
+
+  095b:39 6a            pushi 6a // $6a init
+  095d:76               push0 
+  095e:57 1d 04         super View 4 
+
+  0961:48                 ret 
+    )
+
+)
+
+// 09ce
+(instance littlepic4 of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $4
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_09b0
+  09b0:38 00d2          pushi d2 // $d2 posn
+  09b3:7a               push2 
+  09b4:38 00a2          pushi a2 // $a2 checkState
+  09b7:38 00a0          pushi a0 // $a0 setMark
+  09ba:38 00d3          pushi d3 // $d3 stopUpd
+  09bd:76               push0 
+  09be:54 0c             self c 
+
+  09c0:39 6a            pushi 6a // $6a init
+  09c2:76               push0 
+  09c3:57 1d 04         super View 4 
+
+  09c6:48                 ret 
+  09c7:00                bnot 
+    )
+
+)
+
+// 0a32
+(instance littlename4top of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $4
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_0a16
+  0a16:38 00d2          pushi d2 // $d2 posn
+  0a19:7a               push2 
+  0a1a:38 00a0          pushi a0 // $a0 setMark
+  0a1d:39 32            pushi 32 // $32 b-i2
+  0a1f:38 00d3          pushi d3 // $d3 stopUpd
+  0a22:76               push0 
+  0a23:54 0c             self c 
+
+  0a25:39 6a            pushi 6a // $6a init
+  0a27:76               push0 
+  0a28:57 1d 04         super View 4 
+
+  0a2b:48                 ret 
+    )
+
+)
+
+// 0a98
+(instance littlename4bot of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $4
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_0a7a
+  0a7a:38 00d2          pushi d2 // $d2 posn
+  0a7d:7a               push2 
+  0a7e:38 00a5          pushi a5 // $a5 theItem
+  0a81:38 00b2          pushi b2 // $b2 ticksToDo
+  0a84:38 00d3          pushi d3 // $d3 stopUpd
+  0a87:76               push0 
+  0a88:54 0c             self c 
+
+  0a8a:39 6a            pushi 6a // $6a init
+  0a8c:76               push0 
+  0a8d:57 1d 04         super View 4 
+
+  0a90:48                 ret 
+  0a91:00                bnot 
+    )
+
+)
+
+// 0afe
+(instance littlepic5 of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $5
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_0ae0
+  0ae0:38 00d2          pushi d2 // $d2 posn
+  0ae3:7a               push2 
+  0ae4:38 00a2          pushi a2 // $a2 checkState
+  0ae7:38 00a0          pushi a0 // $a0 setMark
+  0aea:38 00d3          pushi d3 // $d3 stopUpd
+  0aed:76               push0 
+  0aee:54 0c             self c 
+
+  0af0:39 6a            pushi 6a // $6a init
+  0af2:76               push0 
+  0af3:57 1d 04         super View 4 
+
+  0af6:48                 ret 
+  0af7:00                bnot 
+    )
+
+)
+
+// 0b62
+(instance littlename5top of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $5
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_0b46
+  0b46:38 00d2          pushi d2 // $d2 posn
+  0b49:7a               push2 
+  0b4a:38 00a0          pushi a0 // $a0 setMark
+  0b4d:39 32            pushi 32 // $32 b-i2
+  0b4f:38 00d3          pushi d3 // $d3 stopUpd
+  0b52:76               push0 
+  0b53:54 0c             self c 
+
+  0b55:39 6a            pushi 6a // $6a init
+  0b57:76               push0 
+  0b58:57 1d 04         super View 4 
+
+  0b5b:48                 ret 
+    )
+
+)
+
+// 0bc8
+(instance littlename5bot of View
+    (properties
+        y $0
+        x $0
+        z $0
+        heading $0
+        yStep $2
+        view $5
+        loop $0
+        cel $0
+        priority $5
+        underBits $0
+        signal $101
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        brTop $0
+        brLeft $0
+        brBottom $0
+        brRight $0
+    )
+    (method (init) // method_0baa
+  0baa:38 00d2          pushi d2 // $d2 posn
+  0bad:7a               push2 
+  0bae:38 00a5          pushi a5 // $a5 theItem
+  0bb1:38 00b2          pushi b2 // $b2 ticksToDo
+  0bb4:38 00d3          pushi d3 // $d3 stopUpd
+  0bb7:76               push0 
+  0bb8:54 0c             self c 
+
+  0bba:39 6a            pushi 6a // $6a init
+  0bbc:76               push0 
+  0bbd:57 1d 04         super View 4 
+
+  0bc0:48                 ret 
+  0bc1:00                bnot 
+    )
+
+)
+
+
+

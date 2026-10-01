@@ -1,0 +1,171 @@
+(script 993)
+
+(string
+    string_0104 "gamefile.sh"
+)
+
+(said
+)
+
+(local
+)
+
+// 00ca
+(class gamefile.sh of Obj
+    (properties
+        handle $0
+    )
+    (method (dispose) // method_00a8
+  00a8:38 00ff          pushi ff // $ff close
+  00ab:76               push0 
+  00ac:54 04             self 4 
+
+  00ae:39 6b            pushi 6b // $6b dispose
+  00b0:76               push0 
+  00b1:57 00 04         super Obj 4 
+
+  00b4:48                 ret 
+    )
+
+    (method (showStr) // method_00b5
+  00b5:39 04            pushi 4 // $4 x
+  00b7:8f 01              lsp param1 
+  00b9:38 03e1          pushi 3e1 // $3e1 sel_993
+  00bc:76               push0 
+  00bd:67 06             pTos name 
+  00bf:43 48 08         callk Format 8 
+
+  00c2:48                 ret 
+  00c3:00                bnot 
+    )
+
+    (method (open) // method_0004
+  0004:8f 00              lsp paramTotal 
+  0006:3c                 dup 
+  0007:35 00              ldi 0 
+  0009:1a                 eq? 
+  000a:30 000c            bnt code_0019 
+  000d:39 03            pushi 3 // $3 y
+  000f:76               push0 
+  0010:67 06             pTos name 
+  0012:76               push0 
+  0013:43 74 06         callk FileIO 6 
+
+  0016:32 0016            jmp code_002f 
+
+        code_0019
+  0019:3c                 dup 
+  001a:35 01              ldi 1 
+  001c:1a                 eq? 
+  001d:30 000d            bnt code_002d 
+  0020:39 03            pushi 3 // $3 y
+  0022:76               push0 
+  0023:67 06             pTos name 
+  0025:8f 01              lsp param1 
+  0027:43 74 06         callk FileIO 6 
+
+  002a:32 0002            jmp code_002f 
+
+        code_002d
+  002d:35 ff              ldi ff 
+
+        code_002f
+  002f:3a                toss 
+  0030:65 08             aTop handle 
+  0032:67 08             pTos handle 
+  0034:35 ff              ldi ff 
+  0036:1a                 eq? 
+  0037:30 0005            bnt code_003f 
+  003a:35 00              ldi 0 
+  003c:32 0001            jmp code_0040 
+
+        code_003f
+  003f:5c              selfID 
+
+        code_0040
+  0040:48                 ret 
+    )
+
+    (method (write) // method_0041
+  0041:3f 02             link 2 // (var $2)
+  0043:63 08             pToa handle 
+  0045:18                 not 
+  0046:30 0006            bnt code_004f 
+  0049:38 00a7          pushi a7 // $a7 open
+  004c:76               push0 
+  004d:54 04             self 4 
+
+
+        code_004f
+  004f:35 00              ldi 0 
+  0051:a5 00              sat temp0 
+
+        code_0053
+  0053:8d 00              lst temp0 
+  0055:87 00              lap paramTotal 
+  0057:22                 lt? 
+  0058:30 0014            bnt code_006f 
+  005b:39 03            pushi 3 // $3 y
+  005d:39 06            pushi 6 // $6 loop
+  005f:67 08             pTos handle 
+  0061:85 00              lat temp0 
+  0063:9f 01             lspi param1 
+  0065:43 74 06         callk FileIO 6 
+
+  0068:a5 01              sat temp1 
+  006a:c5 00              +at temp0 
+  006c:32 ffe4            jmp code_0053 
+
+        code_006f
+  006f:85 01              lat temp1 
+  0071:48                 ret 
+    )
+
+    (method (read) // method_0072
+  0072:8f 00              lsp paramTotal 
+  0074:35 02              ldi 2 
+  0076:1c                 ne? 
+  0077:30 0003            bnt code_007d 
+  007a:35 00              ldi 0 
+  007c:48                 ret 
+
+        code_007d
+  007d:63 08             pToa handle 
+  007f:18                 not 
+  0080:30 0007            bnt code_008a 
+  0083:38 00a7          pushi a7 // $a7 open
+  0086:78               push1 
+  0087:78               push1 
+  0088:54 06             self 6 
+
+
+        code_008a
+  008a:39 04            pushi 4 // $4 x
+  008c:39 05            pushi 5 // $5 view
+  008e:8f 01              lsp param1 
+  0090:8f 02              lsp param2 
+  0092:67 08             pTos handle 
+  0094:43 74 08         callk FileIO 8 
+
+  0097:48                 ret 
+    )
+
+    (method (close) // method_0098
+  0098:63 08             pToa handle 
+  009a:30 000a            bnt code_00a7 
+  009d:7a               push2 
+  009e:78               push1 
+  009f:36                push 
+  00a0:43 74 04         callk FileIO 4 
+
+  00a3:35 00              ldi 0 
+  00a5:65 08             aTop handle 
+
+        code_00a7
+  00a7:48                 ret 
+    )
+
+)
+
+
+

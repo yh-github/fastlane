@@ -1,0 +1,133 @@
+(script 105)
+
+(string
+    string_0102 "InvisibleWindow"
+)
+
+(said
+)
+
+(local
+)
+
+// 0090
+(class InvisibleWindow of SysWindow
+    (properties
+        top $0
+        left $0
+        bottom $0
+        right $0
+        color $0
+        back $7
+        priority $ffff
+        window $0
+        type $81
+        title $0
+        hMargin $4
+        vMargin $4
+        brTop $0
+        brLeft $0
+        brBottom $be
+        brRight $140
+        animateObj $0
+        underBits $0
+        -oldPort- $0
+    )
+    (method (dispose) // method_0052
+  0052:78               push1 
+  0053:76               push0 
+  0054:43 15 02         callk SetPort 2 
+
+  0057:63 2a             pToa underBits 
+  0059:30 001b            bnt code_0077 
+  005c:7a               push2 
+  005d:39 08            pushi 8 // $8 underBits
+  005f:36                push 
+  0060:43 6c 04         callk Graph 4 
+
+  0063:39 06            pushi 6 // $6 loop
+  0065:39 0c            pushi c // $c nsRight
+  0067:67 08             pTos top 
+  0069:67 0a             pTos left 
+  006b:35 01              ldi 1 
+  006d:04                 sub 
+  006e:36                push 
+  006f:67 0c             pTos bottom 
+  0071:67 0e             pTos right 
+  0073:78               push1 
+  0074:43 6c 0c         callk Graph c 
+
+
+        code_0077
+  0077:78               push1 
+  0078:67 16             pTos window 
+  007a:43 16 02         callk DisposeWindow 2 
+
+  007d:78               push1 
+  007e:67 2c             pTos -oldPort- 
+  0080:43 15 02         callk SetPort 2 
+
+  0083:78               push1 
+  0084:7c            pushSelf 
+  0085:43 05 02         callk DisposeClone 2 
+
+  0088:48                 ret 
+  0089:00                bnot 
+    )
+
+    (method (open) // method_0004
+  0004:76               push0 
+  0005:43 14 00         callk GetPort 0 
+
+  0008:65 2c             aTop -oldPort- 
+  000a:78               push1 
+  000b:76               push0 
+  000c:43 15 02         callk SetPort 2 
+
+  000f:63 2a             pToa underBits 
+  0011:30 0017            bnt code_002b 
+  0014:39 06            pushi 6 // $6 loop
+  0016:39 07            pushi 7 // $7 cel
+  0018:67 08             pTos top 
+  001a:67 0a             pTos left 
+  001c:35 01              ldi 1 
+  001e:04                 sub 
+  001f:36                push 
+  0020:67 0c             pTos bottom 
+  0022:67 0e             pTos right 
+  0024:39 03            pushi 3 // $3 y
+  0026:43 6c 0c         callk Graph c 
+
+  0029:65 2a             aTop underBits 
+
+        code_002b
+  002b:39 08            pushi 8 // $8 underBits
+  002d:39 0b            pushi b // $b nsBottom
+  002f:67 08             pTos top 
+  0031:67 0a             pTos left 
+  0033:35 01              ldi 1 
+  0035:04                 sub 
+  0036:36                push 
+  0037:67 0c             pTos bottom 
+  0039:67 0e             pTos right 
+  003b:35 03              ldi 3 
+  003d:04                 sub 
+  003e:36                push 
+  003f:7a               push2 
+  0040:76               push0 
+  0041:76               push0 
+  0042:43 6c 10         callk Graph 10 
+
+  0045:34 0081            ldi 81 
+  0048:65 18             aTop type 
+  004a:38 00a7          pushi a7 // $a7 open
+  004d:76               push0 
+  004e:57 24 04         super SysWindow 4 
+
+  0051:48                 ret 
+    )
+
+)
+
+
+

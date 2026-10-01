@@ -1,0 +1,956 @@
+(script 113)
+
+(string
+    string_066a "BubbleWindow"
+    string_0677 ""
+)
+
+(said
+)
+
+(local
+)
+
+// 05d8
+(class BubbleWindow of SysWindow
+    (properties
+        top $0
+        left $0
+        bottom $0
+        right $0
+        color $0
+        back $7
+        priority $f
+        window $0
+        type $81
+        title $0
+        hMargin $4
+        vMargin $4
+        brTop $0
+        brLeft $0
+        brBottom $be
+        brRight $140
+        animateObj $0
+        underBits $0
+        view $0
+        vColor $0
+        tailUnderbits $0
+        tailLeft $0
+        tailTop $0
+        tailBottom $0
+        tailRight $0
+        tNum $0
+        pPort $0
+    )
+    (method (dispose) // method_056f
+  056f:78               push1 
+  0570:76               push0 
+  0571:43 15 02         callk SetPort 2 
+
+  0574:63 28             pToa animateObj 
+  0576:30 000e            bnt code_0587 
+  0579:39 07            pushi 7 // $7 cel
+  057b:78               push1 
+  057c:76               push0 
+  057d:39 53            pushi 53 // $53 draw
+  057f:76               push0 
+  0580:38 00d8          pushi d8 // $d8 setCycle
+  0583:78               push1 
+  0584:76               push0 
+  0585:4a 10             send 10 
+
+
+        code_0587
+  0587:63 30             pToa tailUnderbits 
+  0589:30 001b            bnt code_05a7 
+  058c:7a               push2 
+  058d:39 08            pushi 8 // $8 underBits
+  058f:36                push 
+  0590:43 6c 04         callk Graph 4 
+
+  0593:39 06            pushi 6 // $6 loop
+  0595:39 0c            pushi c // $c nsRight
+  0597:67 34             pTos tailTop 
+  0599:67 32             pTos tailLeft 
+  059b:67 36             pTos tailBottom 
+  059d:67 38             pTos tailRight 
+  059f:78               push1 
+  05a0:43 6c 0c         callk Graph c 
+
+  05a3:35 00              ldi 0 
+  05a5:65 30             aTop tailUnderbits 
+
+        code_05a7
+  05a7:7a               push2 
+  05a8:39 08            pushi 8 // $8 underBits
+  05aa:67 2a             pTos underBits 
+  05ac:43 6c 04         callk Graph 4 
+
+  05af:39 06            pushi 6 // $6 loop
+  05b1:39 0c            pushi c // $c nsRight
+  05b3:67 08             pTos top 
+  05b5:67 0a             pTos left 
+  05b7:67 0c             pTos bottom 
+  05b9:67 0e             pTos right 
+  05bb:78               push1 
+  05bc:43 6c 0c         callk Graph c 
+
+  05bf:78               push1 
+  05c0:67 3c             pTos pPort 
+  05c2:43 15 02         callk SetPort 2 
+
+  05c5:78               push1 
+  05c6:67 16             pTos window 
+  05c8:43 16 02         callk DisposeWindow 2 
+
+  05cb:78               push1 
+  05cc:7c            pushSelf 
+  05cd:43 05 02         callk DisposeClone 2 
+
+  05d0:48                 ret 
+  05d1:00                bnot 
+    )
+
+    (method (open) // method_0004
+  0004:3f 02             link 2 // (var $2)
+  0006:76               push0 
+  0007:43 14 00         callk GetPort 0 
+
+  000a:65 3c             aTop pPort 
+  000c:78               push1 
+  000d:76               push0 
+  000e:43 15 02         callk SetPort 2 
+
+  0011:80 0217            lag  
+  0014:18                 not 
+  0015:2e 0003             bt code_001b 
+  0018:80 01b7            lag  
+
+        code_001b
+  001b:30 0006            bnt code_0024 
+  001e:80 01ff            lag  
+  0021:32 000d            jmp code_0031 
+
+        code_0024
+  0024:39 04            pushi 4 // $4 x
+  0026:39 05            pushi 5 // $5 view
+  0028:38 00a4          pushi a4 // $a4 center
+  002b:39 3b            pushi 3b // $3b mover
+  002d:3c                 dup 
+  002e:43 6f 08         callk Palette 8 
+
+
+        code_0031
+  0031:65 10             aTop color 
+  0033:80 0217            lag  
+  0036:18                 not 
+  0037:2e 0003             bt code_003d 
+  003a:80 01b7            lag  
+
+        code_003d
+  003d:30 0006            bnt code_0046 
+  0040:80 0200            lag  
+  0043:32 0010            jmp code_0056 
+
+        code_0046
+  0046:39 04            pushi 4 // $4 x
+  0048:39 05            pushi 5 // $5 view
+  004a:38 00f8          pushi f8 // $f8 setTest
+  004d:38 00ec          pushi ec // $ec controls
+  0050:38 009c          pushi 9c // $9c setMark
+  0053:43 6f 08         callk Palette 8 
+
+
+        code_0056
+  0056:65 12             aTop back 
+  0058:80 0228            lag  
+  005b:30 000d            bnt code_006b 
+  005e:35 00              ldi 0 
+  0060:65 10             aTop color 
+  0062:35 0f              ldi f 
+  0064:65 12             aTop back 
+  0066:35 08              ldi 8 
+  0068:a0 0201            sag  
+
+        code_006b
+  006b:35 0f              ldi f 
+  006d:65 14             aTop priority 
+  006f:87 02              lap param2 
+  0071:65 3a             aTop tNum 
+  0073:87 01              lap param1 
+  0075:65 28             aTop animateObj 
+  0077:8f 00              lsp paramTotal 
+  0079:35 02              ldi 2 
+  007b:20                 ge? 
+  007c:30 02e7            bnt code_0366 
+  007f:63 3a             pToa tNum 
+  0081:30 02e2            bnt code_0366 
+  0084:67 0e             pTos right 
+  0086:63 0a             pToa left 
+  0088:04                 sub 
+  0089:a5 00              sat temp0 
+  008b:67 0c             pTos bottom 
+  008d:63 08             pToa top 
+  008f:04                 sub 
+  0090:a5 01              sat temp1 
+  0092:67 3a             pTos tNum 
+  0094:35 01              ldi 1 
+  0096:1a                 eq? 
+  0097:2e 0005             bt code_009f 
+  009a:67 3a             pTos tNum 
+  009c:35 09              ldi 9 
+  009e:20                 ge? 
+
+        code_009f
+  009f:30 0018            bnt code_00ba 
+  00a2:8f 04              lsp param4 
+  00a4:39 03            pushi 3 // $3 y
+  00a6:67 2c             pTos view 
+  00a8:88 0201            lsg  
+  00ab:67 3a             pTos tNum 
+  00ad:35 01              ldi 1 
+  00af:04                 sub 
+  00b0:36                push 
+  00b1:43 10 06         callk CelHigh 6 
+
+  00b4:04                 sub 
+  00b5:65 34             aTop tailTop 
+  00b7:32 002f            jmp code_00e9 
+
+        code_00ba
+  00ba:39 03            pushi 3 // $3 y
+  00bc:63 3a             pToa tNum 
+  00be:24                 le? 
+  00bf:30 000e            bnt code_00d0 
+  00c2:60               pprev 
+  00c3:35 07              ldi 7 
+  00c5:24                 le? 
+  00c6:30 0007            bnt code_00d0 
+  00c9:87 04              lap param4 
+  00cb:65 34             aTop tailTop 
+  00cd:32 0019            jmp code_00e9 
+
+        code_00d0
+  00d0:8f 04              lsp param4 
+  00d2:39 03            pushi 3 // $3 y
+  00d4:67 2c             pTos view 
+  00d6:88 0201            lsg  
+  00d9:67 3a             pTos tNum 
+  00db:35 01              ldi 1 
+  00dd:04                 sub 
+  00de:36                push 
+  00df:43 10 06         callk CelHigh 6 
+
+  00e2:36                push 
+  00e3:35 02              ldi 2 
+  00e5:08                 div 
+  00e6:04                 sub 
+  00e7:65 34             aTop tailTop 
+
+        code_00e9
+  00e9:67 3a             pTos tNum 
+  00eb:35 04              ldi 4 
+  00ed:24                 le? 
+  00ee:2e 0005             bt code_00f6 
+  00f1:67 3a             pTos tNum 
+  00f3:35 0c              ldi c 
+  00f5:1a                 eq? 
+
+        code_00f6
+  00f6:30 0018            bnt code_0111 
+  00f9:8f 03              lsp param3 
+  00fb:39 03            pushi 3 // $3 y
+  00fd:67 2c             pTos view 
+  00ff:88 0201            lsg  
+  0102:67 3a             pTos tNum 
+  0104:35 01              ldi 1 
+  0106:04                 sub 
+  0107:36                push 
+  0108:43 0f 06         callk CelWide 6 
+
+  010b:04                 sub 
+  010c:65 32             aTop tailLeft 
+  010e:32 002f            jmp code_0140 
+
+        code_0111
+  0111:39 05            pushi 5 // $5 view
+  0113:63 3a             pToa tNum 
+  0115:24                 le? 
+  0116:30 000e            bnt code_0127 
+  0119:60               pprev 
+  011a:35 0a              ldi a 
+  011c:24                 le? 
+  011d:30 0007            bnt code_0127 
+  0120:87 03              lap param3 
+  0122:65 32             aTop tailLeft 
+  0124:32 0019            jmp code_0140 
+
+        code_0127
+  0127:8f 03              lsp param3 
+  0129:39 03            pushi 3 // $3 y
+  012b:67 2c             pTos view 
+  012d:88 0201            lsg  
+  0130:67 3a             pTos tNum 
+  0132:35 01              ldi 1 
+  0134:04                 sub 
+  0135:36                push 
+  0136:43 0f 06         callk CelWide 6 
+
+  0139:36                push 
+  013a:35 02              ldi 2 
+  013c:08                 div 
+  013d:04                 sub 
+  013e:65 32             aTop tailLeft 
+
+        code_0140
+  0140:67 34             pTos tailTop 
+  0142:39 03            pushi 3 // $3 y
+  0144:67 2c             pTos view 
+  0146:88 0201            lsg  
+  0149:67 3a             pTos tNum 
+  014b:35 01              ldi 1 
+  014d:04                 sub 
+  014e:36                push 
+  014f:43 10 06         callk CelHigh 6 
+
+  0152:02                 add 
+  0153:65 36             aTop tailBottom 
+  0155:67 32             pTos tailLeft 
+  0157:39 03            pushi 3 // $3 y
+  0159:67 2c             pTos view 
+  015b:88 0201            lsg  
+  015e:67 3a             pTos tNum 
+  0160:35 01              ldi 1 
+  0162:04                 sub 
+  0163:36                push 
+  0164:43 0f 06         callk CelWide 6 
+
+  0167:02                 add 
+  0168:65 38             aTop tailRight 
+  016a:88 0216            lsg  
+  016d:35 02              ldi 2 
+  016f:22                 lt? 
+  0170:30 0013            bnt code_0186 
+  0173:39 06            pushi 6 // $6 loop
+  0175:39 07            pushi 7 // $7 cel
+  0177:67 34             pTos tailTop 
+  0179:67 32             pTos tailLeft 
+  017b:67 36             pTos tailBottom 
+  017d:67 38             pTos tailRight 
+  017f:39 03            pushi 3 // $3 y
+  0181:43 6c 0c         callk Graph c 
+
+  0184:65 30             aTop tailUnderbits 
+
+        code_0186
+  0186:67 3a             pTos tNum 
+  0188:35 03              ldi 3 
+  018a:24                 le? 
+  018b:30 0011            bnt code_019f 
+  018e:67 32             pTos tailLeft 
+  0190:35 01              ldi 1 
+  0192:02                 add 
+  0193:65 0e             aTop right 
+  0195:67 0e             pTos right 
+  0197:85 00              lat temp0 
+  0199:04                 sub 
+  019a:65 0a             aTop left 
+  019c:32 004e            jmp code_01ed 
+
+        code_019f
+  019f:39 04            pushi 4 // $4 x
+  01a1:63 3a             pToa tNum 
+  01a3:24                 le? 
+  01a4:30 0018            bnt code_01bf 
+  01a7:60               pprev 
+  01a8:35 06              ldi 6 
+  01aa:24                 le? 
+  01ab:30 0011            bnt code_01bf 
+  01ae:67 36             pTos tailBottom 
+  01b0:35 01              ldi 1 
+  01b2:04                 sub 
+  01b3:65 08             aTop top 
+  01b5:67 08             pTos top 
+  01b7:85 01              lat temp1 
+  01b9:02                 add 
+  01ba:65 0c             aTop bottom 
+  01bc:32 002e            jmp code_01ed 
+
+        code_01bf
+  01bf:39 07            pushi 7 // $7 cel
+  01c1:63 3a             pToa tNum 
+  01c3:24                 le? 
+  01c4:30 0018            bnt code_01df 
+  01c7:60               pprev 
+  01c8:35 09              ldi 9 
+  01ca:24                 le? 
+  01cb:30 0011            bnt code_01df 
+  01ce:67 38             pTos tailRight 
+  01d0:35 01              ldi 1 
+  01d2:04                 sub 
+  01d3:65 0a             aTop left 
+  01d5:67 0a             pTos left 
+  01d7:85 00              lat temp0 
+  01d9:02                 add 
+  01da:65 0e             aTop right 
+  01dc:32 000e            jmp code_01ed 
+
+        code_01df
+  01df:67 34             pTos tailTop 
+  01e1:35 01              ldi 1 
+  01e3:02                 add 
+  01e4:65 0c             aTop bottom 
+  01e6:67 0c             pTos bottom 
+  01e8:85 01              lat temp1 
+  01ea:04                 sub 
+  01eb:65 08             aTop top 
+
+        code_01ed
+  01ed:67 3a             pTos tNum 
+  01ef:3c                 dup 
+  01f0:35 01              ldi 1 
+  01f2:1a                 eq? 
+  01f3:30 0011            bnt code_0207 
+  01f6:67 36             pTos tailBottom 
+  01f8:35 0c              ldi c 
+  01fa:02                 add 
+  01fb:65 0c             aTop bottom 
+  01fd:67 0c             pTos bottom 
+  01ff:85 01              lat temp1 
+  0201:04                 sub 
+  0202:65 08             aTop top 
+  0204:32 0131            jmp code_0338 
+
+        code_0207
+  0207:3c                 dup 
+  0208:35 02              ldi 2 
+  020a:1a                 eq? 
+  020b:30 001c            bnt code_022a 
+  020e:67 36             pTos tailBottom 
+  0210:63 34             pToa tailTop 
+  0212:02                 add 
+  0213:36                push 
+  0214:35 02              ldi 2 
+  0216:08                 div 
+  0217:36                push 
+  0218:8d 01              lst temp1 
+  021a:35 02              ldi 2 
+  021c:08                 div 
+  021d:02                 add 
+  021e:65 0c             aTop bottom 
+  0220:67 0c             pTos bottom 
+  0222:85 01              lat temp1 
+  0224:04                 sub 
+  0225:65 08             aTop top 
+  0227:32 010e            jmp code_0338 
+
+        code_022a
+  022a:3c                 dup 
+  022b:35 03              ldi 3 
+  022d:1a                 eq? 
+  022e:30 0011            bnt code_0242 
+  0231:67 34             pTos tailTop 
+  0233:35 0c              ldi c 
+  0235:04                 sub 
+  0236:65 08             aTop top 
+  0238:67 08             pTos top 
+  023a:85 01              lat temp1 
+  023c:02                 add 
+  023d:65 0c             aTop bottom 
+  023f:32 00f6            jmp code_0338 
+
+        code_0242
+  0242:3c                 dup 
+  0243:35 04              ldi 4 
+  0245:1a                 eq? 
+  0246:30 0011            bnt code_025a 
+  0249:67 38             pTos tailRight 
+  024b:35 0c              ldi c 
+  024d:02                 add 
+  024e:65 0e             aTop right 
+  0250:67 0e             pTos right 
+  0252:85 00              lat temp0 
+  0254:04                 sub 
+  0255:65 0a             aTop left 
+  0257:32 00de            jmp code_0338 
+
+        code_025a
+  025a:3c                 dup 
+  025b:35 05              ldi 5 
+  025d:1a                 eq? 
+  025e:30 001c            bnt code_027d 
+  0261:67 38             pTos tailRight 
+  0263:63 32             pToa tailLeft 
+  0265:02                 add 
+  0266:36                push 
+  0267:35 02              ldi 2 
+  0269:08                 div 
+  026a:36                push 
+  026b:8d 00              lst temp0 
+  026d:35 02              ldi 2 
+  026f:08                 div 
+  0270:02                 add 
+  0271:65 0e             aTop right 
+  0273:67 0e             pTos right 
+  0275:85 00              lat temp0 
+  0277:04                 sub 
+  0278:65 0a             aTop left 
+  027a:32 00bb            jmp code_0338 
+
+        code_027d
+  027d:3c                 dup 
+  027e:35 06              ldi 6 
+  0280:1a                 eq? 
+  0281:30 0011            bnt code_0295 
+  0284:67 32             pTos tailLeft 
+  0286:35 0c              ldi c 
+  0288:04                 sub 
+  0289:65 0a             aTop left 
+  028b:67 0a             pTos left 
+  028d:85 00              lat temp0 
+  028f:02                 add 
+  0290:65 0e             aTop right 
+  0292:32 00a3            jmp code_0338 
+
+        code_0295
+  0295:3c                 dup 
+  0296:35 07              ldi 7 
+  0298:1a                 eq? 
+  0299:30 0011            bnt code_02ad 
+  029c:67 34             pTos tailTop 
+  029e:35 0c              ldi c 
+  02a0:04                 sub 
+  02a1:65 08             aTop top 
+  02a3:67 08             pTos top 
+  02a5:85 01              lat temp1 
+  02a7:02                 add 
+  02a8:65 0c             aTop bottom 
+  02aa:32 008b            jmp code_0338 
+
+        code_02ad
+  02ad:3c                 dup 
+  02ae:35 08              ldi 8 
+  02b0:1a                 eq? 
+  02b1:30 001c            bnt code_02d0 
+  02b4:67 36             pTos tailBottom 
+  02b6:63 34             pToa tailTop 
+  02b8:02                 add 
+  02b9:36                push 
+  02ba:35 02              ldi 2 
+  02bc:08                 div 
+  02bd:36                push 
+  02be:8d 01              lst temp1 
+  02c0:35 02              ldi 2 
+  02c2:08                 div 
+  02c3:02                 add 
+  02c4:65 0c             aTop bottom 
+  02c6:67 0c             pTos bottom 
+  02c8:85 01              lat temp1 
+  02ca:04                 sub 
+  02cb:65 08             aTop top 
+  02cd:32 0068            jmp code_0338 
+
+        code_02d0
+  02d0:3c                 dup 
+  02d1:35 09              ldi 9 
+  02d3:1a                 eq? 
+  02d4:30 0011            bnt code_02e8 
+  02d7:67 36             pTos tailBottom 
+  02d9:35 0c              ldi c 
+  02db:02                 add 
+  02dc:65 0c             aTop bottom 
+  02de:67 0c             pTos bottom 
+  02e0:85 01              lat temp1 
+  02e2:04                 sub 
+  02e3:65 08             aTop top 
+  02e5:32 0050            jmp code_0338 
+
+        code_02e8
+  02e8:3c                 dup 
+  02e9:35 0a              ldi a 
+  02eb:1a                 eq? 
+  02ec:30 0011            bnt code_0300 
+  02ef:67 32             pTos tailLeft 
+  02f1:35 0c              ldi c 
+  02f3:04                 sub 
+  02f4:65 0a             aTop left 
+  02f6:67 0a             pTos left 
+  02f8:85 00              lat temp0 
+  02fa:02                 add 
+  02fb:65 0e             aTop right 
+  02fd:32 0038            jmp code_0338 
+
+        code_0300
+  0300:3c                 dup 
+  0301:35 0b              ldi b 
+  0303:1a                 eq? 
+  0304:30 001c            bnt code_0323 
+  0307:67 38             pTos tailRight 
+  0309:63 32             pToa tailLeft 
+  030b:02                 add 
+  030c:36                push 
+  030d:35 02              ldi 2 
+  030f:08                 div 
+  0310:36                push 
+  0311:8d 00              lst temp0 
+  0313:35 02              ldi 2 
+  0315:08                 div 
+  0316:02                 add 
+  0317:65 0e             aTop right 
+  0319:67 0e             pTos right 
+  031b:85 00              lat temp0 
+  031d:04                 sub 
+  031e:65 0a             aTop left 
+  0320:32 0015            jmp code_0338 
+
+        code_0323
+  0323:3c                 dup 
+  0324:35 0c              ldi c 
+  0326:1a                 eq? 
+  0327:30 000e            bnt code_0338 
+  032a:67 38             pTos tailRight 
+  032c:35 0c              ldi c 
+  032e:02                 add 
+  032f:65 0e             aTop right 
+  0331:67 0e             pTos right 
+  0333:85 00              lat temp0 
+  0335:04                 sub 
+  0336:65 0a             aTop left 
+
+        code_0338
+  0338:3a                toss 
+  0339:8d 01              lst temp1 
+  033b:35 18              ldi 18 
+  033d:24                 le? 
+  033e:30 0025            bnt code_0366 
+  0341:67 3a             pTos tNum 
+  0343:35 03              ldi 3 
+  0345:24                 le? 
+  0346:2e 000c             bt code_0355 
+  0349:39 07            pushi 7 // $7 cel
+  034b:63 3a             pToa tNum 
+  034d:24                 le? 
+  034e:30 0015            bnt code_0366 
+  0351:60               pprev 
+  0352:35 09              ldi 9 
+  0354:24                 le? 
+
+        code_0355
+  0355:30 000e            bnt code_0366 
+  0358:67 34             pTos tailTop 
+  035a:35 06              ldi 6 
+  035c:04                 sub 
+  035d:65 08             aTop top 
+  035f:67 08             pTos top 
+  0361:85 01              lat temp1 
+  0363:02                 add 
+  0364:65 0c             aTop bottom 
+
+        code_0366
+  0366:39 06            pushi 6 // $6 loop
+  0368:39 07            pushi 7 // $7 cel
+  036a:67 08             pTos top 
+  036c:67 0a             pTos left 
+  036e:67 0c             pTos bottom 
+  0370:67 0e             pTos right 
+  0372:39 03            pushi 3 // $3 y
+  0374:43 6c 0c         callk Graph c 
+
+  0377:65 2a             aTop underBits 
+  0379:39 08            pushi 8 // $8 underBits
+  037b:39 0b            pushi b // $b nsBottom
+  037d:67 08             pTos top 
+  037f:35 0c              ldi c 
+  0381:02                 add 
+  0382:36                push 
+  0383:67 0a             pTos left 
+  0385:35 0c              ldi c 
+  0387:02                 add 
+  0388:36                push 
+  0389:67 0c             pTos bottom 
+  038b:35 0c              ldi c 
+  038d:04                 sub 
+  038e:36                push 
+  038f:67 0e             pTos right 
+  0391:35 0c              ldi c 
+  0393:04                 sub 
+  0394:36                push 
+  0395:39 03            pushi 3 // $3 y
+  0397:67 12             pTos back 
+  0399:67 14             pTos priority 
+  039b:43 6c 10         callk Graph 10 
+
+  039e:39 08            pushi 8 // $8 underBits
+  03a0:39 0b            pushi b // $b nsBottom
+  03a2:67 08             pTos top 
+  03a4:67 0a             pTos left 
+  03a6:35 0c              ldi c 
+  03a8:02                 add 
+  03a9:36                push 
+  03aa:67 08             pTos top 
+  03ac:35 0c              ldi c 
+  03ae:02                 add 
+  03af:36                push 
+  03b0:67 0e             pTos right 
+  03b2:35 0c              ldi c 
+  03b4:04                 sub 
+  03b5:36                push 
+  03b6:39 03            pushi 3 // $3 y
+  03b8:67 12             pTos back 
+  03ba:67 14             pTos priority 
+  03bc:43 6c 10         callk Graph 10 
+
+  03bf:39 08            pushi 8 // $8 underBits
+  03c1:39 0b            pushi b // $b nsBottom
+  03c3:67 08             pTos top 
+  03c5:35 0c              ldi c 
+  03c7:02                 add 
+  03c8:36                push 
+  03c9:67 0a             pTos left 
+  03cb:67 0c             pTos bottom 
+  03cd:35 0c              ldi c 
+  03cf:04                 sub 
+  03d0:36                push 
+  03d1:67 0a             pTos left 
+  03d3:35 0c              ldi c 
+  03d5:02                 add 
+  03d6:36                push 
+  03d7:39 03            pushi 3 // $3 y
+  03d9:67 12             pTos back 
+  03db:67 14             pTos priority 
+  03dd:43 6c 10         callk Graph 10 
+
+  03e0:39 08            pushi 8 // $8 underBits
+  03e2:39 0b            pushi b // $b nsBottom
+  03e4:67 0c             pTos bottom 
+  03e6:35 0c              ldi c 
+  03e8:04                 sub 
+  03e9:36                push 
+  03ea:67 0a             pTos left 
+  03ec:35 0c              ldi c 
+  03ee:02                 add 
+  03ef:36                push 
+  03f0:67 0c             pTos bottom 
+  03f2:67 0e             pTos right 
+  03f4:35 0c              ldi c 
+  03f6:04                 sub 
+  03f7:36                push 
+  03f8:39 03            pushi 3 // $3 y
+  03fa:67 12             pTos back 
+  03fc:67 14             pTos priority 
+  03fe:43 6c 10         callk Graph 10 
+
+  0401:39 08            pushi 8 // $8 underBits
+  0403:39 0b            pushi b // $b nsBottom
+  0405:67 08             pTos top 
+  0407:35 0c              ldi c 
+  0409:02                 add 
+  040a:36                push 
+  040b:67 0e             pTos right 
+  040d:35 0c              ldi c 
+  040f:04                 sub 
+  0410:36                push 
+  0411:67 0c             pTos bottom 
+  0413:35 0c              ldi c 
+  0415:04                 sub 
+  0416:36                push 
+  0417:67 0e             pTos right 
+  0419:39 03            pushi 3 // $3 y
+  041b:67 12             pTos back 
+  041d:67 14             pTos priority 
+  041f:43 6c 10         callk Graph 10 
+
+  0422:39 06            pushi 6 // $6 loop
+  0424:67 2c             pTos view 
+  0426:88 0201            lsg  
+  0429:39 0c            pushi c // $c nsRight
+  042b:67 0a             pTos left 
+  042d:67 08             pTos top 
+  042f:67 14             pTos priority 
+  0431:43 11 0c         callk DrawCel c 
+
+  0434:39 06            pushi 6 // $6 loop
+  0436:67 2c             pTos view 
+  0438:88 0201            lsg  
+  043b:39 0d            pushi d // $d lsTop
+  043d:67 0e             pTos right 
+  043f:39 03            pushi 3 // $3 y
+  0441:67 2c             pTos view 
+  0443:88 0201            lsg  
+  0446:39 0d            pushi d // $d lsTop
+  0448:43 0f 06         callk CelWide 6 
+
+  044b:04                 sub 
+  044c:36                push 
+  044d:67 08             pTos top 
+  044f:67 14             pTos priority 
+  0451:43 11 0c         callk DrawCel c 
+
+  0454:39 06            pushi 6 // $6 loop
+  0456:67 2c             pTos view 
+  0458:88 0201            lsg  
+  045b:39 0e            pushi e // $e lsLeft
+  045d:67 0a             pTos left 
+  045f:67 0c             pTos bottom 
+  0461:39 03            pushi 3 // $3 y
+  0463:67 2c             pTos view 
+  0465:88 0201            lsg  
+  0468:39 0e            pushi e // $e lsLeft
+  046a:43 10 06         callk CelHigh 6 
+
+  046d:04                 sub 
+  046e:36                push 
+  046f:67 14             pTos priority 
+  0471:43 11 0c         callk DrawCel c 
+
+  0474:39 06            pushi 6 // $6 loop
+  0476:67 2c             pTos view 
+  0478:88 0201            lsg  
+  047b:39 0f            pushi f // $f lsBottom
+  047d:67 0e             pTos right 
+  047f:39 03            pushi 3 // $3 y
+  0481:67 2c             pTos view 
+  0483:88 0201            lsg  
+  0486:39 0f            pushi f // $f lsBottom
+  0488:43 0f 06         callk CelWide 6 
+
+  048b:04                 sub 
+  048c:36                push 
+  048d:67 0c             pTos bottom 
+  048f:39 03            pushi 3 // $3 y
+  0491:67 2c             pTos view 
+  0493:88 0201            lsg  
+  0496:39 0f            pushi f // $f lsBottom
+  0498:43 10 06         callk CelHigh 6 
+
+  049b:04                 sub 
+  049c:36                push 
+  049d:67 14             pTos priority 
+  049f:43 11 0c         callk DrawCel c 
+
+  04a2:39 08            pushi 8 // $8 underBits
+  04a4:39 04            pushi 4 // $4 x
+  04a6:67 08             pTos top 
+  04a8:67 0a             pTos left 
+  04aa:35 0c              ldi c 
+  04ac:02                 add 
+  04ad:36                push 
+  04ae:67 08             pTos top 
+  04b0:67 0e             pTos right 
+  04b2:35 0c              ldi c 
+  04b4:04                 sub 
+  04b5:36                push 
+  04b6:67 2e             pTos vColor 
+  04b8:67 14             pTos priority 
+  04ba:39 ff            pushi ff // $ff changeScore
+  04bc:43 6c 10         callk Graph 10 
+
+  04bf:39 08            pushi 8 // $8 underBits
+  04c1:39 04            pushi 4 // $4 x
+  04c3:67 0c             pTos bottom 
+  04c5:35 01              ldi 1 
+  04c7:04                 sub 
+  04c8:36                push 
+  04c9:67 0a             pTos left 
+  04cb:35 0c              ldi c 
+  04cd:02                 add 
+  04ce:36                push 
+  04cf:67 0c             pTos bottom 
+  04d1:35 01              ldi 1 
+  04d3:04                 sub 
+  04d4:36                push 
+  04d5:67 0e             pTos right 
+  04d7:35 0c              ldi c 
+  04d9:04                 sub 
+  04da:36                push 
+  04db:67 2e             pTos vColor 
+  04dd:67 14             pTos priority 
+  04df:39 ff            pushi ff // $ff changeScore
+  04e1:43 6c 10         callk Graph 10 
+
+  04e4:39 08            pushi 8 // $8 underBits
+  04e6:39 04            pushi 4 // $4 x
+  04e8:67 08             pTos top 
+  04ea:35 0c              ldi c 
+  04ec:02                 add 
+  04ed:36                push 
+  04ee:67 0a             pTos left 
+  04f0:67 0c             pTos bottom 
+  04f2:35 0c              ldi c 
+  04f4:04                 sub 
+  04f5:36                push 
+  04f6:67 0a             pTos left 
+  04f8:67 2e             pTos vColor 
+  04fa:67 14             pTos priority 
+  04fc:39 ff            pushi ff // $ff changeScore
+  04fe:43 6c 10         callk Graph 10 
+
+  0501:39 08            pushi 8 // $8 underBits
+  0503:39 04            pushi 4 // $4 x
+  0505:67 08             pTos top 
+  0507:35 0c              ldi c 
+  0509:02                 add 
+  050a:36                push 
+  050b:67 0e             pTos right 
+  050d:35 01              ldi 1 
+  050f:04                 sub 
+  0510:36                push 
+  0511:67 0c             pTos bottom 
+  0513:35 0c              ldi c 
+  0515:04                 sub 
+  0516:36                push 
+  0517:67 0e             pTos right 
+  0519:35 01              ldi 1 
+  051b:04                 sub 
+  051c:36                push 
+  051d:67 2e             pTos vColor 
+  051f:67 14             pTos priority 
+  0521:39 ff            pushi ff // $ff changeScore
+  0523:43 6c 10         callk Graph 10 
+
+  0526:88 0216            lsg  
+  0529:35 02              ldi 2 
+  052b:22                 lt? 
+  052c:30 0023            bnt code_0552 
+  052f:8f 00              lsp paramTotal 
+  0531:35 02              ldi 2 
+  0533:20                 ge? 
+  0534:30 001b            bnt code_0552 
+  0537:63 3a             pToa tNum 
+  0539:30 0016            bnt code_0552 
+  053c:39 06            pushi 6 // $6 loop
+  053e:67 2c             pTos view 
+  0540:88 0201            lsg  
+  0543:8f 02              lsp param2 
+  0545:35 01              ldi 1 
+  0547:04                 sub 
+  0548:36                push 
+  0549:67 32             pTos tailLeft 
+  054b:67 34             pTos tailTop 
+  054d:67 14             pTos priority 
+  054f:43 11 0c         callk DrawCel c 
+
+
+        code_0552
+  0552:39 06            pushi 6 // $6 loop
+  0554:39 0c            pushi c // $c nsRight
+  0556:67 08             pTos top 
+  0558:67 0a             pTos left 
+  055a:67 0c             pTos bottom 
+  055c:67 0e             pTos right 
+  055e:78               push1 
+  055f:43 6c 0c         callk Graph c 
+
+  0562:34 0081            ldi 81 
+  0565:65 18             aTop type 
+  0567:38 00a3          pushi a3 // $a3 open
+  056a:76               push0 
+  056b:57 24 04         super SysWindow 4 
+
+  056e:48                 ret 
+    )
+
+)
+
+
+

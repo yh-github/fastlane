@@ -1,0 +1,341 @@
+(script 233)
+
+(string
+    string_0292 "dialogKeyMouse"
+    string_02a1 "select1"
+    string_02a9 "playGame"
+    string_02b2 "restoreGame"
+    string_02be "demonstration"
+)
+
+(said
+)
+
+(local
+)
+
+// 000e
+(instance dialogKeyMouse of Set
+    (properties
+        elements $0
+        size $0
+    )
+)
+
+// 010a
+(instance publicselect1 of Dialog
+    (properties
+        elements $0
+        size $0
+        text $0
+        window $0
+        theItem $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $77
+        nsRight $b8
+        time $0
+        busy $0
+        seconds $0
+        lastSeconds $0
+        client $0
+        agent $0
+        script $0
+        menuBarOK $1
+        tail $0
+        standard $0
+        keyMouseList $0
+        prevDialog $0
+        prevTalker $0
+        aTimeClock $0
+    )
+    (method (init) // method_0028
+  0028:3f 01             link 1 // (var $1)
+  002a:35 00              ldi 0 
+  002c:a0 0213            sag  
+  002f:78               push1 
+  0030:76               push0 
+  0031:45 11 02         callb procedure_0011 2 //  
+
+  0034:72 ffdd          lofsa $0014 // dialogKeyMouse
+  0037:65 2e             aTop keyMouseList 
+  0039:80 01f6            lag  
+  003c:65 30             aTop prevDialog 
+  003e:5c              selfID 
+  003f:a0 01f6            sag  
+  0042:35 00              ldi 0 
+  0044:a0 019d            sag  
+  0047:76               push0 
+  0048:45 07 00         callb procedure_0007 0 //  
+
+  004b:35 00              ldi 0 
+  004d:65 22             aTop client 
+  004f:39 23            pushi 23 // $23 window
+  0051:78               push1 
+  0052:89 3b              lsg  
+  0054:39 6e            pushi 6e // $6e add
+  0056:39 03            pushi 3 // $3 y
+  0058:72 0115          lofsa $0170 // playGame
+  005b:36                push 
+  005c:72 0179          lofsa $01d8 // restoreGame
+  005f:36                push 
+  0060:72 01eb          lofsa $024e // demonstration
+  0063:36                push 
+  0064:39 6f            pushi 6f // $6f eachElementDo
+  0066:7a               push2 
+  0067:39 66            pushi 66 // $66 init
+  0069:78               push1 
+  006a:39 6f            pushi 6f // $6f eachElementDo
+  006c:78               push1 
+  006d:38 0099          pushi 99 // $99 setSize
+  0070:38 009b          pushi 9b // $9b moveTo
+  0073:7a               push2 
+  0074:39 45            pushi 45 // $45 done
+  0076:39 2c            pushi 2c // $2c nodePtr
+  0078:38 00a3          pushi a3 // $a3 open
+  007b:39 07            pushi 7 // $7 cel
+  007d:76               push0 
+  007e:39 0f            pushi f // $f lsBottom
+  0080:76               push0 
+  0081:76               push0 
+  0082:76               push0 
+  0083:76               push0 
+  0084:78               push1 
+  0085:54 38             self 38 
+
+  0087:38 0129          pushi 129 // $129 setList
+  008a:78               push1 
+  008b:67 2e             pTos keyMouseList 
+  008d:51 30            class KeyMouse 
+  008f:4a 06             send 6 
+
+  0091:39 03            pushi 3 // $3 y
+  0093:7c            pushSelf 
+  0094:67 2e             pTos keyMouseList 
+  0096:72 00d7          lofsa $0170 // playGame
+  0099:36                push 
+  009a:45 09 06         callb procedure_0009 6 //  
+
+  009d:38 00f2          pushi f2 // $f2 canControl
+  00a0:78               push1 
+  00a1:78               push1 
+  00a2:51 20            class User 
+  00a4:4a 06             send 6 
+
+  00a6:39 3c            pushi 3c // $3c doit
+  00a8:7a               push2 
+  00a9:76               push0 
+  00aa:76               push0 
+  00ab:54 08             self 8 
+
+  00ad:a5 00              sat temp0 
+  00af:78               push1 
+  00b0:36                push 
+  00b1:43 06 02         callk IsObject 2 
+
+  00b4:30 0011            bnt code_00c8 
+  00b7:39 72            pushi 72 // $72 contains
+  00b9:78               push1 
+  00ba:8d 00              lst temp0 
+  00bc:54 06             self 6 
+
+  00be:30 000b            bnt code_00cc 
+  00c1:35 00              ldi 0 
+  00c3:a5 00              sat temp0 
+  00c5:32 0004            jmp code_00cc 
+
+        code_00c8
+  00c8:35 01              ldi 1 
+  00ca:a5 00              sat temp0 
+
+        code_00cc
+  00cc:38 0129          pushi 129 // $129 setList
+  00cf:78               push1 
+  00d0:63 30             pToa prevDialog 
+  00d2:30 0009            bnt code_00de 
+  00d5:38 0138          pushi 138 // $138 keyMouseList
+  00d8:76               push0 
+  00d9:4a 04             send 4 
+
+  00db:32 0003            jmp code_00e1 
+
+        code_00de
+  00de:80 01b0            lag  
+
+        code_00e1
+  00e1:36                push 
+  00e2:51 30            class KeyMouse 
+  00e4:4a 06             send 6 
+
+  00e6:39 75            pushi 75 // $75 release
+  00e8:76               push0 
+  00e9:39 67            pushi 67 // $67 dispose
+  00eb:76               push0 
+  00ec:63 2e             pToa keyMouseList 
+  00ee:4a 08             send 8 
+
+  00f0:63 30             pToa prevDialog 
+  00f2:a0 01f6            sag  
+  00f5:39 67            pushi 67 // $67 dispose
+  00f7:76               push0 
+  00f8:54 04             self 4 
+
+  00fa:85 00              lat temp0 
+  00fc:78               push1 
+  00fd:38 00e9          pushi e9 // $e9 triedToMove
+  0100:43 03 02         callk DisposeScript 2 
+
+  0103:48                 ret 
+    )
+
+)
+
+// 016a
+(instance playGame of ErasableDIcon
+    (properties
+        type $4
+        state $23
+        nsTop $11
+        nsLeft $1b
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $a
+        loop $1
+        cel $0
+        priority $d
+    )
+    (method (doit) // method_0152
+  0152:3f 01             link 1 // (var $1)
+  0154:39 3c            pushi 3c // $3c doit
+  0156:76               push0 
+  0157:57 31 04         super ErasableDIcon 4 
+
+  015a:a5 00              sat temp0 
+  015c:35 01              ldi 1 
+  015e:a0 0213            sag  
+  0161:85 00              lat temp0 
+  0163:48                 ret 
+    )
+
+)
+
+// 01d2
+(instance restoreGame of ErasableDIcon
+    (properties
+        type $4
+        state $23
+        nsTop $2f
+        nsLeft $1b
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $a
+        loop $1
+        cel $2
+        priority $d
+    )
+    (method (doit) // method_01b4
+  01b4:3f 01             link 1 // (var $1)
+  01b6:39 3c            pushi 3c // $3c doit
+  01b8:76               push0 
+  01b9:57 31 04         super ErasableDIcon 4 
+
+  01bc:a5 00              sat temp0 
+  01be:35 01              ldi 1 
+  01c0:a0 0211            sag  
+  01c3:35 01              ldi 1 
+  01c5:a0 0215            sag  
+  01c8:85 00              lat temp0 
+  01ca:48                 ret 
+  01cb:00                bnot 
+    )
+
+)
+
+// 0248
+(instance demonstration of ErasableDIcon
+    (properties
+        type $4
+        state $23
+        nsTop $4d
+        nsLeft $1b
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $a
+        loop $1
+        cel $1
+        priority $d
+    )
+    (method (doit) // method_021c
+  021c:3f 01             link 1 // (var $1)
+  021e:39 3c            pushi 3c // $3c doit
+  0220:76               push0 
+  0221:57 31 04         super ErasableDIcon 4 
+
+  0224:a5 00              sat temp0 
+  0226:38 012c          pushi 12c // $12c playing
+  0229:78               push1 
+  022a:39 1d            pushi 1d // $1d back
+  022c:39 43            pushi 43 // $43 at
+  022e:78               push1 
+  022f:76               push0 
+  0230:7a               push2 
+  0231:78               push1 
+  0232:7a               push2 
+  0233:43 02 04         callk ScriptID 4 
+
+  0236:4a 06             send 6 
+
+  0238:4a 06             send 6 
+
+  023a:35 01              ldi 1 
+  023c:a0 020f            sag  
+  023f:85 00              lat temp0 
+  0241:48                 ret 
+    )
+
+)
+
+
+

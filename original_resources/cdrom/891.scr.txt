@@ -1,0 +1,498 @@
+(script 891)
+
+(string
+    string_02f6 "KeyMouse"
+    string_02ff ""
+)
+
+(said
+)
+
+(local
+    local0 = $00b4
+    local1 = $0000
+    local2 = $002d
+    local3 = $005a
+    local4 = $0087
+    local5 = $00b4
+    local6 = $00e1
+    local7 = $010e
+    local8 = $013b
+)
+
+// 02a8
+(class KeyMouse of Obj
+    (properties
+        listOfCoords $0
+        curItem $0
+        -oldPort- $0
+        prevCursorX $0
+        prevCursorY $0
+    )
+    (method (handleEvent) // method_009f
+  009f:3f 09             link 9 // (var $9)
+  00a1:63 08             pToa listOfCoords 
+  00a3:30 0159            bnt code_01ff 
+  00a6:39 59            pushi 59 // $59 size
+  00a8:76               push0 
+  00a9:4a 04             send 4 
+
+  00ab:30 0151            bnt code_01ff 
+  00ae:39 4c            pushi 4c // $4c claimed
+  00b0:76               push0 
+  00b1:87 01              lap param1 
+  00b3:4a 04             send 4 
+
+  00b5:18                 not 
+  00b6:30 0146            bnt code_01ff 
+  00b9:76               push0 
+  00ba:39 28            pushi 28 // $28 message
+  00bc:76               push0 
+  00bd:87 01              lap param1 
+  00bf:4a 04             send 4 
+
+  00c1:24                 le? 
+  00c2:30 013a            bnt code_01ff 
+  00c5:60               pprev 
+  00c6:35 07              ldi 7 
+  00c8:24                 le? 
+  00c9:30 0133            bnt code_01ff 
+  00cc:39 28            pushi 28 // $28 message
+  00ce:76               push0 
+  00cf:87 01              lap param1 
+  00d1:4a 04             send 4 
+
+  00d3:93 00             lali local0 
+  00d5:a5 06              sat temp6 
+  00d7:35 3c              ldi 3c 
+  00d9:a5 03              sat temp3 
+  00db:34 0190            ldi 190 
+  00de:a5 04              sat temp4 
+  00e0:35 00              ldi 0 
+  00e2:a5 02              sat temp2 
+  00e4:a5 05              sat temp5 
+
+        code_00e6
+  00e6:8d 05              lst temp5 
+  00e8:39 59            pushi 59 // $59 size
+  00ea:76               push0 
+  00eb:63 08             pToa listOfCoords 
+  00ed:4a 04             send 4 
+
+  00ef:22                 lt? 
+  00f0:30 00f7            bnt code_01ea 
+  00f3:39 43            pushi 43 // $43 at
+  00f5:78               push1 
+  00f6:8d 05              lst temp5 
+  00f8:63 08             pToa listOfCoords 
+  00fa:4a 06             send 6 
+
+  00fc:a5 01              sat temp1 
+  00fe:39 04            pushi 4 // $4 x
+  0100:76               push0 
+  0101:87 01              lap param1 
+  0103:4a 04             send 4 
+
+  0105:36                push 
+  0106:38 0135          pushi 135 // $135 keyMouseX
+  0109:76               push0 
+  010a:85 01              lat temp1 
+  010c:4a 04             send 4 
+
+  010e:1c                 ne? 
+  010f:2e 0011             bt code_0123 
+  0112:39 03            pushi 3 // $3 y
+  0114:76               push0 
+  0115:87 01              lap param1 
+  0117:4a 04             send 4 
+
+  0119:36                push 
+  011a:38 0137          pushi 137 // $137 keyMouseY
+  011d:76               push0 
+  011e:85 01              lat temp1 
+  0120:4a 04             send 4 
+
+  0122:1c                 ne? 
+
+        code_0123
+  0123:30 00bf            bnt code_01e5 
+  0126:39 04            pushi 4 // $4 x
+  0128:3c                 dup 
+  0129:76               push0 
+  012a:87 01              lap param1 
+  012c:4a 04             send 4 
+
+  012e:36                push 
+  012f:39 03            pushi 3 // $3 y
+  0131:76               push0 
+  0132:87 01              lap param1 
+  0134:4a 04             send 4 
+
+  0136:36                push 
+  0137:38 0135          pushi 135 // $135 keyMouseX
+  013a:76               push0 
+  013b:85 01              lat temp1 
+  013d:4a 04             send 4 
+
+  013f:36                push 
+  0140:38 0137          pushi 137 // $137 keyMouseY
+  0143:76               push0 
+  0144:85 01              lat temp1 
+  0146:4a 04             send 4 
+
+  0148:36                push 
+  0149:43 3f 08         callk GetAngle 8 
+
+  014c:a5 07              sat temp7 
+  014e:39 04            pushi 4 // $4 x
+  0150:3c                 dup 
+  0151:76               push0 
+  0152:87 01              lap param1 
+  0154:4a 04             send 4 
+
+  0156:36                push 
+  0157:39 03            pushi 3 // $3 y
+  0159:76               push0 
+  015a:87 01              lap param1 
+  015c:4a 04             send 4 
+
+  015e:36                push 
+  015f:38 0135          pushi 135 // $135 keyMouseX
+  0162:76               push0 
+  0163:85 01              lat temp1 
+  0165:4a 04             send 4 
+
+  0167:36                push 
+  0168:38 0137          pushi 137 // $137 keyMouseY
+  016b:76               push0 
+  016c:85 01              lat temp1 
+  016e:4a 04             send 4 
+
+  0170:36                push 
+  0171:43 40 08         callk GetDistance 8 
+
+  0174:a5 00              sat temp0 
+  0176:78               push1 
+  0177:8d 06              lst temp6 
+  0179:85 07              lat temp7 
+  017b:04                 sub 
+  017c:36                push 
+  017d:43 3d 02         callk Abs 2 
+
+  0180:a5 08              sat temp8 
+  0182:36                push 
+  0183:34 00b4            ldi b4 
+  0186:1e                 gt? 
+  0187:30 0008            bnt code_0192 
+  018a:38 0168          pushi 168 // $168 units
+  018d:85 08              lat temp8 
+  018f:04                 sub 
+  0190:a5 08              sat temp8 
+
+        code_0192
+  0192:8d 08              lst temp8 
+  0194:8d 03              lst temp3 
+  0196:35 0a              ldi a 
+  0198:04                 sub 
+  0199:24                 le? 
+  019a:2e 0039             bt code_01d6 
+  019d:8d 08              lst temp8 
+  019f:8d 03              lst temp3 
+  01a1:35 0a              ldi a 
+  01a3:02                 add 
+  01a4:24                 le? 
+  01a5:30 000c            bnt code_01b4 
+  01a8:8d 08              lst temp8 
+  01aa:85 00              lat temp0 
+  01ac:02                 add 
+  01ad:36                push 
+  01ae:8d 03              lst temp3 
+  01b0:85 04              lat temp4 
+  01b2:02                 add 
+  01b3:22                 lt? 
+
+        code_01b4
+  01b4:2e 001f             bt code_01d6 
+  01b7:8d 08              lst temp8 
+  01b9:8d 03              lst temp3 
+  01bb:35 0a              ldi a 
+  01bd:02                 add 
+  01be:24                 le? 
+  01bf:30 0023            bnt code_01e5 
+  01c2:8d 08              lst temp8 
+  01c4:85 00              lat temp0 
+  01c6:02                 add 
+  01c7:36                push 
+  01c8:8d 03              lst temp3 
+  01ca:85 04              lat temp4 
+  01cc:02                 add 
+  01cd:1a                 eq? 
+  01ce:30 0014            bnt code_01e5 
+  01d1:8d 08              lst temp8 
+  01d3:85 03              lat temp3 
+  01d5:22                 lt? 
+
+        code_01d6
+  01d6:30 000c            bnt code_01e5 
+  01d9:85 08              lat temp8 
+  01db:a5 03              sat temp3 
+  01dd:85 00              lat temp0 
+  01df:a5 04              sat temp4 
+  01e1:85 01              lat temp1 
+  01e3:a5 02              sat temp2 
+
+        code_01e5
+  01e5:c5 05              +at temp5 
+  01e7:32 fefc            jmp code_00e6 
+
+        code_01ea
+  01ea:85 02              lat temp2 
+  01ec:30 0010            bnt code_01ff 
+  01ef:39 4c            pushi 4c // $4c claimed
+  01f1:78               push1 
+  01f2:78               push1 
+  01f3:87 01              lap param1 
+  01f5:4a 06             send 6 
+
+  01f7:38 0105          pushi 105 // $105 setCursor
+  01fa:78               push1 
+  01fb:8d 02              lst temp2 
+  01fd:54 06             self 6 
+
+
+        code_01ff
+  01ff:48                 ret 
+    )
+
+    (method (setCursor) // method_001c
+  001c:80 012e            lag  
+  001f:30 001e            bnt code_0040 
+  0022:80 01b7            lag  
+  0025:30 0018            bnt code_0040 
+  0028:80 01bb            lag  
+  002b:18                 not 
+  002c:30 0011            bnt code_0040 
+  002f:38 0134          pushi 134 // $134 playing
+  0032:76               push0 
+  0033:80 012e            lag  
+  0036:4a 04             send 4 
+
+  0038:36                push 
+  0039:35 1d              ldi 1d 
+  003b:1a                 eq? 
+  003c:30 0001            bnt code_0040 
+  003f:48                 ret 
+
+        code_0040
+  0040:80 01bf            lag  
+  0043:2e 0003             bt code_0049 
+  0046:80 0206            lag  
+
+        code_0049
+  0049:30 0052            bnt code_009e 
+  004c:38 0132          pushi 132 // $132 setPort
+  004f:76               push0 
+  0050:54 04             self 4 
+
+  0052:78               push1 
+  0053:8f 01              lsp param1 
+  0055:43 06 02         callk IsObject 2 
+
+  0058:30 0039            bnt code_0094 
+  005b:39 04            pushi 4 // $4 x
+  005d:89 13              lsg  
+  005f:78               push1 
+  0060:38 0135          pushi 135 // $135 keyMouseX
+  0063:76               push0 
+  0064:87 01              lap param1 
+  0066:4a 04             send 4 
+
+  0068:36                push 
+  0069:38 0136          pushi 136 // $136 offsetX
+  006c:76               push0 
+  006d:87 01              lap param1 
+  006f:4a 04             send 4 
+
+  0071:02                 add 
+  0072:65 0e             aTop prevCursorX 
+  0074:36                push 
+  0075:38 0137          pushi 137 // $137 keyMouseY
+  0078:76               push0 
+  0079:87 01              lap param1 
+  007b:4a 04             send 4 
+
+  007d:36                push 
+  007e:38 0138          pushi 138 // $138 offsetY
+  0081:76               push0 
+  0082:87 01              lap param1 
+  0084:4a 04             send 4 
+
+  0086:02                 add 
+  0087:65 10             aTop prevCursorY 
+  0089:36                push 
+  008a:43 28 08         callk SetCursor 8 
+
+  008d:87 01              lap param1 
+  008f:65 0a             aTop curItem 
+  0091:32 0004            jmp code_0098 
+
+        code_0094
+  0094:35 00              ldi 0 
+  0096:65 0a             aTop curItem 
+
+        code_0098
+  0098:38 0133          pushi 133 // $133 resetPort
+  009b:76               push0 
+  009c:54 04             self 4 
+
+
+        code_009e
+  009e:48                 ret 
+    )
+
+    (method (setList) // method_0017
+  0017:87 01              lap param1 
+  0019:65 08             aTop listOfCoords 
+  001b:48                 ret 
+    )
+
+    (method (advance) // method_0200
+  0200:3f 01             link 1 // (var $1)
+  0202:80 01bf            lag  
+  0205:30 004b            bnt code_0253 
+  0208:39 76            pushi 76 // $76 contains
+  020a:78               push1 
+  020b:67 0a             pTos curItem 
+  020d:63 08             pToa listOfCoords 
+  020f:4a 06             send 6 
+
+  0211:30 003f            bnt code_0253 
+  0214:39 7f            pushi 7f // $7f indexOf
+  0216:78               push1 
+  0217:67 0a             pTos curItem 
+  0219:63 08             pToa listOfCoords 
+  021b:4a 06             send 6 
+
+  021d:a5 00              sat temp0 
+  021f:36                push 
+  0220:39 59            pushi 59 // $59 size
+  0222:76               push0 
+  0223:63 08             pToa listOfCoords 
+  0225:4a 04             send 4 
+
+  0227:36                push 
+  0228:35 01              ldi 1 
+  022a:04                 sub 
+  022b:1a                 eq? 
+  022c:30 0004            bnt code_0233 
+  022f:35 ff              ldi ff 
+  0231:a5 00              sat temp0 
+
+        code_0233
+  0233:38 0132          pushi 132 // $132 setPort
+  0236:76               push0 
+  0237:54 04             self 4 
+
+  0239:38 0105          pushi 105 // $105 setCursor
+  023c:78               push1 
+  023d:39 43            pushi 43 // $43 at
+  023f:78               push1 
+  0240:8d 00              lst temp0 
+  0242:35 01              ldi 1 
+  0244:02                 add 
+  0245:36                push 
+  0246:63 08             pToa listOfCoords 
+  0248:4a 06             send 6 
+
+  024a:36                push 
+  024b:54 06             self 6 
+
+  024d:38 0133          pushi 133 // $133 resetPort
+  0250:76               push0 
+  0251:54 04             self 4 
+
+
+        code_0253
+  0253:48                 ret 
+    )
+
+    (method (retreat) // method_0254
+  0254:3f 01             link 1 // (var $1)
+  0256:80 01bf            lag  
+  0259:30 0044            bnt code_02a0 
+  025c:39 76            pushi 76 // $76 contains
+  025e:78               push1 
+  025f:67 0a             pTos curItem 
+  0261:63 08             pToa listOfCoords 
+  0263:4a 06             send 6 
+
+  0265:30 0038            bnt code_02a0 
+  0268:39 7f            pushi 7f // $7f indexOf
+  026a:78               push1 
+  026b:67 0a             pTos curItem 
+  026d:63 08             pToa listOfCoords 
+  026f:4a 06             send 6 
+
+  0271:a5 00              sat temp0 
+  0273:18                 not 
+  0274:30 0009            bnt code_0280 
+  0277:39 59            pushi 59 // $59 size
+  0279:76               push0 
+  027a:63 08             pToa listOfCoords 
+  027c:4a 04             send 4 
+
+  027e:a5 00              sat temp0 
+
+        code_0280
+  0280:38 0132          pushi 132 // $132 setPort
+  0283:76               push0 
+  0284:54 04             self 4 
+
+  0286:38 0105          pushi 105 // $105 setCursor
+  0289:78               push1 
+  028a:39 43            pushi 43 // $43 at
+  028c:78               push1 
+  028d:8d 00              lst temp0 
+  028f:35 01              ldi 1 
+  0291:04                 sub 
+  0292:36                push 
+  0293:63 08             pToa listOfCoords 
+  0295:4a 06             send 6 
+
+  0297:36                push 
+  0298:54 06             self 6 
+
+  029a:38 0133          pushi 133 // $133 resetPort
+  029d:76               push0 
+  029e:54 04             self 4 
+
+
+        code_02a0
+  02a0:48                 ret 
+  02a1:00                bnot 
+    )
+
+    (method (setPort) // method_0004
+  0004:76               push0 
+  0005:43 14 00         callk GetPort 0 
+
+  0008:65 0c             aTop -oldPort- 
+  000a:78               push1 
+  000b:76               push0 
+  000c:43 15 02         callk SetPort 2 
+
+  000f:48                 ret 
+    )
+
+    (method (resetPort) // method_0010
+  0010:78               push1 
+  0011:67 0c             pTos -oldPort- 
+  0013:43 15 02         callk SetPort 2 
+
+  0016:48                 ret 
+    )
+
+)
+
+
+

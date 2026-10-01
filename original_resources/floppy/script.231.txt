@@ -1,0 +1,1800 @@
+(script 231)
+
+(string
+    string_0764 "dialogKeyMouse"
+    string_0773 "inventories"
+    string_077f "background"
+    string_078a "doneButton"
+    string_0795 "invSelector"
+    string_07a1 ""
+)
+
+(said
+)
+
+(local
+    local0 = $0000
+    local1 = $0000
+    local2 = $0000
+    local3 = $0000
+    local4 = $0000
+    local5 = $0000
+    local6 = $0000
+    local7 = $0000
+    local8 = $0000
+    local9 = $0000
+    local10 = $0000
+    local11 = $0000
+    local12 = $0000
+    local13 = $0000
+    local14 = $0000
+    local15 = $0000
+    local16 = $0000
+    local17 = $0000
+    local18 = $0000
+    local19 = $0000
+    local20 = $0000
+    local21 = $0000
+    local22 = $0000
+    local23 = $0000
+    local24 = $0000
+    local25 = $0000
+    local26 = $0000
+    local27 = $0000
+    local28 = $0000
+    local29 = $0000
+    local30 = $0000
+    local31 = $0000
+    local32 = $0000
+    local33 = $0000
+    local34 = $0000
+    local35 = $0000
+    local36 = $0000
+    local37 = $0000
+    local38 = $0000
+    local39 = $0000
+    local40 = $0000
+    local41 = $0000
+    local42 = $0000
+    local43 = $0000
+    local44 = $0000
+    local45 = $0000
+    local46 = $0000
+    local47 = $0000
+    local48 = $0000
+    local49 = $0000
+    local50 = $0000
+    local51 = $0000
+    local52 = $0000
+    local53 = $0000
+    local54 = $0000
+    local55 = $0000
+    local56 = $0000
+    local57 = $0000
+    local58 = $0000
+    local59 = $0000
+    local60 = $0000
+    local61 = $0000
+    local62 = $0000
+    local63 = $0000
+    local64 = $0000
+    local65 = $0000
+    local66 = $0000
+    local67 = $0000
+    local68 = $0000
+    local69 = $0000
+    local70 = $0000
+    local71 = $0000
+    local72 = $0000
+    local73 = $0000
+    local74 = $0000
+    local75 = $0000
+    local76 = $0000
+    local77 = $0000
+    local78 = $0000
+    local79 = $0000
+    local80 = $0000
+    local81 = $0000
+    local82 = $0000
+    local83 = $0000
+    local84 = $0000
+    local85 = $0000
+    local86 = $0000
+    local87 = $0000
+    local88 = $0000
+    local89 = $0000
+    local90 = $0000
+    local91 = $0000
+    local92 = $0000
+    local93 = $0000
+    local94 = $0000
+    local95 = $0000
+    local96 = $0000
+    local97 = $0000
+    local98 = $0000
+    local99 = $0000
+    local100 = $0000
+    local101 = $0000
+    local102 = $0000
+    local103 = $0000
+    local104 = $0000
+    local105 = $0000
+    local106 = $0000
+    local107 = $0000
+    local108 = $0000
+    local109 = $0000
+    local110 = $0000
+    local111 = $0000
+    local112 = $0000
+    local113 = $0000
+    local114 = $0000
+    local115 = $0000
+    local116 = $0000
+    local117 = $0000
+    local118 = $0000
+    local119 = $0000
+    local120 = $0000
+    local121 = $0000
+    local122 = $0000
+    local123 = $0000
+    local124 = $0000
+    local125 = $0000
+    local126 = $0000
+    local127 = $0000
+    local128 = $0000
+    local129 = $0000
+    local130 = $0000
+    local131 = $0000
+    local132 = $0000
+    local133 = $0000
+    local134 = $0000
+    local135 = $0000
+    local136 = $0000
+    local137 = $0000
+    local138 = $0000
+    local139 = $0000
+    local140 = $0000
+    local141 = $0000
+    local142 = $0000
+    local143 = $0000
+    local144 = $0000
+    local145 = $0000
+    local146 = $0000
+    local147 = $0000
+    local148 = $0000
+    local149 = $0000
+    local150 = $0000
+    local151 = $0000
+    local152 = $0000
+    local153 = $0000
+    local154 = $0000
+    local155 = $0000
+    local156 = $0000
+    local157 = $0000
+    local158 = $0000
+    local159 = $0000
+    local160 = $0000
+    local161 = $0000
+    local162 = $0000
+    local163 = $0000
+    local164 = $0000
+    local165 = $0000
+    local166 = $0000
+    local167 = $0000
+    local168 = $0000
+    local169 = $0000
+    local170 = $0000
+    local171 = $0000
+    local172 = $0000
+    local173 = $0000
+    local174 = $0000
+    local175 = $0000
+    local176 = $0000
+    local177 = $0000
+    local178 = $0000
+    local179 = $0000
+    local180 = $0000
+    local181 = $0000
+    local182 = $0000
+    local183 = $0000
+    local184 = $0000
+    local185 = $0000
+    local186 = $0000
+    local187 = $0000
+    local188 = $0000
+    local189 = $0000
+    local190 = $0000
+    local191 = $0000
+    local192 = $0000
+    local193 = $0000
+    local194 = $0000
+    local195 = $0000
+    local196 = $0000
+    local197 = $0000
+    local198 = $0000
+    local199 = $0000
+    local200 = $0000
+    local201 = $0000
+    local202 = $0000
+    local203 = $0000
+    local204 = $0000
+    local205 = $0000
+    local206 = $0000
+    local207 = $0000
+    local208 = $0000
+    local209 = $0000
+    local210 = $0000
+    local211 = $0000
+    local212 = $0000
+    local213 = $0000
+    local214 = $0000
+    local215 = $0000
+    local216 = $0000
+    local217 = $0000
+    local218 = $0000
+    local219 = $0000
+    local220 = $0000
+    local221 = $0000
+    local222 = $0000
+    local223 = $0000
+    local224 = $0000
+    local225 = $0000
+    local226 = $0000
+    local227 = $0000
+    local228 = $0000
+    local229 = $0000
+    local230 = $0000
+    local231 = $0000
+    local232 = $0000
+    local233 = $0000
+    local234 = $0000
+    local235 = $0000
+    local236 = $0000
+    local237 = $0000
+    local238 = $0000
+    local239 = $0000
+    local240 = $0000
+    local241 = $0000
+    local242 = $0000
+    local243 = $0000
+    local244 = $0000
+    local245 = $0000
+    local246 = $0000
+    local247 = $0000
+    local248 = $0000
+    local249 = $0000
+    local250 = $0000
+    local251 = $0000
+    local252 = $0000
+    local253 = $0000
+    local254 = $0000
+    local255 = $0000
+    local256 = $0000
+    local257 = $0000
+    local258 = $0000
+    local259 = $0000
+    local260 = $0000
+    local261 = $0000
+    local262 = $0000
+    local263 = $0000
+    local264 = $0000
+    local265 = $0000
+    local266 = $0000
+    local267 = $0000
+    local268 = $0000
+    local269 = $0000
+    local270 = $0000
+    local271 = $0000
+    local272 = $0000
+    local273 = $0000
+    local274 = $0000
+    local275 = $0000
+    local276 = $0000
+    local277 = $0000
+    local278 = $0000
+    local279 = $0000
+    local280 = $0000
+    local281 = $0000
+    local282 = $0000
+    local283 = $0000
+    local284 = $0000
+    local285 = $0000
+    local286 = $0000
+    local287 = $0000
+    local288 = $0000
+    local289 = $0000
+    local290 = $0000
+    local291 = $0000
+    local292 = $0000
+    local293 = $0000
+    local294 = $0000
+    local295 = $0000
+    local296 = $0000
+    local297 = $0000
+    local298 = $0000
+    local299 = $0000
+    local300 = $0000
+    local301 = $0000
+    local302 = $0000
+    local303 = $0000
+    local304 = $0000
+    local305 = $0000
+    local306 = $0000
+    local307 = $0000
+    local308 = $0000
+    local309 = $0000
+    local310 = $0000
+    local311 = $0000
+    local312 = $0000
+    local313 = $0000
+    local314 = $0000
+    local315 = $0000
+    local316 = $0000
+    local317 = $0000
+    local318 = $0000
+    local319 = $0000
+    local320 = $0000
+    local321 = $0000
+    local322 = $0000
+    local323 = $0000
+    local324 = $0000
+    local325 = $0000
+    local326 = $0000
+    local327 = $0000
+    local328 = $0000
+    local329 = $0000
+    local330 = $0000
+    local331 = $0000
+    local332 = $0000
+    local333 = $0000
+    local334 = $0000
+    local335 = $0000
+    local336 = $0000
+    local337 = $0000
+    local338 = $0000
+    local339 = $0000
+    local340 = $0000
+    local341 = $0000
+    local342 = $0000
+    local343 = $0000
+    local344 = $0000
+    local345 = $0000
+    local346 = $0000
+    local347 = $0000
+    local348 = $0000
+    local349 = $0000
+    local350 = $0000
+    local351 = $0000
+    local352 = $0000
+    local353 = $0000
+    local354 = $0000
+    local355 = $0000
+    local356 = $0000
+    local357 = $0000
+    local358 = $0000
+    local359 = $0000
+    local360 = $0000
+    local361 = $0000
+    local362 = $0000
+    local363 = $0000
+    local364 = $0000
+    local365 = $0000
+    local366 = $0000
+    local367 = $0000
+    local368 = $0000
+    local369 = $0000
+    local370 = $0000
+    local371 = $0000
+    local372 = $0000
+    local373 = $0000
+    local374 = $0000
+    local375 = $0000
+    local376 = $0000
+    local377 = $0000
+    local378 = $0000
+    local379 = $0000
+    local380 = $0000
+    local381 = $0000
+    local382 = $0000
+    local383 = $0000
+    local384 = $0000
+    local385 = $0000
+    local386 = $0000
+    local387 = $0000
+    local388 = $0000
+    local389 = $0000
+    local390 = $0000
+    local391 = $0000
+    local392 = $0000
+    local393 = $0000
+    local394 = $0000
+    local395 = $0000
+    local396 = $0000
+    local397 = $0000
+    local398 = $0000
+    local399 = $0000
+    local400 = $0000
+    local401 = $0000
+    local402 = $0000
+    local403 = $0000
+    local404 = $0000
+    local405 = $0000
+    local406 = $0000
+    local407 = $0000
+    local408 = $0000
+    local409 = $0000
+    local410 = $0000
+    local411 = $0000
+    local412 = $0000
+    local413 = $0000
+    local414 = $0000
+    local415 = $0000
+    local416 = $0000
+    local417 = $0000
+    local418 = $0000
+    local419 = $0000
+    local420 = $0000
+    local421 = $0000
+    local422 = $0000
+    local423 = $0000
+    local424 = $0000
+    local425 = $0000
+    local426 = $0000
+    local427 = $0000
+    local428 = $0000
+    local429 = $0000
+    local430 = $0000
+    local431 = $0000
+    local432 = $0000
+    local433 = $0000
+    local434 = $0000
+    local435 = $0000
+    local436 = $0000
+    local437 = $0000
+    local438 = $0000
+    local439 = $0000
+    local440 = $0000
+    local441 = $0000
+    local442 = $0000
+    local443 = $0000
+    local444 = $0000
+    local445 = $0000
+    local446 = $0000
+    local447 = $0000
+    local448 = $0000
+    local449 = $0000
+    local450 = $0000
+    local451 = $0000
+    local452 = $0000
+    local453 = $0000
+    local454 = $0000
+    local455 = $0000
+    local456 = $0000
+    local457 = $0000
+    local458 = $0000
+    local459 = $0000
+    local460 = $0000
+    local461 = $0000
+    local462 = $0000
+    local463 = $0000
+    local464 = $0000
+    local465 = $0000
+    local466 = $0000
+    local467 = $0000
+    local468 = $0000
+    local469 = $0000
+    local470 = $0000
+    local471 = $0000
+    local472 = $0000
+    local473 = $0000
+    local474 = $0000
+    local475 = $0000
+    local476 = $0000
+    local477 = $0000
+    local478 = $0000
+    local479 = $0000
+    local480 = $0000
+    local481 = $0000
+    local482 = $0000
+    local483 = $0000
+    local484 = $0000
+    local485 = $0000
+    local486 = $0000
+    local487 = $0000
+    local488 = $0000
+    local489 = $0000
+    local490 = $0000
+    local491 = $0000
+    local492 = $0000
+    local493 = $0000
+    local494 = $0000
+    local495 = $0000
+    local496 = $0000
+    local497 = $0000
+    local498 = $0000
+    local499 = $0000
+    local500 = $0000
+    local501 = $0000
+    local502 = $0000
+    local503 = $0000
+    local504 = $0000
+    local505 = $0000
+    local506 = $0000
+    local507 = $0000
+    local508 = $0000
+    local509 = $0000
+    local510 = $0000
+    local511 = $0000
+    local512 = $0000
+    local513 = $0000
+    local514 = $0000
+    local515 = $0000
+    local516 = $0000
+    local517 = $0000
+    local518 = $0000
+    local519 = $0000
+    local520 = $0000
+    local521 = $0000
+    local522 = $0000
+    local523 = $0000
+    local524 = $0000
+    local525 = $0000
+    local526 = $0000
+    local527 = $0000
+    local528 = $0000
+    local529 = $0000
+    local530 = $0000
+    local531 = $0000
+    local532 = $0000
+    local533 = $0000
+    local534 = $0000
+    local535 = $0000
+    local536 = $0000
+    local537 = $0000
+    local538 = $0000
+    local539 = $0000
+    local540 = $0000
+    local541 = $0000
+    local542 = $0000
+    local543 = $0000
+    local544 = $0000
+    local545 = $0000
+    local546 = $0000
+    local547 = $0000
+    local548 = $0000
+    local549 = $0000
+    local550 = $0000
+    local551 = $0000
+    local552 = $0000
+    local553 = $0000
+    local554 = $0000
+    local555 = $0000
+    local556 = $0000
+    local557 = $0000
+    local558 = $0000
+    local559 = $0000
+    local560 = $0000
+    local561 = $0000
+    local562 = $0000
+    local563 = $0000
+    local564 = $0000
+    local565 = $0000
+    local566 = $0000
+    local567 = $0000
+    local568 = $0000
+    local569 = $0000
+    local570 = $0000
+    local571 = $0000
+    local572 = $0000
+    local573 = $0000
+    local574 = $0000
+    local575 = $0000
+    local576 = $0000
+    local577 = $0000
+    local578 = $0000
+    local579 = $0000
+    local580 = $0000
+    local581 = $0000
+    local582 = $0000
+    local583 = $0000
+    local584 = $0000
+    local585 = $0000
+    local586 = $0000
+    local587 = $0000
+    local588 = $0000
+    local589 = $0000
+    local590 = $0000
+    local591 = $0000
+    local592 = $0000
+    local593 = $0000
+    local594 = $0000
+    local595 = $0000
+    local596 = $0000
+    local597 = $0000
+    local598 = $0000
+    local599 = $0000
+    local600 = $0000
+    local601 = $0000
+    local602 = $0000
+    local603 = $0000
+    local604 = $0000
+    local605 = $0000
+    local606 = $0000
+    local607 = $0000
+    local608 = $0000
+    local609 = $0000
+    local610 = $0000
+    local611 = $0000
+    local612 = $0000
+    local613 = $0000
+    local614 = $0000
+    local615 = $0000
+    local616 = $0000
+    local617 = $0000
+    local618 = $0000
+    local619 = $0000
+    local620 = $0000
+    local621 = $0000
+    local622 = $0000
+    local623 = $0000
+    local624 = $0000
+    local625 = $0000
+    local626 = $0000
+    local627 = $0000
+    local628 = $0000
+    local629 = $0000
+    local630 = $0000
+    local631 = $0000
+    local632 = $0000
+    local633 = $0000
+    local634 = $0000
+    local635 = $0000
+    local636 = $0000
+    local637 = $0000
+    local638 = $0000
+    local639 = $0000
+    local640 = $0000
+    local641 = $0000
+    local642 = $0000
+    local643 = $0000
+    local644 = $0000
+    local645 = $0000
+    local646 = $0000
+    local647 = $0000
+    local648 = $0000
+    local649 = $0000
+    local650 = $0000
+    local651 = $0000
+    local652 = $0000
+    local653 = $0000
+    local654 = $0000
+    local655 = $0000
+    local656 = $0000
+    local657 = $0000
+    local658 = $0000
+    local659 = $0000
+    local660 = $0000
+    local661 = $0000
+    local662 = $0000
+    local663 = $0000
+    local664 = $0000
+    local665 = $0000
+    local666 = $0000
+    local667 = $0000
+    local668 = $0000
+    local669 = $0000
+    local670 = $0000
+    local671 = $0000
+    local672 = $0000
+    local673 = $0000
+    local674 = $0000
+    local675 = $0000
+    local676 = $0000
+    local677 = $0000
+    local678 = $0000
+    local679 = $0000
+    local680 = $0000
+    local681 = $0000
+    local682 = $0000
+    local683 = $0000
+    local684 = $0000
+    local685 = $0000
+    local686 = $0000
+    local687 = $0000
+    local688 = $0000
+    local689 = $0000
+    local690 = $0000
+    local691 = $0000
+    local692 = $0000
+    local693 = $0000
+    local694 = $0000
+    local695 = $0000
+    local696 = $0000
+    local697 = $0000
+    local698 = $0000
+    local699 = $0000
+)
+
+// 04b0
+(instance dialogKeyMouse of Set
+    (properties
+        elements $0
+        size $0
+    )
+)
+
+// 063e
+(instance publicinventories of Dialog
+    (properties
+        elements $0
+        size $0
+        text $0
+        window $0
+        theItem $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $77
+        nsRight $b8
+        time $0
+        busy $0
+        seconds $0
+        lastSeconds $0
+        client $0
+        agent $0
+        script $0
+        menuBarOK $1
+        tail $0
+        standard $0
+        keyMouseList $0
+        prevDialog $0
+        prevTalker $0
+        aTimeClock $0
+    )
+    (method (init) // method_04ca
+  04ca:3f 05             link 5 // (var $5)
+  04cc:78               push1 
+  04cd:78               push1 
+  04ce:45 11 02         callb procedure_0011 2 //  
+
+  04d1:35 00              ldi 0 
+  04d3:a0 01fe            sag  
+  04d6:72 ffdd          lofsa $04b6 // dialogKeyMouse
+  04d9:65 2e             aTop keyMouseList 
+  04db:80 01f6            lag  
+  04de:65 30             aTop prevDialog 
+  04e0:5c              selfID 
+  04e1:a0 01f6            sag  
+  04e4:76               push0 
+  04e5:45 07 00         callb procedure_0007 0 //  
+
+  04e8:80 01bb            lag  
+  04eb:a5 03              sat temp3 
+  04ed:35 01              ldi 1 
+  04ef:a0 01bb            sag  
+  04f2:87 01              lap param1 
+  04f4:65 22             aTop client 
+  04f6:39 1c            pushi 1c // $1c color
+  04f8:78               push1 
+  04f9:76               push0 
+  04fa:39 1d            pushi 1d // $1d back
+  04fc:78               push1 
+  04fd:80 0217            lag  
+  0500:30 0006            bnt code_0509 
+  0503:34 008e            ldi 8e 
+  0506:32 0002            jmp code_050b 
+
+        code_0509
+  0509:35 0f              ldi f 
+
+        code_050b
+  050b:36                push 
+  050c:81 3b              lag  
+  050e:4a 0c             send c 
+
+  0510:80 019d            lag  
+  0513:65 32             aTop prevTalker 
+  0515:35 00              ldi 0 
+  0517:a0 019d            sag  
+  051a:39 23            pushi 23 // $23 window
+  051c:78               push1 
+  051d:89 3b              lsg  
+  051f:39 6e            pushi 6e // $6e add
+  0521:39 03            pushi 3 // $3 y
+  0523:72 0168          lofsa $068e // background
+  0526:36                push 
+  0527:72 01f4          lofsa $071e // invSelector
+  052a:36                push 
+  052b:72 01a8          lofsa $06d6 // doneButton
+  052e:36                push 
+  052f:54 10             self 10 
+
+  0531:76               push0 
+  0532:40 fad6 00        call proc_000c 0 
+
+  0536:39 1a            pushi 1a // $1a text
+  0538:78               push1 
+  0539:5b 02 00           lea 2 0 
+  053c:36                push 
+  053d:38 009b          pushi 9b // $9b moveTo
+  0540:7a               push2 
+  0541:39 11            pushi 11 // $11 signal
+  0543:39 14            pushi 14 // $14 brLeft
+  0545:72 01d6          lofsa $071e // invSelector
+  0548:4a 0e             send e 
+
+  054a:39 6f            pushi 6f // $6f eachElementDo
+  054c:78               push1 
+  054d:39 66            pushi 66 // $66 init
+  054f:39 6f            pushi 6f // $6f eachElementDo
+  0551:78               push1 
+  0552:38 0099          pushi 99 // $99 setSize
+  0555:38 009b          pushi 9b // $9b moveTo
+  0558:7a               push2 
+  0559:39 45            pushi 45 // $45 done
+  055b:39 2c            pushi 2c // $2c nodePtr
+  055d:38 00a3          pushi a3 // $a3 open
+  0560:7a               push2 
+  0561:76               push0 
+  0562:39 0f            pushi f // $f lsBottom
+  0564:54 1c             self 1c 
+
+  0566:38 0125          pushi 125 // $125 curItem
+  0569:76               push0 
+  056a:51 30            class KeyMouse 
+  056c:4a 04             send 4 
+
+  056e:a5 04              sat temp4 
+  0570:39 03            pushi 3 // $3 y
+  0572:7c            pushSelf 
+  0573:67 2e             pTos keyMouseList 
+  0575:72 015e          lofsa $06d6 // doneButton
+  0578:36                push 
+  0579:45 09 06         callb procedure_0009 6 //  
+
+  057c:38 0129          pushi 129 // $129 setList
+  057f:78               push1 
+  0580:67 2e             pTos keyMouseList 
+  0582:51 30            class KeyMouse 
+  0584:4a 06             send 6 
+
+  0586:39 3c            pushi 3c // $3c doit
+  0588:7a               push2 
+  0589:76               push0 
+  058a:76               push0 
+  058b:54 08             self 8 
+
+  058d:a5 00              sat temp0 
+  058f:78               push1 
+  0590:36                push 
+  0591:43 06 02         callk IsObject 2 
+
+  0594:30 0011            bnt code_05a8 
+  0597:39 72            pushi 72 // $72 contains
+  0599:78               push1 
+  059a:8d 00              lst temp0 
+  059c:54 06             self 6 
+
+  059e:30 000b            bnt code_05ac 
+  05a1:35 00              ldi 0 
+  05a3:a5 00              sat temp0 
+  05a5:32 0004            jmp code_05ac 
+
+        code_05a8
+  05a8:35 01              ldi 1 
+  05aa:a5 00              sat temp0 
+
+        code_05ac
+  05ac:38 0129          pushi 129 // $129 setList
+  05af:78               push1 
+  05b0:63 30             pToa prevDialog 
+  05b2:30 0009            bnt code_05be 
+  05b5:38 0138          pushi 138 // $138 keyMouseList
+  05b8:76               push0 
+  05b9:4a 04             send 4 
+
+  05bb:32 0003            jmp code_05c1 
+
+        code_05be
+  05be:80 01b0            lag  
+
+        code_05c1
+  05c1:36                push 
+  05c2:51 30            class KeyMouse 
+  05c4:4a 06             send 6 
+
+  05c6:38 0125          pushi 125 // $125 curItem
+  05c9:78               push1 
+  05ca:8d 04              lst temp4 
+  05cc:51 30            class KeyMouse 
+  05ce:4a 06             send 6 
+
+  05d0:80 01bf            lag  
+  05d3:30 000a            bnt code_05e0 
+  05d6:38 0102          pushi 102 // $102 setCursor
+  05d9:78               push1 
+  05da:8d 04              lst temp4 
+  05dc:51 30            class KeyMouse 
+  05de:4a 06             send 6 
+
+
+        code_05e0
+  05e0:39 75            pushi 75 // $75 release
+  05e2:76               push0 
+  05e3:39 67            pushi 67 // $67 dispose
+  05e5:76               push0 
+  05e6:63 2e             pToa keyMouseList 
+  05e8:4a 08             send 8 
+
+  05ea:63 30             pToa prevDialog 
+  05ec:a0 01f6            sag  
+  05ef:7a               push2 
+  05f0:7c            pushSelf 
+  05f1:38 0123          pushi 123 // $123 erase
+  05f4:45 0f 04         callb procedure_000f 4 //  
+
+  05f7:39 67            pushi 67 // $67 dispose
+  05f9:76               push0 
+  05fa:54 04             self 4 
+
+  05fc:63 32             pToa prevTalker 
+  05fe:a0 019d            sag  
+  0601:85 03              lat temp3 
+  0603:a0 01bb            sag  
+  0606:39 08            pushi 8 // $8 underBits
+  0608:39 0b            pushi b // $b nsBottom
+  060a:67 12             pTos nsTop 
+  060c:35 01              ldi 1 
+  060e:02                 add 
+  060f:36                push 
+  0610:67 14             pTos nsLeft 
+  0612:67 16             pTos nsBottom 
+  0614:35 01              ldi 1 
+  0616:04                 sub 
+  0617:36                push 
+  0618:67 18             pTos nsRight 
+  061a:35 03              ldi 3 
+  061c:04                 sub 
+  061d:36                push 
+  061e:7a               push2 
+  061f:76               push0 
+  0620:76               push0 
+  0621:43 6c 10         callk Graph 10 
+
+  0624:35 01              ldi 1 
+  0626:a0 01fe            sag  
+  0629:78               push1 
+  062a:76               push0 
+  062b:45 11 02         callb procedure_0011 2 //  
+
+  062e:85 00              lat temp0 
+  0630:78               push1 
+  0631:38 00e7          pushi e7 // $e7 setStep
+  0634:43 03 02         callk DisposeScript 2 
+
+  0637:48                 ret 
+    )
+
+)
+
+// 0688
+(instance background of DIcon
+    (properties
+        type $4
+        state $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $1f9
+        loop $4
+        cel $0
+        priority $ffff
+    )
+)
+
+// 06d0
+(instance doneButton of ErasableDIcon
+    (properties
+        type $4
+        state $63
+        nsTop $6c
+        nsLeft $8f
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        view $fa
+        loop $2
+        cel $0
+        priority $ffff
+    )
+)
+
+// 0718
+(instance invSelector of DSelector
+    (properties
+        type $7
+        state $0
+        nsTop $0
+        nsLeft $0
+        nsBottom $0
+        nsRight $0
+        key $0
+        said $0
+        value $0
+        underBits $0
+        lsTop $0
+        lsLeft $0
+        lsBottom $0
+        lsRight $0
+        client $0
+        -oldPort- $0
+        keyMouseX $0
+        keyMouseY $0
+        offsetX $0
+        offsetY $0
+        font $4
+        x $19
+        y $7
+        text $0
+        cursor $0
+        brTop $0
+        mark $0
+    )
+)
+
+
+
+(procedure proc_000c
+  000c:3f 23             link 23 // (var $23)
+  000e:38 01cd          pushi 1cd // $1cd calcNetWorth
+  0011:76               push0 
+  0012:80 012e            lag  
+  0015:4a 04             send 4 
+
+  0017:35 00              ldi 0 
+  0019:a5 1f              sat temp31 
+
+        code_001b
+  001b:8d 1f              lst temp31 
+  001d:34 02bc            ldi 2bc 
+  0020:22                 lt? 
+  0021:30 000a            bnt code_002e 
+  0024:76               push0 
+  0025:85 1f              lat temp31 
+  0027:b3 00             sali local0 
+  0029:c5 1f              +at temp31 
+  002b:32 ffed            jmp code_001b 
+
+        code_002e
+  002e:38 0142          pushi 142 // $142 durables
+  0031:76               push0 
+  0032:80 012e            lag  
+  0035:4a 04             send 4 
+
+  0037:a5 20              sat temp32 
+  0039:35 00              ldi 0 
+  003b:a5 21              sat temp33 
+  003d:39 59            pushi 59 // $59 size
+  003f:76               push0 
+  0040:85 20              lat temp32 
+  0042:4a 04             send 4 
+
+  0044:30 003b            bnt code_0082 
+  0047:35 00              ldi 0 
+  0049:a5 1f              sat temp31 
+
+        code_004b
+  004b:8d 1f              lst temp31 
+  004d:39 59            pushi 59 // $59 size
+  004f:76               push0 
+  0050:85 20              lat temp32 
+  0052:4a 04             send 4 
+
+  0054:22                 lt? 
+  0055:30 002a            bnt code_0082 
+  0058:8d 21              lst temp33 
+  005a:38 0165          pushi 165 // $165 pricePaid
+  005d:76               push0 
+  005e:39 43            pushi 43 // $43 at
+  0060:78               push1 
+  0061:8d 1f              lst temp31 
+  0063:85 20              lat temp32 
+  0065:4a 06             send 6 
+
+  0067:4a 04             send 4 
+
+  0069:36                push 
+  006a:38 0161          pushi 161 // $161 quantity
+  006d:76               push0 
+  006e:39 43            pushi 43 // $43 at
+  0070:78               push1 
+  0071:8d 1f              lst temp31 
+  0073:85 20              lat temp32 
+  0075:4a 06             send 6 
+
+  0077:4a 04             send 4 
+
+  0079:06                 mul 
+  007a:02                 add 
+  007b:a5 21              sat temp33 
+  007d:c5 1f              +at temp31 
+  007f:32 ffc9            jmp code_004b 
+
+        code_0082
+  0082:39 04            pushi 4 // $4 x
+  0084:5b 02 00           lea 2 0 
+  0087:36                push 
+  0088:38 00e7          pushi e7 // $e7 setStep
+  008b:76               push0 
+  008c:38 0194          pushi 194 // $194 actualName
+  008f:76               push0 
+  0090:80 012e            lag  
+  0093:4a 04             send 4 
+
+  0095:36                push 
+  0096:43 48 08         callk Format 8 
+
+  0099:38 0173          pushi 173 // $173 worksAt
+  009c:76               push0 
+  009d:80 012e            lag  
+  00a0:4a 04             send 4 
+
+  00a2:30 0062            bnt code_0107 
+  00a5:39 05            pushi 5 // $5 view
+  00a7:78               push1 
+  00a8:5b 02 00           lea 2 0 
+  00ab:36                push 
+  00ac:43 43 02         callk StrEnd 2 
+
+  00af:36                push 
+  00b0:38 00e7          pushi e7 // $e7 setStep
+  00b3:78               push1 
+  00b4:38 02bc          pushi 2bc // $2bc sel_700
+  00b7:38 0173          pushi 173 // $173 worksAt
+  00ba:76               push0 
+  00bb:80 012e            lag  
+  00be:4a 04             send 4 
+
+  00c0:36                push 
+  00c1:35 47              ldi 47 
+  00c3:02                 add 
+  00c4:36                push 
+  00c5:43 48 0a         callk Format a 
+
+  00c8:39 05            pushi 5 // $5 view
+  00ca:78               push1 
+  00cb:5b 02 00           lea 2 0 
+  00ce:36                push 
+  00cf:43 43 02         callk StrEnd 2 
+
+  00d2:36                push 
+  00d3:38 00e7          pushi e7 // $e7 setStep
+  00d6:7a               push2 
+  00d7:38 02bc          pushi 2bc // $2bc sel_700
+  00da:38 01aa          pushi 1aa // $1aa occupation
+  00dd:76               push0 
+  00de:80 012e            lag  
+  00e1:4a 04             send 4 
+
+  00e3:36                push 
+  00e4:43 48 0a         callk Format a 
+
+  00e7:39 04            pushi 4 // $4 x
+  00e9:78               push1 
+  00ea:5b 02 00           lea 2 0 
+  00ed:36                push 
+  00ee:43 43 02         callk StrEnd 2 
+
+  00f1:36                push 
+  00f2:38 00e7          pushi e7 // $e7 setStep
+  00f5:39 03            pushi 3 // $3 y
+  00f7:38 01a8          pushi 1a8 // $1a8 wage
+  00fa:76               push0 
+  00fb:80 012e            lag  
+  00fe:4a 04             send 4 
+
+  0100:36                push 
+  0101:43 48 08         callk Format 8 
+
+  0104:32 0018            jmp code_011f 
+
+        code_0107
+  0107:39 05            pushi 5 // $5 view
+  0109:78               push1 
+  010a:5b 02 00           lea 2 0 
+  010d:36                push 
+  010e:43 43 02         callk StrEnd 2 
+
+  0111:36                push 
+  0112:38 00e7          pushi e7 // $e7 setStep
+  0115:39 04            pushi 4 // $4 x
+  0117:38 00e7          pushi e7 // $e7 setStep
+  011a:39 05            pushi 5 // $5 view
+  011c:43 48 0a         callk Format a 
+
+
+        code_011f
+  011f:39 04            pushi 4 // $4 x
+  0121:78               push1 
+  0122:5b 02 00           lea 2 0 
+  0125:36                push 
+  0126:43 43 02         callk StrEnd 2 
+
+  0129:36                push 
+  012a:38 00e7          pushi e7 // $e7 setStep
+  012d:39 06            pushi 6 // $6 loop
+  012f:7a               push2 
+  0130:38 0176          pushi 176 // $176 cashHi
+  0133:76               push0 
+  0134:80 012e            lag  
+  0137:4a 04             send 4 
+
+  0139:36                push 
+  013a:38 0175          pushi 175 // $175 cash
+  013d:76               push0 
+  013e:80 012e            lag  
+  0141:4a 04             send 4 
+
+  0143:36                push 
+  0144:47 73 00 04      calle 73 procedure_0000 4 //  
+
+  0148:36                push 
+  0149:43 48 08         callk Format 8 
+
+  014c:39 04            pushi 4 // $4 x
+  014e:78               push1 
+  014f:5b 02 00           lea 2 0 
+  0152:36                push 
+  0153:43 43 02         callk StrEnd 2 
+
+  0156:36                push 
+  0157:38 00e7          pushi e7 // $e7 setStep
+  015a:39 07            pushi 7 // $7 cel
+  015c:7a               push2 
+  015d:38 01a5          pushi 1a5 // $1a5 bankBalHi
+  0160:76               push0 
+  0161:80 012e            lag  
+  0164:4a 04             send 4 
+
+  0166:36                push 
+  0167:38 01a4          pushi 1a4 // $1a4 bankBal
+  016a:76               push0 
+  016b:80 012e            lag  
+  016e:4a 04             send 4 
+
+  0170:36                push 
+  0171:47 73 00 04      calle 73 procedure_0000 4 //  
+
+  0175:36                push 
+  0176:43 48 08         callk Format 8 
+
+  0179:39 04            pushi 4 // $4 x
+  017b:78               push1 
+  017c:5b 02 00           lea 2 0 
+  017f:36                push 
+  0180:43 43 02         callk StrEnd 2 
+
+  0183:36                push 
+  0184:38 00e7          pushi e7 // $e7 setStep
+  0187:39 08            pushi 8 // $8 underBits
+  0189:38 01ad          pushi 1ad // $1ad rentOwed
+  018c:76               push0 
+  018d:80 012e            lag  
+  0190:4a 04             send 4 
+
+  0192:36                push 
+  0193:43 48 08         callk Format 8 
+
+  0196:39 04            pushi 4 // $4 x
+  0198:78               push1 
+  0199:5b 02 00           lea 2 0 
+  019c:36                push 
+  019d:43 43 02         callk StrEnd 2 
+
+  01a0:36                push 
+  01a1:38 00e7          pushi e7 // $e7 setStep
+  01a4:39 09            pushi 9 // $9 nsTop
+  01a6:38 01b1          pushi 1b1 // $1b1 loanBal
+  01a9:76               push0 
+  01aa:80 012e            lag  
+  01ad:4a 04             send 4 
+
+  01af:36                push 
+  01b0:43 48 08         callk Format 8 
+
+  01b3:39 04            pushi 4 // $4 x
+  01b5:78               push1 
+  01b6:5b 02 00           lea 2 0 
+  01b9:36                push 
+  01ba:43 43 02         callk StrEnd 2 
+
+  01bd:36                push 
+  01be:38 00e7          pushi e7 // $e7 setStep
+  01c1:39 0a            pushi a // $a nsLeft
+  01c3:8d 21              lst temp33 
+  01c5:43 48 08         callk Format 8 
+
+  01c8:39 04            pushi 4 // $4 x
+  01ca:78               push1 
+  01cb:5b 02 00           lea 2 0 
+  01ce:36                push 
+  01cf:43 43 02         callk StrEnd 2 
+
+  01d2:36                push 
+  01d3:38 00e7          pushi e7 // $e7 setStep
+  01d6:39 0b            pushi b // $b nsBottom
+  01d8:7a               push2 
+  01d9:38 01a3          pushi 1a3 // $1a3 invAssHi
+  01dc:76               push0 
+  01dd:80 012e            lag  
+  01e0:4a 04             send 4 
+
+  01e2:36                push 
+  01e3:38 01a2          pushi 1a2 // $1a2 invAss
+  01e6:76               push0 
+  01e7:80 012e            lag  
+  01ea:4a 04             send 4 
+
+  01ec:36                push 
+  01ed:47 73 00 04      calle 73 procedure_0000 4 //  
+
+  01f1:36                push 
+  01f2:43 48 08         callk Format 8 
+
+  01f5:39 04            pushi 4 // $4 x
+  01f7:78               push1 
+  01f8:5b 02 00           lea 2 0 
+  01fb:36                push 
+  01fc:43 43 02         callk StrEnd 2 
+
+  01ff:36                push 
+  0200:38 00e7          pushi e7 // $e7 setStep
+  0203:39 0c            pushi c // $c nsRight
+  0205:7a               push2 
+  0206:38 01a1          pushi 1a1 // $1a1 netWorthHi
+  0209:76               push0 
+  020a:80 012e            lag  
+  020d:4a 04             send 4 
+
+  020f:36                push 
+  0210:38 01a0          pushi 1a0 // $1a0 netWorth
+  0213:76               push0 
+  0214:80 012e            lag  
+  0217:4a 04             send 4 
+
+  0219:36                push 
+  021a:47 73 00 04      calle 73 procedure_0000 4 //  
+
+  021e:36                push 
+  021f:43 48 08         callk Format 8 
+
+  0222:39 05            pushi 5 // $5 view
+  0224:78               push1 
+  0225:5b 02 00           lea 2 0 
+  0228:36                push 
+  0229:43 43 02         callk StrEnd 2 
+
+  022c:36                push 
+  022d:38 00e7          pushi e7 // $e7 setStep
+  0230:76               push0 
+  0231:38 00e7          pushi e7 // $e7 setStep
+  0234:39 0d            pushi d // $d lsTop
+  0236:43 48 0a         callk Format a 
+
+  0239:38 0171          pushi 171 // $171 objectAtIndex
+  023c:78               push1 
+  023d:39 24            pushi 24 // $24 cursor
+  023f:38 0140          pushi 140 // $140 consumables
+  0242:76               push0 
+  0243:80 012e            lag  
+  0246:4a 04             send 4 
+
+  0248:4a 06             send 6 
+
+  024a:a5 22              sat temp34 
+  024c:30 0022            bnt code_0271 
+  024f:38 0161          pushi 161 // $161 quantity
+  0252:76               push0 
+  0253:4a 04             send 4 
+
+  0255:30 0019            bnt code_0271 
+  0258:39 06            pushi 6 // $6 loop
+  025a:78               push1 
+  025b:5b 02 00           lea 2 0 
+  025e:36                push 
+  025f:43 43 02         callk StrEnd 2 
+
+  0262:36                push 
+  0263:38 00e7          pushi e7 // $e7 setStep
+  0266:76               push0 
+  0267:38 00e7          pushi e7 // $e7 setStep
+  026a:39 0e            pushi e // $e lsLeft
+  026c:8d 22              lst temp34 
+  026e:43 48 0c         callk Format c 
+
+
+        code_0271
+  0271:38 0171          pushi 171 // $171 objectAtIndex
+  0274:78               push1 
+  0275:39 23            pushi 23 // $23 window
+  0277:38 0140          pushi 140 // $140 consumables
+  027a:76               push0 
+  027b:80 012e            lag  
+  027e:4a 04             send 4 
+
+  0280:4a 06             send 6 
+
+  0282:a5 22              sat temp34 
+  0284:30 0022            bnt code_02a9 
+  0287:38 0161          pushi 161 // $161 quantity
+  028a:76               push0 
+  028b:4a 04             send 4 
+
+  028d:30 0019            bnt code_02a9 
+  0290:39 06            pushi 6 // $6 loop
+  0292:78               push1 
+  0293:5b 02 00           lea 2 0 
+  0296:36                push 
+  0297:43 43 02         callk StrEnd 2 
+
+  029a:36                push 
+  029b:38 00e7          pushi e7 // $e7 setStep
+  029e:76               push0 
+  029f:38 00e7          pushi e7 // $e7 setStep
+  02a2:39 0f            pushi f // $f lsBottom
+  02a4:8d 22              lst temp34 
+  02a6:43 48 0c         callk Format c 
+
+
+        code_02a9
+  02a9:38 0171          pushi 171 // $171 objectAtIndex
+  02ac:78               push1 
+  02ad:39 22            pushi 22 // $22 type
+  02af:38 0140          pushi 140 // $140 consumables
+  02b2:76               push0 
+  02b3:80 012e            lag  
+  02b6:4a 04             send 4 
+
+  02b8:4a 06             send 6 
+
+  02ba:a5 22              sat temp34 
+  02bc:30 0022            bnt code_02e1 
+  02bf:38 0161          pushi 161 // $161 quantity
+  02c2:76               push0 
+  02c3:4a 04             send 4 
+
+  02c5:30 0019            bnt code_02e1 
+  02c8:39 06            pushi 6 // $6 loop
+  02ca:78               push1 
+  02cb:5b 02 00           lea 2 0 
+  02ce:36                push 
+  02cf:43 43 02         callk StrEnd 2 
+
+  02d2:36                push 
+  02d3:38 00e7          pushi e7 // $e7 setStep
+  02d6:76               push0 
+  02d7:38 00e7          pushi e7 // $e7 setStep
+  02da:39 10            pushi 10 // $10 lsRight
+  02dc:8d 22              lst temp34 
+  02de:43 48 0c         callk Format c 
+
+
+        code_02e1
+  02e1:38 0171          pushi 171 // $171 objectAtIndex
+  02e4:78               push1 
+  02e5:78               push1 
+  02e6:38 0140          pushi 140 // $140 consumables
+  02e9:76               push0 
+  02ea:80 012e            lag  
+  02ed:4a 04             send 4 
+
+  02ef:4a 06             send 6 
+
+  02f1:a5 22              sat temp34 
+  02f3:30 0025            bnt code_031b 
+  02f6:38 0161          pushi 161 // $161 quantity
+  02f9:76               push0 
+  02fa:4a 04             send 4 
+
+  02fc:30 001c            bnt code_031b 
+  02ff:39 04            pushi 4 // $4 x
+  0301:78               push1 
+  0302:5b 02 00           lea 2 0 
+  0305:36                push 
+  0306:43 43 02         callk StrEnd 2 
+
+  0309:36                push 
+  030a:38 00e7          pushi e7 // $e7 setStep
+  030d:39 11            pushi 11 // $11 signal
+  030f:38 0161          pushi 161 // $161 quantity
+  0312:76               push0 
+  0313:85 22              lat temp34 
+  0315:4a 04             send 4 
+
+  0317:36                push 
+  0318:43 48 08         callk Format 8 
+
+
+        code_031b
+  031b:38 0142          pushi 142 // $142 durables
+  031e:76               push0 
+  031f:80 012e            lag  
+  0322:4a 04             send 4 
+
+  0324:a5 20              sat temp32 
+  0326:39 59            pushi 59 // $59 size
+  0328:76               push0 
+  0329:4a 04             send 4 
+
+  032b:30 005e            bnt code_038c 
+  032e:35 00              ldi 0 
+  0330:a5 1f              sat temp31 
+
+        code_0332
+  0332:8d 1f              lst temp31 
+  0334:39 59            pushi 59 // $59 size
+  0336:76               push0 
+  0337:85 20              lat temp32 
+  0339:4a 04             send 4 
+
+  033b:22                 lt? 
+  033c:30 004d            bnt code_038c 
+  033f:38 0161          pushi 161 // $161 quantity
+  0342:76               push0 
+  0343:39 43            pushi 43 // $43 at
+  0345:78               push1 
+  0346:8d 1f              lst temp31 
+  0348:85 20              lat temp32 
+  034a:4a 06             send 6 
+
+  034c:4a 04             send 4 
+
+  034e:30 0036            bnt code_0387 
+  0351:39 06            pushi 6 // $6 loop
+  0353:78               push1 
+  0354:5b 02 00           lea 2 0 
+  0357:36                push 
+  0358:43 43 02         callk StrEnd 2 
+
+  035b:36                push 
+  035c:38 00e7          pushi e7 // $e7 setStep
+  035f:39 12            pushi 12 // $12 illegalBits
+  0361:38 0161          pushi 161 // $161 quantity
+  0364:76               push0 
+  0365:39 43            pushi 43 // $43 at
+  0367:78               push1 
+  0368:8d 1f              lst temp31 
+  036a:85 20              lat temp32 
+  036c:4a 06             send 6 
+
+  036e:4a 04             send 4 
+
+  0370:36                push 
+  0371:38 02bc          pushi 2bc // $2bc sel_700
+  0374:38 0157          pushi 157 // $157 indexNum
+  0377:76               push0 
+  0378:39 43            pushi 43 // $43 at
+  037a:78               push1 
+  037b:8d 1f              lst temp31 
+  037d:85 20              lat temp32 
+  037f:4a 06             send 6 
+
+  0381:4a 04             send 4 
+
+  0383:36                push 
+  0384:43 48 0c         callk Format c 
+
+
+        code_0387
+  0387:c5 1f              +at temp31 
+  0389:32 ffa6            jmp code_0332 
+
+        code_038c
+  038c:39 05            pushi 5 // $5 view
+  038e:78               push1 
+  038f:5b 02 00           lea 2 0 
+  0392:36                push 
+  0393:43 43 02         callk StrEnd 2 
+
+  0396:36                push 
+  0397:38 00e7          pushi e7 // $e7 setStep
+  039a:76               push0 
+  039b:38 00e7          pushi e7 // $e7 setStep
+  039e:39 13            pushi 13 // $13 brTop
+  03a0:43 48 0a         callk Format a 
+
+  03a3:38 01cb          pushi 1cb // $1cb numDegrees
+  03a6:76               push0 
+  03a7:80 012e            lag  
+  03aa:4a 04             send 4 
+
+  03ac:30 006b            bnt code_041a 
+  03af:38 0143          pushi 143 // $143 education
+  03b2:76               push0 
+  03b3:80 012e            lag  
+  03b6:4a 04             send 4 
+
+  03b8:a5 20              sat temp32 
+  03ba:39 59            pushi 59 // $59 size
+  03bc:76               push0 
+  03bd:4a 04             send 4 
+
+  03bf:30 0058            bnt code_041a 
+  03c2:35 00              ldi 0 
+  03c4:a5 1f              sat temp31 
+
+        code_03c6
+  03c6:8d 1f              lst temp31 
+  03c8:39 59            pushi 59 // $59 size
+  03ca:76               push0 
+  03cb:85 20              lat temp32 
+  03cd:4a 04             send 4 
+
+  03cf:22                 lt? 
+  03d0:30 0047            bnt code_041a 
+  03d3:38 01cc          pushi 1cc // $1cc hasDegree
+  03d6:78               push1 
+  03d7:38 0157          pushi 157 // $157 indexNum
+  03da:76               push0 
+  03db:39 43            pushi 43 // $43 at
+  03dd:78               push1 
+  03de:8d 1f              lst temp31 
+  03e0:85 20              lat temp32 
+  03e2:4a 06             send 6 
+
+  03e4:4a 04             send 4 
+
+  03e6:36                push 
+  03e7:80 012e            lag  
+  03ea:4a 06             send 6 
+
+  03ec:30 0026            bnt code_0415 
+  03ef:39 05            pushi 5 // $5 view
+  03f1:78               push1 
+  03f2:5b 02 00           lea 2 0 
+  03f5:36                push 
+  03f6:43 43 02         callk StrEnd 2 
+
+  03f9:36                push 
+  03fa:38 00e7          pushi e7 // $e7 setStep
+  03fd:39 04            pushi 4 // $4 x
+  03ff:38 02bc          pushi 2bc // $2bc sel_700
+  0402:38 0157          pushi 157 // $157 indexNum
+  0405:76               push0 
+  0406:39 43            pushi 43 // $43 at
+  0408:78               push1 
+  0409:8d 1f              lst temp31 
+  040b:85 20              lat temp32 
+  040d:4a 06             send 6 
+
+  040f:4a 04             send 4 
+
+  0411:36                push 
+  0412:43 48 0a         callk Format a 
+
+
+        code_0415
+  0415:c5 1f              +at temp31 
+  0417:32 ffac            jmp code_03c6 
+
+        code_041a
+  041a:39 05            pushi 5 // $5 view
+  041c:78               push1 
+  041d:5b 02 00           lea 2 0 
+  0420:36                push 
+  0421:43 43 02         callk StrEnd 2 
+
+  0424:36                push 
+  0425:38 00e7          pushi e7 // $e7 setStep
+  0428:76               push0 
+  0429:38 00e7          pushi e7 // $e7 setStep
+  042c:39 14            pushi 14 // $14 brLeft
+  042e:43 48 0a         callk Format a 
+
+  0431:38 0193          pushi 193 // $193 investments
+  0434:76               push0 
+  0435:80 012e            lag  
+  0438:4a 04             send 4 
+
+  043a:a5 20              sat temp32 
+  043c:35 00              ldi 0 
+  043e:a5 1f              sat temp31 
+
+        code_0440
+  0440:8d 1f              lst temp31 
+  0442:39 59            pushi 59 // $59 size
+  0444:76               push0 
+  0445:85 20              lat temp32 
+  0447:4a 04             send 4 
+
+  0449:22                 lt? 
+  044a:30 005c            bnt code_04a9 
+  044d:38 017b          pushi 17b // $17b shares
+  0450:76               push0 
+  0451:39 43            pushi 43 // $43 at
+  0453:78               push1 
+  0454:8d 1f              lst temp31 
+  0456:85 20              lat temp32 
+  0458:4a 06             send 6 
+
+  045a:4a 04             send 4 
+
+  045c:30 0045            bnt code_04a4 
+  045f:39 04            pushi 4 // $4 x
+  0461:78               push1 
+  0462:5b 02 00           lea 2 0 
+  0465:36                push 
+  0466:43 43 02         callk StrEnd 2 
+
+  0469:36                push 
+  046a:38 00e7          pushi e7 // $e7 setStep
+  046d:39 04            pushi 4 // $4 x
+  046f:39 06            pushi 6 // $6 loop
+  0471:5b 00 64           lea 0 64 
+  0474:36                push 
+  0475:38 00e7          pushi e7 // $e7 setStep
+  0478:39 15            pushi 15 // $15 brBottom
+  047a:38 017b          pushi 17b // $17b shares
+  047d:76               push0 
+  047e:39 43            pushi 43 // $43 at
+  0480:78               push1 
+  0481:8d 1f              lst temp31 
+  0483:85 20              lat temp32 
+  0485:4a 06             send 6 
+
+  0487:4a 04             send 4 
+
+  0489:36                push 
+  048a:38 02bc          pushi 2bc // $2bc sel_700
+  048d:38 0157          pushi 157 // $157 indexNum
+  0490:76               push0 
+  0491:39 43            pushi 43 // $43 at
+  0493:78               push1 
+  0494:8d 1f              lst temp31 
+  0496:85 20              lat temp32 
+  0498:4a 06             send 6 
+
+  049a:4a 04             send 4 
+
+  049c:36                push 
+  049d:43 48 0c         callk Format c 
+
+  04a0:36                push 
+  04a1:43 48 08         callk Format 8 
+
+
+        code_04a4
+  04a4:c5 1f              +at temp31 
+  04a6:32 ff97            jmp code_0440 
+
+        code_04a9
+  04a9:48                 ret 
+)
+

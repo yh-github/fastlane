@@ -1,0 +1,713 @@
+(script 101)
+
+(string
+    string_0292 "MarblePath"
+    string_029d "marblePath"
+)
+
+(said
+)
+
+(local
+    local0 = $00aa
+    local1 = $0090
+    local2 = $0096
+    local3 = $009c
+    local4 = $00a2
+    local5 = $00a8
+    local6 = $00ae
+    local7 = $00b4
+    local8 = $00ba
+    local9 = $00c0
+    local10 = $00c6
+    local11 = $00cc
+    local12 = $00d2
+    local13 = $00d8
+    local14 = $00de
+    local15 = $00e4
+    local16 = $00ea
+    local17 = $00f0
+    local18 = $00f6
+    local19 = $00fc
+    local20 = $0102
+    local21 = $0108
+    local22 = $010e
+    local23 = $0114
+    local24 = $011a
+    local25 = $0118
+    local26 = $0113
+    local27 = $010e
+    local28 = $0108
+    local29 = $0103
+    local30 = $0101
+    local31 = $0103
+    local32 = $0108
+    local33 = $010e
+    local34 = $0114
+    local35 = $011a
+    local36 = $0120
+    local37 = $0126
+    local38 = $012b
+    local39 = $0130
+    local40 = $0132
+    local41 = $0132
+    local42 = $0130
+    local43 = $012b
+    local44 = $0126
+    local45 = $0120
+    local46 = $011a
+    local47 = $0114
+    local48 = $0119
+    local49 = $011e
+    local50 = $0123
+    local51 = $0128
+    local52 = $012d
+    local53 = $0131
+    local54 = $0131
+    local55 = $0132
+    local56 = $0132
+    local57 = $0132
+    local58 = $0132
+    local59 = $0133
+    local60 = $0133
+    local61 = $0130
+    local62 = $012b
+    local63 = $0126
+    local64 = $0120
+    local65 = $011a
+    local66 = $0114
+    local67 = $010e
+    local68 = $0108
+    local69 = $0102
+    local70 = $00fc
+    local71 = $00f6
+    local72 = $00f0
+    local73 = $00ea
+    local74 = $00e4
+    local75 = $00de
+    local76 = $00d8
+    local77 = $00d2
+    local78 = $00cc
+    local79 = $00c6
+    local80 = $00c1
+    local81 = $00bc
+    local82 = $00b7
+    local83 = $00b2
+    local84 = $00ac
+    local85 = $00a7
+    local86 = $00a2
+    local87 = $009e
+    local88 = $0098
+    local89 = $0094
+    local90 = $008f
+    local91 = $008a
+    local92 = $0085
+    local93 = $0080
+    local94 = $007b
+    local95 = $0076
+    local96 = $0071
+    local97 = $006c
+    local98 = $0067
+    local99 = $0061
+    local100 = $005b
+    local101 = $0055
+    local102 = $004f
+    local103 = $0049
+    local104 = $0043
+    local105 = $003d
+    local106 = $0037
+    local107 = $0031
+    local108 = $002b
+    local109 = $0025
+    local110 = $001f
+    local111 = $0019
+    local112 = $0013
+    local113 = $000e
+    local114 = $000b
+    local115 = $000b
+    local116 = $000e
+    local117 = $0013
+    local118 = $0015
+    local119 = $0017
+    local120 = $0018
+    local121 = $001e
+    local122 = $0024
+    local123 = $002a
+    local124 = $0030
+    local125 = $0036
+    local126 = $003b
+    local127 = $003e
+    local128 = $003f
+    local129 = $003e
+    local130 = $003d
+    local131 = $003a
+    local132 = $0036
+    local133 = $0031
+    local134 = $002b
+    local135 = $0025
+    local136 = $001f
+    local137 = $0019
+    local138 = $0013
+    local139 = $0010
+    local140 = $000e
+    local141 = $000d
+    local142 = $000f
+    local143 = $0013
+    local144 = $0018
+    local145 = $001d
+    local146 = $0022
+    local147 = $0027
+    local148 = $0028
+    local149 = $0026
+    local150 = $0021
+    local151 = $001d
+    local152 = $0023
+    local153 = $0029
+    local154 = $002f
+    local155 = $0035
+    local156 = $003a
+    local157 = $003f
+    local158 = $0044
+    local159 = $004a
+    local160 = $0050
+    local161 = $0056
+    local162 = $005c
+    local163 = $0062
+    local164 = $0068
+    local165 = $006d
+    local166 = $0073
+    local167 = $0078
+    local168 = $007e
+    local169 = $0084
+    local170 = $008a
+    local171 = $00aa
+    local172 = $0025
+    local173 = $0025
+    local174 = $0026
+    local175 = $0027
+    local176 = $0028
+    local177 = $0028
+    local178 = $0027
+    local179 = $0027
+    local180 = $0027
+    local181 = $0027
+    local182 = $0027
+    local183 = $0028
+    local184 = $0028
+    local185 = $0028
+    local186 = $0028
+    local187 = $0028
+    local188 = $0027
+    local189 = $0026
+    local190 = $0025
+    local191 = $0025
+    local192 = $0026
+    local193 = $0027
+    local194 = $0028
+    local195 = $0027
+    local196 = $002b
+    local197 = $002f
+    local198 = $0034
+    local199 = $0037
+    local200 = $003c
+    local201 = $0042
+    local202 = $0048
+    local203 = $004c
+    local204 = $004f
+    local205 = $0050
+    local206 = $0051
+    local207 = $0053
+    local208 = $0056
+    local209 = $0059
+    local210 = $005e
+    local211 = $0064
+    local212 = $006a
+    local213 = $0070
+    local214 = $0075
+    local215 = $0077
+    local216 = $0078
+    local217 = $0079
+    local218 = $0079
+    local219 = $007e
+    local220 = $0080
+    local221 = $0082
+    local222 = $0085
+    local223 = $0089
+    local224 = $008e
+    local225 = $0094
+    local226 = $0098
+    local227 = $009e
+    local228 = $00a4
+    local229 = $00aa
+    local230 = $00b0
+    local231 = $00b6
+    local232 = $00bb
+    local233 = $00bd
+    local234 = $00bd
+    local235 = $00bd
+    local236 = $00bc
+    local237 = $00bb
+    local238 = $00bb
+    local239 = $00bc
+    local240 = $00bc
+    local241 = $00bc
+    local242 = $00be
+    local243 = $00bf
+    local244 = $00be
+    local245 = $00bd
+    local246 = $00bc
+    local247 = $00bc
+    local248 = $00bd
+    local249 = $00bd
+    local250 = $00bd
+    local251 = $00ba
+    local252 = $00b8
+    local253 = $00b3
+    local254 = $00b1
+    local255 = $00af
+    local256 = $00ad
+    local257 = $00a9
+    local258 = $00a9
+    local259 = $00a9
+    local260 = $00a9
+    local261 = $00aa
+    local262 = $00ad
+    local263 = $00b0
+    local264 = $00b4
+    local265 = $00b7
+    local266 = $00b9
+    local267 = $00bb
+    local268 = $00bc
+    local269 = $00bc
+    local270 = $00bc
+    local271 = $00bc
+    local272 = $00bc
+    local273 = $00bb
+    local274 = $00ba
+    local275 = $00b9
+    local276 = $00b9
+    local277 = $00b9
+    local278 = $00ba
+    local279 = $00bb
+    local280 = $00bb
+    local281 = $00bb
+    local282 = $00bb
+    local283 = $00bb
+    local284 = $00b7
+    local285 = $00b2
+    local286 = $00ad
+    local287 = $00a7
+    local288 = $00a2
+    local289 = $009d
+    local290 = $0099
+    local291 = $0095
+    local292 = $0096
+    local293 = $0096
+    local294 = $0096
+    local295 = $0096
+    local296 = $0095
+    local297 = $0092
+    local298 = $008d
+    local299 = $0087
+    local300 = $0081
+    local301 = $007b
+    local302 = $0076
+    local303 = $0072
+    local304 = $006f
+    local305 = $006e
+    local306 = $006d
+    local307 = $006c
+    local308 = $006b
+    local309 = $0069
+    local310 = $0064
+    local311 = $005e
+    local312 = $0058
+    local313 = $0053
+    local314 = $004e
+    local315 = $004a
+    local316 = $0046
+    local317 = $0042
+    local318 = $003f
+    local319 = $003b
+    local320 = $0036
+    local321 = $0032
+    local322 = $002d
+    local323 = $002d
+    local324 = $002d
+    local325 = $002c
+    local326 = $002c
+    local327 = $002a
+    local328 = $0028
+    local329 = $0025
+    local330 = $0025
+    local331 = $0025
+    local332 = $0026
+    local333 = $0026
+    local334 = $0027
+    local335 = $0027
+    local336 = $0027
+    local337 = $0027
+    local338 = $0027
+    local339 = $0026
+    local340 = $0026
+    local341 = $0025
+)
+
+// 01ca
+(class MarblePath of MoveTo
+    (properties
+        client $0
+        caller $0
+        x $0
+        y $0
+        dx $0
+        dy $0
+        b-moveCnt $0
+        b-i1 $0
+        b-i2 $0
+        b-di $0
+        b-xAxis $0
+        b-incr $0
+        completed $0
+        xLast $0
+        yLast $0
+        index $1
+        theDirection $0
+        finalDest $0
+        lastPlace $0
+        destIndex $0
+        firstMove $1
+    )
+    (method (init) // method_000e
+  000e:87 01              lap param1 
+  0010:65 08             aTop client 
+  0012:87 04              lap param4 
+  0014:65 0a             aTop caller 
+  0016:87 03              lap param3 
+  0018:65 2a             aTop finalDest 
+  001a:87 02              lap param2 
+  001c:65 2c             aTop lastPlace 
+  001e:39 38            pushi 38 // $38 moveSpeed
+  0020:76               push0 
+  0021:63 08             pToa client 
+  0023:4a 04             send 4 
+
+  0025:36                push 
+  0026:35 01              ldi 1 
+  0028:04                 sub 
+  0029:65 14             aTop b-moveCnt 
+  002b:38 018c          pushi 18c // $18c index
+  002e:76               push0 
+  002f:39 43            pushi 43 // $43 at
+  0031:78               push1 
+  0032:67 2a             pTos finalDest 
+  0034:80 012d            lag  
+  0037:4a 06             send 6 
+
+  0039:4a 04             send 4 
+
+  003b:65 2e             aTop destIndex 
+  003d:39 04            pushi 4 // $4 x
+  003f:76               push0 
+  0040:63 08             pToa client 
+  0042:4a 04             send 4 
+
+  0044:65 0c             aTop x 
+  0046:39 03            pushi 3 // $3 y
+  0048:76               push0 
+  0049:63 08             pToa client 
+  004b:4a 04             send 4 
+
+  004d:65 0e             aTop y 
+  004f:35 01              ldi 1 
+  0051:65 30             aTop firstMove 
+  0053:38 00ec          pushi ec // $ec setDirection
+  0056:76               push0 
+  0057:39 44            pushi 44 // $44 next
+  0059:76               push0 
+  005a:54 08             self 8 
+
+  005c:38 00dc          pushi dc // $dc setCycle
+  005f:78               push1 
+  0060:51 14            class Fwd 
+  0062:36                push 
+  0063:80 012f            lag  
+  0066:4a 06             send 6 
+
+  0068:48                 ret 
+    )
+
+    (method (doit) // method_0069
+  0069:39 38            pushi 38 // $38 moveSpeed
+  006b:76               push0 
+  006c:63 08             pToa client 
+  006e:4a 04             send 4 
+
+  0070:30 0033            bnt code_00a6 
+  0073:6b 14            ipToa b-moveCnt 
+  0075:67 14             pTos b-moveCnt 
+  0077:39 38            pushi 38 // $38 moveSpeed
+  0079:76               push0 
+  007a:63 08             pToa client 
+  007c:4a 04             send 4 
+
+  007e:1a                 eq? 
+  007f:30 0024            bnt code_00a6 
+  0082:35 00              ldi 0 
+  0084:65 14             aTop b-moveCnt 
+  0086:39 44            pushi 44 // $44 next
+  0088:76               push0 
+  0089:54 04             self 4 
+
+  008b:67 26             pTos index 
+  008d:63 2e             pToa destIndex 
+  008f:1a                 eq? 
+  0090:30 0013            bnt code_00a6 
+  0093:38 00dc          pushi dc // $dc setCycle
+  0096:78               push1 
+  0097:76               push0 
+  0098:38 00d3          pushi d3 // $d3 stopUpd
+  009b:76               push0 
+  009c:80 012f            lag  
+  009f:4a 0a             send a 
+
+  00a1:39 64            pushi 64 // $64 moveDone
+  00a3:76               push0 
+  00a4:54 04             self 4 
+
+
+        code_00a6
+  00a6:48                 ret 
+    )
+
+    (method (setDirection) // method_013e
+  013e:3f 04             link 4 // (var $4)
+  0140:35 00              ldi 0 
+  0142:a5 01              sat temp1 
+
+        code_0144
+  0144:8d 01              lst temp1 
+  0146:35 00              ldi 0 
+  0148:93 00             lali local0 
+  014a:24                 le? 
+  014b:30 0020            bnt code_016e 
+  014e:67 0c             pTos x 
+  0150:85 01              lat temp1 
+  0152:93 00             lali local0 
+  0154:1a                 eq? 
+  0155:30 0011            bnt code_0169 
+  0158:67 0e             pTos y 
+  015a:85 01              lat temp1 
+  015c:93 ab             lali local171 
+  015e:1a                 eq? 
+  015f:30 0007            bnt code_0169 
+  0162:85 01              lat temp1 
+  0164:a5 02              sat temp2 
+  0166:32 0005            jmp code_016e 
+
+        code_0169
+  0169:c5 01              +at temp1 
+  016b:32 ffd6            jmp code_0144 
+
+        code_016e
+  016e:38 018c          pushi 18c // $18c index
+  0171:76               push0 
+  0172:39 43            pushi 43 // $43 at
+  0174:78               push1 
+  0175:67 2a             pTos finalDest 
+  0177:80 012d            lag  
+  017a:4a 06             send 6 
+
+  017c:4a 04             send 4 
+
+  017e:a5 03              sat temp3 
+  0180:8d 02              lst temp2 
+  0182:1e                 gt? 
+  0183:30 001f            bnt code_01a5 
+  0186:8d 02              lst temp2 
+  0188:85 03              lat temp3 
+  018a:04                 sub 
+  018b:a5 00              sat temp0 
+  018d:36                push 
+  018e:35 00              ldi 0 
+  0190:9b 00             lsli local0 
+  0192:35 02              ldi 2 
+  0194:08                 div 
+  0195:20                 ge? 
+  0196:30 0005            bnt code_019e 
+  0199:35 01              ldi 1 
+  019b:32 0002            jmp code_01a0 
+
+        code_019e
+  019e:35 00              ldi 0 
+
+        code_01a0
+  01a0:65 28             aTop theDirection 
+  01a2:32 001c            jmp code_01c1 
+
+        code_01a5
+  01a5:8d 03              lst temp3 
+  01a7:85 02              lat temp2 
+  01a9:04                 sub 
+  01aa:a5 00              sat temp0 
+  01ac:36                push 
+  01ad:35 00              ldi 0 
+  01af:9b 00             lsli local0 
+  01b1:35 02              ldi 2 
+  01b3:08                 div 
+  01b4:20                 ge? 
+  01b5:30 0005            bnt code_01bd 
+  01b8:35 00              ldi 0 
+  01ba:32 0002            jmp code_01bf 
+
+        code_01bd
+  01bd:35 01              ldi 1 
+
+        code_01bf
+  01bf:65 28             aTop theDirection 
+
+        code_01c1
+  01c1:85 00              lat temp0 
+  01c3:48                 ret 
+    )
+
+    (method (next) // method_00a7
+  00a7:63 30             pToa firstMove 
+  00a9:30 0007            bnt code_00b3 
+  00ac:35 00              ldi 0 
+  00ae:65 30             aTop firstMove 
+  00b0:32 000f            jmp code_00c2 
+
+        code_00b3
+  00b3:67 28             pTos theDirection 
+  00b5:35 01              ldi 1 
+  00b7:1a                 eq? 
+  00b8:30 0005            bnt code_00c0 
+  00bb:6b 26            ipToa index 
+  00bd:32 0002            jmp code_00c2 
+
+        code_00c0
+  00c0:6d 26            dpToa index 
+
+        code_00c2
+  00c2:39 43            pushi 43 // $43 at
+  00c4:76               push0 
+  00c5:54 04             self 4 
+
+  00c7:39 3a            pushi 3a // $3a heading
+  00c9:78               push1 
+  00ca:39 04            pushi 4 // $4 x
+  00cc:3c                 dup 
+  00cd:76               push0 
+  00ce:63 08             pToa client 
+  00d0:4a 04             send 4 
+
+  00d2:36                push 
+  00d3:39 03            pushi 3 // $3 y
+  00d5:76               push0 
+  00d6:63 08             pToa client 
+  00d8:4a 04             send 4 
+
+  00da:36                push 
+  00db:67 0c             pTos x 
+  00dd:67 0e             pTos y 
+  00df:43 3f 08         callk GetAngle 8 
+
+  00e2:36                push 
+  00e3:63 08             pToa client 
+  00e5:4a 06             send 6 
+
+  00e7:38 00d2          pushi d2 // $d2 posn
+  00ea:7a               push2 
+  00eb:67 0c             pTos x 
+  00ed:67 0e             pTos y 
+  00ef:63 08             pToa client 
+  00f1:4a 08             send 8 
+
+  00f3:39 3e            pushi 3e // $3e looper
+  00f5:76               push0 
+  00f6:63 08             pToa client 
+  00f8:4a 04             send 4 
+
+  00fa:30 0016            bnt code_0113 
+  00fd:39 3c            pushi 3c // $3c doit
+  00ff:7a               push2 
+  0100:67 08             pTos client 
+  0102:39 3a            pushi 3a // $3a heading
+  0104:76               push0 
+  0105:63 08             pToa client 
+  0107:4a 04             send 4 
+
+  0109:36                push 
+  010a:39 3e            pushi 3e // $3e looper
+  010c:76               push0 
+  010d:63 08             pToa client 
+  010f:4a 04             send 4 
+
+  0111:4a 08             send 8 
+
+
+        code_0113
+  0113:48                 ret 
+    )
+
+    (method (at) // method_0114
+  0114:63 26             pToa index 
+  0116:18                 not 
+  0117:30 0006            bnt code_0120 
+  011a:35 00              ldi 0 
+  011c:93 00             lali local0 
+  011e:65 26             aTop index 
+
+        code_0120
+  0120:67 26             pTos index 
+  0122:35 00              ldi 0 
+  0124:9b 00             lsli local0 
+  0126:35 01              ldi 1 
+  0128:02                 add 
+  0129:1a                 eq? 
+  012a:30 0004            bnt code_0131 
+  012d:35 01              ldi 1 
+  012f:65 26             aTop index 
+
+        code_0131
+  0131:63 26             pToa index 
+  0133:93 00             lali local0 
+  0135:65 0c             aTop x 
+  0137:63 26             pToa index 
+  0139:93 ab             lali local171 
+  013b:65 0e             aTop y 
+  013d:48                 ret 
+    )
+
+)
+
+// 0252
+(instance publicmarblePath of MarblePath
+    (properties
+        client $0
+        caller $0
+        x $0
+        y $0
+        dx $0
+        dy $0
+        b-moveCnt $0
+        b-i1 $0
+        b-i2 $0
+        b-di $0
+        b-xAxis $0
+        b-incr $0
+        completed $0
+        xLast $0
+        yLast $0
+        index $1
+        theDirection $0
+        finalDest $0
+        lastPlace $0
+        destIndex $0
+        firstMove $1
+    )
+)
+
+
+
