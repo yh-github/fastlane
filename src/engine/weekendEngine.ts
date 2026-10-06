@@ -28,16 +28,16 @@ export const FREE_WEEKEND_CARDS: Record<string, WeekendCard> = {
     type: 'rest',
     eventKey: 'events.weekend.free_stay_home',
     titleKey: 'weekendScreen.card.stayHomeTitle',
-    fluff: 'You stayed home all weekend, resting in bed and letting the dishes pile up.',
+    fluff: 'You stayed home all weekend resting in bed and watching TV. You feel refreshed, but dishes and laundry piled up.',
     icon: '🛋️',
     costMin: 0,
     costMax: 0,
     targetStat: 'mental',
-    potentialBonusMin: 1,
-    potentialBonusMax: 1,
-    secondaryStat: 'mess',
-    potentialSecondaryBonusMin: 2,
-    potentialSecondaryBonusMax: 2
+    potentialBonusMin: 2,
+    potentialBonusMax: 2,
+    secondaryStat: 'physical',
+    potentialSecondaryBonusMin: 1,
+    potentialSecondaryBonusMax: 1
   },
   free_deep_clean: {
     id: 'free_deep_clean',
@@ -62,13 +62,16 @@ export const FREE_WEEKEND_CARDS: Record<string, WeekendCard> = {
     type: 'walk',
     eventKey: 'events.weekend.free_park_walk',
     titleKey: 'weekendScreen.card.parkWalkTitle',
-    fluff: 'You took long refreshing walks and did light exercises in the city park.',
+    fluff: 'You took long refreshing walks and exercised in the city park, but left dishes in the sink.',
     icon: '🌳',
     costMin: 0,
     costMax: 0,
     targetStat: 'physical',
-    potentialBonusMin: 1,
-    potentialBonusMax: 1
+    potentialBonusMin: 2,
+    potentialBonusMax: 2,
+    secondaryStat: 'mess',
+    potentialSecondaryBonusMin: 2,
+    potentialSecondaryBonusMax: 2
   },
   free_porch_chat: {
     id: 'free_porch_chat',
@@ -76,13 +79,16 @@ export const FREE_WEEKEND_CARDS: Record<string, WeekendCard> = {
     type: 'chat',
     eventKey: 'events.weekend.free_porch_chat',
     titleKey: 'weekendScreen.card.porchChatTitle',
-    fluff: 'You sat on the front porch and spent hours chatting with neighbors and passersby.',
+    fluff: 'You sat on the front porch chatting for hours with neighbors, leaving cups and clutter around.',
     icon: '🗣️',
     costMin: 0,
     costMax: 0,
     targetStat: 'social',
-    potentialBonusMin: 1,
-    potentialBonusMax: 1
+    potentialBonusMin: 2,
+    potentialBonusMax: 2,
+    secondaryStat: 'mess',
+    potentialSecondaryBonusMin: 2,
+    potentialSecondaryBonusMax: 2
   }
 };
 
@@ -470,13 +476,16 @@ export function generateWeekendChoices(
         type: 'rest',
         eventKey: 'events.weekend.broke_rest',
         titleKey: 'weekendScreen.card.stayHomeTitle',
-        fluff: 'You stayed home all weekend, resting in bed and letting the dishes pile up.',
+        fluff: 'You stayed home all weekend resting in bed and watching TV. You feel refreshed, but dishes and laundry piled up.',
         icon: '🛋️',
         costMin: 0,
         costMax: 0,
         targetStat: 'mental',
-        potentialBonusMin: 1,
-        potentialBonusMax: 1
+        potentialBonusMin: 2,
+        potentialBonusMax: 2,
+        secondaryStat: 'physical',
+        potentialSecondaryBonusMin: 1,
+        potentialSecondaryBonusMax: 1
       },
       {
         id: 'broke_deep_clean',
@@ -692,13 +701,18 @@ export function resolveWeekendChoice(
 
   // 1. Handle Broke / Free Stay Home
   if (card.id === 'broke_stay_home' || card.id === 'free_stay_home') {
-    const mentalBonus = 1;
+    const mentalBonus = 2;
+    const physicalBonus = 1;
     const messIncrease = 2;
 
     if (rules?.usePhysicalMentalConditions) {
       const maxMental = updatedPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
       updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + mentalBonus);
       modifications.push({ stat: 'mental', diff: mentalBonus });
+
+      const maxPhys = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+      updatedPlayer.physicalCondition = Math.min(maxPhys, (updatedPlayer.physicalCondition ?? 50) + physicalBonus);
+      modifications.push({ stat: 'physical', diff: physicalBonus });
     } else {
       updatedPlayer = applyHappinessChange(updatedPlayer, mentalBonus, 'weekend_bonus', rules || ({} as any), statRules);
       modifications.push({ stat: 'happiness', diff: mentalBonus });
@@ -773,11 +787,18 @@ export function resolveWeekendChoice(
 
   // 3. Handle Free Park Walk
   if (card.id === 'free_park_walk') {
-    const physicalGain = 1;
+    const physicalGain = 2;
+    const messIncrease = 2;
+
     if (rules?.usePhysicalMentalConditions) {
       const maxPhys = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
       updatedPlayer.physicalCondition = Math.min(maxPhys, (updatedPlayer.physicalCondition ?? 50) + physicalGain);
       modifications.push({ stat: 'physical', diff: physicalGain });
+    }
+
+    if (rules?.trackMess) {
+      updatedPlayer.mess = (updatedPlayer.mess || 0) + messIncrease;
+      modifications.push({ stat: 'mess', diff: messIncrease });
     }
 
     if (updatedPlayer.inventory?.tickets) {
@@ -801,10 +822,17 @@ export function resolveWeekendChoice(
 
   // 4. Handle Free Porch Chat
   if (card.id === 'free_porch_chat') {
-    const socialGain = 1;
+    const socialGain = 2;
+    const messIncrease = 2;
+
     if (rules?.trackSocial) {
       updatedPlayer.social = Math.min(100, (updatedPlayer.social || 10) + socialGain);
       modifications.push({ stat: 'social', diff: socialGain });
+    }
+
+    if (rules?.trackMess) {
+      updatedPlayer.mess = (updatedPlayer.mess || 0) + messIncrease;
+      modifications.push({ stat: 'mess', diff: messIncrease });
     }
 
     if (updatedPlayer.inventory?.tickets) {

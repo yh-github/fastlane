@@ -8,7 +8,8 @@ import {
   addApplianceCardToDeck,
   removeApplianceCardFromDeck,
   generateWeekendChoices,
-  resolveWeekendChoice
+  resolveWeekendChoice,
+  FREE_WEEKEND_CARDS
 } from './weekendEngine';
 
 describe('Weekend Engine', () => {
@@ -173,7 +174,8 @@ describe('Weekend Engine', () => {
 
       // Resolve Rest
       const afterRest = resolveWeekendChoice(updated, 'broke_stay_home', new Random(1), { usePhysicalMentalConditions: true, trackMess: true } as any);
-      expect(afterRest.mentalCondition).toBe(31);
+      expect(afterRest.mentalCondition).toBe(32);
+      expect(afterRest.physicalCondition).toBe(41);
       expect(afterRest.mess).toBe(17);
       expect(afterRest.money).toBe(2);
 
@@ -437,8 +439,11 @@ describe('Weekend Engine', () => {
               costMin: 0,
               costMax: 0,
               targetStat: 'physical',
-              potentialBonusMin: 1,
-              potentialBonusMax: 1
+              potentialBonusMin: 2,
+              potentialBonusMax: 2,
+              secondaryStat: 'mess',
+              potentialSecondaryBonusMin: 2,
+              potentialSecondaryBonusMax: 2
             },
             {
               id: 'free_porch_chat',
@@ -451,20 +456,25 @@ describe('Weekend Engine', () => {
               costMin: 0,
               costMax: 0,
               targetStat: 'social',
-              potentialBonusMin: 1,
-              potentialBonusMax: 1
+              potentialBonusMin: 2,
+              potentialBonusMax: 2,
+              secondaryStat: 'mess',
+              potentialSecondaryBonusMin: 2,
+              potentialSecondaryBonusMax: 2
             }
           ]
         } as unknown as PlayerState;
 
-        // Resolve park walk: +1 physical condition
-        const resWalk = resolveWeekendChoice(player, 'free_park_walk', new Random(1), { usePhysicalMentalConditions: true } as any);
-        expect(resWalk.physicalCondition).toBe(36);
+        // Resolve park walk: +2 physical condition, +2 mess
+        const resWalk = resolveWeekendChoice(player, 'free_park_walk', new Random(1), { usePhysicalMentalConditions: true, trackMess: true } as any);
+        expect(resWalk.physicalCondition).toBe(37);
+        expect(resWalk.mess).toBe(2);
         expect(resWalk.money).toBe(300); // Free ($0)
 
-        // Resolve porch chat: +1 social
-        const resChat = resolveWeekendChoice(player, 'free_porch_chat', new Random(1), { usePhysicalMentalConditions: true, trackSocial: true } as any);
-        expect(resChat.social).toBe(21);
+        // Resolve porch chat: +2 social, +2 mess
+        const resChat = resolveWeekendChoice(player, 'free_porch_chat', new Random(1), { usePhysicalMentalConditions: true, trackSocial: true, trackMess: true } as any);
+        expect(resChat.social).toBe(22);
+        expect(resChat.mess).toBe(2);
         expect(resChat.money).toBe(300); // Free ($0)
       });
 
@@ -537,6 +547,45 @@ describe('Weekend Engine', () => {
         }
         // With strong momentum on turn 8, expensive cards should appear very frequently
         expect(expensiveCount).toBeGreaterThan(25);
+      });
+
+      it('ensures all non-cleaning free cards increase mess and provide meaningful stats (+2), while deep clean reduces mess', () => {
+        const basePlayer = {
+          id: 'p1',
+          money: 0,
+          mess: 10,
+          mentalCondition: 20,
+          mentalConditionMax: 50,
+          physicalCondition: 20,
+          physicalConditionMax: 50,
+          social: 20,
+          inventory: { appliances: [], tickets: { baseball: 0, theatre: 0, concert: 0 } },
+          offeredWeekendCards: [
+            FREE_WEEKEND_CARDS.free_stay_home,
+            FREE_WEEKEND_CARDS.free_deep_clean,
+            FREE_WEEKEND_CARDS.free_park_walk,
+            FREE_WEEKEND_CARDS.free_porch_chat
+          ]
+        } as unknown as PlayerState;
+
+        const rules = { usePhysicalMentalConditions: true, trackSocial: true, trackMess: true } as any;
+
+        const resStayHome = resolveWeekendChoice(basePlayer, 'free_stay_home', new Random(1), rules);
+        expect(resStayHome.mentalCondition).toBe(22);
+        expect(resStayHome.physicalCondition).toBe(21);
+        expect(resStayHome.mess).toBe(12); // +2 mess
+
+        const resParkWalk = resolveWeekendChoice(basePlayer, 'free_park_walk', new Random(1), rules);
+        expect(resParkWalk.physicalCondition).toBe(22);
+        expect(resParkWalk.mess).toBe(12); // +2 mess
+
+        const resPorchChat = resolveWeekendChoice(basePlayer, 'free_porch_chat', new Random(1), rules);
+        expect(resPorchChat.social).toBe(22);
+        expect(resPorchChat.mess).toBe(12); // +2 mess
+
+        const resClean = resolveWeekendChoice(basePlayer, 'free_deep_clean', new Random(1), rules);
+        expect(resClean.physicalCondition).toBe(19); // -1 physical
+        expect(resClean.mess).toBe(0); // 10 - 10 = 0
       });
     });
   });

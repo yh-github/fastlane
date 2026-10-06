@@ -88,13 +88,13 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
       return `-8..-12 🧹, -1 💪`;
     }
     if (card.type === 'rest') {
-      return `+1 🧠, +2 🧹`;
+      return `+2 🧠, +1 💪, +2 🧹`;
     }
     if (card.type === 'walk') {
-      return `+1 💪 (${t('weekendScreen.physical', { defaultValue: 'Physical' })})`;
+      return `+2 💪, +2 🧹`;
     }
     if (card.type === 'chat') {
-      return `+1 👥 (${t('weekendScreen.social', { defaultValue: 'Social' })})`;
+      return `+2 👥, +2 🧹`;
     }
     if (card.type === 'ticket' && card.secondaryStat) {
       const p1 = (card.potentialBonusMax !== undefined && card.potentialBonusMax !== card.potentialBonusMin)
