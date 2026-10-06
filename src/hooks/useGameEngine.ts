@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { type GameState, type PlayerState, createInitialGameState, createDefaultGoalAllotment, recalculatePlayerEffects } from '../engine/gameState';
+import { type GameState, type PlayerState, recalculatePlayerEffects } from '../engine/gameState';
 import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
-import { loadCampaign, type CampaignBundle } from '../engine/dataLoader';
+import { type CampaignBundle } from '../engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, getEdgeKey } from '../graphics/pathfinding';
 import { animatePlayerPath, pulsePlayer, showMapClick, animateRobberInterception } from '../graphics/mapRenderer';
 import { processStreetRobbery } from '../engine/eventEngine';
@@ -10,100 +10,69 @@ import { executeAITurn } from '../engine/aiEngine';
 import { simulateActionVisuals } from '../engine/aiTranslator';
 import { gameReducer, type GameAction } from '../engine/gameReducer';
 import type { GameEvent } from '../engine/gameState';
-import { Random, generateRandomSeed } from '../utils/rng';
+import { Random } from '../utils/rng';
 import type { ReplayData, EngineDecision, ReplayContext } from '../engine/replayTypes';
 import { calculateStatDiffsAndAnimate, type AppStatus, type LogEntry } from './gameEngine';
+import type { ActiveModal } from '../types/modal';
 
 export type { AppStatus, LogEntry };
 
 export function useGameEngine(
-  campaignId: string | null,
+  campaign: CampaignBundle,
+  initialGameState: GameState,
   triggerAnim: (type: 'item' | 'emoji' | 'text', content: string, options?: any) => void,
   setIsAnimating: (val: boolean) => void,
   isAnimating: boolean,
-  setIsBuildingModalOpen: (val: boolean) => void,
-  setIsNewspaperModalOpen: (val: boolean) => void,
-  triggerScreenShake?: (durationMs?: number) => void
+  openModal: (modal: ActiveModal) => void,
+  closeModal: () => void,
+  triggerScreenShake?: (durationMs?: number) => void,
+  clearFloatingAnims?: () => void
 ) {
-  const [status, setStatus] = useState<AppStatus>('loading');
-  const [campaign, setCampaign] = useState<CampaignBundle | null>(null);
-  const [gameState, _setGameState] = useState<GameState | null>(null);
-  const gameStateRef = useRef<GameState | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [gameState, _setGameState] = useState<GameState>(initialGameState);
+  const gameStateRef = useRef<GameState>(initialGameState);
+  const [logs, setLogs] = useState<LogEntry[]>([
+    { week: initialGameState.turn, event: { key: 'Game started. Good luck!' } }
+  ]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
   const [streetRobberyNotice, setStreetRobberyNotice] = useState<{ lostAmount: number; location: string; onConfirm?: () => void } | null>(null);
   const lastPulsedRef = useRef({ turn: -1, playerIndex: -1 });
-  const replayDataRef = useRef<ReplayData | null>(null);
+  const replayDataRef = useRef<ReplayData>({
+    version: '1.0.0',
+    commitHash: 'unknown',
+    campaignId: campaign.config.name,
+    rules: initialGameState.rules,
+    startingState: initialGameState,
+    steps: [],
+    endStateHash: ''
+  });
   const pendingDestinationRef = useRef<string | null>(null);
   const isMovingRef = useRef<boolean>(false);
   const [isTravelling, setIsTravelling] = useState<boolean>(false);
 
-  const setGameState = useCallback((updater: GameState | null | ((prev: GameState | null) => GameState | null)) => {
+  const setGameState = useCallback((updater: GameState | ((prev: GameState | null) => GameState | null)) => {
     if (typeof updater === 'function') {
-      gameStateRef.current = updater(gameStateRef.current);
+      const prev = gameStateRef.current;
+      const next = updater(prev);
+      if (next) {
+        gameStateRef.current = next;
+        _setGameState(next);
+      }
     } else {
       gameStateRef.current = updater;
+      _setGameState(updater);
     }
-    _setGameState(gameStateRef.current);
   }, []);
 
   useEffect(() => {
-    if (!campaignId) return;
-    setStatus('loading');
-    loadCampaign(campaignId)
-      .then((bundle) => {
-        setCampaign(bundle);
-        const randomSeed = generateRandomSeed();
-        let savedCurvedBoard: boolean | undefined = undefined;
-        try {
-          const stored = localStorage.getItem('fastlane_curved_board');
-          if (stored !== null) {
-            savedCurvedBoard = stored === 'true';
-          }
-        } catch {
-          // ignore
-        }
-        let savedHudLayout: 'auto' | 'side' | 'top' | undefined = undefined;
-        try {
-          const stored = localStorage.getItem('fastlane_hud_layout');
-          if (stored === 'auto' || stored === 'side' || stored === 'top') {
-            savedHudLayout = stored;
-          }
-        } catch {
-          // ignore
-        }
-        const initialRules = {
-          ...(savedCurvedBoard !== undefined ? { authenticCurvedPaths: savedCurvedBoard } : {}),
-          ...(savedHudLayout !== undefined ? { hudLayout: savedHudLayout } : {})
-        };
-        const initialState = createInitialGameState(bundle, [{name: 'Player 1', isAi: false, goals: createDefaultGoalAllotment()}], 'node_low_cost', Object.keys(initialRules).length > 0 ? initialRules : undefined, randomSeed);
-        setGameState(initialState);
-        replayDataRef.current = {
-          version: '1.0.0', // Can be dynamically injected from package.json in future
-          commitHash: 'unknown', 
-          campaignId: bundle.config.name,
-          rules: initialState.rules,
-          startingState: initialState,
-          steps: [],
-          endStateHash: ''
-        };
-        setStatus('ready');
-        if (initialState && initialState.rules.turnStartAtHome && !initialState.players[0].isAi) {
-          setIsBuildingModalOpen(true);
-        } else {
-          setIsBuildingModalOpen(false);
-        }
-        if (initialState && initialState.players[0].turnFlags.freeNewspaper) {
-          setIsNewspaperModalOpen(true);
-        }
-    })
-      .catch((err) => {
-        console.error('[App] Campaign load failed:', err);
-        setErrorMsg(err.message);
-        setStatus('error');
-      });
-  }, [campaignId, setGameState, setIsNewspaperModalOpen]);
+    if (initialGameState.rules.turnStartAtHome && !initialGameState.players[0].isAi) {
+      openModal({ type: 'building' });
+    } else {
+      closeModal();
+    }
+    if (initialGameState.players[0].turnFlags.freeNewspaper) {
+      openModal({ type: 'newspaper' });
+    }
+  }, [initialGameState, openModal, closeModal]);
 
   const adjacencyMap = useMemo(() => {
     if (!campaign) return new Map<string, string[]>();
@@ -125,7 +94,7 @@ export function useGameEngine(
     const homeNodeId = housingDef ? housingDef.homeNodeId : 'node_low_cost';
     const currentBuilding = campaign!.map.nodes.find(n => n.id === player.position)?.buildingId;
     const wasInside = player.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null;
-    setIsBuildingModalOpen(false);
+    closeModal();
 
     const currentState = gameStateRef.current!;
     const streetRobberyOnTurnEnd = currentState.rules.streetRobberyOnTurnEnd ?? true;
@@ -136,7 +105,7 @@ export function useGameEngine(
       const rng = new Random(currentState.rngState);
       const replayCtx: ReplayContext = { outDecisions: turnEndDecisions };
       const isForced = !!currentState.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId));
-      player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign!, replayCtx, isForced);
+      player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced);
 
       if (isForced) {
         setGameState(prev => prev ? {
@@ -182,13 +151,13 @@ export function useGameEngine(
       setIsTravelling(true);
       const pathResult = findShortestPath(adjacencyMap, player.position, homeNodeId, edgeWeights);
       if (pathResult.found) {
-        const useAuthentic = (gameStateRef.current?.rules.authenticCurvedPaths !== false) && !!campaign!.map.authenticNodes;
+        const useAuthentic = (gameStateRef.current?.rules.authenticCurvedPaths !== false) && !!campaign.map.authenticNodes;
         const pathCoords: { nodeId: string; x: number; y: number }[] = [];
         
         for (let i = 0; i < pathResult.path.length - 1; i++) {
           const u = pathResult.path[i];
           const v = pathResult.path[i + 1];
-          const edge = campaign!.map.edges?.find(
+          const edge = campaign.map.edges?.find(
             e => (e.from === u && e.to === v) || (e.to === u && e.from === v)
           );
           if (useAuthentic && edge?.path && edge.path.length > 0) {
@@ -197,7 +166,7 @@ export function useGameEngine(
               pathCoords.push({ nodeId: v, x: w.x, y: w.y });
             }
           }
-          const targetCoord = (useAuthentic && campaign!.map.authenticNodes?.[v]) || campaign!.map.nodes.find(n => n.id === v);
+          const targetCoord = (useAuthentic && campaign.map.authenticNodes?.[v]) || campaign.map.nodes.find(n => n.id === v);
           if (targetCoord) {
             pathCoords.push({ nodeId: v, x: targetCoord.x, y: targetCoord.y });
           }
@@ -216,12 +185,14 @@ export function useGameEngine(
     }
 
     if (activePlayerIndex + 1 < updatedPlayers.length) {
+      if (clearFloatingAnims) clearFloatingAnims();
       setGameState({ ...gameStateRef.current!, players: updatedPlayers });
       setActivePlayerIndex(activePlayerIndex + 1);
     } else {
+      if (clearFloatingAnims) clearFloatingAnims();
       const outDecisions: EngineDecision[] = [];
       const replayCtx: ReplayContext = { outDecisions };
-      const nextState = processTurnStart({ ...gameStateRef.current!, players: updatedPlayers }, campaign!, replayCtx);
+      const nextState = processTurnStart({ ...gameStateRef.current!, players: updatedPlayers }, campaign, replayCtx);
       
       if (replayDataRef.current) {
         if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
@@ -235,10 +206,12 @@ export function useGameEngine(
       setGameState(nextState);
       setActivePlayerIndex(0);
       if (nextState.rules.turnStartAtHome && !nextState.players[0].isAi) {
-        setIsBuildingModalOpen(true);
+        openModal({ type: 'building' });
+      } else {
+        closeModal();
       }
       if (nextState.players[0].turnFlags.freeNewspaper) {
-        setIsNewspaperModalOpen(true);
+        openModal({ type: 'newspaper' });
       }
     }
   };
@@ -265,7 +238,7 @@ export function useGameEngine(
       let player = { ...updatedPlayers[activePlayerIndex] };
       const currentBuilding = campaign.map.nodes.find(n => n.id === player.position)?.buildingId;
       const wasInside = player.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null;
-      setIsBuildingModalOpen(false);
+      closeModal();
 
       if (
         currentState.rules.reenterCurrentLocationCost &&
@@ -358,12 +331,12 @@ export function useGameEngine(
           if (player.turnFlags && destNode?.buildingId) {
             player.turnFlags = { ...player.turnFlags, enteredBuildingThisTurn: destNode.buildingId };
           }
-          setIsBuildingModalOpen(true);
+          openModal({ type: 'building' });
         }
         return;
       }
 
-      setIsBuildingModalOpen(false); // Auto close menu immediately when walking away
+      closeModal(); // Auto close menu immediately when walking away
       setIsAnimating(true);
       isMovingRef.current = true;
       setIsTravelling(true);
@@ -555,7 +528,7 @@ export function useGameEngine(
           } else if (!activePlayer.isAi && player.position === targetNodeId) {
             const destNode = campaign.map.nodes.find(n => n.id === player.position);
             if (destNode && campaign.buildings.some(b => b.id === destNode.buildingId)) {
-              setIsBuildingModalOpen(true);
+              openModal({ type: 'building' });
             }
           }
         }
@@ -604,7 +577,7 @@ export function useGameEngine(
       // UI Side Effects
       if (payload.type === 'buy' && payload.itemId === 'newspaper') {
         if (player.money < oldPlayer.money) {
-          setIsNewspaperModalOpen(true);
+          openModal({ type: 'newspaper' });
         }
       } else if (payload.type === 'buy' && player.inventory.appliances.length > oldPlayer.inventory.appliances.length) {
         if (prevState.rules.enableAnimations) {
@@ -733,7 +706,12 @@ export function useGameEngine(
               showMapClick(targetNode.x, targetNode.y);
             }
           }
-          await simulateActionVisuals(actions[0], { setIsBuildingModalOpen });
+          await simulateActionVisuals(actions[0], {
+            setIsBuildingModalOpen: (val: boolean) => {
+              if (val) openModal({ type: 'building' });
+              else closeModal();
+            }
+          });
 
           await handleAction(actions[0]);
           await new Promise(r => setTimeout(r, 600)); // slightly longer delay for visual pathfinding feedback
@@ -756,11 +734,11 @@ export function useGameEngine(
   }, [gameState?.phase, activePlayerIndex, gameState?.players[activePlayerIndex]?.turnFlags?.hasSeenWeekend]);
 
   return {
-    status,
+    status: 'ready' as const,
     campaign,
     gameState,
     setGameState,
-    errorMsg,
+    errorMsg: null,
     logs,
     setLogs,
     activePlayerIndex,

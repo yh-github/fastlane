@@ -43,7 +43,7 @@ describe('InventoryModal', () => {
         turn={3}
         onClose={onClose}
         onAction={onAction}
-        rules={campaign.config.gameRules as any}
+        rules={{ ...campaign.config.gameRules, helpfulUI: true } as any}
       />
     );
 
@@ -288,5 +288,170 @@ describe('InventoryModal', () => {
     expect(clothesSection).toBeInTheDocument();
     expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
     expect(clothesSection).toHaveClass('status-section--highlighted');
+  });
+
+  it('hides Fast Food when helpfulUI is false and shows it when helpfulUI is true', () => {
+    const campaign = createMockCampaign();
+    const player = createTestPlayer(
+      {
+        inventory: {
+          freshFoodUnits: 2,
+          fastFoodItems: [{ itemId: 'burger', happinessBonus: 1 }],
+          casualClothesWeeks: 4,
+          dressClothesWeeks: 0,
+          businessClothesWeeks: 0,
+          selectedClothes: 'casual',
+          appliances: [],
+          books: [],
+          tickets: { baseball: 0, theatre: 0, concert: 0 },
+          lotteryTickets: 0,
+          stocks: { tBills: 0, holdings: {} },
+          pawnedItems: [],
+        },
+      },
+      campaign
+    );
+
+    const { rerender } = render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        rules={{ helpfulUI: false } as any}
+      />
+    );
+
+    // Fast food should NOT be shown when helpfulUI is false (original game behavior)
+    expect(screen.queryByText(/Fast Food/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Fresh Food/i)).toBeInTheDocument();
+
+    // Rerender with helpfulUI: true
+    rerender(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    // Fast food should now be shown
+    expect(screen.getByText(/Fast Food/i)).toBeInTheDocument();
+  });
+
+  it('hides Canned Food when campaign has no canned food items and player has none', () => {
+    const campaign = createMockCampaign(); // default mock campaign has no canned food items
+    const player = createTestPlayer(
+      {
+        inventory: {
+          freshFoodUnits: 2,
+          cannedFoodUnits: 0,
+          fastFoodItems: [],
+          casualClothesWeeks: 4,
+          dressClothesWeeks: 0,
+          businessClothesWeeks: 0,
+          selectedClothes: 'casual',
+          appliances: [],
+          books: [],
+          tickets: { baseball: 0, theatre: 0, concert: 0 },
+          lotteryTickets: 0,
+          stocks: { tBills: 0, holdings: {} },
+          pawnedItems: [],
+        },
+      },
+      campaign
+    );
+
+    render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    expect(screen.queryByText(/Canned Food/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Fresh Food/i)).toBeInTheDocument();
+  });
+
+  it('shows Canned Food when campaign includes canned food items', () => {
+    const campaign = createMockCampaign({
+      items: [
+        { id: 'canned_meat', name: 'Canned Meat', category: 'food', subcategory: 'canned', happinessBonus: 0 }
+      ]
+    });
+    const player = createTestPlayer(
+      {
+        inventory: {
+          freshFoodUnits: 2,
+          cannedFoodUnits: 0,
+          fastFoodItems: [],
+          casualClothesWeeks: 4,
+          dressClothesWeeks: 0,
+          businessClothesWeeks: 0,
+          selectedClothes: 'casual',
+          appliances: [],
+          books: [],
+          tickets: { baseball: 0, theatre: 0, concert: 0 },
+          lotteryTickets: 0,
+          stocks: { tBills: 0, holdings: {} },
+          pawnedItems: [],
+        },
+      },
+      campaign
+    );
+
+    render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    expect(screen.getByText(/Canned Food/i)).toBeInTheDocument();
+  });
+
+  it('shows Canned Food if player has cannedFoodUnits > 0 even if campaign items list is omitted', () => {
+    const campaign = createMockCampaign();
+    const player = createTestPlayer(
+      {
+        inventory: {
+          freshFoodUnits: 2,
+          cannedFoodUnits: 3,
+          fastFoodItems: [],
+          casualClothesWeeks: 4,
+          dressClothesWeeks: 0,
+          businessClothesWeeks: 0,
+          selectedClothes: 'casual',
+          appliances: [],
+          books: [],
+          tickets: { baseball: 0, theatre: 0, concert: 0 },
+          lotteryTickets: 0,
+          stocks: { tBills: 0, holdings: {} },
+          pawnedItems: [],
+        },
+      },
+      campaign
+    );
+
+    render(
+      <InventoryModal
+        player={player}
+        campaign={campaign}
+        turn={1}
+        onClose={vi.fn()}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    expect(screen.getByText(/Canned Food/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 units/i)).toBeInTheDocument();
   });
 });

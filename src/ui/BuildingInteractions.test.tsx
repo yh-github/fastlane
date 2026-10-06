@@ -429,7 +429,7 @@ describe('BuildingInteractions', () => {
     // Leisure actions are present in the left flanking wing
     const hostBtn = screen.getByTestId('btn-socialize');
     expect(hostBtn).not.toBeDisabled();
-    expect(screen.getByText(/-1 💪 Fatigue/i)).toBeInTheDocument();
+    expect(screen.getByText(/-1 💪/i)).toBeInTheDocument();
 
     fireEvent.click(hostBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'socialize_guests' });
@@ -674,7 +674,9 @@ describe('BuildingInteractions', () => {
     // Mess: +1
     expect(screen.getByText(/\+3 💪 Phys/i)).toBeInTheDocument();
     expect(screen.getByText(/\+7 🧠 Mental/i)).toBeInTheDocument();
-    expect(screen.getByText(/\+1 🧹 Mess/i)).toBeInTheDocument();
+    const relaxCard = screen.getByTestId('home-card-relax');
+    expect(within(relaxCard).getByText(/\+1/i)).toBeInTheDocument();
+    expect(within(relaxCard).getByTestId('mess-icon')).toBeInTheDocument();
     const relaxBtn = screen.getByTestId('btn-relax');
     expect(relaxBtn.textContent).toContain('Relax');
 

@@ -82,6 +82,10 @@ export function useGameAnimations() {
     setFloatingAnims(prev => prev.filter(a => a.id !== id));
   }, []);
 
+  const clearFloatingAnims = useCallback(() => {
+    setFloatingAnims([]);
+  }, []);
+
   const triggerScreenShake = useCallback((durationMs: number = 450) => {
     const container = document.querySelector('.app-container') || document.body;
     if (container) {
@@ -99,6 +103,7 @@ export function useGameAnimations() {
     triggerAnim,
     triggerScreenShake,
     removeAnim,
+    clearFloatingAnims,
     isAnimating,
     setIsAnimating,
   };

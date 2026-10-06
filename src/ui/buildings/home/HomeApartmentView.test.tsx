@@ -212,7 +212,8 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
 
     // Initial state: Durables showcase is visible, Space & Mess gauge is visible, wings begin folded
     expect(screen.getByTestId('apartment-furnishings')).toBeInTheDocument();
-    expect(screen.getByTestId('compact-mess-bar')).toHaveTextContent(/🧹\s*5/);
+    expect(screen.getByTestId('compact-mess-bar')).toHaveTextContent(/5\s*\(Messy\)/);
+    expect(within(screen.getByTestId('compact-mess-bar')).getByTestId('mess-icon')).toBeInTheDocument();
     expect(screen.queryByTestId('home-wing-left')).toBeNull();
     expect(screen.queryByTestId('home-wing-right')).toBeNull();
 
@@ -247,18 +248,20 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     // Verify DIY Clean card content
     const cleanCard = within(rightWing).getByTestId('home-card-clean');
     expect(cleanCard).toHaveTextContent('DIY Clean');
-    expect(cleanCard).toHaveTextContent('-2..-6 🧹 Mess');
+    expect(cleanCard).toHaveTextContent('-2..-6');
+    expect(within(cleanCard).getByTestId('mess-icon')).toBeInTheDocument();
     expect(cleanCard).toHaveTextContent('$0 Free');
-    expect(cleanCard).toHaveTextContent('-2 💪 Fatigue');
+    expect(cleanCard).toHaveTextContent('-2 💪');
     expect(cleanCard).toHaveTextContent('Manual Labor');
     expect(within(cleanCard).getByTestId('btn-clean')).toHaveTextContent('Clean');
 
     // Verify Pro Service card content
     const serviceCard = within(rightWing).getByTestId('home-card-service');
     expect(serviceCard).toHaveTextContent('Pro Service');
-    expect(serviceCard).toHaveTextContent('-10 🧹 Mess');
+    expect(serviceCard).toHaveTextContent('-10');
+    expect(within(serviceCard).getByTestId('mess-icon')).toBeInTheDocument();
     expect(serviceCard).toHaveTextContent('-$100');
-    expect(serviceCard).toHaveTextContent('0 💪 Fatigue');
+    expect(serviceCard).toHaveTextContent('0 💪');
     expect(serviceCard).toHaveTextContent('Pro Cleaners');
     expect(within(serviceCard).getByTestId('btn-service')).toHaveTextContent('Hire Service');
 

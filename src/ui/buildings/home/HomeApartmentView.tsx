@@ -7,6 +7,7 @@ import { DurableCardModal } from './DurableCardModal';
 import { ApartmentFurnishings } from './ApartmentFurnishings';
 import { CuriosFlankingWings } from './CuriosFlankingWings';
 import { HomeFlankingWings } from './HomeFlankingWings';
+import { MessIcon } from '../../icons/MessIcon';
 
 interface HomeApartmentViewProps {
   player: PlayerState;
@@ -310,8 +311,12 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                   <span style={{ color: '#2ecc71' }}>{freeSpace} free</span>
                 )}
               </span>
-              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
-                {messIcon} {currentMess} ({messLabel})
+              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {messIcon && !messIcon.includes('🧹') && messIcon !== '📦' && messIcon !== '📦📦' && messIcon !== '🗑️' && (
+                  <span>{messIcon} </span>
+                )}
+                <MessIcon size="1.15em" />
+                <span>{currentMess} ({messLabel})</span>
               </span>
             </div>
           ) : (
@@ -337,8 +342,12 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                 transition: 'width 0.5s ease-in-out, background-color 0.5s ease',
                 zIndex: 1
               }} />
-              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
-                {messIcon} Mess: {currentMess}
+              <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {messIcon && !messIcon.includes('🧹') && messIcon !== '📦' && messIcon !== '📦📦' && messIcon !== '🗑️' && (
+                  <span>{messIcon} </span>
+                )}
+                <MessIcon size="1.15em" />
+                <span>{currentMess}</span>
               </span>
               <span style={{ position: 'relative', zIndex: 5, fontWeight: 'bold', fontSize: '0.78rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                 {messLabel}
@@ -404,7 +413,9 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             >
               ✕
             </button>
-            <div style={{ fontSize: '2rem', marginBottom: '6px' }}>🧹</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '6px' }}>
+              <MessIcon size={44} />
+            </div>
             <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem', fontWeight: 800 }}>
               {t('homeRelax.messDetailsTitle', { defaultValue: 'Apartment Space & Mess Breakdown' })}
             </h3>

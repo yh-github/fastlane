@@ -452,4 +452,74 @@ describe('App Integration & StrictMode', () => {
 
     expect(screen.queryByTestId('log-window')).not.toBeInTheDocument();
   });
+
+  it('cleanly isolates sessions: quitting to title and starting a new game resets all modals without leakage', async () => {
+    render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+
+    // 1. Start Game 1
+    const newGameBtn = await screen.findByText(/New Game|titleScreen\.startGame/i);
+    fireEvent.click(newGameBtn);
+
+    const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
+    fireEvent.click(startGameBtn);
+
+    await screen.findByText(/Player 1 - Week/i);
+
+    // Close any initial home modal
+    const closeBtn = document.querySelector('.building-modal__close');
+    if (closeBtn) {
+      fireEvent.click(closeBtn);
+      await act(async () => {
+        await new Promise(r => setTimeout(r, 0));
+      });
+    }
+
+    // 2. Open Settings modal via HUD button
+    const settingsBtn = document.getElementById('btn-settings')!;
+    expect(settingsBtn).toBeInTheDocument();
+    fireEvent.click(settingsBtn);
+
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    // Verify settings modal is open
+    expect(screen.getByTestId('btn-quit-game')).toBeInTheDocument();
+
+    // 3. Click Quit Game and confirm
+    fireEvent.click(screen.getByTestId('btn-quit-game'));
+
+    const confirmQuitBtn = await screen.findByTestId('btn-confirm-quit');
+    fireEvent.click(confirmQuitBtn);
+
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 0));
+    });
+
+    // 4. Verify we are back on the Title Screen
+    const newGameBtn2 = await screen.findByText(/New Game|titleScreen\.startGame/i);
+    expect(newGameBtn2).toBeInTheDocument();
+
+    // 5. Start Game 2
+    fireEvent.click(newGameBtn2);
+
+    const startGameBtn2 = await screen.findByText(/Start Life|setupScreen\.startLife/i);
+    fireEvent.click(startGameBtn2);
+
+    await screen.findByText(/Player 1 - Week/i);
+
+    // 6. Assert Session Isolation:
+    // Newspaper modal MUST NOT be open on Turn 1!
+    expect(screen.queryByTestId('newspaper-modal')).not.toBeInTheDocument();
+    expect(screen.queryByText(/The Daily News|newspaper\.title/i)).not.toBeInTheDocument();
+    // Settings modal MUST NOT be open!
+    expect(screen.queryByTestId('btn-quit-game')).not.toBeInTheDocument();
+    // Inventory modal MUST NOT be open!
+    expect(screen.queryByTestId('inventory-modal')).not.toBeInTheDocument();
+  });
 });
+

@@ -236,31 +236,31 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   let messBarColor = '#2ecc71';
 
   if (currentMess > 60) {
-    messIcon = '🧹🧹🪰🪰🪳🪳 ☣️';
+    messIcon = '🪰🪰🪳🪳 ☣️';
     messLabel = 'Biohazard Emergency!';
     messBarColor = '#e74c3c';
   } else if (currentMess > 50) {
-    messIcon = '🧹🧹🪰🪰🪳🪳';
+    messIcon = '🪰🪰🪳🪳';
     messLabel = 'Severe Cockroach Infestation!';
     messBarColor = '#e74c3c';
   } else if (currentMess > 40) {
-    messIcon = '🧹🧹🪰🪰🪳';
+    messIcon = '🪰🪰🪳';
     messLabel = 'Pest & Cockroach Swarm!';
     messBarColor = '#e67e22';
   } else if (currentMess > 30) {
-    messIcon = '🧹🧹🪰🪰';
+    messIcon = '🪰🪰';
     messLabel = 'Fly Swarm Warning!';
     messBarColor = '#e67e22';
   } else if (currentMess > 20) {
-    messIcon = '🧹🧹🪰';
+    messIcon = '🪰';
     messLabel = 'Flies Appearing!';
     messBarColor = '#f1c40f';
   } else if (currentMess > 10) {
-    messIcon = '🧹🧹';
+    messIcon = '📦📦';
     messLabel = 'Messy';
     messBarColor = '#f1c40f';
   } else if (currentMess > 3) {
-    messIcon = '🧹';
+    messIcon = '📦';
     messLabel = 'Minor Mess';
     messBarColor = '#2ecc71';
   }
@@ -271,7 +271,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const hasFreezer = player.inventory?.appliances?.some(a => a.id === 'freezer' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('freezer')) ?? false;
 
   const housingDef = campaign?.housing?.find(h => h.id === player.currentHousingId);
-  const housingName = housingDef ? t(`housing.${housingDef.id}.name`, { defaultValue: housingDef.name }) : (isPenthouse ? 'Penthouse Suite' : isSecurity ? 'Security Apartments' : 'Low-Cost Housing');
+  const housingName = housingDef ? t(`housing.${housingDef.id}`, { defaultValue: housingDef.name }) : (isPenthouse ? 'Penthouse Suite' : isSecurity ? 'Security Apartments' : 'Low-Cost Housing');
 
   const useAdvancedHome = rules?.advancedHomeGUI ?? rules?.usePhysicalMentalConditions ?? false;
 

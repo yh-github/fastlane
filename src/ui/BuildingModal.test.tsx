@@ -1099,5 +1099,49 @@ describe('BuildingModal Component', () => {
     // Reset button should NOT be shown on clean start
     expect(screen.queryByTestId('btn-reset-modal-layout')).toBeNull();
   });
+
+  it('renders Penthouse Suite title and 🏙️ face when player lives in Penthouse', () => {
+    const penthouseCampaign: CampaignBundle = {
+      ...mockCampaign,
+      housing: [
+        { id: 'low_cost', name: 'Low Cost Apt', baseRent: 300, homeNodeId: 'node1' },
+        { id: 'penthouse', name: 'Penthouse Suite', baseRent: 850, homeNodeId: 'node_security' }
+      ] as any,
+      buildings: [
+        ...mockCampaign.buildings,
+        { id: 'security_apartments', name: 'Security Apartments', archetype: 'home' }
+      ] as any,
+      map: {
+        nodes: [
+          { id: 'node1', buildingId: 'apartment_complex' },
+          { id: 'node_security', buildingId: 'security_apartments' }
+        ]
+      } as any
+    };
+
+    const penthousePlayer: PlayerState = {
+      ...mockPlayer,
+      currentHousingId: 'penthouse',
+      position: 'node_security'
+    };
+
+    render(
+      <BuildingModal
+        player={penthousePlayer}
+        campaign={penthouseCampaign}
+        currentBuildingId="security_apartments"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Title should be Penthouse Suite, not Security Apartments
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Penthouse Suite');
+    // Face should be 🏙️, not 🛌
+    expect(screen.getByText('🏙️')).toBeInTheDocument();
+  });
 });
 
