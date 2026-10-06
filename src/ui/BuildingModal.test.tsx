@@ -141,17 +141,17 @@ describe('BuildingModal Component', () => {
 
     expect(screen.getAllByText('Bank of Jones').length).toBeGreaterThan(0);
     
-    // Verify all 3 tabs are present
-    expect(screen.getByText(/^Bank$|bank\.tabBanking/i)).toBeInTheDocument();
-    expect(screen.getByText('Stocks')).toBeInTheDocument();
-    expect(screen.getByText('Loans')).toBeInTheDocument();
+    // Verify all 3 tabs are present as top folder tab ears
+    expect(screen.getByTestId('tab-ear-banking')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-ear-stocks')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-ear-loans')).toBeInTheDocument();
 
     // Verify Banking tab is active by default
     expect(screen.getByText(/Deposit Money/i)).toBeInTheDocument();
     expect(screen.getByText(/Withdraw Money/i)).toBeInTheDocument();
 
     // Click Stocks tab
-    fireEvent.click(screen.getByText('Stocks'));
+    fireEvent.click(screen.getByTestId('tab-ear-stocks'));
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'open_broker' });
     expect(screen.getByText(/Treasury Bills/i)).toBeInTheDocument();
     expect(screen.getByText(/Blue Chip Stocks/i)).toBeInTheDocument();
@@ -197,7 +197,7 @@ describe('BuildingModal Component', () => {
     );
 
     // Switch to loans tab and click make payment
-    fireEvent.click(screen.getByText('Loans'));
+    fireEvent.click(screen.getByTestId('tab-ear-loans'));
     const payBtn = screen.getByText(/Make Loan Payment/i);
     fireEvent.click(payBtn);
 
@@ -255,8 +255,8 @@ describe('BuildingModal Component', () => {
       />
     );
 
-    // Both Work section toggle and Shop items should be present on the same window
-    expect(screen.getByTestId('tab-work')).toBeInTheDocument();
+    // Flanking Work console is open by default while bottom toggle is hidden, and Shop items are present
+    expect(screen.queryByTestId('tab-work')).not.toBeInTheDocument();
     expect(screen.getByText('Burger')).toBeInTheDocument();
 
     // Work Station is open by default, showing work modes
@@ -438,9 +438,8 @@ describe('BuildingModal Component', () => {
       />
     );
 
-    // Docked bottom WORK button is present
-    const toggleWorkBtn = screen.getByTestId('btn-toggle-work');
-    expect(toggleWorkBtn).toBeInTheDocument();
+    // Flanking cards are open by default; docked bottom WORK button is hidden while console is open
+    expect(screen.queryByTestId('btn-toggle-work')).not.toBeInTheDocument();
 
     // Flanking cards are open by default. Mistake risk badge is NOT rendered when safe (0% chance)
     expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
@@ -465,12 +464,16 @@ describe('BuildingModal Component', () => {
     const closeWingsBtn = screen.getByTestId('btn-close-work-wings');
     fireEvent.click(closeWingsBtn);
 
-    // Flanking cards are now dismissed
+    // Flanking cards are now dismissed, and slim docked bottom WORK button appears
     expect(screen.queryByTestId('work-mode-work_work')).not.toBeInTheDocument();
+    const toggleWorkBtn = screen.getByTestId('btn-toggle-work');
+    expect(toggleWorkBtn).toBeInTheDocument();
+    expect(toggleWorkBtn.textContent).toContain('WORK');
 
     // Click docked bottom WORK button to reopen flanking cards
     fireEvent.click(toggleWorkBtn);
     expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
+    expect(screen.queryByTestId('btn-toggle-work')).not.toBeInTheDocument();
   });
 
   it('renders prominent Grind tier badges on Shift 4 and Overtime badges with -0.5 Max Physical on Shift 8', () => {
@@ -809,7 +812,7 @@ describe('BuildingModal Component', () => {
     );
 
     // Click Loans tab
-    const loansTab = screen.getByText('Loans');
+    const loansTab = screen.getByTestId('tab-ear-loans');
     fireEvent.click(loansTab);
 
     const applyLoanBtn = screen.getByRole('button', { name: /Apply for Loan/i });
@@ -1142,6 +1145,98 @@ describe('BuildingModal Component', () => {
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Penthouse Suite');
     // Face should be 🏙️, not 🛌
     expect(screen.getByText('🏙️')).toBeInTheDocument();
+  });
+
+  it('renders University modal with folder tab ears and sets clerk speech bubble when unenrolled class is clicked', async () => {
+    const uniCampaign: CampaignBundle = {
+      ...mockCampaign,
+      education: [
+        {
+          id: 'degree_business',
+          name: 'Business Administration',
+          baseTuitionFee: 100,
+          lessonsRequired: 10,
+          prerequisites: [],
+          rewards: {}
+        } as any
+      ]
+    };
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          enrolledClasses: {},
+          enrolledCredits: 0
+        }}
+        campaign={uniCampaign}
+        currentBuildingId="university"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Verify folder tab ears above header
+    expect(screen.getByTestId('university-tab-ears')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-ear-available')).toBeInTheDocument();
+    expect(screen.getByTestId('tab-ear-tree')).toBeInTheDocument();
+
+    // Verify unenrolled card is present and clicking it triggers clerk speech bubble
+    const unenrolledCard = screen.getByTestId('unenrolled-class-degree_business');
+    expect(unenrolledCard).toBeInTheDocument();
+    fireEvent.click(unenrolledCard);
+
+    // Speech bubble displays clerk response with typewriter effect
+    await waitFor(() => {
+      expect(screen.getByText(/You are not enrolled/i)).toBeInTheDocument();
+    }, { timeout: 2500 });
+
+    // Switch to Class Tree tab ear
+    fireEvent.click(screen.getByTestId('tab-ear-tree'));
+    expect(screen.getByTestId('tab-ear-tree')).toHaveClass('building-modal__tab-ear--active');
+  });
+
+  it('triggers compact layout modifier when modal content overflows', () => {
+    // Mock scrollHeight and clientHeight on HTMLDivElement prototype
+    const origScrollHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollHeight');
+    const origClientHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');
+
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get() {
+        return this.classList?.contains('building-modal__content') ? 700 : 500;
+      }
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      get() {
+        return this.classList?.contains('building-modal__content') ? 400 : 500;
+      }
+    });
+
+    try {
+      const { container } = render(
+        <BuildingModal
+          player={mockPlayer}
+          campaign={mockCampaign}
+          currentBuildingId="university"
+          turn={1}
+          economicIndex={0}
+          rules={mockRules}
+          onAction={vi.fn().mockResolvedValue({})}
+          onClose={vi.fn()}
+        />
+      );
+
+      // Verify building-modal has the compact modifier class
+      expect(container.querySelector('.building-modal--compact')).toBeInTheDocument();
+    } finally {
+      if (origScrollHeight) Object.defineProperty(HTMLElement.prototype, 'scrollHeight', origScrollHeight);
+      if (origClientHeight) Object.defineProperty(HTMLElement.prototype, 'clientHeight', origClientHeight);
+    }
   });
 });
 

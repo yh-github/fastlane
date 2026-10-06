@@ -8,9 +8,33 @@ import { calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } 
 import { roundToResolution, formatHours } from '../../engine/statMath';
 import type { InteractionProps } from './types';
 
-export function UniversityRegistry({ player, onAction, availableDegrees, rules, campaign, economicIndex = 0 }: InteractionProps & { availableDegrees?: EducationDef[], rules?: GameRules, campaign: CampaignBundle, economicIndex?: number }) {
+export interface UniversityRegistryProps extends InteractionProps {
+  availableDegrees?: EducationDef[];
+  rules?: GameRules;
+  campaign: CampaignBundle;
+  economicIndex?: number;
+  activeTab?: 'available' | 'tree';
+  onTabChange?: (tab: 'available' | 'tree') => void;
+  compact?: boolean;
+  onClerkSpeak?: (msg: string) => void;
+}
+
+export function UniversityRegistry({
+  player,
+  onAction,
+  availableDegrees,
+  rules,
+  campaign,
+  economicIndex = 0,
+  activeTab,
+  onTabChange,
+  compact = false,
+  onClerkSpeak
+}: UniversityRegistryProps) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<'available'|'tree'>('available');
+  const [internalTab, setInternalTab] = useState<'available'|'tree'>('available');
+  const tab = activeTab ?? internalTab;
+  const setTab = onTabChange ?? setInternalTab;
   const [showEnrollConfirm, setShowEnrollConfirm] = useState(false);
 
   const degreesList: EducationDef[] = availableDegrees || campaign?.education || (campaign as any)?.degrees || [];
@@ -22,16 +46,27 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
   const enrolledCredits = player.enrolledCredits ?? 0;
   const modalParent = typeof document !== 'undefined' ? document.querySelector('.building-modal') : null;
 
+  const eligibleDegrees = degreesList
+    .filter(deg => deg.prerequisites.every(prereq => (player.degrees || []).includes(prereq)))
+    .filter(deg => !(player.degrees || []).includes(deg.id));
+
+  const hasExtraCreditBonus = eligibleDegrees.some(deg => calcRequiredLessons(player, deg) < deg.lessonsRequired);
+  const bonusLessonReduction = eligibleDegrees.length > 0 
+    ? Math.max(0, ...eligibleDegrees.map(deg => deg.lessonsRequired - calcRequiredLessons(player, deg)))
+    : 0;
+
   return (
-    <div className="interaction-panel">
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-        <button onClick={() => setTab('available')} style={{ fontWeight: tab === 'available' ? 'bold' : 'normal', background: tab === 'available' ? '#4aa' : '#333' }}>
-          {t('university.tabAvailable', { defaultValue: 'Available Classes' })}
-        </button>
-        <button onClick={() => setTab('tree')} style={{ fontWeight: tab === 'tree' ? 'bold' : 'normal', background: tab === 'tree' ? '#4aa' : '#333' }}>
-          {t('university.tabTree', { defaultValue: 'Class Tree' })}
-        </button>
-      </div>
+    <div className={`interaction-panel ${compact ? 'interaction-panel--compact' : ''}`}>
+      {!onTabChange && (
+        <div style={{ display: 'flex', gap: '10px', marginBottom: compact ? '8px' : '15px' }}>
+          <button onClick={() => setTab('available')} style={{ fontWeight: tab === 'available' ? 'bold' : 'normal', background: tab === 'available' ? '#4aa' : '#333' }}>
+            {t('university.tabAvailable', { defaultValue: 'Available Classes' })}
+          </button>
+          <button onClick={() => setTab('tree')} style={{ fontWeight: tab === 'tree' ? 'bold' : 'normal', background: tab === 'tree' ? '#4aa' : '#333' }}>
+            {t('university.tabTree', { defaultValue: 'Class Tree' })}
+          </button>
+        </div>
+      )}
 
       {tab === 'available' && (
         <>
@@ -42,12 +77,12 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                 background: 'rgba(52, 152, 219, 0.15)',
                 border: '1px solid #3498db',
                 borderRadius: '6px',
-                padding: '8px 12px',
-                marginBottom: '12px',
+                padding: compact ? '4px 8px' : '8px 12px',
+                marginBottom: compact ? '6px' : '12px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontSize: '0.88rem',
+                fontSize: compact ? '0.80rem' : '0.88rem',
                 color: '#38bdf8'
               }}
             >
@@ -57,52 +92,101 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
               </span>
             </div>
           )}
-          <h4 style={{ color: 'var(--accent-cyan)', margin: '0 0 10px 0', fontSize: '0.95em' }}>{t('university.available', { defaultValue: 'Available Degrees' })}</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
-            {degreesList
-              .filter(deg => deg.prerequisites.every(prereq => (player.degrees || []).includes(prereq)))
-              .filter(deg => !(player.degrees || []).includes(deg.id))
-              .map(deg => {
-                const required = calcRequiredLessons(player, deg);
-                const hasBonus = required < deg.lessonsRequired;
-                const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
-                const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? '6px' : '10px' }}>
+            <h4 style={{ color: 'var(--accent-cyan)', margin: 0, fontSize: compact ? '0.88rem' : '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{t('university.available', { defaultValue: 'Available Degrees' })}</span>
+              {hasExtraCreditBonus && (
+                <span 
+                  data-testid="university-extra-credit-badge"
+                  style={{
+                    color: '#2ecc71',
+                    background: 'rgba(46, 204, 113, 0.15)',
+                    border: '1px solid rgba(46, 204, 113, 0.4)',
+                    borderRadius: '12px',
+                    padding: '1px 8px',
+                    fontSize: '11px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {t('university.extraCreditBonus', {
+                    count: bonusLessonReduction,
+                    defaultValue: `★ Extra Credit (-${bonusLessonReduction} ${bonusLessonReduction === 1 ? 'lesson' : 'lessons'})`
+                  })}
+                </span>
+              )}
+            </h4>
+          </div>
+          <div 
+            className="university-classes-grid"
+            style={{ 
+              display: 'grid', 
+              gridTemplateColumns: compact ? 'repeat(auto-fill, minmax(240px, 1fr))' : 'repeat(auto-fill, minmax(280px, 1fr))', 
+              gap: compact ? '6px' : '10px' 
+            }}
+          >
+            {eligibleDegrees.map(deg => {
+              const required = calcRequiredLessons(player, deg);
+              const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
+              const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
+              const isClickableUnenrolled = !isEnrolled && enrolledCredits === 0;
 
-                const tuitionFee = calcEconomyPrice(deg.baseTuitionFee, economicIndex);
+              const handleCardClick = () => {
+                if (isClickableUnenrolled) {
+                  const msg = t('university.notEnrolled', { defaultValue: 'You are not enrolled in this class.' });
+                  if (onClerkSpeak) {
+                    onClerkSpeak(msg);
+                  } else {
+                    onAction({ type: 'speak', message: msg });
+                  }
+                }
+              };
 
-                return (
-                  <div key={deg.id} className="interaction-item" style={{ margin: 0, padding: '12px', border: '1px solid #4aa', borderRadius: '6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                        <strong>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong>
-                        {hasBonus && <span style={{ color: '#2ecc71', fontSize: '11px', fontWeight: 'bold' }}>{t('university.bonus', { defaultValue: '★ Bonus' })}</span>}
-                      </div>
-                      {!isEnrolled && (
-                        <div style={{ fontSize: '12px', color: '#ccc', marginBottom: '6px' }}>
-                          {t('university.tuition', { fee: tuitionFee, defaultValue: `Tuition: $${tuitionFee}` })}
-                        </div>
-                      )}
-                      
-                      {isEnrolled && (
-                        <div style={{ marginTop: '4px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--accent-cyan)', marginBottom: '3px' }}>
-                            <span>{rules?.percentageEducation ? t('university.progress', { defaultValue: 'Progress' }) : t('university.lessonsLabel', { defaultValue: 'Lessons' })}:</span>
-                            <span style={{ fontWeight: 'bold' }}>
-                              {rules?.percentageEducation 
-                                ? `${formatDegreeProgress(lessonsCompleted, true)} / 100%` 
-                                : `${lessonsCompleted} / ${required}`}
-                            </span>
-                          </div>
-                          {rules?.percentageEducation && (
-                            <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                              <div style={{ width: `${Math.min(100, lessonsCompleted)}%`, height: '100%', backgroundColor: '#3498db', transition: 'width 0.3s ease' }} />
-                            </div>
-                          )}
-                        </div>
-                      )}
+              return (
+                <div 
+                  key={deg.id} 
+                  className="interaction-item university-class-card" 
+                  data-testid={isClickableUnenrolled ? `unenrolled-class-${deg.id}` : undefined}
+                  onClick={handleCardClick}
+                  style={{ 
+                    margin: 0, 
+                    padding: compact ? '8px' : '12px', 
+                    border: '1px solid #4aa', 
+                    borderRadius: '6px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    justifyContent: 'space-between',
+                    cursor: isClickableUnenrolled ? 'pointer' : 'default',
+                    transition: 'border-color 0.15s ease, background-color 0.15s ease',
+                    background: isClickableUnenrolled ? 'rgba(255,255,255,0.02)' : undefined
+                  }}
+                  title={isClickableUnenrolled ? t('university.notEnrolled', { defaultValue: 'You are not enrolled in this class.' }) : undefined}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: compact ? '2px' : '4px' }}>
+                      <strong style={{ fontSize: compact ? '0.88rem' : '1rem' }}>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong>
                     </div>
+                    
+                    {isEnrolled && (
+                      <div style={{ marginTop: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--accent-cyan)', marginBottom: '3px' }}>
+                          <span>{rules?.percentageEducation ? t('university.progress', { defaultValue: 'Progress' }) : t('university.lessonsLabel', { defaultValue: 'Lessons' })}:</span>
+                          <span style={{ fontWeight: 'bold' }}>
+                            {rules?.percentageEducation 
+                              ? `${formatDegreeProgress(lessonsCompleted, true)} / 100%` 
+                              : `${lessonsCompleted} / ${required}`}
+                          </span>
+                        </div>
+                        {rules?.percentageEducation && (
+                          <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, lessonsCompleted)}%`, height: '100%', backgroundColor: '#3498db', transition: 'width 0.3s ease' }} />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
-                    <div style={{ marginTop: '10px' }}>
+                  {(isEnrolled || enrolledCredits > 0) && (
+                    <div style={{ marginTop: compact ? '6px' : '10px' }}>
                       {isEnrolled ? (() => {
                         const standardCost = campaign.config.timeRules.studySessionCost;
                         let maxSpend = standardCost;
@@ -188,7 +272,7 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                             })()}
                           </button>
                         );
-                      })() : enrolledCredits > 0 ? (
+                      })() : (
                         <button 
                           data-testid={`choose-class-${deg.id}`}
                           data-action-target={`enroll-${deg.id}`}
@@ -199,26 +283,20 @@ export function UniversityRegistry({ player, onAction, availableDegrees, rules, 
                             fontWeight: 'bold',
                             border: '1px solid #2ecc71',
                             borderRadius: '4px',
-                            padding: '6px 12px',
+                            padding: compact ? '4px 8px' : '6px 12px',
+                            fontSize: compact ? '0.82rem' : '0.90rem',
                             cursor: 'pointer' 
                           }} 
-                          onClick={() => onAction({ type: 'enroll', degreeId: deg.id })} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAction({ type: 'enroll', degreeId: deg.id });
+                          }} 
                         >
                           🎓 {t('university.chooseClassBtn', { defaultValue: 'Choose Class' })}
                         </button>
-                      ) : (
-                        <div style={{
-                          fontSize: '12px',
-                          color: '#94a3b8',
-                          padding: '6px 0',
-                          textAlign: 'center',
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          borderRadius: '4px'
-                        }}>
-                          {t('university.availableStatus', { defaultValue: 'Available' })}
-                        </div>
                       )}
                     </div>
+                  )}
                   </div>
                 );
               })}

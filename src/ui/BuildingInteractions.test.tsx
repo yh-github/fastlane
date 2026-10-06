@@ -581,9 +581,10 @@ describe('BuildingInteractions', () => {
     expect(enrollBtn).toBeInTheDocument();
     expect(enrollBtn.textContent).toContain('ENROLL');
 
-    // Individual class card should NOT have an enroll button when credits === 0
+    // Individual class card should NOT have an enroll button when credits === 0 and should NOT say Available
     expect(screen.queryByTestId('choose-class-trade_school')).not.toBeInTheDocument();
-    expect(screen.getByText('Available')).toBeInTheDocument();
+    expect(screen.queryByText('Available')).not.toBeInTheDocument();
+    expect(screen.getByTestId('unenrolled-class-trade_school')).toBeInTheDocument();
 
     // Click ENROLL button opens confirmation dialog
     fireEvent.click(enrollBtn);
@@ -624,6 +625,63 @@ describe('BuildingInteractions', () => {
 
     fireEvent.click(chooseClassBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'enroll', degreeId: 'trade_school' });
+  });
+
+  it('UniversityRegistry renders extra credit in title and notifies clerk when clicking unenrolled class', () => {
+    const mockPlayerWithComputer = {
+      name: 'Tester',
+      money: 50,
+      hoursRemaining: 50,
+      degrees: [],
+      enrolledClasses: {},
+      enrolledCredits: 0,
+      inventory: {
+        appliances: [{ id: 'computer' }]
+      }
+    } as any;
+
+    const mockCampaign = {
+      degrees: [
+        {
+          id: 'trade_school',
+          name: 'Trade School',
+          baseTuitionFee: 100,
+          lessonsRequired: 10,
+          prerequisites: [],
+          rewards: {}
+        }
+      ],
+      config: {
+        timeRules: { studySessionCost: 6 },
+        statRules: {}
+      }
+    } as any;
+
+    const mockSpeak = vi.fn();
+
+    render(
+      <UniversityRegistry
+        player={mockPlayerWithComputer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        onClerkSpeak={mockSpeak}
+      />
+    );
+
+    // Extra credit badge is rendered in the title
+    const extraCreditBadge = screen.getByTestId('university-extra-credit-badge');
+    expect(extraCreditBadge).toBeInTheDocument();
+    expect(extraCreditBadge.textContent).toContain('Extra Credit');
+    expect(extraCreditBadge.textContent).toContain('-1');
+
+    // Individual card does NOT have a separate bonus tag or tuition
+    expect(screen.queryByText('★ Bonus')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tuition:/i)).not.toBeInTheDocument();
+
+    // Clicking unenrolled card calls onClerkSpeak
+    const unenrolledCard = screen.getByTestId('unenrolled-class-trade_school');
+    fireEvent.click(unenrolledCard);
+    expect(mockSpeak).toHaveBeenCalledWith('You are not enrolled in this class.');
   });
 
   it('HomeRelax dynamically updates Relax button with exact runtime gains based on conditions, mental condition bonus, first-turn bonus, mess, social, and appliances', () => {
