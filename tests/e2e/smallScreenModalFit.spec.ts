@@ -229,4 +229,61 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     await closeSettingsBtn.click();
     await expect(settingsOverlay).toBeHidden();
   });
+
+  test('verifies modal face and bank buttons retain prominent full size on large screens', async ({ page }) => {
+    // 1. Set viewport to large desktop screen (1440x900)
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    // 2. Load root page and start new game
+    await page.goto('/');
+    const startGameBtn = page.locator('.title-screen__btn').first();
+    await expect(startGameBtn).toBeVisible({ timeout: 5000 });
+    await startGameBtn.click();
+
+    const startLifeBtn = page.locator('.action-panel__btn').filter({ hasText: /Start Life|התחל חיים/i }).first();
+    await expect(startLifeBtn).toBeVisible({ timeout: 5000 });
+    await startLifeBtn.click();
+
+    // 3. Verify HUD loads and close initial apartment modal
+    const dashboard = page.locator('.dashboard, .side-hud');
+    await expect(dashboard).toBeVisible({ timeout: 5000 });
+
+    const buildingModal = page.locator('.building-modal');
+    if (await buildingModal.isVisible()) {
+      await page.locator('.building-modal__close').click();
+      await expect(buildingModal).toBeHidden({ timeout: 3000 });
+    }
+
+    // 4. Open Bank on large screen
+    await page.evaluate(() => {
+      (window as any).__openBuilding('bank');
+    });
+
+    await expect(buildingModal).toBeVisible({ timeout: 5000 });
+    await expect(buildingModal).not.toHaveClass(/building-modal--compact/);
+
+    // Verify avatar face is prominent (height >= 40px)
+    const faceEl = page.locator('.building-modal__face');
+    const faceBox = await faceEl.boundingBox();
+    expect(faceBox).not.toBeNull();
+    if (faceBox) {
+      expect(faceBox.height).toBeGreaterThanOrEqual(40);
+    }
+
+    // Verify Deposit and Withdraw buttons are full-sized and prominent (height >= 40px)
+    const depositBtn = page.locator('[data-testid="btn-bank-deposit"]');
+    const withdrawBtn = page.locator('[data-testid="btn-bank-withdraw"]');
+    await expect(depositBtn).toBeVisible();
+    await expect(withdrawBtn).toBeVisible();
+
+    const depositBox = await depositBtn.boundingBox();
+    expect(depositBox).not.toBeNull();
+    if (depositBox) {
+      expect(depositBox.height).toBeGreaterThanOrEqual(40);
+    }
+
+    // Close Bank modal
+    await page.locator('.building-modal__close').click();
+    await expect(buildingModal).toBeHidden({ timeout: 3000 });
+  });
 });
