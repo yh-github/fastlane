@@ -92,30 +92,29 @@ export function UniversityRegistry({
               </span>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? '6px' : '10px' }}>
-            <h4 style={{ color: 'var(--accent-cyan)', margin: 0, fontSize: compact ? '0.88rem' : '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>{t('university.available', { defaultValue: 'Available Degrees' })}</span>
-              {hasExtraCreditBonus && (
-                <span 
-                  data-testid="university-extra-credit-badge"
-                  style={{
-                    color: '#2ecc71',
-                    background: 'rgba(46, 204, 113, 0.15)',
-                    border: '1px solid rgba(46, 204, 113, 0.4)',
-                    borderRadius: '12px',
-                    padding: '1px 8px',
-                    fontSize: '11px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {t('university.extraCreditBonus', {
-                    count: bonusLessonReduction,
-                    defaultValue: `★ Extra Credit (-${bonusLessonReduction} ${bonusLessonReduction === 1 ? 'lesson' : 'lessons'})`
-                  })}
-                </span>
-              )}
-            </h4>
-          </div>
+          {hasExtraCreditBonus && (
+            <div style={{ marginBottom: compact ? '4px' : '6px' }}>
+              <span 
+                data-testid="university-extra-credit-badge"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: '#2ecc71',
+                  background: 'rgba(46, 204, 113, 0.15)',
+                  border: '1px solid rgba(46, 204, 113, 0.4)',
+                  borderRadius: '12px',
+                  padding: '1px 8px',
+                  fontSize: '11px',
+                  fontWeight: 'bold'
+                }}
+              >
+                {t('university.extraCreditBonus', {
+                  count: bonusLessonReduction,
+                  defaultValue: `★ Extra Credit (-${bonusLessonReduction} ${bonusLessonReduction === 1 ? 'lesson' : 'lessons'})`
+                })}
+              </span>
+            </div>
+          )}
           <div 
             className="university-classes-grid"
             style={{ 
