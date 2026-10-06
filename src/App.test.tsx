@@ -238,12 +238,12 @@ describe('App Integration & StrictMode', () => {
     });
 
     // Open Bank modal if not open
-    if (!screen.queryByTestId('tab-stocks')) {
+    if (!screen.queryByTestId('tab-stocks') && !screen.queryByTestId('tab-ear-stocks')) {
       fireEvent.click(bankNodeBtn);
     }
 
     // Verify Stocks tab is present in Bank modal!
-    const stocksTabBtn = await screen.findByTestId('tab-stocks');
+    const stocksTabBtn = await screen.findByTestId(/tab-stocks|tab-ear-stocks/);
     expect(stocksTabBtn).toBeInTheDocument();
 
     // Click Stocks tab
