@@ -490,55 +490,57 @@ export function BankInterface({
           style={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr', 
-            gap: compact ? '8px' : '16px', 
-            marginTop: compact ? '6px' : '10px' 
+            gap: compact ? '6px' : '8px', 
+            marginTop: compact ? '4px' : '6px' 
           }}
         >
           <button 
+            data-testid="btn-bank-deposit"
             onClick={handleDepositClick}
             className="bank-action-btn"
             style={{
-              padding: compact ? '8px 12px' : '16px',
+              padding: compact ? '5px 10px' : '6px 14px',
               background: canDeposit ? '#2ecc71' : '#555',
               color: canDeposit ? '#000' : '#aaa',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '6px',
               fontWeight: 'bold',
-              fontSize: compact ? '13px' : '15px',
+              fontSize: compact ? '12px' : '13px',
               cursor: canDeposit ? 'pointer' : 'not-allowed',
               opacity: canDeposit ? 1 : 0.6,
               display: 'flex',
-              flexDirection: compact ? 'row' : 'column',
+              flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: compact ? '8px' : '6px'
+              gap: '6px'
             }}
           >
-            <span style={{ fontSize: compact ? '1.2rem' : '1.8rem' }}>📥</span>
-            <span>{t('bank.depositBtn', { defaultValue: 'Deposit Money' })}</span>
+            <span style={{ fontSize: compact ? '0.95rem' : '1.05rem' }}>📥</span>
+            <span>{t('bank.depositBtn', { defaultValue: 'Deposit' })}</span>
           </button>
           <button 
+            data-testid="btn-bank-withdraw"
             onClick={handleWithdrawClick}
             className="bank-action-btn"
             style={{
-              padding: compact ? '8px 12px' : '16px',
+              padding: compact ? '5px 10px' : '6px 14px',
               background: canWithdraw ? '#3498db' : '#555',
               color: canWithdraw ? '#fff' : '#aaa',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '6px',
               fontWeight: 'bold',
-              fontSize: compact ? '13px' : '15px',
+              fontSize: compact ? '12px' : '13px',
               cursor: canWithdraw ? 'pointer' : 'not-allowed',
               opacity: canWithdraw ? 1 : 0.6,
               display: 'flex',
-              flexDirection: compact ? 'row' : 'column',
+              flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: compact ? '8px' : '6px'
+              gap: '6px'
             }}
           >
-            <span style={{ fontSize: compact ? '1.2rem' : '1.8rem' }}>📤</span>
-            <span>{t('bank.withdrawBtn', { defaultValue: 'Withdraw Money' })}</span>
+            <span style={{ fontSize: compact ? '0.95rem' : '1.05rem' }}>📤</span>
+            <span>{t('bank.withdrawBtn', { defaultValue: 'Withdraw' })}</span>
           </button>
         </div>
       )}

@@ -226,7 +226,7 @@ body {
   backdrop-filter: blur(15px);
   border: 1px solid var(--accent-cyan);
   border-radius: 12px;
-  padding: calc(18px * var(--board-scale, 1)) calc(24px * var(--board-scale, 1));
+  padding: calc(10px * var(--board-scale, 1)) calc(16px * var(--board-scale, 1));
   display: flex;
   flex-direction: column;
   box-shadow: 0 10px 30px rgba(0,0,0,0.8), var(--glow-cyan);
@@ -247,9 +247,9 @@ body {
 .building-modal__header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
   border-bottom: 1px solid rgba(255,255,255,0.1);
   flex-shrink: 0;
   position: relative;
@@ -342,12 +342,17 @@ body {
 }
 
 .building-modal__face {
-  font-size: 3rem;
+  font-size: 1.35rem;
   line-height: 1;
-  background: rgba(0,0,0,0.3);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.35);
   border-radius: 50%;
-  padding: 10px;
-  border: 2px solid var(--accent-amber);
+  padding: 0;
+  border: 1.5px solid var(--accent-amber);
   box-shadow: var(--glow-amber);
   flex-shrink: 0;
 }
@@ -359,8 +364,9 @@ body {
 
 .building-modal__title-group h2 {
   color: var(--accent-cyan);
-  font-size: 1.4rem;
-  margin-bottom: 4px;
+  font-size: 1.15rem;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .building-modal__title-group p {
@@ -438,34 +444,36 @@ body {
 
 /* Compact mode modifiers */
 .building-modal--compact {
-  padding: calc(8px * var(--board-scale, 1)) calc(14px * var(--board-scale, 1)) !important;
+  padding: calc(6px * var(--board-scale, 1)) calc(12px * var(--board-scale, 1)) !important;
 }
 
 .building-modal--compact .building-modal__header {
-  padding-bottom: 4px !important;
-  margin-bottom: 6px !important;
-  gap: 8px !important;
+  padding-bottom: 3px !important;
+  margin-bottom: 4px !important;
+  gap: 6px !important;
 }
 
 .building-modal--compact .building-modal__face {
-  font-size: 1.3rem !important;
-  padding: 2px 6px !important;
+  font-size: 1.15rem !important;
+  width: 26px !important;
+  height: 26px !important;
   border-width: 1px !important;
+  padding: 0 !important;
 }
 
 .building-modal--compact .building-modal__title-group h2 {
-  font-size: 1.05rem !important;
-  margin-bottom: 0px !important;
+  font-size: 1.0rem !important;
+  margin: 0 !important;
 }
 
 .building-modal--compact .building-modal__close {
-  top: 8px !important;
-  inset-inline-end: 10px !important;
-  font-size: 1.2rem !important;
+  top: 6px !important;
+  inset-inline-end: 8px !important;
+  font-size: 1.15rem !important;
 }
 
 .building-modal--compact .building-modal__work-dock {
-  padding-top: 4px !important;
+  padding-top: 3px !important;
 }
 
 .building-modal--compact .building-modal__work-dock button {
@@ -486,12 +494,68 @@ body {
 }
 
 .building-modal--compact .bank-actions-grid {
-  gap: 8px !important;
+  gap: 6px !important;
+  margin-top: 4px !important;
 }
 
 .building-modal--compact .bank-action-btn {
-  padding: 8px 12px !important;
-  font-size: 13px !important;
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  min-height: 28px !important;
+}
+
+.bank-action-btn {
+  min-height: 32px !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+/* Small screen responsive adjustments */
+@media (max-height: 720px), (max-width: 900px) {
+  .building-modal,
+  .building-modal--curved,
+  .building-modal--schematic {
+    padding: 8px 12px !important;
+  }
+
+  .building-modal__header {
+    padding-bottom: 4px !important;
+    margin-bottom: 4px !important;
+    gap: 6px !important;
+  }
+
+  .building-modal__face {
+    font-size: 1.15rem !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-width: 1px !important;
+    padding: 0 !important;
+  }
+
+  .building-modal__title-group h2 {
+    font-size: 1.0rem !important;
+    margin: 0 !important;
+  }
+
+  .building-modal__close {
+    top: 6px !important;
+    inset-inline-end: 8px !important;
+    font-size: 1.15rem !important;
+  }
+
+  .bank-action-btn {
+    padding: 5px 10px !important;
+    font-size: 12px !important;
+    min-height: 28px !important;
+  }
+
+  .bank-actions-grid {
+    gap: 6px !important;
+    margin-top: 4px !important;
+  }
 }
 
 /* Dashboard Controls (for End Turn) */
@@ -827,69 +891,69 @@ button:disabled {
 /* Speech Bubble */
 .speech-bubble {
   position: absolute;
-  top: -12px;
+  top: -6px;
   left: 100%;
-  margin-left: 16px;
+  margin-left: 10px;
   background: #13132c;
-  border: 2px solid var(--accent-cyan);
-  border-radius: 12px;
-  padding: 10px 14px;
-  min-width: 160px;
-  max-width: 320px;
+  border: 1.5px solid var(--accent-cyan);
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-width: 140px;
+  max-width: 300px;
   font-family: var(--font-main);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.35;
   white-space: pre-wrap;
   color: var(--text-color);
-  box-shadow: 0 8px 24px rgba(0, 229, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 20;
-  transform-origin: left 30px;
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 16px rgba(0, 229, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 80;
+  transform-origin: left 14px;
+  animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .speech-bubble-tail {
   position: absolute;
-  top: 20px;
-  left: -12px;
+  top: 10px;
+  left: -8px;
   width: 0;
   height: 0;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  border-right: 12px solid var(--accent-cyan);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 8px solid var(--accent-cyan);
 }
 
 .speech-bubble-tail::after {
   content: '';
   position: absolute;
-  top: -7px;
-  left: 3px;
+  top: -4px;
+  left: 2px;
   width: 0;
   height: 0;
-  border-top: 7px solid transparent;
-  border-bottom: 7px solid transparent;
-  border-right: 9px solid #13132c;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-right: 6px solid #13132c;
 }
 
 [dir="rtl"] .speech-bubble {
   left: auto;
   right: 100%;
   margin-left: 0;
-  margin-right: 16px;
-  transform-origin: right 30px;
+  margin-right: 10px;
+  transform-origin: right 14px;
 }
 
 [dir="rtl"] .speech-bubble-tail {
   left: auto;
-  right: -12px;
+  right: -8px;
   border-right: none;
-  border-left: 12px solid var(--accent-cyan);
+  border-left: 8px solid var(--accent-cyan);
 }
 
 [dir="rtl"] .speech-bubble-tail::after {
   left: auto;
-  right: 3px;
+  right: 2px;
   border-right: none;
-  border-left: 9px solid #13132c;
+  border-left: 6px solid #13132c;
 }
 
 @keyframes popIn {

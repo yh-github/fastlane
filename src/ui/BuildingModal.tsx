@@ -313,6 +313,11 @@ export function BuildingModal({
     const checkOverflow = () => {
       if (!contentRef.current) return;
       const el = contentRef.current;
+      const isSmallViewport = typeof window !== 'undefined' && (window.innerHeight <= 720 || window.innerWidth <= 900 || measuredRect.height < 450);
+      if (isSmallViewport) {
+        setIsContentOverflowing(true);
+        return;
+      }
       if (!isContentOverflowing) {
         if (el.scrollHeight > el.clientHeight + 2) {
           setIsContentOverflowing(true);

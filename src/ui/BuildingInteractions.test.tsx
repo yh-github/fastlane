@@ -187,8 +187,8 @@ describe('BuildingInteractions', () => {
       <BankInterface player={mockPlayer} onAction={mockOnAction} />
     );
 
-    // Click Deposit Money -> opens Deposit dialog
-    fireEvent.click(screen.getByText(/Deposit Money/i));
+    // Click Deposit -> opens Deposit dialog
+    fireEvent.click(screen.getByRole('button', { name: /deposit/i }));
     expect(screen.getByText(/Deposit Money into Savings/i)).toBeInTheDocument();
 
     // Select Max preset button

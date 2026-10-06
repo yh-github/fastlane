@@ -43,11 +43,29 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     await expect(treeEar).toBeVisible();
     await expect(availableEar).toHaveClass(/building-modal__tab-ear--active/);
 
+    // Verify University does not render redundant "Available Degrees" section title
+    await expect(buildingModal).not.toContainText(/Available Degrees/i);
+
     // Verify unenrolled class card does not display "Available" or "Tuition: $"
     const unenrolledCard = page.locator('[data-testid^="unenrolled-class-"]').first();
     await expect(unenrolledCard).toBeVisible();
     await expect(unenrolledCard).not.toContainText(/Available/i);
     await expect(unenrolledCard).not.toContainText(/Tuition:\s*\$/i);
+
+    // Verify header and face are compact (not consuming 1/3 of the modal)
+    const headerEl = page.locator('.building-modal__header');
+    const headerBox = await headerEl.boundingBox();
+    expect(headerBox).not.toBeNull();
+    if (headerBox) {
+      expect(headerBox.height).toBeLessThanOrEqual(45);
+    }
+
+    const faceEl = page.locator('.building-modal__face');
+    const faceBox = await faceEl.boundingBox();
+    expect(faceBox).not.toBeNull();
+    if (faceBox) {
+      expect(faceBox.height).toBeLessThanOrEqual(36);
+    }
 
     // Click unenrolled class card -> triggers clerk speech bubble
     await unenrolledCard.click();
@@ -92,6 +110,18 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     await expect(stocksEar).toBeVisible();
     await expect(loansEar).toBeVisible();
     await expect(bankingEar).toHaveClass(/building-modal__tab-ear--active/);
+
+    // Verify Deposit and Withdraw buttons are sleek and compact (height <= 40px)
+    const depositBtn = page.locator('[data-testid="btn-bank-deposit"]');
+    const withdrawBtn = page.locator('[data-testid="btn-bank-withdraw"]');
+    await expect(depositBtn).toBeVisible();
+    await expect(withdrawBtn).toBeVisible();
+
+    const depositBox = await depositBtn.boundingBox();
+    expect(depositBox).not.toBeNull();
+    if (depositBox) {
+      expect(depositBox.height).toBeLessThanOrEqual(40);
+    }
 
     // Switch to Stocks tab ear
     await stocksEar.click();

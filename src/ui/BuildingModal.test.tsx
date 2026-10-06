@@ -147,8 +147,8 @@ describe('BuildingModal Component', () => {
     expect(screen.getByTestId('tab-ear-loans')).toBeInTheDocument();
 
     // Verify Banking tab is active by default
-    expect(screen.getByText(/Deposit Money/i)).toBeInTheDocument();
-    expect(screen.getByText(/Withdraw Money/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /deposit/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /withdraw/i })).toBeInTheDocument();
 
     // Click Stocks tab
     fireEvent.click(screen.getByTestId('tab-ear-stocks'));
