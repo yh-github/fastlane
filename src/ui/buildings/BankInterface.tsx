@@ -383,6 +383,17 @@ export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { 
   );
 }
 
+export interface BankInterfaceProps extends InteractionProps {
+  campaign?: CampaignBundle;
+  turn?: number;
+  economicIndex?: number;
+  rules?: GameRules;
+  economySimulation?: EconomySimulationState;
+  activeTab?: 'banking' | 'stocks' | 'loans';
+  onTabChange?: (tab: 'banking' | 'stocks' | 'loans') => void;
+  compact?: boolean;
+}
+
 export function BankInterface({
   player,
   onAction,
@@ -391,15 +402,14 @@ export function BankInterface({
   economicIndex = 0,
   rules,
   economySimulation,
-}: InteractionProps & {
-  campaign?: CampaignBundle;
-  turn?: number;
-  economicIndex?: number;
-  rules?: GameRules;
-  economySimulation?: EconomySimulationState;
-}) {
+  activeTab,
+  onTabChange,
+  compact = false
+}: BankInterfaceProps) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<'banking'|'stocks'|'loans'>('banking');
+  const [internalTab, setInternalTab] = useState<'banking'|'stocks'|'loans'>('banking');
+  const tab = activeTab ?? internalTab;
+  const setTab = onTabChange ?? setInternalTab;
   const [bankDialogMode, setBankDialogMode] = useState<'deposit' | 'withdraw' | null>(null);
   const [reasonMsg, setReasonMsg] = useState<string | null>(null);
 
@@ -426,27 +436,29 @@ export function BankInterface({
   };
   
   return (
-    <div className="interaction-panel">
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-        <button onClick={() => setTab('banking')} style={{ fontWeight: tab === 'banking' ? 'bold' : 'normal' }}>{t('bank.tabBanking', { defaultValue: 'Bank' })}</button>
-        {(!campaign || !campaign.stocks || campaign.stocks.length > 0) && (
-          <button 
-            data-testid="tab-stocks"
-            onClick={() => {
-              if (tab !== 'stocks') {
-                onAction({ type: 'open_broker' });
-              }
-              setTab('stocks');
-            }} 
-            style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}
-          >
-            {t('bank.tabStocks', { defaultValue: 'Stocks' })}
-          </button>
-        )}
-        <button onClick={() => setTab('loans')} style={{ fontWeight: tab === 'loans' ? 'bold' : 'normal' }}>{t('bank.tabLoans', { defaultValue: 'Loans' })}</button>
-      </div>
+    <div className={`interaction-panel ${compact ? 'interaction-panel--compact' : ''}`}>
+      {!onTabChange && (
+        <div style={{ display: 'flex', gap: '10px', marginBottom: compact ? '8px' : '15px' }}>
+          <button onClick={() => setTab('banking')} style={{ fontWeight: tab === 'banking' ? 'bold' : 'normal' }}>{t('bank.tabBanking', { defaultValue: 'Bank' })}</button>
+          {(!campaign || !campaign.stocks || campaign.stocks.length > 0) && (
+            <button 
+              data-testid="tab-stocks"
+              onClick={() => {
+                if (tab !== 'stocks') {
+                  onAction({ type: 'open_broker' });
+                }
+                setTab('stocks');
+              }} 
+              style={{ fontWeight: tab === 'stocks' ? 'bold' : 'normal' }}
+            >
+              {t('bank.tabStocks', { defaultValue: 'Stocks' })}
+            </button>
+          )}
+          <button onClick={() => setTab('loans')} style={{ fontWeight: tab === 'loans' ? 'bold' : 'normal' }}>{t('bank.tabLoans', { defaultValue: 'Loans' })}</button>
+        </div>
+      )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: compact ? '10px' : '20px' }}>
         <div>
           <strong>{t('bank.cash', { defaultValue: 'Cash:' })}</strong> ${player.money}
         </div>
@@ -473,49 +485,59 @@ export function BankInterface({
       </div>
       
       {tab === 'banking' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '10px' }}>
+        <div 
+          className="bank-actions-grid"
+          style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: compact ? '8px' : '16px', 
+            marginTop: compact ? '6px' : '10px' 
+          }}
+        >
           <button 
             onClick={handleDepositClick}
+            className="bank-action-btn"
             style={{
-              padding: '16px',
+              padding: compact ? '8px 12px' : '16px',
               background: canDeposit ? '#2ecc71' : '#555',
               color: canDeposit ? '#000' : '#aaa',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 'bold',
-              fontSize: '15px',
+              fontSize: compact ? '13px' : '15px',
               cursor: canDeposit ? 'pointer' : 'not-allowed',
               opacity: canDeposit ? 1 : 0.6,
               display: 'flex',
-              flexDirection: 'column',
+              flexDirection: compact ? 'row' : 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px'
+              gap: compact ? '8px' : '6px'
             }}
           >
-            <span style={{ fontSize: '1.8rem' }}>📥</span>
+            <span style={{ fontSize: compact ? '1.2rem' : '1.8rem' }}>📥</span>
             <span>{t('bank.depositBtn', { defaultValue: 'Deposit Money' })}</span>
           </button>
           <button 
             onClick={handleWithdrawClick}
+            className="bank-action-btn"
             style={{
-              padding: '16px',
+              padding: compact ? '8px 12px' : '16px',
               background: canWithdraw ? '#3498db' : '#555',
               color: canWithdraw ? '#fff' : '#aaa',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 'bold',
-              fontSize: '15px',
+              fontSize: compact ? '13px' : '15px',
               cursor: canWithdraw ? 'pointer' : 'not-allowed',
               opacity: canWithdraw ? 1 : 0.6,
               display: 'flex',
-              flexDirection: 'column',
+              flexDirection: compact ? 'row' : 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px'
+              gap: compact ? '8px' : '6px'
             }}
           >
-            <span style={{ fontSize: '1.8rem' }}>📤</span>
+            <span style={{ fontSize: compact ? '1.2rem' : '1.8rem' }}>📤</span>
             <span>{t('bank.withdrawBtn', { defaultValue: 'Withdraw Money' })}</span>
           </button>
         </div>
@@ -544,7 +566,7 @@ export function BankInterface({
       )}
 
       {tab === 'stocks' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: compact ? 'repeat(auto-fit, minmax(180px, 1fr))' : 'repeat(auto-fit, minmax(220px, 1fr))', gap: compact ? '6px' : '10px' }}>
           {(campaign?.stocks || [
             { id: 'tbills', name: 'Treasury Bills', type: 'fixed', basePrice: 100 },
             { id: 'blue_chip', name: 'Blue Chip Stocks', type: 'fluctuating', basePrice: 49 },
@@ -565,7 +587,7 @@ export function BankInterface({
       )}
 
       {tab === 'loans' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? '8px' : '14px', marginTop: compact ? '6px' : '10px' }}>
           {rules?.helpfulUI && (
             <div 
               data-testid="helpful-loan-assessment"
@@ -573,22 +595,22 @@ export function BankInterface({
                 background: assessment.eligible ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                 border: `1px solid ${assessment.eligible ? 'rgba(34, 197, 94, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
                 borderRadius: '8px',
-                padding: '14px 16px',
-                fontSize: '13px'
+                padding: compact ? '8px 12px' : '14px 16px',
+                fontSize: compact ? '12px' : '13px'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', fontSize: '14px', color: assessment.eligible ? '#4ade80' : '#f87171' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? '4px' : '8px' }}>
+                <span style={{ fontWeight: 'bold', fontSize: compact ? '13px' : '14px', color: assessment.eligible ? '#4ade80' : '#f87171' }}>
                   📊 Approval Chance: {assessment.approvalChance}% ({assessment.eligible ? 'Approved' : 'Refused'})
                 </span>
-                <span style={{ fontWeight: 'bold', fontSize: '15px', color: assessment.eligible ? '#38bdf8' : '#9ca3af' }}>
+                <span style={{ fontWeight: 'bold', fontSize: compact ? '13px' : '15px', color: assessment.eligible ? '#38bdf8' : '#9ca3af' }}>
                   Likely Loan: ${assessment.estimatedAmount}
                 </span>
               </div>
-              <div style={{ color: '#e5e7eb', marginBottom: '8px' }}>
+              <div style={{ color: '#e5e7eb', marginBottom: compact ? '4px' : '8px' }}>
                 {assessment.reasonText}
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', fontSize: '12px', color: '#9ca3af', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: compact ? '8px' : '14px', fontSize: compact ? '11px' : '12px', color: '#9ca3af', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: compact ? '4px' : '8px' }}>
                 <span>💼 Wage: ${player.currentWage}/hr</span>
                 <span>💧 Liquidity Score: {assessment.liquidity.toFixed(2)}</span>
                 <span>⚠️ Risk Factor: {assessment.risk.toFixed(2)}</span>
@@ -600,12 +622,13 @@ export function BankInterface({
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: compact ? '8px' : '16px' }}>
             <button 
               onClick={() => onAction({ type: 'take_loan' })}
               style={{ 
-                padding: '14px', 
+                padding: compact ? '8px 12px' : '14px', 
                 borderRadius: '8px',
+                fontSize: compact ? '12px' : undefined,
                 border: rules?.helpfulUI && !assessment.eligible ? '1px solid rgba(239, 68, 68, 0.5)' : undefined
               }}
             >
@@ -620,8 +643,9 @@ export function BankInterface({
               onClick={() => onAction({ type: 'pay_loan' })} 
               disabled={(player.loanDebt || 0) <= 0}
               style={{ 
-                padding: '14px', 
+                padding: compact ? '8px 12px' : '14px', 
                 borderRadius: '8px',
+                fontSize: compact ? '12px' : undefined,
                 opacity: (player.loanDebt || 0) <= 0 ? 0.5 : 1,
                 cursor: (player.loanDebt || 0) <= 0 ? 'not-allowed' : 'pointer'
               }}

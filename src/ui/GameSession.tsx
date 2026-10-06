@@ -178,6 +178,28 @@ export const GameSession: React.FC<GameSessionProps> = ({
     ? (campaign.map.nodes.find((n) => n.id === activePlayer.position)?.buildingId || null)
     : null;
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__openBuilding = (buildingId: string) => {
+        const node = campaign?.map.nodes.find((n) => n.buildingId === buildingId);
+        if (node && activePlayer) {
+          const newPlayers = [...gameState.players];
+          newPlayers[activePlayerIndex] = {
+            ...activePlayer,
+            position: node.id,
+          };
+          setGameState({ ...gameState, players: newPlayers });
+          openModal({ type: 'building' });
+        }
+      };
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).__openBuilding;
+      }
+    };
+  }, [campaign, activePlayer, activePlayerIndex, gameState, openModal, setGameState]);
+
   if (activePlayer && !activePlayer.turnFlags.hasSeenEvents && activePlayer.turnEvents && activePlayer.turnEvents.length > 0 && gameState.turn > 1) {
     return (
       <TurnEventsQueue 

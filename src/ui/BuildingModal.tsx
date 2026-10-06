@@ -48,10 +48,16 @@ export function BuildingModal({
   const { t } = useTranslation();
   const [clerkMessage, setClerkMessage] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'shop' | 'pawn'>('shop');
+  const [educationTab, setEducationTab] = useState<'available' | 'tree'>('available');
+  const [bankTab, setBankTab] = useState<'banking' | 'stocks' | 'loans'>('banking');
   const [isWorkDeckOpen, setIsWorkDeckOpen] = useState(true);
   const [isBreakInModalOpen, setIsBreakInModalOpen] = useState(false);
   const [isPantryModalOpen, setIsPantryModalOpen] = useState(false);
   const justUpdatedMessageRef = useRef(false);
+
+  // Overflow and compact layout detection
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isContentOverflowing, setIsContentOverflowing] = useState(false);
 
   // Movable and Resizable window state
   const modalRef = useRef<HTMLDivElement>(null);
@@ -292,8 +298,36 @@ export function BuildingModal({
   // Reset tab on building change
   useEffect(() => {
     setActiveTab('shop');
+    setEducationTab('available');
+    setBankTab('banking');
     setIsWorkDeckOpen(true);
+    setIsContentOverflowing(false);
   }, [currentBuildingId]);
+
+  // Dynamic layout check: if content overflows, trigger compact layout
+  useEffect(() => {
+    setIsContentOverflowing(false);
+  }, [currentBuildingId, educationTab, bankTab, activeTab]);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (!contentRef.current) return;
+      const el = contentRef.current;
+      if (!isContentOverflowing) {
+        if (el.scrollHeight > el.clientHeight + 2) {
+          setIsContentOverflowing(true);
+        }
+      } else {
+        if (el.scrollHeight + 35 <= el.clientHeight) {
+          setIsContentOverflowing(false);
+        }
+      }
+    };
+
+    checkOverflow();
+    const timer = setTimeout(checkOverflow, 40);
+    return () => clearTimeout(timer);
+  }, [currentBuildingId, educationTab, bankTab, activeTab, isContentOverflowing, measuredRect, isWorkDeckOpen]);
 
   if (!player || !campaign || !currentBuildingId || !building) return null;
 
@@ -439,6 +473,13 @@ export function BuildingModal({
               rules={rules}
               campaign={campaign}
               economicIndex={economicIndex}
+              activeTab={educationTab}
+              onTabChange={setEducationTab}
+              compact={isContentOverflowing}
+              onClerkSpeak={(msg) => {
+                setClerkMessage(msg);
+                justUpdatedMessageRef.current = true;
+              }}
             />
           )}
           {building.archetype === 'housing' && (
@@ -460,6 +501,9 @@ export function BuildingModal({
               rules={rules}
               economySimulation={economySimulation}
               onAction={handleActionIntercept}
+              activeTab={bankTab}
+              onTabChange={setBankTab}
+              compact={isContentOverflowing}
             />
           )}
           {building.archetype === 'pawnshop' && (
@@ -497,7 +541,7 @@ export function BuildingModal({
   return (
     <div 
       ref={modalRef}
-      className={`building-modal ${rules?.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}`}
+      className={`building-modal ${rules?.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}${isContentOverflowing ? ' building-modal--compact' : ''}`}
       style={{
         '--modal-margin': `${modalMargin}px`,
         ...(position ? { left: `${position.x}px`, top: `${position.y}px` } : {}),
@@ -634,6 +678,64 @@ export function BuildingModal({
         </div>
       )}
 
+      {/* Tab Ears protruding above the modal header */}
+      {building.archetype === 'education' && (
+        <div className="building-modal__tab-ears" data-testid="university-tab-ears">
+          <button
+            type="button"
+            data-testid="tab-ear-available"
+            className={`building-modal__tab-ear ${educationTab === 'available' ? 'building-modal__tab-ear--active' : ''}`}
+            onClick={() => setEducationTab('available')}
+          >
+            🎓 {t('university.tabAvailable', { defaultValue: 'Available Classes' })}
+          </button>
+          <button
+            type="button"
+            data-testid="tab-ear-tree"
+            className={`building-modal__tab-ear ${educationTab === 'tree' ? 'building-modal__tab-ear--active' : ''}`}
+            onClick={() => setEducationTab('tree')}
+          >
+            🌳 {t('university.tabTree', { defaultValue: 'Class Tree' })}
+          </button>
+        </div>
+      )}
+
+      {building.archetype === 'bank' && (
+        <div className="building-modal__tab-ears" data-testid="bank-tab-ears">
+          <button
+            type="button"
+            data-testid="tab-ear-banking"
+            className={`building-modal__tab-ear ${bankTab === 'banking' ? 'building-modal__tab-ear--active' : ''}`}
+            onClick={() => setBankTab('banking')}
+          >
+            🏦 {t('bank.tabBanking', { defaultValue: 'Bank' })}
+          </button>
+          {(!campaign || !campaign.stocks || campaign.stocks.length > 0) && (
+            <button
+              type="button"
+              data-testid="tab-ear-stocks"
+              className={`building-modal__tab-ear ${bankTab === 'stocks' ? 'building-modal__tab-ear--active' : ''}`}
+              onClick={() => {
+                if (bankTab !== 'stocks') {
+                  handleActionIntercept({ type: 'open_broker' });
+                }
+                setBankTab('stocks');
+              }}
+            >
+              📈 {t('bank.tabStocks', { defaultValue: 'Stocks' })}
+            </button>
+          )}
+          <button
+            type="button"
+            data-testid="tab-ear-loans"
+            className={`building-modal__tab-ear ${bankTab === 'loans' ? 'building-modal__tab-ear--active' : ''}`}
+            onClick={() => setBankTab('loans')}
+          >
+            📝 {t('bank.tabLoans', { defaultValue: 'Loans' })}
+          </button>
+        </div>
+      )}
+
       {!hasPendingMiniGame && (
         <button className="building-modal__close" onClick={onClose}>&times;</button>
       )}
@@ -720,6 +822,7 @@ export function BuildingModal({
       </div>
 
       <div 
+        ref={contentRef}
         className="building-modal__content" 
         style={{ 
           display: 'flex', 
@@ -733,14 +836,14 @@ export function BuildingModal({
           {renderBuildingServices()}
         </div>
 
-        {/* Docked bottom WORK button when employed here (Advanced GUI) */}
-        {playerJobHere && isAdvancedWorkGUI && (
+        {/* Docked bottom WORK button when employed here and console is closed (Advanced GUI) */}
+        {playerJobHere && isAdvancedWorkGUI && !isWorkDeckOpen && (
           <div 
             className="building-modal__work-dock"
             data-testid="tab-work"
             style={{
               marginTop: 'auto',
-              paddingTop: '8px',
+              paddingTop: isContentOverflowing ? '4px' : '8px',
               borderTop: '1px solid rgba(255, 255, 255, 0.12)',
               display: 'flex',
               justifyContent: 'center',
@@ -751,53 +854,34 @@ export function BuildingModal({
             <button
               data-testid="btn-toggle-work"
               data-action-target={`work-${playerJobHere.id}`}
-              onClick={() => !hasPendingMiniGame && setIsWorkDeckOpen(!isWorkDeckOpen)}
+              onClick={() => !hasPendingMiniGame && setIsWorkDeckOpen(true)}
               disabled={hasPendingMiniGame}
               style={{
                 width: '100%',
-                maxWidth: '520px',
-                padding: '9px 16px',
+                maxWidth: isContentOverflowing ? '260px' : '360px',
+                padding: isContentOverflowing ? '4px 12px' : '6px 14px',
                 background: hasPendingMiniGame
                   ? '#333'
-                  : (isWorkDeckOpen
-                    ? 'linear-gradient(145deg, #0284c7 0%, #0369a1 100%)'
-                    : 'linear-gradient(145deg, #059669 0%, #047857 100%)'),
+                  : 'linear-gradient(145deg, #059669 0%, #047857 100%)',
                 color: hasPendingMiniGame ? '#777' : '#fff',
-                border: hasPendingMiniGame ? '2px solid #555' : (isWorkDeckOpen ? '2px solid #38bdf8' : '2px solid #34d399'),
-                borderRadius: '8px',
+                border: hasPendingMiniGame ? '1px solid #555' : '1px solid #34d399',
+                borderRadius: '6px',
                 fontWeight: 'bold',
-                fontSize: '0.92rem',
+                fontSize: isContentOverflowing ? '0.78rem' : '0.84rem',
                 cursor: hasPendingMiniGame ? 'not-allowed' : 'pointer',
                 opacity: hasPendingMiniGame ? 0.6 : 1,
                 boxShadow: hasPendingMiniGame
                   ? 'none'
-                  : (isWorkDeckOpen
-                    ? '0 0 14px rgba(56, 189, 248, 0.4), 0 3px 10px rgba(0,0,0,0.5)'
-                    : '0 0 14px rgba(52, 211, 153, 0.4), 0 3px 10px rgba(0,0,0,0.5)'),
+                  : '0 0 10px rgba(52, 211, 153, 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
+                gap: '6px',
                 transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ fontSize: '1.2rem' }}>💼</span>
-              <span>
-                {isWorkDeckOpen
-                  ? t('workStation.hideWorkDeck', { defaultValue: 'Hide Work Console' })
-                  : t('workStation.showWorkDeck', {
-                      defaultValue: `Work Shift (${playerJobHere.title} — $${player.currentWage || playerJobHere.baseWage}/hr)`
-                    })}
-              </span>
-              <span style={{
-                fontSize: '0.75rem',
-                background: 'rgba(0,0,0,0.35)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                color: '#cbd5e1'
-              }}>
-                ⏳ {formatHours(player.hoursRemaining)}h
-              </span>
+              <span style={{ fontSize: '1.1rem' }}>💼</span>
+              <span>{t('workStation.workBtnShort', { defaultValue: 'WORK' })}</span>
             </button>
           </div>
         )}

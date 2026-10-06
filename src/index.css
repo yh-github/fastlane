@@ -389,6 +389,111 @@ body {
   box-shadow: none;
 }
 
+/* Browser / Folder Style Tab Ears protruding above the modal header */
+.building-modal__tab-ears {
+  position: absolute;
+  top: -31px;
+  left: 20px;
+  display: flex;
+  gap: 6px;
+  z-index: 55;
+  pointer-events: auto;
+}
+
+.building-modal__tab-ear {
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  border-bottom: none;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  padding: 5px 14px;
+  font-size: 0.80rem;
+  font-weight: 600;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.4);
+  text-transform: none;
+}
+
+.building-modal__tab-ear:hover {
+  color: #e2e8f0;
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(0, 229, 255, 0.6);
+}
+
+.building-modal__tab-ear--active {
+  background: var(--panel-bg, rgba(20, 20, 40, 0.98));
+  color: var(--accent-cyan, #00e5ff);
+  font-weight: 700;
+  border-color: var(--accent-cyan, #00e5ff);
+  border-bottom: 2px solid var(--panel-bg, rgba(20, 20, 40, 0.98));
+  box-shadow: 0 -4px 12px rgba(0, 229, 255, 0.25);
+  transform: translateY(1px);
+}
+
+/* Compact mode modifiers */
+.building-modal--compact {
+  padding: calc(8px * var(--board-scale, 1)) calc(14px * var(--board-scale, 1)) !important;
+}
+
+.building-modal--compact .building-modal__header {
+  padding-bottom: 4px !important;
+  margin-bottom: 6px !important;
+  gap: 8px !important;
+}
+
+.building-modal--compact .building-modal__face {
+  font-size: 1.3rem !important;
+  padding: 2px 6px !important;
+  border-width: 1px !important;
+}
+
+.building-modal--compact .building-modal__title-group h2 {
+  font-size: 1.05rem !important;
+  margin-bottom: 0px !important;
+}
+
+.building-modal--compact .building-modal__close {
+  top: 8px !important;
+  inset-inline-end: 10px !important;
+  font-size: 1.2rem !important;
+}
+
+.building-modal--compact .building-modal__work-dock {
+  padding-top: 4px !important;
+}
+
+.building-modal--compact .building-modal__work-dock button {
+  padding: 4px 10px !important;
+  font-size: 0.78rem !important;
+}
+
+.building-modal--compact .interaction-panel {
+  gap: 6px !important;
+}
+
+.building-modal--compact .university-classes-grid {
+  gap: 6px !important;
+}
+
+.building-modal--compact .university-class-card {
+  padding: 8px !important;
+}
+
+.building-modal--compact .bank-actions-grid {
+  gap: 8px !important;
+}
+
+.building-modal--compact .bank-action-btn {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+}
+
 /* Dashboard Controls (for End Turn) */
 .dashboard__controls {
   display: flex;
