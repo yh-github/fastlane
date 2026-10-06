@@ -1174,7 +1174,9 @@
     "quitConfirmTitle": "האם לצאת מהמשחק?",
     "quitConfirmMsg": "האם אתה בטוח שברצונך לצאת? ההתקדמות במשחק הנוכחי תאבד.",
     "confirmQuit": "כן, צא",
-    "cancel": "ביטול"
+    "cancel": "ביטול",
+    "enterFullscreen": "מסך מלא",
+    "exitFullscreen": "צא ממסך מלא"
   },
   "debug": {
     "modalTitle": "ניפוי אירועים וכלכלה (Debug)",
