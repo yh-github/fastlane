@@ -21,6 +21,7 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [isDebugModalOpen, setIsDebugModalOpen] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleCategory = (catId: string) => {
     setCollapsedCategories(prev => ({
@@ -194,8 +195,21 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
   return (
     <>
       <div className="fullscreen-overlay settings-modal-overlay" style={{ zIndex: 9999 }}>
-        <div className="building-modal settings-modal-content" style={{ maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
-          <button className="building-modal__close" onClick={onClose}>×</button>
+        <div 
+          className={`building-modal settings-modal-content ${isFullscreen ? 'settings-modal-content--fullscreen' : ''}`}
+          data-testid="settings-modal-content"
+          style={{ display: 'flex', flexDirection: 'column' }}
+        >
+          <button className="building-modal__close" onClick={onClose} aria-label="Close">×</button>
+          <button 
+            type="button"
+            className="settings-modal__fullscreen-btn"
+            data-testid="btn-settings-fullscreen"
+            onClick={() => setIsFullscreen(prev => !prev)}
+            title={isFullscreen ? t('settings.exitFullscreen', { defaultValue: 'Exit Full Screen' }) : t('settings.enterFullscreen', { defaultValue: 'Full Screen' })}
+          >
+            {isFullscreen ? '🗗' : '⛶'}
+          </button>
           <div className="building-modal__header">
             <div className="building-modal__face">⚙️</div>
             <div className="building-modal__title-group">

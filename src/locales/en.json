@@ -1130,7 +1130,9 @@
     "quitConfirmTitle": "Quit Current Game?",
     "quitConfirmMsg": "Are you sure you want to quit? Current game progress will be lost.",
     "confirmQuit": "Yes, Quit",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "enterFullscreen": "Full Screen",
+    "exitFullscreen": "Exit Full Screen"
   },
   "debug": {
     "modalTitle": "Debug Events & Economy",

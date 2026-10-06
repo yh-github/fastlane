@@ -193,5 +193,40 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     if (bankBox1024) {
       expect(bankBox1024.y + bankBox1024.height).toBeLessThanOrEqual(645);
     }
+
+    // Close Bank modal
+    await page.locator('.building-modal__close').click();
+    await expect(buildingModal).toBeHidden({ timeout: 3000 });
+
+    // 8. Test Settings modal on small screen: does not shrink to board scale and can be full screen
+    await page.setViewportSize({ width: 800, height: 600 });
+    const settingsBtn = page.locator('#btn-settings');
+    await expect(settingsBtn).toBeVisible();
+    await settingsBtn.click();
+
+    const settingsOverlay = page.locator('.settings-modal-overlay');
+    await expect(settingsOverlay).toBeVisible();
+
+    const settingsContent = page.locator('[data-testid="settings-modal-content"]');
+    await expect(settingsContent).toBeVisible();
+
+    // Verify Settings content occupies the full small viewport instead of shrinking to board scale
+    const settingsBox = await settingsContent.boundingBox();
+    expect(settingsBox).not.toBeNull();
+    if (settingsBox) {
+      expect(settingsBox.width).toBeGreaterThanOrEqual(780);
+      expect(settingsBox.height).toBeGreaterThanOrEqual(580);
+    }
+
+    // Test fullscreen button toggle
+    const fullscreenToggleBtn = page.locator('[data-testid="btn-settings-fullscreen"]');
+    await expect(fullscreenToggleBtn).toBeVisible();
+    await fullscreenToggleBtn.click();
+    await expect(settingsContent).toHaveClass(/settings-modal-content--fullscreen/);
+
+    // Close Settings modal via close button
+    const closeSettingsBtn = page.locator('.settings-modal-content button').first();
+    await closeSettingsBtn.click();
+    await expect(settingsOverlay).toBeHidden();
   });
 });

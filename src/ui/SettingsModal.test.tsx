@@ -324,5 +324,29 @@ describe('SettingsModal', () => {
     expect(onQuitGame).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('supports toggling full screen layout via header fullscreen button', () => {
+    render(
+      <SettingsModal
+        gameState={dummyGameState}
+        setGameState={() => {}}
+        onClose={() => {}}
+      />
+    );
+
+    const modalContent = screen.getByTestId('settings-modal-content');
+    expect(modalContent).not.toHaveClass('settings-modal-content--fullscreen');
+
+    const fullscreenBtn = screen.getByTestId('btn-settings-fullscreen');
+    expect(fullscreenBtn).toBeInTheDocument();
+
+    // Toggle fullscreen on
+    fireEvent.click(fullscreenBtn);
+    expect(modalContent).toHaveClass('settings-modal-content--fullscreen');
+
+    // Toggle fullscreen off
+    fireEvent.click(fullscreenBtn);
+    expect(modalContent).not.toHaveClass('settings-modal-content--fullscreen');
+  });
 });
 
