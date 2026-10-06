@@ -30,6 +30,7 @@ export interface CampaignConfig {
   eventRules: EventRules;
   gameRules: GameRules;
   baseCampaign?: string;
+  hasCannedFood?: boolean;
 }
 
 export type {
@@ -214,6 +215,7 @@ export interface CampaignBundle {
   messages: Record<string, string>;
   weekends: WeekendDef;
   synergies: SynergyDef[];
+  hasCannedFood?: boolean;
 }
 
 // ─── Loader Functions ───────────────────────────────────────────
@@ -441,6 +443,9 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
       finalBundle.config.winConditions.push({ stat: 'wellbeing', target: 100, label: 'Well-being' });
     }
   }
+
+  finalBundle.hasCannedFood = finalBundle.config.hasCannedFood ??
+    (finalBundle.items || []).some(item => item.subcategory === 'canned');
 
   validateBundle(finalBundle);
 

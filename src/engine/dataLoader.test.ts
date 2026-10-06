@@ -14,6 +14,7 @@ describe('dataLoader', () => {
     expect(floppy.config.gameRules?.helpfulUI).toBe(false);
     expect(floppy.config.gameRules?.enableAnimations).toBe(false);
     expect(floppy.config.gameRules?.turnStartAtHome).toBe(false);
+    expect(floppy.hasCannedFood).toBe(false);
   });
 
   it('loads cdrom campaign inheriting floppy settings', async () => {
@@ -21,6 +22,7 @@ describe('dataLoader', () => {
     expect(cdrom.config.gameRules?.helpfulUI).toBe(false);
     expect(cdrom.config.gameRules?.enableAnimations).toBe(false);
     expect(cdrom.config.gameRules?.turnStartAtHome).toBe(false);
+    expect(cdrom.hasCannedFood).toBe(false);
   });
 
   it('loads qol_improved campaign with expected rule overrides', async () => {
@@ -32,6 +34,7 @@ describe('dataLoader', () => {
     expect(qol.config.gameRules?.bypassDoctorIfBroke).toBe(true);
     expect(qol.config.gameRules?.reducedDegreeStatBonus).toBe(false);
     expect(qol.config.gameRules?.turnStartAtHome).toBe(false);
+    expect(qol.hasCannedFood).toBe(false);
   });
 
   it('loads advanced campaign inheriting qol_improved base settings with advanced rule overrides', async () => {
@@ -48,6 +51,7 @@ describe('dataLoader', () => {
     expect(advanced.config.statRules?.lowSpiritsThreshold).toBe(10);
     expect(advanced.config.gameRules?.reducedDegreeStatBonus).toBe(false);
     expect(advanced.config.gameRules?.turnStartAtHome).toBe(true);
+    expect(advanced.hasCannedFood).toBe(true);
     // Verify base items from floppy/cdrom/qol are inherited
     expect(advanced.items.length).toBeGreaterThan(0);
     expect(advanced.jobs.length).toBeGreaterThan(0);

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import { formatHours } from '../../../engine/statMath';
+import { MessIcon } from '../../icons/MessIcon';
 
 export type HomeActionType = 'relax' | 'host' | 'clean' | 'service' | 'pantry';
 
@@ -36,7 +37,7 @@ export interface HomeCardHelpModalProps {
 }
 
 interface SectionItem {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   desc: string;
 }
@@ -105,7 +106,7 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
         });
         if (rules?.trackMess && scaledMess > 0) {
           outputs.push({
-            icon: '🧹',
+            icon: <MessIcon />,
             title: 'Apartment Mess',
             desc: `+${scaledMess} Mess generated from spending time living at home`
           });
@@ -155,7 +156,7 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
         desc: '-1 Physical Condition from entertaining and running the gathering'
       });
       outputs.push({
-        icon: '🧹',
+        icon: <MessIcon />,
         title: 'Post-Party Mess',
         desc: 'Generates significant clutter and dishes that will need cleaning'
       });
@@ -185,7 +186,7 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
         });
       }
       outputs.push({
-        icon: '🧹',
+        icon: <MessIcon />,
         title: 'Mess Reduction (2 to 6)',
         desc: 'Cleans 2 to 6 units of accumulated apartment clutter and dirty dishes.'
       });
@@ -212,7 +213,7 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
         desc: `${cleaningServiceCost} hour to let them in and inspect`
       });
       outputs.push({
-        icon: '🧹',
+        icon: <MessIcon />,
         title: '10 Mess Reduction',
         desc: 'Removes 10 units of accumulated apartment mess.'
       });

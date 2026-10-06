@@ -271,9 +271,15 @@ export function createMockCampaign(overrides: MockCampaignOverrides = {}): Campa
     },
   };
 
+  const items = overrides.items || defaultCampaign.items;
+  const hasCannedFood = overrides.hasCannedFood ??
+    overrides.config?.hasCannedFood ??
+    items.some(item => item.subcategory === 'canned');
+
   return {
     ...defaultCampaign,
     ...overrides,
+    hasCannedFood,
     config: {
       ...defaultCampaign.config,
       ...(overrides.config || {}),

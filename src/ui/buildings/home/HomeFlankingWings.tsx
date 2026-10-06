@@ -4,6 +4,7 @@ import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import { formatHours, messGrowth } from '../../../engine/statMath';
 import { HomeCardHelpModal, type HomeActionType } from './HomeCardHelpModal';
+import { MessIcon } from '../../icons/MessIcon';
 
 export interface HomeFlankingWingsProps {
   activeWing?: 'leisure' | 'chores' | null;
@@ -273,14 +274,22 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                 <div style={{ color: '#86efac', display: 'flex', flexWrap: 'wrap', gap: '4px', fontWeight: 600 }}>
                   <span>+{physGain} 💪 Phys</span>
                   <span>+{mentalGain} 🧠 Mental</span>
-                  {trackMess && scaledMess > 0 && <span style={{ color: '#f59e0b' }}>+{scaledMess} 🧹 Mess</span>}
+                  {trackMess && scaledMess > 0 && (
+                    <span style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                      +{scaledMess} <MessIcon />
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                   <div style={{ color: '#86efac', display: 'flex', flexWrap: 'wrap', gap: '4px', fontWeight: 600 }}>
                     <span>+{physGain} 💪 Phys</span>
                     <span>+{mentalGain} 🧠 Mental</span>
-                    {trackMess && scaledMess > 0 && <span style={{ color: '#f59e0b' }}>+{scaledMess} 🧹 Mess</span>}
+                    {trackMess && scaledMess > 0 && (
+                      <span style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                        +{scaledMess} <MessIcon />
+                      </span>
+                    )}
                   </div>
                   <div style={{ color: '#fca5a5', fontWeight: 700, fontSize: '0.66rem' }}>
                     ⚠️ Starving: -1 Max 💪 & 🧠!
@@ -393,8 +402,10 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                 <span style={{ color: '#f87171' }}>-{socialCostRange}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: '0.66rem' }}>
-                <span style={{ color: '#fca5a5' }}>-1 💪 Fatigue</span>
-                <span style={{ color: '#f59e0b' }}>{hostMessRangeStr} 🧹 Mess</span>
+                <span style={{ color: '#fca5a5' }}>-1 💪</span>
+                <span style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                  {hostMessRangeStr} <MessIcon />
+                </span>
               </div>
             </div>
 
@@ -543,14 +554,16 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               gap: '3px'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600 }}>
-                <span style={{ color: '#86efac' }}>{cleanMessRangeStr} 🧹 Mess</span>
+                <span style={{ color: '#86efac', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                  {cleanMessRangeStr} <MessIcon />
+                </span>
                 <span style={{ color: '#38bdf8' }}>$0 Free</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.66rem' }}>
                 {usePhysicalMental ? (
-                  <span style={{ color: '#fca5a5' }}>-{cleanPhysGain} 💪 Fatigue</span>
+                  <span style={{ color: '#fca5a5' }}>-{cleanPhysGain} 💪</span>
                 ) : (
-                  <span style={{ color: '#94a3b8' }}>0 💪 Fatigue</span>
+                  <span style={{ color: '#94a3b8' }}>0 💪</span>
                 )}
                 <span style={{ color: '#94a3b8' }}>
                   {t('homeRelax.manualLabor', { defaultValue: 'Manual Labor' })}
@@ -661,13 +674,15 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               gap: '3px'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600 }}>
-                <span style={{ color: '#c084fc' }}>-10 🧹 Mess</span>
+                <span style={{ color: '#c084fc', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                  -10 <MessIcon />
+                </span>
                 <span style={{ color: canAffordService ? '#f87171' : '#ef4444', fontWeight: 700 }}>
                   -${cleaningServicePrice}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.66rem' }}>
-                <span style={{ color: '#86efac' }}>0 💪 Fatigue</span>
+                <span style={{ color: '#86efac' }}>0 💪</span>
                 <span style={{ color: '#94a3b8' }}>
                   {t('homeRelax.proCleaners', { defaultValue: 'Pro Cleaners' })}
                 </span>

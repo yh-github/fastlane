@@ -323,6 +323,12 @@ export function BuildingModal({
   const housing = campaign.housing.find(h => h.id === player.currentHousingId);
   const homeNode = campaign.map.nodes.find(n => n.id === housing?.homeNodeId);
   const livesHere = homeNode?.buildingId === building.id;
+  const isPenthouse = player.currentHousingId === 'penthouse';
+  const buildingTitle = (building.archetype === 'home' && livesHere)
+    ? (housing
+        ? t(`housing.${housing.id}`, { defaultValue: housing.name })
+        : (isPenthouse ? t('housing.penthouse', { defaultValue: 'Penthouse Suite' }) : t(`building.${building.id}`, { defaultValue: building.name })))
+    : t(`building.${building.id}`, { defaultValue: building.name });
 
   const isWeek4 = turn % 4 === 0;
   const rentDue = player.rentPaidUntilWeek <= turn + 1;
@@ -333,6 +339,8 @@ export function BuildingModal({
   let currentFace = getClerkFace(building.id, building.archetype);
   if (building.archetype === 'home' && !livesHere) {
     currentFace = '🚫';
+  } else if (building.archetype === 'home' && livesHere && isPenthouse) {
+    currentFace = '🏙️';
   } else if (building.id === 'apartment_complex' && !isRentOfficeOpen) {
     currentFace = '🚫';
   }
@@ -644,7 +652,7 @@ export function BuildingModal({
         </div>
         <div className="building-modal__title-group">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-            <h2>{t(`building.${building.id}`, { defaultValue: building.name })}</h2>
+            <h2>{buildingTitle}</h2>
             {rules?.helpfulUI && building.archetype === 'home' && livesHere && (() => {
               const robberyRate = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
               const isBaseHome = !rules?.advancedHomeGUI && !rules?.usePhysicalMentalConditions;
