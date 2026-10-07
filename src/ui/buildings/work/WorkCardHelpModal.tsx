@@ -96,7 +96,9 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         inputs.push({
           icon: '👔',
           title: 'Management Tag',
-          desc: isExecMgmt ? 'Awards +0.50 Management Skill per Exp earned.' : 'Awards +0.25 Management Skill per Exp earned.'
+          desc: isExecMgmt
+            ? 'Awards +0.50 Management Skill per Exp earned. Executive oversight brings high mental accountability: +1 weekly Dep decay, and mental mistakes trigger below 20 Mental.'
+            : 'Awards +0.25 Management Skill per Exp earned.'
         });
       }
 

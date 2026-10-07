@@ -1002,8 +1002,8 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
         "business_admin",
         "engineering",
       ],
-      "dependability": 70,
-      "experience": 70,
+      "dependability": 80,
+      "experience": 80,
       "uniform": "business",
     },
     "tags": [
@@ -1293,7 +1293,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
     "perks": [],
     "requirements": {
       "degrees": [
-        "pre_engineering",
+        "electronics",
       ],
       "dependability": 35,
       "experience": 35,
