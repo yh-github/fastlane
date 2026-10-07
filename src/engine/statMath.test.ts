@@ -81,6 +81,11 @@ describe('statMath', () => {
     expect(calcDependabilityDecay(50, mockStatRules, 0, true, 99)).toBe(49);
   });
 
+  it('calcDependabilityDecay applies +1 extra decay for executive management jobs in advanced mode', () => {
+    expect(calcDependabilityDecay(50, mockStatRules, 50, true, 0, false, true)).toBe(44);
+    expect(calcDependabilityDecay(50, mockStatRules, 50, true, 25, false, true)).toBe(45);
+  });
+
   it('calcMaxDependability', () => {
     expect(calcMaxDependability(0, 0)).toBe(20);
     expect(calcMaxDependability(10, 5)).toBe(35); // 20 + 10 + 5

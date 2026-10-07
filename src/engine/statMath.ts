@@ -325,7 +325,8 @@ export function calcDependabilityDecay(
   jobRequiredDep?: number,
   isAdvanced?: boolean,
   social: number = 0,
-  isHighDowntime: boolean = false
+  isHighDowntime: boolean = false,
+  isExecutiveManagement: boolean = false
 ): number {
   if (isAdvanced) {
     const baseDepLoss = (jobRequiredDep !== undefined && jobRequiredDep > 0)
@@ -335,6 +336,9 @@ export function calcDependabilityDecay(
     let depLoss = Math.max(1, baseDepLoss - socialOffset);
     if (isHighDowntime) {
       depLoss = Math.max(1, Math.floor(depLoss / 2));
+    }
+    if (isExecutiveManagement) {
+      depLoss += 1;
     }
     return clampZero(current - depLoss);
   }

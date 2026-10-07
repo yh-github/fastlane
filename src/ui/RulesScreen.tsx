@@ -714,7 +714,7 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
                                 def.descKey === 'tag.heavy_physical_desc' ? '+0.5 Physical cost per shift. Overworking risks injury.' :
                                 def.descKey === 'tag.frontline_service_desc' ? 'Customer-facing: social score impacts shift earnings & tips.' :
                                 def.descKey === 'tag.middle_management_desc' ? '+1 Mental cost, Look Busy disabled. Builds Skill_Mgmt.' :
-                                def.descKey === 'tag.executive_management_desc' ? 'Requires Skill_Mgmt >= Exp/10. Builds +0.50 Skill_Mgmt/shift.' :
+                                def.descKey === 'tag.executive_management_desc' ? 'Requires Skill_Mgmt >= Exp/10. Builds +0.50 Skill_Mgmt/shift. High mental pressure: +1 weekly Dep decay, mental mistakes trigger < 20.' :
                                 def.descKey === 'tag.high_downtime_desc' ? 'Low fatigue accumulation, protects dependability decay.' :
                                 def.descKey === 'tag.technical_desc' ? 'Builds +0.25 Skill_Tech per shift.' :
                                 def.descKey === 'tag.look_fit_desc' ? 'Requires Physical Condition >= 30. High fitness scales hiring chance.' :

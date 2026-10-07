@@ -20,6 +20,7 @@ import {
   getJobWorkMistakeSocialPenalty,
   getLookBusyPhysicalCostModifier,
   getJobPhysicalFatigueThreshold,
+  getJobMentalMistakeThreshold,
   isManagementJob,
   isExecutiveManagementJob
 } from './jobTags';
@@ -543,17 +544,19 @@ export function calcWorkShiftSummary(
   }
 
   const physMistakeThreshold = hasJobTag(job, 'heavy_physical') ? 20 : 10;
+  const mentalMistakeThreshold = getJobMentalMistakeThreshold(job);
   const mentalMultiplier = hasJobTag(job, 'heavy_physical') ? 0.5 : 1.0;
   const isFrontline = hasJobTag(job, 'frontline_service');
   const socialMistakeThreshold = isFrontline ? 20 : 10;
+  const isExecJob = hasJobTag(job, 'executive_management');
   const curMental = player.mentalCondition ?? 50;
 
   for (const m of modes) {
     const physChance = (isAdvanced && m.physCost > 0 && curPhys < physMistakeThreshold)
       ? Math.min(1.0, Math.max(0, (physMistakeThreshold - curPhys) * 0.025))
       : 0;
-    const mentalChance = (isAdvanced && m.mentalCost > 0 && curMental < 10)
-      ? Math.min(1.0, Math.max(0, (10 - curMental) * 0.025 * mentalMultiplier))
+    const mentalChance = (isAdvanced && (m.mentalCost > 0 || isExecJob) && curMental < mentalMistakeThreshold)
+      ? Math.min(1.0, Math.max(0, (mentalMistakeThreshold - curMental) * 0.025 * mentalMultiplier))
       : 0;
     const modifiesSocial = isFrontline ||
                            (m.id === 'look_busy' && lbSocialPenalty > 0) ||
@@ -850,9 +853,11 @@ export function workShift(
       physMistake = resolveDecision(replay, `work_phys_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < physChance);
     }
 
-    if (mentalCost > 0 && oldMental < 10) {
+    const mentalMistakeThreshold = getJobMentalMistakeThreshold(job);
+    const isExecMgmt = hasJobTag(job, 'executive_management');
+    if ((mentalCost > 0 || isExecMgmt) && oldMental < mentalMistakeThreshold) {
       const mentalMultiplier = hasJobTag(job, 'heavy_physical') ? 0.5 : 1.0;
-      const mentalChance = (10 - oldMental) * 0.025 * mentalMultiplier;
+      const mentalChance = (mentalMistakeThreshold - oldMental) * 0.025 * mentalMultiplier;
       mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
     }
 

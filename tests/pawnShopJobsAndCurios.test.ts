@@ -267,11 +267,11 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
   });
 
   describe('Horologist & Butcher balance', () => {
-    it('pawn_horologist uses pre_engineering degree with technical tag at $13/hr', () => {
+    it('pawn_horologist uses electronics degree with technical tag at $13/hr', () => {
       const horologist = campaign.jobs.find((j: any) => j.id === 'pawn_horologist');
       expect(horologist).toBeDefined();
       expect(horologist.baseWage).toBe(13);
-      expect(horologist.requirements.degrees).toContain('pre_engineering');
+      expect(horologist.requirements.degrees).toContain('electronics');
       expect(hasJobTag(horologist, 'technical')).toBe(true);
       expect(hasJobTag(horologist, 'high_downtime')).toBe(true);
     });

@@ -1253,6 +1253,69 @@ describe('Job Engine', () => {
         expect(qualifiedRes.updated.currentJobId).toBe('factory_gen_mgr');
       });
 
+      it('doubles mental mistake threshold to 20 for executive_management jobs', () => {
+        const execJob: JobDef = {
+          id: 'burger_mgr',
+          title: 'Manager',
+          locationId: 'burger_palace',
+          baseWage: 8,
+          requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'dress' },
+          tags: ['executive_management'],
+          perks: []
+        };
+        const standardJob: JobDef = {
+          id: 'standard_clerk',
+          title: 'Clerk',
+          locationId: 'burger_palace',
+          baseWage: 6,
+          requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+          tags: [],
+          perks: []
+        };
+
+        const player = {
+          id: 'p_exec',
+          currentJobId: 'burger_mgr',
+          dependability: 30,
+          hoursRemaining: 10,
+          currentWage: 10,
+          physicalCondition: 50,
+          mentalCondition: 15,
+          mentalConditionMax: 50,
+          mistakesByLocation: {},
+          turnFlags: {},
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+
+        const execDetails = calcWorkShiftSummary(player, execJob, 6, advancedRules as any);
+        const standardDetails = calcWorkShiftSummary(player, standardJob, 6, advancedRules as any);
+
+        const execWW = execDetails.modes.find(m => m.id === 'work_work')!;
+        const stdWW = standardDetails.modes.find(m => m.id === 'work_work')!;
+
+        // Standard job threshold is 10, so at mental 15 chance is 0
+        expect(stdWW.mentalMistakeChance).toBe(0);
+
+        // Executive job threshold is 20, so at mental 15 chance is (20 - 15) * 0.025 = 0.125
+        expect(execWW.mentalMistakeChance).toBeCloseTo(0.125, 4);
+
+        // Executing workShift with mental mistake forced via replay context
+        const resMistake = workShift(
+          player,
+          execJob,
+          1,
+          advancedRules as any,
+          undefined,
+          'work_work',
+          new Random(1),
+          { inDecisions: [{ type: `work_mental_mistake_${player.id}_1`, result: true }], outDecisions: [] }
+        );
+        expect(resMistake.updated.mentalConditionMax).toBe(49);
+        expect(resMistake.updated.mistakesByLocation?.['burger_palace']).toBe(1);
+      });
+
       it('reduces Max_Physical by 0.5 on Grind/Overtime for heavy_physical, and on Overtime for normal jobs', () => {
         const heavyJob: JobDef = {
           id: 'burger_cook',

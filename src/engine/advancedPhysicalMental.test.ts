@@ -485,6 +485,8 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(calcDependabilityDecay(50, ({ dependabilityWeeklyDecay: 3 } as any), 15, true)).toBe(48);
       // Unemployed D_REQ = 0 -> default 3 loss -> 50 - 3 = 47
       expect(calcDependabilityDecay(50, ({ dependabilityWeeklyDecay: 3 } as any), 0, true)).toBe(47);
+      // Executive management job (50 req) -> 5 base + 1 exec = 6 loss -> 50 - 6 = 44
+      expect(calcDependabilityDecay(50, ({ dependabilityWeeklyDecay: 3 } as any), 50, true, 0, false, true)).toBe(44);
     });
 
     it('doctor visits trigger on Physical < 10 and unpaid bills convert to loan debt', () => {

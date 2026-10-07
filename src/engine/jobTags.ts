@@ -118,6 +118,17 @@ export function getJobMentalCostModifier(job: JobDef | undefined | null): number
 }
 
 /**
+ * Get the mental mistake threshold for this job.
+ * Executive management roles double the threshold to 20 due to high strategic pressure and scrutiny.
+ */
+export function getJobMentalMistakeThreshold(job: JobDef | undefined | null): number {
+  if (hasJobTag(job, 'executive_management')) {
+    return 20;
+  }
+  return 10;
+}
+
+/**
  * Check if face_time mode is allowed for this job.
  */
 export function isFaceTimeAllowed(job: JobDef | undefined | null): boolean {

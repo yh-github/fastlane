@@ -195,7 +195,8 @@ export function processMaintenanceAndDecayPhase(
   }
   const curJob = player.currentJobId && campaign?.jobs ? campaign.jobs.find(j => j.id === player.currentJobId) : undefined;
   const isHighDowntime = curJob?.tags?.includes('high_downtime') ?? false;
-  player.dependability = calcDependabilityDecay(player.dependability, campaign.config.statRules, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, player.social, isHighDowntime); 
+  const isExecMgmt = curJob?.tags?.includes('executive_management') ?? false;
+  player.dependability = calcDependabilityDecay(player.dependability, campaign.config.statRules, curJob?.requirements?.dependability, state.rules.usePhysicalMentalConditions, player.social, isHighDowntime, isExecMgmt); 
 
   // 8. Apartment Robbery
   const queuedAptRobbery = state.debugQueue?.find(e => e.type === 'apartment_robbery' && (e.playerId === player.id || !e.playerId));
