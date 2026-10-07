@@ -192,10 +192,30 @@ export const GameSession: React.FC<GameSessionProps> = ({
           openModal({ type: 'building' });
         }
       };
+      (window as any).__triggerAppraisalDilemma = (dilemma?: any) => {
+        if (activePlayer) {
+          const newPlayers = [...gameState.players];
+          newPlayers[activePlayerIndex] = {
+            ...activePlayer,
+            pendingMiniGame: dilemma || {
+              itemTitle: 'Antique Swiss Tourbillon Pocketwatch',
+              options: [
+                { type: 'cash', title: 'Quick Escapement Adjustment', description: 'Clean gears for quick tip.', cashAmount: 25 },
+                { type: 'standing', title: 'Master Horology Certification', description: 'Authenticate for shop record.', depAmount: 2, mentalAmount: 1 },
+                { type: 'item', title: 'Vintage Horological Curio', description: 'Take piece for display.', itemType: 'knick_knack' },
+                { type: 'skill', title: 'Study Mechanical Escapement', description: 'Disassemble mechanism.', techSkillAmount: 0.25, mentalAmount: 2 }
+              ]
+            }
+          };
+          setGameState({ ...gameState, players: newPlayers });
+          openModal({ type: 'building' });
+        }
+      };
     }
     return () => {
       if (typeof window !== 'undefined') {
         delete (window as any).__openBuilding;
+        delete (window as any).__triggerAppraisalDilemma;
       }
     };
   }, [campaign, activePlayer, activePlayerIndex, gameState, openModal, setGameState]);

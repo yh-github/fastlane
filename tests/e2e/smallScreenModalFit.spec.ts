@@ -265,6 +265,61 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     // Close Pawn Shop modal
     await page.locator('.building-modal__close').click();
     await expect(buildingModal).toBeHidden({ timeout: 3000 });
+
+    // 10. Test Pawn Shop Mini Game Cards (Appraisal Dilemma) on 800x600
+    await page.evaluate(() => {
+      (window as any).__triggerAppraisalDilemma();
+    });
+    const dilemmaModal = page.locator('[data-testid="appraisal-dilemma-modal"]');
+    await expect(dilemmaModal).toBeVisible({ timeout: 5000 });
+    const dilemmaContent = page.locator('[data-testid="appraisal-dilemma-content"]');
+    await expect(dilemmaContent).toBeVisible();
+
+    // Verify modal fits within 800x600 viewport
+    const dilemmaBox = await dilemmaContent.boundingBox();
+    expect(dilemmaBox).not.toBeNull();
+    if (dilemmaBox) {
+      expect(dilemmaBox.y).toBeGreaterThanOrEqual(0);
+      expect(dilemmaBox.y + dilemmaBox.height).toBeLessThanOrEqual(600);
+    }
+
+    // Verify cards are in compact form side-by-side
+    const compactCards = page.locator('.appraisal-card--compact');
+    await expect(compactCards).toHaveCount(4);
+
+    // Click first option to resolve dilemma
+    await page.locator('[data-testid="appraisal-option-0"]').click();
+    await expect(dilemmaModal).toBeHidden({ timeout: 3000 });
+
+    // 11. Test Pawn Shop Mini Game Cards on mobile viewport (390x844)
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.evaluate(() => {
+      (window as any).__triggerAppraisalDilemma();
+    });
+    await expect(dilemmaModal).toBeVisible({ timeout: 5000 });
+
+    // Verify carousel mode is active and pills exist
+    const carouselEl = page.locator('.appraisal-cards-carousel');
+    await expect(carouselEl).toBeVisible();
+    const pills = page.locator('[data-testid^="appraisal-pill-"]');
+    await expect(pills).toHaveCount(4);
+
+    // Switch selection via pill
+    await page.locator('[data-testid="appraisal-pill-1"]').click();
+    await expect(page.locator('[data-testid="appraisal-pill-1"]')).toHaveClass(/appraisal-carousel-indicator__btn--active/);
+
+    // Confirm via sticky bar
+    const confirmBtn = page.locator('[data-testid="btn-confirm-appraisal-choice"]');
+    await expect(confirmBtn).toBeVisible();
+    await confirmBtn.click();
+    await expect(dilemmaModal).toBeHidden({ timeout: 3000 });
+
+    // Reset back to 800x600 for clean state
+    await page.setViewportSize({ width: 800, height: 600 });
+    if (await buildingModal.isVisible()) {
+      await page.locator('.building-modal__close').click();
+      await expect(buildingModal).toBeHidden({ timeout: 3000 });
+    }
   });
 
   test('verifies modal face and bank buttons retain prominent full size on large screens', async ({ page }) => {
@@ -333,5 +388,22 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     // Close Pawn Shop modal
     await page.locator('.building-modal__close').click();
     await expect(buildingModal).toBeHidden({ timeout: 3000 });
+
+    // 6. Test Pawn Shop Mini Game Cards on large screen (1440x900)
+    await page.evaluate(() => {
+      (window as any).__triggerAppraisalDilemma();
+    });
+    const largeDilemma = page.locator('[data-testid="appraisal-dilemma-modal"]');
+    await expect(largeDilemma).toBeVisible({ timeout: 5000 });
+    // Verify spacious mode: not compact cards
+    await expect(page.locator('.appraisal-card--compact')).toHaveCount(0);
+    await expect(page.locator('.appraisal-cards-carousel')).toHaveCount(0);
+
+    // Resolve dilemma
+    await page.locator('[data-testid="appraisal-option-0"]').click();
+    await expect(largeDilemma).toBeHidden({ timeout: 3000 });
+    if (await buildingModal.isVisible()) {
+      await page.locator('.building-modal__close').click();
+    }
   });
 });

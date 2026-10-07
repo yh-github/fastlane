@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
 import { loadCampaign, getAvailableCampaigns, loadAvailableCampaigns } from './dataLoader';
 
 describe('dataLoader', () => {
@@ -65,5 +67,11 @@ describe('dataLoader', () => {
     const asyncList = await loadAvailableCampaigns();
     expect(asyncList.length).toBe(4);
     expect(asyncList[0].id).toBe('1990_classic_floppy');
+  });
+
+  it('keeps src/campaigns/campaigns.json and public/campaigns/campaigns.json in sync', () => {
+    const srcCampaigns = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../campaigns/campaigns.json'), 'utf-8'));
+    const publicCampaigns = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../public/campaigns/campaigns.json'), 'utf-8'));
+    expect(srcCampaigns).toEqual(publicCampaigns);
   });
 });
