@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 export interface FloatingAnimation {
   id: string;
   type: 'item' | 'emoji' | 'text';
-  content: string; // The icon, emoji, or text
+  content: React.ReactNode; // The icon, emoji, or text
   startX: number;
   startY: number;
   endX: number;

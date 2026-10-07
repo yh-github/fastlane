@@ -3,6 +3,7 @@ import type { Random } from '../utils/rng';
 import { applyHappinessChange } from './statEffects';
 import type { PlayerState, GameEvent, GameRules, WeekendCard, WeekendDeckTier, StatModification } from './gameState';
 import type { StatRules } from './rules';
+import { CURIO_CATALOG } from './curioCatalog';
 
 // Helper to determine cost based on price range
 function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number, rng: Random): number {
@@ -509,12 +510,17 @@ export function generateWeekendChoices(
   // 2. Solvent players (or players with tickets): 3 choices
   const drawnCards: WeekendCard[] = [];
 
-  // 2a. Ticket guarantee: If holding ticket, guarantee attend and resale cards
+  // 2a. Ticket guarantee: If holding ticket, guarantee attend (if affordable) and resale cards
   if (heldTicketType) {
     const ticketCount = tickets[heldTicketType];
     const { attendCard, resaleCard } = buildTicketCards(heldTicketType, ticketCount, weekendData, rng);
-    drawnCards.push(attendCard);
-    drawnCards.push(resaleCard);
+    if (updatedPlayer.money >= attendCard.costMin) {
+      drawnCards.push(attendCard);
+      drawnCards.push(resaleCard);
+    } else {
+      // Cannot afford to go out with cash - scalping appears INSTEAD of attend card
+      drawnCards.push(resaleCard);
+    }
   }
 
   const slotsNeeded = 3 - drawnCards.length;
@@ -915,6 +921,37 @@ export function resolveWeekendChoice(
       modifications.push({ stat: 'social', diff: socialBonus });
     }
 
+    // Souvenir (Curio) roll: 10% per ticket, up to 35%
+    const ticketCount = card.ticketCount || 1;
+    const souvenirChance = Math.min(0.35, ticketCount * 0.10);
+    let acquiredSouvenir: { id: string; name: string; icon: string } | undefined = undefined;
+
+    if (rng.next() < souvenirChance) {
+      const curioIndex = Math.floor(rng.next() * CURIO_CATALOG.length);
+      const curioItem = CURIO_CATALOG[curioIndex] || CURIO_CATALOG[0];
+      const existingCurios = updatedPlayer.inventory?.curios ? [...updatedPlayer.inventory.curios] : [];
+      const newCurio = {
+        id: `${curioItem.id}_souvenir_${Date.now()}_${existingCurios.length}`,
+        catalogId: curioItem.id,
+        name: curioItem.name,
+        icon: curioItem.icon,
+        flavorText: curioItem.description,
+        acquiredWeek: 1
+      };
+      existingCurios.push(newCurio);
+      if (!updatedPlayer.inventory) {
+        updatedPlayer.inventory = {} as any;
+      }
+      updatedPlayer.inventory.curios = existingCurios;
+      updatedPlayer.inventory.knickKnacks = existingCurios.length;
+
+      acquiredSouvenir = {
+        id: newCurio.id,
+        name: curioItem.name,
+        icon: curioItem.icon
+      };
+    }
+
     // Expire all tickets
     if (updatedPlayer.inventory?.tickets) {
       updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
@@ -930,7 +967,8 @@ export function resolveWeekendChoice(
       cost,
       happinessBonus: mentalBonus,
       modifications: finalMods,
-      chosenCard: card
+      chosenCard: card,
+      ...(acquiredSouvenir ? { souvenir: acquiredSouvenir } : {})
     };
     updatedPlayer.offeredWeekendCards = undefined;
     return updatedPlayer;
@@ -1050,18 +1088,44 @@ export function processWeekend(
   let weekendEvent: GameEvent | null = null;
   let priceType: 'cheap' | 'medium' | 'expensive' = 'cheap';
   let happinessBonus: number | undefined = undefined;
+  let acquiredSouvenir: { id: string; name: string; icon: string } | undefined = undefined;
+
+  const rollClassicSouvenir = (ticketCount: number) => {
+    const souvenirChance = Math.min(0.35, ticketCount * 0.10);
+    if (rng.next() < souvenirChance) {
+      const curioIndex = Math.floor(rng.next() * CURIO_CATALOG.length);
+      const curioItem = CURIO_CATALOG[curioIndex] || CURIO_CATALOG[0];
+      const existingCurios = newPlayer.inventory?.curios ? [...newPlayer.inventory.curios] : [];
+      const newCurio = {
+        id: `${curioItem.id}_souvenir_${Date.now()}_${existingCurios.length}`,
+        catalogId: curioItem.id,
+        name: curioItem.name,
+        icon: curioItem.icon,
+        flavorText: curioItem.description,
+        acquiredWeek: turnNumber || 1
+      };
+      existingCurios.push(newCurio);
+      if (!newPlayer.inventory) newPlayer.inventory = {} as any;
+      newPlayer.inventory.curios = existingCurios;
+      newPlayer.inventory.knickKnacks = existingCurios.length;
+      acquiredSouvenir = { id: newCurio.id, name: curioItem.name, icon: curioItem.icon };
+    }
+  };
 
   // 1. Tickets
   if (player.inventory.tickets.baseball > 0 && weekendData.ticketWeekends.baseball) {
     weekendEvent = { key: 'events.weekend.ticket_baseball' };
+    rollClassicSouvenir(player.inventory.tickets.baseball);
     newPlayer.inventory.tickets.baseball--;
     priceType = 'medium';
   } else if (player.inventory.tickets.theatre > 0 && weekendData.ticketWeekends.theatre) {
     weekendEvent = { key: 'events.weekend.ticket_theatre' };
+    rollClassicSouvenir(player.inventory.tickets.theatre);
     newPlayer.inventory.tickets.theatre--;
     priceType = 'medium';
   } else if (player.inventory.tickets.concert > 0 && weekendData.ticketWeekends.concert) {
     weekendEvent = { key: 'events.weekend.ticket_concert' };
+    rollClassicSouvenir(player.inventory.tickets.concert);
     newPlayer.inventory.tickets.concert--;
     priceType = 'medium';
   } 
@@ -1146,7 +1210,8 @@ export function processWeekend(
   newPlayer.weekendResult = {
     event: weekendEvent!,
     cost,
-    happinessBonus
+    happinessBonus,
+    ...(acquiredSouvenir ? { souvenir: acquiredSouvenir } : {})
   };
 
   return newPlayer;

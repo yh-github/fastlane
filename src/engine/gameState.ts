@@ -336,6 +336,7 @@ export interface WeekendResult {
   happinessBonus?: number;
   modifications?: StatModification[];
   chosenCard?: WeekendCard;
+  souvenir?: { id: string; name: string; icon: string };
 }
 
 // ─── Inventory ──────────────────────────────────────────────────

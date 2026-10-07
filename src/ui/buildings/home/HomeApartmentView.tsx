@@ -236,6 +236,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
       {/* Space & Mess Opposing Gauge Bar - Fixed / Always Visible */}
       {(rules?.trackMess || rules?.spaceCapping) && (
         <div 
+          id="home-mess-bar"
           className="mess-visual-card" 
           data-testid="compact-mess-bar"
           onClick={() => setShowMessDetails(true)}

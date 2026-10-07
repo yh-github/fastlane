@@ -418,6 +418,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
         {/* Unified Space & Mess Status Overview (Only if trackMess or spaceCapping is active) */}
         {(rules?.trackMess || rules?.spaceCapping) && (
           <div 
+            id="home-mess-bar"
             className="mess-visual-card"
             data-testid="compact-mess-bar"
             onClick={() => setShowMessDetails(true)}

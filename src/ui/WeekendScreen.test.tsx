@@ -132,6 +132,29 @@ describe('WeekendScreen', () => {
     expect(screen.queryByText(/\+1 💪/)).not.toBeInTheDocument();
   });
 
+  it('renders souvenir callout when souvenir was acquired over the weekend', () => {
+    const player = createTestPlayer({
+      name: 'Elena',
+      weekendResult: {
+        event: { key: 'events.weekend.ticket_concert', params: {} },
+        cost: 40,
+        happinessBonus: 2,
+        souvenir: {
+          id: 'curio_vintage_tin_robot_123',
+          name: 'Vintage Tin Robot',
+          icon: '🤖'
+        }
+      }
+    });
+
+    render(<WeekendScreen player={player} turn={6} onStartWeek={vi.fn()} />);
+
+    const souvenirBadge = screen.getByTestId('weekend-souvenir-callout');
+    expect(souvenirBadge).toBeInTheDocument();
+    expect(souvenirBadge).toHaveTextContent('Vintage Tin Robot');
+    expect(souvenirBadge).toHaveTextContent('🤖');
+  });
+
   describe('Interactive Card Selection Mode', () => {
     it('renders 3 cards with fluff and potential outcomes when offeredWeekendCards are present', () => {
       const onSelectCard = vi.fn();
