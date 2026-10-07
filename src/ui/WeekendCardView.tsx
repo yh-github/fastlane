@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WeekendCard } from '../engine/gameState';
+import { MessIcon } from './icons/MessIcon';
 
 interface WeekendCardViewProps {
   card: WeekendCard;
@@ -87,16 +88,32 @@ export const WeekendCardView = React.forwardRef<HTMLDivElement, WeekendCardViewP
       return `+${card.potentialBonusMin}..+${card.potentialBonusMax} 🧠`;
     }
     if (card.type === 'clean') {
-      return `-8..-12 🧹, -1 💪`;
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          -8..-12 <MessIcon />, -1 💪
+        </span>
+      );
     }
     if (card.type === 'rest') {
-      return `+2 🧠, +1 💪, +2 🧹`;
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          +2 🧠, +1 💪, +2 <MessIcon />
+        </span>
+      );
     }
     if (card.type === 'walk') {
-      return `+2 💪, +2 🧹`;
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          +2 💪, +2 <MessIcon />
+        </span>
+      );
     }
     if (card.type === 'chat') {
-      return `+2 👥, +2 🧹`;
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          +2 👥, +2 <MessIcon />
+        </span>
+      );
     }
     if (card.type === 'ticket' && card.secondaryStat) {
       const p1 = (card.potentialBonusMax !== undefined && card.potentialBonusMax !== card.potentialBonusMin)

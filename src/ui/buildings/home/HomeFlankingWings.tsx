@@ -41,12 +41,12 @@ export interface HomeFlankingWingsProps {
   hoursToClean: number;
   cleanPhysGain: number;
   isCleanDisabled: boolean;
-  cleanSubtext: string;
+  cleanSubtext?: React.ReactNode;
   onCleanClick: () => void;
   cleaningServiceCost: number;
   cleaningServicePrice: number;
   isServiceDisabled: boolean;
-  serviceSubtext: string;
+  serviceSubtext?: React.ReactNode;
   onServiceClick: () => void;
 
   // Pantry props

@@ -6,6 +6,7 @@ import { LeisureCards } from './LeisureCards';
 import { ChoresCards } from './ChoresCards';
 import { PantryCard } from './PantryCard';
 import { HomeCardDeck } from './HomeCardDeck';
+import { MessIcon } from '../../icons/MessIcon';
 
 interface ApartmentMockupSandboxProps {
   campaign?: CampaignBundle;
@@ -271,8 +272,8 @@ export const ApartmentMockupSandbox: React.FC<ApartmentMockupSandboxProps> = ({
 
           {/* Mess Slider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: mess > 20 ? '#e74c3c' : '#aaa', fontWeight: 600 }}>
-              🧹 Mess: <strong>{mess}</strong>
+            <span style={{ color: mess > 20 ? '#e74c3c' : '#aaa', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <MessIcon size="1.15em" /> Mess: <strong>{mess}</strong>
             </span>
             <input
               type="range"
@@ -454,8 +455,13 @@ export const ApartmentMockupSandbox: React.FC<ApartmentMockupSandboxProps> = ({
 
             {/* Mess Status Tag */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '0.78rem', color: mess > 25 ? '#e74c3c' : (mess > 0 ? '#f39c12' : '#2ecc71'), fontWeight: 'bold' }}>
-                {mess === 0 ? '✨ Spotless (0 Mess)' : (mess > 25 ? `⚠️ Cluttered (${mess} Mess - No Guests!)` : `🧹 Mild Mess (${mess})`)}
+              <span style={{ fontSize: '0.78rem', color: mess > 25 ? '#e74c3c' : (mess > 0 ? '#f39c12' : '#2ecc71'), fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {mess === 0 ? '✨ Spotless (0 Mess)' : (mess > 25 ? `⚠️ Cluttered (${mess} Mess - No Guests!)` : (
+                  <>
+                    <MessIcon size="1.15em" />
+                    <span>Mild Mess ({mess})</span>
+                  </>
+                ))}
               </span>
             </div>
           </div>
@@ -706,7 +712,7 @@ export const ApartmentMockupSandbox: React.FC<ApartmentMockupSandboxProps> = ({
                         }}
                       >
                         {isOccupiedByDurable && <span>🛋️</span>}
-                        {isOccupiedByMess && <span>🧹</span>}
+                        {isOccupiedByMess && <MessIcon size={14} />}
                         {isEmpty && <span style={{ fontSize: '0.6rem', color: '#444' }}>{idx + 1}</span>}
                       </div>
                     );

@@ -9,6 +9,7 @@ import { HomeApartmentView } from './home/HomeApartmentView';
 import { DurableCardModal } from './home/DurableCardModal';
 import { ApartmentFurnishings } from './home/ApartmentFurnishings';
 import { PantryDetailsModal } from './home/PantryDetailsModal';
+import { MessIcon } from '../icons/MessIcon';
 import type { InteractionProps } from './types';
 
 export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0, turn = 1 }: InteractionProps & { campaign?: CampaignBundle, rules?: GameRules, economicIndex?: number, turn?: number }) {
@@ -154,12 +155,20 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const isTooExhaustedForClean = !!rules?.usePhysicalMentalConditions && ((player.physicalCondition ?? 50) - cleanPhysGain < 1.0);
   const isNotEnoughTimeForClean = player.hoursRemaining <= 0;
   const isCleanDisabled = isMessClean || isNotEnoughTimeForClean || isTooExhaustedForClean;
-  const cleanSubtext = `Cleans 🧹 ${rules?.usePhysicalMentalConditions ? `(-${cleanPhysGain} 💪)` : ''}`;
+  const cleanSubtext = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+      Cleans <MessIcon /> {rules?.usePhysicalMentalConditions ? `(-${cleanPhysGain} 💪)` : ''}
+    </span>
+  );
 
   const isNotEnoughTimeForService = player.hoursRemaining < cleaningServiceCost;
   const isCannotAffordService = !canAffordCleaning;
   const isServiceDisabled = isMessClean || isCannotAffordService || isNotEnoughTimeForService;
-  const serviceSubtext = 'Professional cleaning (-10 🧹)';
+  const serviceSubtext = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+      Professional cleaning (-10 <MessIcon />)
+    </span>
+  );
 
   const hasFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0 || (player.inventory?.cannedFoodUnits || 0) > 0;
 
@@ -704,7 +713,9 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
             >
               ✕
             </button>
-            <div style={{ fontSize: '2rem', marginBottom: '6px' }}>🧹</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '6px' }}>
+              <MessIcon size={44} />
+            </div>
             <h3 style={{ margin: '0 0 10px', color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.2rem', fontWeight: 800 }}>
               {t('homeRelax.messDetailsTitle', { defaultValue: 'Apartment Space & Mess Breakdown' })}
             </h3>

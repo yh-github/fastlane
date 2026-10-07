@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatHours } from '../../../engine/statMath';
+import { MessIcon } from '../../icons/MessIcon';
 
 interface LeisureCardsProps {
   hoursToRelax: number;
@@ -165,7 +166,11 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
                 <div style={{ color: '#85ffb5', display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', fontWeight: 'bold' }}>
                   <span>+{physGain} 💪 Physical</span>
                   <span>+{mentalGain} 🧠 Mental</span>
-                  {trackMess && scaledMess > 0 && <span style={{ color: '#f39c12' }}>+{scaledMess} 🧹 Mess</span>}
+                  {trackMess && scaledMess > 0 && (
+                    <span style={{ color: '#f39c12', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                      +{scaledMess} <MessIcon />
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div style={{ color: '#ff9999', textAlign: 'center', fontSize: '0.72rem' }}>
@@ -306,11 +311,17 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
             }}>
               <div style={{ color: '#38bdf8', display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', fontWeight: 'bold' }}>
                 <span>{rewardRange} 👥 Social{spaceCappedNote}</span>
-                <span style={{ color: '#ff9999' }}>-1 💪 Fatigue</span>
+                <span style={{ color: '#ff9999' }}>-1 💪</span>
                 <span>-{costRange}</span>
               </div>
               <div style={{ fontSize: '0.70rem', color: '#aaa', textAlign: 'center', marginTop: '2px' }}>
-                {socialParams.isHalfRewardExpected ? '⚠️ Budget Hospitality (half social reward)' : '✨ Full Hospitality (generates mess 🧹)'}
+                {socialParams.isHalfRewardExpected ? (
+                  '⚠️ Budget Hospitality (half social reward)'
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    ✨ Full Hospitality (generates mess <MessIcon />)
+                  </span>
+                )}
               </div>
             </div>
 

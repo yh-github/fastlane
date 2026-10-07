@@ -90,7 +90,8 @@ describe('WeekendScreen', () => {
     expect(screen.getByText(/-\$25/)).toBeInTheDocument();
     expect(screen.getByText(/\+1 🧠/)).toBeInTheDocument();
     expect(screen.getByText(/-3 🤝/)).toBeInTheDocument();
-    expect(screen.getByText(/\+3 🧹/)).toBeInTheDocument();
+    expect(screen.getByText(/\+3/)).toBeInTheDocument();
+    expect(screen.getByTestId('mess-icon')).toBeInTheDocument();
     expect(screen.getByText(/-1 👥/)).toBeInTheDocument();
     expect(screen.getByText(/\+1 💪/)).toBeInTheDocument();
 
@@ -126,7 +127,7 @@ describe('WeekendScreen', () => {
     expect(screen.getByText(/-\$25/)).toBeInTheDocument();
     expect(screen.queryByText(/\+1 🧠/)).not.toBeInTheDocument();
     expect(screen.queryByText(/-3 🤝/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/\+3 🧹/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('mess-icon')).not.toBeInTheDocument();
     expect(screen.queryByText(/-1 👥/)).not.toBeInTheDocument();
     expect(screen.queryByText(/\+1 💪/)).not.toBeInTheDocument();
   });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatHours } from '../../../engine/statMath';
+import { MessIcon } from '../../icons/MessIcon';
 
 interface ChoresCardsProps {
   hoursToClean: number;
@@ -136,7 +137,9 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
             color: '#85ffb5',
             fontWeight: 'bold'
           }}>
-            <div>🧹 Reduces Apartment Mess</div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <MessIcon /> Reduces Apartment Mess
+            </div>
             <div style={{ color: '#ff9999', fontSize: '0.70rem', marginTop: '2px' }}>
               {cleanSubtext || `Physical Effort: -${cleanPhysGain} 💪`}
             </div>
@@ -266,7 +269,9 @@ export const ChoresCards: React.FC<ChoresCardsProps> = ({
             color: '#d8b4fe',
             fontWeight: 'bold'
           }}>
-            <div>✨ Professional Deep Clean (-10 🧹)</div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              ✨ Professional Deep Clean (-10 <MessIcon />)
+            </div>
             <div style={{ fontSize: '0.70rem', color: '#cbd5e1', marginTop: '2px' }}>
               Cost: ${cleaningServicePrice} • No physical exhaustion
             </div>

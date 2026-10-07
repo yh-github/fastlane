@@ -375,6 +375,58 @@ describe('Modal Escape and Card Popups', () => {
     );
     expect(screen.queryByText(/Plays Video Tapes/i)).not.toBeInTheDocument();
     expect(screen.getByText('🎁 One-time: +1 😊 on buy')).toBeInTheDocument();
+
+    // 6. Stove & Microwave: +1 😊/turn in Base mode (no 'when eating'); hidden in Advanced mode
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'stove', isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithTechAndBooks}
+        rules={rulesWithoutSpace}
+        onClose={handleClose}
+      />
+    );
+    expect(screen.getByText('🍳 +1 😊/turn')).toBeInTheDocument();
+    expect(screen.queryByText(/when eating/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Awards \+1 Happiness every turn\./i)).toBeInTheDocument();
+
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'microwave', isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithTechAndBooks}
+        rules={rulesWithoutSpace}
+        onClose={handleClose}
+      />
+    );
+    expect(screen.getByText('⚡ +1 😊/turn')).toBeInTheDocument();
+    expect(screen.queryByText(/when eating/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Awards \+1 Happiness every turn\./i)).toBeInTheDocument();
+
+    // In Advanced mode (usePhysicalMentalConditions: true):
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'stove', isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithTechAndBooks}
+        rules={{ ...rulesWithoutSpace, usePhysicalMentalConditions: true }}
+        onClose={handleClose}
+      />
+    );
+    expect(screen.queryByText(/😊/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/when eating/i)).not.toBeInTheDocument();
+
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'microwave', isOwned: true }}
+        player={mockPlayer}
+        campaign={campaignWithTechAndBooks}
+        rules={{ ...rulesWithoutSpace, usePhysicalMentalConditions: true }}
+        onClose={handleClose}
+      />
+    );
+    expect(screen.queryByText(/😊/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/when eating/i)).not.toBeInTheDocument();
   });
 
   it('renders ApartmentFurnishings with seamless full-height expansion and no restrictive inner box styling', () => {
