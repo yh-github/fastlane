@@ -244,6 +244,175 @@ describe('WeekendScreen', () => {
       expect(screen.getByText(/-\$30/)).toBeInTheDocument();
       expect(screen.getByText(/\+1 👥/)).toBeInTheDocument();
     });
+
+    it('renders full-sized spacious cards on large screen (1440x900)', () => {
+      window.innerWidth = 1440;
+      window.innerHeight = 900;
+      const player = createTestPlayer({
+        name: 'Eva',
+        offeredWeekendCards: [
+          {
+            id: 'c1',
+            tier: 'cheap',
+            type: 'random',
+            eventKey: 'e1',
+            titleKey: 't1',
+            fluff: 'Park stroll',
+            icon: '🌳',
+            costMin: 5,
+            costMax: 10,
+            targetStat: 'mental',
+            potentialBonusMin: 0,
+            potentialBonusMax: 1
+          },
+          {
+            id: 'c2',
+            tier: 'medium',
+            type: 'random',
+            eventKey: 'e2',
+            titleKey: 't2',
+            fluff: 'Concert',
+            icon: '🎸',
+            costMin: 20,
+            costMax: 40,
+            targetStat: 'social',
+            potentialBonusMin: 1,
+            potentialBonusMax: 2
+          }
+        ]
+      });
+
+      const { container } = render(
+        <WeekendScreen
+          player={player}
+          turn={3}
+          onStartWeek={vi.fn()}
+          onSelectCard={vi.fn()}
+        />
+      );
+
+      const cards = container.querySelectorAll('.weekend-card');
+      expect(cards.length).toBe(2);
+      expect(container.querySelector('.weekend-card--compact')).toBeNull();
+      expect(container.querySelector('.weekend-cards-carousel')).toBeNull();
+    });
+
+    it('renders compact side-by-side cards when screen height/width cannot fit full cards (800x600)', () => {
+      window.innerWidth = 800;
+      window.innerHeight = 600;
+      const player = createTestPlayer({
+        name: 'Eva',
+        offeredWeekendCards: [
+          {
+            id: 'c1',
+            tier: 'cheap',
+            type: 'random',
+            eventKey: 'e1',
+            titleKey: 't1',
+            fluff: 'Park stroll',
+            icon: '🌳',
+            costMin: 5,
+            costMax: 10,
+            targetStat: 'mental',
+            potentialBonusMin: 0,
+            potentialBonusMax: 1
+          },
+          {
+            id: 'c2',
+            tier: 'medium',
+            type: 'random',
+            eventKey: 'e2',
+            titleKey: 't2',
+            fluff: 'Concert',
+            icon: '🎸',
+            costMin: 20,
+            costMax: 40,
+            targetStat: 'social',
+            potentialBonusMin: 1,
+            potentialBonusMax: 2
+          },
+          {
+            id: 'c3',
+            tier: 'expensive',
+            type: 'random',
+            eventKey: 'e3',
+            titleKey: 't3',
+            fluff: 'Spa weekend',
+            icon: '💆',
+            costMin: 60,
+            costMax: 90,
+            targetStat: 'physical',
+            potentialBonusMin: 2,
+            potentialBonusMax: 3
+          }
+        ]
+      });
+
+      const { container } = render(
+        <WeekendScreen
+          player={player}
+          turn={3}
+          onStartWeek={vi.fn()}
+          onSelectCard={vi.fn()}
+        />
+      );
+
+      const compactCards = container.querySelectorAll('.weekend-card--compact');
+      expect(compactCards.length).toBe(3);
+      // In 800px width with 3 cards (3*180 + 2*12 + 32 = 596px <= 800px), row fits side-by-side without carousel
+      expect(container.querySelector('.weekend-cards-carousel')).toBeNull();
+    });
+
+    it('activates touch carousel and indicator pills on narrow mobile viewports (390x844)', () => {
+      window.innerWidth = 390;
+      window.innerHeight = 844;
+      const player = createTestPlayer({
+        name: 'Eva',
+        offeredWeekendCards: [
+          {
+            id: 'c1',
+            tier: 'cheap',
+            type: 'random',
+            eventKey: 'e1',
+            titleKey: 't1',
+            fluff: 'Park stroll',
+            icon: '🌳',
+            costMin: 5,
+            costMax: 10,
+            targetStat: 'mental',
+            potentialBonusMin: 0,
+            potentialBonusMax: 1
+          },
+          {
+            id: 'c2',
+            tier: 'medium',
+            type: 'random',
+            eventKey: 'e2',
+            titleKey: 't2',
+            fluff: 'Concert',
+            icon: '🎸',
+            costMin: 20,
+            costMax: 40,
+            targetStat: 'social',
+            potentialBonusMin: 1,
+            potentialBonusMax: 2
+          }
+        ]
+      });
+
+      const { container } = render(
+        <WeekendScreen
+          player={player}
+          turn={3}
+          onStartWeek={vi.fn()}
+          onSelectCard={vi.fn()}
+        />
+      );
+
+      expect(container.querySelector('.weekend-cards-carousel')).not.toBeNull();
+      const indicatorPills = container.querySelectorAll('.weekend-carousel-indicator__btn');
+      expect(indicatorPills.length).toBe(2);
+    });
   });
 });
 

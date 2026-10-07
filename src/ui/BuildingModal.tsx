@@ -443,6 +443,7 @@ export function BuildingModal({
           pawnShopItemsForSale={pawnShopItemsForSale}
           rules={rules}
           campaign={campaign}
+          compact={isContentOverflowing}
         />
       )}
 
@@ -519,6 +520,7 @@ export function BuildingModal({
               pawnShopItemsForSale={pawnShopItemsForSale}
               rules={rules}
               campaign={campaign}
+              compact={isContentOverflowing}
             />
           )}
           {building.archetype === 'home' && (

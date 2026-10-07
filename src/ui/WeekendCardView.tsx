@@ -7,14 +7,16 @@ interface WeekendCardViewProps {
   isSelected: boolean;
   onSelect: () => void;
   onConfirm: () => void;
+  compact?: boolean;
 }
 
-export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
+export const WeekendCardView = React.forwardRef<HTMLDivElement, WeekendCardViewProps>(({
   card,
   isSelected,
   onSelect,
-  onConfirm
-}) => {
+  onConfirm,
+  compact = false
+}, ref) => {
   const { t } = useTranslation();
 
   // Tier color styling
@@ -116,6 +118,7 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
 
   return (
     <div
+      ref={ref}
       role="button"
       tabIndex={0}
       onClick={onSelect}
@@ -126,24 +129,24 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
           else onSelect();
         }
       }}
-      className={`weekend-card ${isSelected ? 'weekend-card--selected' : ''}`}
+      className={`weekend-card ${compact ? 'weekend-card--compact' : ''} ${isSelected ? 'weekend-card--selected' : ''}`}
       style={{
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         width: '100%',
-        maxWidth: '280px',
-        minWidth: '220px',
-        minHeight: '380px',
-        padding: '16px',
-        borderRadius: '16px',
+        maxWidth: compact ? '240px' : '280px',
+        minWidth: compact ? '160px' : '220px',
+        minHeight: compact ? '210px' : '380px',
+        padding: compact ? '10px 12px' : '16px',
+        borderRadius: compact ? '12px' : '16px',
         border: `3px solid ${tierStyles.border}`,
         boxShadow: tierStyles.glow,
         background: tierStyles.bgGradient,
         cursor: 'pointer',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
-        transform: isSelected ? 'translateY(-6px) scale(1.03)' : 'none',
+        transform: isSelected ? 'translateY(-4px) scale(1.02)' : 'none',
         userSelect: 'none',
         boxSizing: 'border-box'
       }}
@@ -154,13 +157,13 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '12px'
+          marginBottom: compact ? '6px' : '12px'
         }}>
           <span style={{
-            fontSize: '0.75rem',
+            fontSize: compact ? '0.68rem' : '0.75rem',
             fontWeight: 'bold',
             letterSpacing: '0.08em',
-            padding: '3px 8px',
+            padding: compact ? '2px 6px' : '3px 8px',
             borderRadius: '6px',
             backgroundColor: tierStyles.headerBg,
             color: tierStyles.headerColor,
@@ -170,9 +173,9 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
           </span>
 
           <span style={{
-            fontSize: '0.85rem',
+            fontSize: compact ? '0.78rem' : '0.85rem',
             fontWeight: 'bold',
-            padding: '3px 10px',
+            padding: compact ? '2px 8px' : '3px 10px',
             borderRadius: '12px',
             backgroundColor: tierStyles.costBadgeBg,
             color: tierStyles.costBadgeColor,
@@ -187,38 +190,43 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '80px',
-          margin: '8px 0 14px',
-          borderRadius: '12px',
+          height: compact ? '36px' : '80px',
+          margin: compact ? '4px 0 6px' : '8px 0 14px',
+          borderRadius: compact ? '8px' : '12px',
           backgroundColor: 'rgba(0, 0, 0, 0.4)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
-          fontSize: '2.8rem'
+          fontSize: compact ? '1.5rem' : '2.8rem'
         }}>
           <span role="img" aria-label="card icon">{card.icon}</span>
         </div>
 
         {/* Card Title */}
         <h3 style={{
-          margin: '0 0 8px',
-          fontSize: '1.05rem',
+          margin: compact ? '0 0 4px' : '0 0 8px',
+          fontSize: compact ? '0.92rem' : '1.05rem',
           fontWeight: 'bold',
           color: '#ffffff',
           textAlign: 'center',
-          lineHeight: '1.3'
+          lineHeight: '1.2'
         }}>
           {t(card.titleKey, { defaultValue: card.type === 'durable' ? 'Home Comfort' : card.type === 'ticket' ? 'Live Entertainment' : 'Weekend Activity' })}
         </h3>
 
         {/* Fluff Narrative */}
         <p style={{
-          fontSize: '0.85rem',
-          lineHeight: '1.4',
+          fontSize: compact ? '0.74rem' : '0.85rem',
+          lineHeight: compact ? '1.3' : '1.4',
           color: '#cbd5e1',
           fontStyle: 'italic',
           textAlign: 'center',
-          margin: '0 0 14px',
+          margin: compact ? '0 0 6px' : '0 0 14px',
           padding: '0 4px',
-          minHeight: '60px'
+          minHeight: compact ? 'auto' : '60px',
+          maxHeight: compact ? '28px' : undefined,
+          overflow: compact ? 'hidden' : undefined,
+          display: compact ? '-webkit-box' : undefined,
+          WebkitLineClamp: compact ? 2 : undefined,
+          WebkitBoxOrient: compact ? 'vertical' : undefined
         }}>
           "{card.fluff}"
         </p>
@@ -229,15 +237,15 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
         <div style={{
           backgroundColor: 'rgba(0, 0, 0, 0.35)',
           borderRadius: '8px',
-          padding: '8px 10px',
+          padding: compact ? '4px 8px' : '8px 10px',
           textAlign: 'center',
           border: '1px solid rgba(255, 255, 255, 0.08)',
-          marginBottom: '12px'
+          marginBottom: compact ? '6px' : '12px'
         }}>
-          <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ fontSize: compact ? '0.65rem' : '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {t('weekendScreen.potentialOutcome', { defaultValue: 'Potential Outcome' })}
           </div>
-          <div style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#f8fafc', marginTop: '3px' }}>
+          <div style={{ fontSize: compact ? '0.82rem' : '0.9rem', fontWeight: 'bold', color: '#f8fafc', marginTop: compact ? '1px' : '3px' }}>
             {formatBonusText()}
           </div>
         </div>
@@ -250,10 +258,11 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
           }}
           style={{
             width: '100%',
-            padding: '10px 14px',
+            padding: compact ? '6px 10px' : '10px 14px',
             borderRadius: '8px',
             border: 'none',
-            fontSize: '0.95rem',
+            fontSize: compact ? '0.84rem' : '0.95rem',
+            minHeight: compact ? '32px' : '40px',
             fontWeight: 'bold',
             cursor: 'pointer',
             backgroundColor: isSelected ? '#00e5ff' : 'rgba(255, 255, 255, 0.15)',
@@ -269,4 +278,6 @@ export const WeekendCardView: React.FC<WeekendCardViewProps> = ({
       </div>
     </div>
   );
-};
+});
+
+WeekendCardView.displayName = 'WeekendCardView';
