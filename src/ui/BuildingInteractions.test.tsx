@@ -366,7 +366,8 @@ describe('BuildingInteractions', () => {
     const cleanServiceBtn = screen.getByRole('button', { name: /Call Cleaning Service/i });
     expect(cleanServiceBtn).not.toBeDisabled();
     expect(cleanServiceBtn.textContent).toContain('$100');
-    expect(cleanServiceBtn.textContent).toContain('Professional cleaning (-10 🧹)');
+    expect(cleanServiceBtn.textContent).toContain('Professional cleaning (-10');
+    expect(within(cleanServiceBtn).getByTestId('mess-icon')).toBeInTheDocument();
 
     // Clicking softly-disabled button calls onAction and receives feedback
     fireEvent.click(cleanServiceBtn);

@@ -5,6 +5,7 @@ import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
 import type { GameAction } from '../../../engine/actions/types';
 import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../../../engine/actions/maintenanceActions';
+import { MessIcon } from '../../icons/MessIcon';
 
 interface DurableCardModalProps {
   durable: {
@@ -166,12 +167,12 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
         return 'Expands food preservation capacity from 6 up to 12 units per turn. Requires an active Refrigerator to function; does not prevent spoilage on its own.';
       case 'stove':
         return rules?.usePhysicalMentalConditions
-          ? 'Cook hot meals at home. Awards +1 Happiness every turn you eat food (shared bonus with Microwave). Restores +1 Physical when relaxing.'
-          : 'Cook hot meals at home. Awards +1 Happiness every turn you eat food (shared bonus with Microwave).';
+          ? 'Cook hot meals at home. Restores +1 Physical when relaxing.'
+          : 'Cook hot meals at home. Awards +1 Happiness every turn.';
       case 'microwave':
         return rules?.usePhysicalMentalConditions
-          ? 'Quickly reheat meals. Awards +1 Happiness every turn you eat food (shared bonus with Stove). Restores +1 Physical when relaxing and +1 Social when socializing.'
-          : 'Quickly reheat meals. Awards +1 Happiness every turn you eat food (shared bonus with Stove).';
+          ? 'Quickly reheat meals. Restores +1 Physical when relaxing and +1 Social when socializing.'
+          : 'Quickly reheat meals. Awards +1 Happiness every turn.';
       case 'color_tv':
         return rules?.usePhysicalMentalConditions
           ? 'Color television set. Boosts guest socializing (+2 Social) and enhances apartment lifestyle.'
@@ -213,7 +214,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
 
   // Compile mechanical effects:
   interface EffectBadge {
-    label: string;
+    label: React.ReactNode;
     isOneTime?: boolean;
   }
   const effectBadges: EffectBadge[] = [];
@@ -227,9 +228,13 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
       effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
     }
   } else if (durable.id === 'stove') {
-    effectBadges.push({ label: '🍳 +1 😊/turn when eating' });
+    if (!rules?.usePhysicalMentalConditions) {
+      effectBadges.push({ label: '🍳 +1 😊/turn' });
+    }
   } else if (durable.id === 'microwave') {
-    effectBadges.push({ label: '⚡ +1 😊/turn when eating' });
+    if (!rules?.usePhysicalMentalConditions) {
+      effectBadges.push({ label: '⚡ +1 😊/turn' });
+    }
   } else if (durable.id === 'computer') {
     effectBadges.push({ label: '🎓 Bonus Study Credit (-1 Lesson)' });
     effectBadges.push({ label: '💻 Freelance Income ($10–$150/turn chance)' });
@@ -258,7 +263,13 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
       if (eff.trigger === 'on_relax') {
         if (eff.stat === 'physical') effectBadges.push({ label: `+${eff.value} 💪 On Relax` });
         else if (eff.stat === 'mental') effectBadges.push({ label: `+${eff.value} 🧠 On Relax` });
-        else if (eff.stat === 'mess') effectBadges.push({ label: `+${eff.value} 🧹 Mess On Relax` });
+        else if (eff.stat === 'mess') effectBadges.push({
+          label: (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              +{eff.value} <MessIcon /> On Relax
+            </span>
+          )
+        });
       } else if (eff.trigger === 'on_socialize') {
         if (eff.stat === 'social') effectBadges.push({ label: `+${eff.value} 👥 On Socialize` });
       } else if (eff.trigger === 'continuous' && eff.stat === 'mental_max') {
@@ -650,8 +661,10 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
                   <strong style={{ fontSize: '0.82rem', color: '#f87171' }}>🗑️ Throw Out</strong>
                   <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>{rules?.helpfulUI ? '⏳ 0h | Free' : 'Free'}</span>
                 </div>
-                <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '6px' }}>
-                  Discards appliance permanently. Leaves +{throwMess} 🧹 Mess in apartment.
+                <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap' }}>
+                  <span>Discards appliance permanently. Leaves +{throwMess}</span>
+                  <MessIcon />
+                  <span>in apartment.</span>
                 </div>
                 <button
                   data-action-target="throw-out-appliance"

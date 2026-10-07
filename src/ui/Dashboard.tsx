@@ -459,7 +459,7 @@ export function Dashboard({
 interface StatBadgeProps {
   label: string;
   value: React.ReactNode;
-  icon: string;
+  icon: React.ReactNode;
   id?: string;
   danger?: boolean;
   warning?: boolean;

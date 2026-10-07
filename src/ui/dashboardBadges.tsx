@@ -13,12 +13,13 @@ import {
 } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import type { GoalFilter } from '../utils/logCategorizer';
+import { MessIcon } from './icons/MessIcon';
 
 export interface DashboardBadgeData {
   id: string;
   label: string;
   value: React.ReactNode;
-  icon: string;
+  icon: React.ReactNode;
   danger?: boolean;
   warning?: boolean;
   badge?: string;
@@ -239,7 +240,7 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
         id: 'stat-mess',
         label: t('dashboard.mess', { defaultValue: 'Mess' }),
         value: `${player.mess ?? 0}`,
-        icon: '🧹',
+        icon: <MessIcon />,
       });
     }
   } else {

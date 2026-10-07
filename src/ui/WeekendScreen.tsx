@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { PlayerState, StatModification, GameRules } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
 import { WeekendCardView } from './WeekendCardView';
+import { MessIcon } from './icons/MessIcon';
 
 interface WeekendScreenProps {
   player: PlayerState;
@@ -30,7 +31,7 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
       case 'dependability':
         return { icon: '🤝', label: t('weekendScreen.dependability', { defaultValue: 'Dependability' }) };
       case 'mess':
-        return { icon: '🧹', label: t('weekendScreen.mess', { defaultValue: 'Apartment Mess' }) };
+        return { icon: <MessIcon />, label: t('weekendScreen.mess', { defaultValue: 'Apartment Mess' }) };
       case 'social':
         return { icon: '👥', label: t('weekendScreen.social', { defaultValue: 'Social Standing' }) };
       case 'happiness':
@@ -310,12 +311,19 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
                     const info = getStatInfo(mod.stat);
                     const isMoney = mod.stat === 'money';
 
-                    let text = '';
+                    let text: React.ReactNode = '';
+                    let textSummary = '';
                     if (isMoney) {
                       text = mod.diff < 0 ? `-$${Math.abs(mod.diff)}` : (mod.diff > 0 ? `+$${mod.diff}` : `$0`);
+                      textSummary = String(text);
                     } else {
                       const sign = mod.diff > 0 ? '+' : '';
-                      text = info.icon ? `${sign}${mod.diff} ${info.icon}` : `${sign}${mod.diff} ${info.label}`;
+                      textSummary = `${sign}${mod.diff} ${info.label}`;
+                      text = info.icon ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          {sign}{mod.diff} {info.icon}
+                        </span>
+                      ) : textSummary;
                     }
 
                     let isPositive = false;
@@ -349,7 +357,7 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
                       <span
                         key={idx}
                         title={info.label}
-                        aria-label={`${info.label}: ${text}`}
+                        aria-label={`${info.label}: ${textSummary}`}
                         dir="ltr"
                         style={{
                           display: 'inline-flex',

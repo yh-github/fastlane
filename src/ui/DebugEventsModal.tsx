@@ -9,6 +9,7 @@ import {
   DEBUG_EVENT_METAS,
 } from '../engine/debugEvents';
 import { ApartmentMockupSandbox } from './buildings/home/ApartmentMockupSandbox';
+import { MessIcon } from './icons/MessIcon';
 
 interface DebugEventsModalProps {
   gameState: GameState;
@@ -417,8 +418,8 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
 
               {/* Mess Row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.8rem', color: '#bbb', minWidth: '85px' }}>
-                  🧹 Mess: <strong style={{ color: (selectedPlayer.mess ?? 0) > 20 ? '#e74c3c' : '#f39c12' }}>{selectedPlayer.mess ?? 0}</strong>
+                <span style={{ fontSize: '0.8rem', color: '#bbb', minWidth: '85px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <MessIcon size="1.2em" /> Mess: <strong style={{ color: (selectedPlayer.mess ?? 0) > 20 ? '#e74c3c' : '#f39c12' }}>{selectedPlayer.mess ?? 0}</strong>
                 </span>
                 <input
                   type="range"
