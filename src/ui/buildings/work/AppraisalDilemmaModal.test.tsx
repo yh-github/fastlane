@@ -53,7 +53,7 @@ describe('AppraisalDilemmaModal', () => {
     const onSelectOption = vi.fn();
     const player = createTestPlayer({ name: 'Clara' });
 
-    const { container } = render(
+    render(
       <AppraisalDilemmaModal
         dilemma={dummyDilemma}
         player={player}
