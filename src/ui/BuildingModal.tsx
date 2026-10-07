@@ -964,6 +964,7 @@ export function BuildingModal({
           dilemma={(player.pendingMiniGame || player.pendingAppraisalDilemma)!}
           player={player}
           campaign={campaign}
+          compact={isContentOverflowing}
           onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_mini_game', choiceIndex: idx })}
         />
       )}

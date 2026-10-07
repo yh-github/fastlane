@@ -842,6 +842,123 @@ button:disabled {
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   PAWN SHOP APPRAISAL DILEMMA MINI-GAME CARDS
+   ───────────────────────────────────────────────────────────── */
+.appraisal-card {
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.appraisal-card:active {
+  transform: scale(0.97) !important;
+}
+
+.appraisal-card--compact {
+  padding: 8px 8px !important;
+  border-radius: 8px !important;
+  gap: 4px !important;
+}
+
+.appraisal-cards-carousel {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-x: contain !important;
+  scrollbar-width: thin;
+  padding: 6px 12px 10px !important;
+  gap: 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.appraisal-cards-carousel .appraisal-card {
+  scroll-snap-align: center !important;
+  flex: 0 0 min(250px, 76vw) !important;
+}
+
+/* Touch indicator pill bar for Appraisal Cards */
+.appraisal-carousel-indicator {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  margin: 2px 0 8px;
+  flex-wrap: wrap;
+}
+
+.appraisal-carousel-indicator__btn {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  min-height: 26px;
+}
+
+.appraisal-carousel-indicator__btn:hover {
+  background: rgba(30, 41, 59, 0.9);
+  color: #fff;
+}
+
+.appraisal-carousel-indicator__btn--active {
+  background: rgba(234, 179, 8, 0.25) !important;
+  border-color: #facc15 !important;
+  color: #fef08a !important;
+  font-weight: bold !important;
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.35);
+}
+
+.appraisal-confirm-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-top: 6px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  box-sizing: border-box;
+}
+
+/* Flanking Work Wings Responsive Fallback for Constrained Screens */
+@media (max-width: 1020px) {
+  .work-wing-left {
+    position: fixed !important;
+    left: 8px !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: 8px !important;
+    width: min(200px, 46vw) !important;
+    max-height: 52vh !important;
+    z-index: 95 !important;
+  }
+  .work-wing-right {
+    position: fixed !important;
+    right: 8px !important;
+    left: auto !important;
+    top: auto !important;
+    bottom: 8px !important;
+    width: min(200px, 46vw) !important;
+    max-height: 52vh !important;
+    z-index: 95 !important;
+  }
+}
+
+
 /* Tooltips */
 .tooltip-wrapper {
   position: relative;
