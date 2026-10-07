@@ -587,6 +587,89 @@ describe('Weekend Engine', () => {
         expect(resClean.physicalCondition).toBe(19); // -1 physical
         expect(resClean.mess).toBe(0); // 10 - 10 = 0
       });
+
+      it('offers scalping INSTEAD of attend card when player does not have enough money for the event', () => {
+        // Baseball 1 ticket costMin is $25. Player has only $10.
+        const brokeWithTicket = {
+          id: 'p1',
+          money: 10,
+          inventory: { appliances: [], tickets: { baseball: 1, theatre: 0, concert: 0 } }
+        } as unknown as PlayerState;
+
+        const { cards } = generateWeekendChoices(brokeWithTicket, 2, fullMockWeekendData, new Random(123));
+        expect(cards).toHaveLength(3);
+        const hasAttend = cards.some(c => c.type === 'ticket');
+        const hasResale = cards.some(c => c.type === 'ticket_resale');
+        expect(hasAttend).toBe(false); // Can't go out without cash!
+        expect(hasResale).toBe(true);  // Scalping appears instead
+
+        // When solvent (money = 50 >= costMin 25), both attend and resale appear
+        const solventWithTicket = {
+          id: 'p1',
+          money: 50,
+          inventory: { appliances: [], tickets: { baseball: 1, theatre: 0, concert: 0 } }
+        } as unknown as PlayerState;
+
+        const { cards: solventCards } = generateWeekendChoices(solventWithTicket, 2, fullMockWeekendData, new Random(123));
+        expect(solventCards).toHaveLength(3);
+        expect(solventCards.some(c => c.type === 'ticket')).toBe(true);
+        expect(solventCards.some(c => c.type === 'ticket_resale')).toBe(true);
+      });
+
+      it('rolls for souvenir curio on ticket attendance and grants passive lifestyle curio', () => {
+        const player = {
+          id: 'p1',
+          money: 100,
+          mentalCondition: 30,
+          mentalConditionMax: 50,
+          social: 20,
+          lifestyle: 0,
+          inventory: {
+            appliances: [],
+            tickets: { baseball: 2, theatre: 0, concert: 0 },
+            curios: [],
+            knickKnacks: 0
+          },
+          offeredWeekendCards: [
+            {
+              id: 'ticket_baseball',
+              tier: 'expensive',
+              type: 'ticket',
+              eventKey: 'events.weekend.ticket_baseball',
+              titleKey: 'weekendScreen.card.ticket_baseball',
+              fluff: 'Baseball game',
+              icon: '⚾',
+              costMin: 50,
+              costMax: 90,
+              targetStat: 'mental',
+              potentialBonusMin: 3,
+              potentialBonusMax: 3,
+              secondaryStat: 'social',
+              potentialSecondaryBonusMin: 3,
+              potentialSecondaryBonusMax: 3,
+              ticketCount: 2
+            }
+          ]
+        } as unknown as PlayerState;
+
+        // Mock rng where next() returns 0.05 (< 0.20 for 2 tickets)
+        let callCount = 0;
+        const luckyRng: any = {
+          next: () => {
+            callCount++;
+            return 0.05; // forces souvenir success
+          },
+          shuffle: (arr: any[]) => arr
+        };
+
+        const resolved = resolveWeekendChoice(player, 'ticket_baseball', luckyRng, { usePhysicalMentalConditions: true, trackSocial: true } as any);
+        expect(resolved.inventory.tickets.baseball).toBe(0);
+        expect(resolved.inventory.curios).toHaveLength(1);
+        expect(resolved.inventory.knickKnacks).toBe(1);
+        expect(resolved.turnFlags?.curioNoveltyGranted).toBeUndefined(); // NO curio surprise granted
+        expect(resolved.weekendResult?.souvenir).toBeDefined();
+        expect(resolved.weekendResult?.souvenir?.name).toBe(resolved.inventory.curios![0].name);
+      });
     });
   });
 });

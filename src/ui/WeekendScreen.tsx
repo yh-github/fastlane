@@ -379,6 +379,29 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
                   })}
                 </div>
               )}
+
+              {player.weekendResult.souvenir && (
+                <div 
+                  data-testid="weekend-souvenir-callout"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    backgroundColor: 'rgba(243, 156, 18, 0.15)',
+                    border: '1px solid rgba(243, 156, 18, 0.4)',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    marginTop: '16px',
+                    color: '#f39c12',
+                    fontWeight: 'bold',
+                    fontSize: '0.92rem'
+                  }}
+                >
+                  <span>🎁</span>
+                  <span>{player.weekendResult.souvenir.icon}</span>
+                  <span>{player.weekendResult.souvenir.name}</span>
+                </div>
+              )}
             </>
           ) : (
             <p style={{ fontStyle: 'italic', color: '#aaa', minHeight: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

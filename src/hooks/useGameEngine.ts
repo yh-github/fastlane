@@ -20,7 +20,7 @@ export type { AppStatus, LogEntry };
 export function useGameEngine(
   campaign: CampaignBundle,
   initialGameState: GameState,
-  triggerAnim: (type: 'item' | 'emoji' | 'text', content: string, options?: any) => void,
+  triggerAnim: (type: 'item' | 'emoji' | 'text', content: React.ReactNode, options?: any) => void,
   setIsAnimating: (val: boolean) => void,
   isAnimating: boolean,
   openModal: (modal: ActiveModal) => void,

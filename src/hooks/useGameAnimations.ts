@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { FloatingAnimation } from '../ui/AnimationLayer';
 
 export interface AnimOptions {
@@ -12,7 +12,7 @@ export function useGameAnimations() {
   const [floatingAnims, setFloatingAnims] = useState<FloatingAnimation[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const triggerAnim = useCallback((type: 'item' | 'emoji' | 'text', content: string, options?: AnimOptions | string) => {
+  const triggerAnim = useCallback((type: 'item' | 'emoji' | 'text', content: React.ReactNode, options?: AnimOptions | string) => {
     let startX = window.innerWidth / 2;
     let startY = window.innerHeight / 2 - 100;
     let endX = window.innerWidth / 2;
