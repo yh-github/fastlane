@@ -228,6 +228,43 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     const closeSettingsBtn = page.locator('.settings-modal-content button').first();
     await closeSettingsBtn.click();
     await expect(settingsOverlay).toBeHidden();
+
+    // 9. Open Pawn Shop on small screen (800x600)
+    await page.evaluate(() => {
+      (window as any).__openBuilding('pawn_shop');
+    });
+    await expect(buildingModal).toBeVisible({ timeout: 5000 });
+    await expect(buildingModal).toContainText(/Pawn/i);
+
+    // Verify tabs are sticky and visible
+    const pawnBuyTab = page.locator('[data-testid="tab-pawnshop-buy"]');
+    const pawnPawnTab = page.locator('[data-testid="tab-pawnshop-pawn"]');
+    await expect(pawnBuyTab).toBeVisible();
+    await expect(pawnPawnTab).toBeVisible();
+
+    // Verify modal boundary fits within 800x600 viewport
+    const pawnBox = await buildingModal.boundingBox();
+    expect(pawnBox).not.toBeNull();
+    if (pawnBox) {
+      expect(pawnBox.y).toBeGreaterThanOrEqual(0);
+      expect(pawnBox.y + pawnBox.height).toBeLessThanOrEqual(605);
+    }
+
+    // Switch to Pawn & Redeem tab
+    await pawnPawnTab.click();
+    await expect(buildingModal).toContainText(/Sell Items|Buy Back/i);
+
+    // Verify pawn modal still fits within 800x600 viewport
+    const pawnBoxTab2 = await buildingModal.boundingBox();
+    expect(pawnBoxTab2).not.toBeNull();
+    if (pawnBoxTab2) {
+      expect(pawnBoxTab2.y).toBeGreaterThanOrEqual(0);
+      expect(pawnBoxTab2.y + pawnBoxTab2.height).toBeLessThanOrEqual(605);
+    }
+
+    // Close Pawn Shop modal
+    await page.locator('.building-modal__close').click();
+    await expect(buildingModal).toBeHidden({ timeout: 3000 });
   });
 
   test('verifies modal face and bank buttons retain prominent full size on large screens', async ({ page }) => {
@@ -283,6 +320,17 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     }
 
     // Close Bank modal
+    await page.locator('.building-modal__close').click();
+    await expect(buildingModal).toBeHidden({ timeout: 3000 });
+
+    // 5. Open Pawn Shop on large screen
+    await page.evaluate(() => {
+      (window as any).__openBuilding('pawn_shop');
+    });
+    await expect(buildingModal).toBeVisible({ timeout: 5000 });
+    await expect(buildingModal).not.toHaveClass(/building-modal--compact/);
+
+    // Close Pawn Shop modal
     await page.locator('.building-modal__close').click();
     await expect(buildingModal).toBeHidden({ timeout: 3000 });
   });

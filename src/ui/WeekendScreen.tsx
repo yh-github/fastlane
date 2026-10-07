@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { PlayerState, StatModification, GameRules } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
 import { WeekendCardView } from './WeekendCardView';
@@ -67,6 +67,44 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
     ? rawModifications 
     : rawModifications.filter(mod => mod.stat === 'money');
 
+  // Dynamic screen dimensions detection for adaptive card layout
+  const [dimensions, setDimensions] = useState<{ width: number; height: number }>(() => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    height: typeof window !== 'undefined' ? window.innerHeight : 768,
+  }));
+
+  useEffect(() => {
+    const handleResize = () => {
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const scrollToCard = (cardId: string) => {
+    setSelectedCardId(cardId);
+    const el = cardRefs.current[cardId];
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  };
+
+  const count = offeredCards.length;
+  // Cards in spacious form need ~270px width each + 20px gap, plus ~680px height
+  const neededWidthForFull = count * 270 + (count - 1) * 20 + 48;
+  const neededHeightForFull = 680;
+  const canShowAllFull = dimensions.width >= neededWidthForFull && dimensions.height >= neededHeightForFull;
+  const isCompact = !canShowAllFull;
+
+  // Narrow screen / carousel check: when width is too small for compact cards side-by-side (width < count * 180 + 32, or mobile <= 640px)
+  const neededWidthForCompactRow = count * 180 + (count - 1) * 12 + 32;
+  const isCarouselMode = isCompact && (dimensions.width < neededWidthForCompactRow || dimensions.width < 640);
+
   // ───────────────────────────────────────────────────────────────────────────
   // CARD SELECTION MODE
   // ───────────────────────────────────────────────────────────────────────────
@@ -77,44 +115,82 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
       }
     };
 
+    const selectedCard = offeredCards.find(c => c.id === selectedCardId);
+
     return (
-      <div className="weekend-screen weekend-screen--selection" style={{
+      <div className={`weekend-screen weekend-screen--selection ${isCompact ? 'weekend-screen--compact' : ''}`} style={{
         position: 'absolute', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
         backgroundColor: 'rgba(5, 8, 15, 0.95)', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', color: 'white', zIndex: 40, overflowY: 'auto', padding: '30px 16px',
+        alignItems: 'center', color: 'white', zIndex: 40, overflowY: 'auto',
+        padding: isCompact ? '16px 12px' : '30px 16px',
         boxSizing: 'border-box'
       }}>
-        <h1 style={{ color: '#00e5ff', textShadow: '0 0 12px #00e5ff', margin: '0 0 8px', textAlign: 'center' }}>
+        <h1 style={{
+          color: '#00e5ff',
+          textShadow: '0 0 12px #00e5ff',
+          margin: '0 0 4px',
+          textAlign: 'center',
+          fontSize: isCompact ? '1.3rem' : '1.8rem'
+        }}>
           {t('weekendScreen.cardChoiceTitle', { defaultValue: 'Weekend Plans' })}
         </h1>
-        <h2 style={{ color: '#94a3b8', fontSize: '1.1rem', margin: '0 0 20px', textAlign: 'center' }}>
+        <h2 style={{
+          color: '#94a3b8',
+          fontSize: isCompact ? '0.88rem' : '1.1rem',
+          margin: isCompact ? '0 0 10px' : '0 0 20px',
+          textAlign: 'center'
+        }}>
           {t('weekendScreen.cardChoiceSubtitle', { defaultValue: 'Choose how {{name}} will spend the weekend before Week {{turn}} begins.', name: player.name, turn })}
         </h2>
 
+        {/* Touch Carousel Quick Pill Selector (when in carousel mode) */}
+        {isCarouselMode && (
+          <div className="weekend-carousel-indicator" role="tablist" aria-label="Weekend card quick select">
+            {offeredCards.map((card, idx) => {
+              const isCardActive = selectedCardId === card.id;
+              return (
+                <button
+                  key={card.id}
+                  role="tab"
+                  aria-selected={isCardActive}
+                  className={`weekend-carousel-indicator__btn ${isCardActive ? 'weekend-carousel-indicator__btn--active' : ''}`}
+                  onClick={() => scrollToCard(card.id)}
+                >
+                  <span>{card.icon}</span>
+                  <span>{idx + 1}. {t(card.titleKey, { defaultValue: card.type === 'durable' ? 'Comfort' : card.type === 'ticket' ? 'Live' : 'Activity' })}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Responsive Card Spread / Carousel Container */}
         <div
-          className="weekend-cards-container"
-          style={{
+          data-testid="weekend-cards-container"
+          className={isCarouselMode ? "weekend-cards-carousel" : "weekend-cards-container"}
+          style={!isCarouselMode ? {
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '20px',
+            gap: isCompact ? '12px' : '20px',
             justifyContent: 'center',
             alignItems: 'stretch',
             width: '100%',
-            maxWidth: '960px',
-            margin: '10px 0 24px',
-            padding: '10px 4px'
-          }}
+            maxWidth: isCompact ? '900px' : '960px',
+            margin: isCompact ? '4px 0 16px' : '10px 0 24px',
+            padding: isCompact ? '4px 2px' : '10px 4px'
+          } : undefined}
         >
           {offeredCards.map((card) => {
             const isSelected = selectedCardId === card.id;
             return (
               <WeekendCardView
                 key={card.id}
+                ref={(el) => { cardRefs.current[card.id] = el; }}
                 card={card}
                 isSelected={isSelected}
-                onSelect={() => setSelectedCardId(card.id)}
+                onSelect={() => scrollToCard(card.id)}
                 onConfirm={() => handleConfirm(card.id)}
+                compact={isCompact}
               />
             );
           })}
@@ -124,33 +200,44 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
         {selectedCardId && (
           <div style={{
             position: 'sticky',
-            bottom: '16px',
+            bottom: isCompact ? '8px' : '16px',
             zIndex: 10,
             marginTop: 'auto',
-            padding: '12px 24px',
-            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-            borderRadius: '12px',
+            padding: isCompact ? '8px 16px' : '12px 24px',
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: isCompact ? '10px' : '12px',
             border: '1px solid rgba(0, 229, 255, 0.4)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
             display: 'flex',
-            gap: '16px',
-            alignItems: 'center'
+            gap: isCompact ? '10px' : '16px',
+            alignItems: 'center',
+            maxWidth: '90%',
+            boxSizing: 'border-box'
           }}>
-            <span style={{ fontSize: '0.95rem', color: '#e2e8f0' }}>
-              {t('weekendScreen.selectedPrompt', { defaultValue: 'Ready to commit your plans?' })}
+            <span style={{ fontSize: isCompact ? '0.84rem' : '0.95rem', color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {selectedCard
+                ? t('weekendScreen.selectedCardPrompt', {
+                    defaultValue: `Selected: {{name}}`,
+                    name: t(selectedCard.titleKey, { defaultValue: selectedCard.type === 'durable' ? 'Home Comfort' : selectedCard.type === 'ticket' ? 'Live Entertainment' : 'Weekend Activity' })
+                  })
+                : t('weekendScreen.selectedPrompt', { defaultValue: 'Ready to commit your plans?' })}
             </span>
             <button
               onClick={() => handleConfirm(selectedCardId)}
               style={{
-                padding: '10px 24px',
-                fontSize: '1rem',
+                padding: isCompact ? '8px 18px' : '10px 24px',
+                fontSize: isCompact ? '0.9rem' : '1rem',
+                minHeight: isCompact ? '38px' : '42px',
                 cursor: 'pointer',
                 backgroundColor: '#00e5ff',
                 color: '#000',
                 border: 'none',
                 borderRadius: '8px',
                 fontWeight: 'bold',
-                boxShadow: '0 0 10px #00e5ff'
+                boxShadow: '0 0 10px #00e5ff',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               {t('weekendScreen.confirmSelection', { defaultValue: 'Lock In Weekend' })}
