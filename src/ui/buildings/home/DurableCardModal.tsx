@@ -1,26 +1,34 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import type { CampaignBundle } from '../../../engine/dataLoader';
+import type { CampaignBundle, ItemDef } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
 import type { GameAction } from '../../../engine/actions/types';
 import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../../../engine/actions/maintenanceActions';
+import { calcItemPrice } from '../../../engine/economyEngine';
+import { calcUsedSpace, calcHousingSpaceCap } from '../../../engine/statMath';
+import { getItemDisplayName } from '../../../utils/itemUtils';
 import { MessIcon } from '../../icons/MessIcon';
 
-interface DurableCardModalProps {
-  durable: {
+export interface ItemCardModalProps {
+  durable?: {
     id: string;
     isBook?: boolean;
     applianceData?: OwnedAppliance;
     isOwned?: boolean;
   };
+  item?: ItemDef;
   player?: PlayerState;
   campaign?: CampaignBundle;
   rules?: GameRules;
   economicIndex?: number;
+  mode?: 'home' | 'shop';
+  priceOverride?: number;
   onAction?: (action: GameAction) => void;
   onClose: () => void;
 }
+
+export type DurableCardModalProps = ItemCardModalProps;
 
 const DEFAULT_APPLIANCE_SPACE: Record<string, number> = {
   refrigerator: 40,
@@ -44,12 +52,15 @@ const DEFAULT_APPLIANCE_SPACE: Record<string, number> = {
   knick_knacks: 2
 };
 
-export const DurableCardModal: React.FC<DurableCardModalProps> = ({
+export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   durable,
+  item,
   player,
   campaign,
   rules,
   economicIndex = 0,
+  mode = 'home',
+  priceOverride,
   onAction,
   onClose
 }) => {
@@ -66,27 +77,106 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [onClose]);
 
-  const itemDef = campaign?.items.find(i => i.id === durable.id);
-  const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : durable.id;
+  const isShop = mode === 'shop';
+  const itemId = durable?.id || item?.id || '';
+  const itemDef = item || campaign?.items.find(i => i.id === itemId);
+  const itemName = itemDef ? getItemDisplayName(itemDef.id, itemDef, t, !!rules?.usePhysicalMentalConditions) : itemId;
+  const isBook = Boolean(durable?.isBook || itemDef?.category === 'book');
 
-  const currentAppliance = durable.isBook 
+  const currentAppliance = isBook 
     ? undefined 
-    : (player?.inventory.appliances.find(a => a.id === durable.id && a.isBroken) || player?.inventory.appliances.find(a => a.id === durable.id));
-  const isBroken = Boolean(currentAppliance ? currentAppliance.isBroken : durable.applianceData?.isBroken);
+    : (player?.inventory.appliances.find(a => a.id === itemId && a.isBroken) || player?.inventory.appliances.find(a => a.id === itemId));
+  const isBroken = Boolean(currentAppliance ? currentAppliance.isBroken : durable?.applianceData?.isBroken);
 
-  const isSpareParts = durable.id === 'spare_parts';
-  const isCurio = durable.id === 'knick_knack' || durable.id === 'knick_knacks';
+  const isSpareParts = itemId === 'spare_parts';
+  const isCurio = itemId === 'knick_knack' || itemId === 'knick_knacks';
 
   const knickKnacks = player?.inventory.knickKnacks || 0;
   const uninspectedKnickKnacks = player?.inventory.uninspectedKnickKnacks || 0;
   const totalCurios = knickKnacks + uninspectedKnickKnacks;
 
-  const isOwned = isCurio 
-    ? (durable.isOwned !== false && totalCurios > 0)
-    : (isSpareParts ? (durable.isOwned !== false && (player?.inventory.spareParts || 0) > 0) : durable.isOwned !== false);
-  const isNew = durable.isBook 
+  // Space calculation
+  let itemSpace = itemDef?.space ?? 0;
+  if ((itemDef?.category === 'book' || durable?.isBook) && itemSpace === 0) {
+    itemSpace = itemId === 'encyclopedia' ? 20 : 10;
+  } else if (!itemDef && DEFAULT_APPLIANCE_SPACE[itemId]) {
+    itemSpace = DEFAULT_APPLIANCE_SPACE[itemId];
+  }
+  const currentSpace = player ? calcUsedSpace(player, campaign, true) : 0;
+  const maxSpace = player ? calcHousingSpaceCap(player, campaign) : 100;
+  const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
+
+  // Price & Affordability
+  const adjustedPrice = priceOverride ?? (itemDef ? calcItemPrice(itemDef, economicIndex) : 0);
+  const canAfford = (player?.money ?? 0) >= adjustedPrice;
+  const canBuy = canAfford && (!rules?.helpfulUI || hasSpace);
+
+  // Detailed ownership calculation
+  let ownedCount = 0;
+  let isOwned = false;
+  let ownershipDetailText = '';
+
+  if (itemDef?.category === 'book' || durable?.isBook) {
+    isOwned = Boolean(player?.inventory.books.includes(itemId));
+    ownedCount = isOwned ? 1 : 0;
+    ownershipDetailText = isOwned ? `✓ ${t('storeFront.owned', { defaultValue: 'Owned' })}` : t('storeFront.notOwned', { defaultValue: 'Not Owned' });
+  } else if (itemDef?.category === 'appliance' || (!itemDef && !durable?.isBook && DEFAULT_APPLIANCE_SPACE[itemId] && !isSpareParts && !isCurio)) {
+    const ownedList = player?.inventory.appliances.filter(a => a.id === itemId) || [];
+    ownedCount = ownedList.length;
+    isOwned = ownedCount > 0;
+    const brokenCount = ownedList.filter(a => a.isBroken).length;
+    ownershipDetailText = isOwned
+      ? (brokenCount > 0 ? `Owned: ${ownedCount} (${brokenCount} broken)` : `Owned: ${ownedCount}`)
+      : t('storeFront.notOwned', { defaultValue: 'Not Owned' });
+  } else if (itemDef?.category === 'clothes') {
+    let weeks = 0;
+    if (itemId === 'casual_clothes') weeks = player?.inventory.casualClothesWeeks || 0;
+    else if (itemId === 'dress_clothes') weeks = player?.inventory.dressClothesWeeks || 0;
+    else if (itemId === 'business_suit') weeks = player?.inventory.businessClothesWeeks || 0;
+    isOwned = weeks > 0;
+    ownedCount = weeks;
+    ownershipDetailText = isOwned ? `✓ Owned (${weeks} wks left)` : t('storeFront.notOwned', { defaultValue: 'Not Owned' });
+  } else if (itemDef?.category === 'food') {
+    if (itemDef.subcategory === 'fast_food') {
+      ownedCount = player?.inventory.fastFoodItems.filter(f => f.itemId === itemId).length || 0;
+      isOwned = ownedCount > 0;
+      ownershipDetailText = isOwned ? `In Inventory: ${ownedCount}` : 'None Owned';
+    } else if (itemDef.subcategory === 'canned') {
+      ownedCount = player?.inventory.cannedFoodUnits || 0;
+      isOwned = ownedCount > 0;
+      ownershipDetailText = `In Pantry: ${ownedCount} units`;
+    } else {
+      ownedCount = player?.inventory.freshFoodUnits || 0;
+      isOwned = ownedCount > 0;
+      ownershipDetailText = `In Storage: ${ownedCount} units`;
+    }
+  } else if (isSpareParts) {
+    ownedCount = player?.inventory.spareParts || 0;
+    isOwned = (durable?.isOwned !== false && ownedCount > 0);
+    ownershipDetailText = `Owned: ${ownedCount} box(es)`;
+  } else if (isCurio) {
+    ownedCount = totalCurios;
+    isOwned = (durable?.isOwned !== false && ownedCount > 0);
+    ownershipDetailText = `Owned: ${ownedCount} curio(s)`;
+  } else if (itemDef?.category === 'ticket') {
+    if (itemId === 'lottery_ticket') {
+      ownedCount = player?.inventory.lotteryTickets || 0;
+      isOwned = ownedCount > 0;
+      ownershipDetailText = `Owned: ${ownedCount} ticket(s)`;
+    } else {
+      ownedCount = (player?.inventory.tickets as any)?.[itemId] || 0;
+      isOwned = ownedCount > 0;
+      ownershipDetailText = `Owned: ${ownedCount} ticket(s)`;
+    }
+  } else {
+    isOwned = durable ? (durable.isOwned !== false) : false;
+    ownedCount = isOwned ? 1 : 0;
+    ownershipDetailText = isOwned ? `✓ ${t('storeFront.owned', { defaultValue: 'Owned' })}` : t('storeFront.notOwned', { defaultValue: 'Not Owned' });
+  }
+
+  const isNew = durable?.isBook 
     ? false 
-    : ((currentAppliance?.condition ?? durable.applianceData?.condition) === 'new' || (currentAppliance?.purchaseSource ?? durable.applianceData?.purchaseSource) === 'socket_city');
+    : ((currentAppliance?.condition ?? durable?.applianceData?.condition) === 'new' || (currentAppliance?.purchaseSource ?? durable?.applianceData?.purchaseSource) === 'socket_city');
 
   const hasAllBooks = Boolean(
     player?.inventory?.books?.includes('dictionary') &&
@@ -100,15 +190,20 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
         ? `⚙️ Spare Parts (${player?.inventory.spareParts || 0})` 
         : (isCurio 
             ? `🏺 Curio Collection (${totalCurios})` 
-            : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable.isBook ? '📚 Book' : '📦 Used')))));
+            : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable?.isBook || itemDef?.category === 'book' ? '📚 Book' : '📦 Used')))));
+
   const conditionDetail = !isOwned
-    ? (durable.isBook 
+    ? (durable?.isBook || itemDef?.category === 'book'
         ? 'Available at Socket City / Z-Mart. Reference literature for your apartment.'
         : (isCurio
             ? 'Available at Pawn Shop rummage bins. Furnish your home shelves to gain aesthetic charm!'
             : (isSpareParts
                 ? 'Available at Pawn Shop rummage bins. Keep a box handy to boost your DIY appliance repair odds!'
-                : 'Available at Socket City (Brand New) or Z-Mart & Pawn Shop (Used). Furnish your home to gain its perks!')))
+                : (itemDef?.category === 'clothes'
+                    ? 'Wardrobe apparel required for career interviews and work shifts.'
+                    : (itemDef?.category === 'food'
+                        ? 'Consumable nutrition to maintain vitality and prevent hunger.'
+                        : 'Available at Socket City (Brand New) or Z-Mart & Pawn Shop (Used). Furnish your home to gain its perks!')))))
     : (isSpareParts
         ? (rules?.spaceCapping 
             ? `Assorted repair materials from pawn shop rummage bins. Occupies 2 space per box. You currently own ${player?.inventory.spareParts || 0} box(es).`
@@ -129,7 +224,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
                 ? 'Broken down and in need of maintenance. Choose a repair option below to restore functionality, or throw it out.'
                 : (isNew 
                     ? 'Purchased brand new from Socket City. Clean and pristine working condition.'
-                    : (durable.isBook ? 'Reference book in your apartment collection.' : 'Second-hand from Z-Mart or Pawn Shop. Fully functional and broken-in.')))));
+                    : (durable?.isBook || itemDef?.category === 'book' ? 'Reference book in your apartment collection.' : 'Second-hand from Z-Mart or Pawn Shop. Fully functional and broken-in.')))));
 
   // Gameplay descriptions for durables:
   const getGameplayDescription = (id: string, isBook?: boolean): string => {
@@ -220,28 +315,28 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   const effectBadges: EffectBadge[] = [];
 
   // Core gameplay appliance mechanics:
-  if (durable.id === 'refrigerator') {
+  if (itemId === 'refrigerator') {
     effectBadges.push({ label: '🧊 Preserves up to 6 Fresh Food/turn' });
-  } else if (durable.id === 'freezer') {
+  } else if (itemId === 'freezer') {
     effectBadges.push({ label: '🧊 Stores up to 12 Food (Needs Refrigerator)' });
     if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
       effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
     }
-  } else if (durable.id === 'stove') {
+  } else if (itemId === 'stove') {
     if (!rules?.usePhysicalMentalConditions) {
       effectBadges.push({ label: '🍳 +1 😊/turn' });
     }
-  } else if (durable.id === 'microwave') {
+  } else if (itemId === 'microwave') {
     if (!rules?.usePhysicalMentalConditions) {
       effectBadges.push({ label: '⚡ +1 😊/turn' });
     }
-  } else if (durable.id === 'computer') {
+  } else if (itemId === 'computer') {
     effectBadges.push({ label: '🎓 Bonus Study Credit (-1 Lesson)' });
     effectBadges.push({ label: '💻 Freelance Income ($10–$150/turn chance)' });
     if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
       effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
     }
-  } else if (durable.id === 'hot_tub') {
+  } else if (itemId === 'hot_tub') {
     effectBadges.push({ label: '🛁 Prevents relaxation collapse' });
     if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
       effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
@@ -249,7 +344,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   }
 
   // Reference book 3-book set synergy (Dictionary, Encyclopedia, Atlas):
-  if (durable.isBook && (durable.id === 'dictionary' || durable.id === 'encyclopedia' || durable.id === 'atlas')) {
+  if (isBook && (itemId === 'dictionary' || itemId === 'encyclopedia' || itemId === 'atlas')) {
     effectBadges.push({
       label: hasAllBooks 
         ? '📚 3-Book Synergy: -1 Lesson (Active)' 
@@ -284,11 +379,11 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   if (
     !rules?.usePhysicalMentalConditions &&
     itemDef?.happinessBonus &&
-    durable.id !== 'freezer' &&
-    durable.id !== 'stove' &&
-    durable.id !== 'microwave' &&
-    durable.id !== 'computer' &&
-    durable.id !== 'hot_tub' &&
+    itemId !== 'freezer' &&
+    itemId !== 'stove' &&
+    itemId !== 'microwave' &&
+    itemId !== 'computer' &&
+    itemId !== 'hot_tub' &&
     !effectBadges.some(b => b.isOneTime)
   ) {
     effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
@@ -311,17 +406,90 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
   }
 
   const hasTv = player?.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
-  const isVcrWithoutTv = durable.id === 'vcr' && isOwned && !hasTv;
-  if (durable.id === 'vcr' && isVcrWithoutTv && rules?.usePhysicalMentalConditions) {
+  const isVcrWithoutTv = itemId === 'vcr' && isOwned && !hasTv;
+  if (itemId === 'vcr' && isVcrWithoutTv && rules?.usePhysicalMentalConditions) {
     effectBadges.push({ label: '⚠️ Requires TV (Inactive)' });
   }
 
   const spaceCost = isSpareParts || isCurio
     ? 2
-    : ((itemDef?.space && itemDef.space > 0) ? itemDef.space : (DEFAULT_APPLIANCE_SPACE[durable.id] ?? (durable.isBook ? 10 : 20)));
+    : ((itemDef?.space && itemDef.space > 0) ? itemDef.space : (DEFAULT_APPLIANCE_SPACE[itemId] ?? (isBook ? 10 : 20)));
   const lifestyleVal = isVcrWithoutTv ? 0 : (isCurio ? Math.min(15, Math.floor(2.8 * Math.sqrt(totalCurios))) : (itemDef?.lifestyleValue ?? 0));
 
+  // Explicit on_buy modifiers
+  interface OnBuyModifier {
+    label: string;
+    icon: string;
+  }
+  const onBuyModifiers: OnBuyModifier[] = [];
+
+  if (itemDef?.happinessBonus && !rules?.usePhysicalMentalConditions) {
+    onBuyModifiers.push({ label: `+${itemDef.happinessBonus} Happiness 😊 on buy`, icon: '😊' });
+  } else if (itemDef?.happinessBonus && rules?.usePhysicalMentalConditions) {
+    onBuyModifiers.push({ label: `+${itemDef.happinessBonus} Morale 😊 on buy`, icon: '😊' });
+  }
+  if (itemDef?.mentalBonus && rules?.usePhysicalMentalConditions) {
+    onBuyModifiers.push({ label: `+${itemDef.mentalBonus} Mental 🧠 on buy`, icon: '🧠' });
+  }
+
+  if (itemDef?.effects) {
+    for (const eff of itemDef.effects) {
+      if (eff.trigger === 'on_purchase' || (eff.trigger as string) === 'on_buy') {
+        if (eff.stat === 'physical_max') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Max Physical 💪`, icon: '💪' });
+        else if (eff.stat === 'physical') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Physical 💪`, icon: '💪' });
+        else if (eff.stat === 'mental_max') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Max Mental 🧠`, icon: '🧠' });
+        else if (eff.stat === 'mental') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Mental 🧠`, icon: '🧠' });
+        else if (eff.stat === 'happiness') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Happiness 😊`, icon: '😊' });
+        else if (eff.stat === 'social') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Social 👥`, icon: '👥' });
+        else if (eff.stat === 'mess') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Mess`, icon: '🧹' });
+      }
+    }
+  }
+
+  if (itemDef?.category === 'clothes') {
+    const weeks = itemId === 'business_suit' ? 12 : 8;
+    onBuyModifiers.push({ label: `+${weeks} Weeks of wear`, icon: '👔' });
+    if (rules?.usePhysicalMentalConditions) {
+      onBuyModifiers.push({ label: '+1 Lifestyle prestige', icon: '✨' });
+    }
+  } else if (itemDef?.category === 'food') {
+    if (itemDef.subcategory === 'fast_food') {
+      onBuyModifiers.push({ label: 'Fast meal (+1 meal turn count)', icon: '🍔' });
+    } else if (itemDef.subcategory === 'canned') {
+      onBuyModifiers.push({ label: '+1 Pantry unit (Never spoils)', icon: '🥫' });
+    } else {
+      onBuyModifiers.push({ label: '+1 Fresh food (Preserves with Fridge)', icon: '🥗' });
+      if (rules?.usePhysicalMentalConditions && !player?.turnFlags?.freshFoodHappinessGranted) {
+        onBuyModifiers.push({ label: '+1 Nutrition happiness', icon: '😊' });
+      }
+    }
+  } else if (itemDef?.category === 'ticket') {
+    if (rules?.usePhysicalMentalConditions) {
+      onBuyModifiers.push({ label: '+1 Mental (up to 4/turn)', icon: '🧠' });
+    }
+  } else if (isCurio) {
+    if (rules?.usePhysicalMentalConditions && !player?.turnFlags?.curioNoveltyGranted) {
+      onBuyModifiers.push({ label: '+1 Mental novelty on buy', icon: '🧠' });
+    }
+  } else if (itemDef?.category === 'appliance' && rules?.usePhysicalMentalConditions) {
+    onBuyModifiers.push({ label: '+1 Lifestyle prestige', icon: '✨' });
+  }
+
   if (typeof document === 'undefined') return null;
+
+  const categoryLabel = isBook
+    ? '📚 BOOK'
+    : (itemDef?.category === 'clothes'
+        ? '👔 CLOTHING'
+        : (itemDef?.category === 'food'
+            ? '🥗 FOOD'
+            : (itemDef?.category === 'ticket'
+                ? '🎟️ TICKET'
+                : (isSpareParts
+                    ? '⚙️ SPARE PARTS'
+                    : (isCurio
+                        ? '🏺 CURIO'
+                        : '🛋️ APPLIANCE')))));
 
   return createPortal(
     <div 
@@ -402,11 +570,11 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
             letterSpacing: '0.08em',
             padding: '2px 6px',
             borderRadius: '5px',
-            backgroundColor: durable.isBook ? 'rgba(155, 89, 182, 0.2)' : 'rgba(52, 152, 219, 0.2)',
-            color: durable.isBook ? '#d7bde2' : '#aed6f1',
-            border: `1px solid ${durable.isBook ? '#9b59b6' : '#3498db'}`
+            backgroundColor: isBook ? 'rgba(155, 89, 182, 0.2)' : 'rgba(52, 152, 219, 0.2)',
+            color: isBook ? '#d7bde2' : '#aed6f1',
+            border: `1px solid ${isBook ? '#9b59b6' : '#3498db'}`
           }}>
-            {durable.isBook ? '📚 BOOK' : '🛋️ APPLIANCE'}
+            {categoryLabel}
           </span>
 
           <span style={{
@@ -414,15 +582,19 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
             fontWeight: 'bold',
             padding: '2px 8px',
             borderRadius: '10px',
-            backgroundColor: isBroken
-              ? 'rgba(239, 68, 68, 0.25)'
-              : (isNew ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.2)'),
-            color: isBroken
-              ? '#ef4444'
-              : (isNew ? '#2ecc71' : '#5dade2'),
-            border: `1px solid ${isBroken ? '#ef4444' : (isNew ? '#2ecc71' : '#3498db')}`
+            backgroundColor: isShop
+              ? (isOwned ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.2)')
+              : (isBroken
+                  ? 'rgba(239, 68, 68, 0.25)'
+                  : (isNew ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.2)')),
+            color: isShop
+              ? (isOwned ? '#2ecc71' : '#5dade2')
+              : (isBroken
+                  ? '#ef4444'
+                  : (isNew ? '#2ecc71' : '#5dade2')),
+            border: `1px solid ${isShop ? (isOwned ? '#2ecc71' : '#3498db') : (isBroken ? '#ef4444' : (isNew ? '#2ecc71' : '#3498db'))}`
           }}>
-            {conditionLabel}
+            {isShop ? (isOwned ? `✓ OWNED (${ownedCount})` : '🏬 FOR SALE') : conditionLabel}
           </span>
         </div>
 
@@ -438,7 +610,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
           boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)'
         }}>
           <img 
-            src={`/assets/raw_images/${durable.id}.png`} 
+            src={`/assets/raw_images/${itemId}.png`} 
             alt={itemName}
             style={{ 
               maxWidth: '48px', 
@@ -458,7 +630,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
             {itemName}
           </h3>
           <div style={{ fontSize: '0.72rem', color: '#888', marginTop: '2px' }}>
-            {conditionDetail}
+            {isShop ? ownershipDetailText : conditionDetail}
           </div>
         </div>
 
@@ -471,7 +643,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
           margin: 0,
           padding: '0 2px'
         }}>
-          {getGameplayDescription(durable.id, durable.isBook)}
+          {getGameplayDescription(itemId, isBook)}
         </p>
 
         {/* Specs & Effect Chips */}
@@ -484,6 +656,21 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
           flexDirection: 'column',
           gap: '5px'
         }}>
+          {isShop && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '0.78rem',
+              color: '#cbd5e1',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              paddingBottom: '4px'
+            }}>
+              <span>Price: <strong style={{ color: canAfford ? '#34d399' : '#f87171' }}>${adjustedPrice}</strong></span>
+              <span style={{ fontSize: '0.72rem', color: isOwned ? '#34d399' : '#94a3b8' }}>{ownershipDetailText}</span>
+            </div>
+          )}
+
           {(Boolean(rules?.spaceCapping) || Boolean(lifestyleVal > 0 && rules?.usePhysicalMentalConditions)) && (
             <div style={{
               display: 'flex',
@@ -494,7 +681,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
               paddingBottom: '3px'
             }}>
               {rules?.spaceCapping ? (
-                <span>Space: <strong style={{ color: '#00e5ff' }}>{spaceCost} space</strong></span>
+                <span>Space: <strong style={{ color: hasSpace ? '#00e5ff' : '#f87171' }}>{spaceCost} space</strong></span>
               ) : <span />}
               {lifestyleVal > 0 && rules?.usePhysicalMentalConditions && (
                 <span>Lifestyle: <strong style={{ color: '#f1c40f' }}>+{lifestyleVal}</strong></span>
@@ -502,37 +689,107 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
             </div>
           )}
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '2px' }}>
-            {effectBadges.map((badge, idx) => (
-              <span 
-                key={idx}
-                style={{
-                  fontSize: '0.70rem',
-                  fontWeight: 'bold',
-                  color: isBroken ? '#94a3b8' : (badge.isOneTime ? '#facc15' : '#2ecc71'),
-                  textDecoration: isBroken ? 'line-through' : 'none',
-                  background: isBroken 
-                    ? 'rgba(148, 163, 184, 0.1)' 
-                    : (badge.isOneTime ? 'rgba(250, 204, 21, 0.12)' : 'rgba(46, 204, 113, 0.12)'),
-                  border: `1px solid ${isBroken ? 'rgba(148, 163, 184, 0.25)' : (badge.isOneTime ? 'rgba(250, 204, 21, 0.3)' : 'rgba(46, 204, 113, 0.3)')}`,
-                  borderRadius: '4px',
-                  padding: '2px 5px'
-                }}
-              >
-                {badge.label}
-              </span>
-            ))}
-            {isBroken && effectBadges.length > 0 && (
-              <div style={{ fontSize: '0.68rem', color: '#f87171', fontStyle: 'italic', width: '100%', marginTop: '2px' }}>
-                ⚠️ Inactive while broken
+          {effectBadges.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '2px' }}>
+              {effectBadges.map((badge, idx) => (
+                <span 
+                  key={idx}
+                  style={{
+                    fontSize: '0.70rem',
+                    fontWeight: 'bold',
+                    color: isBroken ? '#94a3b8' : (badge.isOneTime ? '#facc15' : '#2ecc71'),
+                    textDecoration: isBroken ? 'line-through' : 'none',
+                    background: isBroken 
+                      ? 'rgba(148, 163, 184, 0.1)' 
+                      : (badge.isOneTime ? 'rgba(250, 204, 21, 0.12)' : 'rgba(46, 204, 113, 0.12)'),
+                    border: `1px solid ${isBroken ? 'rgba(148, 163, 184, 0.25)' : (badge.isOneTime ? 'rgba(250, 204, 21, 0.3)' : 'rgba(46, 204, 113, 0.3)')}`,
+                    borderRadius: '4px',
+                    padding: '2px 5px'
+                  }}
+                >
+                  {badge.label}
+                </span>
+              ))}
+              {isBroken && effectBadges.length > 0 && (
+                <div style={{ fontSize: '0.68rem', color: '#f87171', fontStyle: 'italic', width: '100%', marginTop: '2px' }}>
+                  ⚠️ Inactive while broken
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Explicit on_buy modifiers block */}
+        {isShop && (
+          <div style={{
+            background: 'rgba(0, 229, 255, 0.08)',
+            border: '1px solid rgba(0, 229, 255, 0.25)',
+            borderRadius: '8px',
+            padding: '8px 10px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px'
+          }}>
+            <div style={{ fontSize: '0.74rem', fontWeight: 'bold', color: '#00e5ff', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span>⚡ {t('storeFront.onBuyModifiers', { defaultValue: 'On-Purchase Modifiers (on_buy)' })}:</span>
+            </div>
+            {onBuyModifiers.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                {onBuyModifiers.map((mod, i) => (
+                  <span key={i} style={{
+                    fontSize: '0.70rem',
+                    fontWeight: 'bold',
+                    color: '#e2e8f0',
+                    background: 'rgba(0, 0, 0, 0.45)',
+                    border: '1px solid rgba(0, 229, 255, 0.25)',
+                    borderRadius: '4px',
+                    padding: '2px 6px'
+                  }}>
+                    {mod.icon} {mod.label}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.70rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                None (standard item / furnishing)
               </div>
             )}
           </div>
-        </div>
+        )}
 
-        {/* Maintenance / Special Action Hook */}
-        {isBroken && isOwned ? (() => {
-          const diyBreakdown = player ? calcDiySuccessChance(player, campaign, rules, undefined, durable.id) : { baseChance: 25, techBonus: 0, electronicsBonus: 0, partsBonus: 0, complexityPenalty: 0, totalChance: 25 };
+        {/* Shop Buy Action or Maintenance / Special Action Hook */}
+        {isShop ? (
+          <button
+            data-action-target={`buy-${itemId}`}
+            data-testid={`btn-buy-modal-${itemId}`}
+            disabled={!canBuy || !onAction}
+            onClick={() => {
+              onAction?.({ type: 'buy', itemId });
+              onClose();
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              backgroundColor: canBuy ? 'var(--accent-cyan, #00e5ff)' : '#334155',
+              color: canBuy ? '#000000' : '#94a3b8',
+              border: canBuy ? 'none' : '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              fontSize: '0.88rem',
+              cursor: canBuy ? 'pointer' : 'not-allowed',
+              boxShadow: canBuy ? '0 0 14px rgba(0, 229, 255, 0.4)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>🛒 {t('storeFront.buy', { defaultValue: 'BUY' })} (${adjustedPrice})</span>
+            {!canAfford && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughMoney', { defaultValue: 'Too expensive' })})</span>}
+            {canAfford && !hasSpace && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughSpace', { defaultValue: 'No space' })})</span>}
+          </button>
+        ) : isBroken && isOwned ? (() => {
+          const diyBreakdown = player ? calcDiySuccessChance(player, campaign, rules, undefined, itemId) : { baseChance: 25, techBonus: 0, electronicsBonus: 0, partsBonus: 0, complexityPenalty: 0, totalChance: 25 };
           const hasDiyHours = (player?.hoursRemaining ?? 0) >= 6;
           const curPhys = player?.physicalCondition ?? 50;
           const curMental = player?.mentalCondition ?? 50;
@@ -540,13 +797,13 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
           const isDiyDisabled = !player || !hasDiyHours || !hasDiyStamina || !onAction;
           const diyDisabledReason = !hasDiyHours ? 'Need 6h' : (!hasDiyStamina ? 'Exhausted' : '');
 
-          const repairCost = calcRepairmanCost(durable.id, economicIndex, campaign);
+          const repairCost = calcRepairmanCost(itemId, economicIndex, campaign);
           const hasRepairHours = (player?.hoursRemaining ?? 0) >= 1;
           const hasRepairMoney = (player?.money ?? 0) >= repairCost;
           const isRepairDisabled = !player || !hasRepairHours || !hasRepairMoney || !onAction;
           const repairDisabledReason = !hasRepairHours ? 'Need 1h' : (!hasRepairMoney ? `Need $${repairCost}` : '');
 
-          const throwMess = calcThrowOutMess(durable.id, campaign);
+          const throwMess = calcThrowOutMess(itemId, campaign);
 
           return (
             <div style={{
@@ -594,7 +851,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
                   data-action-target="diy-fix"
                   disabled={isDiyDisabled}
                   onClick={() => {
-                    onAction?.({ type: 'appliance_maintenance', applianceId: durable.id, option: 'diy' });
+                    onAction?.({ type: 'appliance_maintenance', applianceId: itemId, option: 'diy' });
                   }}
                   style={{
                     width: '100%',
@@ -631,7 +888,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
                   data-action-target="call-repairman"
                   disabled={isRepairDisabled}
                   onClick={() => {
-                    onAction?.({ type: 'appliance_maintenance', applianceId: durable.id, option: 'repairman' });
+                    onAction?.({ type: 'appliance_maintenance', applianceId: itemId, option: 'repairman' });
                   }}
                   style={{
                     width: '100%',
@@ -670,7 +927,7 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
                   data-action-target="throw-out-appliance"
                   disabled={!onAction}
                   onClick={() => {
-                    onAction?.({ type: 'appliance_maintenance', applianceId: durable.id, option: 'throw_out' });
+                    onAction?.({ type: 'appliance_maintenance', applianceId: itemId, option: 'throw_out' });
                     onClose();
                   }}
                   style={{
@@ -797,10 +1054,13 @@ export const DurableCardModal: React.FC<DurableCardModalProps> = ({
             marginTop: '2px'
           }}
         >
-          ✕ Back to Apartment
+          ✕ {isShop ? t('common.close', { defaultValue: 'Back to Shop' }) : t('homeRelax.backToApartment', { defaultValue: 'Back to Apartment' })}
         </button>
       </div>
     </div>,
     document.body
   );
 };
+
+export const DurableCardModal = ItemCardModal;
+export default ItemCardModal;

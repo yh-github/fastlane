@@ -91,8 +91,14 @@ describe('App Integration & StrictMode', () => {
     // Wait for the storefront modal to open and display the Cheeseburger
     const cheeseburgerItem = await screen.findByText(/Cheeseburger|cheeseburger/i);
     
-    // Click on the Cheeseburger to buy it
+    // Click on the Cheeseburger to buy it (or open ItemCardModal if helpfulUI is active)
     fireEvent.click(cheeseburgerItem);
+
+    // If helpfulUI is enabled, clicking opens ItemCardModal with a BUY button
+    const modalBuyBtn = screen.queryByTestId('btn-buy-modal-cheeseburger') || screen.queryByRole('button', { name: /BUY/i });
+    if (modalBuyBtn) {
+      fireEvent.click(modalBuyBtn);
+    }
 
     // Wait for the log to register the purchase
     await waitFor(() => {

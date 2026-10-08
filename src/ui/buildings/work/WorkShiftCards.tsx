@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
@@ -16,6 +17,7 @@ export interface WorkShiftCardsProps {
   onClose?: () => void;
   layoutMode?: 'flanking' | 'grid';
   isFloating?: boolean;
+  modalRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
@@ -26,11 +28,33 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
   onAction,
   onClose,
   layoutMode = 'grid',
-  isFloating: _isFloating = true
+  isFloating: _isFloating = true,
+  modalRef
 }) => {
   const { t } = useTranslation();
   const [activeHelpMode, setActiveHelpMode] = useState<WorkMode | null>(null);
   const [disabledReason, setDisabledReason] = useState<{ title: string; reason: string } | null>(null);
+
+  const isFlanking = layoutMode === 'flanking';
+  const [modalRect, setModalRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    if (!isFlanking || typeof window === 'undefined') return;
+
+    const updateRect = () => {
+      if (modalRef?.current) {
+        setModalRect(modalRef.current.getBoundingClientRect());
+      }
+    };
+
+    updateRect();
+    window.addEventListener('resize', updateRect);
+    const interval = setInterval(updateRect, 250);
+    return () => {
+      window.removeEventListener('resize', updateRect);
+      clearInterval(interval);
+    };
+  }, [isFlanking, modalRef]);
 
   const effectiveRules = rules || campaign?.config?.gameRules;
   const statRules = campaign?.config?.statRules;
@@ -114,43 +138,55 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     );
 
     if (layoutMode === 'flanking') {
-      return (
+      const leftWingContent = (
         <div
-          className="work-wing-left"
+          className="work-wing-left work-card-wing"
           style={{
-            position: 'absolute',
-            right: 'calc(100% + 14px)',
-            top: '24px',
-            width: '160px',
+            position: 'fixed',
+            top: '8px',
+            bottom: '8px',
+            height: 'calc(100vh - 16px)',
+            width: '124px',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
-            maxHeight: 'calc(520px * var(--board-scale, 1))',
             overflowY: 'auto',
             scrollbarWidth: 'thin',
-            zIndex: 60
+            zIndex: 1000,
+            boxSizing: 'border-box',
+            ...(modalRect ? {
+              right: `${Math.max(6, window.innerWidth - modalRect.left + 6)}px`,
+              left: 'auto'
+            } : {
+              left: '8px'
+            })
           }}
         >
           <div style={{
             background: 'rgba(15, 23, 42, 0.95)',
             border: '1px solid rgba(56, 189, 248, 0.4)',
             borderRadius: '8px',
-            padding: '4px 8px',
+            padding: '4px 6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            flexShrink: 0
           }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
-              💼 Work Console
+            <span style={{ fontSize: '0.70rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
+              💼 Console
             </span>
-            <span style={{ fontSize: '0.70rem', color: '#a5f3fc', fontWeight: 'bold' }}>
+            <span style={{ fontSize: '0.68rem', color: '#a5f3fc', fontWeight: 'bold' }}>
               ${player.currentWage || job.baseWage}/hr
             </span>
           </div>
           {classicCard}
         </div>
       );
+
+      return typeof document !== 'undefined'
+        ? createPortal(leftWingContent, document.body)
+        : leftWingContent;
     }
 
     return (
@@ -287,10 +323,11 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             ? (isWorkWork ? `2px solid ${meta.themeColor}` : `1.5px solid ${meta.themeColor}`)
             : '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '10px',
-          padding: '6px 8px',
-          height: '128px',
-          minHeight: '128px',
-          maxHeight: '135px',
+          padding: isFlanking ? '8px 8px' : '6px 8px',
+          height: isFlanking ? 'auto' : '128px',
+          minHeight: isFlanking ? '120px' : '128px',
+          maxHeight: isFlanking ? 'none' : '135px',
+          flex: isFlanking ? '1 1 auto' : undefined,
           boxSizing: 'border-box',
           boxShadow: canAfford
             ? (isWorkWork ? `0 0 14px ${meta.glowColor}, 0 4px 12px rgba(0,0,0,0.6)` : `0 4px 10px rgba(0,0,0,0.5)`)
@@ -298,9 +335,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          gap: '4px',
+          gap: isFlanking ? '6px' : '4px',
           opacity: canAfford ? 1 : 0.7,
-          overflow: 'hidden'
+          overflow: isFlanking ? 'visible' : 'hidden'
         }}
       >
         {/* Row 1: Duration & '?' Help Button */}
@@ -391,16 +428,15 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             background: 'rgba(239, 68, 68, 0.2)',
             border: '1px solid #ef4444',
             borderRadius: '3px',
-            padding: '1px 4px',
+            padding: '2px 4px',
             color: '#fca5a5',
             fontSize: '0.62rem',
             fontWeight: 'bold',
             display: 'flex',
             alignItems: 'center',
             gap: '3px',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            whiteSpace: isFlanking ? 'normal' : 'nowrap',
+            lineHeight: '1.25',
             flexShrink: 0
           }}>
             <span>🔥</span>
@@ -411,10 +447,11 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             color: canAfford ? '#67e8f9' : '#71717a',
             fontWeight: 'bold',
             fontSize: '0.64rem',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            whiteSpace: isFlanking ? 'normal' : 'nowrap',
+            overflow: isFlanking ? 'visible' : 'hidden',
+            textOverflow: isFlanking ? 'clip' : 'ellipsis',
             padding: '1px 0',
+            lineHeight: '1.25',
             flexShrink: 0
           }}>
             {perkText}
@@ -452,7 +489,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             }}
             style={{
               width: '100%',
-              padding: '5px 4px',
+              padding: isFlanking ? '7px 4px' : '5px 4px',
               borderRadius: '6px',
               border: canAfford ? `1px solid ${meta.themeColor}` : '1px solid rgba(255, 255, 255, 0.15)',
               backgroundColor: canAfford ? meta.themeColor : '#334155',
@@ -462,9 +499,10 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               cursor: 'pointer',
               boxShadow: canAfford ? `0 2px 8px ${meta.glowColor}` : 'none',
               transition: 'all 0.15s ease',
-              whiteSpace: 'nowrap',
+              whiteSpace: isFlanking ? 'normal' : 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              textOverflow: 'ellipsis',
+              lineHeight: '1.2'
             }}
             onMouseDown={(e) => {
               if (canAfford) e.currentTarget.style.transform = 'scale(0.97)';
@@ -508,87 +546,108 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 
       {layoutMode === 'flanking' ? (
         /* FLANKING RADIAL WINGS: Steal screen space from the surrounding board! */
-        <>
-          {/* Left Wing (Work Work & Look Busy) */}
-          <div
-            className="work-wing-left work-card-wing"
-            style={{
-              position: 'absolute',
-              right: 'calc(100% + 8px)',
-              top: '16px',
-              width: '160px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              maxHeight: 'calc(520px * var(--board-scale, 1))',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              zIndex: 60
-            }}
-          >
-
-
-            {leftModes.map(m => renderCompactCard(m))}
-          </div>
-
-          {/* Right Wing (Face Time & Innovate) */}
-          <div
-            className="work-wing-right work-card-wing"
-            style={{
-              position: 'absolute',
-              left: 'calc(100% + 8px)',
-              top: '16px',
-              width: '160px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              maxHeight: 'calc(520px * var(--board-scale, 1))',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              zIndex: 60
-            }}
-          >
-            <div style={{
-              background: summary.tier === 'overtime' ? 'linear-gradient(135deg, rgba(69, 10, 10, 0.96) 0%, rgba(24, 10, 15, 0.98) 100%)' : (summary.tier === 'grind' ? 'linear-gradient(135deg, rgba(69, 39, 10, 0.96) 0%, rgba(26, 18, 10, 0.98) 100%)' : 'rgba(15, 23, 42, 0.96)'),
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              borderRadius: '8px',
-              padding: '5px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '0.74rem', fontWeight: 'bold', color: '#fff' }}>
-                  Shift #{summary.actionCount}
-                </span>
-                {summary.tier === 'grind' && <span style={{ fontSize: '0.62rem', fontWeight: 'bold', padding: '1px 4px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.25)', color: '#f59e0b', border: '1px solid #f59e0b' }}>⚡ GRIND</span>}
-                {summary.tier === 'overtime' && <span style={{ fontSize: '0.62rem', fontWeight: 'bold', padding: '1px 4px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.25)', color: '#ef4444', border: '1px solid #ef4444' }}>🔥 OVERTIME</span>}
+        (() => {
+          const wingsContent = (
+            <>
+              {/* Left Wing (Work Work & Look Busy) */}
+              <div
+                className="work-wing-left work-card-wing"
+                style={{
+                  position: 'fixed',
+                  top: '8px',
+                  bottom: '8px',
+                  height: 'calc(100vh - 16px)',
+                  width: '124px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  zIndex: 1000,
+                  boxSizing: 'border-box',
+                  ...(modalRect ? {
+                    right: `${Math.max(6, window.innerWidth - modalRect.left + 6)}px`,
+                    left: 'auto'
+                  } : {
+                    left: '8px'
+                  })
+                }}
+              >
+                {leftModes.map(m => renderCompactCard(m))}
               </div>
-              {onClose && (
-                <button
-                  data-testid="btn-close-work-wings"
-                  aria-label="Close Work Console"
-                  onClick={onClose}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#94a3b8',
-                    fontSize: '0.80rem',
-                    cursor: 'pointer',
-                    padding: '0 2px',
-                    fontWeight: 'bold'
-                  }}
-                  title="Minimize Work Console"
-                >
-                  <span data-testid="btn-close-work-console" style={{ display: 'contents' }}>✕</span>
-                </button>
-              )}
-            </div>
 
-            {rightModes.map(m => renderCompactCard(m))}
-          </div>
-        </>
+              {/* Right Wing (Face Time & Innovate) */}
+              <div
+                className="work-wing-right work-card-wing"
+                style={{
+                  position: 'fixed',
+                  top: '8px',
+                  bottom: '8px',
+                  height: 'calc(100vh - 16px)',
+                  width: '124px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  zIndex: 1000,
+                  boxSizing: 'border-box',
+                  ...(modalRect ? {
+                    left: `${Math.min(window.innerWidth - 124 - 6, modalRect.right + 6)}px`,
+                    right: 'auto'
+                  } : {
+                    right: '8px'
+                  })
+                }}
+              >
+                <div style={{
+                  background: summary.tier === 'overtime' ? 'linear-gradient(135deg, rgba(69, 10, 10, 0.96) 0%, rgba(24, 10, 15, 0.98) 100%)' : (summary.tier === 'grind' ? 'linear-gradient(135deg, rgba(69, 39, 10, 0.96) 0%, rgba(26, 18, 10, 0.98) 100%)' : 'rgba(15, 23, 42, 0.96)'),
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: '8px',
+                  padding: '5px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  flexShrink: 0
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 'bold', color: '#fff' }}>
+                      Shift #{summary.actionCount}
+                    </span>
+                    {summary.tier === 'grind' && <span style={{ fontSize: '0.60rem', fontWeight: 'bold', padding: '1px 3px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.25)', color: '#f59e0b', border: '1px solid #f59e0b' }}>⚡ GRIND</span>}
+                    {summary.tier === 'overtime' && <span style={{ fontSize: '0.60rem', fontWeight: 'bold', padding: '1px 3px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.25)', color: '#ef4444', border: '1px solid #ef4444' }}>🔥 OVERTIME</span>}
+                  </div>
+                  {onClose && (
+                    <button
+                      data-testid="btn-close-work-wings"
+                      aria-label="Close Work Console"
+                      onClick={onClose}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        fontSize: '0.80rem',
+                        cursor: 'pointer',
+                        padding: '0 2px',
+                        fontWeight: 'bold'
+                      }}
+                      title="Minimize Work Console"
+                    >
+                      <span data-testid="btn-close-work-console" style={{ display: 'contents' }}>✕</span>
+                    </button>
+                  )}
+                </div>
+
+                {rightModes.map(m => renderCompactCard(m))}
+              </div>
+            </>
+          );
+
+          return typeof document !== 'undefined'
+            ? createPortal(wingsContent, document.body)
+            : wingsContent;
+        })()
       ) : (
         /* GRID / STANDALONE VIEW: For direct test rendering */
         <div

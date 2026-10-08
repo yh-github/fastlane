@@ -905,6 +905,7 @@ export function BuildingModal({
           campaign={campaign}
           rules={rules}
           layoutMode="flanking"
+          modalRef={modalRef}
           onClose={() => setIsWorkDeckOpen(false)}
         />
       )}
