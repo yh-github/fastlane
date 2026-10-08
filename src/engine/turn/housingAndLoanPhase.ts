@@ -68,28 +68,34 @@ export function processHousingAndLoanPhase(
 
   // 13. Clothing Decay & Equipment
   if (state.rules.clothingDecaysAll) {
-    if (p.inventory.casualClothesWeeks > 0) {
-      p.inventory.casualClothesWeeks--;
-      if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
-    }
-    if (p.inventory.dressClothesWeeks > 0) {
-      p.inventory.dressClothesWeeks--;
-      if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
-    }
-    if (p.inventory.businessClothesWeeks > 0) {
-      p.inventory.businessClothesWeeks--;
-      if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
-    }
+    if (p.inventory.casualClothesWeeks > 0) p.inventory.casualClothesWeeks--;
+    if (p.inventory.dressClothesWeeks > 0) p.inventory.dressClothesWeeks--;
+    if (p.inventory.businessClothesWeeks > 0) p.inventory.businessClothesWeeks--;
   } else {
     if (p.inventory.selectedClothes === 'casual' && p.inventory.casualClothesWeeks > 0) {
       p.inventory.casualClothesWeeks--;
-      if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
     } else if (p.inventory.selectedClothes === 'dress' && p.inventory.dressClothesWeeks > 0) {
       p.inventory.dressClothesWeeks--;
-      if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
     } else if (p.inventory.selectedClothes === 'business' && p.inventory.businessClothesWeeks > 0) {
       p.inventory.businessClothesWeeks--;
-      if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
+    }
+  }
+
+  // Clothing wear notifications
+  if (state.rules.helpfulUI) {
+    if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
+    if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
+    if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
+  } else {
+    // Authentic Sierra SCI behavior (script.111.txt weeksOfClothing == 1):
+    // Only warns when the player's longest-lasting clothes reach 1 week (anti-nudity warning).
+    const maxWeeks = Math.max(
+      p.inventory.casualClothesWeeks || 0,
+      p.inventory.dressClothesWeeks || 0,
+      p.inventory.businessClothesWeeks || 0
+    );
+    if (maxWeeks === 1) {
+      p.turnEvents.push({ key: 'events.clothes.needNew' });
     }
   }
 
