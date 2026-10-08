@@ -5,6 +5,7 @@ import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
 import { calcWorkShiftSummary, type WorkShiftOption, type WorkMode } from '../../../engine/jobEngine';
 import { formatHours } from '../../../engine/statMath';
 import { WorkCardHelpModal } from './WorkCardHelpModal';
+import { ActionReasonModal } from '../ActionReasonModal';
 
 export interface WorkShiftCardsProps {
   player: PlayerState;
@@ -29,6 +30,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 }) => {
   const { t } = useTranslation();
   const [activeHelpMode, setActiveHelpMode] = useState<WorkMode | null>(null);
+  const [disabledReason, setDisabledReason] = useState<{ title: string; reason: string } | null>(null);
 
   const effectiveRules = rules || campaign?.config?.gameRules;
   const statRules = campaign?.config?.statRules;
@@ -192,64 +194,50 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
   const { hoursToWork, tierLabel, modes, innovationsCount, locationMistakes, turnMistakes } = summary;
 
   const cardMeta: Record<string, {
-    title: string;
+    actionName: string;
     icon: string;
-    badge: string;
     themeColor: string;
     glowColor: string;
-    buttonLabel: string;
   }> = {
     work_work: {
-      title: t('action.workModal.workWork', { defaultValue: 'Work Work' }),
+      actionName: t('workStation.actionWorkWork', { defaultValue: 'Work Shift' }),
       icon: '💼',
-      badge: 'DEFAULT',
       themeColor: '#10b981',
-      glowColor: 'rgba(16, 185, 129, 0.35)',
-      buttonLabel: `💼 ${t('workStation.actionWorkWork', { defaultValue: 'Work Shift' })}`
+      glowColor: 'rgba(16, 185, 129, 0.35)'
     },
     look_busy: {
-      title: t('action.workModal.lookBusy', { defaultValue: 'Look Busy' }),
+      actionName: t('workStation.actionLookBusy', { defaultValue: 'Coast' }),
       icon: '👀',
-      badge: 'SLACKING',
       themeColor: '#f59e0b',
-      glowColor: 'rgba(245, 158, 11, 0.35)',
-      buttonLabel: `👀 ${t('workStation.actionLookBusy', { defaultValue: 'Coast' })}`
+      glowColor: 'rgba(245, 158, 11, 0.35)'
     },
     face_time: {
-      title: t('action.workModal.faceTime', { defaultValue: 'Face Time' }),
+      actionName: t('workStation.actionFaceTime', { defaultValue: 'Network' }),
       icon: '🤝',
-      badge: 'NETWORKING',
       themeColor: '#0ea5e9',
-      glowColor: 'rgba(14, 165, 233, 0.35)',
-      buttonLabel: `🤝 ${t('workStation.actionFaceTime', { defaultValue: 'Network' })}`
+      glowColor: 'rgba(14, 165, 233, 0.35)'
     },
     show_initiative: {
-      title: t('action.workModal.showInitiative', { defaultValue: 'Show Initiative' }),
+      actionName: t('workStation.actionShowInitiative', { defaultValue: 'Initiative' }),
       icon: '🌟',
-      badge: 'LEADERSHIP',
-      themeColor: '#f59e0b',
-      glowColor: 'rgba(245, 158, 11, 0.35)',
-      buttonLabel: `🌟 ${t('workStation.actionShowInitiative', { defaultValue: 'Show Initiative' })}`
+      themeColor: '#a855f7',
+      glowColor: 'rgba(168, 85, 247, 0.35)'
     },
     innovate: {
-      title: t('action.workModal.showInitiative', { defaultValue: 'Show Initiative' }),
+      actionName: t('workStation.actionShowInitiative', { defaultValue: 'Initiative' }),
       icon: '🌟',
-      badge: 'LEADERSHIP',
-      themeColor: '#f59e0b',
-      glowColor: 'rgba(245, 158, 11, 0.35)',
-      buttonLabel: `🌟 ${t('workStation.actionShowInitiative', { defaultValue: 'Show Initiative' })}`
+      themeColor: '#a855f7',
+      glowColor: 'rgba(168, 85, 247, 0.35)'
     }
   };
 
   // Render a single compact card
   const renderCompactCard = (m: WorkShiftOption) => {
     const meta = cardMeta[m.id] || {
-      title: m.id,
+      actionName: m.id,
       icon: '💼',
-      badge: 'MODE',
       themeColor: m.color,
-      glowColor: 'rgba(255,255,255,0.2)',
-      buttonLabel: `Work ${m.id}`
+      glowColor: 'rgba(255,255,255,0.2)'
     };
 
     const curPhys = player.physicalCondition ?? 50;
@@ -269,12 +257,23 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       ? `-${m.physCost} 💪, -${m.mentalCost} 🧠`
       : `-${m.physCost} 💪`;
 
-    const reqExp = (job.requirements?.experience ?? 0) + 10;
-    const displayReward = m.disabledReasonKey
-      ? t(m.disabledReasonKey, { reqExp })
-      : (m.id === 'show_initiative' || m.id === 'innovate'
-          ? t(m.rewardText, { reqExp })
-          : m.rewardText);
+    const wageText = m.wage > 0 ? `(+$${m.wage})` : '($0)';
+
+    // Concise single-line perk/status text without long blurbs or redundant wages
+    let perkText = '';
+    if (summary.tier === 'overtime' && isWorkWork) {
+      perkText = '-0.5 Max Physical Condition';
+    } else if (m.id === 'work_work') {
+      const expMult = m.rewardExp > 0 ? `+${m.rewardExp} 👌` : '';
+      const depMult = m.rewardDep > 0 ? `+${m.rewardDep} 🤝` : '';
+      perkText = [depMult, expMult].filter(Boolean).join(', ') || 'Standard shift';
+    } else if (m.id === 'look_busy') {
+      perkText = 'Rest & avoid exhaustion';
+    } else if (m.id === 'face_time') {
+      perkText = `+${m.rewardDep} 🤝, +1 👥 Networking`;
+    } else if (m.id === 'show_initiative' || m.id === 'innovate') {
+      perkText = '🌟 Standing & bonus';
+    }
 
     return (
       <div
@@ -288,272 +287,203 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             ? (isWorkWork ? `2px solid ${meta.themeColor}` : `1.5px solid ${meta.themeColor}`)
             : '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '10px',
-          padding: '8px 9px',
+          padding: '6px 8px',
+          height: '125px',
+          minHeight: '125px',
+          maxHeight: '125px',
+          boxSizing: 'border-box',
           boxShadow: canAfford
             ? (isWorkWork ? `0 0 14px ${meta.glowColor}, 0 4px 12px rgba(0,0,0,0.6)` : `0 4px 10px rgba(0,0,0,0.5)`)
             : 'none',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          gap: '6px',
-          opacity: canAfford ? 1 : 0.65,
-          boxSizing: 'border-box'
+          gap: '4px',
+          opacity: canAfford ? 1 : 0.7,
+          overflow: 'hidden'
         }}
       >
-        {/* Top Header: Badge, Duration & '?' Help Button */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            {summary.tier === 'overtime' ? (
-              <span
-                style={{
-                  fontSize: '0.62rem',
-                  fontWeight: 'bold',
-                  letterSpacing: '0.04em',
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                  backgroundColor: 'rgba(239, 68, 68, 0.25)',
-                  color: '#ef4444',
-                  border: '1px solid #ef4444'
-                }}
-              >
-                🔥 OVERTIME
-              </span>
-            ) : summary.tier === 'grind' ? (
-              <span
-                style={{
-                  fontSize: '0.62rem',
-                  fontWeight: 'bold',
-                  letterSpacing: '0.04em',
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                  backgroundColor: 'rgba(245, 158, 11, 0.25)',
-                  color: '#fbbf24',
-                  border: '1px solid #f59e0b'
-                }}
-              >
-                ⚡ GRIND
-              </span>
-            ) : (
-              <span
-                style={{
-                  fontSize: '0.62rem',
-                  fontWeight: 'bold',
-                  letterSpacing: '0.04em',
-                  padding: '1px 5px',
-                  borderRadius: '4px',
-                  backgroundColor: canAfford ? `${meta.themeColor}22` : 'rgba(255,255,255,0.05)',
-                  color: canAfford ? meta.themeColor : '#71717a',
-                  border: `1px solid ${canAfford ? meta.themeColor : '#3f3f46'}`
-                }}
-              >
-                {meta.badge}
-              </span>
-            )}
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              {isHelpful && (
-              <span
-                style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 'bold',
-                  padding: '1px 5px',
-                  borderRadius: '6px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                  color: '#cbd5e1'
-                }}
-              >
-                ⏳ {formatHours(hoursToWork)} hrs
-              </span>
-            )}
-
-              {/* Strategy & Mechanics Guide '?' Button */}
-              <button
-                type="button"
-                data-testid={`help-btn-${m.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveHelpMode(m.id);
-                }}
-                title={t('workStation.helpTooltip', { defaultValue: 'View strategy, lore & mechanics' })}
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  background: 'rgba(56, 189, 248, 0.15)',
-                  border: '1px solid #38bdf8',
-                  color: '#38bdf8',
-                  fontSize: '0.68rem',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  padding: 0,
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#38bdf8';
-                  e.currentTarget.style.color = '#000';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)';
-                  e.currentTarget.style.color = '#38bdf8';
-                }}
-              >
-                ?
-              </button>
-            </div>
-          </div>
-
-          {/* Title & Wage Row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ fontSize: '1.15rem' }}>{meta.icon}</span>
-              <h4
-                style={{
-                  margin: 0,
-                  fontSize: '0.90rem',
-                  fontWeight: 'bold',
-                  color: canAfford ? '#ffffff' : '#a1a1aa',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {meta.title}
-              </h4>
-            </div>
-
-            <span
-              style={{
-                fontSize: '0.80rem',
-                fontWeight: 'bold',
-                color: m.wage > 0 ? '#34d399' : '#94a3b8'
-              }}
-            >
-              {m.wage > 0 ? `+$${m.wage}` : '$0'}
-            </span>
-          </div>
-        </div>
-
-        {/* Compact Costs, Risk & Benefits */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div
+        {/* Row 1: Duration & '?' Help Button */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span
             style={{
-              padding: '4px 6px',
-              borderRadius: '5px',
-              backgroundColor: 'rgba(0, 0, 0, 0.4)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
               fontSize: '0.68rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '3px'
+              fontWeight: 'bold',
+              padding: '1px 6px',
+              borderRadius: '4px',
+              backgroundColor: 'rgba(0, 0, 0, 0.45)',
+              color: '#cbd5e1'
             }}
           >
-            {/* Fatigue & Mistake Risk */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{
-                color: summary.tier === 'overtime' ? '#f87171' : (summary.tier === 'grind' ? '#fbbf24' : '#fca5a5'),
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '3px'
-              }}>
-                {summary.tier === 'overtime' ? '🔥 ' : (summary.tier === 'grind' ? '⚡ ' : '')}{fatigueCostText}
-              </span>
+            ⏳ {formatHours(hoursToWork)} hrs
+          </span>
 
-              {totalMistakeChance > 0 && (
-                <span
-                  title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%${socialChance > 0 ? `, Social: ${(socialChance * 100).toFixed(1)}%` : ''}`}
-                  style={{
-                    color: '#f87171',
-                    fontWeight: 'bold',
-                    fontSize: '0.65rem',
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    padding: '1px 5px',
-                    borderRadius: '3px',
-                    border: '1px solid #ef4444'
-                  }}
-                >
-                  ⚠️ {(totalMistakeChance * 100).toFixed(1)}%
-                </span>
-              )}
-            </div>
-
-            {/* Overtime Permanent Wear & Tear Banner */}
-            {summary.tier === 'overtime' && isWorkWork && (
-              <div style={{
-                background: 'rgba(239, 68, 68, 0.2)',
-                border: '1px solid #ef4444',
-                borderRadius: '4px',
-                padding: '2px 5px',
-                color: '#fca5a5',
-                fontSize: '0.63rem',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <span>🔥</span>
-                <span>-0.5 Max Physical Condition</span>
-              </div>
-            )}
-
-            {/* Reward Perks */}
-            <div style={{
-              color: canAfford ? '#67e8f9' : '#71717a',
+          <button
+            type="button"
+            data-testid={`help-btn-${m.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveHelpMode(m.id);
+            }}
+            title={t('workStation.helpTooltip', { defaultValue: 'View strategy, lore & mechanics' })}
+            style={{
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              background: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid #38bdf8',
+              color: '#38bdf8',
+              fontSize: '0.68rem',
               fontWeight: 'bold',
-              fontSize: '0.66rem',
-              lineHeight: '1.25',
-              wordBreak: 'break-word'
-            }}>
-              {displayReward.replace(/,\s*-0\.5\s*Max\s*💪/g, '')}
-            </div>
-          </div>
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              padding: 0,
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#38bdf8';
+              e.currentTarget.style.color = '#000';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)';
+              e.currentTarget.style.color = '#38bdf8';
+            }}
+          >
+            ?
+          </button>
+        </div>
 
-          {/* Action Button */}
-          <div>
-            {m.disabled && m.disabledReasonKey && (
-              <div
-                style={{
-                  fontSize: '0.66rem',
-                  color: '#fca5a5',
-                  marginBottom: '4px',
-                  textAlign: 'center',
-                  fontWeight: 'bold'
-                }}
-              >
-                {displayReward}
-              </div>
-            )}
+        {/* Row 2: Condition / Fatigue cost + Mistake Chance */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.68rem' }}>
+          <span style={{
+            color: summary.tier === 'overtime' ? '#f87171' : (summary.tier === 'grind' ? '#fbbf24' : '#fca5a5'),
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px'
+          }}>
+            {summary.tier === 'overtime' ? '🔥 ' : (summary.tier === 'grind' ? '⚡ ' : '')}{fatigueCostText}
+          </span>
 
-            <button
-              data-testid={`work-mode-${m.id}`}
-              data-action-target={isWorkWork ? `work-${job.id}` : undefined}
-              onClick={() => {
-                onAction({ type: 'work', jobId: job.id, mode: m.id as any });
-              }}
+          {totalMistakeChance > 0 ? (
+            <span
+              title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%${socialChance > 0 ? `, Social: ${(socialChance * 100).toFixed(1)}%` : ''}`}
               style={{
-                width: '100%',
-                padding: '6px 4px',
-                borderRadius: '6px',
-                border: canAfford ? `1px solid ${meta.themeColor}` : 'none',
-                backgroundColor: canAfford ? meta.themeColor : '#3f3f46',
-                color: canAfford ? '#000000' : '#71717a',
+                color: '#f87171',
                 fontWeight: 'bold',
-                fontSize: '0.78rem',
-                cursor: canAfford ? 'pointer' : 'not-allowed',
-                boxShadow: canAfford ? `0 2px 8px ${meta.glowColor}` : 'none',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseDown={(e) => {
-                if (canAfford) e.currentTarget.style.transform = 'scale(0.97)';
-              }}
-              onMouseUp={(e) => {
-                if (canAfford) e.currentTarget.style.transform = 'none';
+                fontSize: '0.64rem',
+                background: 'rgba(239, 68, 68, 0.2)',
+                padding: '1px 5px',
+                borderRadius: '3px',
+                border: '1px solid #ef4444'
               }}
             >
-              {meta.buttonLabel} {m.wage > 0 ? `(+$${m.wage})` : '($0)'}
-            </button>
+              ⚠️ {(totalMistakeChance * 100).toFixed(1)}%
+            </span>
+          ) : (
+            <span
+              style={{
+                color: '#34d399',
+                fontWeight: 'bold',
+                fontSize: '0.64rem',
+                opacity: 0.85
+              }}
+            >
+              ✓ Safe
+            </span>
+          )}
+        </div>
+
+        {/* Row 3: Single concise perk/wear line */}
+        {summary.tier === 'overtime' && isWorkWork ? (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.2)',
+            border: '1px solid #ef4444',
+            borderRadius: '3px',
+            padding: '1px 4px',
+            color: '#fca5a5',
+            fontSize: '0.62rem',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            <span>🔥</span>
+            <span>-0.5 Max Physical Condition</span>
           </div>
+        ) : (
+          <div style={{
+            color: canAfford ? '#67e8f9' : '#71717a',
+            fontWeight: 'bold',
+            fontSize: '0.64rem',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            padding: '1px 0'
+          }}>
+            {perkText}
+          </div>
+        )}
+
+        {/* Row 4: Consolidated Mode Button */}
+        <div>
+          <button
+            data-testid={`work-mode-${m.id}`}
+            data-action-target={isWorkWork ? `work-${job.id}` : undefined}
+            onClick={() => {
+              if (m.disabled) {
+                const reqExp = (job.requirements?.experience ?? 0) + 10;
+                let reasonText = '';
+                if (m.disabledReasonKey) {
+                  reasonText = t(m.disabledReasonKey, { reqExp, defaultValue: 'You need more experience before you can perform this action.' });
+                } else if (m.id === 'show_initiative' || m.id === 'innovate') {
+                  reasonText = t('workStation.initiativeNeedExp', {
+                    reqExp,
+                    defaultValue: `Requires at least ${reqExp} experience to show initiative (you have ${player.experience ?? 0}).`
+                  });
+                } else {
+                  reasonText = t('workStation.modeDisabledReason', { defaultValue: 'This work mode is currently unavailable.' });
+                }
+                setDisabledReason({
+                  title: m.id === 'show_initiative' || m.id === 'innovate'
+                    ? t('workStation.initiativeLockedTitle', { defaultValue: 'Show Initiative Unavailable' })
+                    : t('workStation.modeUnavailableTitle', { defaultValue: 'Action Unavailable' }),
+                  reason: reasonText
+                });
+                return;
+              }
+              onAction({ type: 'work', jobId: job.id, mode: m.id as any });
+            }}
+            style={{
+              width: '100%',
+              padding: '5px 4px',
+              borderRadius: '6px',
+              border: canAfford ? `1px solid ${meta.themeColor}` : '1px solid rgba(255, 255, 255, 0.15)',
+              backgroundColor: canAfford ? meta.themeColor : '#334155',
+              color: canAfford ? '#000000' : '#94a3b8',
+              fontWeight: 'bold',
+              fontSize: '0.74rem',
+              cursor: 'pointer',
+              boxShadow: canAfford ? `0 2px 8px ${meta.glowColor}` : 'none',
+              transition: 'all 0.15s ease',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+            onMouseDown={(e) => {
+              if (canAfford) e.currentTarget.style.transform = 'scale(0.97)';
+            }}
+            onMouseUp={(e) => {
+              if (canAfford) e.currentTarget.style.transform = 'none';
+            }}
+          >
+            {m.disabled ? '🔒 ' : `${meta.icon} `}{meta.actionName} {wageText}
+          </button>
         </div>
       </div>
     );
@@ -576,17 +506,26 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
         />
       )}
 
+      {/* Action Reason Modal when clicking disabled mode */}
+      {disabledReason && (
+        <ActionReasonModal
+          title={disabledReason.title}
+          reason={disabledReason.reason}
+          onClose={() => setDisabledReason(null)}
+        />
+      )}
+
       {layoutMode === 'flanking' ? (
         /* FLANKING RADIAL WINGS: Steal screen space from the surrounding board! */
         <>
           {/* Left Wing (Work Work & Look Busy) */}
           <div
-            className="work-wing-left"
+            className="work-wing-left work-card-wing"
             style={{
               position: 'absolute',
-              right: 'calc(100% + 12px)',
-              top: '20px',
-              width: 'calc(205px * var(--board-scale, 1))',
+              right: 'calc(100% + 8px)',
+              top: '16px',
+              width: 'calc(185px * var(--board-scale, 1))',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
@@ -659,12 +598,12 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 
           {/* Right Wing (Face Time & Innovate) */}
           <div
-            className="work-wing-right"
+            className="work-wing-right work-card-wing"
             style={{
               position: 'absolute',
-              left: 'calc(100% + 12px)',
-              top: '20px',
-              width: 'calc(205px * var(--board-scale, 1))',
+              left: 'calc(100% + 8px)',
+              top: '16px',
+              width: 'calc(185px * var(--board-scale, 1))',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
@@ -718,7 +657,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                   }}
                   title="Minimize Work Console"
                 >
-                  ✕
+                  <span data-testid="btn-close-work-console" style={{ display: 'contents' }}>✕</span>
                 </button>
               )}
             </div>

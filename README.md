@@ -36,6 +36,9 @@ npm run dev
 For a comprehensive guide mapping all **game concepts to specific files**, architecture diagrams, execution pipelines, and development recipes, see:
 👉 **[`docs/CODE_GUIDE.md`](./docs/CODE_GUIDE.md)**
 
+For the authoritative breakdown of the **original Sierra SCI implementation**, how Base replicates it, and how QoL Improved and Advanced diverge via optional rules, see:
+👉 **[`docs/implementation_and_variants_guide.md`](./docs/implementation_and_variants_guide.md)**
+
 ## Project Structure
 
 | Path | Purpose |
