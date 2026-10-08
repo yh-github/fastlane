@@ -1008,6 +1008,47 @@ describe('BuildingInteractions', () => {
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy', itemId: 'bicycle' });
   });
 
+  it('StoreFront opens ItemCardModal when helpfulUI is true and displays price, ownership, on_buy modifiers, and BUY button', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 500,
+      hoursRemaining: 10,
+      inventory: { appliances: [{ id: 'color_tv', isBroken: false, condition: 'used' }], books: [] }
+    } as any;
+
+    const mockItems = [
+      { id: 'bicycle', name: 'Bicycle', basePrice: 100, category: 'vehicle', happinessBonus: 2 },
+      { id: 'color_tv', name: 'Color TV', basePrice: 300, category: 'appliance' }
+    ] as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <StoreFront
+        player={mockPlayer}
+        onAction={mockOnAction}
+        availableItems={mockItems}
+        economicIndex={0}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    // Clicking bicycle opens the modal
+    const bicycleItem = screen.getByText(/Bicycle/i);
+    fireEvent.click(bicycleItem);
+
+    // Verify modal is rendered
+    expect(screen.getByTestId('durable-card-modal-backdrop')).toBeInTheDocument();
+    expect(screen.getByText(/On-Purchase Modifiers/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+2 Happiness/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/\$100/i).length).toBeGreaterThanOrEqual(2);
+
+    // Click BUY button inside modal
+    const buyBtn = screen.getByTestId('btn-buy-modal-bicycle');
+    fireEvent.click(buyBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy', itemId: 'bicycle' });
+  });
+
   it('RentOffice renders housing options and rent payment controls', () => {
     const mockPlayer = {
       id: 'p1',
