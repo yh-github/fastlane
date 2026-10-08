@@ -171,14 +171,13 @@ export const GameSession: React.FC<GameSessionProps> = ({
     handleAction,
   ]);
 
-  if (!gameState) return null;
-
-  const activePlayer = gameState.players[activePlayerIndex] || null;
+  const activePlayer = gameState?.players?.[activePlayerIndex] || null;
   const currentBuildingId = (activePlayer && campaign)
     ? (campaign.map.nodes.find((n) => n.id === activePlayer.position)?.buildingId || null)
     : null;
 
   useEffect(() => {
+    if (!gameState || !activePlayer) return;
     if (typeof window !== 'undefined') {
       (window as any).__openBuilding = (buildingId: string) => {
         const node = campaign?.map.nodes.find((n) => n.buildingId === buildingId);
@@ -219,6 +218,8 @@ export const GameSession: React.FC<GameSessionProps> = ({
       }
     };
   }, [campaign, activePlayer, activePlayerIndex, gameState, openModal, setGameState]);
+
+  if (!gameState) return null;
 
   if (activePlayer && !activePlayer.turnFlags.hasSeenEvents && activePlayer.turnEvents && activePlayer.turnEvents.length > 0 && gameState.turn > 1) {
     return (

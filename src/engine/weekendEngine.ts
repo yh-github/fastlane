@@ -1134,7 +1134,7 @@ export function processWeekend(
       let chosenIndex = -1;
       let attempts = 0;
       while (attempts < 100) {
-        const count = weekendData?.randomWeekends?.length || 42;
+        const count = weekendData?.randomWeekends?.length || 0;
         chosenIndex = Math.floor(rng.next() * count);
         const candidateKey = `events.weekend.random_${chosenIndex}`;
         if (!previousPlayerWeekends.includes(candidateKey)) {

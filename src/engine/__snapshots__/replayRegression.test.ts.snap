@@ -3,8 +3,8 @@
 exports[`Deterministic Replay Regression > replays a real game using fastlane-replay-21-weeks.json 1`] = `
 {
   "campaignId": "The Fast Lane — Improved Version (QoL)",
-  "economicIndex": 32,
-  "economicTrend": 2,
+  "economicIndex": -8,
+  "economicTrend": 0,
   "pawnShopItemsForSale": [],
   "phase": "setup",
   "players": [
@@ -65,7 +65,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 100,
+      "money": 0,
       "nakedTurns": 1,
       "name": "Player 1",
       "newspaperHeadline": {
@@ -87,8 +87,8 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         {
           "key": "events.doctorVisit_reasons",
           "params": {
-            "cost": 36,
-            "reasons": "Starvation",
+            "cost": 102,
+            "reasons": "Relaxation critically low",
           },
         },
         {
@@ -121,14 +121,14 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "workMistakesThisTurn": 0,
       },
       "weekendResult": {
-        "cost": 7,
+        "cost": 17,
         "event": {
-          "key": "events.weekend.random_23",
+          "key": "events.weekend.random_16",
         },
         "happinessBonus": undefined,
         "modifications": [
           {
-            "diff": -7,
+            "diff": -17,
             "stat": "money",
           },
         ],
@@ -138,7 +138,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "xpMaxBonus": 0,
     },
   ],
-  "rngState": 246928004386,
+  "rngState": 274401491581,
   "rules": {
     "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,

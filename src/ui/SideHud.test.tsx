@@ -39,7 +39,7 @@ describe('Side HUD Layout & Folding', () => {
     economicIndex: 10
   } as any;
 
-  it('renders Side HUD with Column 1 (Life/Goals) and Column 2 (Career/Skills in exact order)', () => {
+  it('renders Side HUD with Left Column (Career attributes) and Right Column (Trophy, folding Goals, Life stats)', () => {
     render(
       <Dashboard
         player={mockPlayer}
@@ -56,27 +56,43 @@ describe('Side HUD Layout & Folding', () => {
     // Side HUD container
     expect(screen.getByTestId('side-hud-full')).toBeInTheDocument();
 
-    // Column 1 elements
-    expect(screen.getByText(/Player 1 - Week 3/i)).toBeInTheDocument();
-    expect(screen.getByTitle('Victory')).toBeInTheDocument();
-    expect(screen.getByTitle('Happiness')).toBeInTheDocument();
-    expect(screen.getByTitle('Education')).toBeInTheDocument();
-    expect(screen.getByTitle('Wealth')).toBeInTheDocument();
-    expect(screen.getByTitle('Physical')).toBeInTheDocument();
-    expect(screen.getByTitle('Mental')).toBeInTheDocument();
+    // Top section: player name without Week 3
+    expect(screen.getByText('Player 1')).toBeInTheDocument();
+    expect(screen.queryByText(/Player 1 - Week 3/i)).toBeNull();
 
-    // Column 2 elements — strictly ordered: Career, Employability, Dep, Exp, Mgmt, Tech
+    // Column 1 (Left) — strictly career attributes EXCEPT career goal: Employability, Dep, Exp, Mgmt, Tech
     const careerCol = screen.getByTestId('side-hud-full').querySelector('.side-hud__col--career');
     expect(careerCol).toBeInTheDocument();
 
-    const badges = careerCol!.querySelectorAll('.stat-badge');
-    expect(badges.length).toBe(6);
-    expect(badges[0].id).toBe('stat-career');
-    expect(badges[1].id).toBe('stat-employability');
-    expect(badges[2].id).toBe('stat-dependability');
-    expect(badges[3].id).toBe('stat-experience');
-    expect(badges[4].id).toBe('stat-skill-mgmt');
-    expect(badges[5].id).toBe('stat-skill-tech');
+    const careerBadges = careerCol!.querySelectorAll('.stat-badge');
+    expect(careerBadges.length).toBe(5);
+    expect(careerBadges[0].id).toBe('stat-employability');
+    expect(careerBadges[1].id).toBe('stat-dependability');
+    expect(careerBadges[2].id).toBe('stat-experience');
+    expect(careerBadges[3].id).toBe('stat-skill-mgmt');
+    expect(careerBadges[4].id).toBe('stat-skill-tech');
+    expect(careerCol!.querySelector('#stat-career')).toBeNull();
+
+    // Column 2 (Right) — Trophy at the top, goals folded by default, then life stats
+    const lifeCol = screen.getByTestId('side-hud-full').querySelector('.side-hud__col--life');
+    expect(lifeCol).toBeInTheDocument();
+    expect(screen.getByTitle('Victory')).toBeInTheDocument();
+    expect(screen.getByTitle('Money')).toBeInTheDocument();
+    expect(screen.getByTitle('Physical')).toBeInTheDocument();
+    expect(screen.getByTitle('Mental')).toBeInTheDocument();
+
+    // Goals are folded by default
+    expect(screen.queryByTitle('Happiness')).toBeNull();
+    expect(screen.queryByTitle('Education')).toBeNull();
+    expect(screen.queryByTitle('Wealth')).toBeNull();
+    expect(screen.queryByTitle('Career')).toBeNull();
+
+    // Clicking Victory unfolds goals
+    fireEvent.click(screen.getByTitle('Victory'));
+    expect(screen.getByTitle('Happiness')).toBeInTheDocument();
+    expect(screen.getByTitle('Education')).toBeInTheDocument();
+    expect(screen.getByTitle('Wealth')).toBeInTheDocument();
+    expect(screen.getByTitle('Career')).toBeInTheDocument();
   });
 
   it('folds Column 2 in compact mode and allows expanding back to full or minimizing', () => {
@@ -120,8 +136,9 @@ describe('Side HUD Layout & Folding', () => {
     // Career column is folded away
     expect(screen.getByTestId('side-hud-compact').querySelector('.side-hud__col--career')).toBeNull();
 
-    // Column 1 is still visible
-    expect(screen.getByTitle('Happiness')).toBeInTheDocument();
+    // Right Column (Trophy, Money, Health) is still visible
+    expect(screen.getByTitle('Victory')).toBeInTheDocument();
+    expect(screen.getByTitle('Money')).toBeInTheDocument();
 
     // Expand Career button
     const expandCareerBtn = screen.getByTestId('side-hud-expand-career');
@@ -197,6 +214,9 @@ describe('Side HUD Layout & Folding', () => {
       />
     );
 
+    // Unfold goals under Trophy
+    fireEvent.click(screen.getByTitle('Victory'));
+
     // Should render Lifestyle and Wellbeing
     expect(screen.getByTitle('Lifestyle')).toBeInTheDocument();
     expect(screen.getByTitle('Well-being')).toBeInTheDocument();
@@ -232,10 +252,9 @@ describe('Side HUD Layout & Folding', () => {
       />
     );
 
-    // Side HUD has Career, Employability, Dep, Exp, but NOT Mgmt or Tech
+    // Side HUD has Employability, Dep, Exp, but NOT Mgmt or Tech
     const careerCol = screen.getByTestId('side-hud-full').querySelector('.side-hud__col--career');
     expect(careerCol).toBeInTheDocument();
-    expect(careerCol!.querySelector('#stat-career')).toBeInTheDocument();
     expect(careerCol!.querySelector('#stat-employability')).toBeInTheDocument();
     expect(careerCol!.querySelector('#stat-dependability')).toBeInTheDocument();
     expect(careerCol!.querySelector('#stat-experience')).toBeInTheDocument();

@@ -26,10 +26,11 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
 
     const dashboard = page.locator('.dashboard, .side-hud');
     await expect(dashboard).toBeVisible();
-    await expect(dashboard).toContainText(/Week 1|שבוע 1/i);
     if (await page.locator('.dashboard').isVisible()) {
+      await expect(dashboard).toContainText(/Week 1|שבוע 1/i);
       await expect(dashboard).toContainText(/60(\.0)?\s*\/\s*60/);
     } else {
+      await expect(page.locator('#hud-clock-digital')).toContainText(/Week #?1|שבוע 1/i);
       await expect(page.locator('[data-testid="bottom-center-clock"]')).toBeVisible();
     }
 
@@ -184,10 +185,11 @@ test.describe('Headless E2E Multi-Turn Gameplay Flows', () => {
       await startWeek3Btn.click();
 
       // 14. Verify Week 3 begins
-      await expect(dashboard).toContainText(/Week 3|שבוע 3/i);
       if (await page.locator('.dashboard').isVisible()) {
+        await expect(dashboard).toContainText(/Week 3|שבוע 3/i);
         await expect(dashboard).toContainText(/(40|50|60)(\.0)?\s*\/\s*60/);
       } else {
+        await expect(page.locator('#hud-clock-digital')).toContainText(/Week #?3|שבוע 3/i);
         await expect(page.locator('.clock-face-number')).toContainText(/(40|50|60)/);
       }
     }

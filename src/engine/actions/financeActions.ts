@@ -173,7 +173,7 @@ export function handlePayLoanAction(
         nextPlayer.loanPaymentDeadline = 0;
         actionLog = { key: 'action.loan.paidOff', params: { amount: loanPaymentAmount } };
       } else {
-        if (context.rules.rollingLoanDeadline) {
+        if (context.rules && context.rules.rollingLoanDeadline) {
           nextPlayer.loanPaymentDeadline = Math.max(nextPlayer.loanPaymentDeadline || 0, context.turn + 4);
         } else {
           const currentMonthEnd = Math.floor((context.turn - 1) / 4) * 4 + 4;
