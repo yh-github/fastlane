@@ -487,6 +487,8 @@ export interface TurnFlags {
   loanDefaultWarning?: boolean;
   /** Loan payable warning flag */
   loanPayableWarning?: boolean;
+  /** Whether the player made a loan payment this turn */
+  loanPaidThisTurn?: boolean;
   /** Jobs the player was rejected from this turn */
   jobsRejectedThisTurn?: string[];
   /** Whether the book set was completed this turn (for delayBookSetCredit rule) */

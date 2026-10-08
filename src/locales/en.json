@@ -274,7 +274,8 @@
       "business": "Your business suit is wearing out."
     },
     "loan": {
-      "due": "Your loan payment is due."
+      "due": "Your loan payment is due.",
+      "overdue": "Your loan payment is overdue!"
     },
     "applianceBroke": "Your {{appliance}} broke! Repair cost: ${{repairCost}}",
     "applianceBrokeNeedRepair": "Your {{appliance}} broke down! It will not function until repaired.",

@@ -125,7 +125,11 @@ export function handleTakeLoanAction(
   } else {
     const loanSize = assessment.estimatedAmount;
     if ((nextPlayer.loanDebt || 0) === 0) {
-      nextPlayer.loanPaymentDeadline = Math.floor((context.turn - 1) / 4) * 4 + 4; // Week 4 of current month
+      if (context.rules.rollingLoanDeadline) {
+        nextPlayer.loanPaymentDeadline = context.turn + 4;
+      } else {
+        nextPlayer.loanPaymentDeadline = Math.floor((context.turn - 1) / 4) * 4 + 4; // Week 4 of current month
+      }
     }
     nextPlayer.money += loanSize;
     nextPlayer.loanDebt = (nextPlayer.loanDebt || 0) + loanSize;
@@ -153,18 +157,32 @@ export function handlePayLoanAction(
       const amount = nextPlayer.loanDebt;
       nextPlayer.money -= amount;
       nextPlayer.loanDebt = 0;
-      nextPlayer.loanPaymentDeadline += 4;
+      nextPlayer.loanPaymentDeadline = 0;
+      nextPlayer.turnFlags.loanPaidThisTurn = true;
+      nextPlayer.turnFlags.loanPayableWarning = false;
       actionLog = { key: 'action.loan.paidOff', params: { amount } };
     } else if (nextPlayer.money >= loanPaymentAmount) {
       nextPlayer.money -= loanPaymentAmount;
       nextPlayer.loanDebt = Math.max(0, nextPlayer.loanDebt - loanPrincipalAmount);
-      nextPlayer.loanPaymentDeadline += 4;
-      actionLog = { key: 'action.loan.paidInstallment', params: { payment: loanPaymentAmount, principal: loanPrincipalAmount, interest: loanInterestAmount } };
+      nextPlayer.turnFlags.loanPaidThisTurn = true;
+      nextPlayer.turnFlags.loanPayableWarning = false;
+
+      if (nextPlayer.loanDebt === 0) {
+        nextPlayer.loanPaymentDeadline = 0;
+        actionLog = { key: 'action.loan.paidOff', params: { amount: loanPaymentAmount } };
+      } else {
+        if (context.rules.rollingLoanDeadline) {
+          nextPlayer.loanPaymentDeadline = Math.max(nextPlayer.loanPaymentDeadline || 0, context.turn + 4);
+        } else {
+          const currentMonthEnd = Math.floor((context.turn - 1) / 4) * 4 + 4;
+          if ((nextPlayer.loanPaymentDeadline || 0) <= currentMonthEnd) {
+            nextPlayer.loanPaymentDeadline = currentMonthEnd + 4;
+          }
+        }
+        actionLog = { key: 'action.loan.paidInstallment', params: { payment: loanPaymentAmount, principal: loanPrincipalAmount, interest: loanInterestAmount } };
+      }
     } else {
       actionLog = { key: 'action.error.notEnoughMoneyPayment' };
-    }
-    if (nextPlayer.loanDebt === 0) {
-      nextPlayer.loanPaymentDeadline = 0;
     }
   } else {
     actionLog = { key: 'action.error.noLoan' };

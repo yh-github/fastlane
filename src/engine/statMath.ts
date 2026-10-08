@@ -890,17 +890,19 @@ export function calcLoanAssessment(
   turn: number,
   rules?: GameRules
 ): LoanAssessment {
-  const liquidAssets = (player.money || 0) + (player.bankSavings || 0) - (player.loanDebt || 0);
+  const liquidAssets = (player.money || 0) + (player.bankSavings || 0) - (player.rentDebt || 0) - (player.loanDebt || 0);
   const wage = player.currentWage || 0;
-  const liquidity = wage + (liquidAssets / 1000);
+  const liquidity = wage + Math.trunc(Math.max(0, liquidAssets) / 1000);
   
   let risk = 5;
-  if ((player.timesDefaulted || 0) > 0 || (player.loanDebt || 0) > 0) {
-    risk = 5 + (player.timesDefaulted || 0) + ((player.loanDebt || 0) / 100) + ((player.loanDebt || 0) > 0 ? 1 : 0);
+  const timesDefaulted = player.timesDefaulted || 0;
+  const loanDebt = player.loanDebt || 0;
+  if (timesDefaulted > 0 || loanDebt > 0) {
+    risk = 5 + timesDefaulted + Math.floor(loanDebt / 100) + (loanDebt > 0 ? 1 : 0);
   }
 
   const isDefaulted = (player.loanPaymentDeadline || 0) > 0 && (player.loanPaymentDeadline || 0) < turn;
-  const requireJob = rules?.requireJobForLoan ?? campaign?.config?.gameRules?.requireJobForLoan ?? true;
+  const requireJob = rules?.requireJobForLoan ?? campaign?.config?.gameRules?.requireJobForLoan ?? false;
   const hasJob = player.currentJobId !== null && player.currentJobId !== undefined;
 
   if (isDefaulted) {
@@ -929,8 +931,7 @@ export function calcLoanAssessment(
     };
   }
 
-  const rawLoan = 100 * (liquidity - risk);
-  const estimatedAmount = Math.max(0, Math.floor(rawLoan));
+  const estimatedAmount = liquidity > risk ? (liquidity - risk) * 100 : 0;
 
   if (liquidity <= risk || estimatedAmount <= 0) {
     return {
@@ -941,7 +942,7 @@ export function calcLoanAssessment(
       risk,
       liquidAssets,
       reason: 'insufficient_liquidity',
-      reasonText: `Income & savings too low (Liquidity ${liquidity.toFixed(1)} ≤ Risk ${risk.toFixed(1)}).`,
+      reasonText: `Income & savings too low (Liquidity ${liquidity} ≤ Risk ${risk}).`,
     };
   }
 
