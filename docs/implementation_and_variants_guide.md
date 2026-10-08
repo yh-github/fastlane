@@ -43,7 +43,7 @@ graph TD
 3. **`qol_improved` (Quality-of-Life Improved)**:
    * Built on top of `1990_classic_cdrom`.
    * **Same authentic balance and rules**, but fixes known Sierra bytecode bugs and removes tedious UI friction.
-   * Enables `helpfulUI` (explicit numbers, price breakdowns, transaction fees).
+   * Enables `helpfulUI` (explicit numbers, price breakdowns, transaction fees, and tier-specific clothing wear warnings).
    * Fixes the Sierra Script 107 bytecode bug via `economicUpsideBonus: true`.
    * Fixes infinite pawn money loop via `preventPawnArbitrage: true`.
    * Eliminates the 2-hour building re-entry penalty (`reenterCurrentLocationCost: false`).
@@ -224,7 +224,7 @@ graph TD
 | `economicUpsideBonus` | Fixes Sierra bytecode bug to enable upper-range momentum bonus | `false` | `false` | **`true`** | **`true`** |
 | `preventPawnArbitrage` | Scales pawn redemption/clearance with economy to block infinite money loop | `false` | `false` | **`true`** | **`true`** |
 | `maskEarlyJobRejections` | Masks low dependability rejections as "No openings" in weeks 1–4 | `true` | `true` | **`false`** | **`false`** |
-| `helpfulUI` | Displays exact prices, transaction fees, and loan costs in UI | `false` | `false` | **`true`** | **`true`** |
+| `helpfulUI` | Displays exact prices, fees, and specific clothing wear warnings in UI | `false` | `false` | **`true`** | **`true`** |
 | `enableAnimations` | Enables transaction popups and UI animations | `false` | `false` | **`true`** | **`true`** |
 | `predictiveNewspaperStockTips`| Enables predictive stock market tips in the weekly newspaper | `false` | `false` | **`true`** | **`true`** |
 | `reenterCurrentLocationCost` | Charges 2 hours travel cost to re-enter current building | `true` | `true` | **`false`** | **`false`** |

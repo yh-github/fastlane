@@ -271,7 +271,8 @@
     "clothes": {
       "casual": "Your casual clothes are wearing out.",
       "dress": "Your dress clothes are wearing out.",
-      "business": "Your business suit is wearing out."
+      "business": "Your business suit is wearing out.",
+      "needNew": "You need new clothes."
     },
     "loan": {
       "due": "Your loan payment is due.",
