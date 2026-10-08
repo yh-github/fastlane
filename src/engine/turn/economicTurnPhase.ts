@@ -146,13 +146,15 @@ export function processEconomicTurnPhase(
   const crashStartWeek = eventRules.marketCrashStartWeek ?? 8;
   const crashDivisor = eventRules.marketCrashDivisor ?? 30;
   const rawCrashThreshold = eventRules.marketCrashThreshold ?? 80;
-  const crashThresholdReading = rawCrashThreshold < 50 ? (rawCrashThreshold + 100) : rawCrashThreshold;
-  const crashThresholdIndex = rawCrashThreshold >= 50 ? (rawCrashThreshold - 100) : rawCrashThreshold;
+  // rawCrashThreshold is an index. Convert to reading (reading = index + 100).
+  const crashThresholdReading = rawCrashThreshold + 100;
+  const crashThresholdIndex = rawCrashThreshold;
 
   const boomStartWeek = eventRules.economicBoomStartWeek ?? 8;
   const boomDivisor = eventRules.economicBoomDivisor ?? 30;
   const rawBoomThreshold = eventRules.economicBoomThreshold ?? 120;
-  const boomThresholdReading = rawBoomThreshold < 50 ? (rawBoomThreshold + 100) : rawBoomThreshold;
+  // If rawBoomThreshold is > 100, it's already a reading. Otherwise it's an index.
+  const boomThresholdReading = rawBoomThreshold > 50 ? rawBoomThreshold : rawBoomThreshold + 100;
 
   // Current price level reading (main / goods reading)
   const currentGoodsReading = sim.main.reading;

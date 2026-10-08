@@ -44,8 +44,7 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef, econom
     enrolledCredits: hasCredit ? Math.max(0, (player.enrolledCredits || 0) - 1) : (player.enrolledCredits || 0),
     enrolledClasses: { 
       ...(player.enrolledClasses || {}), 
-      [degree.id]: 0,
-      [`${degree.id}_req`]: calcRequiredLessons(player, degree, rules)
+      [degree.id]: 0
     }
   };
 
@@ -72,10 +71,6 @@ export function buyEducationCredit(player: PlayerState, baseTuitionFee: number =
 }
 
 export function calcRequiredLessons(player: PlayerState, degree: EducationDef, rules?: GameRules): number {
-  if (player.enrolledClasses && player.enrolledClasses[`${degree.id}_req`] !== undefined) {
-    return player.enrolledClasses[`${degree.id}_req`];
-  }
-
   let required = degree.lessonsRequired;
   let reduction = 0;
   
