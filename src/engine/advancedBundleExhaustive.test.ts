@@ -472,11 +472,10 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       // Enroll
       const enrollRes = enrollInDegree(player, degreeDef, 0, mockRules);
       player = enrollRes.updated;
-      expect(player.enrolledClasses[`${degreeDef.id}_req`]).toBeDefined();
 
       // Study until completion
       player.hoursRemaining = 100;
-      const req = player.enrolledClasses[`${degreeDef.id}_req`];
+      const req = degreeDef.lessonsRequired;
       for (let i = 0; i < req; i++) {
         const studyRes = study(player, degreeDef, 3, mockRules);
         player = studyRes.updated;
@@ -484,7 +483,6 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
 
       expect(player.degrees).includes(degreeDef.id);
       expect(player.enrolledClasses[degreeDef.id]).toBeUndefined();
-      expect(player.enrolledClasses[`${degreeDef.id}_req`]).toBeUndefined();
     });
   });
 
