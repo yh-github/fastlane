@@ -158,12 +158,14 @@ export function handlePayLoanAction(
       nextPlayer.money -= amount;
       nextPlayer.loanDebt = 0;
       nextPlayer.loanPaymentDeadline = 0;
+      if (!nextPlayer.turnFlags) nextPlayer.turnFlags = {} as any;
       nextPlayer.turnFlags.loanPaidThisTurn = true;
       nextPlayer.turnFlags.loanPayableWarning = false;
       actionLog = { key: 'action.loan.paidOff', params: { amount } };
     } else if (nextPlayer.money >= loanPaymentAmount) {
       nextPlayer.money -= loanPaymentAmount;
       nextPlayer.loanDebt = Math.max(0, nextPlayer.loanDebt - loanPrincipalAmount);
+      if (!nextPlayer.turnFlags) nextPlayer.turnFlags = {} as any;
       nextPlayer.turnFlags.loanPaidThisTurn = true;
       nextPlayer.turnFlags.loanPayableWarning = false;
 
