@@ -24,6 +24,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     caffeineDebt: 0,
     askedForExtension: false,
     rentPaidThisTurn: false,
+    loanPaidThisTurn: false,
     freeNewspaper: false,
     hasSeenEvents: false,
     hasSeenWeekend: false,

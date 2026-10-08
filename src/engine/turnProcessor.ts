@@ -40,6 +40,7 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       caffeineDebt: p.turnFlags?.caffeineDebt || 0,
       askedForExtension: false,
       rentPaidThisTurn: false,
+      loanPaidThisTurn: false,
       freeNewspaper: false,
       hasSeenEvents: state.turn === 0,
       hasSeenWeekend: state.turn === 0,

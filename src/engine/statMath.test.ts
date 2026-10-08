@@ -287,11 +287,50 @@ describe('statMath', () => {
         loanPaymentDeadline: 0,
       } as any;
 
-      const assessment = calcLoanAssessment(player, null, 1);
+      const assessment = calcLoanAssessment(player, null, 1, { requireJobForLoan: true } as any);
       expect(assessment.eligible).toBe(false);
       expect(assessment.approvalChance).toBe(0);
       expect(assessment.estimatedAmount).toBe(0);
       expect(assessment.reason).toBe('unemployed');
+    });
+
+    it('approves unemployed players with high savings when requireJobForLoan is false (authentic SCI)', () => {
+      const player = {
+        currentJobId: null,
+        currentWage: 0,
+        money: 1000,
+        bankSavings: 6000,
+        loanDebt: 0,
+        timesDefaulted: 0,
+        loanPaymentDeadline: 0,
+      } as any;
+
+      // Liquid assets: 7000. Liquidity: 0 + trunc(7000 / 1000) = 7. Risk: 5.
+      // Loan size: (7 - 5) * 100 = 200.
+      const assessment = calcLoanAssessment(player, null, 1);
+      expect(assessment.eligible).toBe(true);
+      expect(assessment.approvalChance).toBe(100);
+      expect(assessment.estimatedAmount).toBe(200);
+    });
+
+    it('deducts rentDebt from liquid assets', () => {
+      const player = {
+        currentJobId: 'clerk',
+        currentWage: 10,
+        money: 2000,
+        bankSavings: 0,
+        rentDebt: 1500,
+        loanDebt: 0,
+        timesDefaulted: 0,
+        loanPaymentDeadline: 0,
+      } as any;
+
+      // Liquid assets: 2000 - 1500 = 500. Liquidity: 10 + trunc(500 / 1000) = 10. Risk: 5.
+      // Loan size: (10 - 5) * 100 = 500.
+      const assessment = calcLoanAssessment(player, null, 1);
+      expect(assessment.liquidAssets).toBe(500);
+      expect(assessment.liquidity).toBe(10);
+      expect(assessment.estimatedAmount).toBe(500);
     });
 
     it('refuses players currently in default', () => {
@@ -323,7 +362,7 @@ describe('statMath', () => {
         loanPaymentDeadline: 0,
       } as any;
 
-      // Liquidity: 4 + 100/1000 = 4.1 <= Risk 5.0
+      // Liquidity: 4 + trunc(100/1000) = 4 <= Risk 5
       const assessment = calcLoanAssessment(player, null, 1);
       expect(assessment.eligible).toBe(false);
       expect(assessment.approvalChance).toBe(0);
@@ -342,17 +381,17 @@ describe('statMath', () => {
         loanPaymentDeadline: 0,
       } as any;
 
-      // Liquid assets: 1000 -> Liquidity: 10 + 1.0 = 11.0. Risk: 5.0.
+      // Liquid assets: 1000 -> Liquidity: 10 + 1 = 11. Risk: 5.
       // Loan size: 100 * (11 - 5) = 600.
       const assessment = calcLoanAssessment(player, null, 1);
       expect(assessment.eligible).toBe(true);
       expect(assessment.approvalChance).toBe(100);
       expect(assessment.estimatedAmount).toBe(600);
-      expect(assessment.liquidity).toBeCloseTo(11.0);
-      expect(assessment.risk).toBe(5.0);
+      expect(assessment.liquidity).toBe(11);
+      expect(assessment.risk).toBe(5);
     });
 
-    it('correctly incorporates past defaults and existing debt into risk factor', () => {
+    it('correctly incorporates past defaults and existing debt into risk factor using integer division', () => {
       const player = {
         currentJobId: 'manager',
         currentWage: 20,
@@ -363,14 +402,15 @@ describe('statMath', () => {
         loanPaymentDeadline: 8, // Deadline is Week 8, current turn is 6 (not in default)
       } as any;
 
-      // Liquid assets: 1500 - 200 = 1300. Liquidity: 20 + 1.3 = 21.3.
-      // Risk: 5 + 2 (defaults) + 200/100 (2) + 1 (has debt) = 10.0.
-      // Loan size: floor(100 * (21.3 - 10)) = 1130.
+      // Liquid assets: 1500 - 200 = 1300. Liquidity: 20 + trunc(1300 / 1000) = 21.
+      // Risk: 5 + 2 (defaults) + floor(200/100) (2) + 1 (has debt) = 10.
+      // Loan size: (21 - 10) * 100 = 1100 (exact multiple of 100).
       const assessment = calcLoanAssessment(player, null, 6);
       expect(assessment.eligible).toBe(true);
       expect(assessment.approvalChance).toBe(100);
-      expect(assessment.estimatedAmount).toBe(1130);
-      expect(assessment.risk).toBe(10.0);
+      expect(assessment.estimatedAmount).toBe(1100);
+      expect(assessment.risk).toBe(10);
+      expect(assessment.liquidity).toBe(21);
     });
   });
 });

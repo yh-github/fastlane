@@ -50,9 +50,18 @@ export interface GameRules {
 
   /**
    * Requires having a job to qualify for a bank loan.
-   * Classic Floppy/CD-ROM: true. QoL Improved: true.
+   * In authentic Sierra SCI bytecode, qualification is strictly formula-driven
+   * (wage + liquidAssets / 1000 > risk); unemployed players with high savings can qualify.
+   * Classic Floppy/CD-ROM: false. QoL Improved: false.
    */
   requireJobForLoan: boolean;
+
+  /**
+   * If true, loan payment deadline is rolling (4 weeks after origination/payment)
+   * rather than strictly aligned to calendar month boundaries (week 4, 8, 12...).
+   * Classic Floppy/CD-ROM: false. QoL Improved: false. Advanced: configurable.
+   */
+  rollingLoanDeadline?: boolean;
 
   /**
    * If true, displays exact prices, transaction fees, and loan costs in the UI.
@@ -476,7 +485,8 @@ export const DEFAULT_GAME_RULES: GameRules = {
   classicStockMarket: true,
   allowPartialHours: true,
   enableRelaxationDoctor: true,
-  requireJobForLoan: true,
+  requireJobForLoan: false,
+  rollingLoanDeadline: false,
   helpfulUI: false,
   enableAnimations: false,
   pixelatedSprites: true,
@@ -550,6 +560,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   allowPartialHours: 'Allows studying/working for remaining hours even if less than full session',
   enableRelaxationDoctor: 'Triggers mandatory doctor visit if relaxation drops below threshold',
   requireJobForLoan: 'Requires holding a job to qualify for bank loan',
+  rollingLoanDeadline: 'Calculates loan payment deadline as 4 weeks from loan date rather than end of calendar month',
   helpfulUI: 'Displays exact prices, transaction fees, and loan costs in UI',
   enableAnimations: 'Enables money transaction popups and UI animations',
   allowOverAchievingGoals: 'Allows progression metrics to exceed 100%',

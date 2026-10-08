@@ -117,18 +117,41 @@ export function processHousingAndLoanPhase(
   }
 
   // 14. Loan Payments & Warnings
+  const finishedTurn = state.turn;
+  const startingTurn = state.turn + 1;
+
   if (p.loanDebt > 0) {
-    if (state.turn % 4 === 1) { 
-      if (p.loanPaymentDeadline < state.turn) {
-        p.timesDefaulted += 1;
+    // End-of-billing-turn default evaluation:
+    // If the turn that just finished was a deadline turn and player didn't service debt this turn:
+    if (finishedTurn > 0 && p.loanPaymentDeadline > 0 && finishedTurn >= p.loanPaymentDeadline) {
+      const prevPlayer = state.players.find(pl => pl.id === p.id);
+      const paidThisTurn = prevPlayer?.turnFlags?.loanPaidThisTurn ?? false;
+      if (!paidThisTurn) {
+        p.timesDefaulted = (p.timesDefaulted || 0) + 1;
         p = applyHappinessChange(p, -1, 'loan_default', state.rules, campaign.config.statRules);
         p.turnFlags.loanDefaultWarning = true;
+        p.turnEvents.push({ key: 'events.loan.overdue' });
+        if (state.rules.rollingLoanDeadline) {
+          p.loanPaymentDeadline = finishedTurn + 4;
+        } else {
+          p.loanPaymentDeadline = Math.floor((finishedTurn - 1) / 4) * 4 + 8;
+        }
+      } else {
+        if (p.loanPaymentDeadline <= finishedTurn) {
+          if (state.rules.rollingLoanDeadline) {
+            p.loanPaymentDeadline = finishedTurn + 4;
+          } else {
+            p.loanPaymentDeadline = Math.floor((finishedTurn - 1) / 4) * 4 + 8;
+          }
+        }
       }
-    } else if (state.turn % 4 === 0) { 
-      if (p.loanPaymentDeadline <= state.turn) {
-        p.turnFlags.loanPayableWarning = true;
-        p.turnEvents.push({ key: 'events.loan.due' });
-      }
+    }
+
+    // Start-of-turn warning:
+    // If the turn starting is a deadline turn:
+    if (p.loanPaymentDeadline > 0 && startingTurn >= p.loanPaymentDeadline) {
+      p.turnFlags.loanPayableWarning = true;
+      p.turnEvents.push({ key: 'events.loan.due' });
     }
   }
 
