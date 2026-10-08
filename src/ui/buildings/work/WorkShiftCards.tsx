@@ -121,7 +121,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             position: 'absolute',
             right: 'calc(100% + 14px)',
             top: '24px',
-            width: '220px',
+            width: '160px',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
@@ -268,11 +268,11 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       const depMult = m.rewardDep > 0 ? `+${m.rewardDep} 🤝` : '';
       perkText = [depMult, expMult].filter(Boolean).join(', ') || 'Standard shift';
     } else if (m.id === 'look_busy') {
-      perkText = 'Rest & avoid exhaustion';
+      perkText = '';
     } else if (m.id === 'face_time') {
-      perkText = `+${m.rewardDep} 🤝, +1 👥 Networking`;
+      perkText = `+${m.rewardDep} 🤝`;
     } else if (m.id === 'show_initiative' || m.id === 'innovate') {
-      perkText = '🌟 Standing & bonus';
+      perkText = '';
     }
 
     return (
@@ -406,7 +406,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             <span>🔥</span>
             <span>-0.5 Max Physical Condition</span>
           </div>
-        ) : (
+        ) : perkText ? (
           <div style={{
             color: canAfford ? '#67e8f9' : '#71717a',
             fontWeight: 'bold',
@@ -419,7 +419,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           }}>
             {perkText}
           </div>
-        )}
+        ) : null}
 
         {/* Row 4: Consolidated Mode Button */}
         <div style={{ flexShrink: 0 }}>
@@ -516,7 +516,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               position: 'absolute',
               right: 'calc(100% + 8px)',
               top: '16px',
-              width: '220px',
+              width: '160px',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
@@ -526,63 +526,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               zIndex: 60
             }}
           >
-            <div style={{
-              background: summary.tier === 'overtime'
-                ? 'linear-gradient(135deg, rgba(69, 10, 10, 0.96) 0%, rgba(24, 10, 15, 0.98) 100%)'
-                : (summary.tier === 'grind'
-                  ? 'linear-gradient(135deg, rgba(69, 39, 10, 0.96) 0%, rgba(26, 18, 10, 0.98) 100%)'
-                  : 'rgba(15, 23, 42, 0.96)'),
-              border: summary.tier === 'overtime'
-                ? '1px solid #ef4444'
-                : (summary.tier === 'grind'
-                  ? '1px solid #f59e0b'
-                  : '1px solid rgba(56, 189, 248, 0.4)'),
-              borderRadius: '8px',
-              padding: '5px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: summary.tier === 'overtime'
-                ? '0 0 12px rgba(239, 68, 68, 0.4), 0 4px 12px rgba(0,0,0,0.5)'
-                : (summary.tier === 'grind'
-                  ? '0 0 10px rgba(245, 158, 11, 0.35), 0 4px 12px rgba(0,0,0,0.5)'
-                  : '0 4px 12px rgba(0,0,0,0.5)')
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <span style={{ fontSize: '0.74rem', fontWeight: 'bold', color: '#fff' }}>
-                  Shift #{summary.actionCount}
-                </span>
-                {summary.tier === 'grind' && (
-                  <span style={{
-                    fontSize: '0.62rem',
-                    fontWeight: 'bold',
-                    padding: '1px 5px',
-                    borderRadius: '4px',
-                    background: 'rgba(245, 158, 11, 0.25)',
-                    color: '#f59e0b',
-                    border: '1px solid #f59e0b'
-                  }}>
-                    ⚡ GRIND
-                  </span>
-                )}
-                {summary.tier === 'overtime' && (
-                  <span style={{
-                    fontSize: '0.62rem',
-                    fontWeight: 'bold',
-                    padding: '1px 5px',
-                    borderRadius: '4px',
-                    background: 'rgba(239, 68, 68, 0.25)',
-                    color: '#ef4444',
-                    border: '1px solid #ef4444'
-                  }}>
-                    🔥 OVERTIME
-                  </span>
-                )}
-              </div>
-              <span style={{ fontSize: '0.70rem', color: '#a5f3fc', fontWeight: 'bold' }}>
-                ${player.currentWage || job.baseWage}/hr
-              </span>
-            </div>
+
 
             {leftModes.map(m => renderCompactCard(m))}
           </div>
@@ -594,7 +538,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               position: 'absolute',
               left: 'calc(100% + 8px)',
               top: '16px',
-              width: '220px',
+              width: '160px',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
@@ -605,7 +549,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             }}
           >
             <div style={{
-              background: 'rgba(15, 23, 42, 0.96)',
+              background: summary.tier === 'overtime' ? 'linear-gradient(135deg, rgba(69, 10, 10, 0.96) 0%, rgba(24, 10, 15, 0.98) 100%)' : (summary.tier === 'grind' ? 'linear-gradient(135deg, rgba(69, 39, 10, 0.96) 0%, rgba(26, 18, 10, 0.98) 100%)' : 'rgba(15, 23, 42, 0.96)'),
               border: '1px solid rgba(56, 189, 248, 0.4)',
               borderRadius: '8px',
               padding: '5px 8px',
@@ -615,22 +559,11 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {summary.locationInitiatives > 0 && (
-                  <span
-                    title={`${summary.locationInitiatives} Initiatives (+${summary.locationInitiatives * 3}% promotion standing)`}
-                    style={{
-                      fontSize: '0.62rem',
-                      fontWeight: 'bold',
-                      color: '#f59e0b',
-                      background: 'rgba(245, 158, 11, 0.15)',
-                      padding: '1px 4px',
-                      borderRadius: '4px',
-                      border: '1px solid rgba(245, 158, 11, 0.3)'
-                    }}
-                  >
-                    🌟 {summary.locationInitiatives}
-                  </span>
-                )}
+                <span style={{ fontSize: '0.74rem', fontWeight: 'bold', color: '#fff' }}>
+                  Shift #{summary.actionCount}
+                </span>
+                {summary.tier === 'grind' && <span style={{ fontSize: '0.62rem', fontWeight: 'bold', padding: '1px 4px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.25)', color: '#f59e0b', border: '1px solid #f59e0b' }}>⚡ GRIND</span>}
+                {summary.tier === 'overtime' && <span style={{ fontSize: '0.62rem', fontWeight: 'bold', padding: '1px 4px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.25)', color: '#ef4444', border: '1px solid #ef4444' }}>🔥 OVERTIME</span>}
               </div>
               {onClose && (
                 <button
