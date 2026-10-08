@@ -121,7 +121,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             position: 'absolute',
             right: 'calc(100% + 14px)',
             top: '24px',
-            width: 'calc(185px * var(--board-scale, 1))',
+            width: '220px',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
@@ -288,9 +288,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             : '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '10px',
           padding: '6px 8px',
-          height: '125px',
-          minHeight: '125px',
-          maxHeight: '125px',
+          height: '128px',
+          minHeight: '128px',
+          maxHeight: '135px',
           boxSizing: 'border-box',
           boxShadow: canAfford
             ? (isWorkWork ? `0 0 14px ${meta.glowColor}, 0 4px 12px rgba(0,0,0,0.6)` : `0 4px 10px rgba(0,0,0,0.5)`)
@@ -304,7 +304,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
         }}
       >
         {/* Row 1: Duration & '?' Help Button */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <span
             style={{
               fontSize: '0.68rem',
@@ -355,8 +355,8 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           </button>
         </div>
 
-        {/* Row 2: Condition / Fatigue cost + Mistake Chance */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.68rem' }}>
+        {/* Row 2: Condition / Fatigue cost + Mistake Chance (No 'Safe' badge) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.68rem', flexShrink: 0 }}>
           <span style={{
             color: summary.tier === 'overtime' ? '#f87171' : (summary.tier === 'grind' ? '#fbbf24' : '#fca5a5'),
             fontWeight: 'bold',
@@ -367,7 +367,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             {summary.tier === 'overtime' ? '🔥 ' : (summary.tier === 'grind' ? '⚡ ' : '')}{fatigueCostText}
           </span>
 
-          {totalMistakeChance > 0 ? (
+          {totalMistakeChance > 0 && (
             <span
               title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%${socialChance > 0 ? `, Social: ${(socialChance * 100).toFixed(1)}%` : ''}`}
               style={{
@@ -381,17 +381,6 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               }}
             >
               ⚠️ {(totalMistakeChance * 100).toFixed(1)}%
-            </span>
-          ) : (
-            <span
-              style={{
-                color: '#34d399',
-                fontWeight: 'bold',
-                fontSize: '0.64rem',
-                opacity: 0.85
-              }}
-            >
-              ✓ Safe
             </span>
           )}
         </div>
@@ -411,7 +400,8 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             gap: '3px',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            textOverflow: 'ellipsis',
+            flexShrink: 0
           }}>
             <span>🔥</span>
             <span>-0.5 Max Physical Condition</span>
@@ -424,14 +414,15 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            padding: '1px 0'
+            padding: '1px 0',
+            flexShrink: 0
           }}>
             {perkText}
           </div>
         )}
 
         {/* Row 4: Consolidated Mode Button */}
-        <div>
+        <div style={{ flexShrink: 0 }}>
           <button
             data-testid={`work-mode-${m.id}`}
             data-action-target={isWorkWork ? `work-${job.id}` : undefined}
@@ -525,7 +516,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               position: 'absolute',
               right: 'calc(100% + 8px)',
               top: '16px',
-              width: 'calc(185px * var(--board-scale, 1))',
+              width: '220px',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
@@ -603,7 +594,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               position: 'absolute',
               left: 'calc(100% + 8px)',
               top: '16px',
-              width: 'calc(185px * var(--board-scale, 1))',
+              width: '220px',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',

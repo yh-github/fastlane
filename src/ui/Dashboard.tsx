@@ -8,8 +8,6 @@
 import React from 'react';
 import { type PlayerState, type GameState } from '../engine/gameState';
 import {
-  calcUsedSpace,
-  calcHousingSpaceCap,
   formatHours
 } from '../engine/statMath';
 import { useTranslation } from 'react-i18next';
@@ -54,7 +52,7 @@ interface AdvancedStatsStripProps {
 
 function AdvancedStatsStrip({
   campaign,
-  gameState,
+  gameState: _gameState,
   player,
   lifestyle,
   isMentalCritical,
@@ -113,24 +111,6 @@ function AdvancedStatsStrip({
         <strong>{t('stat.physicalCondition')}:</strong>{' '}
         {Math.floor(player.physicalCondition || 0)}
       </div>
-      {gameState.rules.spaceCapping && (
-        <div
-          title={`Appliances & Books: ${calcUsedSpace(player, campaign, false)} space | Clutter/Mess: ${player.mess || 0} space`}
-          style={{
-            fontWeight:
-              calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign)
-                ? 'bold'
-                : 'normal',
-            color:
-              calcUsedSpace(player, campaign, true) >= calcHousingSpaceCap(player, campaign)
-                ? '#e74c3c'
-                : 'inherit',
-          }}
-        >
-          <strong>📦 {t('stat.space', 'Space')}:</strong>{' '}
-          {calcUsedSpace(player, campaign, true)}/{calcHousingSpaceCap(player, campaign)}
-        </div>
-      )}
     </div>
   );
 }
@@ -153,6 +133,8 @@ export function Dashboard({
   onToggleFold
 }: DashboardProps) {
   const { t } = useTranslation();
+  const [isGoalsFolded, setIsGoalsFolded] = React.useState(true);
+
   if (!player) return <header className="dashboard">{t('dashboard.loading')}</header>;
 
   const handleFilterToggle = (filter: GoalFilter) => {
@@ -176,7 +158,15 @@ export function Dashboard({
   const trendArrow = trendVal > 0 ? '↑' : trendVal < 0 ? '↓' : '→';
   const formattedTrend = `${trendVal > 0 ? `+${trendVal}` : `${trendVal}`} ${trendArrow}`;
 
-  const { lifeBadges, careerBadges, allBadges, stats } = buildDashboardBadges({
+  const {
+    victoryBadge,
+    goalBadges,
+    careerAttributes,
+    lifeBadges,
+    careerBadges: _careerBadges,
+    allBadges,
+    stats
+  } = buildDashboardBadges({
     player,
     rules: gameState.rules,
     gameState,
@@ -242,97 +232,103 @@ export function Dashboard({
           )}
         </div>
 
+        {/* Top Section: Player Card & Controls */}
+        <div className="side-hud__player-card">
+          <h2 className="side-hud__player-title">{player ? player.name : ''}</h2>
+          {player?.isAi && <span className="ai-badge">{t('dashboard.aiBadge', { defaultValue: 'AI' })}</span>}
+          {player?.inventory?.selectedClothes === 'none' && (
+            <span 
+              className="naked-badge" 
+              role="button"
+              tabIndex={0}
+              onClick={() => onOpenInventory('clothes')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpenInventory('clothes');
+                }
+              }}
+              title={t('dashboard.nakedWarningTooltip', { defaultValue: 'Click to view clothes in Status' })}
+              data-testid="naked-warning-badge"
+            >
+              ⚠️ NAKED
+            </span>
+          )}
+          {gameState.rules.helpfulUI && (
+            <div 
+              className="side-hud__economy"
+              title={t('dashboard.economyTooltip', { defaultValue: 'Economic Reading: Price level relative to baseline (higher = higher prices).\nEconomic Trend: Momentum pushing prices up or down (-3 to +3).' })}
+            >
+              <span>
+                {t('dashboard.economyCompact', { 
+                  reading: formattedReading, 
+                  trend: formattedTrend,
+                  defaultValue: `Economy: ${formattedReading} | ${formattedTrend}`
+                })}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="side-hud__controls-card" style={{ marginBottom: '6px' }}>
+          <button
+            id="btn-inventory"
+            onClick={() => onOpenInventory()}
+            className="side-hud__btn side-hud__btn--status"
+            title={t('dashboard.status', { defaultValue: 'Status' })}
+            aria-label={t('dashboard.status', { defaultValue: 'Status' })}
+          >
+            📊
+          </button>
+          <button
+            id="btn-settings"
+            onClick={onOpenSettings}
+            className="side-hud__btn side-hud__btn--settings"
+            title={t('dashboard.settings', { defaultValue: 'Settings' })}
+            aria-label={t('dashboard.settings', { defaultValue: 'Settings' })}
+          >
+            ⚙️
+          </button>
+        </div>
+
         <div className="side-hud__columns">
-          {/* Column 1 — Life & Goals */}
-          <div className="side-hud__col side-hud__col--life">
-            <div className="side-hud__player-card">
-              <h2 className="side-hud__player-title">{player ? player.name : ''} - {t('dashboard.turn', { turn, defaultValue: `Week ${turn}` })}</h2>
-              {player.isAi && <span className="ai-badge">{t('dashboard.aiBadge', { defaultValue: 'AI' })}</span>}
-              {player.inventory?.selectedClothes === 'none' && (
-                <span 
-                  className="naked-badge" 
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onOpenInventory('clothes')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onOpenInventory('clothes');
-                    }
-                  }}
-                  title={t('dashboard.nakedWarningTooltip', { defaultValue: 'Click to view clothes in Status' })}
-                  data-testid="naked-warning-badge"
-                >
-                  ⚠️ NAKED
-                </span>
-              )}
-              {gameState.rules.helpfulUI && (
-                <div 
-                  className="side-hud__economy"
-                  title={t('dashboard.economyTooltip', { defaultValue: 'Economic Reading: Price level relative to baseline (higher = higher prices).\nEconomic Trend: Momentum pushing prices up or down (-3 to +3).' })}
-                >
-                  <span>
-                    {t('dashboard.economy', { 
-                      reading: formattedReading, 
-                      trend: formattedTrend,
-                      index: formattedReading,
-                      defaultValue: `Economy: Reading ${formattedReading} | Trend ${formattedTrend}`
-                    })}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="side-hud__controls-card">
-              <button
-                id="btn-inventory"
-                onClick={() => onOpenInventory()}
-                className="side-hud__btn side-hud__btn--status"
-              >
-                📊 {t('dashboard.status', { defaultValue: 'Status' })}
-              </button>
-              <button
-                id="btn-settings"
-                onClick={onOpenSettings}
-                className="side-hud__btn side-hud__btn--settings"
-                title={t('dashboard.settings', { defaultValue: 'Settings' })}
-              >
-                ⚙️
-              </button>
-            </div>
-
-            <div className="side-hud__badges-group">
-              {lifeBadges.map((badge) => (
-                <StatBadge key={badge.id} {...badge} />
-              ))}
-
-              <AdvancedStatsStrip
-                campaign={campaign}
-                gameState={gameState}
-                player={player}
-                lifestyle={stats.lifestyle}
-                isMentalCritical={stats.isMentalCritical}
-                isMentalWarning={stats.isMentalWarning}
-                isPhysicalCritical={stats.isPhysicalCritical}
-                isPhysicalWarning={stats.isPhysicalWarning}
-                activeLogFilter={activeLogFilter}
-                onFilterToggle={handleFilterToggle}
-                t={t}
-              />
-            </div>
-          </div>
-
-          {/* Column 2 — Career & Skills (Strict user order: Career, Employability, Dep, Exp, Mgmt, Tech) */}
+          {/* Column 1 (Left) — Career attributes */}
           {foldState === 'full' && (
-            <div className="side-hud__col side-hud__col--career">
-              <div className="side-hud__col-header">💼 {t('dashboard.career', { defaultValue: 'Career' })}</div>
+            <div className="side-hud__col side-hud__col--career" data-testid="side-hud-col-career">
               <div className="side-hud__badges-group">
-                {careerBadges.map((badge) => (
+                {careerAttributes.map((badge) => (
                   <StatBadge key={badge.id} {...badge} />
                 ))}
               </div>
             </div>
           )}
+
+          {/* Column 2 (Right) — Trophy (folds goals underneath), then Money & Life Stats */}
+          <div className="side-hud__col side-hud__col--life" data-testid="side-hud-col-life">
+            <div className="side-hud__badges-group">
+              <StatBadge
+                {...victoryBadge}
+                value={
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    {victoryBadge.value}
+                    <span style={{ fontSize: '0.65rem', opacity: 0.75 }}>
+                      {isGoalsFolded ? '▸' : '▾'}
+                    </span>
+                  </span>
+                }
+                onClick={() => setIsGoalsFolded(!isGoalsFolded)}
+              />
+
+              {!isGoalsFolded &&
+                goalBadges.map((badge) => (
+                  <StatBadge key={badge.id} {...badge} />
+                ))}
+
+              {lifeBadges.map((badge) => (
+                <StatBadge key={badge.id} {...badge} />
+              ))}
+            </div>
+          </div>
         </div>
       </aside>
     );

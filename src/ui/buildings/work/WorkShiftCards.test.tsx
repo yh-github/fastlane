@@ -36,7 +36,7 @@ describe('WorkShiftCards Component', () => {
     }
   } as any;
 
-  it('renders cards with zero redundant badges or titles and uniform fixed 125px height', () => {
+  it('renders cards with zero redundant badges or titles and uniform fixed height', () => {
     const player = createTestPlayer({
       hoursRemaining: 12,
       physicalCondition: 40,
@@ -54,20 +54,21 @@ describe('WorkShiftCards Component', () => {
       />
     );
 
-    // 1. Verify fake tag badges (DEFAULT, SLACKING, NETWORKING, LEADERSHIP) are NOT present
+    // 1. Verify fake tag badges (DEFAULT, SLACKING, NETWORKING, LEADERSHIP) and 'Safe' are NOT present
     expect(screen.queryByText(/^DEFAULT$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^SLACKING$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^NETWORKING$/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/^LEADERSHIP$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Safe/i)).not.toBeInTheDocument();
 
-    // 2. Verify all rendered shift cards have uniform fixed 125px height
+    // 2. Verify all rendered shift cards have uniform fixed height
     const cards = container.querySelectorAll('.work-shift-card');
     expect(cards.length).toBeGreaterThan(0);
     cards.forEach((card) => {
       const el = card as HTMLElement;
-      expect(el.style.height).toBe('125px');
-      expect(el.style.minHeight).toBe('125px');
-      expect(el.style.maxHeight).toBe('125px');
+      expect(el.style.height).toBe('128px');
+      expect(el.style.minHeight).toBe('128px');
+      expect(el.style.maxHeight).toBe('135px');
     });
   });
 

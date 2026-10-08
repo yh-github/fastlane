@@ -72,7 +72,7 @@ describe('App Integration & StrictMode', () => {
     fireEvent.click(startGameBtn);
 
     // Wait for the app to finish loading the campaign and transition to gameplay
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // Find the Burger Node button on our mocked map
     const burgerNodeBtn = screen.getByTestId('node-burger');
@@ -126,7 +126,7 @@ describe('App Integration & StrictMode', () => {
     fireEvent.click(startGameBtn);
 
     // Wait for gameplay
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // Open Home modal if not already open
     const homeNodeBtn = screen.getByTestId('node-home');
@@ -196,7 +196,7 @@ describe('App Integration & StrictMode', () => {
     fireEvent.click(startWeekBtn);
 
     // Verify Week 2 begins
-    await screen.findByText(/Player 1 - Week 2/i);
+    await screen.findByText(/Week #?2/i);
 
     await act(async () => {
       await new Promise(r => setTimeout(r, 0));
@@ -218,7 +218,7 @@ describe('App Integration & StrictMode', () => {
     const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
     fireEvent.click(startGameBtn);
 
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // Close any automatically open home modal first
     const closeBtn = document.querySelector('.building-modal__close');
@@ -280,7 +280,7 @@ describe('App Integration & StrictMode', () => {
     const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
     fireEvent.click(startGameBtn);
 
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // Start moving towards burger
     const burgerNodeBtn = screen.getByTestId('node-burger');
@@ -316,7 +316,7 @@ describe('App Integration & StrictMode', () => {
     const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
     fireEvent.click(startGameBtn);
 
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // Default HUD is Top HUD
     expect(document.querySelector('.app-container--top-hud')).toBeInTheDocument();
@@ -342,7 +342,7 @@ describe('App Integration & StrictMode', () => {
     const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
     fireEvent.click(startGameBtn);
 
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // Close any initial home modal
     const closeBtn = document.querySelector('.building-modal__close');
@@ -397,7 +397,7 @@ describe('App Integration & StrictMode', () => {
     const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
     fireEvent.click(startGameBtn);
 
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // Close any initial home modal
     const closeBtn = document.querySelector('.building-modal__close');
@@ -439,7 +439,7 @@ describe('App Integration & StrictMode', () => {
     expect(document.querySelector('.fullscreen-overlay')).toBeNull(); // No blocking overlay!
 
     // Verify the HUD is still visible and interactive
-    expect(screen.getByText(/Player 1 - Week/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Player 1/i)).toBeInTheDocument();
 
     // Close Log window
     const logCloseBtn = logWindow.querySelector('.building-modal__close');
@@ -467,7 +467,7 @@ describe('App Integration & StrictMode', () => {
     const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
     fireEvent.click(startGameBtn);
 
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // Close any initial home modal
     const closeBtn = document.querySelector('.building-modal__close');
@@ -510,7 +510,7 @@ describe('App Integration & StrictMode', () => {
     const startGameBtn2 = await screen.findByText(/Start Life|setupScreen\.startLife/i);
     fireEvent.click(startGameBtn2);
 
-    await screen.findByText(/Player 1 - Week/i);
+    await screen.findByText(/^Player 1/i);
 
     // 6. Assert Session Isolation:
     // Newspaper modal MUST NOT be open on Turn 1!

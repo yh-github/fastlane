@@ -13,7 +13,6 @@ import {
 } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import type { GoalFilter } from '../utils/logCategorizer';
-import { MessIcon } from './icons/MessIcon';
 
 export interface DashboardBadgeData {
   id: string;
@@ -40,6 +39,9 @@ export interface BuildDashboardBadgesParams {
 }
 
 export interface DashboardBadgesResult {
+  victoryBadge: DashboardBadgeData;
+  goalBadges: DashboardBadgeData[];
+  careerAttributes: DashboardBadgeData[];
   lifeBadges: DashboardBadgeData[];
   careerBadges: DashboardBadgeData[];
   allBadges: DashboardBadgeData[];
@@ -148,28 +150,20 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
 
   const useSkills = rules.useSkills !== undefined ? rules.useSkills : !!rules.usePhysicalMentalConditions;
 
-  // 1. Column 1: Life & Goals
-  const lifeBadges: DashboardBadgeData[] = [
-    {
-      id: 'stat-money',
-      label: t('dashboard.money', { defaultValue: 'Money' }),
-      value: `$${player.money}`,
-      icon: '💰',
-      isActive: activeLogFilter === 'money',
-      onClick: () => onFilterToggle?.('money'),
-    },
-    {
-      id: 'stat-victory',
-      label: t('dashboard.victory', { defaultValue: 'Victory' }),
-      value: `${victoryPercent}%`,
-      icon: '🏆',
-    },
-  ];
+  // 1. Victory Badge (Top-most icon on the right column)
+  const victoryBadge: DashboardBadgeData = {
+    id: 'stat-victory',
+    label: t('dashboard.victory', { defaultValue: 'Victory' }),
+    value: `${victoryPercent}%`,
+    icon: '🏆',
+  };
 
-  // Dynamic Goal Badges for Non-Career Win Conditions
-  for (const cond of winConditions.filter((c: { stat: string; label: string }) => c.stat !== 'career')) {
+  // 2. Dynamic Goal Badges for all win conditions (including career)
+  const goalBadges: DashboardBadgeData[] = [];
+  for (const cond of winConditions) {
     let current = 0;
-    if (cond.stat === 'wealth') current = !rules.allowOverAchievingGoals ? Math.min(wealth, player.goalAllotment.wealth || 0) : wealth;
+    if (cond.stat === 'career') current = career;
+    else if (cond.stat === 'wealth') current = !rules.allowOverAchievingGoals ? Math.min(wealth, player.goalAllotment.wealth || 0) : wealth;
     else if (cond.stat === 'education') current = !rules.allowOverAchievingGoals ? Math.min(education, player.goalAllotment.education || 0) : education;
     else if (cond.stat === 'happiness') current = displayHappiness as number;
     else if (cond.stat === 'lifestyle') current = !rules.allowOverAchievingGoals ? Math.min(lifestyle, player.goalAllotment.lifestyle || 0) : lifestyle;
@@ -178,13 +172,14 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
 
     const target = player.goalAllotment[cond.stat] || 0;
     let icon = '🎯';
-    if (cond.stat === 'wealth') icon = '🤑';
+    if (cond.stat === 'career') icon = '💼';
+    else if (cond.stat === 'wealth') icon = '🤑';
     else if (cond.stat === 'education') icon = '🎓';
     else if (cond.stat === 'happiness') icon = '😊';
     else if (cond.stat === 'lifestyle') icon = (player.lifestyle || 0) > 50 ? '🧐' : '😎';
     else if (cond.stat === 'wellbeing') icon = '🧘';
 
-    lifeBadges.push({
+    goalBadges.push({
       id: `stat-${cond.stat}`,
       label: t(`dashboard.${cond.stat}`, { defaultValue: cond.label }),
       value: `${current}/${target}`,
@@ -194,7 +189,65 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     });
   }
 
-  // Health / Condition badges
+  // 3. Career Attributes (Left column: Employability, Dep, Exp, Mgmt, Tech - strict order, only when helpfulUI)
+  const careerAttributes: DashboardBadgeData[] = [];
+  if (rules.helpfulUI) {
+    careerAttributes.push({
+      id: 'stat-employability',
+      label: t('dashboard.employability', { defaultValue: 'Employability' }),
+      value: `${employabilityScore}%`,
+      icon: '👨‍💼',
+      isActive: activeLogFilter === 'employability',
+      onClick: () => onFilterToggle?.('employability'),
+    });
+
+    careerAttributes.push({
+      id: 'stat-dependability',
+      label: t('dashboard.dependability', { defaultValue: 'Dependability' }),
+      value: `${player.dependability}/${maxDep}`,
+      icon: '🤝',
+      isActive: activeLogFilter === 'dependability',
+      onClick: () => onFilterToggle?.('dependability'),
+    });
+
+    careerAttributes.push({
+      id: 'stat-experience',
+      label: t('dashboard.experience', { defaultValue: 'Experience' }),
+      value: `${player.experience}/${maxExp}`,
+      icon: '👌',
+      isActive: activeLogFilter === 'experience',
+      onClick: () => onFilterToggle?.('experience'),
+    });
+
+    if (useSkills) {
+      careerAttributes.push({
+        id: 'stat-skill-mgmt',
+        label: t('dashboard.skillMgmt', { defaultValue: 'Mgmt' }),
+        value: `${(player.skillMgmt ?? 0).toFixed(1)}/10`,
+        icon: '👔',
+      });
+
+      careerAttributes.push({
+        id: 'stat-skill-tech',
+        label: t('dashboard.skillTech', { defaultValue: 'Tech' }),
+        value: `${(player.skillTech ?? 0).toFixed(1)}/10`,
+        icon: '🔧',
+      });
+    }
+  }
+
+  // 4. Life & Resource Badges (Right column under goals: Money, Physical, Mental, Social, Relaxation)
+  const lifeBadges: DashboardBadgeData[] = [
+    {
+      id: 'stat-money',
+      label: t('dashboard.money', { defaultValue: 'Money' }),
+      value: `$${player.money}`,
+      icon: '💰',
+      isActive: activeLogFilter === 'money',
+      onClick: () => onFilterToggle?.('money'),
+    },
+  ];
+
   if (rules.usePhysicalMentalConditions) {
     lifeBadges.push({
       id: 'stat-physical',
@@ -234,15 +287,6 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
         icon: '👥',
       });
     }
-
-    if (rules.trackMess) {
-      lifeBadges.push({
-        id: 'stat-mess',
-        label: t('dashboard.mess', { defaultValue: 'Mess' }),
-        value: `${player.mess ?? 0}`,
-        icon: <MessIcon />,
-      });
-    }
   } else {
     if (rules.helpfulUI) {
       const relaxationMax = player.relaxationMax ?? campaign?.config?.statRules?.maxRelaxation ?? campaign?.config?.statRules?.initialPhysicalMax ?? 50;
@@ -262,66 +306,17 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     }
   }
 
-  // 2. Column 2: Career & Skills (Strict user order: Career, Employability, Dep, Exp, Mgmt, Tech)
+  // Combined badges for backwards compatibility
   const careerBadges: DashboardBadgeData[] = [
-    {
-      id: 'stat-career',
-      label: t('dashboard.career', { defaultValue: 'Career' }),
-      value: `${career}/${player.goalAllotment.career || 0}`,
-      icon: '💼',
-      isActive: activeLogFilter === 'career',
-      onClick: () => onFilterToggle?.('career'),
-    },
+    ...goalBadges.filter(g => g.id === 'stat-career'),
+    ...careerAttributes
   ];
-
-  if (rules.helpfulUI) {
-    careerBadges.push({
-      id: 'stat-employability',
-      label: t('dashboard.employability', { defaultValue: 'Employability' }),
-      value: `${employabilityScore}%`,
-      icon: '👨‍💼',
-      isActive: activeLogFilter === 'employability',
-      onClick: () => onFilterToggle?.('employability'),
-    });
-
-    careerBadges.push({
-      id: 'stat-dependability',
-      label: t('dashboard.dependability', { defaultValue: 'Dependability' }),
-      value: `${player.dependability}/${maxDep}`,
-      icon: '🤝',
-      isActive: activeLogFilter === 'dependability',
-      onClick: () => onFilterToggle?.('dependability'),
-    });
-
-    careerBadges.push({
-      id: 'stat-experience',
-      label: t('dashboard.experience', { defaultValue: 'Experience' }),
-      value: `${player.experience}/${maxExp}`,
-      icon: '👌',
-      isActive: activeLogFilter === 'experience',
-      onClick: () => onFilterToggle?.('experience'),
-    });
-
-    if (useSkills) {
-      careerBadges.push({
-        id: 'stat-skill-mgmt',
-        label: t('dashboard.skillMgmt', { defaultValue: 'Mgmt' }),
-        value: `${(player.skillMgmt ?? 0).toFixed(1)}/10`,
-        icon: '👔',
-      });
-
-      careerBadges.push({
-        id: 'stat-skill-tech',
-        label: t('dashboard.skillTech', { defaultValue: 'Tech' }),
-        value: `${(player.skillTech ?? 0).toFixed(1)}/10`,
-        icon: '🔧',
-      });
-    }
-  }
-
-  const allBadges: DashboardBadgeData[] = [...lifeBadges, ...careerBadges];
+  const allBadges: DashboardBadgeData[] = [victoryBadge, ...goalBadges, ...lifeBadges, ...careerAttributes];
 
   return {
+    victoryBadge,
+    goalBadges,
+    careerAttributes,
     lifeBadges,
     careerBadges,
     allBadges,

@@ -613,7 +613,7 @@ export function BankInterface({
                 {assessment.reasonText}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: compact ? '8px' : '14px', fontSize: compact ? '11px' : '12px', color: '#9ca3af', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: compact ? '4px' : '8px' }}>
-                <span>💼 Wage: ${player.currentWage}/hr</span>
+                <span>💼 Wage: {player.currentJobId ? `$${player.currentWage}/hr` : 'Unemployed'}</span>
                 <span>💧 Liquidity Score: {assessment.liquidity.toFixed(2)}</span>
                 <span>⚠️ Risk Factor: {assessment.risk.toFixed(2)}</span>
                 {player.timesDefaulted > 0 && (
