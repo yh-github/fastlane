@@ -46,7 +46,7 @@ describe('Weekend Engine', () => {
     expect(nextPlayer.money).toBeLessThan(1000); // Spent money
   });
 
-  it('safely handles poor players without putting them in negative cash, but skips random events if broke', () => {
+  it('safely handles poor players without putting them in negative cash, but still processes a random event and drains their remaining cash', () => {
     vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); // First event
     const player = { 
       money: 2, // Less than cheapest cost (5)
@@ -56,8 +56,8 @@ describe('Weekend Engine', () => {
     } as unknown as PlayerState;
     
     const nextPlayer = processWeekend(player, 1, [], mockWeekendData, new Random(1));
-    expect(nextPlayer.money).toBe(2); // Should not drain their last 2 dollars
-    expect(nextPlayer.weekendResult?.event.key).toBe('events.weekend.too_broke');
+    expect(nextPlayer.money).toBe(0); // Should drain their last 2 dollars
+    expect(nextPlayer.weekendResult?.event.key).toBe('events.weekend.random_0');
   });
 
   it('consumes exactly 1 ticket, not all of them', () => {
