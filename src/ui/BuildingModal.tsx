@@ -887,8 +887,10 @@ export function BuildingModal({
                 transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ fontSize: '1.1rem' }}>💼</span>
-              <span>{t('workStation.workBtnShort', { defaultValue: 'WORK' })}</span>
+              <span data-testid="btn-work-dock" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.1rem' }}>💼</span>
+                <span>{t('workStation.workBtnShort', { defaultValue: 'WORK' })}</span>
+              </span>
             </button>
           </div>
         )}

@@ -463,6 +463,96 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
           </div>
         )}
 
+        {/* Condition Cost & Modifier Computation Breakdown */}
+        {(() => {
+          const activeMode = summary?.modes.find(m => m.id === mode);
+          const breakdown = activeMode?.modifierBreakdown;
+          if (!breakdown) return null;
+
+          return (
+            <div
+              data-testid="work-help-modifier-breakdown"
+              style={{
+                padding: '12px 14px',
+                borderRadius: '8px',
+                background: 'rgba(15, 23, 42, 0.75)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px'
+              }}
+            >
+              <h4 style={{ margin: 0, fontSize: '0.86rem', color: '#facc15', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🧮</span>
+                <span>{t('workStation.helpComputationTitle', { defaultValue: 'Condition Cost & Modifier Computation' })}</span>
+              </h4>
+
+              {/* Mental Condition Breakdown */}
+              <div style={{ fontSize: '0.78rem', background: 'rgba(0, 0, 0, 0.3)', padding: '8px', borderRadius: '6px' }}>
+                <div style={{ fontWeight: 'bold', color: '#93c5fd', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>🧠 Mental Condition Cost:</span>
+                  <span style={{ color: breakdown.totalMentalCost > 0 ? '#f87171' : '#34d399' }}>
+                    {breakdown.totalMentalCost > 0 ? `-${breakdown.totalMentalCost} 🧠` : '0 🧠'}
+                  </span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '18px', color: '#cbd5e1', lineHeight: '1.45' }}>
+                  <li>Base shift cost: <strong>{breakdown.mentalBase > 0 ? `-${breakdown.mentalBase} 🧠` : '0 🧠'}</strong></li>
+                  {breakdown.mentalModifiers.map((mod, i) => (
+                    <li key={i}>
+                      {mod.label}: <strong style={{ color: '#fca5a5' }}>-{mod.amount} 🧠</strong>
+                    </li>
+                  ))}
+                  <li style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '4px', paddingTop: '2px', fontWeight: 'bold' }}>
+                    Total Mental Cost: <span style={{ color: breakdown.totalMentalCost > 0 ? '#f87171' : '#34d399' }}>-{breakdown.totalMentalCost} 🧠</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Physical Condition Breakdown */}
+              <div style={{ fontSize: '0.78rem', background: 'rgba(0, 0, 0, 0.3)', padding: '8px', borderRadius: '6px' }}>
+                <div style={{ fontWeight: 'bold', color: '#fca5a5', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>💪 Physical Condition Cost:</span>
+                  <span style={{ color: breakdown.totalPhysicalCost > 0 ? '#f87171' : '#34d399' }}>
+                    {breakdown.totalPhysicalCost > 0 ? `-${breakdown.totalPhysicalCost} 💪` : '0 💪'}
+                  </span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '18px', color: '#cbd5e1', lineHeight: '1.45' }}>
+                  <li>Base shift cost: <strong>-{breakdown.physicalBase} 💪</strong></li>
+                  {breakdown.physicalModifiers.map((mod, i) => (
+                    <li key={i}>
+                      {mod.label}: <strong style={{ color: '#fca5a5' }}>-{mod.amount} 💪</strong>
+                    </li>
+                  ))}
+                  <li style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '4px', paddingTop: '2px', fontWeight: 'bold' }}>
+                    Total Physical Cost: <span style={{ color: breakdown.totalPhysicalCost > 0 ? '#f87171' : '#34d399' }}>-{breakdown.totalPhysicalCost} 💪</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Mistake Risk Breakdown */}
+              {activeMode?.totalMistakeChance !== undefined && activeMode.totalMistakeChance > 0 && (
+                <div style={{ fontSize: '0.78rem', background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                  <div style={{ fontWeight: 'bold', color: '#f87171', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>⚠️ Total Mistake Risk:</span>
+                    <span>{(activeMode.totalMistakeChance * 100).toFixed(1)}%</span>
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#e2e8f0', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {(activeMode.physMistakeChance ?? 0) > 0 && (
+                      <span>Physical Risk: <strong>{((activeMode.physMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
+                    )}
+                    {(activeMode.mentalMistakeChance ?? 0) > 0 && (
+                      <span>Mental Risk: <strong>{((activeMode.mentalMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
+                    )}
+                    {(activeMode.socialMistakeChance ?? 0) > 0 && (
+                      <span>Social Risk: <strong>{((activeMode.socialMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Fluff Lore Quote */}
         <div style={{
           padding: '10px 14px',

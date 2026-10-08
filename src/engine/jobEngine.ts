@@ -348,6 +348,25 @@ export function applyForJob(
   return { updated, success: true, message: { key: 'action.job.gotJob', params: { title: job.title } } };
 }
 
+export interface ModifierBreakdownItem {
+  label: string;
+  amount: number;
+}
+
+export interface WorkShiftModifierBreakdown {
+  physicalBase: number;
+  physicalModifiers: ModifierBreakdownItem[];
+  totalPhysicalCost: number;
+  mentalBase: number;
+  mentalModifiers: ModifierBreakdownItem[];
+  totalMentalCost: number;
+  fatigueApplied: boolean;
+  tier: ShiftTier;
+  actionCount: number;
+  grindThreshold: number;
+  overtimeThreshold: number;
+}
+
 export interface WorkShiftOption {
   id: WorkMode;
   physCost: number;
@@ -365,6 +384,7 @@ export interface WorkShiftOption {
   mentalMistakeChance?: number;
   socialMistakeChance?: number;
   totalMistakeChance?: number;
+  modifierBreakdown?: WorkShiftModifierBreakdown;
 }
 
 export type ShiftTier = 'normal' | 'grind' | 'overtime';
@@ -374,6 +394,8 @@ export interface WorkShiftSummary {
   shiftCost: number;
   workRatio: number;
   actionCount: number;
+  grindThreshold: number;
+  overtimeThreshold: number;
   tier: ShiftTier;
   tierLabel: string;
   modes: WorkShiftOption[];
@@ -570,6 +592,75 @@ export function calcWorkShiftSummary(
     m.mentalMistakeChance = mentalChance;
     m.socialMistakeChance = socialChance;
     m.totalMistakeChance = isAdvanced ? (1 - (1 - physChance) * (1 - mentalChance) * (1 - socialChance)) : 0;
+
+    // Detailed modifier breakdown for '?' strategy & help display
+    if (isAdvanced) {
+      const physMods: ModifierBreakdownItem[] = [];
+      const mentalMods: ModifierBreakdownItem[] = [];
+
+      let modeBasePhys = basePhys;
+      let modeBaseMental = baseMental;
+      if (m.id === 'look_busy') {
+        modeBasePhys = basePhys * 0.5;
+        modeBaseMental = baseMental * 0.5;
+      } else if (m.id === 'face_time') {
+        modeBasePhys = basePhys * 0.5;
+        modeBaseMental = baseMental * 1.0;
+      } else if (m.id === 'show_initiative' || m.id === 'innovate') {
+        modeBasePhys = basePhys * 1.5;
+        modeBaseMental = baseMental * 1.5;
+      }
+
+      if (tier === 'overtime') {
+        physMods.push({ label: `Overtime tier (shift #${actionCount} ≥ ${overtimeThreshold})`, amount: 1 });
+      }
+
+      if (m.id === 'work_work' && physTagMod !== 0) {
+        physMods.push({ label: hasJobTag(job, 'heavy_physical') ? 'Heavy Physical job requirement' : 'Job physical modifier', amount: physTagMod });
+      } else if (m.id === 'look_busy' && lbPhysTagMod !== 0) {
+        physMods.push({ label: 'Job physical modifier', amount: lbPhysTagMod });
+      }
+
+      if (tier === 'grind') {
+        mentalMods.push({ label: `Grind time (worked > ${grindThreshold - 1} shifts this turn)`, amount: modeBaseMental > 0 ? modeBaseMental : 1 });
+      } else if (tier === 'overtime') {
+        mentalMods.push({ label: `Overtime fatigue (worked ≥ ${overtimeThreshold} shifts this turn)`, amount: modeBaseMental > 0 ? modeBaseMental : 2 });
+      }
+
+      if (m.id === 'work_work' && mentalTagMod !== 0) {
+        const isExec = hasJobTag(job, 'executive_management');
+        const isMid = hasJobTag(job, 'middle_management');
+        mentalMods.push({
+          label: isExec ? 'Executive Management high accountability' : (isMid ? 'Middle Management oversight' : 'Job mental demand'),
+          amount: mentalTagMod
+        });
+      }
+
+      const modeFatigue = (m.id === 'look_busy' || m.id === 'face_time') ? halfFatigueMental : fatigueMental;
+      if (modeFatigue > 0) {
+        mentalMods.push({ label: 'Physical exhaustion carryover (Physical < 20)', amount: modeFatigue });
+      }
+
+      if (m.id === 'face_time') {
+        mentalMods.push({ label: 'Networking social & mental burden', amount: 2.0 });
+      } else if (m.id === 'show_initiative' || m.id === 'innovate') {
+        mentalMods.push({ label: 'Leadership responsibility & problem solving', amount: 2.0 });
+      }
+
+      m.modifierBreakdown = {
+        physicalBase: modeBasePhys,
+        physicalModifiers: physMods,
+        totalPhysicalCost: m.physCost,
+        mentalBase: modeBaseMental,
+        mentalModifiers: mentalMods,
+        totalMentalCost: m.mentalCost,
+        fatigueApplied: modeFatigue > 0,
+        tier,
+        actionCount,
+        grindThreshold,
+        overtimeThreshold
+      };
+    }
   }
 
   return {
@@ -577,6 +668,8 @@ export function calcWorkShiftSummary(
     shiftCost,
     workRatio,
     actionCount,
+    grindThreshold,
+    overtimeThreshold,
     tier,
     tierLabel,
     modes,

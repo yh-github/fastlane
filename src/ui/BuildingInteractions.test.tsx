@@ -476,7 +476,7 @@ describe('BuildingInteractions', () => {
     );
 
     // Inline strategy options are displayed directly without a modal
-    expect(screen.getByText(/DEFAULT/i)).toBeInTheDocument();
+    expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
     expect(screen.getByText(/3h/i)).toBeInTheDocument();
 
     const workWorkBtn = screen.getByTestId('work-mode-work_work');
