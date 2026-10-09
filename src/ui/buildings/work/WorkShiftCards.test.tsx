@@ -144,4 +144,39 @@ describe('WorkShiftCards Component', () => {
     expect(breakdown.textContent).toContain('Grind time');
     expect(breakdown.textContent).toContain('Physical Condition Cost');
   });
+
+  it('renders +1 Social badge on work_work and -1 Social on look_busy for frontline_service jobs', () => {
+    const frontlineJob = {
+      id: 'job_clerk',
+      title: 'Store Clerk',
+      baseWage: 12,
+      locationId: 'zmart',
+      tags: ['frontline_service'],
+      requirements: { dependability: 0, experience: 0, degrees: [] }
+    } as any;
+
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      workActionsThisTurn: 0 // Shift #1: normal shift -> +1 Social on work_work
+    });
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={frontlineJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="flanking"
+      />
+    );
+
+    // Should display +1 👥 badge for work_work and face_time
+    const socialGainBadges = screen.getAllByText('+1 👥');
+    expect(socialGainBadges.length).toBe(2);
+
+    // Should display -1 👥 penalty badge for look_busy
+    expect(screen.getByText('-1 👥')).toBeInTheDocument();
+  });
 });

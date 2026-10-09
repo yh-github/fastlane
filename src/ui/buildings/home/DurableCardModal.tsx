@@ -513,13 +513,14 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     >
       <div 
         onClick={(e) => e.stopPropagation()}
+        className="item-card-modal-content"
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '320px',
-          maxHeight: '90vh',
+          maxWidth: '290px',
+          maxHeight: '92vh',
           overflowY: 'auto',
-          borderRadius: '14px',
+          borderRadius: '12px',
           border: isBroken
             ? '2px solid #ef4444'
             : `2px solid ${isNew ? '#2ecc71' : '#3498db'}`,
@@ -529,12 +530,12 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
               ? '0 0 25px rgba(46, 204, 113, 0.4), 0 10px 30px rgba(0,0,0,0.8)' 
               : '0 0 25px rgba(52, 152, 219, 0.4), 0 10px 30px rgba(0,0,0,0.8)'),
           background: 'linear-gradient(165deg, #161b2e 0%, #0d111d 100%)',
-          padding: '12px 14px',
+          padding: '10px 12px',
           color: '#fff',
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
-          gap: '8px'
+          gap: '6px'
         }}
       >
         {/* Top-Right Dismiss Button */}
@@ -545,8 +546,8 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
           aria-label="Close"
           style={{
             position: 'absolute',
-            top: '8px',
-            right: '10px',
+            top: '6px',
+            right: '8px',
             background: 'transparent',
             border: 'none',
             color: '#94a3b8',
@@ -565,7 +566,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
         {/* Top Badges */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '22px' }}>
           <span style={{
-            fontSize: '0.68rem',
+            fontSize: '0.66rem',
             fontWeight: 'bold',
             letterSpacing: '0.08em',
             padding: '2px 6px',
@@ -578,9 +579,9 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
           </span>
 
           <span style={{
-            fontSize: '0.70rem',
+            fontSize: '0.68rem',
             fontWeight: 'bold',
-            padding: '2px 8px',
+            padding: '2px 7px',
             borderRadius: '10px',
             backgroundColor: isShop
               ? (isOwned ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.2)')
@@ -599,22 +600,26 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
         </div>
 
         {/* Artwork Frame */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '56px',
-          borderRadius: '8px',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)'
-        }}>
+        <div 
+          className="item-card-modal-artwork"
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '46px',
+            borderRadius: '8px',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.6)',
+            flexShrink: 0
+          }}
+        >
           <img 
             src={`/assets/raw_images/${itemId}.png`} 
             alt={itemName}
             style={{ 
-              maxWidth: '48px', 
-              maxHeight: '48px', 
+              maxWidth: '40px', 
+              maxHeight: '40px', 
               objectFit: 'contain',
               filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.7))'
             }}
@@ -626,25 +631,39 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
         {/* Title */}
         <div style={{ textAlign: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontWeight: 'bold' }}>
+          <h3 className="item-card-modal-title" style={{ margin: 0, fontSize: '1.02rem', color: '#fff', fontWeight: 'bold' }}>
             {itemName}
           </h3>
-          <div style={{ fontSize: '0.72rem', color: '#888', marginTop: '2px' }}>
-            {isShop ? ownershipDetailText : conditionDetail}
-          </div>
+          {!isOwned && !isShop && (
+            <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '1px' }}>
+              Available at Socket City / Z-Mart
+            </div>
+          )}
+          {!isShop && isBroken && (
+            <div style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 'bold', marginTop: '1px' }}>
+              ⚠️ Broken (Needs Repair)
+            </div>
+          )}
+          {!isShop && isNew && (
+            <div style={{ fontSize: '0.68rem', color: '#2ecc71', fontWeight: 'bold', marginTop: '1px' }}>
+              ✨ Brand New
+            </div>
+          )}
         </div>
 
-        {/* Gameplay Mechanic Narrative */}
-        <p style={{
-          fontSize: '0.76rem',
-          lineHeight: '1.35',
-          color: '#cbd5e1',
-          textAlign: 'center',
-          margin: 0,
-          padding: '0 2px'
-        }}>
-          {getGameplayDescription(itemId, isBook)}
-        </p>
+        {/* Gameplay Narrative (Home Apartment Inspection) */}
+        {!isShop && getGameplayDescription(itemId, isBook) && (
+          <p style={{
+            fontSize: '0.74rem',
+            lineHeight: '1.35',
+            color: '#cbd5e1',
+            textAlign: 'center',
+            margin: 0,
+            padding: '0 2px'
+          }}>
+            {getGameplayDescription(itemId, isBook)}
+          </p>
+        )}
 
         {/* Specs & Effect Chips */}
         <div style={{

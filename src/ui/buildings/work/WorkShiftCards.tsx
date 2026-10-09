@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
 import { calcWorkShiftSummary, type WorkShiftOption, type WorkMode } from '../../../engine/jobEngine';
+import { hasJobTag } from '../../../engine/jobTags';
 import { formatHours } from '../../../engine/statMath';
 import { WorkCardHelpModal } from './WorkCardHelpModal';
 import { ActionReasonModal } from '../ActionReasonModal';
@@ -138,14 +139,14 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     );
 
     if (layoutMode === 'flanking') {
+      const wingTop = modalRect ? `${Math.max(8, Math.min(modalRect.top, Math.max(8, window.innerHeight - 380)))}px` : '8px';
       const leftWingContent = (
         <div
           className="work-wing-left work-card-wing"
           style={{
             position: 'fixed',
-            top: '8px',
-            bottom: '8px',
-            height: 'calc(100vh - 16px)',
+            top: wingTop,
+            maxHeight: 'calc(100vh - 16px)',
             width: '124px',
             display: 'flex',
             flexDirection: 'column',
@@ -295,20 +296,154 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 
     const wageText = m.wage > 0 ? `(+$${m.wage})` : '($0)';
 
-    // Concise single-line perk/status text without long blurbs or redundant wages
-    let perkText = '';
-    if (summary.tier === 'overtime' && isWorkWork) {
-      perkText = '-0.5 Max Physical Condition';
-    } else if (m.id === 'work_work') {
-      const expMult = m.rewardExp > 0 ? `+${m.rewardExp} 👌` : '';
-      const depMult = m.rewardDep > 0 ? `+${m.rewardDep} 🤝` : '';
-      perkText = [depMult, expMult].filter(Boolean).join(', ') || 'Standard shift';
-    } else if (m.id === 'look_busy') {
-      perkText = '';
-    } else if (m.id === 'face_time') {
-      perkText = `+${m.rewardDep} 🤝`;
-    } else if (m.id === 'show_initiative' || m.id === 'innovate') {
-      perkText = '';
+    // Extract all exact properties and active modifiers as clean badges
+    interface ModifierBadge {
+      key: string;
+      label: string;
+      color: string;
+      bg: string;
+      border: string;
+    }
+    const badges: ModifierBadge[] = [];
+
+    // 1. Dependability
+    if (m.rewardDep > 0) {
+      badges.push({
+        key: 'dep',
+        label: `+${m.rewardDep} 🤝`,
+        color: '#38bdf8',
+        bg: 'rgba(56, 189, 248, 0.18)',
+        border: 'rgba(56, 189, 248, 0.45)'
+      });
+    } else if (m.rewardDep < 0) {
+      badges.push({
+        key: 'dep_pen',
+        label: `${m.rewardDep} 🤝`,
+        color: '#f87171',
+        bg: 'rgba(239, 68, 68, 0.18)',
+        border: 'rgba(239, 68, 68, 0.45)'
+      });
+    }
+
+    // 2. Experience
+    if (m.rewardExp > 0) {
+      badges.push({
+        key: 'exp',
+        label: `+${m.rewardExp} 👌`,
+        color: '#a78bfa',
+        bg: 'rgba(167, 139, 250, 0.18)',
+        border: 'rgba(167, 139, 250, 0.45)'
+      });
+    }
+
+    // 3. Social modifier (crucial: frontline_service +1/-1 Social, and network +1 Social)
+    if (m.rewardSocial > 0) {
+      badges.push({
+        key: 'social_gain',
+        label: `+${m.rewardSocial} 👥`,
+        color: '#f472b6',
+        bg: 'rgba(244, 114, 182, 0.18)',
+        border: 'rgba(244, 114, 182, 0.45)'
+      });
+    } else if (m.rewardSocial < 0) {
+      badges.push({
+        key: 'social_loss',
+        label: `${m.rewardSocial} 👥`,
+        color: '#f87171',
+        bg: 'rgba(239, 68, 68, 0.18)',
+        border: 'rgba(239, 68, 68, 0.45)'
+      });
+    }
+
+    // 4. Technical Skill gain
+    const useSkills = Boolean(rules?.useSkills !== undefined ? rules.useSkills : rules?.usePhysicalMentalConditions);
+    const isTech = useSkills && hasJobTag(job, 'technical');
+    if (isTech && m.id === 'work_work' && m.rewardExp > 0) {
+      const techGain = (m.rewardExp * 0.25).toFixed(2);
+      badges.push({
+        key: 'tech',
+        label: `+${techGain} 🔧`,
+        color: '#38bdf8',
+        bg: 'rgba(56, 189, 248, 0.18)',
+        border: 'rgba(56, 189, 248, 0.45)'
+      });
+    }
+
+    // 5. Management Skill gain
+    const isMiddleMgmt = useSkills && hasJobTag(job, 'middle_management');
+    const isExecMgmt = useSkills && hasJobTag(job, 'executive_management');
+    const isMgmt = isMiddleMgmt || isExecMgmt;
+    if (isMgmt) {
+      if (m.id === 'work_work' && m.rewardExp > 0) {
+        const mgmtGain = ((isExecMgmt ? 0.50 : 0.25) * m.rewardExp).toFixed(2);
+        badges.push({
+          key: 'mgmt',
+          label: `+${mgmtGain} 👔`,
+          color: '#fbbf24',
+          bg: 'rgba(251, 191, 36, 0.18)',
+          border: 'rgba(251, 191, 36, 0.45)'
+        });
+      } else if (m.id === 'face_time') {
+        badges.push({
+          key: 'mgmt_ft',
+          label: '+0.25 👔',
+          color: '#fbbf24',
+          bg: 'rgba(251, 191, 36, 0.18)',
+          border: 'rgba(251, 191, 36, 0.45)'
+        });
+      } else if (m.id === 'show_initiative' || m.id === 'innovate') {
+        const initMgmt = (isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25)).toFixed(2);
+        badges.push({
+          key: 'mgmt_init',
+          label: `+${initMgmt} 👔`,
+          color: '#fbbf24',
+          bg: 'rgba(251, 191, 36, 0.18)',
+          border: 'rgba(251, 191, 36, 0.45)'
+        });
+      }
+    }
+
+    // 6. Overtime / Heavy Grind permanent physical drop
+    const isOvertimeShift = summary.tier === 'overtime';
+    const isHeavyGrindShift = summary.tier === 'grind' && hasJobTag(job, 'heavy_physical');
+    if ((isOvertimeShift || isHeavyGrindShift) && m.id === 'work_work') {
+      badges.push({
+        key: 'max_phys_drop',
+        label: '-0.5 Max Physical Condition',
+        color: '#ef4444',
+        bg: 'rgba(239, 68, 68, 0.22)',
+        border: '#ef4444',
+        wrap: true
+      });
+    }
+
+    // 7. Initiative special rewards
+    if (m.id === 'show_initiative' || m.id === 'innovate') {
+      badges.push({
+        key: 'clear_mistake',
+        label: '-1 ⚠️',
+        color: '#34d399',
+        bg: 'rgba(52, 211, 153, 0.18)',
+        border: 'rgba(52, 211, 153, 0.45)'
+      });
+      badges.push({
+        key: 'initiative_star',
+        label: `+${isExecMgmt ? 2 : 1} 🌟`,
+        color: '#fbbf24',
+        bg: 'rgba(251, 191, 36, 0.18)',
+        border: 'rgba(251, 191, 36, 0.45)'
+      });
+    }
+
+    // 8. Coasting with 0 rewards
+    if (m.id === 'look_busy' && badges.length === 0) {
+      badges.push({
+        key: 'coast_neutral',
+        label: '0 👌 (Coast)',
+        color: '#94a3b8',
+        bg: 'rgba(148, 163, 184, 0.12)',
+        border: 'rgba(148, 163, 184, 0.25)'
+      });
     }
 
     return (
@@ -323,11 +458,10 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             ? (isWorkWork ? `2px solid ${meta.themeColor}` : `1.5px solid ${meta.themeColor}`)
             : '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '10px',
-          padding: isFlanking ? '8px 8px' : '6px 8px',
+          padding: '6px 7px',
           height: isFlanking ? 'auto' : '128px',
-          minHeight: isFlanking ? '120px' : '128px',
+          minHeight: isFlanking ? '136px' : '128px',
           maxHeight: isFlanking ? 'none' : '135px',
-          flex: isFlanking ? '1 1 auto' : undefined,
           boxSizing: 'border-box',
           boxShadow: canAfford
             ? (isWorkWork ? `0 0 14px ${meta.glowColor}, 0 4px 12px rgba(0,0,0,0.6)` : `0 4px 10px rgba(0,0,0,0.5)`)
@@ -335,71 +469,77 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          gap: isFlanking ? '6px' : '4px',
+          gap: '5px',
           opacity: canAfford ? 1 : 0.7,
           overflow: isFlanking ? 'visible' : 'hidden'
         }}
       >
-        {/* Row 1: Duration & '?' Help Button */}
+        {/* Row 1: Title + Duration & '?' Help Button */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <span
-            style={{
-              fontSize: '0.68rem',
-              fontWeight: 'bold',
-              padding: '1px 6px',
-              borderRadius: '4px',
-              backgroundColor: 'rgba(0, 0, 0, 0.45)',
-              color: '#cbd5e1'
-            }}
-          >
-            ⏳ {formatHours(hoursToWork)} hrs
+          <span style={{ fontSize: '0.68rem', fontWeight: 'bold', color: meta.themeColor, display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <span>{meta.icon}</span>
+            <span>{meta.actionName}</span>
           </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <span
+              style={{
+                fontSize: '0.62rem',
+                fontWeight: 'bold',
+                padding: '1px 4px',
+                borderRadius: '4px',
+                backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                color: '#cbd5e1'
+              }}
+            >
+              ⏳ {formatHours(hoursToWork)} hrs
+            </span>
 
-          <button
-            type="button"
-            data-testid={`help-btn-${m.id}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveHelpMode(m.id);
-            }}
-            title={t('workStation.helpTooltip', { defaultValue: 'View strategy, lore & mechanics' })}
-            style={{
-              width: '18px',
-              height: '18px',
-              borderRadius: '50%',
-              background: 'rgba(56, 189, 248, 0.15)',
-              border: '1px solid #38bdf8',
-              color: '#38bdf8',
-              fontSize: '0.68rem',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              padding: 0,
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#38bdf8';
-              e.currentTarget.style.color = '#000';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)';
-              e.currentTarget.style.color = '#38bdf8';
-            }}
-          >
-            ?
-          </button>
+            <button
+              type="button"
+              data-testid={`help-btn-${m.id}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveHelpMode(m.id);
+              }}
+              title={t('workStation.helpTooltip', { defaultValue: 'View strategy, lore & mechanics' })}
+              style={{
+                width: '16px',
+                height: '16px',
+                borderRadius: '50%',
+                background: 'rgba(56, 189, 248, 0.15)',
+                border: '1px solid #38bdf8',
+                color: '#38bdf8',
+                fontSize: '0.64rem',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                padding: 0,
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#38bdf8';
+                e.currentTarget.style.color = '#000';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)';
+                e.currentTarget.style.color = '#38bdf8';
+              }}
+            >
+              ?
+            </button>
+          </div>
         </div>
 
-        {/* Row 2: Condition / Fatigue cost + Mistake Chance (No 'Safe' badge) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.68rem', flexShrink: 0 }}>
+        {/* Row 2: Condition / Fatigue cost + Mistake Chance */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.66rem', flexShrink: 0 }}>
           <span style={{
             color: summary.tier === 'overtime' ? '#f87171' : (summary.tier === 'grind' ? '#fbbf24' : '#fca5a5'),
             fontWeight: 'bold',
             display: 'flex',
             alignItems: 'center',
-            gap: '3px'
+            gap: '2px'
           }}>
             {summary.tier === 'overtime' ? '🔥 ' : (summary.tier === 'grind' ? '⚡ ' : '')}{fatigueCostText}
           </span>
@@ -410,9 +550,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               style={{
                 color: '#f87171',
                 fontWeight: 'bold',
-                fontSize: '0.64rem',
+                fontSize: '0.62rem',
                 background: 'rgba(239, 68, 68, 0.2)',
-                padding: '1px 5px',
+                padding: '1px 4px',
                 borderRadius: '3px',
                 border: '1px solid #ef4444'
               }}
@@ -422,41 +562,33 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
           )}
         </div>
 
-        {/* Row 3: Single concise perk/wear line */}
-        {summary.tier === 'overtime' && isWorkWork ? (
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.2)',
-            border: '1px solid #ef4444',
-            borderRadius: '3px',
-            padding: '2px 4px',
-            color: '#fca5a5',
-            fontSize: '0.62rem',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '3px',
-            whiteSpace: isFlanking ? 'normal' : 'nowrap',
-            lineHeight: '1.25',
-            flexShrink: 0
-          }}>
-            <span>🔥</span>
-            <span>-0.5 Max Physical Condition</span>
-          </div>
-        ) : perkText ? (
-          <div style={{
-            color: canAfford ? '#67e8f9' : '#71717a',
-            fontWeight: 'bold',
-            fontSize: '0.64rem',
-            whiteSpace: isFlanking ? 'normal' : 'nowrap',
-            overflow: isFlanking ? 'visible' : 'hidden',
-            textOverflow: isFlanking ? 'clip' : 'ellipsis',
-            padding: '1px 0',
-            lineHeight: '1.25',
-            flexShrink: 0
-          }}>
-            {perkText}
-          </div>
-        ) : null}
+        {/* Row 3: All active modifier badges (frontline social, tech, overtime drop, etc.) */}
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '3px',
+          alignItems: 'center',
+          minHeight: '20px'
+        }}>
+          {badges.map(b => (
+            <span
+              key={b.key}
+              style={{
+                fontSize: '0.62rem',
+                fontWeight: 'bold',
+                padding: '1px 4px',
+                borderRadius: '3px',
+                backgroundColor: b.bg,
+                color: b.color,
+                border: `1px solid ${b.border}`,
+                whiteSpace: b.wrap ? 'normal' : 'nowrap',
+                lineHeight: '1.2'
+              }}
+            >
+              {b.label}
+            </span>
+          ))}
+        </div>
 
         {/* Row 4: Consolidated Mode Button */}
         <div style={{ flexShrink: 0 }}>
@@ -489,17 +621,17 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             }}
             style={{
               width: '100%',
-              padding: isFlanking ? '7px 4px' : '5px 4px',
+              padding: '6px 4px',
               borderRadius: '6px',
               border: canAfford ? `1px solid ${meta.themeColor}` : '1px solid rgba(255, 255, 255, 0.15)',
               backgroundColor: canAfford ? meta.themeColor : '#334155',
               color: canAfford ? '#000000' : '#94a3b8',
               fontWeight: 'bold',
-              fontSize: '0.74rem',
+              fontSize: '0.72rem',
               cursor: 'pointer',
               boxShadow: canAfford ? `0 2px 8px ${meta.glowColor}` : 'none',
               transition: 'all 0.15s ease',
-              whiteSpace: isFlanking ? 'normal' : 'nowrap',
+              whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               lineHeight: '1.2'
@@ -547,6 +679,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       {layoutMode === 'flanking' ? (
         /* FLANKING RADIAL WINGS: Steal screen space from the surrounding board! */
         (() => {
+          const wingTop = modalRect ? `${Math.max(8, Math.min(modalRect.top, Math.max(8, window.innerHeight - 380)))}px` : '8px';
           const wingsContent = (
             <>
               {/* Left Wing (Work Work & Look Busy) */}
@@ -554,9 +687,8 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                 className="work-wing-left work-card-wing"
                 style={{
                   position: 'fixed',
-                  top: '8px',
-                  bottom: '8px',
-                  height: 'calc(100vh - 16px)',
+                  top: wingTop,
+                  maxHeight: 'calc(100vh - 16px)',
                   width: '124px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -573,6 +705,25 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                   })
                 }}
               >
+                <div style={{
+                  background: 'rgba(15, 23, 42, 0.95)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: '8px',
+                  padding: '4px 6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  flexShrink: 0
+                }}>
+                  <span style={{ fontSize: '0.70rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
+                    💼 Console
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#a5f3fc', fontWeight: 'bold' }}>
+                    ${player.currentWage || job.baseWage}/hr
+                  </span>
+                </div>
+
                 {leftModes.map(m => renderCompactCard(m))}
               </div>
 
@@ -581,9 +732,8 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                 className="work-wing-right work-card-wing"
                 style={{
                   position: 'fixed',
-                  top: '8px',
-                  bottom: '8px',
-                  height: 'calc(100vh - 16px)',
+                  top: wingTop,
+                  maxHeight: 'calc(100vh - 16px)',
                   width: '124px',
                   display: 'flex',
                   flexDirection: 'column',
