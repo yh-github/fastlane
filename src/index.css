@@ -982,12 +982,43 @@ button:disabled {
   .work-wing-left,
   .work-wing-right,
   .work-card-wing {
-    top: 8px !important;
-    bottom: 8px !important;
-    height: calc(100vh - 16px) !important;
     max-height: calc(100vh - 16px) !important;
     width: 124px !important;
     z-index: 1000 !important;
+  }
+}
+
+/* Item Card Modal (Shop & Home Durables) Responsive Styling */
+.item-card-modal-content {
+  max-width: 290px;
+  max-height: 92vh;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+@media (max-height: 640px), (max-width: 480px) {
+  .item-card-modal-content {
+    max-width: min(268px, 92vw) !important;
+    padding: 8px 10px !important;
+    gap: 5px !important;
+    border-radius: 10px !important;
+  }
+  .item-card-modal-artwork {
+    height: 36px !important;
+  }
+  .item-card-modal-artwork img {
+    max-height: 30px !important;
+    max-width: 30px !important;
+  }
+  .item-card-modal-title {
+    font-size: 0.92rem !important;
+  }
+}
+
+@media (max-height: 440px) {
+  .item-card-modal-artwork {
+    display: none !important;
   }
 }
 
