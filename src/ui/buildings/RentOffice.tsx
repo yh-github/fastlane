@@ -172,10 +172,16 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                 ) : (
                   <div style={{ fontSize: '11px', color: '#888', marginTop: '6px' }}>
                     ℹ️ {t('rentOffice.marketNotLower', { currentRent: player.currentRentPrice, marketRent })}
-                    {(landlordStandingInfo?.standing ?? 0) < 40 && (
-                      <div style={{ color: '#e67e22', marginTop: '4px', fontSize: '10px' }}>
-                        {t('rentOffice.standingPoorWarning')}
+                    {(player.rentPaymentsAtCurrentRate || 0) < 2 ? (
+                      <div style={{ color: '#38bdf8', marginTop: '4px', fontSize: '10px' }}>
+                        🔒 {t('rentOffice.rateLocked', { count: player.rentPaymentsAtCurrentRate || 0 })}
                       </div>
+                    ) : (
+                      (landlordStandingInfo?.standing ?? 0) < 30 && (
+                        <div style={{ color: '#e67e22', marginTop: '4px', fontSize: '10px' }}>
+                          {t('rentOffice.standingPoorWarning')}
+                        </div>
+                      )
                     )}
                   </div>
                 )}

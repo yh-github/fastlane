@@ -61,7 +61,7 @@ test.describe('Character Center Walking Animation E2E', () => {
     const nodeEl = page.locator('.map-container canvas');
     await expect(nodeEl).toBeVisible();
   });
-  test('immediately updates clothes on center stage when changed via Status screen in Advanced without moving', async ({ page }) => {
+  test('immediately updates clothes on center stage when changed via wardrobe in Advanced without moving', async ({ page }) => {
     await page.goto('/');
     // Select Advanced campaign
     await page.locator('select:has(option[value="advanced"])').selectOption('advanced');
@@ -72,35 +72,30 @@ test.describe('Character Center Walking Animation E2E', () => {
     await expect(startLifeBtn).toBeVisible({ timeout: 5000 });
     await startLifeBtn.click();
 
-    // Close initial home modal
+    // Initial Home modal is open with wardrobe closet
     const buildingModal = page.locator('.building-modal');
-    if (await buildingModal.isVisible()) {
-      const closeBtn = page.locator('.building-modal__close');
-      await closeBtn.click();
-      await expect(buildingModal).toBeHidden({ timeout: 3000 });
-    }
+    await expect(buildingModal).toBeVisible();
+
+    // Click wardrobe card
+    const wardrobeCard = page.locator('[data-testid="durable-card-wardrobe"]');
+    await expect(wardrobeCard).toBeVisible();
+    await wardrobeCard.click();
+
+    // Select 'none' (take off clothes / naked)
+    const noneBtn = page.locator('[data-testid="btn-wardrobe-none"]');
+    await expect(noneBtn).toBeVisible();
+    await noneBtn.click();
+
+    // Close wardrobe sub-modal via Escape
+    await page.keyboard.press('Escape');
+
+    // Close Home modal to reveal center stage
+    const closeBtn = page.locator('.building-modal__close');
+    await closeBtn.click();
+    await expect(buildingModal).toBeHidden({ timeout: 3000 });
 
     const centerStage = page.locator('[data-testid="center-walk-animation"]');
     await expect(centerStage).toBeVisible();
-    await expect(centerStage).toHaveAttribute('data-clothes', 'casual');
-    await expect(centerStage).toHaveAttribute('data-walking', 'false');
-
-    // Open Status / Inventory modal
-    const inventoryBtn = page.locator('#btn-inventory');
-    await inventoryBtn.click();
-
-    const inventoryModal = page.locator('[data-testid="inventory-modal"]');
-    await expect(inventoryModal).toBeVisible();
-
-    // Select clothes dropdown (change to 'none' / Naked)
-    const clothesSelect = inventoryModal.locator('select').first();
-    await clothesSelect.selectOption('none');
-
-    // Close Status modal
-    const closeInvBtn = inventoryModal.locator('[data-testid="status-modal-close"]');
-    await closeInvBtn.click();
-    await expect(inventoryModal).toBeHidden();
-
     // The center stage must IMMEDIATELY show 'none' (naked) while idle
     await expect(centerStage).toHaveAttribute('data-clothes', 'none');
     await expect(centerStage).toHaveAttribute('data-walking', 'false');
