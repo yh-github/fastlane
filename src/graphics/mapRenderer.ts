@@ -322,7 +322,7 @@ export async function initMapRenderer(
     nodeGraphic.y = pos.y;
     nodeGraphic.eventMode = 'static';
     nodeGraphic.cursor = 'pointer';
-    nodeGraphic.on('pointerdown', () => {
+    nodeGraphic.on('pointertap', () => {
       config.onNodeClick(node.id);
     });
     

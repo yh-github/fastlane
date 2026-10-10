@@ -176,6 +176,35 @@ export const GameSession: React.FC<GameSessionProps> = ({
     ? (campaign.map.nodes.find((n) => n.id === activePlayer.position)?.buildingId || null)
     : null;
 
+  const lastGreetedNodeRef = useRef<{ turn: number; playerIndex: number; position: string } | null>(null);
+  const previousPlayerPositionRef = useRef<string | null>(null);
+
+  // If the active player moves to a different position, reset the greeted location
+  useEffect(() => {
+    if (activePlayer && previousPlayerPositionRef.current !== null && previousPlayerPositionRef.current !== activePlayer.position) {
+      lastGreetedNodeRef.current = null;
+    }
+    previousPlayerPositionRef.current = activePlayer?.position ?? null;
+  }, [activePlayer?.position]);
+
+  const isReentry = Boolean(
+    activePlayer &&
+    lastGreetedNodeRef.current &&
+    lastGreetedNodeRef.current.turn === gameState?.turn &&
+    lastGreetedNodeRef.current.playerIndex === activePlayerIndex &&
+    lastGreetedNodeRef.current.position === activePlayer.position
+  );
+
+  useEffect(() => {
+    if (activeModal?.type === 'building' && activePlayer && gameState) {
+      lastGreetedNodeRef.current = {
+        turn: gameState.turn,
+        playerIndex: activePlayerIndex,
+        position: activePlayer.position,
+      };
+    }
+  }, [activeModal?.type, activePlayer?.position, activePlayerIndex, gameState?.turn]);
+
   useEffect(() => {
     if (!gameState || !activePlayer) return;
     if (typeof window !== 'undefined') {
@@ -395,6 +424,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
             economySimulation={gameState.economySimulation}
             gameSeed={gameState.gameSeed ?? gameState.rngState}
             onAction={handleAction}
+            isReentry={isReentry}
             onClose={() => {
               closeModal();
               const p = gameState.players[activePlayerIndex];

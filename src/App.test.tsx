@@ -527,5 +527,60 @@ describe('App Integration & StrictMode', () => {
     // Inventory modal MUST NOT be open!
     expect(screen.queryByTestId('inventory-modal')).not.toBeInTheDocument();
   });
+
+  it('suppresses greeting dialogue when exiting Status modal or re-entering current location', async () => {
+    render(<App />);
+
+    const newGameBtn = await screen.findByText(/New Game|titleScreen\.startGame/i);
+    fireEvent.click(newGameBtn);
+
+    const startGameBtn = await screen.findByText(/Start Life|setupScreen\.startLife/i);
+    fireEvent.click(startGameBtn);
+
+    await screen.findByText(/^Player 1/i);
+
+    // Travel to Burger Node (fast food)
+    const burgerBtn = screen.getByTestId('node-burger');
+    fireEvent.click(burgerBtn);
+
+    // Initial arrival: speech bubble should be present with clerk greeting
+    await waitFor(() => {
+      expect(document.querySelector('.speech-bubble')).toBeInTheDocument();
+    });
+
+    // 1. Open Status modal
+    const statusBtn = document.getElementById('btn-inventory')!;
+    fireEvent.click(statusBtn);
+
+    await screen.findByTestId('inventory-modal');
+
+    // Close Status modal to resume building modal
+    const closeStatusBtn = screen.getByTestId('status-modal-close');
+    fireEvent.click(closeStatusBtn);
+
+    // Verify building modal resumed, but speech bubble is NOT shown
+    await waitFor(() => {
+      expect(screen.queryByTestId('inventory-modal')).not.toBeInTheDocument();
+      expect(document.querySelector('.building-modal')).toBeInTheDocument();
+      expect(document.querySelector('.speech-bubble')).not.toBeInTheDocument();
+    });
+
+    // 2. Close building modal
+    const closeBuildingBtn = document.querySelector('.building-modal__close') as HTMLElement;
+    fireEvent.click(closeBuildingBtn);
+
+    await waitFor(() => {
+      expect(document.querySelector('.building-modal')).not.toBeInTheDocument();
+    });
+
+    // Re-enter burger node without moving
+    fireEvent.click(screen.getByTestId('node-burger'));
+
+    // Verify building modal re-opened, but speech bubble is NOT shown
+    await waitFor(() => {
+      expect(document.querySelector('.building-modal')).toBeInTheDocument();
+      expect(document.querySelector('.speech-bubble')).not.toBeInTheDocument();
+    });
+  });
 });
 

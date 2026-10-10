@@ -1238,5 +1238,37 @@ describe('BuildingModal Component', () => {
       if (origClientHeight) Object.defineProperty(HTMLElement.prototype, 'clientHeight', origClientHeight);
     }
   });
+
+  it('displays clerk greeting dialogue on fresh entry but suppresses it on re-entry', () => {
+    const { container: freshContainer } = render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+        isReentry={false}
+      />
+    );
+    expect(freshContainer.querySelector('.speech-bubble')).toBeInTheDocument();
+
+    const { container: reentryContainer } = render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={mockRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+        isReentry={true}
+      />
+    );
+    expect(reentryContainer.querySelector('.speech-bubble')).not.toBeInTheDocument();
+  });
 });
 
