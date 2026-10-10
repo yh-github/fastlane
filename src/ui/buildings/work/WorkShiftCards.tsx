@@ -275,6 +275,19 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     }
   };
 
+  const uniformReq = job.requirements?.uniform || 'casual';
+  const hasCasual = (player.inventory?.casualClothesWeeks ?? 0) > 0;
+  const hasDress = (player.inventory?.dressClothesWeeks ?? 0) > 0;
+  const hasBusiness = (player.inventory?.businessClothesWeeks ?? 0) > 0;
+  let activeClothes = player.inventory?.selectedClothes as string | undefined;
+  if (activeClothes === 'business' && !hasBusiness) activeClothes = hasDress ? 'dress' : (hasCasual ? 'casual' : 'none');
+  if (activeClothes === 'dress' && !hasDress) activeClothes = hasBusiness ? 'business' : (hasCasual ? 'casual' : 'none');
+  if (activeClothes === 'casual' && !hasCasual) activeClothes = hasDress ? 'dress' : (hasBusiness ? 'business' : 'none');
+  const clothesScore = activeClothes === 'business' ? 3 : (activeClothes === 'dress' ? 2 : (activeClothes === 'casual' ? 1 : 0));
+  const reqScore = uniformReq === 'business' ? 3 : (uniformReq === 'dress' ? 2 : (uniformReq === 'casual' ? 1 : 0));
+  const hasProperUniform = reqScore === 0 || clothesScore >= reqScore;
+  const uniformName = uniformReq === 'business' ? 'Business' : (uniformReq === 'dress' ? 'Dress' : 'Casual');
+
   // Render a single compact card
   const renderCompactCard = (m: WorkShiftOption) => {
     const meta = cardMeta[m.id] || {
@@ -301,7 +314,20 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       ? `-${m.physCost} 💪, -${m.mentalCost} 🧠`
       : `-${m.physCost} 💪`;
 
-    const wageText = m.wage > 0 ? `(+$${m.wage})` : '($0)';
+    // Rent Debt Garnishment calculation
+    const rentDebt = player.rentDebt ?? 0;
+    const isGarnished = rentDebt > 0 && m.wage > 0;
+    const garnishedAmount = isGarnished ? Math.min(rentDebt, Math.floor(m.wage * 0.5)) : 0;
+    const netWage = m.wage - garnishedAmount;
+    const wageText = m.wage > 0 ? `(+$${netWage})` : '($0)';
+
+    // Stat and skill caps
+    const effectiveMaxDep = 20 + (job.requirements?.dependability ?? 0) + (player.degreeDepBoost ?? 0) + (player.depMaxBonus ?? 0);
+    const effectiveMaxExp = 10 + (job.requirements?.experience ?? 0) + (player.degreeExpBoost ?? 0) + (player.xpMaxBonus ?? 0);
+    const isDepCapped = (player.dependability ?? 0) >= effectiveMaxDep;
+    const isExpCapped = (player.experience ?? 0) >= effectiveMaxExp;
+    const isTechCapped = (player.skillTech ?? 0) >= 10;
+    const isMgmtCapped = (player.skillMgmt ?? 0) >= 10;
 
     // Extract all exact properties and active modifiers as clean badges
     interface ModifierBadge {
@@ -314,15 +340,52 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     }
     const badges: ModifierBadge[] = [];
 
+    // Exhaustion Floor Warning (<1.0 stat)
+    if (!hasEnoughPhys && !hasEnoughMental) {
+      badges.push({
+        key: 'exhaust_both',
+        label: '⛔ <1.0 💪/🧠',
+        color: '#ef4444',
+        bg: 'rgba(239, 68, 68, 0.22)',
+        border: '#ef4444'
+      });
+    } else if (!hasEnoughPhys) {
+      badges.push({
+        key: 'exhaust_phys',
+        label: '⛔ <1.0 💪',
+        color: '#ef4444',
+        bg: 'rgba(239, 68, 68, 0.22)',
+        border: '#ef4444'
+      });
+    } else if (!hasEnoughMental) {
+      badges.push({
+        key: 'exhaust_mental',
+        label: '⛔ <1.0 🧠',
+        color: '#ef4444',
+        bg: 'rgba(239, 68, 68, 0.22)',
+        border: '#ef4444'
+      });
+    }
+
     // 1. Dependability
     if (m.rewardDep > 0) {
-      badges.push({
-        key: 'dep',
-        label: `+${m.rewardDep} 🤝`,
-        color: '#38bdf8',
-        bg: 'rgba(56, 189, 248, 0.18)',
-        border: 'rgba(56, 189, 248, 0.45)'
-      });
+      if (isDepCapped) {
+        badges.push({
+          key: 'dep_capped',
+          label: `0 🤝 (Cap: ${effectiveMaxDep})`,
+          color: '#94a3b8',
+          bg: 'rgba(148, 163, 184, 0.12)',
+          border: 'rgba(148, 163, 184, 0.3)'
+        });
+      } else {
+        badges.push({
+          key: 'dep',
+          label: `+${m.rewardDep} 🤝`,
+          color: '#38bdf8',
+          bg: 'rgba(56, 189, 248, 0.18)',
+          border: 'rgba(56, 189, 248, 0.45)'
+        });
+      }
     } else if (m.rewardDep < 0) {
       badges.push({
         key: 'dep_pen',
@@ -335,17 +398,38 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 
     // 2. Experience
     if (m.rewardExp > 0) {
-      badges.push({
-        key: 'exp',
-        label: `+${m.rewardExp} 👌`,
-        color: '#a78bfa',
-        bg: 'rgba(167, 139, 250, 0.18)',
-        border: 'rgba(167, 139, 250, 0.45)'
-      });
+      if (isExpCapped) {
+        badges.push({
+          key: 'exp_capped',
+          label: `0 👌 (Cap: ${effectiveMaxExp})`,
+          color: '#94a3b8',
+          bg: 'rgba(148, 163, 184, 0.12)',
+          border: 'rgba(148, 163, 184, 0.3)'
+        });
+      } else {
+        badges.push({
+          key: 'exp',
+          label: `+${m.rewardExp} 👌`,
+          color: '#a78bfa',
+          bg: 'rgba(167, 139, 250, 0.18)',
+          border: 'rgba(167, 139, 250, 0.45)'
+        });
+      }
     }
 
-    // 3. Social modifier (crucial: frontline_service +1/-1 Social, and network +1 Social)
-    if (m.rewardSocial > 0) {
+    // 3. Social modifier (probabilistic on face_time, explicit on frontline_service)
+    if (m.id === 'face_time') {
+      const curSoc = player.social || 1;
+      const ratio = shiftCost > 0 ? Math.min(player.hoursRemaining, shiftCost) / shiftCost : 1;
+      const netSocChance = Math.max(0, Math.min(100, Math.round(((100 - curSoc) / 100) * ratio * 100)));
+      badges.push({
+        key: 'social_ft',
+        label: `👥 ~${netSocChance}% Social`,
+        color: '#f472b6',
+        bg: 'rgba(244, 114, 182, 0.18)',
+        border: 'rgba(244, 114, 182, 0.45)'
+      });
+    } else if (m.rewardSocial > 0) {
       badges.push({
         key: 'social_gain',
         label: `+${m.rewardSocial} 👥 Social`,
@@ -372,17 +456,47 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     }
 
     // 4. Technical Skill gain
-    const useSkills = Boolean(rules?.useSkills !== undefined ? rules.useSkills : rules?.usePhysicalMentalConditions);
+    const useSkills = Boolean(effectiveRules?.useSkills !== undefined ? effectiveRules.useSkills : effectiveRules?.usePhysicalMentalConditions);
     const isTech = useSkills && hasJobTag(job, 'technical');
-    if (isTech && m.id === 'work_work' && m.rewardExp > 0) {
-      const techGain = (m.rewardExp * 0.25).toFixed(2);
-      badges.push({
-        key: 'tech',
-        label: `+${techGain} 🔧`,
-        color: '#38bdf8',
-        bg: 'rgba(56, 189, 248, 0.18)',
-        border: 'rgba(56, 189, 248, 0.45)'
-      });
+    if (isTech) {
+      if (m.id === 'work_work' && m.rewardExp > 0) {
+        if (isTechCapped) {
+          badges.push({
+            key: 'tech_capped',
+            label: 'MAX 🔧 (10)',
+            color: '#94a3b8',
+            bg: 'rgba(148, 163, 184, 0.12)',
+            border: 'rgba(148, 163, 184, 0.3)'
+          });
+        } else {
+          const techGain = (m.rewardExp * 0.25).toFixed(2);
+          badges.push({
+            key: 'tech',
+            label: `+${techGain} 🔧`,
+            color: '#38bdf8',
+            bg: 'rgba(56, 189, 248, 0.18)',
+            border: 'rgba(56, 189, 248, 0.45)'
+          });
+        }
+      } else if (m.id === 'show_initiative' || m.id === 'innovate') {
+        if (isTechCapped) {
+          badges.push({
+            key: 'tech_init_capped',
+            label: 'MAX 🔧 (10)',
+            color: '#94a3b8',
+            bg: 'rgba(148, 163, 184, 0.12)',
+            border: 'rgba(148, 163, 184, 0.3)'
+          });
+        } else {
+          badges.push({
+            key: 'tech_init',
+            label: '+0.25 🔧',
+            color: '#38bdf8',
+            bg: 'rgba(56, 189, 248, 0.18)',
+            border: 'rgba(56, 189, 248, 0.45)'
+          });
+        }
+      }
     }
 
     // 5. Management Skill gain
@@ -390,32 +504,49 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     const isExecMgmt = useSkills && hasJobTag(job, 'executive_management');
     const isMgmt = isMiddleMgmt || isExecMgmt;
     if (isMgmt) {
-      if (m.id === 'work_work' && m.rewardExp > 0) {
-        const mgmtGain = ((isExecMgmt ? 0.50 : 0.25) * m.rewardExp).toFixed(2);
-        badges.push({
-          key: 'mgmt',
-          label: `+${mgmtGain} 👔`,
-          color: '#fbbf24',
-          bg: 'rgba(251, 191, 36, 0.18)',
-          border: 'rgba(251, 191, 36, 0.45)'
-        });
-      } else if (m.id === 'face_time') {
-        badges.push({
-          key: 'mgmt_ft',
-          label: '+0.25 👔',
-          color: '#fbbf24',
-          bg: 'rgba(251, 191, 36, 0.18)',
-          border: 'rgba(251, 191, 36, 0.45)'
-        });
-      } else if (m.id === 'show_initiative' || m.id === 'innovate') {
-        const initMgmt = (isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25)).toFixed(2);
-        badges.push({
-          key: 'mgmt_init',
-          label: `+${initMgmt} 👔`,
-          color: '#fbbf24',
-          bg: 'rgba(251, 191, 36, 0.18)',
-          border: 'rgba(251, 191, 36, 0.45)'
-        });
+      if (isMgmtCapped) {
+        if (
+          (m.id === 'work_work' && m.rewardExp > 0) ||
+          m.id === 'face_time' ||
+          m.id === 'show_initiative' ||
+          m.id === 'innovate'
+        ) {
+          badges.push({
+            key: 'mgmt_capped',
+            label: 'MAX 👔 (10)',
+            color: '#94a3b8',
+            bg: 'rgba(148, 163, 184, 0.12)',
+            border: 'rgba(148, 163, 184, 0.3)'
+          });
+        }
+      } else {
+        if (m.id === 'work_work' && m.rewardExp > 0) {
+          const mgmtGain = ((isExecMgmt ? 0.50 : 0.25) * m.rewardExp).toFixed(2);
+          badges.push({
+            key: 'mgmt',
+            label: `+${mgmtGain} 👔`,
+            color: '#fbbf24',
+            bg: 'rgba(251, 191, 36, 0.18)',
+            border: 'rgba(251, 191, 36, 0.45)'
+          });
+        } else if (m.id === 'face_time') {
+          badges.push({
+            key: 'mgmt_ft',
+            label: '+0.25 👔',
+            color: '#fbbf24',
+            bg: 'rgba(251, 191, 36, 0.18)',
+            border: 'rgba(251, 191, 36, 0.45)'
+          });
+        } else if (m.id === 'show_initiative' || m.id === 'innovate') {
+          const initMgmt = (isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25)).toFixed(2);
+          badges.push({
+            key: 'mgmt_init',
+            label: `+${initMgmt} 👔`,
+            color: '#fbbf24',
+            bg: 'rgba(251, 191, 36, 0.18)',
+            border: 'rgba(251, 191, 36, 0.45)'
+          });
+        }
       }
     }
 
@@ -432,15 +563,39 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       });
     }
 
-    // 7. Initiative special rewards
-    if (m.id === 'show_initiative' || m.id === 'innovate') {
+    // 7. Mental Resilience bonus (+1 MAX 🧠)
+    if (isAdvanced && m.mentalCost >= (statRules?.resilienceDropThreshold ?? 3)) {
       badges.push({
-        key: 'clear_mistake',
-        label: '-1 ⚠️',
-        color: '#34d399',
-        bg: 'rgba(52, 211, 153, 0.18)',
-        border: 'rgba(52, 211, 153, 0.45)'
+        key: 'resilience',
+        label: '+1 MAX 🧠',
+        color: '#c084fc',
+        bg: 'rgba(192, 132, 252, 0.18)',
+        border: 'rgba(192, 132, 252, 0.45)'
       });
+    }
+
+    // 8. Rent Debt Wage Garnishment
+    if (isGarnished && garnishedAmount > 0) {
+      badges.push({
+        key: 'debt_garnished',
+        label: `-$${garnishedAmount} Debt`,
+        color: '#f87171',
+        bg: 'rgba(239, 68, 68, 0.18)',
+        border: 'rgba(239, 68, 68, 0.45)'
+      });
+    }
+
+    // 9. Initiative special rewards
+    if (m.id === 'show_initiative' || m.id === 'innovate') {
+      if (locationMistakes > 0) {
+        badges.push({
+          key: 'clear_mistake',
+          label: '-1 ⚠️ Demerit',
+          color: '#34d399',
+          bg: 'rgba(52, 211, 153, 0.18)',
+          border: 'rgba(52, 211, 153, 0.45)'
+        });
+      }
       badges.push({
         key: 'initiative_star',
         label: `+${isExecMgmt ? 2 : 1} 🌟`,
@@ -450,7 +605,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       });
     }
 
-    // 8. Coasting with 0 rewards
+    // 10. Coasting with 0 rewards
     if (m.id === 'look_busy' && badges.length === 0) {
       badges.push({
         key: 'coast_neutral',
@@ -559,22 +714,26 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             {summary.tier === 'overtime' ? '🔥 ' : (summary.tier === 'grind' ? '⚡ ' : '')}{fatigueCostText}
           </span>
 
-          {totalMistakeChance > 0 && (
-            <span
-              title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%${socialChance > 0 ? `, Social: ${(socialChance * 100).toFixed(1)}%` : ''}`}
-              style={{
-                color: '#f87171',
-                fontWeight: 'bold',
-                fontSize: '0.62rem',
-                background: 'rgba(239, 68, 68, 0.2)',
-                padding: '1px 4px',
-                borderRadius: '3px',
-                border: '1px solid #ef4444'
-              }}
-            >
-              ⚠️ {(totalMistakeChance * 100).toFixed(1)}%
-            </span>
-          )}
+          {totalMistakeChance > 0 && (() => {
+            const hazardDrivers = [physChance > 0 ? '💪' : '', mentalChance > 0 ? '🧠' : '', socialChance > 0 ? '👥' : ''].filter(Boolean).join('/');
+            return (
+              <span
+                title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%${socialChance > 0 ? `, Social: ${(socialChance * 100).toFixed(1)}%` : ''}`}
+                style={{
+                  color: '#f87171',
+                  fontWeight: 'bold',
+                  fontSize: '0.62rem',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                  border: '1px solid #ef4444',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                ⚠️ {(totalMistakeChance * 100).toFixed(1)}%{hazardDrivers ? ` (${hazardDrivers})` : ''}
+              </span>
+            );
+          })()}
         </div>
 
         {/* Row 3: All active modifier badges (frontline social, tech, overtime drop, etc.) */}
@@ -728,17 +887,24 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                   borderRadius: '8px',
                   padding: '4px 6px',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  flexDirection: 'column',
+                  gap: '2px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
                   flexShrink: 0
                 }}>
-                  <span style={{ fontSize: '0.70rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
-                    💼 Console
-                  </span>
-                  <span style={{ fontSize: '0.68rem', color: '#a5f3fc', fontWeight: 'bold' }}>
-                    ${player.currentWage || job.baseWage}/hr
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.70rem', fontWeight: 'bold', color: 'var(--accent-cyan)' }}>
+                      💼 Console
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#a5f3fc', fontWeight: 'bold' }}>
+                      ${player.currentWage || job.baseWage}/hr
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.60rem', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ color: hasProperUniform ? '#94a3b8' : '#ef4444' }}>
+                      {hasProperUniform ? `👔 ${uniformName}` : `⚠️ Attire (${uniformName})`}
+                    </span>
+                  </div>
                 </div>
 
                 {leftModes.map(m => renderCompactCard(m))}
@@ -773,38 +939,80 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                   background: summary.tier === 'overtime' ? 'linear-gradient(135deg, rgba(69, 10, 10, 0.96) 0%, rgba(24, 10, 15, 0.98) 100%)' : (summary.tier === 'grind' ? 'linear-gradient(135deg, rgba(69, 39, 10, 0.96) 0%, rgba(26, 18, 10, 0.98) 100%)' : 'rgba(15, 23, 42, 0.96)'),
                   border: '1px solid rgba(56, 189, 248, 0.4)',
                   borderRadius: '8px',
-                  padding: '5px 8px',
+                  padding: '4px 6px',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  flexDirection: 'column',
+                  gap: '3px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
                   flexShrink: 0
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 'bold', color: '#fff' }}>
-                      Shift #{summary.actionCount}
-                    </span>
-                    {summary.tier === 'grind' && <span style={{ fontSize: '0.60rem', fontWeight: 'bold', padding: '1px 3px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.25)', color: '#f59e0b', border: '1px solid #f59e0b' }}>⚡ GRIND</span>}
-                    {summary.tier === 'overtime' && <span style={{ fontSize: '0.60rem', fontWeight: 'bold', padding: '1px 3px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.25)', color: '#ef4444', border: '1px solid #ef4444' }}>🔥 OVERTIME</span>}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '0.70rem', fontWeight: 'bold', color: '#fff' }}>
+                        Shift #{summary.actionCount}
+                      </span>
+                      {summary.tier === 'grind' && <span style={{ fontSize: '0.58rem', fontWeight: 'bold', padding: '1px 3px', borderRadius: '3px', background: 'rgba(245, 158, 11, 0.25)', color: '#f59e0b', border: '1px solid #f59e0b' }}>⚡ GRIND</span>}
+                      {summary.tier === 'overtime' && <span style={{ fontSize: '0.58rem', fontWeight: 'bold', padding: '1px 3px', borderRadius: '3px', background: 'rgba(239, 68, 68, 0.25)', color: '#ef4444', border: '1px solid #ef4444' }}>🔥 OVERTIME</span>}
+                    </div>
+                    {onClose && (
+                      <button
+                        data-testid="btn-close-work-wings"
+                        aria-label="Close Work Console"
+                        onClick={onClose}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#94a3b8',
+                          fontSize: '0.80rem',
+                          cursor: 'pointer',
+                          padding: '0 2px',
+                          fontWeight: 'bold'
+                        }}
+                        title="Minimize Work Console"
+                      >
+                        <span data-testid="btn-close-work-console" style={{ display: 'contents' }}>✕</span>
+                      </button>
+                    )}
                   </div>
-                  {onClose && (
-                    <button
-                      data-testid="btn-close-work-wings"
-                      aria-label="Close Work Console"
-                      onClick={onClose}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#94a3b8',
-                        fontSize: '0.80rem',
-                        cursor: 'pointer',
-                        padding: '0 2px',
-                        fontWeight: 'bold'
-                      }}
-                      title="Minimize Work Console"
-                    >
-                      <span data-testid="btn-close-work-console" style={{ display: 'contents' }}>✕</span>
-                    </button>
+                  {(turnMistakes > 0 || locationMistakes > 0 || summary.locationInitiatives > 0) && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', fontSize: '0.58rem' }}>
+                      {turnMistakes > 0 && (
+                        <span style={{
+                          background: turnMistakes >= 2 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(239, 68, 68, 0.2)',
+                          color: '#fca5a5',
+                          border: '1px solid #ef4444',
+                          padding: '1px 3px',
+                          borderRadius: '3px',
+                          fontWeight: 'bold'
+                        }}>
+                          ⚠️ {turnMistakes}/3 Mistakes
+                        </span>
+                      )}
+                      {locationMistakes > 0 && (
+                        <span style={{
+                          background: 'rgba(245, 158, 11, 0.2)',
+                          color: '#fcd34d',
+                          border: '1px solid #f59e0b',
+                          padding: '1px 3px',
+                          borderRadius: '3px',
+                          fontWeight: 'bold'
+                        }}>
+                          ⚠️ {locationMistakes} Demerits
+                        </span>
+                      )}
+                      {summary.locationInitiatives > 0 && (
+                        <span style={{
+                          background: 'rgba(56, 189, 248, 0.2)',
+                          color: '#7dd3fc',
+                          border: '1px solid #38bdf8',
+                          padding: '1px 3px',
+                          borderRadius: '3px',
+                          fontWeight: 'bold'
+                        }}>
+                          🌟 {summary.locationInitiatives} Standing
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
 

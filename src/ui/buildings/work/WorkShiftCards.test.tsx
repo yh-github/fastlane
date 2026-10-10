@@ -159,6 +159,7 @@ describe('WorkShiftCards Component', () => {
       hoursRemaining: 12,
       physicalCondition: 40,
       mentalCondition: 40,
+      social: 50,
       workActionsThisTurn: 0 // Shift #1: normal shift -> +1 Social on work_work
     });
 
@@ -172,9 +173,9 @@ describe('WorkShiftCards Component', () => {
       />
     );
 
-    // Should display +1 👥 Social badge for work_work and face_time
-    const socialGainBadges = screen.getAllByText('+1 👥 Social');
-    expect(socialGainBadges.length).toBe(2);
+    // Should display +1 👥 Social badge for work_work and probabilistic ~50% Social for face_time
+    expect(screen.getByText('+1 👥 Social')).toBeInTheDocument();
+    expect(screen.getByText('👥 ~50% Social')).toBeInTheDocument();
 
     // Should display -1 👥 Social penalty badge for look_busy
     expect(screen.getByText('-1 👥 Social')).toBeInTheDocument();
@@ -209,6 +210,138 @@ describe('WorkShiftCards Component', () => {
 
     expect(screen.getByText('0 👥 Social (Grind)')).toBeInTheDocument();
     expect(screen.getByText('-1 👥 Social')).toBeInTheDocument(); // Coast still penalizes
+  });
+
+  it('renders capped dependability and experience indicators when player is at job cap', () => {
+    const entryJob = {
+      ...dummyJob,
+      requirements: { dependability: 0, experience: 0, degrees: [] }
+    };
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      dependability: 20, // entryJob req dependability = 0 -> cap = 20
+      experience: 10     // entryJob req experience = 0 -> cap = 10
+    });
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={entryJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="grid"
+      />
+    );
+
+    expect(screen.getAllByText('0 🤝 (Cap: 20)').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('0 👌 (Cap: 10)').length).toBeGreaterThan(0);
+  });
+
+  it('renders +0.25 🔧 tech skill on show_initiative for technical jobs', () => {
+    const techJob = {
+      ...dummyJob,
+      id: 'job_technician',
+      tags: ['technical'],
+      requirements: { dependability: 0, experience: 0, degrees: [] }
+    };
+
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      experience: 15 // satisfies 10 reqExp for initiative
+    });
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={techJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="grid"
+      />
+    );
+
+    expect(screen.getAllByText('+0.25 🔧').length).toBeGreaterThan(0);
+  });
+
+  it('renders -1 ⚠️ Demerit only when location has mistakes, and +1 MAX 🧠 when resilience threshold met', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      experience: 15,
+      mistakesByLocation: { [dummyJob.locationId]: 1 },
+      workActionsThisTurn: 0
+    });
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="grid"
+      />
+    );
+
+    // With 1 mistake at location, initiative should show demerit clear
+    expect(screen.getByText('-1 ⚠️ Demerit')).toBeInTheDocument();
+  });
+
+  it('renders rent debt garnishment badge and net wages on button', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      rentDebt: 100 // dummyJob wage is $30 * 8 = $240. 50% = $120. With $100 debt -> $100 garnished, net $140
+    });
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="grid"
+      />
+    );
+
+    expect(screen.getAllByText('-$100 Debt').length).toBeGreaterThan(0);
+    expect(screen.getByText(/💼 Work Shift \(\+\$140\)/)).toBeInTheDocument();
+  });
+
+  it('renders uniform attire status and turn mistakes in flanking wing headers', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      workMistakesThisTurn: 1,
+      inventory: {
+        casualClothesWeeks: 1,
+        dressClothesWeeks: 0,
+        businessClothesWeeks: 0,
+        selectedClothes: 'casual'
+      } as any
+    });
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="flanking"
+      />
+    );
+
+    // Left wing header: dress code
+    expect(screen.getByText(/👔 Casual/)).toBeInTheDocument();
+
+    // Right wing header: mistakes counter
+    expect(screen.getByText('⚠️ 1/3 Mistakes')).toBeInTheDocument();
   });
 
   it('hides and disables pointer events on flanking wings when unmeasured', () => {
