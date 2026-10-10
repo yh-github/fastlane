@@ -331,6 +331,54 @@ describe('Job Engine', () => {
       expect(employedRes.success).toBe(false);
       expect(employedRes.updated.noOpeningBonus).toBe(5);
     });
+
+    it('applies attire modifier: -5% when underdressed, +5% when overdressed in Advanced mode', () => {
+      const dressJob: JobDef = {
+        id: 'office_worker',
+        title: 'Office Worker',
+        locationId: 'office',
+        baseWage: 10,
+        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'dress' },
+        perks: []
+      };
+
+      const basePlayer = {
+        hoursRemaining: 10,
+        money: 100,
+        experience: 0,
+        dependability: 0,
+        degrees: [],
+        currentJobId: null,
+        turnFlags: { jobsRejectedThisTurn: [], clothesWornThisTurn: [] },
+        inventory: {
+          casualClothesWeeks: 10,
+          dressClothesWeeks: 10,
+          businessClothesWeeks: 10,
+          selectedClothes: 'casual'
+        }
+      } as unknown as PlayerState;
+
+      const advRules = { usePhysicalMentalConditions: true };
+
+      // 1. Underdressed (wearing Casual for Dress uniform job):
+      // Base score is 45. -5% attire penalty = 40%. Roll 43 > 40 -> Rejected!
+      const underdressedPlayer = { ...basePlayer, inventory: { ...basePlayer.inventory, selectedClothes: 'casual' as const } } as unknown as PlayerState;
+      const replayUnder = { inDecisions: [{ type: 'job_apply_luck', result: 43 }], outDecisions: [] };
+      const underRes = applyForJob(underdressedPlayer, dressJob, 4, {}, undefined, undefined, advRules, 1, replayUnder);
+      expect(underRes.success).toBe(false);
+
+      // 2. Overdressed (wearing Business for Dress uniform job):
+      // Base score is 45. +5% attire bonus = 50%. Roll 43 <= 50 -> Hired!
+      const overdressedPlayer = {
+        ...basePlayer,
+        turnFlags: { jobsRejectedThisTurn: [], clothesWornThisTurn: [] },
+        inventory: { ...basePlayer.inventory, selectedClothes: 'business' as const }
+      } as unknown as PlayerState;
+      const replayOver = { inDecisions: [{ type: 'job_apply_luck', result: 43 }], outDecisions: [] };
+      const overRes = applyForJob(overdressedPlayer, dressJob, 4, {}, undefined, undefined, advRules, 1, replayOver);
+      expect(overRes.success).toBe(true);
+      expect(overRes.updated.turnFlags?.clothesWornThisTurn).toContain('business');
+    });
   });
 
   describe('calcWorkShiftSummary', () => {

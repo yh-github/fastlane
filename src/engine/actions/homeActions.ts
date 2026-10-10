@@ -1,7 +1,7 @@
 import type { PlayerState } from '../gameState';
-import { collectItemEffects } from '../gameState';
+import { collectItemEffects, markClothesWorn } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
-import { requireConfig } from '../rules';
+import { requireConfig, getClothesSwitchingRule } from '../rules';
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
 import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental, calcSocializeParameters } from '../statMath';
@@ -311,10 +311,55 @@ export function handleSocializeAction(
 
 export function handleChangeClothesAction(
   player: PlayerState,
-  action: { type: 'change_clothes'; clothes: 'casual' | 'dress' | 'business' | 'none' }
+  action: { type: 'change_clothes'; clothes: 'casual' | 'dress' | 'business' | 'none' },
+  context?: ReducerContext
 ): ActionHandlerResult {
-  const nextPlayer = structuredClone(player);
+  // 1. Ownership check (unless 'none')
+  if (action.clothes === 'casual' && (player.inventory.casualClothesWeeks || 0) <= 0) {
+    return { nextPlayer: player, actionLog: { key: 'action.clothes.notOwned', params: { clothes: action.clothes } } };
+  }
+  if (action.clothes === 'dress' && (player.inventory.dressClothesWeeks || 0) <= 0) {
+    return { nextPlayer: player, actionLog: { key: 'action.clothes.notOwned', params: { clothes: action.clothes } } };
+  }
+  if (action.clothes === 'business' && (player.inventory.businessClothesWeeks || 0) <= 0) {
+    return { nextPlayer: player, actionLog: { key: 'action.clothes.notOwned', params: { clothes: action.clothes } } };
+  }
+
+  // 2. Location & Policy checks
+  if (context?.rules) {
+    const rule = getClothesSwitchingRule(context.rules);
+    if (rule === 'autoBest') {
+      return { nextPlayer: player, actionLog: { key: 'action.clothes.autoEquipActive' } };
+    }
+
+    if (rule === 'homeOnly' || rule === 'homeOrStore') {
+      const currentNode = context.campaign.map?.nodes?.find(n => n.id === player.position);
+      const currentBuildingId = currentNode?.buildingId;
+      const currentHousing = context.campaign.housing?.find(h => h.id === player.currentHousingId);
+      const isAtHome = currentBuildingId === 'home' || Boolean(currentHousing?.homeNodeId && player.position === currentHousing.homeNodeId);
+
+      const isAtClothingStore = currentBuildingId === 'qt_clothing' ||
+        currentBuildingId === 'z_mart' ||
+        Boolean(context.campaign.items?.some(i => i.category === 'clothes' && i.store === currentBuildingId));
+
+      if (rule === 'homeOnly' && !isAtHome) {
+        return { nextPlayer: player, actionLog: { key: 'action.clothes.homeOnly' } };
+      }
+      if (rule === 'homeOrStore' && !isAtHome && !isAtClothingStore) {
+        return { nextPlayer: player, actionLog: { key: 'action.clothes.homeOrStoreOnly' } };
+      }
+    }
+  }
+
+  let nextPlayer = structuredClone(player);
   nextPlayer.inventory.selectedClothes = action.clothes;
+
+  // If actions have already been performed this turn, mark newly equipped clothes as worn
+  const hoursPerTurn = context?.campaign?.config?.timeRules?.hoursPerTurn ?? 60;
+  if (action.clothes !== 'none' && nextPlayer.hoursRemaining < hoursPerTurn) {
+    nextPlayer = markClothesWorn(nextPlayer, action.clothes);
+  }
+
   const actionLog = { key: 'action.clothes.changed', params: { clothes: action.clothes } };
   return { nextPlayer, actionLog };
 }

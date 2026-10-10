@@ -427,10 +427,107 @@ describe('gameReducer', () => {
   });
 
   describe('clothes actions', () => {
-    it('changes clothes successfully', () => {
+    it('changes clothes successfully when allowed', () => {
       player.inventory.businessClothesWeeks = 10;
-      const result = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, context);
+      const result = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, {
+        ...context,
+        rules: { ...context.rules, clothesSwitching: 'anywhere' }
+      });
       expect(result.updatedPlayer.inventory.selectedClothes).toBe('business');
+    });
+
+    it('rejects changing clothes when autoEquipBestClothes is active', () => {
+      player.inventory.businessClothesWeeks = 10;
+      const result = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, {
+        ...context,
+        rules: { ...context.rules, autoEquipBestClothes: true }
+      });
+      expect(getLogKey(result.actionLog)).toBe('action.clothes.autoEquipActive');
+      expect(result.updatedPlayer.inventory.selectedClothes).not.toBe('business');
+    });
+
+    it('rejects changing to unowned clothes', () => {
+      player.inventory.businessClothesWeeks = 0;
+      const result = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, {
+        ...context,
+        rules: { ...context.rules, clothesSwitching: 'anywhere' }
+      });
+      expect(getLogKey(result.actionLog)).toBe('action.clothes.notOwned');
+      expect(result.updatedPlayer.inventory.selectedClothes).not.toBe('business');
+    });
+
+    it('enforces homeOrStore policy: rejects on street, allows at home and clothing store', () => {
+      const homeNode = { id: 'node_home', buildingId: 'home' };
+      const storeNode = { id: 'node_qt', buildingId: 'qt_clothing' };
+      const streetNode = { id: 'node_street', buildingId: undefined };
+      const testContext = {
+        ...context,
+        campaign: {
+          ...context.campaign,
+          map: { width: 10, height: 10, nodes: [homeNode, storeNode, streetNode] } as any
+        },
+        rules: { ...context.rules, clothesSwitching: 'homeOrStore' as const, autoEquipBestClothes: false }
+      } as ReducerContext;
+
+      player.inventory.businessClothesWeeks = 5;
+
+      // 1. On street -> Rejected
+      player.position = 'node_street';
+      const streetRes = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, testContext);
+      expect(getLogKey(streetRes.actionLog)).toBe('action.clothes.homeOrStoreOnly');
+      expect(streetRes.updatedPlayer.inventory.selectedClothes).not.toBe('business');
+
+      // 2. At Home -> Allowed
+      player.position = 'node_home';
+      const homeRes = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, testContext);
+      expect(getLogKey(homeRes.actionLog)).toBe('action.clothes.changed');
+      expect(homeRes.updatedPlayer.inventory.selectedClothes).toBe('business');
+
+      // 3. At Clothing Store -> Allowed
+      player.position = 'node_qt';
+      const storeRes = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, testContext);
+      expect(getLogKey(storeRes.actionLog)).toBe('action.clothes.changed');
+      expect(storeRes.updatedPlayer.inventory.selectedClothes).toBe('business');
+    });
+
+    it('enforces homeOnly policy: rejects at clothing store, allows at home', () => {
+      const homeNode = { id: 'node_home', buildingId: 'home' };
+      const storeNode = { id: 'node_qt', buildingId: 'qt_clothing' };
+      const testContext = {
+        ...context,
+        campaign: {
+          ...context.campaign,
+          map: { width: 10, height: 10, nodes: [homeNode, storeNode] } as any
+        },
+        rules: { ...context.rules, clothesSwitching: 'homeOnly' as const, autoEquipBestClothes: false }
+      } as ReducerContext;
+
+      player.inventory.businessClothesWeeks = 5;
+
+      // At Clothing Store -> Rejected under homeOnly
+      player.position = 'node_qt';
+      const storeRes = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, testContext);
+      expect(getLogKey(storeRes.actionLog)).toBe('action.clothes.homeOnly');
+
+      // At Home -> Allowed
+      player.position = 'node_home';
+      const homeRes = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, testContext);
+      expect(getLogKey(homeRes.actionLog)).toBe('action.clothes.changed');
+      expect(homeRes.updatedPlayer.inventory.selectedClothes).toBe('business');
+    });
+
+    it('marks switched clothes as worn when changed after hours were spent this turn', () => {
+      player.inventory.businessClothesWeeks = 5;
+      player.hoursRemaining = 50; // 10 hours spent out of 60
+      player.turnFlags.clothesWornThisTurn = [];
+
+      const result = gameReducer(player, { type: 'change_clothes', clothes: 'business' }, {
+        ...context,
+        rules: { ...context.rules, clothesSwitching: 'anywhere' }
+      });
+
+      expect(result.updatedPlayer.inventory.selectedClothes).toBe('business');
+      expect(result.updatedPlayer.turnFlags.clothesWornThisTurn).toContain('business');
     });
   });
 });

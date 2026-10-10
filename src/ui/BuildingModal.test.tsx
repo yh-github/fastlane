@@ -552,7 +552,7 @@ describe('BuildingModal Component', () => {
 
     expect(screen.getByText(/Shift #8/i)).toBeInTheDocument();
     expect(screen.getAllByText(/🔥 OVERTIME/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/-0\.5 Max Physical Condition/i)).toBeInTheDocument();
+    expect(screen.getByText(/-0\.5 MAX 💪/i)).toBeInTheDocument();
   });
 
   it('shows break-in risk badge only when helpfulUI is on, and hides it when helpfulUI is off', () => {

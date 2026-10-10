@@ -66,35 +66,53 @@ export function processHousingAndLoanPhase(
     }
   }
 
+  const prevPlayer = state.players.find(pl => pl.id === p.id);
+  const prevCasual = prevPlayer?.inventory?.casualClothesWeeks ?? p.inventory.casualClothesWeeks ?? 0;
+  const prevDress = prevPlayer?.inventory?.dressClothesWeeks ?? p.inventory.dressClothesWeeks ?? 0;
+  const prevBusiness = prevPlayer?.inventory?.businessClothesWeeks ?? p.inventory.businessClothesWeeks ?? 0;
+
   // 13. Clothing Decay & Equipment
   if (state.rules.clothingDecaysAll) {
     if (p.inventory.casualClothesWeeks > 0) p.inventory.casualClothesWeeks--;
     if (p.inventory.dressClothesWeeks > 0) p.inventory.dressClothesWeeks--;
     if (p.inventory.businessClothesWeeks > 0) p.inventory.businessClothesWeeks--;
   } else {
-    if (p.inventory.selectedClothes === 'casual' && p.inventory.casualClothesWeeks > 0) {
+    // Worn this turn: any clothes worn during the turn or currently selected at turn end
+    const wornList = new Set<'casual' | 'dress' | 'business'>(prevPlayer?.turnFlags?.clothesWornThisTurn || []);
+    if (p.inventory.selectedClothes && p.inventory.selectedClothes !== 'none') {
+      wornList.add(p.inventory.selectedClothes);
+    }
+    if (prevPlayer?.inventory?.selectedClothes && prevPlayer.inventory.selectedClothes !== 'none') {
+      wornList.add(prevPlayer.inventory.selectedClothes);
+    }
+
+    if (wornList.has('casual') && p.inventory.casualClothesWeeks > 0) {
       p.inventory.casualClothesWeeks--;
-    } else if (p.inventory.selectedClothes === 'dress' && p.inventory.dressClothesWeeks > 0) {
+    }
+    if (wornList.has('dress') && p.inventory.dressClothesWeeks > 0) {
       p.inventory.dressClothesWeeks--;
-    } else if (p.inventory.selectedClothes === 'business' && p.inventory.businessClothesWeeks > 0) {
+    }
+    if (wornList.has('business') && p.inventory.businessClothesWeeks > 0) {
       p.inventory.businessClothesWeeks--;
     }
   }
 
   // Clothing wear notifications
+  // Warn ONLY on decay transition to 1 week (was > 1, now == 1), preventing spam when clothes sit unworn
   if (state.rules.helpfulUI) {
-    if (p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
-    if (p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
-    if (p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
+    if (prevCasual > 1 && p.inventory.casualClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.casual' });
+    if (prevDress > 1 && p.inventory.dressClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.dress' });
+    if (prevBusiness > 1 && p.inventory.businessClothesWeeks === 1) p.turnEvents.push({ key: 'events.clothes.business' });
   } else {
     // Authentic Sierra SCI behavior (script.111.txt weeksOfClothing == 1):
     // Only warns when the player's longest-lasting clothes reach 1 week (anti-nudity warning).
+    const prevMaxWeeks = Math.max(prevCasual, prevDress, prevBusiness);
     const maxWeeks = Math.max(
       p.inventory.casualClothesWeeks || 0,
       p.inventory.dressClothesWeeks || 0,
       p.inventory.businessClothesWeeks || 0
     );
-    if (maxWeeks === 1) {
+    if (prevMaxWeeks > 1 && maxWeeks === 1) {
       p.turnEvents.push({ key: 'events.clothes.needNew' });
     }
   }
@@ -130,7 +148,6 @@ export function processHousingAndLoanPhase(
     // End-of-billing-turn default evaluation:
     // If the turn that just finished was a deadline turn and player didn't service debt this turn:
     if (finishedTurn > 0 && p.loanPaymentDeadline > 0 && finishedTurn >= p.loanPaymentDeadline) {
-      const prevPlayer = state.players.find(pl => pl.id === p.id);
       const paidThisTurn = prevPlayer?.turnFlags?.loanPaidThisTurn ?? false;
       if (!paidThisTurn) {
         p.timesDefaulted = (p.timesDefaulted || 0) + 1;

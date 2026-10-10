@@ -624,5 +624,42 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     expect(screen.getByText('+1 😊 Happiness')).toBeInTheDocument();
     expect(screen.getByText('🏺 Curio Collection')).toBeInTheDocument();
   });
+
+  it('renders DurableCardModal for wardrobe and allows switching clothes', () => {
+    const onAction = vi.fn();
+    const onClose = vi.fn();
+    const playerWithClothes: any = {
+      ...basePlayer,
+      inventory: {
+        ...basePlayer.inventory,
+        selectedClothes: 'casual' as const,
+        casualClothesWeeks: 5,
+        dressClothesWeeks: 4,
+        businessClothesWeeks: 0
+      }
+    };
+
+    render(
+      <DurableCardModal
+        durable={{ id: 'wardrobe', isBook: false, isOwned: true }}
+        player={playerWithClothes}
+        campaign={mockCampaign}
+        rules={{ clothesSwitching: 'homeOrStore', autoEquipBestClothes: false } as any}
+        onAction={onAction}
+        onClose={onClose}
+      />
+    );
+
+    expect(screen.getByText('👔 WARDROBE')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-wardrobe-casual')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-wardrobe-dress')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-wardrobe-business')).toBeDisabled(); // 0 weeks
+
+    fireEvent.click(screen.getByTestId('btn-wardrobe-dress'));
+    expect(onAction).toHaveBeenCalledWith({
+      type: 'change_clothes',
+      clothes: 'dress'
+    });
+  });
 });
 

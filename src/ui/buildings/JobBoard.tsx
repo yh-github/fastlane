@@ -168,6 +168,16 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const curMental = player.mentalCondition ?? 50;
           const mentalMistakeChance = isAdvanced && curMental < 10 ? Math.round((10 - curMental) * 2.5 * 10) / 10 : 0;
           
+          const reqUniform = job.requirements.uniform;
+          const reqScore = reqUniform === 'business' ? 3 : (reqUniform === 'dress' ? 2 : 1);
+          const playerClothes = player.inventory?.selectedClothes || 'none';
+          const hasSelected = (playerClothes === 'business' && (player.inventory?.businessClothesWeeks || 0) > 0)
+            || (playerClothes === 'dress' && (player.inventory?.dressClothesWeeks || 0) > 0)
+            || (playerClothes === 'casual' && (player.inventory?.casualClothesWeeks || 0) > 0);
+          const effectiveClothes = hasSelected ? playerClothes : 'none';
+          const clothesScore = effectiveClothes === 'business' ? 3 : (effectiveClothes === 'dress' ? 2 : (effectiveClothes === 'casual' ? 1 : 0));
+          const attireModifier = clothesScore < reqScore ? -5 : (clothesScore > reqScore ? 5 : 0);
+
           const baseJobScore = isAlwaysHiring ? (hasMissingReqs ? 0 : 100) : (isAdvanced
             ? calcAdvancedJobEmployabilityScore({
                 dependability: player.dependability || 0,
@@ -187,7 +197,8 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 skillMgmt: player.skillMgmt || 0,
                 isManagement,
                 physicalCondition: player.physicalCondition ?? 50,
-                isLookFit
+                isLookFit,
+                attireModifier
               })
             : locationScore);
           const jobScore = isAdvanced && !isAlwaysHiring && (player.noOpeningBonus || 0) > 0
@@ -204,10 +215,27 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 {rules?.helpfulUI && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#888', marginBottom: '6px' }}>
                     <span>{t('jobBoard.base')}: ${job.baseWage}/hr</span>
-                    <span style={{ color: isAlwaysHiring ? (hasMissingReqs ? '#e74c3c' : '#2ecc71') : (jobScore >= 70 ? '#2ecc71' : (jobScore >= 45 ? '#00e5ff' : '#f39c12')), fontWeight: 'bold' }}>
-                      {isAlwaysHiring 
-                        ? (hasMissingReqs ? '🎯 0%' : (rules?.showJobTags ? `🎯 100% (${t('jobBoard.alwaysHiring', { defaultValue: 'Always Hiring' })})` : '🎯 100%')) 
-                        : `🎯 ${jobScore}%`}
+                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                      <span style={{ color: isAlwaysHiring ? (hasMissingReqs ? '#e74c3c' : '#2ecc71') : (jobScore >= 70 ? '#2ecc71' : (jobScore >= 45 ? '#00e5ff' : '#f39c12')), fontWeight: 'bold' }}>
+                        {isAlwaysHiring 
+                          ? (hasMissingReqs ? '🎯 0%' : (rules?.showJobTags ? `🎯 100% (${t('jobBoard.alwaysHiring', { defaultValue: 'Always Hiring' })})` : '🎯 100%')) 
+                          : `🎯 ${jobScore}%`}
+                      </span>
+                      {isAdvanced && !isAlwaysHiring && attireModifier !== 0 && (
+                        <span 
+                          style={{ 
+                            fontSize: '10px', 
+                            color: attireModifier > 0 ? '#2ecc71' : '#f87171', 
+                            marginInlineStart: '5px',
+                            background: attireModifier > 0 ? 'rgba(46, 204, 113, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            padding: '1px 4px',
+                            borderRadius: '3px',
+                            border: `1px solid ${attireModifier > 0 ? '#2ecc71' : '#ef4444'}`
+                          }}
+                        >
+                          {attireModifier > 0 ? '+5% 👔 Overdressed' : '-5% ⚠️ Underdressed'}
+                        </span>
+                      )}
                     </span>
                   </div>
                 )}

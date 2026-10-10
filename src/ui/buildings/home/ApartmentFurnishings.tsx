@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
+import { getClothesSwitchingRule } from '../../../engine/rules';
 
 export interface ApplianceSlotDef {
   slotId: string;
@@ -380,6 +381,87 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
             </div>
           );
         })}
+
+        {/* Wardrobe (Clothes) */}
+        {(() => {
+          const clothesRule = getClothesSwitchingRule(rules);
+          if (clothesRule === 'autoBest') return null;
+
+          const casualWks = player.inventory?.casualClothesWeeks || 0;
+          const dressWks = player.inventory?.dressClothesWeeks || 0;
+          const businessWks = player.inventory?.businessClothesWeeks || 0;
+          const totalClothes = casualWks + dressWks + businessWks;
+          const currentClothes = player.inventory?.selectedClothes || 'none';
+
+          return (
+            <div
+              key="wardrobe"
+              data-testid="durable-card-wardrobe"
+              className="durable-card-item"
+              onClick={() => {
+                onInspectDurable({
+                  id: 'wardrobe',
+                  isBook: false,
+                  isOwned: totalClothes > 0
+                });
+              }}
+              title={`Wardrobe Closet\nCurrently wearing: ${currentClothes}\nClick to manage wardrobe.`}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '58px',
+                height: '62px',
+                background: totalClothes > 0 ? 'rgba(0, 0, 0, 0.45)' : 'rgba(0, 0, 0, 0.25)',
+                border: totalClothes > 0 ? '1.5px solid #a855f7' : '1.5px dashed rgba(255, 255, 255, 0.2)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                boxShadow: totalClothes > 0 ? '0 0 8px rgba(168, 85, 247, 0.25)' : 'none',
+                opacity: totalClothes > 0 ? 1 : 0.6,
+                transition: 'all 0.15s ease',
+                position: 'relative',
+                padding: '4px 2px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <span style={{ fontSize: '20px' }}>
+                👔
+              </span>
+              <span 
+                className="durable-card-item__label"
+                style={{
+                  fontSize: '0.60rem',
+                  color: '#e2e8f0',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '52px',
+                  marginTop: '2px'
+                }}
+              >
+                Wardrobe
+              </span>
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-4px',
+                background: '#a855f7',
+                color: '#fff',
+                fontSize: '0.52rem',
+                fontWeight: 'bold',
+                padding: '1px 4px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                border: '1px solid #c084fc',
+                textTransform: 'capitalize'
+              }}>
+                {currentClothes}
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Knick Knacks (Curios) */}
         {(() => {

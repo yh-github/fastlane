@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemDef, CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules } from '../../engine/gameState';
+import { getClothesSwitchingRule } from '../../engine/rules';
 import { calcItemPrice } from '../../engine/economyEngine';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
 import { getItemDisplayName } from '../../utils/itemUtils';
@@ -14,8 +15,55 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
   const maxSpace = calcHousingSpaceCap(player, campaign);
   const [modalItem, setModalItem] = useState<ItemDef | null>(null);
 
+  const sellsClothes = availableItems.some(i => i.category === 'clothes');
+  const clothesRule = getClothesSwitchingRule(rules);
+
   return (
     <div className="interaction-panel store-front-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+      {sellsClothes && clothesRule !== 'autoBest' && (
+        <div 
+          className="fitting-room-panel" 
+          data-testid="store-fitting-room"
+          style={{ 
+            marginBottom: '8px', 
+            padding: '6px 10px', 
+            background: 'rgba(255, 255, 255, 0.05)', 
+            borderRadius: '6px', 
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+            <span>👔</span>
+            <span style={{ fontWeight: 'bold', color: 'var(--accent-cyan, #00e5ff)' }}>
+              {t('storeFront.fittingRoom', { defaultValue: 'Fitting Room' })}:
+            </span>
+            <span style={{ color: '#ccc' }}>
+              {t('inventoryModal.wearing', 'Wearing:')} <strong>{player.inventory.selectedClothes && player.inventory.selectedClothes !== 'none' ? t(`inventoryModal.${player.inventory.selectedClothes}`, { defaultValue: player.inventory.selectedClothes }) : t('inventoryModal.none', 'None')}</strong>
+            </span>
+          </div>
+          <select
+            data-testid="fitting-room-select"
+            value={player.inventory.selectedClothes || 'none'}
+            onChange={(e) => onAction && onAction({ type: 'change_clothes', clothes: e.target.value })}
+            style={{ padding: '3px 8px', fontSize: '12px', borderRadius: '4px', background: '#1e293b', color: '#fff', border: '1px solid #475569', cursor: 'pointer' }}
+          >
+            <option value="none">{t('inventoryModal.none', 'None')}</option>
+            <option value="casual" disabled={(player.inventory.casualClothesWeeks || 0) <= 0}>
+              {t('inventoryModal.casual', 'Casual')} ({player.inventory.casualClothesWeeks || 0}w)
+            </option>
+            <option value="dress" disabled={(player.inventory.dressClothesWeeks || 0) <= 0}>
+              {t('inventoryModal.dress', 'Dress')} ({player.inventory.dressClothesWeeks || 0}w)
+            </option>
+            <option value="business" disabled={(player.inventory.businessClothesWeeks || 0) <= 0}>
+              {t('inventoryModal.business', 'Business')} ({player.inventory.businessClothesWeeks || 0}w)
+            </option>
+          </select>
+        </div>
+      )}
       <div 
         className="store-front-grid"
         style={{ 

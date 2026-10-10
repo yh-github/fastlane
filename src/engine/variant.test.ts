@@ -229,5 +229,23 @@ describe('Game Variant mechanics', () => {
       expect(res2.updated.happiness).toBe(52); // No additional happiness
       expect(res2.updated.inventory.lotteryTickets).toBe(20);
     });
+
+    it('lottery tickets in advanced mode: grants +1 mental on EVERY purchase', () => {
+      const lotteryItem = { id: 'lottery_tickets', name: '10 Lottery Tickets', category: 'ticket' as const, store: 'blacks_market', basePrice: 10, happinessBonus: 0, mentalBonus: 1 };
+      const player = getDummyPlayer({ money: 100, mentalCondition: 30, mentalConditionMax: 50 });
+      const advRules = { usePhysicalMentalConditions: true };
+
+      // First purchase
+      const res1 = buyItem(player, lotteryItem, advRules);
+      expect(res1.updated.mentalCondition).toBe(31);
+      expect(res1.updated.inventory.lotteryTickets).toBe(10);
+      expect(res1.message.params?.mentalBonus).toBe(1);
+
+      // Second purchase in same turn
+      const res2 = buyItem(res1.updated, lotteryItem, advRules);
+      expect(res2.updated.mentalCondition).toBe(32);
+      expect(res2.updated.inventory.lotteryTickets).toBe(20);
+      expect(res2.message.params?.mentalBonus).toBe(1);
+    });
   });
 });

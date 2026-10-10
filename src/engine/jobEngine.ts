@@ -1,4 +1,4 @@
-import { type PlayerState, type GameRules, type GameEvent, type MiniGameOption, type MiniGameState } from './gameState';
+import { type PlayerState, type GameRules, type GameEvent, type MiniGameOption, type MiniGameState, markClothesWorn } from './gameState';
 import { spendHours } from './timeManager';
 import { processRentDebt } from './economyEngine';
 import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, roundToResolution } from './statMath';
@@ -275,6 +275,27 @@ export function applyForJob(
   let employability: number;
   if (isAdvanced) {
     const locInnovations = updated.innovationsByLocation?.[job.locationId] || 0;
+
+    const reqUniform = job.requirements.uniform;
+    const reqScore = reqUniform === 'business' ? 3 : (reqUniform === 'dress' ? 2 : 1);
+    const playerClothes = updated.inventory?.selectedClothes || 'none';
+    const hasSelected = (playerClothes === 'business' && (updated.inventory?.businessClothesWeeks || 0) > 0)
+      || (playerClothes === 'dress' && (updated.inventory?.dressClothesWeeks || 0) > 0)
+      || (playerClothes === 'casual' && (updated.inventory?.casualClothesWeeks || 0) > 0);
+    const effectiveClothes = hasSelected ? playerClothes : 'none';
+    const clothesScore = effectiveClothes === 'business' ? 3 : (effectiveClothes === 'dress' ? 2 : (effectiveClothes === 'casual' ? 1 : 0));
+
+    let attireModifier = 0;
+    if (clothesScore < reqScore) {
+      attireModifier = -5;
+    } else if (clothesScore > reqScore) {
+      attireModifier = 5;
+    }
+
+    if (effectiveClothes !== 'none') {
+      updated = markClothesWorn(updated, effectiveClothes);
+    }
+
     employability = calcAdvancedJobEmployabilityScore({
       dependability: updated.dependability,
       experience: updated.experience,
@@ -293,7 +314,8 @@ export function applyForJob(
       skillMgmt: updated.skillMgmt || 0,
       isManagement: isManagement,
       physicalCondition: updated.physicalCondition ?? 50,
-      isLookFit: isLookFit
+      isLookFit: isLookFit,
+      attireModifier
     });
     if (updated.noOpeningBonus) {
       employability = Math.min(99, employability + updated.noOpeningBonus);
@@ -869,6 +891,12 @@ export function workShift(
   const hoursToWork = Math.min(player.hoursRemaining, shiftCost);
   const ratio = hoursToWork / shiftCost;
   let updated = spendHours(player, hoursToWork);
+  if (activeClothes) {
+    updated = markClothesWorn(updated, activeClothes);
+    if (updated.inventory) {
+      updated.inventory.selectedClothes = activeClothes;
+    }
+  }
 
   // Prorate wage: shiftCost hours = 8 hours of base wage (full shift)
   const fullShiftWage = Math.floor(updated.currentWage * 8 * wageMultiplier);
