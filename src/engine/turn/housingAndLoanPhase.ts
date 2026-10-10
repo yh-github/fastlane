@@ -9,30 +9,34 @@ export function processHousingAndLoanPhase(
   state: GameState,
   campaign: CampaignBundle
 ): PlayerState {
-  // 12. Rent Notice
+  const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
+  const baseRent = curHousing?.baseRent ?? (p.currentHousingId === 'security' ? 475 : 325);
+
+  // Fluctuating Rent & Lease Review
+  if (state.rules.fluctuatingRent && p.currentHousingId !== 'street') {
+    // When the lease is expiring / due for renewal (1 week prior to expiry or when overdue):
+    if (p.rentPaidUntilWeek <= state.turn + 1) {
+      const marketRent = calcEconomyPrice(baseRent, state.economicIndex);
+      if (marketRent > p.currentRentPrice) {
+        const { standing } = calcLandlordStanding(p, state.rules, state.turn);
+        if (standing < 40) {
+          const oldRent = p.currentRentPrice;
+          p.currentRentPrice = marketRent;
+          p.rentPaymentsAtCurrentRate = 0;
+          p.turnEvents.push({ key: 'events.rent.raised', params: { newRent: marketRent, oldRent } });
+        }
+      }
+    }
+  }
+
+  // 12. Rent Notice & Collection
   if (p.rentPaidUntilWeek <= state.turn) {
     if (p.rentExtensionActive) {
       p.rentExtensionActive = false;
       p.turnEvents.push({ key: 'events.rent.extensionExpired' });
     } else {
       p.rentExtensionsDeniedPermanently = true; 
-      const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
-      const baseRent = curHousing?.baseRent ?? (p.currentHousingId === 'security' ? 475 : 325);
-      if (state.rules.usePhysicalMentalConditions && state.rules.fluctuatingRent) {
-        const marketRent = calcEconomyPrice(baseRent, state.economicIndex);
-        if (marketRent > p.currentRentPrice) {
-          const { standing } = calcLandlordStanding(p, state.rules);
-          if (standing < 40) {
-            const oldRent = p.currentRentPrice;
-            p.currentRentPrice = marketRent;
-            p.rentPaymentsAtCurrentRate = 0;
-            p.turnEvents.push({ key: 'events.rent.raised', params: { newRent: marketRent, oldRent } });
-          }
-        }
-      }
-      const debtAmount = state.rules.usePhysicalMentalConditions
-        ? p.currentRentPrice
-        : (state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice);
+      const debtAmount = p.currentRentPrice;
       p.rentDebt += debtAmount;
       p.rentPaidUntilWeek = state.turn + 4; 
       p.turnEvents.push({ key: 'events.rent.charged', params: { amount: debtAmount } });
@@ -53,11 +57,7 @@ export function processHousingAndLoanPhase(
       }
     }
   } else if (p.rentPaidUntilWeek <= state.turn + 1) { 
-    const curHousing = campaign?.housing?.find(h => h.id === p.currentHousingId);
-    const baseRent = curHousing?.baseRent ?? (p.currentHousingId === 'security' ? 475 : 325);
-    const rentAmount = state.rules.usePhysicalMentalConditions
-      ? p.currentRentPrice
-      : (state.rules.fluctuatingRent ? calcEconomyPrice(baseRent, state.economicIndex) : p.currentRentPrice);
+    const rentAmount = p.currentRentPrice;
     const debtAmount = p.rentDebt || 0;
     if (p.rentExtensionsDeniedPermanently) {
       p.turnEvents.push({ key: 'events.rent.due_nodenied', params: { amount: rentAmount, debt: debtAmount } });
