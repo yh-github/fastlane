@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemDef, CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules, PawnedItem } from '../../engine/gameState';
@@ -32,6 +32,44 @@ export function PawnShop({
   const [purchasedItemKeys, setPurchasedItemKeys] = useState<Record<string, boolean>>({});
   const [showCuriosPicker, setShowCuriosPicker] = useState(false);
 
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [isCompactRummage, setIsCompactRummage] = useState<boolean>(compact);
+
+  useEffect(() => {
+    if (compact) {
+      setIsCompactRummage(true);
+      return;
+    }
+
+    const checkFit = () => {
+      const el = panelRef.current;
+      if (!el) return;
+
+      const scrollParent = el.closest('.building-modal__content') || el.parentElement;
+      if (scrollParent) {
+        const hasScroll = scrollParent.clientHeight > 0 && scrollParent.scrollHeight > scrollParent.clientHeight + 1;
+        const isNarrow = el.clientWidth > 0 && el.clientWidth < 480;
+        const isSmallScreen = typeof window !== 'undefined' && window.innerWidth > 0 && (window.innerWidth <= 600 || window.innerHeight <= 600);
+
+        if (hasScroll || isNarrow || isSmallScreen) {
+          setIsCompactRummage(true);
+          return;
+        }
+      }
+      setIsCompactRummage(false);
+    };
+
+    checkFit();
+    window.addEventListener('resize', checkFit);
+    const timer = setTimeout(checkFit, 40);
+    return () => {
+      window.removeEventListener('resize', checkFit);
+      clearTimeout(timer);
+    };
+  }, [compact, availableItems.length, player.pendingPawnRummage]);
+
+  const isEffectiveCompact = compact || isCompactRummage;
+
   const pawnableAppliances = player.inventory.appliances || [];
   const pawnableBooks = (player.inventory.books || []).map(bId => {
     const bookDef = campaign?.items.find(i => i.id === bId);
@@ -51,18 +89,18 @@ export function PawnShop({
     id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   return (
-    <div className={`interaction-panel pawn-shop-panel ${compact ? 'interaction-panel--compact' : ''}`}>
+    <div ref={panelRef} className={`interaction-panel pawn-shop-panel ${isEffectiveCompact ? 'interaction-panel--compact' : ''}`}>
       {/* Primary Navigation Tabs: Prevent accidental selling */}
       <div style={{
         display: 'flex',
         gap: '8px',
-        marginBottom: compact ? '8px' : '16px',
+        marginBottom: isEffectiveCompact ? '8px' : '16px',
         position: 'sticky',
         top: 0,
         zIndex: 10,
         background: 'var(--panel-bg, #13132c)',
         paddingTop: '2px',
-        paddingBottom: compact ? '4px' : '8px'
+        paddingBottom: isEffectiveCompact ? '4px' : '8px'
       }}>
         <button
           data-testid="tab-pawnshop-buy"
@@ -117,18 +155,20 @@ export function PawnShop({
                   background: 'linear-gradient(165deg, rgba(30, 27, 22, 0.95) 0%, rgba(18, 16, 12, 0.98) 100%)',
                   border: '2px solid #f59e0b',
                   borderRadius: '10px',
-                  padding: compact ? '8px 10px' : '14px',
-                  marginBottom: compact ? '8px' : '16px',
+                  padding: isEffectiveCompact ? '6px 8px' : '14px',
+                  marginBottom: isEffectiveCompact ? '6px' : '16px',
                   boxShadow: '0 4px 16px rgba(245, 158, 11, 0.2)'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: compact ? '4px' : '8px' }}>
-                  <h4 style={{ color: '#fbbf24', margin: 0, fontSize: compact ? '0.92rem' : '1.02rem', fontWeight: 'bold' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isEffectiveCompact ? '2px' : '8px' }}>
+                  <h4 style={{ color: '#fbbf24', margin: 0, fontSize: isEffectiveCompact ? '0.88rem' : '1.02rem', fontWeight: 'bold' }}>
                     🔍 {t('pawnShop.rummageItemTitle', { defaultValue: 'Unearthed Item' })}
                   </h4>
                 </div>
-                <p style={{ margin: compact ? '0 0 6px 0' : '0 0 12px 0', fontSize: compact ? '0.74rem' : '0.82rem', color: '#d1d5db' }}>
-                  {t('pawnShop.rummageDesc', { defaultValue: 'Dig through unsorted bins of discarded goods and curios. You might find a bargain, a rare calming trinket, spare parts, or broken machinery. (Costs 1 hour)' })}
+                <p style={{ margin: isEffectiveCompact ? '0 0 4px 0' : '0 0 12px 0', fontSize: isEffectiveCompact ? '0.70rem' : '0.82rem', color: '#d1d5db' }}>
+                  {isEffectiveCompact
+                    ? t('pawnShop.rummageCompactPickDesc', { defaultValue: 'Pick at most 1 item or leave the batch (Costs 1 hour).' })
+                    : t('pawnShop.rummageDesc', { defaultValue: 'Dig through unsorted bins of discarded goods and curios. You might find a bargain, a rare calming trinket, spare parts, or broken machinery. (Costs 1 hour)' })}
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: compact ? '6px' : '10px', marginBottom: compact ? '6px' : '12px', maxWidth: '420px' }}>
@@ -282,60 +322,129 @@ export function PawnShop({
               </div>
             ) : (
               /* RUMMAGE ACTION TRIGGER */
-              <div
-                data-testid="pawn-rummage-trigger"
-                style={{
-                  background: 'linear-gradient(165deg, rgba(30, 27, 22, 0.7) 0%, rgba(18, 16, 12, 0.8) 100%)',
-                  border: '1px dashed #f59e0b',
-                  borderRadius: '10px',
-                  padding: compact ? '8px 10px' : '14px',
-                  marginBottom: compact ? '8px' : '16px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: compact ? '8px' : '12px'
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ color: '#fbbf24', margin: '0 0 2px 0', fontSize: compact ? '0.9rem' : '0.98rem', fontWeight: 'bold' }}>
-                    📦 {t('pawnShop.rummageTitle', { defaultValue: 'Dusty Junk Bins & Crates' })}
-                  </h4>
-                  <p style={{ margin: 0, fontSize: compact ? '0.75rem' : '0.80rem', color: '#9ca3af' }}>
-                    {t('pawnShop.rummageDesc', { defaultValue: 'Dig through unsorted bins of discarded goods and curios. You might find bargains, spare parts, or broken machinery. (Costs 1 hour, pick at most 1 item)' })}
-                  </p>
-                </div>
-
-                <button
-                  data-testid="rummage-pawn-shop-btn"
-                  data-action-target="rummage-pawn-shop"
-                  onClick={() => player.hoursRemaining >= 1 && onAction({ type: 'rummage_pawn_shop' })}
-                  disabled={player.hoursRemaining < 1}
+              isEffectiveCompact ? (
+                <div
+                  data-testid="pawn-rummage-trigger"
+                  className="pawn-rummage-trigger pawn-rummage-trigger--compact"
                   style={{
-                    padding: compact ? '6px 12px' : '10px 16px',
+                    background: 'linear-gradient(165deg, rgba(30, 27, 22, 0.85) 0%, rgba(18, 16, 12, 0.95) 100%)',
+                    border: '1px dashed #f59e0b',
                     borderRadius: '8px',
-                    fontWeight: 'bold',
-                    fontSize: compact ? '0.8rem' : '0.85rem',
-                    minHeight: compact ? '34px' : undefined,
-                    background: player.hoursRemaining >= 1 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : '#374151',
-                    color: player.hoursRemaining >= 1 ? '#000' : '#6b7280',
-                    border: 'none',
-                    cursor: player.hoursRemaining >= 1 ? 'pointer' : 'not-allowed',
-                    boxShadow: player.hoursRemaining >= 1 ? '0 0 10px rgba(245, 158, 11, 0.3)' : 'none',
-                    whiteSpace: 'nowrap'
+                    padding: '6px 10px',
+                    marginBottom: '8px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  🔍 {rules?.helpfulUI ? t('pawnShop.actionRummage', { defaultValue: 'Rummage Through Bins (1 hr)' }) : t('pawnShop.actionRummageBasic', { defaultValue: 'Rummage Through Bins' })}
-                </button>
-              </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>📦</span>
+                    <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <div style={{
+                        color: '#fbbf24',
+                        fontSize: '0.82rem',
+                        fontWeight: 'bold',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        lineHeight: 1.2
+                      }}>
+                        {t('pawnShop.rummageTitle', { defaultValue: 'Dusty Junk Bins & Crates' })}
+                      </div>
+                      <div style={{
+                        color: '#9ca3af',
+                        fontSize: '0.68rem',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        lineHeight: 1.2
+                      }}>
+                        {t('pawnShop.rummageCompactDesc', { defaultValue: 'Dig for curios, parts & bargains (1 hr)' })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    data-testid="rummage-pawn-shop-btn"
+                    data-action-target="rummage-pawn-shop"
+                    onClick={() => player.hoursRemaining >= 1 && onAction({ type: 'rummage_pawn_shop' })}
+                    disabled={player.hoursRemaining < 1}
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      fontSize: '0.78rem',
+                      minHeight: '30px',
+                      background: player.hoursRemaining >= 1 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : '#374151',
+                      color: player.hoursRemaining >= 1 ? '#000' : '#6b7280',
+                      border: 'none',
+                      cursor: player.hoursRemaining >= 1 ? 'pointer' : 'not-allowed',
+                      boxShadow: player.hoursRemaining >= 1 ? '0 0 8px rgba(245, 158, 11, 0.3)' : 'none',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
+                    }}
+                  >
+                    🔍 {rules?.helpfulUI ? t('pawnShop.actionRummageCompact', { defaultValue: 'Rummage (1 hr)' }) : t('pawnShop.actionRummageBasic', { defaultValue: 'Rummage' })}
+                  </button>
+                </div>
+              ) : (
+                <div
+                  data-testid="pawn-rummage-trigger"
+                  className="pawn-rummage-trigger"
+                  style={{
+                    background: 'linear-gradient(165deg, rgba(30, 27, 22, 0.7) 0%, rgba(18, 16, 12, 0.8) 100%)',
+                    border: '1px dashed #f59e0b',
+                    borderRadius: '10px',
+                    padding: '14px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ color: '#fbbf24', margin: '0 0 2px 0', fontSize: '0.98rem', fontWeight: 'bold' }}>
+                      📦 {t('pawnShop.rummageTitle', { defaultValue: 'Dusty Junk Bins & Crates' })}
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.80rem', color: '#9ca3af' }}>
+                      {t('pawnShop.rummageDesc', { defaultValue: 'Dig through unsorted bins of discarded goods and curios. You might find bargains, spare parts, or broken machinery. (Costs 1 hour, pick at most 1 item)' })}
+                    </p>
+                  </div>
+
+                  <button
+                    data-testid="rummage-pawn-shop-btn"
+                    data-action-target="rummage-pawn-shop"
+                    onClick={() => player.hoursRemaining >= 1 && onAction({ type: 'rummage_pawn_shop' })}
+                    disabled={player.hoursRemaining < 1}
+                    style={{
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      fontSize: '0.85rem',
+                      background: player.hoursRemaining >= 1 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : '#374151',
+                      color: player.hoursRemaining >= 1 ? '#000' : '#6b7280',
+                      border: 'none',
+                      cursor: player.hoursRemaining >= 1 ? 'pointer' : 'not-allowed',
+                      boxShadow: player.hoursRemaining >= 1 ? '0 0 10px rgba(245, 158, 11, 0.3)' : 'none',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    🔍 {rules?.helpfulUI ? t('pawnShop.actionRummage', { defaultValue: 'Rummage Through Bins (1 hr)' }) : t('pawnShop.actionRummageBasic', { defaultValue: 'Rummage Through Bins' })}
+                  </button>
+                </div>
+              )
             )
           )}
 
           {availableItems.length > 0 && (!rules?.pawnRummageBins || !player.pendingPawnRummage) ? (
-            <div style={{ marginBottom: compact ? '8px' : '16px' }}>
-              <h4 style={{ color: 'var(--accent-cyan)', margin: compact ? '0 0 6px 0' : '0 0 10px 0', fontSize: '0.95em' }}>
+            <div style={{ marginBottom: isEffectiveCompact ? '8px' : '16px' }}>
+              <h4 style={{ color: 'var(--accent-cyan)', margin: isEffectiveCompact ? '0 0 6px 0' : '0 0 10px 0', fontSize: '0.95em' }}>
                 🏷️ {t('pawnShop.weeklyStockTitle', { defaultValue: 'Weekly Pawn & Curio Stock' })}
               </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: compact ? 'repeat(auto-fit, minmax(180px, 1fr))' : 'repeat(2, minmax(0, 1fr))', gap: compact ? '6px' : '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isEffectiveCompact ? 'repeat(auto-fit, minmax(180px, 1fr))' : 'repeat(2, minmax(0, 1fr))', gap: isEffectiveCompact ? '6px' : '8px' }}>
                 {availableItems.map((item, idx) => {
                   const slotKey = `${item.id}_${item.name}_${idx}`;
                   const isBroken = item.tags?.includes('broken') || (item as any).isBroken;

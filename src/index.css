@@ -525,6 +525,12 @@ body {
   gap: 6px !important;
 }
 
+.building-modal--compact .pawn-rummage-trigger {
+  padding: 6px 10px !important;
+  margin-bottom: 8px !important;
+  gap: 8px !important;
+}
+
 .building-modal--compact .speech-bubble {
   top: -6px !important;
   margin-left: 8px !important;
@@ -675,6 +681,17 @@ body {
     width: 22px !important;
     height: 22px !important;
   }
+
+  .pawn-rummage-trigger {
+    padding: 6px 10px !important;
+    margin-bottom: 8px !important;
+    gap: 8px !important;
+  }
+}
+
+.pawn-rummage-trigger--compact button {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 /* Dashboard Controls (for End Turn) */

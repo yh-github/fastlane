@@ -172,11 +172,42 @@ describe('WorkShiftCards Component', () => {
       />
     );
 
-    // Should display +1 👥 badge for work_work and face_time
-    const socialGainBadges = screen.getAllByText('+1 👥');
+    // Should display +1 👥 Social badge for work_work and face_time
+    const socialGainBadges = screen.getAllByText('+1 👥 Social');
     expect(socialGainBadges.length).toBe(2);
 
-    // Should display -1 👥 penalty badge for look_busy
-    expect(screen.getByText('-1 👥')).toBeInTheDocument();
+    // Should display -1 👥 Social penalty badge for look_busy
+    expect(screen.getByText('-1 👥 Social')).toBeInTheDocument();
+  });
+
+  it('renders 0 👥 Social (Grind) badge on work_work for frontline_service jobs on grind shifts', () => {
+    const frontlineJob = {
+      id: 'job_clerk',
+      title: 'Store Clerk',
+      baseWage: 12,
+      locationId: 'zmart',
+      tags: ['frontline_service'],
+      requirements: { dependability: 0, experience: 0, degrees: [] }
+    } as any;
+
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      workActionsThisTurn: 3 // Shift #4: grind shift -> 0 Social on work_work
+    });
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={frontlineJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="flanking"
+      />
+    );
+
+    expect(screen.getByText('0 👥 Social (Grind)')).toBeInTheDocument();
+    expect(screen.getByText('-1 👥 Social')).toBeInTheDocument(); // Coast still penalizes
   });
 });

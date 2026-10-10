@@ -341,7 +341,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     if (m.rewardSocial > 0) {
       badges.push({
         key: 'social_gain',
-        label: `+${m.rewardSocial} 👥`,
+        label: `+${m.rewardSocial} 👥 Social`,
         color: '#f472b6',
         bg: 'rgba(244, 114, 182, 0.18)',
         border: 'rgba(244, 114, 182, 0.45)'
@@ -349,10 +349,18 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     } else if (m.rewardSocial < 0) {
       badges.push({
         key: 'social_loss',
-        label: `${m.rewardSocial} 👥`,
+        label: `${m.rewardSocial} 👥 Social`,
         color: '#f87171',
         bg: 'rgba(239, 68, 68, 0.18)',
         border: 'rgba(239, 68, 68, 0.45)'
+      });
+    } else if (hasJobTag(job, 'frontline_service') && m.id === 'work_work') {
+      badges.push({
+        key: 'social_grind',
+        label: '0 👥 Social (Grind)',
+        color: '#94a3b8',
+        bg: 'rgba(148, 163, 184, 0.12)',
+        border: 'rgba(148, 163, 184, 0.25)'
       });
     }
 
