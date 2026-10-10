@@ -96,7 +96,7 @@ export function gameReducer(
       res = handleSocializeAction(nextPlayer, action, context);
       break;
     case 'change_clothes':
-      res = handleChangeClothesAction(nextPlayer, action);
+      res = handleChangeClothesAction(nextPlayer, action, context);
       break;
     case 'move':
       res = handleMoveAction(nextPlayer, action, context, replayContext);

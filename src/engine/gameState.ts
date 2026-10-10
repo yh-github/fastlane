@@ -509,6 +509,28 @@ export interface TurnFlags {
   curioNoveltyGranted?: boolean;
   /** Number of fast food meals purchased this turn (first is free of time, subsequent cost 1 hour) */
   fastFoodMealsThisTurn?: number;
+  /** Clothes worn or utilized during the turn */
+  clothesWornThisTurn?: Array<'casual' | 'dress' | 'business'>;
+}
+
+/**
+ * Flags a clothing tier as having been worn or utilized during the current turn.
+ */
+export function markClothesWorn(
+  player: PlayerState,
+  clothes?: 'casual' | 'dress' | 'business' | 'none'
+): PlayerState {
+  if (!clothes || clothes === 'none') return player;
+  if (!player.turnFlags || player.turnFlags.clothesWornThisTurn === undefined) return player;
+  const currentWorn = player.turnFlags.clothesWornThisTurn;
+  if (currentWorn.includes(clothes)) return player;
+  return {
+    ...player,
+    turnFlags: {
+      ...player.turnFlags,
+      clothesWornThisTurn: [...currentWorn, clothes]
+    }
+  };
 }
 
 export interface PlayerConfig {

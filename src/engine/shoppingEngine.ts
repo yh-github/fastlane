@@ -73,11 +73,16 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
   } else if (item.id === 'dress_clothes') {
     happinessBonus = item.store === 'qt_clothing' ? 1 : (item.store === 'z_mart' ? 0 : (item.happinessBonus || 0));
   } else if (item.id === 'lottery_tickets') {
-    if (!player.turnFlags?.lotteryHappinessGranted) {
-      newTurnFlags.lotteryHappinessGranted = true;
-    } else {
+    if (rules?.usePhysicalMentalConditions) {
       happinessBonus = 0;
-      mentalBonus = 0;
+      mentalBonus = item.mentalBonus ?? 1;
+    } else {
+      if (!player.turnFlags?.lotteryHappinessGranted) {
+        newTurnFlags.lotteryHappinessGranted = true;
+      } else {
+        happinessBonus = 0;
+        mentalBonus = 0;
+      }
     }
   } else if (item.subcategory === 'fast_food') {
     const mealCount = (newTurnFlags.fastFoodMealsThisTurn || 0) + 1;

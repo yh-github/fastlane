@@ -9,6 +9,7 @@ import {
   calcMaxExperience,
   calcRaiseThreshold
 } from '../engine/statMath';
+import { getClothesSwitchingRule } from '../engine/rules';
 
 interface InventoryModalProps {
   player: PlayerState;
@@ -197,27 +198,47 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.clothes', 'Clothes')}</h3>
           <div style={{ marginBottom: '10px' }}>
             <label style={{ marginInlineEnd: '10px' }}>{t('inventoryModal.wearing', 'Wearing:')}</label>
-            {rules?.autoEquipBestClothes ? (
-              <span style={{ fontWeight: 'bold' }}>
-                {inventory.selectedClothes && inventory.selectedClothes !== 'none'
-                  ? t(`inventoryModal.${inventory.selectedClothes}`, { defaultValue: inventory.selectedClothes.charAt(0).toUpperCase() + inventory.selectedClothes.slice(1) })
-                  : t('inventoryModal.none', 'None')}
-                <span style={{ fontSize: '11px', color: '#aaa', marginInlineStart: '8px', fontWeight: 'normal' }}>
-                  ({t('inventoryModal.autoEquipped', { defaultValue: 'Auto-equipped' })})
+            {(() => {
+              const clothesRule = getClothesSwitchingRule(rules);
+              const wornLabel = inventory.selectedClothes && inventory.selectedClothes !== 'none'
+                ? t(`inventoryModal.${inventory.selectedClothes}`, { defaultValue: inventory.selectedClothes.charAt(0).toUpperCase() + inventory.selectedClothes.slice(1) })
+                : t('inventoryModal.none', 'None');
+
+              if (clothesRule === 'anywhere') {
+                return (
+                  <select 
+                    value={inventory.selectedClothes || 'none'} 
+                    onChange={(e) => onAction && onAction({ type: 'change_clothes', clothes: e.target.value })}
+                    style={{ padding: '4px' }}
+                  >
+                    <option value="none">{t('inventoryModal.none', 'None')}</option>
+                    <option value="casual" disabled={inventory.casualClothesWeeks <= 0}>{t('inventoryModal.casual', 'Casual')}</option>
+                    <option value="dress" disabled={inventory.dressClothesWeeks <= 0}>{t('inventoryModal.dress', 'Dress')}</option>
+                    <option value="business" disabled={inventory.businessClothesWeeks <= 0}>{t('inventoryModal.business', 'Business')}</option>
+                  </select>
+                );
+              }
+
+              let hintText = '';
+              if (clothesRule === 'autoBest') {
+                hintText = t('inventoryModal.autoEquipped', { defaultValue: 'Auto-equipped' });
+              } else if (clothesRule === 'homeOrStore') {
+                hintText = t('inventoryModal.changeHomeOrStore', { defaultValue: 'Change at Home or Clothing Stores' });
+              } else if (clothesRule === 'homeOnly') {
+                hintText = t('inventoryModal.changeHomeOnly', { defaultValue: 'Change at Home only' });
+              }
+
+              return (
+                <span style={{ fontWeight: 'bold' }}>
+                  {wornLabel}
+                  {hintText && (
+                    <span style={{ fontSize: '11px', color: '#aaa', marginInlineStart: '8px', fontWeight: 'normal' }}>
+                      ({hintText})
+                    </span>
+                  )}
                 </span>
-              </span>
-            ) : (
-              <select 
-                value={inventory.selectedClothes || 'none'} 
-                onChange={(e) => onAction && onAction({ type: 'change_clothes', clothes: e.target.value })}
-                style={{ padding: '4px' }}
-              >
-                <option value="none">{t('inventoryModal.none', 'None')}</option>
-                <option value="casual" disabled={inventory.casualClothesWeeks <= 0}>{t('inventoryModal.casual', 'Casual')}</option>
-                <option value="dress" disabled={inventory.dressClothesWeeks <= 0}>{t('inventoryModal.dress', 'Dress')}</option>
-                <option value="business" disabled={inventory.businessClothesWeeks <= 0}>{t('inventoryModal.business', 'Business')}</option>
-              </select>
-            )}
+              );
+            })()}
           </div>
           <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
             <li>{t('inventoryModal.casualClothes', 'Casual Clothes')}: {inventory.casualClothesWeeks > 0 ? t('inventoryModal.weeksLeft', `${inventory.casualClothesWeeks} weeks left`, { count: inventory.casualClothesWeeks }) : t('inventoryModal.none')}</li>

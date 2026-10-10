@@ -50,7 +50,10 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       firedLocationsThisTurn: [],
       workMistakesThisTurn: 0,
       jobsRejectedThisTurn: [],
-      fastFoodMealsThisTurn: 0
+      fastFoodMealsThisTurn: 0,
+      ...(state.rules.clothingDecaysAll === false || (state.rules.clothesSwitching && state.rules.clothesSwitching !== 'autoBest')
+        ? { clothesWornThisTurn: [] }
+        : {})
     };
     p.turnEvents = [];
     p.newspaperHeadline = null;

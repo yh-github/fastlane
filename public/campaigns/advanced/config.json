@@ -38,6 +38,7 @@
     "advancedHomeGUI": true,
     "advancedWorkGUI": true,
     "autoEquipBestClothes": false,
+    "clothesSwitching": "homeOrStore",
     "showJobTags": true,
     "pawnRummageBins": true,
     "predictiveNewspaperStockTips": true,

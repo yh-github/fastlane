@@ -303,6 +303,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       color: string;
       bg: string;
       border: string;
+      wrap?: boolean;
     }
     const badges: ModifierBadge[] = [];
 
@@ -409,11 +410,10 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     if ((isOvertimeShift || isHeavyGrindShift) && m.id === 'work_work') {
       badges.push({
         key: 'max_phys_drop',
-        label: '-0.5 Max Physical Condition',
+        label: '-0.5 MAX 💪',
         color: '#ef4444',
         bg: 'rgba(239, 68, 68, 0.22)',
-        border: '#ef4444',
-        wrap: true
+        border: '#ef4444'
       });
     }
 

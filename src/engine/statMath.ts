@@ -259,6 +259,7 @@ export interface EmployabilityCalculatorOptions {
   isManagement?: boolean;
   physicalCondition?: number;
   isLookFit?: boolean;
+  attireModifier?: number;
 }
 
 /**
@@ -271,7 +272,8 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
     dependability, experience, degreesCount, jobReqDep, jobReqExp,
     innovationsAtLocation = 0, initiativesAtLocation = 0, mistakesAtLocation = 0, social = 0, economicIndex = 0,
     isProbation = false, isFrontline = false, skillTech = 0, isTechnical = false,
-    skillMgmt = 0, isManagement = false, physicalCondition = 50, isLookFit = false
+    skillMgmt = 0, isManagement = false, physicalCondition = 50, isLookFit = false,
+    attireModifier = 0
   } = opts;
 
   const base = 45;
@@ -307,7 +309,7 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
     }
   }
 
-  const rawScore = base + marginBonus + degreesBonus + innovBonus + initiativeBonus + socialBonus + techBonus + mgmtBonus + lookFitBonus + econModifier - mistakesAtLocation;
+  const rawScore = base + marginBonus + degreesBonus + innovBonus + initiativeBonus + socialBonus + techBonus + mgmtBonus + lookFitBonus + econModifier + attireModifier - mistakesAtLocation;
   const clampedScore = Math.max(1, Math.min(99, rawScore));
   return isProbation ? Math.floor(clampedScore / 2) : clampedScore;
 }

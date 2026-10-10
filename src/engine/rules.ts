@@ -5,6 +5,8 @@
  * economic multipliers, time rules, and their fallback defaults.
  */
 
+export type ClothesSwitchingRule = 'autoBest' | 'anywhere' | 'homeOrStore' | 'homeOnly';
+
 export interface GameRules {
   /**
    * If true, warns at 1 month rent debt and evicts from apartment at >2 months debt.
@@ -29,6 +31,15 @@ export interface GameRules {
    * Classic Floppy/CD-ROM: true. QoL Improved: true.
    */
   autoEquipBestClothes: boolean;
+
+  /**
+   * Policy for switching clothes/wardrobe:
+   * - 'autoBest': Automatically equips best available clothes (classic behavior).
+   * - 'anywhere': Can change clothes anywhere via inventory.
+   * - 'homeOrStore': Can change clothes only when at Home or inside clothing stores.
+   * - 'homeOnly': Can change clothes only when at Home.
+   */
+  clothesSwitching?: ClothesSwitchingRule;
 
   /**
    * Uses the original stock market price calculations.
@@ -482,6 +493,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   fluctuatingRent: false,
   clothingDecaysAll: true,
   autoEquipBestClothes: true,
+  clothesSwitching: 'autoBest',
   classicStockMarket: true,
   allowPartialHours: true,
   enableRelaxationDoctor: true,
@@ -534,6 +546,15 @@ export const DEFAULT_GAME_RULES: GameRules = {
 };
 
 /**
+ * Resolves the active clothes switching rule with fallback to autoBest or anywhere.
+ */
+export function getClothesSwitchingRule(rules?: GameRules): ClothesSwitchingRule {
+  if (rules?.clothesSwitching) return rules.clothesSwitching;
+  if (rules?.autoEquipBestClothes ?? true) return 'autoBest';
+  return 'anywhere';
+}
+
+/**
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
@@ -556,6 +577,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   fluctuatingRent: 'Rent rates adjust dynamically with economic index changes',
   clothingDecaysAll: 'All clothing in inventory decays by 1 week every turn (vs only worn clothing)',
   autoEquipBestClothes: 'Automatically equips best available clothes for current job',
+  clothesSwitching: 'Policy for wardrobe changes (autoBest, anywhere, homeOrStore, homeOnly)',
   classicStockMarket: 'Uses original stock market price calculations',
   allowPartialHours: 'Allows studying/working for remaining hours even if less than full session',
   enableRelaxationDoctor: 'Triggers mandatory doctor visit if relaxation drops below threshold',

@@ -79,17 +79,19 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
   const isShop = mode === 'shop';
   const itemId = durable?.id || item?.id || '';
+  const isWardrobe = itemId === 'wardrobe';
+  const isSpareParts = itemId === 'spare_parts';
+  const isCurio = itemId === 'knick_knack' || itemId === 'knick_knacks';
   const itemDef = item || campaign?.items.find(i => i.id === itemId);
-  const itemName = itemDef ? getItemDisplayName(itemDef.id, itemDef, t, !!rules?.usePhysicalMentalConditions) : itemId;
+  const itemName = isWardrobe
+    ? t('homeApartment.wardrobe', { defaultValue: 'Wardrobe Closet' })
+    : (itemDef ? getItemDisplayName(itemDef.id, itemDef, t, !!rules?.usePhysicalMentalConditions) : itemId);
   const isBook = Boolean(durable?.isBook || itemDef?.category === 'book');
 
   const currentAppliance = isBook 
     ? undefined 
     : (player?.inventory.appliances.find(a => a.id === itemId && a.isBroken) || player?.inventory.appliances.find(a => a.id === itemId));
   const isBroken = Boolean(currentAppliance ? currentAppliance.isBroken : durable?.applianceData?.isBroken);
-
-  const isSpareParts = itemId === 'spare_parts';
-  const isCurio = itemId === 'knick_knack' || itemId === 'knick_knacks';
 
   const knickKnacks = player?.inventory.knickKnacks || 0;
   const uninspectedKnickKnacks = player?.inventory.uninspectedKnickKnacks || 0;
@@ -116,11 +118,15 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   let isOwned = false;
   let ownershipDetailText = '';
 
-  if (itemDef?.category === 'book' || durable?.isBook) {
+  if (isWardrobe) {
+    isOwned = true;
+    ownedCount = 1;
+    ownershipDetailText = `Wearing: ${player?.inventory.selectedClothes || 'none'}`;
+  } else if (itemDef?.category === 'book' || durable?.isBook) {
     isOwned = Boolean(player?.inventory.books.includes(itemId));
     ownedCount = isOwned ? 1 : 0;
     ownershipDetailText = isOwned ? `✓ ${t('storeFront.owned', { defaultValue: 'Owned' })}` : t('storeFront.notOwned', { defaultValue: 'Not Owned' });
-  } else if (itemDef?.category === 'appliance' || (!itemDef && !durable?.isBook && DEFAULT_APPLIANCE_SPACE[itemId] && !isSpareParts && !isCurio)) {
+  } else if (itemDef?.category === 'appliance' || (!itemDef && !durable?.isBook && DEFAULT_APPLIANCE_SPACE[itemId] && !isSpareParts && !isCurio && !isWardrobe)) {
     const ownedList = player?.inventory.appliances.filter(a => a.id === itemId) || [];
     ownedCount = ownedList.length;
     isOwned = ownedCount > 0;
@@ -184,50 +190,21 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     player?.inventory?.books?.includes('atlas')
   );
 
-  const conditionLabel = !isOwned 
-    ? '🏬 Not Owned' 
-    : (isSpareParts 
-        ? `⚙️ Spare Parts (${player?.inventory.spareParts || 0})` 
-        : (isCurio 
-            ? `🏺 Curio Collection (${totalCurios})` 
-            : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable?.isBook || itemDef?.category === 'book' ? '📚 Book' : '📦 Used')))));
-
-  const conditionDetail = !isOwned
-    ? (durable?.isBook || itemDef?.category === 'book'
-        ? 'Available at Socket City / Z-Mart. Reference literature for your apartment.'
-        : (isCurio
-            ? 'Available at Pawn Shop rummage bins. Furnish your home shelves to gain aesthetic charm!'
-            : (isSpareParts
-                ? 'Available at Pawn Shop rummage bins. Keep a box handy to boost your DIY appliance repair odds!'
-                : (itemDef?.category === 'clothes'
-                    ? 'Wardrobe apparel required for career interviews and work shifts.'
-                    : (itemDef?.category === 'food'
-                        ? 'Consumable nutrition to maintain vitality and prevent hunger.'
-                        : 'Available at Socket City (Brand New) or Z-Mart & Pawn Shop (Used). Furnish your home to gain its perks!')))))
-    : (isSpareParts
-        ? (rules?.spaceCapping 
-            ? `Assorted repair materials from pawn shop rummage bins. Occupies 2 space per box. You currently own ${player?.inventory.spareParts || 0} box(es).`
-            : `Assorted repair materials from pawn shop rummage bins. You currently own ${player?.inventory.spareParts || 0} box(es).`)
-        : (isCurio
-            ? (rules?.spaceCapping
-                ? (uninspectedKnickKnacks > 0 && knickKnacks > 0
-                    ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently own ${totalCurios} curio(s) (${knickKnacks} on display, ${uninspectedKnickKnacks} pending weekend appraisal).`
-                    : (uninspectedKnickKnacks > 0
-                        ? `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently own ${uninspectedKnickKnacks} curio(s) pending weekend appraisal.`
-                        : `Curios & knick-knacks salvaged from pawn shop bins. Occupies 2 space each. You currently have ${knickKnacks} on display.`))
-                : (uninspectedKnickKnacks > 0 && knickKnacks > 0
-                    ? `Curios & knick-knacks salvaged from pawn shop bins. You currently own ${totalCurios} curio(s) (${knickKnacks} on display, ${uninspectedKnickKnacks} pending weekend appraisal).`
-                    : (uninspectedKnickKnacks > 0
-                        ? `Curios & knick-knacks salvaged from pawn shop bins. You currently own ${uninspectedKnickKnacks} curio(s) pending weekend appraisal.`
-                        : `Curios & knick-knacks salvaged from pawn shop bins. You currently have ${knickKnacks} on display.`)))
-            : (isBroken
-                ? 'Broken down and in need of maintenance. Choose a repair option below to restore functionality, or throw it out.'
-                : (isNew 
-                    ? 'Purchased brand new from Socket City. Clean and pristine working condition.'
-                    : (durable?.isBook || itemDef?.category === 'book' ? 'Reference book in your apartment collection.' : 'Second-hand from Z-Mart or Pawn Shop. Fully functional and broken-in.')))));
+  const conditionLabel = isWardrobe
+    ? `👔 Wardrobe (${player?.inventory.selectedClothes || 'none'})`
+    : (!isOwned 
+        ? '🏬 Not Owned' 
+        : (isSpareParts 
+            ? `⚙️ Spare Parts (${player?.inventory.spareParts || 0})` 
+            : (isCurio 
+                ? `🏺 Curio Collection (${totalCurios})` 
+                : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable?.isBook || itemDef?.category === 'book' ? '📚 Book' : '📦 Used'))))));
 
   // Gameplay descriptions for durables:
   const getGameplayDescription = (id: string, isBook?: boolean): string => {
+    if (id === 'wardrobe') {
+      return 'Your personal apartment wardrobe. Select which outfit to wear for work and activities, or review clothes durability.';
+    }
     if (isBook) {
       const isRefBook = id === 'dictionary' || id === 'encyclopedia' || id === 'atlas';
       const synergyText = 'Part of the 3-book Reference Library (Dictionary, Encyclopedia, Atlas): owning all 3 grants a bonus study credit (-1 lesson required) for university degrees.';
@@ -479,17 +456,19 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
   const categoryLabel = isBook
     ? '📚 BOOK'
-    : (itemDef?.category === 'clothes'
-        ? '👔 CLOTHING'
-        : (itemDef?.category === 'food'
-            ? '🥗 FOOD'
-            : (itemDef?.category === 'ticket'
-                ? '🎟️ TICKET'
-                : (isSpareParts
-                    ? '⚙️ SPARE PARTS'
-                    : (isCurio
-                        ? '🏺 CURIO'
-                        : '🛋️ APPLIANCE')))));
+    : (isWardrobe
+        ? '👔 WARDROBE'
+        : (itemDef?.category === 'clothes'
+            ? '👔 CLOTHING'
+            : (itemDef?.category === 'food'
+                ? '🥗 FOOD'
+                : (itemDef?.category === 'ticket'
+                    ? '🎟️ TICKET'
+                    : (isSpareParts
+                        ? '⚙️ SPARE PARTS'
+                        : (isCurio
+                            ? '🏺 CURIO'
+                            : '🛋️ APPLIANCE'))))));
 
   return createPortal(
     <div 
@@ -614,19 +593,23 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
             flexShrink: 0
           }}
         >
-          <img 
-            src={`/assets/raw_images/${itemId}.png`} 
-            alt={itemName}
-            style={{ 
-              maxWidth: '40px', 
-              maxHeight: '40px', 
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.7))'
-            }}
-            onError={(e) => { 
-              (e.target as HTMLImageElement).style.display = 'none'; 
-            }}
-          />
+          {isWardrobe ? (
+            <span style={{ fontSize: '1.8rem' }}>👔</span>
+          ) : (
+            <img 
+              src={`/assets/raw_images/${itemId}.png`} 
+              alt={itemName}
+              style={{ 
+                maxWidth: '40px', 
+                maxHeight: '40px', 
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.7))'
+              }}
+              onError={(e) => { 
+                (e.target as HTMLImageElement).style.display = 'none'; 
+              }}
+            />
+          )}
         </div>
 
         {/* Title */}
@@ -1055,6 +1038,54 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
               No curios in inventory. Find them rummaging at the Pawn Shop.
             </div>
           )
+        ) : isWardrobe ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textAlign: 'center', marginBottom: '2px' }}>
+              Select outfit to wear:
+            </div>
+            {([
+              { id: 'none', label: t('inventoryModal.none', { defaultValue: 'None (Street Casual)' }), weeks: Infinity, icon: '👕' },
+              { id: 'casual', label: t('inventoryModal.casual', { defaultValue: 'Casual Clothes' }), weeks: player?.inventory.casualClothesWeeks || 0, icon: '👖' },
+              { id: 'dress', label: t('inventoryModal.dress', { defaultValue: 'Dress Clothes' }), weeks: player?.inventory.dressClothesWeeks || 0, icon: '👔' },
+              { id: 'business', label: t('inventoryModal.business', { defaultValue: 'Business Suit' }), weeks: player?.inventory.businessClothesWeeks || 0, icon: '💼' }
+            ] as const).map(outfit => {
+              const isSelected = (player?.inventory.selectedClothes || 'none') === outfit.id;
+              const isAvailable = outfit.id === 'none' || outfit.weeks > 0;
+              return (
+                <button
+                  key={outfit.id}
+                  data-testid={`btn-wardrobe-${outfit.id}`}
+                  disabled={!isAvailable}
+                  onClick={() => {
+                    onAction?.({ type: 'change_clothes', clothes: outfit.id });
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.3)' : 'rgba(255, 255, 255, 0.05)',
+                    border: isSelected ? '1.5px solid #3b82f6' : '1px solid rgba(255, 255, 255, 0.1)',
+                    color: isAvailable ? '#fff' : '#64748b',
+                    cursor: isAvailable ? 'pointer' : 'not-allowed',
+                    fontSize: '0.82rem',
+                    fontWeight: isSelected ? 'bold' : 'normal',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{outfit.icon}</span>
+                    <span>{outfit.label}</span>
+                    {isSelected && <span style={{ color: '#3b82f6', fontSize: '0.75rem', fontWeight: 'bold' }}>✓ Wearing</span>}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: isAvailable ? '#94a3b8' : '#64748b' }}>
+                    {outfit.id === 'none' ? 'Always' : `${outfit.weeks} wks`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         ) : null}
 
         {/* Close Button */}

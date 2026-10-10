@@ -4,7 +4,7 @@
  * Implements the 60 hours/turn economy.
  */
 
-import { type GameState, type PlayerState } from './gameState';
+import { type GameState, type PlayerState, markClothesWorn } from './gameState';
 
 // ─── Time Management Functions ──────────────────────────────────
 
@@ -41,10 +41,16 @@ export function spendHours(player: PlayerState, cost: number): PlayerState {
 
   const newHours = Math.max(0, player.hoursRemaining - cost);
 
-  return {
+  let updated: PlayerState = {
     ...player,
     hoursRemaining: newHours,
   };
+
+  if (player.inventory?.selectedClothes && player.inventory.selectedClothes !== 'none') {
+    updated = markClothesWorn(updated, player.inventory.selectedClothes);
+  }
+
+  return updated;
 }
 
 /**

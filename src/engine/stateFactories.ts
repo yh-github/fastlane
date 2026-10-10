@@ -122,7 +122,10 @@ export function createPlayerState(
       }
       return finalGoals;
     })(),
-    turnFlags: createDefaultTurnFlags(),
+    turnFlags: {
+      ...createDefaultTurnFlags(),
+      ...(config.gameRules && (config.gameRules.clothingDecaysAll === false || (config.gameRules.clothesSwitching && config.gameRules.clothesSwitching !== 'autoBest')) ? { clothesWornThisTurn: [] } : {})
+    },
     turnEvents: [],
     newspaperHeadline: null,
     activeEffects: {},
