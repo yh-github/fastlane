@@ -351,6 +351,77 @@ describe('Turn Processor', () => {
       expect(nextState.players[0].currentHousingId).toBe('low_cost');
       expect(nextState.players[0].turnEvents.some(e => e.key.includes('evicted'))).toBe(true);
     });
+
+    it('raises rent during economic surge on lease renewal if fluctuatingRent is enabled and standing < 40', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 3;
+      state.rules.fluctuatingRent = true;
+      state.economicIndex = 30; // baseRent 325 * 1.30 = 422
+      state.players[0].currentHousingId = 'low_cost';
+      state.players[0].currentRentPrice = 325;
+      state.players[0].rentPaidUntilWeek = 4; // Lease expires next week (state.turn + 1)
+      state.players[0].rentExtensionsAsked = 2; // -10 standing -> standing 25 (< 40)
+
+      const nextState = processTurnStart(state, mockCampaign);
+      const player = nextState.players[0];
+
+      expect(player.currentRentPrice).toBeGreaterThan(325);
+      expect(player.turnEvents.some(e => e.key === 'events.rent.raised')).toBe(true);
+      const dueEvent = player.turnEvents.find(e => e.key === 'events.rent.due');
+      expect(dueEvent).toBeDefined();
+      expect(dueEvent?.params?.amount).toBe(player.currentRentPrice);
+    });
+
+    it('protects good tenants (standing >= 40) from rent increases during economic surge under fluctuatingRent', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 3;
+      state.rules.fluctuatingRent = true;
+      state.economicIndex = 30;
+      state.players[0].currentHousingId = 'low_cost';
+      state.players[0].currentRentPrice = 325;
+      state.players[0].rentPaidUntilWeek = 4;
+      state.players[0].rentPaymentsMade = 5; // +15 standing -> standing 50 (>= 40)
+
+      const nextState = processTurnStart(state, mockCampaign);
+      const player = nextState.players[0];
+
+      expect(player.currentRentPrice).toBe(325);
+      expect(player.turnEvents.some(e => e.key === 'events.rent.raised')).toBe(false);
+    });
+
+    it('does NOT raise rent if fluctuatingRent is false, even with poor standing and economic surge', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 3;
+      state.rules.fluctuatingRent = false;
+      state.economicIndex = 50;
+      state.players[0].currentHousingId = 'low_cost';
+      state.players[0].currentRentPrice = 325;
+      state.players[0].rentPaidUntilWeek = 4;
+      state.players[0].rentExtensionsAsked = 3; // very low standing
+
+      const nextState = processTurnStart(state, mockCampaign);
+      const player = nextState.players[0];
+
+      expect(player.currentRentPrice).toBe(325);
+      expect(player.turnEvents.some(e => e.key === 'events.rent.raised')).toBe(false);
+    });
+
+    it('does NOT review or raise rent if tenant paid in advance (lease not expiring)', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 3;
+      state.rules.fluctuatingRent = true;
+      state.economicIndex = 50;
+      state.players[0].currentHousingId = 'low_cost';
+      state.players[0].currentRentPrice = 325;
+      state.players[0].rentPaidUntilWeek = 8; // Paid a month ahead! (8 > 3 + 1)
+      state.players[0].rentExtensionsAsked = 3;
+
+      const nextState = processTurnStart(state, mockCampaign);
+      const player = nextState.players[0];
+
+      expect(player.currentRentPrice).toBe(325);
+      expect(player.turnEvents.some(e => e.key === 'events.rent.raised')).toBe(false);
+    });
   });
 
   describe('Market Crash', () => {

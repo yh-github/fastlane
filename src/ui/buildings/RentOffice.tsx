@@ -28,14 +28,14 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   ]).filter(h => h.id !== 'street');
 
   const isAdvanced = !!rules?.usePhysicalMentalConditions;
+  const isFluctuating = !!rules?.fluctuatingRent;
+  const showLandlordStanding = isAdvanced || isFluctuating;
   const marketRent = currentHousing
     ? calcEconomyPrice(currentHousing.baseRent, economicIndex)
     : player.currentRentPrice;
-  const landlordStandingInfo = isAdvanced ? calcLandlordStanding(player, rules, turn) : null;
+  const landlordStandingInfo = showLandlordStanding ? calcLandlordStanding(player, rules, turn) : null;
 
-  const rentAdvanceCost = rules?.fluctuatingRent && currentHousing && !isAdvanced
-    ? calcEconomyPrice(currentHousing.baseRent, economicIndex)
-    : player.currentRentPrice;
+  const rentAdvanceCost = player.currentRentPrice;
 
   const handleInitiateMove = (housingId: string, baseCost: number, newAptName: string) => {
     const movingFee = rules?.trackMess ? calcMovingFee(player.mess || 0, player.inventory.appliances.length, campaign?.config.economyRules) : 0;
@@ -88,7 +88,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
               </div>
             )}
 
-            {isAdvanced && currentHousing && (
+            {showLandlordStanding && currentHousing && (
               <div 
                 data-testid="landlord-standing-panel"
                 style={{ padding: '10px', border: '1px solid #55a', borderRadius: '6px', background: 'rgba(20, 20, 45, 0.4)' }}

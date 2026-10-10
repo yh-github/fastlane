@@ -20,6 +20,7 @@
     "enableRelaxationDoctor": false,
     "useHomeTimeRobbery": true,
     "usePhysicalMentalConditions": true,
+    "fluctuatingRent": true,
     "useSkills": true,
     "turnStartAtHome": true,
     "trackMess": true,
