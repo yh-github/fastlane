@@ -74,6 +74,12 @@ export default function App() {
     const firstTurnState = processTurnStart({ ...baseInitialState, phase: 'playing' }, campaign);
     setInitialGameState(firstTurnState);
     setGameSessionKey(prev => prev + 1);
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
     setScreen('playing');
   };
 

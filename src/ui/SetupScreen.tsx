@@ -114,7 +114,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ winConditions, onConfi
                     type="text" 
                     value={player.name} 
                     onChange={(e) => updatePlayer(index, 'name', e.target.value)}
-                    style={{ width: '100%', boxSizing: 'border-box' }}
+                    style={{ width: '100%', boxSizing: 'border-box', fontSize: '16px' }}
                   />
                 </div>
 

@@ -38,6 +38,13 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 
   const isFlanking = layoutMode === 'flanking';
   const [modalRect, setModalRect] = useState<DOMRect | null>(null);
+  const [isArmed, setIsArmed] = useState(false);
+
+  useEffect(() => {
+    if (!isFlanking) return;
+    const timer = setTimeout(() => setIsArmed(true), 200);
+    return () => clearTimeout(timer);
+  }, [isFlanking]);
 
   useEffect(() => {
     if (!isFlanking || typeof window === 'undefined') return;
@@ -705,6 +712,8 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                   scrollbarWidth: 'thin',
                   zIndex: 1000,
                   boxSizing: 'border-box',
+                  visibility: modalRect ? 'visible' : 'hidden',
+                  pointerEvents: (modalRect && isArmed) ? 'auto' : 'none',
                   ...(modalRect ? {
                     right: `${Math.max(6, window.innerWidth - modalRect.left + 6)}px`,
                     left: 'auto'
@@ -750,6 +759,8 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
                   scrollbarWidth: 'thin',
                   zIndex: 1000,
                   boxSizing: 'border-box',
+                  visibility: modalRect ? 'visible' : 'hidden',
+                  pointerEvents: (modalRect && isArmed) ? 'auto' : 'none',
                   ...(modalRect ? {
                     left: `${Math.min(window.innerWidth - 124 - 6, modalRect.right + 6)}px`,
                     right: 'auto'

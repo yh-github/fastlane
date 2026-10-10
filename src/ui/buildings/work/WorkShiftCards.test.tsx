@@ -210,4 +210,32 @@ describe('WorkShiftCards Component', () => {
     expect(screen.getByText('0 👥 Social (Grind)')).toBeInTheDocument();
     expect(screen.getByText('-1 👥 Social')).toBeInTheDocument(); // Coast still penalizes
   });
+
+  it('hides and disables pointer events on flanking wings when unmeasured', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+    });
+
+    const modalRef = {
+      current: null
+    };
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="flanking"
+        modalRef={modalRef}
+      />
+    );
+
+    const leftWing = document.querySelector('.work-wing-left') as HTMLElement;
+    expect(leftWing).toBeInTheDocument();
+    expect(leftWing.style.visibility).toBe('hidden');
+    expect(leftWing.style.pointerEvents).toBe('none');
+  });
 });

@@ -30,6 +30,7 @@ interface BuildingModalProps {
   gameSeed?: number;
   onAction: (actionPayload: any) => Promise<any>;
   onClose: () => void;
+  isReentry?: boolean;
 }
 
 export function BuildingModal({
@@ -43,7 +44,8 @@ export function BuildingModal({
   economySimulation,
   gameSeed,
   onAction,
-  onClose
+  onClose,
+  isReentry = false
 }: BuildingModalProps) {
   const { t } = useTranslation();
   const [clerkMessage, setClerkMessage] = useState<string>('');
@@ -254,6 +256,10 @@ export function BuildingModal({
   // Initialize greeting on entering building
   useEffect(() => {
     if (!building) return;
+    if (isReentry) {
+      setClerkMessage('');
+      return;
+    }
     const isWeek4 = turn % 4 === 0;
     const rentDue = player?.rentPaidUntilWeek !== undefined && player.rentPaidUntilWeek <= turn;
     const hasJobAtRentOffice = !!(player?.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
@@ -270,7 +276,7 @@ export function BuildingModal({
       setClerkMessage('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentBuildingId]);
+  }, [currentBuildingId, isReentry]);
 
   // Handle global click to close speech bubble
   useEffect(() => {

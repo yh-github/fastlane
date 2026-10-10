@@ -24,6 +24,14 @@ html, body {
   touch-action: manipulation;
 }
 
+input, select, textarea {
+  font-size: 16px;
+}
+
+button, input, select, textarea, canvas, a, .action-panel__btn {
+  touch-action: manipulation;
+}
+
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
