@@ -1254,6 +1254,61 @@ describe('BuildingInteractions', () => {
       valuePerItem: expect.any(Number)
     });
   });
+
+  it('PawnShop renders full rummage trigger in standard mode and compact trigger in compact mode', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 100,
+      hoursRemaining: 5,
+      inventory: { appliances: [], pawnedItems: [] }
+    } as any;
+    const mockOnAction = vi.fn();
+    const mockRules = { pawnRummageBins: true, helpfulUI: true } as any;
+
+    // 1. Standard mode
+    const { unmount } = render(
+      <PawnShop
+        player={mockPlayer}
+        onAction={mockOnAction}
+        economicIndex={0}
+        rules={mockRules}
+        compact={false}
+      />
+    );
+
+    const fullTrigger = screen.getByTestId('pawn-rummage-trigger');
+    expect(fullTrigger).toBeInTheDocument();
+    expect(fullTrigger).not.toHaveClass('pawn-rummage-trigger--compact');
+    expect(screen.getByText(/Dig through unsorted bins of discarded goods/i)).toBeInTheDocument();
+
+    const fullRummageBtn = screen.getByTestId('rummage-pawn-shop-btn');
+    expect(fullRummageBtn).toHaveTextContent(/Rummage Through Bins/i);
+    fireEvent.click(fullRummageBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'rummage_pawn_shop' });
+
+    unmount();
+
+    // 2. Compact mode
+    render(
+      <PawnShop
+        player={mockPlayer}
+        onAction={mockOnAction}
+        economicIndex={0}
+        rules={mockRules}
+        compact={true}
+      />
+    );
+
+    const compactTrigger = screen.getByTestId('pawn-rummage-trigger');
+    expect(compactTrigger).toBeInTheDocument();
+    expect(compactTrigger).toHaveClass('pawn-rummage-trigger--compact');
+    expect(screen.getByText(/Dig for curios, parts & bargains/i)).toBeInTheDocument();
+
+    const compactRummageBtn = screen.getByTestId('rummage-pawn-shop-btn');
+    expect(compactRummageBtn).toHaveTextContent(/Rummage \(1 hr\)/i);
+    fireEvent.click(compactRummageBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'rummage_pawn_shop' });
+  });
 });
 
 
