@@ -16,14 +16,30 @@ export function processHousingAndLoanPhase(
   if (state.rules.fluctuatingRent && p.currentHousingId !== 'street') {
     // When the lease is expiring / due for renewal (1 week prior to expiry or when overdue):
     if (p.rentPaidUntilWeek <= state.turn + 1) {
-      const marketRent = calcEconomyPrice(baseRent, state.economicIndex);
-      if (marketRent > p.currentRentPrice) {
-        const { standing } = calcLandlordStanding(p, state.rules, state.turn);
-        if (standing < 40) {
-          const oldRent = p.currentRentPrice;
-          p.currentRentPrice = marketRent;
-          p.rentPaymentsAtCurrentRate = 0;
-          p.turnEvents.push({ key: 'events.rent.raised', params: { newRent: marketRent, oldRent } });
+      const paymentsAtRate = p.rentPaymentsAtCurrentRate || 0;
+      // Only eligible for a raise after at least 2 payments completed at the current rate
+      if (paymentsAtRate >= 2) {
+        const marketRent = calcEconomyPrice(baseRent, state.economicIndex);
+        const diff = marketRent - p.currentRentPrice;
+        // Require at least $10 surge difference to trigger a renegotiation increase
+        if (diff >= 10) {
+          const { standing } = calcLandlordStanding(p, state.rules, state.turn);
+          let newRent = p.currentRentPrice;
+
+          if (standing < 15) {
+            // Full market surge hike for very poor standing (< 15)
+            newRent = marketRent;
+          } else if (standing < 30) {
+            // Partial compromise surge hike (50% of difference) for poor standing (< 30)
+            newRent = p.currentRentPrice + Math.round(diff * 0.5);
+          }
+
+          if (newRent > p.currentRentPrice) {
+            const oldRent = p.currentRentPrice;
+            p.currentRentPrice = newRent;
+            p.rentPaymentsAtCurrentRate = 0;
+            p.turnEvents.push({ key: 'events.rent.raised', params: { newRent, oldRent } });
+          }
         }
       }
     }
