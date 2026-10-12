@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import type { PlayerState, StatModification, GameRules } from '../engine/gameState';
 import { useTranslation } from 'react-i18next';
 import { WeekendCardView } from './WeekendCardView';
-import { MessIcon } from './icons/MessIcon';
 import { StatModifierPills } from './StatModifierPills';
 
 interface WeekendScreenProps {
