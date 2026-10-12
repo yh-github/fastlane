@@ -8,7 +8,7 @@ export type PawnableItem = OwnedAppliance | { id: string; purchasePrice: number;
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
   | { type: 'work'; jobId: string; mode?: 'look_busy' | 'work_work' | 'face_time' | 'innovate' | 'show_initiative' }
-  | { type: 'buy'; itemId: string }
+  | { type: 'buy'; itemId: string; quantity?: number }
   | { type: 'buy_education_credit'; baseFee?: number }
   | { type: 'enroll'; degreeId: string }
   | { type: 'study'; degreeId: string }

@@ -188,11 +188,53 @@ export function handleRenegotiateRentAction(
   // Costs 1 hour
   nextPlayer.hoursRemaining -= 1;
 
+  const curMental = nextPlayer.mentalCondition ?? 50;
+  const curSocial = nextPlayer.social ?? 20;
+
   // Costs 2 Mental Condition upfront
   nextPlayer = applyMentalChange(nextPlayer, -2, context.campaign?.config?.statRules);
 
   // Asking lowers standing whether you get it or not
   nextPlayer.rentRenegotiationsAsked = (nextPlayer.rentRenegotiationsAsked || 0) + 1;
+
+  // Mistake checks for renegotiating rent
+  let mentalMistake = false;
+  let socialMistake = false;
+
+  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
+  const actionCount = nextPlayer.rentRenegotiationsAsked;
+
+  if (context.rules.usePhysicalMentalConditions && curMental < 10) {
+    const mentalChance = (10 - curMental) * 0.025;
+    mentalMistake = resolveDecision(
+      replayContext,
+      `renegotiate_mental_mistake_${nextPlayer.id}_${actionCount}`,
+      () => context.rng.next() < mentalChance
+    );
+  }
+
+  if (context.rules.trackSocial && curSocial < 10) {
+    const socialChance = (10 - curSocial) * 0.0125;
+    socialMistake = resolveDecision(
+      replayContext,
+      `renegotiate_social_mistake_${nextPlayer.id}_${actionCount}`,
+      () => context.rng.next() < socialChance
+    );
+  }
+
+  if (mentalMistake || socialMistake) {
+    if (mentalMistake) {
+      nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) - 1;
+      nextPlayer.mentalConditionMax = Math.max(1, (nextPlayer.mentalConditionMax ?? 50) - 1);
+      nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax, nextPlayer.mentalCondition ?? 50);
+    }
+    if (socialMistake) {
+      nextPlayer.social = Math.max(1, (nextPlayer.social || 1) - 1);
+    }
+    const mistakeTypes = [mentalMistake ? 'Mental' : null, socialMistake ? 'Social' : null].filter(Boolean).join(' & ');
+    actionLog = { key: 'action.rent.renegotiateMistake', params: { type: mistakeTypes, currentRent } };
+    return { nextPlayer, actionLog };
+  }
 
   const { standing } = calcLandlordStanding(nextPlayer, context.rules, context.turn);
 

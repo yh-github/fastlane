@@ -46,7 +46,8 @@
     "reenterCurrentLocationCost": false,
     "economicUpsideBonus": true,
     "dynamicSkillCaps": true,
-    "wageScaledEmployability": true
+    "wageScaledEmployability": true,
+    "advancedStores": true
   },
   "statRules": {
     "baseSkillCap": 2.5,

@@ -75,4 +75,42 @@ describe("RentOffice", () => {
     expect(screen.getByText(/Come back during Week 8/i)).toBeInTheDocument();
   });
 
+  it('renders renegotiate button with standard icons (⏳ 1h, -2 🧠)', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 1000,
+      hoursRemaining: 10,
+      currentHousingId: 'low_cost',
+      currentRentPrice: 350,
+      rentPaidUntilWeek: 4,
+      rentPaymentsAtCurrentRate: 1,
+      rentPaymentsMade: 2,
+      rentDebt: 0,
+      turnFlags: { rentPaidThisTurn: false },
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const mockCampaign = {
+      housing: [
+        { id: 'low_cost', name: 'Low Cost Housing', baseRent: 300, isRobberyImmune: false }
+      ],
+      jobs: [],
+      config: { timeRules: { moveApartmentCost: 4 } }
+    } as any;
+
+    render(
+      <RentOffice
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ usePhysicalMentalConditions: true } as any}
+        turn={4}
+        economicIndex={-20}
+      />
+    );
+
+    const renegotiateBtn = screen.getByTestId('btn-renegotiate-rent');
+    expect(renegotiateBtn).toBeInTheDocument();
+    expect(renegotiateBtn.textContent).toContain('(⏳ 1h, -2 🧠)');
+  });
 });

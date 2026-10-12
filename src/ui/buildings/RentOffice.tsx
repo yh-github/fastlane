@@ -152,7 +152,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                               opacity: isDisabled ? 0.6 : 1
                             }}
                           >
-                            {t('rentOffice.renegotiateBtn')} (⏳ 1 hr, -2 {t('stats.mental', { defaultValue: 'Mental' })})
+                            {t('rentOffice.renegotiateBtn')} (⏳ 1h, -2 🧠)
                           </button>
                           {mustPayFirst ? (
                             <div style={{ fontSize: '10px', color: '#e74c3c', marginTop: '4px' }}>

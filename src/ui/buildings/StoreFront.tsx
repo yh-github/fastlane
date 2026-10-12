@@ -74,7 +74,12 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
           padding: '2px 4px' 
         }}
       >
-        {availableItems.map(item => {
+        {availableItems.filter(item => {
+          if (rules?.advancedStores && (item.id === 'food_2weeks' || item.id === 'food_4weeks')) {
+            return false;
+          }
+          return true;
+        }).map(item => {
           const adjustedPrice = calcItemPrice(item, economicIndex);
           
           let alreadyOwned = false;
@@ -111,6 +116,8 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
             }
           };
 
+          const isBulkGrocery = Boolean(rules?.advancedStores && item.id === 'food_1week');
+
           return (
             <div
               key={item.id}
@@ -145,7 +152,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
                   <span style={{ fontSize: '13px', fontWeight: '500', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {getItemDisplayName(item.id, item, t, !!rules?.usePhysicalMentalConditions)}
+                    {getItemDisplayName(item.id, item, t, !!rules?.usePhysicalMentalConditions, !!rules?.advancedStores)}
                   </span>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center', fontSize: '11px' }}>
                     {rules?.helpfulUI && alreadyOwned && (
@@ -158,7 +165,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                 </div>
               </div>
               <span style={{ fontSize: '13px', fontWeight: 'bold', color: canAfford ? 'var(--accent-cyan)' : '#f87171', marginLeft: '6px', flexShrink: 0 }}>
-                ${adjustedPrice}
+                ${adjustedPrice}{isBulkGrocery ? '+' : ''}
               </span>
             </div>
           );
