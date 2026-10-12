@@ -3,7 +3,7 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import type { ReplayContext } from '../replayTypes';
 import { requireConfig } from '../rules';
 import { applyForJob, workShift } from '../jobEngine';
-import { calcUsedSpace, calcHousingSpaceCap } from '../statMath';
+import { calcUsedSpace, calcHousingSpaceCap, calcMaxSkillCap } from '../statMath';
 
 export function handleApplyAction(
   player: PlayerState,
@@ -27,7 +27,9 @@ export function handleApplyAction(
       context.turn,
       replayContext,
       context.campaign.config.statRules,
-      context.economicIndex
+      context.economicIndex,
+      context.campaign.minBaseWage,
+      context.campaign.maxBaseWage
     );
     nextPlayer = result.updated;
     actionLog = result.message;
@@ -54,7 +56,8 @@ export function handleWorkAction(
       context.campaign.config.statRules,
       action.mode || 'work_work',
       context.rng,
-      replayContext
+      replayContext,
+      context.campaign.education
     );
     nextPlayer = result.updated;
     if (result.messages && result.messages.length > 0) {
@@ -119,7 +122,8 @@ export function handleResolveAppraisalDilemmaAction(
     }
   } else if (choice.type === 'skill') {
     if (choice.techSkillAmount) {
-      nextPlayer.skillTech = Math.min(10, Math.round(((nextPlayer.skillTech || 0) + choice.techSkillAmount) * 100) / 100);
+      const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, context.campaign.config.statRules, context.rules);
+      nextPlayer.skillTech = Math.min(maxTech, Math.round(((nextPlayer.skillTech || 0) + choice.techSkillAmount) * 100) / 100);
     }
     if (choice.mentalAmount) {
       nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, (nextPlayer.mentalCondition ?? 50) + choice.mentalAmount);

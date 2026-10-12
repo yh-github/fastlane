@@ -47,7 +47,9 @@ export function applyForJob(
   turn: number = 1,
   replay?: ReplayContext,
   statRules?: StatRules,
-  economicIndex: number = 0
+  economicIndex: number = 0,
+  minCampaignWage?: number,
+  maxCampaignWage?: number
 ): JobApplicationResult {
   const msg = (key: string, defaultMsg: string, vars: Record<string, string | number> = {}) => {
     let m = messages[key] || defaultMsg;
@@ -113,7 +115,8 @@ export function applyForJob(
     const useSkills = rules?.useSkills !== undefined ? rules.useSkills : isAdvanced;
     const isTechnical = useSkills && hasJobTag(job, 'technical');
     const isManagement = useSkills && isManagementJob(job);
-    const effectiveDep = updated.dependability + (isTechnical ? (updated.skillTech || 0) : 0) + (isManagement ? (updated.skillMgmt || 0) : 0);
+    const decoupleSkills = !!rules?.wageScaledEmployability;
+    const effectiveDep = updated.dependability + (decoupleSkills ? 0 : ((isTechnical ? (updated.skillTech || 0) : 0) + (isManagement ? (updated.skillMgmt || 0) : 0)));
     const reqDep = job.requirements.dependability + (effectiveRaises * 5);
     if (effectiveDep >= reqDep) {
       if (newWage > player.currentWage) {
@@ -140,8 +143,9 @@ export function applyForJob(
 
   const techSkill = isTechnical ? (updated.skillTech || 0) : 0;
   const mgmtSkill = isManagement ? (updated.skillMgmt || 0) : 0;
-  const effectiveExp = updated.experience + techSkill + mgmtSkill;
-  const effectiveDep = updated.dependability + techSkill + mgmtSkill;
+  const decoupleSkills = !!rules?.wageScaledEmployability;
+  const effectiveExp = updated.experience + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
+  const effectiveDep = updated.dependability + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
 
   const shouldMask = rules?.maskEarlyJobRejections !== undefined 
     ? (rules.maskEarlyJobRejections && turn <= 4)
@@ -174,14 +178,14 @@ export function applyForJob(
   if (isExecutive) {
     const reqMgmt = Math.floor(job.requirements.experience / 10);
     if ((updated.skillMgmt || 0) < reqMgmt) {
-      rejectionReasons.push(msg('job_apply_missing_mgmt_skill', `Requires at least ${reqMgmt}.00 Management Skill (Skill_Mgmt). Gain experience in Middle Management.`, { reqMgmt }));
+      rejectionReasons.push(msg('job_apply_missing_mgmt_skill', `Requires at least ${reqMgmt.toFixed(2)} Management Skill (Skill_Mgmt). Gain experience in Middle Management.`, { reqMgmt: reqMgmt.toFixed(2) }));
     }
   }
 
   const reqTech = (job.requirements as any)?.techSkill ?? (job.requirements as any)?.skillTech;
   if (isTechnical && reqTech !== undefined) {
     if ((updated.skillTech || 0) < reqTech) {
-      rejectionReasons.push(msg('job_apply_missing_tech_skill', `Requires at least ${reqTech}.00 Technical Skill (Skill_Tech).`, { reqTech }));
+      rejectionReasons.push(msg('job_apply_missing_tech_skill', `Requires at least ${Number(reqTech).toFixed(2)} Technical Skill (Skill_Tech).`, { reqTech: Number(reqTech).toFixed(2) }));
     }
   }
 
@@ -294,7 +298,13 @@ export function applyForJob(
       isManagement: isManagement,
       physicalCondition: updated.physicalCondition ?? 50,
       isLookFit: isLookFit,
-      attireModifier
+      attireModifier,
+      jobBaseWage: job.baseWage,
+      minCampaignWage,
+      maxCampaignWage,
+      jobTags: job.tags,
+      rules: rules as GameRules,
+      statRules
     });
     if (updated.noOpeningBonus) {
       employability = Math.min(99, employability + updated.noOpeningBonus);

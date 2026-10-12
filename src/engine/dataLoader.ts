@@ -4,14 +4,15 @@
  * Single gateway between raw campaign data files and the engine's typed models.
  */
 
-import type {
-  GameRules,
-  EventRules,
-  StatRules,
-  WinCondition,
-  TimeRules,
-  EconomyRules,
-  MapRules,
+import {
+  type GameRules,
+  type EventRules,
+  type StatRules,
+  type WinCondition,
+  type TimeRules,
+  type EconomyRules,
+  type MapRules,
+  requireConfig,
 } from './rules';
 import defaultCampaigns from '../campaigns/campaigns.json';
 
@@ -57,6 +58,8 @@ export interface JobRequirements {
   dependability: number;
   degrees: string[];
   uniform: 'casual' | 'dress' | 'business';
+  techSkill?: number;
+  mgmtSkill?: number;
 }
 
 export interface JobDef {
@@ -103,6 +106,7 @@ export interface ItemDef {
 export interface EducationDef {
   id: string;
   name: string;
+  tags?: string[];
   prerequisites: string[];
   baseTuitionFee: number;
   lessonsRequired: number;
@@ -111,6 +115,8 @@ export interface EducationDef {
     dependability: number;
     maxDepBoost: number;
     maxExpBoost: number;
+    maxTechBoost?: number;
+    maxMgmtBoost?: number;
   };
 }
 
@@ -216,6 +222,8 @@ export interface CampaignBundle {
   weekends: WeekendDef;
   synergies: SynergyDef[];
   hasCannedFood?: boolean;
+  minBaseWage?: number;
+  maxBaseWage?: number;
 }
 
 // ─── Loader Functions ───────────────────────────────────────────
@@ -313,6 +321,23 @@ function validateConfig(config: unknown): asserts config is CampaignConfig {
   if (typeof sr.startingHappiness !== 'number') throw new Error('config.json: missing "statRules.startingHappiness"');
   if (typeof sr.startingExperience !== 'number') throw new Error('config.json: missing "statRules.startingExperience"');
   if (typeof sr.startingDependability !== 'number') throw new Error('config.json: missing "statRules.startingDependability"');
+
+  const gr = c.gameRules as Record<string, unknown> | undefined;
+  if (gr?.dynamicSkillCaps) {
+    requireConfig(sr.baseSkillCap, 'statRules.baseSkillCap');
+    requireConfig(sr.maxSkillCap, 'statRules.maxSkillCap');
+  }
+  if (gr?.wageScaledEmployability) {
+    requireConfig(sr.baseEmployability, 'statRules.baseEmployability');
+    requireConfig(sr.employabilityMarginRate, 'statRules.employabilityMarginRate');
+    requireConfig(sr.employabilityMaxMarginBonus, 'statRules.employabilityMaxMarginBonus');
+    requireConfig(sr.maxWageCompetitionPenalty, 'statRules.maxWageCompetitionPenalty');
+    requireConfig(sr.employabilitySkillBonusRate, 'statRules.employabilitySkillBonusRate');
+    requireConfig(sr.generalSocialEmployabilityRate, 'statRules.generalSocialEmployabilityRate');
+    requireConfig(sr.socialEmployabilityBaseline, 'statRules.socialEmployabilityBaseline');
+    requireConfig(sr.frontlineSocialEmployabilityRate, 'statRules.frontlineSocialEmployabilityRate');
+    requireConfig(sr.tagCompetitionModifiers, 'statRules.tagCompetitionModifiers');
+  }
 }
 
 function validateBundle(bundle: CampaignBundle) {
@@ -446,6 +471,12 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
 
   finalBundle.hasCannedFood = finalBundle.config.hasCannedFood ??
     (finalBundle.items || []).some(item => item.subcategory === 'canned');
+
+  const bundleJobs = finalBundle.jobs || [];
+  if (bundleJobs.length > 0) {
+    finalBundle.minBaseWage = Math.min(...bundleJobs.map(j => j.baseWage));
+    finalBundle.maxBaseWage = Math.max(...bundleJobs.map(j => j.baseWage));
+  }
 
   validateBundle(finalBundle);
 

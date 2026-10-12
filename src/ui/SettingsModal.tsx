@@ -103,6 +103,32 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     });
   };
 
+  const handleToggleDynamicSkillCaps = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          dynamicSkillCaps: !prev.rules.dynamicSkillCaps
+        }
+      };
+    });
+  };
+
+  const handleToggleWageScaledEmployability = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          wageScaledEmployability: !prev.rules.wageScaledEmployability
+        }
+      };
+    });
+  };
+
   const handleTogglePixelatedSprites = () => {
     setGameState(prev => {
       if (!prev) return prev;
@@ -417,6 +443,52 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                     <input 
                       type="checkbox" 
                       checked={!!gameState.rules.useSkills} 
+                      readOnly
+                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
+                    />
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable"
+                  onClick={handleToggleDynamicSkillCaps}
+                  data-testid="setting-dynamic-skill-caps"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.dynamicSkillCaps', { defaultValue: 'Dynamic Skill Caps' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.dynamicSkillCaps
+                          ? t('settings.dynamicSkillCapsOn', { defaultValue: 'Skill caps scale with completed degrees up to 10.0 (ON)' })
+                          : t('settings.dynamicSkillCapsOff', { defaultValue: 'Flat 10.0 skill caps (OFF)' })}
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={!!gameState.rules.dynamicSkillCaps} 
+                      readOnly
+                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
+                    />
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable"
+                  onClick={handleToggleWageScaledEmployability}
+                  data-testid="setting-wage-scaled-employability"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.wageScaledEmployability', { defaultValue: 'Wage-Scaled Employability' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {gameState.rules.wageScaledEmployability
+                          ? t('settings.wageScaledEmployabilityOn', { defaultValue: 'Normalized wage competition, qualification margin, and tag modifiers (ON)' })
+                          : t('settings.wageScaledEmployabilityOff', { defaultValue: 'Classic employability formula (OFF)' })}
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      checked={!!gameState.rules.wageScaledEmployability} 
                       readOnly
                       style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
                     />

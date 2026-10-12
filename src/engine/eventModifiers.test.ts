@@ -45,8 +45,8 @@ describe('eventModifiers', () => {
       };
       const mods = getEventModifications(event, { usePhysicalMentalConditions: false });
       expect(mods).toEqual([
-        { stat: 'mess', diff: 3 },
-        { stat: 'happiness', diff: -2 },
+        { stat: 'mess', diff: 3, label: 'Food Spoilage' },
+        { stat: 'happiness', diff: -2, label: 'Food Spoilage' },
       ]);
     });
 
@@ -57,8 +57,8 @@ describe('eventModifiers', () => {
       };
       const mods = getEventModifications(event, { usePhysicalMentalConditions: true });
       expect(mods).toEqual([
-        { stat: 'mess', diff: 2 },
-        { stat: 'mental', diff: -2 },
+        { stat: 'mess', diff: 2, label: 'Food Spoilage' },
+        { stat: 'mental', diff: -2, label: 'Food Spoilage' },
       ]);
     });
 
@@ -69,8 +69,8 @@ describe('eventModifiers', () => {
       };
       const mods = getEventModifications(event, { usePhysicalMentalConditions: true });
       expect(mods).toEqual([
-        { stat: 'mess', diff: 1 },
-        { stat: 'mental', diff: -1 },
+        { stat: 'mess', diff: 1, label: 'Food Spoilage' },
+        { stat: 'mental', diff: -1, label: 'Food Spoilage' },
       ]);
     });
 
@@ -81,9 +81,9 @@ describe('eventModifiers', () => {
       };
       const mods = getEventModifications(event, { usePhysicalMentalConditions: true });
       expect(mods).toEqual([
-        { stat: 'money', diff: 75 },
-        { stat: 'mental', diff: 3 },
-        { stat: 'skillTech', diff: 0.25 },
+        { stat: 'money', diff: 75, label: 'Computer Gig' },
+        { stat: 'mental', diff: 3, label: 'Computer Gig' },
+        { stat: 'skillTech', diff: 0.25, label: 'Computer Gig' },
       ]);
     });
 
@@ -94,8 +94,8 @@ describe('eventModifiers', () => {
       };
       const mods = getEventModifications(event, { usePhysicalMentalConditions: false });
       expect(mods).toEqual([
-        { stat: 'money', diff: 50 },
-        { stat: 'happiness', diff: 3 },
+        { stat: 'money', diff: 50, label: 'Computer Gig' },
+        { stat: 'happiness', diff: 3, label: 'Computer Gig' },
       ]);
     });
 
@@ -105,8 +105,8 @@ describe('eventModifiers', () => {
         params: { amount: 250 },
       };
       expect(getEventModifications(smallWin)).toEqual([
-        { stat: 'money', diff: 250 },
-        { stat: 'happiness', diff: 5 },
+        { stat: 'money', diff: 250, label: 'Lottery Win' },
+        { stat: 'happiness', diff: 5, label: 'Lottery Win' },
       ]);
 
       const bigWin: GameEvent = {
@@ -114,18 +114,18 @@ describe('eventModifiers', () => {
         params: { amount: 5000 },
       };
       expect(getEventModifications(bigWin, { usePhysicalMentalConditions: true })).toEqual([
-        { stat: 'money', diff: 5000 },
-        { stat: 'mental', diff: 10 },
+        { stat: 'money', diff: 5000, label: 'Lottery Win' },
+        { stat: 'mental', diff: 10, label: 'Lottery Win' },
       ]);
     });
 
     it('infers apartment robbery modifiers', () => {
       const event: GameEvent = { key: 'events.robbery.apartment' };
       expect(getEventModifications(event, { usePhysicalMentalConditions: true })).toEqual([
-        { stat: 'mental', diff: -4 },
+        { stat: 'mental', diff: -4, label: 'Apartment Robbery' },
       ]);
       expect(getEventModifications(event, { usePhysicalMentalConditions: false })).toEqual([
-        { stat: 'happiness', diff: -4 },
+        { stat: 'happiness', diff: -4, label: 'Apartment Robbery' },
       ]);
     });
 
@@ -135,25 +135,25 @@ describe('eventModifiers', () => {
         params: { repairCost: 80 },
       };
       expect(getEventModifications(brokeWithRepair, { usePhysicalMentalConditions: false })).toEqual([
-        { stat: 'money', diff: -80 },
-        { stat: 'happiness', diff: -1 },
+        { stat: 'money', diff: -80, label: 'Appliance Repair' },
+        { stat: 'happiness', diff: -1, label: 'Appliance Breakdown' },
       ]);
 
       const brokeNeedRepair: GameEvent = {
         key: 'events.applianceBrokeNeedRepair',
       };
       expect(getEventModifications(brokeNeedRepair, { usePhysicalMentalConditions: true })).toEqual([
-        { stat: 'mental', diff: -1 },
+        { stat: 'mental', diff: -1, label: 'Appliance Breakdown' },
       ]);
     });
 
     it('infers starvation modifiers', () => {
       const event: GameEvent = { key: 'events.starvation' };
       expect(getEventModifications(event, { usePhysicalMentalConditions: true })).toEqual([
-        { stat: 'mental', diff: -10 },
+        { stat: 'mental', diff: -10, label: 'Starvation' },
       ]);
       expect(getEventModifications(event, { usePhysicalMentalConditions: false })).toEqual([
-        { stat: 'happiness', diff: -2 },
+        { stat: 'happiness', diff: -2, label: 'Starvation' },
       ]);
     });
 
@@ -163,51 +163,51 @@ describe('eventModifiers', () => {
         params: { cost: 150 },
       };
       expect(getEventModifications(event, { usePhysicalMentalConditions: true })).toEqual([
-        { stat: 'money', diff: -150 },
-        { stat: 'physical', diff: 4 },
+        { stat: 'money', diff: -150, label: 'Doctor Visit' },
+        { stat: 'physical', diff: 4, label: 'Doctor Treatment' },
       ]);
       expect(getEventModifications(event, { usePhysicalMentalConditions: false })).toEqual([
-        { stat: 'money', diff: -150 },
-        { stat: 'happiness', diff: -4 },
+        { stat: 'money', diff: -150, label: 'Doctor Visit' },
+        { stat: 'happiness', diff: -4, label: 'Doctor Visit' },
       ]);
     });
 
     it('infers burnout and low spirits bounce back', () => {
       expect(getEventModifications({ key: 'events.burnout', params: { amount: 5 } })).toEqual([
-        { stat: 'mental', diff: 5 },
+        { stat: 'mental', diff: 5, label: 'Burnout Recovery' },
       ]);
       expect(getEventModifications({ key: 'events.lowSpiritsBounceBack', params: { amount: 3 } })).toEqual([
-        { stat: 'mental', diff: 3 },
+        { stat: 'mental', diff: 3, label: 'Burnout Recovery' },
       ]);
     });
 
     it('infers curio modifiers (decor, mental, cash)', () => {
       expect(getEventModifications({ key: 'events.curioDecor', params: { lifestyle: 2 } })).toEqual([
-        { stat: 'lifestyle', diff: 2 },
+        { stat: 'lifestyle', diff: 2, label: 'Curio Decor' },
       ]);
       expect(getEventModifications({ key: 'events.curioMental', params: { mental: 4 } })).toEqual([
-        { stat: 'mental', diff: 4 },
+        { stat: 'mental', diff: 4, label: 'Curio Reflection' },
       ]);
       expect(getEventModifications({ key: 'events.curioCash', params: { amount: 120 } })).toEqual([
-        { stat: 'money', diff: 120 },
+        { stat: 'money', diff: 120, label: 'Curio Fortune' },
       ]);
     });
 
     it('infers donation modifiers', () => {
       expect(getEventModifications({ key: 'events.donation', params: { amount: 50 } })).toEqual([
-        { stat: 'money', diff: 50 },
+        { stat: 'money', diff: 50, label: 'Community Charity' },
       ]);
     });
 
     it('infers rent charged modifiers', () => {
       expect(getEventModifications({ key: 'events.rent.charged', params: { amount: 400 } })).toEqual([
-        { stat: 'rentDebt', diff: 400 },
+        { stat: 'rentDebt', diff: 400, label: 'Unpaid Rent' },
       ]);
     });
 
     it('infers market crash bank savings lost modifiers', () => {
       expect(getEventModifications({ key: 'events.marketCrash.bankSavingsLost', params: { amount: 200 } })).toEqual([
-        { stat: 'money', diff: -200 },
+        { stat: 'money', diff: -200, label: 'Market Crash' },
       ]);
     });
 

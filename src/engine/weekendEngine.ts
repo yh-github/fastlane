@@ -324,23 +324,56 @@ export function generateWeekendChoices(
   return { player: updatedPlayer, cards: drawnCards };
 }
 
-function mergeWeekendModifications(
+export function mergeWeekendModifications(
   cardMods: StatModification[],
   maintenanceMods?: StatModification[]
 ): StatModification[] {
-  if (!maintenanceMods || maintenanceMods.length === 0) {
-    return cardMods;
-  }
-  const merged = cardMods.map(m => ({ ...m }));
-  for (const mMod of maintenanceMods) {
-    const existing = merged.find(m => m.stat === mMod.stat);
-    if (existing) {
-      existing.diff += mMod.diff;
+  const statMap = new Map<string, {
+    diff: number;
+    breakdown: { source: string; diff: number }[];
+    label?: string;
+  }>();
+
+  for (const c of cardMods) {
+    if (c.diff === 0) continue;
+    const sourceLabel = c.label || 'Weekend Activity';
+    const entry = statMap.get(c.stat) || { diff: 0, breakdown: [] };
+    entry.diff += c.diff;
+    if (c.breakdown && c.breakdown.length > 0) {
+      entry.breakdown.push(...c.breakdown);
     } else {
-      merged.push({ ...mMod });
+      entry.breakdown.push({ source: sourceLabel, diff: c.diff });
+    }
+    statMap.set(c.stat, entry);
+  }
+
+  if (maintenanceMods) {
+    for (const m of maintenanceMods) {
+      if (m.diff === 0) continue;
+      const sourceLabel = m.label || 'Weekly Maintenance';
+      const entry = statMap.get(m.stat) || { diff: 0, breakdown: [] };
+      entry.diff += m.diff;
+      if (m.breakdown && m.breakdown.length > 0) {
+        entry.breakdown.push(...m.breakdown);
+      } else {
+        entry.breakdown.push({ source: sourceLabel, diff: m.diff });
+      }
+      statMap.set(m.stat, entry);
     }
   }
-  return merged.filter(m => m.diff !== 0);
+
+  const result: StatModification[] = [];
+  for (const [stat, data] of statMap.entries()) {
+    if (data.diff !== 0) {
+      result.push({
+        stat,
+        diff: data.diff,
+        ...(data.breakdown.length === 1 ? { label: data.breakdown[0].source } : {}),
+        ...(data.breakdown.length > 1 ? { breakdown: data.breakdown } : {})
+      });
+    }
+  }
+  return result;
 }
 
 function maintainDecksOnChoice(
@@ -399,6 +432,30 @@ export function resolveWeekendChoice(
   }
 
   const modifications: StatModification[] = [];
+  const savedMaintenanceMods = updatedPlayer.maintenanceModifications
+    ? [...updatedPlayer.maintenanceModifications]
+    : undefined;
+
+  function finalizeWeekendResult(
+    cost: number = 0,
+    happinessBonus?: number,
+    souvenir?: { id: string; name: string; icon: string }
+  ): PlayerState {
+    const finalMods = mergeWeekendModifications(modifications, savedMaintenanceMods);
+    updatedPlayer.maintenanceModifications = undefined;
+    updatedPlayer.weekendResult = {
+      event: { key: card.eventKey },
+      cost,
+      ...(happinessBonus !== undefined ? { happinessBonus } : {}),
+      modifications: finalMods,
+      activityModifications: modifications.length > 0 ? [...modifications] : undefined,
+      maintenanceModifications: savedMaintenanceMods && savedMaintenanceMods.length > 0 ? savedMaintenanceMods : undefined,
+      chosenCard: card,
+      ...(souvenir ? { souvenir } : {})
+    };
+    updatedPlayer.offeredWeekendCards = undefined;
+    return updatedPlayer;
+  }
 
   // 1. Handle Broke / Free Stay Home
   if (card.id === 'broke_stay_home' || card.id === 'free_stay_home') {
@@ -430,19 +487,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-
-    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
-    updatedPlayer.maintenanceModifications = undefined;
-
-    updatedPlayer.weekendResult = {
-      event: { key: card.eventKey },
-      cost: 0,
-      happinessBonus: mentalBonus,
-      modifications: finalMods,
-      chosenCard: card
-    };
-    updatedPlayer.offeredWeekendCards = undefined;
-    return updatedPlayer;
+    return finalizeWeekendResult(0, mentalBonus);
   }
 
   // 2. Handle Broke / Free Deep Clean
@@ -472,18 +517,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-
-    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
-    updatedPlayer.maintenanceModifications = undefined;
-
-    updatedPlayer.weekendResult = {
-      event: { key: card.eventKey },
-      cost: 0,
-      modifications: finalMods,
-      chosenCard: card
-    };
-    updatedPlayer.offeredWeekendCards = undefined;
-    return updatedPlayer;
+    return finalizeWeekendResult(0);
   }
 
   // 3. Handle Free Park Walk
@@ -507,18 +541,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-
-    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
-    updatedPlayer.maintenanceModifications = undefined;
-
-    updatedPlayer.weekendResult = {
-      event: { key: card.eventKey },
-      cost: 0,
-      modifications: finalMods,
-      chosenCard: card
-    };
-    updatedPlayer.offeredWeekendCards = undefined;
-    return updatedPlayer;
+    return finalizeWeekendResult(0);
   }
 
   // 4. Handle Free Porch Chat
@@ -541,18 +564,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-
-    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
-    updatedPlayer.maintenanceModifications = undefined;
-
-    updatedPlayer.weekendResult = {
-      event: { key: card.eventKey },
-      cost: 0,
-      modifications: finalMods,
-      chosenCard: card
-    };
-    updatedPlayer.offeredWeekendCards = undefined;
-    return updatedPlayer;
+    return finalizeWeekendResult(0);
   }
 
   // 5. Handle Ticket Resale
@@ -568,18 +580,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-
-    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
-    updatedPlayer.maintenanceModifications = undefined;
-
-    updatedPlayer.weekendResult = {
-      event: { key: card.eventKey },
-      cost: 0,
-      modifications: finalMods,
-      chosenCard: card
-    };
-    updatedPlayer.offeredWeekendCards = undefined;
-    return updatedPlayer;
+    return finalizeWeekendResult(0);
   }
 
   // 6. Handle Ticket Event Attendance
@@ -653,20 +654,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-
-    const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
-    updatedPlayer.maintenanceModifications = undefined;
-
-    updatedPlayer.weekendResult = {
-      event: { key: card.eventKey },
-      cost,
-      happinessBonus: mentalBonus,
-      modifications: finalMods,
-      chosenCard: card,
-      ...(acquiredSouvenir ? { souvenir: acquiredSouvenir } : {})
-    };
-    updatedPlayer.offeredWeekendCards = undefined;
-    return updatedPlayer;
+    return finalizeWeekendResult(cost, mentalBonus, acquiredSouvenir);
   }
 
   // 7. Regular / Paid Cards
@@ -750,19 +738,7 @@ export function resolveWeekendChoice(
     updatedPlayer.mentalCondition = Math.min(maxMental, updatedPlayer.mentalCondition ?? maxMental);
   }
 
-  const finalMods = mergeWeekendModifications(modifications, updatedPlayer.maintenanceModifications);
-  updatedPlayer.maintenanceModifications = undefined;
-
-  updatedPlayer.weekendResult = {
-    event: { key: card.eventKey },
-    cost,
-    happinessBonus,
-    modifications: finalMods,
-    chosenCard: card
-  };
-
-  updatedPlayer.offeredWeekendCards = undefined;
-  return updatedPlayer;
+  return finalizeWeekendResult(cost, happinessBonus);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

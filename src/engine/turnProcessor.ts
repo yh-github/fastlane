@@ -16,6 +16,7 @@ import {
   processMaintenanceAndDecayPhase,
   processPostHealthMaintenance
 } from './turn';
+import { mergeWeekendModifications } from './weekendEngine';
 
 export function processTurnStart(state: GameState, campaign: CampaignBundle, replay?: ReplayContext): GameState {
   const rng = new Random(state.rngState);
@@ -143,46 +144,58 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       if (state.rules.usePhysicalMentalConditions) {
         const mentalDiff = (p.mentalCondition ?? 0) - preTurnStats.mentalCondition;
         if (mentalDiff !== 0) {
-          maintenanceMods.push({ stat: 'mental', diff: mentalDiff });
+          maintenanceMods.push({ stat: 'mental', diff: mentalDiff, label: 'Weekly Upkeep' });
         }
         const physDiff = (p.physicalCondition ?? 0) - preTurnStats.physicalCondition;
         if (physDiff !== 0) {
-          maintenanceMods.push({ stat: 'physical', diff: physDiff });
+          maintenanceMods.push({ stat: 'physical', diff: physDiff, label: 'Weekly Upkeep' });
         }
         if (state.rules.trackSocial) {
           const socDiff = (p.social ?? 0) - preTurnStats.social;
           if (socDiff !== 0) {
-            maintenanceMods.push({ stat: 'social', diff: socDiff });
+            maintenanceMods.push({ stat: 'social', diff: socDiff, label: 'Weekly Upkeep' });
           }
         }
       } else {
         const hapDiff = p.happiness - preTurnStats.happiness;
         if (hapDiff !== 0) {
-          maintenanceMods.push({ stat: 'happiness', diff: hapDiff });
+          maintenanceMods.push({ stat: 'happiness', diff: hapDiff, label: 'Weekly Upkeep' });
         }
         const relaxDiff = p.relaxation - preTurnStats.relaxation;
         if (relaxDiff !== 0) {
-          maintenanceMods.push({ stat: 'relaxation', diff: relaxDiff });
+          maintenanceMods.push({ stat: 'relaxation', diff: relaxDiff, label: 'Weekly Upkeep' });
         }
       }
       const depDiff = p.dependability - preTurnStats.dependability;
       if (depDiff !== 0) {
-        maintenanceMods.push({ stat: 'dependability', diff: depDiff });
+        maintenanceMods.push({ stat: 'dependability', diff: depDiff, label: 'Dependability Decay' });
       }
       if (state.rules.trackMess) {
         const messDiff = (p.mess ?? 0) - preTurnStats.mess;
         if (messDiff !== 0) {
-          maintenanceMods.push({ stat: 'mess', diff: messDiff });
+          maintenanceMods.push({ stat: 'mess', diff: messDiff, label: 'Apartment Mess' });
         }
       }
 
       if (p.weekendResult) {
-        const mods: StatModification[] = [];
+        const activityMods: StatModification[] = [];
         if (p.weekendResult.cost > 0) {
-          mods.push({ stat: 'money', diff: -p.weekendResult.cost });
+          activityMods.push({ stat: 'money', diff: -p.weekendResult.cost, label: 'Weekend Cost' });
         }
-        mods.push(...maintenanceMods);
-        p.weekendResult.modifications = mods;
+        if (p.weekendResult.happinessBonus) {
+          if (p.mentalCondition !== undefined) {
+            activityMods.push({ stat: 'mental', diff: p.weekendResult.happinessBonus, label: 'Weekend Activity' });
+          } else {
+            activityMods.push({ stat: 'happiness', diff: p.weekendResult.happinessBonus, label: 'Weekend Activity' });
+          }
+        }
+        if (activityMods.length > 0) {
+          p.weekendResult.activityModifications = activityMods;
+        }
+        if (maintenanceMods.length > 0) {
+          p.weekendResult.maintenanceModifications = maintenanceMods;
+        }
+        p.weekendResult.modifications = mergeWeekendModifications(activityMods, maintenanceMods);
       } else if (p.offeredWeekendCards) {
         p.maintenanceModifications = maintenanceMods;
       }

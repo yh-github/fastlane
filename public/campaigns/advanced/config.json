@@ -44,9 +44,25 @@
     "pawnRummageBins": true,
     "predictiveNewspaperStockTips": true,
     "reenterCurrentLocationCost": false,
-    "economicUpsideBonus": true
+    "economicUpsideBonus": true,
+    "dynamicSkillCaps": true,
+    "wageScaledEmployability": true
   },
   "statRules": {
+    "baseSkillCap": 2.5,
+    "maxSkillCap": 10.0,
+    "baseEmployability": 45,
+    "employabilityMarginRate": 1.0,
+    "employabilityMaxMarginBonus": 40,
+    "maxWageCompetitionPenalty": 20,
+    "employabilitySkillBonusRate": 2.0,
+    "generalSocialEmployabilityRate": 0.1,
+    "socialEmployabilityBaseline": 20,
+    "frontlineSocialEmployabilityRate": 0.5,
+    "tagCompetitionModifiers": {
+      "heavy_physical": -5,
+      "high_downtime": 5
+    },
     "startingSocial": 20,
     "startingPhysicalCondition": 50,
     "startingMentalCondition": 51,

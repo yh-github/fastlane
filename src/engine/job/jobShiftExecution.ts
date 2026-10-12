@@ -8,8 +8,8 @@ import {
 } from '../gameState';
 import { spendHours } from '../timeManager';
 import { processRentDebt } from '../economyEngine';
-import { roundToResolution } from '../statMath';
-import type { JobDef } from '../dataLoader';
+import { roundToResolution, calcMaxSkillCap } from '../statMath';
+import type { JobDef, EducationDef } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { applyHappinessChange } from '../statEffects';
@@ -40,7 +40,8 @@ export function workShift(
   statRules?: StatRules,
   mode: WorkMode = 'work_work',
   rng?: Random,
-  replay?: ReplayContext
+  replay?: ReplayContext,
+  campaignEducation?: EducationDef[]
 ): WorkResult {
   if (player.hoursRemaining <= 0 || player.currentJobId !== job.id) {
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.cannotWork' }] };
@@ -380,7 +381,8 @@ export function workShift(
         const mgmtGain = isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25);
         const standingGain = isExecMgmt ? 2 : 1;
         if (useSkills) {
-          updated.skillMgmt = Math.min(10, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
+          const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
+          updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
         }
 
         // Clear 1 location mistake if any exist
@@ -405,7 +407,8 @@ export function workShift(
         }
 
         if (useSkills && hasJobTag(job, 'technical')) {
-          updated.skillTech = Math.min(10, roundToResolution((updated.skillTech || 0) + 0.25, 0.05));
+          const maxTech = calcMaxSkillCap(updated, 'skillTech', campaignEducation, statRules, rules as GameRules);
+          updated.skillTech = Math.min(maxTech, roundToResolution((updated.skillTech || 0) + 0.25, 0.05));
         }
 
         messages.push({ key: 'action.job.initiativeSuccess', params: { skillMgmt: updated.skillMgmt ?? 0 } });
@@ -428,19 +431,22 @@ export function workShift(
       if (useSkills && hasJobTag(job, 'technical')) {
         const techGain = roundToResolution(expGain * 0.25, 0.05);
         if (techGain > 0) {
-          updated.skillTech = Math.min(10, roundToResolution((updated.skillTech || 0) + techGain, 0.05));
+          const maxTech = calcMaxSkillCap(updated, 'skillTech', campaignEducation, statRules, rules as GameRules);
+          updated.skillTech = Math.min(maxTech, roundToResolution((updated.skillTech || 0) + techGain, 0.05));
         }
       }
 
       if (useSkills && hasJobTag(job, 'middle_management')) {
         const mgmtGain = roundToResolution(expGain * 0.25, 0.05);
         if (mgmtGain > 0) {
-          updated.skillMgmt = Math.min(10, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
+          const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
+          updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
         }
       } else if (useSkills && hasJobTag(job, 'executive_management')) {
         const mgmtGain = roundToResolution(expGain * 0.50, 0.05);
         if (mgmtGain > 0) {
-          updated.skillMgmt = Math.min(10, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
+          const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
+          updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
         }
       }
 
@@ -453,7 +459,8 @@ export function workShift(
     let socialGain = 0;
     if (mode === 'face_time' && !physMistake && !mentalMistake) {
       if (isManagementJob(job)) {
-        updated.skillMgmt = Math.min(10, roundToResolution((updated.skillMgmt || 0) + 0.25, 0.05));
+        const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
+        updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + 0.25, 0.05));
       }
       const curSoc = player.social || 1;
       const socChance = Math.max(0, ((100 - curSoc) / 100) * ratio);
@@ -523,7 +530,8 @@ export function workShift(
           }
         ];
 
-        if ((updated.skillTech || 0) >= 10) {
+        const maxTech = calcMaxSkillCap(updated, 'skillTech', campaignEducation, statRules, rules as GameRules);
+        if ((updated.skillTech || 0) >= maxTech) {
           candidateOptions = candidateOptions.filter(o => o.type !== 'skill');
         }
 
@@ -557,7 +565,7 @@ export function workShift(
               updated.inventory.knickKnacks = (updated.inventory.knickKnacks || 0) + 1;
             }
           } else if (chosenOptions[0].type === 'skill') {
-            updated.skillTech = Math.min(10, (updated.skillTech || 0) + (chosenOptions[0].techSkillAmount || 0.25));
+            updated.skillTech = Math.min(maxTech, (updated.skillTech || 0) + (chosenOptions[0].techSkillAmount || 0.25));
           }
           updated.pendingMiniGame = null;
           updated.pendingAppraisalDilemma = null;

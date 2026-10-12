@@ -147,12 +147,15 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const isManagement = isMiddleMgmt || isExecMgmt;
           const isFrontline = job.tags?.includes('frontline_service');
 
+          const decoupleSkills = !!rules?.wageScaledEmployability;
           const techSkill = isTechnical ? (player.skillTech || 0) : 0;
           const mgmtSkill = isManagement ? (player.skillMgmt || 0) : 0;
-          const effectiveExp = (player.experience || 0) + techSkill + mgmtSkill;
-          const effectiveDep = (player.dependability || 0) + techSkill + mgmtSkill;
+          const effectiveExp = (player.experience || 0) + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
+          const effectiveDep = (player.dependability || 0) + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
           const reqMgmt = isExecMgmt ? Math.floor(job.requirements.experience / 10) : 0;
           const missingMgmt = isExecMgmt && ((player.skillMgmt || 0) < reqMgmt);
+          const reqTech = (job.requirements as any)?.techSkill ?? (job.requirements as any)?.skillTech;
+          const missingTech = isTechnical && reqTech !== undefined && ((player.skillTech || 0) < reqTech);
           const missingExp = effectiveExp < job.requirements.experience;
           const missingDep = effectiveDep < job.requirements.dependability;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
@@ -161,7 +164,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const isHeavyPhysical = isAdvanced && job.tags?.includes('heavy_physical');
           const heavyMinPhys = campaign.config.statRules?.heavyPhysicalMinRequirement ?? 21;
           const missingHeavyPhys = isHeavyPhysical && ((player.physicalCondition ?? 50) < heavyMinPhys);
-          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt || missingPhysical || missingHeavyPhys;
+          const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt || missingTech || missingPhysical || missingHeavyPhys;
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
           const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
           const appCost = campaign.config.timeRules?.jobApplicationCost ?? 4;
@@ -198,7 +201,13 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 isManagement,
                 physicalCondition: player.physicalCondition ?? 50,
                 isLookFit,
-                attireModifier
+                attireModifier,
+                jobBaseWage: job.baseWage,
+                minCampaignWage: campaign.minBaseWage,
+                maxCampaignWage: campaign.maxBaseWage,
+                jobTags: job.tags,
+                rules,
+                statRules: campaign.config.statRules
               })
             : locationScore);
           const jobScore = isAdvanced && !isAlwaysHiring && (player.noOpeningBonus || 0) > 0
@@ -256,6 +265,11 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                       {isExecMgmt && (
                         <span style={{ color: missingMgmt ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
                           | 👔 {t('dashboard.skillMgmt', { defaultValue: 'Mgmt' })}: {reqMgmt}.00
+                        </span>
+                      )}
+                      {isTechnical && reqTech !== undefined && (
+                        <span style={{ color: missingTech ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
+                          | 🔧 {t('dashboard.skillTech', { defaultValue: 'Tech' })}: {reqTech.toFixed(2)}
                         </span>
                       )}
                       {isHeavyPhysical && (

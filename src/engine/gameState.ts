@@ -325,10 +325,16 @@ export interface WeekendCard {
   specialBonus?: number;
 }
 
+export interface StatModificationBreakdown {
+  source: string;
+  diff: number;
+}
+
 export interface StatModification {
   stat: 'money' | 'happiness' | 'mental' | 'physical' | 'dependability' | 'mess' | 'social' | 'relaxation' | 'skillTech' | 'skillMgmt' | 'lifestyle' | 'loanDebt' | 'rentDebt' | string;
   diff: number;
   label?: string;
+  breakdown?: StatModificationBreakdown[];
 }
 
 export interface WeekendResult {
@@ -336,6 +342,8 @@ export interface WeekendResult {
   cost: number;
   happinessBonus?: number;
   modifications?: StatModification[];
+  activityModifications?: StatModification[];
+  maintenanceModifications?: StatModification[];
   chosenCard?: WeekendCard;
   souvenir?: { id: string; name: string; icon: string };
 }

@@ -644,12 +644,13 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       execPlayer.currentWage = execJob.baseWage;
       execPlayer.experience = 50; // req 30 + 10 = 40
       execPlayer.dependability = 40;
+      execPlayer.degrees = ['junior_college'];
       execPlayer.skillMgmt = 2.0;
       execPlayer.hoursRemaining = 10;
       execPlayer.inventory.businessClothesWeeks = 10;
       execPlayer.inventory.selectedClothes = 'business';
 
-      const execResult = workShift(execPlayer, execJob, 6, rules, campaign.config.statRules, 'show_initiative');
+      const execResult = workShift(execPlayer, execJob, 6, rules, campaign.config.statRules, 'show_initiative', undefined, undefined, campaign.education);
       expect(execResult.success).toBe(true);
       expect(execResult.updated.skillMgmt).toBe(3.0); // 2.0 + 1.0 = 3.0
       expect(execResult.updated.dependability).toBe(42); // 40 + 2.0 = 42

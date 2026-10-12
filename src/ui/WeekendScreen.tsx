@@ -3,6 +3,7 @@ import type { PlayerState, StatModification, GameRules } from '../engine/gameSta
 import { useTranslation } from 'react-i18next';
 import { WeekendCardView } from './WeekendCardView';
 import { StatModifierPills } from './StatModifierPills';
+import { WeekendBreakdownModal } from './WeekendBreakdownModal';
 
 interface WeekendScreenProps {
   player: PlayerState;
@@ -17,6 +18,7 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
   const offeredCards = player.offeredWeekendCards || [];
   const isSelectionMode = offeredCards.length > 0 && !player.weekendResult;
   const [selectedCardId, setSelectedCardId] = useState<string>(offeredCards[0]?.id || '');
+  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
 
   const isHelpfulUI = rules?.helpfulUI ?? true;
 
@@ -241,9 +243,45 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
           width: '100%', border: '2px solid #34495e', textAlign: 'center',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)'
         }}>
-          <h3 style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.2)', paddingBottom: '12px', margin: '0 0 16px 0' }}>
-            {t('weekendScreen.activities')}
-          </h3>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+            paddingBottom: '12px',
+            marginBottom: '16px'
+          }}>
+            <h3 style={{ margin: 0 }}>
+              {t('weekendScreen.activities')}
+            </h3>
+            <button
+              data-testid="weekend-breakdown-help-btn"
+              onClick={() => setShowBreakdownModal(true)}
+              style={{
+                position: 'absolute',
+                insetInlineEnd: '4px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                border: '1px solid #00e5ff',
+                backgroundColor: 'rgba(0, 229, 255, 0.15)',
+                color: '#00e5ff',
+                fontSize: '0.95rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 8px rgba(0, 229, 255, 0.3)',
+                transition: 'all 0.2s'
+              }}
+              title={t('weekendScreen.helpTooltip', { defaultValue: 'How Weekends & Turns Work / Stat Breakdown' })}
+              aria-label={t('weekendScreen.helpTooltip', { defaultValue: 'How Weekends & Turns Work / Stat Breakdown' })}
+            >
+              ?
+            </button>
+          </div>
           
           {player.weekendResult ? (
             <>
@@ -321,6 +359,14 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
       >
         {t('weekendScreen.startWeek', { turn })}
       </button>
+
+      {showBreakdownModal && (
+        <WeekendBreakdownModal
+          weekendResult={player.weekendResult}
+          isHelpfulUI={isHelpfulUI}
+          onClose={() => setShowBreakdownModal(false)}
+        />
+      )}
     </div>
   );
 }

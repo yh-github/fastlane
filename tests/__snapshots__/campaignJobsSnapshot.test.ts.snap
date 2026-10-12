@@ -767,6 +767,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 40,
       "experience": 40,
+      "techSkill": 1.5,
       "uniform": "casual",
     },
     "tags": [
@@ -786,11 +787,12 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 40,
       "experience": 40,
+      "techSkill": 2,
       "uniform": "business",
     },
     "tags": [
       "technical",
-      "executive_management",
+      "middle_management",
     ],
     "title": "Manager",
   },
@@ -946,6 +948,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 50,
       "experience": 50,
+      "techSkill": 3,
       "uniform": "casual",
     },
     "tags": [
@@ -965,6 +968,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 60,
       "experience": 60,
+      "techSkill": 3,
       "uniform": "business",
     },
     "tags": [
@@ -985,6 +989,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 60,
       "experience": 60,
+      "techSkill": 4,
       "uniform": "business",
     },
     "tags": [
@@ -1004,6 +1009,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 80,
       "experience": 80,
+      "techSkill": 5,
       "uniform": "business",
     },
     "tags": [
@@ -1297,6 +1303,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 35,
       "experience": 35,
+      "techSkill": 1.5,
       "uniform": "casual",
     },
     "tags": [

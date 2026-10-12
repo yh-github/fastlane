@@ -319,5 +319,83 @@ describe('jobApplication', () => {
       expect(overRes.success).toBe(true);
       expect(overRes.updated.turnFlags?.clothesWornThisTurn).toContain('business');
     });
+
+    it('decouples technical and management skills from experience requirement when wageScaledEmployability is true', () => {
+      const techJob: JobDef = {
+        id: 'socket_repairman',
+        title: 'Repairman',
+        locationId: 'socket_city',
+        baseWage: 8,
+        perks: [],
+        requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
+        tags: ['technical']
+      };
+
+      const playerClassic = {
+        hoursRemaining: 20,
+        experience: 8,
+        dependability: 10,
+        skillTech: 4.0,
+        degrees: [],
+        turnFlags: { jobsRejectedThisTurn: [] }
+      } as unknown as PlayerState;
+
+      // With classic rules (wageScaledEmployability: false), skillTech adds to effectiveExp (8 + 4 = 12 >= 10)
+      const resClassic = applyForJob(playerClassic, techJob, 4, {}, undefined, undefined, { useSkills: true, wageScaledEmployability: false, maskEarlyJobRejections: false });
+      expect(resClassic.message.params?.reasons).toBeUndefined();
+
+      const playerDecoupled = {
+        hoursRemaining: 20,
+        experience: 8,
+        dependability: 10,
+        skillTech: 4.0,
+        degrees: [],
+        turnFlags: { jobsRejectedThisTurn: [] }
+      } as unknown as PlayerState;
+
+      // With wageScaledEmployability: true, skills are decoupled from experience (8 < 10) -> rejected
+      const resDecoupled = applyForJob(playerDecoupled, techJob, 4, {}, undefined, undefined, { useSkills: true, wageScaledEmployability: true, maskEarlyJobRejections: false });
+      expect(resDecoupled.success).toBe(false);
+      expect(resDecoupled.message.params?.reasons).toContain('Not enough experience.');
+    });
+
+    it('enforces hard requirements.techSkill on technical jobs', () => {
+      const horologistJob: JobDef = {
+        id: 'pawn_horologist',
+        title: 'Horologist',
+        locationId: 'pawn_shop',
+        baseWage: 12,
+        perks: [],
+        requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual', techSkill: 1.5 },
+        tags: ['technical']
+      };
+
+      const playerLowTech = {
+        hoursRemaining: 20,
+        experience: 10,
+        dependability: 10,
+        skillTech: 1.0,
+        degrees: [],
+        turnFlags: { jobsRejectedThisTurn: [] }
+      } as unknown as PlayerState;
+
+      const resReject = applyForJob(playerLowTech, horologistJob, 4, {}, undefined, undefined, { useSkills: true });
+      expect(resReject.success).toBe(false);
+      expect(resReject.message.params?.reasons).toContain('Requires at least 1.50 Technical Skill');
+
+      const playerHighTech = {
+        hoursRemaining: 20,
+        experience: 10,
+        dependability: 10,
+        skillTech: 2.0,
+        degrees: [],
+        turnFlags: { jobsRejectedThisTurn: [] },
+        inventory: { selectedClothes: 'casual', casualClothesWeeks: 5 }
+      } as unknown as PlayerState;
+
+      const replayPass = { inDecisions: [{ type: 'job_apply_luck', result: 1 }], outDecisions: [] };
+      const resPass = applyForJob(playerHighTech, horologistJob, 4, {}, undefined, undefined, { useSkills: true }, 1, replayPass);
+      expect(resPass.success).toBe(true);
+    });
   });
 });

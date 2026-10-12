@@ -10,6 +10,7 @@ import {
   calcEmployabilityScore,
   calcMaxDependability,
   calcMaxExperience,
+  calcMaxSkillCap,
 } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import type { GoalFilter } from '../utils/logCategorizer';
@@ -220,17 +221,19 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     });
 
     if (useSkills) {
+      const maxMgmt = calcMaxSkillCap(player, 'skillMgmt', campaign?.education, campaign?.config?.statRules, rules);
+      const maxTech = calcMaxSkillCap(player, 'skillTech', campaign?.education, campaign?.config?.statRules, rules);
       careerAttributes.push({
         id: 'stat-skill-mgmt',
         label: t('dashboard.skillMgmt', { defaultValue: 'Mgmt' }),
-        value: `${(player.skillMgmt ?? 0).toFixed(1)}/10`,
+        value: `${(player.skillMgmt ?? 0).toFixed(1)}/${maxMgmt.toFixed(1)}`,
         icon: '👔',
       });
 
       careerAttributes.push({
         id: 'stat-skill-tech',
         label: t('dashboard.skillTech', { defaultValue: 'Tech' }),
-        value: `${(player.skillTech ?? 0).toFixed(1)}/10`,
+        value: `${(player.skillTech ?? 0).toFixed(1)}/${maxTech.toFixed(1)}`,
         icon: '🔧',
       });
     }
