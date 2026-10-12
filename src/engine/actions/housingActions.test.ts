@@ -133,4 +133,56 @@ describe('Housing Actions & Rent Renegotiation', () => {
       key: 'action.rent.mustPayFirst'
     });
   });
+
+  it('triggers mental mistake when mental condition is low', () => {
+    let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+    player.currentRentPrice = 300;
+    player.rentPaymentsAtCurrentRate = 1;
+    player.mentalCondition = 8; // < 10
+    player.mentalConditionMax = 50;
+
+    const context: ReducerContext = {
+      campaign: dummyCampaign,
+      rules: { usePhysicalMentalConditions: true } as any,
+      turn: 4,
+      economicIndex: -20,
+      rng: new Random(1),
+      state: {} as any,
+      engineDecisions: [{ type: `renegotiate_mental_mistake_${player.id}_1`, result: true }]
+    };
+
+    const res = handleRenegotiateRentAction(player, { type: 'renegotiate_rent' }, context);
+    expect(res.nextPlayer.currentRentPrice).toBe(300); // Failed
+    expect(res.nextPlayer.mentalConditionMax).toBe(49);
+    expect(res.actionLog).toMatchObject({
+      key: 'action.rent.renegotiateMistake',
+      params: { type: 'Mental' }
+    });
+  });
+
+  it('triggers social mistake when social standing is low', () => {
+    let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+    player.currentRentPrice = 300;
+    player.rentPaymentsAtCurrentRate = 1;
+    player.mentalCondition = 50;
+    player.social = 8; // < 10
+
+    const context: ReducerContext = {
+      campaign: dummyCampaign,
+      rules: { trackSocial: true } as any,
+      turn: 4,
+      economicIndex: -20,
+      rng: new Random(1),
+      state: {} as any,
+      engineDecisions: [{ type: `renegotiate_social_mistake_${player.id}_1`, result: true }]
+    };
+
+    const res = handleRenegotiateRentAction(player, { type: 'renegotiate_rent' }, context);
+    expect(res.nextPlayer.currentRentPrice).toBe(300); // Failed
+    expect(res.nextPlayer.social).toBe(7);
+    expect(res.actionLog).toMatchObject({
+      key: 'action.rent.renegotiateMistake',
+      params: { type: 'Social' }
+    });
+  });
 });

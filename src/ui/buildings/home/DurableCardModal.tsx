@@ -1,11 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle, ItemDef } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
 import type { GameAction } from '../../../engine/actions/types';
 import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../../../engine/actions/maintenanceActions';
-import { calcItemPrice } from '../../../engine/economyEngine';
+import { calcItemPrice, calcEconomyPrice } from '../../../engine/economyEngine';
+import { calcBulkGroceryBasePrice } from '../../../engine/actions/shoppingActions';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../../engine/statMath';
 import { getItemDisplayName } from '../../../utils/itemUtils';
 import { MessIcon } from '../../icons/MessIcon';
@@ -59,13 +60,16 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
   const isShop = mode === 'shop';
   const itemId = durable?.id || item?.id || '';
+  const itemDef = item || campaign?.items.find(i => i.id === itemId);
+  const isLottery = itemId === 'lottery_tickets';
+  const isBulkGrocery = Boolean(rules?.advancedStores && (itemId === 'food_1week' || (itemDef?.category === 'food' && itemDef?.subcategory === 'groceries')));
+  const [buyQuantity, setBuyQuantity] = useState(1);
   const isWardrobe = itemId === 'wardrobe';
   const isSpareParts = itemId === 'spare_parts';
   const isCurio = itemId === 'knick_knack' || itemId === 'knick_knacks';
-  const itemDef = item || campaign?.items.find(i => i.id === itemId);
   const itemName = isWardrobe
     ? t('homeApartment.wardrobe', { defaultValue: 'Wardrobe Closet' })
-    : (itemDef ? getItemDisplayName(itemDef.id, itemDef, t, !!rules?.usePhysicalMentalConditions) : itemId);
+    : (itemDef ? getItemDisplayName(itemDef.id, itemDef, t, !!rules?.usePhysicalMentalConditions, !!rules?.advancedStores) : itemId);
   const isBook = Boolean(durable?.isBook || itemDef?.category === 'book');
 
   const currentAppliance = isBook 
@@ -89,7 +93,13 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
 
   // Price & Affordability
-  const adjustedPrice = priceOverride ?? (itemDef ? calcItemPrice(itemDef, economicIndex) : 0);
+  let adjustedPrice = priceOverride ?? (itemDef ? calcItemPrice(itemDef, economicIndex) : 0);
+  if (isShop && isBulkGrocery) {
+    const bulkBase = calcBulkGroceryBasePrice(buyQuantity);
+    adjustedPrice = calcItemPrice({ basePrice: bulkBase }, economicIndex ?? 0);
+  } else if (isShop && isLottery && rules?.advancedStores) {
+    adjustedPrice = (priceOverride ?? 10) * buyQuantity;
+  }
   const canAfford = (player?.money ?? 0) >= adjustedPrice;
   const canBuy = canAfford && (!rules?.helpfulUI || hasSpace);
 
@@ -298,23 +308,27 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   const onBuyModifiers: OnBuyModifier[] = [];
 
   if (itemDef?.happinessBonus && !rules?.usePhysicalMentalConditions) {
-    onBuyModifiers.push({ label: `+${itemDef.happinessBonus} Happiness 😊 on buy`, icon: '😊' });
-  } else if (itemDef?.happinessBonus && rules?.usePhysicalMentalConditions) {
-    onBuyModifiers.push({ label: `+${itemDef.happinessBonus} Morale 😊 on buy`, icon: '😊' });
+    onBuyModifiers.push({ label: `+${itemDef.happinessBonus} on buy`, icon: '😊' });
   }
-  if (itemDef?.mentalBonus && rules?.usePhysicalMentalConditions) {
-    onBuyModifiers.push({ label: `+${itemDef.mentalBonus} Mental 🧠 on buy`, icon: '🧠' });
+
+  // Mental bonus on purchase
+  if (isLottery && rules?.usePhysicalMentalConditions) {
+    const mentalPerPack = itemDef?.mentalBonus ?? 1;
+    const totalMental = rules?.advancedStores ? mentalPerPack * buyQuantity : mentalPerPack;
+    onBuyModifiers.push({ label: `+${totalMental} on buy`, icon: '🧠' });
+  } else if (itemDef?.mentalBonus && rules?.usePhysicalMentalConditions && itemDef.category !== 'ticket') {
+    onBuyModifiers.push({ label: `+${itemDef.mentalBonus} on buy`, icon: '🧠' });
   }
 
   if (itemDef?.effects) {
     for (const eff of itemDef.effects) {
       if (eff.trigger === 'on_purchase' || (eff.trigger as string) === 'on_buy') {
-        if (eff.stat === 'physical_max') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Max Physical 💪`, icon: '💪' });
-        else if (eff.stat === 'physical') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Physical 💪`, icon: '💪' });
-        else if (eff.stat === 'mental_max') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Max Mental 🧠`, icon: '🧠' });
-        else if (eff.stat === 'mental') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Mental 🧠`, icon: '🧠' });
-        else if (eff.stat === 'happiness') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Happiness 😊`, icon: '😊' });
-        else if (eff.stat === 'social') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Social 👥`, icon: '👥' });
+        if (eff.stat === 'physical_max') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Max Physical`, icon: '💪' });
+        else if (eff.stat === 'physical') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Physical`, icon: '💪' });
+        else if (eff.stat === 'mental_max') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Max Mental`, icon: '🧠' });
+        else if (eff.stat === 'mental') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} on buy`, icon: '🧠' });
+        else if (eff.stat === 'happiness') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Happiness`, icon: '😊' });
+        else if (eff.stat === 'social') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} on buy`, icon: '👥' });
         else if (eff.stat === 'mess') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Mess`, icon: '🧹' });
       }
     }
@@ -332,14 +346,15 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     } else if (itemDef.subcategory === 'canned') {
       onBuyModifiers.push({ label: '+1 Pantry unit (Never spoils)', icon: '🥫' });
     } else {
-      onBuyModifiers.push({ label: '+1 Fresh food (Preserves with Fridge)', icon: '🥗' });
+      const foodUnits = isBulkGrocery ? buyQuantity : 1;
+      onBuyModifiers.push({ label: `+${foodUnits} Fresh food (Preserves with Fridge)`, icon: '🥗' });
       if (rules?.usePhysicalMentalConditions && !player?.turnFlags?.freshFoodHappinessGranted) {
         onBuyModifiers.push({ label: '+1 Nutrition happiness', icon: '😊' });
       }
     }
-  } else if (itemDef?.category === 'ticket') {
+  } else if (itemDef?.category === 'ticket' && !isLottery) {
     if (rules?.usePhysicalMentalConditions) {
-      onBuyModifiers.push({ label: '+1 Mental (up to 4/turn)', icon: '🧠' });
+      onBuyModifiers.push({ label: '+1 (up to 4/turn)', icon: '🧠' });
     }
   } else if (isCurio) {
     if (rules?.usePhysicalMentalConditions && !player?.turnFlags?.curioNoveltyGranted) {
@@ -658,35 +673,141 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
         {/* Shop Buy Action or Maintenance / Special Action Hook */}
         {isShop ? (
-          <button
-            data-action-target={`buy-${itemId}`}
-            data-testid={`btn-buy-modal-${itemId}`}
-            disabled={!canBuy || !onAction}
-            onClick={() => {
-              onAction?.({ type: 'buy', itemId });
-              onClose();
-            }}
-            style={{
-              width: '100%',
-              padding: '10px 14px',
-              backgroundColor: canBuy ? 'var(--accent-cyan, #00e5ff)' : '#334155',
-              color: canBuy ? '#000000' : '#94a3b8',
-              border: canBuy ? 'none' : '1px solid rgba(255, 255, 255, 0.15)',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              fontSize: '0.88rem',
-              cursor: canBuy ? 'pointer' : 'not-allowed',
-              boxShadow: canBuy ? '0 0 14px rgba(0, 229, 255, 0.4)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
-          >
-            <span>🛒 {t('storeFront.buy', { defaultValue: 'BUY' })} (${adjustedPrice})</span>
-            {!canAfford && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughMoney', { defaultValue: 'Too expensive' })})</span>}
-            {canAfford && !hasSpace && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughSpace', { defaultValue: 'No space' })})</span>}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {(isBulkGrocery || (isLottery && rules?.advancedStores)) && (
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.45)',
+                border: '1px solid rgba(0, 229, 255, 0.25)',
+                borderRadius: '8px',
+                padding: '8px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.76rem', fontWeight: 'bold', color: '#00e5ff' }}>
+                    {isBulkGrocery ? '🥗 Weeks of Groceries:' : '🎟️ Ticket Packs (10/pack):'}
+                  </span>
+                  <span style={{ fontSize: '0.80rem', fontWeight: 'bold', color: '#fff' }}>
+                    {isBulkGrocery ? `${buyQuantity} wk${buyQuantity > 1 ? 's' : ''}` : `${buyQuantity * 10} tickets (${buyQuantity} pack${buyQuantity > 1 ? 's' : ''})`}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    data-testid="btn-qty-minus"
+                    onClick={() => setBuyQuantity(q => Math.max(1, q - 1))}
+                    disabled={buyQuantity <= 1}
+                    style={{
+                      padding: '2px 10px',
+                      background: buyQuantity <= 1 ? '#334155' : 'rgba(0, 229, 255, 0.2)',
+                      border: '1px solid rgba(0, 229, 255, 0.4)',
+                      borderRadius: '4px',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      cursor: buyQuantity <= 1 ? 'not-allowed' : 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    -
+                  </button>
+
+                  <input
+                    type="range"
+                    data-testid="input-qty-slider"
+                    min={1}
+                    max={isBulkGrocery ? 12 : 10}
+                    value={buyQuantity}
+                    onChange={(e) => setBuyQuantity(Number(e.target.value))}
+                    style={{ flex: 1, cursor: 'pointer' }}
+                  />
+
+                  <button
+                    type="button"
+                    data-testid="btn-qty-plus"
+                    onClick={() => setBuyQuantity(q => Math.min(isBulkGrocery ? 12 : 10, q + 1))}
+                    disabled={buyQuantity >= (isBulkGrocery ? 12 : 10)}
+                    style={{
+                      padding: '2px 10px',
+                      background: buyQuantity >= (isBulkGrocery ? 12 : 10) ? '#334155' : 'rgba(0, 229, 255, 0.2)',
+                      border: '1px solid rgba(0, 229, 255, 0.4)',
+                      borderRadius: '4px',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      cursor: buyQuantity >= (isBulkGrocery ? 12 : 10) ? 'not-allowed' : 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                  {(isBulkGrocery ? [1, 2, 4, 6, 12] : [1, 2, 5, 10]).map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      data-testid={`btn-qty-preset-${preset}`}
+                      onClick={() => setBuyQuantity(preset)}
+                      style={{
+                        fontSize: '0.68rem',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        background: buyQuantity === preset ? 'var(--accent-cyan, #00e5ff)' : 'rgba(255, 255, 255, 0.08)',
+                        color: buyQuantity === preset ? '#000' : '#cbd5e1',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontWeight: buyQuantity === preset ? 'bold' : 'normal'
+                      }}
+                    >
+                      {isBulkGrocery ? `${preset}w` : `${preset * 10}`}
+                    </button>
+                  ))}
+                </div>
+
+                {isBulkGrocery && (
+                  <div style={{ fontSize: '0.68rem', color: '#94a3b8', textAlign: 'center' }}>
+                    ${Math.round(adjustedPrice / buyQuantity)}/wk • {(calcEconomyPrice(55, economicIndex ?? 0) * buyQuantity) - adjustedPrice > 0 ? `Bulk savings: $${(calcEconomyPrice(55, economicIndex ?? 0) * buyQuantity) - adjustedPrice}` : 'Standard rate'}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              data-action-target={`buy-${itemId}`}
+              data-testid={`btn-buy-modal-${itemId}`}
+              disabled={!canBuy || !onAction}
+              onClick={() => {
+                onAction?.({
+                  type: 'buy',
+                  itemId,
+                  quantity: (isBulkGrocery || (isLottery && rules?.advancedStores)) ? buyQuantity : undefined
+                });
+                onClose();
+              }}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                backgroundColor: canBuy ? 'var(--accent-cyan, #00e5ff)' : '#334155',
+                color: canBuy ? '#000000' : '#94a3b8',
+                border: canBuy ? 'none' : '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '0.88rem',
+                cursor: canBuy ? 'pointer' : 'not-allowed',
+                boxShadow: canBuy ? '0 0 14px rgba(0, 229, 255, 0.4)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>🛒 {t('storeFront.buy', { defaultValue: 'BUY' })} (${adjustedPrice})</span>
+              {!canAfford && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughMoney', { defaultValue: 'Too expensive' })})</span>}
+              {canAfford && !hasSpace && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughSpace', { defaultValue: 'No space' })})</span>}
+            </button>
+          </div>
         ) : isBroken && isOwned ? (() => {
           const diyBreakdown = player ? calcDiySuccessChance(player, campaign, rules, undefined, itemId) : { baseChance: 25, techBonus: 0, electronicsBonus: 0, partsBonus: 0, complexityPenalty: 0, totalChance: 25 };
           const hasDiyHours = (player?.hoursRemaining ?? 0) >= 6;

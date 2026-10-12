@@ -10,7 +10,13 @@ export interface ShoppingResult {
   message: GameEvent;
 }
 
-export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<GameRules>, campaign?: CampaignBundle): ShoppingResult {
+export function buyItem(
+  player: PlayerState,
+  item: ItemDef,
+  rules?: Partial<GameRules>,
+  campaign?: CampaignBundle,
+  quantity: number = 1
+): ShoppingResult {
   const price = item.basePrice ?? 0;
   if (player.money < price) {
     return { updated: player, success: false, message: { key: 'action.error.notEnoughMoney' } };
@@ -75,7 +81,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
   } else if (item.id === 'lottery_tickets') {
     if (rules?.usePhysicalMentalConditions) {
       happinessBonus = 0;
-      mentalBonus = item.mentalBonus ?? 1;
+      mentalBonus = (item.mentalBonus ?? 1) * quantity;
     } else {
       if (!player.turnFlags?.lotteryHappinessGranted) {
         newTurnFlags.lotteryHappinessGranted = true;
@@ -217,7 +223,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
       } else if (item.subcategory === 'canned') {
         updated.inventory.cannedFoodUnits = (updated.inventory.cannedFoodUnits || 0) + (item.units || 1);
       } else {
-        updated.inventory.freshFoodUnits += (item.units || 1);
+        updated.inventory.freshFoodUnits += (item.units || 1) * quantity;
       }
       break;
     case 'clothes':
@@ -277,7 +283,7 @@ export function buyItem(player: PlayerState, item: ItemDef, rules?: Partial<Game
       break;
     case 'ticket':
       if (item.id === 'lottery_tickets') {
-        updated.inventory.lotteryTickets += 10;
+        updated.inventory.lotteryTickets += 10 * quantity;
       } else if (item.id === 'baseball_tickets') {
         updated.inventory.tickets = { ...updated.inventory.tickets, baseball: updated.inventory.tickets.baseball + 1 };
       } else if (item.id === 'theatre_tickets') {

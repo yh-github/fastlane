@@ -172,7 +172,8 @@
       "renegotiateCompromise": "Landlord offered a partial compromise. Rent lowered from ${{oldRent}} to ${{newRent}}/mo (Standing: {{standing}}).",
       "renegotiateDenied": "Landlord refused to lower rent due to your poor standing (Standing: {{standing}}).",
       "renegotiateNotCheaper": "Market rent (${{marketRent}}) is currently not cheaper than your lease (${{currentRent}}).",
-      "mustPayFirst": "You must pay rent at least once at your current rate before you can renegotiate."
+      "mustPayFirst": "You must pay rent at least once at your current rate before you can renegotiate.",
+      "renegotiateMistake": "You made a {{type}} blunder during lease renegotiation! Landlord refused to discuss terms."
     },
     "error": {
       "mustResolveDilemma": "You must resolve the customer dilemma before doing anything else.",
@@ -1322,6 +1323,7 @@
     "astro_chicken": "Astro Chicken",
     "fries": "Fries",
     "food_1week": "Food for 1 Week",
+    "groceries_bulk": "Fresh Groceries (1-12 Wks)",
     "food_2weeks": "Food for 2 Weeks",
     "food_4weeks": "Food for 4 Weeks",
     "lottery_tickets": "10 Lottery Tickets",

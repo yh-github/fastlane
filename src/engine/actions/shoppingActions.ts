@@ -5,9 +5,13 @@ import { calcItemPrice } from '../economyEngine';
 import { spendHours } from '../timeManager';
 import { safeDecrementPhysical } from '../statMath';
 
+export function calcBulkGroceryBasePrice(weeks: number): number {
+  return 45 * Math.max(1, Math.floor(weeks)) + 10;
+}
+
 export function handleBuyAction(
   player: PlayerState,
-  action: { type: 'buy'; itemId: string },
+  action: { type: 'buy'; itemId: string; quantity?: number },
   context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
@@ -19,6 +23,7 @@ export function handleBuyAction(
   const baseItemDef = context.campaign.items.find(i => i.id === action.itemId);
 
   if (baseItemDef) {
+    const quantity = Math.max(1, Math.floor(action.quantity ?? 1));
     const timeCost = baseItemDef.id === 'newspaper' ? context.campaign.config.timeRules.newspaperCost : 0;
     if (timeCost > 0 && nextPlayer.hoursRemaining < timeCost) {
       actionLog = { key: 'action.error.notEnoughTimeBuy', params: { name: baseItemDef.name } };
@@ -26,14 +31,21 @@ export function handleBuyAction(
     }
 
     // Resolve price from inventory override or fallback to old basePrice, default to 0
-    const basePrice = inventoryEntry?.priceOverride ?? baseItemDef.basePrice ?? 0;
+    let adjustedPrice = 0;
+    const isGroceryFood = baseItemDef.category === 'food' && (baseItemDef.subcategory === 'groceries' || baseItemDef.id === 'food_1week');
 
-    // Ensure price is adjusted for economy, respecting fixed-price items
-    const itemForPricing = { ...baseItemDef, basePrice };
-    const adjustedPrice = calcItemPrice(itemForPricing, context.economicIndex);
+    if (context.rules.advancedStores && isGroceryFood) {
+      const bulkBase = calcBulkGroceryBasePrice(quantity);
+      adjustedPrice = calcItemPrice({ basePrice: bulkBase }, context.economicIndex);
+    } else {
+      const basePrice = (inventoryEntry?.priceOverride ?? baseItemDef.basePrice ?? 0) * quantity;
+      const itemForPricing = { ...baseItemDef, basePrice };
+      adjustedPrice = calcItemPrice(itemForPricing, context.economicIndex);
+    }
+
     const itemWithPriceAndStore = { ...baseItemDef, basePrice: adjustedPrice, store: currentBuildingId };
 
-    const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules, context.campaign);
+    const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules, context.campaign, quantity);
     if (result.success) {
       nextPlayer = spendHours(result.updated, timeCost);
       if (baseItemDef.id === 'newspaper') {

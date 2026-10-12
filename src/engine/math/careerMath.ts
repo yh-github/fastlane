@@ -121,14 +121,16 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
   // New Wage-Scaled & Tag-Aware Employability system
   if (opts.rules?.wageScaledEmployability && opts.statRules) {
     const sr = opts.statRules;
-    const base = sr.baseEmployability;
+    const base = sr.baseEmployability ?? 45;
 
     // Decoupled raw margin: Experience is Experience, Dependability is Dependability
     const depMargin = Math.max(0, dependability - jobReqDep);
     const expMargin = Math.max(0, experience - jobReqExp);
+    const marginRate = sr.employabilityMarginRate ?? 1.0;
+    const maxMarginBonus = sr.employabilityMaxMarginBonus ?? 40;
     const marginBonus = Math.min(
-      sr.employabilityMaxMarginBonus,
-      Math.floor((depMargin + expMargin) * sr.employabilityMarginRate)
+      maxMarginBonus,
+      Math.floor((depMargin + expMargin) * marginRate)
     );
 
     // Normalized Wage Competition
@@ -136,7 +138,8 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
     const maxW = opts.maxCampaignWage ?? 25;
     const jobW = opts.jobBaseWage ?? 4;
     const wageRatio = maxW > minW ? Math.max(0, Math.min(1, (jobW - minW) / (maxW - minW))) : 0;
-    const baseWageComp = Math.round(wageRatio * sr.maxWageCompetitionPenalty);
+    const maxWagePenalty = sr.maxWageCompetitionPenalty ?? 20;
+    const baseWageComp = Math.round(wageRatio * maxWagePenalty);
 
     // Tag competition modifiers
     let tagModifier = 0;
@@ -150,16 +153,17 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
     const wageCompetition = Math.max(0, baseWageComp + tagModifier);
 
     // Domain Skill Leverage
-    const techBonus = isTechnical ? Math.floor((skillTech || 0) * sr.employabilitySkillBonusRate) : 0;
-    const mgmtBonus = isManagement ? Math.floor((skillMgmt || 0) * sr.employabilitySkillBonusRate) : 0;
+    const skillRate = sr.employabilitySkillBonusRate ?? 2.0;
+    const techBonus = isTechnical ? Math.floor((skillTech || 0) * skillRate) : 0;
+    const mgmtBonus = isManagement ? Math.floor((skillMgmt || 0) * skillRate) : 0;
 
     // Social weighting: Frontline vs Non-Frontline
     let socialBonus = 0;
     if (isFrontline) {
-      const socialDelta = (social || 0) - sr.socialEmployabilityBaseline;
-      socialBonus = Math.round(socialDelta * sr.frontlineSocialEmployabilityRate);
+      const socialDelta = (social || 0) - (sr.socialEmployabilityBaseline ?? 20);
+      socialBonus = Math.round(socialDelta * (sr.frontlineSocialEmployabilityRate ?? 0.5));
     } else {
-      socialBonus = Math.floor((social || 0) * sr.generalSocialEmployabilityRate);
+      socialBonus = Math.floor((social || 0) * (sr.generalSocialEmployabilityRate ?? 0.1));
     }
 
     const degreesBonus = degreesCount * 1;

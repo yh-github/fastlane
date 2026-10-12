@@ -317,6 +317,11 @@ export interface GameRules {
   wageScaledEmployability?: boolean;
 
   /**
+   * ADVANCED: Consolidates grocery items into a single bulk-order grocery selection (1-12 weeks) and enables ticket multi-buy.
+   */
+  advancedStores?: boolean;
+
+  /**
    * Shows coordinate and dimension readout toolbar on building location windows.
    */
   showWindowPositionSize: boolean;
@@ -566,6 +571,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   economicUpsideBonus: false,
   dynamicSkillCaps: false,
   wageScaledEmployability: false,
+  advancedStores: false,
   showWindowPositionSize: false,
   allowWindowMoveResize: false,
 };
@@ -583,6 +589,7 @@ export function getClothesSwitchingRule(rules?: GameRules): ClothesSwitchingRule
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  advancedStores: 'Consolidates grocery inventory into a single bulk item (1-12 weeks) and enables ticket multi-buy',
   dynamicSkillCaps: 'Skill caps scale dynamically with completed degrees instead of a flat 10 cap',
   wageScaledEmployability: 'Hiring chances scale dynamically with normalized wage competition, qualification margin, and domain skills',
   showWindowPositionSize: 'Shows coordinate, dimension, and margin tools on building location windows',
