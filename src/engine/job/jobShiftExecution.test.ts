@@ -1,427 +1,43 @@
-import { Random } from '../utils/rng';
-// @ts-nocheck
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { applyForJob, workShift, calcWorkShiftSummary } from './jobEngine';
-import type { PlayerState } from './gameState';
-import type { JobDef } from './dataLoader';
+import { Random } from "../../utils/rng";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { workShift } from "./jobShiftExecution";
+import { applyForJob } from "./jobApplication";
+import { calcWorkShiftSummary } from "./jobShiftSummary";
+import type { PlayerState } from "../gameState";
+import type { JobDef } from "../dataLoader";
 
-describe('Job Engine', () => {
+describe("Job Engine - workShift", () => {
   const burgerCook: JobDef = {
-    id: 'burger_cook',
-    title: 'Burger Cook',
-    locationId: 'burger_palace',
+    id: "burger_cook",
+    title: "Burger Cook",
+    locationId: "burger_palace",
     baseWage: 5,
     perks: [],
-    requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
-    tags: ['always_hiring']
+    requirements: { experience: 10, dependability: 10, degrees: [], uniform: "casual" },
+    tags: ["always_hiring"]
   };
 
   const salesManager: JobDef = {
-    id: 'sales_manager',
-    title: 'Sales Manager',
-    locationId: 'z_mart',
+    id: "sales_manager",
+    title: "Sales Manager",
+    locationId: "z_mart",
     baseWage: 12,
     perks: [],
-    requirements: { experience: 50, dependability: 50, degrees: ['business_admin'], uniform: 'business' }
+    requirements: { experience: 50, dependability: 50, degrees: ["business_admin"], uniform: "business" }
   };
 
   const lowLevelJob: JobDef = {
-    id: 'zmart_clerk',
-    title: 'Z-Mart Clerk',
-    locationId: 'z_mart',
+    id: "zmart_clerk",
+    title: "Z-Mart Clerk",
+    locationId: "z_mart",
     baseWage: 5,
     perks: [],
-    requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' }
+    requirements: { experience: 10, dependability: 10, degrees: [], uniform: "casual" }
   };
 
   beforeEach(() => {
     vi.restoreAllMocks();
   });
-
-  describe('applyForJob', () => {
-    it('always_hiring job is accepted when requirements are met', () => {
-      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), { grantExpOnJobSwitch: true });
-      expect(result.success).toBe(true);
-      expect(result.updated.currentJobId).toBe('burger_cook');
-      expect(result.updated.currentWage).toBe(5);
-      expect(result.updated.experience).toBe(12); // With grantExpOnJobSwitch: true
-    });
-
-    it('does not grant experience on job switch if grantExpOnJobSwitch is false (Advanced)', () => {
-      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), { grantExpOnJobSwitch: false });
-      expect(result.success).toBe(true);
-      expect(result.updated.currentJobId).toBe('burger_cook');
-      expect(result.updated.experience).toBe(10);
-    });
-
-    it('always_hiring job is rejected if player does not meet hard requirements', () => {
-      const player = { hoursRemaining: 20, experience: 0, dependability: 0, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, burgerCook, 4, {}, undefined, new Random(1), undefined, 5);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      expect(result.message?.params?.reasons).toContain('Poor Work History.');
-    });
-
-    it('rejects if missing hard requirements (experience)', () => {
-      const player = { hoursRemaining: 20, experience: 10, dependability: 60, degrees: ['business_admin'], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      expect(result.message?.params?.reasons).toContain('Not enough experience.');
-    });
-
-    it('rejects if missing hard requirements (dependability - Poor Work History)', () => {
-      const player = { hoursRemaining: 20, experience: 60, dependability: 10, degrees: ['business_admin'], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      expect(result.message?.params?.reasons).toContain('Poor Work History.');
-    });
-
-    it('rejects if missing degree', () => {
-      const player = { hoursRemaining: 20, experience: 60, dependability: 60, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      expect(result.message?.params?.reasons).toContain('Missing required degree: business_admin');
-    });
-
-    it('suppresses Poor Work History on turns 1-4 when missing multiple requirements and maskEarlyJobRejections is true', () => {
-      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), { maskEarlyJobRejections: true }, 1);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      expect(result.message?.params?.reasons).toContain('Not enough experience.');
-      expect(result.message?.params?.reasons).toContain('Missing required degree: business_admin');
-      expect(result.message?.params?.reasons).not.toContain('Poor Work History.');
-    });
-
-    it('masks as "no openings" on turns 1-4 when dependability is the ONLY missing requirement and maskEarlyJobRejections is true', () => {
-      const player = { hoursRemaining: 20, experience: 50, dependability: 10, degrees: ['business_admin'], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), { maskEarlyJobRejections: true }, 1);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.noOpenings');
-    });
-
-    it('returns ALL rejection reasons together (experience, dependability, degrees) when multiple requirements are missing', () => {
-      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      // Turn 5: maskEarlyJobRejections no longer suppresses Poor Work History
-      const result = applyForJob(player, salesManager, 4, {}, undefined, new Random(1), undefined, 5);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      const reasons = String(result.message?.params?.reasons);
-      expect(reasons).toContain('Not enough experience.');
-      expect(reasons).toContain('Poor Work History.');
-      expect(reasons).toContain('Missing required degree: business_admin');
-    });
-
-    it('returns "Not enough education." alongside experience and dependability when job_apply_missing_education is configured', () => {
-      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const messages = {
-        job_apply_missing_experience: 'Not enough experience.',
-        job_apply_missing_dependability: 'Poor Work History.',
-        job_apply_missing_education: 'Not enough education.'
-      };
-      const result = applyForJob(player, salesManager, 4, messages, undefined, new Random(1), { helpfulUI: false }, 5);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      const reasons = String(result.message?.params?.reasons);
-      expect(reasons).toContain('Not enough experience.');
-      expect(reasons).toContain('Poor Work History.');
-      expect(reasons).toContain('Not enough education.');
-    });
-
-    it('returns "Not enough education: missing [degrees]" when helpfulUI is true', () => {
-      const multiDegreeJob: JobDef = {
-        id: 'engineer_mgr',
-        title: 'Engineering Manager',
-        locationId: 'factory',
-        baseWage: 25,
-        perks: [],
-        requirements: {
-          experience: 10,
-          dependability: 10,
-          degrees: ['junior_college', 'engineering'],
-          uniform: 'business'
-        }
-      };
-      const player = {
-        hoursRemaining: 20,
-        experience: 10,
-        dependability: 10,
-        degrees: ['junior_college'], // Missing engineering
-        turnFlags: { jobsRejectedThisTurn: [] }
-      } as unknown as PlayerState;
-
-      const result = applyForJob(player, multiDegreeJob, 4, {}, undefined, new Random(1), { helpfulUI: true }, 5);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      const reasons = String(result.message?.params?.reasons);
-      expect(reasons).toContain('Not enough education: missing Engineering.');
-      expect(result.message?.params?.missingDegrees).toBe('engineering');
-    });
-
-    it('returns ALL rejection reasons in Advanced including Management Skill and Technical Skill', () => {
-      const advExecTechJob: JobDef = {
-        id: 'tech_exec_mgr',
-        title: 'Tech Executive Manager',
-        locationId: 'factory',
-        baseWage: 30,
-        perks: [],
-        tags: ['technical', 'executive_management'],
-        requirements: {
-          experience: 50,
-          dependability: 50,
-          degrees: ['business_admin'],
-          uniform: 'business',
-          techSkill: 5.0
-        } as any
-      };
-      const advancedRules = { usePhysicalMentalConditions: true };
-      const player = {
-        hoursRemaining: 20,
-        experience: 20, // Missing 30 Exp
-        dependability: 20, // Missing 30 Dep
-        degrees: [], // Missing degree
-        skillMgmt: 1.0, // Requires 50/10 = 5.0 Skill_Mgmt
-        skillTech: 1.0, // Requires 5.0 Skill_Tech
-        turnFlags: { jobsRejectedThisTurn: [] }
-      } as unknown as PlayerState;
-
-      const result = applyForJob(player, advExecTechJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.rejected');
-      const reasons = String(result.message?.params?.reasons);
-      expect(reasons).toContain('Not enough experience.');
-      expect(reasons).toContain('Poor Work History.');
-      expect(reasons).toContain('Missing required degree: business_admin');
-      expect(reasons).toContain('Management Skill');
-      expect(reasons).toContain('Technical Skill');
-    });
-
-    it('rejects due to insufficient employability roll', () => {
-      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.99); // Force high roll (99)
-      const player = { hoursRemaining: 20, experience: 10, dependability: 10, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1)); // Employability = 40 + 10 + 10 = 60. 99 > 60 = rejected.
-      expect(result.success).toBe(false);
-      expect(result.message?.key).toBe('action.job.noOpenings');
-    });
-
-    it('grants +2 experience in classic when getting a new job', () => {
-      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); 
-      const player = { hoursRemaining: 20, experience: 10, dependability: 20, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1), { grantExpOnJobSwitch: true });
-      expect(result.success).toBe(true);
-      expect(result.updated.experience).toBe(12);
-    });
-
-    it('resets dependability to 10 if it is below 10 when getting a new job', () => {
-      const zeroDepJob: JobDef = {
-        id: 'entry_zero',
-        title: 'Entry Zero',
-        locationId: 'entry',
-        baseWage: 5,
-        perks: [],
-        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
-        tags: ['always_hiring']
-      };
-      const player = { hoursRemaining: 20, experience: 10, dependability: 5, degrees: [], turnFlags: { jobsRejectedThisTurn: [] } } as unknown as PlayerState;
-      const result = applyForJob(player, zeroDepJob, 4, {}, undefined, new Random(1));
-      expect(result.success).toBe(true);
-      expect(result.updated.dependability).toBe(10);
-    });
-
-    it('rejects application to heavy_physical job if physical condition < heavyPhysicalMinRequirement', () => {
-      const heavyJob: JobDef = {
-        id: 'factory_heavy',
-        title: 'Heavy Laborer',
-        locationId: 'factory',
-        baseWage: 12,
-        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
-        tags: ['heavy_physical'],
-        perks: []
-      };
-      const weakPlayer = {
-        hoursRemaining: 20,
-        experience: 10,
-        dependability: 20,
-        degrees: [],
-        physicalCondition: 15,
-        turnFlags: { jobsRejectedThisTurn: [] }
-      } as unknown as PlayerState;
-      const res = applyForJob(
-        weakPlayer,
-        heavyJob,
-        4,
-        {},
-        undefined,
-        new Random(1),
-        { usePhysicalMentalConditions: true },
-        1,
-        undefined,
-        { heavyPhysicalMinRequirement: 21 } as any
-      );
-      expect(res.success).toBe(false);
-      expect(res.message?.params?.reasons).toContain('Requires at least 21 Physical Condition');
-    });
-
-    it('accumulates employability bonus on "No opening" rejection (+10% if unemployed, +5% if employed) and resets on hire', () => {
-      const normalJob: JobDef = {
-        id: 'clerk',
-        title: 'Clerk',
-        locationId: 'store',
-        baseWage: 10,
-        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
-        perks: []
-      };
-      const replayFail = {
-        inDecisions: [
-          { type: 'job_apply_luck', result: 99 },
-          { type: 'job_apply_luck', result: 99 },
-          { type: 'job_apply_luck', result: 99 }
-        ],
-        outDecisions: []
-      };
-      const unemployedPlayer = {
-        id: 'p1',
-        currentJobId: null,
-        hoursRemaining: 20,
-        experience: 10,
-        dependability: 20,
-        degrees: [],
-        physicalCondition: 50,
-        mentalCondition: 50,
-        turnFlags: { jobsRejectedThisTurn: [] }
-      } as unknown as PlayerState;
-
-      // 1st rejection while unemployed: +10%
-      let res = applyForJob(unemployedPlayer, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
-      expect(res.success).toBe(false);
-      expect(res.updated.noOpeningBonus).toBe(10);
-
-      // 2nd rejection while unemployed: +10% -> 20%
-      res.updated.turnFlags.jobsRejectedThisTurn = [];
-      res = applyForJob(res.updated, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
-      expect(res.success).toBe(false);
-      expect(res.updated.noOpeningBonus).toBe(20);
-
-      // Now with roll = 1, they succeed and get hired -> noOpeningBonus resets to 0
-      const replaySuccess = {
-        inDecisions: [{ type: 'job_apply_luck', result: 1 }],
-        outDecisions: []
-      };
-      res.updated.turnFlags.jobsRejectedThisTurn = [];
-      const successRes = applyForJob(res.updated, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replaySuccess);
-      expect(successRes.success).toBe(true);
-      expect(successRes.updated.noOpeningBonus).toBe(0);
-
-      // While employed, rejection only gives +5%
-      const otherJob: JobDef = {
-        id: 'other_clerk',
-        title: 'Other Clerk',
-        locationId: 'other_store',
-        baseWage: 10,
-        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
-        perks: []
-      };
-      successRes.updated.turnFlags.jobsRejectedThisTurn = [];
-      const employedRes = applyForJob(successRes.updated, otherJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
-      expect(employedRes.success).toBe(false);
-      expect(employedRes.updated.noOpeningBonus).toBe(5);
-    });
-
-    it('applies attire modifier: -5% when underdressed, +5% when overdressed in Advanced mode', () => {
-      const dressJob: JobDef = {
-        id: 'office_worker',
-        title: 'Office Worker',
-        locationId: 'office',
-        baseWage: 10,
-        requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'dress' },
-        perks: []
-      };
-
-      const basePlayer = {
-        hoursRemaining: 10,
-        money: 100,
-        experience: 0,
-        dependability: 0,
-        degrees: [],
-        currentJobId: null,
-        turnFlags: { jobsRejectedThisTurn: [], clothesWornThisTurn: [] },
-        inventory: {
-          casualClothesWeeks: 10,
-          dressClothesWeeks: 10,
-          businessClothesWeeks: 10,
-          selectedClothes: 'casual'
-        }
-      } as unknown as PlayerState;
-
-      const advRules = { usePhysicalMentalConditions: true };
-
-      // 1. Underdressed (wearing Casual for Dress uniform job):
-      // Base score is 45. -5% attire penalty = 40%. Roll 43 > 40 -> Rejected!
-      const underdressedPlayer = { ...basePlayer, inventory: { ...basePlayer.inventory, selectedClothes: 'casual' as const } } as unknown as PlayerState;
-      const replayUnder = { inDecisions: [{ type: 'job_apply_luck', result: 43 }], outDecisions: [] };
-      const underRes = applyForJob(underdressedPlayer, dressJob, 4, {}, undefined, undefined, advRules, 1, replayUnder);
-      expect(underRes.success).toBe(false);
-
-      // 2. Overdressed (wearing Business for Dress uniform job):
-      // Base score is 45. +5% attire bonus = 50%. Roll 43 <= 50 -> Hired!
-      const overdressedPlayer = {
-        ...basePlayer,
-        turnFlags: { jobsRejectedThisTurn: [], clothesWornThisTurn: [] },
-        inventory: { ...basePlayer.inventory, selectedClothes: 'business' as const }
-      } as unknown as PlayerState;
-      const replayOver = { inDecisions: [{ type: 'job_apply_luck', result: 43 }], outDecisions: [] };
-      const overRes = applyForJob(overdressedPlayer, dressJob, 4, {}, undefined, undefined, advRules, 1, replayOver);
-      expect(overRes.success).toBe(true);
-      expect(overRes.updated.turnFlags?.clothesWornThisTurn).toContain('business');
-    });
-  });
-
-  describe('calcWorkShiftSummary', () => {
-    it('computes accurate shift options, stamina costs, and disabled statuses', () => {
-      const heavyJob: JobDef = {
-        id: 'factory_assembly',
-        title: 'Assembly Worker',
-        locationId: 'factory',
-        baseWage: 8,
-        requirements: { experience: 30, dependability: 30, degrees: [], uniform: 'casual' },
-        tags: ['heavy_physical'],
-        perks: []
-      };
-      const player = {
-        hoursRemaining: 6,
-        currentWage: 8,
-        physicalCondition: 50,
-        mentalCondition: 50,
-        degrees: [],
-        workActionsThisTurn: 0,
-        social: 10
-      } as unknown as PlayerState;
-
-      const summary = calcWorkShiftSummary(player, heavyJob, 6, { usePhysicalMentalConditions: true } as any);
-      expect(summary.hoursToWork).toBe(6);
-      expect(summary.modes.length).toBe(4);
-
-      const workWork = summary.modes.find(m => m.id === 'work_work');
-      expect(workWork?.physCost).toBe(1.5); // base 1 + heavy_physical 0.5 = 1.5
-      expect(workWork?.rewardExp).toBe(0.5); // 0.5x exp gain
-
-      const lookBusy = summary.modes.find(m => m.id === 'look_busy');
-      expect(lookBusy?.physCost).toBe(0.75); // base 0.5 + heavy_physical 0.25 = 0.75
-      expect(lookBusy?.rewardDep).toBe(-1); // -1 dep penalty for heavy_physical
-
-      const faceTime = summary.modes.find(m => m.id === 'face_time');
-      expect(faceTime?.disabled).toBe(true);
-
-      const initiative = summary.modes.find(m => m.id === 'show_initiative');
-      expect(initiative?.disabled).toBe(true); // Insufficient Exp (req 0 + 10 = 10, player has 0)
-    });
-  });
-
   describe('workShift', () => {
     it('fails if no clothes matching requirement', () => {
       const player = { 
@@ -1655,6 +1271,3 @@ describe('Job Engine', () => {
     });
   });
 });
-
-
-
