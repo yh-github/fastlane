@@ -1,15 +1,29 @@
 import { useTranslation } from 'react-i18next';
+import type { StatModification } from '../engine/gameState';
+import { StatModifierPills } from './StatModifierPills';
 
 interface StreetRobberyModalProps {
   lostAmount: number;
   location: string;
   onClose: () => void;
+  modifications?: StatModification[];
+  isHelpfulUI?: boolean;
 }
 
-export function StreetRobberyModal({ lostAmount, location, onClose }: StreetRobberyModalProps) {
+export function StreetRobberyModal({
+  lostAmount,
+  location,
+  onClose,
+  modifications,
+  isHelpfulUI = true
+}: StreetRobberyModalProps) {
   const { t } = useTranslation();
   
   const locationName = t(`building.${location}`, { defaultValue: location });
+
+  const effectiveModifications: StatModification[] = modifications && modifications.length > 0
+    ? modifications
+    : [{ stat: 'money', diff: -lostAmount }];
 
   return (
     <div 
@@ -48,7 +62,7 @@ export function StreetRobberyModal({ lostAmount, location, onClose }: StreetRobb
           padding: '12px',
           borderRadius: '8px',
           border: '1px solid rgba(231, 76, 60, 0.3)',
-          marginBottom: '24px',
+          marginBottom: '16px',
           fontWeight: 'bold',
           fontSize: '1.2em',
           color: '#ff7675',
@@ -56,6 +70,9 @@ export function StreetRobberyModal({ lostAmount, location, onClose }: StreetRobb
           unicodeBidi: 'isolate'
         }}>
           Loss: -${lostAmount}
+        </div>
+        <div style={{ marginBottom: '20px' }}>
+          <StatModifierPills modifications={effectiveModifications} isHelpfulUI={isHelpfulUI} />
         </div>
         <button 
           onClick={onClose}

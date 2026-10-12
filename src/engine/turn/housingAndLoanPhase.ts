@@ -55,7 +55,11 @@ export function processHousingAndLoanPhase(
       const debtAmount = p.currentRentPrice;
       p.rentDebt += debtAmount;
       p.rentPaidUntilWeek = state.turn + 4; 
-      p.turnEvents.push({ key: 'events.rent.charged', params: { amount: debtAmount } });
+      p.turnEvents.push({
+        key: 'events.rent.charged',
+        params: { amount: debtAmount },
+        modifications: [{ stat: 'rentDebt', diff: debtAmount }]
+      });
 
       // Strict eviction: warning if debt > 1 month rent, eviction to low_cost if debt > 2 months rent
       if (state.rules.strictEviction) {
