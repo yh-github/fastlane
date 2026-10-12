@@ -567,7 +567,12 @@ export function applyMarketCrash(
   } else if (severity === 'major') {
     // Lose all bank savings
     if (updated.bankSavings > 0) {
-      updated.turnEvents.push({ key: 'events.marketCrash.bankSavingsLost', params: { amount: updated.bankSavings } });
+      const lostSavings = updated.bankSavings;
+      updated.turnEvents.push({
+        key: 'events.marketCrash.bankSavingsLost',
+        params: { amount: lostSavings },
+        modifications: [{ stat: 'money', diff: -lostSavings }]
+      });
       updated.bankSavings = 0;
     }
     updated = applyHappinessChange(updated, hasSignificantStocks ? -8 : -3, 'market_crash', rules || ({} as any), statRules);
@@ -614,7 +619,10 @@ export function applyEconomicBoom(
   }
   
   if (stockValue > 1000) {
-    updated.turnEvents.push({ key: 'events.economicBoom.investorBonus' });
+    updated.turnEvents.push({
+      key: 'events.economicBoom.investorBonus',
+      modifications: [{ stat: rules?.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: 5 }]
+    });
     updated = applyHappinessChange(updated, 5, 'economic_boom', rules || ({} as any), statRules);
   }
 

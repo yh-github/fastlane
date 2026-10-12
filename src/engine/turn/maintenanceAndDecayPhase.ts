@@ -94,7 +94,14 @@ export function processMaintenanceAndDecayPhase(
       else if (tier === 'medium') { amount = 500; happiness = 5; }
       player.money += amount;
       player = applyHappinessChange(player, happiness, 'lottery_win', state.rules, campaign.config.statRules);
-      player.turnEvents.push({ key: 'events.lottery', params: { amount } });
+      player.turnEvents.push({
+        key: 'events.lottery',
+        params: { amount },
+        modifications: [
+          { stat: 'money', diff: amount },
+          { stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: happiness }
+        ]
+      });
       player.inventory.lotteryTickets = 0;
     } else {
       player.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Lottery Win', reason: 'Player owns 0 lottery tickets' } });
@@ -103,9 +110,20 @@ export function processMaintenanceAndDecayPhase(
     const r = resolveDecision(replay, `lottery_roll_${player.id}`, () => Math.floor(rng.next() * 501));
     const t = player.inventory.lotteryTickets;
     if (r < t) {
-      if (r <= t / 20) { player.money += 5000; player = applyHappinessChange(player, 10, 'lottery_win', state.rules, campaign.config.statRules); player.turnEvents.push({ key: 'events.lottery', params: { amount: 5000 } }); }
-      else if (r <= t / 5) { player.money += 500; player = applyHappinessChange(player, 5, 'lottery_win', state.rules, campaign.config.statRules); player.turnEvents.push({ key: 'events.lottery', params: { amount: 500 } }); }
-      else { player.money += 200; player = applyHappinessChange(player, 5, 'lottery_win', state.rules, campaign.config.statRules); player.turnEvents.push({ key: 'events.lottery', params: { amount: 200 } }); }
+      const isLarge = r <= t / 20;
+      const isMed = r <= t / 5;
+      const winAmt = isLarge ? 5000 : (isMed ? 500 : 200);
+      const winHap = isLarge ? 10 : 5;
+      player.money += winAmt;
+      player = applyHappinessChange(player, winHap, 'lottery_win', state.rules, campaign.config.statRules);
+      player.turnEvents.push({
+        key: 'events.lottery',
+        params: { amount: winAmt },
+        modifications: [
+          { stat: 'money', diff: winAmt },
+          { stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: winHap }
+        ]
+      });
     }
     player.inventory.lotteryTickets = 0;
   }
@@ -128,7 +146,8 @@ export function processMaintenanceAndDecayPhase(
         player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + uninspectedCurios;
         player.turnEvents.push({
           key: 'events.curioDecor',
-          params: { name: curio.name, lifestyle: lifestyleGain }
+          params: { name: curio.name, lifestyle: lifestyleGain },
+          modifications: [{ stat: 'lifestyle', diff: lifestyleGain }]
         });
       } else if (outcomeRoll < 0.80) {
         // 40% Fascinating Trinket (+1 or +2 Mental)
@@ -137,7 +156,8 @@ export function processMaintenanceAndDecayPhase(
         player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + uninspectedCurios;
         player.turnEvents.push({
           key: 'events.curioMental',
-          params: { name: curio.name, mental: mentalGain }
+          params: { name: curio.name, mental: mentalGain },
+          modifications: [{ stat: 'mental', diff: mentalGain }]
         });
       } else {
         // 20% Collector's Antique Cash ($35–$50)
@@ -147,7 +167,8 @@ export function processMaintenanceAndDecayPhase(
         player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + (uninspectedCurios - 1);
         player.turnEvents.push({
           key: 'events.curioCash',
-          params: { name: curio.name, amount: cashAmount }
+          params: { name: curio.name, amount: cashAmount },
+          modifications: [{ stat: 'money', diff: cashAmount }]
         });
       }
     } else {
@@ -169,7 +190,14 @@ export function processMaintenanceAndDecayPhase(
       if (state.rules.usePhysicalMentalConditions) {
         player.skillTech = Math.min(10, roundToResolution((player.skillTech || 0) + 0.25, 0.05));
       }
-      player.turnEvents.push({ key: 'events.computerProfit', params: { profit } });
+      const compMods: import('../gameState').StatModification[] = [
+        { stat: 'money', diff: profit },
+        { stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: 3 }
+      ];
+      if (state.rules.usePhysicalMentalConditions) {
+        compMods.push({ stat: 'skillTech', diff: 0.25 });
+      }
+      player.turnEvents.push({ key: 'events.computerProfit', params: { profit }, modifications: compMods });
     } else {
       player.turnEvents.push({ key: 'debug.event_cancelled', params: { event: 'Computer Profit', reason: 'No active computer synergy' } });
     }
@@ -182,7 +210,14 @@ export function processMaintenanceAndDecayPhase(
       if (state.rules.usePhysicalMentalConditions) {
         player.skillTech = Math.min(10, roundToResolution((player.skillTech || 0) + 0.25, 0.05));
       }
-      player.turnEvents.push({ key: 'events.computerProfit', params: { profit } });
+      const compMods: import('../gameState').StatModification[] = [
+        { stat: 'money', diff: profit },
+        { stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: 3 }
+      ];
+      if (state.rules.usePhysicalMentalConditions) {
+        compMods.push({ stat: 'skillTech', diff: 0.25 });
+      }
+      player.turnEvents.push({ key: 'events.computerProfit', params: { profit }, modifications: compMods });
     }
   }
 
@@ -261,12 +296,23 @@ export function processPostHealthMaintenance(
       if (isAdvancedMaint) {
         targetApp.isBroken = true;
         player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-        player.turnEvents.push({ key: 'events.applianceBrokeNeedRepair', params: { appliance: formatAppName(targetApp.id) } });
+        player.turnEvents.push({
+          key: 'events.applianceBrokeNeedRepair',
+          params: { appliance: formatAppName(targetApp.id) },
+          modifications: [{ stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -1 }]
+        });
       } else {
         const repairCost = Math.floor(targetApp.purchasePrice * (0.05 + rng.next() * 0.2));
         player.money = Math.max(0, player.money - repairCost);
         player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-        player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(targetApp.id), repairCost } });
+        player.turnEvents.push({
+          key: 'events.applianceBroke',
+          params: { appliance: formatAppName(targetApp.id), repairCost },
+          modifications: [
+            { stat: 'money', diff: -repairCost },
+            { stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -1 }
+          ]
+        });
       }
 
       for (const app of player.inventory.appliances.filter(a => a !== targetApp && (!isAdvancedMaint || !a.isBroken))) {
@@ -276,12 +322,23 @@ export function processPostHealthMaintenance(
           if (isAdvancedMaint) {
             app.isBroken = true;
             player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-            player.turnEvents.push({ key: 'events.applianceBrokeNeedRepair', params: { appliance: formatAppName(app.id) } });
+            player.turnEvents.push({
+              key: 'events.applianceBrokeNeedRepair',
+              params: { appliance: formatAppName(app.id) },
+              modifications: [{ stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -1 }]
+            });
           } else {
             const rCost = resolveDecision(replay, `appliance_repair_${player.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
             player.money = Math.max(0, player.money - rCost);
             player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-            player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost: rCost } });
+            player.turnEvents.push({
+              key: 'events.applianceBroke',
+              params: { appliance: formatAppName(app.id), repairCost: rCost },
+              modifications: [
+                { stat: 'money', diff: -rCost },
+                { stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -1 }
+              ]
+            });
           }
         }
       }
@@ -297,12 +354,23 @@ export function processPostHealthMaintenance(
         if (isAdvancedMaint) {
           app.isBroken = true;
           player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-          player.turnEvents.push({ key: 'events.applianceBrokeNeedRepair', params: { appliance: formatAppName(app.id) } });
+          player.turnEvents.push({
+            key: 'events.applianceBrokeNeedRepair',
+            params: { appliance: formatAppName(app.id) },
+            modifications: [{ stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -1 }]
+          });
         } else {
           const repairCost = resolveDecision(replay, `appliance_repair_${player.id}_${app.id}`, () => Math.floor(app.purchasePrice * (0.05 + rng.next() * 0.2)));
           player.money = Math.max(0, player.money - repairCost);
           player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
-          player.turnEvents.push({ key: 'events.applianceBroke', params: { appliance: formatAppName(app.id), repairCost } });
+          player.turnEvents.push({
+            key: 'events.applianceBroke',
+            params: { appliance: formatAppName(app.id), repairCost },
+            modifications: [
+              { stat: 'money', diff: -repairCost },
+              { stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -1 }
+            ]
+          });
         }
       }
     }

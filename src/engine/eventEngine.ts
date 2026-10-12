@@ -29,7 +29,8 @@ export function processStreetRobbery(
   rng: Random,
   campaign: CampaignBundle,
   replay?: ReplayContext,
-  forceRobbed?: boolean
+  forceRobbed?: boolean,
+  rules?: Partial<import('./gameState').GameRules>
 ): PlayerState {
   const startWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
   if (week < startWeek || player.money <= 0) return player;
@@ -40,9 +41,8 @@ export function processStreetRobbery(
 
   if (robbed) {
     let updated = { ...player, money: 0 };
-    // Fallback to empty object if rules aren't explicitly passed, but gameRules should be on campaign
-    const rules = (campaign.config.gameRules || {}) as any;
-    return applyHappinessChange(updated, -3, 'street_robbery', rules, campaign.config.statRules);
+    const effectiveRules = rules || (campaign.config.gameRules || {}) as any;
+    return applyHappinessChange(updated, -3, 'street_robbery', effectiveRules, campaign.config.statRules);
   }
 
   return player;
@@ -171,10 +171,13 @@ export function processApartmentRobbery(
         if (unprotected) {
           const remAppliances = player.inventory.appliances.filter(a => a !== unprotected);
           const itemsStr = (unprotected as any).name || formatItem(unprotected.id);
+          const aptMods: import('./gameState').StatModification[] = [
+            { stat: rules?.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -4 }
+          ];
           let updated: PlayerState = {
             ...player,
             inventory: { ...player.inventory, appliances: remAppliances },
-            turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }],
+            turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr }, modifications: aptMods }],
             turnFlags: { ...player.turnFlags, freeNewspaper: true },
             newspaperHeadline: { key: 'newspaper.robbery' }
           };
@@ -186,10 +189,13 @@ export function processApartmentRobbery(
     }
 
     const itemsStr = stolenItemNames.join(', ');
+    const aptMods: import('./gameState').StatModification[] = [
+      { stat: rules?.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -4 }
+    ];
     let updated: PlayerState = { 
       ...player, 
       inventory: { ...player.inventory, appliances: newAppliances }, 
-      turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr } }],
+      turnEvents: [...player.turnEvents, { key: 'events.robbery.apartment', params: { items: itemsStr }, modifications: aptMods }],
       turnFlags: { ...player.turnFlags, freeNewspaper: true },
       newspaperHeadline: { key: 'newspaper.robbery' }
     };
@@ -259,7 +265,14 @@ export function processDonations(
     ...player,
     money: player.money + totalDonation,
     nakedTurns: 0,
-    turnEvents: [...player.turnEvents, { key: 'events.donation', params: { amount: totalDonation } }]
+    turnEvents: [
+      ...player.turnEvents,
+      {
+        key: 'events.donation',
+        params: { amount: totalDonation },
+        modifications: [{ stat: 'money', diff: totalDonation }]
+      }
+    ]
   };
 
   return updated;

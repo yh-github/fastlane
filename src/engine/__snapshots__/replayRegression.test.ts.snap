@@ -83,9 +83,21 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "turnEvents": [
         {
           "key": "events.starvation",
+          "modifications": [
+            {
+              "diff": -2,
+              "stat": "happiness",
+            },
+          ],
         },
         {
           "key": "events.doctorVisit_reasons",
+          "modifications": [
+            {
+              "diff": -102,
+              "stat": "money",
+            },
+          ],
           "params": {
             "cost": 102,
             "reasons": "Relaxation critically low",
@@ -252,6 +264,12 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "turnEvents": [
         {
           "key": "events.starvation",
+          "modifications": [
+            {
+              "diff": -2,
+              "stat": "happiness",
+            },
+          ],
         },
         {
           "key": "events.pawnExpired",

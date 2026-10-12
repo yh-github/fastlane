@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { type GameState, type PlayerState, recalculatePlayerEffects } from '../engine/gameState';
+import { type GameState, type PlayerState, type StatModification, recalculatePlayerEffects } from '../engine/gameState';
 import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
 import { type CampaignBundle } from '../engine/dataLoader';
@@ -34,7 +34,12 @@ export function useGameEngine(
     { week: initialGameState.turn, event: { key: 'Game started. Good luck!' } }
   ]);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
-  const [streetRobberyNotice, setStreetRobberyNotice] = useState<{ lostAmount: number; location: string; onConfirm?: () => void } | null>(null);
+  const [streetRobberyNotice, setStreetRobberyNotice] = useState<{
+    lostAmount: number;
+    location: string;
+    modifications?: StatModification[];
+    onConfirm?: () => void;
+  } | null>(null);
   const lastPulsedRef = useRef({ turn: -1, playerIndex: -1 });
   const replayDataRef = useRef<ReplayData>({
     version: '1.0.0',
@@ -88,6 +93,58 @@ export function useGameEngine(
     setLogs(prev => [...prev.slice(-9999), { week: weekOverride ?? gameStateRef.current?.turn ?? 1, event, playerId }]);
   }, []);
 
+  const triggerRobberyNotificationAndAnim = async (
+    robbedPlayer: PlayerState,
+    preRobberyMoney: number,
+    preRobberyHappiness: number,
+    preRobberyMental: number,
+    location: string
+  ) => {
+    if (robbedPlayer.money >= preRobberyMoney) return;
+    const lostAmount = preRobberyMoney - robbedPlayer.money;
+    const hapDiff = (robbedPlayer.happiness ?? 0) - (preRobberyHappiness ?? 0);
+    const mentalDiff = (robbedPlayer.mentalCondition ?? 0) - (preRobberyMental ?? 0);
+
+    const robberyMods: StatModification[] = [
+      { stat: 'money', diff: -lostAmount }
+    ];
+    if (mentalDiff !== 0) {
+      robberyMods.push({ stat: 'mental', diff: mentalDiff });
+    }
+    if (hapDiff !== 0) {
+      robberyMods.push({ stat: 'happiness', diff: hapDiff });
+    }
+
+    addLog({ key: 'log.robbery' }, undefined, robbedPlayer.id);
+    const rules = gameStateRef.current?.rules;
+    if (rules?.enableAnimations) {
+      triggerAnim('text', `-${lostAmount} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
+      if (mentalDiff < 0) {
+        triggerAnim('text', `${mentalDiff} 🧠`, { targetId: 'stat-mental', customClass: 'anim-negative' });
+      }
+      if (hapDiff < 0) {
+        triggerAnim('text', `${hapDiff} 😊`, { targetId: 'stat-happiness', customClass: 'anim-negative' });
+      }
+    }
+    robbedPlayer.newspaperHeadline = { key: 'newspaper.robbery' };
+
+    await animateRobberInterception(activePlayerIndex);
+
+    if (!robbedPlayer.isAi) {
+      await new Promise<void>(resolve => {
+        setStreetRobberyNotice({
+          lostAmount,
+          location,
+          modifications: robberyMods,
+          onConfirm: () => {
+            setStreetRobberyNotice(null);
+            resolve();
+          }
+        });
+      });
+    }
+  };
+
   const endTurnSequence = async (updatedPlayers: PlayerState[]) => {
     let player = updatedPlayers[activePlayerIndex];
     const housingDef = campaign!.housing.find(h => h.id === player.currentHousingId);
@@ -102,10 +159,12 @@ export function useGameEngine(
 
     if (streetRobberyOnTurnEnd && wasInside && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
       const preRobberyMoney = player.money;
+      const preRobberyHappiness = player.happiness;
+      const preRobberyMental = player.mentalCondition || 0;
       const rng = new Random(currentState.rngState);
       const replayCtx: ReplayContext = { outDecisions: turnEndDecisions };
       const isForced = !!currentState.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId));
-      player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced);
+      player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced, currentState.rules);
 
       if (isForced) {
         setGameState(prev => prev ? {
@@ -114,31 +173,7 @@ export function useGameEngine(
         } : prev);
       }
 
-      if (player.money < preRobberyMoney) {
-        const lostAmount = preRobberyMoney - player.money;
-        addLog({ key: 'log.robbery' }, undefined, player.id);
-        if (currentState.rules.enableAnimations) {
-          const diff = player.money - preRobberyMoney;
-          triggerAnim('text', `${diff} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
-        }
-        player.newspaperHeadline = { key: 'newspaper.robbery' };
-
-        // Triggers map robbery interception animation
-        await animateRobberInterception(activePlayerIndex);
-
-        if (!player.isAi) {
-          await new Promise<void>(resolve => {
-            setStreetRobberyNotice({
-              lostAmount,
-              location: currentBuilding || '',
-              onConfirm: () => {
-                setStreetRobberyNotice(null);
-                resolve();
-              }
-            });
-          });
-        }
-      }
+      await triggerRobberyNotificationAndAnim(player, preRobberyMoney, preRobberyHappiness, preRobberyMental, currentBuilding || '');
 
       const newPlayers = [...updatedPlayers];
       newPlayers[activePlayerIndex] = player;
@@ -249,11 +284,13 @@ export function useGameEngine(
         const canBeRobbed = player.hoursRemaining > 0 || (player.hoursRemaining <= 0 && streetRobberyOnTurnEnd);
         if (canBeRobbed) {
           const preRobberyMoney = player.money;
+          const preRobberyHappiness = player.happiness;
+          const preRobberyMental = player.mentalCondition || 0;
           const rng = new Random(currentState.rngState);
           const outDecisions: EngineDecision[] = [];
           const replayCtx: ReplayContext = { outDecisions };
           const isForced = !!currentState.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId));
-          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced);
+          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced, currentState.rules);
 
           if (isForced) {
             setGameState(prev => prev ? {
@@ -265,28 +302,7 @@ export function useGameEngine(
           delete player.turnFlags?.enteredBuildingThisTurn;
           updatedPlayers[activePlayerIndex] = player;
 
-          if (player.money < preRobberyMoney) {
-            const lostAmount = preRobberyMoney - player.money;
-            addLog({ key: 'log.robbery' }, undefined, player.id);
-            if (currentState.rules.enableAnimations) {
-              const diff = player.money - preRobberyMoney;
-              triggerAnim('text', `${diff} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
-            }
-            player.newspaperHeadline = { key: 'newspaper.robbery' };
-            await animateRobberInterception(activePlayerIndex);
-            if (!player.isAi) {
-              await new Promise<void>(resolve => {
-                setStreetRobberyNotice({
-                  lostAmount,
-                  location: currentBuilding || '',
-                  onConfirm: () => {
-                    setStreetRobberyNotice(null);
-                    resolve();
-                  }
-                });
-              });
-            }
-          }
+          await triggerRobberyNotificationAndAnim(player, preRobberyMoney, preRobberyHappiness, preRobberyMental, currentBuilding || '');
           setGameState(prev => prev ? { ...prev, rngState: rng.getState(), players: updatedPlayers } : prev);
         }
       } else if (currentState.rules.reenterCurrentLocationCost && player.turnFlags?.enteredBuildingThisTurn) {
@@ -347,11 +363,13 @@ export function useGameEngine(
         const wasInside = player.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null;
         if (wasInside && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
           const preRobberyMoney = player.money;
+          const preRobberyHappiness = player.happiness;
+          const preRobberyMental = player.mentalCondition || 0;
           const rng = new Random(currentState.rngState);
           const outDecisions: EngineDecision[] = [];
           const replayCtx: ReplayContext = { outDecisions };
           const isForced = !!currentState.debugQueue?.some(e => e.type === 'street_robbery' && (e.playerId === player.id || !e.playerId));
-          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced);
+          player = processStreetRobbery(player, currentBuilding, currentState.turn, rng, campaign, replayCtx, isForced, currentState.rules);
           
           if (isForced) {
             setGameState(prev => prev ? {
@@ -371,31 +389,7 @@ export function useGameEngine(
             });
           }
 
-          if (player.money < preRobberyMoney) {
-            const lostAmount = preRobberyMoney - player.money;
-            addLog({ key: 'log.robbery' }, undefined, player.id);
-            if (currentState.rules.enableAnimations) {
-              const diff = player.money - preRobberyMoney;
-              triggerAnim('text', `${diff} 💸`, { sourceId: 'stat-money', customClass: 'anim-negative' });
-            }
-            player.newspaperHeadline = { key: 'newspaper.robbery' };
-
-            // Triggers map robbery interception animation
-            await animateRobberInterception(activePlayerIndex);
-
-            if (!player.isAi) {
-              await new Promise<void>(resolve => {
-                setStreetRobberyNotice({
-                  lostAmount,
-                  location: currentBuilding || '',
-                  onConfirm: () => {
-                    setStreetRobberyNotice(null);
-                    resolve();
-                  }
-                });
-              });
-            }
-          }
+          await triggerRobberyNotificationAndAnim(player, preRobberyMoney, preRobberyHappiness, preRobberyMental, currentBuilding || '');
           // Save the RNG state back since we used it!
           setGameState(prev => prev ? { ...prev, rngState: rng.getState() } : prev);
         }

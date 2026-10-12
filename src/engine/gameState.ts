@@ -21,6 +21,7 @@ export interface GameEvent {
     headlineKey: string;
     detailKey: string;
   };
+  modifications?: StatModification[];
 }
 
 export interface SectorState {
@@ -325,7 +326,7 @@ export interface WeekendCard {
 }
 
 export interface StatModification {
-  stat: 'money' | 'happiness' | 'mental' | 'physical' | 'dependability' | 'mess' | 'social' | 'relaxation' | string;
+  stat: 'money' | 'happiness' | 'mental' | 'physical' | 'dependability' | 'mess' | 'social' | 'relaxation' | 'skillTech' | 'skillMgmt' | 'lifestyle' | 'loanDebt' | 'rentDebt' | string;
   diff: number;
   label?: string;
 }

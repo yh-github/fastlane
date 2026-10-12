@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GameEvent } from '../engine/gameState';
+import type { GameEvent, GameRules } from '../engine/gameState';
+import { getEventModifications } from '../engine/eventModifiers';
+import { StatModifierPills } from './StatModifierPills';
 
 interface TurnEventsQueueProps {
   events: GameEvent[];
   onComplete: () => void;
+  rules?: GameRules;
 }
 
-export function TurnEventsQueue({ events, onComplete }: TurnEventsQueueProps) {
+export function TurnEventsQueue({ events, onComplete, rules }: TurnEventsQueueProps) {
   const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -94,8 +97,14 @@ export function TurnEventsQueue({ events, onComplete }: TurnEventsQueueProps) {
         <h2 style={{ fontSize: '24px', margin: '20px 0', lineHeight: '1.4', whiteSpace: 'pre-line' }}>
           {t(currentEvent.key, currentEvent.params as any) as string}
         </h2>
+
+        <StatModifierPills
+          modifications={getEventModifications(currentEvent, rules)}
+          isHelpfulUI={rules?.helpfulUI ?? true}
+          style={{ margin: '16px 0 24px' }}
+        />
         
-        <div style={{ marginTop: '40px' }}>
+        <div style={{ marginTop: '30px' }}>
           <button onClick={handleNext} style={{
             padding: '12px 30px', fontSize: '1.2em', cursor: 'pointer',
             backgroundColor: color, color: '#000', border: 'none', borderRadius: '8px',

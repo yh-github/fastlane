@@ -3,6 +3,7 @@ import type { PlayerState, StatModification, GameRules } from '../engine/gameSta
 import { useTranslation } from 'react-i18next';
 import { WeekendCardView } from './WeekendCardView';
 import { MessIcon } from './icons/MessIcon';
+import { StatModifierPills } from './StatModifierPills';
 
 interface WeekendScreenProps {
   player: PlayerState;
@@ -19,29 +20,6 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
   const [selectedCardId, setSelectedCardId] = useState<string>(offeredCards[0]?.id || '');
 
   const isHelpfulUI = rules?.helpfulUI ?? true;
-
-  const getStatInfo = (stat: string) => {
-    switch (stat) {
-      case 'money':
-        return { icon: '$', label: t('weekendScreen.cost', { defaultValue: 'Money' }) };
-      case 'mental':
-        return { icon: '🧠', label: t('weekendScreen.mental', { defaultValue: 'Mental Condition' }) };
-      case 'physical':
-        return { icon: '💪', label: t('weekendScreen.physical', { defaultValue: 'Physical Condition' }) };
-      case 'dependability':
-        return { icon: '🤝', label: t('weekendScreen.dependability', { defaultValue: 'Dependability' }) };
-      case 'mess':
-        return { icon: <MessIcon />, label: t('weekendScreen.mess', { defaultValue: 'Apartment Mess' }) };
-      case 'social':
-        return { icon: '👥', label: t('weekendScreen.social', { defaultValue: 'Social Standing' }) };
-      case 'happiness':
-        return { icon: '😊', label: t('weekendScreen.happiness', { defaultValue: 'Happiness' }) };
-      case 'relaxation':
-        return { icon: '🛌', label: t('weekendScreen.relaxation', { defaultValue: 'Relaxation' }) };
-      default:
-        return { icon: '', label: stat };
-    }
-  };
 
   const rawModifications: StatModification[] = (() => {
     if (player.weekendResult?.modifications && player.weekendResult.modifications.length > 0) {
@@ -63,10 +41,6 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
     }
     return mods;
   })();
-
-  const modifications = isHelpfulUI 
-    ? rawModifications 
-    : rawModifications.filter(mod => mod.stat === 'money');
 
   // Dynamic screen dimensions detection for adaptive card layout
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>(() => ({
@@ -297,88 +271,15 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
                 "{player.weekendResult.chosenCard ? player.weekendResult.chosenCard.fluff : (t(player.weekendResult.event.key, player.weekendResult.event.params as any) as string)}"
               </p>
 
-              {modifications.length > 0 && (
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '10px',
-                  justifyContent: 'center',
+              <StatModifierPills
+                modifications={rawModifications}
+                isHelpfulUI={isHelpfulUI}
+                style={{
                   marginTop: '16px',
                   paddingTop: '16px',
                   borderTop: '1px solid rgba(255, 255, 255, 0.15)'
-                }}>
-                  {modifications.map((mod, idx) => {
-                    const info = getStatInfo(mod.stat);
-                    const isMoney = mod.stat === 'money';
-
-                    let text: React.ReactNode = '';
-                    let textSummary = '';
-                    if (isMoney) {
-                      text = mod.diff < 0 ? `-$${Math.abs(mod.diff)}` : (mod.diff > 0 ? `+$${mod.diff}` : `$0`);
-                      textSummary = String(text);
-                    } else {
-                      const sign = mod.diff > 0 ? '+' : '';
-                      textSummary = `${sign}${mod.diff} ${info.label}`;
-                      text = info.icon ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          {sign}{mod.diff} {info.icon}
-                        </span>
-                      ) : textSummary;
-                    }
-
-                    let isPositive = false;
-                    let isNegative = false;
-                    if (isMoney) {
-                      if (mod.diff < 0) isNegative = true;
-                      else if (mod.diff > 0) isPositive = true;
-                    } else if (mod.stat === 'mess') {
-                      if (mod.diff > 0) isNegative = true;
-                      else if (mod.diff < 0) isPositive = true;
-                    } else {
-                      if (mod.diff > 0) isPositive = true;
-                      else if (mod.diff < 0) isNegative = true;
-                    }
-
-                    let color = '#94a3b8';
-                    let bg = 'rgba(148, 163, 184, 0.15)';
-                    let border = '1px solid rgba(148, 163, 184, 0.3)';
-
-                    if (isPositive) {
-                      color = '#4ade80';
-                      bg = 'rgba(74, 222, 128, 0.18)';
-                      border = '1px solid rgba(74, 222, 128, 0.35)';
-                    } else if (isNegative) {
-                      color = mod.stat === 'mess' ? '#fb923c' : '#f87171';
-                      bg = mod.stat === 'mess' ? 'rgba(251, 146, 60, 0.18)' : 'rgba(248, 113, 113, 0.18)';
-                      border = mod.stat === 'mess' ? '1px solid rgba(251, 146, 60, 0.35)' : '1px solid rgba(248, 113, 113, 0.35)';
-                    }
-
-                    return (
-                      <span
-                        key={idx}
-                        title={info.label}
-                        aria-label={`${info.label}: ${textSummary}`}
-                        dir="ltr"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          padding: '6px 12px',
-                          borderRadius: '20px',
-                          fontWeight: 'bold',
-                          fontSize: '1em',
-                          color,
-                          backgroundColor: bg,
-                          border,
-                          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                          unicodeBidi: 'isolate'
-                        }}
-                      >
-                        {text}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
+                }}
+              />
 
               {player.weekendResult.souvenir && (
                 <div 

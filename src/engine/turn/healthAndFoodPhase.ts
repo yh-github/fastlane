@@ -35,12 +35,26 @@ export function processHealthAndFoodPhase(
       if (hasEatenFastFood) {
         p.turnFlags.hasEaten = true;
         const key = state.rules.helpfulUI ? 'events.foodSpoiled.noFridge_qol' : 'events.foodSpoiled.noFridge';
-        p.turnEvents.push({ key, params: { amount: lostFood } });
+        p.turnEvents.push({
+          key,
+          params: { amount: lostFood },
+          modifications: [
+            { stat: 'mess', diff: lostFood },
+            { stat: 'mental', diff: -2 }
+          ]
+        });
       } else {
         ateSpoiledThisTurn = true;
         p.turnFlags.hasEaten = true;
         const key = state.rules.helpfulUI ? 'events.foodSpoiled.ateSpoiled_qol' : 'events.foodSpoiled.ateSpoiled';
-        p.turnEvents.push({ key, params: { amount: lostFood } });
+        p.turnEvents.push({
+          key,
+          params: { amount: lostFood },
+          modifications: [
+            { stat: 'mess', diff: lostFood },
+            { stat: 'mental', diff: -2 }
+          ]
+        });
       }
     } else if (maxStorage > 0 && p.inventory.freshFoodUnits > maxStorage) {
       const lostFood = p.inventory.freshFoodUnits - maxStorage;
@@ -48,7 +62,14 @@ export function processHealthAndFoodPhase(
       p = applyMoraleEffect(p, -1, 'food_spoilage', state.rules, campaign.config.statRules);
       p.mess = Math.min(99, (p.mess || 0) + lostFood);
       const key = state.rules.helpfulUI ? 'events.foodSpoiled.tooMuch_qol' : 'events.foodSpoiled.tooMuch';
-      p.turnEvents.push({ key, params: { amount: lostFood, capacity: maxStorage } });
+      p.turnEvents.push({
+        key,
+        params: { amount: lostFood, capacity: maxStorage },
+        modifications: [
+          { stat: 'mess', diff: lostFood },
+          { stat: 'mental', diff: -1 }
+        ]
+      });
     }
 
     if (!p.turnFlags.hasEaten) {
@@ -74,17 +95,33 @@ export function processHealthAndFoodPhase(
       p.mentalCondition = Math.max(campaign.config.statRules?.minMentalCondition ?? 5, (p.mentalCondition ?? 50) - mentalDrop);
       if (mentalDrop >= 3) p.resilienceBonus = (p.resilienceBonus || 0) + 1;
       spoiledFoodSickMultiplier = 2;
+
+      const foodEvent = p.turnEvents.find(e => e.key.startsWith('events.foodSpoiled.ateSpoiled'));
+      if (foodEvent && foodEvent.modifications) {
+        foodEvent.modifications.push({ stat: 'mental', diff: -mentalDrop });
+        const physDelta = (p.physicalCondition ?? 50) - currentPhys;
+        if (physDelta !== 0) {
+          foodEvent.modifications.push({ stat: 'physical', diff: physDelta });
+        }
+      }
     }
 
     if (starvedThisTurn) {
       const starvationDrop = campaign.config.statRules?.starvationMaxPhysicalPenalty ?? 10;
       p.minPhysicalCondition = Math.max(campaign.config.statRules?.globalPhysicalMin ?? 1, (p.minPhysicalCondition ?? 3) - 1);
       p.physicalConditionMax = Math.max(campaign.config.statRules?.minMaxPhysical ?? 10, (p.physicalConditionMax ?? 50) - starvationDrop);
+      const prevPhys = p.physicalCondition ?? 50;
       p.physicalCondition = p.minPhysicalCondition;
       const mentalDrop = 10;
       p.mentalCondition = Math.max(campaign.config.statRules?.minMentalCondition ?? 5, (p.mentalCondition ?? 50) - mentalDrop);
       if (mentalDrop >= 3) p.resilienceBonus = (p.resilienceBonus || 0) + 1;
-      p.turnEvents.push({ key: 'events.starvation' });
+      p.turnEvents.push({
+        key: 'events.starvation',
+        modifications: [
+          { stat: 'mental', diff: -mentalDrop },
+          { stat: 'physical', diff: p.minPhysicalCondition - prevPhys }
+        ]
+      });
     }
   } else {
     const hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
@@ -99,11 +136,25 @@ export function processHealthAndFoodPhase(
       if (hasEatenFastFood) {
         p.turnFlags.hasEaten = true;
         const key = state.rules.helpfulUI ? 'events.foodSpoiled.noFridge_qol' : 'events.foodSpoiled.noFridge';
-        p.turnEvents.push({ key, params: { amount: lostFood } });
+        p.turnEvents.push({
+          key,
+          params: { amount: lostFood },
+          modifications: [
+            { stat: 'mess', diff: lostFood },
+            { stat: 'happiness', diff: -2 }
+          ]
+        });
       } else {
         p.turnFlags.hasEaten = true;
         const key = state.rules.helpfulUI ? 'events.foodSpoiled.ateSpoiled_qol' : 'events.foodSpoiled.ateSpoiled';
-        p.turnEvents.push({ key, params: { amount: lostFood } });
+        p.turnEvents.push({
+          key,
+          params: { amount: lostFood },
+          modifications: [
+            { stat: 'mess', diff: lostFood },
+            { stat: 'happiness', diff: -2 }
+          ]
+        });
         if (p.money > 0) {
           const sickTrigger = resolveDecision(replay, `spoiled_food_sick_1_${p.id}`, () => rng.next() < 0.5);
           if (sickTrigger) {
@@ -119,7 +170,14 @@ export function processHealthAndFoodPhase(
       p = applyMoraleEffect(p, -1, 'food_spoilage', state.rules, campaign.config.statRules);
       p.mess = Math.min(20, (p.mess || 0) + lostFood);
       const key = state.rules.helpfulUI ? 'events.foodSpoiled.tooMuch_qol' : 'events.foodSpoiled.tooMuch';
-      p.turnEvents.push({ key, params: { amount: lostFood, capacity: maxStorage } });
+      p.turnEvents.push({
+        key,
+        params: { amount: lostFood, capacity: maxStorage },
+        modifications: [
+          { stat: 'mess', diff: lostFood },
+          { stat: 'happiness', diff: -1 }
+        ]
+      });
     }
 
     if (!p.turnFlags.hasEaten) {
@@ -135,7 +193,10 @@ export function processHealthAndFoodPhase(
         const starvationPenalty = requireConfig(campaign.config.timeRules?.starvationPenalty, 'timeRules.starvationPenalty');
         const { updated, doctorTriggered } = processStarvation(p, starvationPenalty, rng, state.rules, replay);
         p = updated;
-        p.turnEvents.push({ key: 'events.starvation' });
+        p.turnEvents.push({
+          key: 'events.starvation',
+          modifications: [{ stat: 'happiness', diff: -2 }]
+        });
         if (doctorTriggered) {
           doctorNeeded = true;
           doctorReasons.push('Starvation');
@@ -210,17 +271,39 @@ export function processHealthAndFoodPhase(
   if (doctorNeeded) {
     const moneyBefore = p.money;
     const loanBefore = p.loanDebt || 0;
+    const physBefore = p.physicalCondition;
+    const hapBefore = p.happiness;
     const doctorPenalty = requireConfig(campaign.config.timeRules?.doctorPenalty, 'timeRules.doctorPenalty');
     p = processDoctorVisit(p, doctorPenalty, rng, state.rules.bypassDoctorIfBroke, state.rules, replay);
     const totalPaid = (moneyBefore - p.money) + ((p.loanDebt || 0) - loanBefore);
     if (totalPaid > 0 || !state.rules.bypassDoctorIfBroke) {
+      const moneyDiff = moneyBefore - p.money;
+      const loanDiff = (p.loanDebt || 0) - loanBefore;
+      const docMods: import('../gameState').StatModification[] = [];
+      if (moneyDiff > 0) {
+        docMods.push({ stat: 'money', diff: -moneyDiff });
+      }
+      if (loanDiff > 0) {
+        docMods.push({ stat: 'loanDebt', diff: loanDiff });
+      }
+      if (state.rules.usePhysicalMentalConditions) {
+        const physDiff = (p.physicalCondition || 0) - (physBefore || 0);
+        if (physDiff !== 0) docMods.push({ stat: 'physical', diff: physDiff });
+      } else {
+        const hapDiff = p.happiness - hapBefore;
+        if (hapDiff !== 0) docMods.push({ stat: 'happiness', diff: hapDiff });
+      }
+
       const evtParams: any = { cost: totalPaid };
+      if (loanDiff > 0) {
+        evtParams.loanDebt = loanDiff;
+      }
       let key = 'events.doctorVisit';
       if (state.rules.helpfulUI && doctorReasons.length > 0) {
         evtParams.reasons = doctorReasons.join(', ');
         key = 'events.doctorVisit_reasons';
       }
-      p.turnEvents.push({ key, params: evtParams });
+      p.turnEvents.push({ key, params: evtParams, modifications: docMods });
     }
   }
 

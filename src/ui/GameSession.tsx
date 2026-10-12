@@ -254,6 +254,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
     return (
       <TurnEventsQueue 
         events={activePlayer.turnEvents}
+        rules={gameState.rules}
         onComplete={() => {
           const newPlayers = [...gameState.players];
           newPlayers[activePlayerIndex] = {
@@ -507,6 +508,8 @@ export const GameSession: React.FC<GameSessionProps> = ({
           <StreetRobberyModal
             lostAmount={streetRobberyNotice.lostAmount}
             location={streetRobberyNotice.location}
+            modifications={streetRobberyNotice.modifications}
+            isHelpfulUI={gameState.rules.helpfulUI ?? true}
             onClose={() => {
               if (streetRobberyNotice.onConfirm) {
                 streetRobberyNotice.onConfirm();
