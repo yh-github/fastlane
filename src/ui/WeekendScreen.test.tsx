@@ -31,9 +31,62 @@ describe('WeekendScreen', () => {
     expect(screen.getByText(/-?\$45/i)).toBeInTheDocument();
     expect(screen.getByText(/\+3 😊/i)).toBeInTheDocument();
 
-    const startWeekBtn = screen.getByRole('button');
+    const startWeekBtn = screen.getByRole('button', { name: /startWeek/i });
     fireEvent.click(startWeekBtn);
     expect(onStartWeek).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens and closes the breakdown and concept guide modal when clicking ? button', () => {
+    const player = createTestPlayer({
+      name: 'Alice',
+      weekendResult: {
+        event: { key: 'weekend.baseball', params: {} },
+        cost: 30,
+        happinessBonus: 2,
+        activityModifications: [
+          { stat: 'money', diff: -30, label: 'Game Ticket' },
+          { stat: 'mental', diff: 2, label: 'Relaxation' },
+        ],
+        maintenanceModifications: [
+          { stat: 'mess', diff: 2, label: 'Apartment Mess' },
+          { stat: 'dependability', diff: -1, label: 'Dependability Decay' },
+        ],
+        modifications: [
+          { stat: 'money', diff: -30 },
+          { stat: 'mental', diff: 2 },
+          { stat: 'mess', diff: 2 },
+          { stat: 'dependability', diff: -1 },
+        ],
+      },
+    });
+
+    render(<WeekendScreen player={player} turn={3} onStartWeek={vi.fn()} />);
+
+    // Verify ? button is present
+    const helpBtn = screen.getByTestId('weekend-breakdown-help-btn');
+    expect(helpBtn).toBeInTheDocument();
+
+    // Modal is initially closed
+    expect(screen.queryByTestId('weekend-breakdown-modal')).not.toBeInTheDocument();
+
+    // Click ? button
+    fireEvent.click(helpBtn);
+
+    // Modal is now open
+    const modal = screen.getByTestId('weekend-breakdown-modal');
+    expect(modal).toBeInTheDocument();
+    expect(screen.getByText(/Weekly Life Cycle/i)).toBeInTheDocument();
+    expect(screen.getByText(/No Double Deductions/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Weekend Activity/i).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(/Weekly Upkeep & Maintenance/i).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(/Net Weekly Change/i)).toBeInTheDocument();
+
+    // Click Got It! button to dismiss
+    const gotItBtn = screen.getByRole('button', { name: /Got It!/i });
+    fireEvent.click(gotItBtn);
+
+    // Modal is closed
+    expect(screen.queryByTestId('weekend-breakdown-modal')).not.toBeInTheDocument();
   });
 
   it('renders empty activity message when no weekend activity occurred', () => {

@@ -133,6 +133,13 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "workMistakesThisTurn": 0,
       },
       "weekendResult": {
+        "activityModifications": [
+          {
+            "diff": -17,
+            "label": "Weekend Cost",
+            "stat": "money",
+          },
+        ],
         "cost": 17,
         "event": {
           "key": "events.weekend.random_16",
@@ -141,6 +148,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
         "modifications": [
           {
             "diff": -17,
+            "label": "Weekend Cost",
             "stat": "money",
           },
         ],
@@ -297,22 +305,44 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "workMistakesThisTurn": 0,
       },
       "weekendResult": {
+        "activityModifications": [
+          {
+            "diff": -5,
+            "label": "Weekend Cost",
+            "stat": "money",
+          },
+        ],
         "cost": 5,
         "event": {
           "key": "events.weekend.random_2",
         },
         "happinessBonus": undefined,
-        "modifications": [
-          {
-            "diff": -5,
-            "stat": "money",
-          },
+        "maintenanceModifications": [
           {
             "diff": -1,
+            "label": "Weekly Upkeep",
             "stat": "relaxation",
           },
           {
             "diff": -3,
+            "label": "Dependability Decay",
+            "stat": "dependability",
+          },
+        ],
+        "modifications": [
+          {
+            "diff": -5,
+            "label": "Weekend Cost",
+            "stat": "money",
+          },
+          {
+            "diff": -1,
+            "label": "Weekly Upkeep",
+            "stat": "relaxation",
+          },
+          {
+            "diff": -3,
+            "label": "Dependability Decay",
             "stat": "dependability",
           },
         ],

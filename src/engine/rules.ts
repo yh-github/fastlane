@@ -307,6 +307,16 @@ export interface GameRules {
   economicUpsideBonus: boolean;
 
   /**
+   * ADVANCED: If true, skill caps scale dynamically with completed degrees rather than a flat 10 cap.
+   */
+  dynamicSkillCaps?: boolean;
+
+  /**
+   * ADVANCED: If true, job hiring probability scales dynamically with normalized wage competition, qualification margin, and domain skills.
+   */
+  wageScaledEmployability?: boolean;
+
+  /**
    * Shows coordinate and dimension readout toolbar on building location windows.
    */
   showWindowPositionSize: boolean;
@@ -407,6 +417,19 @@ export interface StatRules {
   heavyPhysicalMinRequirement?: number;
   mentalMaxBaseValue: number;
   mentalMaxDegreeBonus: number;
+
+  // Skill & Employability overhaul
+  baseSkillCap?: number;
+  maxSkillCap?: number;
+  baseEmployability?: number;
+  employabilityMarginRate?: number;
+  employabilityMaxMarginBonus?: number;
+  maxWageCompetitionPenalty?: number;
+  employabilitySkillBonusRate?: number;
+  generalSocialEmployabilityRate?: number;
+  socialEmployabilityBaseline?: number;
+  frontlineSocialEmployabilityRate?: number;
+  tagCompetitionModifiers?: Record<string, number>;
   
   // Starting values
   startingExperience: number;
@@ -541,6 +564,8 @@ export const DEFAULT_GAME_RULES: GameRules = {
   predictiveNewspaperStockTips: false,
   reenterCurrentLocationCost: true,
   economicUpsideBonus: false,
+  dynamicSkillCaps: false,
+  wageScaledEmployability: false,
   showWindowPositionSize: false,
   allowWindowMoveResize: false,
 };
@@ -558,6 +583,8 @@ export function getClothesSwitchingRule(rules?: GameRules): ClothesSwitchingRule
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  dynamicSkillCaps: 'Skill caps scale dynamically with completed degrees instead of a flat 10 cap',
+  wageScaledEmployability: 'Hiring chances scale dynamically with normalized wage competition, qualification margin, and domain skills',
   showWindowPositionSize: 'Shows coordinate, dimension, and margin tools on building location windows',
   allowWindowMoveResize: 'Allows dragging window headers to move and corner handles to resize location windows',
   economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',
@@ -741,6 +768,19 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   startingDependability: 'Initial dependability points at campaign start',
   maxExperience: 'Maximum work experience points attainable',
   maxDependability: 'Maximum dependability points attainable',
-  dependabilityWeeklyDecay: 'Dependability points lost each week if unemployed'
+  dependabilityWeeklyDecay: 'Dependability points lost each week if unemployed',
+
+  // Skill & Employability overhaul stat rules
+  baseSkillCap: 'Base maximum skill cap for technical and management skills without degrees',
+  maxSkillCap: 'Absolute ceiling for technical and management skills across all degree bonuses',
+  baseEmployability: 'Baseline employability chance (percentage) for meeting minimum job requirements',
+  employabilityMarginRate: 'Employability percentage bonus per point of dependability and experience exceeding requirements',
+  employabilityMaxMarginBonus: 'Maximum employability bonus attainable from exceeding job qualification margins',
+  maxWageCompetitionPenalty: 'Maximum employability penalty applied to highest-paying jobs due to labor market wage competition',
+  employabilitySkillBonusRate: 'Employability percentage bonus per point of relevant technical or management skill',
+  generalSocialEmployabilityRate: 'Employability percentage bonus rate per point of social standing for standard jobs',
+  socialEmployabilityBaseline: 'Neutral baseline social standing for frontline service jobs',
+  frontlineSocialEmployabilityRate: 'Employability multiplier applied to social deviation from baseline for frontline service jobs',
+  tagCompetitionModifiers: 'Applicant competition modifiers applied based on job characteristics (e.g. heavy physical labor, downtime)'
 };
 

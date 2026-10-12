@@ -9,6 +9,7 @@ import {
   removeApplianceCardFromDeck,
   generateWeekendChoices,
   resolveWeekendChoice,
+  mergeWeekendModifications,
   FREE_WEEKEND_CARDS
 } from './weekendEngine';
 
@@ -364,8 +365,44 @@ describe('Weekend Engine', () => {
       expect(mods.find(m => m.stat === 'mess')?.diff).toBe(3);
       expect(mods.find(m => m.stat === 'social')?.diff).toBe(-1);
 
+      // Verify activityModifications and maintenanceModifications are preserved
+      expect(resolved.weekendResult?.activityModifications).toBeDefined();
+      expect(resolved.weekendResult!.activityModifications!.find(m => m.stat === 'money')?.diff).toBe(-25);
+      expect(resolved.weekendResult!.activityModifications!.find(m => m.stat === 'mental')?.diff).toBe(1);
+
+      expect(resolved.weekendResult?.maintenanceModifications).toBeDefined();
+      expect(resolved.weekendResult!.maintenanceModifications!.find(m => m.stat === 'mess')?.diff).toBe(3);
+
       // Player maintenanceModifications should be cleared
       expect(resolved.maintenanceModifications).toBeUndefined();
+    });
+
+    it('mergeWeekendModifications preserves multi-source breakdown when card and maintenance both modify the same stat', () => {
+      const cardMods = [
+        { stat: 'mental', diff: 2, label: 'Movie Night' },
+        { stat: 'money', diff: -20, label: 'Tickets' },
+      ];
+      const maintMods = [
+        { stat: 'mental', diff: -1, label: 'Mess Decay' },
+        { stat: 'mess', diff: 1, label: 'Weekly Mess' },
+      ];
+
+      const merged = mergeWeekendModifications(cardMods, maintMods);
+      const mental = merged.find(m => m.stat === 'mental');
+      expect(mental).toBeDefined();
+      expect(mental?.diff).toBe(1); // 2 - 1
+      expect(mental?.breakdown).toEqual([
+        { source: 'Movie Night', diff: 2 },
+        { source: 'Mess Decay', diff: -1 },
+      ]);
+
+      const money = merged.find(m => m.stat === 'money');
+      expect(money?.diff).toBe(-20);
+      expect(money?.label).toBe('Tickets');
+
+      const mess = merged.find(m => m.stat === 'mess');
+      expect(mess?.diff).toBe(1);
+      expect(mess?.label).toBe('Weekly Mess');
     });
 
     describe('Advanced Weekend System Overhaul (Phases 1 & 2)', () => {

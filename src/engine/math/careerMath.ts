@@ -1,5 +1,49 @@
-import type { StatRules } from '../rules';
+import type { GameRules, StatRules } from '../rules';
+import type { EducationDef } from '../dataLoader';
 import { clampZero } from './conditionMath';
+
+/**
+ * Calculates the player's dynamic maximum skill cap.
+ * If dynamicSkillCaps is disabled in rules, returns maxSkillCap (default 10.0).
+ * Otherwise: Base cap (default 2.5) + sum of completed degree boosts up to maxSkillCap.
+ */
+export function calcMaxSkillCap(
+  player: { degrees?: string[] },
+  skillType: 'skillTech' | 'skillMgmt',
+  campaignEducation?: EducationDef[],
+  statRules?: StatRules,
+  rules?: GameRules
+): number {
+  if (!rules?.dynamicSkillCaps) {
+    return statRules?.maxSkillCap ?? 10.0;
+  }
+  const baseCap = statRules?.baseSkillCap ?? 2.5;
+  const maxCap = statRules?.maxSkillCap ?? 10.0;
+  if (!player.degrees || player.degrees.length === 0 || !campaignEducation) {
+    return baseCap;
+  }
+
+  let bonus = 0;
+  for (const degId of player.degrees) {
+    const def = campaignEducation.find(e => e.id === degId);
+    if (!def) continue;
+    if (skillType === 'skillTech') {
+      if (def.rewards?.maxTechBoost !== undefined) {
+        bonus += def.rewards.maxTechBoost;
+      } else if (def.tags?.includes('technical')) {
+        bonus += 2.5;
+      }
+    } else if (skillType === 'skillMgmt') {
+      if (def.rewards?.maxMgmtBoost !== undefined) {
+        bonus += def.rewards.maxMgmtBoost;
+      } else if (def.tags?.includes('management')) {
+        bonus += 2.5;
+      }
+    }
+  }
+
+  return Math.min(maxCap, baseCap + bonus);
+}
 
 /**
  * Calculate the Employability / Hiring Roll Threshold Score (30-100).
@@ -50,6 +94,14 @@ export interface EmployabilityCalculatorOptions {
   physicalCondition?: number;
   isLookFit?: boolean;
   attireModifier?: number;
+
+  // Optional extensions for wage-scaled and tag-aware employability
+  jobBaseWage?: number;
+  minCampaignWage?: number;
+  maxCampaignWage?: number;
+  jobTags?: string[];
+  rules?: GameRules;
+  statRules?: StatRules;
 }
 
 /**
@@ -66,6 +118,77 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
     attireModifier = 0
   } = opts;
 
+  // New Wage-Scaled & Tag-Aware Employability system
+  if (opts.rules?.wageScaledEmployability && opts.statRules) {
+    const sr = opts.statRules;
+    const base = sr.baseEmployability;
+
+    // Decoupled raw margin: Experience is Experience, Dependability is Dependability
+    const depMargin = Math.max(0, dependability - jobReqDep);
+    const expMargin = Math.max(0, experience - jobReqExp);
+    const marginBonus = Math.min(
+      sr.employabilityMaxMarginBonus,
+      Math.floor((depMargin + expMargin) * sr.employabilityMarginRate)
+    );
+
+    // Normalized Wage Competition
+    const minW = opts.minCampaignWage ?? 4;
+    const maxW = opts.maxCampaignWage ?? 25;
+    const jobW = opts.jobBaseWage ?? 4;
+    const wageRatio = maxW > minW ? Math.max(0, Math.min(1, (jobW - minW) / (maxW - minW))) : 0;
+    const baseWageComp = Math.round(wageRatio * sr.maxWageCompetitionPenalty);
+
+    // Tag competition modifiers
+    let tagModifier = 0;
+    if (opts.jobTags && sr.tagCompetitionModifiers) {
+      for (const tag of opts.jobTags) {
+        if (sr.tagCompetitionModifiers[tag] !== undefined) {
+          tagModifier += sr.tagCompetitionModifiers[tag];
+        }
+      }
+    }
+    const wageCompetition = Math.max(0, baseWageComp + tagModifier);
+
+    // Domain Skill Leverage
+    const techBonus = isTechnical ? Math.floor((skillTech || 0) * sr.employabilitySkillBonusRate) : 0;
+    const mgmtBonus = isManagement ? Math.floor((skillMgmt || 0) * sr.employabilitySkillBonusRate) : 0;
+
+    // Social weighting: Frontline vs Non-Frontline
+    let socialBonus = 0;
+    if (isFrontline) {
+      const socialDelta = (social || 0) - sr.socialEmployabilityBaseline;
+      socialBonus = Math.round(socialDelta * sr.frontlineSocialEmployabilityRate);
+    } else {
+      socialBonus = Math.floor((social || 0) * sr.generalSocialEmployabilityRate);
+    }
+
+    const degreesBonus = degreesCount * 1;
+    const innovBonus = innovationsAtLocation * 5;
+    const initiativeBonus = initiativesAtLocation * 3;
+    const lookFitBonus = isLookFit ? Math.max(0, physicalCondition - 30) * 2 : 0;
+
+    let econModifier = 0;
+    if (economicIndex >= 0) {
+      econModifier = Math.floor(economicIndex / 10);
+    } else {
+      if (jobReqDep <= 20) {
+        econModifier = Math.floor(economicIndex / 10);
+      } else if (jobReqDep <= 40) {
+        econModifier = Math.floor(economicIndex / 5);
+      } else {
+        econModifier = Math.floor(economicIndex / 2.5);
+      }
+    }
+
+    const rawScore = base + marginBonus - wageCompetition + techBonus + mgmtBonus 
+                   + socialBonus + degreesBonus + innovBonus + initiativeBonus 
+                   + lookFitBonus + econModifier + attireModifier - mistakesAtLocation;
+
+    const clampedScore = Math.max(1, Math.min(99, rawScore));
+    return isProbation ? Math.floor(clampedScore / 2) : clampedScore;
+  }
+
+  // Classic/Default Advanced formula
   const base = 45;
   const effectiveDep = dependability + (isTechnical ? skillTech : 0) + (isManagement ? skillMgmt : 0);
   const effectiveExp = experience + (isTechnical ? skillTech : 0) + (isManagement ? skillMgmt : 0);

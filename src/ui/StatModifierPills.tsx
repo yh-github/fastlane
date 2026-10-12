@@ -147,11 +147,25 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
           border = mod.stat === 'mess' ? '1px solid rgba(251, 146, 60, 0.35)' : '1px solid rgba(248, 113, 113, 0.35)';
         }
 
+        let tooltip = info.label;
+        if (mod.breakdown && mod.breakdown.length > 0) {
+          const breakdownParts = mod.breakdown.map(b => {
+            const bSign = b.diff > 0 ? '+' : '';
+            return `${b.source}: ${bSign}${b.diff}`;
+          });
+          tooltip = `${info.label}: ${textSummary} (${breakdownParts.join(', ')})`;
+        } else if (mod.label) {
+          tooltip = `${info.label}: ${textSummary} (${mod.label})`;
+        } else {
+          tooltip = `${info.label}: ${textSummary}`;
+        }
+
         return (
           <span
             key={`${mod.stat}-${idx}`}
-            title={info.label}
-            aria-label={`${info.label}: ${textSummary}`}
+            data-testid={`stat-pill-${mod.stat}`}
+            title={tooltip}
+            aria-label={tooltip}
             dir="ltr"
             style={{
               display: 'inline-flex',
@@ -164,7 +178,8 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
               backgroundColor: bg,
               border,
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-              unicodeBidi: 'isolate'
+              unicodeBidi: 'isolate',
+              cursor: (mod.breakdown?.length || mod.label) ? 'help' : 'default',
             }}
           >
             {text}

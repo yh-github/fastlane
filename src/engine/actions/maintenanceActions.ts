@@ -3,7 +3,7 @@ import type { CampaignBundle } from '../dataLoader';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
-import { roundToResolution, calcMaxMess, safeDecrementPhysical, safeDecrementMental } from '../statMath';
+import { roundToResolution, calcMaxMess, safeDecrementPhysical, safeDecrementMental, calcMaxSkillCap } from '../statMath';
 import { applyHappinessChange } from '../statEffects';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { removeApplianceCardFromDeck } from '../weekendEngine';
@@ -197,11 +197,13 @@ export function handleApplianceMaintenanceAction(
         nextPlayer = applyHappinessChange(nextPlayer, 1, 'appliance_repair', context.rules, context.campaign.config.statRules);
       }
 
-      nextPlayer.skillTech = Math.min(10, roundToResolution((nextPlayer.skillTech || 0) + 0.5, 0.05));
+      const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, context.campaign.config.statRules, context.rules);
+      nextPlayer.skillTech = Math.min(maxTech, roundToResolution((nextPlayer.skillTech || 0) + 0.5, 0.05));
       actionLog = { key: 'action.appliance.diySuccess', params: { appliance: applianceName, chance: breakdown.totalChance, usedParts: hasSpareParts ? 1 : 0 } };
     } else {
       // Failure: remains broken, consolation +0.1 skill_tech
-      nextPlayer.skillTech = Math.min(10, roundToResolution((nextPlayer.skillTech || 0) + 0.1, 0.05));
+      const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, context.campaign.config.statRules, context.rules);
+      nextPlayer.skillTech = Math.min(maxTech, roundToResolution((nextPlayer.skillTech || 0) + 0.1, 0.05));
       actionLog = { key: 'action.appliance.diyFailure', params: { appliance: applianceName, chance: breakdown.totalChance, usedParts: hasSpareParts ? 1 : 0 } };
     }
 

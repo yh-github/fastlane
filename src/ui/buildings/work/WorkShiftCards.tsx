@@ -5,7 +5,7 @@ import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
 import { calcWorkShiftSummary, type WorkShiftOption, type WorkMode } from '../../../engine/jobEngine';
 import { hasJobTag } from '../../../engine/jobTags';
-import { formatHours } from '../../../engine/statMath';
+import { formatHours, calcMaxSkillCap } from '../../../engine/statMath';
 import { WorkCardHelpModal } from './WorkCardHelpModal';
 import { ActionReasonModal } from '../ActionReasonModal';
 
@@ -326,8 +326,10 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     const effectiveMaxExp = 10 + (job.requirements?.experience ?? 0) + (player.degreeExpBoost ?? 0) + (player.xpMaxBonus ?? 0);
     const isDepCapped = (player.dependability ?? 0) >= effectiveMaxDep;
     const isExpCapped = (player.experience ?? 0) >= effectiveMaxExp;
-    const isTechCapped = (player.skillTech ?? 0) >= 10;
-    const isMgmtCapped = (player.skillMgmt ?? 0) >= 10;
+    const maxTech = calcMaxSkillCap(player, 'skillTech', campaign?.education, campaign?.config?.statRules, rules);
+    const maxMgmt = calcMaxSkillCap(player, 'skillMgmt', campaign?.education, campaign?.config?.statRules, rules);
+    const isTechCapped = (player.skillTech ?? 0) >= maxTech;
+    const isMgmtCapped = (player.skillMgmt ?? 0) >= maxMgmt;
 
     // Extract all exact properties and active modifiers as clean badges
     interface ModifierBadge {

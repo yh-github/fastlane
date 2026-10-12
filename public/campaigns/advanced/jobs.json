@@ -52,11 +52,17 @@
   },
   {
     "id": "socket_repairman",
-    "tags": ["technical"]
+    "tags": ["technical"],
+    "requirements": {
+      "techSkill": 1.5
+    }
   },
   {
     "id": "socket_mgr",
-    "tags": ["technical", "executive_management"]
+    "tags": ["technical", "middle_management"],
+    "requirements": {
+      "techSkill": 2.0
+    }
   },
   {
     "id": "uni_janitor",
@@ -88,21 +94,31 @@
   },
   {
     "id": "factory_machinist",
-    "tags": ["technical"]
+    "tags": ["technical"],
+    "requirements": {
+      "techSkill": 3.0
+    }
   },
   {
     "id": "factory_dept_mgr",
-    "tags": ["technical", "middle_management"]
+    "tags": ["technical", "middle_management"],
+    "requirements": {
+      "techSkill": 3.0
+    }
   },
   {
     "id": "factory_engineer",
-    "tags": ["technical"]
+    "tags": ["technical"],
+    "requirements": {
+      "techSkill": 4.0
+    }
   },
   {
     "id": "factory_gen_mgr",
     "requirements": {
       "experience": 80,
-      "dependability": 80
+      "dependability": 80,
+      "techSkill": 5.0
     },
     "tags": ["technical", "executive_management"]
   },
@@ -187,7 +203,8 @@
       "experience": 35,
       "dependability": 35,
       "degrees": ["electronics"],
-      "uniform": "casual"
+      "uniform": "casual",
+      "techSkill": 1.5
     },
     "tags": ["technical", "high_downtime"],
     "perks": []
