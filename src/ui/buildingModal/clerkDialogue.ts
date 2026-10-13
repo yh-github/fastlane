@@ -115,12 +115,14 @@ export function getAvailableItemsForBuilding(
     .map(inv => {
       const baseItem = campaign.items.find(i => i.id === inv.itemId);
       if (!baseItem) return null;
-      let happinessBonus = baseItem.happinessBonus;
-      if (baseItem.id === 'microwave') {
+      let happinessBonus = inv.happinessBonusOverride ?? baseItem.happinessBonus;
+      if (baseItem.id === 'microwave' && inv.happinessBonusOverride === undefined) {
         happinessBonus = building.id === 'socket_city' ? 2 : 1;
       }
       return {
         ...baseItem,
+        name: inv.nameOverride ?? baseItem.name,
+        weeks: inv.weeksOverride ?? baseItem.weeks,
         happinessBonus,
         basePrice: inv.priceOverride ?? baseItem.basePrice ?? 0
       };

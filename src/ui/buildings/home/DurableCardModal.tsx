@@ -335,7 +335,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   }
 
   if (itemDef?.category === 'clothes') {
-    const weeks = itemId === 'business_suit' ? 12 : 8;
+    const weeks = itemDef.weeks ?? (itemId === 'business_suit' ? 12 : 8);
     onBuyModifiers.push({ label: `+${weeks} Weeks of wear`, icon: '👔' });
     if (rules?.usePhysicalMentalConditions) {
       onBuyModifiers.push({ label: '+1 Lifestyle prestige', icon: '✨' });

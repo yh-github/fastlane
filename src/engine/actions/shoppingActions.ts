@@ -43,7 +43,14 @@ export function handleBuyAction(
       adjustedPrice = calcItemPrice(itemForPricing, context.economicIndex);
     }
 
-    const itemWithPriceAndStore = { ...baseItemDef, basePrice: adjustedPrice, store: currentBuildingId };
+    const itemWithPriceAndStore = {
+      ...baseItemDef,
+      basePrice: adjustedPrice,
+      store: currentBuildingId,
+      name: inventoryEntry?.nameOverride ?? baseItemDef.name,
+      weeks: inventoryEntry?.weeksOverride ?? baseItemDef.weeks,
+      happinessBonus: inventoryEntry?.happinessBonusOverride ?? baseItemDef.happinessBonus
+    };
 
     const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules, context.campaign, quantity);
     if (result.success) {

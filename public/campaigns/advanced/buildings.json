@@ -62,11 +62,22 @@
       },
       {
         "itemId": "casual_clothes",
-        "priceOverride": 35
+        "priceOverride": 35,
+        "weeksOverride": 7,
+        "nameOverride": "Used Casual Clothes"
       },
       {
         "itemId": "dress_clothes",
-        "priceOverride": 90
+        "priceOverride": 90,
+        "weeksOverride": 7,
+        "nameOverride": "Used Dress Clothes"
+      },
+      {
+        "itemId": "business_suit",
+        "priceOverride": 100,
+        "weeksOverride": 3,
+        "nameOverride": "Used Business Suit",
+        "happinessBonusOverride": 0
       },
       {
         "itemId": "baseball_tickets",

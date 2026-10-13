@@ -74,4 +74,47 @@ describe('dataLoader', () => {
     const publicCampaigns = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../public/campaigns/campaigns.json'), 'utf-8'));
     expect(srcCampaigns).toEqual(publicCampaigns);
   });
+
+  it('loads discount_and_pawn in advanced campaign with used clothes and durability overrides', async () => {
+    const advanced = await loadCampaign('advanced');
+    const discountShop = advanced.buildings.find(b => b.id === 'discount_and_pawn');
+    expect(discountShop).toBeDefined();
+
+    const casual = discountShop?.inventory?.find(i => i.itemId === 'casual_clothes');
+    expect(casual).toMatchObject({
+      itemId: 'casual_clothes',
+      priceOverride: 35,
+      weeksOverride: 7,
+      nameOverride: 'Used Casual Clothes'
+    });
+
+    const dress = discountShop?.inventory?.find(i => i.itemId === 'dress_clothes');
+    expect(dress).toMatchObject({
+      itemId: 'dress_clothes',
+      priceOverride: 90,
+      weeksOverride: 7,
+      nameOverride: 'Used Dress Clothes'
+    });
+
+    const business = discountShop?.inventory?.find(i => i.itemId === 'business_suit');
+    expect(business).toMatchObject({
+      itemId: 'business_suit',
+      priceOverride: 100,
+      weeksOverride: 3,
+      nameOverride: 'Used Business Suit',
+      happinessBonusOverride: 0
+    });
+  });
+
+  it('preserves floppy campaign z_mart clothes without used overrides', async () => {
+    const floppy = await loadCampaign('1990_classic_floppy');
+    const zMart = floppy.buildings.find(b => b.id === 'z_mart');
+    const casual = zMart?.inventory?.find(i => i.itemId === 'casual_clothes');
+    expect(casual?.weeksOverride).toBeUndefined();
+    expect(casual?.nameOverride).toBeUndefined();
+    expect(casual?.priceOverride).toBe(35);
+
+    const businessInZMart = zMart?.inventory?.find(i => i.itemId === 'business_suit');
+    expect(businessInZMart).toBeUndefined();
+  });
 });

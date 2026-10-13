@@ -21,6 +21,16 @@ export function getItemDisplayName(
     return itemDef?.name || 'Canned Mystery Meat';
   }
 
+  if (itemDef?.name) {
+    const slug = itemDef.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_');
+    if (slug !== itemId) {
+      if (t) {
+        return t(`item.${slug}`, { defaultValue: itemDef.name });
+      }
+      return itemDef.name;
+    }
+  }
+
   if (t) {
     return t(`item.${itemId}`, { defaultValue: itemDef?.name || itemId });
   }
