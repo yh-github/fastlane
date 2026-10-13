@@ -181,7 +181,7 @@ export const LocationsTab: React.FC<LocationsTabProps> = ({
                           <div style={{ maxHeight: '100px', overflowY: 'auto', fontSize: '11px', color: '#aaa', background: 'rgba(0,0,0,0.2)', padding: '4px 6px', borderRadius: '4px' }}>
                             {inv.map(i => (
                               <div key={i.itemId}>
-                                • {i.itemId}{i.priceOverride !== undefined ? ` ($${i.priceOverride})` : ''}
+                                • {i.nameOverride || i.itemId}{i.priceOverride !== undefined ? ` ($${i.priceOverride})` : ''}{i.weeksOverride !== undefined ? ` (${i.weeksOverride}w)` : ''}
                               </div>
                             ))}
                           </div>

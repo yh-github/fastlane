@@ -158,6 +158,9 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                     {rules?.helpfulUI && alreadyOwned && (
                       <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ {ownedCount > 1 ? `(${ownedCount})` : ''}</span>
                     )}
+                    {rules?.helpfulUI && item.category === 'clothes' && (
+                      <span style={{ color: '#c084fc', fontWeight: '500' }}>👔 {item.weeks ?? (item.id === 'business_suit' ? 12 : 8)}w</span>
+                    )}
                     {rules?.spaceCapping && itemSpace > 0 && (
                       <span style={{ color: !hasSpace ? '#e74c3c' : '#00e5ff' }}>📦 {itemSpace}</span>
                     )}

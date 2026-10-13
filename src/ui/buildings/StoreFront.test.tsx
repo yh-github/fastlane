@@ -159,4 +159,42 @@ describe("StoreFront", () => {
     fireEvent.click(screen.getByTestId('btn-buy-modal-food_1week'));
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy', itemId: 'food_1week', quantity: 4 });
   });
+
+  it('renders used clothes with "Used" naming and durability badges when available in store', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 500,
+      hoursRemaining: 10,
+      inventory: { appliances: [], books: [], casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 0 }
+    } as any;
+
+    const mockClothes = [
+      { id: 'casual_clothes', name: 'Used Casual Clothes', basePrice: 35, category: 'clothes', subcategory: 'casual', weeks: 7 },
+      { id: 'dress_clothes', name: 'Used Dress Clothes', basePrice: 90, category: 'clothes', subcategory: 'dress', weeks: 7 },
+      { id: 'business_suit', name: 'Used Business Suit', basePrice: 100, category: 'clothes', subcategory: 'business', weeks: 3 }
+    ] as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <StoreFront
+        player={mockPlayer}
+        onAction={mockOnAction}
+        availableItems={mockClothes}
+        economicIndex={0}
+        rules={{ helpfulUI: true } as any}
+      />
+    );
+
+    expect(screen.getByText('Used Casual Clothes')).toBeInTheDocument();
+    expect(screen.getByText('Used Dress Clothes')).toBeInTheDocument();
+    expect(screen.getByText('Used Business Suit')).toBeInTheDocument();
+
+    expect(screen.getAllByText('👔 7w')).toHaveLength(2);
+    expect(screen.getByText('👔 3w')).toBeInTheDocument();
+
+    // Clicking Used Business Suit opens ItemCardModal with 3 weeks of wear badge
+    fireEvent.click(screen.getByTestId('store-item-business_suit'));
+    expect(screen.getByText(/\+3 Weeks of wear/i)).toBeInTheDocument();
+  });
 });

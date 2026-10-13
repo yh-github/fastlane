@@ -264,4 +264,42 @@ describe('Shopping Engine', () => {
       expect(result.updated.money).toBe(100);
     });
   });
+
+  describe('Clothes Purchasing & Durability', () => {
+    it('applies custom weeks durability from item definition', () => {
+      const player = {
+        money: 500,
+        inventory: { casualClothesWeeks: 0, dressClothesWeeks: 0, businessClothesWeeks: 0 },
+        turnFlags: {}
+      } as unknown as PlayerState;
+
+      // Used Casual Clothes: 7 weeks
+      const usedCasual: ItemDef = {
+        id: 'casual_clothes',
+        name: 'Used Casual Clothes',
+        category: 'clothes',
+        subcategory: 'casual',
+        basePrice: 35,
+        weeks: 7
+      };
+      const r1 = buyItem(player, usedCasual);
+      expect(r1.success).toBe(true);
+      expect(r1.updated.money).toBe(465);
+      expect(r1.updated.inventory.casualClothesWeeks).toBe(7);
+
+      // Used Business Suit: 3 weeks
+      const usedSuit: ItemDef = {
+        id: 'business_suit',
+        name: 'Used Business Suit',
+        category: 'clothes',
+        subcategory: 'business',
+        basePrice: 100,
+        weeks: 3
+      };
+      const r2 = buyItem(r1.updated, usedSuit);
+      expect(r2.success).toBe(true);
+      expect(r2.updated.money).toBe(365);
+      expect(r2.updated.inventory.businessClothesWeeks).toBe(3);
+    });
+  });
 });

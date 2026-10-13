@@ -102,11 +102,11 @@ export function areBuildingsEqual(b1?: BuildingDef, b2?: BuildingDef): boolean {
   if ((b1 as any).cost !== (b2 as any).cost) return false;
   if ((b1 as any).entryCost !== (b2 as any).entryCost) return false;
   const inv1 = (b1.inventory || [])
-    .map(i => `${i.itemId}:${i.priceOverride ?? ''}:${(i.tags || []).slice().sort().join(',')}`)
+    .map(i => `${i.itemId}:${i.priceOverride ?? ''}:${i.weeksOverride ?? ''}:${i.nameOverride ?? ''}:${(i.tags || []).slice().sort().join(',')}`)
     .sort()
     .join(';');
   const inv2 = (b2.inventory || [])
-    .map(i => `${i.itemId}:${i.priceOverride ?? ''}:${(i.tags || []).slice().sort().join(',')}`)
+    .map(i => `${i.itemId}:${i.priceOverride ?? ''}:${i.weeksOverride ?? ''}:${i.nameOverride ?? ''}:${(i.tags || []).slice().sort().join(',')}`)
     .sort()
     .join(';');
   if (inv1 !== inv2) return false;

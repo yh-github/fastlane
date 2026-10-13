@@ -44,13 +44,22 @@ export type {
   MapRules,
 } from './rules';
 
+export interface BuildingInventoryEntry {
+  itemId: string;
+  priceOverride?: number;
+  weeksOverride?: number;
+  nameOverride?: string;
+  happinessBonusOverride?: number;
+  tags?: string[];
+}
+
 export interface BuildingDef {
   id: string;
   name: string;
   archetype: string;
   spritePath: string;
   description: string;
-  inventory?: { itemId: string; priceOverride?: number; tags?: string[] }[];
+  inventory?: BuildingInventoryEntry[];
 }
 
 export interface JobRequirements {
