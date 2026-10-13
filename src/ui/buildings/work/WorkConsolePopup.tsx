@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
-import { calcWorkShiftSummary, type WorkShiftOption, type WorkMode } from '../../../engine/jobEngine';
+import { calcWorkShiftSummary, getWorkShiftModifiers, type WorkShiftOption, type WorkMode } from '../../../engine/jobEngine';
 import { formatHours } from '../../../engine/statMath';
 import { WorkCardHelpModal } from './WorkCardHelpModal';
 import { ActionReasonModal } from '../ActionReasonModal';
@@ -41,7 +41,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
   const statRules = campaign?.config?.statRules;
   const shiftCost = campaign?.config?.timeRules?.workSessionCost ?? 6;
 
-  const summary = calcWorkShiftSummary(player, job, shiftCost, effectiveRules, statRules);
+  const summary = calcWorkShiftSummary(player, job, shiftCost, effectiveRules, statRules, campaign?.education, campaign);
   const { hoursToWork, modes, turnMistakes, locationMistakes } = summary;
 
   // Ensure selectedMode is valid among modes; default to work_work
@@ -51,7 +51,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
     }
   }, [modes, selectedMode]);
 
-  // HUD bounds detection helper for clamping
+  // HUD bounds detection helper for clamping (avoids top HUD and bottom clock)
   const getHudBounds = useCallback((): { minY: number; maxY: number; minX: number; maxX: number } => {
     let hudTopLimit = 8;
     let hudBottomLimit = typeof window !== 'undefined' ? window.innerHeight - 8 : 800;
@@ -61,6 +61,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
     if (typeof document !== 'undefined') {
       const topHud = document.querySelector('.dashboard') as HTMLElement | null;
       const sideHud = document.querySelector('.side-hud') as HTMLElement | null;
+      const bottomClock = document.querySelector('.bottom-center-clock, [data-testid="bottom-center-clock"]') as HTMLElement | null;
 
       if (topHud) {
         const rect = topHud.getBoundingClientRect();
@@ -69,13 +70,18 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
         }
       }
 
+      if (bottomClock) {
+        const clockRect = bottomClock.getBoundingClientRect();
+        if (clockRect.top > 0) {
+          hudBottomLimit = Math.min(hudBottomLimit, Math.round(clockRect.top) - 8);
+        }
+      }
+
       if (sideHud) {
         const rect = sideHud.getBoundingClientRect();
         if (rect.right > 0 && rect.left < 50) {
-          // Left side HUD
           hudLeftLimit = Math.max(hudLeftLimit, Math.round(rect.right) + 6);
         } else if (rect.left > 0 && rect.right >= (window.innerWidth - 50)) {
-          // Right side HUD
           hudRightLimit = Math.min(hudRightLimit, Math.round(rect.left) - 6);
         }
       }
@@ -93,8 +99,8 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const popupW = 410;
-    const popupH = 430;
+    const popupW = 360;
+    const popupH = 290;
     const bounds = getHudBounds();
 
     let initialX: number | null = null;
@@ -114,7 +120,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
     }
 
     if (initialX === null || initialY === null) {
-      // Default: front and center, respecting HUD boundaries
+      // Default: front and center, respecting HUD and bottom clock boundaries
       const availableWidth = bounds.maxX - bounds.minX;
       const availableHeight = bounds.maxY - bounds.minY;
       initialX = Math.max(bounds.minX, bounds.minX + Math.round((availableWidth - popupW) / 2));
@@ -245,6 +251,28 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
   const garnishedAmount = isGarnished ? Math.min(rentDebt, Math.floor((activeModeOption?.wage ?? 0) * 0.5)) : 0;
   const activeNetWage = (activeModeOption?.wage ?? 0) - garnishedAmount;
 
+  // Active modifiers for selected mode ONLY
+  const activeBadges = activeModeOption?.modifiers || getWorkShiftModifiers(player, job, activeModeOption, summary, {
+    rules: effectiveRules,
+    statRules,
+    campaignEducation: campaign?.education,
+    campaign
+  });
+
+  const roundPct = (val: number) => Math.round(Number((val * 100).toFixed(6)));
+
+  const activeMistakeChance = activeModeOption?.totalMistakeChance ?? 0;
+  const roundedMistakeChance = roundPct(activeMistakeChance);
+  const roundedPhysChance = roundPct(activeModeOption?.physMistakeChance ?? 0);
+  const roundedMentalChance = roundPct(activeModeOption?.mentalMistakeChance ?? 0);
+  const roundedSocialChance = roundPct(activeModeOption?.socialMistakeChance ?? 0);
+
+  const activeHazardDrivers = [
+    roundedPhysChance > 0 ? `💪 ${roundedPhysChance}%` : '',
+    roundedMentalChance > 0 ? `🧠 ${roundedMentalChance}%` : '',
+    roundedSocialChance > 0 ? `👥 ${roundedSocialChance}%` : ''
+  ].filter(Boolean).join(' / ');
+
   // Resolve disabled explanation
   const getDisabledReason = (m: WorkShiftOption) => {
     const reqExp = (job.requirements?.experience ?? 0) + 10;
@@ -312,7 +340,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
           top: position ? `${position.y}px` : '50%',
           transform: position ? 'none' : 'translate(-50%, -50%)',
           zIndex: 1050,
-          width: 'min(410px, calc(100vw - 20px))',
+          width: 'min(360px, calc(100vw - 20px))',
           maxHeight: 'calc(100vh - 40px)',
           background: 'linear-gradient(165deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 30, 0.99) 100%)',
           border: '1px solid rgba(56, 189, 248, 0.45)',
@@ -335,19 +363,19 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '8px 12px',
+            padding: '6px 10px',
             background: 'linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
             borderBottom: '1px solid rgba(56, 189, 248, 0.25)',
             cursor: isDragging ? 'grabbing' : 'grab',
             touchAction: 'none'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-            <span style={{ fontSize: '0.90rem', color: '#94a3b8', letterSpacing: '-1px' }}>⋮⋮</span>
-            <span style={{ fontSize: '1rem' }}>💼</span>
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8', letterSpacing: '-1px' }}>⋮⋮</span>
+            <span style={{ fontSize: '0.95rem' }}>💼</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
               <span style={{
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 fontWeight: 'bold',
                 color: '#fff',
                 whiteSpace: 'nowrap',
@@ -356,16 +384,23 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
               }}>
                 {t(`job.${job.id}`, { defaultValue: job.title })}
               </span>
+              <span style={{
+                fontSize: '0.68rem',
+                color: '#94a3b8',
+                whiteSpace: 'nowrap'
+              }}>
+                Shift #{summary.actionCount}
+              </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
             <span style={{
-              fontSize: '0.74rem',
+              fontSize: '0.72rem',
               fontWeight: 'bold',
               color: 'var(--accent-cyan, #00e5ff)',
               background: 'rgba(0, 229, 255, 0.12)',
-              padding: '2px 6px',
+              padding: '1px 5px',
               borderRadius: '4px',
               border: '1px solid rgba(0, 229, 255, 0.3)'
             }}>
@@ -382,9 +417,9 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                   border: '1px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '4px',
                   color: '#94a3b8',
-                  fontSize: '0.80rem',
+                  fontSize: '0.76rem',
                   cursor: 'pointer',
-                  padding: '2px 6px',
+                  padding: '1px 5px',
                   fontWeight: 'bold',
                   lineHeight: '1'
                 }}
@@ -396,114 +431,23 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
           </div>
         </div>
 
-        {/* Status & Shift Info Ribbon (Fixed Height) */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '6px 12px',
-          background: 'rgba(15, 23, 42, 0.7)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          fontSize: '0.72rem',
-          flexWrap: 'wrap',
-          gap: '6px',
-          flexShrink: 0
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontWeight: 'bold', color: '#fff' }}>
-              Shift #{summary.actionCount}
-            </span>
-            {summary.tier === 'grind' && (
-              <span style={{
-                fontSize: '0.62rem',
-                fontWeight: 'bold',
-                padding: '1px 5px',
-                borderRadius: '3px',
-                background: 'rgba(245, 158, 11, 0.25)',
-                color: '#f59e0b',
-                border: '1px solid #f59e0b'
-              }}>
-                ⚡ GRIND (+1 Mistake Risk)
-              </span>
-            )}
-            {summary.tier === 'overtime' && (
-              <span style={{
-                fontSize: '0.62rem',
-                fontWeight: 'bold',
-                padding: '1px 5px',
-                borderRadius: '3px',
-                background: 'rgba(239, 68, 68, 0.25)',
-                color: '#ef4444',
-                border: '1px solid #ef4444'
-              }}>
-                🔥 OVERTIME (-0.5 MAX 💪)
-              </span>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{
-              fontSize: '0.65rem',
-              color: hasProperUniform ? '#94a3b8' : '#ef4444',
-              fontWeight: 600
-            }}>
-              {hasProperUniform ? `👔 ${uniformName}` : `⚠️ Attire (${uniformName})`}
-            </span>
-            {turnMistakes > 0 && (
-              <span style={{
-                fontSize: '0.62rem',
-                background: turnMistakes >= 2 ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.2)',
-                color: '#fca5a5',
-                border: '1px solid #ef4444',
-                padding: '1px 4px',
-                borderRadius: '3px',
-                fontWeight: 'bold'
-              }}>
-                ⚠️ {turnMistakes}/3 Mistakes
-              </span>
-            )}
-            {locationMistakes > 0 && (
-              <span style={{
-                fontSize: '0.62rem',
-                background: 'rgba(245, 158, 11, 0.2)',
-                color: '#fcd34d',
-                border: '1px solid #f59e0b',
-                padding: '1px 4px',
-                borderRadius: '3px',
-                fontWeight: 'bold'
-              }}>
-                ⚠️ {locationMistakes} Demerits
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Radio Modes Group (Fixed Stable Rows) */}
+        {/* Minimalistic Mode Selection List */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '6px',
-          padding: '10px 12px',
+          gap: '3px',
+          padding: '6px 10px 4px 10px',
           flexShrink: 0
         }}>
           {modes.map((m: WorkShiftOption) => {
             const isSelected = selectedMode === m.id;
             const meta = cardMeta[m.id] || cardMeta.work_work;
 
-            const modePhysOk = curPhys - m.physCost >= 1.0;
-            const modeMentalOk = curMental - m.mentalCost >= 1.0;
-            const modeCanAfford = hasEnoughTime && modePhysOk && modeMentalOk && !m.disabled;
-
             // Garnishment calculation for display
             const isOptionGarnished = rentDebt > 0 && m.wage > 0;
             const optionGarnishedAmt = isOptionGarnished ? Math.min(rentDebt, Math.floor(m.wage * 0.5)) : 0;
             const optionNetWage = m.wage - optionGarnishedAmt;
             const wageText = m.wage > 0 ? `+$${optionNetWage}` : '$0';
-
-            // Cost label
-            const costLabel = m.mentalCost > 0
-              ? `-${m.physCost} 💪, -${m.mentalCost} 🧠`
-              : `-${m.physCost} 💪`;
 
             const handleRowClick = () => {
               if (m.disabled) {
@@ -527,29 +471,28 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  height: '52px',
-                  maxHeight: '52px',
-                  minHeight: '52px',
-                  padding: '6px 10px',
-                  borderRadius: '8px',
+                  height: '30px',
+                  maxHeight: '30px',
+                  minHeight: '30px',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
                   boxSizing: 'border-box',
                   background: isSelected
-                    ? 'rgba(16, 185, 129, 0.12)'
+                    ? 'rgba(16, 185, 129, 0.14)'
                     : 'rgba(255, 255, 255, 0.03)',
                   border: isSelected
                     ? `1.5px solid ${meta.themeColor}`
-                    : '1px solid rgba(255, 255, 255, 0.12)',
+                    : '1px solid rgba(255, 255, 255, 0.10)',
                   boxShadow: isSelected
-                    ? `0 0 10px ${meta.glowColor}`
+                    ? `0 0 8px ${meta.glowColor}`
                     : 'none',
                   cursor: m.disabled ? 'not-allowed' : 'pointer',
-                  opacity: m.disabled ? 0.6 : (modeCanAfford ? 1 : 0.8),
-                  transition: 'background 0.12s ease, border-color 0.12s ease',
-                  overflow: 'hidden'
+                  opacity: m.disabled ? 0.6 : 1,
+                  transition: 'background 0.12s ease, border-color 0.12s ease'
                 }}
               >
-                {/* Left: Radio input + Icon + Name + Payout */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                {/* Left: Radio input + Icon + Name */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
                   <input
                     type="radio"
                     name="work_mode_selection"
@@ -562,93 +505,228 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                     style={{
                       cursor: m.disabled ? 'not-allowed' : 'pointer',
                       accentColor: meta.themeColor,
-                      width: '16px',
-                      height: '16px',
+                      width: '14px',
+                      height: '14px',
                       margin: 0,
                       flexShrink: 0
                     }}
                   />
-                  <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>{m.disabled ? '🔒' : meta.icon}</span>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{
-                        fontSize: '0.80rem',
-                        fontWeight: 'bold',
-                        color: isSelected ? '#fff' : '#e2e8f0',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {meta.actionName}
-                      </span>
-                      <span style={{
-                        fontSize: '0.78rem',
-                        fontWeight: 'bold',
-                        color: m.wage > 0 ? '#34d399' : '#94a3b8',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {wageText}
-                      </span>
-                    </div>
-
-                    {/* Secondary stats row (Fixed single line) */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '0.66rem',
-                      color: '#94a3b8',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}>
-                      <span>{costLabel}</span>
-                      {(m.totalMistakeChance ?? 0) > 0 && (
-                        <span style={{ color: '#f87171', fontWeight: 600 }}>
-                          ⚠️ {m.totalMistakeChance}%
-                        </span>
-                      )}
-                      {(m.rewardDep ?? 0) > 0 && <span style={{ color: '#38bdf8' }}>+{m.rewardDep} Dep</span>}
-                      {(m.rewardExp ?? 0) > 0 && <span style={{ color: '#a855f7' }}>+{m.rewardExp} Exp</span>}
-                      {(m.rewardSocial ?? 0) > 0 && <span style={{ color: '#34d399' }}>+{m.rewardSocial} Soc</span>}
-                    </div>
-                  </div>
+                  <span style={{ fontSize: '0.90rem', flexShrink: 0 }}>{m.disabled ? '🔒' : meta.icon}</span>
+                  <span style={{
+                    fontSize: '0.78rem',
+                    fontWeight: isSelected ? 'bold' : 'normal',
+                    color: isSelected ? '#fff' : '#cbd5e1',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {meta.actionName}
+                  </span>
                 </div>
 
-                {/* Right: Info / Help button */}
-                <button
-                  type="button"
-                  data-testid={`help-btn-${m.id}`}
-                  data-no-drag
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveHelpMode(m.id);
-                  }}
-                  title={t('workStation.helpTooltip', { defaultValue: 'View strategy, lore & mechanics' })}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '4px',
-                    color: '#94a3b8',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    padding: '3px 6px',
+                {/* Right: Net wage + Help button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                  <span style={{
+                    fontSize: '0.74rem',
                     fontWeight: 'bold',
-                    flexShrink: 0,
-                    marginLeft: '6px'
-                  }}
-                >
-                  ℹ️
-                </button>
+                    color: m.wage > 0 ? '#34d399' : '#94a3b8'
+                  }}>
+                    {wageText}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid={`help-btn-${m.id}`}
+                    data-no-drag
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveHelpMode(m.id);
+                    }}
+                    title={t('workStation.helpTooltip', { defaultValue: 'View strategy, lore & mechanics' })}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '4px',
+                      color: '#94a3b8',
+                      fontSize: '0.68rem',
+                      cursor: 'pointer',
+                      padding: '1px 5px',
+                      fontWeight: 'bold',
+                      lineHeight: '1'
+                    }}
+                  >
+                    ℹ️
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
 
+        {/* Selected Mode Modifiers & Outlook Panel (Active selection ONLY) */}
+        <div
+          data-testid="selected-mode-modifiers-panel"
+          style={{
+            margin: '4px 10px',
+            padding: '6px 8px',
+            background: 'rgba(15, 23, 42, 0.85)',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
+            borderRadius: '6px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '5px',
+            flexShrink: 0
+          }}
+        >
+          {/* Row 1: Cost & Mistake Risk */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.68rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              {summary.tier === 'grind' && (
+                <span style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  padding: '1px 5px',
+                  borderRadius: '3px',
+                  background: 'rgba(245, 158, 11, 0.25)',
+                  color: '#f59e0b',
+                  border: '1px solid #f59e0b'
+                }}>
+                  ⚡ GRIND
+                </span>
+              )}
+              {summary.tier === 'overtime' && (
+                <span style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  padding: '1px 5px',
+                  borderRadius: '3px',
+                  background: 'rgba(239, 68, 68, 0.25)',
+                  color: '#ef4444',
+                  border: '1px solid #ef4444'
+                }}>
+                  🔥 OVERTIME
+                </span>
+              )}
+              <span style={{
+                color: summary.tier === 'overtime' ? '#f87171' : (summary.tier === 'grind' ? '#fbbf24' : '#fca5a5'),
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}>
+                {activeModeOption.mentalCost > 0
+                  ? `-${activeModeOption.physCost} 💪, -${activeModeOption.mentalCost} 🧠`
+                  : `-${activeModeOption.physCost} 💪`}
+              </span>
+            </div>
+
+            {roundedMistakeChance > 0 && (
+              <span
+                data-testid="selected-mode-mistake-risk"
+                title={`Physical: ${roundedPhysChance}%, Mental: ${roundedMentalChance}%${roundedSocialChance > 0 ? `, Social: ${roundedSocialChance}%` : ''}`}
+                style={{
+                  color: '#f87171',
+                  fontWeight: 'bold',
+                  fontSize: '0.64rem',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  padding: '1px 5px',
+                  borderRadius: '3px',
+                  border: '1px solid #ef4444',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                ⚠️ {roundedMistakeChance}% Risk{activeHazardDrivers ? ` (${activeHazardDrivers})` : ''}
+              </span>
+            )}
+          </div>
+
+          {/* Row 2: Active Modifier Badges */}
+          <div
+            data-testid="selected-mode-active-badges"
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '3px',
+              alignItems: 'center',
+              minHeight: '20px'
+            }}
+          >
+            {activeBadges.map(b => (
+              <span
+                key={b.key}
+                data-testid={`modifier-badge-${b.key}`}
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                  backgroundColor: b.bg,
+                  color: b.color,
+                  border: `1px solid ${b.border}`,
+                  whiteSpace: b.wrap ? 'normal' : 'nowrap',
+                  lineHeight: '1.2'
+                }}
+              >
+                {b.label}
+              </span>
+            ))}
+          </div>
+
+          {/* Row 3: Context / Job Demerits & Uniform Status */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '0.64rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            paddingTop: '3px',
+            color: '#94a3b8'
+          }}>
+            <span style={{
+              color: hasProperUniform ? '#94a3b8' : '#ef4444',
+              fontWeight: 600
+            }}>
+              {hasProperUniform ? `👔 ${uniformName}` : `⚠️ Attire (${uniformName})`}
+            </span>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {turnMistakes > 0 && (
+                <span style={{
+                  fontSize: '0.60rem',
+                  background: turnMistakes >= 2 ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.2)',
+                  color: '#fca5a5',
+                  border: '1px solid #ef4444',
+                  padding: '0 3px',
+                  borderRadius: '2px',
+                  fontWeight: 'bold'
+                }}>
+                  ⚠️ {turnMistakes}/3 Mistakes
+                </span>
+              )}
+              {locationMistakes > 0 && (
+                <span style={{
+                  fontSize: '0.60rem',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  color: '#fcd34d',
+                  border: '1px solid #f59e0b',
+                  padding: '0 3px',
+                  borderRadius: '2px',
+                  fontWeight: 'bold'
+                }}>
+                  ⚠️ {locationMistakes} Demerits
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Footer: Prominent WORK Action Button */}
         <div style={{
-          padding: '8px 12px 10px 12px',
+          padding: '6px 10px 8px 10px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
@@ -663,14 +741,14 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             onClick={handleExecuteShift}
             style={{
               width: '100%',
-              height: '44px',
+              height: '40px',
               padding: '0 12px',
-              borderRadius: '8px',
+              borderRadius: '7px',
               border: canAffordActive ? `1px solid ${activeMeta.themeColor}` : '1px solid rgba(255, 255, 255, 0.15)',
               backgroundColor: canAffordActive ? activeMeta.themeColor : '#334155',
               color: canAffordActive ? '#000' : '#94a3b8',
               fontWeight: 'bold',
-              fontSize: '0.88rem',
+              fontSize: '0.86rem',
               cursor: 'pointer',
               boxShadow: canAffordActive ? `0 2px 10px ${activeMeta.glowColor}` : 'none',
               transition: 'all 0.12s ease',
@@ -689,7 +767,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            fontSize: '0.68rem',
+            fontSize: '0.66rem',
             color: '#94a3b8',
             padding: '0 2px'
           }}>

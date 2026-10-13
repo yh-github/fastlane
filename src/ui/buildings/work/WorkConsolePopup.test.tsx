@@ -218,4 +218,119 @@ describe('WorkConsolePopup Component', () => {
     const popup = screen.getByTestId('work-console-popup');
     expect(popup).toBeInTheDocument();
   });
+
+  it('displays rounded mistake chance and driver breakdown in selected mode panel', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 7, // threshold 10 -> (10 - 7) * 0.025 = 0.075 (7.5%) -> rounds to 8%
+      mentalCondition: 50,
+      experience: 50
+    });
+
+    render(
+      <WorkConsolePopup
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+      />
+    );
+
+    const mistakeRisk = screen.getByTestId('selected-mode-mistake-risk');
+    expect(mistakeRisk).toBeInTheDocument();
+    // Mistake percentage must be rounded integer, not raw decimal like 0.075% or 7.5000%
+    expect(mistakeRisk.textContent).toContain('8% Risk');
+    expect(mistakeRisk.textContent).toContain('💪 8%');
+    expect(mistakeRisk.textContent).not.toContain('0.075');
+    expect(mistakeRisk.textContent).not.toContain('7.5%');
+  });
+
+  it('renders minimalistic selection rows without modifier clutter and shows all active modifiers in dedicated panel', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      experience: 50,
+      workActionsThisTurn: 8, // Overtime shift
+      rentDebt: 100,
+      mistakesByLocation: { [dummyJob.locationId]: 1 }
+    });
+
+    render(
+      <WorkConsolePopup
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+      />
+    );
+
+    // 1. Selection row is minimalistic: does NOT contain modifier badges
+    const workWorkRow = screen.getByTestId('work-mode-option-work_work');
+    expect(workWorkRow.textContent).not.toContain('-$100 Debt');
+    expect(workWorkRow.textContent).not.toContain('-0.5 MAX 💪');
+    expect(workWorkRow.textContent).not.toContain('+0.25 🔧');
+
+    // 2. Dedicated modifiers panel displays all active modifiers for work_work
+    const modPanel = screen.getByTestId('selected-mode-modifiers-panel');
+    expect(modPanel).toBeInTheDocument();
+    expect(modPanel.textContent).toContain('-$100 Debt');
+    expect(modPanel.textContent).toContain('-0.5 MAX 💪');
+    expect(modPanel.textContent).toContain('+0.25 🔧');
+    expect(modPanel.textContent).toContain('⚠️ 1 Demerits');
+
+    // 3. Switch mode to show_initiative: panel updates to display initiative modifiers (and resilience since mental cost is 5 >= 3)
+    const initOption = screen.getByTestId('work-mode-option-show_initiative');
+    fireEvent.click(initOption);
+
+    expect(modPanel.textContent).toContain('🃏 2 Cards');
+    expect(modPanel.textContent).toContain('-1 ⚠️ Demerit');
+    expect(modPanel.textContent).toContain('+1 🌟');
+    expect(modPanel.textContent).toContain('+1 MAX 🧠');
+  });
+
+  it('clamps popup vertical bounds to avoid covering the bottom center clock', () => {
+    // Add dummy bottom center clock
+    const clockEl = document.createElement('div');
+    clockEl.className = 'bottom-center-clock';
+    clockEl.setAttribute('data-testid', 'bottom-center-clock');
+    clockEl.getBoundingClientRect = () => ({
+      top: 550,
+      bottom: 610,
+      left: 400,
+      right: 500,
+      width: 100,
+      height: 60,
+      x: 400,
+      y: 550,
+      toJSON: () => {}
+    });
+    document.body.appendChild(clockEl);
+
+    try {
+      const player = createTestPlayer({
+        hoursRemaining: 12,
+        physicalCondition: 40,
+        mentalCondition: 40,
+        experience: 50
+      });
+
+      render(
+        <WorkConsolePopup
+          player={player}
+          job={dummyJob}
+          campaign={dummyCampaign}
+          onAction={vi.fn()}
+        />
+      );
+
+      const popup = screen.getByTestId('work-console-popup');
+      const topPx = parseInt(popup.style.top, 10);
+      // Popup height is ~290px. With clock top at 550, top + height must stay <= 550 - 8 = 542
+      expect(topPx + 290).toBeLessThanOrEqual(550);
+    } finally {
+      document.body.removeChild(clockEl);
+    }
+  });
 });
+

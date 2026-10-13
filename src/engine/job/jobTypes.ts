@@ -28,6 +28,16 @@ export interface WorkShiftModifierBreakdown {
   overtimeThreshold: number;
 }
 
+export interface WorkShiftModifierBadge {
+  key: string;
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+  wrap?: boolean;
+  type?: 'cost' | 'cap' | 'reward' | 'penalty' | 'risk' | 'warning' | 'special';
+}
+
 export interface WorkShiftOption {
   id: WorkMode;
   physCost: number;
@@ -46,6 +56,7 @@ export interface WorkShiftOption {
   socialMistakeChance?: number;
   totalMistakeChance?: number;
   modifierBreakdown?: WorkShiftModifierBreakdown;
+  modifiers?: WorkShiftModifierBadge[];
 }
 
 export interface WorkShiftSummary {

@@ -426,6 +426,7 @@ export interface MiniGameState {
   title?: string;
   subtitle?: string;
   tier?: number;
+  locationId?: string;
   options: MiniGameOption[];
 }
 
