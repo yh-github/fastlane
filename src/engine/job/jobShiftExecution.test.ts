@@ -1269,5 +1269,97 @@ describe("Job Engine - workShift", () => {
       const resCapped = workShift(player, burgerCook, 6);
       expect(resCapped.updated.experience).toBe(20);
     });
+
+    describe('Show Initiative Card Decision & Fatigue Mechanics', () => {
+      const execJob: JobDef = {
+        id: 'corp_exec',
+        title: 'Executive Vice President',
+        locationId: 'z_mart',
+        baseWage: 40,
+        requirements: { experience: 60, dependability: 60, degrees: ['business_admin'], uniform: 'business' },
+        tags: ['executive_management'],
+        perks: []
+      };
+
+      const advRules = { usePhysicalMentalConditions: true, useSkills: true } as any;
+
+      it('generates 3 initiative cards on Tier 3 executive jobs and 2 cards on lower tier jobs', () => {
+        const humanExec = {
+          id: 'p_exec',
+          hoursRemaining: 12,
+          currentJobId: 'corp_exec',
+          currentWage: 40,
+          experience: 70, // 60 + 10 = 70
+          dependability: 60,
+          degrees: ['business_admin'],
+          physicalCondition: 50,
+          mentalCondition: 50,
+          inventory: { businessClothesWeeks: 10, selectedClothes: 'business' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        const resExec = workShift(humanExec, execJob, 6, advRules, undefined, 'show_initiative');
+        expect(resExec.success).toBe(true);
+        expect(resExec.updated.pendingMiniGame).toBeDefined();
+        expect(resExec.updated.pendingMiniGame?.gameType).toBe('work_initiative');
+        expect(resExec.updated.pendingMiniGame?.options.length).toBe(3);
+        expect(resExec.updated.pendingMiniGame?.tier).toBe(3);
+
+        // Lower tier job (e.g. salesManager with reqExp 50) -> Tier 2 -> draws 2 cards
+        const humanSales = {
+          ...humanExec,
+          currentJobId: 'sales_manager',
+          currentWage: 12,
+          experience: 60
+        } as unknown as PlayerState;
+        const resSales = workShift(humanSales, salesManager, 6, advRules, undefined, 'show_initiative');
+        expect(resSales.success).toBe(true);
+        expect(resSales.updated.pendingMiniGame?.options.length).toBe(2);
+        expect(resSales.updated.pendingMiniGame?.tier).toBe(2);
+      });
+
+      it('automatically evaluates and resolves initiative card for AI players without pending mini game', () => {
+        const aiPlayer = {
+          id: 'p_ai',
+          isAi: true,
+          hoursRemaining: 12,
+          currentJobId: 'sales_manager',
+          currentWage: 12,
+          experience: 60,
+          dependability: 50,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          skillMgmt: 1.0,
+          inventory: { businessClothesWeeks: 10, selectedClothes: 'business' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        const resAi = workShift(aiPlayer, salesManager, 6, advRules, undefined, 'show_initiative');
+        expect(resAi.success).toBe(true);
+        expect(resAi.updated.pendingMiniGame).toBeFalsy(); // AI does not block on modal
+        expect(resAi.messages?.some(m => m.key === 'action.job.initiativeSuccess')).toBe(true);
+      });
+
+      it('applies overtime permanent physical drop (-0.5 MAX physical) to show_initiative on shift 8+', () => {
+        const overtimePlayer = {
+          id: 'p_ot',
+          hoursRemaining: 12,
+          currentJobId: 'sales_manager',
+          currentWage: 12,
+          experience: 60,
+          dependability: 50,
+          physicalCondition: 50,
+          physicalConditionMax: 50,
+          mentalCondition: 50,
+          workActionsThisTurn: 7, // 8th action -> overtime!
+          inventory: { businessClothesWeeks: 10, selectedClothes: 'business' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        const res = workShift(overtimePlayer, salesManager, 6, advRules, undefined, 'show_initiative');
+        expect(res.success).toBe(true);
+        expect(res.updated.physicalConditionMax).toBe(49.5); // Dropped by 0.5
+      });
+    });
   });
 });

@@ -275,8 +275,10 @@ export interface PlayerState {
   workMistakesThisTurn?: number;
   skillTech?: number;
   skillMgmt?: number;
+  /** Alias for skillMgmt under the Leadership skill designation */
+  skillLeadership?: number;
 
-  /** Pending mini-game encounter state (e.g. Pawn Shop appraisal dilemma) */
+  /** Pending mini-game encounter state (e.g. Pawn Shop appraisal dilemma, Show Initiative cards) */
   pendingMiniGame?: MiniGameState | null;
   /** @deprecated Backwards-compatible alias for pendingMiniGame */
   pendingAppraisalDilemma?: MiniGameState | null;
@@ -397,13 +399,22 @@ export interface OwnedCurio {
 }
 
 export interface MiniGameOption {
-  type: 'cash' | 'standing' | 'item' | 'skill';
+  type: 'cash' | 'standing' | 'item' | 'skill' | 'initiative';
   title: string;
   description: string;
   cashAmount?: number;
   depAmount?: number;
   mentalAmount?: number;
   techSkillAmount?: number;
+  leadershipSkillAmount?: number;
+  expAmount?: number;
+  standingAmount?: number;
+  socialAmount?: number;
+  physicalAmount?: number;
+  cashCost?: number;
+  burnoutRisk?: boolean;
+  badge?: string;
+  icon?: string;
   itemType?: 'knick_knack' | 'spare_parts';
 }
 
@@ -413,6 +424,8 @@ export interface MiniGameState {
   gameType?: string;
   itemTitle?: string;
   title?: string;
+  subtitle?: string;
+  tier?: number;
   options: MiniGameOption[];
 }
 

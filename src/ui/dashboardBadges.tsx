@@ -225,7 +225,7 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
       const maxTech = calcMaxSkillCap(player, 'skillTech', campaign?.education, campaign?.config?.statRules, rules);
       careerAttributes.push({
         id: 'stat-skill-mgmt',
-        label: t('dashboard.skillMgmt', { defaultValue: 'Mgmt' }),
+        label: t('dashboard.skillMgmt', { defaultValue: 'Leadership' }),
         value: `${(player.skillMgmt ?? 0).toFixed(1)}/${maxMgmt.toFixed(1)}`,
         icon: '👔',
       });

@@ -43,7 +43,7 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
       case 'skillTech':
         return { icon: '💻', label: t('stats.skillTech', { defaultValue: 'Tech Skill' }) };
       case 'skillMgmt':
-        return { icon: '📈', label: t('stats.skillMgmt', { defaultValue: 'Management Skill' }) };
+        return { icon: '👔', label: t('stats.skillMgmt', { defaultValue: 'Leadership' }) };
       case 'lifestyle':
         return { icon: '😎', label: t('stats.lifestyle', { defaultValue: 'Lifestyle' }) };
       case 'loanDebt':

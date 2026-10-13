@@ -95,10 +95,10 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
       if (isMgmt) {
         inputs.push({
           icon: '👔',
-          title: 'Management Tag',
+          title: 'Leadership Tag',
           desc: isExecMgmt
-            ? 'Awards +0.50 Management Skill per Exp earned. Executive oversight brings high mental accountability: +1 weekly Dep decay, and mental mistakes trigger below 20 Mental.'
-            : 'Awards +0.25 Management Skill per Exp earned.'
+            ? 'Awards +0.50 Leadership per Exp earned. Executive oversight brings high mental accountability: +1 weekly Dep decay, and mental mistakes trigger below 20 Mental.'
+            : 'Awards +0.25 Leadership per Exp earned.'
         });
       }
 
@@ -235,7 +235,7 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         inputs.push({
           icon: '👔',
           title: 'Executive Affinity',
-          desc: 'Guarantees +0.25 Management Skill growth on every successful Face Time session.'
+          desc: 'Guarantees +0.25 Leadership growth on every successful Face Time session.'
         });
       }
 
@@ -266,13 +266,13 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
 
     case 'show_initiative':
     case 'innovate': {
-      title = t('action.workModal.showInitiative', { defaultValue: 'Show Initiative (Leadership & Problem Solving)' });
+      title = t('action.workModal.showInitiative', { defaultValue: 'Show Initiative (Dynamic Initiative Deck & Problem Solving)' });
       icon = '🌟';
-      badge = 'LEADERSHIP';
+      badge = 'INITIATIVE DECK';
       themeColor = '#f59e0b';
       glowColor = 'rgba(245, 158, 11, 0.4)';
-      fluff = "Step up, take charge of unresolved problems, and demonstrate leadership potential. It's demanding and earns less immediately, but proves your management readiness and cleans up your record.";
-      rationale = 'Proactive leadership and internal advancement: resolve workplace incidents, gain valuable management experience, and position yourself as a favored candidate for internal promotions.';
+      fluff = "Step up, take charge of unresolved problems, and demonstrate initiative. Draw strategic initiative cards tailored to your job tier and workplace. It's demanding and earns lower base wages, but awards powerful tailored bonuses and cleans up your record.";
+      rationale = 'Agency-driven initiative mini-game: draw cards (choose 1) scaled to job requirements. Build leadership, gain technical proficiency, pocket cash bounties, protect ethics to restore Mental health, or tackle high-stakes strategic crunch.';
 
       const reqExp = (job.requirements?.experience ?? 0) + 10;
       const hasReqExp = (player.experience ?? 0) >= reqExp;
@@ -301,20 +301,9 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
 
       outputs.push(
         {
-          icon: '💵',
-          title: 'Reduced Pay (40% Wages)',
-          desc: `Earns 40% of standard hourly wage ($${Math.floor((player.currentWage || job.baseWage) * 0.4)}/hr). You are investing time into leadership and fixing mistakes rather than routine billable output.`
-        },
-        {
-          icon: '👔',
-          title: isExecMgmt
-            ? 'Executive Management Skill (+1.00)'
-            : (isMiddleMgmt ? 'Management Skill (+0.50)' : 'Management Skill (+0.25)'),
-          desc: isExecMgmt
-            ? 'Earns +1.00 Management Skill (👔) per shift, supercharging your executive mastery.'
-            : (isMiddleMgmt
-                ? 'Earns +0.50 Management Skill (👔) per shift, accelerating your leadership growth.'
-                : 'Earns +0.25 Management Skill (👔) per shift, allowing non-managers to build leadership and qualify for executive roles!')
+          icon: '🃏',
+          title: 'Dynamic Initiative Cards (Choose 1)',
+          desc: 'Draws 2 cards (Tier 1 & 2 jobs) or 3 cards (Executive Manager jobs). Archetypes include: Leadership (👔), Technical / DIY (🔧), Mentorship / Exp (🎓), Cash Bounties (💵), Ethics & Aesthetics (🧘, +Mental recovery), and high-stakes Strategic Crunch (⚡).'
         },
         {
           icon: '🧹',
@@ -324,7 +313,7 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         {
           icon: '🌟',
           title: isExecMgmt ? 'Location Initiative (+2, +6% Standing)' : 'Location Initiative (+1, +3% Standing)',
-          desc: 'Builds permanent Location Initiatives at this workplace, acting as local experience: adds +3% employability per initiative on all jobs here and offsets past raises.'
+          desc: 'Builds permanent Location Initiatives at this workplace: adds +3% employability per initiative on all jobs here and offsets past raises.'
         },
         {
           icon: '🤝',
@@ -334,13 +323,19 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
             : (isMiddleMgmt
                 ? 'Steadily builds +1.5 Dependability through demonstrated leadership.'
                 : 'Steadily builds +1.0 Dependability through demonstrated reliability.')
+        },
+        {
+          icon: '💵',
+          title: 'Base Pay (40% Wages)',
+          desc: `Earns 40% of standard hourly wage ($${Math.floor((player.currentWage || job.baseWage) * 0.4)}/hr) in addition to any card cash rewards. You are investing time into solving problems rather than routine queue work.`
         }
       );
 
       tips.push(
         'Use Show Initiative to erase damaging mistake incidents before your employer disciplines or fires you.',
-        'The best way to build Management skill on lower-tier jobs without needing to hold an executive role first.',
-        'Accumulating initiatives acts as local experience, adding +3% promotion employability and qualifying you for raises more easily.'
+        'Low on Mental condition? Look for Ethics & Aesthetics cards (🧘) to restore Mental condition (+Mental).',
+        'Executive positions draw 3 cards with high stakes: Strategic Crunch cards offer massive payouts but cost Mental/Social/Cash and expose you to burnout mistakes.',
+        'Workplaces with technical jobs offer Technical cards (🔧), letting you build tech skills even in non-technical roles.'
       );
       break;
     }

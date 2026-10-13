@@ -13,6 +13,58 @@ interface AppraisalDilemmaModalProps {
   compact?: boolean;
 }
 
+function getOptionRewardDetails(opt: any, hasSpace: boolean) {
+  let icon = opt.icon || '💵';
+  let borderColor = '#22c55e';
+  let rewardText = `+$${opt.cashAmount || 0}`;
+  let shortTag = 'Cash';
+
+  if (opt.type === 'initiative') {
+    icon = opt.icon || (opt.badge === 'LEADERSHIP' ? '👔' : opt.badge === 'TECHNICAL' ? '🔧' : opt.badge === 'ETHICS' ? '🧘' : opt.badge === 'BOUNTY' ? '💵' : opt.badge === 'EXPERIENCE' ? '🎓' : '⚡');
+    shortTag = opt.badge || 'Initiative';
+    if (opt.badge === 'LEADERSHIP') borderColor = '#38bdf8';
+    else if (opt.badge === 'TECHNICAL') borderColor = '#10b981';
+    else if (opt.badge === 'ETHICS') borderColor = '#a855f7';
+    else if (opt.badge === 'BOUNTY') borderColor = '#22c55e';
+    else if (opt.badge === 'EXPENSIVE') borderColor = '#ef4444';
+    else borderColor = '#f59e0b';
+
+    const parts: string[] = [];
+    if (opt.leadershipSkillAmount) parts.push(`+${opt.leadershipSkillAmount} 👔`);
+    if (opt.techSkillAmount) parts.push(`+${opt.techSkillAmount} 🔧`);
+    if (opt.expAmount) parts.push(`+${opt.expAmount} 🎓`);
+    if (opt.cashAmount) parts.push(`+$${opt.cashAmount}`);
+    if (opt.cashCost) parts.push(`-$${opt.cashCost}`);
+    if (opt.depAmount) parts.push(`+${opt.depAmount} Dep`);
+    if (opt.mentalAmount && opt.mentalAmount > 0) parts.push(`+${opt.mentalAmount} 🧠`);
+    if (opt.mentalAmount && opt.mentalAmount < 0) parts.push(`${opt.mentalAmount} 🧠`);
+    if (opt.socialAmount && opt.socialAmount < 0) parts.push(`${opt.socialAmount} 👥`);
+    rewardText = parts.length > 0 ? parts.slice(0, 3).join(', ') : 'Select';
+  } else if (opt.type === 'standing') {
+    icon = '⭐';
+    borderColor = '#38bdf8';
+    shortTag = 'Standing';
+    rewardText = `+${opt.depAmount || 0} Dep${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
+  } else if (opt.type === 'item') {
+    icon = opt.itemType === 'spare_parts' ? '⚙️' : '🏺';
+    shortTag = opt.itemType === 'spare_parts' ? 'Parts' : 'Curio';
+    if (hasSpace) {
+      borderColor = '#a855f7';
+      rewardText = opt.itemType === 'spare_parts' ? '1x Spare Parts' : '1x Knick-Knack';
+    } else {
+      borderColor = '#f59e0b';
+      rewardText = opt.itemType === 'spare_parts' ? 'Auto-Pawn (+$10)' : 'Auto-Pawn (+$15)';
+    }
+  } else if (opt.type === 'skill') {
+    icon = '🔬';
+    borderColor = '#f59e0b';
+    shortTag = 'Tech';
+    rewardText = `+${opt.techSkillAmount || 0} Tech${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
+  }
+
+  return { icon, borderColor, rewardText, shortTag };
+}
+
 export function AppraisalDilemmaModal({
   dilemma,
   onSelectOption,
@@ -137,31 +189,51 @@ export function AppraisalDilemmaModal({
         }}
       >
         {/* HEADER */}
-        {isCompact ? (
-          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '1.25rem' }}>🔍 ⚖️</span>
-              <h3 style={{ margin: 0, color: '#facc15', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                {t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' })}
-              </h3>
+        {(() => {
+          const isInitiative = dilemma.gameType === 'work_initiative';
+          const modalTitle = isInitiative
+            ? (dilemma.title || t('appraisalDilemma.initiativeTitle', { defaultValue: 'Workplace Initiative' }))
+            : t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' });
+          const headerIcons = isInitiative ? '🌟 👔 📈' : '🔍 ⚖️ 🏷️';
+
+          return isCompact ? (
+            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.25rem' }}>{headerIcons}</span>
+                <h3 style={{ margin: 0, color: '#facc15', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                  {modalTitle}
+                </h3>
+              </div>
+              <div style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                {isInitiative ? (
+                  dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
+                ) : (
+                  <>
+                    {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
+                    <strong style={{ color: '#fef08a' }}>{dilemma.itemTitle}</strong>
+                  </>
+                )}
+              </div>
             </div>
-            <div style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
-              {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
-              <strong style={{ color: '#fef08a' }}>{dilemma.itemTitle}</strong>
+          ) : (
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <div style={{ fontSize: '2.2rem', marginBottom: '4px' }}>{headerIcons}</div>
+              <h2 style={{ margin: '0 0 4px 0', color: '#facc15', fontSize: '1.35rem' }}>
+                {modalTitle}
+              </h2>
+              <div style={{ fontSize: '0.95rem', color: '#94a3b8' }}>
+                {isInitiative ? (
+                  dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
+                ) : (
+                  <>
+                    {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
+                    <strong style={{ color: '#e2e8f0' }}>{dilemma.itemTitle}</strong>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '2.2rem', marginBottom: '4px' }}>🔍 ⚖️ 🏷️</div>
-            <h2 style={{ margin: '0 0 4px 0', color: '#facc15', fontSize: '1.35rem' }}>
-              {t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' })}
-            </h2>
-            <div style={{ fontSize: '0.95rem', color: '#94a3b8' }}>
-              {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
-              <strong style={{ color: '#e2e8f0' }}>{dilemma.itemTitle}</strong>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* TOUCH CAROUSEL PILL NAVIGATION (when carousel is active) */}
         {isCarouselMode && (
@@ -190,16 +262,7 @@ export function AppraisalDilemmaModal({
             </button>
 
             {dilemma.options.map((opt, idx) => {
-              const icon = opt.type === 'standing'
-                ? '⭐'
-                : (opt.type === 'item'
-                    ? (opt.itemType === 'spare_parts' ? '⚙️' : '🏺')
-                    : (opt.type === 'skill' ? '🔬' : '💵'));
-              const shortTag = opt.type === 'standing'
-                ? 'Standing'
-                : (opt.type === 'item'
-                    ? (opt.itemType === 'spare_parts' ? 'Parts' : 'Curio')
-                    : (opt.type === 'skill' ? 'Tech' : 'Cash'));
+              const details = getOptionRewardDetails(opt, hasSpace);
               const isSelected = selectedIdx === idx;
 
               return (
@@ -211,8 +274,8 @@ export function AppraisalDilemmaModal({
                   className={`appraisal-carousel-indicator__btn ${isSelected ? 'appraisal-carousel-indicator__btn--active' : ''}`}
                   onClick={() => scrollToOption(idx)}
                 >
-                  <span>{icon}</span>
-                  <span>{idx + 1}. {shortTag}</span>
+                  <span>{details.icon}</span>
+                  <span>{idx + 1}. {details.shortTag}</span>
                 </button>
               );
             })}
@@ -255,30 +318,9 @@ export function AppraisalDilemmaModal({
           } : undefined}
         >
           {dilemma.options.map((opt, idx) => {
-            let icon = '💵';
-            let borderColor = '#22c55e';
-            let rewardText = `+$${opt.cashAmount}`;
-            let isItemFull = false;
-
-            if (opt.type === 'standing') {
-              icon = '⭐';
-              borderColor = '#38bdf8';
-              rewardText = `+${opt.depAmount || 0} Dep${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
-            } else if (opt.type === 'item') {
-              icon = opt.itemType === 'spare_parts' ? '⚙️' : '🏺';
-              if (hasSpace) {
-                borderColor = '#a855f7';
-                rewardText = opt.itemType === 'spare_parts' ? '1x Spare Parts' : '1x Knick-Knack';
-              } else {
-                isItemFull = true;
-                borderColor = '#f59e0b';
-                rewardText = opt.itemType === 'spare_parts' ? 'Auto-Pawn (+$10)' : 'Auto-Pawn (+$15)';
-              }
-            } else if (opt.type === 'skill') {
-              icon = '🔬';
-              borderColor = '#f59e0b';
-              rewardText = `+${opt.techSkillAmount || 0} Tech${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
-            }
+            const details = getOptionRewardDetails(opt, hasSpace);
+            const { icon, borderColor, rewardText } = details;
+            const isItemFull = opt.type === 'item' && !hasSpace;
 
             const isSelected = selectedIdx === idx;
             const displayTitle = opt.title || t(`appraisalDilemma.option_${opt.type}.title`, { defaultValue: opt.title });
@@ -320,6 +362,23 @@ export function AppraisalDilemmaModal({
                   boxSizing: 'border-box'
                 }}
               >
+                {/* Badge if present */}
+                {opt.badge && (
+                  <span style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 'bold',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    background: `${borderColor}22`,
+                    color: borderColor,
+                    border: `1px solid ${borderColor}55`,
+                    marginBottom: '2px',
+                    display: 'inline-block'
+                  }}>
+                    {opt.badge}
+                  </span>
+                )}
+
                 {/* Icon & Title */}
                 <div>
                   <div style={{ fontSize: isCompact ? '1.35rem' : '1.9rem', lineHeight: '1.1' }}>
@@ -352,6 +411,11 @@ export function AppraisalDilemmaModal({
                   {isItemFull && (
                     <div style={{ color: '#f59e0b', fontSize: '0.66rem', marginTop: '2px', fontWeight: 'bold' }}>
                       ⚠️ {t('appraisalDilemma.apartmentFullNotice', { defaultValue: 'Auto-pawn scrap cash' })}
+                    </div>
+                  )}
+                  {opt.burnoutRisk && (
+                    <div style={{ color: '#ef4444', fontSize: '0.66rem', marginTop: '2px', fontWeight: 'bold' }}>
+                      ⚠️ High Burnout & Mistake Risk
                     </div>
                   )}
                 </div>
@@ -396,20 +460,8 @@ export function AppraisalDilemmaModal({
         {/* STICKY CAROUSEL CONFIRM BAR (When in mobile carousel mode) */}
         {isCarouselMode && (() => {
           const opt = dilemma.options[selectedIdx] || dilemma.options[0];
-          let borderColor = '#22c55e';
-          let rewardText = `+$${opt.cashAmount}`;
-          if (opt.type === 'standing') {
-            borderColor = '#38bdf8';
-            rewardText = `+${opt.depAmount || 0} Dep${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
-          } else if (opt.type === 'item') {
-            borderColor = hasSpace ? '#a855f7' : '#f59e0b';
-            rewardText = hasSpace
-              ? (opt.itemType === 'spare_parts' ? '1x Spare Parts' : '1x Knick-Knack')
-              : (opt.itemType === 'spare_parts' ? 'Auto-Pawn (+$10)' : 'Auto-Pawn (+$15)');
-          } else if (opt.type === 'skill') {
-            borderColor = '#f59e0b';
-            rewardText = `+${opt.techSkillAmount || 0} Tech${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
-          }
+          const details = getOptionRewardDetails(opt, hasSpace);
+          const { borderColor, rewardText } = details;
 
           return (
             <div className="appraisal-confirm-bar">

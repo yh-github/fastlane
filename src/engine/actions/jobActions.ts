@@ -57,7 +57,8 @@ export function handleWorkAction(
       action.mode || 'work_work',
       context.rng,
       replayContext,
-      context.campaign.education
+      context.campaign.education,
+      context.campaign
     );
     nextPlayer = result.updated;
     if (result.messages && result.messages.length > 0) {
@@ -129,6 +130,68 @@ export function handleResolveAppraisalDilemmaAction(
       nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, (nextPlayer.mentalCondition ?? 50) + choice.mentalAmount);
     }
     actionLog = { key: 'action.job.appraisalChoiceSkill', params: { tech: choice.techSkillAmount ?? 0 } };
+  } else if (choice.type === 'initiative') {
+    if (choice.cashAmount) {
+      nextPlayer.money += choice.cashAmount;
+    }
+    if (choice.cashCost) {
+      nextPlayer.money = Math.max(0, nextPlayer.money - choice.cashCost);
+    }
+    if (choice.depAmount) {
+      const job = context.campaign.jobs.find(j => j.id === nextPlayer.currentJobId);
+      const maxDep = 20 + (job?.requirements?.dependability ?? 0) + (nextPlayer.degreeDepBoost || 0) + (nextPlayer.depMaxBonus || 0);
+      nextPlayer.dependability = Math.min(Math.max(100, maxDep), (nextPlayer.dependability || 0) + choice.depAmount);
+    }
+    if (choice.expAmount) {
+      const job = context.campaign.jobs.find(j => j.id === nextPlayer.currentJobId);
+      const maxExp = 10 + (job?.requirements?.experience ?? 0) + (nextPlayer.degreeExpBoost || 0) + (nextPlayer.xpMaxBonus || 0);
+      nextPlayer.experience = Math.min(maxExp, (nextPlayer.experience || 0) + choice.expAmount);
+    }
+    if (choice.leadershipSkillAmount) {
+      const maxLeadership = calcMaxSkillCap(nextPlayer, 'skillMgmt', context.campaign.education, context.campaign.config.statRules, context.rules);
+      const newLead = Math.min(maxLeadership, Math.round(((nextPlayer.skillMgmt || 0) + choice.leadershipSkillAmount) * 100) / 100);
+      nextPlayer.skillMgmt = newLead;
+      nextPlayer.skillLeadership = newLead;
+    }
+    if (choice.techSkillAmount) {
+      const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, context.campaign.config.statRules, context.rules);
+      nextPlayer.skillTech = Math.min(maxTech, Math.round(((nextPlayer.skillTech || 0) + choice.techSkillAmount) * 100) / 100);
+    }
+    if (choice.standingAmount && nextPlayer.currentJobId) {
+      const job = context.campaign.jobs.find(j => j.id === nextPlayer.currentJobId);
+      if (job?.locationId) {
+        nextPlayer.initiativesByLocation = {
+          ...(nextPlayer.initiativesByLocation || {}),
+          [job.locationId]: (nextPlayer.initiativesByLocation?.[job.locationId] || 0) + choice.standingAmount
+        };
+      }
+    }
+    if (choice.mentalAmount) {
+      const maxMental = nextPlayer.mentalConditionMax ?? 50;
+      nextPlayer.mentalCondition = Math.max(1, Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + choice.mentalAmount));
+    }
+    if (choice.socialAmount) {
+      nextPlayer.social = Math.max(1, Math.min(99, (nextPlayer.social ?? 50) + choice.socialAmount));
+    }
+    if (choice.physicalAmount) {
+      const maxPhys = nextPlayer.physicalConditionMax ?? 50;
+      nextPlayer.physicalCondition = Math.max(1, Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + choice.physicalAmount));
+    }
+
+    actionLog = {
+      key: 'action.job.initiativeChoiceResolved',
+      params: {
+        title: choice.title,
+        badge: choice.badge || 'INITIATIVE',
+        leadership: choice.leadershipSkillAmount ?? 0,
+        tech: choice.techSkillAmount ?? 0,
+        exp: choice.expAmount ?? 0,
+        dep: choice.depAmount ?? 0,
+        cash: (choice.cashAmount ?? 0) - (choice.cashCost ?? 0),
+        mental: choice.mentalAmount ?? 0,
+        social: choice.socialAmount ?? 0
+      }
+    };
   }
 
   nextPlayer.pendingMiniGame = null;

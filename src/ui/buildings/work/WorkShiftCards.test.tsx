@@ -371,4 +371,73 @@ describe('WorkShiftCards Component', () => {
     expect(leftWing.style.visibility).toBe('hidden');
     expect(leftWing.style.pointerEvents).toBe('none');
   });
+
+  it('renders initiative card badges (🃏 2 Cards / 🃏 3 Cards) based on job tier', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      experience: 50,
+    });
+
+    const midJob = {
+      ...dummyJob,
+      baseWage: 8, // Tier 2 (baseWage < 14)
+    };
+
+    const { rerender } = render(
+      <WorkShiftCards
+        player={player}
+        job={midJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="grid"
+      />
+    );
+
+    // midJob is middle_management (Tier 2) -> 2 cards
+    expect(screen.getByText('🃏 2 Cards')).toBeInTheDocument();
+
+    const execJob = {
+      ...dummyJob,
+      id: 'job_exec_manager',
+      tags: ['executive_management'],
+    };
+
+    rerender(
+      <WorkShiftCards
+        player={player}
+        job={execJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="grid"
+      />
+    );
+
+    // execJob is executive_management (Tier 3) -> 3 cards
+    expect(screen.getByText('🃏 3 Cards')).toBeInTheDocument();
+  });
+
+  it('renders -0.5 MAX 💪 badge on Show Initiative during overtime shift', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      experience: 50,
+      workActionsThisTurn: 8 // Overtime tier
+    });
+
+    render(
+      <WorkShiftCards
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+        layoutMode="grid"
+      />
+    );
+
+    const physDrops = screen.getAllByText('-0.5 MAX 💪');
+    expect(physDrops.length).toBeGreaterThanOrEqual(2); // On both Work Work and Show Initiative
+  });
 });
