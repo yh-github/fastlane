@@ -9,11 +9,12 @@ import {
 import { spendHours } from '../timeManager';
 import { processRentDebt } from '../economyEngine';
 import { roundToResolution, calcMaxSkillCap } from '../statMath';
-import type { JobDef, EducationDef } from '../dataLoader';
+import type { JobDef, EducationDef, CampaignBundle } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { applyHappinessChange } from '../statEffects';
 import type { StatRules } from '../rules';
+import { generateInitiativeCards, getJobInitiativeTier } from './jobInitiativeDeck';
 import {
   hasJobTag,
   getJobPhysicalCostModifier,
@@ -41,7 +42,8 @@ export function workShift(
   mode: WorkMode = 'work_work',
   rng?: Random,
   replay?: ReplayContext,
-  campaignEducation?: EducationDef[]
+  campaignEducation?: EducationDef[],
+  campaign?: CampaignBundle
 ): WorkResult {
   if (player.hoursRemaining <= 0 || player.currentJobId !== job.id) {
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.cannotWork' }] };
@@ -259,7 +261,7 @@ export function workShift(
       updated.mentalConditionMax = Math.min(statRules?.globalMaxMentalCondition ?? 99, (updated.mentalConditionMax || 50) + 1);
     }
 
-    if (mode === 'work_work') {
+    if (mode === 'work_work' || isInitiative) {
       const isOvertime = actionCount >= overtimeThreshold;
       const isHeavyGrind = actionCount >= grindThreshold && hasJobTag(job, 'heavy_physical');
       if (isOvertime || isHeavyGrind) {
@@ -376,16 +378,7 @@ export function workShift(
       const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0) + (updated.depMaxBonus || 0);
 
       if (isInitiative) {
-        const isExecMgmt = hasJobTag(job, 'executive_management');
-        const isMiddleMgmt = hasJobTag(job, 'middle_management');
-        const mgmtGain = isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25);
-        const standingGain = isExecMgmt ? 2 : 1;
-        if (useSkills) {
-          const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
-          updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
-        }
-
-        // Clear 1 location mistake if any exist
+        // Clear 1 location mistake if any exist (core initiative guarantee)
         const curLocMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
         if (curLocMistakes > 0) {
           updated.mistakesByLocation = {
@@ -395,23 +388,103 @@ export function workShift(
           messages.push({ key: 'action.job.initiativeClearedMistake' });
         }
 
-        // Increment location initiative (local standing)
+        const isExecMgmt = hasJobTag(job, 'executive_management');
+        const isMiddleMgmt = hasJobTag(job, 'middle_management');
+        const standingGain = isExecMgmt ? 2 : 1;
+        const depGain = isExecMgmt ? 2.0 : (isMiddleMgmt ? 1.5 : (baseDepGain > 0 ? baseDepGain : 1.0));
+
+        // Base location initiative tracking (proves proactive contribution)
         updated.initiativesByLocation = {
           ...(updated.initiativesByLocation || {}),
           [job.locationId]: (updated.initiativesByLocation?.[job.locationId] || 0) + standingGain
         };
 
-        // Advance dependability
-        if (baseDepGain > 0 && updated.dependability < effectiveMaxDep) {
-          updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + baseDepGain, 0.5));
+        // Advance baseline dependability
+        if (depGain > 0 && updated.dependability < effectiveMaxDep) {
+          updated.dependability = Math.min(effectiveMaxDep, roundToResolution(updated.dependability + depGain, 0.5));
         }
 
-        if (useSkills && hasJobTag(job, 'technical')) {
-          const maxTech = calcMaxSkillCap(updated, 'skillTech', campaignEducation, statRules, rules as GameRules);
+        const mgmtGain = isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25);
+        const maxMgmt = useSkills ? calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules) : 99;
+        updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
+
+        if (hasJobTag(job, 'technical')) {
+          const maxTech = useSkills ? calcMaxSkillCap(updated, 'skillTech', campaignEducation, statRules, rules as GameRules) : 99;
           updated.skillTech = Math.min(maxTech, roundToResolution((updated.skillTech || 0) + 0.25, 0.05));
         }
 
-        messages.push({ key: 'action.job.initiativeSuccess', params: { skillMgmt: updated.skillMgmt ?? 0 } });
+        // Generate dynamic initiative cards
+        const initiativeCards = generateInitiativeCards(
+          updated,
+          job,
+          campaign,
+          rng,
+          replay,
+          actionCount
+        );
+
+        if (updated.isAi) {
+          // AI evaluates and automatically resolves the best initiative option
+          let chosen = initiativeCards[0];
+          if ((updated.mentalCondition ?? 50) < 15) {
+            const ethics = initiativeCards.find(c => (c.mentalAmount || 0) > 0);
+            if (ethics) chosen = ethics;
+          } else if (updated.money < 30) {
+            const bounty = initiativeCards.find(c => (c.cashAmount || 0) > 0);
+            if (bounty) chosen = bounty;
+          } else {
+            const skillCard = initiativeCards.find(c => (c.leadershipSkillAmount || 0) > 0 || (c.techSkillAmount || 0) > 0);
+            if (skillCard) chosen = skillCard;
+          }
+
+          if (chosen.cashAmount) updated.money += chosen.cashAmount;
+          if (chosen.cashCost) updated.money = Math.max(0, updated.money - chosen.cashCost);
+          if (chosen.depAmount) updated.dependability = Math.min(effectiveMaxDep, (updated.dependability || 0) + chosen.depAmount);
+          if (chosen.expAmount) updated.experience = Math.min(100, (updated.experience || 0) + chosen.expAmount);
+          if (chosen.leadershipSkillAmount && useSkills) {
+            const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
+            const newLead = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + chosen.leadershipSkillAmount, 0.05));
+            updated.skillMgmt = newLead;
+            updated.skillLeadership = newLead;
+          }
+          if (chosen.techSkillAmount && useSkills) {
+            const maxTech = calcMaxSkillCap(updated, 'skillTech', campaignEducation, statRules, rules as GameRules);
+            updated.skillTech = Math.min(maxTech, roundToResolution((updated.skillTech || 0) + chosen.techSkillAmount, 0.05));
+          }
+          if (chosen.standingAmount) {
+            updated.initiativesByLocation = {
+              ...(updated.initiativesByLocation || {}),
+              [job.locationId]: (updated.initiativesByLocation?.[job.locationId] || 0) + chosen.standingAmount
+            };
+          }
+          if (chosen.mentalAmount) {
+            const maxMental = updated.mentalConditionMax ?? 50;
+            updated.mentalCondition = Math.max(1, Math.min(maxMental, (updated.mentalCondition ?? 50) + chosen.mentalAmount));
+          }
+          if (chosen.socialAmount) {
+            updated.social = Math.max(1, Math.min(99, (updated.social ?? 50) + chosen.socialAmount));
+          }
+          if (chosen.physicalAmount) {
+            const maxPhys = updated.physicalConditionMax ?? 50;
+            updated.physicalCondition = Math.max(1, Math.min(maxPhys, (updated.physicalCondition ?? 50) + chosen.physicalAmount));
+          }
+
+          updated.pendingMiniGame = null;
+          updated.pendingAppraisalDilemma = null;
+          messages.push({ key: 'action.job.initiativeSuccess', params: { skillMgmt: updated.skillMgmt ?? 0, title: chosen.title } });
+        } else {
+          const tier = getJobInitiativeTier(job);
+          const miniGameState: MiniGameState = {
+            gameType: 'work_initiative',
+            title: 'Workplace Initiative',
+            subtitle: `${job.title} — Initiative Tier ${tier}`,
+            tier,
+            options: initiativeCards
+          };
+          updated.pendingMiniGame = miniGameState;
+          updated.pendingAppraisalDilemma = miniGameState;
+          messages.push({ key: 'action.job.initiativeCardsDrawn', params: { count: initiativeCards.length } });
+        }
       } else {
         // Normal stat growth for other modes
         if (baseDepGain > 0 && updated.dependability < effectiveMaxDep) {

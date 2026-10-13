@@ -264,7 +264,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                       <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>🤝 {t('jobBoard.dep')}: {job.requirements.dependability}</span>
                       {isExecMgmt && (
                         <span style={{ color: missingMgmt ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
-                          | 👔 {t('dashboard.skillMgmt', { defaultValue: 'Mgmt' })}: {reqMgmt}.00
+                          | 👔 {t('dashboard.skillMgmt', { defaultValue: 'Leadership' })}: {reqMgmt}.00
                         </span>
                       )}
                       {isTechnical && reqTech !== undefined && (

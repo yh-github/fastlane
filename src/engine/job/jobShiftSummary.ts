@@ -22,6 +22,7 @@ import type {
   WorkShiftSummary, 
   ModifierBreakdownItem 
 } from './jobTypes';
+import { getJobInitiativeTier } from './jobInitiativeDeck';
 
 export function calcWorkShiftSummary(
   player: PlayerState,
@@ -154,7 +155,7 @@ export function calcWorkShiftSummary(
       rewardExp: 0,
       rewardSocial: 0,
       rewardText: (player.experience ?? 0) >= (job.requirements?.experience ?? 0) + 10
-        ? `+${(isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25)).toFixed(2)} 👔, +${(isExecMgmt ? 2.0 : (isMiddleMgmt ? 1.5 : 1.0)).toFixed(1)} 🤝, -1 ⚠️, +${isExecMgmt ? 2 : 1} 🌟`
+        ? `Draw ${getJobInitiativeTier(job) === 3 ? '3' : '2'} Initiative Cards (👔, 🔧, 🎓, 💵, 🧘)`
         : 'action.job.initiativeNeedExp',
       color: '#f59e0b',
       isDefault: false,

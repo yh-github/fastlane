@@ -35,7 +35,7 @@
     "career": "קריירה",
     "wealth": "עושר",
     "skillTech": "טכנולוגיה",
-    "skillMgmt": "ניהול",
+    "skillMgmt": "מנהיגות",
     "weekNumber": "שבוע #{{turn}}",
     "lifestyle": "סגנון חיים",
     "wellbeing": "רווחה אישית"
@@ -92,7 +92,8 @@
       "mistake": "עשית טעות בעבודה ({{type}})! איבדת {{penalty}} אמינות (סה״כ עונשי מוניטין במיקום זה: {{total}})",
       "initiativeNeedExp": "דרוש לפחות {{reqExp}} ניסיון (+10 מעל דרישת התפקיד) כדי לגלות יוזמה.",
       "needMoreSocial": "מצב חברתי ירוד מדי ועצבנות מונעים ממך לבצע זאת כרגע.",
-      "initiativeSuccess": "הפגנת יוזמה ומנהיגות! (מיומנות ניהול: {{skillMgmt}})",
+      "initiativeSuccess": "הפגנת יוזמה ומנהיגות! (מנהיגות: {{skillMgmt}})",
+      "initiativeChoiceResolved": "יוזמה הושלמה: {{title}}.",
       "initiativeClearedMistake": "היוזמה שלך תיקנה תקלת עבודה קודמת במיקום זה!",
       "innovateNeedDegree": "דרוש לפחות תואר אקדמי אחד כדי לחדש בעבודה.",
       "innovateGainExp": "סיעור מוחות ומו\"פ: קיבלת {{amount}}+ ניסיון!",

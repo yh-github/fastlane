@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
 import { calcWorkShiftSummary, type WorkShiftOption, type WorkMode } from '../../../engine/jobEngine';
+import { getJobInitiativeTier } from '../../../engine/job/jobInitiativeDeck';
 import { hasJobTag } from '../../../engine/jobTags';
 import { formatHours, calcMaxSkillCap } from '../../../engine/statMath';
 import { WorkCardHelpModal } from './WorkCardHelpModal';
@@ -555,15 +556,6 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             bg: 'rgba(251, 191, 36, 0.18)',
             border: 'rgba(251, 191, 36, 0.45)'
           });
-        } else if (m.id === 'show_initiative' || m.id === 'innovate') {
-          const initMgmt = (isExecMgmt ? 1.0 : (isMiddleMgmt ? 0.5 : 0.25)).toFixed(2);
-          badges.push({
-            key: 'mgmt_init',
-            label: `+${initMgmt} 👔`,
-            color: '#fbbf24',
-            bg: 'rgba(251, 191, 36, 0.18)',
-            border: 'rgba(251, 191, 36, 0.45)'
-          });
         }
       }
     }
@@ -571,7 +563,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
     // 6. Overtime / Heavy Grind permanent physical drop
     const isOvertimeShift = summary.tier === 'overtime';
     const isHeavyGrindShift = summary.tier === 'grind' && hasJobTag(job, 'heavy_physical');
-    if ((isOvertimeShift || isHeavyGrindShift) && m.id === 'work_work') {
+    if ((isOvertimeShift || isHeavyGrindShift) && (m.id === 'work_work' || m.id === 'show_initiative' || m.id === 'innovate')) {
       badges.push({
         key: 'max_phys_drop',
         label: '-0.5 MAX 💪',
@@ -605,6 +597,15 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 
     // 9. Initiative special rewards
     if (m.id === 'show_initiative' || m.id === 'innovate') {
+      const initTier = getJobInitiativeTier(job);
+      const cardCount = initTier === 3 ? 3 : 2;
+      badges.push({
+        key: 'initiative_cards',
+        label: `🃏 ${cardCount} Cards`,
+        color: '#38bdf8',
+        bg: 'rgba(56, 189, 248, 0.18)',
+        border: 'rgba(56, 189, 248, 0.45)'
+      });
       if (locationMistakes > 0) {
         badges.push({
           key: 'clear_mistake',
