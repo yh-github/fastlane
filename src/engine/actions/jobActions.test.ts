@@ -98,7 +98,7 @@ describe('Job Actions & Initiative Card Resolution', () => {
     // Pending mini game cleared
     expect(nextPlayer.pendingMiniGame).toBeNull();
     // Action log populated
-    expect(actionLog?.key).toBe('action.job.initiativeChoiceResolved');
+    expect((actionLog as any)?.key).toBe('action.job.initiativeChoiceResolved');
     expect((actionLog as any)?.params?.title).toBe('Code Quality & Refactoring Pride');
     expect((actionLog as any)?.params?.badge).toBe('ETHICS');
   });
