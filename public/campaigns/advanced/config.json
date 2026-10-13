@@ -38,6 +38,7 @@
     "advancedMaintenance": true,
     "advancedHomeGUI": true,
     "advancedWorkGUI": true,
+    "workConsoleStyle": "popup",
     "autoEquipBestClothes": false,
     "clothesSwitching": "homeOrStore",
     "showJobTags": true,

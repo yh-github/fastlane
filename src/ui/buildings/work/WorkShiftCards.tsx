@@ -8,6 +8,7 @@ import { hasJobTag } from '../../../engine/jobTags';
 import { formatHours, calcMaxSkillCap } from '../../../engine/statMath';
 import { WorkCardHelpModal } from './WorkCardHelpModal';
 import { ActionReasonModal } from '../ActionReasonModal';
+import { WorkConsolePopup } from './WorkConsolePopup';
 
 export interface WorkShiftCardsProps {
   player: PlayerState;
@@ -16,7 +17,7 @@ export interface WorkShiftCardsProps {
   rules?: GameRules;
   onAction: (action: any) => void;
   onClose?: () => void;
-  layoutMode?: 'flanking' | 'grid';
+  layoutMode?: 'flanking' | 'grid' | 'popup';
   isFloating?: boolean;
   modalRef?: React.RefObject<HTMLDivElement | null>;
 }
@@ -69,6 +70,21 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
   const isAdvanced = !!effectiveRules?.usePhysicalMentalConditions;
   const isHelpful = effectiveRules ? effectiveRules.helpfulUI !== false : true;
   const shiftCost = campaign?.config.timeRules?.workSessionCost ?? 6;
+
+  // Movable Popup Work Console (Advanced Mode)
+  if (isAdvanced && layoutMode === 'popup') {
+    return (
+      <WorkConsolePopup
+        player={player}
+        job={job}
+        campaign={campaign}
+        rules={rules}
+        onAction={onAction}
+        onClose={onClose}
+        modalRef={modalRef}
+      />
+    );
+  }
 
   // Classic Mode (Non-Advanced): streamlined visual card
   if (!isAdvanced) {

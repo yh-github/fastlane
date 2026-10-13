@@ -203,6 +203,7 @@ export function BuildingModal({
     : null;
 
   const isAdvancedWorkGUI = rules ? (rules.advancedWorkGUI ?? !!rules.usePhysicalMentalConditions) : false;
+  const workConsoleStyle = rules?.workConsoleStyle || 'popup';
 
   const itemsHere = getAvailableItemsForBuilding(building, campaign, turn, player.id, gameSeed);
   const hasPendingMiniGame = !!(player?.pendingMiniGame || player?.pendingAppraisalDilemma);
@@ -765,7 +766,7 @@ export function BuildingModal({
           job={playerJobHere}
           campaign={campaign}
           rules={rules}
-          layoutMode="flanking"
+          layoutMode={workConsoleStyle}
           modalRef={modalRef}
           onClose={() => setIsWorkDeckOpen(false)}
         />

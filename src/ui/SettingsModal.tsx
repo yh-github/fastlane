@@ -90,6 +90,26 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     });
   };
 
+  const handleToggleWorkConsoleStyle = () => {
+    const currentStyle = gameState.rules.workConsoleStyle || 'popup';
+    const nextStyle: 'popup' | 'flanking' = currentStyle === 'popup' ? 'flanking' : 'popup';
+    try {
+      localStorage.setItem('fastlane_work_console_style', nextStyle);
+    } catch {
+      // ignore
+    }
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          workConsoleStyle: nextStyle
+        }
+      };
+    });
+  };
+
   const handleToggleUseSkills = () => {
     setGameState(prev => {
       if (!prev) return prev;
@@ -422,6 +442,34 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                       border: '1px solid var(--accent-cyan)'
                     }}>
                       {(gameState.rules.hudLayout || 'auto').toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable"
+                  onClick={handleToggleWorkConsoleStyle}
+                  data-testid="setting-work-console-style"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.workConsoleStyle', { defaultValue: 'Work Console Style' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {(gameState.rules.workConsoleStyle || 'popup') === 'popup'
+                          ? t('settings.workConsolePopup', { defaultValue: 'Movable Window (Popup with radio modes - can move aside to watch shop)' })
+                          : t('settings.workConsoleFlanking', { defaultValue: 'Flanking Wings (Fixed cards flanking the location window)' })}
+                      </div>
+                    </div>
+                    <span style={{ 
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      background: 'rgba(0, 229, 255, 0.2)', 
+                      color: 'var(--accent-cyan)',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      border: '1px solid var(--accent-cyan)'
+                    }}>
+                      {(gameState.rules.workConsoleStyle || 'popup').toUpperCase()}
                     </span>
                   </div>
                 </div>
