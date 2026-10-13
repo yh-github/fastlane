@@ -1013,6 +1013,34 @@ button:disabled {
   }
 }
 
+/* Movable Popup Work Console */
+.work-console-popup {
+  box-sizing: border-box;
+}
+
+.work-console-popup__header {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (max-height: 620px) {
+  .work-console-popup {
+    max-height: calc(100vh - 20px) !important;
+  }
+  .work-console-popup [data-testid^="work-mode-option-"] {
+    height: 46px !important;
+    max-height: 46px !important;
+    min-height: 46px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .work-console-popup {
+    width: calc(100vw - 12px) !important;
+  }
+}
+
 /* Item Card Modal (Shop & Home Durables) Responsive Styling */
 .item-card-modal-content {
   max-width: 290px;

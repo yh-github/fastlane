@@ -348,5 +348,45 @@ describe('SettingsModal', () => {
     fireEvent.click(fullscreenBtn);
     expect(modalContent).not.toHaveClass('settings-modal-content--fullscreen');
   });
+
+  it('cycles Work Console Style setting between popup and flanking', () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+    let state = { ...dummyGameState, rules: { ...dummyGameState.rules, workConsoleStyle: 'popup' as const } };
+    const setGameState = vi.fn().mockImplementation((updater) => {
+      state = updater(state);
+    });
+
+    const { rerender } = render(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+
+    const workConsoleItem = screen.getByTestId('setting-work-console-style');
+    expect(workConsoleItem).toBeInTheDocument();
+    expect(screen.getByText('POPUP')).toBeInTheDocument();
+
+    fireEvent.click(workConsoleItem);
+    expect(setGameState).toHaveBeenCalled();
+    expect(state.rules.workConsoleStyle).toBe('flanking');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_work_console_style', 'flanking');
+
+    rerender(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByText('FLANKING')).toBeInTheDocument();
+
+    fireEvent.click(workConsoleItem);
+    expect(state.rules.workConsoleStyle).toBe('popup');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_work_console_style', 'popup');
+
+    setItemSpy.mockRestore();
+  });
 });
 

@@ -263,6 +263,11 @@ export interface GameRules {
   advancedWorkGUI: boolean;
 
   /**
+   * ADVANCED: Work Console GUI style for workplaces ('popup' or 'flanking').
+   */
+  workConsoleStyle?: 'popup' | 'flanking';
+
+  /**
    * QoL & ADVANCED: Adjusts pawn redemption and clearance prices dynamically with the economy to prevent infinite-money same-turn arbitrage.
    */
   preventPawnArbitrage: boolean;
@@ -565,6 +570,7 @@ export const DEFAULT_GAME_RULES: GameRules = {
   educationResolution: 0.1,
   advancedHomeGUI: false,
   advancedWorkGUI: false,
+  workConsoleStyle: 'popup',
   streetRobberyOnTurnEnd: true,
   predictiveNewspaperStockTips: false,
   reenterCurrentLocationCost: true,
@@ -602,7 +608,8 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   streetRobberyOnTurnEnd: 'Allows street robbery when leaving the Bank or Black Market upon ending a turn (0 hours left)',
   predictiveNewspaperStockTips: 'Enables predictive stock market tips and financial column in the weekly newspaper',
   advancedHomeGUI: 'Uses the card-based GUI and visual apartment showcase for Home',
-  advancedWorkGUI: 'Uses the card-based GUI and flanking work shift console for workplaces',
+  advancedWorkGUI: 'Uses the card-based GUI and work shift console for workplaces',
+  workConsoleStyle: 'Work console style for workplaces: movable popup window or flanking side wings',
   advancedMaintenance: 'Appliances break instead of auto-repairing for money, requiring manual repair, service, or disposal',
   showJobTags: 'Displays job archetype tags (Always Hiring, Frontline Service, Technical, etc.) in the Employment Office',
   pawnRummageBins: 'Enables Dusty Junk Bins & Crates section in the Pawn Shop for rummaging bargains, curios, and spare parts',

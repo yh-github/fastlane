@@ -60,9 +60,19 @@ export default function App() {
     } catch {
       // ignore
     }
+    let savedWorkConsoleStyle: 'popup' | 'flanking' | undefined = undefined;
+    try {
+      const stored = localStorage.getItem('fastlane_work_console_style');
+      if (stored === 'popup' || stored === 'flanking') {
+        savedWorkConsoleStyle = stored;
+      }
+    } catch {
+      // ignore
+    }
     const initialRules = {
       ...(savedCurvedBoard !== undefined ? { authenticCurvedPaths: savedCurvedBoard } : {}),
-      ...(savedHudLayout !== undefined ? { hudLayout: savedHudLayout } : {})
+      ...(savedHudLayout !== undefined ? { hudLayout: savedHudLayout } : {}),
+      ...(savedWorkConsoleStyle !== undefined ? { workConsoleStyle: savedWorkConsoleStyle } : {})
     };
     const baseInitialState = createInitialGameState(
       campaign,
