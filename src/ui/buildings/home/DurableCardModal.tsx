@@ -10,6 +10,8 @@ import { calcBulkGroceryBasePrice } from '../../../engine/actions/shoppingAction
 import { calcUsedSpace, calcHousingSpaceCap } from '../../../engine/statMath';
 import { getItemDisplayName } from '../../../utils/itemUtils';
 import { MessIcon } from '../../icons/MessIcon';
+import { previewAction } from '../../../engine/actionPreview';
+import { StatModifierPills } from '../../StatModifierPills';
 
 export interface ItemCardModalProps {
   durable?: {
@@ -101,7 +103,30 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     adjustedPrice = (priceOverride ?? 10) * buyQuantity;
   }
   const canAfford = (player?.money ?? 0) >= adjustedPrice;
-  const canBuy = canAfford && (!rules?.helpfulUI || hasSpace);
+
+  // Engine-derived preview
+  const actionPreview = React.useMemo(() => {
+    if (!isShop || !player || !itemDef || !campaign) return null;
+    return previewAction(
+      player,
+      { type: 'buy', itemId: itemDef.id, quantity: buyQuantity, item: itemDef } as any,
+      { campaign, rules, economicIndex }
+    );
+  }, [player, itemDef, campaign, rules, economicIndex, buyQuantity, isShop]);
+
+  const isFastFood = itemDef?.category === 'food' && itemDef?.subcategory === 'fast_food';
+  const fastFoodMealsCount = player?.turnFlags?.fastFoodMealsThisTurn || 0;
+  const isSecondFastFood = isFastFood && fastFoodMealsCount >= 1;
+  const hasTime = !isSecondFastFood || (player?.hoursRemaining ?? 0) >= 1;
+
+  const canBuy = actionPreview
+    ? actionPreview.feasible
+    : canAfford && (!rules?.helpfulUI || hasSpace) && hasTime;
+
+  const blockedKey = actionPreview?.blockedReason?.key;
+  const isBlockedBySpace = blockedKey === 'action.error.notEnoughSpace' || (!actionPreview && !hasSpace);
+  const isBlockedByTime = blockedKey === 'action.error.notEnoughTimeBuy' || (!actionPreview && !hasTime);
+  const isBlockedByMoney = blockedKey === 'action.error.notEnoughMoney' || (!actionPreview && !canAfford);
 
   // Detailed ownership calculation
   let ownedCount = 0;
@@ -343,6 +368,11 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   } else if (itemDef?.category === 'food') {
     if (itemDef.subcategory === 'fast_food') {
       onBuyModifiers.push({ label: 'Fast meal (+1 meal turn count)', icon: '🍔' });
+      if (isSecondFastFood) {
+        onBuyModifiers.push({ label: '-1 Hour (2nd+ meal this turn)', icon: '⏳' });
+      } else {
+        onBuyModifiers.push({ label: '0h Time (1st meal free; 2nd+ costs 1h)', icon: '⏳' });
+      }
     } else if (itemDef.subcategory === 'canned') {
       onBuyModifiers.push({ label: '+1 Pantry unit (Never spoils)', icon: '🥫' });
     } else {
@@ -647,6 +677,13 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
             <div style={{ fontSize: '0.74rem', fontWeight: 'bold', color: '#00e5ff', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span>⚡ {t('storeFront.onBuyModifiers', { defaultValue: 'On-Purchase Modifiers (on_buy)' })}:</span>
             </div>
+            {actionPreview && actionPreview.modifications.filter(m => m.stat !== 'money').length > 0 && (
+              <StatModifierPills
+                modifications={actionPreview.modifications.filter(m => m.stat !== 'money')}
+                align="start"
+                style={{ margin: '2px 0 6px 0' }}
+              />
+            )}
             {onBuyModifiers.length > 0 ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {onBuyModifiers.map((mod, i) => (
@@ -663,11 +700,11 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
                   </span>
                 ))}
               </div>
-            ) : (
+            ) : (!actionPreview || actionPreview.modifications.filter(m => m.stat !== 'money').length === 0) ? (
               <div style={{ fontSize: '0.70rem', color: '#94a3b8', fontStyle: 'italic' }}>
                 None (standard item / furnishing)
               </div>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -804,8 +841,9 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
               }}
             >
               <span>🛒 {t('storeFront.buy', { defaultValue: 'BUY' })} (${adjustedPrice})</span>
-              {!canAfford && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughMoney', { defaultValue: 'Too expensive' })})</span>}
-              {canAfford && !hasSpace && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughSpace', { defaultValue: 'No space' })})</span>}
+              {!canBuy && isBlockedByMoney && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('action.error.notEnoughMoney', { defaultValue: 'Too expensive' })})</span>}
+              {!canBuy && !isBlockedByMoney && isBlockedBySpace && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('storeFront.noSpace', { defaultValue: 'No space' })})</span>}
+              {!canBuy && !isBlockedByMoney && !isBlockedBySpace && isBlockedByTime && <span style={{ fontSize: '0.74rem', color: '#f87171' }}>({t('storeFront.notEnoughTime', { defaultValue: 'Not enough time' })})</span>}
             </button>
           </div>
         ) : isBroken && isOwned ? (() => {

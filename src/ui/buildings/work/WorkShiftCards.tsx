@@ -19,6 +19,8 @@ export interface WorkShiftCardsProps {
   layoutMode?: 'flanking' | 'grid' | 'popup';
   isFloating?: boolean;
   modalRef?: React.RefObject<HTMLDivElement | null>;
+  selectedMode?: WorkMode;
+  onSelectMode?: (mode: WorkMode) => void;
 }
 
 export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
@@ -30,7 +32,9 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
   onClose,
   layoutMode = 'grid',
   isFloating: _isFloating = true,
-  modalRef
+  modalRef,
+  selectedMode,
+  onSelectMode
 }) => {
   const { t } = useTranslation();
   const [activeHelpMode, setActiveHelpMode] = useState<WorkMode | null>(null);
@@ -81,6 +85,8 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
         onAction={onAction}
         onClose={onClose}
         modalRef={modalRef}
+        selectedMode={selectedMode}
+        onSelectMode={onSelectMode}
       />
     );
   }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StatModification } from '../engine/gameState';
-import { MessIcon } from './icons/MessIcon';
+import { getStatMeta } from './statMeta';
 
 export interface StatModifierPillsProps {
   modifications?: StatModification[];
@@ -20,51 +20,27 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const getStatInfo = (stat: string) => {
-    switch (stat) {
-      case 'money':
-        return { icon: '$', label: t('stats.money', { defaultValue: 'Money' }) };
-      case 'mental':
-      case 'mentalCondition':
-        return { icon: '🧠', label: t('stats.mental', { defaultValue: 'Mental Condition' }) };
-      case 'physical':
-      case 'physicalCondition':
-        return { icon: '💪', label: t('stats.physical', { defaultValue: 'Physical Condition' }) };
-      case 'dependability':
-        return { icon: '🤝', label: t('stats.dependability', { defaultValue: 'Dependability' }) };
-      case 'mess':
-        return { icon: <MessIcon />, label: t('stats.mess', { defaultValue: 'Apartment Mess' }) };
-      case 'social':
-        return { icon: '👥', label: t('stats.social', { defaultValue: 'Social Standing' }) };
-      case 'happiness':
-        return { icon: '😊', label: t('stats.happiness', { defaultValue: 'Happiness' }) };
-      case 'relaxation':
-        return { icon: '🛌', label: t('stats.relaxation', { defaultValue: 'Relaxation' }) };
-      case 'skillTech':
-        return { icon: '💻', label: t('stats.skillTech', { defaultValue: 'Tech Skill' }) };
-      case 'skillMgmt':
-        return { icon: '👔', label: t('stats.skillMgmt', { defaultValue: 'Leadership' }) };
-      case 'lifestyle':
-        return { icon: '😎', label: t('stats.lifestyle', { defaultValue: 'Lifestyle' }) };
-      case 'loanDebt':
-        return { icon: '🏦', label: t('stats.loanDebt', { defaultValue: 'Loan Debt' }) };
-      case 'rentDebt':
-        return { icon: '🏢', label: t('stats.rentDebt', { defaultValue: 'Rent Debt' }) };
-      case 'time':
-      case 'hours':
-        return { icon: '⏰', label: t('stats.time', { defaultValue: 'Time' }) };
-      default:
-        return { icon: '', label: stat };
-    }
-  };
+  const getStatInfo = (stat: string) => getStatMeta(stat, t);
 
   const filteredMods = modifications.filter(mod => {
-    if (mod.diff === 0) return false;
+    if (mod.diff === 0 && !mod.isCapped) return false;
     if (isHelpfulUI) return true;
     return mod.stat === 'money' || mod.stat === 'loanDebt' || mod.stat === 'rentDebt';
   });
 
-  if (filteredMods.length === 0) {
+  const mergedMods: StatModification[] = [];
+  for (const mod of filteredMods) {
+    const existing = mergedMods.find(m => m.stat === mod.stat);
+    if (existing) {
+      existing.diff += mod.diff;
+      if (mod.isCapped) existing.isCapped = true;
+    } else {
+      mergedMods.push({ ...mod });
+    }
+  }
+  const displayMods = mergedMods.filter(m => m.diff !== 0 || m.isCapped);
+
+  if (displayMods.length === 0) {
     return null;
   }
 
@@ -88,7 +64,7 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
         ...style
       }}
     >
-      {filteredMods.map((mod, idx) => {
+      {displayMods.map((mod, idx) => {
         const info = getStatInfo(mod.stat);
         const isMoney = mod.stat === 'money';
         const isDebt = mod.stat === 'loanDebt' || mod.stat === 'rentDebt';
@@ -96,7 +72,14 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
         let textSummary: string;
         let text: React.ReactNode;
 
-        if (isMoney) {
+        if (mod.isCapped) {
+          textSummary = `MAX ${info.label}`;
+          text = (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              MAX {info.icon}
+            </span>
+          );
+        } else if (isMoney) {
           const sign = mod.diff > 0 ? '+' : '-';
           textSummary = `${sign}$${Math.abs(mod.diff)}`;
           text = textSummary;
@@ -121,7 +104,9 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
         let isPositive = false;
         let isNegative = false;
 
-        if (isMoney) {
+        if (mod.isCapped) {
+          // Neutral grey
+        } else if (isMoney) {
           if (mod.diff < 0) isNegative = true;
           else if (mod.diff > 0) isPositive = true;
         } else if (mod.stat === 'mess' || isDebt) {
@@ -137,7 +122,11 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
         let bg = 'rgba(148, 163, 184, 0.15)';
         let border = '1px solid rgba(148, 163, 184, 0.3)';
 
-        if (isPositive) {
+        if (mod.isCapped) {
+          color = '#94a3b8';
+          bg = 'rgba(148, 163, 184, 0.12)';
+          border = '1px solid rgba(148, 163, 184, 0.25)';
+        } else if (isPositive) {
           color = '#4ade80';
           bg = 'rgba(74, 222, 128, 0.18)';
           border = '1px solid rgba(74, 222, 128, 0.35)';
@@ -148,7 +137,9 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
         }
 
         let tooltip = info.label;
-        if (mod.breakdown && mod.breakdown.length > 0) {
+        if (mod.isCapped) {
+          tooltip = mod.label || `${info.label}: Capped at maximum`;
+        } else if (mod.breakdown && mod.breakdown.length > 0) {
           const breakdownParts = mod.breakdown.map(b => {
             const bSign = b.diff > 0 ? '+' : '';
             return `${b.source}: ${bSign}${b.diff}`;

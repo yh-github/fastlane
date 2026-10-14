@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { WorkConsolePopup } from './WorkConsolePopup';
 import { createTestPlayer } from '../../../engine/testFactories';
@@ -14,6 +14,12 @@ vi.mock('react-i18next', () => ({
 }));
 
 describe('WorkConsolePopup Component', () => {
+  beforeEach(() => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
+    }
+  });
+
   const dummyJob = {
     id: 'job_dev',
     title: 'Senior Developer',
@@ -331,6 +337,52 @@ describe('WorkConsolePopup Component', () => {
     } finally {
       document.body.removeChild(clockEl);
     }
+  });
+
+  it('persists selected work mode in sessionStorage across component remounts', () => {
+    const player = createTestPlayer({
+      hoursRemaining: 12,
+      physicalCondition: 40,
+      mentalCondition: 40,
+      experience: 50
+    });
+
+    // Initial render: defaults to work_work
+    const { unmount } = render(
+      <WorkConsolePopup
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+      />
+    );
+
+    // Click show_initiative mode
+    const initOption = screen.getByTestId('work-mode-option-show_initiative');
+    fireEvent.click(initOption);
+
+    const radioInit = screen.getByTestId('radio-work-mode-show_initiative') as HTMLInputElement;
+    expect(radioInit.checked).toBe(true);
+    expect(sessionStorage.getItem('fastlane_selected_work_mode')).toBe('show_initiative');
+
+    // Simulate dilemma triggering and work station unmounting
+    unmount();
+
+    // Re-mount after resolving dilemma
+    render(
+      <WorkConsolePopup
+        player={player}
+        job={dummyJob}
+        campaign={dummyCampaign}
+        onAction={vi.fn()}
+      />
+    );
+
+    // Verify it stays on show_initiative and did not jump back to work_work
+    const remountedRadioInit = screen.getByTestId('radio-work-mode-show_initiative') as HTMLInputElement;
+    expect(remountedRadioInit.checked).toBe(true);
+    const remountedRadioWork = screen.getByTestId('radio-work-mode-work_work') as HTMLInputElement;
+    expect(remountedRadioWork.checked).toBe(false);
   });
 });
 

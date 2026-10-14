@@ -53,7 +53,18 @@ export function BuildingModal({
   const [activeTab, setActiveTab] = useState<'shop' | 'pawn'>('shop');
   const [educationTab, setEducationTab] = useState<'available' | 'tree'>('available');
   const [bankTab, setBankTab] = useState<'banking' | 'stocks' | 'loans'>('banking');
-  const [isWorkDeckOpen, setIsWorkDeckOpen] = useState(true);
+  const [isWorkDeckOpen, setIsWorkDeckOpen] = useState(false);
+  const [selectedWorkMode, setSelectedWorkMode] = useState<import('../engine/jobEngine').WorkMode>(() => {
+    try {
+      const saved = sessionStorage.getItem('fastlane_selected_work_mode');
+      if (saved && ['work_work', 'look_busy', 'face_time', 'show_initiative', 'innovate'].includes(saved)) {
+        return saved as import('../engine/jobEngine').WorkMode;
+      }
+    } catch {
+      // ignore
+    }
+    return 'work_work';
+  });
   const [isBreakInModalOpen, setIsBreakInModalOpen] = useState(false);
   const [isPantryModalOpen, setIsPantryModalOpen] = useState(false);
   const justUpdatedMessageRef = useRef(false);
@@ -161,7 +172,7 @@ export function BuildingModal({
     setActiveTab('shop');
     setEducationTab('available');
     setBankTab('banking');
-    setIsWorkDeckOpen(true);
+    setIsWorkDeckOpen(false);
     setIsContentOverflowing(false);
   }, [currentBuildingId]);
 
@@ -727,8 +738,8 @@ export function BuildingModal({
               disabled={hasPendingMiniGame}
               style={{
                 width: '100%',
-                maxWidth: isContentOverflowing ? '260px' : '360px',
-                padding: isContentOverflowing ? '4px 12px' : '6px 14px',
+                maxWidth: isContentOverflowing ? '220px' : '260px',
+                padding: isContentOverflowing ? '4px 10px' : '5px 12px',
                 background: hasPendingMiniGame
                   ? '#333'
                   : 'linear-gradient(145deg, #059669 0%, #047857 100%)',
@@ -736,7 +747,7 @@ export function BuildingModal({
                 border: hasPendingMiniGame ? '1px solid #555' : '1px solid #34d399',
                 borderRadius: '6px',
                 fontWeight: 'bold',
-                fontSize: isContentOverflowing ? '0.78rem' : '0.84rem',
+                fontSize: isContentOverflowing ? '0.78rem' : '0.82rem',
                 cursor: hasPendingMiniGame ? 'not-allowed' : 'pointer',
                 opacity: hasPendingMiniGame ? 0.6 : 1,
                 boxShadow: hasPendingMiniGame
@@ -750,7 +761,7 @@ export function BuildingModal({
               }}
             >
               <span data-testid="btn-work-dock" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1.1rem' }}>💼</span>
+                <span style={{ fontSize: '0.95rem' }}>💼</span>
                 <span>{t('workStation.workBtnShort', { defaultValue: 'WORK' })}</span>
               </span>
             </button>
@@ -768,6 +779,8 @@ export function BuildingModal({
           rules={rules}
           layoutMode={workConsoleStyle}
           modalRef={modalRef}
+          selectedMode={selectedWorkMode}
+          onSelectMode={setSelectedWorkMode}
           onClose={() => setIsWorkDeckOpen(false)}
         />
       )}

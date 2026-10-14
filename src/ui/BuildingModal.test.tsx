@@ -255,11 +255,12 @@ describe('BuildingModal Component', () => {
       />
     );
 
-    // Flanking Work console is open by default while bottom toggle is hidden, and Shop items are present
-    expect(screen.queryByTestId('tab-work')).not.toBeInTheDocument();
+    // Flanking Work console is NOT open by default; bottom toggle is visible, and Shop items are present
+    expect(screen.getByTestId('btn-toggle-work')).toBeInTheDocument();
     expect(screen.getByText('Burger')).toBeInTheDocument();
 
-    // Work Station is open by default, showing work modes
+    // Clicking bottom WORK button opens Work Station
+    fireEvent.click(screen.getByTestId('btn-toggle-work'));
     const workWorkBtn = screen.getByTestId('work-mode-work_work');
     expect(workWorkBtn).toBeInTheDocument();
 
@@ -438,11 +439,16 @@ describe('BuildingModal Component', () => {
       />
     );
 
-    // Flanking cards are open by default; docked bottom WORK button is hidden while console is open
-    expect(screen.queryByTestId('btn-toggle-work')).not.toBeInTheDocument();
+    // Work console is closed by default; docked bottom WORK button is visible
+    const toggleWorkBtn = screen.getByTestId('btn-toggle-work');
+    expect(toggleWorkBtn).toBeInTheDocument();
+    expect(toggleWorkBtn.textContent).toContain('WORK');
+    expect(screen.queryByTestId('work-mode-work_work')).not.toBeInTheDocument();
 
-    // Flanking cards are open by default. Mistake risk badge is NOT rendered when safe (0% chance)
+    // Click docked bottom WORK button to open console
+    fireEvent.click(toggleWorkBtn);
     expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
+    expect(screen.queryByTestId('btn-toggle-work')).not.toBeInTheDocument();
     expect(screen.queryByText(/0% \(Safe\)/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Shift #1/i)).toBeInTheDocument();
 
@@ -466,14 +472,7 @@ describe('BuildingModal Component', () => {
 
     // Flanking cards are now dismissed, and slim docked bottom WORK button appears
     expect(screen.queryByTestId('work-mode-work_work')).not.toBeInTheDocument();
-    const toggleWorkBtn = screen.getByTestId('btn-toggle-work');
-    expect(toggleWorkBtn).toBeInTheDocument();
-    expect(toggleWorkBtn.textContent).toContain('WORK');
-
-    // Click docked bottom WORK button to reopen flanking cards
-    fireEvent.click(toggleWorkBtn);
-    expect(screen.getByTestId('work-mode-work_work')).toBeInTheDocument();
-    expect(screen.queryByTestId('btn-toggle-work')).not.toBeInTheDocument();
+    expect(screen.getByTestId('btn-toggle-work')).toBeInTheDocument();
   });
 
   it('renders prominent Grind tier badges on Shift 4 and Overtime badges with -0.5 Max Physical on Shift 8', () => {
@@ -524,6 +523,7 @@ describe('BuildingModal Component', () => {
       />
     );
 
+    fireEvent.click(screen.getByTestId('btn-toggle-work'));
     expect(screen.getByText(/Shift #4/i)).toBeInTheDocument();
     expect(screen.getAllByText(/⚡ GRIND/i).length).toBeGreaterThan(0);
     unmount();
@@ -550,6 +550,7 @@ describe('BuildingModal Component', () => {
       />
     );
 
+    fireEvent.click(screen.getByTestId('btn-toggle-work'));
     expect(screen.getByText(/Shift #8/i)).toBeInTheDocument();
     expect(screen.getAllByText(/🔥 OVERTIME/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/-0\.5 MAX 💪/i)).toBeInTheDocument();

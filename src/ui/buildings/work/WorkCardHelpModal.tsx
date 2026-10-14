@@ -303,7 +303,7 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         {
           icon: '🃏',
           title: 'Dynamic Initiative Cards (Choose 1)',
-          desc: 'Draws 2 cards (Tier 1 & 2 jobs) or 3 cards (Executive Manager jobs). Archetypes include: Leadership (👔), Technical / DIY (🔧), Mentorship / Exp (🎓), Cash Bounties (💵), Ethics & Aesthetics (🧘, +Mental recovery), and high-stakes Strategic Crunch (⚡).'
+          desc: 'Draws 2 cards (Tier 1 & 2 jobs) or 3 cards (Executive Manager jobs). Archetypes include: Leadership (👔), Technical / DIY (🔧), Role Mastery / Exp (📈), Cash Bounties (💵), Ethics & Integrity (🧘, +Mental recovery), and high-stakes Strategic Crunch (🔥).'
         },
         {
           icon: '🧹',

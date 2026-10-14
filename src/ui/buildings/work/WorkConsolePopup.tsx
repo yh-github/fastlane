@@ -16,6 +16,8 @@ export interface WorkConsolePopupProps {
   onAction: (action: any) => void;
   onClose?: () => void;
   modalRef?: React.RefObject<HTMLDivElement | null>;
+  selectedMode?: WorkMode;
+  onSelectMode?: (mode: WorkMode) => void;
 }
 
 export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
@@ -25,17 +27,59 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
   rules,
   onAction,
   onClose,
-  modalRef: _modalRef
+  modalRef,
+  selectedMode: selectedModeProp,
+  onSelectMode
 }) => {
   const { t } = useTranslation();
   const popupRef = useRef<HTMLDivElement>(null);
 
-  const [selectedMode, setSelectedMode] = useState<WorkMode>('work_work');
+  const getInitialMode = (): WorkMode => {
+    if (selectedModeProp) return selectedModeProp;
+    try {
+      const saved = sessionStorage.getItem('fastlane_selected_work_mode');
+      if (saved && ['work_work', 'look_busy', 'face_time', 'show_initiative', 'innovate'].includes(saved)) {
+        return saved as WorkMode;
+      }
+    } catch {
+      // ignore
+    }
+    return 'work_work';
+  };
+
+  const [internalMode, setInternalMode] = useState<WorkMode>(getInitialMode);
+  const selectedMode = selectedModeProp ?? internalMode;
+
+  const handleSelectMode = (mode: WorkMode) => {
+    setInternalMode(mode);
+    try {
+      sessionStorage.setItem('fastlane_selected_work_mode', mode);
+    } catch {
+      // ignore
+    }
+    onSelectMode?.(mode);
+  };
+
   const [activeHelpMode, setActiveHelpMode] = useState<WorkMode | null>(null);
   const [disabledReason, setDisabledReason] = useState<{ title: string; reason: string } | null>(null);
 
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const [modalWidth, setModalWidth] = useState<number | null>(null);
+
+  // Monitor location window width to ensure console does not exceed it
+  useEffect(() => {
+    if (!modalRef?.current || typeof window === 'undefined') return;
+    const updateModalW = () => {
+      if (modalRef.current) {
+        setModalWidth(modalRef.current.getBoundingClientRect().width);
+      }
+    };
+    updateModalW();
+    window.addEventListener('resize', updateModalW);
+    return () => window.removeEventListener('resize', updateModalW);
+  }, [modalRef]);
 
   const effectiveRules = rules || campaign?.config?.gameRules;
   const statRules = campaign?.config?.statRules;
@@ -47,7 +91,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
   // Ensure selectedMode is valid among modes; default to work_work
   useEffect(() => {
     if (!modes.some(m => m.id === selectedMode)) {
-      setSelectedMode('work_work');
+      handleSelectMode('work_work');
     }
   }, [modes, selectedMode]);
 
@@ -95,12 +139,15 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
     };
   }, []);
 
+  const maxLocationWidth = modalWidth ?? (modalRef?.current ? modalRef.current.getBoundingClientRect().width : null);
+  const targetWidth = maxLocationWidth ? Math.min(340, Math.max(260, Math.round(maxLocationWidth - 12))) : 340;
+
   // Initialize position on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const popupW = 360;
-    const popupH = 290;
+    const popupW = 340;
+    const popupH = 150;
     const bounds = getHudBounds();
 
     let initialX: number | null = null;
@@ -182,36 +229,42 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
   // Card meta configuration
   const cardMeta: Record<string, {
     actionName: string;
+    shortName: string;
     icon: string;
     themeColor: string;
     glowColor: string;
   }> = {
     work_work: {
       actionName: t('workStation.actionWorkWork', { defaultValue: 'Work Shift' }),
+      shortName: t('workStation.shortWorkWork', { defaultValue: 'Work' }),
       icon: '💼',
       themeColor: '#10b981',
       glowColor: 'rgba(16, 185, 129, 0.35)'
     },
     look_busy: {
       actionName: t('workStation.actionLookBusy', { defaultValue: 'Coast' }),
+      shortName: t('workStation.shortLookBusy', { defaultValue: 'Coast' }),
       icon: '👀',
       themeColor: '#f59e0b',
       glowColor: 'rgba(245, 158, 11, 0.35)'
     },
     face_time: {
       actionName: t('workStation.actionFaceTime', { defaultValue: 'Network' }),
+      shortName: t('workStation.shortFaceTime', { defaultValue: 'Network' }),
       icon: '🤝',
       themeColor: '#0ea5e9',
       glowColor: 'rgba(14, 165, 233, 0.35)'
     },
     show_initiative: {
       actionName: t('workStation.actionShowInitiative', { defaultValue: 'Initiative' }),
+      shortName: t('workStation.shortShowInitiative', { defaultValue: 'Initiative' }),
       icon: '🌟',
       themeColor: '#a855f7',
       glowColor: 'rgba(168, 85, 247, 0.35)'
     },
     innovate: {
       actionName: t('workStation.actionShowInitiative', { defaultValue: 'Initiative' }),
+      shortName: t('workStation.shortShowInitiative', { defaultValue: 'Initiative' }),
       icon: '🌟',
       themeColor: '#a855f7',
       glowColor: 'rgba(168, 85, 247, 0.35)'
@@ -340,12 +393,12 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
           top: position ? `${position.y}px` : '50%',
           transform: position ? 'none' : 'translate(-50%, -50%)',
           zIndex: 1050,
-          width: 'min(360px, calc(100vw - 20px))',
+          width: `min(${targetWidth}px, calc(100vw - 16px))`,
           maxHeight: 'calc(100vh - 40px)',
           background: 'linear-gradient(165deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 30, 0.99) 100%)',
           border: '1px solid rgba(56, 189, 248, 0.45)',
-          borderRadius: '10px',
-          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(56, 189, 248, 0.15)',
+          borderRadius: '8px',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.75), 0 0 12px rgba(56, 189, 248, 0.15)',
           display: 'flex',
           flexDirection: 'column',
           boxSizing: 'border-box',
@@ -363,19 +416,19 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '6px 10px',
+            padding: '4px 8px',
             background: 'linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
             borderBottom: '1px solid rgba(56, 189, 248, 0.25)',
             cursor: isDragging ? 'grabbing' : 'grab',
             touchAction: 'none'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8', letterSpacing: '-1px' }}>⋮⋮</span>
-            <span style={{ fontSize: '0.95rem' }}>💼</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+            <span style={{ fontSize: '0.80rem', color: '#94a3b8', letterSpacing: '-1px' }}>⋮⋮</span>
+            <span style={{ fontSize: '0.85rem' }}>💼</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
               <span style={{
-                fontSize: '0.82rem',
+                fontSize: '0.78rem',
                 fontWeight: 'bold',
                 color: '#fff',
                 whiteSpace: 'nowrap',
@@ -385,7 +438,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                 {t(`job.${job.id}`, { defaultValue: job.title })}
               </span>
               <span style={{
-                fontSize: '0.68rem',
+                fontSize: '0.66rem',
                 color: '#94a3b8',
                 whiteSpace: 'nowrap'
               }}>
@@ -394,14 +447,14 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
             <span style={{
-              fontSize: '0.72rem',
+              fontSize: '0.68rem',
               fontWeight: 'bold',
               color: 'var(--accent-cyan, #00e5ff)',
               background: 'rgba(0, 229, 255, 0.12)',
-              padding: '1px 5px',
-              borderRadius: '4px',
+              padding: '1px 4px',
+              borderRadius: '3px',
               border: '1px solid rgba(0, 229, 255, 0.3)'
             }}>
               ${player.currentWage || job.baseWage}/hr
@@ -415,11 +468,11 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                 style={{
                   background: 'rgba(255, 255, 255, 0.08)',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '4px',
+                  borderRadius: '3px',
                   color: '#94a3b8',
-                  fontSize: '0.76rem',
+                  fontSize: '0.72rem',
                   cursor: 'pointer',
-                  padding: '1px 5px',
+                  padding: '1px 4px',
                   fontWeight: 'bold',
                   lineHeight: '1'
                 }}
@@ -431,12 +484,12 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
           </div>
         </div>
 
-        {/* Minimalistic Mode Selection List */}
+        {/* Minimalistic Mode Selection Bar (Compact 4-column Grid) */}
         <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '3px',
-          padding: '6px 10px 4px 10px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '4px',
+          padding: '4px 8px',
           flexShrink: 0
         }}>
           {modes.map((m: WorkShiftOption) => {
@@ -459,7 +512,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                 });
                 return;
               }
-              setSelectedMode(m.id);
+              handleSelectMode(m.id);
             };
 
             return (
@@ -469,94 +522,103 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                 data-testid={`work-mode-option-${m.id}`}
                 style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  height: '30px',
-                  maxHeight: '30px',
-                  minHeight: '30px',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
+                  justifyContent: 'center',
+                  height: '32px',
+                  maxHeight: '32px',
+                  minHeight: '32px',
+                  padding: '2px 4px',
+                  borderRadius: '5px',
                   boxSizing: 'border-box',
                   background: isSelected
-                    ? 'rgba(16, 185, 129, 0.14)'
+                    ? 'rgba(16, 185, 129, 0.16)'
                     : 'rgba(255, 255, 255, 0.03)',
                   border: isSelected
                     ? `1.5px solid ${meta.themeColor}`
                     : '1px solid rgba(255, 255, 255, 0.10)',
                   boxShadow: isSelected
-                    ? `0 0 8px ${meta.glowColor}`
+                    ? `0 0 6px ${meta.glowColor}`
                     : 'none',
                   cursor: m.disabled ? 'not-allowed' : 'pointer',
                   opacity: m.disabled ? 0.6 : 1,
+                  position: 'relative',
+                  userSelect: 'none',
                   transition: 'background 0.12s ease, border-color 0.12s ease'
                 }}
               >
-                {/* Left: Radio input + Icon + Name */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
-                  <input
-                    type="radio"
-                    name="work_mode_selection"
-                    id={`radio-work-${m.id}`}
-                    value={m.id}
-                    checked={isSelected}
-                    onChange={() => !m.disabled && setSelectedMode(m.id)}
-                    disabled={m.disabled}
-                    data-testid={`radio-work-mode-${m.id}`}
-                    style={{
-                      cursor: m.disabled ? 'not-allowed' : 'pointer',
-                      accentColor: meta.themeColor,
-                      width: '14px',
-                      height: '14px',
-                      margin: 0,
-                      flexShrink: 0
-                    }}
-                  />
-                  <span style={{ fontSize: '0.90rem', flexShrink: 0 }}>{m.disabled ? '🔒' : meta.icon}</span>
+                {/* Radio input (hidden but accessible for tests & accessibility) */}
+                <input
+                  type="radio"
+                  name="work_mode_selection"
+                  id={`radio-work-${m.id}`}
+                  value={m.id}
+                  checked={isSelected}
+                  onChange={() => !m.disabled && handleSelectMode(m.id)}
+                  disabled={m.disabled}
+                  data-testid={`radio-work-mode-${m.id}`}
+                  style={{
+                    position: 'absolute',
+                    opacity: 0.01,
+                    width: '1px',
+                    height: '1px',
+                    pointerEvents: 'none',
+                    margin: 0
+                  }}
+                />
+
+                {/* Top/Center: Icon + Mode short name */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', pointerEvents: 'none' }}>
+                  <span style={{ fontSize: '0.80rem', flexShrink: 0 }}>{m.disabled ? '🔒' : meta.icon}</span>
                   <span style={{
-                    fontSize: '0.78rem',
+                    fontSize: '0.68rem',
                     fontWeight: isSelected ? 'bold' : 'normal',
                     color: isSelected ? '#fff' : '#cbd5e1',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                   }}>
-                    {meta.actionName}
+                    {meta.shortName}
                   </span>
                 </div>
 
-                {/* Right: Net wage + Help button */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                  <span style={{
-                    fontSize: '0.74rem',
-                    fontWeight: 'bold',
-                    color: m.wage > 0 ? '#34d399' : '#94a3b8'
-                  }}>
-                    {wageText}
-                  </span>
-                  <button
-                    type="button"
-                    data-testid={`help-btn-${m.id}`}
-                    data-no-drag
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveHelpMode(m.id);
-                    }}
-                    title={t('workStation.helpTooltip', { defaultValue: 'View strategy, lore & mechanics' })}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '4px',
-                      color: '#94a3b8',
-                      fontSize: '0.68rem',
-                      cursor: 'pointer',
-                      padding: '1px 5px',
-                      fontWeight: 'bold',
-                      lineHeight: '1'
-                    }}
-                  >
-                    ℹ️
-                  </button>
-                </div>
+                {/* Bottom: Net wage */}
+                <span style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 'bold',
+                  color: isSelected ? meta.themeColor : (m.wage > 0 ? '#34d399' : '#94a3b8'),
+                  lineHeight: '1',
+                  pointerEvents: 'none'
+                }}>
+                  {wageText}
+                </span>
+
+                {/* Help button in top-right */}
+                <button
+                  type="button"
+                  data-testid={`help-btn-${m.id}`}
+                  data-no-drag
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveHelpMode(m.id);
+                  }}
+                  title={t('workStation.helpTooltip', { defaultValue: 'View strategy, lore & mechanics' })}
+                  style={{
+                    position: 'absolute',
+                    top: '1px',
+                    right: '2px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#64748b',
+                    fontSize: '0.58rem',
+                    cursor: 'pointer',
+                    padding: '0 1px',
+                    lineHeight: '1',
+                    zIndex: 2
+                  }}
+                >
+                  ℹ️
+                </button>
               </div>
             );
           })}
@@ -566,14 +628,14 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
         <div
           data-testid="selected-mode-modifiers-panel"
           style={{
-            margin: '4px 10px',
-            padding: '6px 8px',
+            margin: '2px 8px',
+            padding: '3px 6px',
             background: 'rgba(15, 23, 42, 0.85)',
             border: '1px solid rgba(56, 189, 248, 0.25)',
-            borderRadius: '6px',
+            borderRadius: '5px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '5px',
+            gap: '3px',
             flexShrink: 0
           }}
         >
@@ -582,14 +644,14 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            fontSize: '0.68rem'
+            fontSize: '0.66rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               {summary.tier === 'grind' && (
                 <span style={{
-                  fontSize: '0.62rem',
+                  fontSize: '0.60rem',
                   fontWeight: 'bold',
-                  padding: '1px 5px',
+                  padding: '0 4px',
                   borderRadius: '3px',
                   background: 'rgba(245, 158, 11, 0.25)',
                   color: '#f59e0b',
@@ -600,9 +662,9 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
               )}
               {summary.tier === 'overtime' && (
                 <span style={{
-                  fontSize: '0.62rem',
+                  fontSize: '0.60rem',
                   fontWeight: 'bold',
-                  padding: '1px 5px',
+                  padding: '0 4px',
                   borderRadius: '3px',
                   background: 'rgba(239, 68, 68, 0.25)',
                   color: '#ef4444',
@@ -631,9 +693,9 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                 style={{
                   color: '#f87171',
                   fontWeight: 'bold',
-                  fontSize: '0.64rem',
+                  fontSize: '0.62rem',
                   background: 'rgba(239, 68, 68, 0.2)',
-                  padding: '1px 5px',
+                  padding: '0 4px',
                   borderRadius: '3px',
                   border: '1px solid #ef4444',
                   whiteSpace: 'nowrap'
@@ -652,7 +714,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
               flexWrap: 'wrap',
               gap: '3px',
               alignItems: 'center',
-              minHeight: '20px'
+              minHeight: '18px'
             }}
           >
             {activeBadges.map(b => (
@@ -660,9 +722,9 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                 key={b.key}
                 data-testid={`modifier-badge-${b.key}`}
                 style={{
-                  fontSize: '0.62rem',
+                  fontSize: '0.60rem',
                   fontWeight: 'bold',
-                  padding: '1px 4px',
+                  padding: '0 3px',
                   borderRadius: '3px',
                   backgroundColor: b.bg,
                   color: b.color,
@@ -681,9 +743,9 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            fontSize: '0.64rem',
+            fontSize: '0.62rem',
             borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-            paddingTop: '3px',
+            paddingTop: '2px',
             color: '#94a3b8'
           }}>
             <span style={{
@@ -696,7 +758,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               {turnMistakes > 0 && (
                 <span style={{
-                  fontSize: '0.60rem',
+                  fontSize: '0.58rem',
                   background: turnMistakes >= 2 ? 'rgba(239, 68, 68, 0.35)' : 'rgba(239, 68, 68, 0.2)',
                   color: '#fca5a5',
                   border: '1px solid #ef4444',
@@ -709,7 +771,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
               )}
               {locationMistakes > 0 && (
                 <span style={{
-                  fontSize: '0.60rem',
+                  fontSize: '0.58rem',
                   background: 'rgba(245, 158, 11, 0.2)',
                   color: '#fcd34d',
                   border: '1px solid #f59e0b',
@@ -726,12 +788,12 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
 
         {/* Footer: Prominent WORK Action Button */}
         <div style={{
-          padding: '6px 10px 8px 10px',
+          padding: '4px 8px 6px 8px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '4px',
+          gap: '2px',
           flexShrink: 0
         }}>
           <button
@@ -741,16 +803,16 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             onClick={handleExecuteShift}
             style={{
               width: '100%',
-              height: '40px',
-              padding: '0 12px',
-              borderRadius: '7px',
+              height: '28px',
+              padding: '0 8px',
+              borderRadius: '5px',
               border: canAffordActive ? `1px solid ${activeMeta.themeColor}` : '1px solid rgba(255, 255, 255, 0.15)',
               backgroundColor: canAffordActive ? activeMeta.themeColor : '#334155',
               color: canAffordActive ? '#000' : '#94a3b8',
               fontWeight: 'bold',
-              fontSize: '0.86rem',
+              fontSize: '0.78rem',
               cursor: 'pointer',
-              boxShadow: canAffordActive ? `0 2px 10px ${activeMeta.glowColor}` : 'none',
+              boxShadow: canAffordActive ? `0 1px 8px ${activeMeta.glowColor}` : 'none',
               transition: 'all 0.12s ease',
               display: 'flex',
               alignItems: 'center',
@@ -765,14 +827,12 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
 
           <div style={{
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             alignItems: 'center',
-            fontSize: '0.66rem',
-            color: '#94a3b8',
-            padding: '0 2px'
+            fontSize: '0.62rem',
+            color: '#94a3b8'
           }}>
             <span>⏳ {formatHours(hoursToWork)}h Shift</span>
-            <span>{player.hoursRemaining}h remaining</span>
           </div>
         </div>
       </div>

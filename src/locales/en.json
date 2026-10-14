@@ -939,7 +939,9 @@
     "workBtnText": "WORK"
   },
   "storeFront": {
-    "title": "Storefront"
+    "title": "Storefront",
+    "noSpace": "No space",
+    "notEnoughTime": "Not enough time"
   },
   "homeRelax": {
     "title": "Home Sweet Home",

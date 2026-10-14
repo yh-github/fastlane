@@ -337,6 +337,7 @@ export interface StatModification {
   diff: number;
   label?: string;
   breakdown?: StatModificationBreakdown[];
+  isCapped?: boolean;
 }
 
 export interface WeekendResult {

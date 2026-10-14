@@ -155,7 +155,7 @@ export function generateInitiativeCards(
     candidatePool.push({
       type: 'initiative',
       badge: 'TECHNICAL',
-      icon: '🔬',
+      icon: '🔧',
       title: 'Infrastructure & Tech Modernization',
       description: 'Lead major technical architecture upgrades and introduce automated workflow tools.',
       techSkillAmount: 0.50,
@@ -175,7 +175,7 @@ export function generateInitiativeCards(
     candidatePool.push({
       type: 'initiative',
       badge: 'EXPERIENCE',
-      icon: '🎓',
+      icon: '👌',
       title: 'Standard Operating Procedures Drill',
       description: 'Master operating manuals and shadow senior staff to accelerate your core competencies.',
       expAmount: 0.75,
@@ -186,7 +186,7 @@ export function generateInitiativeCards(
     candidatePool.push({
       type: 'initiative',
       badge: 'EXPERIENCE',
-      icon: '🎓',
+      icon: '👌',
       title: 'Cross-Departmental Immersion',
       description: 'Collaborate with adjacent departments to develop versatile cross-functional mastery.',
       expAmount: 1.5,
@@ -197,7 +197,7 @@ export function generateInitiativeCards(
     candidatePool.push({
       type: 'initiative',
       badge: 'EXPERIENCE',
-      icon: '🎓',
+      icon: '👌',
       title: 'Strategic Industry Fellowship',
       description: 'Represent the firm at executive summits and publish high-impact operational analyses.',
       expAmount: 2.5,
@@ -256,7 +256,7 @@ export function generateInitiativeCards(
     candidatePool.push({
       type: 'initiative',
       badge: 'ETHICS',
-      icon: '🧘',
+      icon: '🧠',
       title: 'Pride in Cleanliness & Order',
       description: 'Take quiet pride in thoroughly organizing the workspace, bringing calm and dignity to your shift.',
       mentalAmount: 2.0,
@@ -267,7 +267,7 @@ export function generateInitiativeCards(
     candidatePool.push({
       type: 'initiative',
       badge: 'ETHICS',
-      icon: '✨',
+      icon: '🧠',
       title: 'Ethical Stand: Fair Shift Scheduling',
       description: 'Defend exhausted team members against unfair overtime, earning deep respect and clear conscience.',
       mentalAmount: 3.0,
@@ -279,7 +279,7 @@ export function generateInitiativeCards(
     candidatePool.push({
       type: 'initiative',
       badge: 'ETHICS',
-      icon: '⚖️',
+      icon: '🧠',
       title: 'Corporate Conscience: Client Protection',
       description: 'Refuse predatory upsells and protect consumer trust, foregoing short-term profit for lasting integrity.',
       mentalAmount: 4.0,
@@ -290,13 +290,13 @@ export function generateInitiativeCards(
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 6. STRATEGIC CRUNCH ("EXPENSIVE" HIGH-STAKES BREAKTHROUGHS, TIER 2 & 3)
+  // 6. EXPENSIVE HIGH-STAKES BREAKTHROUGHS (TIER 2 & 3)
   // ─────────────────────────────────────────────────────────────────────────
   if (tier === 2) {
     candidatePool.push({
       type: 'initiative',
       badge: 'EXPENSIVE',
-      icon: '⚡',
+      icon: '⚠️',
       title: 'Crunch Process Sprint',
       description: 'Lead an intense sprint to resolve department backlogs. High gains, but drains mental resilience.',
       leadershipSkillAmount: 0.40,
@@ -312,7 +312,7 @@ export function generateInitiativeCards(
     candidatePool.push({
       type: 'initiative',
       badge: 'EXPENSIVE',
-      icon: '⚡',
+      icon: '⚠️',
       title: 'High-Stakes Strategic Overhaul',
       description: 'Commit to an exhausting restructuring overhaul. Unlocks massive power, but pushes you to the brink.',
       leadershipSkillAmount: 0.85,

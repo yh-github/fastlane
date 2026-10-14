@@ -71,4 +71,19 @@ describe('StatModifierPills', () => {
 
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('bunches duplicate modifications for the same stat into a single pill', () => {
+    render(
+      <StatModifierPills
+        modifications={[
+          { stat: 'mental', diff: -2, label: 'Food Spoilage' },
+          { stat: 'mental', diff: -5, label: 'Sick' }
+        ]}
+      />
+    );
+
+    const mentalPills = screen.getAllByTestId('stat-pill-mental');
+    expect(mentalPills.length).toBe(1);
+    expect(mentalPills[0].textContent).toContain('-7');
+  });
 });

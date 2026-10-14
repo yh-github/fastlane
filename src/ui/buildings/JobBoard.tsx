@@ -399,7 +399,7 @@ import { WorkShiftCards } from './work/WorkShiftCards';
  * WorkStation — Shown at workplace buildings where the player is employed.
  * Allows the player to work a shift via the WorkShiftCards card GUI.
  */
-export function WorkStation({ player, onAction, job, campaign, onClose, rules, layoutMode, modalRef }: InteractionProps & { job: JobDef, campaign?: CampaignBundle, onClose?: () => void, rules?: import('../../engine/gameState').GameRules, layoutMode?: 'flanking' | 'grid' | 'popup', modalRef?: React.RefObject<HTMLDivElement | null> }) {
+export function WorkStation({ player, onAction, job, campaign, onClose, rules, layoutMode, modalRef, selectedMode, onSelectMode }: InteractionProps & { job: JobDef, campaign?: CampaignBundle, onClose?: () => void, rules?: import('../../engine/gameState').GameRules, layoutMode?: 'flanking' | 'grid' | 'popup', modalRef?: React.RefObject<HTMLDivElement | null>, selectedMode?: import('../../engine/jobEngine').WorkMode, onSelectMode?: (mode: import('../../engine/jobEngine').WorkMode) => void }) {
   return (
     <WorkShiftCards
       player={player}
@@ -410,6 +410,8 @@ export function WorkStation({ player, onAction, job, campaign, onClose, rules, l
       onClose={onClose}
       layoutMode={layoutMode}
       modalRef={modalRef}
+      selectedMode={selectedMode}
+      onSelectMode={onSelectMode}
     />
   );
 }
