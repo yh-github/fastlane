@@ -67,7 +67,7 @@ describe('TurnEventsQueue', () => {
 
     expect(screen.getByText(/\+\$75/i)).toBeInTheDocument();
     expect(screen.getByText(/\+3 🧠/i)).toBeInTheDocument();
-    expect(screen.getByText(/\+0.25 💻/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+0.25 🔧/i)).toBeInTheDocument();
   });
 
   it('renders doctor visit with cash, loanDebt diversion, and physical condition', () => {
@@ -119,7 +119,7 @@ describe('TurnEventsQueue', () => {
 
     expect(screen.getByText(/\+\$75/i)).toBeInTheDocument();
     expect(screen.queryByText(/\+3 🧠/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/\+0.25 💻/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+0.25 🔧/i)).not.toBeInTheDocument();
   });
 });
 

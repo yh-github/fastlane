@@ -486,7 +486,9 @@
     "workBtnText": "עבודה"
   },
   "storeFront": {
-    "title": "חנות"
+    "title": "חנות",
+    "noSpace": "אין מקום",
+    "notEnoughTime": "אין מספיק זמן"
   },
   "homeRelax": {
     "title": "אין כמו בבית",

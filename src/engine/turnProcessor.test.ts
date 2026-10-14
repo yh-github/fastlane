@@ -80,6 +80,49 @@ describe('Turn Processor', () => {
       // Physical condition did NOT suffer severe ate-spoiled-food drop (50 - 5 = 45)
       expect(p.physicalCondition).toBe(50);
     });
+
+    it('eats canned food and does not get sick from spoiled fresh food when canned food is available', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 1;
+      state.rules.usePhysicalMentalConditions = true;
+      state.players[0].inventory.freshFoodUnits = 4;
+      state.players[0].inventory.cannedFoodUnits = 2;
+      state.players[0].physicalCondition = 50;
+
+      const nextState = processTurnStart(state, mockCampaign);
+      const p = nextState.players[0];
+
+      // Fresh food spoiled and removed
+      expect(p.inventory.freshFoodUnits).toBe(0);
+      // Canned food decremented by 1
+      expect(p.inventory.cannedFoodUnits).toBe(1);
+      expect(p.turnFlags.hasEaten).toBe(true);
+      // No sickness or physical condition reduction
+      expect(p.physicalCondition).toBe(50);
+      expect(p.turnEvents.some(e => e.key.startsWith('events.foodSpoiled.noFridge'))).toBe(true);
+      expect(p.turnEvents.some(e => e.key.startsWith('events.foodSpoiled.ateSpoiled'))).toBe(false);
+    });
+
+    it('bunches mental reductions together into a single modification when eating spoiled food', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 1;
+      state.rules.usePhysicalMentalConditions = true;
+      state.players[0].inventory.freshFoodUnits = 3;
+      state.players[0].inventory.cannedFoodUnits = 0;
+      state.players[0].inventory.fastFoodItems = [];
+
+      const nextState = processTurnStart(state, mockCampaign);
+      const p = nextState.players[0];
+
+      const ateSpoiledEvent = p.turnEvents.find(e => e.key.startsWith('events.foodSpoiled.ateSpoiled'));
+      expect(ateSpoiledEvent).toBeDefined();
+      expect(ateSpoiledEvent?.modifications).toBeDefined();
+
+      // Only ONE mental modification entry should exist, bunched together (-2 spoilage + -5 sickness = -7)
+      const mentalMods = ateSpoiledEvent?.modifications?.filter(m => m.stat === 'mental');
+      expect(mentalMods?.length).toBe(1);
+      expect(mentalMods?.[0].diff).toBe(-7);
+    });
   });
 
   describe('Appliance Breakage', () => {

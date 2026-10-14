@@ -455,4 +455,95 @@ describe('Modal Escape and Card Popups', () => {
     expect(grid.style.flex).toBe('1 1 auto');
     expect(grid.style.alignContent).toBe('start');
   });
+
+  it('renders No space without raw {{ or }} when apartment space is exceeded', () => {
+    const itemWithSpace = {
+      id: 'hot_tub',
+      name: 'Hot Tub',
+      category: 'appliance' as const,
+      space: 50,
+      basePrice: 200,
+      happinessBonus: 0
+    };
+
+    const fullPlayer = {
+      ...mockPlayer,
+      money: 1000,
+      mess: 80
+    };
+
+    const campaignWithHousing: CampaignBundle = {
+      ...mockCampaign,
+      housing: [
+        { id: 'low_cost_housing', name: 'Low Cost Apartment', spaceCap: 100 } as any
+      ],
+      items: [itemWithSpace]
+    };
+
+    const { container } = render(
+      <DurableCardModal
+        item={itemWithSpace}
+        player={fullPlayer}
+        campaign={campaignWithHousing}
+        rules={{ ...baseRules, spaceCapping: true }}
+        mode="shop"
+        onClose={vi.fn()}
+      />
+    );
+
+    // Verify BUY button shows (No space) and NO {{ or }} appears in text
+    expect(screen.getByText(/\(No space\)/i)).toBeInTheDocument();
+    expect(container.textContent).not.toContain('{{');
+    expect(container.textContent).not.toContain('}}');
+  });
+
+  it('displays fast food time cost on card and disables buy when lacking time on 2nd+ meal', () => {
+    const fastFoodItem = {
+      id: 'burger',
+      name: 'Burger',
+      category: 'food' as const,
+      subcategory: 'fast_food',
+      basePrice: 5,
+      happinessBonus: 0
+    };
+
+    // 1st purchase: 0h time (free)
+    const { rerender } = render(
+      <DurableCardModal
+        item={fastFoodItem}
+        player={{
+          ...mockPlayer,
+          money: 50,
+          hoursRemaining: 5,
+          turnFlags: { fastFoodMealsThisTurn: 0 } as any
+        }}
+        campaign={mockCampaign}
+        rules={baseRules}
+        mode="shop"
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/0h Time \(1st meal free; 2nd\+ costs 1h\)/i)).toBeInTheDocument();
+
+    // 2nd purchase with hoursRemaining = 0: shows -1h time and (Not enough time)
+    rerender(
+      <DurableCardModal
+        item={fastFoodItem}
+        player={{
+          ...mockPlayer,
+          money: 50,
+          hoursRemaining: 0,
+          turnFlags: { fastFoodMealsThisTurn: 1 } as any
+        }}
+        campaign={mockCampaign}
+        rules={baseRules}
+        mode="shop"
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/-1 Hour \(2nd\+ meal this turn\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/\(Not enough time\)/i)).toBeInTheDocument();
+  });
 });

@@ -18,9 +18,9 @@ export function handleBuyAction(
   let actionLog;
 
   const currentBuildingId = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
-  const buildingDef = context.campaign.buildings.find(b => b.id === currentBuildingId);
+  const buildingDef = context.campaign.buildings?.find(b => b.id === currentBuildingId);
   const inventoryEntry = buildingDef?.inventory?.find(i => i.itemId === action.itemId);
-  const baseItemDef = context.campaign.items.find(i => i.id === action.itemId);
+  const baseItemDef = context.campaign.items?.find(i => i.id === action.itemId) || (action as any).item;
 
   if (baseItemDef) {
     const quantity = Math.max(1, Math.floor(action.quantity ?? 1));

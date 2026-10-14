@@ -20,7 +20,6 @@ function getOptionRewardDetails(opt: any, hasSpace: boolean) {
   let shortTag = 'Cash';
 
   if (opt.type === 'initiative') {
-    icon = opt.icon || (opt.badge === 'LEADERSHIP' ? '👔' : opt.badge === 'TECHNICAL' ? '🔧' : opt.badge === 'ETHICS' ? '🧘' : opt.badge === 'BOUNTY' ? '💵' : opt.badge === 'EXPERIENCE' ? '🎓' : '⚡');
     shortTag = opt.badge || 'Initiative';
     if (opt.badge === 'LEADERSHIP') borderColor = '#38bdf8';
     else if (opt.badge === 'TECHNICAL') borderColor = '#10b981';
@@ -30,21 +29,23 @@ function getOptionRewardDetails(opt: any, hasSpace: boolean) {
     else borderColor = '#f59e0b';
 
     const parts: string[] = [];
-    if (opt.leadershipSkillAmount) parts.push(`+${opt.leadershipSkillAmount} 👔`);
-    if (opt.techSkillAmount) parts.push(`+${opt.techSkillAmount} 🔧`);
-    if (opt.expAmount) parts.push(`+${opt.expAmount} 🎓`);
+    if (opt.standingAmount) parts.push(`+${opt.standingAmount} 🌟`);
     if (opt.cashAmount) parts.push(`+$${opt.cashAmount}`);
     if (opt.cashCost) parts.push(`-$${opt.cashCost}`);
-    if (opt.depAmount) parts.push(`+${opt.depAmount} Dep`);
+    if (opt.expAmount) parts.push(`+${opt.expAmount} 👌`);
+    if (opt.depAmount) parts.push(`+${opt.depAmount} 🤝`);
+    if (opt.leadershipSkillAmount) parts.push(`+${opt.leadershipSkillAmount} 👔`);
+    if (opt.techSkillAmount) parts.push(`+${opt.techSkillAmount} 🔧`);
     if (opt.mentalAmount && opt.mentalAmount > 0) parts.push(`+${opt.mentalAmount} 🧠`);
     if (opt.mentalAmount && opt.mentalAmount < 0) parts.push(`${opt.mentalAmount} 🧠`);
     if (opt.socialAmount && opt.socialAmount < 0) parts.push(`${opt.socialAmount} 👥`);
-    rewardText = parts.length > 0 ? parts.slice(0, 3).join(', ') : 'Select';
+    if (opt.physicalAmount && opt.physicalAmount < 0) parts.push(`${opt.physicalAmount} 💪`);
+    rewardText = parts.length > 0 ? parts.join(', ') : 'Select';
   } else if (opt.type === 'standing') {
     icon = '⭐';
     borderColor = '#38bdf8';
     shortTag = 'Standing';
-    rewardText = `+${opt.depAmount || 0} Dep${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
+    rewardText = `+${opt.depAmount || 0} 🤝${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
   } else if (opt.type === 'item') {
     icon = opt.itemType === 'spare_parts' ? '⚙️' : '🏺';
     shortTag = opt.itemType === 'spare_parts' ? 'Parts' : 'Curio';
@@ -56,10 +57,10 @@ function getOptionRewardDetails(opt: any, hasSpace: boolean) {
       rewardText = opt.itemType === 'spare_parts' ? 'Auto-Pawn (+$10)' : 'Auto-Pawn (+$15)';
     }
   } else if (opt.type === 'skill') {
-    icon = '🔬';
+    icon = '🔧';
     borderColor = '#f59e0b';
     shortTag = 'Tech';
-    rewardText = `+${opt.techSkillAmount || 0} Tech${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
+    rewardText = `+${opt.techSkillAmount || 0} 🔧${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
   }
 
   return { icon, borderColor, rewardText, shortTag };
@@ -79,7 +80,9 @@ export function AppraisalDilemmaModal({
     height: typeof window !== 'undefined' ? window.innerHeight : 768
   });
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const isInitiative = dilemma.gameType === 'work_initiative';
 
   useEffect(() => {
     const handleResize = () => {
@@ -194,7 +197,7 @@ export function AppraisalDilemmaModal({
           const modalTitle = isInitiative
             ? (dilemma.title || t('appraisalDilemma.initiativeTitle', { defaultValue: 'Workplace Initiative' }))
             : t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' });
-          const headerIcons = isInitiative ? '🌟 👔 📈' : '🔍 ⚖️ 🏷️';
+          const headerIcons = isInitiative ? '🌟 👔 👌' : '🔍 ⚖️ 🏷️';
 
           return isCompact ? (
             <div style={{ textAlign: 'center', marginBottom: '8px' }}>
@@ -203,6 +206,33 @@ export function AppraisalDilemmaModal({
                 <h3 style={{ margin: 0, color: '#facc15', fontSize: '1.1rem', fontWeight: 'bold' }}>
                   {modalTitle}
                 </h3>
+                <button
+                  type="button"
+                  data-testid="appraisal-help-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowHelp(prev => !prev);
+                  }}
+                  title={isInitiative ? "Explain initiative options and icons" : "Appraisal Help"}
+                  style={{
+                    background: showHelp ? 'rgba(234, 179, 8, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(234, 179, 8, 0.5)',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    color: '#facc15',
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginLeft: '4px',
+                    lineHeight: '1'
+                  }}
+                >
+                  ?
+                </button>
               </div>
               <div style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
                 {isInitiative ? (
@@ -218,9 +248,37 @@ export function AppraisalDilemmaModal({
           ) : (
             <div style={{ textAlign: 'center', marginBottom: '16px' }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '4px' }}>{headerIcons}</div>
-              <h2 style={{ margin: '0 0 4px 0', color: '#facc15', fontSize: '1.35rem' }}>
-                {modalTitle}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <h2 style={{ margin: '0 0 4px 0', color: '#facc15', fontSize: '1.35rem' }}>
+                  {modalTitle}
+                </h2>
+                <button
+                  type="button"
+                  data-testid="appraisal-help-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowHelp(prev => !prev);
+                  }}
+                  title={isInitiative ? "Explain initiative options and icons" : "Appraisal Help"}
+                  style={{
+                    background: showHelp ? 'rgba(234, 179, 8, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(234, 179, 8, 0.5)',
+                    borderRadius: '50%',
+                    width: '22px',
+                    height: '22px',
+                    color: '#facc15',
+                    fontSize: '0.80rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: '1'
+                  }}
+                >
+                  ?
+                </button>
+              </div>
               <div style={{ fontSize: '0.95rem', color: '#94a3b8' }}>
                 {isInitiative ? (
                   dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
@@ -234,6 +292,49 @@ export function AppraisalDilemmaModal({
             </div>
           );
         })()}
+
+        {/* HELP POPUP / EXPLANATION PANEL */}
+        {showHelp && (
+          <div
+            data-testid="appraisal-help-panel"
+            style={{
+              background: 'rgba(15, 23, 42, 0.98)',
+              border: '1.5px solid #eab308',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              marginBottom: '10px',
+              fontSize: '0.78rem',
+              lineHeight: '1.4',
+              color: '#cbd5e1',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontWeight: 'bold', color: '#facc15' }}>💡 {dilemma.gameType === 'work_initiative' ? 'Workplace Initiative Guide' : 'Appraisal Guide'}</span>
+              <button
+                type="button"
+                onClick={() => setShowHelp(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', padding: 0 }}
+              >
+                ✕
+              </button>
+            </div>
+            {dilemma.gameType === 'work_initiative' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div><strong>👌 Experience:</strong> Builds on-the-job mastery towards promotions.</div>
+                <div><strong>👔 Leadership:</strong> Advances managerial competency for management positions.</div>
+                <div><strong>🔧 Tech Skill:</strong> Develops technical proficiency for specialist roles and DIY repairs.</div>
+                <div><strong>🤝 Dependability:</strong> Proves reliability to prevent demerits and qualify for raises.</div>
+                <div><strong>🌟 Workplace Standing:</strong> Local reputation improving employability and raise prospects.</div>
+                <div><strong>💵 Cash Bounty:</strong> Immediate earnings from client efficiency and quotas.</div>
+                <div><strong>🧠 Ethics & Integrity:</strong> Dedicated craft restoring Mental condition.</div>
+                <div><strong>⚠️ High-Stakes Sprint:</strong> Heavy workload sprint granting large skill/experience bonuses, but drains Mental condition and risks burnout.</div>
+              </div>
+            ) : (
+              <div>Choose how to handle the customer item based on appraisal value and apartment space.</div>
+            )}
+          </div>
+        )}
 
         {/* TOUCH CAROUSEL PILL NAVIGATION (when carousel is active) */}
         {isCarouselMode && (
@@ -381,9 +482,11 @@ export function AppraisalDilemmaModal({
 
                 {/* Icon & Title */}
                 <div>
-                  <div style={{ fontSize: isCompact ? '1.35rem' : '1.9rem', lineHeight: '1.1' }}>
-                    {icon}
-                  </div>
+                  {!isInitiative && (
+                    <div style={{ fontSize: isCompact ? '1.35rem' : '1.9rem', lineHeight: '1.1' }}>
+                      {icon}
+                    </div>
+                  )}
                   <div style={{
                     fontWeight: 'bold',
                     fontSize: isCompact ? '0.82rem' : '0.94rem',
@@ -423,6 +526,7 @@ export function AppraisalDilemmaModal({
                 {/* Reward Badge / Action Button */}
                 <button
                   type="button"
+                  title={rewardText}
                   data-action-target={`appraisal-choice-${idx}`}
                   onClick={(e) => {
                     e.stopPropagation();

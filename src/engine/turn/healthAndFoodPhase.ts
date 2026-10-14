@@ -22,6 +22,7 @@ export function processHealthAndFoodPhase(
   if (state.rules.usePhysicalMentalConditions) {
     const hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
     p.inventory.fastFoodItems = [];
+    const hasCannedFood = (p.inventory.cannedFoodUnits || 0) > 0;
 
     let ateSpoiledThisTurn = false;
     let starvedThisTurn = false;
@@ -32,7 +33,10 @@ export function processHealthAndFoodPhase(
       p.mess = Math.min(99, (p.mess || 0) + lostFood);
       p = applyMoraleEffect(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
 
-      if (hasEatenFastFood) {
+      if (hasEatenFastFood || hasCannedFood) {
+        if (!hasEatenFastFood && hasCannedFood) {
+          p.inventory.cannedFoodUnits!--;
+        }
         p.turnFlags.hasEaten = true;
         const key = state.rules.helpfulUI ? 'events.foodSpoiled.noFridge_qol' : 'events.foodSpoiled.noFridge';
         p.turnEvents.push({
@@ -98,7 +102,12 @@ export function processHealthAndFoodPhase(
 
       const foodEvent = p.turnEvents.find(e => e.key.startsWith('events.foodSpoiled.ateSpoiled'));
       if (foodEvent && foodEvent.modifications) {
-        foodEvent.modifications.push({ stat: 'mental', diff: -mentalDrop });
+        const existingMental = foodEvent.modifications.find(m => m.stat === 'mental');
+        if (existingMental) {
+          existingMental.diff -= mentalDrop;
+        } else {
+          foodEvent.modifications.push({ stat: 'mental', diff: -mentalDrop });
+        }
         const physDelta = (p.physicalCondition ?? 50) - currentPhys;
         if (physDelta !== 0) {
           foodEvent.modifications.push({ stat: 'physical', diff: physDelta });
@@ -126,6 +135,7 @@ export function processHealthAndFoodPhase(
   } else {
     const hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
     p.inventory.fastFoodItems = [];
+    const hasCannedFood = (p.inventory.cannedFoodUnits || 0) > 0;
 
     if (maxStorage === 0 && p.inventory.freshFoodUnits > 0) {
       const lostFood = p.inventory.freshFoodUnits;
@@ -133,7 +143,10 @@ export function processHealthAndFoodPhase(
       p.mess = Math.min(20, (p.mess || 0) + lostFood);
       p = applyMoraleEffect(p, -2, 'food_spoilage', state.rules, campaign.config.statRules);
 
-      if (hasEatenFastFood) {
+      if (hasEatenFastFood || hasCannedFood) {
+        if (!hasEatenFastFood && hasCannedFood) {
+          p.inventory.cannedFoodUnits!--;
+        }
         p.turnFlags.hasEaten = true;
         const key = state.rules.helpfulUI ? 'events.foodSpoiled.noFridge_qol' : 'events.foodSpoiled.noFridge';
         p.turnEvents.push({

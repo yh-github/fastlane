@@ -96,7 +96,7 @@ describe('AppraisalDilemmaModal', () => {
 
     // Verify option titles and rewards appear in compact form
     expect(screen.getByText('+$25')).toBeInTheDocument();
-    expect(screen.getByText(/\+2 Dep,\s*\+1 🧠/)).toBeInTheDocument();
+    expect(screen.getByText(/\+2 🤝,\s*\+1 🧠/)).toBeInTheDocument();
   });
 
   it('activates touch carousel, indicator pills, and confirm bar on narrow mobile viewports (390x844)', () => {
@@ -127,5 +127,59 @@ describe('AppraisalDilemmaModal', () => {
     expect(confirmBtn).toBeInTheDocument();
     fireEvent.click(confirmBtn);
     expect(onSelectOption).toHaveBeenCalledWith(1);
+  });
+
+  it('renders initiative cards with clear stat labels and toggles help guide on ? click', () => {
+    const initiativeDilemma = {
+      gameType: 'work_initiative' as const,
+      title: 'Workplace Initiative: Career Boost',
+      subtitle: 'Select an opportunity to advance your career:',
+      options: [
+        {
+          type: 'initiative' as const,
+          badge: 'EXPERIENCE',
+          title: 'Role Mentorship',
+          description: 'Shadow senior developers.',
+          expAmount: 1.5,
+          depAmount: 1.0
+        },
+        {
+          type: 'initiative' as const,
+          badge: 'EXPENSIVE',
+          title: 'Crunch Sprint',
+          description: 'High stakes delivery.',
+          leadershipSkillAmount: 0.5,
+          mentalAmount: -2.0,
+          burnoutRisk: true
+        }
+      ]
+    };
+
+    render(
+      <AppraisalDilemmaModal
+        dilemma={initiativeDilemma}
+        player={createTestPlayer({ name: 'Clara' })}
+        onSelectOption={vi.fn()}
+      />
+    );
+
+    // Verify canonical stat icons appear on buttons (without redundant text labels)
+    expect(screen.getByText(/\+1\.5 👌/)).toBeInTheDocument();
+    expect(screen.getByText(/\+0\.5 👔/)).toBeInTheDocument();
+    expect(screen.getByText(/-2 🧠/)).toBeInTheDocument();
+
+    // Verify help button toggles guide
+    const helpBtn = screen.getByTestId('appraisal-help-btn');
+    expect(helpBtn).toBeInTheDocument();
+    expect(screen.queryByTestId('appraisal-help-panel')).not.toBeInTheDocument();
+
+    fireEvent.click(helpBtn);
+    expect(screen.getByTestId('appraisal-help-panel')).toBeInTheDocument();
+    expect(screen.getByText(/Workplace Initiative Guide/i)).toBeInTheDocument();
+    expect(screen.getByText(/👌 Experience/i)).toBeInTheDocument();
+
+    // Close help panel
+    fireEvent.click(screen.getByText('✕'));
+    expect(screen.queryByTestId('appraisal-help-panel')).not.toBeInTheDocument();
   });
 });

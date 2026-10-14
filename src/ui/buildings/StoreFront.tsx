@@ -6,6 +6,7 @@ import { getClothesSwitchingRule } from '../../engine/rules';
 import { calcItemPrice } from '../../engine/economyEngine';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
 import { getItemDisplayName } from '../../utils/itemUtils';
+import { previewAction } from '../../engine/actionPreview';
 import { ItemCardModal } from './home/DurableCardModal';
 import type { InteractionProps } from './types';
 
@@ -104,9 +105,40 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
           if (item.category === 'book' && itemSpace === 0) {
             itemSpace = item.id === 'encyclopedia' ? 20 : 10;
           }
-          const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
+
           const canAfford = player.money >= adjustedPrice;
-          const canBuy = canAfford && (!rules?.helpfulUI || hasSpace);
+          const hasSpace = !rules?.spaceCapping || itemSpace === 0 || (currentSpace + itemSpace <= maxSpace);
+
+          let canBuy = true;
+          let blockedTooltip: string | undefined;
+
+          if (campaign) {
+            const preview = previewAction(
+              player,
+              { type: 'buy', itemId: item.id },
+              { campaign, rules, economicIndex }
+            );
+            canBuy = preview.feasible;
+            if (!canBuy && preview.blockedReason) {
+              if (preview.blockedReason.key === 'action.error.notEnoughSpace') {
+                blockedTooltip = `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)`;
+              } else if (preview.blockedReason.key === 'action.error.notEnoughTimeBuy') {
+                blockedTooltip = 'Not enough time (Costs 1 hour for 2nd+ fast food meal)';
+              } else {
+                blockedTooltip = t(preview.blockedReason.key, {
+                  ...preview.blockedReason.params,
+                  defaultValue: 'Cannot buy'
+                });
+              }
+            }
+          } else {
+            const isFastFood = item.category === 'food' && item.subcategory === 'fast_food';
+            const fastFoodMealsCount = player.turnFlags?.fastFoodMealsThisTurn || 0;
+            const isSecondFastFood = isFastFood && fastFoodMealsCount >= 1;
+            const hasTime = !isSecondFastFood || (player.hoursRemaining ?? 0) >= 1;
+            canBuy = canAfford && (!rules?.helpfulUI || hasSpace) && hasTime;
+            blockedTooltip = !hasTime ? 'Not enough time (Costs 1 hour for 2nd+ fast food meal)' : (!hasSpace ? `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)` : undefined);
+          }
 
           const handleClick = () => {
             if (rules?.helpfulUI) {
@@ -125,7 +157,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
               data-testid={`store-item-${item.id}`}
               className={`interaction-item interaction-item--clickable ${!canBuy ? 'interaction-item--disabled' : ''}`}
               onClick={handleClick}
-              title={!hasSpace ? `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)` : undefined}
+              title={blockedTooltip}
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
