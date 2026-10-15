@@ -60,6 +60,17 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    if (isSelectionMode) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !showBreakdownModal) {
+        onStartWeek();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSelectionMode, showBreakdownModal, onStartWeek]);
+
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const scrollToCard = (cardId: string) => {
@@ -229,19 +240,14 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
   // ───────────────────────────────────────────────────────────────────────────
   return (
     <div className="weekend-screen weekend-screen--summary">
-      <header className="weekend-summary-header">
-        <h1 className="weekend-summary-title">{t('weekendScreen.title')}</h1>
-        <span className="weekend-summary-divider" aria-hidden="true">•</span>
-        <h2 className="weekend-summary-subtitle">{t('weekendScreen.summary', { turn, name: player.name })}</h2>
-      </header>
-
       <div className="weekend-summary-card-wrapper">
-        <div className="weekend-player-summary">
+        <div className="weekend-player-summary" data-testid="weekend-summary-card">
+          {/* Header bar: Title, Choice Badge, ? help button, and ✕ close button */}
           <div className="weekend-summary-card-header">
-            <div className="weekend-summary-col-title-group">
-              <h3 className="weekend-summary-section-heading">
-                {t('weekendScreen.activities')}
-              </h3>
+            <div className="weekend-summary-title-group">
+              <h1 className="weekend-summary-title">{t('weekendScreen.title')}</h1>
+              <span className="weekend-summary-divider" aria-hidden="true">•</span>
+              <h2 className="weekend-summary-subtitle">{t('weekendScreen.summary', { turn, name: player.name })}</h2>
               {player.weekendResult?.chosenCard && (
                 <div className="weekend-summary-choice-badge">
                   <span>{player.weekendResult.chosenCard.icon}</span>
@@ -249,71 +255,72 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
                 </div>
               )}
             </div>
-            <button
-              data-testid="weekend-breakdown-help-btn"
-              onClick={() => setShowBreakdownModal(true)}
-              className="weekend-help-btn"
-              title={t('weekendScreen.helpTooltip', { defaultValue: 'How Weekends & Turns Work / Stat Breakdown' })}
-              aria-label={t('weekendScreen.helpTooltip', { defaultValue: 'How Weekends & Turns Work / Stat Breakdown' })}
-            >
-              ?
-            </button>
-          </div>
 
-          <div className="weekend-summary-grid">
-            {/* Column 1: Activities, Fluff & Narrative, Souvenirs */}
-            <div className="weekend-summary-col weekend-summary-col--narrative">
-              {player.weekendResult ? (
-                <>
-                  <div className="weekend-summary-narrative-body">
-                    <h4 className="weekend-summary-what-you-did">{t('weekendScreen.whatYouDid')}</h4>
-                    <p className="weekend-summary-fluff">
-                      "{player.weekendResult.chosenCard ? player.weekendResult.chosenCard.fluff : (t(player.weekendResult.event.key, player.weekendResult.event.params as any) as string)}"
-                    </p>
-                  </div>
-
-                  {player.weekendResult.souvenir && (
-                    <div 
-                      data-testid="weekend-souvenir-callout"
-                      className="weekend-summary-souvenir"
-                    >
-                      <span>🎁</span>
-                      <span>{player.weekendResult.souvenir.icon}</span>
-                      <span>{player.weekendResult.souvenir.name}</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="weekend-summary-empty">
-                  {t('weekendScreen.nothingSpecial')}
-                </p>
-              )}
-            </div>
-
-            {/* Column 2: Stat Modifier Pills & Action Button */}
-            <div className="weekend-summary-col weekend-summary-col--results">
-              <div className="weekend-summary-pills-box">
-                {rawModifications.length > 0 ? (
-                  <StatModifierPills
-                    modifications={rawModifications}
-                    isHelpfulUI={isHelpfulUI}
-                    align="center"
-                    style={{ margin: '2px 0', padding: 0 }}
-                  />
-                ) : (
-                  <span className="weekend-summary-no-mods">
-                    {t('weekendScreen.noBonusStat', { defaultValue: 'No extra adjustments' })}
-                  </span>
-                )}
-              </div>
-
-              <button 
-                onClick={onStartWeek}
-                className="weekend-summary-start-btn"
+            <div className="weekend-summary-header-actions">
+              <button
+                data-testid="weekend-breakdown-help-btn"
+                onClick={() => setShowBreakdownModal(true)}
+                className="weekend-help-btn"
+                title={t('weekendScreen.helpTooltip', { defaultValue: 'How Weekends & Turns Work / Stat Breakdown' })}
+                aria-label={t('weekendScreen.helpTooltip', { defaultValue: 'How Weekends & Turns Work / Stat Breakdown' })}
               >
-                {t('weekendScreen.startWeek', { turn })}
+                ?
+              </button>
+              <button
+                data-testid="weekend-close-btn"
+                onClick={onStartWeek}
+                className="weekend-close-btn"
+                title={t('weekendScreen.startWeek', { turn })}
+                aria-label={t('weekendScreen.close', { defaultValue: 'Close' })}
+              >
+                &times;
               </button>
             </div>
+          </div>
+
+          {/* Card Body */}
+          {player.weekendResult ? (
+            <>
+              <h4 className="weekend-summary-what-you-did">{t('weekendScreen.whatYouDid')}</h4>
+              <p className="weekend-summary-fluff">
+                "{player.weekendResult.chosenCard ? player.weekendResult.chosenCard.fluff : (t(player.weekendResult.event.key, player.weekendResult.event.params as any) as string)}"
+              </p>
+
+              <div className="weekend-summary-pills-box">
+                <StatModifierPills
+                  modifications={rawModifications}
+                  isHelpfulUI={isHelpfulUI}
+                  align="center"
+                  style={{ margin: '4px 0', padding: 0 }}
+                />
+              </div>
+
+              {player.weekendResult.souvenir && (
+                <div 
+                  data-testid="weekend-souvenir-callout"
+                  className="weekend-summary-souvenir"
+                >
+                  <span>🎁</span>
+                  <span>{player.weekendResult.souvenir.icon}</span>
+                  <span>{player.weekendResult.souvenir.name}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="weekend-summary-empty">
+              {t('weekendScreen.nothingSpecial')}
+            </p>
+          )}
+
+          {/* Card Footer Action Button */}
+          <div className="weekend-summary-footer">
+            <button 
+              onClick={onStartWeek}
+              className="weekend-summary-start-btn"
+              data-testid="weekend-start-week-btn"
+            >
+              {t('weekendScreen.startWeek', { turn })}
+            </button>
           </div>
         </div>
       </div>
