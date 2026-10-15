@@ -263,6 +263,59 @@ describe('Shopping Engine', () => {
       expect(result.message.key).toBe('action.error.notEnoughTimeBuy');
       expect(result.updated.money).toBe(100);
     });
+
+    it('does NOT consume time on 2nd fast food purchase in base mode (trackSocial disabled)', () => {
+      const player = {
+        money: 100,
+        social: 15,
+        hoursRemaining: 30,
+        inventory: { fastFoodItems: [{ itemId: 'cheeseburger' }] },
+        turnFlags: { fastFoodMealsThisTurn: 1 }
+      } as unknown as PlayerState;
+
+      const result = buyItem(player, mockBurger);
+      expect(result.success).toBe(true);
+      expect(result.updated.social).toBe(15);
+      expect(result.updated.hoursRemaining).toBe(30); // 0 hours spent on 2nd buy in base mode
+    });
+
+    it('succeeds to buy 2nd fast food in base mode even if player has 0 hours remaining', () => {
+      const player = {
+        money: 100,
+        social: 15,
+        hoursRemaining: 0,
+        inventory: { fastFoodItems: [{ itemId: 'cheeseburger' }] },
+        turnFlags: { fastFoodMealsThisTurn: 1 }
+      } as unknown as PlayerState;
+
+      const result = buyItem(player, mockBurger);
+      expect(result.success).toBe(true);
+      expect(result.updated.hoursRemaining).toBe(0);
+    });
+
+    it('does NOT consume time on 2nd fast food purchase if item lacks social modifier even with trackSocial enabled', () => {
+      const mockPlainBurger: ItemDef = {
+        id: 'plain_burger',
+        name: 'Plain Burger',
+        category: 'food',
+        subcategory: 'fast_food',
+        store: 'monolith_burgers',
+        basePrice: 50,
+        happinessBonus: 1
+      };
+
+      const player = {
+        money: 100,
+        social: 15,
+        hoursRemaining: 0,
+        inventory: { fastFoodItems: [{ itemId: 'plain_burger' }] },
+        turnFlags: { fastFoodMealsThisTurn: 1 }
+      } as unknown as PlayerState;
+
+      const result = buyItem(player, mockPlainBurger, { trackSocial: true });
+      expect(result.success).toBe(true);
+      expect(result.updated.hoursRemaining).toBe(0);
+    });
   });
 
   describe('Clothes Purchasing & Durability', () => {

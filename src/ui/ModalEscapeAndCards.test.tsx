@@ -497,15 +497,17 @@ describe('Modal Escape and Card Popups', () => {
     expect(container.textContent).not.toContain('}}');
   });
 
-  it('displays fast food time cost on card and disables buy when lacking time on 2nd+ meal', () => {
+  it('displays fast food time cost on card and disables buy when lacking time on 2nd+ meal in Advanced mode with social modifier', () => {
     const fastFoodItem = {
       id: 'burger',
       name: 'Burger',
       category: 'food' as const,
       subcategory: 'fast_food',
       basePrice: 5,
-      happinessBonus: 0
+      happinessBonus: 0,
+      effects: [{ trigger: 'on_purchase' as const, stat: 'social' as const, value: 1 }]
     };
+    const advancedRules = { ...baseRules, trackSocial: true };
 
     // 1st purchase: 0h time (free)
     const { rerender } = render(
@@ -518,7 +520,7 @@ describe('Modal Escape and Card Popups', () => {
           turnFlags: { fastFoodMealsThisTurn: 0 } as any
         }}
         campaign={mockCampaign}
-        rules={baseRules}
+        rules={advancedRules}
         mode="shop"
         onClose={vi.fn()}
       />
@@ -537,7 +539,7 @@ describe('Modal Escape and Card Popups', () => {
           turnFlags: { fastFoodMealsThisTurn: 1 } as any
         }}
         campaign={mockCampaign}
-        rules={baseRules}
+        rules={advancedRules}
         mode="shop"
         onClose={vi.fn()}
       />
@@ -545,5 +547,60 @@ describe('Modal Escape and Card Popups', () => {
 
     expect(screen.getByText(/-1 Hour \(2nd\+ meal this turn\)/i)).toBeInTheDocument();
     expect(screen.getByText(/\(Not enough time\)/i)).toBeInTheDocument();
+  });
+
+  it('does NOT display time cost and does NOT disable buy on 2nd+ meal in base mode even if hoursRemaining is 0', () => {
+    const fastFoodItem = {
+      id: 'burger',
+      name: 'Burger',
+      category: 'food' as const,
+      subcategory: 'fast_food',
+      basePrice: 5,
+      happinessBonus: 0
+    };
+
+    // 1st purchase in base mode: displays "Fast meal" without 0h time rule text
+    const { rerender } = render(
+      <DurableCardModal
+        item={fastFoodItem}
+        player={{
+          ...mockPlayer,
+          money: 50,
+          hoursRemaining: 5,
+          turnFlags: { fastFoodMealsThisTurn: 0 } as any
+        }}
+        campaign={mockCampaign}
+        rules={baseRules}
+        mode="shop"
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/Fast meal/i)).toBeInTheDocument();
+    expect(screen.queryByText(/0h Time \(1st meal free; 2nd\+ costs 1h\)/i)).not.toBeInTheDocument();
+
+    // 2nd purchase in base mode with hoursRemaining = 0: does NOT show -1h time and does NOT disable buy
+    rerender(
+      <DurableCardModal
+        item={fastFoodItem}
+        player={{
+          ...mockPlayer,
+          money: 50,
+          hoursRemaining: 0,
+          turnFlags: { fastFoodMealsThisTurn: 1 } as any
+        }}
+        campaign={mockCampaign}
+        rules={baseRules}
+        mode="shop"
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText(/-1 Hour \(2nd\+ meal this turn\)/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\(Not enough time\)/i)).not.toBeInTheDocument();
+    const buyButton = screen.getByRole('button', { name: /BUY/i });
+    expect(buyButton).toBeEnabled();
   });
 });
