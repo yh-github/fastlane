@@ -491,5 +491,103 @@ describe('WeekendScreen', () => {
       expect(indicatorPills.length).toBe(2);
     });
   });
+
+  describe('Responsive Summary Layout (Phone Landscape & Side HUD Protection)', () => {
+    it('renders horizontal 2-column layout on phone landscape without overflowing or obscuring the side HUD', () => {
+      window.innerWidth = 667;
+      window.innerHeight = 375;
+
+      const player = createTestPlayer({
+        name: 'Jordan',
+        weekendResult: {
+          event: { key: 'weekend.concert' },
+          cost: 35,
+          happinessBonus: 2,
+          chosenCard: {
+            id: 'c_live',
+            tier: 'medium',
+            type: 'ticket',
+            eventKey: 'weekend.concert',
+            titleKey: 'weekendScreen.card.mediumTitle',
+            fluff: 'Danced to energetic live music all night.',
+            icon: '🎵',
+            costMin: 20,
+            costMax: 40,
+            targetStat: 'social',
+            potentialBonusMin: 1,
+            potentialBonusMax: 2
+          },
+          souvenir: {
+            id: 'wristband',
+            name: 'Concert Wristband',
+            icon: '🎗️'
+          },
+          modifications: [
+            { stat: 'money', diff: -35 },
+            { stat: 'happiness', diff: 2 }
+          ]
+        }
+      });
+
+      const onStartWeek = vi.fn();
+      const { container } = render(
+        <WeekendScreen
+          player={player}
+          turn={4}
+          onStartWeek={onStartWeek}
+        />
+      );
+
+      // Verify the summary container is bounded within the viewport (not position fixed breakout)
+      const summaryScreen = container.querySelector('.weekend-screen--summary');
+      expect(summaryScreen).toBeInTheDocument();
+
+      // Verify horizontal grid structure
+      const grid = container.querySelector('.weekend-summary-grid');
+      expect(grid).toBeInTheDocument();
+
+      const narrativeCol = container.querySelector('.weekend-summary-col--narrative');
+      expect(narrativeCol).toBeInTheDocument();
+      expect(narrativeCol?.textContent).toContain('Danced to energetic live music all night.');
+      expect(narrativeCol?.textContent).toContain('Concert Wristband');
+
+      const resultsCol = container.querySelector('.weekend-summary-col--results');
+      expect(resultsCol).toBeInTheDocument();
+
+      // Start week button is inside results column for more horizontal, less vertical presentation
+      const startBtn = resultsCol?.querySelector('.weekend-summary-start-btn');
+      expect(startBtn).toBeInTheDocument();
+      fireEvent.click(startBtn!);
+      expect(onStartWeek).toHaveBeenCalledTimes(1);
+
+      // Verify compact header
+      const header = container.querySelector('.weekend-summary-header');
+      expect(header).toBeInTheDocument();
+      expect(header?.textContent).toContain('Jordan');
+      expect(screen.getByRole('button', { name: /startWeek/i })).toBeInTheDocument();
+    });
+
+    it('gracefully handles empty weekend results in horizontal layout', () => {
+      window.innerWidth = 844;
+      window.innerHeight = 390;
+
+      const player = createTestPlayer({
+        name: 'Sam',
+        weekendResult: undefined
+      });
+
+      const { container } = render(
+        <WeekendScreen
+          player={player}
+          turn={2}
+          onStartWeek={vi.fn()}
+        />
+      );
+
+      expect(container.querySelector('.weekend-summary-grid')).toBeInTheDocument();
+      expect(container.querySelector('.weekend-summary-empty')).toBeInTheDocument();
+      expect(container.querySelector('.weekend-summary-start-btn')).toBeInTheDocument();
+    });
+  });
 });
 
