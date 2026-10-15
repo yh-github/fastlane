@@ -3,6 +3,8 @@ import { TitleScreen } from './ui/TitleScreen';
 import { SetupScreen } from './ui/SetupScreen';
 import { GameOverScreen } from './ui/GameOverScreen';
 import { GameSession } from './ui/GameSession';
+import { OrientationPrompt } from './ui/OrientationPrompt';
+import { attemptLockLandscape } from './hooks/useScreenOrientation';
 import { loadCampaign, type CampaignBundle } from './engine/dataLoader';
 import { createInitialGameState, type GameState, type PlayerConfig } from './engine/gameState';
 import { processTurnStart } from './engine/turnProcessor';
@@ -24,6 +26,7 @@ export default function App() {
   } | null>(null);
 
   const handleStartCampaign = async (campaignId: string) => {
+    attemptLockLandscape();
     setSelectedCampaignId(campaignId);
     setIsLoadingCampaign(true);
     setLoadingError(null);
@@ -40,6 +43,7 @@ export default function App() {
   };
 
   const handleSetupConfirm = (playersConfig: PlayerConfig[]) => {
+    attemptLockLandscape();
     if (!campaign) return;
     const randomSeed = generateRandomSeed();
     let savedCurvedBoard: boolean | undefined = undefined;
@@ -93,31 +97,26 @@ export default function App() {
     setScreen('playing');
   };
 
+  let screenContent = null;
+
   if (isLoadingCampaign) {
-    return <div className="loading-screen">Loading campaign data…</div>;
-  }
-
-  if (loadingError) {
-    return <div className="error-screen">Error: {loadingError}</div>;
-  }
-
-  if (screen === 'title') {
-    return <TitleScreen onStartGame={handleStartCampaign} />;
-  }
-
-  if (screen === 'setup') {
-    if (!campaign) return null;
-    return (
-      <SetupScreen
-        key={campaign.config.name || selectedCampaignId || 'setup'}
-        winConditions={campaign.config.winConditions}
-        onConfirm={handleSetupConfirm}
-      />
-    );
-  }
-
-  if (screen === 'game-over') {
-    return (
+    screenContent = <div className="loading-screen">Loading campaign data…</div>;
+  } else if (loadingError) {
+    screenContent = <div className="error-screen">Error: {loadingError}</div>;
+  } else if (screen === 'title') {
+    screenContent = <TitleScreen onStartGame={handleStartCampaign} />;
+  } else if (screen === 'setup') {
+    if (campaign) {
+      screenContent = (
+        <SetupScreen
+          key={campaign.config.name || selectedCampaignId || 'setup'}
+          winConditions={campaign.config.winConditions}
+          onConfirm={handleSetupConfirm}
+        />
+      );
+    }
+  } else if (screen === 'game-over') {
+    screenContent = (
       <GameOverScreen
         playerName={gameOverInfo?.playerName || 'Player 1'}
         turn={gameOverInfo?.turn || 1}
@@ -128,10 +127,8 @@ export default function App() {
         }}
       />
     );
-  }
-
-  if (screen === 'playing' && campaign && initialGameState) {
-    return (
+  } else if (screen === 'playing' && campaign && initialGameState) {
+    screenContent = (
       <GameSession
         key={gameSessionKey}
         campaign={campaign}
@@ -148,5 +145,10 @@ export default function App() {
     );
   }
 
-  return null;
+  return (
+    <>
+      <OrientationPrompt />
+      {screenContent}
+    </>
+  );
 }
