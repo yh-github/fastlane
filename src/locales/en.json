@@ -1427,5 +1427,12 @@
     "experience": "Experience",
     "relaxation": "Relaxation",
     "space": "Space"
+  },
+  "orientation": {
+    "title": "Please Rotate Your Device",
+    "message": "Fast Lane Modernized is designed for landscape mode. Please turn your phone sideways to play.",
+    "autoRotateTip": "If your screen doesn’t rotate, check that Auto-Rotate is enabled in your device settings.",
+    "rotateBtn": "Switch to Landscape",
+    "continueAnyway": "Continue in portrait anyway"
   }
 }

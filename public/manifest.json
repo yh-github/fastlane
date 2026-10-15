@@ -1,0 +1,17 @@
+{
+  "name": "Fast Lane Modernized",
+  "short_name": "Fast Lane",
+  "description": "Fast Lane Modernized — A modern reimagining of Jones in the Fast Lane",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0a0a1a",
+  "theme_color": "#0a0a1a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
