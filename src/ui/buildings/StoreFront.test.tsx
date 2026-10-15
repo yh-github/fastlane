@@ -197,4 +197,77 @@ describe("StoreFront", () => {
     fireEvent.click(screen.getByTestId('store-item-business_suit'));
     expect(screen.getByText(/\+3 Weeks of wear/i)).toBeInTheDocument();
   });
+
+  it('allows buying 2nd+ fast food in base mode even when hoursRemaining is 0', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 50,
+      hoursRemaining: 0,
+      turnFlags: { fastFoodMealsThisTurn: 1 },
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const mockFastFood = [
+      { id: 'burger', name: 'Burger', basePrice: 5, category: 'food', subcategory: 'fast_food' }
+    ] as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <StoreFront
+        player={mockPlayer}
+        onAction={mockOnAction}
+        availableItems={mockFastFood}
+        economicIndex={0}
+        rules={{ trackSocial: false } as any}
+      />
+    );
+
+    const burgerItem = screen.getByTestId('store-item-burger');
+    expect(burgerItem).not.toHaveClass('interaction-item--disabled');
+    expect(burgerItem).not.toHaveAttribute('title', expect.stringContaining('Not enough time'));
+
+    fireEvent.click(burgerItem);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy', itemId: 'burger' });
+  });
+
+  it('blocks buying 2nd+ fast food in Advanced mode with social modifier when hoursRemaining is 0', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 50,
+      hoursRemaining: 0,
+      turnFlags: { fastFoodMealsThisTurn: 1 },
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const mockFastFood = [
+      {
+        id: 'burger',
+        name: 'Burger',
+        basePrice: 5,
+        category: 'food',
+        subcategory: 'fast_food',
+        effects: [{ trigger: 'on_purchase', stat: 'social', value: 1 }]
+      }
+    ] as any;
+
+    const mockOnAction = vi.fn();
+
+    render(
+      <StoreFront
+        player={mockPlayer}
+        onAction={mockOnAction}
+        availableItems={mockFastFood}
+        economicIndex={0}
+        rules={{ trackSocial: true } as any}
+      />
+    );
+
+    const burgerItem = screen.getByTestId('store-item-burger');
+    expect(burgerItem).toHaveClass('interaction-item--disabled');
+    expect(burgerItem).toHaveAttribute('title', expect.stringContaining('Not enough time'));
+
+    fireEvent.click(burgerItem);
+    expect(mockOnAction).not.toHaveBeenCalled();
+  });
 });

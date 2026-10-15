@@ -10,6 +10,11 @@ export interface ShoppingResult {
   message: GameEvent;
 }
 
+export function givesFastFoodSocial(item: ItemDef, rules?: Partial<GameRules>): boolean {
+  if (!rules?.trackSocial) return false;
+  return item.subcategory === 'fast_food' && Boolean(item.effects?.some(e => e.trigger === 'on_purchase' && e.stat === 'social' && (e.value ?? 0) > 0));
+}
+
 export function buyItem(
   player: PlayerState,
   item: ItemDef,
@@ -51,7 +56,7 @@ export function buyItem(
     }
   }
 
-  if (item.subcategory === 'fast_food') {
+  if (givesFastFoodSocial(item, rules)) {
     const mealCount = player.turnFlags?.fastFoodMealsThisTurn || 0;
     if (mealCount >= 1 && player.hoursRemaining !== undefined && player.hoursRemaining < 1) {
       return {
@@ -216,7 +221,7 @@ export function buyItem(
     case 'food':
       if (item.subcategory === 'fast_food') {
         const mealCount = newTurnFlags.fastFoodMealsThisTurn || 1;
-        if (mealCount > 1 && updated.hoursRemaining !== undefined) {
+        if (givesFastFoodSocial(item, rules) && mealCount > 1 && updated.hoursRemaining !== undefined) {
           updated.hoursRemaining = Math.max(0, updated.hoursRemaining - 1);
         }
         updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];

@@ -11,6 +11,7 @@ import { calcUsedSpace, calcHousingSpaceCap } from '../../../engine/statMath';
 import { getItemDisplayName } from '../../../utils/itemUtils';
 import { MessIcon } from '../../icons/MessIcon';
 import { previewAction } from '../../../engine/actionPreview';
+import { givesFastFoodSocial } from '../../../engine/shoppingEngine';
 import { StatModifierPills } from '../../StatModifierPills';
 
 export interface ItemCardModalProps {
@@ -115,8 +116,9 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   }, [player, itemDef, campaign, rules, economicIndex, buyQuantity, isShop]);
 
   const isFastFood = itemDef?.category === 'food' && itemDef?.subcategory === 'fast_food';
+  const givesSocial = Boolean(itemDef && givesFastFoodSocial(itemDef, rules));
   const fastFoodMealsCount = player?.turnFlags?.fastFoodMealsThisTurn || 0;
-  const isSecondFastFood = isFastFood && fastFoodMealsCount >= 1;
+  const isSecondFastFood = isFastFood && givesSocial && fastFoodMealsCount >= 1;
   const hasTime = !isSecondFastFood || (player?.hoursRemaining ?? 0) >= 1;
 
   const canBuy = actionPreview
@@ -367,11 +369,15 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     }
   } else if (itemDef?.category === 'food') {
     if (itemDef.subcategory === 'fast_food') {
-      onBuyModifiers.push({ label: 'Fast meal (+1 meal turn count)', icon: '🍔' });
-      if (isSecondFastFood) {
-        onBuyModifiers.push({ label: '-1 Hour (2nd+ meal this turn)', icon: '⏳' });
+      if (givesSocial) {
+        onBuyModifiers.push({ label: 'Fast meal (+1 meal turn count)', icon: '🍔' });
+        if (isSecondFastFood) {
+          onBuyModifiers.push({ label: '-1 Hour (2nd+ meal this turn)', icon: '⏳' });
+        } else {
+          onBuyModifiers.push({ label: '0h Time (1st meal free; 2nd+ costs 1h)', icon: '⏳' });
+        }
       } else {
-        onBuyModifiers.push({ label: '0h Time (1st meal free; 2nd+ costs 1h)', icon: '⏳' });
+        onBuyModifiers.push({ label: 'Fast meal', icon: '🍔' });
       }
     } else if (itemDef.subcategory === 'canned') {
       onBuyModifiers.push({ label: '+1 Pantry unit (Never spoils)', icon: '🥫' });
