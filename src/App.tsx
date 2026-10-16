@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TitleScreen } from './ui/TitleScreen';
 import { SetupScreen } from './ui/SetupScreen';
 import { GameOverScreen } from './ui/GameOverScreen';
 import { GameSession } from './ui/GameSession';
 import { OrientationPrompt } from './ui/OrientationPrompt';
+import { ResumePromptModal } from './ui/ResumePromptModal';
 import { attemptLockLandscape } from './hooks/useScreenOrientation';
 import { loadCampaign, type CampaignBundle } from './engine/dataLoader';
 import { createInitialGameState, type GameState, type PlayerConfig } from './engine/gameState';
 import { processTurnStart } from './engine/turnProcessor';
 import { generateRandomSeed } from './utils/rng';
 import type { ReplayData } from './engine/replayTypes';
+import type { LogEntry } from './hooks/gameEngine';
+import type { ActiveModal } from './types/modal';
+import { loadAutoSave, clearAutoSave, type AutoSaveData } from './utils/saveManager';
 
 export default function App() {
   const [screen, setScreen] = useState<'title' | 'setup' | 'playing' | 'game-over'>('title');
@@ -18,12 +22,28 @@ export default function App() {
   const [isLoadingCampaign, setIsLoadingCampaign] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [initialGameState, setInitialGameState] = useState<GameState | null>(null);
+  const [initialLogs, setInitialLogs] = useState<LogEntry[] | undefined>(undefined);
+  const [initialReplayData, setInitialReplayData] = useState<ReplayData | null | undefined>(undefined);
+  const [initialActivePlayerIndex, setInitialActivePlayerIndex] = useState<number | undefined>(undefined);
+  const [initialActiveModal, setInitialActiveModal] = useState<ActiveModal | undefined>(undefined);
+  const [isResumed, setIsResumed] = useState<boolean>(false);
+  const [savedGame, setSavedGame] = useState<AutoSaveData | null>(null);
+  const [showResumeModal, setShowResumeModal] = useState<boolean>(false);
   const [gameSessionKey, setGameSessionKey] = useState(0);
   const [gameOverInfo, setGameOverInfo] = useState<{
     playerName: string;
     turn: number;
     replayData: ReplayData | null;
   } | null>(null);
+
+  // Check for auto-saved game on initial load
+  useEffect(() => {
+    const existing = loadAutoSave();
+    if (existing) {
+      setSavedGame(existing);
+      setShowResumeModal(true);
+    }
+  }, []);
 
   const handleStartCampaign = async (campaignId: string) => {
     attemptLockLandscape();
@@ -42,9 +62,57 @@ export default function App() {
     }
   };
 
+  const handleResumeGame = async (saveToResume?: AutoSaveData) => {
+    const targetSave = saveToResume || savedGame;
+    if (!targetSave) return;
+    attemptLockLandscape();
+    setSelectedCampaignId(targetSave.campaignId);
+    setIsLoadingCampaign(true);
+    setLoadingError(null);
+    setShowResumeModal(false);
+    try {
+      const bundle = await loadCampaign(targetSave.campaignId);
+      setCampaign(bundle);
+      setInitialGameState(targetSave.gameState);
+      setInitialLogs(targetSave.logs);
+      setInitialReplayData(targetSave.replayData ?? null);
+      setInitialActivePlayerIndex(targetSave.activePlayerIndex ?? 0);
+      setInitialActiveModal(targetSave.activeModal ?? null);
+      setIsResumed(true);
+      setGameSessionKey(prev => prev + 1);
+      if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      if (typeof window !== 'undefined') {
+        window.scrollTo(0, 0);
+      }
+      setScreen('playing');
+      setIsLoadingCampaign(false);
+    } catch (err: any) {
+      console.error('[App] Failed to resume game:', err);
+      setLoadingError(err.message || 'Failed to resume game');
+      setIsLoadingCampaign(false);
+    }
+  };
+
+  const handleDiscardSave = () => {
+    clearAutoSave();
+    setSavedGame(null);
+    setShowResumeModal(false);
+  };
+
   const handleSetupConfirm = (playersConfig: PlayerConfig[]) => {
     attemptLockLandscape();
     if (!campaign) return;
+    // Clear old autosave when starting a fresh game
+    clearAutoSave();
+    setSavedGame(null);
+    setIsResumed(false);
+    setInitialLogs(undefined);
+    setInitialReplayData(undefined);
+    setInitialActivePlayerIndex(undefined);
+    setInitialActiveModal(undefined);
+
     const randomSeed = generateRandomSeed();
     let savedCurvedBoard: boolean | undefined = undefined;
     try {
@@ -117,7 +185,13 @@ export default function App() {
   } else if (loadingError) {
     screenContent = <div className="error-screen">Error: {loadingError}</div>;
   } else if (screen === 'title') {
-    screenContent = <TitleScreen onStartGame={handleStartCampaign} />;
+    screenContent = (
+      <TitleScreen
+        onStartGame={handleStartCampaign}
+        savedGame={savedGame}
+        onResumeGame={handleResumeGame}
+      />
+    );
   } else if (screen === 'setup') {
     if (campaign) {
       screenContent = (
@@ -135,6 +209,9 @@ export default function App() {
         turn={gameOverInfo?.turn || 1}
         replayData={gameOverInfo?.replayData || null}
         onPlayAgain={() => {
+          clearAutoSave();
+          setSavedGame(null);
+          setIsResumed(false);
           setScreen('title');
           setInitialGameState(null);
         }}
@@ -145,12 +222,23 @@ export default function App() {
       <GameSession
         key={gameSessionKey}
         campaign={campaign}
+        campaignId={selectedCampaignId || campaign.config.name}
         initialGameState={initialGameState}
+        initialLogs={initialLogs}
+        initialReplayData={initialReplayData}
+        initialActivePlayerIndex={initialActivePlayerIndex}
+        initialActiveModal={initialActiveModal}
+        isResumed={isResumed}
         onGameOver={(info) => {
+          clearAutoSave();
+          setSavedGame(null);
           setGameOverInfo(info);
           setScreen('game-over');
         }}
         onQuitToTitle={() => {
+          clearAutoSave();
+          setSavedGame(null);
+          setIsResumed(false);
           setScreen('title');
           setInitialGameState(null);
         }}
@@ -162,6 +250,15 @@ export default function App() {
     <>
       <OrientationPrompt />
       {screenContent}
+      {showResumeModal && savedGame && (
+        <ResumePromptModal
+          savedGame={savedGame}
+          onResume={() => handleResumeGame(savedGame)}
+          onStartNew={() => setShowResumeModal(false)}
+          onDiscard={handleDiscardSave}
+          onClose={() => setShowResumeModal(false)}
+        />
+      )}
     </>
   );
 }

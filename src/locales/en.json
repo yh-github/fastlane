@@ -2,7 +2,25 @@
   "titleScreen": {
     "subtitle": "Modernized",
     "startGame": "New Game",
-    "language": "Language"
+    "language": "Language",
+    "continueGame": "Continue Game",
+    "continueSavedGame": "Continue Saved Game"
+  },
+  "autoSave": {
+    "resumeTitle": "Continue Where You Left Off?",
+    "resumeMessage": "A saved game in progress was found.",
+    "continueGame": "Continue Game",
+    "startNewGame": "Start New Game",
+    "discardSave": "Discard Save",
+    "savedInfo": "Week {{turn}} • {{player}} • Cash: ${{cash}}",
+    "campaign": "Campaign",
+    "turn": "Week {{turn}}",
+    "player": "Player",
+    "cash": "Cash",
+    "hours": "{{hours}} hrs left",
+    "savedAt": "Saved",
+    "exportSave": "Export Save",
+    "exportReplay": "Export Replay"
   },
   "setupScreen": {
     "title": "Game Setup",

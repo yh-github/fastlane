@@ -69,4 +69,22 @@ describe('TitleScreen', () => {
     fireEvent.click(screen.getByText(/startGame/i));
     expect(handleStart).toHaveBeenCalledWith('qol_improved');
   });
+
+  it('renders continue game button when savedGame is provided', () => {
+    const handleResume = vi.fn();
+    const mockSave: any = {
+      version: 1,
+      campaignId: 'qol_improved',
+      gameState: { turn: 5, players: [{ name: 'Player 1', money: 100 }] },
+    };
+    render(<TitleScreen onStartGame={() => {}} savedGame={mockSave} onResumeGame={handleResume} />);
+
+    const resumeBtn = screen.getByTestId('btn-title-resume');
+    expect(resumeBtn).toBeInTheDocument();
+    expect(resumeBtn).toHaveTextContent(/5/);
+
+    fireEvent.click(resumeBtn);
+    expect(handleResume).toHaveBeenCalledWith(mockSave);
+  });
 });
+

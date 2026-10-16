@@ -2,7 +2,25 @@
   "titleScreen": {
     "subtitle": "בגירסה מודרנית",
     "startGame": "משחק חדש",
-    "language": "שפה"
+    "language": "שפה",
+    "continueGame": "המשך משחק",
+    "continueSavedGame": "המשך משחק שמור"
+  },
+  "autoSave": {
+    "resumeTitle": "האם להמשיך מהמקום שבו עצרת?",
+    "resumeMessage": "נמצא משחק שמור בתהליך.",
+    "continueGame": "המשך משחק",
+    "startNewGame": "משחק חדש",
+    "discardSave": "מחק שמירה",
+    "savedInfo": "שבוע {{turn}} • {{player}} • מזומן: ${{cash}}",
+    "campaign": "מערכה",
+    "turn": "שבוע {{turn}}",
+    "player": "שחקן",
+    "cash": "מזומן",
+    "hours": "{{hours}} שעות נותרו",
+    "savedAt": "נשמר",
+    "exportSave": "ייצוא שמירה",
+    "exportReplay": "ייצוא ריפליי"
   },
   "setupScreen": {
     "title": "הגדרות משחק",

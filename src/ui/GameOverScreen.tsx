@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ReplayData } from '../engine/replayTypes';
+import { exportReplayToFile } from '../utils/saveManager';
 
 interface GameOverScreenProps {
   playerName: string;
@@ -15,13 +16,7 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({ playerName, turn
 
   const handleExportReplay = () => {
     if (!replayData) return;
-    const blob = new Blob([JSON.stringify(replayData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fastlane-replay-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportReplayToFile(replayData);
   };
 
   return (

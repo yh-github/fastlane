@@ -3,11 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { getAvailableCampaigns, loadAvailableCampaigns, type CampaignInfo } from '../engine/dataLoader';
 import { RulesScreen, type TabType } from './RulesScreen';
 
+import type { AutoSaveData } from '../utils/saveManager';
+
 interface TitleScreenProps {
   onStartGame: (campaignId: string) => void;
+  savedGame?: AutoSaveData | null;
+  onResumeGame?: (save?: AutoSaveData) => void;
 }
 
-export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
+export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame, savedGame, onResumeGame }) => {
   const { t, i18n } = useTranslation();
   const [campaigns, setCampaigns] = useState<CampaignInfo[]>(getAvailableCampaigns());
   const defaultCampaign = campaigns.find(c => c.id === 'qol_improved') || campaigns[0];
@@ -66,6 +70,21 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+        {savedGame && onResumeGame && (
+          <button
+            className="title-screen__btn"
+            data-testid="btn-title-resume"
+            onClick={() => onResumeGame(savedGame)}
+            style={{
+              background: '#10b981',
+              borderColor: '#34d399',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+              fontWeight: 700,
+            }}
+          >
+            ▶ {t('titleScreen.continueSavedGame', { defaultValue: 'Continue Saved Game' })} ({t('dashboard.turn', { turn: savedGame.gameState.turn, defaultValue: `Week ${savedGame.gameState.turn}` })})
+          </button>
+        )}
         <button className="title-screen__btn" onClick={() => onStartGame(selectedCampaignId)}>
           {t('titleScreen.startGame')}
         </button>

@@ -26,14 +26,20 @@ export function useGameEngine(
   openModal: (modal: ActiveModal) => void,
   closeModal: () => void,
   triggerScreenShake?: (durationMs?: number) => void,
-  clearFloatingAnims?: () => void
+  clearFloatingAnims?: () => void,
+  initialLogs?: LogEntry[],
+  initialReplayData?: ReplayData | null,
+  initialActivePlayerIndex?: number,
+  isResumed?: boolean
 ) {
   const [gameState, _setGameState] = useState<GameState>(initialGameState);
   const gameStateRef = useRef<GameState>(initialGameState);
-  const [logs, setLogs] = useState<LogEntry[]>([
-    { week: initialGameState.turn, event: { key: 'Game started. Good luck!' } }
-  ]);
-  const [activePlayerIndex, setActivePlayerIndex] = useState(0);
+  const [logs, setLogs] = useState<LogEntry[]>(() =>
+    initialLogs && initialLogs.length > 0
+      ? initialLogs
+      : [{ week: initialGameState.turn, event: { key: 'Game started. Good luck!' } }]
+  );
+  const [activePlayerIndex, setActivePlayerIndex] = useState(initialActivePlayerIndex ?? 0);
   const [streetRobberyNotice, setStreetRobberyNotice] = useState<{
     lostAmount: number;
     location: string;
@@ -41,15 +47,17 @@ export function useGameEngine(
     onConfirm?: () => void;
   } | null>(null);
   const lastPulsedRef = useRef({ turn: -1, playerIndex: -1 });
-  const replayDataRef = useRef<ReplayData>({
-    version: '1.0.0',
-    commitHash: 'unknown',
-    campaignId: campaign.config.name,
-    rules: initialGameState.rules,
-    startingState: initialGameState,
-    steps: [],
-    endStateHash: ''
-  });
+  const replayDataRef = useRef<ReplayData>(
+    initialReplayData || {
+      version: '1.0.0',
+      commitHash: 'unknown',
+      campaignId: campaign.config.name,
+      rules: initialGameState.rules,
+      startingState: initialGameState,
+      steps: [],
+      endStateHash: ''
+    }
+  );
   const pendingDestinationRef = useRef<string | null>(null);
   const isMovingRef = useRef<boolean>(false);
   const [isTravelling, setIsTravelling] = useState<boolean>(false);
@@ -69,6 +77,9 @@ export function useGameEngine(
   }, []);
 
   useEffect(() => {
+    if (isResumed) {
+      return;
+    }
     if (initialGameState.rules.turnStartAtHome && !initialGameState.players[0].isAi) {
       openModal({ type: 'building' });
     } else {
@@ -77,7 +88,7 @@ export function useGameEngine(
     if (initialGameState.players[0].turnFlags.freeNewspaper) {
       openModal({ type: 'newspaper' });
     }
-  }, [initialGameState, openModal, closeModal]);
+  }, [initialGameState, openModal, closeModal, isResumed]);
 
   const adjacencyMap = useMemo(() => {
     if (!campaign) return new Map<string, string[]>();
