@@ -6,8 +6,9 @@
  * from the campaign bundle to render the world.
  */
 
-import { Application, Graphics, Container, Text } from 'pixi.js';
+import { Application, Graphics, Container, Text, Sprite } from 'pixi.js';
 import type { MapData, BuildingDef } from '../engine/dataLoader';
+import { AUTHENTIC_BOARD_WIDTH, AUTHENTIC_BOARD_HEIGHT, AUTHENTIC_BUILDINGS } from './authenticData';
 
 // ─── Renderer Interface ─────────────────────────────────────────
 
@@ -24,6 +25,10 @@ export interface MapRendererConfig {
   onNodeClick: (nodeId: string) => void;
   /** If true, renders authentic curved sidewalks and proportionate waypoint positions */
   authenticCurvedPaths?: boolean;
+  /** GUI presentation style: 'generated' or 'authentic' */
+  guiStyle?: 'generated' | 'authentic';
+  /** Base path for authentic assets (defaults to '/assets/authentic') */
+  authenticBasePath?: string;
 }
 
 export interface PlayerPosition {
@@ -34,10 +39,16 @@ export interface PlayerPosition {
 
 // Keep references to movable sprites/graphics
 let app: Application | null = null;
-let playerTokens: Graphics[] = [];
+let playerTokens: any[] = [];
 let buildingLabels: Map<string, Text> = new Map();
 let testMarker: HTMLDivElement | null = null;
 let activeInstanceId = 0;
+let activeGuiStyle: 'generated' | 'authentic' = 'generated';
+let authenticBasePath = '/assets/authentic';
+let buildingDoors: Map<string, { sprite: any; basePath: string }> = new Map();
+let roofsLayer: Container | null = null;
+let tokensLayer: Container | null = null;
+
 
 function safeDestroyApp(targetApp: Application | null): void {
   if (!targetApp) return;
@@ -61,10 +72,22 @@ export async function initMapRenderer(
 ): Promise<() => void> {
   const instanceId = ++activeInstanceId;
   const localApp = new Application();
+
+  activeGuiStyle = config.guiStyle || 'generated';
+  const isAuthentic = activeGuiStyle === 'authentic';
+  const authenticBase = config.authenticBasePath || '/assets/authentic';
+  authenticBasePath = authenticBase;
+  playerTokens = [];
+  buildingDoors.clear();
+  roofsLayer = null;
+  tokensLayer = null;
+
+  const initW = isAuthentic ? AUTHENTIC_BOARD_WIDTH : config.mapData.width;
+  const initH = isAuthentic ? AUTHENTIC_BOARD_HEIGHT : config.mapData.height;
   
   await localApp.init({
-    width: config.mapData.width,
-    height: config.mapData.height,
+    width: initW,
+    height: initH,
     backgroundAlpha: 0, // Transparent to show CSS background
     resizeTo: config.container,
   });
@@ -133,12 +156,15 @@ export async function initMapRenderer(
       (localApp.renderer as any).resize(containerW, containerH);
     }
 
+    const baseW = isAuthentic ? AUTHENTIC_BOARD_WIDTH : config.mapData.width;
+    const baseH = isAuthentic ? AUTHENTIC_BOARD_HEIGHT : config.mapData.height;
+
     // Uniformly scale map to fit container, taking full advantage of available space
-    const scale = Math.min(containerW / config.mapData.width, containerH / config.mapData.height);
-    const boardW = config.mapData.width * scale;
-    const boardH = config.mapData.height * scale;
+    const scale = Math.min(containerW / baseW, containerH / baseH);
+    const boardW = baseW * scale;
+    const boardH = baseH * scale;
     const boardX = (containerW - boardW) / 2;
-    const boardY = (containerH - boardH) / 2 + verticalOffset * scale;
+    const boardY = (containerH - boardH) / 2 + (isAuthentic ? 0 : verticalOffset * scale);
 
     mapContainer.scale.set(scale);
     mapContainer.x = boardX;
@@ -164,11 +190,83 @@ export async function initMapRenderer(
   }
   window.addEventListener('resize', updateBoardTransform);
 
-  const edgesLayer = new Graphics();
-  mapContainer.addChild(edgesLayer);
+  if (isAuthentic) {
+    // ─── Authentic Sierra Board Layers ─────────────────────────────
+    // 1. Painted background picture
+    const bgSprite = Sprite.from(`${authenticBase}/board.png`);
+    bgSprite.width = AUTHENTIC_BOARD_WIDTH;
+    bgSprite.height = AUTHENTIC_BOARD_HEIGHT;
+    if ((bgSprite.texture as any)?.source) {
+      (bgSprite.texture as any).source.scaleMode = 'nearest';
+    }
+    mapContainer.addChild(bgSprite);
 
-  const waypointsLayer = new Graphics();
-  mapContainer.addChild(waypointsLayer);
+    // 2. Animated building doors
+    const doorsContainer = new Container();
+    mapContainer.addChild(doorsContainer);
+    for (const [bId, b] of Object.entries(AUTHENTIC_BUILDINGS)) {
+      const door = Sprite.from(`${authenticBase}/doors/${bId}_cel_0.png`);
+      door.x = b.doorX;
+      door.y = b.doorY;
+      if ((door.texture as any)?.source) {
+        (door.texture as any).source.scaleMode = 'nearest';
+      }
+      doorsContainer.addChild(door);
+      buildingDoors.set(bId, { sprite: door, basePath: authenticBase });
+    }
+
+    // 3. Tokens layer (under roofs layer)
+    tokensLayer = new Container();
+    mapContainer.addChild(tokensLayer);
+
+    // 4. Rooftop Occluders layer (above tokens layer)
+    roofsLayer = new Container();
+    const roofPatch = Sprite.from(`${authenticBase}/roof_patch.png`);
+    roofPatch.x = 68;
+    roofPatch.y = 131;
+    roofPatch.width = 183;
+    roofPatch.height = 25;
+    if ((roofPatch.texture as any)?.source) {
+      (roofPatch.texture as any).source.scaleMode = 'nearest';
+    }
+    roofsLayer.addChild(roofPatch);
+    mapContainer.addChild(roofsLayer);
+
+    // 5. Interactive Hitboxes layer (on top of roofs for mouse/touch interactivity)
+    const hitboxesLayer = new Container();
+    mapContainer.addChild(hitboxesLayer);
+    for (const b of Object.values(AUTHENTIC_BUILDINGS)) {
+      const [top, left, bottom, right] = b.hitbox;
+      const hitBox = new Graphics();
+      hitBox.rect(left, top, right - left, bottom - top);
+      hitBox.fill({ color: 0x000000, alpha: 0.001 });
+      hitBox.eventMode = 'static';
+      hitBox.cursor = 'pointer';
+      hitBox.on('pointertap', () => {
+        config.onNodeClick(b.nodeId);
+      });
+      hitBox.on('pointerover', () => {
+        hitBox.clear();
+        hitBox.rect(left, top, right - left, bottom - top);
+        hitBox.fill({ color: 0xffb300, alpha: 0.15 });
+        hitBox.setStrokeStyle({ width: 1, color: 0xffb300, alpha: 0.8 });
+        hitBox.stroke();
+      });
+      hitBox.on('pointerout', () => {
+        hitBox.clear();
+        hitBox.rect(left, top, right - left, bottom - top);
+        hitBox.fill({ color: 0x000000, alpha: 0.001 });
+      });
+      hitboxesLayer.addChild(hitBox);
+    }
+  } else {
+    // ─── Generated Vector Board Layers ──────────────────────────────
+    const edgesLayer = new Graphics();
+    mapContainer.addChild(edgesLayer);
+
+    const waypointsLayer = new Graphics();
+    mapContainer.addChild(waypointsLayer);
+
 
   // Build edge waypoint lookup and edge object lookup
   const edgeWaypointMap = new Map<string, number>();
@@ -336,6 +434,7 @@ export async function initMapRenderer(
 
     mapContainer.addChild(nodeGraphic);
   }
+}
 
   // We will create player tokens dynamically in updatePlayers
 
@@ -360,6 +459,9 @@ export async function initMapRenderer(
       safeDestroyApp(app);
       app = null;
       playerTokens = [];
+      buildingDoors.clear();
+      roofsLayer = null;
+      tokensLayer = null;
       buildingLabels.clear();
       if (testMarker) {
         testMarker.remove();
@@ -402,12 +504,23 @@ export function getBuildingLabelStyle(buildingId: string): any {
  */
 export function updatePlayers(players: { position: PlayerPosition, index: number, isActive: boolean }[]): void {
   if (!app) return;
-  const mapContainer = app.stage.children[0] as Container;
+  const isAuthentic = activeGuiStyle === 'authentic';
+  const targetParent = (isAuthentic && tokensLayer) ? tokensLayer : (app.stage.children[0] as Container);
+  const coordScale = isAuthentic ? (1 / 3.75) : 1;
   
   // Create missing tokens
   while (playerTokens.length < players.length) {
-    const token = new Graphics();
-    mapContainer.addChild(token);
+    const idx = playerTokens.length;
+    let token: any;
+    if (isAuthentic) {
+      token = Sprite.from(`${authenticBasePath}/marbles/marble_${idx % 4}.png`);
+      if (token.anchor) {
+        token.anchor.set(0.5, 0.5);
+      }
+    } else {
+      token = new Graphics();
+    }
+    targetParent.addChild(token);
     playerTokens.push(token);
   }
 
@@ -416,48 +529,78 @@ export function updatePlayers(players: { position: PlayerPosition, index: number
 
   const colors = [0xff4081, 0x00e5ff, 0x76ff03, 0xffeb3b]; // Magenta, Cyan, Light Green, Yellow
 
-  players.forEach((p, _i) => {
+  players.forEach((p) => {
     const token = playerTokens[p.index];
     if (!token) return;
     
-    token.clear();
-    const color = colors[p.index % colors.length];
-    
-    // Different shapes for color blindness
-    if (p.index === 0) {
-      token.circle(0, 0, p.isActive ? 14 : 10); // Player 1: Circle
-    } else if (p.index === 1) {
-      token.drawRect(p.isActive ? -12 : -8, p.isActive ? -12 : -8, p.isActive ? 24 : 16, p.isActive ? 24 : 16); // Player 2: Square
-    } else if (p.index === 2) {
-      token.drawPolygon([-14, 12, 14, 12, 0, -14]); // Player 3: Triangle
+    if (isAuthentic) {
+      if (token.scale) {
+        token.scale.set(p.isActive ? 1.0 : 0.85);
+      }
     } else {
-      token.circle(0, 0, p.isActive ? 14 : 10);
+      token.clear();
+      const color = colors[p.index % colors.length];
+      
+      // Different shapes for color blindness
+      if (p.index === 0) {
+        token.circle(0, 0, p.isActive ? 14 : 10); // Player 1: Circle
+      } else if (p.index === 1) {
+        token.drawRect(p.isActive ? -12 : -8, p.isActive ? -12 : -8, p.isActive ? 24 : 16, p.isActive ? 24 : 16); // Player 2: Square
+      } else if (p.index === 2) {
+        token.drawPolygon([-14, 12, 14, 12, 0, -14]); // Player 3: Triangle
+      } else {
+        token.circle(0, 0, p.isActive ? 14 : 10);
+      }
+      
+      token.fill({ color });
+      token.setStrokeStyle({ width: 3, color: p.isActive ? 0xffffff : 0x555555 });
+      token.stroke();
     }
-    
-    token.fill({ color });
-    token.setStrokeStyle({ width: 3, color: p.isActive ? 0xffffff : 0x555555 });
-    token.stroke();
 
     // Prevent overriding position if this token is currently animating
     if (!(token as any).isAnimating) {
-      token.x = p.position.x;
-      token.y = p.position.y;
+      token.x = p.position.x * coordScale;
+      token.y = p.position.y * coordScale;
     }
     
     token.visible = true; // Show all players now that jitter bug is fixed
     
     // To prevent overlapping tokens from perfectly hiding each other, offset slightly based on index
     if (p.isActive && players.filter(other => other.position.nodeId === p.position.nodeId && other.isActive).length > 1) {
-       token.x += (p.index - (players.length / 2)) * 6;
-       token.y += (p.index - (players.length / 2)) * 6;
+       const offsetAmt = isAuthentic ? 2 : 6;
+       token.x += (p.index - (players.length / 2)) * offsetAmt;
+       token.y += (p.index - (players.length / 2)) * offsetAmt;
     }
 
     if (p.isActive && testMarker) {
-      testMarker.dataset.x = p.position.x.toString();
-      testMarker.dataset.y = p.position.y.toString();
+      testMarker.dataset.x = (p.position.x * coordScale).toString();
+      testMarker.dataset.y = (p.position.y * coordScale).toString();
       testMarker.dataset.visible = 'true';
     }
   });
+
+  // Authentic door animation updates: open door (cel 3) if occupied, closed (cel 0) if not
+  if (isAuthentic && buildingDoors.size > 0) {
+    const occupiedBuildings = new Set<string>();
+    for (const p of players) {
+      if (p.position?.nodeId) {
+        for (const [bId, b] of Object.entries(AUTHENTIC_BUILDINGS)) {
+          if (b.nodeId === p.position.nodeId) {
+            occupiedBuildings.add(bId);
+          }
+        }
+      }
+    }
+
+    for (const [bId, doorInfo] of buildingDoors.entries()) {
+      const isOccupied = occupiedBuildings.has(bId);
+      const cel = isOccupied ? 3 : 0;
+      const newSprite = Sprite.from(`${doorInfo.basePath}/doors/${bId}_cel_${cel}.png`);
+      if (newSprite && (newSprite as any).texture && doorInfo.sprite) {
+        doorInfo.sprite.texture = (newSprite as any).texture;
+      }
+    }
+  }
 }
 
 /**
@@ -477,13 +620,15 @@ export async function animatePlayerPath(path: PlayerPosition[], playerIndex: num
   if (path.length === 0 || !playerTokens[playerIndex]) return;
   const token = playerTokens[playerIndex];
   token.visible = true;
+  const isAuthentic = activeGuiStyle === 'authentic';
+  const coordScale = isAuthentic ? (1 / 3.75) : 1;
 
   for (const pos of path) {
     await new Promise<void>((resolve) => {
       const startX = token.x;
       const startY = token.y;
-      const targetX = pos.x;
-      const targetY = pos.y;
+      const targetX = pos.x * coordScale;
+      const targetY = pos.y * coordScale;
       
       const startTime = performance.now();
       
@@ -548,15 +693,18 @@ export async function pulsePlayer(playerIndex: number): Promise<void> {
  */
 export function showMapClick(x: number, y: number): void {
   if (!app) return;
-  const mapContainer = app.stage.children[0] as Container;
+  const isAuthentic = activeGuiStyle === 'authentic';
+  const mapContainer = (isAuthentic && tokensLayer) ? tokensLayer : (app.stage.children[0] as Container);
+  const coordScale = isAuthentic ? (1 / 3.75) : 1;
+  const radius = isAuthentic ? 3 : 10;
   
   const ping = new Graphics();
-  ping.circle(0, 0, 10);
+  ping.circle(0, 0, radius);
   ping.fill({ color: 0xffffff, alpha: 0.8 });
-  ping.setStrokeStyle({ width: 2, color: 0x00e5ff });
+  ping.setStrokeStyle({ width: isAuthentic ? 1 : 2, color: 0x00e5ff });
   ping.stroke();
-  ping.x = x;
-  ping.y = y;
+  ping.x = x * coordScale;
+  ping.y = y * coordScale;
   mapContainer.addChild(ping);
 
   const startTime = performance.now();
@@ -566,7 +714,7 @@ export function showMapClick(x: number, y: number): void {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
     
-    const scale = 1 + progress * 4;
+    const scale = 1 + progress * (isAuthentic ? 2 : 4);
     ping.scale.set(scale, scale);
     ping.alpha = 1 - (progress * progress); // non-linear fade
     
@@ -584,8 +732,61 @@ export function showMapClick(x: number, y: number): void {
  */
 export async function animateRobberInterception(playerIndex: number, speedMs: number = 600): Promise<void> {
   if (!app || !playerTokens[playerIndex]) return;
-  const mapContainer = app.stage.children[0] as Container;
+  const isAuthentic = activeGuiStyle === 'authentic';
+  const mapContainer = (isAuthentic && tokensLayer) ? tokensLayer : (app.stage.children[0] as Container);
   const pToken = playerTokens[playerIndex];
+
+  if (isAuthentic) {
+    const robber = Sprite.from(`${authenticBasePath}/robber/run_left_0.png`);
+    if (robber.anchor) robber.anchor.set(0.5, 0.5);
+    robber.x = pToken.x + 35;
+    robber.y = pToken.y;
+    mapContainer.addChild(robber);
+
+    await new Promise<void>((resolve) => {
+      const startX = robber.x;
+      const startY = robber.y;
+      const targetX = pToken.x;
+      const targetY = pToken.y;
+      const startTime = performance.now();
+
+      function step(now: number) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / speedMs, 1);
+
+        robber.x = startX + (targetX - startX) * progress;
+        robber.y = startY + (targetY - startY) * progress;
+
+        const frameIdx = Math.floor((elapsed / 80) % 6);
+        const nextTex = (Sprite.from(`${authenticBasePath}/robber/run_left_${frameIdx}.png`) as any)?.texture;
+        if (nextTex) robber.texture = nextTex;
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          const clubTex = (Sprite.from(`${authenticBasePath}/robber/club_left.png`) as any)?.texture;
+          if (clubTex) robber.texture = clubTex;
+
+          setTimeout(() => {
+            const flash = new Graphics();
+            flash.circle(0, 0, 15);
+            flash.fill({ color: 0xe74c3c, alpha: 0.6 });
+            flash.x = targetX;
+            flash.y = targetY;
+            mapContainer.addChild(flash);
+
+            setTimeout(() => {
+              flash.destroy();
+              robber.destroy();
+              resolve();
+            }, 250);
+          }, 200);
+        }
+      }
+      requestAnimationFrame(step);
+    });
+    return;
+  }
   
   const robber = new Graphics();
   robber.circle(0, 0, 12);

@@ -10,9 +10,10 @@ interface GameMapProps {
   activePlayerIndex: number;
   onNodeClick: (nodeId: string) => void;
   authenticCurvedPaths?: boolean;
+  guiStyle?: 'generated' | 'authentic';
 }
 
-export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlayerIndex, onNodeClick, authenticCurvedPaths }) => {
+export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlayerIndex, onNodeClick, authenticCurvedPaths, guiStyle }) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -40,6 +41,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlaye
       buildings: translatedBuildings,
       assetBasePath: `/campaigns/${campaign.config.name}`,
       authenticCurvedPaths,
+      guiStyle,
       onNodeClick: (nodeId) => {
         onNodeClickRef.current(nodeId);
       }
@@ -60,7 +62,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlaye
         cleanupRef.current = null;
       }
     };
-  }, [campaign, authenticCurvedPaths]);
+  }, [campaign, authenticCurvedPaths, guiStyle]);
 
   // Dynamically update building text labels when language changes without recreating WebGL canvas
   useEffect(() => {
@@ -75,7 +77,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlaye
 
   useEffect(() => {
     if (isMapReady && players.length > 0 && campaign) {
-      const useAuthentic = authenticCurvedPaths !== false && !!campaign.map.authenticNodes;
+      const useAuthentic = (authenticCurvedPaths !== false || guiStyle === 'authentic') && !!campaign.map.authenticNodes;
       const renderPlayers = players.map((p, index) => {
         const authPos = useAuthentic ? campaign.map.authenticNodes?.[p.position] : undefined;
         const node = campaign.map.nodes.find(n => n.id === p.position);
@@ -91,7 +93,7 @@ export const GameMap: React.FC<GameMapProps> = ({ campaign, players, activePlaye
       });
       updatePlayers(renderPlayers);
     }
-  }, [players, activePlayerIndex, campaign, isMapReady, authenticCurvedPaths]);
+  }, [players, activePlayerIndex, campaign, isMapReady, authenticCurvedPaths, guiStyle]);
 
   return (
     <div

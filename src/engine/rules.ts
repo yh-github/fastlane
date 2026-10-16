@@ -6,6 +6,8 @@
  */
 
 export type ClothesSwitchingRule = 'autoBest' | 'anywhere' | 'homeOrStore' | 'homeOnly';
+export type GuiStyle = 'generated' | 'authentic';
+
 
 export interface GameRules {
   /**
@@ -169,6 +171,8 @@ export interface GameRules {
    * HUD layout style: 'auto' (automatic detection based on screen orientation), 'side' (modern 2-column sidebar), or 'top' (classic desktop top-bar).
    */
   hudLayout?: 'auto' | 'side' | 'top';
+  guiStyle?: GuiStyle;
+
 
   /**
    * ADVANCED: If true, apartment robberies are based on a 4-week moving average of time spent at home.
@@ -548,6 +552,8 @@ export const DEFAULT_GAME_RULES: GameRules = {
   depthScaledDegreeBonus: false,
   showItemImages: true,
   hudLayout: 'auto',
+  guiStyle: 'generated',
+
   maxEnrolledClasses: 4,
   turnStartAtHome: false,
   delayRobberyFoodSpoilage: false,
@@ -639,6 +645,8 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   depthScaledDegreeBonus: 'Scales graduation Dependability and Max Experience bonuses by prerequisite depth: +(depth + 1) instead of flat +5',
   showItemImages: 'Displays graphical icons for items in menus and inventory',
   hudLayout: 'HUD layout style (Auto-detect based on screen orientation, Top HUD, or Side HUD)',
+  guiStyle: 'GUI visual presentation theme (Generated modern vector or Authentic 1990 Sierra VGA)',
+
   delayRobberyFoodSpoilage: 'Grants a 1-week grace period before food rots when a refrigerator is stolen',
   maskEarlyJobRejections: 'Masks low dependability rejection as "No openings" (and suppresses "Poor Work History" if other requirements are missing) during turns 1-4 (Original Floppy/CD-ROM behavior)',
   percentageEducation: 'Tracks degree progress on a 0-100% continuous progress scale',

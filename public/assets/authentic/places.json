@@ -1,0 +1,197 @@
+{
+  "low_cost_housing": {
+    "doorLoop": 0,
+    "doorX": 144,
+    "doorY": 30,
+    "hitbox": [
+      10,
+      130,
+      43,
+      190
+    ],
+    "place": [
+      134,
+      2
+    ]
+  },
+  "rent_office": {
+    "doorLoop": 1,
+    "doorX": 105,
+    "doorY": 29,
+    "hitbox": [
+      10,
+      68,
+      43,
+      129
+    ],
+    "place": [
+      85,
+      3
+    ]
+  },
+  "security": {
+    "doorLoop": 2,
+    "doorX": 29,
+    "doorY": 44,
+    "hitbox": [
+      10,
+      7,
+      43,
+      67
+    ],
+    "place": [
+      9,
+      2
+    ]
+  },
+  "blacks_market": {
+    "doorLoop": 3,
+    "doorX": 46,
+    "doorY": 105,
+    "hitbox": [
+      69,
+      24,
+      114,
+      67
+    ],
+    "place": [
+      26,
+      70
+    ]
+  },
+  "bank": {
+    "doorLoop": 4,
+    "doorX": 20,
+    "doorY": 147,
+    "hitbox": [
+      119,
+      7,
+      154,
+      67
+    ],
+    "place": [
+      11,
+      92
+    ]
+  },
+  "factory": {
+    "doorLoop": 5,
+    "doorX": 50,
+    "doorY": 181,
+    "hitbox": [
+      155,
+      7,
+      192,
+      67
+    ],
+    "place": [
+      25,
+      134
+    ]
+  },
+  "employment_office": {
+    "doorLoop": 6,
+    "doorX": 97,
+    "doorY": 183,
+    "hitbox": [
+      168,
+      68,
+      192,
+      128
+    ],
+    "place": [
+      79,
+      151
+    ]
+  },
+  "university": {
+    "doorLoop": 7,
+    "doorX": 220,
+    "doorY": 179,
+    "hitbox": [
+      158,
+      190,
+      192,
+      250
+    ],
+    "place": [
+      190,
+      141
+    ]
+  },
+  "socket_city": {
+    "doorLoop": 8,
+    "doorX": 277,
+    "doorY": 183,
+    "hitbox": [
+      133,
+      251,
+      192,
+      311
+    ],
+    "place": [
+      256,
+      133
+    ]
+  },
+  "qt_clothing": {
+    "doorLoop": 9,
+    "doorX": 277,
+    "doorY": 113,
+    "hitbox": [
+      82,
+      251,
+      118,
+      311
+    ],
+    "place": [
+      257,
+      80
+    ]
+  },
+  "burger_palace": {
+    "doorLoop": 10,
+    "doorX": 288,
+    "doorY": 75,
+    "hitbox": [
+      44,
+      251,
+      81,
+      311
+    ],
+    "place": [
+      264,
+      32
+    ]
+  },
+  "z_mart": {
+    "doorLoop": 11,
+    "doorX": 282,
+    "doorY": 34,
+    "hitbox": [
+      10,
+      251,
+      43,
+      311
+    ],
+    "place": [
+      258,
+      2
+    ]
+  },
+  "pawn_shop": {
+    "doorLoop": 12,
+    "doorX": 221,
+    "doorY": 34,
+    "hitbox": [
+      10,
+      191,
+      43,
+      250
+    ],
+    "place": [
+      201,
+      4
+    ]
+  }
+}

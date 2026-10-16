@@ -32,10 +32,12 @@ export interface CampaignConfig {
   gameRules: GameRules;
   baseCampaign?: string;
   hasCannedFood?: boolean;
+  supportedGuiStyles?: import('./rules').GuiStyle[];
 }
 
 export type {
   GameRules,
+  GuiStyle,
   EventRules,
   StatRules,
   WinCondition,
@@ -43,6 +45,7 @@ export type {
   EconomyRules,
   MapRules,
 } from './rules';
+
 
 export interface BuildingInventoryEntry {
   itemId: string;

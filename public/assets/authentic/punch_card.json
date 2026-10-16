@@ -1,0 +1,10 @@
+{
+  "width": 68,
+  "height": 55,
+  "cels": [
+    "punch_card/punch_0.png",
+    "punch_card/punch_1.png",
+    "punch_card/punch_2.png",
+    "punch_card/punch_3.png"
+  ]
+}

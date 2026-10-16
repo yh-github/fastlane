@@ -388,5 +388,74 @@ describe('SettingsModal', () => {
 
     setItemSpy.mockRestore();
   });
+
+  it('cycles GUI Presentation Mode setting between generated and authentic when supported', () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+    const mockCampaign = {
+      config: { name: '1990_classic_floppy', supportedGuiStyles: ['generated', 'authentic'] }
+    } as any;
+    let state = { ...dummyGameState, rules: { ...dummyGameState.rules, guiStyle: 'generated' as const } };
+    const setGameState = vi.fn().mockImplementation((updater) => {
+      state = updater(state);
+    });
+
+    const { rerender } = render(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        campaign={mockCampaign}
+        onClose={() => {}}
+      />
+    );
+
+    const guiStyleItem = screen.getByTestId('setting-gui-style');
+    expect(guiStyleItem).toBeInTheDocument();
+    expect(screen.getByText('GENERATED')).toBeInTheDocument();
+
+    fireEvent.click(guiStyleItem);
+    expect(setGameState).toHaveBeenCalled();
+    expect(state.rules.guiStyle).toBe('authentic');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_gui_style', 'authentic');
+
+    rerender(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        campaign={mockCampaign}
+        onClose={() => {}}
+      />
+    );
+    expect(screen.getByText('AUTHENTIC')).toBeInTheDocument();
+
+    fireEvent.click(guiStyleItem);
+    expect(state.rules.guiStyle).toBe('generated');
+    expect(setItemSpy).toHaveBeenCalledWith('fastlane_gui_style', 'generated');
+
+    setItemSpy.mockRestore();
+  });
+
+  it('disables GUI Presentation Mode toggle when campaign does not support authentic style', () => {
+    const mockCampaign = {
+      config: { name: 'advanced', supportedGuiStyles: ['generated'] }
+    } as any;
+    let state = { ...dummyGameState, rules: { ...dummyGameState.rules, guiStyle: 'generated' as const } };
+    const setGameState = vi.fn();
+
+    render(
+      <SettingsModal
+        gameState={state}
+        setGameState={setGameState}
+        campaign={mockCampaign}
+        onClose={() => {}}
+      />
+    );
+
+    const guiStyleItem = screen.getByTestId('setting-gui-style');
+    expect(guiStyleItem).toBeInTheDocument();
+    expect(screen.getByText('N/A')).toBeInTheDocument();
+
+    fireEvent.click(guiStyleItem);
+    expect(setGameState).not.toHaveBeenCalled();
+  });
 });
 

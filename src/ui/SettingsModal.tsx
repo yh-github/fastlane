@@ -110,6 +110,29 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     });
   };
 
+  const isAuthenticSupported = campaign?.config?.supportedGuiStyles ? campaign.config.supportedGuiStyles.includes('authentic') : true;
+
+  const handleToggleGuiStyle = () => {
+    if (!isAuthenticSupported) return;
+    const currentStyle = gameState.rules.guiStyle || 'generated';
+    const nextStyle: 'generated' | 'authentic' = currentStyle === 'generated' ? 'authentic' : 'generated';
+    try {
+      localStorage.setItem('fastlane_gui_style', nextStyle);
+    } catch {
+      // ignore
+    }
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          guiStyle: nextStyle
+        }
+      };
+    });
+  };
+
   const handleToggleUseSkills = () => {
     setGameState(prev => {
       if (!prev) return prev;
@@ -413,6 +436,41 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                       readOnly
                       style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
                     />
+                  </div>
+                </div>
+
+                <div 
+                  className={`interaction-item ${isAuthenticSupported ? 'interaction-item--clickable' : ''}`}
+                  onClick={isAuthenticSupported ? handleToggleGuiStyle : undefined}
+                  data-testid="setting-gui-style"
+                  style={{ opacity: isAuthenticSupported ? 1 : 0.6 }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{t('settings.guiStyle', { defaultValue: 'GUI Presentation Mode' })}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {!isAuthenticSupported
+                          ? t('settings.guiStyleUnsupported', { defaultValue: 'Authentic 1990 VGA view is not supported by this campaign' })
+                          : (gameState.rules.guiStyle === 'authentic')
+                          ? t('settings.guiStyleAuthentic', { defaultValue: 'Authentic (1990 Sierra SCI VGA board & animated doors)' })
+                          : t('settings.guiStyleGenerated', { defaultValue: 'Generated (Modern crisp procedural vector board)' })}
+                      </div>
+                    </div>
+                    <span style={{ 
+                      padding: '4px 8px', 
+                      borderRadius: '4px', 
+                      background: !isAuthenticSupported ? 'rgba(255,255,255,0.06)' : gameState.rules.guiStyle === 'authentic' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(0, 229, 255, 0.2)', 
+                      color: !isAuthenticSupported ? '#64748b' : gameState.rules.guiStyle === 'authentic' ? '#f59e0b' : 'var(--accent-cyan)',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase'
+                    }}>
+                      {!isAuthenticSupported
+                        ? 'N/A'
+                        : (gameState.rules.guiStyle === 'authentic')
+                        ? 'AUTHENTIC'
+                        : 'GENERATED'}
+                    </span>
                   </div>
                 </div>
 
