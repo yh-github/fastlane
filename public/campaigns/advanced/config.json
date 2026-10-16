@@ -2,7 +2,9 @@
   "name": "The Fast Lane — Advanced Edition",
   "version": "3.0.0",
   "description": "Experimental campaign for testing new sub-systems and modular game mechanics.",
+  "supportedGuiStyles": ["generated"],
   "baseCampaign": "qol_improved",
+
   "winConditions": [
     { "stat": "wealth", "target": 100, "label": "Wealth" },
     { "stat": "lifestyle", "target": 100, "label": "Lifestyle" },

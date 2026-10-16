@@ -1,0 +1,20 @@
+{
+  "run_right": [
+    "robber/run_right_0.png",
+    "robber/run_right_1.png",
+    "robber/run_right_2.png",
+    "robber/run_right_3.png",
+    "robber/run_right_4.png",
+    "robber/run_right_5.png"
+  ],
+  "run_left": [
+    "robber/run_left_0.png",
+    "robber/run_left_1.png",
+    "robber/run_left_2.png",
+    "robber/run_left_3.png",
+    "robber/run_left_4.png",
+    "robber/run_left_5.png"
+  ],
+  "club_right": "robber/club_right.png",
+  "club_left": "robber/club_left.png"
+}

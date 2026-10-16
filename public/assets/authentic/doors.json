@@ -1,0 +1,158 @@
+{
+  "low_cost_housing": {
+    "width": 8,
+    "height": 8,
+    "doorX": 144,
+    "doorY": 30,
+    "cels": [
+      "doors/low_cost_housing_cel_0.png",
+      "doors/low_cost_housing_cel_1.png",
+      "doors/low_cost_housing_cel_2.png",
+      "doors/low_cost_housing_cel_3.png"
+    ]
+  },
+  "rent_office": {
+    "width": 7,
+    "height": 11,
+    "doorX": 105,
+    "doorY": 29,
+    "cels": [
+      "doors/rent_office_cel_0.png",
+      "doors/rent_office_cel_1.png",
+      "doors/rent_office_cel_2.png",
+      "doors/rent_office_cel_3.png"
+    ]
+  },
+  "security": {
+    "width": 12,
+    "height": 12,
+    "doorX": 29,
+    "doorY": 44,
+    "cels": [
+      "doors/security_cel_0.png",
+      "doors/security_cel_1.png",
+      "doors/security_cel_2.png",
+      "doors/security_cel_3.png"
+    ]
+  },
+  "blacks_market": {
+    "width": 14,
+    "height": 14,
+    "doorX": 46,
+    "doorY": 105,
+    "cels": [
+      "doors/blacks_market_cel_0.png",
+      "doors/blacks_market_cel_1.png",
+      "doors/blacks_market_cel_2.png",
+      "doors/blacks_market_cel_3.png"
+    ]
+  },
+  "bank": {
+    "width": 9,
+    "height": 12,
+    "doorX": 20,
+    "doorY": 147,
+    "cels": [
+      "doors/bank_cel_0.png",
+      "doors/bank_cel_1.png",
+      "doors/bank_cel_2.png",
+      "doors/bank_cel_3.png"
+    ]
+  },
+  "factory": {
+    "width": 10,
+    "height": 11,
+    "doorX": 50,
+    "doorY": 181,
+    "cels": [
+      "doors/factory_cel_0.png",
+      "doors/factory_cel_1.png",
+      "doors/factory_cel_2.png",
+      "doors/factory_cel_3.png"
+    ]
+  },
+  "employment_office": {
+    "width": 10,
+    "height": 13,
+    "doorX": 97,
+    "doorY": 183,
+    "cels": [
+      "doors/employment_office_cel_0.png",
+      "doors/employment_office_cel_1.png",
+      "doors/employment_office_cel_2.png",
+      "doors/employment_office_cel_3.png"
+    ]
+  },
+  "university": {
+    "width": 10,
+    "height": 12,
+    "doorX": 220,
+    "doorY": 179,
+    "cels": [
+      "doors/university_cel_0.png",
+      "doors/university_cel_1.png",
+      "doors/university_cel_2.png",
+      "doors/university_cel_3.png"
+    ]
+  },
+  "socket_city": {
+    "width": 14,
+    "height": 14,
+    "doorX": 277,
+    "doorY": 183,
+    "cels": [
+      "doors/socket_city_cel_0.png",
+      "doors/socket_city_cel_1.png",
+      "doors/socket_city_cel_2.png",
+      "doors/socket_city_cel_3.png"
+    ]
+  },
+  "qt_clothing": {
+    "width": 9,
+    "height": 11,
+    "doorX": 277,
+    "doorY": 113,
+    "cels": [
+      "doors/qt_clothing_cel_0.png",
+      "doors/qt_clothing_cel_1.png",
+      "doors/qt_clothing_cel_2.png",
+      "doors/qt_clothing_cel_3.png"
+    ]
+  },
+  "burger_palace": {
+    "width": 14,
+    "height": 10,
+    "doorX": 288,
+    "doorY": 75,
+    "cels": [
+      "doors/burger_palace_cel_0.png",
+      "doors/burger_palace_cel_1.png",
+      "doors/burger_palace_cel_2.png",
+      "doors/burger_palace_cel_3.png"
+    ]
+  },
+  "z_mart": {
+    "width": 25,
+    "height": 11,
+    "doorX": 282,
+    "doorY": 34,
+    "cels": [
+      "doors/z_mart_cel_0.png",
+      "doors/z_mart_cel_1.png",
+      "doors/z_mart_cel_2.png",
+      "doors/z_mart_cel_3.png"
+    ]
+  },
+  "pawn_shop": {
+    "width": 10,
+    "height": 12,
+    "doorX": 221,
+    "doorY": 34,
+    "cels": [
+      "doors/pawn_shop_cel_0.png",
+      "doors/pawn_shop_cel_1.png",
+      "doors/pawn_shop_cel_2.png",
+      "doors/pawn_shop_cel_3.png"
+    ]
+  }
+}

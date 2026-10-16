@@ -5,7 +5,7 @@ import path from 'path';
 
 global.fetch = vi.fn((url: string | URL | Request) => {
   const urlStr = url.toString();
-  if (urlStr.startsWith('/campaigns/')) {
+  if (urlStr.startsWith('/campaigns/') || urlStr.startsWith('/assets/')) {
     const filePath = path.join(process.cwd(), 'public', urlStr);
     if (!fs.existsSync(filePath)) {
       return Promise.resolve({

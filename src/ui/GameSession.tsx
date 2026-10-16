@@ -344,6 +344,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
               handleNodeClick(nodeId);
             }}
             authenticCurvedPaths={gameState.rules.authenticCurvedPaths}
+            guiStyle={gameState.rules.guiStyle}
           />
         </div>
 

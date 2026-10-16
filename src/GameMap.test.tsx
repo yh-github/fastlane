@@ -7,7 +7,7 @@ import { getBuildingLabel, getBuildingLabelStyle } from './graphics/mapRenderer'
 vi.mock('pixi.js', () => {
   class Graphics {
     x = 0; y = 0; visible = true; scale = { set: vi.fn() };
-    clear() {} drawRect() {} drawPolygon() {}
+    clear() {} rect() {} drawRect() {} drawPolygon() {}
     circle() {} fill() {} setStrokeStyle() {} stroke() {} addChild() {} on() {} moveTo() {} lineTo() {}
   }
   class Container {
@@ -33,8 +33,19 @@ vi.mock('pixi.js', () => {
       if (opts?.style) this.style = opts.style;
     }
   }
-  return { Graphics, Container, Application, Text };
+  class Sprite {
+    x = 0; y = 0; width = 0; height = 0; visible = true;
+    scale = { set: vi.fn() };
+    anchor = { set: vi.fn() };
+    texture = { source: { scaleMode: 'nearest' } };
+    static from = vi.fn(() => new Sprite());
+  }
+  const Assets = {
+    load: vi.fn().mockResolvedValue({ source: {} })
+  };
+  return { Graphics, Container, Application, Text, Sprite, Assets };
 });
+
 
 describe('GameMap Character GUI Tests', () => {
   it('renders the character on the board and updates its coordinates', async () => {
@@ -190,5 +201,49 @@ describe('GameMap Character GUI Tests', () => {
     const style = getBuildingLabelStyle('blacks_market');
     expect(style?.fontSize).toBe(20);
     expect(style?.wordWrapWidth).toBe(84);
+  });
+
+  it('renders authentic VGA layout with 320x190 coordinate scaling when guiStyle is authentic', async () => {
+    const mockCampaign = {
+      config: { name: 'test', startingMoney: 100, supportedGuiStyles: ['generated', 'authentic'] },
+      map: {
+        width: 1200,
+        height: 800,
+        nodes: [{ id: 'node_low_cost', x: 600, y: 100, connections: [] }],
+        authenticNodes: {
+          node_low_cost: { x: 540, y: 150 }
+        }
+      },
+      buildings: [],
+      items: [],
+      jobs: [],
+      events: []
+    } as any;
+
+    const mockPlayer = {
+      position: 'node_low_cost',
+      money: 100,
+      job: null,
+      inventory: [],
+      clothes: 'Casual'
+    } as any;
+
+    render(
+      <GameMap 
+        campaign={mockCampaign} 
+        players={[mockPlayer]} 
+        activePlayerIndex={0}
+        onNodeClick={() => {}}
+        guiStyle="authentic"
+      />
+    );
+
+    await waitFor(() => {
+      const marker = screen.getByTestId('player-character');
+      expect(marker).toHaveAttribute('data-visible', 'true');
+      // 540 / 3.75 = 144, 150 / 3.75 = 40
+      expect(marker).toHaveAttribute('data-x', '144');
+      expect(marker).toHaveAttribute('data-y', '40');
+    });
   });
 });

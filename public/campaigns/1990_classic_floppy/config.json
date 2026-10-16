@@ -2,7 +2,9 @@
   "name": "The Fast Lane — Classic 1990",
   "version": "1.0.0",
   "description": "Original game campaign based on Jones in the Fast Lane (Floppy Version)",
+  "supportedGuiStyles": ["generated", "authentic"],
   "startingMoney": 200,
+
   "winConditions": [
     { "stat": "wealth", "target": 100, "label": "Wealth" },
     { "stat": "happiness", "target": 100, "label": "Happiness" },

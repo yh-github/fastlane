@@ -73,10 +73,23 @@ export default function App() {
     } catch {
       // ignore
     }
+    let savedGuiStyle: 'generated' | 'authentic' | undefined = undefined;
+    try {
+      const stored = localStorage.getItem('fastlane_gui_style');
+      if (stored === 'generated' || stored === 'authentic') {
+        const isSupported = campaign.config.supportedGuiStyles ? campaign.config.supportedGuiStyles.includes(stored) : true;
+        if (isSupported) {
+          savedGuiStyle = stored;
+        }
+      }
+    } catch {
+      // ignore
+    }
     const initialRules = {
       ...(savedCurvedBoard !== undefined ? { authenticCurvedPaths: savedCurvedBoard } : {}),
       ...(savedHudLayout !== undefined ? { hudLayout: savedHudLayout } : {}),
-      ...(savedWorkConsoleStyle !== undefined ? { workConsoleStyle: savedWorkConsoleStyle } : {})
+      ...(savedWorkConsoleStyle !== undefined ? { workConsoleStyle: savedWorkConsoleStyle } : {}),
+      ...(savedGuiStyle !== undefined ? { guiStyle: savedGuiStyle } : {})
     };
     const baseInitialState = createInitialGameState(
       campaign,
