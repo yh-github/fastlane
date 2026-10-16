@@ -46,7 +46,7 @@ describe('AppraisalDilemmaModal', () => {
     ]
   };
 
-  it('renders prominent spacious cards on large screen (1440x900)', () => {
+  it('renders prominent spacious cards on large screen (1440x900) without blacking out screen', () => {
     window.innerWidth = 1440;
     window.innerHeight = 900;
 
@@ -64,13 +64,21 @@ describe('AppraisalDilemmaModal', () => {
     expect(screen.getByText('Antique Swiss Tourbillon Pocketwatch')).toBeInTheDocument();
     expect(screen.getByText('Quick Escapement Adjustment')).toBeInTheDocument();
 
+    const overlay = document.body.querySelector('.appraisal-dilemma-overlay') as HTMLElement;
+    expect(overlay).toBeInTheDocument();
+    // Verify non-blackout: semi-transparent backdrop and z-index below HUD (60 < 100)
+    expect(overlay.style.zIndex).toBe('60');
+    expect(overlay.style.backgroundColor).toBe('rgba(5, 10, 20, 0.45)');
+
     const cards = document.body.querySelectorAll('.appraisal-card');
     expect(cards.length).toBe(4);
     expect(document.body.querySelector('.appraisal-card--compact')).toBeNull();
     expect(document.body.querySelector('.appraisal-cards-carousel')).toBeNull();
 
-    // Clicking an option triggers onSelectOption
-    fireEvent.click(cards[0]);
+    // Clicking an option action button triggers confirmation
+    const selectBtn = cards[0].querySelector('.card-action-btn') as HTMLElement;
+    expect(selectBtn).toBeInTheDocument();
+    fireEvent.click(selectBtn);
     expect(onSelectOption).toHaveBeenCalledWith(0);
   });
 
@@ -94,7 +102,7 @@ describe('AppraisalDilemmaModal', () => {
     // In 800px width with 4 cards, they fit side-by-side in grid mode without carousel
     expect(document.body.querySelector('.appraisal-cards-carousel')).toBeNull();
 
-    // Verify option titles and rewards appear in compact form
+    // Verify option titles and rewards appear on card face
     expect(screen.getByText('+$25')).toBeInTheDocument();
     expect(screen.getByText(/\+2 🤝,\s*\+1 🧠/)).toBeInTheDocument();
   });
@@ -129,7 +137,7 @@ describe('AppraisalDilemmaModal', () => {
     expect(onSelectOption).toHaveBeenCalledWith(1);
   });
 
-  it('renders initiative cards with clear stat labels and toggles help guide on ? click', () => {
+  it('renders initiative cards with canonical icons on card face, clean buttons, no top badges, and per-card ? help', () => {
     const initiativeDilemma = {
       gameType: 'work_initiative' as const,
       title: 'Workplace Initiative: Career Boost',
@@ -137,17 +145,19 @@ describe('AppraisalDilemmaModal', () => {
       options: [
         {
           type: 'initiative' as const,
-          badge: 'EXPERIENCE',
+          badge: 'EXPERIENCE', // Should NOT be rendered as a top tag
           title: 'Role Mentorship',
           description: 'Shadow senior developers.',
+          icon: '👌',
           expAmount: 1.5,
           depAmount: 1.0
         },
         {
           type: 'initiative' as const,
-          badge: 'EXPENSIVE',
+          badge: 'EXPENSIVE', // Should NOT be rendered as a top tag
           title: 'Crunch Sprint',
           description: 'High stakes delivery.',
+          icon: '👔',
           leadershipSkillAmount: 0.5,
           mentalAmount: -2.0,
           burnoutRisk: true
@@ -163,23 +173,83 @@ describe('AppraisalDilemmaModal', () => {
       />
     );
 
-    // Verify canonical stat icons appear on buttons (without redundant text labels)
-    expect(screen.getByText(/\+1\.5 👌/)).toBeInTheDocument();
-    expect(screen.getByText(/\+0\.5 👔/)).toBeInTheDocument();
-    expect(screen.getByText(/-2 🧠/)).toBeInTheDocument();
+    // 1. Modifiers appear in the Outcome box on the card face
+    expect(screen.getByText(/\+1\.5 👌,\s*\+1 🤝/)).toBeInTheDocument();
+    expect(screen.getByText(/\+0\.5 👔,\s*-2 🧠/)).toBeInTheDocument();
 
-    // Verify help button toggles guide
-    const helpBtn = screen.getByTestId('appraisal-help-btn');
-    expect(helpBtn).toBeInTheDocument();
-    expect(screen.queryByTestId('appraisal-help-panel')).not.toBeInTheDocument();
+    // 2. Buttons are clean action buttons (NO stat text crammed into buttons)
+    const selectButtons = screen.getAllByRole('button', { name: /select|accept/i });
+    selectButtons.forEach(btn => {
+      // The button text should NOT contain the stat modifiers
+      expect(btn.textContent).not.toMatch(/\+1\.5 👌/);
+      expect(btn.textContent).not.toMatch(/-2 🧠/);
+    });
 
-    fireEvent.click(helpBtn);
-    expect(screen.getByTestId('appraisal-help-panel')).toBeInTheDocument();
-    expect(screen.getByText(/Workplace Initiative Guide/i)).toBeInTheDocument();
-    expect(screen.getByText(/👌 Experience/i)).toBeInTheDocument();
+    // 3. Top tags like "EXPERIENCE", "EXPENSIVE", "ETHICS", "BOUNTY" must NOT be rendered
+    expect(screen.queryByText('EXPERIENCE')).not.toBeInTheDocument();
+    expect(screen.queryByText('EXPENSIVE')).not.toBeInTheDocument();
+    expect(screen.queryByText('ETHICS')).not.toBeInTheDocument();
+    expect(screen.queryByText('BOUNTY')).not.toBeInTheDocument();
 
-    // Close help panel
-    fireEvent.click(screen.getByText('✕'));
-    expect(screen.queryByTestId('appraisal-help-panel')).not.toBeInTheDocument();
+    // 4. Per-card '?' help button exists on each card
+    const card0HelpBtn = screen.getByTestId('card-help-btn-0');
+    const card1HelpBtn = screen.getByTestId('card-help-btn-1');
+    expect(card0HelpBtn).toBeInTheDocument();
+    expect(card1HelpBtn).toBeInTheDocument();
+
+    // Card 0 help panel is initially closed
+    expect(screen.queryByTestId('card-help-panel-0')).not.toBeInTheDocument();
+
+    // Clicking Card 0 help button opens Card 0 specific explanation
+    fireEvent.click(card0HelpBtn);
+    expect(screen.getByTestId('card-help-panel-0')).toBeInTheDocument();
+    expect(screen.getByText(/👌 Experience \(\+1\.5\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/🤝 Dependability \(\+1\)/i)).toBeInTheDocument();
+    // Card 1 panel is not open
+    expect(screen.queryByTestId('card-help-panel-1')).not.toBeInTheDocument();
+
+    // Close Card 0 help
+    const closeBtn = screen.getByRole('button', { name: /close help/i });
+    fireEvent.click(closeBtn);
+    expect(screen.queryByTestId('card-help-panel-0')).not.toBeInTheDocument();
+
+    // Clicking Card 1 help button opens Card 1 specific explanation (Leadership, Burnout Risk)
+    fireEvent.click(card1HelpBtn);
+    expect(screen.getByTestId('card-help-panel-1')).toBeInTheDocument();
+    expect(screen.getByText(/👔 Leadership \(\+0\.5\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/⚠️ Burnout Risk/i)).toBeInTheDocument();
+  });
+
+  it('portals inside .game-viewport when present to protect HUD visibility, and handles direct card clicks', () => {
+    window.innerWidth = 1440;
+    window.innerHeight = 900;
+
+    // Setup a simulated game-viewport
+    const viewport = document.createElement('div');
+    viewport.className = 'game-viewport';
+    document.body.appendChild(viewport);
+
+    const onSelectOption = vi.fn();
+    const player = createTestPlayer({ name: 'Clara' });
+
+    render(
+      <AppraisalDilemmaModal
+        dilemma={dummyDilemma}
+        player={player}
+        onSelectOption={onSelectOption}
+      />
+    );
+
+    // Verify modal is mounted inside .game-viewport (leaving HUD untouched outside)
+    const overlayInViewport = viewport.querySelector('.appraisal-dilemma-overlay');
+    expect(overlayInViewport).toBeInTheDocument();
+
+    // Clicking anywhere on the card container directly calls onSelectOption in grid mode
+    const cards = viewport.querySelectorAll('.appraisal-card');
+    fireEvent.click(cards[2]);
+    expect(onSelectOption).toHaveBeenCalledWith(2);
+
+    // Cleanup
+    document.body.removeChild(viewport);
   });
 });
