@@ -52,6 +52,7 @@ vi.mock('./graphics/pathfinding', () => ({
 describe('App Integration & StrictMode', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it('does not double-execute side effects when in StrictMode (e.g. buying an item)', async () => {

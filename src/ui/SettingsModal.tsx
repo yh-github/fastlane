@@ -4,6 +4,7 @@ import { type GameState } from '../engine/gameState';
 import { type CampaignBundle } from '../engine/dataLoader';
 import type { ReplayData } from '../engine/replayTypes';
 import { DebugEventsModal } from './DebugEventsModal';
+import { exportReplayToFile, exportSaveToFile } from '../utils/saveManager';
 
 interface SettingsModalProps {
   gameState: GameState;
@@ -248,13 +249,17 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
 
   const handleExportReplay = () => {
     if (!replayData) return;
-    const blob = new Blob([JSON.stringify(replayData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fastlane-replay-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportReplayToFile(replayData);
+  };
+
+  const handleExportSave = () => {
+    exportSaveToFile({
+      version: 1,
+      campaignId: campaign?.config.name || gameState.campaignId || 'qol_improved',
+      gameState,
+      replayData,
+      timestamp: Date.now()
+    });
   };
 
   const isInterfaceCollapsed = !!collapsedCategories['interface'];
@@ -847,6 +852,9 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                 Export Replay
               </button>
             )}
+            <button className="action-panel__btn" data-testid="btn-export-save" onClick={handleExportSave}>
+              {t('autoSave.exportSave', { defaultValue: 'Export Save' })}
+            </button>
             {onQuitGame && (
               <button 
                 className="action-panel__btn" 

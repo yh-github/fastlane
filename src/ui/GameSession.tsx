@@ -22,25 +22,48 @@ import { useIsLandscape } from '../hooks/useScreenOrientation';
 import type { GameState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { ReplayData } from '../engine/replayTypes';
+import type { LogEntry } from '../hooks/gameEngine';
 import { Random } from '../utils/rng';
 import type { ActiveModal } from '../types/modal';
+import { saveAutoSave, clearAutoSave, resolveCampaignId } from '../utils/saveManager';
 
 export interface GameSessionProps {
   campaign: CampaignBundle;
+  campaignId?: string;
   initialGameState: GameState;
   onGameOver: (info: { playerName: string; turn: number; replayData: ReplayData | null }) => void;
   onQuitToTitle: () => void;
+  initialLogs?: LogEntry[];
+  initialReplayData?: ReplayData | null;
+  initialActivePlayerIndex?: number;
+  initialActiveModal?: ActiveModal;
+  isResumed?: boolean;
 }
 
 export const GameSession: React.FC<GameSessionProps> = ({
   campaign,
+  campaignId,
   initialGameState,
   onGameOver,
   onQuitToTitle,
+  initialLogs,
+  initialReplayData,
+  initialActivePlayerIndex,
+  initialActiveModal,
+  isResumed,
 }) => {
   const { t } = useTranslation();
   const isLandscape = useIsLandscape();
-  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [activeModal, setActiveModal] = useState<ActiveModal>(() => {
+    if (isResumed) {
+      if (initialActiveModal !== undefined) return initialActiveModal;
+      const playerIdx = initialActivePlayerIndex ?? 0;
+      const activeP = initialGameState.players[playerIdx];
+      const bldId = activeP ? campaign.map.nodes.find((n) => n.id === activeP.position)?.buildingId : null;
+      return bldId ? { type: 'building' } : null;
+    }
+    return null;
+  });
   const previousModalRef = useRef<ActiveModal>(null);
   const [activeLogFilter, setActiveLogFilter] = useState<GoalFilter | null>(null);
   const [hudFoldState, setHudFoldState] = useState<HudFoldState>('full');
@@ -104,14 +127,70 @@ export const GameSession: React.FC<GameSessionProps> = ({
     openModal,
     closeModal,
     triggerScreenShake,
-    clearFloatingAnims
+    clearFloatingAnims,
+    initialLogs,
+    initialReplayData,
+    initialActivePlayerIndex,
+    isResumed
   );
 
   useNavigationGuard({ enabled: gameState?.phase === 'playing' });
 
+  // Auto-save game state changes
+  useEffect(() => {
+    if (!gameState) return;
+    if (gameState.phase === 'game-over' || gameState.winnerId) {
+      clearAutoSave();
+      return;
+    }
+    if (gameState.phase === 'playing' || gameState.phase === 'weekend') {
+      const resolvedId = resolveCampaignId(campaignId || gameState.campaignId || campaign.config.name);
+      saveAutoSave({
+        version: 1,
+        campaignId: resolvedId,
+        gameState,
+        logs,
+        replayData,
+        activePlayerIndex,
+        activeModal: activeModal?.type === 'settings' ? null : activeModal,
+        timestamp: Date.now(),
+      });
+    }
+  }, [gameState, activeModal, logs, activePlayerIndex, campaignId, replayData, campaign]);
+
+  // Page hide / visibilitychange listener to ensure immediate save when backgrounding on mobile
+  useEffect(() => {
+    const handleVisibilityOrUnload = () => {
+      if (document.visibilityState === 'hidden') {
+        if (!gameState || gameState.phase === 'game-over' || gameState.winnerId) return;
+        if (gameState.phase === 'playing' || gameState.phase === 'weekend') {
+          const resolvedId = resolveCampaignId(campaignId || gameState.campaignId || campaign.config.name);
+          saveAutoSave({
+            version: 1,
+            campaignId: resolvedId,
+            gameState,
+            logs,
+            replayData,
+            activePlayerIndex,
+            activeModal: activeModal?.type === 'settings' ? null : activeModal,
+            timestamp: Date.now(),
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrUnload);
+    window.addEventListener('pagehide', handleVisibilityOrUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityOrUnload);
+      window.removeEventListener('pagehide', handleVisibilityOrUnload);
+    };
+  }, [gameState, logs, replayData, activePlayerIndex, activeModal, campaignId, campaign]);
+
   // Handle Game Over transition
   useEffect(() => {
     if (gameState?.phase === 'game-over') {
+      clearAutoSave();
       onGameOver({
         playerName: gameState.winnerId || 'Player 1',
         turn: gameState.turn,
@@ -468,7 +547,10 @@ export const GameSession: React.FC<GameSessionProps> = ({
             onClose={closeModal} 
             onOpenLog={handleOpenLog}
             logCount={logs.length}
-            onQuitGame={onQuitToTitle}
+            onQuitGame={() => {
+              clearAutoSave();
+              onQuitToTitle();
+            }}
           />
         )}
 
