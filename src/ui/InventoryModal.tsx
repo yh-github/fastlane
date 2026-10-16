@@ -56,7 +56,7 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
   return (
     <div 
       className={`building-modal ${rules?.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}`}
-      style={{ zIndex: 55, display: 'flex', flexDirection: 'column' }}
+      style={{ zIndex: 75, display: 'flex', flexDirection: 'column' }}
       data-testid="inventory-modal"
     >
       <button 

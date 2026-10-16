@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { AppraisalDilemmaState, PlayerState } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../../engine/statMath';
+import { CardView } from '../../CardView';
 
 interface AppraisalDilemmaModalProps {
   dilemma: AppraisalDilemmaState;
@@ -13,20 +14,31 @@ interface AppraisalDilemmaModalProps {
   compact?: boolean;
 }
 
-function getOptionRewardDetails(opt: any, hasSpace: boolean) {
-  let icon = opt.icon || '💵';
+function getOptionDetails(opt: any, hasSpace: boolean) {
+  let icon: React.ReactNode = opt.icon || '💵';
   let borderColor = '#22c55e';
   let rewardText = `+$${opt.cashAmount || 0}`;
-  let shortTag = 'Cash';
+  let shortTag = opt.title ? opt.title.split(' ')[0] : 'Choice';
+  let warning: React.ReactNode = undefined;
+  let helpText: React.ReactNode = undefined;
 
   if (opt.type === 'initiative') {
-    shortTag = opt.badge || 'Initiative';
-    if (opt.badge === 'LEADERSHIP') borderColor = '#38bdf8';
-    else if (opt.badge === 'TECHNICAL') borderColor = '#10b981';
-    else if (opt.badge === 'ETHICS') borderColor = '#a855f7';
-    else if (opt.badge === 'BOUNTY') borderColor = '#22c55e';
-    else if (opt.badge === 'EXPENSIVE') borderColor = '#ef4444';
+    if (opt.burnoutRisk) borderColor = '#ef4444';
+    else if (opt.standingAmount) borderColor = '#38bdf8';
+    else if (opt.leadershipSkillAmount) borderColor = '#38bdf8';
+    else if (opt.techSkillAmount) borderColor = '#10b981';
+    else if (opt.mentalAmount && opt.mentalAmount > 0) borderColor = '#a855f7';
+    else if (opt.cashAmount) borderColor = '#22c55e';
     else borderColor = '#f59e0b';
+
+    icon = opt.icon || (
+      opt.burnoutRisk ? '⚠️' :
+      opt.standingAmount ? '🌟' :
+      opt.leadershipSkillAmount ? '👔' :
+      opt.techSkillAmount ? '🔧' :
+      opt.cashAmount ? '💵' :
+      (opt.mentalAmount && opt.mentalAmount > 0) ? '🧠' : '👌'
+    );
 
     const parts: string[] = [];
     if (opt.standingAmount) parts.push(`+${opt.standingAmount} 🌟`);
@@ -40,30 +52,158 @@ function getOptionRewardDetails(opt: any, hasSpace: boolean) {
     if (opt.mentalAmount && opt.mentalAmount < 0) parts.push(`${opt.mentalAmount} 🧠`);
     if (opt.socialAmount && opt.socialAmount < 0) parts.push(`${opt.socialAmount} 👥`);
     if (opt.physicalAmount && opt.physicalAmount < 0) parts.push(`${opt.physicalAmount} 💪`);
-    rewardText = parts.length > 0 ? parts.join(', ') : 'Select';
+    rewardText = parts.length > 0 ? parts.join(', ') : 'Standard';
+
+    if (opt.burnoutRisk) {
+      warning = '⚠️ High Burnout & Mistake Risk';
+    }
+
+    const helpParts: React.ReactNode[] = [];
+    if (opt.expAmount) {
+      helpParts.push(
+        <div key="exp" style={{ marginBottom: '4px' }}>
+          <strong>👌 Experience (+{opt.expAmount}):</strong> Builds on-the-job mastery towards promotions.
+        </div>
+      );
+    }
+    if (opt.depAmount) {
+      helpParts.push(
+        <div key="dep" style={{ marginBottom: '4px' }}>
+          <strong>🤝 Dependability (+{opt.depAmount}):</strong> Proves reliability to qualify for raises and avoid demerits.
+        </div>
+      );
+    }
+    if (opt.leadershipSkillAmount) {
+      helpParts.push(
+        <div key="lead" style={{ marginBottom: '4px' }}>
+          <strong>👔 Leadership (+{opt.leadershipSkillAmount}):</strong> Advances managerial competency for supervisor and manager positions.
+        </div>
+      );
+    }
+    if (opt.techSkillAmount) {
+      helpParts.push(
+        <div key="tech" style={{ marginBottom: '4px' }}>
+          <strong>🔧 Tech Skill (+{opt.techSkillAmount}):</strong> Develops technical proficiency for specialist roles and DIY repairs.
+        </div>
+      );
+    }
+    if (opt.standingAmount) {
+      helpParts.push(
+        <div key="standing" style={{ marginBottom: '4px' }}>
+          <strong>🌟 Standing (+{opt.standingAmount}):</strong> Local reputation at this employer, improving raise chances and employability.
+        </div>
+      );
+    }
+    if (opt.cashAmount) {
+      helpParts.push(
+        <div key="cash" style={{ marginBottom: '4px' }}>
+          <strong>💵 Cash Bounty (+${opt.cashAmount}):</strong> Immediate earnings from client efficiency and bonuses.
+        </div>
+      );
+    }
+    if (opt.cashCost) {
+      helpParts.push(
+        <div key="cost" style={{ marginBottom: '4px' }}>
+          <strong>💸 Cost (-${opt.cashCost}):</strong> Out-of-pocket investment for tools or materials.
+        </div>
+      );
+    }
+    if (opt.mentalAmount && opt.mentalAmount > 0) {
+      helpParts.push(
+        <div key="mental-pos" style={{ marginBottom: '4px' }}>
+          <strong>🧠 Morale (+{opt.mentalAmount}):</strong> Craftsmanship, ethics, and pride restore mental energy.
+        </div>
+      );
+    }
+    if (opt.mentalAmount && opt.mentalAmount < 0) {
+      helpParts.push(
+        <div key="mental-neg" style={{ marginBottom: '4px' }}>
+          <strong>🧠 Mental Drain ({opt.mentalAmount}):</strong> Heavy workload and cognitive pressure deplete mental condition.
+        </div>
+      );
+    }
+    if (opt.burnoutRisk) {
+      helpParts.push(
+        <div key="burnout" style={{ color: '#fca5a5', marginBottom: '4px' }}>
+          <strong>⚠️ Burnout Risk:</strong> Severe exhaustion increases the risk of mistakes during shifts.
+        </div>
+      );
+    }
+    if (opt.physicalAmount && opt.physicalAmount < 0) {
+      helpParts.push(
+        <div key="phys" style={{ marginBottom: '4px' }}>
+          <strong>💪 Physical Strain ({opt.physicalAmount}):</strong> Strenuous labor reduces physical stamina.
+        </div>
+      );
+    }
+    if (opt.socialAmount && opt.socialAmount < 0) {
+      helpParts.push(
+        <div key="social" style={{ marginBottom: '4px' }}>
+          <strong>👥 Social Friction ({opt.socialAmount}):</strong> Intense deadlines reduce time for social connection.
+        </div>
+      );
+    }
+
+    helpText = (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        {helpParts}
+      </div>
+    );
   } else if (opt.type === 'standing') {
     icon = '⭐';
     borderColor = '#38bdf8';
     shortTag = 'Standing';
     rewardText = `+${opt.depAmount || 0} 🤝${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
+    helpText = (
+      <div>
+        <strong>⭐ Certification & Standing:</strong> Authenticating and documenting the timepiece builds employer trust (🤝 Dependability) and craft pride (🧠 Mental).
+      </div>
+    );
   } else if (opt.type === 'item') {
     icon = opt.itemType === 'spare_parts' ? '⚙️' : '🏺';
     shortTag = opt.itemType === 'spare_parts' ? 'Parts' : 'Curio';
     if (hasSpace) {
       borderColor = '#a855f7';
       rewardText = opt.itemType === 'spare_parts' ? '1x Spare Parts' : '1x Knick-Knack';
+      helpText = (
+        <div>
+          <strong>{opt.itemType === 'spare_parts' ? '⚙️ Spare Parts' : '🏺 Knick-Knack'}:</strong> Keep this curio in your apartment to furnish your home or use for DIY repairs.
+        </div>
+      );
     } else {
       borderColor = '#f59e0b';
       rewardText = opt.itemType === 'spare_parts' ? 'Auto-Pawn (+$10)' : 'Auto-Pawn (+$15)';
+      warning = '⚠️ Auto-pawn scrap cash';
+      helpText = (
+        <div>
+          <strong>⚠️ Auto-Pawn:</strong> Apartment space is full! Item will be automatically pawned for immediate scrap cash.
+        </div>
+      );
     }
   } else if (opt.type === 'skill') {
     icon = '🔧';
     borderColor = '#f59e0b';
     shortTag = 'Tech';
     rewardText = `+${opt.techSkillAmount || 0} 🔧${opt.mentalAmount ? `, +${opt.mentalAmount} 🧠` : ''}`;
+    helpText = (
+      <div>
+        <strong>🔧 Technical Apprenticeship:</strong> Studying intricate clockwork escapements expands Tech Skill (🔧) and mental satisfaction (🧠).
+      </div>
+    );
+  } else {
+    // cash
+    icon = '💵';
+    borderColor = '#22c55e';
+    rewardText = `+$${opt.cashAmount || 0}`;
+    shortTag = 'Cash';
+    helpText = (
+      <div>
+        <strong>💵 Immediate Cash Tip:</strong> Quick customer payout for swift mechanical adjustment and expedient service.
+      </div>
+    );
   }
 
-  return { icon, borderColor, rewardText, shortTag };
+  return { icon, borderColor, rewardText, shortTag, warning, helpText };
 }
 
 export function AppraisalDilemmaModal({
@@ -80,7 +220,6 @@ export function AppraisalDilemmaModal({
     height: typeof window !== 'undefined' ? window.innerHeight : 768
   });
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
-  const [showHelp, setShowHelp] = useState<boolean>(false);
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const isInitiative = dilemma.gameType === 'work_initiative';
 
@@ -145,24 +284,35 @@ export function AppraisalDilemmaModal({
 
   if (typeof document === 'undefined') return null;
 
+  // Render inside .game-viewport so HUD (top / side) remains 100% visible and interactive.
+  // Fall back to document.body if running in an isolated test environment without a full viewport.
+  const portalTarget = document.querySelector('.game-viewport') || document.body;
+
+  const modalTitle = isInitiative
+    ? (dilemma.title || t('appraisalDilemma.initiativeTitle', { defaultValue: 'Workplace Initiative' }))
+    : t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' });
+  const headerIcons = isInitiative ? '🌟 👔 👌' : '🔍 ⚖️ 🏷️';
+
   return createPortal(
     <div
-      className="building-modal-overlay"
+      className="building-modal-overlay appraisal-dilemma-overlay"
       data-testid="appraisal-dilemma-modal"
       role="dialog"
       aria-modal="true"
-      aria-label={t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' })}
+      aria-label={modalTitle}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       onClick={(e) => e.stopPropagation()}
       style={{
-        position: 'fixed',
+        position: portalTarget === document.body ? 'fixed' : 'absolute',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.88)',
-        zIndex: 9999,
+        // Semi-transparent backdrop with blur: never pitch-black screen so player retains full situational awareness of HUD and board
+        backgroundColor: 'rgba(5, 10, 20, 0.45)',
+        backdropFilter: 'blur(3px)',
+        zIndex: 60, // Above building-modal (50), below HUD (100) and Status modal (75)
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -176,9 +326,9 @@ export function AppraisalDilemmaModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'linear-gradient(145deg, #1e293b, #0f172a)',
-          padding: isCompact ? '12px 14px' : '22px 24px',
+          padding: isCompact ? '12px 14px' : '20px 22px',
           borderRadius: isCompact ? '10px' : '12px',
-          width: isCarouselMode ? 'min(580px, 96vw)' : (isCompact ? 'min(780px, 96vw)' : '680px'),
+          width: isCarouselMode ? 'min(580px, 96vw)' : (isCompact ? 'min(780px, 96vw)' : '720px'),
           maxWidth: '96%',
           maxHeight: 'min(92vh, 620px)',
           overflowY: isCarouselMode ? 'visible' : 'auto',
@@ -191,152 +341,46 @@ export function AppraisalDilemmaModal({
           animation: 'popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
         }}
       >
-        {/* HEADER */}
-        {(() => {
-          const isInitiative = dilemma.gameType === 'work_initiative';
-          const modalTitle = isInitiative
-            ? (dilemma.title || t('appraisalDilemma.initiativeTitle', { defaultValue: 'Workplace Initiative' }))
-            : t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' });
-          const headerIcons = isInitiative ? '🌟 👔 👌' : '🔍 ⚖️ 🏷️';
-
-          return isCompact ? (
-            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1.25rem' }}>{headerIcons}</span>
-                <h3 style={{ margin: 0, color: '#facc15', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                  {modalTitle}
-                </h3>
-                <button
-                  type="button"
-                  data-testid="appraisal-help-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowHelp(prev => !prev);
-                  }}
-                  title={isInitiative ? "Explain initiative options and icons" : "Appraisal Help"}
-                  style={{
-                    background: showHelp ? 'rgba(234, 179, 8, 0.35)' : 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(234, 179, 8, 0.5)',
-                    borderRadius: '50%',
-                    width: '20px',
-                    height: '20px',
-                    color: '#facc15',
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginLeft: '4px',
-                    lineHeight: '1'
-                  }}
-                >
-                  ?
-                </button>
-              </div>
-              <div style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                {isInitiative ? (
-                  dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
-                ) : (
-                  <>
-                    {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
-                    <strong style={{ color: '#fef08a' }}>{dilemma.itemTitle}</strong>
-                  </>
-                )}
-              </div>
+        {/* HEADER: Clean title and subtitle with no global ? button (help is now contextual per card) */}
+        {isCompact ? (
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '1.25rem' }}>{headerIcons}</span>
+              <h3 style={{ margin: 0, color: '#facc15', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                {modalTitle}
+              </h3>
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <div style={{ fontSize: '2.2rem', marginBottom: '4px' }}>{headerIcons}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <h2 style={{ margin: '0 0 4px 0', color: '#facc15', fontSize: '1.35rem' }}>
-                  {modalTitle}
-                </h2>
-                <button
-                  type="button"
-                  data-testid="appraisal-help-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowHelp(prev => !prev);
-                  }}
-                  title={isInitiative ? "Explain initiative options and icons" : "Appraisal Help"}
-                  style={{
-                    background: showHelp ? 'rgba(234, 179, 8, 0.35)' : 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(234, 179, 8, 0.5)',
-                    borderRadius: '50%',
-                    width: '22px',
-                    height: '22px',
-                    color: '#facc15',
-                    fontSize: '0.80rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    lineHeight: '1'
-                  }}
-                >
-                  ?
-                </button>
-              </div>
-              <div style={{ fontSize: '0.95rem', color: '#94a3b8' }}>
-                {isInitiative ? (
-                  dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
-                ) : (
-                  <>
-                    {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
-                    <strong style={{ color: '#e2e8f0' }}>{dilemma.itemTitle}</strong>
-                  </>
-                )}
-              </div>
+            <div style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
+              {isInitiative ? (
+                dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
+              ) : (
+                <>
+                  {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
+                  <strong style={{ color: '#fef08a' }}>{dilemma.itemTitle}</strong>
+                </>
+              )}
             </div>
-          );
-        })()}
-
-        {/* HELP POPUP / EXPLANATION PANEL */}
-        {showHelp && (
-          <div
-            data-testid="appraisal-help-panel"
-            style={{
-              background: 'rgba(15, 23, 42, 0.98)',
-              border: '1.5px solid #eab308',
-              borderRadius: '8px',
-              padding: '10px 14px',
-              marginBottom: '10px',
-              fontSize: '0.78rem',
-              lineHeight: '1.4',
-              color: '#cbd5e1',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.6)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span style={{ fontWeight: 'bold', color: '#facc15' }}>💡 {dilemma.gameType === 'work_initiative' ? 'Workplace Initiative Guide' : 'Appraisal Guide'}</span>
-              <button
-                type="button"
-                onClick={() => setShowHelp(false)}
-                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold', padding: 0 }}
-              >
-                ✕
-              </button>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', marginBottom: '14px' }}>
+            <div style={{ fontSize: '2.0rem', marginBottom: '2px' }}>{headerIcons}</div>
+            <h2 style={{ margin: '0 0 4px 0', color: '#facc15', fontSize: '1.35rem' }}>
+              {modalTitle}
+            </h2>
+            <div style={{ fontSize: '0.92rem', color: '#94a3b8' }}>
+              {isInitiative ? (
+                dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
+              ) : (
+                <>
+                  {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
+                  <strong style={{ color: '#e2e8f0' }}>{dilemma.itemTitle}</strong>
+                </>
+              )}
             </div>
-            {dilemma.gameType === 'work_initiative' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div><strong>👌 Experience:</strong> Builds on-the-job mastery towards promotions.</div>
-                <div><strong>👔 Leadership:</strong> Advances managerial competency for management positions.</div>
-                <div><strong>🔧 Tech Skill:</strong> Develops technical proficiency for specialist roles and DIY repairs.</div>
-                <div><strong>🤝 Dependability:</strong> Proves reliability to prevent demerits and qualify for raises.</div>
-                <div><strong>🌟 Workplace Standing:</strong> Local reputation improving employability and raise prospects.</div>
-                <div><strong>💵 Cash Bounty:</strong> Immediate earnings from client efficiency and quotas.</div>
-                <div><strong>🧠 Ethics & Integrity:</strong> Dedicated craft restoring Mental condition.</div>
-                <div><strong>⚠️ High-Stakes Sprint:</strong> Heavy workload sprint granting large skill/experience bonuses, but drains Mental condition and risks burnout.</div>
-              </div>
-            ) : (
-              <div>Choose how to handle the customer item based on appraisal value and apartment space.</div>
-            )}
           </div>
         )}
 
-        {/* TOUCH CAROUSEL PILL NAVIGATION (when carousel is active) */}
+        {/* TOUCH CAROUSEL PILL NAVIGATION (when carousel is active on narrow screens) */}
         {isCarouselMode && (
           <div className="appraisal-carousel-indicator" role="tablist" aria-label="Appraisal options selector">
             <button
@@ -363,7 +407,7 @@ export function AppraisalDilemmaModal({
             </button>
 
             {dilemma.options.map((opt, idx) => {
-              const details = getOptionRewardDetails(opt, hasSpace);
+              const details = getOptionDetails(opt, hasSpace);
               const isSelected = selectedIdx === idx;
 
               return (
@@ -406,7 +450,7 @@ export function AppraisalDilemmaModal({
           </div>
         )}
 
-        {/* CARDS CONTAINER: CAROUSEL VS SIDE-BY-SIDE GRID */}
+        {/* CARDS CONTAINER: SHARED CARD PRESENTATION LAYER */}
         <div
           data-testid="appraisal-cards-container"
           className={isCarouselMode ? "appraisal-cards-carousel" : "appraisal-cards-grid"}
@@ -414,149 +458,47 @@ export function AppraisalDilemmaModal({
             display: 'grid',
             gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
             gap: isCompact ? '8px' : '12px',
-            marginBottom: isCompact ? '6px' : '14px',
+            marginBottom: isCompact ? '6px' : '12px',
             alignItems: 'stretch'
           } : undefined}
         >
           {dilemma.options.map((opt, idx) => {
-            const details = getOptionRewardDetails(opt, hasSpace);
-            const { icon, borderColor, rewardText } = details;
-            const isItemFull = opt.type === 'item' && !hasSpace;
-
+            const details = getOptionDetails(opt, hasSpace);
             const isSelected = selectedIdx === idx;
             const displayTitle = opt.title || t(`appraisalDilemma.option_${opt.type}.title`, { defaultValue: opt.title });
             const displayDesc = opt.description || t(`appraisalDilemma.option_${opt.type}.desc`, { defaultValue: opt.description });
 
             return (
-              <div
+              <CardView
                 key={idx}
                 ref={(el) => { cardRefs.current[idx] = el; }}
-                data-testid={`appraisal-option-${idx}`}
+                testId={`appraisal-option-${idx}`}
+                actionTarget={`appraisal-choice-${idx}`}
                 className={`appraisal-card ${isCompact ? 'appraisal-card--compact' : ''}`}
-                onClick={() => {
+                compact={isCompact}
+                isSelected={isSelected}
+                onSelect={() => {
+                  setSelectedIdx(idx);
                   if (isCarouselMode) {
                     scrollToOption(idx);
                   } else {
                     onSelectOption(idx);
                   }
                 }}
-                style={{
-                  background: isSelected && isCarouselMode
-                    ? 'linear-gradient(165deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)'
-                    : 'linear-gradient(165deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
-                  border: isSelected
-                    ? `2px solid ${borderColor}`
-                    : `1.5px solid ${borderColor}66`,
-                  borderRadius: isCompact ? '8px' : '10px',
-                  padding: isCompact ? '8px 8px' : '14px 12px',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: isCompact ? '4px' : '8px',
-                  boxShadow: isSelected
-                    ? `0 0 16px ${borderColor}55, 0 4px 12px rgba(0,0,0,0.5)`
-                    : '0 2px 8px rgba(0,0,0,0.4)',
-                  textAlign: 'center',
-                  boxSizing: 'border-box'
-                }}
-              >
-                {/* Badge if present */}
-                {opt.badge && (
-                  <span style={{
-                    fontSize: '0.62rem',
-                    fontWeight: 'bold',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    background: `${borderColor}22`,
-                    color: borderColor,
-                    border: `1px solid ${borderColor}55`,
-                    marginBottom: '2px',
-                    display: 'inline-block'
-                  }}>
-                    {opt.badge}
-                  </span>
-                )}
-
-                {/* Icon & Title */}
-                <div>
-                  {!isInitiative && (
-                    <div style={{ fontSize: isCompact ? '1.35rem' : '1.9rem', lineHeight: '1.1' }}>
-                      {icon}
-                    </div>
-                  )}
-                  <div style={{
-                    fontWeight: 'bold',
-                    fontSize: isCompact ? '0.82rem' : '0.94rem',
-                    color: '#f8fafc',
-                    marginTop: '2px',
-                    lineHeight: '1.2'
-                  }}>
-                    {displayTitle}
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div style={{
-                  fontSize: isCompact ? '0.70rem' : '0.78rem',
-                  color: '#94a3b8',
-                  lineHeight: '1.25',
-                  flex: 1,
-                  display: '-webkit-box',
-                  WebkitLineClamp: isCompact ? 2 : 4,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}>
-                  {displayDesc}
-                  {isItemFull && (
-                    <div style={{ color: '#f59e0b', fontSize: '0.66rem', marginTop: '2px', fontWeight: 'bold' }}>
-                      ⚠️ {t('appraisalDilemma.apartmentFullNotice', { defaultValue: 'Auto-pawn scrap cash' })}
-                    </div>
-                  )}
-                  {opt.burnoutRisk && (
-                    <div style={{ color: '#ef4444', fontSize: '0.66rem', marginTop: '2px', fontWeight: 'bold' }}>
-                      ⚠️ High Burnout & Mistake Risk
-                    </div>
-                  )}
-                </div>
-
-                {/* Reward Badge / Action Button */}
-                <button
-                  type="button"
-                  title={rewardText}
-                  data-action-target={`appraisal-choice-${idx}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectOption(idx);
-                  }}
-                  style={{
-                    marginTop: isCompact ? '2px' : '6px',
-                    fontWeight: 'bold',
-                    fontSize: isCompact ? '0.78rem' : '0.88rem',
-                    color: '#000',
-                    background: borderColor,
-                    padding: isCompact ? '4px 6px' : '7px 10px',
-                    borderRadius: '5px',
-                    width: '100%',
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: `0 2px 8px ${borderColor}44`,
-                    transition: 'all 0.15s ease',
-                    minHeight: isCompact ? '30px' : '36px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {isCarouselMode
-                    ? (isSelected ? `✓ Select (${rewardText})` : rewardText)
-                    : (isCompact ? rewardText : `Accept (${rewardText})`)}
-                </button>
-              </div>
+                onConfirm={() => onSelectOption(idx)}
+                borderColor={details.borderColor}
+                icon={details.icon}
+                title={displayTitle}
+                description={displayDesc}
+                warning={details.warning}
+                outcome={details.rewardText}
+                outcomeLabel={isInitiative ? 'Modifiers' : 'Reward'}
+                helpText={details.helpText}
+                helpBtnTestId={`card-help-btn-${idx}`}
+                helpPanelTestId={`card-help-panel-${idx}`}
+                selectLabel="Select"
+                confirmLabel="✓ Accept"
+              />
             );
           })}
         </div>
@@ -564,7 +506,7 @@ export function AppraisalDilemmaModal({
         {/* STICKY CAROUSEL CONFIRM BAR (When in mobile carousel mode) */}
         {isCarouselMode && (() => {
           const opt = dilemma.options[selectedIdx] || dilemma.options[0];
-          const details = getOptionRewardDetails(opt, hasSpace);
+          const details = getOptionDetails(opt, hasSpace);
           const { borderColor, rewardText } = details;
 
           return (
@@ -602,7 +544,6 @@ export function AppraisalDilemmaModal({
         })()}
       </div>
     </div>,
-    document.body
+    portalTarget
   );
 }
-
