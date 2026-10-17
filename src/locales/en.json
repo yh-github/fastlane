@@ -97,6 +97,11 @@
       "noOpenings": "No openings for this position.",
       "needClothes": "You need {{req}} to work here.",
       "fired": "You have missed too much work! You're fired!",
+      "firedDepLow": "Terminated! Your Dependability dropped too far below company standards.",
+      "executiveMistake": "Executive blunder! The weight of executive responsibility led to a critical error.",
+      "faceTimeClearedMistake": "Face time cleared an incident from your employment record.",
+      "initiativeRedrawn": "Brainstormed alternative initiatives (-1h, -1.0 Mental).",
+      "cannotRedraw": "Cannot brainstorm alternatives again this shift.",
       "warning": "Your work habits better pick up soon or you're fired!",
       "garnished": "Your Landlord garnished ${{amount}}.",
       "raiseSuccess": "You got a raise!",
@@ -263,6 +268,7 @@
     "lowSpiritsBounceBack": "You are burnt out! You took a mental health leave (+{{amount}} Mental Condition).",
     "marketCrash": {
       "jobLost": "The stock market crashed! You lost your job due to company cutbacks.",
+      "jobSparedMerits": "Downsizing avoided! Your exemplary workplace standing and merits shielded you from company layoffs.",
       "wageCut": "Market crash! Your wage was cut by 20% due to company downsizing.",
       "bankSavingsLost": "Market crash! The banking system collapsed and you lost all ${{amount}} of your bank savings!"
     },
@@ -1311,6 +1317,7 @@
   "appraisalDilemma": {
     "title": "Appraisal Dilemma",
     "subtitle": "A customer brought in:",
+    "redrawButton": "Brainstorm Alternatives (⏳ 1 hr, -1.0 🧠)",
     "option_cash": {
       "title": "Fast Cash Commission",
       "desc": "Broker a quick sale for the shop and pocket an immediate commission."

@@ -383,7 +383,7 @@ export function processPostHealthMaintenance(
 
   // 16. Economic Events
   if (economicTurnResult.crashSeverity !== 'none') {
-    player = applyMarketCrash(player, economicTurnResult.crashSeverity, rng, replay, state.rules, campaign.config.statRules);
+    player = applyMarketCrash(player, economicTurnResult.crashSeverity, rng, replay, state.rules, campaign.config.statRules, campaign);
   } else if (economicTurnResult.economicBoom) {
     player = applyEconomicBoom(player, campaign, economicTurnResult.newEconomy, state.turn, state.rules, campaign.config.statRules);
   }

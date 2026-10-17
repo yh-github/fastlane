@@ -535,7 +535,8 @@ export function applyMarketCrash(
   rng: Random,
   _replay?: ReplayContext,
   rules?: GameRules,
-  statRules?: StatRules
+  statRules?: StatRules,
+  campaign?: CampaignBundle
 ): PlayerState {
   let updated = { ...player };
   updated.turnEvents = updated.turnEvents ? [...updated.turnEvents] : [];
@@ -545,6 +546,10 @@ export function applyMarketCrash(
   // In a full implementation, we'd pass in current prices to sum value.
   const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
 
+  const currentJob = campaign?.jobs?.find(j => j.id === updated.currentJobId);
+  const locMerits = currentJob ? (updated.initiativesByLocation?.[currentJob.locationId] || 0) : 0;
+  const hasMeritShield = !!rules?.usePhysicalMentalConditions && locMerits >= 2;
+
   if (severity === 'minor') {
     updated = applyHappinessChange(updated, hasSignificantStocks ? -2 : -1, 'market_crash', rules || ({} as any), statRules);
   } else if (severity === 'moderate') {
@@ -553,11 +558,16 @@ export function applyMarketCrash(
     // 50% chance to lose job, otherwise wage cut
     if (updated.currentJobId !== null) {
       if (rng.next() < 0.5) {
-        updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
-        updated.currentJobId = null;
-        updated.currentWage = 0;
-        updated.raisesAtCurrentJob = 0;
-        updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
+        if (hasMeritShield) {
+          updated.turnEvents.push({ key: 'events.marketCrash.jobSparedMerits' });
+        } else {
+          updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
+          updated.currentJobId = null;
+          updated.currentJobTier = undefined;
+          updated.currentWage = 0;
+          updated.raisesAtCurrentJob = 0;
+          updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
+        }
       } else {
         // Pay cut to 80%
         updated.turnEvents.push({ key: 'events.marketCrash.wageCut' });
@@ -577,13 +587,18 @@ export function applyMarketCrash(
     }
     updated = applyHappinessChange(updated, hasSignificantStocks ? -8 : -3, 'market_crash', rules || ({} as any), statRules);
     
-    // 100% chance to lose job
+    // 100% chance to lose job (unless shielded by 2+ merits in advanced mode)
     if (updated.currentJobId !== null) {
-      updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
-      updated.currentJobId = null;
-      updated.currentWage = 0;
-      updated.raisesAtCurrentJob = 0;
-      updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
+      if (hasMeritShield) {
+        updated.turnEvents.push({ key: 'events.marketCrash.jobSparedMerits' });
+      } else {
+        updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
+        updated.currentJobId = null;
+        updated.currentJobTier = undefined;
+        updated.currentWage = 0;
+        updated.raisesAtCurrentJob = 0;
+        updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
+      }
     }
   }
 

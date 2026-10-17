@@ -235,7 +235,7 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         inputs.push({
           icon: '👔',
           title: 'Executive Affinity',
-          desc: 'Guarantees +0.25 Leadership growth on every successful Face Time session.'
+          desc: 'Guarantees +0.15 Leadership growth on every successful Face Time session.'
         });
       }
 
@@ -244,6 +244,11 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
           icon: '💵',
           title: 'Unpaid Shift ($0 Pay)',
           desc: 'Earns $0 wages. You are investing shift hours into political capital rather than billable output.'
+        },
+        {
+          icon: '🧹',
+          title: 'Clear 1 Workplace Demerit',
+          desc: 'Clears 1 recorded mistake incident from your employment file at this workplace.'
         },
         {
           icon: '🤝',
@@ -271,7 +276,7 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
       badge = 'INITIATIVE DECK';
       themeColor = '#f59e0b';
       glowColor = 'rgba(245, 158, 11, 0.4)';
-      fluff = "Step up, take charge of unresolved problems, and demonstrate initiative. Draw strategic initiative cards tailored to your job tier and workplace. It's demanding and earns lower base wages, but awards powerful tailored bonuses and cleans up your record.";
+      fluff = "Step up, take charge of unresolved problems, and demonstrate initiative. Draw strategic initiative cards tailored to your job tier and workplace. It's demanding and earns lower base wages, but awards powerful tailored bonuses and career standing.";
       rationale = 'Agency-driven initiative mini-game: draw cards (choose 1) scaled to job requirements. Build leadership, gain technical proficiency, pocket cash bounties, protect ethics to restore Mental health, or tackle high-stakes strategic crunch.';
 
       const reqExp = (job.requirements?.experience ?? 0) + 10;
@@ -303,17 +308,12 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         {
           icon: '🃏',
           title: 'Dynamic Initiative Cards (Choose 1)',
-          desc: 'Draws 2 cards (Tier 1 & 2 jobs) or 3 cards (Executive Manager jobs). Archetypes include: Leadership (👔), Technical / DIY (🔧), Role Mastery / Exp (📈), Cash Bounties (💵), Ethics & Integrity (🧘, +Mental recovery), and high-stakes Strategic Crunch (🔥).'
-        },
-        {
-          icon: '🧹',
-          title: 'Clear 1 Workplace Incident',
-          desc: 'Immediately removes 1 recorded mistake incident at this employer, repairing your standing.'
+          desc: 'Draws 2 cards (Tier 1 & 2 jobs) or 3 cards (Executive Manager jobs). Archetypes include: Leadership (👔), Technical / DIY (🔧), Role Mastery / Exp (📈), Cash Bounties (💵, near merit cap), Ethics & Integrity (🧠, +Mental recovery), and high-stakes Strategic Crunch (⚠️).'
         },
         {
           icon: '🌟',
-          title: isExecMgmt ? 'Location Initiative (+2, +6% Standing)' : 'Location Initiative (+1, +3% Standing)',
-          desc: 'Builds permanent Location Initiatives at this workplace: adds +3% employability per initiative on all jobs here and offsets past raises.'
+          title: isExecMgmt ? 'Workplace Standing (+2 Merits, +10% Employability)' : 'Workplace Standing (+1 Merit, +5% Employability)',
+          desc: 'Builds Workplace Merits at this employer: adds +5% employability per merit on all jobs here, discounts adjacent job requirements by -2 Dep & -2 Exp per merit, and expands firing buffer.'
         },
         {
           icon: '🤝',

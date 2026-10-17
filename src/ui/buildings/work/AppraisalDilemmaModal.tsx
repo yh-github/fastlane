@@ -9,6 +9,7 @@ import { CardView } from '../../CardView';
 interface AppraisalDilemmaModalProps {
   dilemma: AppraisalDilemmaState;
   onSelectOption: (index: number) => void;
+  onRedraw?: () => void;
   player?: PlayerState;
   campaign?: CampaignBundle;
   compact?: boolean;
@@ -209,6 +210,7 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
 export function AppraisalDilemmaModal({
   dilemma,
   onSelectOption,
+  onRedraw,
   player,
   campaign,
   compact: compactProp
@@ -502,6 +504,38 @@ export function AppraisalDilemmaModal({
             );
           })}
         </div>
+
+        {/* Brainstorm Alternatives (Redraw) Option */}
+        {isInitiative && onRedraw && !dilemma.hasRedrawn && (() => {
+          const canAffordRedraw = (player?.hoursRemaining ?? 0) >= 1 && ((player?.mentalCondition ?? 50) - 1.0 >= 1.0);
+          return (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px', marginBottom: '6px' }}>
+              <button
+                type="button"
+                data-testid="btn-redraw-initiative"
+                disabled={!canAffordRedraw}
+                onClick={onRedraw}
+                style={{
+                  background: canAffordRedraw ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                  border: canAffordRedraw ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
+                  color: canAffordRedraw ? '#38bdf8' : '#64748b',
+                  fontSize: '0.78rem',
+                  fontWeight: 'bold',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  cursor: canAffordRedraw ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>🔄</span>
+                <span>{t('appraisalDilemma.redrawButton', { defaultValue: 'Brainstorm Alternatives (⏳ 1 hr, -1.0 🧠)' })}</span>
+              </button>
+            </div>
+          );
+        })()}
 
         {/* STICKY CAROUSEL CONFIRM BAR (When in mobile carousel mode) */}
         {isCarouselMode && (() => {

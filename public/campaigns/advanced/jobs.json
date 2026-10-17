@@ -139,6 +139,10 @@
     "tags": ["executive_management"]
   },
   {
+    "id": "bank_broker",
+    "tags": ["executive_management"]
+  },
+  {
     "id": "blacks_janitor",
     "tags": ["always_hiring", "heavy_physical"]
   },

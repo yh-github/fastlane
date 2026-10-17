@@ -844,6 +844,7 @@ export function BuildingModal({
           campaign={campaign}
           compact={isContentOverflowing}
           onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_mini_game', choiceIndex: idx })}
+          onRedraw={() => handleActionIntercept({ type: 'redraw_initiative' })}
         />
       )}
 

@@ -14,30 +14,9 @@ import type { PlayerState, MiniGameOption } from '../gameState';
 import type { Random } from '../../utils/rng';
 import type { ReplayContext } from '../replayTypes';
 import { resolveDecision } from '../replayTypes';
-import { hasJobTag } from '../jobTags';
+import { hasJobTag, getJobInitiativeTier, type JobInitiativeTier } from '../jobTags';
 
-export type JobInitiativeTier = 1 | 2 | 3;
-
-/**
- * Determine the Initiative Tier for a job.
- * - Tier 3: Executive management or top-tier requirements (Exp >= 60, baseWage >= 14)
- * - Tier 2: Middle management, technical specialist, or mid-tier requirements (Exp >= 20, baseWage >= 8)
- * - Tier 1: Base / frontline entry jobs
- */
-export function getJobInitiativeTier(job: JobDef): JobInitiativeTier {
-  if (hasJobTag(job, 'executive_management') || (job.requirements?.experience ?? 0) >= 60) {
-    return 3;
-  }
-  if (
-    hasJobTag(job, 'middle_management') ||
-    hasJobTag(job, 'technical') ||
-    (job.requirements?.experience ?? 0) >= 20 ||
-    job.baseWage >= 8
-  ) {
-    return 2;
-  }
-  return 1;
-}
+export { getJobInitiativeTier, type JobInitiativeTier };
 
 /**
  * Checks whether the current workplace location has at least one technical job in the campaign.
@@ -208,45 +187,50 @@ export function generateInitiativeCards(
 
   // ─────────────────────────────────────────────────────────────────────────
   // 4. OPERATIONAL BOUNTY & EFFICIENCY (CASH)
+  // Gated to when player is at or near the job's merit cap (curStanding >= Math.max(1, tier - 1))
   // ─────────────────────────────────────────────────────────────────────────
-  if (tier === 1) {
-    const cashVal = Math.max(12, Math.floor(baseWage * 2.2));
-    candidatePool.push({
-      type: 'initiative',
-      badge: 'BOUNTY',
-      icon: '💵',
-      title: 'Preventing Waste & Client Tip',
-      description: 'Catch an inventory discrepancy and assist high-value customers for an immediate bonus.',
-      cashAmount: cashVal,
-      depAmount: 0.5,
-      standingAmount: 1
-    });
-  } else if (tier === 2) {
-    const cashVal = Math.max(30, Math.floor(baseWage * 3.5));
-    candidatePool.push({
-      type: 'initiative',
-      badge: 'BOUNTY',
-      icon: '💵',
-      title: 'Procurement Savings Commission',
-      description: 'Renegotiate vendor supply deliveries and pocket a performance efficiency bounty.',
-      cashAmount: cashVal,
-      depAmount: 1.0,
-      standingAmount: 1
-    });
-  } else {
-    const cashVal = Math.max(65, Math.floor(baseWage * 5.0));
-    candidatePool.push({
-      type: 'initiative',
-      badge: 'BOUNTY',
-      icon: '💵',
-      title: 'Aggressive Revenue Quota Clampdown',
-      description: 'Enforce ruthless quarterly billing quotas to secure a lucrative executive bonus.',
-      cashAmount: cashVal,
-      depAmount: 2.0,
-      standingAmount: 2,
-      socialAmount: -2.0,
-      burnoutRisk: true
-    });
+  const curStanding = player.initiativesByLocation?.[job.locationId] || 0;
+  const canGetBounty = curStanding >= Math.max(1, tier - 1);
+  if (canGetBounty) {
+    if (tier === 1) {
+      const cashVal = Math.max(12, Math.floor(baseWage * 2.2));
+      candidatePool.push({
+        type: 'initiative',
+        badge: 'BOUNTY',
+        icon: '💵',
+        title: 'Preventing Waste & Client Tip',
+        description: 'Catch an inventory discrepancy and assist high-value customers for an immediate bonus.',
+        cashAmount: cashVal,
+        depAmount: 0.5,
+        standingAmount: 1
+      });
+    } else if (tier === 2) {
+      const cashVal = Math.max(30, Math.floor(baseWage * 3.5));
+      candidatePool.push({
+        type: 'initiative',
+        badge: 'BOUNTY',
+        icon: '💵',
+        title: 'Procurement Savings Commission',
+        description: 'Renegotiate vendor supply deliveries and pocket a performance efficiency bounty.',
+        cashAmount: cashVal,
+        depAmount: 1.0,
+        standingAmount: 1
+      });
+    } else {
+      const cashVal = Math.max(65, Math.floor(baseWage * 5.0));
+      candidatePool.push({
+        type: 'initiative',
+        badge: 'BOUNTY',
+        icon: '💵',
+        title: 'Aggressive Revenue Quota Clampdown',
+        description: 'Enforce ruthless quarterly billing quotas to secure a lucrative executive bonus.',
+        cashAmount: cashVal,
+        depAmount: 2.0,
+        standingAmount: 2,
+        socialAmount: -2.0,
+        burnoutRisk: true
+      });
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -259,7 +243,7 @@ export function generateInitiativeCards(
       icon: '🧠',
       title: 'Pride in Cleanliness & Order',
       description: 'Take quiet pride in thoroughly organizing the workspace, bringing calm and dignity to your shift.',
-      mentalAmount: 2.0,
+      mentalAmount: 4.0,
       depAmount: 1.0,
       standingAmount: 1
     });
@@ -270,7 +254,7 @@ export function generateInitiativeCards(
       icon: '🧠',
       title: 'Ethical Stand: Fair Shift Scheduling',
       description: 'Defend exhausted team members against unfair overtime, earning deep respect and clear conscience.',
-      mentalAmount: 3.0,
+      mentalAmount: 4.0,
       socialAmount: 1.0,
       depAmount: 1.0,
       standingAmount: 1

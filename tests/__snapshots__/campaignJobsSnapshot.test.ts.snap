@@ -1103,6 +1103,9 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       "experience": 70,
       "uniform": "business",
     },
+    "tags": [
+      "executive_management",
+    ],
     "title": "Broker",
   },
   {

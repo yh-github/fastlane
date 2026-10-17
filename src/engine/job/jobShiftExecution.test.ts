@@ -171,7 +171,7 @@ describe("Job Engine - workShift", () => {
         expect(result.messages?.[0]?.key).toBe('action.job.initiativeNeedExp');
       });
 
-      it('show_initiative earns 0.4x wage, grants Management skill, clears mistake, and tracks initiative', () => {
+      it('show_initiative earns 0.4x wage, grants Management skill, and tracks initiative (face_time clears mistakes)', () => {
         const player = {
           id: 'p1',
           hoursRemaining: 20,
@@ -193,9 +193,15 @@ describe("Job Engine - workShift", () => {
         expect(result.wagesEarned).toBe(38); // Math.floor(12 * 8 * 0.4) = 38
         expect(result.updated.dependability).toBe(51);
         expect(result.updated.skillMgmt).toBe(1.25); // +0.25 for standard jobs
-        expect(result.updated.mistakesByLocation?.[salesManager.locationId]).toBe(0);
+        // Show initiative does NOT clear location mistakes
+        expect(result.updated.mistakesByLocation?.[salesManager.locationId]).toBe(1);
         expect(result.updated.initiativesByLocation?.[salesManager.locationId]).toBe(1);
-        expect(result.messages?.some(m => m.key === 'action.job.initiativeClearedMistake')).toBe(true);
+
+        // Face time clears location mistakes
+        const ftResult = workShift(player, salesManager, 6, advRules, undefined, 'face_time');
+        expect(ftResult.success).toBe(true);
+        expect(ftResult.updated.mistakesByLocation?.[salesManager.locationId]).toBe(0);
+        expect(ftResult.messages?.some(m => m.key === 'action.job.faceTimeClearedMistake')).toBe(true);
       });
 
       it('completed innovation breakthroughs discount raises and provide extra firing protection', () => {
@@ -400,6 +406,46 @@ describe("Job Engine - workShift", () => {
         expect(result.updated.currentJobId).toBeNull();
         expect(result.updated.turnFlags.firedLocationsThisTurn).toContain('factory');
         expect(result.messages?.some(m => m.key === 'action.job.firedMistakes' || m.key === 'action.job.fired')).toBe(true);
+      });
+
+      it('merits expand mistake firing buffer so player is not fired at 3 mistakes when holding merits', () => {
+        const job: JobDef = {
+          id: 'factory_worker',
+          title: 'Factory Worker',
+          locationId: 'factory',
+          baseWage: 8,
+          requirements: { experience: 10, dependability: 20, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+
+        const playerWithMerits = {
+          id: 'p_merits',
+          hoursRemaining: 18,
+          currentJobId: 'factory_worker',
+          currentWage: 8,
+          degrees: [],
+          physicalCondition: 2,
+          mentalCondition: 2,
+          dependability: 40,
+          experience: 20,
+          social: 10,
+          workMistakesThisTurn: 2, // 2 mistakes so far
+          turnFlags: {},
+          initiativesByLocation: { factory: 1 }, // 1 merit -> threshold is 3 + 1 = 4
+          mistakesByLocation: { factory: 2 },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        // Force a physical mistake on this 3rd work shift (total mistakes this turn becomes 3)
+        const replay = {
+          inDecisions: [{ type: `work_phys_mistake_${playerWithMerits.id}_1`, result: true }],
+          outDecisions: []
+        };
+
+        const result = workShift(playerWithMerits, job, 6, advRules, undefined, 'work_work', new Random(1), replay);
+        // Player should NOT be fired because threshold is 4 (3 + 1 merit)
+        expect(result.updated.currentJobId).toBe('factory_worker');
+        expect(result.updated.workMistakesThisTurn).toBe(3);
       });
 
       it('halves employability score when applying to a location where player was fired this turn (Probation)', () => {
@@ -682,12 +728,12 @@ describe("Job Engine - workShift", () => {
         expect(lbResult.success).toBe(false);
         expect(lbResult.messages?.[0].key).toBe('action.job.lookBusyDisabled');
 
-        // work_work: base Mental 0 + 1 = 1 Mental cost, builds skillMgmt (+0.25)
+        // work_work: base Mental 0 + 1 = 1 Mental cost, builds skillMgmt (+0.05)
         const wwResult = workShift(player, mgrJob, 6, advancedRules as any, undefined, 'work_work');
         expect(wwResult.success).toBe(true);
         expect(wwResult.updated.mentalCondition).toBe(49); // 50 - 1
         expect(wwResult.updated.social).toBe(10); // Social unaffected
-        expect(wwResult.updated.skillMgmt).toBe(0.25); // +0.25 Skill_Mgmt
+        expect(wwResult.updated.skillMgmt).toBe(0.05); // +0.05 Skill_Mgmt
       });
 
       it('applies Technical tag mechanics: builds skillTech and skillTech reduces prerequisites', () => {
@@ -833,19 +879,19 @@ describe("Job Engine - workShift", () => {
 
         const advancedRules = { usePhysicalMentalConditions: true };
         
-        // Middle management shift -> +0.25 skillMgmt
+        // Middle management shift -> +0.05 skillMgmt
         const res1 = workShift(player, asstJob, 6, advancedRules as any, undefined, 'work_work');
         expect(res1.success).toBe(true);
-        expect(res1.updated.skillMgmt).toBe(0.25);
+        expect(res1.updated.skillMgmt).toBe(0.05);
 
-        // Executive management shift -> +0.50 skillMgmt
+        // Executive management shift -> +0.10 skillMgmt
         const execPlayer = { ...player, currentJobId: 'zmart_mgr', currentWage: 8, skillMgmt: 2.0, inventory: { selectedClothes: 'business', businessClothesWeeks: 10 } } as unknown as PlayerState;
         const res2 = workShift(execPlayer, execJob, 6, advancedRules as any, undefined, 'work_work');
         expect(res2.success).toBe(true);
-        expect(res2.updated.skillMgmt).toBe(2.50);
+        expect(res2.updated.skillMgmt).toBe(2.10);
       });
 
-      it('awards +0.25 skillMgmt on face_time in management jobs', () => {
+      it('awards +0.15 skillMgmt on face_time in management jobs', () => {
         const asstJob: JobDef = {
           id: 'zmart_asst_mgr',
           title: 'Assistant Manager',
@@ -876,7 +922,7 @@ describe("Job Engine - workShift", () => {
         const advancedRules = { usePhysicalMentalConditions: true };
         const res = workShift(player, asstJob, 6, advancedRules as any, undefined, 'face_time');
         expect(res.success).toBe(true);
-        expect(res.updated.skillMgmt).toBe(1.25);
+        expect(res.updated.skillMgmt).toBe(1.15);
       });
 
       it('enforces hard requirement of skillMgmt >= Exp_req / 10 for executive_management jobs', () => {
@@ -978,6 +1024,44 @@ describe("Job Engine - workShift", () => {
         );
         expect(resMistake.updated.mentalConditionMax).toBe(49);
         expect(resMistake.updated.mistakesByLocation?.['burger_palace']).toBe(1);
+      });
+
+      it('applies executive management experience-based base mistake risk', () => {
+        const execJob: JobDef = {
+          id: 'burger_mgr',
+          title: 'Manager',
+          locationId: 'burger_palace',
+          baseWage: 8,
+          requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'dress' },
+          tags: ['executive_management'],
+          perks: []
+        };
+
+        const player = {
+          id: 'p_exec_risk',
+          currentJobId: 'burger_mgr',
+          dependability: 30,
+          hoursRemaining: 10,
+          currentWage: 8,
+          degrees: [],
+          experience: 20, // margin = 0 -> base risk is 20 * 0.005 = 0.10
+          physicalCondition: 50,
+          mentalCondition: 50,
+          turnFlags: { hasWorked: false },
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
+        } as unknown as PlayerState;
+
+        const advancedRules = { usePhysicalMentalConditions: true };
+        // Replay forcing executive base mistake
+        const replay = {
+          inDecisions: [{ type: `work_exec_mistake_${player.id}_1`, result: true }],
+          outDecisions: []
+        };
+
+        const res = workShift(player, execJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), replay);
+        expect(res.success).toBe(true);
+        expect(res.updated.mistakesByLocation?.['burger_palace']).toBe(1);
+        expect(res.messages?.some(m => m.key === 'action.job.executiveMistake')).toBe(true);
       });
 
       it('reduces Max_Physical by 0.5 on Grind/Overtime for heavy_physical, and on Overtime for normal jobs', () => {

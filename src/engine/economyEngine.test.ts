@@ -134,6 +134,37 @@ describe('Economy Engine', () => {
       expect(updated.money).toBe(1000); // Cash is safe
       expect(updated.turnEvents.some(e => e.key === 'events.marketCrash.bankSavingsLost')).toBe(true);
     });
+
+    it('shields player from market crash layoffs if they hold 2+ merits at their workplace in advanced mode', () => {
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); // Would normally trigger firing
+      const mockCampaign = {
+        jobs: [{ id: 'clerk', locationId: 'zmart' }]
+      } as any;
+      const advancedRules = { usePhysicalMentalConditions: true } as any;
+
+      const player = {
+        money: 1000,
+        bankSavings: 500,
+        happiness: 50,
+        currentJobId: 'clerk',
+        currentWage: 20,
+        initiativesByLocation: { zmart: 2 },
+        inventory: { stocks: { tBills: 0, holdings: {} } }
+      } as unknown as PlayerState;
+
+      // Moderate crash: spared from firing
+      const moderateUpdated = applyMarketCrash(player, 'moderate', new Random(1), undefined, advancedRules, undefined, mockCampaign);
+      expect(moderateUpdated.currentJobId).toBe('clerk');
+      expect(moderateUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobSparedMerits')).toBe(true);
+      expect(moderateUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobLost')).toBe(false);
+
+      // Major crash: savings wiped, but job is shielded by merits!
+      const majorUpdated = applyMarketCrash(player, 'major', new Random(1), undefined, advancedRules, undefined, mockCampaign);
+      expect(majorUpdated.currentJobId).toBe('clerk');
+      expect(majorUpdated.bankSavings).toBe(0);
+      expect(majorUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobSparedMerits')).toBe(true);
+      expect(majorUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobLost')).toBe(false);
+    });
   });
 
   describe('applyEconomicBoom', () => {

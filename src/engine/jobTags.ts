@@ -271,5 +271,29 @@ export function getJobSpecialRequirements(job: JobDef | undefined | null, isAdva
   return reqs;
 }
 
+export type JobInitiativeTier = 1 | 2 | 3;
+
+/**
+ * Determine the Initiative / Career Tier for a job.
+ * - Tier 3: Executive management or top-tier requirements (Exp >= 60, baseWage >= 14)
+ * - Tier 2: Middle management, technical specialist, or mid-tier requirements (Exp >= 20, baseWage >= 8)
+ * - Tier 1: Base / frontline entry jobs
+ */
+export function getJobInitiativeTier(job: JobDef | undefined | null): JobInitiativeTier {
+  if (!job) return 1;
+  if (hasJobTag(job, 'executive_management') || (job.requirements?.experience ?? 0) >= 60) {
+    return 3;
+  }
+  if (
+    hasJobTag(job, 'middle_management') ||
+    hasJobTag(job, 'technical') ||
+    (job.requirements?.experience ?? 0) >= 20 ||
+    (job.baseWage ?? 0) >= 8
+  ) {
+    return 2;
+  }
+  return 1;
+}
+
 
 

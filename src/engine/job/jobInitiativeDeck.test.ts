@@ -78,17 +78,24 @@ describe('jobInitiativeDeck', () => {
     expect(t3Cards.length).toBe(3);
   });
 
-  it('scales cash bonuses proportionally to base wage', () => {
+  it('scales cash bonuses proportionally to base wage when at or near merit cap', () => {
     // Generate over multiple seeds to find bounty cards
     let t1Cash = 0;
     let t3Cash = 0;
+    const playerWithStanding: PlayerState = {
+      ...basePlayer,
+      initiativesByLocation: {
+        burger_joint: 1,
+        bank: 2
+      }
+    };
 
     for (let seed = 1; seed <= 20; seed++) {
-      const cards1 = generateInitiativeCards(basePlayer, burgerCook, mockCampaign, new Random(seed), undefined, 1);
+      const cards1 = generateInitiativeCards(playerWithStanding, burgerCook, mockCampaign, new Random(seed), undefined, 1);
       const bounty1 = cards1.find(c => c.badge === 'BOUNTY');
       if (bounty1?.cashAmount && !t1Cash) t1Cash = bounty1.cashAmount;
 
-      const cards3 = generateInitiativeCards(basePlayer, bankManager, mockCampaign, new Random(seed), undefined, 1);
+      const cards3 = generateInitiativeCards(playerWithStanding, bankManager, mockCampaign, new Random(seed), undefined, 1);
       const bounty3 = cards3.find(c => c.badge === 'BOUNTY' && c.cashAmount);
       if (bounty3?.cashAmount && !t3Cash) t3Cash = bounty3.cashAmount;
     }
@@ -99,14 +106,14 @@ describe('jobInitiativeDeck', () => {
     expect(t3Cash).toBeGreaterThanOrEqual(60);
   });
 
-  it('includes ethics/aesthetics cards that restore Mental condition', () => {
+  it('includes ethics/aesthetics cards that restore Mental condition (+4.0)', () => {
     let foundEthics = false;
     for (let seed = 1; seed <= 25; seed++) {
       const cards = generateInitiativeCards(basePlayer, socketRepairman, mockCampaign, new Random(seed), undefined, 1);
       const ethicsCard = cards.find(c => c.badge === 'ETHICS');
       if (ethicsCard) {
         foundEthics = true;
-        expect(ethicsCard.mentalAmount).toBeGreaterThan(0);
+        expect(ethicsCard.mentalAmount).toBe(4.0);
         break;
       }
     }

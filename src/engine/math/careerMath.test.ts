@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { calcMaxSkillCap, calcAdvancedJobEmployabilityScore } from './careerMath';
-import type { EducationDef } from '../dataLoader';
+import { calcMaxSkillCap, calcAdvancedJobEmployabilityScore, calcEffectiveJobRequirements } from './careerMath';
+import type { EducationDef, JobDef } from '../dataLoader';
+import type { PlayerState } from '../gameState';
 import type { GameRules, StatRules } from '../rules';
 
 describe('careerMath', () => {
@@ -301,6 +302,109 @@ describe('careerMath', () => {
       });
       // Base 45 + 10 social bonus = 55%
       expect(scoreHighSocial).toBe(55);
+    });
+  });
+
+  describe('calcEffectiveJobRequirements', () => {
+    const tier1Job: JobDef = {
+      id: 'job_t1',
+      title: 'Junior Clerk',
+      locationId: 'office',
+      baseWage: 5,
+      requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
+      perks: []
+    };
+
+    const tier2Job: JobDef = {
+      id: 'job_t2',
+      title: 'Supervisor',
+      locationId: 'office',
+      baseWage: 10,
+      requirements: { experience: 30, dependability: 30, degrees: [], uniform: 'dress' },
+      tags: ['middle_management'],
+      perks: []
+    };
+
+    const tier3Job: JobDef = {
+      id: 'job_t3',
+      title: 'Director',
+      locationId: 'office',
+      baseWage: 20,
+      requirements: { experience: 60, dependability: 60, degrees: [], uniform: 'business' },
+      tags: ['executive_management'],
+      perks: []
+    };
+
+    const basePlayer = {
+      id: 'p1',
+      currentJobId: 'job_t1',
+      currentJobTier: 1,
+      initiativesByLocation: { office: 2 },
+      mistakesByLocation: { office: 1 }
+    } as unknown as PlayerState;
+
+    it('returns exact base requirements without modifiers in classic mode', () => {
+      const res = calcEffectiveJobRequirements(tier2Job, basePlayer, false);
+      expect(res.reqDep).toBe(30);
+      expect(res.reqExp).toBe(30);
+      expect(res.meritDiscount).toBe(0);
+      expect(res.demeritPenaltyDep).toBe(0);
+      expect(res.demeritPenaltyExp).toBe(0);
+      expect(res.isAdjacent).toBe(true);
+    });
+
+    it('applies merit discounts and mistake penalties when applying within the same tier', () => {
+      // currentJobTier = 1, targetTier = 1 (adjacent: 1 <= 1 + 1)
+      const res = calcEffectiveJobRequirements(tier1Job, basePlayer, true);
+      expect(res.meritDiscount).toBe(4);
+      expect(res.demeritPenaltyDep).toBe(3);
+      expect(res.demeritPenaltyExp).toBe(2);
+      expect(res.reqDep).toBe(9); // 10 - 4 + 3
+      expect(res.reqExp).toBe(8); // 10 - 4 + 2
+      expect(res.isAdjacent).toBe(true);
+    });
+
+    it('applies merit discount (-2 Dep, -2 Exp) and demerit penalty (+3 Dep, +2 Exp) on adjacent job tiers', () => {
+      // currentJobTier = 1, targetTier = 2 (adjacent: 2 <= 1 + 1)
+      // 2 merits = -4 Dep, -4 Exp discount
+      // 1 mistake = +3 Dep, +2 Exp penalty
+      const res = calcEffectiveJobRequirements(tier2Job, basePlayer, true);
+      expect(res.meritDiscount).toBe(4);
+      expect(res.demeritPenaltyDep).toBe(3);
+      expect(res.demeritPenaltyExp).toBe(2);
+      expect(res.reqDep).toBe(29); // 30 - 4 + 3
+      expect(res.reqExp).toBe(28); // 30 - 4 + 2
+      expect(res.isAdjacent).toBe(true);
+    });
+
+    it('blocks merit discounts for non-adjacent job tiers but still applies mistake penalties', () => {
+      // currentJobTier = 1, targetTier = 3 (non-adjacent: 3 > 1 + 1)
+      // merits discount blocked -> 0
+      // 1 mistake = +3 Dep, +2 Exp penalty
+      const res = calcEffectiveJobRequirements(tier3Job, basePlayer, true);
+      expect(res.meritDiscount).toBe(0);
+      expect(res.demeritPenaltyDep).toBe(3);
+      expect(res.demeritPenaltyExp).toBe(2);
+      expect(res.reqDep).toBe(63); // 60 + 3
+      expect(res.reqExp).toBe(62); // 60 + 2
+      expect(res.isAdjacent).toBe(false);
+    });
+
+    it('allows merit discounts when unemployed or when current tier matches target tier', () => {
+      const unemployedPlayer = {
+        ...basePlayer,
+        currentJobId: null,
+        currentJobTier: undefined,
+        initiativesByLocation: { office: 2 },
+        mistakesByLocation: { office: 0 }
+      } as unknown as PlayerState;
+
+      // Unemployed (currentTier = 1) applying to Tier 2 (adjacent: 2 <= 1 + 1)
+      const res = calcEffectiveJobRequirements(tier2Job, unemployedPlayer, true);
+      expect(res.meritDiscount).toBe(4);
+      expect(res.reqDep).toBe(26); // 30 - 4
+      expect(res.reqExp).toBe(26); // 30 - 4
+      expect(res.isAdjacent).toBe(true);
     });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { handleResolveAppraisalDilemmaAction, handleWorkAction } from './jobActions';
+import { handleResolveAppraisalDilemmaAction, handleWorkAction, handleRedrawInitiativeAction } from './jobActions';
 import { createPlayerState } from '../stateFactories';
 import { Random } from '../../utils/rng';
 import type { ReducerContext } from './types';
@@ -212,13 +212,49 @@ describe('Job Actions & Initiative Card Resolution', () => {
 
     // Paid 0.4x wage: Math.floor(20 * 8 * 0.4) = 64
     expect(nextPlayer.money).toBe(200 + 64);
-    // Erases 1 location mistake
-    expect(nextPlayer.mistakesByLocation?.['socket_city']).toBe(0);
+    // Show initiative does NOT erase location mistakes (face_time does)
+    expect(nextPlayer.mistakesByLocation?.['socket_city']).toBe(1);
     // Increments location initiatives
     expect(nextPlayer.initiativesByLocation?.['socket_city']).toBe(1);
     // Spawns pendingMiniGame for user choice
     expect(nextPlayer.pendingMiniGame).toBeDefined();
     expect(nextPlayer.pendingMiniGame?.gameType).toBe('work_initiative');
     expect(nextPlayer.pendingMiniGame?.options.length).toBe(2);
+  });
+
+  it('handleRedrawInitiativeAction spends 1 hour and 1.0 Mental to redraw cards once per shift', () => {
+    let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+    player.currentJobId = 'tech_lead';
+    player.hoursRemaining = 10;
+    player.mentalCondition = 40;
+    player.pendingMiniGame = {
+      gameType: 'work_initiative',
+      title: 'Show Initiative',
+      hasRedrawn: false,
+      options: [
+        { title: 'Card 1', badge: 'LEADERSHIP', description: 'Desc 1', type: 'initiative' }
+      ]
+    };
+
+    const result = handleRedrawInitiativeAction(
+      player,
+      { type: 'redraw_initiative' },
+      mockContext,
+      mockReplay
+    );
+
+    expect((result.actionLog as any)?.key).toBe('action.job.initiativeRedrawn');
+    expect(result.nextPlayer.hoursRemaining).toBe(9);
+    expect(result.nextPlayer.mentalCondition).toBe(39);
+    expect(result.nextPlayer.pendingMiniGame?.hasRedrawn).toBe(true);
+
+    // Second redraw attempt fails
+    const secondResult = handleRedrawInitiativeAction(
+      result.nextPlayer,
+      { type: 'redraw_initiative' },
+      mockContext,
+      mockReplay
+    );
+    expect((secondResult.actionLog as any)?.key).toBe('action.error.cannotRedraw');
   });
 });

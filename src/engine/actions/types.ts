@@ -40,6 +40,7 @@ export type GameAction =
   | { type: 'buy_pawn_rummage_item'; itemIndex?: number }
   | { type: 'discard_inventory_item'; itemType: 'spare_parts' | 'knick_knacks'; count?: number; curioId?: string }
   | { type: 'renegotiate_rent' }
+  | { type: 'redraw_initiative' }
   | { type: 'close_rummage' }
   | { type: 'pass_pawn_rummage' };
 

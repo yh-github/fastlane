@@ -1,9 +1,11 @@
-import type { PlayerState } from '../gameState';
+import type { PlayerState, MiniGameState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import type { ReplayContext } from '../replayTypes';
 import { requireConfig } from '../rules';
 import { applyForJob, workShift } from '../jobEngine';
+import { spendHours } from '../timeManager';
 import { calcUsedSpace, calcHousingSpaceCap, calcMaxSkillCap } from '../statMath';
+import { generateInitiativeCards, getJobInitiativeTier } from '../job/jobInitiativeDeck';
 
 export function handleApplyAction(
   player: PlayerState,
@@ -160,10 +162,15 @@ export function handleResolveAppraisalDilemmaAction(
     if (choice.standingAmount && nextPlayer.currentJobId) {
       const job = context.campaign.jobs.find(j => j.id === nextPlayer.currentJobId);
       if (job?.locationId) {
-        nextPlayer.initiativesByLocation = {
-          ...(nextPlayer.initiativesByLocation || {}),
-          [job.locationId]: (nextPlayer.initiativesByLocation?.[job.locationId] || 0) + choice.standingAmount
-        };
+        const tier = getJobInitiativeTier(job);
+        const curStanding = nextPlayer.initiativesByLocation?.[job.locationId] || 0;
+        const allowedGain = Math.max(0, Math.min(choice.standingAmount, tier - curStanding));
+        if (allowedGain > 0) {
+          nextPlayer.initiativesByLocation = {
+            ...(nextPlayer.initiativesByLocation || {}),
+            [job.locationId]: curStanding + allowedGain
+          };
+        }
       }
     }
     if (choice.mentalAmount) {
@@ -198,4 +205,59 @@ export function handleResolveAppraisalDilemmaAction(
   nextPlayer.pendingAppraisalDilemma = null;
   return { nextPlayer, actionLog };
 }
+
+export function handleRedrawInitiativeAction(
+  player: PlayerState,
+  _action: { type: 'redraw_initiative' },
+  context: ReducerContext,
+  replayContext: ReplayContext
+): ActionHandlerResult {
+  let nextPlayer = structuredClone(player);
+  let actionLog;
+
+  const dilemma = nextPlayer.pendingMiniGame || nextPlayer.pendingAppraisalDilemma;
+  if (!dilemma || dilemma.gameType !== 'work_initiative' || dilemma.hasRedrawn) {
+    return { nextPlayer, actionLog: { key: 'action.error.cannotRedraw' } };
+  }
+
+  // Cost: 1 hour, 1.0 Mental
+  if (nextPlayer.hoursRemaining < 1) {
+    return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
+  }
+  const curMental = nextPlayer.mentalCondition ?? 50;
+  if (curMental - 1.0 < 1.0) {
+    return { nextPlayer, actionLog: { key: 'action.error.tooMentallyExhausted' } };
+  }
+
+  nextPlayer = spendHours(nextPlayer, 1);
+  nextPlayer.mentalCondition = curMental - 1.0;
+
+  const job = context.campaign.jobs.find(j => j.id === nextPlayer.currentJobId);
+  if (!job) {
+    return { nextPlayer, actionLog };
+  }
+
+  const actionCount = (nextPlayer.workActionsThisTurn || 0) + 1;
+  const newCards = generateInitiativeCards(
+    nextPlayer,
+    job,
+    context.campaign,
+    context.rng,
+    replayContext,
+    actionCount
+  );
+
+  const updatedDilemma: MiniGameState = {
+    ...dilemma,
+    hasRedrawn: true,
+    options: newCards
+  };
+
+  nextPlayer.pendingMiniGame = updatedDilemma;
+  nextPlayer.pendingAppraisalDilemma = updatedDilemma;
+
+  actionLog = { key: 'action.job.initiativeRedrawn' };
+  return { nextPlayer, actionLog };
+}
+
 
