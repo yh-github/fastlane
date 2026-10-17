@@ -477,6 +477,17 @@ export interface AdvancedStatRules extends BaseStatRules {
   socialEmployabilityBaseline: number;
   frontlineSocialEmployabilityRate: number;
   tagCompetitionModifiers: Record<string, number>;
+  workMistakePhysicalThreshold?: number;
+  workMistakeHeavyPhysicalThreshold?: number;
+  workMistakePhysicalChancePerPoint?: number;
+  workMistakeMentalThreshold?: number;
+  workMistakeExecutiveMentalThreshold?: number;
+  workMistakeMentalChancePerPoint?: number;
+  workMistakeSocialThreshold?: number;
+  workMistakeFrontlineSocialThreshold?: number;
+  workMistakeSocialChancePerPoint?: number;
+  workMistakeExecutiveExpMargin?: number;
+  workMistakeExecutiveExpChancePerPoint?: number;
 }
 
 export type StatRules = BaseStatRules | AdvancedStatRules;
@@ -802,6 +813,17 @@ export const ADVANCED_STAT_RULE_KEYS: readonly (keyof AdvancedStatRules)[] = [
   'socialEmployabilityBaseline',
   'frontlineSocialEmployabilityRate',
   'tagCompetitionModifiers',
+  'workMistakePhysicalThreshold',
+  'workMistakeHeavyPhysicalThreshold',
+  'workMistakePhysicalChancePerPoint',
+  'workMistakeMentalThreshold',
+  'workMistakeExecutiveMentalThreshold',
+  'workMistakeMentalChancePerPoint',
+  'workMistakeSocialThreshold',
+  'workMistakeFrontlineSocialThreshold',
+  'workMistakeSocialChancePerPoint',
+  'workMistakeExecutiveExpMargin',
+  'workMistakeExecutiveExpChancePerPoint',
 ] as const;
 
 export const EVENT_RULE_KEYS: readonly (keyof EventRules)[] = [

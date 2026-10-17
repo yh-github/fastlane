@@ -316,15 +316,13 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
 
   const activeMistakeChance = activeModeOption?.totalMistakeChance ?? 0;
   const roundedMistakeChance = roundPct(activeMistakeChance);
-  const roundedPhysChance = roundPct(activeModeOption?.physMistakeChance ?? 0);
-  const roundedMentalChance = roundPct(activeModeOption?.mentalMistakeChance ?? 0);
-  const roundedSocialChance = roundPct(activeModeOption?.socialMistakeChance ?? 0);
 
-  const activeHazardDrivers = [
-    roundedPhysChance > 0 ? `💪 ${roundedPhysChance}%` : '',
-    roundedMentalChance > 0 ? `🧠 ${roundedMentalChance}%` : '',
-    roundedSocialChance > 0 ? `👥 ${roundedSocialChance}%` : ''
-  ].filter(Boolean).join(' / ');
+  const breakdownTooltip = activeModeOption?.modifierBreakdown?.mistakeBreakdown
+    ? (activeModeOption.modifierBreakdown.mistakeBreakdown
+        .filter(b => b.isTriggered)
+        .map(b => `${b.label}: ${(b.chance * 100).toFixed(1)}%`)
+        .join(' | ') || `Mistake Risk: ${roundedMistakeChance}%`)
+    : `Mistake Risk: ${roundedMistakeChance}%`;
 
   // Resolve disabled explanation
   const getDisabledReason = (m: WorkShiftOption) => {
@@ -689,7 +687,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
             {roundedMistakeChance > 0 && (
               <span
                 data-testid="selected-mode-mistake-risk"
-                title={`Physical: ${roundedPhysChance}%, Mental: ${roundedMentalChance}%${roundedSocialChance > 0 ? `, Social: ${roundedSocialChance}%` : ''}`}
+                title={breakdownTooltip}
                 style={{
                   color: '#f87171',
                   fontWeight: 'bold',
@@ -701,7 +699,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                   whiteSpace: 'nowrap'
                 }}
               >
-                ⚠️ {roundedMistakeChance}% Risk{activeHazardDrivers ? ` (${activeHazardDrivers})` : ''}
+                ⚠️ {roundedMistakeChance}% Risk
               </span>
             )}
           </div>

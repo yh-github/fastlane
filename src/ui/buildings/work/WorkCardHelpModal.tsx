@@ -4,7 +4,18 @@ import { useTranslation } from 'react-i18next';
 import type { PlayerState } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
 import type { WorkMode, WorkShiftSummary } from '../../../engine/jobEngine';
-import { hasJobTag } from '../../../engine/jobTags';
+import type { StatRules } from '../../../engine/rules';
+import {
+  hasJobTag,
+  getJobPhysicalMistakeThreshold,
+  getJobPhysicalMistakeRate,
+  getJobMentalMistakeThreshold,
+  getJobMentalMistakeRate,
+  getJobSocialMistakeThreshold,
+  getJobSocialMistakeRate,
+  getExecutiveMistakeExpMargin,
+  getExecutiveMistakeRate
+} from '../../../engine/jobTags';
 
 export interface WorkCardHelpModalProps {
   mode: WorkMode;
@@ -13,6 +24,7 @@ export interface WorkCardHelpModalProps {
   onClose: () => void;
   campaign?: CampaignBundle;
   summary?: WorkShiftSummary;
+  statRules?: StatRules;
 }
 
 interface SectionItem {
@@ -26,9 +38,21 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
   job,
   player,
   onClose,
-  summary
+  campaign,
+  summary,
+  statRules
 }) => {
   const { t } = useTranslation();
+
+  const effectiveStatRules = statRules || campaign?.config?.statRules;
+  const physMistakeThreshold = getJobPhysicalMistakeThreshold(job, effectiveStatRules);
+  const physMistakeRate = getJobPhysicalMistakeRate(effectiveStatRules);
+  const mentalMistakeThreshold = getJobMentalMistakeThreshold(job, effectiveStatRules);
+  const mentalMistakeRate = getJobMentalMistakeRate(effectiveStatRules);
+  const socialMistakeThreshold = getJobSocialMistakeThreshold(job, effectiveStatRules);
+  const socialMistakeRate = getJobSocialMistakeRate(effectiveStatRules);
+  const execExpMargin = getExecutiveMistakeExpMargin(effectiveStatRules);
+  const execExpRate = getExecutiveMistakeRate(effectiveStatRules);
 
   const isHeavyPhysical = hasJobTag(job, 'heavy_physical');
   const isFrontline = hasJobTag(job, 'frontline_service');
@@ -68,13 +92,15 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
           icon: '💪',
           title: 'Physical Threshold',
           desc: isHeavyPhysical
-            ? 'Heavy Physical job: Physical mistake risk triggers below 20 Physical condition (2.5% per point below 20).'
-            : 'Normal job: Physical mistake risk triggers below 10 Physical condition (2.5% per point below 10).'
+            ? `Heavy Physical job: Physical mistake risk triggers below ${physMistakeThreshold} Physical condition (${(physMistakeRate * 100).toFixed(1)}% per point below ${physMistakeThreshold}).`
+            : `Normal job: Physical mistake risk triggers below ${physMistakeThreshold} Physical condition (${(physMistakeRate * 100).toFixed(1)}% per point below ${physMistakeThreshold}).`
         },
         {
           icon: '🧠',
           title: 'Mental Threshold',
-          desc: 'Mental mistake risk triggers below 10 Mental condition. If both conditions are low, mistake probabilities compound.'
+          desc: isExecMgmt
+            ? `Executive Management: Mental mistake risk triggers below elevated threshold of ${mentalMistakeThreshold} Mental condition (${(mentalMistakeRate * 100).toFixed(1)}% per point below ${mentalMistakeThreshold}).`
+            : `Mental mistake risk triggers below ${mentalMistakeThreshold} Mental condition (${(mentalMistakeRate * 100).toFixed(1)}% per point below ${mentalMistakeThreshold}). If both conditions are low, mistake probabilities compound.`
         }
       );
 
@@ -97,8 +123,15 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
           icon: '👔',
           title: 'Leadership Tag',
           desc: isExecMgmt
-            ? 'Awards +0.50 Leadership per Exp earned. Executive oversight brings high mental accountability: +1 weekly Dep decay, and mental mistakes trigger below 20 Mental.'
+            ? `Awards +0.50 Leadership per Exp earned. Executive oversight brings high mental accountability: +1 weekly Dep decay, and mental mistakes trigger below ${mentalMistakeThreshold} Mental.`
             : 'Awards +0.25 Leadership per Exp earned.'
+        });
+      }
+      if (isExecMgmt) {
+        inputs.push({
+          icon: '💼',
+          title: 'Executive Experience Buffer',
+          desc: `Requires a buffer of +${execExpMargin} Experience above the role requirement (${job.requirements?.experience ?? 0} Exp). Falling below this safety buffer incurs a base executive blunder risk of ${(execExpRate * 100).toFixed(1)}% per missing Experience point.`
         });
       }
 
@@ -200,7 +233,7 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         tips.push('Warning: Looking busy on Frontline Service jobs costs -1 Social standing because customers notice your absence!');
       }
       tips.push(
-        'Ideal when your Physical condition drops below 10 (or 20 for heavy jobs) and you need cash without risking devastating mistakes.',
+        `Ideal when your Physical condition drops below ${physMistakeThreshold} and you need cash without risking devastating mistakes.`,
         'Great when your Dependability is already safely above your job requirements and you need to conserve stamina for studying or chores.',
         'Avoid this mode if you are actively working towards an upcoming promotion that requires Dependability gains.'
       );
@@ -299,10 +332,18 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
           icon: '👥',
           title: 'Social Mistake Vulnerability',
           desc: isFrontline
-            ? 'Frontline Service: Social mistake threshold is 20 (double standard!). When below 20 Social, mistake risk increases by 2.5% per missing point.'
-            : 'Standard Job: Social mistake threshold is 10. Low Social risks awkward friction and workplace incidents.'
+            ? `Frontline Service: Social mistake threshold is ${socialMistakeThreshold} (elevated frontline standard). When below ${socialMistakeThreshold} Social, mistake risk increases by ${(socialMistakeRate * 100).toFixed(2)}% per missing point.`
+            : `Standard Job: Social mistake threshold is ${socialMistakeThreshold}. Low Social (below ${socialMistakeThreshold}) risks awkward friction and workplace incidents (${(socialMistakeRate * 100).toFixed(2)}%/pt).`
         }
       );
+
+      if (isExecMgmt) {
+        inputs.push({
+          icon: '💼',
+          title: 'Executive Experience Buffer',
+          desc: `Executive oversight requires a buffer of +${execExpMargin} Experience above the job requirement (${job.requirements?.experience ?? 0} Exp). Each point below this buffer adds ${(execExpRate * 100).toFixed(1)}% base blunder risk.`
+        });
+      }
 
       outputs.push(
         {
@@ -525,24 +566,94 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
               </div>
 
               {/* Mistake Risk Breakdown */}
-              {activeMode?.totalMistakeChance !== undefined && activeMode.totalMistakeChance > 0 && (
-                <div style={{ fontSize: '0.78rem', background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
-                  <div style={{ fontWeight: 'bold', color: '#f87171', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>⚠️ Total Mistake Risk:</span>
-                    <span>{(activeMode.totalMistakeChance * 100).toFixed(1)}%</span>
+              {breakdown.mistakeBreakdown && breakdown.mistakeBreakdown.length > 0 ? (
+                <div
+                  data-testid="work-help-mistake-breakdown"
+                  style={{
+                    fontSize: '0.78rem',
+                    background: (activeMode?.totalMistakeChance ?? 0) > 0 ? 'rgba(239, 68, 68, 0.10)' : 'rgba(16, 185, 129, 0.08)',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: (activeMode?.totalMistakeChance ?? 0) > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(16, 185, 129, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
+                  <div style={{
+                    fontWeight: 'bold',
+                    color: (activeMode?.totalMistakeChance ?? 0) > 0 ? '#f87171' : '#34d399',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span>⚠️ Total Mistake Risk:</span>
+                      <span style={{ fontSize: '0.90rem' }}>
+                        {((activeMode?.totalMistakeChance ?? 0) * 100).toFixed(1)}%
+                      </span>
+                    </span>
+                    <span style={{ fontSize: '0.64rem', color: '#94a3b8', fontWeight: 'normal' }}>
+                      Compound formula: 1 - ∏(1 - Risk)
+                    </span>
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#e2e8f0', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {(activeMode.physMistakeChance ?? 0) > 0 && (
-                      <span>Physical Risk: <strong>{((activeMode.physMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
-                    )}
-                    {(activeMode.mentalMistakeChance ?? 0) > 0 && (
-                      <span>Mental Risk: <strong>{((activeMode.mentalMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
-                    )}
-                    {(activeMode.socialMistakeChance ?? 0) > 0 && (
-                      <span>Social Risk: <strong>{((activeMode.socialMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
-                    )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {breakdown.mistakeBreakdown.map((item) => (
+                      <div
+                        key={item.type}
+                        style={{
+                          background: item.isTriggered ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                          border: item.isTriggered ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)',
+                          borderRadius: '5px',
+                          padding: '6px 8px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '2px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 'bold', color: item.isTriggered ? '#fca5a5' : '#cbd5e1' }}>
+                            {item.icon} {item.label}
+                          </span>
+                          <span style={{
+                            fontWeight: 'bold',
+                            fontSize: '0.74rem',
+                            color: item.isTriggered ? '#ef4444' : '#34d399'
+                          }}>
+                            {item.isTriggered ? `⚠️ ${(item.chance * 100).toFixed(1)}% Risk` : '✓ 0.0% (Safe)'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', lineHeight: '1.3' }}>
+                          {item.explanation}
+                        </div>
+                        <div style={{ fontSize: '0.64rem', color: '#64748b' }}>
+                          Current: {item.currentStat} | Safe Threshold: ≥ {item.threshold} | Rate: {(item.ratePerPoint * 100).toFixed(2)}%/pt
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+              ) : (
+                activeMode?.totalMistakeChance !== undefined && activeMode.totalMistakeChance > 0 && (
+                  <div style={{ fontSize: '0.78rem', background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                    <div style={{ fontWeight: 'bold', color: '#f87171', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>⚠️ Total Mistake Risk:</span>
+                      <span>{(activeMode.totalMistakeChance * 100).toFixed(1)}%</span>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#e2e8f0', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      {(activeMode.physMistakeChance ?? 0) > 0 && (
+                        <span>Physical Risk: <strong>{((activeMode.physMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
+                      )}
+                      {(activeMode.mentalMistakeChance ?? 0) > 0 && (
+                        <span>Mental Risk: <strong>{((activeMode.mentalMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
+                      )}
+                      {(activeMode.socialMistakeChance ?? 0) > 0 && (
+                        <span>Social Risk: <strong>{((activeMode.socialMistakeChance ?? 0) * 100).toFixed(1)}%</strong></span>
+                      )}
+                    </div>
+                  </div>
+                )
               )}
             </div>
           );

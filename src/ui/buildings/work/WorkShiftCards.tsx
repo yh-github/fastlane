@@ -327,9 +327,6 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
 
     const isWorkWork = m.id === 'work_work';
     const totalMistakeChance = m.totalMistakeChance ?? 0;
-    const physChance = m.physMistakeChance ?? 0;
-    const mentalChance = m.mentalMistakeChance ?? 0;
-    const socialChance = m.socialMistakeChance ?? 0;
 
     const fatigueCostText = m.mentalCost > 0
       ? `-${m.physCost} 💪, -${m.mentalCost} 🧠`
@@ -442,26 +439,30 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
             {summary.tier === 'overtime' ? '🔥 ' : (summary.tier === 'grind' ? '⚡ ' : '')}{fatigueCostText}
           </span>
 
-          {totalMistakeChance > 0 && (() => {
-            const hazardDrivers = [physChance > 0 ? '💪' : '', mentalChance > 0 ? '🧠' : '', socialChance > 0 ? '👥' : ''].filter(Boolean).join('/');
-            return (
-              <span
-                title={`Physical: ${(physChance * 100).toFixed(1)}%, Mental: ${(mentalChance * 100).toFixed(1)}%${socialChance > 0 ? `, Social: ${(socialChance * 100).toFixed(1)}%` : ''}`}
-                style={{
-                  color: '#f87171',
-                  fontWeight: 'bold',
-                  fontSize: '0.62rem',
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  padding: '1px 4px',
-                  borderRadius: '3px',
-                  border: '1px solid #ef4444',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                ⚠️ {(totalMistakeChance * 100).toFixed(1)}%{hazardDrivers ? ` (${hazardDrivers})` : ''}
-              </span>
-            );
-          })()}
+          {totalMistakeChance > 0 && (
+            <span
+              title={
+                m.modifierBreakdown?.mistakeBreakdown
+                  ? (m.modifierBreakdown.mistakeBreakdown
+                      .filter(b => b.isTriggered)
+                      .map(b => `${b.label}: ${(b.chance * 100).toFixed(1)}%`)
+                      .join(' | ') || `Mistake Risk: ${(totalMistakeChance * 100).toFixed(1)}%`)
+                  : `Mistake Risk: ${(totalMistakeChance * 100).toFixed(1)}%`
+              }
+              style={{
+                color: '#f87171',
+                fontWeight: 'bold',
+                fontSize: '0.62rem',
+                background: 'rgba(239, 68, 68, 0.2)',
+                padding: '1px 4px',
+                borderRadius: '3px',
+                border: '1px solid #ef4444',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              ⚠️ {(totalMistakeChance * 100).toFixed(1)}%
+            </span>
+          )}
         </div>
 
         {/* Row 3: All active modifier badges (frontline social, tech, overtime drop, etc.) */}

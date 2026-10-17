@@ -28,7 +28,14 @@ import {
   getJobWorkMistakeSocialPenalty,
   getLookBusyPhysicalCostModifier,
   getJobPhysicalFatigueThreshold,
+  getJobPhysicalMistakeThreshold,
+  getJobPhysicalMistakeRate,
   getJobMentalMistakeThreshold,
+  getJobMentalMistakeRate,
+  getJobSocialMistakeThreshold,
+  getJobSocialMistakeRate,
+  getExecutiveMistakeExpMargin,
+  getExecutiveMistakeRate,
   isManagementJob
 } from '../jobTags';
 import type { WorkMode, WorkResult } from './jobTypes';
@@ -408,26 +415,30 @@ export function workShift(
   let execMistake = false;
 
   if (useConditions) {
-    const physMistakeThreshold = hasJobTag(job, 'heavy_physical') ? 20 : 10;
+    const physMistakeThreshold = getJobPhysicalMistakeThreshold(job, statRules);
+    const physMistakeRate = getJobPhysicalMistakeRate(statRules);
     if (physicalCost > 0 && oldPhys < physMistakeThreshold) {
-      const physChance = (physMistakeThreshold - oldPhys) * 0.025;
+      const physChance = (physMistakeThreshold - oldPhys) * physMistakeRate;
       physMistake = resolveDecision(replay, `work_phys_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < physChance);
     }
 
-    const mentalMistakeThreshold = getJobMentalMistakeThreshold(job);
+    const mentalMistakeThreshold = getJobMentalMistakeThreshold(job, statRules);
+    const mentalMistakeRate = getJobMentalMistakeRate(statRules);
     const isExecMgmt = hasJobTag(job, 'executive_management');
     if ((mentalCost > 0 || isExecMgmt) && oldMental < mentalMistakeThreshold) {
       const mentalMultiplier = hasJobTag(job, 'heavy_physical') ? 0.5 : 1.0;
-      const mentalChance = (mentalMistakeThreshold - oldMental) * 0.025 * mentalMultiplier;
+      const mentalChance = (mentalMistakeThreshold - oldMental) * mentalMistakeRate * mentalMultiplier;
       mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
     }
   }
 
   const isExecMgmt = hasJobTag(job, 'executive_management');
-  // Executive management base mistake risk based on experience margin: max(0, 20 - (Exp - Exp_req)) * 0.005
+  // Executive management base mistake risk based on experience margin: max(0, margin - (Exp - Exp_req)) * rate
   if (isAdvanced && isExecMgmt) {
     const expMargin = (updated.experience || 0) - (job.requirements?.experience || 0);
-    const execMistakeChance = Math.max(0, 20 - expMargin) * 0.005;
+    const execExpMargin = getExecutiveMistakeExpMargin(statRules);
+    const execExpRate = getExecutiveMistakeRate(statRules);
+    const execMistakeChance = Math.max(0, execExpMargin - expMargin) * execExpRate;
     if (execMistakeChance > 0) {
       execMistake = resolveDecision(
         replay,
@@ -442,9 +453,10 @@ export function workShift(
                          (mode === 'look_busy' && lookBusySocPenalty > 0) ||
                          (mode === 'work_work' && getJobSocialModifier(job, actionCount) !== 0) ||
                          (mode === 'face_time');
-  const socialMistakeThreshold = isFrontline ? 20 : 10;
+  const socialMistakeThreshold = getJobSocialMistakeThreshold(job, statRules);
+  const socialMistakeRate = getJobSocialMistakeRate(statRules);
   if (isAdvanced && modifiesSocial && oldSocial < socialMistakeThreshold) {
-    const socialChance = (socialMistakeThreshold - oldSocial) * 0.0125;
+    const socialChance = (socialMistakeThreshold - oldSocial) * socialMistakeRate;
     socialMistake = resolveDecision(replay, `work_social_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < socialChance);
   }
 

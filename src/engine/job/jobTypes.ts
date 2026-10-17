@@ -14,6 +14,18 @@ export interface ModifierBreakdownItem {
   amount: number;
 }
 
+export interface MistakeBreakdownItem {
+  type: 'physical' | 'mental' | 'social' | 'executive';
+  label: string;
+  icon: string;
+  currentStat: number;
+  threshold: number;
+  ratePerPoint: number;
+  chance: number;
+  isTriggered: boolean;
+  explanation: string;
+}
+
 export interface WorkShiftModifierBreakdown {
   physicalBase: number;
   physicalModifiers: ModifierBreakdownItem[];
@@ -26,6 +38,7 @@ export interface WorkShiftModifierBreakdown {
   actionCount: number;
   grindThreshold: number;
   overtimeThreshold: number;
+  mistakeBreakdown?: MistakeBreakdownItem[];
 }
 
 export interface WorkShiftModifierBadge {
@@ -54,6 +67,7 @@ export interface WorkShiftOption {
   physMistakeChance?: number;
   mentalMistakeChance?: number;
   socialMistakeChance?: number;
+  execMistakeChance?: number;
   totalMistakeChance?: number;
   modifierBreakdown?: WorkShiftModifierBreakdown;
   modifiers?: WorkShiftModifierBadge[];
