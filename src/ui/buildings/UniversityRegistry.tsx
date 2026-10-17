@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { EducationDef, CampaignBundle } from '../../engine/dataLoader';
 import type { PlayerState, GameRules } from '../../engine/gameState';
+import { isAdvancedStatRules } from '../../engine/rules';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../../engine/educationEngine';
 import { roundToResolution, formatHours } from '../../engine/statMath';
@@ -212,7 +213,7 @@ export function UniversityRegistry({
                           >
                             🎓 {rules?.helpfulUI ? t('university.studyBtn', { cost: formatHours(hoursToStudy), defaultValue: `Study (⏳ ${formatHours(hoursToStudy)}h)` }) : t('university.studyBtnBasic', { defaultValue: 'Study' })}
                             {rules?.usePhysicalMentalConditions && rules?.helpfulUI && (() => {
-                              const sRules = campaign.config.statRules;
+                              const sRules = isAdvancedStatRules(campaign.config.statRules) ? campaign.config.statRules : undefined;
                               const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
                               const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;
                               const studyGrindThresh = sRules?.studyGrindThreshold ?? 4;

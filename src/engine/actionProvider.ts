@@ -136,7 +136,7 @@ export function getAvailableActions(
         // Filter jobs: Show jobs player qualifies for, OR is only slightly underqualified for (1 tier higher)
         // Close enough = missing at most 1 degree, and within 20 points of exp/dep
         const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d)).length;
-        const useSkills = state.rules?.useSkills !== undefined ? state.rules.useSkills : !!state.rules?.usePhysicalMentalConditions;
+        const useSkills = Boolean(state.rules?.useSkills);
         const isTechnical = useSkills && job.tags?.includes('technical');
         const isManagement = useSkills && (job.tags?.includes('middle_management') || job.tags?.includes('executive_management'));
         const techSkill = isTechnical ? (player.skillTech || 0) : 0;
@@ -163,7 +163,7 @@ export function getAvailableActions(
     if (bDef?.archetype === 'education') {
       const studyCost = campaign.config.timeRules.studySessionCost;
       const activeEnrolledCount = Object.keys(player.enrolledClasses || {}).filter(k => !k.endsWith('_req')).length;
-      const maxAllowed = state.rules?.maxEnrolledClasses ?? 4;
+      const maxAllowed = state.rules.maxEnrolledClasses;
       campaign.education.forEach(deg => {
         if (!player.degrees.includes(deg.id) && player.enrolledClasses[deg.id] === undefined && activeEnrolledCount < maxAllowed) {
           const adjustedTuition = calcEconomyPrice(deg.baseTuitionFee, state.economicIndex);

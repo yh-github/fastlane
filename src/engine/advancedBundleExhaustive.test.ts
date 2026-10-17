@@ -5,19 +5,26 @@ import { processTurnStart } from './turnProcessor';
 import { processDoctorVisit } from './eventEngine';
 import { enrollInDegree, study } from './educationEngine';
 import { Random } from '../utils/rng';
+import { TEST_ADVANCED_CAMPAIGN_CONFIG, TEST_BASE_GAME_RULES } from './testFactories';
 
 describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
   const mockRules: any = {
+    ...TEST_BASE_GAME_RULES,
+    versionClass: 'advanced',
     usePhysicalMentalConditions: true,
+    useSkills: true,
     trackMess: true,
     allowEatingSpoiledFood: true
   };
 
   const mockCampaign: any = {
     config: {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG,
       gameRules: mockRules,
-      timeRules: { hoursPerTurn: 60, relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6, cleanPhysicalCost: 1, starvationPenalty: 20, doctorPenalty: 10 },
+      timeRules: { ...TEST_ADVANCED_CAMPAIGN_CONFIG.timeRules, hoursPerTurn: 60, relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6, cleanPhysicalCost: 1, starvationPenalty: 20, doctorPenalty: 10 },
       statRules: {
+        ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules,
+        mentalMaxBaseValue: 51,
         globalMessMin: 0,
         globalMessMax: 99,
         lowCostMessMax: 50,
@@ -33,6 +40,7 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
         cleanPhysicalCost: 1
       },
       economyRules: {
+        ...TEST_ADVANCED_CAMPAIGN_CONFIG.economyRules,
         cleaningServiceBasePrice: 100,
         socializeLowCostCashCost: 25,
         socializeSecurityCashCost: 50,
@@ -153,11 +161,11 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
   describe('3. Dynamic MAX_MENTAL, Resilience & Lifestyle', () => {
     it('calculates dynamic MAX_MENTAL correctly across mess, social, and resilience bonuses', () => {
       // 51 - mess_growth(3) [1] + floor(9/10) [0] + 0 = 50
-      expect(calcMaxMental(3, 9, 0)).toBe(50);
+      expect(calcMaxMental(3, 9, 0, undefined, mockCampaign.config.statRules)).toBe(50);
       // 51 - mess_growth(49) [11] + floor(35/10) [3] + 2 = 45
-      expect(calcMaxMental(49, 35, 2)).toBe(45);
+      expect(calcMaxMental(49, 35, 2, undefined, mockCampaign.config.statRules)).toBe(45);
       // 51 - mess_growth(99) [21] + floor(9/10) [0] + 0 = 30
-      expect(calcMaxMental(99, 9, 0)).toBe(30);
+      expect(calcMaxMental(99, 9, 0, undefined, mockCampaign.config.statRules)).toBe(30);
     });
 
     it('recalculateLifestyle incorporates mess growth penalty and social boost', () => {
@@ -206,11 +214,11 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
 
   describe('4. Moving Fees & Rent Extension Penalties', () => {
     it('calculates moving fees accurately', () => {
-      expect(calcMovingFee(5, 0)).toBe(0);
-      expect(calcMovingFee(10, 0)).toBe(0);
-      expect(calcMovingFee(15, 0)).toBe(250); // (15 - 10) * 50 = 250
-      expect(calcMovingFee(10, 3)).toBe(150); // 3 * 50 = 150
-      expect(calcMovingFee(25, 2)).toBe(850); // (25 - 10)*50 + 2*50 = 750 + 100 = 850
+      expect(calcMovingFee(5, 0, mockCampaign.config.economyRules)).toBe(0);
+      expect(calcMovingFee(10, 0, mockCampaign.config.economyRules)).toBe(0);
+      expect(calcMovingFee(15, 0, mockCampaign.config.economyRules)).toBe(250); // (15 - 10) * 50 = 250
+      expect(calcMovingFee(10, 3, mockCampaign.config.economyRules)).toBe(150); // 3 * 50 = 150
+      expect(calcMovingFee(25, 2, mockCampaign.config.economyRules)).toBe(850); // (25 - 10)*50 + 2*50 = 750 + 100 = 850
     });
 
     it('charges moving fee and resets mess upon apartment change', () => {

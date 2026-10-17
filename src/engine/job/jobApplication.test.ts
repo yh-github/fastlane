@@ -134,7 +134,7 @@ describe('jobApplication', () => {
         turnFlags: { jobsRejectedThisTurn: [] }
       } as unknown as PlayerState;
 
-      const result = applyForJob(player, ceoJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true, maskEarlyJobRejections: false }, 5);
+      const result = applyForJob(player, ceoJob, 4, {}, undefined, undefined, { versionClass: 'advanced', useSkills: true, usePhysicalMentalConditions: true, maskEarlyJobRejections: false }, 5);
       expect(result.success).toBe(false);
       expect(result.message.params?.reasons).toContain('Not enough experience.');
       expect(result.message.params?.reasons).toContain('Poor Work History.');
@@ -207,7 +207,7 @@ describe('jobApplication', () => {
         turnFlags: { jobsRejectedThisTurn: [] }
       } as unknown as PlayerState;
 
-      const result = applyForJob(weakPlayer, heavyJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true });
+      const result = applyForJob(weakPlayer, heavyJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, undefined, { heavyPhysicalMinRequirement: 21, enableAdvancedStats: true } as any);
       expect(result.success).toBe(false);
       expect(result.message.params?.reasons).toContain('Requires at least 21 Physical Condition');
     });
@@ -242,13 +242,13 @@ describe('jobApplication', () => {
       } as unknown as PlayerState;
 
       // 1st rejection while unemployed: +10%
-      let res = applyForJob(unemployedPlayer, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
+      let res = applyForJob(unemployedPlayer, normalJob, 4, {}, undefined, undefined, { versionClass: 'advanced', usePhysicalMentalConditions: true }, 1, replayFail);
       expect(res.success).toBe(false);
       expect(res.updated.noOpeningBonus).toBe(10);
 
       // 2nd rejection while unemployed: +10% -> 20%
       res.updated.turnFlags.jobsRejectedThisTurn = [];
-      res = applyForJob(res.updated, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
+      res = applyForJob(res.updated, normalJob, 4, {}, undefined, undefined, { versionClass: 'advanced', usePhysicalMentalConditions: true }, 1, replayFail);
       expect(res.success).toBe(false);
       expect(res.updated.noOpeningBonus).toBe(20);
 
@@ -258,7 +258,7 @@ describe('jobApplication', () => {
         outDecisions: []
       };
       res.updated.turnFlags.jobsRejectedThisTurn = [];
-      const successRes = applyForJob(res.updated, normalJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replaySuccess);
+      const successRes = applyForJob(res.updated, normalJob, 4, {}, undefined, undefined, { versionClass: 'advanced', usePhysicalMentalConditions: true }, 1, replaySuccess);
       expect(successRes.success).toBe(true);
       expect(successRes.updated.noOpeningBonus).toBe(0);
 
@@ -272,7 +272,7 @@ describe('jobApplication', () => {
         perks: []
       };
       successRes.updated.turnFlags.jobsRejectedThisTurn = [];
-      const  employedRes = applyForJob(successRes.updated, otherJob, 4, {}, undefined, undefined, { usePhysicalMentalConditions: true }, 1, replayFail);
+      const employedRes = applyForJob(successRes.updated, otherJob, 4, {}, undefined, undefined, { versionClass: 'advanced', usePhysicalMentalConditions: true }, 1, replayFail);
       expect(employedRes.success).toBe(false);
       expect(employedRes.updated.noOpeningBonus).toBe(5);
     });
@@ -302,7 +302,7 @@ describe('jobApplication', () => {
         }
       } as unknown as PlayerState;
 
-      const advRules = { usePhysicalMentalConditions: true };
+      const advRules = { versionClass: 'advanced' as const, usePhysicalMentalConditions: true };
 
       const underdressedPlayer = { ...basePlayer, inventory: { ...basePlayer.inventory, selectedClothes: 'casual' as const } } as unknown as PlayerState;
       const replayUnder = { inDecisions: [{ type: 'job_apply_luck', result: 43 }], outDecisions: [] };

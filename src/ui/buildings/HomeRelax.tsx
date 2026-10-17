@@ -124,7 +124,9 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const isRelaxDisabled = player.hoursRemaining <= 0 || (player.hoursRemaining < relaxCost && !rules?.allowPartialHours && !isDivisible);
 
   const currentMess = player.mess || 0;
-  const maxMessHousing = calcMaxMess(player, campaign?.config.statRules);
+  const maxMessHousing = rules?.trackMess && campaign?.config.statRules
+    ? calcMaxMess(player, campaign.config.statRules, campaign)
+    : 100;
   const isMessClean = currentMess <= 0;
 
   // Space & Mess calculation
@@ -139,16 +141,37 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const messPct = spaceCap > 0 ? Math.min(100, (currentMess / spaceCap) * 100) : 0;
 
   // Socialize logic
-  const socialParams = calcSocializeParameters(player, campaign, rules);
-  const cleaningServiceCost = campaign?.config.timeRules?.cleaningServiceCost ?? 1;
-  const cleaningServiceBasePrice = campaign?.config.economyRules?.cleaningServiceBasePrice ?? 100;
+  const socialParams = (rules?.trackSocial && campaign?.config?.timeRules && ('socializeCost' in campaign.config.timeRules))
+    ? calcSocializeParameters(player, campaign, rules)
+    : {
+        hasTime: player.hoursRemaining >= 6,
+        isNoSpace: false,
+        isTooExhausted: Boolean(rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) - 1 < 1.0),
+        timeCost: 6,
+        diceCount: 1,
+        maxGuestsBySpace: 10,
+        appBonus: 0,
+        cashRate: 5,
+        minCashCost: 5,
+        maxCashCost: 15,
+        minGuests: 1,
+        maxGuests: 3
+      };
+  const cleaningServiceCost = (campaign?.config.timeRules && 'cleaningServiceCost' in campaign.config.timeRules)
+    ? campaign.config.timeRules.cleaningServiceCost
+    : 1;
+  const cleaningServiceBasePrice = (campaign?.config.economyRules && 'cleaningServiceBasePrice' in campaign.config.economyRules)
+    ? campaign.config.economyRules.cleaningServiceBasePrice
+    : 100;
   const cleaningServicePrice = calcEconomyPrice(cleaningServiceBasePrice, economicIndex);
   const canAffordCleaning = player.money >= cleaningServicePrice;
 
   const isPenthouse = player.currentHousingId === 'penthouse';
   const isSecurity = player.currentHousingId === 'security';
 
-  const cleanPhysicalCost = campaign?.config.statRules?.cleanPhysicalCost ?? 1;
+  const cleanPhysicalCost = (campaign?.config.statRules && 'cleanPhysicalCost' in campaign.config.statRules)
+    ? campaign.config.statRules.cleanPhysicalCost
+    : 1;
   const hoursToClean = player.hoursRemaining > 0 ? Math.min(3, player.hoursRemaining) : 3;
   const cleanRatio = hoursToClean / 3;
   const cleanPhysGain = Math.max(0.5, roundToResolution(cleanPhysicalCost * cleanRatio, 0.5));
@@ -183,6 +206,9 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   let classicGain = 0;
   let classicFirstBonus = 0;
   const conditionRes = rules?.conditionResolution ?? 0.5;
+  const baseRelaxMess = (campaign?.config.statRules && 'relaxMessIncrease' in campaign.config.statRules)
+    ? campaign.config.statRules.relaxMessIncrease
+    : 1;
 
   if (rules?.usePhysicalMentalConditions) {
     if (hasFood) {
@@ -201,7 +227,6 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
         : rawMentalGain;
 
       if (rules.trackMess) {
-        const baseRelaxMess = campaign?.config.statRules?.relaxMessIncrease ?? 1;
         const relaxMess = baseRelaxMess + extraMess;
         scaledMess = (isDivisible && hoursToRelax < relaxCost)
           ? Math.max(1, Math.round(relaxMess * relaxRatio))
@@ -218,7 +243,6 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
         : rawMentalGain;
 
       if (rules.trackMess) {
-        const baseRelaxMess = campaign?.config.statRules?.relaxMessIncrease ?? 1;
         scaledMess = (isDivisible && hoursToRelax < relaxCost)
           ? Math.max(1, Math.round(baseRelaxMess * relaxRatio))
           : baseRelaxMess;
@@ -282,7 +306,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const housingDef = campaign?.housing?.find(h => h.id === player.currentHousingId);
   const housingName = housingDef ? t(`housing.${housingDef.id}`, { defaultValue: housingDef.name }) : (isPenthouse ? 'Penthouse Suite' : isSecurity ? 'Security Apartments' : 'Low-Cost Housing');
 
-  const useAdvancedHome = rules?.advancedHomeGUI ?? rules?.usePhysicalMentalConditions ?? false;
+  const useAdvancedHome = Boolean(rules?.advancedHomeGUI ?? rules?.usePhysicalMentalConditions);
 
   const unfedWarningPortal = showUnfedWarning && typeof document !== 'undefined' && createPortal(
     <div style={{

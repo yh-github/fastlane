@@ -133,23 +133,24 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);
   const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
 
+  const statRules = campaign?.config?.statRules;
   const mentalThreshold =
-    campaign?.config?.statRules?.mentalWarningThreshold ??
-    campaign?.config?.statRules?.lowSpiritsThreshold ??
+    (statRules && 'mentalWarningThreshold' in statRules ? statRules.mentalWarningThreshold : undefined) ??
+    (statRules && 'lowSpiritsThreshold' in statRules ? statRules.lowSpiritsThreshold : undefined) ??
     10;
   const mentalVal = player.mentalCondition || 0;
   const isMentalCritical = mentalVal <= mentalThreshold;
   const isMentalWarning = mentalVal <= mentalThreshold * 2;
 
   const physicalThreshold =
-    campaign?.config?.statRules?.physicalWarningThreshold ??
-    campaign?.config?.statRules?.physicalDoctorThreshold ??
+    (statRules && 'physicalWarningThreshold' in statRules ? statRules.physicalWarningThreshold : undefined) ??
+    (statRules && 'physicalDoctorThreshold' in statRules ? statRules.physicalDoctorThreshold : undefined) ??
     10;
   const physicalVal = player.physicalCondition || 0;
   const isPhysicalCritical = physicalVal <= physicalThreshold;
   const isPhysicalWarning = physicalVal <= physicalThreshold * 2;
 
-  const useSkills = rules.useSkills !== undefined ? rules.useSkills : !!rules.usePhysicalMentalConditions;
+  const useSkills = Boolean(rules.useSkills);
 
   // 1. Victory Badge (Top-most icon on the right column)
   const victoryBadge: DashboardBadgeData = {
@@ -220,9 +221,9 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
       onClick: () => onFilterToggle?.('experience'),
     });
 
-    if (useSkills) {
-      const maxMgmt = calcMaxSkillCap(player, 'skillMgmt', campaign?.education, campaign?.config?.statRules, rules);
-      const maxTech = calcMaxSkillCap(player, 'skillTech', campaign?.education, campaign?.config?.statRules, rules);
+    if (useSkills && campaign?.config?.statRules) {
+      const maxMgmt = calcMaxSkillCap(player, 'skillMgmt', campaign?.education, campaign.config.statRules, rules);
+      const maxTech = calcMaxSkillCap(player, 'skillTech', campaign?.education, campaign.config.statRules, rules);
       careerAttributes.push({
         id: 'stat-skill-mgmt',
         label: t('dashboard.skillMgmt', { defaultValue: 'Leadership' }),
@@ -292,7 +293,7 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     }
   } else {
     if (rules.helpfulUI) {
-      const relaxationMax = player.relaxationMax ?? campaign?.config?.statRules?.maxRelaxation ?? campaign?.config?.statRules?.initialPhysicalMax ?? 50;
+      const relaxationMax = player.relaxationMax ?? campaign?.config?.statRules?.maxRelaxation ?? 50;
       const displayRelaxation = relaxationMax ? `${player.relaxation}/${relaxationMax}` : `${player.relaxation}`;
       lifeBadges.push({
         id: 'stat-relaxation',

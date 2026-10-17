@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createPlayerState, type PlayerState, type GameRules, type GameState } from './gameState';
-import { DEFAULT_GAME_RULES } from './rules';
+import { TEST_BASE_GAME_RULES, TEST_ADVANCED_CAMPAIGN_CONFIG } from './testFactories';
 import { gameReducer, type ReducerContext } from './gameReducer';
 import { type CampaignBundle } from './dataLoader';
 import { Random } from '../utils/rng';
@@ -17,18 +17,26 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
   beforeEach(() => {
     campaign = {
       config: {
+        ...TEST_ADVANCED_CAMPAIGN_CONFIG,
         name: 'Advanced Physical Mental',
         version: '1.0.0',
         description: 'Advanced Physical & Mental rules',
         startingMoney: 1000,
         winConditions: [],
         gameRules: {
-          ...DEFAULT_GAME_RULES,
+          ...TEST_BASE_GAME_RULES,
+          versionClass: 'advanced',
           usePhysicalMentalConditions: true,
+          useSkills: true,
           trackMess: true,
           allowPartialHours: false
         },
         statRules: {
+          ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules,
+          mentalMaxBaseValue: 51,
+          maxMentalCondition: 50,
+          startingMentalCondition: 50,
+          startingPhysicalCondition: 50,
           minPhysicalCondition: 1,
           minMentalCondition: 1,
           initialPhysicalMax: 50,
@@ -47,6 +55,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
           globalMessMin: 0
         },
         timeRules: {
+          ...TEST_ADVANCED_CAMPAIGN_CONFIG.timeRules,
           hoursPerTurn: 60,
           workSessionCost: 6,
           studySessionCost: 6,
@@ -63,6 +72,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
           brokerCost: 2
         },
         economyRules: {
+          ...TEST_ADVANCED_CAMPAIGN_CONFIG.economyRules,
           rentGarnishRate: 0.5,
           rentFee: 20,
           repairCostMin: 10,
@@ -72,6 +82,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
           cleaningServiceBasePrice: 100
         },
         eventRules: {
+          ...TEST_ADVANCED_CAMPAIGN_CONFIG.eventRules,
           willyRobberyStartWeek: 4,
           doctorCost: 500,
           lowSpiritsThreshold: 10
@@ -158,12 +169,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       events: []
     };
 
-    rules = {
-      ...DEFAULT_GAME_RULES,
-      usePhysicalMentalConditions: true,
-      trackMess: true,
-      allowPartialHours: false
-    };
+    rules = campaign.config.gameRules;
 
     player = createPlayerState('P1', 'Hero', false, { wealth: 1000, happiness: 50, education: 1, career: 1 }, 'node_home', campaign.config);
     player.physicalCondition = 50;

@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ResumePromptModal } from './ResumePromptModal';
-import { DEFAULT_GAME_RULES } from '../engine/rules';
+import { TEST_BASE_GAME_RULES } from '../engine/testFactories';
 import type { AutoSaveData } from '../utils/saveManager';
 import type { GameState } from '../engine/gameState';
 
@@ -44,7 +44,7 @@ describe('ResumePromptModal', () => {
     phase: 'playing',
     campaignId: 'qol_improved',
     rngState: 789,
-    rules: { ...DEFAULT_GAME_RULES },
+    rules: { ...TEST_BASE_GAME_RULES },
     winnerId: null,
   };
 

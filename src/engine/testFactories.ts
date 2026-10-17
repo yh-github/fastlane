@@ -1,23 +1,74 @@
 /**
  * testFactories.ts — Strongly-typed factory functions for tests.
  *
- * Avoids dangerous `as unknown as PlayerState` casts by generating fully-formed,
- * valid default domain models that adhere to all TypeScript interfaces.
+ * Generates complete, validated default domain models for unit tests.
  */
 
 import { type PlayerState, type GameState, type GameRules, createPlayerState, createInitialGameState } from './gameState';
-import { type CampaignBundle } from './dataLoader';
-import { DEFAULT_GAME_RULES } from './rules';
-import type { TimeRules, StatRules, EconomyRules, EventRules } from './rules';
-import type { CampaignConfig } from './dataLoader';
+import { type CampaignBundle, type CampaignConfig, type BaseCampaignConfig, type AdvancedCampaignConfig } from './dataLoader';
+import type { AdvancedTimeRules, AdvancedStatRules, AdvancedEconomyRules, EventRules, MapRules } from './rules';
+import floppyConfigJson from '../../public/campaigns/1990_classic_floppy/config.json';
+import cdromConfigJson from '../../public/campaigns/1990_classic_cdrom/config.json';
+import qolConfigJson from '../../public/campaigns/qol_improved/config.json';
+import advancedConfigJson from '../../public/campaigns/advanced/config.json';
+
+export const TEST_BASE_GAME_RULES: GameRules = {
+  ...(floppyConfigJson.gameRules as GameRules),
+};
+
+export const TEST_BASE_CAMPAIGN_CONFIG: BaseCampaignConfig = floppyConfigJson as unknown as BaseCampaignConfig;
+
+export const TEST_ADVANCED_GAME_RULES: GameRules = {
+  ...(floppyConfigJson.gameRules as GameRules),
+  ...(cdromConfigJson.gameRules as Partial<GameRules>),
+  ...(qolConfigJson.gameRules as Partial<GameRules>),
+  ...(advancedConfigJson.gameRules as Partial<GameRules>),
+  versionClass: 'advanced',
+};
+
+export const TEST_ADVANCED_CAMPAIGN_CONFIG: AdvancedCampaignConfig = {
+  ...(floppyConfigJson as unknown as AdvancedCampaignConfig),
+  ...(cdromConfigJson as unknown as Partial<AdvancedCampaignConfig>),
+  ...(qolConfigJson as unknown as Partial<AdvancedCampaignConfig>),
+  ...(advancedConfigJson as unknown as Partial<AdvancedCampaignConfig>),
+  versionClass: 'advanced',
+  timeRules: {
+    ...floppyConfigJson.timeRules,
+    ...advancedConfigJson.timeRules,
+  },
+  economyRules: {
+    ...(floppyConfigJson.economyRules as unknown as AdvancedEconomyRules),
+    ...((qolConfigJson as any).economyRules || {}),
+    ...advancedConfigJson.economyRules,
+  },
+  mapRules: {
+    ...floppyConfigJson.mapRules,
+    ...((qolConfigJson as any).mapRules || {}),
+  } as MapRules,
+  statRules: {
+    ...floppyConfigJson.statRules,
+    ...((qolConfigJson as any).statRules || {}),
+    ...advancedConfigJson.statRules,
+  } as AdvancedStatRules,
+  eventRules: {
+    ...(floppyConfigJson.eventRules as EventRules),
+    ...((cdromConfigJson as any).eventRules || {}),
+    charity: {
+      ...floppyConfigJson.eventRules.charity,
+      ...(((cdromConfigJson as any).eventRules || {}).charity || {}),
+    },
+  },
+  gameRules: TEST_ADVANCED_GAME_RULES,
+};
 
 export type MockCampaignOverrides = Partial<Omit<CampaignBundle, 'config'>> & {
-  config?: Partial<Omit<CampaignConfig, 'timeRules' | 'economyRules' | 'statRules' | 'gameRules' | 'eventRules'>> & {
-    timeRules?: Partial<TimeRules>;
-    economyRules?: Partial<EconomyRules>;
-    statRules?: Partial<StatRules>;
+  config?: Partial<Omit<CampaignConfig, 'timeRules' | 'economyRules' | 'statRules' | 'gameRules' | 'eventRules' | 'mapRules'>> & {
+    timeRules?: Partial<AdvancedTimeRules>;
+    economyRules?: Partial<AdvancedEconomyRules>;
+    statRules?: Partial<AdvancedStatRules>;
     gameRules?: Partial<GameRules>;
     eventRules?: Partial<EventRules>;
+    mapRules?: Partial<MapRules>;
   };
 };
 
@@ -25,139 +76,205 @@ export type MockCampaignOverrides = Partial<Omit<CampaignBundle, 'config'>> & {
  * Creates a valid, complete CampaignBundle with sensible defaults for testing.
  */
 export function createMockCampaign(overrides: MockCampaignOverrides = {}): CampaignBundle {
+  const defaultTimeRules: AdvancedTimeRules = {
+    hoursPerTurn: 60,
+    workSessionCost: 6,
+    studySessionCost: 6,
+    jobApplicationCost: 4,
+    relaxCost: 6,
+    newspaperCost: 1,
+    starvationPenalty: 20,
+    doctorPenalty: 10,
+    buildingEntryCost: 2,
+    loanCost: 2,
+    brokerCost: 2,
+    cleaningServiceCost: 1,
+    socializeCost: 6,
+    relaxGain: 3,
+    burnoutPenalty: 15,
+  };
+
+  const defaultEconomyRules: AdvancedEconomyRules = {
+    model: 'authentic_sectors',
+    rentGarnishRate: 0.5,
+    rentFee: 20,
+    repairCostMin: 0.05,
+    repairCostMax: 0.25,
+    pawnPayoutRate: 0.5,
+    pawnRedeemRate: 1.0,
+    cleaningServiceBasePrice: 100,
+    socializeLowCostCashCost: 25,
+    socializeSecurityCashCost: 50,
+    socializePenthouseCashCost: 100,
+    moveFeeMessThreshold: 10,
+    moveFeeMessRate: 5,
+    moveFeeDurableRate: 10,
+    bankTransactionIncrementSmall: 50,
+    bankTransactionIncrementLarge: 500,
+    loanPaymentAmount: 50,
+    loanInterestAmount: 5,
+    loanPrincipalAmount: 45,
+    baselineReading: 100,
+    minReading: 10,
+    maxReading: 190,
+    priceFloorPercent: 50,
+    priceCeilingPercent: 250,
+    upwardBounceStrongThreshold: 40,
+    upwardBounceModerateThreshold: 70,
+    downwardBounceStrongThreshold: 160,
+    downwardBounceModerateThreshold: 130,
+    sectorRisks: {
+      main: 4,
+      goods: 4,
+      investments: 4,
+      gold: 2,
+      silver: 2,
+      pork: 4,
+      blueChip: 1,
+      penny: 10,
+    },
+  };
+
+  const defaultMapRules: MapRules = {
+    allowDiagonalMovement: false,
+    movementCostModel: 'waypoints',
+    movementCostPerNode: 1,
+    stepsPerHour: 14,
+  };
+
+  const defaultStatRules: AdvancedStatRules = {
+    startingHappiness: 0,
+    minHappiness: 0,
+    maxHappiness: 100,
+    startingRelaxation: 25,
+    minRelaxation: 10,
+    maxRelaxation: 50,
+    relaxationDecayRate: 1,
+    relaxMessIncrease: 1,
+    relaxationDoctorChance: 0.20,
+    enableAdvancedStats: true,
+    mentalWarningThreshold: 15,
+    physicalWarningThreshold: 15,
+    startingPhysicalCondition: 50,
+    startingMentalCondition: 50,
+    minPhysicalCondition: 3,
+    maxPhysicalCondition: 50,
+    minMentalCondition: 3,
+    maxMentalCondition: 50,
+    globalMaxMentalCondition: 99,
+    physicalDoctorThreshold: 10,
+    physicalDoctorChancePerPoint: 0.1,
+    doctorVisitPhysicalThreshold: 10,
+    doctorVisitPhysicalChancePerPoint: 0.1,
+    hotTubMaxMessBonus: 5,
+    lowSpiritsThreshold: 15,
+    lowSpiritsChancePerPoint: 0.05,
+    workGrindThreshold: 3,
+    workGrindMentalCost: 2,
+    workGrindPhysicalCost: 2,
+    workPhysicalCost: 1,
+    workNormalMentalCost: 1,
+    workOvertimeThreshold: 8,
+    workOvertimePhysicalCost: 2,
+    workOvertimeMentalCost: 2,
+    studyMentalCost: 1,
+    studyNormalMentalCost: 1,
+    studyNormalPhysicalCost: 0,
+    studyGrindThreshold: 3,
+    studyGrindMentalCost: 2,
+    studyGrindPhysicalCost: 1,
+    studyOvertimeThreshold: 8,
+    studyOvertimeMentalCost: 2,
+    studyOvertimePhysicalCost: 2,
+    resilienceDropThreshold: 3,
+    cleanPhysicalCost: 1,
+    initialPhysicalMax: 50,
+    initialMinPhysical: 3,
+    globalPhysicalMin: 3,
+    minMaxPhysical: 50,
+    globalMessMax: 100,
+    lowCostMessMax: 30,
+    securityMessMax: 100,
+    initialMessMin: 0,
+    globalMessMin: 0,
+    startingSocial: 20,
+    minSocial: 0,
+    maxSocial: 99,
+    doctorPhysicalBounceBack: 20,
+    starvationMaxPhysicalPenalty: 15,
+    lowSpiritsMentalBounceBack: 10,
+    globalMaxPhysicalCondition: 99,
+    heavyPhysicalMinRequirement: 21,
+    mentalMaxBaseValue: 50,
+    mentalMaxDegreeBonus: 5,
+    mentalMaxBookLimit: 3,
+    mentalMaxBookBonus: 1,
+    mentalMaxComputerBonus: 3,
+    baseSkillCap: 2.5,
+    maxSkillCap: 10.0,
+    baseEmployability: 45,
+    employabilityMarginRate: 1.0,
+    employabilityMaxMarginBonus: 40,
+    maxWageCompetitionPenalty: 20,
+    employabilitySkillBonusRate: 2.0,
+    generalSocialEmployabilityRate: 0.1,
+    socialEmployabilityBaseline: 20,
+    frontlineSocialEmployabilityRate: 0.5,
+    tagCompetitionModifiers: {
+      heavy_physical: -5,
+      high_downtime: 5,
+    },
+    startingExperience: 10,
+    startingDependability: 20,
+    startingCasualClothesWeeks: 6,
+    maxExperience: 99,
+    maxDependability: 99,
+    dependabilityWeeklyDecay: 3,
+  };
+
+  const defaultEventRules: EventRules = {
+    marketCrashDivisor: 2,
+    marketCrashThreshold: 80,
+    marketCrashStartWeek: 8,
+    economicBoomDivisor: 50,
+    economicBoomStartWeek: 8,
+    economicBoomThreshold: 120,
+    willyRobberyStartWeek: 5,
+    applianceBreakStartWeek: 2,
+    charity: {
+      maxCash: 500,
+      maxWealth: 2000,
+      wealthMetric: 'netWorth',
+    },
+  };
+
+  const mergedGameRules: GameRules = {
+    ...TEST_BASE_GAME_RULES,
+    ...(overrides.config?.gameRules || {}),
+  };
+  if (overrides.config?.versionClass && !overrides.config?.gameRules?.versionClass) {
+    mergedGameRules.versionClass = overrides.config.versionClass;
+  } else if (overrides.config?.gameRules?.usePhysicalMentalConditions && !overrides.config?.versionClass && !overrides.config?.gameRules?.versionClass) {
+    mergedGameRules.versionClass = 'advanced';
+  }
+  const versionClass = overrides.config?.versionClass ?? mergedGameRules.versionClass;
+  mergedGameRules.versionClass = versionClass;
+
   const defaultCampaign: CampaignBundle = {
     config: {
+      versionClass,
       name: 'test_mock_campaign',
       version: '1.0.0',
       description: 'Mock Campaign for Unit Tests',
+      supportedGuiStyles: ['generated', 'authentic'],
       startingMoney: 200,
       winConditions: [],
-      timeRules: {
-        hoursPerTurn: 60,
-        workSessionCost: 6,
-        studySessionCost: 6,
-        jobApplicationCost: 4,
-        relaxCost: 6,
-        newspaperCost: 1,
-        starvationPenalty: 20,
-        doctorPenalty: 10,
-        buildingEntryCost: 2,
-        loanCost: 2,
-        brokerCost: 2,
-        cleaningServiceCost: 1,
-        socializeCost: 6,
-        relaxGain: 3,
-        burnoutPenalty: 15
-      },
-      economyRules: {
-        rentGarnishRate: 0.5,
-        rentFee: 20,
-        repairCostMin: 10,
-        repairCostMax: 50,
-        pawnPayoutRate: 0.5,
-        pawnRedeemRate: 1.0,
-        cleaningServiceBasePrice: 100,
-        socializeLowCostCashCost: 25,
-        socializeSecurityCashCost: 50,
-        socializePenthouseCashCost: 100,
-        moveFeeMessThreshold: 10,
-        moveFeeMessRate: 5,
-        moveFeeDurableRate: 10,
-        bankTransactionIncrementSmall: 50,
-        bankTransactionIncrementLarge: 500,
-        loanPaymentAmount: 50,
-        loanInterestAmount: 20,
-        loanPrincipalAmount: 30
-      },
-      mapRules: {
-        movementCostPerNode: 1,
-      },
-      statRules: {
-        startingHappiness: 0,
-        startingRelaxation: 25,
-        relaxationDecayRate: 1,
-        relaxMessIncrease: 1,
-        relaxationDoctorChance: 0.20,
-        enableAdvancedStats: false,
-        mentalWarningThreshold: 15,
-        physicalWarningThreshold: 15,
-        startingPhysicalCondition: 50,
-        startingMentalCondition: 50,
-        minPhysicalCondition: 3,
-        maxPhysicalCondition: 50,
-        minMentalCondition: 3,
-        maxMentalCondition: 50,
-        globalMaxMentalCondition: 99,
-        physicalDoctorThreshold: 10,
-        physicalDoctorChancePerPoint: 0.1,
-        doctorVisitPhysicalThreshold: 10,
-        doctorVisitPhysicalChancePerPoint: 0.1,
-        hotTubMaxMessBonus: 5,
-        lowSpiritsThreshold: 15,
-        lowSpiritsChancePerPoint: 0.05,
-        workGrindThreshold: 3,
-        workGrindMentalCost: 2,
-        workGrindPhysicalCost: 2,
-        workPhysicalCost: 1,
-        workNormalMentalCost: 1,
-        workOvertimeThreshold: 8,
-        workOvertimePhysicalCost: 2,
-        workOvertimeMentalCost: 2,
-        studyMentalCost: 1,
-        studyNormalMentalCost: 1,
-        studyNormalPhysicalCost: 0,
-        studyGrindThreshold: 3,
-        studyGrindMentalCost: 2,
-        studyGrindPhysicalCost: 1,
-        studyOvertimeThreshold: 8,
-        studyOvertimeMentalCost: 2,
-        studyOvertimePhysicalCost: 2,
-        resilienceDropThreshold: 3,
-        cleanPhysicalCost: 1,
-        initialPhysicalMax: 50,
-        initialMinPhysical: 3,
-        globalPhysicalMin: 3,
-        minMaxPhysical: 50,
-        globalMessMax: 100,
-        lowCostMessMax: 30,
-        securityMessMax: 100,
-        initialMessMin: 0,
-        globalMessMin: 0,
-        startingSocial: 20,
-        minSocial: 0,
-        maxSocial: 99,
-        
-        
-        
-        
-        
-        
-        
-        doctorPhysicalBounceBack: 20,
-        starvationMaxPhysicalPenalty: 15,
-        lowSpiritsMentalBounceBack: 10,
-        globalMaxPhysicalCondition: 99,
-        mentalMaxBaseValue: 50,
-        mentalMaxDegreeBonus: 5,
-        startingExperience: 10,
-        startingDependability: 20,
-        startingCasualClothesWeeks: 6,
-        maxExperience: 99,
-        maxDependability: 99,
-        dependabilityWeeklyDecay: 3,
-      },
-      eventRules: {
-        marketCrashDivisor: 2,
-        marketCrashThreshold: 80,
-        economicBoomDivisor: 50,
-        willyRobberyStartWeek: 5,
-        charity: {
-          maxCash: 500,
-          maxWealth: 2000,
-          wealthMetric: 'netWorth'
-        }
-      },
-      gameRules: { ...DEFAULT_GAME_RULES },
+      timeRules: defaultTimeRules,
+      economyRules: defaultEconomyRules,
+      mapRules: defaultMapRules,
+      statRules: defaultStatRules,
+      eventRules: defaultEventRules,
+      gameRules: mergedGameRules,
     },
     buildings: [
       { id: 'monolith_burgers', name: 'Monolith Burgers', archetype: 'restaurant', spritePath: '', description: '' },
@@ -283,20 +400,67 @@ export function createMockCampaign(overrides: MockCampaignOverrides = {}): Campa
     config: {
       ...defaultCampaign.config,
       ...(overrides.config || {}),
-      timeRules: { ...defaultCampaign.config.timeRules, ...(overrides.config?.timeRules || {}) },
-      economyRules: { ...defaultCampaign.config.economyRules, ...(overrides.config?.economyRules || {}) },
-      statRules: { ...defaultCampaign.config.statRules, ...(overrides.config?.statRules || {}) },
-      gameRules: { ...defaultCampaign.config.gameRules, ...(overrides.config?.gameRules || {}) },
-      eventRules: overrides.config?.eventRules ? { ...(defaultCampaign.config.eventRules || {}), ...overrides.config.eventRules } as EventRules : defaultCampaign.config.eventRules,
-    },
+      versionClass,
+      timeRules: { ...defaultTimeRules, ...(overrides.config?.timeRules || {}) },
+      economyRules: { ...defaultEconomyRules, ...(overrides.config?.economyRules || {}) },
+      mapRules: { ...defaultMapRules, ...(overrides.config?.mapRules || {}) },
+      statRules: { ...defaultStatRules, ...(overrides.config?.statRules || {}) },
+      gameRules: mergedGameRules,
+      eventRules: overrides.config?.eventRules
+        ? {
+            ...defaultEventRules,
+            ...overrides.config.eventRules,
+            charity: {
+              ...defaultEventRules.charity,
+              ...(overrides.config.eventRules.charity || {}),
+            },
+          }
+        : defaultEventRules,
+    } as CampaignConfig,
   };
+}
+
+/**
+ * Ensures any partial mock CampaignBundle constructed in legacy tests has complete validated config fields.
+ */
+function ensureCompleteTestCampaign(campaign: CampaignBundle, rules?: Partial<GameRules>): CampaignBundle {
+  const merged = createMockCampaign({
+    ...campaign,
+    config: {
+      ...(campaign.config || {}),
+      gameRules: {
+        ...(campaign.config?.gameRules || {}),
+        ...(rules || {}),
+      },
+    },
+  });
+  // Populate in-place on the passed mock reference so subsequent calls like processTurnStart(state, mockCampaign)
+  // in unit tests also see a complete config.
+  campaign.config = merged.config;
+  if (!campaign.buildings) campaign.buildings = merged.buildings;
+  if (!campaign.items) campaign.items = merged.items;
+  if (!campaign.jobs) campaign.jobs = merged.jobs;
+  if (!campaign.housing) {
+    campaign.housing = [
+      { ...merged.housing[0], baseRent: 325 },
+      { ...merged.housing[1], baseRent: 475, homeNodeId: 'node_security' },
+    ];
+  }
+  if (!campaign.education) campaign.education = merged.education;
+  if (!campaign.stocks) campaign.stocks = merged.stocks;
+  if (!campaign.weekends) campaign.weekends = merged.weekends;
+  if (!campaign.events) campaign.events = merged.events;
+  if (!campaign.synergies) campaign.synergies = merged.synergies;
+  if (!campaign.messages) campaign.messages = merged.messages;
+  if (!campaign.map) campaign.map = merged.map;
+  return campaign;
 }
 
 /**
  * Creates a valid, complete PlayerState with sensible defaults.
  */
 export function createTestPlayer(overrides: Partial<PlayerState> = {}, campaign?: CampaignBundle): PlayerState {
-  const camp = campaign || createMockCampaign();
+  const camp = campaign ? ensureCompleteTestCampaign(campaign) : createMockCampaign();
   const basePlayer = createPlayerState(
     overrides.id || 'test_player_1',
     overrides.name || 'Test Player',
@@ -349,7 +513,7 @@ export function createTestGame(
   playerOverrides?: Partial<PlayerState>,
   rulesOverrides?: Partial<GameRules>
 ): GameState {
-  const camp = campaign || createMockCampaign();
+  const camp = campaign ? ensureCompleteTestCampaign(campaign, rulesOverrides) : createMockCampaign({ config: { gameRules: rulesOverrides } });
   const state = createInitialGameState(
     camp,
     [{ name: 'Test Player', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }],
@@ -376,10 +540,11 @@ export function createTestGameState(
   rules?: Partial<GameRules>,
   seed: number = 12345
 ): GameState {
+  const completeCampaign = ensureCompleteTestCampaign(campaign, rules);
   const formattedPlayers = playersConfig.map(p => ({
     name: p.name,
     isAi: p.isAi,
     goals: p.goals || { wealth: 50, happiness: 50, education: 50, career: 50 }
   }));
-  return createInitialGameState(campaign, formattedPlayers, startNode, rules, seed);
+  return createInitialGameState(completeCampaign, formattedPlayers, startNode, rules, seed);
 }

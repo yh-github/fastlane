@@ -1,5 +1,5 @@
 import { type PlayerState, type GameRules } from './gameState';
-import { type StatRules } from './rules';
+import { type StatRules, isAdvancedStatRules } from './rules';
 
 export type MoraleReason = 
   | 'loan_refused' | 'loan_approved' | 'rent_extension_approved' 
@@ -12,8 +12,8 @@ export type MoraleReason =
 export type HappinessReason = MoraleReason;
 
 /**
- * Applies a morale change to the player, updating both Classic Happiness
- * and (in Advanced Mode) Mental Condition.
+ * Applies a morale change to the player, updating Classic Happiness
+ * or (when usePhysicalMentalConditions is enabled) Mental Condition.
  */
 export function applyMoraleEffect(
   player: PlayerState, 
@@ -22,15 +22,18 @@ export function applyMoraleEffect(
   rules?: Partial<GameRules>,
   statRules?: StatRules
 ): PlayerState {
-  let nextPlayer = { ...player };
+  const nextPlayer = { ...player };
 
   if (!rules?.usePhysicalMentalConditions) {
-    nextPlayer.happiness = Math.max(0, Math.min(100, nextPlayer.happiness + amount));
+    const minHap = statRules ? statRules.minHappiness : 0;
+    const maxHap = statRules ? statRules.maxHappiness : 100;
+    nextPlayer.happiness = Math.max(minHap, Math.min(maxHap, nextPlayer.happiness + amount));
   } else {
-    const minMental = statRules?.minMentalCondition ?? 1;
-    const maxMental = nextPlayer.mentalConditionMax || 50;
-    nextPlayer.mentalCondition = Math.max(minMental, Math.min(maxMental, 
-      (nextPlayer.mentalCondition || 50) + amount));
+    const sr = statRules && isAdvancedStatRules(statRules) ? statRules : undefined;
+    const minMental = sr ? sr.minMentalCondition : 1;
+    const maxMental = nextPlayer.mentalConditionMax ?? (sr ? sr.maxMentalCondition : 85);
+    const curMental = nextPlayer.mentalCondition ?? (sr ? sr.startingMentalCondition : 51);
+    nextPlayer.mentalCondition = Math.max(minMental, Math.min(maxMental, curMental + amount));
   }
 
   return nextPlayer;
@@ -43,10 +46,11 @@ export function applyMentalChange(
   amount: number,
   statRules?: StatRules
 ): PlayerState {
-  let nextPlayer = { ...player };
-  const minMental = statRules?.minMentalCondition ?? 1;
-  const maxMental = nextPlayer.mentalConditionMax || (statRules?.maxMentalCondition ?? 25);
-  nextPlayer.mentalCondition = Math.max(minMental, Math.min(maxMental, 
-    (nextPlayer.mentalCondition || 15) + amount));
+  const nextPlayer = { ...player };
+  const sr = isAdvancedStatRules(statRules) ? statRules : undefined;
+  const minMental = sr ? sr.minMentalCondition : 1;
+  const maxMental = nextPlayer.mentalConditionMax ?? (sr ? sr.maxMentalCondition : 85);
+  const curMental = nextPlayer.mentalCondition ?? (sr ? sr.startingMentalCondition : 51);
+  nextPlayer.mentalCondition = Math.max(minMental, Math.min(maxMental, curMental + amount));
   return nextPlayer;
 }

@@ -17,9 +17,9 @@ export function processEconomicTurnPhase(
   rng: Random,
   replay?: ReplayContext
 ): EconomicTurnResult {
-  const econRules = campaign.config.economyRules || ({} as any);
-  const eventRules = campaign.config.eventRules || ({} as any);
-  const minReading = state.rules.minEconomicReading ?? -30;
+  const econRules = campaign.config.economyRules;
+  const eventRules = campaign.config.eventRules;
+  const minReading = state.rules.minEconomicReading ?? campaign.config.gameRules.minEconomicReading;
   const isAuthentic = econRules.model === 'authentic_sectors' && (state.economySimulation !== undefined || !(replay?.inDecisions && replay.inDecisions.length > 0));
 
   if (!isAuthentic) {
@@ -33,13 +33,13 @@ export function processEconomicTurnPhase(
     const debugCrash = state.debugQueue?.find(e => e.type === 'market_crash');
     const debugBoom = state.debugQueue?.find(e => e.type === 'market_boom');
 
-    const crashStartWeek = eventRules.marketCrashStartWeek ?? 8;
-    const crashDivisor = eventRules.marketCrashDivisor ?? 20;
-    const crashThreshold = eventRules.marketCrashThreshold ?? 60;
+    const crashStartWeek = eventRules.marketCrashStartWeek;
+    const crashDivisor = eventRules.marketCrashDivisor;
+    const crashThreshold = eventRules.marketCrashThreshold;
 
-    const boomStartWeek = eventRules.economicBoomStartWeek ?? 8;
-    const boomDivisor = eventRules.economicBoomDivisor ?? 50;
-    const boomThreshold = eventRules.economicBoomThreshold ?? 120;
+    const boomStartWeek = eventRules.economicBoomStartWeek;
+    const boomDivisor = eventRules.economicBoomDivisor;
+    const boomThreshold = eventRules.economicBoomThreshold;
 
     if (debugCrash) {
       if (state.turn >= crashStartWeek && newEconomy >= crashThreshold) {
@@ -73,7 +73,7 @@ export function processEconomicTurnPhase(
       const crashTriggered = resolveDecision(replay, `market_crash_trigger`, () => rng.next() < crashChance);
       if (crashTriggered) {
         const roll = resolveDecision(replay, `market_crash_roll`, () => rng.next());
-        const trendDrop = resolveDecision(replay, `market_crash_trend`, () => Math.floor(rng.next() * 3) - 3); // -3 to -1
+        const trendDrop = resolveDecision(replay, `market_crash_trend`, () => Math.floor(rng.next() * 3) - 3);
         
         if (roll < 0.333) {
           crashSeverity = 'minor';
@@ -114,8 +114,8 @@ export function processEconomicTurnPhase(
       const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
       if (boomTriggered) {
         economicBoom = true;
-        newEconomy = Math.min(90, newEconomy + 6); // +10% (6 points)
-        newTrend = resolveDecision(replay, `market_boom_trend`, () => Math.floor(rng.next() * 3) + 1); // +1 to +3
+        newEconomy = Math.min(90, newEconomy + 6);
+        newTrend = resolveDecision(replay, `market_boom_trend`, () => Math.floor(rng.next() * 3) + 1);
         currentHeadline = { key: 'newspaper.boom' };
       }
     }
@@ -135,6 +135,18 @@ export function processEconomicTurnPhase(
     ? structuredClone(state.economySimulation) 
     : createDefaultEconomySimulationState(econRules, state.economicIndex, state.economicTrend);
 
+  if (state.economicIndex !== undefined && state.economySimulation && sim.main.reading !== state.economicIndex + 100) {
+    const diff = (state.economicIndex + 100) - sim.main.reading;
+    sim.main.reading = state.economicIndex + 100;
+    sim.goods.reading += diff;
+    sim.investments.reading += diff;
+  }
+  if (state.economicTrend !== undefined && state.economySimulation && sim.main.index !== state.economicTrend) {
+    sim.main.index = state.economicTrend;
+    sim.goods.index = state.economicTrend;
+    sim.investments.index = state.economicTrend;
+  }
+
   let crashSeverity: 'none' | 'minor' | 'moderate' | 'major' = 'none';
   let economicBoom = false;
   let currentHeadline: GameEvent | null = null;
@@ -143,20 +155,17 @@ export function processEconomicTurnPhase(
   const debugCrash = state.debugQueue?.find(e => e.type === 'market_crash');
   const debugBoom = state.debugQueue?.find(e => e.type === 'market_boom');
 
-  const crashStartWeek = eventRules.marketCrashStartWeek ?? 8;
-  const crashDivisor = eventRules.marketCrashDivisor ?? 30;
-  const rawCrashThreshold = eventRules.marketCrashThreshold ?? 80;
-  // rawCrashThreshold is an index. Convert to reading (reading = index + 100).
+  const crashStartWeek = eventRules.marketCrashStartWeek;
+  const crashDivisor = eventRules.marketCrashDivisor;
+  const rawCrashThreshold = eventRules.marketCrashThreshold;
   const crashThresholdReading = rawCrashThreshold + 100;
   const crashThresholdIndex = rawCrashThreshold;
 
-  const boomStartWeek = eventRules.economicBoomStartWeek ?? 8;
-  const boomDivisor = eventRules.economicBoomDivisor ?? 30;
-  const rawBoomThreshold = eventRules.economicBoomThreshold ?? 120;
-  // If rawBoomThreshold is > 100, it's already a reading. Otherwise it's an index.
+  const boomStartWeek = eventRules.economicBoomStartWeek;
+  const boomDivisor = eventRules.economicBoomDivisor;
+  const rawBoomThreshold = eventRules.economicBoomThreshold;
   const boomThresholdReading = rawBoomThreshold > 50 ? rawBoomThreshold : rawBoomThreshold + 100;
 
-  // Current price level reading (main / goods reading)
   const currentGoodsReading = sim.main.reading;
   const currentGoodsIndex = sim.main.reading - 100;
 
@@ -220,15 +229,12 @@ export function processEconomicTurnPhase(
     }
   }
 
-  // Step the authentic 8-sector simulation
-  const enableUpsideBonus = !!state.rules.economicUpsideBonus || !!econRules.enableUpsideBonus;
+  const enableUpsideBonus = !!state.rules.economicUpsideBonus;
   const newSim = stepEconomySimulation(sim, econRules, rng, crashSeverity, economicBoom, replay, enableUpsideBonus);
 
-  // New economy reading and trend (Consumer Goods tier)
   const newEconomy = Math.max(minReading, newSim.goods.reading - 100);
   const newTrend = newSim.goods.index;
 
-  // Authentic mover headline (if no crash/boom headline and predictive tips not active), or fallback to city news
   if (!currentHeadline) {
     const mover = !state.rules.predictiveNewspaperStockTips ? determineNewspaperMover(newSim) : null;
     if (mover) {
@@ -245,7 +251,6 @@ export function processEconomicTurnPhase(
     }
   }
 
-  // Predictive Stock Tips (if enabled for QoL / Advanced)
   if (state.rules.predictiveNewspaperStockTips) {
     const stockTip = generatePredictiveStockTip(newSim, rng, replay);
     if (stockTip && currentHeadline) {
@@ -263,4 +268,3 @@ export function processEconomicTurnPhase(
     newEconomySimulation: newSim,
   };
 }
-

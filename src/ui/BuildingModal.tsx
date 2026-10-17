@@ -213,7 +213,7 @@ export function BuildingModal({
     ? campaign.jobs.find(j => j.id === player.currentJobId && j.locationId === currentBuildingId)
     : null;
 
-  const isAdvancedWorkGUI = rules ? (rules.advancedWorkGUI ?? !!rules.usePhysicalMentalConditions) : false;
+  const isAdvancedWorkGUI = Boolean(rules?.advancedWorkGUI);
   const workConsoleStyle = rules?.workConsoleStyle || 'popup';
 
   const itemsHere = getAvailableItemsForBuilding(building, campaign, turn, player.id, gameSeed);

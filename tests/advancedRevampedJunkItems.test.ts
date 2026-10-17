@@ -9,8 +9,10 @@ import { processDoctorVisit } from '../src/engine/eventEngine';
 import { gameReducer } from '../src/engine/gameReducer';
 import { Random } from '../src/utils/rng';
 import type { CampaignBundle } from '../src/engine/dataLoader';
+import { TEST_ADVANCED_CAMPAIGN_CONFIG, TEST_BASE_GAME_RULES } from '../src/engine/testFactories';
 
 const mockStatRules: StatRules = {
+  ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules,
   startingHappiness: 50,
   startingRelaxation: 25,
   relaxationDecayRate: 2,
@@ -42,8 +44,12 @@ const mockCampaign: CampaignBundle = {
   version: '1.0.0',
   startingCash: 500,
   config: {
+    ...TEST_ADVANCED_CAMPAIGN_CONFIG,
     gameRules: {
+      ...TEST_BASE_GAME_RULES,
+      versionClass: 'advanced',
       usePhysicalMentalConditions: true,
+      useSkills: true,
       trackMess: true,
       trackSocial: true,
       spaceCapping: true,
@@ -52,6 +58,7 @@ const mockCampaign: CampaignBundle = {
     },
     statRules: mockStatRules,
     timeRules: {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG.timeRules,
       hoursPerTurn: 48,
       relaxCost: 6,
       relaxGain: 3,
@@ -63,15 +70,17 @@ const mockCampaign: CampaignBundle = {
       starvationPenalty: 20
     },
     economyRules: {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG.economyRules,
       socializeLowCostCashCost: 25,
       socializeSecurityCashCost: 50,
       socializePenthouseCashCost: 75,
       cleaningServiceBasePrice: 100
     },
     eventRules: {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG.eventRules,
       willyRobberyStartWeek: 4
     }
-  },
+  } as any,
   housing: [
     { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, isRobberyImmune: false, homeNodeId: 'node_low_cost', spaceCap: 100, lifestyleValue: 10 }
   ],
@@ -182,7 +191,7 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
 
   beforeEach(() => {
     player = {
-      ...createPlayerState('p1', 'Player 1', false, 'node_low_cost', mockCampaign.config, mockStatRules),
+      ...createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_low_cost', mockCampaign.config),
       currentHousingId: 'low_cost',
       money: 1000,
       hoursRemaining: 48,
@@ -472,7 +481,8 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
         new Random(12345),
         false,
         mockCampaign.config.gameRules,
-        undefined
+        undefined,
+        mockStatRules
       );
 
       // Physical condition restored by +4: 5 + 4 = 9

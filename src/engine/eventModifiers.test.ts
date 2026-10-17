@@ -43,7 +43,7 @@ describe('eventModifiers', () => {
         key: 'events.foodSpoiled.noFridge',
         params: { amount: 3 },
       };
-      const mods = getEventModifications(event, { usePhysicalMentalConditions: false });
+      const mods = getEventModifications(event, { usePhysicalMentalConditions: false, trackMess: true });
       expect(mods).toEqual([
         { stat: 'mess', diff: 3, label: 'Food Spoilage' },
         { stat: 'happiness', diff: -2, label: 'Food Spoilage' },
@@ -55,7 +55,7 @@ describe('eventModifiers', () => {
         key: 'events.foodSpoiled.ateSpoiled',
         params: { amount: 2 },
       };
-      const mods = getEventModifications(event, { usePhysicalMentalConditions: true });
+      const mods = getEventModifications(event, { usePhysicalMentalConditions: true, trackMess: true });
       expect(mods).toEqual([
         { stat: 'mess', diff: 2, label: 'Food Spoilage' },
         { stat: 'mental', diff: -2, label: 'Food Spoilage' },
@@ -67,7 +67,7 @@ describe('eventModifiers', () => {
         key: 'events.foodSpoiled.tooMuch',
         params: { amount: 1 },
       };
-      const mods = getEventModifications(event, { usePhysicalMentalConditions: true });
+      const mods = getEventModifications(event, { usePhysicalMentalConditions: true, trackMess: true });
       expect(mods).toEqual([
         { stat: 'mess', diff: 1, label: 'Food Spoilage' },
         { stat: 'mental', diff: -1, label: 'Food Spoilage' },
@@ -79,7 +79,7 @@ describe('eventModifiers', () => {
         key: 'events.computerProfit',
         params: { profit: 75 },
       };
-      const mods = getEventModifications(event, { usePhysicalMentalConditions: true });
+      const mods = getEventModifications(event, { usePhysicalMentalConditions: true, useSkills: true });
       expect(mods).toEqual([
         { stat: 'money', diff: 75, label: 'Computer Gig' },
         { stat: 'mental', diff: 3, label: 'Computer Gig' },

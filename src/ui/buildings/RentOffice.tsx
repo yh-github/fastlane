@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules } from '../../engine/gameState';
+import { isAdvancedVersion } from '../../engine/rules';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcMovingFee, calcUsedSpace, calcLandlordStanding } from '../../engine/statMath';
 import type { InteractionProps } from './types';
@@ -27,18 +28,18 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
     { id: 'security', name: 'Security Apartments', baseRent: 475, spaceCap: 250 }
   ]).filter(h => h.id !== 'street');
 
-  const isAdvanced = !!rules?.usePhysicalMentalConditions;
-  const isFluctuating = !!rules?.fluctuatingRent;
+  const isAdvanced = isAdvancedVersion(rules) || Boolean(rules?.usePhysicalMentalConditions);
+  const isFluctuating = Boolean(rules?.fluctuatingRent);
   const showLandlordStanding = isAdvanced || isFluctuating;
   const marketRent = currentHousing
     ? calcEconomyPrice(currentHousing.baseRent, economicIndex)
     : player.currentRentPrice;
-  const landlordStandingInfo = showLandlordStanding ? calcLandlordStanding(player, rules, turn) : null;
+  const landlordStandingInfo = (showLandlordStanding && rules) ? calcLandlordStanding(player, rules, turn) : null;
 
   const rentAdvanceCost = player.currentRentPrice;
 
   const handleInitiateMove = (housingId: string, baseCost: number, newAptName: string) => {
-    const movingFee = rules?.trackMess ? calcMovingFee(player.mess || 0, player.inventory.appliances.length, campaign?.config.economyRules) : 0;
+    const movingFee = (rules?.trackMess && campaign?.config.economyRules) ? calcMovingFee(player.mess || 0, player.inventory.appliances.length, campaign.config.economyRules) : 0;
     const totalCost = baseCost + movingFee;
     setConfirmMove({ housingId, baseCost, movingFee, totalCost, newAptName });
   };

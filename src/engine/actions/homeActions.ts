@@ -1,7 +1,7 @@
 import type { PlayerState } from '../gameState';
 import { collectItemEffects, markClothesWorn } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
-import { requireConfig, getClothesSwitchingRule } from '../rules';
+import { requireConfig, requireAdvancedStatRules, requireAdvancedTimeRules, requireAdvancedEconomyRules, getClothesSwitchingRule } from '../rules';
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
 import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental, calcSocializeParameters } from '../statMath';
@@ -14,8 +14,8 @@ export function handleRelaxAction(
   let nextPlayer = structuredClone(player);
   let actionLog;
 
-  const relaxCost = requireConfig(context.campaign.config.timeRules?.relaxCost, 'timeRules.relaxCost');
-  const relaxGain = context.campaign.config.timeRules.relaxGain ?? 3;
+  const relaxCost = requireConfig(context.campaign.config.timeRules.relaxCost, 'timeRules.relaxCost');
+  const relaxGain = context.campaign.config.timeRules.relaxGain;
   if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < relaxCost && !context.rules.allowPartialHours && !context.rules.proportionalDivisibleActions)) {
     actionLog = { key: 'action.error.notEnoughTimeRelax' };
     return { nextPlayer, actionLog };
@@ -27,10 +27,10 @@ export function handleRelaxAction(
   
   let statsStr = '';
   if (context.rules.usePhysicalMentalConditions) {
-    const statRules = context.campaign.config.statRules;
-    const maxPhysical = nextPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const maxPhysical = nextPlayer.physicalConditionMax ?? statRules.initialPhysicalMax;
     const maxMental = nextPlayer.mentalConditionMax ?? 50;
-    const conditionRes = context.rules.conditionResolution ?? 0.5;
+    const conditionRes = context.rules.conditionResolution;
 
     const hasFood = (nextPlayer.inventory?.freshFoodUnits || 0) > 0 || (nextPlayer.inventory?.fastFoodItems?.length || 0) > 0 || (nextPlayer.inventory?.cannedFoodUnits || 0) > 0;
 
@@ -46,7 +46,7 @@ export function handleRelaxAction(
         ? Math.max(0.5, roundToResolution(rawPhysGain * ratio, conditionRes))
         : rawPhysGain;
 
-      const globalMaxPhys = statRules?.initialPhysicalMax ?? 50;
+      const globalMaxPhys = statRules.initialPhysicalMax;
       const curPhys = nextPlayer.physicalCondition ?? maxPhysical;
       let maxPhysGain = 0;
 
@@ -71,7 +71,7 @@ export function handleRelaxAction(
       nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
 
       if (context.rules.trackMess) {
-        const baseRelaxMess = statRules?.relaxMessIncrease ?? 1;
+        const baseRelaxMess = statRules.relaxMessIncrease;
         const relaxMess = baseRelaxMess + extraMess;
         const scaledMess = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
           ? Math.max(1, Math.round(relaxMess * ratio))
@@ -106,7 +106,7 @@ export function handleRelaxAction(
       nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax, nextPlayer.mentalCondition);
 
       if (context.rules.trackMess) {
-        const baseRelaxMess = statRules?.relaxMessIncrease ?? 1;
+        const baseRelaxMess = statRules.relaxMessIncrease;
         const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
         nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + baseRelaxMess);
       }
@@ -148,16 +148,16 @@ export function handleCleanAction(
   }
   const actualHours = Math.min(3, nextPlayer.hoursRemaining);
   const ratio = actualHours / 3;
-  const conditionRes = context.rules.conditionResolution ?? 0.5;
+  const conditionRes = context.rules.conditionResolution;
 
   let cleanCost = 0;
   if (context.rules.usePhysicalMentalConditions) {
-    const statRules = context.campaign.config.statRules;
-    const rawCleanCost = statRules?.cleanPhysicalCost ?? 1;
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const rawCleanCost = statRules.cleanPhysicalCost;
     cleanCost = (context.rules.proportionalDivisibleActions && actualHours < 3)
       ? Math.max(0.5, roundToResolution(rawCleanCost * ratio, conditionRes))
       : rawCleanCost;
-    const currentPhys = nextPlayer.physicalCondition ?? (statRules?.initialPhysicalMax ?? 50);
+    const currentPhys = nextPlayer.physicalCondition ?? statRules.initialPhysicalMax;
     if (currentPhys - cleanCost < 1.0) {
       actionLog = { key: 'action.error.tooExhausted' };
       return { nextPlayer, actionLog };
@@ -166,22 +166,23 @@ export function handleCleanAction(
   nextPlayer = spendHours(nextPlayer, actualHours);
   let cleanStatsStr = '';
   if (context.rules.usePhysicalMentalConditions) {
-    const statRules = context.campaign.config.statRules;
-    const minPhysical = statRules?.minPhysicalCondition ?? 1;
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const minPhysical = statRules.minPhysicalCondition;
 
-    const currentPhys = nextPlayer.physicalCondition ?? (statRules?.initialPhysicalMax ?? 50);
+    const currentPhys = nextPlayer.physicalCondition ?? statRules.initialPhysicalMax;
     nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, cleanCost, minPhysical);
     nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
     cleanStatsStr = ` (-${cleanCost} Physical)`;
   }
-  if (context.rules.trackMess || context.rules.usePhysicalMentalConditions) {
+  if (context.rules.trackMess) {
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
     const d3_1 = context.rng.nextInt(1, 3);
     const d3_2 = context.rng.nextInt(1, 3);
     const rawReduction = d3_1 + d3_2;
     const reduction = (context.rules.proportionalDivisibleActions && actualHours < 3)
       ? Math.max(1, Math.round(rawReduction * ratio))
       : rawReduction;
-    const minMess = context.campaign.config.statRules?.globalMessMin ?? 0;
+    const minMess = statRules.globalMessMin;
     nextPlayer.mess = Math.max(minMess, (nextPlayer.mess || 0) - reduction);
   }
   actionLog = { key: 'action.clean', params: { stats: cleanStatsStr } };
@@ -201,12 +202,14 @@ export function handleCleaningServiceAction(
     actionLog = { key: 'action.error.alreadyClean' };
     return { nextPlayer, actionLog };
   }
-  const timeCost = context.campaign.config.timeRules?.cleaningServiceCost ?? 1;
+  const timeRules = requireAdvancedTimeRules(context.campaign.config.timeRules);
+  const timeCost = timeRules.cleaningServiceCost;
   if (nextPlayer.hoursRemaining < timeCost) {
     actionLog = { key: 'action.error.notEnoughTimeClean' };
     return { nextPlayer, actionLog };
   }
-  const basePrice = context.campaign.config.economyRules?.cleaningServiceBasePrice ?? 100;
+  const economyRules = requireAdvancedEconomyRules(context.campaign.config.economyRules);
+  const basePrice = economyRules.cleaningServiceBasePrice;
   const price = calcEconomyPrice(basePrice, context.economicIndex);
   if (nextPlayer.money < price) {
     actionLog = { key: 'action.error.notEnoughMoneyCleanService' };
@@ -214,7 +217,8 @@ export function handleCleaningServiceAction(
   }
   nextPlayer = spendHours(nextPlayer, timeCost);
   nextPlayer.money -= price;
-  const minMess = context.campaign.config.statRules?.globalMessMin ?? 0;
+  const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+  const minMess = statRules.globalMessMin;
   nextPlayer.mess = Math.max(minMess, (nextPlayer.mess || 0) - 10);
   actionLog = { key: 'action.callCleaningService', params: { cost: price } };
 
@@ -254,7 +258,7 @@ export function handleSocializeAction(
   const currentPhys = nextPlayer.physicalCondition ?? 50;
   nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, 1, minPhysical);
 
-  const statRules = context.campaign.config.statRules;
+  const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
 
   // Roll guests based on housing tier dice (1d3 low-cost, 2d3 security, 3d3 penthouse)
   let rawRoll = 0;
@@ -279,7 +283,7 @@ export function handleSocializeAction(
   const fullReward = X; // 1:1 base social reward per guest
 
   const currentMental = nextPlayer.mentalCondition ?? 25;
-  const minMental = statRules?.minMentalCondition ?? 5;
+  const minMental = statRules.minMentalCondition;
   const maxMental = nextPlayer.mentalConditionMax ?? 90;
   const hasFullCash = nextPlayer.money >= cashCost;
   const hasFullMental = finalMentalCost <= 0 || currentMental >= finalMentalCost;
@@ -302,7 +306,7 @@ export function handleSocializeAction(
     actualReward = Math.floor(fullReward / 2) + params.appBonus;
   }
 
-  const maxSocial = statRules?.maxSocial ?? 99;
+  const maxSocial = statRules.maxSocial;
   nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? 9) + actualReward);
 
   actionLog = { key: 'action.socialize', params: { reward: actualReward, guests: X } };

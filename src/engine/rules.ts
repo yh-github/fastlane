@@ -1,36 +1,60 @@
 /**
- * rules.ts — Single source of truth for game rules, rule interfaces, and default values.
+ * rules.ts — Single source of truth for game rules and rule interfaces.
  *
- * This file defines all the configurable rules across campaigns, including optional rules,
- * economic multipliers, time rules, and their fallback defaults.
+ * This file defines all the configurable rules across campaigns, including
+ * explicit Base vs. Advanced tiered rule interfaces and validation key sets.
  */
 
+export type VersionClass = 'base' | 'advanced';
 export type ClothesSwitchingRule = 'autoBest' | 'anywhere' | 'homeOrStore' | 'homeOnly';
 export type GuiStyle = 'generated' | 'authentic';
 
+/**
+ * Checks whether a campaign config, game rules object, or versionClass string belongs to the frozen Base pipeline
+ * (Floppy, CD-ROM, QoL Improved).
+ */
+export function isBaseVersion(target?: { versionClass?: VersionClass } | VersionClass): boolean {
+  if (!target) return true;
+  const vc = typeof target === 'string' ? target : target.versionClass;
+  return vc !== 'advanced';
+}
+
+/**
+ * Checks whether a campaign config, game rules object, or versionClass string belongs to the Advanced/custom pipeline.
+ */
+export function isAdvancedVersion(target?: { versionClass?: VersionClass } | VersionClass): boolean {
+  if (!target) return false;
+  const vc = typeof target === 'string' ? target : target.versionClass;
+  return vc === 'advanced';
+}
 
 export interface GameRules {
   /**
+   * Explicit pipeline classification: 'base' (Floppy, CD-ROM, QoL) or 'advanced' (Advanced and custom variants).
+   */
+  versionClass: VersionClass;
+
+  /**
    * If true, warns at 1 month rent debt and evicts from apartment at >2 months debt.
-   * Classic Floppy/CD-ROM: false (lenient). QoL Improved: true.
+   * Classic Floppy/CD-ROM: false (lenient). QoL Improved: false. Advanced: true.
    */
   strictEviction: boolean;
 
   /**
    * Rent rates adjust dynamically with the economic index.
-   * Classic Floppy/CD-ROM: false. QoL Improved: false.
+   * Classic Floppy/CD-ROM: false. QoL Improved: false. Advanced: true.
    */
   fluctuatingRent: boolean;
 
   /**
    * If true, all clothing types in inventory decay by 1 week every turn. If false, only worn clothing decays.
-   * Classic Floppy/CD-ROM: true. QoL Improved: true.
+   * Classic Floppy/CD-ROM: true. QoL Improved: true. Advanced: false.
    */
   clothingDecaysAll: boolean;
 
   /**
    * Automatically selects and equips the best available clothes in inventory for your job.
-   * Classic Floppy/CD-ROM: true. QoL Improved: true.
+   * Classic Floppy/CD-ROM: true. QoL Improved: true. Advanced: false.
    */
   autoEquipBestClothes: boolean;
 
@@ -41,7 +65,7 @@ export interface GameRules {
    * - 'homeOrStore': Can change clothes only when at Home or inside clothing stores.
    * - 'homeOnly': Can change clothes only when at Home.
    */
-  clothesSwitching?: ClothesSwitchingRule;
+  clothesSwitching: ClothesSwitchingRule;
 
   /**
    * Uses the original stock market price calculations.
@@ -74,7 +98,7 @@ export interface GameRules {
    * rather than strictly aligned to calendar month boundaries (week 4, 8, 12...).
    * Classic Floppy/CD-ROM: false. QoL Improved: false. Advanced: configurable.
    */
-  rollingLoanDeadline?: boolean;
+  rollingLoanDeadline: boolean;
 
   /**
    * If true, displays exact prices, transaction fees, and loan costs in the UI.
@@ -89,30 +113,29 @@ export interface GameRules {
   enableAnimations: boolean;
 
   /**
-   * If true (default), renders character sprites with nearest-neighbor crisp pixelation.
+   * If true, renders character sprites with nearest-neighbor crisp pixelation.
    * If false, renders with smooth bilinear filtering.
    */
-  pixelatedSprites?: boolean;
+  pixelatedSprites: boolean;
 
   /**
    * If true, renders character sprites with transparent background instead of solid color.
    */
-  removeCharacterBg?: boolean;
+  removeCharacterBg: boolean;
 
   /**
-   * If true (default), renders the board using authentic curved sidewalks and non-straight waypoint paths from the original game.
+   * If true, renders the board using authentic curved sidewalks and non-straight waypoint paths from the original game.
    */
-  authenticCurvedPaths?: boolean;
+  authenticCurvedPaths: boolean;
 
   /**
    * Allows progression metrics to go beyond 100% (useful for scoring or AI optimization).
-   * Classic Floppy/CD-ROM: false. QoL Improved: true.
    */
   allowOverAchievingGoals: boolean;
 
   /**
    * If true, a mandatory doctor visit is bypassed without penalty if you have no cash/savings.
-   * Classic Floppy/CD-ROM: true. QoL Improved: false.
+   * Classic Floppy/CD-ROM: true. QoL Improved: true. Advanced: false.
    */
   bypassDoctorIfBroke: boolean;
 
@@ -170,9 +193,8 @@ export interface GameRules {
   /**
    * HUD layout style: 'auto' (automatic detection based on screen orientation), 'side' (modern 2-column sidebar), or 'top' (classic desktop top-bar).
    */
-  hudLayout?: 'auto' | 'side' | 'top';
-  guiStyle?: GuiStyle;
-
+  hudLayout: 'auto' | 'side' | 'top';
+  guiStyle: GuiStyle;
 
   /**
    * ADVANCED: If true, apartment robberies are based on a 4-week moving average of time spent at home.
@@ -187,7 +209,7 @@ export interface GameRules {
   /**
    * ADVANCED: If true, tracks Management and Technical skills that boost dependability and experience in management and technical roles.
    */
-  useSkills?: boolean;
+  useSkills: boolean;
 
   /**
    * The lowest possible value the economic index (reading) can reach.
@@ -269,7 +291,7 @@ export interface GameRules {
   /**
    * ADVANCED: Work Console GUI style for workplaces ('popup' or 'flanking').
    */
-  workConsoleStyle?: 'popup' | 'flanking';
+  workConsoleStyle: 'popup' | 'flanking';
 
   /**
    * QoL & ADVANCED: Adjusts pawn redemption and clearance prices dynamically with the economy to prevent infinite-money same-turn arbitrage.
@@ -318,17 +340,17 @@ export interface GameRules {
   /**
    * ADVANCED: If true, skill caps scale dynamically with completed degrees rather than a flat 10 cap.
    */
-  dynamicSkillCaps?: boolean;
+  dynamicSkillCaps: boolean;
 
   /**
    * ADVANCED: If true, job hiring probability scales dynamically with normalized wage competition, qualification margin, and domain skills.
    */
-  wageScaledEmployability?: boolean;
+  wageScaledEmployability: boolean;
 
   /**
    * ADVANCED: Consolidates grocery items into a single bulk-order grocery selection (1-12 weeks) and enables ticket multi-buy.
    */
-  advancedStores?: boolean;
+  advancedStores: boolean;
 
   /**
    * Shows coordinate and dimension readout toolbar on building location windows.
@@ -344,11 +366,12 @@ export interface GameRules {
 export interface EventRules {
   marketCrashDivisor: number;
   marketCrashThreshold: number;
-  marketCrashStartWeek?: number;
+  marketCrashStartWeek: number;
   economicBoomDivisor: number;
-  economicBoomStartWeek?: number;
-  economicBoomThreshold?: number;
+  economicBoomStartWeek: number;
+  economicBoomThreshold: number;
   willyRobberyStartWeek: number;
+  applianceBreakStartWeek: number;
   charity: {
     maxCash: number;
     maxWealth: number;
@@ -366,13 +389,24 @@ export function requireConfig<T>(value: T | undefined | null, name: string): T {
   return value;
 }
 
-export interface StatRules {
+export interface BaseStatRules {
   startingHappiness: number;
+  minHappiness: number;
+  maxHappiness: number;
   startingRelaxation: number;
+  minRelaxation: number;
+  maxRelaxation: number;
   relaxationDecayRate: number;
   relaxationDoctorChance: number;
-  
-  // Advanced mechanics
+  startingExperience: number;
+  maxExperience: number;
+  startingDependability: number;
+  maxDependability: number;
+  dependabilityWeeklyDecay: number;
+  startingCasualClothesWeeks: number;
+}
+
+export interface AdvancedStatRules extends BaseStatRules {
   enableAdvancedStats: boolean;
   mentalWarningThreshold: number;
   physicalWarningThreshold: number;
@@ -409,9 +443,7 @@ export interface StatRules {
   studyOvertimePhysicalCost: number;
   resilienceDropThreshold: number;
   cleanPhysicalCost: number;
-  // Advanced feature bundle configuration
   initialPhysicalMax: number;
-  maxRelaxation?: number;
   initialMinPhysical: number;
   globalPhysicalMin: number;
   minMaxPhysical: number;
@@ -428,32 +460,36 @@ export interface StatRules {
   starvationMaxPhysicalPenalty: number;
   lowSpiritsMentalBounceBack: number;
   globalMaxPhysicalCondition: number;
-  heavyPhysicalMinRequirement?: number;
+  heavyPhysicalMinRequirement: number;
   mentalMaxBaseValue: number;
   mentalMaxDegreeBonus: number;
+  mentalMaxBookLimit: number;
+  mentalMaxBookBonus: number;
+  mentalMaxComputerBonus: number;
+  baseSkillCap: number;
+  maxSkillCap: number;
+  baseEmployability: number;
+  employabilityMarginRate: number;
+  employabilityMaxMarginBonus: number;
+  maxWageCompetitionPenalty: number;
+  employabilitySkillBonusRate: number;
+  generalSocialEmployabilityRate: number;
+  socialEmployabilityBaseline: number;
+  frontlineSocialEmployabilityRate: number;
+  tagCompetitionModifiers: Record<string, number>;
+}
 
-  // Skill & Employability overhaul
-  baseSkillCap?: number;
-  maxSkillCap?: number;
-  baseEmployability?: number;
-  employabilityMarginRate?: number;
-  employabilityMaxMarginBonus?: number;
-  maxWageCompetitionPenalty?: number;
-  employabilitySkillBonusRate?: number;
-  generalSocialEmployabilityRate?: number;
-  socialEmployabilityBaseline?: number;
-  frontlineSocialEmployabilityRate?: number;
-  tagCompetitionModifiers?: Record<string, number>;
-  
-  // Starting values
-  startingExperience: number;
-  startingDependability: number;
-  startingCasualClothesWeeks: number;
-  
-  // Caps and limits
-  maxExperience: number;
-  maxDependability: number;
-  dependabilityWeeklyDecay: number;
+export type StatRules = BaseStatRules | AdvancedStatRules;
+
+export function isAdvancedStatRules(sr?: StatRules): sr is AdvancedStatRules {
+  return !!sr && 'enableAdvancedStats' in sr && sr.enableAdvancedStats === true;
+}
+
+export function requireAdvancedStatRules(sr?: StatRules): AdvancedStatRules {
+  if (!sr) {
+    throw new Error('Missing required configuration: AdvancedStatRules expected');
+  }
+  return sr as AdvancedStatRules;
 }
 
 export interface WinCondition {
@@ -462,7 +498,7 @@ export interface WinCondition {
   label: string;
 }
 
-export interface TimeRules {
+export interface BaseTimeRules {
   hoursPerTurn: number;
   buildingEntryCost: number;
   workSessionCost: number;
@@ -473,21 +509,33 @@ export interface TimeRules {
   newspaperCost: number;
   starvationPenalty: number;
   doctorPenalty: number;
-  burnoutPenalty: number;
   loanCost: number;
   brokerCost: number;
+}
+
+export interface AdvancedTimeRules extends BaseTimeRules {
+  burnoutPenalty: number;
   cleaningServiceCost: number;
   socializeCost: number;
 }
 
-export interface MapRules {
-  allowDiagonalMovement?: boolean;
-  movementCostModel?: 'hops' | 'waypoints';
-  movementCostPerNode?: number;
-  stepsPerHour?: number;
+export type TimeRules = BaseTimeRules | AdvancedTimeRules;
+
+export function requireAdvancedTimeRules(tr?: TimeRules): AdvancedTimeRules {
+  if (!tr) {
+    throw new Error('Missing required configuration: AdvancedTimeRules expected');
+  }
+  return tr as AdvancedTimeRules;
 }
 
-export interface EconomyRules {
+export interface MapRules {
+  allowDiagonalMovement: boolean;
+  movementCostModel: 'hops' | 'waypoints';
+  movementCostPerNode: number;
+  stepsPerHour: number;
+}
+
+export interface BaseEconomyRules {
   rentGarnishRate: number;
   rentFee: number;
   repairCostMin: number;
@@ -499,6 +547,21 @@ export interface EconomyRules {
   loanPaymentAmount: number;
   loanInterestAmount: number;
   loanPrincipalAmount: number;
+  model: 'authentic_sectors' | 'legacy_scalar';
+  baselineReading: number;
+  minReading: number;
+  maxReading: number;
+  priceFloorPercent: number;
+  priceCeilingPercent: number;
+  upwardBounceStrongThreshold: number;
+  upwardBounceModerateThreshold: number;
+  downwardBounceStrongThreshold: number;
+  downwardBounceModerateThreshold: number;
+  sectorRisks: Record<string, number>;
+  enableUpsideBonus?: boolean;
+}
+
+export interface AdvancedEconomyRules extends BaseEconomyRules {
   cleaningServiceBasePrice: number;
   socializeLowCostCashCost: number;
   socializeSecurityCashCost: number;
@@ -506,101 +569,265 @@ export interface EconomyRules {
   moveFeeMessThreshold: number;
   moveFeeMessRate: number;
   moveFeeDurableRate: number;
+}
 
-  // Multi-Sector Economy Simulation (Authentic Sierra SCI)
-  model?: 'authentic_sectors' | 'legacy_scalar';
-  baselineReading?: number;
-  minReading?: number;
-  maxReading?: number;
-  priceFloorPercent?: number;
-  priceCeilingPercent?: number;
-  upwardBounceStrongThreshold?: number;
-  upwardBounceModerateThreshold?: number;
-  downwardBounceStrongThreshold?: number;
-  downwardBounceModerateThreshold?: number;
-  sectorRisks?: Record<string, number>;
-  enableUpsideBonus?: boolean;
+export type EconomyRules = BaseEconomyRules | AdvancedEconomyRules;
+
+export function requireAdvancedEconomyRules(er?: EconomyRules): AdvancedEconomyRules {
+  if (!er) {
+    throw new Error('Missing required configuration: AdvancedEconomyRules expected');
+  }
+  return er as AdvancedEconomyRules;
 }
 
 /**
- * Default rules fallback used when a campaign does not explicitly specify a rule.
+ * Resolves the active clothes switching rule from validated GameRules.
  */
-export const DEFAULT_GAME_RULES: GameRules = {
-  strictEviction: false,
-  fluctuatingRent: false,
-  clothingDecaysAll: true,
-  autoEquipBestClothes: true,
-  clothesSwitching: 'autoBest',
-  classicStockMarket: true,
-  allowPartialHours: true,
-  enableRelaxationDoctor: true,
-  requireJobForLoan: false,
-  rollingLoanDeadline: false,
-  helpfulUI: false,
-  enableAnimations: false,
-  pixelatedSprites: true,
-  removeCharacterBg: true,
-  authenticCurvedPaths: true,
-  allowOverAchievingGoals: true,
-  bypassDoctorIfBroke: true,
-  relaxationDoctorThreshold: 10,
-  protectBuiltInAppliances: false,
-  allowEmployedRentPayment: false,
-  delayBookSetCredit: true,
-  allowEatingSpoiledFood: true,
-  reducedDegreeStatBonus: false,
-  depthScaledDegreeBonus: false,
-  showItemImages: true,
-  hudLayout: 'auto',
-  guiStyle: 'generated',
-
-  maxEnrolledClasses: 4,
-  turnStartAtHome: false,
-  delayRobberyFoodSpoilage: false,
-  maskEarlyJobRejections: true,
-  spaceCapping: false,
-  grantExpOnJobSwitch: true,
-  alternativeWeekends: false,
-  preventPawnArbitrage: false,
-  advancedMaintenance: false,
-  showJobTags: false,
-  pawnRummageBins: false,
-  useHomeTimeRobbery: false,
-  usePhysicalMentalConditions: false,
-  minEconomicReading: -90,
-  trackMess: false,
-  trackSocial: false,
-  percentageEducation: false,
-  proportionalDivisibleActions: false,
-  conditionResolution: 0.5,
-  educationResolution: 0.1,
-  advancedHomeGUI: false,
-  advancedWorkGUI: false,
-  workConsoleStyle: 'popup',
-  streetRobberyOnTurnEnd: true,
-  predictiveNewspaperStockTips: false,
-  reenterCurrentLocationCost: true,
-  economicUpsideBonus: false,
-  dynamicSkillCaps: false,
-  wageScaledEmployability: false,
-  advancedStores: false,
-  showWindowPositionSize: false,
-  allowWindowMoveResize: false,
-};
-
-/**
- * Resolves the active clothes switching rule with fallback to autoBest or anywhere.
- */
-export function getClothesSwitchingRule(rules?: GameRules): ClothesSwitchingRule {
-  if (rules?.clothesSwitching) return rules.clothesSwitching;
-  if (rules?.autoEquipBestClothes ?? true) return 'autoBest';
-  return 'anywhere';
+export function getClothesSwitchingRule(rules?: Partial<GameRules>): ClothesSwitchingRule {
+  if (!rules) return 'autoBest';
+  if (rules.autoEquipBestClothes === false && (!rules.clothesSwitching || rules.clothesSwitching === 'autoBest')) {
+    return 'anywhere';
+  }
+  return rules.clothesSwitching ?? 'autoBest';
 }
+
+export const GAME_RULE_KEYS: readonly (keyof GameRules)[] = [
+  'versionClass',
+  'strictEviction',
+  'fluctuatingRent',
+  'clothingDecaysAll',
+  'autoEquipBestClothes',
+  'clothesSwitching',
+  'classicStockMarket',
+  'allowPartialHours',
+  'enableRelaxationDoctor',
+  'requireJobForLoan',
+  'rollingLoanDeadline',
+  'helpfulUI',
+  'enableAnimations',
+  'pixelatedSprites',
+  'removeCharacterBg',
+  'authenticCurvedPaths',
+  'allowOverAchievingGoals',
+  'bypassDoctorIfBroke',
+  'relaxationDoctorThreshold',
+  'protectBuiltInAppliances',
+  'allowEmployedRentPayment',
+  'delayBookSetCredit',
+  'allowEatingSpoiledFood',
+  'reducedDegreeStatBonus',
+  'depthScaledDegreeBonus',
+  'maxEnrolledClasses',
+  'showItemImages',
+  'hudLayout',
+  'guiStyle',
+  'useHomeTimeRobbery',
+  'usePhysicalMentalConditions',
+  'useSkills',
+  'minEconomicReading',
+  'turnStartAtHome',
+  'trackMess',
+  'trackSocial',
+  'delayRobberyFoodSpoilage',
+  'maskEarlyJobRejections',
+  'percentageEducation',
+  'proportionalDivisibleActions',
+  'conditionResolution',
+  'educationResolution',
+  'spaceCapping',
+  'grantExpOnJobSwitch',
+  'alternativeWeekends',
+  'advancedHomeGUI',
+  'advancedWorkGUI',
+  'workConsoleStyle',
+  'preventPawnArbitrage',
+  'advancedMaintenance',
+  'showJobTags',
+  'pawnRummageBins',
+  'streetRobberyOnTurnEnd',
+  'predictiveNewspaperStockTips',
+  'reenterCurrentLocationCost',
+  'economicUpsideBonus',
+  'dynamicSkillCaps',
+  'wageScaledEmployability',
+  'advancedStores',
+  'showWindowPositionSize',
+  'allowWindowMoveResize',
+] as const;
+
+export const BASE_TIME_RULE_KEYS: readonly (keyof BaseTimeRules)[] = [
+  'hoursPerTurn',
+  'buildingEntryCost',
+  'workSessionCost',
+  'studySessionCost',
+  'jobApplicationCost',
+  'relaxCost',
+  'relaxGain',
+  'newspaperCost',
+  'starvationPenalty',
+  'doctorPenalty',
+  'loanCost',
+  'brokerCost',
+] as const;
+
+export const ADVANCED_TIME_RULE_KEYS: readonly (keyof AdvancedTimeRules)[] = [
+  ...BASE_TIME_RULE_KEYS,
+  'burnoutPenalty',
+  'cleaningServiceCost',
+  'socializeCost',
+] as const;
+
+export const BASE_ECONOMY_RULE_KEYS: readonly (keyof BaseEconomyRules)[] = [
+  'rentGarnishRate',
+  'rentFee',
+  'repairCostMin',
+  'repairCostMax',
+  'pawnPayoutRate',
+  'pawnRedeemRate',
+  'bankTransactionIncrementSmall',
+  'bankTransactionIncrementLarge',
+  'loanPaymentAmount',
+  'loanInterestAmount',
+  'loanPrincipalAmount',
+  'model',
+  'baselineReading',
+  'minReading',
+  'maxReading',
+  'priceFloorPercent',
+  'priceCeilingPercent',
+  'upwardBounceStrongThreshold',
+  'upwardBounceModerateThreshold',
+  'downwardBounceStrongThreshold',
+  'downwardBounceModerateThreshold',
+  'sectorRisks',
+] as const;
+
+export const ADVANCED_ECONOMY_RULE_KEYS: readonly (keyof AdvancedEconomyRules)[] = [
+  ...BASE_ECONOMY_RULE_KEYS,
+  'cleaningServiceBasePrice',
+  'socializeLowCostCashCost',
+  'socializeSecurityCashCost',
+  'socializePenthouseCashCost',
+  'moveFeeMessThreshold',
+  'moveFeeMessRate',
+  'moveFeeDurableRate',
+] as const;
+
+export const BASE_STAT_RULE_KEYS: readonly (keyof BaseStatRules)[] = [
+  'startingHappiness',
+  'minHappiness',
+  'maxHappiness',
+  'startingRelaxation',
+  'minRelaxation',
+  'maxRelaxation',
+  'relaxationDecayRate',
+  'relaxationDoctorChance',
+  'startingExperience',
+  'maxExperience',
+  'startingDependability',
+  'maxDependability',
+  'dependabilityWeeklyDecay',
+  'startingCasualClothesWeeks',
+] as const;
+
+export const ADVANCED_STAT_RULE_KEYS: readonly (keyof AdvancedStatRules)[] = [
+  ...BASE_STAT_RULE_KEYS,
+  'enableAdvancedStats',
+  'mentalWarningThreshold',
+  'physicalWarningThreshold',
+  'startingPhysicalCondition',
+  'startingMentalCondition',
+  'minPhysicalCondition',
+  'maxPhysicalCondition',
+  'minMentalCondition',
+  'maxMentalCondition',
+  'globalMaxMentalCondition',
+  'physicalDoctorThreshold',
+  'physicalDoctorChancePerPoint',
+  'doctorVisitPhysicalThreshold',
+  'doctorVisitPhysicalChancePerPoint',
+  'hotTubMaxMessBonus',
+  'lowSpiritsThreshold',
+  'lowSpiritsChancePerPoint',
+  'workGrindThreshold',
+  'workGrindMentalCost',
+  'workGrindPhysicalCost',
+  'workPhysicalCost',
+  'workNormalMentalCost',
+  'workOvertimeThreshold',
+  'workOvertimePhysicalCost',
+  'workOvertimeMentalCost',
+  'studyMentalCost',
+  'studyNormalMentalCost',
+  'studyNormalPhysicalCost',
+  'studyGrindThreshold',
+  'studyGrindMentalCost',
+  'studyGrindPhysicalCost',
+  'studyOvertimeThreshold',
+  'studyOvertimeMentalCost',
+  'studyOvertimePhysicalCost',
+  'resilienceDropThreshold',
+  'cleanPhysicalCost',
+  'initialPhysicalMax',
+  'initialMinPhysical',
+  'globalPhysicalMin',
+  'minMaxPhysical',
+  'globalMessMax',
+  'lowCostMessMax',
+  'securityMessMax',
+  'initialMessMin',
+  'globalMessMin',
+  'startingSocial',
+  'minSocial',
+  'maxSocial',
+  'relaxMessIncrease',
+  'doctorPhysicalBounceBack',
+  'starvationMaxPhysicalPenalty',
+  'lowSpiritsMentalBounceBack',
+  'globalMaxPhysicalCondition',
+  'heavyPhysicalMinRequirement',
+  'mentalMaxBaseValue',
+  'mentalMaxDegreeBonus',
+  'mentalMaxBookLimit',
+  'mentalMaxBookBonus',
+  'mentalMaxComputerBonus',
+  'baseSkillCap',
+  'maxSkillCap',
+  'baseEmployability',
+  'employabilityMarginRate',
+  'employabilityMaxMarginBonus',
+  'maxWageCompetitionPenalty',
+  'employabilitySkillBonusRate',
+  'generalSocialEmployabilityRate',
+  'socialEmployabilityBaseline',
+  'frontlineSocialEmployabilityRate',
+  'tagCompetitionModifiers',
+] as const;
+
+export const EVENT_RULE_KEYS: readonly (keyof EventRules)[] = [
+  'marketCrashDivisor',
+  'marketCrashThreshold',
+  'marketCrashStartWeek',
+  'economicBoomDivisor',
+  'economicBoomStartWeek',
+  'economicBoomThreshold',
+  'willyRobberyStartWeek',
+  'applianceBreakStartWeek',
+  'charity',
+] as const;
+
+export const MAP_RULE_KEYS: readonly (keyof MapRules)[] = [
+  'allowDiagonalMovement',
+  'movementCostModel',
+  'movementCostPerNode',
+  'stepsPerHour',
+] as const;
 
 /**
  * Human-readable descriptions for each rule (concise and without "If true," intros).
  */
 export const RULE_DESCRIPTIONS: Record<string, string> = {
+  versionClass: 'Pipeline classification (base for Classic/QoL frozen pipeline, advanced for Advanced/custom pipeline)',
   advancedStores: 'Consolidates grocery inventory into a single bulk item (1-12 weeks) and enables ticket multi-buy',
   dynamicSkillCaps: 'Skill caps scale dynamically with completed degrees instead of a flat 10 cap',
   wageScaledEmployability: 'Hiring chances scale dynamically with normalized wage competition, qualification margin, and domain skills',
@@ -663,6 +890,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   economicBoomThreshold: 'Maximum reading threshold for economic boom events to trigger (default 120)',
   minEconomicReading: 'The lowest possible value the economic index (reading) can reach (-90 for Floppy, -30 for CD-ROM)',
   willyRobberyStartWeek: 'Game turn/week when Willy robbery events begin',
+  applianceBreakStartWeek: 'Game turn/week when random appliance breakdown events begin',
   charity: 'Charity eligibility limits and payout rules',
   'charity.maxCash': 'Maximum cash limit to remain eligible for charity payout',
   'charity.maxWealth': 'Maximum wealth limit to remain eligible for charity payout',
@@ -676,6 +904,12 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   trackSocial: 'Tracks Social standing stat (gained from gatherings, fast food, frontline service, etc.)',
 
   maxEnrolledClasses: 'Maximum number of courses a player can be concurrently enrolled in (set to 999 or high number for unlimited)',
+
+  // MapRules
+  allowDiagonalMovement: 'Allows diagonal node movement across the board',
+  movementCostModel: 'Movement time calculation model (hops or waypoints)',
+  movementCostPerNode: 'Hours deducted per node hop in hop-based movement model',
+  stepsPerHour: 'Number of waypoint steps traversed per hour of travel',
 
   // TimeRules
   hoursPerTurn: 'Total number of hours available to the player per week (turn)',
@@ -727,7 +961,11 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
 
   // StatRules
   startingHappiness: 'Initial happiness score at the start of a campaign',
+  minHappiness: 'Minimum possible happiness score',
+  maxHappiness: 'Maximum base happiness score',
   startingRelaxation: 'Initial relaxation score at the start of a campaign',
+  minRelaxation: 'Minimum possible relaxation score',
+  maxRelaxation: 'Maximum possible relaxation score',
   relaxationDecayRate: 'Amount of relaxation lost naturally per turn',
   relaxationDoctorChance: 'Probability of a doctor visit if relaxation is critically low',
   enableAdvancedStats: 'Enables advanced physical condition and mental health tracking',
@@ -763,7 +1001,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   studyGrindPhysicalCost: 'Physical condition lost per study session during Academic Grind (actions 4-7)',
   studyOvertimeThreshold: 'Number of study sessions taken in a turn before Hyper-Accelerating penalties apply (e.g. 8 means action 8+)',
   studyOvertimeMentalCost: 'Mental condition lost per study session during Hyper-Accelerating (action 8+)',
-  studyOvertimePhysicalCost: 'Physical condition lost per study session during Hyper-Accelerating (action 8+)',
+  studyOvertimePhysicalCost: 'Mental condition lost per study session during Hyper-Accelerating (action 8+)',
   resilienceDropThreshold: 'Single-event mental drop threshold required to award a permanent resilience bonus (e.g. 3)',
   cleanPhysicalCost: 'Physical condition lost per cleaning action',
   initialPhysicalMax: 'Initial maximum physical condition ceiling',
@@ -783,8 +1021,12 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   starvationMaxPhysicalPenalty: 'Maximum physical condition penalty suffered from starvation',
   lowSpiritsMentalBounceBack: 'Mental condition restored when recovering from Low Spirits',
   globalMaxPhysicalCondition: 'Absolute maximum possible physical condition cap',
+  heavyPhysicalMinRequirement: 'Minimum physical condition required to work heavy physical jobs without penalty',
   mentalMaxBaseValue: 'Base maximum mental condition ceiling',
   mentalMaxDegreeBonus: 'Bonus maximum mental condition ceiling granted per completed degree',
+  mentalMaxBookLimit: 'Maximum number of non-encyclopedia books that grant bonus maximum mental condition',
+  mentalMaxBookBonus: 'Bonus maximum mental condition ceiling granted per book up to the limit',
+  mentalMaxComputerBonus: 'Bonus maximum mental condition ceiling granted by owning a personal computer',
   startingCasualClothesWeeks: 'Initial durability in weeks of starting casual clothes',
   startingExperience: 'Initial work experience points at campaign start',
   startingDependability: 'Initial dependability points at campaign start',
@@ -805,4 +1047,3 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   frontlineSocialEmployabilityRate: 'Employability multiplier applied to social deviation from baseline for frontline service jobs',
   tagCompetitionModifiers: 'Applicant competition modifiers applied based on job characteristics (e.g. heavy physical labor, downtime)'
 };
-

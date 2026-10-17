@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { JobBoard } from "./JobBoard";
 import type { PlayerState } from "../../engine/gameState";
 import type { CampaignBundle } from "../../engine/dataLoader";
+import { TEST_BASE_CAMPAIGN_CONFIG } from "../../engine/testFactories";
 
 describe("JobBoard", () => {
   it('renders JobBoard without crashing and displays buildings', () => {
@@ -22,7 +23,7 @@ describe("JobBoard", () => {
         { id: 'burger_palace', name: 'Monolith Burgers' }
       ],
       items: [],
-      config: {}
+      config: TEST_BASE_CAMPAIGN_CONFIG
     } as unknown as CampaignBundle;
 
     render(
@@ -57,7 +58,7 @@ describe("JobBoard", () => {
         { id: 'burger_palace', name: 'Monolith Burgers' }
       ],
       items: [],
-      config: {}
+      config: TEST_BASE_CAMPAIGN_CONFIG
     } as unknown as CampaignBundle;
 
     render(
@@ -93,7 +94,7 @@ describe("JobBoard", () => {
         { id: 'qt_clothing', name: 'QT Clothing' }
       ],
       items: [],
-      config: {}
+      config: TEST_BASE_CAMPAIGN_CONFIG
     } as unknown as CampaignBundle;
 
     render(

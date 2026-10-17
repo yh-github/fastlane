@@ -5,43 +5,84 @@
  */
 
 import {
+  type GuiStyle,
   type GameRules,
   type EventRules,
-  type StatRules,
+  type BaseStatRules,
+  type AdvancedStatRules,
   type WinCondition,
-  type TimeRules,
-  type EconomyRules,
+  type BaseTimeRules,
+  type AdvancedTimeRules,
+  type BaseEconomyRules,
+  type AdvancedEconomyRules,
   type MapRules,
+  GAME_RULE_KEYS,
+  BASE_TIME_RULE_KEYS,
+  ADVANCED_TIME_RULE_KEYS,
+  BASE_ECONOMY_RULE_KEYS,
+  ADVANCED_ECONOMY_RULE_KEYS,
+  BASE_STAT_RULE_KEYS,
+  ADVANCED_STAT_RULE_KEYS,
+  EVENT_RULE_KEYS,
+  MAP_RULE_KEYS,
   requireConfig,
 } from './rules';
 import defaultCampaigns from '../campaigns/campaigns.json';
 
 // ─── Campaign Data Types ────────────────────────────────────────
 
-export interface CampaignConfig {
+export interface BaseCampaignConfig {
+  versionClass: 'base';
   name: string;
   version: string;
   description: string;
   startingMoney: number;
   winConditions: WinCondition[];
-  timeRules: TimeRules;
-  economyRules: EconomyRules;
+  timeRules: BaseTimeRules;
+  economyRules: BaseEconomyRules;
   mapRules: MapRules;
-  statRules: StatRules;
+  statRules: BaseStatRules;
   eventRules: EventRules;
   gameRules: GameRules;
   baseCampaign?: string;
   hasCannedFood?: boolean;
-  supportedGuiStyles?: import('./rules').GuiStyle[];
+  supportedGuiStyles: GuiStyle[];
 }
 
+export interface AdvancedCampaignConfig {
+  versionClass: 'advanced';
+  name: string;
+  version: string;
+  description: string;
+  startingMoney: number;
+  winConditions: WinCondition[];
+  timeRules: AdvancedTimeRules;
+  economyRules: AdvancedEconomyRules;
+  mapRules: MapRules;
+  statRules: AdvancedStatRules;
+  eventRules: EventRules;
+  gameRules: GameRules;
+  baseCampaign?: string;
+  hasCannedFood?: boolean;
+  supportedGuiStyles: GuiStyle[];
+}
+
+export type CampaignConfig = BaseCampaignConfig | AdvancedCampaignConfig;
+
 export type {
+  VersionClass,
   GameRules,
   GuiStyle,
   EventRules,
+  BaseStatRules,
+  AdvancedStatRules,
   StatRules,
   WinCondition,
+  BaseTimeRules,
+  AdvancedTimeRules,
   TimeRules,
+  BaseEconomyRules,
+  AdvancedEconomyRules,
   EconomyRules,
   MapRules,
 } from './rules';
@@ -316,39 +357,62 @@ async function loadJSON<T>(campaignId: string, filename: string, optional: boole
 }
 
 /**
- * Validate that a loaded config has required fields.
+ * Validate that a loaded config has 100% of required fields for its versionClass ('base' or 'advanced').
  */
-function validateConfig(config: unknown): asserts config is CampaignConfig {
-  const c = config as Record<string, unknown>;
+export function validateConfig(config: unknown): asserts config is CampaignConfig {
+  const c = requireConfig(config as Record<string, unknown>, 'config');
   if (typeof c.name !== 'string') throw new Error('config.json: missing "name"');
+  if (typeof c.version !== 'string') throw new Error('config.json: missing "version"');
+  if (typeof c.description !== 'string') throw new Error('config.json: missing "description"');
+  if (c.versionClass !== 'base' && c.versionClass !== 'advanced') {
+    throw new Error('config.json: missing or invalid "versionClass" (expected "base" or "advanced")');
+  }
   if (typeof c.startingMoney !== 'number') throw new Error('config.json: missing "startingMoney"');
   if (!Array.isArray(c.winConditions)) throw new Error('config.json: missing "winConditions"');
-  if (!c.timeRules) throw new Error('config.json: missing "timeRules"');
-  if (!c.economyRules) throw new Error('config.json: missing "economyRules"');
-  if (!c.statRules) throw new Error('config.json: missing "statRules"');
-  if (!c.eventRules) throw new Error('config.json: missing "eventRules"');
-  if (!c.gameRules) throw new Error('config.json: missing "gameRules"');
-  
-  const sr = c.statRules as Record<string, unknown>;
-  if (typeof sr.startingHappiness !== 'number') throw new Error('config.json: missing "statRules.startingHappiness"');
-  if (typeof sr.startingExperience !== 'number') throw new Error('config.json: missing "statRules.startingExperience"');
-  if (typeof sr.startingDependability !== 'number') throw new Error('config.json: missing "statRules.startingDependability"');
-
-  const gr = c.gameRules as Record<string, unknown> | undefined;
-  if (gr?.dynamicSkillCaps) {
-    requireConfig(sr.baseSkillCap, 'statRules.baseSkillCap');
-    requireConfig(sr.maxSkillCap, 'statRules.maxSkillCap');
+  if (!Array.isArray(c.supportedGuiStyles) || c.supportedGuiStyles.length === 0) {
+    throw new Error('config.json: missing "supportedGuiStyles"');
   }
-  if (gr?.wageScaledEmployability) {
-    requireConfig(sr.baseEmployability, 'statRules.baseEmployability');
-    requireConfig(sr.employabilityMarginRate, 'statRules.employabilityMarginRate');
-    requireConfig(sr.employabilityMaxMarginBonus, 'statRules.employabilityMaxMarginBonus');
-    requireConfig(sr.maxWageCompetitionPenalty, 'statRules.maxWageCompetitionPenalty');
-    requireConfig(sr.employabilitySkillBonusRate, 'statRules.employabilitySkillBonusRate');
-    requireConfig(sr.generalSocialEmployabilityRate, 'statRules.generalSocialEmployabilityRate');
-    requireConfig(sr.socialEmployabilityBaseline, 'statRules.socialEmployabilityBaseline');
-    requireConfig(sr.frontlineSocialEmployabilityRate, 'statRules.frontlineSocialEmployabilityRate');
-    requireConfig(sr.tagCompetitionModifiers, 'statRules.tagCompetitionModifiers');
+
+  const tr = requireConfig(c.timeRules as Record<string, unknown>, 'timeRules');
+  const er = requireConfig(c.economyRules as Record<string, unknown>, 'economyRules');
+  const mr = requireConfig(c.mapRules as Record<string, unknown>, 'mapRules');
+  const sr = requireConfig(c.statRules as Record<string, unknown>, 'statRules');
+  const evr = requireConfig(c.eventRules as Record<string, unknown>, 'eventRules');
+  const gr = requireConfig(c.gameRules as Record<string, unknown>, 'gameRules');
+
+  if (gr.versionClass !== c.versionClass) {
+    throw new Error(`config.json: gameRules.versionClass ("${String(gr.versionClass)}") must match versionClass ("${c.versionClass}")`);
+  }
+
+  for (const key of GAME_RULE_KEYS) {
+    requireConfig(gr[key], `gameRules.${key}`);
+  }
+
+  for (const key of MAP_RULE_KEYS) {
+    requireConfig(mr[key], `mapRules.${key}`);
+  }
+
+  for (const key of EVENT_RULE_KEYS) {
+    requireConfig(evr[key], `eventRules.${key}`);
+  }
+  const charity = requireConfig(evr.charity as Record<string, unknown>, 'eventRules.charity');
+  requireConfig(charity.maxCash, 'eventRules.charity.maxCash');
+  requireConfig(charity.maxWealth, 'eventRules.charity.maxWealth');
+  requireConfig(charity.wealthMetric, 'eventRules.charity.wealthMetric');
+
+  const timeKeys = c.versionClass === 'advanced' ? ADVANCED_TIME_RULE_KEYS : BASE_TIME_RULE_KEYS;
+  for (const key of timeKeys) {
+    requireConfig(tr[key], `timeRules.${key}`);
+  }
+
+  const economyKeys = c.versionClass === 'advanced' ? ADVANCED_ECONOMY_RULE_KEYS : BASE_ECONOMY_RULE_KEYS;
+  for (const key of economyKeys) {
+    requireConfig(er[key], `economyRules.${key}`);
+  }
+
+  const statKeys = c.versionClass === 'advanced' ? ADVANCED_STAT_RULE_KEYS : BASE_STAT_RULE_KEYS;
+  for (const key of statKeys) {
+    requireConfig(sr[key], `statRules.${key}`);
   }
 }
 
@@ -473,12 +537,6 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
       weekends: weekends || { ticketWeekends: {}, durableWeekends: {}, randomWeekends: [] },
       synergies: synergies || []
     };
-  }
-
-  if (finalBundle.config.gameRules?.usePhysicalMentalConditions) {
-    if (!finalBundle.config.winConditions.some(w => w.stat === 'wellbeing')) {
-      finalBundle.config.winConditions.push({ stat: 'wellbeing', target: 100, label: 'Well-being' });
-    }
   }
 
   finalBundle.hasCannedFood = finalBundle.config.hasCannedFood ??

@@ -1,6 +1,6 @@
 import type { PlayerState, GameRules } from '../gameState';
 import type { JobDef, EducationDef, CampaignBundle } from '../dataLoader';
-import type { StatRules } from '../rules';
+import { isAdvancedVersion, isAdvancedStatRules, requireAdvancedStatRules, type StatRules } from '../rules';
 import { roundToResolution, calcMaxSkillCap } from '../statMath';
 import {
   hasJobTag,
@@ -34,10 +34,13 @@ export function calcWorkShiftSummary(
   campaignEducation?: EducationDef[],
   campaign?: CampaignBundle
 ): WorkShiftSummary {
-  const isAdvanced = !!rules?.usePhysicalMentalConditions;
+  const isAdvanced = isAdvancedVersion(rules) || Boolean(rules?.usePhysicalMentalConditions);
+  const useConditions = Boolean(rules?.usePhysicalMentalConditions);
+  const useSkills = Boolean(rules?.useSkills);
   const actionCount = (player.workActionsThisTurn || 0) + 1;
-  const overtimeThreshold = statRules?.workOvertimeThreshold ?? 8;
-  const grindThreshold = statRules?.workGrindThreshold ?? 4;
+  const advStatRules = isAdvanced && statRules ? requireAdvancedStatRules(statRules) : undefined;
+  const overtimeThreshold = advStatRules ? advStatRules.workOvertimeThreshold : 8;
+  const grindThreshold = advStatRules ? advStatRules.workGrindThreshold : 4;
 
   let basePhys = 1;
   let baseMental = 0;
@@ -47,18 +50,19 @@ export function calcWorkShiftSummary(
     ? 'overtime'
     : (actionCount >= grindThreshold ? 'grind' : 'normal');
 
-  if (isAdvanced) {
+  if (useConditions) {
+    const reqStatRules = requireAdvancedStatRules(statRules);
     if (actionCount >= overtimeThreshold) {
-      basePhys = statRules?.workOvertimePhysicalCost ?? 2;
-      baseMental = statRules?.workOvertimeMentalCost ?? 2;
+      basePhys = reqStatRules.workOvertimePhysicalCost;
+      baseMental = reqStatRules.workOvertimeMentalCost;
       tierLabel = ' [Overtime]';
     } else if (actionCount >= grindThreshold) {
-      basePhys = statRules?.workGrindPhysicalCost ?? 1;
-      baseMental = statRules?.workGrindMentalCost ?? 1;
+      basePhys = reqStatRules.workGrindPhysicalCost;
+      baseMental = reqStatRules.workGrindMentalCost;
       tierLabel = ' [Grind]';
     } else {
-      basePhys = statRules?.workPhysicalCost ?? 1;
-      baseMental = statRules?.workNormalMentalCost ?? 0;
+      basePhys = reqStatRules.workPhysicalCost;
+      baseMental = reqStatRules.workNormalMentalCost;
     }
   }
 
@@ -87,7 +91,6 @@ export function calcWorkShiftSummary(
   const workWorkDepGain = roundToResolution(1 * workRatio, 0.5);
   const workWorkExpGain = roundToResolution(1 * expMult * workRatio, 0.5);
   const socialGainText = socialMod > 0 ? `, +${socialMod} 👥` : (socialMod < 0 ? `, ${socialMod} 👥` : '');
-  const useSkills = rules?.useSkills !== undefined ? rules.useSkills : isAdvanced;
   const isTech = useSkills && hasJobTag(job, 'technical');
   const isMiddleMgmt = useSkills && hasJobTag(job, 'middle_management');
   const isExecMgmt = useSkills && hasJobTag(job, 'executive_management');
@@ -101,7 +104,7 @@ export function calcWorkShiftSummary(
 
   const isOvertimeShift = actionCount >= overtimeThreshold;
   const isHeavyGrindShift = actionCount >= grindThreshold && hasJobTag(job, 'heavy_physical');
-  const maxPhysDropText = isAdvanced && (isOvertimeShift || isHeavyGrindShift) ? ', -0.5 Max 💪' : '';
+  const maxPhysDropText = useConditions && (isOvertimeShift || isHeavyGrindShift) ? ', -0.5 Max 💪' : '';
 
   const modes: WorkShiftOption[] = [
     {
@@ -336,8 +339,8 @@ export function getWorkShiftModifiers(
   const effectiveRules = options?.rules || options?.campaign?.config?.gameRules;
   const statRules = options?.statRules || options?.campaign?.config?.statRules;
   const campaignEducation = options?.campaignEducation || options?.campaign?.education;
-  const isAdvanced = !!effectiveRules?.usePhysicalMentalConditions;
-  const useSkills = Boolean(effectiveRules?.useSkills !== undefined ? effectiveRules.useSkills : isAdvanced);
+  const useConditions = Boolean(effectiveRules?.usePhysicalMentalConditions);
+  const useSkills = Boolean(effectiveRules?.useSkills);
 
   const curPhys = player.physicalCondition ?? 50;
   const curMental = player.mentalCondition ?? 50;
@@ -350,15 +353,16 @@ export function getWorkShiftModifiers(
   const isDepCapped = (player.dependability ?? 0) >= effectiveMaxDep;
   const isExpCapped = (player.experience ?? 0) >= effectiveMaxExp;
 
-  const maxTech = calcMaxSkillCap(player, 'skillTech', campaignEducation, statRules, effectiveRules as GameRules);
-  const maxMgmt = calcMaxSkillCap(player, 'skillMgmt', campaignEducation, statRules, effectiveRules as GameRules);
+  const advStatRules = isAdvancedStatRules(statRules) ? statRules : undefined;
+  const maxTech = (useSkills && advStatRules && effectiveRules) ? calcMaxSkillCap(player, 'skillTech', campaignEducation, advStatRules, effectiveRules as GameRules) : 0;
+  const maxMgmt = (useSkills && advStatRules && effectiveRules) ? calcMaxSkillCap(player, 'skillMgmt', campaignEducation, advStatRules, effectiveRules as GameRules) : 0;
   const isTechCapped = (player.skillTech ?? 0) >= maxTech;
   const isMgmtCapped = (player.skillMgmt ?? 0) >= maxMgmt;
 
   const badges: WorkShiftModifierBadge[] = [];
 
   // 1. Exhaustion Floor Warning (<1.0 stat)
-  if (isAdvanced) {
+  if (useConditions) {
     if (!hasEnoughPhys && !hasEnoughMental) {
       badges.push({
         key: 'exhaust_both',
@@ -608,7 +612,7 @@ export function getWorkShiftModifiers(
   }
 
   // 9. Mental Resilience bonus (+1 MAX 🧠)
-  if (isAdvanced && m.mentalCost >= (statRules?.resilienceDropThreshold ?? 3)) {
+  if (useConditions && m.mentalCost >= requireAdvancedStatRules(statRules).resilienceDropThreshold) {
     badges.push({
       key: 'resilience',
       label: '+1 MAX 🧠',

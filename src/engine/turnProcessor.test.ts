@@ -35,7 +35,23 @@ describe('Turn Processor', () => {
       calendar: [
         { id: 'W1', name: 'Week 1' }
       ],
-      config: { name: 'test', startingMoney: 200, timeRules: { hoursPerTurn: 60, starvationPenalty: 20, doctorPenalty: 10 }, economyRules: { repairCostMin: 0.05, repairCostMax: 0.25 } }
+      config: {
+        name: 'test',
+        startingMoney: 200,
+        timeRules: { hoursPerTurn: 60, starvationPenalty: 20, doctorPenalty: 10 },
+        economyRules: { repairCostMin: 0.05, repairCostMax: 0.25, model: 'legacy_scalar' },
+        eventRules: {
+          marketCrashStartWeek: 8,
+          marketCrashDivisor: 30,
+          marketCrashThreshold: 80,
+          economicBoomStartWeek: 8,
+          economicBoomDivisor: 30,
+          economicBoomThreshold: 120,
+          willyRobberyStartWeek: 4,
+          applianceBreakStartWeek: 2,
+          charity: { maxCash: 0, maxWealth: 199, wealthMetric: 'liquid' }
+        }
+      }
     } as unknown as CampaignBundle;
   });
 

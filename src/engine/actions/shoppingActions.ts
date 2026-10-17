@@ -1,5 +1,6 @@
 import type { PlayerState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
+import { isAdvancedVersion } from '../rules';
 import { buyItem } from '../shoppingEngine';
 import { calcItemPrice } from '../economyEngine';
 import { spendHours } from '../timeManager';
@@ -58,10 +59,12 @@ export function handleBuyAction(
       if (baseItemDef.id === 'newspaper') {
         nextPlayer.turnFlags.readNewspaperThisTurn = true;
       }
-      if (context.rules.usePhysicalMentalConditions) {
+      if (isAdvancedVersion(context.rules)) {
         if (baseItemDef.category === 'appliance' || baseItemDef.category === 'clothes') {
           nextPlayer.lifestyle = Math.min(100, (nextPlayer.lifestyle || 50) + 1);
         }
+      }
+      if (context.rules.usePhysicalMentalConditions) {
         const isBurger = ['hamburger', 'cheeseburger', 'burger'].includes(baseItemDef.id);
         const isCurioOrParts = baseItemDef.id === 'knick_knack' || baseItemDef.id === 'spare_parts';
         const isJunkOrBadFastFood = !isBurger && !isCurioOrParts && (

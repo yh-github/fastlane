@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { SettingsModal } from './SettingsModal';
-import { DEFAULT_GAME_RULES } from '../engine/rules';
+import { TEST_BASE_GAME_RULES } from '../engine/testFactories';
 import type { GameState } from '../engine/gameState';
 
 const mockChangeLanguage = vi.fn();
@@ -26,7 +26,7 @@ describe('SettingsModal', () => {
     phase: 'turn-start',
     campaignId: 'classic',
     rngState: 123,
-    rules: { ...DEFAULT_GAME_RULES, showItemImages: true, enableAnimations: true },
+    rules: { ...TEST_BASE_GAME_RULES, showItemImages: true, enableAnimations: true },
     winnerId: null,
   };
 

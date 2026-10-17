@@ -6,20 +6,26 @@ import { buyItem } from './shoppingEngine';
 import type { GameState, PlayerState } from './gameState';
 import type { CampaignBundle } from './dataLoader';
 import { Random } from '../utils/rng';
-import { DEFAULT_GAME_RULES } from './rules';
+import { TEST_BASE_GAME_RULES, TEST_BASE_CAMPAIGN_CONFIG } from './testFactories';
 
 describe('Game Variant mechanics', () => {
   const dummyCampaign = {
     config: {
+      ...TEST_BASE_CAMPAIGN_CONFIG,
       eventRules: {
+        ...TEST_BASE_CAMPAIGN_CONFIG.eventRules,
         willyRobberyStartWeek: 1, // Default for tests
         charity: { maxCash: 0, maxWealth: 199, wealthMetric: 'durableValue' }
       },
-      timeRules: { hoursPerTurn: 112, starvationPenalty: 50, doctorPenalty: 20 },
-      statRules: { relaxationDecayRate: 1, relaxationDoctorChance: 0.2 }
+      timeRules: { ...TEST_BASE_CAMPAIGN_CONFIG.timeRules, hoursPerTurn: 112, starvationPenalty: 50, doctorPenalty: 20 },
+      statRules: { ...TEST_BASE_CAMPAIGN_CONFIG.statRules, relaxationDecayRate: 1, relaxationDoctorChance: 0.2 }
     },
     items: [{ id: 'casual_clothes', subcategory: 'casual', store: 'qt_clothing', basePrice: 50 }],
     jobs: [{ id: 'job_1', requirements: { uniform: 'casual' } }],
+    housing: [
+      { id: 'low_cost', name: 'Low Cost Apt', baseRent: 325, lifestyleValue: 10, isRobberyImmune: false, homeNodeId: 'node_low_cost', description: '' },
+      { id: 'security', name: 'La Security', baseRent: 475, lifestyleValue: 30, isRobberyImmune: true, homeNodeId: 'node_security', description: '' }
+    ],
   } as unknown as CampaignBundle;
 
   const getDummyPlayer = (overrides: Partial<PlayerState> = {}): PlayerState => ({
@@ -44,7 +50,7 @@ describe('Game Variant mechanics', () => {
   const getDummyState = (): GameState => ({
     turn: 4, economicIndex: 0, economicTrend: 0, pawnShopItemsForSale: [], players: [], phase: 'turn-start',
     campaignId: 'classic', rngState: 12345,
-    rules: DEFAULT_GAME_RULES,
+    rules: TEST_BASE_GAME_RULES,
     winnerId: null
   });
 
@@ -137,7 +143,7 @@ describe('Game Variant mechanics', () => {
       state.players = [getDummyPlayer()]; // 1 player -> 1/31
       state.turn = 10;
       state.economicIndex = 85; // Crashes require economic index >= 80
-      const cdromCampaign = { ...dummyCampaign, config: { ...dummyCampaign.config, eventRules: { marketCrashDivisor: 30 } } } as unknown as CampaignBundle;
+      const cdromCampaign = { ...dummyCampaign, config: { ...dummyCampaign.config, eventRules: { ...dummyCampaign.config.eventRules, marketCrashDivisor: 30 } } } as unknown as CampaignBundle;
       let crashCount = 0;
       for (let i = 0; i < 100; i++) {
         state.rngState = i;

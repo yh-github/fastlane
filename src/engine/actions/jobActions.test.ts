@@ -26,7 +26,9 @@ describe('Job Actions & Initiative Card Resolution', () => {
         workNormalMentalCost: 1,
         initialPhysicalMax: 50,
         initialMentalMax: 50,
-        globalMaxMentalCondition: 99
+        globalMaxMentalCondition: 99,
+        baseSkillCap: 2.5,
+        maxSkillCap: 10.0
       },
       gameRules: { usePhysicalMentalConditions: true, useSkills: true }
     },

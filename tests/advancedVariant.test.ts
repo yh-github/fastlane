@@ -4,8 +4,10 @@ import { GameState, PlayerState, createPlayerState, GameRules, StatRules } from 
 import { gameReducer } from '../src/engine/gameReducer';
 import { processWeekend } from '../src/engine/weekendEngine';
 import { Random } from '../src/utils/rng';
+import { TEST_ADVANCED_CAMPAIGN_CONFIG, TEST_ADVANCED_GAME_RULES } from '../src/engine/testFactories';
 
 const mockStatRules: StatRules = {
+  ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules,
   startingHappiness: 50,
   startingRelaxation: 25,
   relaxationDecayRate: 2,
@@ -16,7 +18,10 @@ const mockStatRules: StatRules = {
   maxPhysicalCondition: 50,
   minMentalCondition: 5,
   maxMentalCondition: 50,
+  initialPhysicalMax: 50,
+  mentalMaxBaseValue: 51,
   globalMaxMentalCondition: 99,
+  globalMaxPhysicalCondition: 99,
   physicalDoctorThreshold: 10,
   physicalDoctorChancePerPoint: 0.05,
   lowSpiritsThreshold: 10,
@@ -39,15 +44,22 @@ const mockStatRules: StatRules = {
   studyOvertimeMentalCost: 2,
   studyOvertimePhysicalCost: 1,
   resilienceDropThreshold: 3,
-  cleanPhysicalCost: 1
+  cleanPhysicalCost: 1,
+  enableAdvancedStats: true
 };
 
 const mockCampaign = {
   config: {
-    timeRules: { hoursPerTurn: 48, relaxCost: 6, relaxGain: 3, studySessionCost: 6, workSessionCost: 6, jobApplicationCost: 4, doctorPenalty: 4, starvationPenalty: 20 },
-    eventRules: { willyRobberyStartWeek: 4 },
+    ...TEST_ADVANCED_CAMPAIGN_CONFIG,
+    versionClass: 'advanced',
+    timeRules: { ...TEST_ADVANCED_CAMPAIGN_CONFIG.timeRules, hoursPerTurn: 48, relaxCost: 6, relaxGain: 3, studySessionCost: 6, workSessionCost: 6, jobApplicationCost: 4, doctorPenalty: 4, starvationPenalty: 20 },
+    eventRules: { ...TEST_ADVANCED_CAMPAIGN_CONFIG.eventRules, willyRobberyStartWeek: 4 },
     winConditions: [{ stat: 'lifestyle', target: 100, label: 'Lifestyle' }],
-    statRules: mockStatRules
+    statRules: mockStatRules,
+    gameRules: {
+      ...TEST_ADVANCED_GAME_RULES,
+      usePhysicalMentalConditions: true
+    }
   },
   housing: [
     { id: 'low_cost', name: 'Low Cost', rent: 200, type: 'basic', homeNodeId: 'node_low_cost' }

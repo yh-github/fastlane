@@ -163,7 +163,7 @@ export const ItemsTab: React.FC<ItemsTabProps> = ({
                       </td>
                     );
                   }
-                  const isAdvancedCampaign = !!c.bundle.config.gameRules?.usePhysicalMentalConditions;
+                  const isAdvancedCampaign = c.bundle.config.gameRules.versionClass === 'advanced';
 
                   return (
                     <td key={c.info.id} style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', verticalAlign: 'top' }}>

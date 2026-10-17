@@ -1,5 +1,6 @@
 import type { CampaignBundle, CampaignConfig } from './dataLoader';
-import { type GameRules, DEFAULT_GAME_RULES } from './rules';
+import { type GameRules, requireAdvancedStatRules, isAdvancedStatRules } from './rules';
+import { TEST_ADVANCED_CAMPAIGN_CONFIG } from './testFactories';
 import { calcMaxMental } from './statMath';
 import { createDefaultEconomySimulationState } from './economyEngine';
 import type {
@@ -10,9 +11,6 @@ import type {
   GoalAllotment,
   PlayerConfig
 } from './gameState';
-
-export const MIN_HAPPINESS = 0;
-export const MAX_HAPPINESS = 100;
 
 export function createDefaultTurnFlags(): TurnFlags {
   return {
@@ -77,6 +75,7 @@ export function createPlayerState(
   config: CampaignConfig,
   characterIndex: number = 0
 ): PlayerState {
+  const rules = config.gameRules;
   return {
     id,
     name,
@@ -89,18 +88,18 @@ export function createPlayerState(
     loanDebt: 0,
     timesDefaulted: 0,
     loanPaymentDeadline: 0,
-    happiness: config.statRules?.startingHappiness ?? 0,
+    happiness: config.statRules?.startingHappiness ?? 50,
     experience: config.statRules?.startingExperience ?? 10,
     dependability: config.statRules?.startingDependability ?? 20,
     degreeExpBoost: 0,
     degreeDepBoost: 0,
-    relaxation: config.statRules?.startingRelaxation ?? 25,
+    relaxation: config.statRules?.startingRelaxation ?? 16,
     currentJobId: null,
     currentWage: 0,
     raisesAtCurrentJob: 0,
     hasEarnedIncome: false,
     currentHousingId: 'low_cost',
-    currentRentPrice: 325, // Default base for low_cost
+    currentRentPrice: 325,
     rentPaidUntilWeek: 4,
     rentPaymentsAtCurrentRate: 0,
     rentExtensionActive: false,
@@ -113,7 +112,7 @@ export function createPlayerState(
     position: startNode,
     goalAllotment: (() => {
       const finalGoals: GoalAllotment = { ...goals };
-      if (config.winConditions) {
+      if (Array.isArray(config.winConditions)) {
         for (const cond of config.winConditions) {
           if (finalGoals[cond.stat] === undefined) {
             finalGoals[cond.stat] = 50;
@@ -124,23 +123,28 @@ export function createPlayerState(
     })(),
     turnFlags: {
       ...createDefaultTurnFlags(),
-      ...(config.gameRules && (config.gameRules.clothingDecaysAll === false || (config.gameRules.clothesSwitching && config.gameRules.clothesSwitching !== 'autoBest')) ? { clothesWornThisTurn: [] } : {})
+      ...(rules?.clothingDecaysAll === false || rules?.clothesSwitching !== 'autoBest'
+        ? { clothesWornThisTurn: [] }
+        : {})
     },
     turnEvents: [],
     newspaperHeadline: null,
     activeEffects: {},
-    ...(config.gameRules?.usePhysicalMentalConditions ? (() => {
-      const startMess = config.gameRules?.trackMess ? 3 : 0;
-      const startSocial = config.statRules?.startingSocial ?? 9;
-      const initMaxMental = calcMaxMental(startMess, config.gameRules?.trackSocial ? startSocial : 0, 0, undefined, config.statRules);
-      const initMaxPhys = config.statRules?.initialPhysicalMax ?? 50;
+    ...(rules?.usePhysicalMentalConditions ? (() => {
+      const sr = (config.statRules && isAdvancedStatRules(config.statRules))
+        ? config.statRules
+        : requireAdvancedStatRules(TEST_ADVANCED_CAMPAIGN_CONFIG.statRules);
+      const startMess = rules.trackMess ? 3 : 0;
+      const startSocial = sr.startingSocial;
+      const initMaxMental = calcMaxMental(startMess, rules.trackSocial ? startSocial : 0, 0, undefined, sr);
+      const initMaxPhys = sr.initialPhysicalMax;
       return {
         physicalConditionMax: initMaxPhys,
-        minPhysicalCondition: config.statRules?.minPhysicalCondition ?? 1,
-        physicalCondition: config.statRules?.startingPhysicalCondition ?? initMaxPhys,
+        minPhysicalCondition: sr.minPhysicalCondition,
+        physicalCondition: sr.startingPhysicalCondition,
         mentalConditionMax: initMaxMental,
-        mentalCondition: config.statRules?.startingMentalCondition ?? initMaxMental,
-        ...(config.gameRules?.trackSocial ? { social: startSocial } : {}),
+        mentalCondition: sr.startingMentalCondition,
+        ...(rules.trackSocial ? { social: startSocial } : {}),
         resilienceBonus: 0,
         lifestyle: 0,
         mistakesByLocation: {},
@@ -151,7 +155,7 @@ export function createPlayerState(
         skillMgmt: 0
       };
     })() : {}),
-    ...(config.gameRules?.trackMess ? { mess: 3 } : {}),
+    ...(rules?.trackMess ? { mess: 3 } : {}),
   };
 }
 
@@ -162,12 +166,14 @@ export function createInitialGameState(
   rules: Partial<GameRules> | undefined,
   seed: number
 ): GameState {
-  const defaultRules = DEFAULT_GAME_RULES;
-
-  const finalRules = {
-    ...defaultRules,
-    ...(campaign.config.gameRules || {}),
+  const finalRules: GameRules = {
+    ...campaign.config.gameRules,
     ...rules
+  };
+
+  const configWithRules: CampaignConfig = {
+    ...campaign.config,
+    gameRules: finalRules
   };
 
   return {
@@ -180,7 +186,7 @@ export function createInitialGameState(
     rngState: seed,
     pawnShopItemsForSale: [],
     players: playersConfig.map((cfg, i) =>
-      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, campaign.config, cfg.characterIndex ?? (i % 5))
+      createPlayerState(`player_${i + 1}`, cfg.name, cfg.isAi, cfg.goals, startNode, configWithRules, cfg.characterIndex ?? (i % 5))
     ),
     phase: 'setup',
     winnerId: null,

@@ -1,4 +1,4 @@
-import type { GameRules, StatRules } from '../rules';
+import { type GameRules, type StatRules, requireAdvancedStatRules, requireConfig } from '../rules';
 import type { EducationDef, JobDef, CampaignBundle } from '../dataLoader';
 import type { PlayerState } from '../gameState';
 import { getJobInitiativeTier } from '../jobTags';
@@ -6,21 +6,22 @@ import { clampZero } from './conditionMath';
 
 /**
  * Calculates the player's dynamic maximum skill cap.
- * If dynamicSkillCaps is disabled in rules, returns maxSkillCap (default 10.0).
- * Otherwise: Base cap (default 2.5) + sum of completed degree boosts up to maxSkillCap.
+ * If dynamicSkillCaps is disabled in rules, returns maxSkillCap.
+ * Otherwise: Base cap + sum of completed degree boosts up to maxSkillCap.
  */
 export function calcMaxSkillCap(
   player: { degrees?: string[] },
   skillType: 'skillTech' | 'skillMgmt',
-  campaignEducation?: EducationDef[],
-  statRules?: StatRules,
-  rules?: GameRules
+  campaignEducation: EducationDef[] | undefined,
+  statRules: StatRules,
+  rules: GameRules
 ): number {
-  if (!rules?.dynamicSkillCaps) {
-    return statRules?.maxSkillCap ?? 10.0;
+  const sr = requireAdvancedStatRules(statRules);
+  if (!rules.dynamicSkillCaps) {
+    return sr.maxSkillCap;
   }
-  const baseCap = statRules?.baseSkillCap ?? 2.5;
-  const maxCap = statRules?.maxSkillCap ?? 10.0;
+  const baseCap = sr.baseSkillCap;
+  const maxCap = sr.maxSkillCap;
   if (!player.degrees || player.degrees.length === 0 || !campaignEducation) {
     return baseCap;
   }
@@ -30,13 +31,13 @@ export function calcMaxSkillCap(
     const def = campaignEducation.find(e => e.id === degId);
     if (!def) continue;
     if (skillType === 'skillTech') {
-      if (def.rewards?.maxTechBoost !== undefined) {
+      if (def.rewards.maxTechBoost !== undefined) {
         bonus += def.rewards.maxTechBoost;
       } else if (def.tags?.includes('technical')) {
         bonus += 2.5;
       }
     } else if (skillType === 'skillMgmt') {
-      if (def.rewards?.maxMgmtBoost !== undefined) {
+      if (def.rewards.maxMgmtBoost !== undefined) {
         bonus += def.rewards.maxMgmtBoost;
       } else if (def.tags?.includes('management')) {
         bonus += 2.5;
@@ -97,7 +98,7 @@ export interface EmployabilityCalculatorOptions {
   isLookFit?: boolean;
   attireModifier?: number;
 
-  // Optional extensions for wage-scaled and tag-aware employability
+  // Extensions for wage-scaled and tag-aware employability
   jobBaseWage?: number;
   minCampaignWage?: number;
   maxCampaignWage?: number;
@@ -121,15 +122,15 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
   } = opts;
 
   // New Wage-Scaled & Tag-Aware Employability system
-  if (opts.rules?.wageScaledEmployability && opts.statRules) {
-    const sr = opts.statRules;
-    const base = sr.baseEmployability ?? 45;
+  if (opts.rules?.wageScaledEmployability) {
+    const sr = requireAdvancedStatRules(requireConfig(opts.statRules, 'statRules'));
+    const base = sr.baseEmployability;
 
     // Decoupled raw margin: Experience is Experience, Dependability is Dependability
     const depMargin = Math.max(0, dependability - jobReqDep);
     const expMargin = Math.max(0, experience - jobReqExp);
-    const marginRate = sr.employabilityMarginRate ?? 1.0;
-    const maxMarginBonus = sr.employabilityMaxMarginBonus ?? 40;
+    const marginRate = sr.employabilityMarginRate;
+    const maxMarginBonus = sr.employabilityMaxMarginBonus;
     const marginBonus = Math.min(
       maxMarginBonus,
       Math.floor((depMargin + expMargin) * marginRate)
@@ -138,14 +139,14 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
     // Normalized Wage Competition
     const minW = opts.minCampaignWage ?? 4;
     const maxW = opts.maxCampaignWage ?? 25;
-    const jobW = opts.jobBaseWage ?? 4;
+    const jobW = opts.jobBaseWage ?? minW;
     const wageRatio = maxW > minW ? Math.max(0, Math.min(1, (jobW - minW) / (maxW - minW))) : 0;
-    const maxWagePenalty = sr.maxWageCompetitionPenalty ?? 20;
+    const maxWagePenalty = sr.maxWageCompetitionPenalty;
     const baseWageComp = Math.round(wageRatio * maxWagePenalty);
 
     // Tag competition modifiers
     let tagModifier = 0;
-    if (opts.jobTags && sr.tagCompetitionModifiers) {
+    if (opts.jobTags) {
       for (const tag of opts.jobTags) {
         if (sr.tagCompetitionModifiers[tag] !== undefined) {
           tagModifier += sr.tagCompetitionModifiers[tag];
@@ -155,17 +156,17 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
     const wageCompetition = Math.max(0, baseWageComp + tagModifier);
 
     // Domain Skill Leverage
-    const skillRate = sr.employabilitySkillBonusRate ?? 2.0;
+    const skillRate = sr.employabilitySkillBonusRate;
     const techBonus = isTechnical ? Math.floor((skillTech || 0) * skillRate) : 0;
     const mgmtBonus = isManagement ? Math.floor((skillMgmt || 0) * skillRate) : 0;
 
     // Social weighting: Frontline vs Non-Frontline
     let socialBonus = 0;
     if (isFrontline) {
-      const socialDelta = (social || 0) - (sr.socialEmployabilityBaseline ?? 20);
-      socialBonus = Math.round(socialDelta * (sr.frontlineSocialEmployabilityRate ?? 0.5));
+      const socialDelta = (social || 0) - sr.socialEmployabilityBaseline;
+      socialBonus = Math.round(socialDelta * sr.frontlineSocialEmployabilityRate);
     } else {
-      socialBonus = Math.floor((social || 0) * (sr.generalSocialEmployabilityRate ?? 0.1));
+      socialBonus = Math.floor((social || 0) * sr.generalSocialEmployabilityRate);
     }
 
     const degreesBonus = degreesCount * 1;
@@ -237,13 +238,13 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
 
 /**
  * Calculate dependability decay for the start of a turn.
- * Always flat -3 per turn in classic.
- * In advanced (usePhysicalMentalConditions): dep_loss = Math.max(1, Math.ceil(D_REQ / 10) - Math.floor(social / 25)),
+ * Always flat -dependabilityWeeklyDecay per turn in Base pipeline.
+ * In Advanced pipeline: dep_loss = Math.max(1, Math.ceil(D_REQ / 10) - Math.floor(social / 25)),
  * where D_REQ is current job requirement or 3 for unemployed.
  */
 export function calcDependabilityDecay(
   current: number,
-  statRules?: StatRules,
+  statRules: StatRules,
   jobRequiredDep?: number,
   isAdvanced?: boolean,
   social: number = 0,
@@ -264,7 +265,7 @@ export function calcDependabilityDecay(
     }
     return clampZero(current - depLoss);
   }
-  return clampZero(current - (statRules?.dependabilityWeeklyDecay ?? 3));
+  return clampZero(current - statRules.dependabilityWeeklyDecay);
 }
 
 /**
@@ -347,8 +348,8 @@ export function calcEffectiveJobRequirements(
   isAdvanced: boolean,
   campaign?: CampaignBundle
 ): EffectiveJobRequirements {
-  const baseReqDep = job?.requirements?.dependability ?? 0;
-  const baseReqExp = job?.requirements?.experience ?? 0;
+  const baseReqDep = job ? job.requirements.dependability : 0;
+  const baseReqExp = job ? job.requirements.experience : 0;
 
   if (!isAdvanced || !job) {
     return {
@@ -366,7 +367,7 @@ export function calcEffectiveJobRequirements(
   const targetTier = getJobInitiativeTier(job);
   let currentTier: 1 | 2 | 3 = 1;
   if (player.currentJobId) {
-    const curJob = campaign?.jobs?.find(j => j.id === player.currentJobId);
+    const curJob = campaign?.jobs.find(j => j.id === player.currentJobId);
     currentTier = curJob ? getJobInitiativeTier(curJob) : (player.currentJobTier as 1 | 2 | 3 ?? 1);
   } else if (player.currentJobTier) {
     currentTier = player.currentJobTier as 1 | 2 | 3;
@@ -394,4 +395,3 @@ export function calcEffectiveJobRequirements(
     isAdjacent
   };
 }
-

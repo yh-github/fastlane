@@ -59,6 +59,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
         socializeCost: 6,
       },
       economyRules: {
+        model: 'legacy_scalar',
         rentGarnishRate: 0.5,
         rentFee: 0.1,
         repairCostMin: 0.2,
@@ -84,7 +85,7 @@ describe('Balance, Burnout & Spoilage Tests', () => {
         mentalMaxBaseValue: 86,
         physicalDoctorThreshold: 10,
         physicalDoctorChancePerPoint: 0.05,
-        doctorPhysicalBounceBack: 8,
+        doctorPhysicalBounceBack: 4,
         lowSpiritsThreshold: 10,
         lowSpiritsChancePerPoint: 0.05,
         lowSpiritsMentalBounceBack: 8,

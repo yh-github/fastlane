@@ -5,7 +5,7 @@
  * and map-based triggers.
  */
 
-import { type PlayerState, type GameState } from './gameState';
+import { type PlayerState, type GameState, type StatModification } from './gameState';
 import { spendHours } from './timeManager';
 import { calcRobberyChance, calcNetWorth, calcFloppyDurableValue } from './statMath';
 import { calcEconomyPrice } from './economyEngine';
@@ -13,6 +13,7 @@ import type { Random } from '../utils/rng';
 import type { CampaignBundle } from './dataLoader';
 import { resolveDecision, type ReplayContext } from './replayTypes';
 import { applyMoraleEffect, applyHappinessChange } from './statEffects';
+import { type GameRules, type StatRules, isAdvancedStatRules } from './rules';
 
 /**
  * Attempt a Wild Willy street robbery when leaving Bank or Black's Market.
@@ -30,9 +31,9 @@ export function processStreetRobbery(
   campaign: CampaignBundle,
   replay?: ReplayContext,
   forceRobbed?: boolean,
-  rules?: Partial<import('./gameState').GameRules>
+  rules?: Partial<GameRules>
 ): PlayerState {
-  const startWeek = campaign.config.eventRules?.willyRobberyStartWeek ?? 4;
+  const startWeek = campaign.config.eventRules.willyRobberyStartWeek;
   if (week < startWeek || player.money <= 0) return player;
 
   const chance = buildingType === 'bank' ? 1 / 31 : 1 / 51;
@@ -40,8 +41,8 @@ export function processStreetRobbery(
   const robbed = forceRobbed ? true : resolveDecision(replay, `street_robbery`, () => rng.next() < chance);
 
   if (robbed) {
-    let updated = { ...player, money: 0 };
-    const effectiveRules = rules || (campaign.config.gameRules || {}) as any;
+    const updated = { ...player, money: 0 };
+    const effectiveRules = rules || campaign.config.gameRules;
     return applyHappinessChange(updated, -3, 'street_robbery', effectiveRules, campaign.config.statRules);
   }
 
@@ -54,13 +55,22 @@ export function processStreetRobbery(
  * @param player — Current player state
  * @returns        Updated player state and boolean indicating if doctor visit triggered
  */
-export function processStarvation(player: PlayerState, timePenalty: number, rng: Random, rules?: import('./gameState').GameRules, replay?: ReplayContext): { updated: PlayerState; doctorTriggered: boolean } {
-  let updated = spendHours(player, timePenalty);
+export function processStarvation(
+  player: PlayerState,
+  timePenalty: number,
+  rng: Random,
+  rules?: GameRules,
+  replay?: ReplayContext,
+  statRules?: StatRules
+): { updated: PlayerState; doctorTriggered: boolean } {
+  const updated = spendHours(player, timePenalty);
   
   if (rules?.usePhysicalMentalConditions) {
-    updated.physicalCondition = Math.max(0, (updated.physicalCondition || 15) - 2);
+    const minPhys = (statRules && isAdvancedStatRules(statRules)) ? statRules.minPhysicalCondition : 0;
+    updated.physicalCondition = Math.max(minPhys, (updated.physicalCondition ?? 15) - 2);
   } else {
-    updated.happiness = Math.max(0, updated.happiness - 2);
+    const minHap = statRules ? statRules.minHappiness : 0;
+    updated.happiness = Math.max(minHap, updated.happiness - 2);
   }
   
   // 25% chance of Doctor Visit
@@ -75,23 +85,32 @@ export function processStarvation(player: PlayerState, timePenalty: number, rng:
  * @param player — Current player state
  * @returns        Updated player state
  */
-export function processDoctorVisit(player: PlayerState, timePenalty: number, rng: Random, bypassDoctorIfBroke: boolean = true, rules?: import('./gameState').GameRules, replay?: ReplayContext): PlayerState {
+export function processDoctorVisit(
+  player: PlayerState,
+  timePenalty: number,
+  rng: Random,
+  bypassDoctorIfBroke: boolean = true,
+  rules?: GameRules,
+  replay?: ReplayContext,
+  statRules?: StatRules
+): PlayerState {
   // Bypassed entirely if carrying $0 cash (if rule is enabled)
   if (player.money <= 0 && bypassDoctorIfBroke) return player;
 
-  let updated = spendHours(player, timePenalty);
+  const updated = spendHours(player, timePenalty);
   
   if (rules?.usePhysicalMentalConditions) {
-    const maxPhys = updated.physicalConditionMax ?? 50;
-    const physBounce = (rules as any)?.doctorPhysicalBounceBack ?? 4;
+    const maxPhys = updated.physicalConditionMax ?? ((statRules && isAdvancedStatRules(statRules)) ? statRules.initialPhysicalMax : 50);
+    const physBounce = (statRules && isAdvancedStatRules(statRules)) ? statRules.doctorPhysicalBounceBack : 4;
     updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 15) + physBounce);
   } else {
-    updated.happiness = Math.max(0, updated.happiness - 4);
+    const minHap = statRules ? statRules.minHappiness : 0;
+    updated.happiness = Math.max(minHap, updated.happiness - 4);
   }
   
   // Cost: random between $30 and $200
-  const cost = resolveDecision(replay, `doctor_cost`, () => (rng ? Math.floor(rng.next() * 171) + 30 : Math.floor(Math.random() * 171) + 30));
-  if (rules?.usePhysicalMentalConditions) {
+  const cost = resolveDecision(replay, `doctor_cost`, () => Math.floor(rng.next() * 171) + 30);
+  if (!bypassDoctorIfBroke && rules?.usePhysicalMentalConditions) {
     if (updated.money < cost) {
       const unpaid = cost - updated.money;
       updated.money = 0;
@@ -116,11 +135,11 @@ export function processApartmentRobbery(
   player: PlayerState,
   rng: Random,
   protectBuiltInAppliances: boolean = false,
-  rules?: import('./gameState').GameRules,
+  rules?: GameRules,
   turn: number = 1,
   startWeek: number = 4,
   replay?: ReplayContext,
-  statRules?: import('./rules').StatRules,
+  statRules?: StatRules,
   forceRobbed?: boolean,
   forcedStolenItemIds?: string[]
 ): { updated: PlayerState; robbed: boolean } {
@@ -171,7 +190,7 @@ export function processApartmentRobbery(
         if (unprotected) {
           const remAppliances = player.inventory.appliances.filter(a => a !== unprotected);
           const itemsStr = (unprotected as any).name || formatItem(unprotected.id);
-          const aptMods: import('./gameState').StatModification[] = [
+          const aptMods: StatModification[] = [
             { stat: rules?.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -4 }
           ];
           let updated: PlayerState = {
@@ -181,7 +200,7 @@ export function processApartmentRobbery(
             turnFlags: { ...player.turnFlags, freeNewspaper: true },
             newspaperHeadline: { key: 'newspaper.robbery' }
           };
-          updated = applyMoraleEffect(updated, -4, 'apartment_robbery', (rules || {}) as any, statRules);
+          updated = applyMoraleEffect(updated, -4, 'apartment_robbery', rules, statRules);
           return { updated, robbed: true };
         }
       }
@@ -189,7 +208,7 @@ export function processApartmentRobbery(
     }
 
     const itemsStr = stolenItemNames.join(', ');
-    const aptMods: import('./gameState').StatModification[] = [
+    const aptMods: StatModification[] = [
       { stat: rules?.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -4 }
     ];
     let updated: PlayerState = { 
@@ -199,8 +218,7 @@ export function processApartmentRobbery(
       turnFlags: { ...player.turnFlags, freeNewspaper: true },
       newspaperHeadline: { key: 'newspaper.robbery' }
     };
-    // -4 Happiness/Morale penalty
-    updated = applyMoraleEffect(updated, -4, 'apartment_robbery', (rules || {}) as any, statRules);
+    updated = applyMoraleEffect(updated, -4, 'apartment_robbery', rules, statRules);
     
     return { updated, robbed: true };
   }
@@ -227,8 +245,7 @@ export function processDonations(
 
   let isEligible = false;
 
-  const rules = campaign.config.eventRules?.charity;
-  if (!rules) return player;
+  const rules = campaign.config.eventRules.charity;
 
   if (rules.wealthMetric === 'netWorth') {
     const netWorth = calcNetWorth(player);
@@ -244,7 +261,6 @@ export function processDonations(
 
   if (!isEligible) return player;
 
-  // Calculate amount
   let uniformPrice = 50;
   
   if (player.currentJobId) {
@@ -252,13 +268,13 @@ export function processDonations(
     if (jobDef) {
       const uniformSubcategory = jobDef.requirements.uniform;
       const qtItem = campaign.items.find(i => i.subcategory === uniformSubcategory && i.store === 'qt_clothing');
-      if (qtItem) {
-        uniformPrice = calcEconomyPrice(qtItem.basePrice ?? 0, state.economicIndex);
+      if (qtItem && qtItem.basePrice !== undefined) {
+        uniformPrice = calcEconomyPrice(qtItem.basePrice, state.economicIndex);
       }
     }
   }
 
-  const extraCash = resolveDecision(replay, `donation_extra_cash`, () => Math.floor(rng.next() * 100) + 1); // 1 to 100
+  const extraCash = resolveDecision(replay, `donation_extra_cash`, () => Math.floor(rng.next() * 100) + 1);
   const totalDonation = uniformPrice + extraCash;
 
   const updated = {

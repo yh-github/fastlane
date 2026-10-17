@@ -100,17 +100,18 @@ describe('Advanced Variant Bugs (Integration & Regression)', () => {
   });
 
   it('NEW BUG FIX: calcEffectiveRobberyChance returns 0 for security housing or early weeks', () => {
+    const mockCampaign = { config: { eventRules: { willyRobberyStartWeek: 4 } } } as any;
     
     // 1. Security housing is 0%
     const securityPlayer = { currentHousingId: 'security', relaxation: 0 };
-    expect(calcEffectiveRobberyChance(securityPlayer, {}, 5)).toBe(0);
+    expect(calcEffectiveRobberyChance(securityPlayer, {}, 5, mockCampaign)).toBe(0);
 
     // 2. Early turns before start week is 0%
     const earlyPlayer = { currentHousingId: 'low_cost', relaxation: 0 };
-    expect(calcEffectiveRobberyChance(earlyPlayer, { useHomeTimeRobbery: true }, 1)).toBe(0);
+    expect(calcEffectiveRobberyChance(earlyPlayer, { useHomeTimeRobbery: true }, 1, mockCampaign)).toBe(0);
 
     // 3. Normal low cost housing on week 5 uses formula
-    expect(calcEffectiveRobberyChance(earlyPlayer, { useHomeTimeRobbery: true }, 5)).toBeGreaterThan(0);
+    expect(calcEffectiveRobberyChance(earlyPlayer, { useHomeTimeRobbery: true }, 5, mockCampaign)).toBeGreaterThan(0);
   });
 
 });

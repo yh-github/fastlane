@@ -1,5 +1,6 @@
 import type { CampaignBundle, EffectTrigger, StatTarget } from './dataLoader';
 import type { PlayerState } from './gameState';
+import { requireAdvancedStatRules } from './rules';
 import { messGrowth, calcMaxMental } from './statMath';
 
 export function recalculatePlayerEffects(player: PlayerState, campaign: CampaignBundle): PlayerState {
@@ -54,7 +55,7 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
   };
 
   if (campaign.config.gameRules?.usePhysicalMentalConditions) {
-    const statRules = campaign.config.statRules;
+    const statRules = requireAdvancedStatRules(campaign.config.statRules);
     const calculatedMaxMental = calcMaxMental(
       updatedPlayer.mess || 0,
       updatedPlayer.social || 9,
@@ -68,7 +69,7 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
       updatedPlayer.mentalCondition = Math.min(updatedPlayer.mentalConditionMax, updatedPlayer.mentalCondition);
     }
 
-    const globalMaxPhys = statRules?.globalMaxPhysicalCondition ?? 100;
+    const globalMaxPhys = statRules.globalMaxPhysicalCondition;
     if (updatedPlayer.physicalConditionMax !== undefined) {
       updatedPlayer.physicalConditionMax = Math.min(globalMaxPhys, updatedPlayer.physicalConditionMax);
     }

@@ -339,6 +339,7 @@ describe('Translation Interpolation & Template Verification', () => {
         { id: 'penny_stocks', name: 'Penny Stocks', type: 'fluctuating', basePrice: 10 }
       ],
       education: [],
+      items: [],
       jobs: [
         { id: 'janitor', title: 'Janitor', locationId: 'monolith_burgers', baseWage: 10, requirements: { experience: 0, dependability: 0, degrees: [] } }
       ],

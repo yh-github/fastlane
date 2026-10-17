@@ -40,7 +40,9 @@ describe('maintenanceActions', () => {
           maxPhysicalCondition: 50,
           minMentalCondition: 1,
           maxMentalCondition: 50,
-          lowCostMessMax: 50
+          lowCostMessMax: 50,
+          baseSkillCap: 2.5,
+          maxSkillCap: 10.0
         }
       }
     } as unknown as CampaignBundle;
@@ -60,7 +62,8 @@ describe('maintenanceActions', () => {
       campaign: mockCampaign,
       rules: {
         advancedMaintenance: true,
-        usePhysicalMentalConditions: true
+        usePhysicalMentalConditions: true,
+        useSkills: true
       } as GameRules,
       turn: 1,
       economicIndex: 0,

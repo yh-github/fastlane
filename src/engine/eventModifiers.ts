@@ -29,12 +29,12 @@ export function getEventModifications(
   }
 
   const mods: StatModification[] = [];
-  const isAdv = Boolean(rules?.usePhysicalMentalConditions);
-  const moraleStat = isAdv ? 'mental' : 'happiness';
+  const usePhysMental = Boolean(rules?.usePhysicalMentalConditions);
+  const moraleStat = usePhysMental ? 'mental' : 'happiness';
 
   if (event.key.startsWith('events.foodSpoiled')) {
     const amount = Number(event.params?.amount) || 0;
-    if (amount > 0) {
+    if (amount > 0 && rules?.trackMess) {
       mods.push({ stat: 'mess', diff: amount, label: 'Food Spoilage' });
     }
     if (event.key.includes('noFridge') || event.key.includes('ateSpoiled')) {
@@ -48,7 +48,7 @@ export function getEventModifications(
       mods.push({ stat: 'money', diff: profit, label: 'Computer Gig' });
     }
     mods.push({ stat: moraleStat, diff: 3, label: 'Computer Gig' });
-    if (isAdv) {
+    if (rules?.useSkills) {
       mods.push({ stat: 'skillTech', diff: 0.25, label: 'Computer Gig' });
     }
   } else if (event.key === 'events.lottery') {
@@ -68,7 +68,7 @@ export function getEventModifications(
   } else if (event.key === 'events.applianceBrokeNeedRepair') {
     mods.push({ stat: moraleStat, diff: -1, label: 'Appliance Breakdown' });
   } else if (event.key === 'events.starvation') {
-    if (isAdv) {
+    if (usePhysMental) {
       mods.push({ stat: 'mental', diff: -10, label: 'Starvation' });
     } else {
       mods.push({ stat: 'happiness', diff: -2, label: 'Starvation' });
@@ -78,7 +78,7 @@ export function getEventModifications(
     if (cost > 0) {
       mods.push({ stat: 'money', diff: -cost, label: 'Doctor Visit' });
     }
-    if (isAdv) {
+    if (usePhysMental) {
       mods.push({ stat: 'physical', diff: 4, label: 'Doctor Treatment' });
     } else {
       mods.push({ stat: 'happiness', diff: -4, label: 'Doctor Visit' });
