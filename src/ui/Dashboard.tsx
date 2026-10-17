@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { type PlayerState, type GameState } from '../engine/gameState';
+import { isAdvancedStatRules } from '../engine/rules';
 import {
   formatHours
 } from '../engine/statMath';
@@ -63,7 +64,7 @@ function AdvancedStatsStrip({
   onFilterToggle,
   t,
 }: AdvancedStatsStripProps) {
-  if (!campaign?.config.statRules?.enableAdvancedStats) return null;
+  if (!isAdvancedStatRules(campaign?.config.statRules)) return null;
 
   return (
     <div
@@ -431,7 +432,7 @@ export function Dashboard({
         t={t}
       />
 
-      {(gameState.rules as any).showDetailedStats && !campaign?.config.statRules?.enableAdvancedStats && (
+      {(gameState.rules as any).showDetailedStats && !isAdvancedStatRules(campaign?.config.statRules) && (
         <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
           <div><strong>{t('stat.dependability')}:</strong> {Math.floor(player.dependability)}</div>
           <div><strong>{t('stat.experience')}:</strong> {Math.floor(player.experience)}</div>

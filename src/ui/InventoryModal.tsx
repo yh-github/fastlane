@@ -46,7 +46,8 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
   const formatItemName = (id: string) => campaign?.items.find(i => i.id === id)?.name || id.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   const employabilityScore = calcEmployabilityScore(player.dependability || 0, player.experience || 0, player.degrees?.length || 0, 0, player.social || 0);
-  const robberyRisk = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
+  const effectiveRules = rules || campaign?.config.gameRules;
+  const robberyRisk = (effectiveRules && campaign) ? (calcEffectiveRobberyChance(player, effectiveRules, turn ?? 1, campaign) * 100).toFixed(1) : '0.0';
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);

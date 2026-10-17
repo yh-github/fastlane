@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Dashboard } from './Dashboard';
 import type { PlayerState } from '../engine/gameState';
+import { TEST_ADVANCED_CAMPAIGN_CONFIG } from '../engine/testFactories';
 
 describe('Side HUD Layout & Folding', () => {
   const mockPlayer = {
@@ -33,10 +34,25 @@ describe('Side HUD Layout & Folding', () => {
     rules: {
       helpfulUI: true,
       hudLayout: 'side' as const,
-      usePhysicalMentalConditions: true
+      usePhysicalMentalConditions: true,
+      useSkills: true
     },
     turn: 3,
     economicIndex: 10
+  } as any;
+
+  const mockCampaign = {
+    config: {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG,
+      winConditions: [
+        { stat: 'wealth', target: 100, label: 'Wealth' },
+        { stat: 'happiness', target: 100, label: 'Happiness' },
+        { stat: 'education', target: 100, label: 'Education' },
+        { stat: 'career', target: 100, label: 'Career' }
+      ]
+    },
+    education: [],
+    jobs: []
   } as any;
 
   it('renders Side HUD with Left Column (Career attributes) and Right Column (Trophy, folding Goals, Life stats)', () => {
@@ -44,6 +60,7 @@ describe('Side HUD Layout & Folding', () => {
       <Dashboard
         player={mockPlayer}
         gameState={mockGameState}
+        campaign={mockCampaign}
         turn={3}
         hoursPerTurn={30}
         layout="side"

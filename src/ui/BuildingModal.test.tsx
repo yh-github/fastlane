@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { BuildingModal } from './BuildingModal';
 import type { PlayerState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
+import { TEST_ADVANCED_CAMPAIGN_CONFIG } from '../engine/testFactories';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -67,7 +68,11 @@ describe('BuildingModal Component', () => {
   };
 
   const mockCampaign: CampaignBundle = {
-    config: { timeRules: { hoursPerTurn: 50, jobApplicationCost: 4, workSessionCost: 6, relaxCost: 6, studySessionCost: 6, loanCost: 2 } } as any,
+    config: {
+      timeRules: { hoursPerTurn: 50, jobApplicationCost: 4, workSessionCost: 6, relaxCost: 6, studySessionCost: 6, loanCost: 2 },
+      eventRules: { willyRobberyStartWeek: 4 },
+      statRules: { ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules }
+    } as any,
     items: [],
     housing: [{ id: 'low_cost', name: 'Low Cost Apt', baseRent: 300, homeNodeId: 'node1' }] as any,
     jobs: [],
@@ -249,7 +254,7 @@ describe('BuildingModal Component', () => {
         currentBuildingId="z_mart"
         turn={1}
         economicIndex={0}
-        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true, advancedWorkGUI: true }}
         onAction={mockOnAction}
         onClose={vi.fn()}
       />
@@ -433,7 +438,7 @@ describe('BuildingModal Component', () => {
         currentBuildingId="z_mart"
         turn={1}
         economicIndex={0}
-        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true, advancedWorkGUI: true }}
         onAction={mockOnAction}
         onClose={vi.fn()}
       />
@@ -517,7 +522,7 @@ describe('BuildingModal Component', () => {
         currentBuildingId="z_mart"
         turn={1}
         economicIndex={0}
-        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true, advancedWorkGUI: true }}
         onAction={vi.fn()}
         onClose={vi.fn()}
       />
@@ -544,7 +549,7 @@ describe('BuildingModal Component', () => {
         currentBuildingId="z_mart"
         turn={1}
         economicIndex={0}
-        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true, advancedWorkGUI: true }}
         onAction={vi.fn()}
         onClose={vi.fn()}
       />

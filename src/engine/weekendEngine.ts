@@ -2,7 +2,7 @@ import type { WeekendDef } from './dataLoader';
 import type { Random } from '../utils/rng';
 import { applyHappinessChange } from './statEffects';
 import type { PlayerState, GameEvent, GameRules, WeekendCard, WeekendDeckTier, StatModification } from './gameState';
-import type { StatRules } from './rules';
+import { type StatRules, isAdvancedStatRules } from './rules';
 import { CURIO_CATALOG } from './curioCatalog';
 
 // Helper to determine cost based on price range
@@ -457,6 +457,8 @@ export function resolveWeekendChoice(
     return updatedPlayer;
   }
 
+  const advStatRules = isAdvancedStatRules(statRules) ? statRules : undefined;
+
   // 1. Handle Broke / Free Stay Home
   if (card.id === 'broke_stay_home' || card.id === 'free_stay_home') {
     const mentalBonus = 2;
@@ -464,11 +466,11 @@ export function resolveWeekendChoice(
     const messIncrease = 2;
 
     if (rules?.usePhysicalMentalConditions) {
-      const maxMental = updatedPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
+      const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
       updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + mentalBonus);
       modifications.push({ stat: 'mental', diff: mentalBonus });
 
-      const maxPhys = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+      const maxPhys = updatedPlayer.physicalConditionMax ?? advStatRules?.initialPhysicalMax ?? 50;
       updatedPlayer.physicalCondition = Math.min(maxPhys, (updatedPlayer.physicalCondition ?? 50) + physicalBonus);
       modifications.push({ stat: 'physical', diff: physicalBonus });
     } else {
@@ -526,7 +528,7 @@ export function resolveWeekendChoice(
     const messIncrease = 2;
 
     if (rules?.usePhysicalMentalConditions) {
-      const maxPhys = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+      const maxPhys = updatedPlayer.physicalConditionMax ?? advStatRules?.initialPhysicalMax ?? 50;
       updatedPlayer.physicalCondition = Math.min(maxPhys, (updatedPlayer.physicalCondition ?? 50) + physicalGain);
       modifications.push({ stat: 'physical', diff: physicalGain });
     }
@@ -604,7 +606,7 @@ export function resolveWeekendChoice(
       : secMin;
 
     if (rules?.usePhysicalMentalConditions) {
-      const maxMental = updatedPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
+      const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
       updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + mentalBonus);
       modifications.push({ stat: 'mental', diff: mentalBonus });
     } else {
@@ -670,7 +672,7 @@ export function resolveWeekendChoice(
   if (card.isSpecial) {
     happinessBonus = card.specialBonus || 3;
     if (rules?.usePhysicalMentalConditions) {
-      const maxMental = updatedPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
+      const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
       updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + happinessBonus);
       modifications.push({ stat: 'mental', diff: happinessBonus });
     } else {
@@ -692,7 +694,7 @@ export function resolveWeekendChoice(
     if (bonusModifier > 0 && card.targetStat) {
       if (card.targetStat === 'mental') {
         if (rules?.usePhysicalMentalConditions) {
-          const maxMental = updatedPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
+          const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
           updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + bonusModifier);
           modifications.push({ stat: 'mental', diff: bonusModifier });
         } else {
@@ -710,7 +712,7 @@ export function resolveWeekendChoice(
         }
       } else if (card.targetStat === 'physical') {
         if (rules?.usePhysicalMentalConditions) {
-          const maxPhysical = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
+          const maxPhysical = updatedPlayer.physicalConditionMax ?? advStatRules?.initialPhysicalMax ?? 50;
           updatedPlayer.physicalCondition = Math.min(maxPhysical, (updatedPlayer.physicalCondition ?? 50) + bonusModifier);
           modifications.push({ stat: 'physical', diff: bonusModifier });
         }
@@ -732,8 +734,8 @@ export function resolveWeekendChoice(
 
   // Clamp limits if needed
   if (rules?.usePhysicalMentalConditions) {
-    const maxPhysical = updatedPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
-    const maxMental = updatedPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
+    const maxPhysical = updatedPlayer.physicalConditionMax ?? advStatRules?.initialPhysicalMax ?? 50;
+    const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
     updatedPlayer.physicalCondition = Math.min(maxPhysical, updatedPlayer.physicalCondition ?? maxPhysical);
     updatedPlayer.mentalCondition = Math.min(maxMental, updatedPlayer.mentalCondition ?? maxMental);
   }
@@ -838,7 +840,7 @@ export function processWeekend(
   }
 
   if (rules?.usePhysicalMentalConditions) {
-    const statRules = campaign?.config.statRules;
+    const statRules = isAdvancedStatRules(campaign?.config.statRules) ? campaign?.config.statRules : undefined;
     const maxPhysical = newPlayer.physicalConditionMax ?? statRules?.initialPhysicalMax ?? 50;
     const maxMental = newPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
 

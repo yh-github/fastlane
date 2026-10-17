@@ -1,3 +1,6 @@
+import type { CampaignBundle } from '../dataLoader';
+import type { GameRules } from '../rules';
+
 /**
  * Calculate the chance of getting robbed at home.
  *
@@ -14,7 +17,7 @@ export function calcRobberyChance(relaxation: number): number {
  */
 export function calcTheoreticalRobberyChance(
   player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[]; homeTimeThisTurn?: number },
-  rules?: { useHomeTimeRobbery?: boolean }
+  rules?: Pick<GameRules, 'useHomeTimeRobbery'>
 ): number {
   if (player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments' || player.currentHousingId === 'penthouse') return 0;
 
@@ -34,11 +37,11 @@ export function calcTheoreticalRobberyChance(
  */
 export function calcEffectiveRobberyChance(
   player: { currentHousingId: string; relaxation?: number; homeTimeHistory?: number[]; homeTimeThisTurn?: number },
-  rules?: { useHomeTimeRobbery?: boolean },
-  turn: number = 1,
-  campaign?: { config?: { eventRules?: { willyRobberyStartWeek?: number } } }
+  rules: Pick<GameRules, 'useHomeTimeRobbery'>,
+  turn: number,
+  campaign: Pick<CampaignBundle, 'config'>
 ): number {
-  const startWeek = campaign?.config?.eventRules?.willyRobberyStartWeek ?? 4;
+  const startWeek = campaign.config.eventRules.willyRobberyStartWeek;
   if (turn < startWeek) return 0;
   return calcTheoreticalRobberyChance(player, rules);
 }

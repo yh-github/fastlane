@@ -31,13 +31,21 @@ describe('WorkConsolePopup Component', () => {
 
   const dummyCampaign = {
     config: {
-      gameRules: { usePhysicalMentalConditions: true, helpfulUI: true },
+      versionClass: 'advanced',
+      gameRules: { versionClass: 'advanced', usePhysicalMentalConditions: true, useSkills: true, helpfulUI: true },
       timeRules: { workSessionCost: 6 },
       statRules: {
         workPhysicalCost: 1,
         workNormalMentalCost: 0,
+        workGrindThreshold: 4,
         workGrindMentalCost: 1,
-        workOvertimeMentalCost: 2
+        workOvertimeThreshold: 8,
+        workOvertimePhysicalCost: 2,
+        workOvertimeMentalCost: 2,
+        resilienceDropThreshold: 3,
+        enableAdvancedStats: true,
+        baseSkillCap: 2.5,
+        maxSkillCap: 10.0
       }
     }
   } as any;

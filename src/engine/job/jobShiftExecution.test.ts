@@ -5,6 +5,9 @@ import { applyForJob } from "./jobApplication";
 import { calcWorkShiftSummary } from "./jobShiftSummary";
 import type { PlayerState } from "../gameState";
 import type { JobDef } from "../dataLoader";
+import { TEST_ADVANCED_CAMPAIGN_CONFIG, TEST_BASE_GAME_RULES } from "../testFactories";
+const advStatRules = TEST_ADVANCED_CAMPAIGN_CONFIG.statRules;
+const advRules = { ...TEST_BASE_GAME_RULES, versionClass: 'advanced' as const, usePhysicalMentalConditions: true, useSkills: true, trackSocial: true };
 
 describe("Job Engine - workShift", () => {
   const burgerCook: JobDef = {
@@ -109,7 +112,7 @@ describe("Job Engine - workShift", () => {
     });
 
     describe('Advanced Work Modes & Innovate Progression', () => {
-      const advRules = { usePhysicalMentalConditions: true } as any;
+      const advRules = { ...TEST_BASE_GAME_RULES, versionClass: 'advanced' as const, usePhysicalMentalConditions: true, useSkills: true, trackSocial: true };
 
       it('only work_work gains standard shift experience; face_time gives $0 wage, scaled dep, and smooth social chance', () => {
         const basePlayer = {
@@ -127,11 +130,11 @@ describe("Job Engine - workShift", () => {
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         } as unknown as PlayerState;
 
-        const resWork = workShift(basePlayer, salesManager, 6, advRules, undefined, 'work_work');
+        const resWork = workShift(basePlayer, salesManager, 6, advRules, advStatRules, 'work_work');
         expect(resWork.updated.experience).toBe(51);
         expect(resWork.wagesEarned).toBe(96); // 12 * 8 = 96
 
-        const resLookBusy = workShift(basePlayer, salesManager, 6, advRules, undefined, 'look_busy');
+        const resLookBusy = workShift(basePlayer, salesManager, 6, advRules, advStatRules, 'look_busy');
         expect(resLookBusy.updated.experience).toBe(50);
         expect(resLookBusy.wagesEarned).toBe(96);
 
@@ -142,7 +145,7 @@ describe("Job Engine - workShift", () => {
           ],
           outDecisions: []
         };
-        const resFaceTime = workShift(basePlayer, salesManager, 6, advRules, undefined, 'face_time', new Random(1), replayFaceTime);
+        const resFaceTime = workShift(basePlayer, salesManager, 6, advRules, advStatRules, 'face_time', new Random(1), replayFaceTime);
         expect(resFaceTime.updated.experience).toBe(50);
         expect(resFaceTime.wagesEarned).toBe(0);
         expect(resFaceTime.updated.dependability).toBe(51.5);
@@ -150,7 +153,7 @@ describe("Job Engine - workShift", () => {
 
         // With Social 50: ceil(50/25)/2 = 1.0 -> 1 + 1.0 = +2.0 Dep
         const socialPlayer = { ...basePlayer, social: 50 };
-        const resFaceTimeSocial = workShift(socialPlayer, salesManager, 6, advRules, undefined, 'face_time');
+        const resFaceTimeSocial = workShift(socialPlayer, salesManager, 6, advRules, advStatRules, 'face_time');
         expect(resFaceTimeSocial.updated.dependability).toBe(52);
       });
 
@@ -166,7 +169,7 @@ describe("Job Engine - workShift", () => {
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         } as unknown as PlayerState;
 
-        const result = workShift(playerLowExp, salesManager, 6, advRules, undefined, 'show_initiative');
+        const result = workShift(playerLowExp, salesManager, 6, advRules, advStatRules, 'show_initiative');
         expect(result.success).toBe(false);
         expect(result.messages?.[0]?.key).toBe('action.job.initiativeNeedExp');
       });
@@ -188,7 +191,7 @@ describe("Job Engine - workShift", () => {
           inventory: { businessClothesWeeks: 10, selectedClothes: 'business' }
         } as unknown as PlayerState;
 
-        const result = workShift(player, salesManager, 6, advRules, undefined, 'show_initiative');
+        const result = workShift(player, salesManager, 6, advRules, advStatRules, 'show_initiative');
         expect(result.success).toBe(true);
         expect(result.wagesEarned).toBe(38); // Math.floor(12 * 8 * 0.4) = 38
         expect(result.updated.dependability).toBe(51);
@@ -198,7 +201,7 @@ describe("Job Engine - workShift", () => {
         expect(result.updated.initiativesByLocation?.[salesManager.locationId]).toBe(1);
 
         // Face time clears location mistakes
-        const ftResult = workShift(player, salesManager, 6, advRules, undefined, 'face_time');
+        const ftResult = workShift(player, salesManager, 6, advRules, advStatRules, 'face_time');
         expect(ftResult.success).toBe(true);
         expect(ftResult.updated.mistakesByLocation?.[salesManager.locationId]).toBe(0);
         expect(ftResult.messages?.some(m => m.key === 'action.job.faceTimeClearedMistake')).toBe(true);
@@ -229,7 +232,7 @@ describe("Job Engine - workShift", () => {
           dependability: 45,
           inventory: { ...raiseResult.updated.inventory, businessClothesWeeks: 10, selectedClothes: 'business' as const }
         };
-        const workResult = workShift(protectedPlayer, salesManager, 6, advRules);
+        const workResult = workShift(protectedPlayer, salesManager, 6, advRules, advStatRules);
         expect(workResult.success).toBe(true); // not fired
       });
 
@@ -252,7 +255,7 @@ describe("Job Engine - workShift", () => {
           outDecisions: []
         };
 
-        const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1), advRules, 1, replay);
+        const result = applyForJob(player, lowLevelJob, 4, {}, undefined, new Random(1), advRules, 1, replay, advStatRules);
         expect(result.success).toBe(true);
         expect(result.updated.currentJobId).toBe('zmart_clerk');
         expect(result.updated.innovationCount).toBe(0);
@@ -298,7 +301,7 @@ describe("Job Engine - workShift", () => {
         } as unknown as PlayerState;
 
         // 1. work_work mode: half wages ($40 vs $80), half physical/mental cost, +0.5 Dep, +0.5 Exp
-        const resWorkWork = workShift(basePlayer, salesManager, 6, propRules, undefined, 'work_work', new Random(1));
+        const resWorkWork = workShift(basePlayer, salesManager, 6, propRules, advStatRules, 'work_work', new Random(1));
         expect(resWorkWork.success).toBe(true);
         expect(resWorkWork.wagesEarned).toBe(40); // 10 * 8 * 0.5 = 40
         expect(resWorkWork.updated.dependability).toBe(50.5);
@@ -306,7 +309,7 @@ describe("Job Engine - workShift", () => {
         expect(resWorkWork.updated.hoursRemaining).toBe(0);
 
         // 2. look_busy mode: half wages ($40), +0 Dep, 0 Exp
-        const resLookBusy = workShift(basePlayer, salesManager, 6, propRules, undefined, 'look_busy', new Random(1));
+        const resLookBusy = workShift(basePlayer, salesManager, 6, propRules, advStatRules, 'look_busy', new Random(1));
         expect(resLookBusy.success).toBe(true);
         expect(resLookBusy.wagesEarned).toBe(40);
         expect(resLookBusy.updated.dependability).toBe(50);
@@ -317,14 +320,14 @@ describe("Job Engine - workShift", () => {
           inDecisions: [{ type: `work_facetime_social_${basePlayer.id}_1`, result: true }],
           outDecisions: []
         };
-        const resFaceTime = workShift(basePlayer, salesManager, 6, propRules, undefined, 'face_time', new Random(1), replayFaceTime);
+        const resFaceTime = workShift(basePlayer, salesManager, 6, propRules, advStatRules, 'face_time', new Random(1), replayFaceTime);
         expect(resFaceTime.success).toBe(true);
         expect(resFaceTime.wagesEarned).toBe(0);
         expect(resFaceTime.updated.dependability).toBeGreaterThan(50);
         expect(resFaceTime.updated.social).toBe(21);
 
         // 4. show_initiative mode: 0.4x wages ($16), +0.5 Dep, +0.5 Mgmt
-        const resInitiative = workShift(basePlayer, salesManager, 6, propRules, undefined, 'show_initiative', new Random(1));
+        const resInitiative = workShift(basePlayer, salesManager, 6, propRules, advStatRules, 'show_initiative', new Random(1));
         expect(resInitiative.success).toBe(true);
         expect(resInitiative.wagesEarned).toBe(16); // 10 * 8 * 0.4 * 0.5 = 16
         expect(resInitiative.updated.dependability).toBe(50.5);
@@ -363,7 +366,7 @@ describe("Job Engine - workShift", () => {
         expect(classicRes.updated.dependability).toBe(60); // MUST NOT drop to 30
 
         // Advanced mode (work_work)
-        const advRes = workShift(highStatPlayer, lowJob, 6, advRules, undefined, 'work_work');
+        const advRes = workShift(highStatPlayer, lowJob, 6, advRules, advStatRules, 'work_work');
         expect(advRes.success).toBe(true);
         expect(advRes.updated.experience).toBe(50); // MUST NOT drop to 20
         expect(advRes.updated.dependability).toBe(60); // MUST NOT drop to 30
@@ -402,7 +405,7 @@ describe("Job Engine - workShift", () => {
           outDecisions: []
         };
 
-        const result = workShift(exhaustedPlayer, job, 6, advRules, undefined, 'work_work', new Random(1), replay);
+        const result = workShift(exhaustedPlayer, job, 6, advRules, advStatRules, 'work_work', new Random(1), replay);
         expect(result.updated.currentJobId).toBeNull();
         expect(result.updated.turnFlags.firedLocationsThisTurn).toContain('factory');
         expect(result.messages?.some(m => m.key === 'action.job.firedMistakes' || m.key === 'action.job.fired')).toBe(true);
@@ -442,7 +445,7 @@ describe("Job Engine - workShift", () => {
           outDecisions: []
         };
 
-        const result = workShift(playerWithMerits, job, 6, advRules, undefined, 'work_work', new Random(1), replay);
+        const result = workShift(playerWithMerits, job, 6, advRules, advStatRules, 'work_work', new Random(1), replay);
         // Player should NOT be fired because threshold is 4 (3 + 1 merit)
         expect(result.updated.currentJobId).toBe('factory_worker');
         expect(result.updated.workMistakesThisTurn).toBe(3);
@@ -505,7 +508,7 @@ describe("Job Engine - workShift", () => {
           inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
+        const advancedRules = advRules;
         const result = applyForJob(exhaustedPlayer, job, 4, {}, undefined, new Random(1), advancedRules as any, 1);
         expect(result.success).toBe(false);
         expect(result.message.key).toBe('action.error.tooMentallyExhausted');
@@ -534,7 +537,7 @@ describe("Job Engine - workShift", () => {
           inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
+        const advancedRules = advRules;
         const replay = {
           inDecisions: [{ type: `job_interview_mental_mistake_p_low_mental_1_zmart_clerk`, result: true }],
           outDecisions: []
@@ -573,21 +576,21 @@ describe("Job Engine - workShift", () => {
           inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
+        const advancedRules = advRules;
 
         // Test face_time disabled
-        const ftResult = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'face_time');
+        const ftResult = workShift(player, heavyJob, 6, advancedRules as any, advStatRules, 'face_time');
         expect(ftResult.success).toBe(false);
         expect(ftResult.messages?.[0].key).toBe('action.job.faceTimeDisabled');
 
         // Test look_busy costs 1 Dep and +0.25 extra Phys (base 0.5 + 0.25 = 0.75)
-        const lbResult = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'look_busy');
+        const lbResult = workShift(player, heavyJob, 6, advancedRules as any, advStatRules, 'look_busy');
         expect(lbResult.success).toBe(true);
         expect(lbResult.updated.dependability).toBe(19); // 20 - 1
         expect(lbResult.updated.physicalCondition).toBe(49.25); // 50 - 0.75
 
         // Test work_work has +0.5 Physical cost (base 1 + 0.5 = 1.5) and grants 0.5 Exp
-        const wwResult = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'work_work');
+        const wwResult = workShift(player, heavyJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(wwResult.success).toBe(true);
         expect(wwResult.updated.physicalCondition).toBe(48.5); // 50 - 1.5
         expect(wwResult.updated.experience).toBe(0.5); // 0 + 0.5
@@ -614,7 +617,7 @@ describe("Job Engine - workShift", () => {
           perks: []
         };
 
-        const advancedRules = { usePhysicalMentalConditions: true };
+        const advancedRules = advRules;
 
         // Test at Phys = 15:
         // On normal job (threshold 10), Phys 15 is safe (0% mistake chance, no decision resolved)
@@ -634,7 +637,7 @@ describe("Job Engine - workShift", () => {
         } as unknown as PlayerState;
 
         const normalReplay = { inDecisions: [], outDecisions: [] as any[] };
-        const normalRes = workShift(playerAt15, normalJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), normalReplay);
+        const normalRes = workShift(playerAt15, normalJob, 6, advancedRules as any, advStatRules, 'work_work', new Random(1), normalReplay);
         expect(normalRes.success).toBe(true);
         expect(normalReplay.outDecisions.length).toBe(0); // No mistake roll triggered for normal job
 
@@ -644,7 +647,7 @@ describe("Job Engine - workShift", () => {
           inDecisions: [{ type: `work_phys_mistake_${heavyPlayerAt15.id}_1`, result: true }],
           outDecisions: [] as any[]
         };
-        const heavyRes = workShift(heavyPlayerAt15, heavyJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), heavyReplay);
+        const heavyRes = workShift(heavyPlayerAt15, heavyJob, 6, advancedRules as any, advStatRules, 'work_work', new Random(1), heavyReplay);
         expect(heavyRes.success).toBe(true);
         expect(heavyRes.messages?.some(m => m.key === 'action.job.mistake')).toBe(true);
         expect(heavyRes.updated.mistakesByLocation?.['factory']).toBe(1);
@@ -652,7 +655,7 @@ describe("Job Engine - workShift", () => {
         // At Phys = 20, heavy_physical job is safe (0% mistake chance, no decision resolved)
         const heavyPlayerAt20 = { ...playerAt15, currentJobId: 'factory_assembly', physicalCondition: 20 };
         const heavySafeReplay = { inDecisions: [], outDecisions: [] as any[] };
-        const heavySafeRes = workShift(heavyPlayerAt20, heavyJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), heavySafeReplay);
+        const heavySafeRes = workShift(heavyPlayerAt20, heavyJob, 6, advancedRules as any, advStatRules, 'work_work', new Random(1), heavySafeReplay);
         expect(heavySafeRes.success).toBe(true);
         expect(heavySafeReplay.outDecisions.length).toBe(0);
       });
@@ -684,12 +687,12 @@ describe("Job Engine - workShift", () => {
           inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
+        const advancedRules = advRules;
         const replay = {
           inDecisions: [{ type: `work_social_mistake_${player.id}_1`, result: false }],
           outDecisions: []
         };
-        const wwResult = workShift(player, frontlineJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), replay);
+        const wwResult = workShift(player, frontlineJob, 6, advancedRules as any, advStatRules, 'work_work', new Random(1), replay);
         expect(wwResult.success).toBe(true);
         expect(wwResult.updated.social).toBe(11); // 10 + 1
       });
@@ -721,15 +724,15 @@ describe("Job Engine - workShift", () => {
           inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
+        const advancedRules = advRules;
 
         // look_busy disabled
-        const lbResult = workShift(player, mgrJob, 6, advancedRules as any, undefined, 'look_busy');
+        const lbResult = workShift(player, mgrJob, 6, advancedRules as any, advStatRules, 'look_busy');
         expect(lbResult.success).toBe(false);
         expect(lbResult.messages?.[0].key).toBe('action.job.lookBusyDisabled');
 
         // work_work: base Mental 0 + 1 = 1 Mental cost, builds skillMgmt (+0.05)
-        const wwResult = workShift(player, mgrJob, 6, advancedRules as any, undefined, 'work_work');
+        const wwResult = workShift(player, mgrJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(wwResult.success).toBe(true);
         expect(wwResult.updated.mentalCondition).toBe(49); // 50 - 1
         expect(wwResult.updated.social).toBe(10); // Social unaffected
@@ -764,10 +767,10 @@ describe("Job Engine - workShift", () => {
           inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
+        const advancedRules = advRules;
 
         // Working heavy physical technical job grants 0.5 Exp, so +0.125 skillTech
-        const shiftRes = workShift(player, techJob, 6, advancedRules as any, undefined, 'work_work');
+        const shiftRes = workShift(player, techJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(shiftRes.success).toBe(true);
         expect(shiftRes.updated.skillTech).toBeCloseTo(1.15, 2); // 1.0 + 0.125 ~ 1.15 rounded to 0.05
 
@@ -782,7 +785,7 @@ describe("Job Engine - workShift", () => {
         } as unknown as PlayerState;
 
         vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01);
-        const applyRes = applyForJob(applicant, techJob, 4, {}, undefined, new Random(1), advancedRules as any);
+        const applyRes = applyForJob(applicant, techJob, 4, {}, undefined, new Random(1), advancedRules as any, 1, undefined, advStatRules);
         expect(applyRes.success).toBe(true);
 
         // A player with 28 Exp and 0 skillTech fails prerequisite check
@@ -795,7 +798,7 @@ describe("Job Engine - workShift", () => {
           turnFlags: { jobsRejectedThisTurn: [] }
         } as unknown as PlayerState;
 
-        const unqRes = applyForJob(unqualifiedApplicant, techJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
+        const unqRes = applyForJob(unqualifiedApplicant, techJob, 4, {}, undefined, new Random(1), advancedRules as any, 5, undefined, advStatRules);
         expect(unqRes.success).toBe(false);
         expect(unqRes.message.params?.reasons).toContain('Not enough experience.');
       });
@@ -829,8 +832,8 @@ describe("Job Engine - workShift", () => {
           inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
-        const shiftRes = workShift(engineerPlayer, engineerJob, 6, advancedRules as any, undefined, 'work_work');
+        const advancedRules = advRules;
+        const shiftRes = workShift(engineerPlayer, engineerJob, 6, advancedRules as any, advStatRules, 'work_work');
         
         // Player should NOT be fired!
         expect(shiftRes.success).toBe(true);
@@ -839,6 +842,8 @@ describe("Job Engine - workShift", () => {
     });
 
     describe('Management Skill (Skill_Mgmt) & Executive Management', () => {
+      const advancedRules = advRules;
+
       it('awards +0.25 skillMgmt on middle_management and +0.50 on executive_management work_work shifts', () => {
         const asstJob: JobDef = {
           id: 'zmart_asst_mgr',
@@ -877,16 +882,14 @@ describe("Job Engine - workShift", () => {
           inventory: { dressClothesWeeks: 10, businessClothesWeeks: 10, selectedClothes: 'dress' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
-        
         // Middle management shift -> +0.05 skillMgmt
-        const res1 = workShift(player, asstJob, 6, advancedRules as any, undefined, 'work_work');
+        const res1 = workShift(player, asstJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(res1.success).toBe(true);
         expect(res1.updated.skillMgmt).toBe(0.05);
 
         // Executive management shift -> +0.10 skillMgmt
         const execPlayer = { ...player, currentJobId: 'zmart_mgr', currentWage: 8, skillMgmt: 2.0, inventory: { selectedClothes: 'business', businessClothesWeeks: 10 } } as unknown as PlayerState;
-        const res2 = workShift(execPlayer, execJob, 6, advancedRules as any, undefined, 'work_work');
+        const res2 = workShift(execPlayer, execJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(res2.success).toBe(true);
         expect(res2.updated.skillMgmt).toBe(2.10);
       });
@@ -919,8 +922,7 @@ describe("Job Engine - workShift", () => {
           inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
-        const res = workShift(player, asstJob, 6, advancedRules as any, undefined, 'face_time');
+        const res = workShift(player, asstJob, 6, advancedRules as any, advStatRules, 'face_time');
         expect(res.success).toBe(true);
         expect(res.updated.skillMgmt).toBe(1.15);
       });
@@ -947,7 +949,6 @@ describe("Job Engine - workShift", () => {
           turnFlags: { jobsRejectedThisTurn: [] }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
         const rejectRes = applyForJob(underQualifiedPlayer, execJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
         expect(rejectRes.success).toBe(false);
         expect(rejectRes.message.params?.reasons).toContain('Management Skill');
@@ -958,7 +959,7 @@ describe("Job Engine - workShift", () => {
           skillMgmt: 7.0
         } as unknown as PlayerState;
 
-        const qualifiedRes = applyForJob(qualifiedPlayer, execJob, 4, {}, undefined, new Random(1), advancedRules as any, 5);
+        const qualifiedRes = applyForJob(qualifiedPlayer, execJob, 4, {}, undefined, new Random(1), advancedRules as any, 5, undefined, advStatRules);
         expect(qualifiedRes.success).toBe(true);
         expect(qualifiedRes.updated.currentJobId).toBe('factory_gen_mgr');
       });
@@ -997,10 +998,8 @@ describe("Job Engine - workShift", () => {
           inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
-
-        const execDetails = calcWorkShiftSummary(player, execJob, 6, advancedRules as any);
-        const standardDetails = calcWorkShiftSummary(player, standardJob, 6, advancedRules as any);
+        const execDetails = calcWorkShiftSummary(player, execJob, 6, advancedRules as any, advStatRules);
+        const standardDetails = calcWorkShiftSummary(player, standardJob, 6, advancedRules as any, advStatRules);
 
         const execWW = execDetails.modes.find(m => m.id === 'work_work')!;
         const stdWW = standardDetails.modes.find(m => m.id === 'work_work')!;
@@ -1017,7 +1016,7 @@ describe("Job Engine - workShift", () => {
           execJob,
           1,
           advancedRules as any,
-          undefined,
+          advStatRules,
           'work_work',
           new Random(1),
           { inDecisions: [{ type: `work_mental_mistake_${player.id}_1`, result: true }], outDecisions: [] }
@@ -1051,14 +1050,13 @@ describe("Job Engine - workShift", () => {
           inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
         // Replay forcing executive base mistake
         const replay = {
           inDecisions: [{ type: `work_exec_mistake_${player.id}_1`, result: true }],
           outDecisions: []
         };
 
-        const res = workShift(player, execJob, 6, advancedRules as any, undefined, 'work_work', new Random(1), replay);
+        const res = workShift(player, execJob, 6, advancedRules as any, advStatRules, 'work_work', new Random(1), replay);
         expect(res.success).toBe(true);
         expect(res.updated.mistakesByLocation?.['burger_palace']).toBe(1);
         expect(res.messages?.some(m => m.key === 'action.job.executiveMistake')).toBe(true);
@@ -1101,22 +1099,20 @@ describe("Job Engine - workShift", () => {
           inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
-
         // Action 4 (Grind) on heavy_physical: drops physicalConditionMax by 0.5 (50 -> 49.5)
-        const resGrindHeavy = workShift(player, heavyJob, 6, advancedRules as any, undefined, 'work_work');
+        const resGrindHeavy = workShift(player, heavyJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(resGrindHeavy.success).toBe(true);
         expect(resGrindHeavy.updated.physicalConditionMax).toBe(49.5);
 
         // Action 4 (Grind) on normal job: does NOT drop physicalConditionMax (remains 50)
         const normalPlayerGrind = { ...player, currentJobId: 'office_worker' };
-        const resGrindNormal = workShift(normalPlayerGrind, normalJob, 6, advancedRules as any, undefined, 'work_work');
+        const resGrindNormal = workShift(normalPlayerGrind, normalJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(resGrindNormal.success).toBe(true);
         expect(resGrindNormal.updated.physicalConditionMax).toBe(50);
 
         // Action 8 (Overtime) on normal job: drops physicalConditionMax by 0.5 (50 -> 49.5)
         const normalPlayerOvertime = { ...player, currentJobId: 'office_worker', workActionsThisTurn: 7 };
-        const resOvertimeNormal = workShift(normalPlayerOvertime, normalJob, 6, advancedRules as any, undefined, 'work_work');
+        const resOvertimeNormal = workShift(normalPlayerOvertime, normalJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(resOvertimeNormal.success).toBe(true);
         expect(resOvertimeNormal.updated.physicalConditionMax).toBe(49.5);
       });
@@ -1147,9 +1143,8 @@ describe("Job Engine - workShift", () => {
           inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
         } as unknown as PlayerState;
 
-        const advancedRules = { usePhysicalMentalConditions: true };
         // Normal tier work_work has 0 base mental cost, but Physical < 20 triggers +1 Mental fatigue spillover
-        const res = workShift(playerAt18, heavyJob, 6, advancedRules as any, undefined, 'work_work');
+        const res = workShift(playerAt18, heavyJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(res.success).toBe(true);
         expect(res.updated.mentalCondition).toBe(49); // 50 - 1
       });
@@ -1164,7 +1159,6 @@ describe("Job Engine - workShift", () => {
           tags: ['frontline_service'],
           perks: []
         };
-        const advancedRules = { usePhysicalMentalConditions: true };
 
         const basePlayer = {
           id: 'p_frontline',
@@ -1183,29 +1177,29 @@ describe("Job Engine - workShift", () => {
 
         // Shift 3 (workActionsThisTurn: 2 -> next shift is 3): < 4, so socialMod = +1
         const pShift3 = { ...basePlayer, workActionsThisTurn: 2, social: 20 };
-        const summary3 = calcWorkShiftSummary(pShift3, frontlineJob, 6, advancedRules as any);
+        const summary3 = calcWorkShiftSummary(pShift3, frontlineJob, 6, advancedRules as any, advStatRules);
         const workWork3 = summary3.modes.find(m => m.id === 'work_work')!;
         expect(workWork3.rewardSocial).toBe(1);
         expect(workWork3.rewardText).toContain('+1 👥');
-        const res3 = workShift(pShift3, frontlineJob, 6, advancedRules as any, undefined, 'work_work');
+        const res3 = workShift(pShift3, frontlineJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(res3.updated.social).toBe(21); // +1 👥
 
         // Shift 4 (workActionsThisTurn: 3 -> next shift is 4, Grind tier): NOT < 4, so socialMod = 0
         const pShift4 = { ...basePlayer, workActionsThisTurn: 3, social: 20 };
-        const summary4 = calcWorkShiftSummary(pShift4, frontlineJob, 6, advancedRules as any);
+        const summary4 = calcWorkShiftSummary(pShift4, frontlineJob, 6, advancedRules as any, advStatRules);
         const workWork4 = summary4.modes.find(m => m.id === 'work_work')!;
         expect(workWork4.rewardSocial).toBe(0);
         expect(workWork4.rewardText).not.toContain('👥');
-        const res4 = workShift(pShift4, frontlineJob, 6, advancedRules as any, undefined, 'work_work');
+        const res4 = workShift(pShift4, frontlineJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(res4.updated.social).toBe(20); // 0 👥
 
         // Shift 8 (workActionsThisTurn: 7 -> next shift is 8, Overtime tier): >= 8, so socialMod = -1
         const pShift8 = { ...basePlayer, workActionsThisTurn: 7, social: 20 };
-        const summary8 = calcWorkShiftSummary(pShift8, frontlineJob, 6, advancedRules as any);
+        const summary8 = calcWorkShiftSummary(pShift8, frontlineJob, 6, advancedRules as any, advStatRules);
         const workWork8 = summary8.modes.find(m => m.id === 'work_work')!;
         expect(workWork8.rewardSocial).toBe(-1);
         expect(workWork8.rewardText).toContain('-1 👥');
-        const res8 = workShift(pShift8, frontlineJob, 6, advancedRules as any, undefined, 'work_work');
+        const res8 = workShift(pShift8, frontlineJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(res8.updated.social).toBe(19); // -1 👥
       });
 
@@ -1227,7 +1221,6 @@ describe("Job Engine - workShift", () => {
           requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
           perks: []
         };
-        const advancedRules = { usePhysicalMentalConditions: true };
         const player = {
           id: 'p_test',
           hoursRemaining: 10,
@@ -1241,23 +1234,23 @@ describe("Job Engine - workShift", () => {
         } as unknown as PlayerState;
 
         // Frontline Service: look_busy previews -1 Social and deducts 1 Social
-        const frontlineSummary = calcWorkShiftSummary(player, frontlineJob, 6, advancedRules as any);
+        const frontlineSummary = calcWorkShiftSummary(player, frontlineJob, 6, advancedRules as any, advStatRules);
         const frontlineLB = frontlineSummary.modes.find(m => m.id === 'look_busy')!;
         expect(frontlineLB.rewardSocial).toBe(-1);
         expect(frontlineLB.rewardText).toContain('-1 👥');
 
         const safeRng = { next: () => 0.99 } as any;
-        const frontlineRes = workShift(player, frontlineJob, 6, advancedRules as any, undefined, 'look_busy', safeRng);
+        const frontlineRes = workShift(player, frontlineJob, 6, advancedRules as any, advStatRules, 'look_busy', safeRng);
         expect(frontlineRes.success).toBe(true);
         expect(frontlineRes.updated.social).toBe(14); // 15 - 1 = 14
 
         // Non-frontline job: look_busy does not penalize Social
-        const normalSummary = calcWorkShiftSummary(player, normalJob, 6, advancedRules as any);
+        const normalSummary = calcWorkShiftSummary(player, normalJob, 6, advancedRules as any, advStatRules);
         const normalLB = normalSummary.modes.find(m => m.id === 'look_busy')!;
         expect(normalLB.rewardSocial).toBe(0);
         expect(normalLB.rewardText).not.toContain('👥');
 
-        const normalRes = workShift({ ...player, currentJobId: 'office_worker' }, normalJob, 6, advancedRules as any, undefined, 'look_busy', safeRng);
+        const normalRes = workShift({ ...player, currentJobId: 'office_worker' }, normalJob, 6, advancedRules as any, advStatRules, 'look_busy', safeRng);
         expect(normalRes.success).toBe(true);
         expect(normalRes.updated.social).toBe(15);
       });
@@ -1271,7 +1264,6 @@ describe("Job Engine - workShift", () => {
           requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
           perks: []
         };
-        const advancedRules = { usePhysicalMentalConditions: true };
 
         // Safe player: physical 30, mental 30 -> 0% risk
         const safePlayer = {
@@ -1281,7 +1273,7 @@ describe("Job Engine - workShift", () => {
           mentalCondition: 30,
           workActionsThisTurn: 0
         } as unknown as PlayerState;
-        const safeSummary = calcWorkShiftSummary(safePlayer, normalJob, 6, advancedRules as any);
+        const safeSummary = calcWorkShiftSummary(safePlayer, normalJob, 6, advancedRules as any, advStatRules);
         const safeWork = safeSummary.modes.find(m => m.id === 'work_work')!;
         expect(safeWork.physMistakeChance).toBe(0);
         expect(safeWork.mentalMistakeChance).toBe(0);
@@ -1295,7 +1287,7 @@ describe("Job Engine - workShift", () => {
           mentalCondition: 6,
           workActionsThisTurn: 3 // Grind tier: basePhys 1, baseMental 1
         } as unknown as PlayerState;
-        const tiredSummary = calcWorkShiftSummary(tiredPlayer, normalJob, 6, advancedRules as any);
+        const tiredSummary = calcWorkShiftSummary(tiredPlayer, normalJob, 6, advancedRules as any, advStatRules);
         const tiredWork = tiredSummary.modes.find(m => m.id === 'work_work')!;
         expect(tiredWork.physMistakeChance).toBeCloseTo(0.05, 4);
         expect(tiredWork.mentalMistakeChance).toBeCloseTo(0.10, 4);
@@ -1309,7 +1301,7 @@ describe("Job Engine - workShift", () => {
           tags: ['heavy_physical']
         };
         // Player at physical 16: threshold 20 -> (20 - 16) * 0.025 = 0.10
-        const heavySummary = calcWorkShiftSummary({ ...tiredPlayer, physicalCondition: 16 }, heavyJob, 6, advancedRules as any);
+        const heavySummary = calcWorkShiftSummary({ ...tiredPlayer, physicalCondition: 16 }, heavyJob, 6, advancedRules as any, advStatRules);
         const heavyWork = heavySummary.modes.find(m => m.id === 'work_work')!;
         expect(heavyWork.physMistakeChance).toBeCloseTo(0.10, 4);
 
@@ -1320,7 +1312,7 @@ describe("Job Engine - workShift", () => {
           tags: ['frontline_service']
         };
         // Player at social 12: threshold 20 -> (20 - 12) * 0.0125 = 0.10 (10%)
-        const frontlineSummary = calcWorkShiftSummary({ ...tiredPlayer, social: 12 }, frontlineJob, 6, advancedRules as any);
+        const frontlineSummary = calcWorkShiftSummary({ ...tiredPlayer, social: 12 }, frontlineJob, 6, advancedRules as any, advStatRules);
         const frontlineWork = frontlineSummary.modes.find(m => m.id === 'work_work')!;
         expect(frontlineWork.socialMistakeChance).toBeCloseTo(0.10, 4);
       });
@@ -1365,8 +1357,6 @@ describe("Job Engine - workShift", () => {
         perks: []
       };
 
-      const advRules = { usePhysicalMentalConditions: true, useSkills: true } as any;
-
       it('generates 3 initiative cards on Tier 3 executive jobs and 2 cards on lower tier jobs', () => {
         const humanExec = {
           id: 'p_exec',
@@ -1382,7 +1372,7 @@ describe("Job Engine - workShift", () => {
           turnFlags: {}
         } as unknown as PlayerState;
 
-        const resExec = workShift(humanExec, execJob, 6, advRules, undefined, 'show_initiative');
+        const resExec = workShift(humanExec, execJob, 6, advRules, advStatRules, 'show_initiative');
         expect(resExec.success).toBe(true);
         expect(resExec.updated.pendingMiniGame).toBeDefined();
         expect(resExec.updated.pendingMiniGame?.gameType).toBe('work_initiative');
@@ -1396,7 +1386,7 @@ describe("Job Engine - workShift", () => {
           currentWage: 12,
           experience: 60
         } as unknown as PlayerState;
-        const resSales = workShift(humanSales, salesManager, 6, advRules, undefined, 'show_initiative');
+        const resSales = workShift(humanSales, salesManager, 6, advRules, advStatRules, 'show_initiative');
         expect(resSales.success).toBe(true);
         expect(resSales.updated.pendingMiniGame?.options.length).toBe(2);
         expect(resSales.updated.pendingMiniGame?.tier).toBe(2);
@@ -1418,7 +1408,7 @@ describe("Job Engine - workShift", () => {
           turnFlags: {}
         } as unknown as PlayerState;
 
-        const resAi = workShift(aiPlayer, salesManager, 6, advRules, undefined, 'show_initiative');
+        const resAi = workShift(aiPlayer, salesManager, 6, advRules, advStatRules, 'show_initiative');
         expect(resAi.success).toBe(true);
         expect(resAi.updated.pendingMiniGame).toBeFalsy(); // AI does not block on modal
         expect(resAi.messages?.some(m => m.key === 'action.job.initiativeSuccess')).toBe(true);
@@ -1440,7 +1430,7 @@ describe("Job Engine - workShift", () => {
           turnFlags: {}
         } as unknown as PlayerState;
 
-        const res = workShift(overtimePlayer, salesManager, 6, advRules, undefined, 'show_initiative');
+        const res = workShift(overtimePlayer, salesManager, 6, advRules, advStatRules, 'show_initiative');
         expect(res.success).toBe(true);
         expect(res.updated.physicalConditionMax).toBe(49.5); // Dropped by 0.5
       });

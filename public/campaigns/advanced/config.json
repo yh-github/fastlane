@@ -1,4 +1,5 @@
 {
+  "versionClass": "advanced",
   "name": "The Fast Lane — Advanced Edition",
   "version": "3.0.0",
   "description": "Experimental campaign for testing new sub-systems and modular game mechanics.",
@@ -12,7 +13,22 @@
     { "stat": "career", "target": 100, "label": "Career" },
     { "stat": "wellbeing", "target": 100, "label": "Well-being" }
   ],
+  "timeRules": {
+    "burnoutPenalty": 12,
+    "cleaningServiceCost": 1,
+    "socializeCost": 6
+  },
+  "economyRules": {
+    "cleaningServiceBasePrice": 100,
+    "socializeLowCostCashCost": 25,
+    "socializeSecurityCashCost": 50,
+    "socializePenthouseCashCost": 100,
+    "moveFeeMessThreshold": 10,
+    "moveFeeMessRate": 50,
+    "moveFeeDurableRate": 50
+  },
   "gameRules": {
+    "versionClass": "advanced",
     "helpfulUI": true,
     "enableAnimations": true,
     "showItemImages": true,
@@ -53,6 +69,9 @@
     "advancedStores": true
   },
   "statRules": {
+    "enableAdvancedStats": true,
+    "mentalWarningThreshold": 20,
+    "physicalWarningThreshold": 20,
     "baseSkillCap": 2.5,
     "maxSkillCap": 10.0,
     "baseEmployability": 45,
@@ -68,6 +87,8 @@
       "high_downtime": 5
     },
     "startingSocial": 20,
+    "minSocial": 1,
+    "maxSocial": 99,
     "startingPhysicalCondition": 50,
     "startingMentalCondition": 51,
     "minPhysicalCondition": 1,
@@ -77,6 +98,8 @@
     "globalMaxMentalCondition": 100,
     "physicalDoctorThreshold": 10,
     "physicalDoctorChancePerPoint": 0.05,
+    "doctorVisitPhysicalThreshold": 10,
+    "doctorVisitPhysicalChancePerPoint": 0.05,
     "doctorPhysicalBounceBack": 4,
     "starvationMaxPhysicalPenalty": 10,
     "lowSpiritsThreshold": 10,
@@ -102,9 +125,22 @@
     "resilienceDropThreshold": 3,
     "cleanPhysicalCost": 1,
     "initialPhysicalMax": 100,
+    "initialMinPhysical": 3,
+    "globalPhysicalMin": 1,
+    "minMaxPhysical": 10,
     "globalMaxPhysicalCondition": 100,
     "heavyPhysicalMinRequirement": 21,
+    "hotTubMaxMessBonus": 5,
+    "globalMessMax": 99,
+    "lowCostMessMax": 50,
+    "securityMessMax": 90,
+    "initialMessMin": 0,
+    "globalMessMin": 0,
+    "relaxMessIncrease": 1,
     "mentalMaxBaseValue": 86,
-    "mentalMaxDegreeBonus": 1
+    "mentalMaxDegreeBonus": 1,
+    "mentalMaxBookLimit": 3,
+    "mentalMaxBookBonus": 1,
+    "mentalMaxComputerBonus": 3
   }
 }

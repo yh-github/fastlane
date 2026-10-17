@@ -6,6 +6,7 @@ import { processTurnStart } from './turnProcessor';
 import { type ReplayData, type ReplayContext } from './replayTypes';
 import { Random } from '../utils/rng';
 import { loadCampaign, type CampaignBundle } from './dataLoader';
+import { TEST_BASE_CAMPAIGN_CONFIG, TEST_BASE_GAME_RULES } from './testFactories';
 
 describe('Deterministic Replay Regression', () => {
   it('replays a recorded game exactly using test_replay.json', () => {
@@ -65,16 +66,18 @@ describe('Deterministic Replay Regression', () => {
         job_apply_success: 'You got the job as {title}!'
       },
       config: {
+        ...TEST_BASE_CAMPAIGN_CONFIG,
         name: 'test_regression',
         version: '1.0',
         description: 'Test Campaign',
         startingMoney: 200,
         winConditions: [],
-        timeRules: { hoursPerTurn: 60, workSessionCost: 6, studySessionCost: 6, jobApplicationCost: 4, relaxCost: 6, newspaperCost: 1, starvationPenalty: 20, doctorPenalty: 10, buildingEntryCost: 2, loanCost: 2, brokerCost: 2 },
-        economyRules: { rentGarnishRate: 0.5, rentFee: 20, repairCostMin: 10, repairCostMax: 50, pawnPayoutRate: 0.5, pawnRedeemRate: 1.0 },
-        mapRules: {},
-        statRules: { startingHappiness: 50, startingRelaxation: 16, relaxationDecayRate: 1, relaxationDoctorChance: 0.20 },
-        gameRules: { classicStockMarket: true, allowPartialHours: true, autoEquipBestClothes: true, clothingDecaysAll: true, strictEviction: true }
+        timeRules: { ...TEST_BASE_CAMPAIGN_CONFIG.timeRules, hoursPerTurn: 60, workSessionCost: 6, studySessionCost: 6, jobApplicationCost: 4, relaxCost: 6, newspaperCost: 1, starvationPenalty: 20, doctorPenalty: 10, buildingEntryCost: 2, loanCost: 2, brokerCost: 2 },
+        economyRules: { ...TEST_BASE_CAMPAIGN_CONFIG.economyRules, model: undefined, rentGarnishRate: 0.5, rentFee: 20, repairCostMin: 0.05, repairCostMax: 0.25, pawnPayoutRate: 0.5, pawnRedeemRate: 1.0 },
+        mapRules: { ...TEST_BASE_CAMPAIGN_CONFIG.mapRules },
+        statRules: { ...TEST_BASE_CAMPAIGN_CONFIG.statRules, startingHappiness: 50, startingRelaxation: 16, relaxationDecayRate: 1, relaxationDoctorChance: 0.20 },
+        eventRules: { ...TEST_BASE_CAMPAIGN_CONFIG.eventRules, willyRobberyStartWeek: 4 },
+        gameRules: { ...TEST_BASE_GAME_RULES, minEconomicReading: -30, classicStockMarket: true, allowPartialHours: true, autoEquipBestClothes: true, clothingDecaysAll: true, strictEviction: true }
       },
       buildings: [],
       map: { width: 100, height: 100, nodes: [] }

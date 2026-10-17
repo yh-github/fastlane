@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import React from 'react';
 import App from '../src/App';
 import { AUTOSAVE_STORAGE_KEY, saveAutoSave } from '../src/utils/saveManager';
-import { DEFAULT_GAME_RULES } from '../src/engine/rules';
+import { TEST_BASE_GAME_RULES, TEST_BASE_CAMPAIGN_CONFIG } from '../src/engine/testFactories';
 import { createPlayerState, createDefaultTurnFlags } from '../src/engine/stateFactories';
 import type { GameState } from '../src/engine/gameState';
 
@@ -72,6 +72,7 @@ describe('Auto-Save Integration', () => {
           { wealth: 100, happiness: 100, education: 100, career: 100 },
           'node_low_cost',
           {
+            ...TEST_BASE_CAMPAIGN_CONFIG,
             name: 'Test',
             version: '1.0.0',
             description: '',
@@ -82,12 +83,7 @@ describe('Auto-Save Integration', () => {
               { stat: 'education', label: 'Education', target: 100 },
               { stat: 'career', label: 'Career', target: 100 },
             ],
-            timeRules: {} as any,
-            economyRules: {} as any,
-            mapRules: {} as any,
-            statRules: {} as any,
-            eventRules: {} as any,
-            gameRules: DEFAULT_GAME_RULES,
+            gameRules: TEST_BASE_GAME_RULES,
           }
         ),
         hoursRemaining: 45,
@@ -101,7 +97,7 @@ describe('Auto-Save Integration', () => {
     phase: 'playing',
     campaignId: 'qol_improved',
     rngState: 999,
-    rules: { ...DEFAULT_GAME_RULES },
+    rules: { ...TEST_BASE_GAME_RULES },
     winnerId: null,
   });
 

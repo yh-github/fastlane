@@ -12,7 +12,7 @@ import {
   exportReplayToFile,
   type AutoSaveData
 } from './saveManager';
-import { DEFAULT_GAME_RULES } from '../engine/rules';
+import { TEST_BASE_GAME_RULES } from '../engine/testFactories';
 import type { GameState } from '../engine/gameState';
 
 describe('saveManager', () => {
@@ -59,7 +59,7 @@ describe('saveManager', () => {
     phase: 'playing',
     campaignId: 'qol_improved',
     rngState: 456,
-    rules: { ...DEFAULT_GAME_RULES },
+    rules: { ...TEST_BASE_GAME_RULES },
     winnerId: null,
   };
 
@@ -190,7 +190,7 @@ describe('saveManager', () => {
       version: '1.0.0',
       commitHash: 'abc',
       campaignId: 'qol_improved',
-      rules: DEFAULT_GAME_RULES,
+      rules: TEST_BASE_GAME_RULES,
       startingState: mockGameState,
       steps: [],
       endStateHash: 'xyz',

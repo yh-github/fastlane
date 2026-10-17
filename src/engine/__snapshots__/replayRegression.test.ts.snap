@@ -188,17 +188,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
   "campaignId": "test_regression",
   "economicIndex": 8,
   "economicTrend": 2,
-  "pawnShopItemsForSale": [
-    {
-      "condition": "new",
-      "itemId": "refrigerator",
-      "originalPrice": 400,
-      "ownerId": "player_1",
-      "purchaseSource": "socket_city",
-      "redeemCost": 200,
-      "weekPawned": 2,
-    },
-  ],
+  "pawnShopItemsForSale": [],
   "phase": "game-over",
   "players": [
     {
@@ -219,14 +209,21 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "happiness": 50,
         "wealth": 50,
       },
-      "happiness": 44,
+      "happiness": 41,
       "hasEarnedIncome": true,
       "hasWon": true,
       "hoursRemaining": 40,
       "id": "player_1",
       "innovationCount": 0,
       "inventory": {
-        "appliances": [],
+        "appliances": [
+          {
+            "condition": "used",
+            "id": "refrigerator",
+            "purchasePrice": 400,
+            "purchaseSource": "socket_city",
+          },
+        ],
         "books": [],
         "businessClothesWeeks": 0,
         "casualClothesWeeks": 14,
@@ -251,8 +248,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "mess": 4,
-      "money": 212,
+      "money": 197,
       "nakedTurns": 0,
       "name": "TestPlayer",
       "newspaperHeadline": {
@@ -263,11 +259,10 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "relaxation": 15,
       "rentDebt": 0,
       "rentExtensionActive": false,
+      "rentExtensionsAsked": 1,
       "rentExtensionsDeniedPermanently": false,
-      "rentExtensionsReceived": 0,
-      "rentPaidUntilWeek": 8,
-      "rentPaymentsAtCurrentRate": 1,
-      "rentPaymentsMade": 1,
+      "rentExtensionsReceived": 1,
+      "rentPaidUntilWeek": 4,
       "timesDefaulted": 0,
       "turnEvents": [
         {
@@ -280,7 +275,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
           ],
         },
         {
-          "key": "events.pawnExpired",
+          "key": "events.rent.extensionExpired",
         },
       ],
       "turnFlags": {

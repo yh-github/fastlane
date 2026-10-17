@@ -164,14 +164,14 @@ export function buyItem(
 
   if (happinessBonus !== 0) {
     if (rules) {
-      updated = applyMoraleEffect(updated, happinessBonus, 'shopping_bonus', rules);
+      updated = applyMoraleEffect(updated, happinessBonus, 'shopping_bonus', rules, campaign?.config.statRules);
     } else {
       updated.happiness = Math.max(0, Math.min(100, updated.happiness + happinessBonus));
     }
   }
 
   if (rules?.usePhysicalMentalConditions && mentalBonus !== 0) {
-    updated = applyMentalChange(updated, mentalBonus);
+    updated = applyMentalChange(updated, mentalBonus, campaign?.config.statRules);
   }
 
   // Generic on_purchase item effects
@@ -189,10 +189,10 @@ export function buyItem(
         updated.mentalConditionMax = Math.max(10, (updated.mentalConditionMax ?? 50) + effect.value);
         updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition ?? 50);
       } else if (effect.stat === 'mental' && rules?.usePhysicalMentalConditions) {
-        updated = applyMentalChange(updated, effect.value);
+        updated = applyMentalChange(updated, effect.value, campaign?.config.statRules);
       } else if (effect.stat === 'happiness') {
         if (rules) {
-          updated = applyMoraleEffect(updated, effect.value, 'shopping_bonus', rules);
+          updated = applyMoraleEffect(updated, effect.value, 'shopping_bonus', rules, campaign?.config.statRules);
         } else {
           updated.happiness = Math.max(0, Math.min(100, updated.happiness + effect.value));
         }

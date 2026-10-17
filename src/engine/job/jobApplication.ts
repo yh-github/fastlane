@@ -5,7 +5,7 @@ import type { JobDef } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { applyMoraleEffect } from '../statEffects';
-import type { StatRules } from '../rules';
+import { isAdvancedVersion, requireAdvancedStatRules, type StatRules } from '../rules';
 import {
   hasJobTag,
   isManagementJob,
@@ -66,10 +66,12 @@ export function applyForJob(
     return { updated: player, success: false, message: { key: 'action.job.noOpenings' } };
   }
 
-  const isAdvanced = !!rules?.usePhysicalMentalConditions;
+  const isAdvanced = isAdvancedVersion(rules);
+  const useConditions = Boolean(rules?.usePhysicalMentalConditions);
+  const useSkills = Boolean(rules?.useSkills);
 
-  // Interview costs 1 Mental in Advanced mode
-  if (isAdvanced) {
+  // Interview costs 1 Mental when Physical/Mental conditions are enabled
+  if (useConditions) {
     const curMental = player.mentalCondition ?? 50;
     if (curMental - 1 < 1.0) {
       return { updated: player, success: false, message: { key: 'action.error.tooMentallyExhausted' } };
@@ -80,7 +82,7 @@ export function applyForJob(
   let updated = spendHours(player, timeCost);
 
   // Apply mental cost and check for interview mistake
-  if (isAdvanced) {
+  if (useConditions) {
     const oldMental = updated.mentalCondition ?? 50;
     updated.mentalCondition = oldMental - 1;
 
@@ -111,19 +113,20 @@ export function applyForJob(
       return { updated, success: false, message: { key: 'action.job.raiseLess' } };
     }
 
-    const localInitiatives = (updated.initiativesByLocation?.[job.locationId] || 0) + (updated.innovationCount || 0);
+    const localInitiatives = isAdvanced
+      ? ((updated.initiativesByLocation?.[job.locationId] || 0) + (updated.innovationCount || 0))
+      : 0;
     const effectiveRaises = Math.max(0, updated.raisesAtCurrentJob - localInitiatives);
-    const useSkills = rules?.useSkills !== undefined ? rules.useSkills : isAdvanced;
     const isTechnical = useSkills && hasJobTag(job, 'technical');
     const isManagement = useSkills && isManagementJob(job);
-    const decoupleSkills = !!rules?.wageScaledEmployability;
+    const decoupleSkills = Boolean(rules?.wageScaledEmployability);
     const effectiveDep = updated.dependability + (decoupleSkills ? 0 : ((isTechnical ? (updated.skillTech || 0) : 0) + (isManagement ? (updated.skillMgmt || 0) : 0)));
     const reqDep = job.requirements.dependability + (effectiveRaises * 5);
     if (effectiveDep >= reqDep) {
       if (newWage > player.currentWage) {
         updated.currentWage = newWage;
         updated.raisesAtCurrentJob += 1;
-        updated = applyMoraleEffect(updated, 3, 'raise_approved', rules || ({} as any), statRules);
+        updated = applyMoraleEffect(updated, 3, 'raise_approved', rules as GameRules, statRules);
         return { updated, success: true, message: { key: 'action.job.raiseSuccess' } };
       } else {
         return { updated, success: false, message: { key: 'action.job.raiseWaste' } };
@@ -136,7 +139,6 @@ export function applyForJob(
   // Regular job application logic: Check hard requirements first
   const rejectionReasons: string[] = [];
 
-  const useSkills = rules?.useSkills !== undefined ? rules.useSkills : isAdvanced;
   const isTechnical = useSkills && hasJobTag(job, 'technical');
   const isManagement = useSkills && isManagementJob(job);
   const isExecutive = useSkills && isExecutiveManagementJob(job);
@@ -148,7 +150,7 @@ export function applyForJob(
 
   const techSkill = isTechnical ? (updated.skillTech || 0) : 0;
   const mgmtSkill = isManagement ? (updated.skillMgmt || 0) : 0;
-  const decoupleSkills = !!rules?.wageScaledEmployability;
+  const decoupleSkills = Boolean(rules?.wageScaledEmployability);
   const effectiveExp = updated.experience + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
   const effectiveDep = updated.dependability + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
 
@@ -194,7 +196,7 @@ export function applyForJob(
     }
   }
 
-  const isLookFit = isAdvanced && hasJobTag(job, 'look_fit');
+  const isLookFit = useConditions && hasJobTag(job, 'look_fit');
   if (isLookFit) {
     const phys = updated.physicalCondition ?? 50;
     if (phys < 30) {
@@ -202,9 +204,10 @@ export function applyForJob(
     }
   }
 
-  const isHeavyPhysical = isAdvanced && hasJobTag(job, 'heavy_physical');
+  const isHeavyPhysical = useConditions && hasJobTag(job, 'heavy_physical');
   if (isHeavyPhysical) {
-    const minPhys = statRules?.heavyPhysicalMinRequirement ?? 21;
+    const advStatRules = requireAdvancedStatRules(statRules);
+    const minPhys = advStatRules.heavyPhysicalMinRequirement;
     const phys = updated.physicalCondition ?? 50;
     if (phys < minPhys) {
       rejectionReasons.push(msg('job_apply_missing_physical_heavy', `Requires at least ${minPhys} Physical Condition for heavy physical labor.`, { minPhys }));
@@ -248,7 +251,7 @@ export function applyForJob(
       updated.dependability = 10;
     }
 
-    const shouldGrantExpOnSwitch = rules?.grantExpOnJobSwitch ?? true;
+    const shouldGrantExpOnSwitch = rules?.grantExpOnJobSwitch !== undefined ? rules.grantExpOnJobSwitch : true;
     if (shouldGrantExpOnSwitch) {
       updated.experience += 2;
     }

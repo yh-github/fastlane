@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { calcWorkShiftSummary } from './jobShiftSummary';
 import type { PlayerState } from '../gameState';
 import type { JobDef } from '../dataLoader';
+import { TEST_ADVANCED_CAMPAIGN_CONFIG, TEST_ADVANCED_GAME_RULES } from '../testFactories';
 
 describe('jobShiftSummary', () => {
   it('computes accurate shift options, stamina costs, and disabled statuses', () => {
@@ -24,7 +25,7 @@ describe('jobShiftSummary', () => {
       social: 10
     } as unknown as PlayerState;
 
-    const summary = calcWorkShiftSummary(player, heavyJob, 6, { usePhysicalMentalConditions: true } as any);
+    const summary = calcWorkShiftSummary(player, heavyJob, 6, TEST_ADVANCED_GAME_RULES, TEST_ADVANCED_CAMPAIGN_CONFIG.statRules);
     expect(summary.hoursToWork).toBe(6);
     expect(summary.modes.length).toBe(4);
 
@@ -69,9 +70,10 @@ describe('jobShiftSummary', () => {
       mistakesByLocation: { tech_office: 2 }
     } as unknown as PlayerState;
 
-    const summary = calcWorkShiftSummary(player, techJob, 6, { usePhysicalMentalConditions: true } as any, {
+    const summary = calcWorkShiftSummary(player, techJob, 6, TEST_ADVANCED_GAME_RULES, {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules,
       resilienceDropThreshold: 2
-    } as any);
+    });
 
     const workWork = summary.modes.find(m => m.id === 'work_work');
     expect(workWork?.modifiers).toBeDefined();
@@ -126,7 +128,7 @@ describe('jobShiftSummary', () => {
       social: 50
     } as unknown as PlayerState;
 
-    const summary = calcWorkShiftSummary(exhaustedPlayer, job, 6, { usePhysicalMentalConditions: true } as any);
+    const summary = calcWorkShiftSummary(exhaustedPlayer, job, 6, TEST_ADVANCED_GAME_RULES, TEST_ADVANCED_CAMPAIGN_CONFIG.statRules);
     const workWork = summary.modes.find(m => m.id === 'work_work');
     const labels = workWork!.modifiers!.map(b => b.label);
     expect(labels).toContain('⛔ <1.0 💪');

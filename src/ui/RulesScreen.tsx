@@ -4,7 +4,6 @@ import {
   loadCampaign, 
   type CampaignBundle, 
 } from '../engine/dataLoader';
-import { DEFAULT_GAME_RULES } from '../engine/rules';
 import { 
   type TabType, 
   type SortDirection, 
@@ -55,10 +54,7 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
       for (const info of available) {
         try {
           const bundle: CampaignBundle = await loadCampaign(info.id);
-          const finalGameRules = {
-            ...DEFAULT_GAME_RULES,
-            ...(bundle.config.gameRules || {})
-          };
+          const finalGameRules = bundle.config.gameRules;
           loadedData.push({
             info,
             gameRules: flattenObject(finalGameRules),

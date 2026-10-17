@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { loadCampaign, getAvailableCampaigns, loadAvailableCampaigns } from './dataLoader';
+import { loadCampaign, getAvailableCampaigns, loadAvailableCampaigns, validateConfig } from './dataLoader';
+import { requireAdvancedStatRules } from './rules';
 
 describe('dataLoader', () => {
   it('should handle optional files that do not exist (fallback to HTML issue)', async () => {
@@ -41,6 +42,7 @@ describe('dataLoader', () => {
 
   it('loads advanced campaign inheriting qol_improved base settings with advanced rule overrides', async () => {
     const advanced = await loadCampaign('advanced');
+    const advStats = requireAdvancedStatRules(advanced.config.statRules);
     expect(advanced.config.baseCampaign).toBe('qol_improved');
     expect(advanced.config.gameRules?.helpfulUI).toBe(true);
     expect(advanced.config.gameRules?.enableAnimations).toBe(true);
@@ -49,8 +51,8 @@ describe('dataLoader', () => {
     expect(advanced.config.gameRules?.clothingDecaysAll).toBe(false);
     expect(advanced.config.gameRules?.bypassDoctorIfBroke).toBe(false);
     expect(advanced.config.gameRules?.enableRelaxationDoctor).toBe(false);
-    expect(advanced.config.statRules?.physicalDoctorThreshold).toBe(10);
-    expect(advanced.config.statRules?.lowSpiritsThreshold).toBe(10);
+    expect(advStats.physicalDoctorThreshold).toBe(10);
+    expect(advStats.lowSpiritsThreshold).toBe(10);
     expect(advanced.config.gameRules?.reducedDegreeStatBonus).toBe(false);
     expect(advanced.config.gameRules?.turnStartAtHome).toBe(true);
     expect(advanced.hasCannedFood).toBe(true);
@@ -116,5 +118,52 @@ describe('dataLoader', () => {
 
     const businessInZMart = zMart?.inventory?.find(i => i.itemId === 'business_suit');
     expect(businessInZMart).toBeUndefined();
+  });
+
+  describe('validateConfig', () => {
+    it('throws when config is missing or invalid versionClass', async () => {
+      const floppy = await loadCampaign('1990_classic_floppy');
+      const badConfig1 = { ...floppy.config, versionClass: undefined };
+      expect(() => validateConfig(badConfig1)).toThrow('missing or invalid "versionClass"');
+
+      const badConfig2 = { ...floppy.config, versionClass: 'custom_unknown' };
+      expect(() => validateConfig(badConfig2)).toThrow('missing or invalid "versionClass"');
+    });
+
+    it('throws when gameRules.versionClass does not match config.versionClass', async () => {
+      const floppy = await loadCampaign('1990_classic_floppy');
+      const badConfig = {
+        ...floppy.config,
+        gameRules: { ...floppy.config.gameRules, versionClass: 'advanced' as const },
+      };
+      expect(() => validateConfig(badConfig)).toThrow('gameRules.versionClass ("advanced") must match versionClass ("base")');
+    });
+
+    it('throws when a required gameRule is missing', async () => {
+      const floppy = await loadCampaign('1990_classic_floppy');
+      const badConfig = {
+        ...floppy.config,
+        gameRules: { ...floppy.config.gameRules, strictEviction: undefined },
+      };
+      expect(() => validateConfig(badConfig)).toThrow('Missing required configuration: gameRules.strictEviction');
+    });
+
+    it('throws when a required base time rule is missing', async () => {
+      const floppy = await loadCampaign('1990_classic_floppy');
+      const badConfig = {
+        ...floppy.config,
+        timeRules: { ...floppy.config.timeRules, hoursPerTurn: undefined },
+      };
+      expect(() => validateConfig(badConfig)).toThrow('Missing required configuration: timeRules.hoursPerTurn');
+    });
+
+    it('throws when advanced campaign is missing an advanced-specific rule', async () => {
+      const advanced = await loadCampaign('advanced');
+      const badConfig = {
+        ...advanced.config,
+        statRules: { ...advanced.config.statRules, physicalDoctorThreshold: undefined },
+      };
+      expect(() => validateConfig(badConfig)).toThrow('Missing required configuration: statRules.physicalDoctorThreshold');
+    });
   });
 });

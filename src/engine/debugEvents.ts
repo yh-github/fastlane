@@ -3,6 +3,7 @@
  */
 
 import { type GameState, type PlayerState } from './gameState';
+import { isAdvancedStatRules } from './rules';
 import { type CampaignBundle } from './dataLoader';
 
 export type DebugEventType =
@@ -163,7 +164,7 @@ export function checkEventPreconditions(
       }
 
       if (state.rules.usePhysicalMentalConditions) {
-        const statRules = campaign.config.statRules;
+        const statRules = isAdvancedStatRules(campaign.config.statRules) ? campaign.config.statRules : undefined;
         const physThreshold = statRules?.physicalDoctorThreshold ?? 10;
         const mentalThreshold = statRules?.lowSpiritsThreshold ?? 10;
 

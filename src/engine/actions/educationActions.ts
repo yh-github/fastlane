@@ -1,7 +1,7 @@
 import type { PlayerState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import type { ReplayContext } from '../replayTypes';
-import { requireConfig } from '../rules';
+import { requireConfig, requireAdvancedStatRules } from '../rules';
 import { enrollInDegree, buyEducationCredit, study, calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../educationEngine';
 import { spendHours } from '../timeManager';
 import { roundToResolution } from '../statMath';
@@ -46,31 +46,31 @@ export function handleStudyAction(
 
   const degDef = context.campaign.education.find(d => d.id === action.degreeId);
   if (degDef) {
-    const studySessionCost = requireConfig(context.campaign.config.timeRules?.studySessionCost, 'timeRules.studySessionCost');
+    const studySessionCost = requireConfig(context.campaign.config.timeRules.studySessionCost, 'timeRules.studySessionCost');
     if (nextPlayer.hoursRemaining <= 0 || (nextPlayer.hoursRemaining < studySessionCost && !context.rules.allowPartialHours)) {
       actionLog = { key: 'action.error.notEnoughTime' };
       return { nextPlayer, actionLog };
     }
 
     if (context.rules.usePhysicalMentalConditions) {
-      const statRules = context.campaign.config.statRules;
+      const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
       const actionCount = (nextPlayer.studyActionsThisTurn || 0) + 1;
 
-      const overtimeThreshold = statRules?.studyOvertimeThreshold ?? 8;
-      const grindThreshold = statRules?.studyGrindThreshold ?? 4;
+      const overtimeThreshold = statRules.studyOvertimeThreshold;
+      const grindThreshold = statRules.studyGrindThreshold;
 
       let mentalCost: number;
       let physicalCost: number;
 
       if (actionCount >= overtimeThreshold) {
-        mentalCost = statRules?.studyOvertimeMentalCost ?? 2;
-        physicalCost = statRules?.studyOvertimePhysicalCost ?? 1;
+        mentalCost = statRules.studyOvertimeMentalCost;
+        physicalCost = statRules.studyOvertimePhysicalCost;
       } else if (actionCount >= grindThreshold) {
-        mentalCost = statRules?.studyGrindMentalCost ?? 2;
-        physicalCost = statRules?.studyGrindPhysicalCost ?? 0;
+        mentalCost = statRules.studyGrindMentalCost;
+        physicalCost = statRules.studyGrindPhysicalCost;
       } else {
-        mentalCost = statRules?.studyMentalCost ?? statRules?.studyNormalMentalCost ?? 1;
-        physicalCost = statRules?.studyNormalPhysicalCost ?? 0;
+        mentalCost = statRules.studyMentalCost;
+        physicalCost = statRules.studyNormalPhysicalCost;
       }
 
       const prereqDepth = getPrerequisiteChainDepth(degDef.id, context.campaign.education);
@@ -101,7 +101,7 @@ export function handleStudyAction(
         mentalMistake = resolveDecision(replayContext, `study_mental_mistake_${nextPlayer.id}_${actionCount}`, () => context.rng.next() < mentalChance);
       }
 
-      const isPercentage = !!context.rules.percentageEducation;
+      const isPercentage = Boolean(context.rules.percentageEducation);
       const required = calcRequiredLessons(nextPlayer, degDef, context.rules);
       const totalRequiredHours = required * studySessionCost;
       const currentProgress = nextPlayer.enrolledClasses?.[degDef.id] || 0;
@@ -124,7 +124,7 @@ export function handleStudyAction(
       const ratio = hoursToSpend / studySessionCost;
 
       if (context.rules.proportionalDivisibleActions && hoursToSpend < studySessionCost) {
-        const conditionRes = context.rules.conditionResolution ?? 0.5;
+        const conditionRes = context.rules.conditionResolution;
         physicalCost = Math.max(0, roundToResolution(physicalCost * ratio, conditionRes));
         mentalCost = Math.max(0, roundToResolution(mentalCost * ratio, conditionRes));
       }
@@ -185,7 +185,7 @@ export function handleStudyAction(
             nextPlayer.enrolledClasses[degDef.id] = 100;
             isGraduated = true;
           } else {
-            const newProgress = Math.min(100, roundToResolution(rawProgress, context.rules.educationResolution ?? 0.1));
+            const newProgress = Math.min(100, roundToResolution(rawProgress, context.rules.educationResolution));
             if (newProgress >= 99.0) {
               nextPlayer.enrolledClasses[degDef.id] = 100;
               isGraduated = true;

@@ -548,7 +548,7 @@ export function applyMarketCrash(
 
   const currentJob = campaign?.jobs?.find(j => j.id === updated.currentJobId);
   const locMerits = currentJob ? (updated.initiativesByLocation?.[currentJob.locationId] || 0) : 0;
-  const hasMeritShield = !!rules?.usePhysicalMentalConditions && locMerits >= 2;
+  const hasMeritShield = Boolean(rules?.versionClass === 'advanced' || rules?.usePhysicalMentalConditions || campaign?.config?.versionClass === 'advanced') && locMerits >= 2;
 
   if (severity === 'minor') {
     updated = applyHappinessChange(updated, hasSignificantStocks ? -2 : -1, 'market_crash', rules || ({} as any), statRules);

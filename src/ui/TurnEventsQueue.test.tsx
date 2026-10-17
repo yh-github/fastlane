@@ -61,7 +61,7 @@ describe('TurnEventsQueue', () => {
       <TurnEventsQueue
         events={events}
         onComplete={vi.fn()}
-        rules={{ helpfulUI: true, usePhysicalMentalConditions: true } as any}
+        rules={{ helpfulUI: true, usePhysicalMentalConditions: true, useSkills: true } as any}
       />
     );
 

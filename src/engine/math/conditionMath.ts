@@ -1,18 +1,23 @@
 import {
-  MIN_HAPPINESS,
-  MAX_HAPPINESS,
   type PlayerState,
   collectItemEffects
 } from '../gameState';
 import type { CampaignBundle } from '../dataLoader';
-import type { GameRules } from '../rules';
+import {
+  type GameRules,
+  type StatRules,
+  requireAdvancedStatRules,
+  requireAdvancedTimeRules,
+  requireAdvancedEconomyRules,
+  requireConfig
+} from '../rules';
 import { messGrowth, calcUsedSpace, calcHousingSpaceCap } from './housingMath';
 
 /**
- * Clamp a stat value between its floor and ceiling.
+ * Clamp a stat value between its floor and ceiling from StatRules.
  */
-export function clampHappiness(value: number): number {
-  return Math.max(MIN_HAPPINESS, Math.min(MAX_HAPPINESS, value));
+export function clampHappiness(value: number, statRules: { minHappiness: number; maxHappiness: number }): number {
+  return Math.max(statRules.minHappiness, Math.min(statRules.maxHappiness, value));
 }
 
 /**
@@ -42,14 +47,14 @@ export function safeDecrementMental(current: number, cost: number, minMental: nu
  * Calculate Wellbeing score.
  * Formula: Wellbeing_Score = Math.ceil((Physical + Mental) / 2)
  */
-export function calcWellbeingScore(physical: number = 50, mental: number = 25): number {
+export function calcWellbeingScore(physical: number, mental: number): number {
   return Math.ceil((physical + mental) / 2);
 }
 
 /**
  * Rounds a number to a specific step resolution (e.g. 0.5 for half points, 0.1 for decimals).
  */
-export function roundToResolution(value: number, resolution: number = 0.5): number {
+export function roundToResolution(value: number, resolution: number): number {
   if (resolution <= 0) return value;
   const factor = 1 / resolution;
   return Math.round(value * factor) / factor;
@@ -57,14 +62,15 @@ export function roundToResolution(value: number, resolution: number = 0.5): numb
 
 export function calcMaxMental(
   currentMess: number,
-  social: number = 9,
-  resilienceBonus: number = 0,
-  player?: PlayerState,
-  statRules?: any,
+  social: number,
+  resilienceBonus: number,
+  player: PlayerState | undefined,
+  statRules: StatRules,
   campaign?: CampaignBundle
 ): number {
-  const baseVal = statRules?.mentalMaxBaseValue ?? 51;
-  const globalMax = statRules?.globalMaxMentalCondition ?? 99;
+  const sr = requireAdvancedStatRules(statRules);
+  const baseVal = sr.mentalMaxBaseValue;
+  const globalMax = sr.globalMaxMentalCondition;
   
   let bonus = resilienceBonus;
   
@@ -73,18 +79,18 @@ export function calcMaxMental(
       const continuousEffects = collectItemEffects(player, campaign, 'continuous');
       bonus += continuousEffects.get('mental_max') || 0;
     } else {
-      const numBooks = player.inventory?.books?.length || 0;
-      const maxBookBonus = statRules?.mentalMaxBookLimit ?? 3;
-      const bookBonusVal = statRules?.mentalMaxBookBonus ?? 1;
+      const numBooks = player.inventory.books.length;
+      const maxBookBonus = sr.mentalMaxBookLimit;
+      const bookBonusVal = sr.mentalMaxBookBonus;
       bonus += Math.min(maxBookBonus, numBooks * bookBonusVal);
       
-      if (player.inventory?.appliances?.some(a => a.id === 'computer')) {
-        bonus += statRules?.mentalMaxComputerBonus ?? 3;
+      if (player.inventory.appliances.some(a => a.id === 'computer')) {
+        bonus += sr.mentalMaxComputerBonus;
       }
     }
     
-    const numDegrees = player.degrees?.length || 0;
-    const degreeBonusVal = statRules?.mentalMaxDegreeBonus ?? 1;
+    const numDegrees = player.degrees.length;
+    const degreeBonusVal = sr.mentalMaxDegreeBonus;
     bonus += numDegrees * degreeBonusVal;
   }
   
@@ -121,8 +127,8 @@ export interface SocializeParameters {
  */
 export function calcSocializeParameters(
   player: PlayerState,
-  campaign?: CampaignBundle,
-  rules?: GameRules
+  campaign: CampaignBundle,
+  rules: GameRules
 ): SocializeParameters {
   const isPenthouse = player.currentHousingId === 'penthouse';
   const isSecurity = player.currentHousingId === 'security';
@@ -136,7 +142,7 @@ export function calcSocializeParameters(
   let isNoSpace = false;
   let disabledReasonKey: 'notEnoughTime' | 'noSpace' | 'messTooHigh' | 'tooExhausted' | undefined;
 
-  if (rules?.spaceCapping) {
+  if (rules.spaceCapping) {
     const usedSpace = calcUsedSpace(player, campaign, true);
     const spaceCap = calcHousingSpaceCap(player, campaign);
     freeSpace = Math.max(0, spaceCap - usedSpace);
@@ -154,16 +160,19 @@ export function calcSocializeParameters(
 
   const effectiveMaxGuests = Math.max(0, Math.min(maxRolledGuests, maxGuestsBySpace));
   const effectiveMinGuests = Math.max(0, Math.min(minRolledGuests, effectiveMaxGuests));
-  const isCappedBySpace = !!rules?.spaceCapping && maxGuestsBySpace < maxRolledGuests;
+  const isCappedBySpace = !!rules.spaceCapping && maxGuestsBySpace < maxRolledGuests;
 
-  const timeCost = campaign?.config?.timeRules?.socializeCost ?? 6;
+  const timeRules = requireAdvancedTimeRules(campaign.config.timeRules);
+  const economyRules = requireAdvancedEconomyRules(campaign.config.economyRules);
+
+  const timeCost = requireConfig(timeRules.socializeCost, 'timeRules.socializeCost');
   const hasTime = player.hoursRemaining >= timeCost;
   if (!hasTime && !disabledReasonKey) {
     disabledReasonKey = 'notEnoughTime';
   }
 
-  const currentPhys = player.physicalCondition ?? 50;
-  const isTooExhausted = !!rules?.usePhysicalMentalConditions && (currentPhys - 1 < 1.0);
+  const currentPhys = player.physicalCondition ?? 0;
+  const isTooExhausted = !!rules.usePhysicalMentalConditions && (currentPhys - 1 < 1.0);
   if (isTooExhausted && !disabledReasonKey) {
     disabledReasonKey = 'tooExhausted';
   }
@@ -171,17 +180,17 @@ export function calcSocializeParameters(
   const isDisabled = isNoSpace || !hasTime || isTooExhausted;
 
   let appBonus = 0;
-  if (rules?.usePhysicalMentalConditions) {
+  if (rules.usePhysicalMentalConditions) {
     const socializeEffects = collectItemEffects(player, campaign, 'on_socialize');
     appBonus += socializeEffects.get('social') || 0;
     appBonus += player.activeEffects?.['vcr_social_bonus'] || 0;
   }
 
-  const cashRate = campaign?.config?.economyRules?.socializeLowCostCashCost ?? 25;
+  const cashRate = requireConfig(economyRules.socializeLowCostCashCost, 'economyRules.socializeLowCostCashCost');
   const minCashNeeded = effectiveMinGuests * cashRate;
   const maxCashNeeded = effectiveMaxGuests * cashRate;
 
-  const currentMental = player.mentalCondition ?? 50;
+  const currentMental = player.mentalCondition ?? 0;
   const hasSufficientCash = player.money >= minCashNeeded;
   const hasSufficientMental = currentMental >= 5;
   const isHalfRewardExpected = !hasSufficientCash || !hasSufficientMental;

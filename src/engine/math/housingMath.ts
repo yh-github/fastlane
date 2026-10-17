@@ -2,7 +2,13 @@ import {
   type PlayerState,
   collectItemEffects
 } from '../gameState';
-import type { StatRules, GameRules } from '../rules';
+import {
+  type StatRules,
+  type GameRules,
+  type EconomyRules,
+  requireAdvancedStatRules,
+  requireAdvancedEconomyRules
+} from '../rules';
 import type { CampaignBundle } from '../dataLoader';
 
 /**
@@ -15,41 +21,37 @@ export function messGrowth(currentMess: number): number {
 
 /**
  * Calculate moving fee when changing housing.
- * Formula: Moving_Fee = Math.max(0, current_mess - 10) * `$50` + (num_of_durables_owned * `$50`)
+ * Formula: Moving_Fee = Math.max(0, current_mess - threshold) * messRate + (num_of_durables_owned * durableRate)
  */
 export function calcMovingFee(
   currentMess: number,
   numOfDurablesOwned: number,
-  economyRules?: { moveFeeMessThreshold?: number; moveFeeMessRate?: number; moveFeeDurableRate?: number }
+  economyRules: EconomyRules
 ): number {
-  const threshold = economyRules?.moveFeeMessThreshold ?? 10;
-  const messRate = economyRules?.moveFeeMessRate ?? 50;
-  const durableRate = economyRules?.moveFeeDurableRate ?? 50;
-  return Math.max(0, currentMess - threshold) * messRate + (numOfDurablesOwned * durableRate);
+  const er = requireAdvancedEconomyRules(economyRules);
+  return Math.max(0, currentMess - er.moveFeeMessThreshold) * er.moveFeeMessRate + (numOfDurablesOwned * er.moveFeeDurableRate);
 }
 
 /**
  * Calculate dynamic housing Mess limit considering Hot Tub (+5 MAX_MESS bonus).
  */
-export function calcMaxMess(player: PlayerState, statRules?: StatRules, campaign?: CampaignBundle): number {
-  let baseMax = 50;
+export function calcMaxMess(player: PlayerState, statRules: StatRules, campaign?: CampaignBundle): number {
+  const sr = requireAdvancedStatRules(statRules);
+  let baseMax = sr.lowCostMessMax;
   if (player.currentHousingId === 'penthouse') {
-    baseMax = 99;
+    baseMax = sr.globalMessMax;
   } else if (player.currentHousingId === 'security') {
-    baseMax = statRules?.securityMessMax ?? 90;
-  } else {
-    baseMax = statRules?.lowCostMessMax ?? 50;
+    baseMax = sr.securityMessMax;
   }
 
   if (campaign) {
     const continuousEffects = collectItemEffects(player, campaign, 'continuous');
     baseMax += continuousEffects.get('mess_max') || 0;
-  } else if (player.inventory?.appliances?.some(a => a.id === 'hot_tub')) {
-    baseMax += statRules?.hotTubMaxMessBonus ?? 5;
+  } else if (player.inventory.appliances.some(a => a.id === 'hot_tub')) {
+    baseMax += sr.hotTubMaxMessBonus;
   }
 
-  const globalMax = statRules?.globalMessMax ?? 99;
-  return Math.min(baseMax, globalMax);
+  return Math.min(baseMax, sr.globalMessMax);
 }
 
 /**
@@ -68,9 +70,9 @@ export function calcUsedSpace(player: PlayerState, campaign?: CampaignBundle, in
     used += def?.space ?? (bookId === 'encyclopedia' ? 20 : 10);
   }
   // Knick-knacks and curios (2 space each)
-  used += ((player.inventory as any)?.knickKnacks || 0) * 2;
-  used += ((player.inventory as any)?.uninspectedKnickKnacks || 0) * 2;
-  used += ((player.inventory as any)?.spareParts || 0) * 2;
+  used += (player.inventory?.knickKnacks || 0) * 2;
+  used += (player.inventory?.uninspectedKnickKnacks || 0) * 2;
+  used += (player.inventory?.spareParts || 0) * 2;
   // Mess (1:1 with space)
   if (includeMess && player.mess && player.mess > 0) {
     used += player.mess;
@@ -82,7 +84,7 @@ export function calcUsedSpace(player: PlayerState, campaign?: CampaignBundle, in
  * Get the max space capacity for player's current housing.
  */
 export function calcHousingSpaceCap(player: PlayerState, campaign?: CampaignBundle): number {
-  const housingDef = campaign?.housing?.find(h => h.id === player.currentHousingId);
+  const housingDef = campaign?.housing.find(h => h.id === player.currentHousingId);
   return housingDef?.spaceCap ?? 999999;
 }
 
@@ -93,8 +95,8 @@ export interface LandlordStandingBreakdown {
 
 export function calcLandlordStanding(
   player: PlayerState,
-  rules?: GameRules,
-  currentTurn?: number
+  rules: GameRules,
+  currentTurn: number = 1
 ): { standing: number; breakdown: LandlordStandingBreakdown[] } {
   let baseline = 35;
   let baselineLabel = 'Baseline';
@@ -123,8 +125,7 @@ export function calcLandlordStanding(
   }
 
   // Bonus for paying ahead (+5 per 4-week month in advance, capped at +15)
-  const turn = currentTurn !== undefined ? currentTurn : 1;
-  const weeksAhead = Math.max(0, (player.rentPaidUntilWeek || 0) - turn);
+  const weeksAhead = Math.max(0, (player.rentPaidUntilWeek || 0) - currentTurn);
   const monthsAhead = Math.floor(weeksAhead / 4);
   if (monthsAhead >= 1) {
     const advanceBonus = Math.min(15, monthsAhead * 5);
@@ -160,7 +161,7 @@ export function calcLandlordStanding(
     breakdown.push({ label: `Past Evictions/Defaults (${defaults})`, value: penalty });
   }
 
-  if (rules?.trackMess && player.mess !== undefined) {
+  if (rules.trackMess && player.mess !== undefined) {
     if (player.mess <= 2) {
       standing += 5;
       breakdown.push({ label: 'Clean & Tidy Apartment', value: 5 });
@@ -171,7 +172,7 @@ export function calcLandlordStanding(
     }
   }
 
-  if (rules?.trackSocial && player.social !== undefined) {
+  if (rules.trackSocial && player.social !== undefined) {
     const social = player.social;
     if (social > 25) {
       const socialBonus = Math.min(15, Math.floor((social - 25) / 5));

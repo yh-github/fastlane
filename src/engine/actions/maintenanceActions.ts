@@ -1,4 +1,5 @@
 import type { PlayerState, GameRules } from '../gameState';
+import { requireAdvancedStatRules } from '../rules';
 import type { CampaignBundle } from '../dataLoader';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
@@ -167,11 +168,11 @@ export function handleApplianceMaintenanceAction(
     nextPlayer = spendHours(nextPlayer, 6);
 
     if (context.rules.usePhysicalMentalConditions) {
-      const statRules = context.campaign.config.statRules;
-      const minPhysical = statRules?.minPhysicalCondition ?? 1;
-      const minMental = statRules?.minMentalCondition ?? 5;
-      const currentPhys = nextPlayer.physicalCondition ?? 50;
-      const currentMental = nextPlayer.mentalCondition ?? 50;
+      const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+      const minPhysical = statRules.minPhysicalCondition;
+      const minMental = statRules.minMentalCondition;
+      const currentPhys = nextPlayer.physicalCondition ?? statRules.startingPhysicalCondition;
+      const currentMental = nextPlayer.mentalCondition ?? statRules.startingMentalCondition;
       nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, 2, minPhysical);
       nextPlayer.mentalCondition = safeDecrementMental(currentMental, 1, minMental);
     }
@@ -190,20 +191,26 @@ export function handleApplianceMaintenanceAction(
 
       // Reward: +3 Mental Condition (or +1 Happiness), +0.5 skill_tech
       if (context.rules.usePhysicalMentalConditions) {
-        const statRules = context.campaign.config.statRules;
-        const maxMental = nextPlayer.mentalConditionMax ?? statRules?.maxMentalCondition ?? 50;
+        const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+        const maxMental = nextPlayer.mentalConditionMax ?? statRules.maxMentalCondition;
         nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + 3);
       } else {
         nextPlayer = applyHappinessChange(nextPlayer, 1, 'appliance_repair', context.rules, context.campaign.config.statRules);
       }
 
-      const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, context.campaign.config.statRules, context.rules);
-      nextPlayer.skillTech = Math.min(maxTech, roundToResolution((nextPlayer.skillTech || 0) + 0.5, 0.05));
+      if (context.rules.useSkills) {
+        const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+        const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, statRules, context.rules);
+        nextPlayer.skillTech = Math.min(maxTech, roundToResolution((nextPlayer.skillTech || 0) + 0.5, 0.05));
+      }
       actionLog = { key: 'action.appliance.diySuccess', params: { appliance: applianceName, chance: breakdown.totalChance, usedParts: hasSpareParts ? 1 : 0 } };
     } else {
       // Failure: remains broken, consolation +0.1 skill_tech
-      const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, context.campaign.config.statRules, context.rules);
-      nextPlayer.skillTech = Math.min(maxTech, roundToResolution((nextPlayer.skillTech || 0) + 0.1, 0.05));
+      if (context.rules.useSkills) {
+        const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+        const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, statRules, context.rules);
+        nextPlayer.skillTech = Math.min(maxTech, roundToResolution((nextPlayer.skillTech || 0) + 0.1, 0.05));
+      }
       actionLog = { key: 'action.appliance.diyFailure', params: { appliance: applianceName, chance: breakdown.totalChance, usedParts: hasSpareParts ? 1 : 0 } };
     }
 

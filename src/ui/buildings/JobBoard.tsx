@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoader';
+import { isAdvancedVersion, isAdvancedStatRules } from '../../engine/rules';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, calcEffectiveJobRequirements, formatHours } from '../../engine/statMath';
 import { formatDegreeName } from '../../engine/jobEngine';
@@ -14,7 +15,9 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   const { t } = useTranslation();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
-  const isAdvanced = !!rules?.usePhysicalMentalConditions;
+  const isAdvanced = isAdvancedVersion(rules) || Boolean(rules?.usePhysicalMentalConditions);
+  const useConditions = Boolean(rules?.usePhysicalMentalConditions);
+  const useSkills = Boolean(rules?.useSkills);
 
   // Group jobs by locationId
   const locations = Array.from(new Set(availableJobs.map(j => j.locationId)));
@@ -141,13 +144,13 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
         {jobsAtLocation.map(job => {
           const isCurrentJob = player.currentJobId === job.id;
-          const isTechnical = isAdvanced && job.tags?.includes('technical');
-          const isMiddleMgmt = isAdvanced && job.tags?.includes('middle_management');
-          const isExecMgmt = isAdvanced && job.tags?.includes('executive_management');
+          const isTechnical = useSkills && job.tags?.includes('technical');
+          const isMiddleMgmt = useSkills && job.tags?.includes('middle_management');
+          const isExecMgmt = useSkills && job.tags?.includes('executive_management');
           const isManagement = isMiddleMgmt || isExecMgmt;
           const isFrontline = job.tags?.includes('frontline_service');
 
-          const decoupleSkills = !!rules?.wageScaledEmployability;
+          const decoupleSkills = Boolean(rules?.wageScaledEmployability);
           const techSkill = isTechnical ? (player.skillTech || 0) : 0;
           const mgmtSkill = isManagement ? (player.skillMgmt || 0) : 0;
           const effectiveExp = (player.experience || 0) + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
@@ -160,17 +163,17 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const missingExp = effectiveExp < effReqs.reqExp;
           const missingDep = effectiveDep < effReqs.reqDep;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
-          const isLookFit = isAdvanced && job.tags?.includes('look_fit');
+          const isLookFit = useConditions && job.tags?.includes('look_fit');
           const missingPhysical = isLookFit && ((player.physicalCondition ?? 50) < 30);
-          const isHeavyPhysical = isAdvanced && job.tags?.includes('heavy_physical');
-          const heavyMinPhys = campaign.config.statRules?.heavyPhysicalMinRequirement ?? 21;
+          const isHeavyPhysical = useConditions && job.tags?.includes('heavy_physical');
+          const heavyMinPhys = isAdvancedStatRules(campaign.config.statRules) ? campaign.config.statRules.heavyPhysicalMinRequirement : 21;
           const missingHeavyPhys = isHeavyPhysical && ((player.physicalCondition ?? 50) < heavyMinPhys);
           const hasMissingReqs = missingExp || missingDep || missingDegrees.length > 0 || missingMgmt || missingTech || missingPhysical || missingHeavyPhys;
           const offeredWage = calcEconomyPrice(job.baseWage, economicIndex);
           const isAlwaysHiring = job.tags?.includes('always_hiring') || job.tags?.includes('auto_accept');
-          const appCost = campaign.config.timeRules?.jobApplicationCost ?? 4;
+          const appCost = campaign.config.timeRules.jobApplicationCost;
           const curMental = player.mentalCondition ?? 50;
-          const mentalMistakeChance = isAdvanced && curMental < 10 ? Math.round((10 - curMental) * 2.5 * 10) / 10 : 0;
+          const mentalMistakeChance = useConditions && curMental < 10 ? Math.round((10 - curMental) * 2.5 * 10) / 10 : 0;
           
           const reqUniform = job.requirements.uniform;
           const reqScore = reqUniform === 'business' ? 3 : (reqUniform === 'dress' ? 2 : 1);

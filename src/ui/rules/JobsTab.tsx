@@ -152,7 +152,7 @@ export const JobsTab: React.FC<JobsTabProps> = ({
                       </td>
                     );
                   }
-                  const isAdvancedCampaign = !!c.bundle.config.gameRules?.usePhysicalMentalConditions;
+                  const isAdvancedCampaign = c.bundle.config.gameRules.versionClass === 'advanced';
                   const specialReqs = getJobSpecialRequirements(job, isAdvancedCampaign);
 
                   return (
