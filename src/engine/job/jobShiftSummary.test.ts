@@ -133,5 +133,102 @@ describe('jobShiftSummary', () => {
     const labels = workWork!.modifiers!.map(b => b.label);
     expect(labels).toContain('⛔ <1.0 💪');
   });
+
+  it('computes executive blunder risk and detailed mistakeBreakdown for executive management jobs', () => {
+    const execJob: JobDef = {
+      id: 'fastfood_manager',
+      title: 'Fastfood General Manager',
+      locationId: 'fastfood',
+      baseWage: 25,
+      requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'dress' },
+      tags: ['executive_management'],
+      perks: []
+    };
+
+    // Player with 20 Exp (0 margin over req 20).
+    // Default margin is 20, rate is 0.005. Missing margin = 20 - 0 = 20. Exec risk = 20 * 0.005 = 0.10 (10%).
+    const player = {
+      hoursRemaining: 6,
+      currentWage: 25,
+      physicalCondition: 50,
+      mentalCondition: 50,
+      degrees: [],
+      workActionsThisTurn: 0,
+      social: 50,
+      experience: 20
+    } as unknown as PlayerState;
+
+    const summary = calcWorkShiftSummary(player, execJob, 6, TEST_ADVANCED_GAME_RULES, TEST_ADVANCED_CAMPAIGN_CONFIG.statRules);
+    const workWork = summary.modes.find(m => m.id === 'work_work');
+    expect(workWork).toBeDefined();
+
+    expect(workWork?.execMistakeChance).toBeCloseTo(0.10, 4);
+    // Phys and Mental are at 50 (above 10 / 20), so their risk is 0
+    expect(workWork?.physMistakeChance).toBe(0);
+    expect(workWork?.mentalMistakeChance).toBe(0);
+    expect(workWork?.totalMistakeChance).toBeCloseTo(0.10, 4);
+
+    const mistakeBreakdown = workWork?.modifierBreakdown?.mistakeBreakdown;
+    expect(mistakeBreakdown).toBeDefined();
+    expect(mistakeBreakdown?.length).toBeGreaterThanOrEqual(3);
+
+    const execItem = mistakeBreakdown?.find(b => b.type === 'executive');
+    expect(execItem).toBeDefined();
+    expect(execItem?.isTriggered).toBe(true);
+    expect(execItem?.chance).toBeCloseTo(0.10, 4);
+    expect(execItem?.threshold).toBe(40); // 20 req + 20 margin
+    expect(execItem?.currentStat).toBe(20);
+    expect(execItem?.explanation).toContain('20.0 Exp below safety buffer');
+
+    // Safe player with 45 Exp (exceeds 20 + 20 = 40 buffer)
+    const safePlayer = { ...player, experience: 45 } as unknown as PlayerState;
+    const safeSummary = calcWorkShiftSummary(safePlayer, execJob, 6, TEST_ADVANCED_GAME_RULES, TEST_ADVANCED_CAMPAIGN_CONFIG.statRules);
+    const safeWorkWork = safeSummary.modes.find(m => m.id === 'work_work');
+    expect(safeWorkWork?.execMistakeChance).toBe(0);
+    expect(safeWorkWork?.totalMistakeChance).toBe(0);
+
+    const safeExecItem = safeWorkWork?.modifierBreakdown?.mistakeBreakdown?.find(b => b.type === 'executive');
+    expect(safeExecItem?.isTriggered).toBe(false);
+    expect(safeExecItem?.chance).toBe(0);
+    expect(safeExecItem?.explanation).toContain('meets executive safety buffer');
+  });
+
+  it('respects config overrides for mistake thresholds and rates', () => {
+    const job: JobDef = {
+      id: 'job_custom',
+      title: 'Custom Job',
+      locationId: 'office',
+      baseWage: 15,
+      requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
+      tags: [],
+      perks: []
+    };
+
+    const player = {
+      hoursRemaining: 6,
+      currentWage: 15,
+      physicalCondition: 25,
+      mentalCondition: 25,
+      degrees: [],
+      workActionsThisTurn: 0,
+      social: 50
+    } as unknown as PlayerState;
+
+    // Custom threshold of 30 physical (player has 25, so 5 points below) at 0.05 per point = 25% risk
+    const customStatRules = {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules,
+      workMistakePhysicalThreshold: 30,
+      workMistakePhysicalChancePerPoint: 0.05
+    };
+
+    const summary = calcWorkShiftSummary(player, job, 6, TEST_ADVANCED_GAME_RULES, customStatRules);
+    const workWork = summary.modes.find(m => m.id === 'work_work');
+    expect(workWork?.physMistakeChance).toBeCloseTo(0.25, 4);
+
+    const physItem = workWork?.modifierBreakdown?.mistakeBreakdown?.find(b => b.type === 'physical');
+    expect(physItem?.threshold).toBe(30);
+    expect(physItem?.ratePerPoint).toBe(0.05);
+    expect(physItem?.chance).toBeCloseTo(0.25, 4);
+  });
 });
 

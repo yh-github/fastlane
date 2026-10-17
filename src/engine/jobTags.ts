@@ -3,6 +3,7 @@
  */
 
 import type { JobDef } from './dataLoader';
+import type { StatRules, AdvancedStatRules } from './rules';
 
 export type JobTag =
   | 'always_hiring'
@@ -100,11 +101,30 @@ export function getLookBusyPhysicalCostModifier(job: JobDef | undefined | null):
 /**
  * Get the physical fatigue threshold (below which mental fatigue spillover occurs).
  */
-export function getJobPhysicalFatigueThreshold(job: JobDef | undefined | null): number {
+export function getJobPhysicalFatigueThreshold(job: JobDef | undefined | null, statRules?: StatRules): number {
+  const advStats = statRules as AdvancedStatRules | undefined;
   if (hasJobTag(job, 'heavy_physical')) {
-    return 20;
+    return advStats?.workMistakeHeavyPhysicalThreshold ?? 20;
   }
-  return 10;
+  return advStats?.workMistakePhysicalThreshold ?? 10;
+}
+
+/**
+ * Get the physical mistake threshold for this job.
+ */
+export function getJobPhysicalMistakeThreshold(job: JobDef | undefined | null, statRules?: StatRules): number {
+  const advStats = statRules as AdvancedStatRules | undefined;
+  if (hasJobTag(job, 'heavy_physical')) {
+    return advStats?.workMistakeHeavyPhysicalThreshold ?? 20;
+  }
+  return advStats?.workMistakePhysicalThreshold ?? 10;
+}
+
+/**
+ * Get the physical mistake scaling rate per point below threshold.
+ */
+export function getJobPhysicalMistakeRate(statRules?: StatRules): number {
+  return (statRules as AdvancedStatRules | undefined)?.workMistakePhysicalChancePerPoint ?? 0.025;
 }
 
 /**
@@ -119,13 +139,53 @@ export function getJobMentalCostModifier(job: JobDef | undefined | null): number
 
 /**
  * Get the mental mistake threshold for this job.
- * Executive management roles double the threshold to 20 due to high strategic pressure and scrutiny.
+ * Executive management roles elevate the threshold due to high strategic pressure and scrutiny.
  */
-export function getJobMentalMistakeThreshold(job: JobDef | undefined | null): number {
+export function getJobMentalMistakeThreshold(job: JobDef | undefined | null, statRules?: StatRules): number {
+  const advStats = statRules as AdvancedStatRules | undefined;
   if (hasJobTag(job, 'executive_management')) {
-    return 20;
+    return advStats?.workMistakeExecutiveMentalThreshold ?? 20;
   }
-  return 10;
+  return advStats?.workMistakeMentalThreshold ?? 10;
+}
+
+/**
+ * Get the mental mistake scaling rate per point below threshold.
+ */
+export function getJobMentalMistakeRate(statRules?: StatRules): number {
+  return (statRules as AdvancedStatRules | undefined)?.workMistakeMentalChancePerPoint ?? 0.025;
+}
+
+/**
+ * Get the social mistake threshold for this job.
+ */
+export function getJobSocialMistakeThreshold(job: JobDef | undefined | null, statRules?: StatRules): number {
+  const advStats = statRules as AdvancedStatRules | undefined;
+  if (hasJobTag(job, 'frontline_service')) {
+    return advStats?.workMistakeFrontlineSocialThreshold ?? 20;
+  }
+  return advStats?.workMistakeSocialThreshold ?? 10;
+}
+
+/**
+ * Get the social mistake scaling rate per point below threshold.
+ */
+export function getJobSocialMistakeRate(statRules?: StatRules): number {
+  return (statRules as AdvancedStatRules | undefined)?.workMistakeSocialChancePerPoint ?? 0.0125;
+}
+
+/**
+ * Get the experience buffer margin above job requirement for executive management roles.
+ */
+export function getExecutiveMistakeExpMargin(statRules?: StatRules): number {
+  return (statRules as AdvancedStatRules | undefined)?.workMistakeExecutiveExpMargin ?? 20;
+}
+
+/**
+ * Get the base blunder risk rate per point below the executive experience margin.
+ */
+export function getExecutiveMistakeRate(statRules?: StatRules): number {
+  return (statRules as AdvancedStatRules | undefined)?.workMistakeExecutiveExpChancePerPoint ?? 0.005;
 }
 
 /**

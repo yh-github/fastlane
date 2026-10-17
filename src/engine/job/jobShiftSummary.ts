@@ -14,13 +14,21 @@ import {
   getJobSocialModifier,
   getLookBusyPhysicalCostModifier,
   getJobPhysicalFatigueThreshold,
-  getJobMentalMistakeThreshold
+  getJobPhysicalMistakeThreshold,
+  getJobPhysicalMistakeRate,
+  getJobMentalMistakeThreshold,
+  getJobMentalMistakeRate,
+  getJobSocialMistakeThreshold,
+  getJobSocialMistakeRate,
+  getExecutiveMistakeExpMargin,
+  getExecutiveMistakeRate
 } from '../jobTags';
 import type { 
   ShiftTier, 
   WorkShiftOption, 
   WorkShiftSummary, 
   ModifierBreakdownItem,
+  MistakeBreakdownItem,
   WorkShiftModifierBadge
 } from './jobTypes';
 import { getJobInitiativeTier } from './jobInitiativeDeck';
@@ -190,38 +198,119 @@ export function calcWorkShiftSummary(
     }
   }
 
-  const physMistakeThreshold = hasJobTag(job, 'heavy_physical') ? 20 : 10;
-  const mentalMistakeThreshold = getJobMentalMistakeThreshold(job);
+  const physMistakeThreshold = getJobPhysicalMistakeThreshold(job, statRules);
+  const physMistakeRate = getJobPhysicalMistakeRate(statRules);
+  const mentalMistakeThreshold = getJobMentalMistakeThreshold(job, statRules);
+  const mentalMistakeRate = getJobMentalMistakeRate(statRules);
   const mentalMultiplier = hasJobTag(job, 'heavy_physical') ? 0.5 : 1.0;
   const isFrontline = hasJobTag(job, 'frontline_service');
-  const socialMistakeThreshold = isFrontline ? 20 : 10;
+  const socialMistakeThreshold = getJobSocialMistakeThreshold(job, statRules);
+  const socialMistakeRate = getJobSocialMistakeRate(statRules);
   const isExecJob = hasJobTag(job, 'executive_management');
   const curMental = player.mentalCondition ?? 50;
 
+  const execExpMargin = getExecutiveMistakeExpMargin(statRules);
+  const execExpRate = getExecutiveMistakeRate(statRules);
+  const playerExp = player.experience || 0;
+  const reqExp = job.requirements?.experience || 0;
+  const expMargin = playerExp - reqExp;
+  const execChance = (isAdvanced && isExecJob)
+    ? Math.min(1.0, Math.max(0, (execExpMargin - expMargin) * execExpRate))
+    : 0;
+
   for (const m of modes) {
     const physChance = (isAdvanced && m.physCost > 0 && curPhys < physMistakeThreshold)
-      ? Math.min(1.0, Math.max(0, (physMistakeThreshold - curPhys) * 0.025))
+      ? Math.min(1.0, Math.max(0, (physMistakeThreshold - curPhys) * physMistakeRate))
       : 0;
     const mentalChance = (isAdvanced && (m.mentalCost > 0 || isExecJob) && curMental < mentalMistakeThreshold)
-      ? Math.min(1.0, Math.max(0, (mentalMistakeThreshold - curMental) * 0.025 * mentalMultiplier))
+      ? Math.min(1.0, Math.max(0, (mentalMistakeThreshold - curMental) * mentalMistakeRate * mentalMultiplier))
       : 0;
     const modifiesSocial = isFrontline ||
                            (m.id === 'look_busy' && lbSocialPenalty > 0) ||
                            (m.id === 'work_work' && socialMod !== 0) ||
                            (m.id === 'face_time');
     const socialChance = (isAdvanced && modifiesSocial && curSocial < socialMistakeThreshold)
-      ? Math.min(1.0, Math.max(0, (socialMistakeThreshold - curSocial) * 0.0125))
+      ? Math.min(1.0, Math.max(0, (socialMistakeThreshold - curSocial) * socialMistakeRate))
       : 0;
 
     m.physMistakeChance = physChance;
     m.mentalMistakeChance = mentalChance;
     m.socialMistakeChance = socialChance;
-    m.totalMistakeChance = isAdvanced ? (1 - (1 - physChance) * (1 - mentalChance) * (1 - socialChance)) : 0;
+    m.execMistakeChance = execChance;
+    m.totalMistakeChance = isAdvanced
+      ? (1 - (1 - physChance) * (1 - mentalChance) * (1 - socialChance) * (1 - execChance))
+      : 0;
 
     // Detailed modifier breakdown for '?' strategy & help display
     if (isAdvanced) {
       const physMods: ModifierBreakdownItem[] = [];
       const mentalMods: ModifierBreakdownItem[] = [];
+      const mistakeBreakdown: MistakeBreakdownItem[] = [];
+
+      mistakeBreakdown.push({
+        type: 'physical',
+        label: 'Physical Fatigue',
+        icon: '💪',
+        currentStat: curPhys,
+        threshold: physMistakeThreshold,
+        ratePerPoint: physMistakeRate,
+        chance: physChance,
+        isTriggered: physChance > 0,
+        explanation: m.physCost === 0
+          ? 'No physical effort required for this action.'
+          : (curPhys >= physMistakeThreshold
+              ? `Physical condition (${curPhys}) meets safety threshold (≥ ${physMistakeThreshold}).`
+              : `${(physMistakeThreshold - curPhys).toFixed(1)} pts below threshold (${physMistakeThreshold}) × ${(physMistakeRate * 100).toFixed(1)}%/pt = ${(physChance * 100).toFixed(1)}%`)
+      });
+
+      const effectiveMentalRate = mentalMistakeRate * mentalMultiplier;
+      mistakeBreakdown.push({
+        type: 'mental',
+        label: 'Mental Exhaustion',
+        icon: '🧠',
+        currentStat: curMental,
+        threshold: mentalMistakeThreshold,
+        ratePerPoint: effectiveMentalRate,
+        chance: mentalChance,
+        isTriggered: mentalChance > 0,
+        explanation: (m.mentalCost === 0 && !isExecJob)
+          ? 'No mental demand required for this action.'
+          : (curMental >= mentalMistakeThreshold
+              ? `Mental condition (${curMental}) meets safety threshold (≥ ${mentalMistakeThreshold}).`
+              : `${(mentalMistakeThreshold - curMental).toFixed(1)} pts below threshold (${mentalMistakeThreshold}) × ${(effectiveMentalRate * 100).toFixed(1)}%/pt = ${(mentalChance * 100).toFixed(1)}%`)
+      });
+
+      if (modifiesSocial) {
+        mistakeBreakdown.push({
+          type: 'social',
+          label: 'Social Strain',
+          icon: '👥',
+          currentStat: curSocial,
+          threshold: socialMistakeThreshold,
+          ratePerPoint: socialMistakeRate,
+          chance: socialChance,
+          isTriggered: socialChance > 0,
+          explanation: curSocial >= socialMistakeThreshold
+            ? `Social standing (${curSocial}) meets safety threshold (≥ ${socialMistakeThreshold}).`
+            : `${(socialMistakeThreshold - curSocial).toFixed(1)} pts below threshold (${socialMistakeThreshold}) × ${(socialMistakeRate * 100).toFixed(2)}%/pt = ${(socialChance * 100).toFixed(1)}%`
+        });
+      }
+
+      if (isExecJob) {
+        mistakeBreakdown.push({
+          type: 'executive',
+          label: 'Executive Blunder Risk',
+          icon: '💼',
+          currentStat: playerExp,
+          threshold: reqExp + execExpMargin,
+          ratePerPoint: execExpRate,
+          chance: execChance,
+          isTriggered: execChance > 0,
+          explanation: expMargin >= execExpMargin
+            ? `Experience (+${expMargin} over req ${reqExp}) meets executive safety buffer (+${execExpMargin}).`
+            : `${(execExpMargin - expMargin).toFixed(1)} Exp below safety buffer (+${execExpMargin} over req ${reqExp}) × ${(execExpRate * 100).toFixed(1)}%/pt = ${(execChance * 100).toFixed(1)}%`
+        });
+      }
 
       let modeBasePhys = basePhys;
       let modeBaseMental = baseMental;
@@ -283,7 +372,8 @@ export function calcWorkShiftSummary(
         tier,
         actionCount,
         grindThreshold,
-        overtimeThreshold
+        overtimeThreshold,
+        mistakeBreakdown
       };
     }
   }

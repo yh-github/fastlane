@@ -252,9 +252,9 @@ describe('WorkConsolePopup Component', () => {
 
     const mistakeRisk = screen.getByTestId('selected-mode-mistake-risk');
     expect(mistakeRisk).toBeInTheDocument();
-    // Mistake percentage must be rounded integer, not raw decimal like 0.075% or 7.5000%
+    // Mistake percentage must be rounded integer on badge, with detailed breakdown in title attribute
     expect(mistakeRisk.textContent).toContain('8% Risk');
-    expect(mistakeRisk.textContent).toContain('💪 8%');
+    expect(mistakeRisk.getAttribute('title')).toContain('Physical Fatigue');
     expect(mistakeRisk.textContent).not.toContain('0.075');
     expect(mistakeRisk.textContent).not.toContain('7.5%');
   });
