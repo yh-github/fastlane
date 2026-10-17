@@ -29,4 +29,31 @@ In the classic game, all store items scale uniformly with the consumer goods ind
 - **Precious Metals & Pawn Valuations**: Fluctuations in Gold and Silver alter the pawn shop payout, appraisal values, and redemption costs of luxury jewelry/curios.
 - **Sticky Wages vs Inflation**: Consumer retail prices fluctuate rapidly with commodity demand, while base job wages remain stickier, creating realistic cost-of-living squeezes during high-inflation economic phases.
 
+## Advanced Workplace & Career Dynamics (Pinned Ideas)
+
+### 1. Halved Routine Dependability on Apex / Tier 3 Jobs
+Award `+0.5 Dep` instead of `+1.0` on routine `work_work` shifts for Tier 3 jobs. Because weekly executive decay is `-4` to `-5 Dep/turn`, executives cannot coast on routine shifts alone; they must actively balance Face Time networking and high-impact Initiatives to survive contract reviews.
+
+### 2. "Look Busy" Reputation Penalty on Executive Roles
+Add a `-1.0 Dep` penalty for using `look_busy` on Tier 3 (Executive Management) jobs. Unlike entry-level workers who can blend into the background, an executive's absence or disengagement is immediately noticed by staff and the board.
+
+### 3. Holistic Career Goal Composite Score
+Replace the legacy `1.25 × Dependability` formula with a multi-pillar career progress evaluation:
+- **Dependability & Reliability** (max 35 pts)
+- **Job Prestige & Wardrobe Tier** (max 30 pts: Casual = 10, Dress = 20, Business Suit = 30)
+- **Domain Skills** (max 20 pts: Management & Technical proficiency)
+- **Institutional Standing** (max 15 pts: Accumulated Merits across career)
+
+### 4. Professional & Redemptive Weekend Events
+Purge generic, unearned Dependability from random weekend leisure events (movies, walks in the park). Introduce:
+- **Merit-Gated Executive Summits & Conferences**: High-yield professional events (e.g. `+2.0 Dep`, `+0.50 Mgmt`, high networking).
+- **Demerit-Gated Redemptive Shifts**: Overtime catch-up shifts to repair poor performance and clear past incidents.
+
+### 5. Whole-Number Skill Scale (Future Skill Rebalance)
+When domain skills (Management, Technical) are completely decoupled from acting as 1:1 substitutes for Experience/Dependability, convert them from fractional units (`0.05 – 2.50`) into intuitive whole numbers (e.g., `1 – 10` or `1 – 100`).
+
+### 6. Above-Market Executive Dividends & Profit-Sharing
+At Tier 3, instead of flat hourly wages, top executives receive quarterly profit dividends scaled by company standing and macroeconomic health.
+
+
 

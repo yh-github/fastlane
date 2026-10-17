@@ -58,8 +58,8 @@ describe('statMath', () => {
     // Economic recession high-tier job
     expect(calcAdvancedJobEmployabilityScore({ dependability: 70, experience: 70, degreesCount: 0, jobReqDep: 70, jobReqExp: 70, economicIndex: -30 })).toBe(33);
 
-    // Mistakes at location
-    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, mistakesAtLocation: 3 })).toBe(42);
+    // Mistakes at location (-5pp per mistake)
+    expect(calcAdvancedJobEmployabilityScore({ dependability: 10, experience: 10, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, mistakesAtLocation: 3 })).toBe(30);
 
     // Probation
     expect(calcAdvancedJobEmployabilityScore({ dependability: 30, experience: 30, degreesCount: 0, jobReqDep: 10, jobReqExp: 10, isProbation: true })).toBe(32);

@@ -1,6 +1,6 @@
 import { type PlayerState, type GameRules, markClothesWorn } from '../gameState';
 import { spendHours } from '../timeManager';
-import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore } from '../statMath';
+import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, calcEffectiveJobRequirements } from '../statMath';
 import type { JobDef } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
@@ -9,7 +9,8 @@ import type { StatRules } from '../rules';
 import {
   hasJobTag,
   isManagementJob,
-  isExecutiveManagementJob
+  isExecutiveManagementJob,
+  getJobInitiativeTier
 } from '../jobTags';
 import type { JobApplicationResult } from './jobTypes';
 
@@ -141,6 +142,10 @@ export function applyForJob(
   const isExecutive = useSkills && isExecutiveManagementJob(job);
   const isFrontline = hasJobTag(job, 'frontline_service');
 
+  const effReqs = calcEffectiveJobRequirements(job, updated, isAdvanced);
+  const reqDepTarget = effReqs.reqDep;
+  const reqExpTarget = effReqs.reqExp;
+
   const techSkill = isTechnical ? (updated.skillTech || 0) : 0;
   const mgmtSkill = isManagement ? (updated.skillMgmt || 0) : 0;
   const decoupleSkills = !!rules?.wageScaledEmployability;
@@ -151,9 +156,9 @@ export function applyForJob(
     ? (rules.maskEarlyJobRejections && turn <= 4)
     : (turn <= 4 && !rules?.helpfulUI);
 
-  const missingDep = effectiveDep < job.requirements.dependability;
+  const missingDep = effectiveDep < reqDepTarget;
 
-  if (effectiveExp < job.requirements.experience) {
+  if (effectiveExp < reqExpTarget) {
     rejectionReasons.push(msg('job_apply_missing_experience', 'Not enough experience.'));
   }
   if (missingDep && !shouldMask) {
@@ -235,6 +240,7 @@ export function applyForJob(
     updated.depMaxBonus = 0;
     updated.xpMaxBonus = 0;
     if (isAdvanced) {
+      updated.currentJobTier = getJobInitiativeTier(job);
       updated.noOpeningBonus = 0;
     }
     
@@ -283,8 +289,8 @@ export function applyForJob(
       dependability: updated.dependability,
       experience: updated.experience,
       degreesCount: updated.degrees.length,
-      jobReqDep: job.requirements.dependability,
-      jobReqExp: job.requirements.experience,
+      jobReqDep: reqDepTarget,
+      jobReqExp: reqExpTarget,
       innovationsAtLocation: locInnovations,
       initiativesAtLocation: updated.initiativesByLocation?.[job.locationId] || 0,
       mistakesAtLocation: locMistakes,
@@ -343,6 +349,7 @@ export function applyForJob(
   updated.depMaxBonus = 0;
   updated.xpMaxBonus = 0;
   if (isAdvanced) {
+    updated.currentJobTier = getJobInitiativeTier(job);
     updated.noOpeningBonus = 0;
   }
   

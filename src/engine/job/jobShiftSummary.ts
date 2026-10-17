@@ -556,7 +556,7 @@ export function getWorkShiftModifiers(
       }
     } else {
       if (m.id === 'work_work' && m.rewardExp > 0) {
-        const mgmtGain = ((isExecMgmt ? 0.50 : 0.25) * m.rewardExp).toFixed(2);
+        const mgmtGain = ((isExecMgmt ? 0.10 : 0.05) * m.rewardExp).toFixed(2);
         badges.push({
           key: 'mgmt',
           label: `+${mgmtGain} 👔`,
@@ -568,7 +568,7 @@ export function getWorkShiftModifiers(
       } else if (m.id === 'face_time') {
         badges.push({
           key: 'mgmt_ft',
-          label: '+0.25 👔',
+          label: '+0.15 👔',
           color: '#fbbf24',
           bg: 'rgba(251, 191, 36, 0.18)',
           border: 'rgba(251, 191, 36, 0.45)',
@@ -578,7 +578,22 @@ export function getWorkShiftModifiers(
     }
   }
 
-  // 7. Overtime / Heavy Grind permanent physical drop
+  // 7. Face Time demerit clearing
+  if (m.id === 'face_time') {
+    const locMistakes = summary.locationMistakes ?? (player.mistakesByLocation?.[job.locationId] || 0);
+    if (locMistakes > 0) {
+      badges.push({
+        key: 'clear_mistake',
+        label: '-1 ⚠️ Demerit',
+        color: '#34d399',
+        bg: 'rgba(52, 211, 153, 0.18)',
+        border: 'rgba(52, 211, 153, 0.45)',
+        type: 'reward'
+      });
+    }
+  }
+
+  // 8. Overtime / Heavy Grind permanent physical drop
   const isOvertimeShift = summary.tier === 'overtime';
   const isHeavyGrindShift = summary.tier === 'grind' && hasJobTag(job, 'heavy_physical');
   if ((isOvertimeShift || isHeavyGrindShift) && (m.id === 'work_work' || m.id === 'show_initiative' || m.id === 'innovate')) {
@@ -592,7 +607,7 @@ export function getWorkShiftModifiers(
     });
   }
 
-  // 8. Mental Resilience bonus (+1 MAX 🧠)
+  // 9. Mental Resilience bonus (+1 MAX 🧠)
   if (isAdvanced && m.mentalCost >= (statRules?.resilienceDropThreshold ?? 3)) {
     badges.push({
       key: 'resilience',
@@ -604,7 +619,7 @@ export function getWorkShiftModifiers(
     });
   }
 
-  // 9. Rent Debt Wage Garnishment
+  // 10. Rent Debt Wage Garnishment
   const rentDebt = player.rentDebt ?? 0;
   const isGarnished = rentDebt > 0 && m.wage > 0;
   const garnishedAmount = isGarnished ? Math.min(rentDebt, Math.floor(m.wage * 0.5)) : 0;
@@ -619,7 +634,7 @@ export function getWorkShiftModifiers(
     });
   }
 
-  // 10. Initiative special rewards
+  // 11. Initiative special rewards
   if (m.id === 'show_initiative' || m.id === 'innovate') {
     const initTier = getJobInitiativeTier(job);
     const cardCount = initTier === 3 ? 3 : 2;
@@ -631,17 +646,6 @@ export function getWorkShiftModifiers(
       border: 'rgba(56, 189, 248, 0.45)',
       type: 'reward'
     });
-    const locMistakes = summary.locationMistakes ?? (player.mistakesByLocation?.[job.locationId] || 0);
-    if (locMistakes > 0) {
-      badges.push({
-        key: 'clear_mistake',
-        label: '-1 ⚠️ Demerit',
-        color: '#34d399',
-        bg: 'rgba(52, 211, 153, 0.18)',
-        border: 'rgba(52, 211, 153, 0.45)',
-        type: 'reward'
-      });
-    }
     badges.push({
       key: 'initiative_star',
       label: `+${isExecMgmt ? 2 : 1} 🌟`,

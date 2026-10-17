@@ -594,7 +594,7 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       expect(result.wagesEarned).toBe(22);
     });
 
-    it('awards +0.25 Management Skill (+0.50 on management jobs) and clears location mistakes', () => {
+    it('awards +0.25 Management Skill (+0.50 on management jobs) and tracks location standing (face_time clears mistakes)', () => {
       const job = campaign.jobs.find((j: any) => j.id === 'pawn_security_guard'); // non-management
       let player = makePlayer();
       player.currentJobId = job.id;
@@ -609,11 +609,16 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       const result = workShift(player, job, 6, rules, campaign.config.statRules, 'show_initiative');
       expect(result.success).toBe(true);
       expect(result.updated.skillMgmt).toBe(0.25);
-      // Clears 1 location mistake: 2 -> 1
-      expect(result.updated.mistakesByLocation?.[job.locationId]).toBe(1);
+      // Show initiative does NOT clear location mistakes
+      expect(result.updated.mistakesByLocation?.[job.locationId]).toBe(2);
       // Tracks location initiative: 0 -> 1
       expect(result.updated.initiativesByLocation?.[job.locationId]).toBe(1);
-      expect(result.messages?.some(m => m.key === 'action.job.initiativeClearedMistake')).toBe(true);
+
+      // Face time clears 1 location mistake: 2 -> 1
+      const ftResult = workShift(player, job, 6, rules, campaign.config.statRules, 'face_time');
+      expect(ftResult.success).toBe(true);
+      expect(ftResult.updated.mistakesByLocation?.[job.locationId]).toBe(1);
+      expect(ftResult.messages?.some(m => m.key === 'action.job.faceTimeClearedMistake')).toBe(true);
     });
 
     it('awards +0.50 MGMT & +1.5 Dep on middle management, and +1.00 MGMT & +2.0 Dep & +2 standing on executive management', () => {
@@ -657,7 +662,7 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       expect(execResult.updated.initiativesByLocation?.[execJob.locationId]).toBe(2); // +2 initiatives for exec
     });
 
-    it('boosts internal promotion employability score by +3 per initiative', () => {
+    it('boosts internal promotion employability score by +5 per initiative', () => {
       const baseScore = calcAdvancedJobEmployabilityScore({
         dependability: 50,
         experience: 50,
@@ -674,7 +679,7 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
         jobReqExp: 20,
         initiativesAtLocation: 2
       });
-      expect(boostedScore - baseScore).toBe(6); // +3 * 2 = +6
+      expect(boostedScore - baseScore).toBe(10); // +5 * 2 = +10
     });
 
     it('location initiatives offset past raises when requesting a wage raise', () => {

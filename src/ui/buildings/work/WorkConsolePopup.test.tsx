@@ -290,9 +290,14 @@ describe('WorkConsolePopup Component', () => {
     fireEvent.click(initOption);
 
     expect(modPanel.textContent).toContain('🃏 2 Cards');
-    expect(modPanel.textContent).toContain('-1 ⚠️ Demerit');
+    expect(modPanel.textContent).not.toContain('-1 ⚠️ Demerit');
     expect(modPanel.textContent).toContain('+1 🌟');
     expect(modPanel.textContent).toContain('+1 MAX 🧠');
+
+    // 4. Switch mode to face_time: panel shows -1 ⚠️ Demerit (defensive clearing)
+    const faceTimeOption = screen.getByTestId('work-mode-option-face_time');
+    fireEvent.click(faceTimeOption);
+    expect(modPanel.textContent).toContain('-1 ⚠️ Demerit');
   });
 
   it('clamps popup vertical bounds to avoid covering the bottom center clock', () => {

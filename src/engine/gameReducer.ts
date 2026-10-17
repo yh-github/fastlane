@@ -31,6 +31,7 @@ import {
   handlePawnKnickKnacksAction,
   handleApplianceMaintenanceAction,
   handleResolveAppraisalDilemmaAction,
+  handleRedrawInitiativeAction,
   handleRummagePawnShopAction,
   handleBuyRummageItemAction,
   handleCloseRummageAction,
@@ -149,6 +150,9 @@ export function gameReducer(
     case 'resolve_appraisal_dilemma':
     case 'resolve_mini_game':
       res = handleResolveAppraisalDilemmaAction(nextPlayer, action, context);
+      break;
+    case 'redraw_initiative':
+      res = handleRedrawInitiativeAction(nextPlayer, action, context, replayContext);
       break;
     case 'rummage_pawn_shop':
       res = handleRummagePawnShopAction(nextPlayer, action, context);

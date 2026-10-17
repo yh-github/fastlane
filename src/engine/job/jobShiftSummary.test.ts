@@ -90,11 +90,16 @@ describe('jobShiftSummary', () => {
     // Debt garnishment: -$100 Debt
     expect(wwLabels).toContain('-$100 Debt');
 
+    const faceTime = summary.modes.find(m => m.id === 'face_time');
+    expect(faceTime?.modifiers).toBeDefined();
+    const ftLabels = faceTime!.modifiers!.map(b => b.label);
+    expect(ftLabels).toContain('-1 ⚠️ Demerit');
+
     const initiative = summary.modes.find(m => m.id === 'show_initiative');
     expect(initiative?.modifiers).toBeDefined();
     const initLabels = initiative!.modifiers!.map(b => b.label);
     expect(initLabels).toContain('🃏 2 Cards');
-    expect(initLabels).toContain('-1 ⚠️ Demerit');
+    expect(initLabels).not.toContain('-1 ⚠️ Demerit');
     expect(initLabels).toContain('+1 🌟');
     expect(initLabels).toContain('-0.5 MAX 💪');
     expect(initLabels).toContain('+1 MAX 🧠');

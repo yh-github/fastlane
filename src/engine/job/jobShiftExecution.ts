@@ -56,11 +56,13 @@ export function workShift(
   const effectiveDep = player.dependability + (isTechnical ? (player.skillTech || 0) : 0) + (isManagement ? (player.skillMgmt || 0) : 0);
   
   // Dependability firing & warning checks
-  const fireBuffer = 5 + (player.innovationCount || 0);
+  const locMerits = (isAdvanced && job.locationId) ? (player.initiativesByLocation?.[job.locationId] || 0) : 0;
+  const fireBuffer = 5 + (player.innovationCount || 0) + locMerits;
   if (effectiveDep <= job.requirements.dependability - fireBuffer) {
     let updated: PlayerState = {
       ...player,
       currentJobId: null,
+      currentJobTier: undefined,
       currentWage: 0,
       raisesAtCurrentJob: 0,
       innovationCount: 0,
@@ -72,7 +74,7 @@ export function workShift(
       }
     };
     updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
-    return { updated, wagesEarned: 0, success: false, messages: [{ key: 'action.job.fired' }] };
+    return { updated, wagesEarned: 0, success: false, messages: [{ key: isAdvanced ? 'action.job.firedDepLow' : 'action.job.fired' }] };
   }
 
   const req = job.requirements.uniform;
@@ -291,6 +293,7 @@ export function workShift(
     let physMistake = false;
     let mentalMistake = false;
     let socialMistake = false;
+    let execMistake = false;
 
     const physMistakeThreshold = hasJobTag(job, 'heavy_physical') ? 20 : 10;
     if (physicalCost > 0 && oldPhys < physMistakeThreshold) {
@@ -306,6 +309,19 @@ export function workShift(
       mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
     }
 
+    // Executive management base mistake risk based on experience margin: max(0, 20 - (Exp - Exp_req)) * 0.005
+    if (isAdvanced && isExecMgmt) {
+      const expMargin = (updated.experience || 0) - (job.requirements?.experience || 0);
+      const execMistakeChance = Math.max(0, 20 - expMargin) * 0.005;
+      if (execMistakeChance > 0) {
+        execMistake = resolveDecision(
+          replay,
+          `work_exec_mistake_${player.id}_${actionCount}`,
+          () => (rng ? rng.next() : Math.random()) < execMistakeChance
+        );
+      }
+    }
+
     const isFrontline = hasJobTag(job, 'frontline_service');
     const modifiesSocial = isFrontline ||
                            (mode === 'look_busy' && lookBusySocPenalty > 0) ||
@@ -317,7 +333,7 @@ export function workShift(
       socialMistake = resolveDecision(replay, `work_social_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < socialChance);
     }
 
-    if (physMistake || mentalMistake || socialMistake) {
+    if (physMistake || mentalMistake || socialMistake || execMistake) {
       const curMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
       let mistakesAdded = 0;
       if (physMistake) {
@@ -335,6 +351,13 @@ export function workShift(
         mistakesAdded++;
         updated.social = Math.max(1, (updated.social || 1) - 1);
         messages.push({ key: 'action.job.socialMistake' });
+      }
+      if (execMistake && !mentalMistake) {
+        mistakesAdded++;
+        updated.resilienceBonus = (updated.resilienceBonus || 0) - 1;
+        updated.mentalConditionMax = Math.max(1, (updated.mentalConditionMax ?? 50) - 1);
+        updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition);
+        messages.push({ key: 'action.job.executiveMistake' });
       }
 
       // Penalty = NUM_OF_MISTAKES (current counter before adding this turn's mistakes)
@@ -355,12 +378,19 @@ export function workShift(
         updated.turnFlags.workMistakesThisTurn = currentTurnMistakes;
       }
 
-      const mistakeTypes = [physMistake ? 'Physical' : null, mentalMistake ? 'Mental' : null, socialMistake ? 'Social' : null].filter(Boolean).join(' & ');
+      const mistakeTypes = [
+        physMistake ? 'Physical' : null,
+        mentalMistake ? 'Mental' : null,
+        socialMistake ? 'Social' : null,
+        execMistake ? 'Executive' : null
+      ].filter(Boolean).join(' & ');
       messages.push({ key: 'action.job.mistake', params: { type: mistakeTypes, penalty: curMistakes, total: curMistakes + mistakesAdded } });
 
-      if (currentTurnMistakes >= 3) {
-        // 3 work mistakes in the same turn -> Immediate Termination (Gross Negligence)
+      const mistakeTerminationThreshold = 3 + locMerits;
+      if (currentTurnMistakes >= mistakeTerminationThreshold) {
+        // Gross Negligence: Immediate Termination
         updated.currentJobId = null;
+        updated.currentJobTier = undefined;
         updated.currentWage = 0;
         updated.raisesAtCurrentJob = 0;
         updated.innovationCount = 0;
@@ -378,26 +408,22 @@ export function workShift(
       const effectiveMaxDep = 20 + job.requirements.dependability + (updated.degreeDepBoost || 0) + (updated.depMaxBonus || 0);
 
       if (isInitiative) {
-        // Clear 1 location mistake if any exist (core initiative guarantee)
-        const curLocMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
-        if (curLocMistakes > 0) {
-          updated.mistakesByLocation = {
-            ...(updated.mistakesByLocation || {}),
-            [job.locationId]: Math.max(0, curLocMistakes - 1)
-          };
-          messages.push({ key: 'action.job.initiativeClearedMistake' });
-        }
-
+        // NOTE: show_initiative does NOT clear demerits (demerits cleared defensively by face_time)
         const isExecMgmt = hasJobTag(job, 'executive_management');
         const isMiddleMgmt = hasJobTag(job, 'middle_management');
-        const standingGain = isExecMgmt ? 2 : 1;
+        const tier = getJobInitiativeTier(job);
+        const rawStandingGain = isExecMgmt ? 2 : 1;
+        const curStanding = updated.initiativesByLocation?.[job.locationId] || 0;
+        const standingGain = Math.max(0, Math.min(rawStandingGain, tier - curStanding));
         const depGain = isExecMgmt ? 2.0 : (isMiddleMgmt ? 1.5 : (baseDepGain > 0 ? baseDepGain : 1.0));
 
-        // Base location initiative tracking (proves proactive contribution)
-        updated.initiativesByLocation = {
-          ...(updated.initiativesByLocation || {}),
-          [job.locationId]: (updated.initiativesByLocation?.[job.locationId] || 0) + standingGain
-        };
+        // Base location initiative tracking (capped at job tier max)
+        if (standingGain > 0) {
+          updated.initiativesByLocation = {
+            ...(updated.initiativesByLocation || {}),
+            [job.locationId]: curStanding + standingGain
+          };
+        }
 
         // Advance baseline dependability
         if (depGain > 0 && updated.dependability < effectiveMaxDep) {
@@ -452,10 +478,14 @@ export function workShift(
             updated.skillTech = Math.min(maxTech, roundToResolution((updated.skillTech || 0) + chosen.techSkillAmount, 0.05));
           }
           if (chosen.standingAmount) {
-            updated.initiativesByLocation = {
-              ...(updated.initiativesByLocation || {}),
-              [job.locationId]: (updated.initiativesByLocation?.[job.locationId] || 0) + chosen.standingAmount
-            };
+            const curStanding = updated.initiativesByLocation?.[job.locationId] || 0;
+            const allowedGain = Math.max(0, Math.min(chosen.standingAmount, tier - curStanding));
+            if (allowedGain > 0) {
+              updated.initiativesByLocation = {
+                ...(updated.initiativesByLocation || {}),
+                [job.locationId]: curStanding + allowedGain
+              };
+            }
           }
           if (chosen.mentalAmount) {
             const maxMental = updated.mentalConditionMax ?? 50;
@@ -493,7 +523,7 @@ export function workShift(
       }
     }
 
-    if (mode === 'work_work' && !physMistake && !mentalMistake && !socialMistake) {
+    if (mode === 'work_work' && !physMistake && !mentalMistake && !socialMistake && !execMistake) {
       const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
       const expMult = getJobExpMultiplier(job);
       const expGain = roundToResolution(((rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? 1 * ratio : 1) * expMult, 0.5);
@@ -510,13 +540,13 @@ export function workShift(
       }
 
       if (useSkills && hasJobTag(job, 'middle_management')) {
-        const mgmtGain = roundToResolution(expGain * 0.25, 0.05);
+        const mgmtGain = roundToResolution(expGain * 0.05, 0.05);
         if (mgmtGain > 0) {
           const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
           updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
         }
       } else if (useSkills && hasJobTag(job, 'executive_management')) {
-        const mgmtGain = roundToResolution(expGain * 0.50, 0.05);
+        const mgmtGain = roundToResolution(expGain * 0.10, 0.05);
         if (mgmtGain > 0) {
           const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
           updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + mgmtGain, 0.05));
@@ -530,10 +560,20 @@ export function workShift(
     }
 
     let socialGain = 0;
-    if (mode === 'face_time' && !physMistake && !mentalMistake) {
+    if (mode === 'face_time' && !physMistake && !mentalMistake && !socialMistake && !execMistake) {
+      // Clear 1 location mistake if any exist (Face Time defensive benefit)
+      const curLocMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
+      if (curLocMistakes > 0) {
+        updated.mistakesByLocation = {
+          ...(updated.mistakesByLocation || {}),
+          [job.locationId]: Math.max(0, curLocMistakes - 1)
+        };
+        messages.push({ key: 'action.job.faceTimeClearedMistake' });
+      }
+
       if (isManagementJob(job)) {
         const maxMgmt = calcMaxSkillCap(updated, 'skillMgmt', campaignEducation, statRules, rules as GameRules);
-        updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + 0.25, 0.05));
+        updated.skillMgmt = Math.min(maxMgmt, roundToResolution((updated.skillMgmt || 0) + 0.15, 0.05));
       }
       const curSoc = player.social || 1;
       const socChance = Math.max(0, ((100 - curSoc) / 100) * ratio);
@@ -680,7 +720,7 @@ export function workShift(
     messages.unshift({ key: 'action.job.worked', params: { title: job.title, wagesEarned, stats: '' } });
   }
 
-  const warnBuffer = 3 + (player.innovationCount || 0);
+  const warnBuffer = 3 + (player.innovationCount || 0) + locMerits;
   if (effectiveDep <= job.requirements.dependability - warnBuffer) {
     messages.unshift({ key: 'action.job.warning' });
   }

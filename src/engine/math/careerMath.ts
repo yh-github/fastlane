@@ -1,5 +1,7 @@
 import type { GameRules, StatRules } from '../rules';
-import type { EducationDef } from '../dataLoader';
+import type { EducationDef, JobDef, CampaignBundle } from '../dataLoader';
+import type { PlayerState } from '../gameState';
+import { getJobInitiativeTier } from '../jobTags';
 import { clampZero } from './conditionMath';
 
 /**
@@ -168,7 +170,8 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
 
     const degreesBonus = degreesCount * 1;
     const innovBonus = innovationsAtLocation * 5;
-    const initiativeBonus = initiativesAtLocation * 3;
+    const initiativeBonus = initiativesAtLocation * 5;
+    const mistakesPenalty = mistakesAtLocation * 5;
     const lookFitBonus = isLookFit ? Math.max(0, physicalCondition - 30) * 2 : 0;
 
     let econModifier = 0;
@@ -186,7 +189,7 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
 
     const rawScore = base + marginBonus - wageCompetition + techBonus + mgmtBonus 
                    + socialBonus + degreesBonus + innovBonus + initiativeBonus 
-                   + lookFitBonus + econModifier + attireModifier - mistakesAtLocation;
+                   + lookFitBonus + econModifier + attireModifier - mistakesPenalty;
 
     const clampedScore = Math.max(1, Math.min(99, rawScore));
     return isProbation ? Math.floor(clampedScore / 2) : clampedScore;
@@ -202,7 +205,8 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
 
   const degreesBonus = degreesCount * 1;
   const innovBonus = innovationsAtLocation * 5;
-  const initiativeBonus = initiativesAtLocation * 3;
+  const initiativeBonus = initiativesAtLocation * 5;
+  const mistakesPenalty = mistakesAtLocation * 5;
   const socialBonus = isFrontline
     ? 2 * Math.floor((social || 0) / 10)
     : Math.floor((social || 0) / 10);
@@ -226,7 +230,7 @@ export function calcAdvancedJobEmployabilityScore(opts: EmployabilityCalculatorO
     }
   }
 
-  const rawScore = base + marginBonus + degreesBonus + innovBonus + initiativeBonus + socialBonus + techBonus + mgmtBonus + lookFitBonus + econModifier + attireModifier - mistakesAtLocation;
+  const rawScore = base + marginBonus + degreesBonus + innovBonus + initiativeBonus + socialBonus + techBonus + mgmtBonus + lookFitBonus + econModifier + attireModifier - mistakesPenalty;
   const clampedScore = Math.max(1, Math.min(99, rawScore));
   return isProbation ? Math.floor(clampedScore / 2) : clampedScore;
 }
@@ -318,3 +322,76 @@ export function calcCareerProgress(dependability: number, hasJob: boolean): numb
   if (!hasJob) return 0;
   return Math.min(100, Math.floor(1.25 * dependability));
 }
+
+export interface EffectiveJobRequirements {
+  reqDep: number;
+  reqExp: number;
+  baseReqDep: number;
+  baseReqExp: number;
+  meritDiscount: number;
+  demeritPenaltyDep: number;
+  demeritPenaltyExp: number;
+  isAdjacent: boolean;
+}
+
+/**
+ * Calculates effective job requirements (Dependability and Experience) taking into account:
+ * - Workplace Merits (initiatives): -2 Dep and -2 Exp per merit, ONLY IF targetTier <= currentTier + 1
+ * - Workplace Demerits (mistakes): +3 Dep and +2 Exp per mistake (always applied at current location)
+ *
+ * In classic mode or when isAdvanced is false, returns unmodified base requirements.
+ */
+export function calcEffectiveJobRequirements(
+  job: JobDef | undefined | null,
+  player: PlayerState,
+  isAdvanced: boolean,
+  campaign?: CampaignBundle
+): EffectiveJobRequirements {
+  const baseReqDep = job?.requirements?.dependability ?? 0;
+  const baseReqExp = job?.requirements?.experience ?? 0;
+
+  if (!isAdvanced || !job) {
+    return {
+      reqDep: baseReqDep,
+      reqExp: baseReqExp,
+      baseReqDep,
+      baseReqExp,
+      meritDiscount: 0,
+      demeritPenaltyDep: 0,
+      demeritPenaltyExp: 0,
+      isAdjacent: true
+    };
+  }
+
+  const targetTier = getJobInitiativeTier(job);
+  let currentTier: 1 | 2 | 3 = 1;
+  if (player.currentJobId) {
+    const curJob = campaign?.jobs?.find(j => j.id === player.currentJobId);
+    currentTier = curJob ? getJobInitiativeTier(curJob) : (player.currentJobTier as 1 | 2 | 3 ?? 1);
+  } else if (player.currentJobTier) {
+    currentTier = player.currentJobTier as 1 | 2 | 3;
+  }
+
+  const isAdjacent = targetTier <= currentTier + 1;
+  const locMerits = player.initiativesByLocation?.[job.locationId] || 0;
+  const locMistakes = player.mistakesByLocation?.[job.locationId] || 0;
+
+  const meritDiscount = isAdjacent ? locMerits * 2 : 0;
+  const demeritPenaltyDep = locMistakes * 3;
+  const demeritPenaltyExp = locMistakes * 2;
+
+  const reqDep = Math.max(0, baseReqDep - meritDiscount + demeritPenaltyDep);
+  const reqExp = Math.max(0, baseReqExp - meritDiscount + demeritPenaltyExp);
+
+  return {
+    reqDep,
+    reqExp,
+    baseReqDep,
+    baseReqExp,
+    meritDiscount,
+    demeritPenaltyDep,
+    demeritPenaltyExp,
+    isAdjacent
+  };
+}
+

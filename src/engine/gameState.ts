@@ -181,6 +181,8 @@ export interface PlayerState {
   // ── Employment & Income ──
   /** Current job ID (null if unemployed) */
   currentJobId: string | null;
+  /** Current job tier (1: Entry, 2: Mid, 3: Apex) */
+  currentJobTier?: number;
   /** Current locked-in hourly wage (set at hire, persists through economy changes) */
   currentWage: number;
   /** Number of raises received at current job (resets on job change) */
@@ -428,6 +430,7 @@ export interface MiniGameState {
   subtitle?: string;
   tier?: number;
   locationId?: string;
+  hasRedrawn?: boolean;
   options: MiniGameOption[];
 }
 

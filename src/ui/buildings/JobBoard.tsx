@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoader';
 import { calcEconomyPrice } from '../../engine/economyEngine';
-import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, formatHours } from '../../engine/statMath';
+import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, calcEffectiveJobRequirements, formatHours } from '../../engine/statMath';
 import { formatDegreeName } from '../../engine/jobEngine';
 import type { InteractionProps } from './types';
 
@@ -123,12 +123,12 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           )}
           {selectedLocInitiatives > 0 && (
             <span style={{ color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '1px 5px', borderRadius: '4px', border: '1px solid #f59e0b' }}>
-              🌟 {t('jobBoard.initiativesBadge', { count: selectedLocInitiatives, bonus: selectedLocInitiatives * 3, defaultValue: `${selectedLocInitiatives} Initiatives (+${selectedLocInitiatives * 3}%)` })}
+              🌟 {t('jobBoard.initiativesBadge', { count: selectedLocInitiatives, bonus: selectedLocInitiatives * 5, defaultValue: `${selectedLocInitiatives} Merits (+${selectedLocInitiatives * 5}%)` })}
             </span>
           )}
           {selectedLocMistakes > 0 && (
             <span style={{ color: '#ffb300', background: 'rgba(255,179,0,0.1)', padding: '1px 5px', borderRadius: '4px', border: '1px solid #ffb300' }}>
-              ⚠️ {t('jobBoard.mistakesBadge', { count: selectedLocMistakes })}
+              ⚠️ {t('jobBoard.mistakesBadge', { count: selectedLocMistakes, penalty: selectedLocMistakes * 5, defaultValue: `${selectedLocMistakes} Demerits (-${selectedLocMistakes * 5}%)` })}
             </span>
           )}
           {isAdvanced && (player.noOpeningBonus || 0) > 0 && (
@@ -152,12 +152,13 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const mgmtSkill = isManagement ? (player.skillMgmt || 0) : 0;
           const effectiveExp = (player.experience || 0) + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
           const effectiveDep = (player.dependability || 0) + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
+          const effReqs = calcEffectiveJobRequirements(job, player, isAdvanced, campaign);
           const reqMgmt = isExecMgmt ? Math.floor(job.requirements.experience / 10) : 0;
           const missingMgmt = isExecMgmt && ((player.skillMgmt || 0) < reqMgmt);
           const reqTech = (job.requirements as any)?.techSkill ?? (job.requirements as any)?.skillTech;
           const missingTech = isTechnical && reqTech !== undefined && ((player.skillTech || 0) < reqTech);
-          const missingExp = effectiveExp < job.requirements.experience;
-          const missingDep = effectiveDep < job.requirements.dependability;
+          const missingExp = effectiveExp < effReqs.reqExp;
+          const missingDep = effectiveDep < effReqs.reqDep;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
           const isLookFit = isAdvanced && job.tags?.includes('look_fit');
           const missingPhysical = isLookFit && ((player.physicalCondition ?? 50) < 30);
@@ -186,8 +187,8 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 dependability: player.dependability || 0,
                 experience: player.experience || 0,
                 degreesCount: player.degrees?.length || 0,
-                jobReqDep: job.requirements.dependability,
-                jobReqExp: job.requirements.experience,
+                jobReqDep: effReqs.reqDep,
+                jobReqExp: effReqs.reqExp,
                 innovationsAtLocation: selectedLocInnovations,
                 initiativesAtLocation: selectedLocInitiatives,
                 mistakesAtLocation: selectedLocMistakes,
@@ -260,8 +261,16 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 {rules?.helpfulUI && (
                   <>
                     <div style={{ fontSize: '12px', marginTop: '5px' }}>
-                      <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>👌 {t('jobBoard.exp')}: {job.requirements.experience}</span> | 
-                      <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>🤝 {t('jobBoard.dep')}: {job.requirements.dependability}</span>
+                      <span style={{ color: missingExp ? '#e74c3c' : '#2ecc71' }}>
+                        👌 {t('jobBoard.exp')}: {effReqs.reqExp}
+                        {effReqs.meritDiscount > 0 && <span style={{ fontSize: '10px', color: '#10b981', marginInlineStart: '2px' }}>(-{effReqs.meritDiscount} 🌟)</span>}
+                        {effReqs.demeritPenaltyExp > 0 && <span style={{ fontSize: '10px', color: '#f87171', marginInlineStart: '2px' }}>(+{effReqs.demeritPenaltyExp} ⚠️)</span>}
+                      </span> | 
+                      <span style={{ color: missingDep ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
+                        🤝 {t('jobBoard.dep')}: {effReqs.reqDep}
+                        {effReqs.meritDiscount > 0 && <span style={{ fontSize: '10px', color: '#10b981', marginInlineStart: '2px' }}>(-{effReqs.meritDiscount} 🌟)</span>}
+                        {effReqs.demeritPenaltyDep > 0 && <span style={{ fontSize: '10px', color: '#f87171', marginInlineStart: '2px' }}>(+{effReqs.demeritPenaltyDep} ⚠️)</span>}
+                      </span>
                       {isExecMgmt && (
                         <span style={{ color: missingMgmt ? '#e74c3c' : '#2ecc71', marginInlineStart: '5px' }}>
                           | 👔 {t('dashboard.skillMgmt', { defaultValue: 'Leadership' })}: {reqMgmt}.00
