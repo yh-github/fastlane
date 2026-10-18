@@ -1363,7 +1363,7 @@ describe("Job Engine - workShift", () => {
           hoursRemaining: 12,
           currentJobId: 'corp_exec',
           currentWage: 40,
-          experience: 70, // 60 + 10 = 70
+          experience: 75, // 60 + 15 = 75 (exceeds execExpMargin to prevent random mistake)
           dependability: 60,
           degrees: ['business_admin'],
           physicalCondition: 50,
