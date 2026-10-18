@@ -184,14 +184,14 @@ export function applyForJob(
 
   if (isExecutive) {
     const reqMgmt = Math.floor(job.requirements.experience / 10);
-    if ((updated.skillMgmt || 0) < reqMgmt) {
+    if ((updated.skillMgmt || 0) < reqMgmt - 0.001) {
       rejectionReasons.push(msg('job_apply_missing_mgmt_skill', `Requires at least ${reqMgmt.toFixed(2)} Management Skill (Skill_Mgmt). Gain experience in Middle Management.`, { reqMgmt: reqMgmt.toFixed(2) }));
     }
   }
 
   const reqTech = (job.requirements as any)?.techSkill ?? (job.requirements as any)?.skillTech;
   if (isTechnical && reqTech !== undefined) {
-    if ((updated.skillTech || 0) < reqTech) {
+    if ((updated.skillTech || 0) < reqTech - 0.001) {
       rejectionReasons.push(msg('job_apply_missing_tech_skill', `Requires at least ${Number(reqTech).toFixed(2)} Technical Skill (Skill_Tech).`, { reqTech: Number(reqTech).toFixed(2) }));
     }
   }

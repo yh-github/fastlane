@@ -396,6 +396,15 @@ describe('jobApplication', () => {
       const replayPass = { inDecisions: [{ type: 'job_apply_luck', result: 1 }], outDecisions: [] };
       const resPass = applyForJob(playerHighTech, horologistJob, 4, {}, undefined, undefined, { useSkills: true }, 1, replayPass);
       expect(resPass.success).toBe(true);
+
+      // Verifies floating point epsilon tolerance (e.g. 1.4999999999999996 vs req 1.50)
+      const playerFloatingPoint = {
+        ...playerHighTech,
+        skillTech: 1.4999999999999996
+      };
+      const replayFloat = { inDecisions: [{ type: 'job_apply_luck', result: 1 }], outDecisions: [] };
+      const resFloat = applyForJob(playerFloatingPoint, horologistJob, 4, {}, undefined, undefined, { useSkills: true }, 1, replayFloat);
+      expect(resFloat.success).toBe(true);
     });
   });
 });

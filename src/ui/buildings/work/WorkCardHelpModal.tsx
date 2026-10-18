@@ -115,7 +115,7 @@ export const WorkCardHelpModal: React.FC<WorkCardHelpModalProps> = ({
         inputs.push({
           icon: '🔧',
           title: 'Technical Tag',
-          desc: 'Builds Technical Skill (+0.25 per Exp earned) to fulfill technical prerequisites for promotions.'
+          desc: 'Builds Technical Skill (+0.10 per Exp earned) to fulfill technical prerequisites for promotions.'
         });
       }
       if (isMgmt) {

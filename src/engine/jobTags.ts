@@ -317,7 +317,7 @@ export function getJobSpecialRequirements(job: JobDef | undefined | null, isAdva
   if (hasJobTag(job, 'technical') && reqTech !== undefined) {
     reqs.push({
       label: 'Technical Skill',
-      detail: `Skill_Tech >= ${reqTech}.00`
+      detail: `Skill_Tech >= ${Number(reqTech).toFixed(2)}`
     });
   }
 

@@ -227,14 +227,14 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
       careerAttributes.push({
         id: 'stat-skill-mgmt',
         label: t('dashboard.skillMgmt', { defaultValue: 'Leadership' }),
-        value: `${(player.skillMgmt ?? 0).toFixed(1)}/${maxMgmt.toFixed(1)}`,
+        value: `${(player.skillMgmt ?? 0).toFixed(2)}/${maxMgmt.toFixed(1)}`,
         icon: '👔',
       });
 
       careerAttributes.push({
         id: 'stat-skill-tech',
         label: t('dashboard.skillTech', { defaultValue: 'Tech' }),
-        value: `${(player.skillTech ?? 0).toFixed(1)}/${maxTech.toFixed(1)}`,
+        value: `${(player.skillTech ?? 0).toFixed(2)}/${maxTech.toFixed(1)}`,
         icon: '🔧',
       });
     }
