@@ -59,6 +59,38 @@ describe('dataLoader', () => {
     // Verify base items from floppy/cdrom/qol are inherited
     expect(advanced.items.length).toBeGreaterThan(0);
     expect(advanced.jobs.length).toBeGreaterThan(0);
+
+    const janitorIds = ['uni_janitor', 'blacks_janitor', 'qt_janitor'];
+    for (const jId of janitorIds) {
+      const job = advanced.jobs.find(j => j.id === jId);
+      expect(job, `Job ${jId} should exist in advanced`).toBeDefined();
+      expect(job?.tags).toContain('always_hiring');
+      expect(job?.tags).toContain('heavy_physical');
+    }
+
+    // Factory janitor replaced by Scrap Sorter
+    expect(advanced.jobs.find(j => j.id === 'factory_janitor')).toBeUndefined();
+    const scrapSorter = advanced.jobs.find(j => j.id === 'factory_scrap_sorter');
+    expect(scrapSorter).toBeDefined();
+    expect(scrapSorter?.baseWage).toBe(7);
+    expect(scrapSorter?.requirements.experience).toBe(20);
+    expect(scrapSorter?.requirements.dependability).toBe(20);
+    expect(scrapSorter?.tags).toEqual([]);
+
+    // Bank janitor replaced by Bank Security Guard
+    expect(advanced.jobs.find(j => j.id === 'bank_janitor')).toBeUndefined();
+    const bankGuard = advanced.jobs.find(j => j.id === 'bank_security_guard');
+    expect(bankGuard).toBeDefined();
+    expect(bankGuard?.baseWage).toBe(8);
+    expect(bankGuard?.requirements.experience).toBe(20);
+    expect(bankGuard?.requirements.dependability).toBe(25);
+    expect(bankGuard?.requirements.uniform).toBe('dress');
+    expect(bankGuard?.tags).toEqual(['look_fit']);
+
+    const groundskeeper = advanced.jobs.find(j => j.id === 'rent_groundskeeper');
+    expect(groundskeeper).toBeDefined();
+    expect(groundskeeper?.tags).toContain('heavy_physical');
+    expect(groundskeeper?.tags).not.toContain('always_hiring');
   });
 
   it('loads available campaigns from campaigns.json manifest', async () => {

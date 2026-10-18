@@ -31,6 +31,10 @@
     "tags": ["executive_management"]
   },
   {
+    "id": "qt_janitor",
+    "tags": ["always_hiring", "heavy_physical"]
+  },
+  {
     "id": "qt_salesperson",
     "tags": ["frontline_service", "high_downtime"]
   },
@@ -74,7 +78,21 @@
   },
   {
     "id": "factory_janitor",
-    "tags": ["always_hiring", "heavy_physical"]
+    "_remove": true
+  },
+  {
+    "id": "factory_scrap_sorter",
+    "title": "Scrap Sorter",
+    "locationId": "factory",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 20,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": [],
+    "perks": []
   },
   {
     "id": "factory_assembly",
@@ -124,7 +142,21 @@
   },
   {
     "id": "bank_janitor",
-    "tags": ["always_hiring", "heavy_physical"]
+    "_remove": true
+  },
+  {
+    "id": "bank_security_guard",
+    "title": "Security Guard",
+    "locationId": "bank",
+    "baseWage": 8,
+    "requirements": {
+      "experience": 20,
+      "dependability": 25,
+      "degrees": [],
+      "uniform": "dress"
+    },
+    "tags": ["look_fit"],
+    "perks": []
   },
   {
     "id": "bank_teller",

@@ -847,23 +847,6 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
     "title": "Professor",
   },
   {
-    "baseWage": 7,
-    "id": "factory_janitor",
-    "locationId": "factory",
-    "perks": [],
-    "requirements": {
-      "degrees": [],
-      "dependability": 20,
-      "experience": 10,
-      "uniform": "casual",
-    },
-    "tags": [
-      "always_hiring",
-      "heavy_physical",
-    ],
-    "title": "Janitor",
-  },
-  {
     "baseWage": 8,
     "id": "factory_assembly",
     "locationId": "factory",
@@ -1017,23 +1000,6 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       "executive_management",
     ],
     "title": "General Manager",
-  },
-  {
-    "baseWage": 6,
-    "id": "bank_janitor",
-    "locationId": "bank",
-    "perks": [],
-    "requirements": {
-      "degrees": [],
-      "dependability": 20,
-      "experience": 10,
-      "uniform": "casual",
-    },
-    "tags": [
-      "always_hiring",
-      "heavy_physical",
-    ],
-    "title": "Janitor",
   },
   {
     "baseWage": 10,
@@ -1241,6 +1207,10 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       "experience": 10,
       "uniform": "casual",
     },
+    "tags": [
+      "always_hiring",
+      "heavy_physical",
+    ],
     "title": "Janitor",
   },
   {
@@ -1258,6 +1228,36 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       "frontline_service",
     ],
     "title": "Clerk",
+  },
+  {
+    "baseWage": 7,
+    "id": "factory_scrap_sorter",
+    "locationId": "factory",
+    "perks": [],
+    "requirements": {
+      "degrees": [],
+      "dependability": 20,
+      "experience": 20,
+      "uniform": "casual",
+    },
+    "tags": [],
+    "title": "Scrap Sorter",
+  },
+  {
+    "baseWage": 8,
+    "id": "bank_security_guard",
+    "locationId": "bank",
+    "perks": [],
+    "requirements": {
+      "degrees": [],
+      "dependability": 25,
+      "experience": 20,
+      "uniform": "dress",
+    },
+    "tags": [
+      "look_fit",
+    ],
+    "title": "Security Guard",
   },
   {
     "baseWage": 7,
