@@ -660,7 +660,7 @@ export function workShift(
     }
 
     if (useSkills && hasJobTag(job, 'technical')) {
-      const techGain = roundToResolution(expGain * 0.25, 0.05);
+      const techGain = roundToResolution(expGain * 0.10, 0.05);
       if (techGain > 0) {
         const maxTech = calcMaxSkillCap(updated, 'skillTech', campaignEducation, advStatRules, rules as GameRules);
         updated.skillTech = Math.min(maxTech, roundToResolution((updated.skillTech || 0) + techGain, 0.05));

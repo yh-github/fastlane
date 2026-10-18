@@ -58,14 +58,14 @@
     "id": "socket_repairman",
     "tags": ["technical"],
     "requirements": {
-      "techSkill": 1.5
+      "techSkill": 3.0
     }
   },
   {
     "id": "socket_mgr",
     "tags": ["technical", "middle_management"],
     "requirements": {
-      "techSkill": 2.0
+      "techSkill": 3.0
     }
   },
   {
@@ -104,7 +104,10 @@
   },
   {
     "id": "factory_machinist_helper",
-    "tags": ["technical"]
+    "tags": ["technical"],
+    "requirements": {
+      "techSkill": 2.0
+    }
   },
   {
     "id": "factory_exec_secretary",
@@ -114,21 +117,21 @@
     "id": "factory_machinist",
     "tags": ["technical"],
     "requirements": {
-      "techSkill": 3.0
+      "techSkill": 5.0
     }
   },
   {
     "id": "factory_dept_mgr",
     "tags": ["technical", "middle_management"],
     "requirements": {
-      "techSkill": 3.0
+      "techSkill": 5.5
     }
   },
   {
     "id": "factory_engineer",
     "tags": ["technical"],
     "requirements": {
-      "techSkill": 4.0
+      "techSkill": 7.5
     }
   },
   {
@@ -136,7 +139,7 @@
     "requirements": {
       "experience": 80,
       "dependability": 80,
-      "techSkill": 5.0
+      "techSkill": 8.0
     },
     "tags": ["technical", "executive_management"]
   },
@@ -240,7 +243,7 @@
       "dependability": 35,
       "degrees": ["electronics"],
       "uniform": "casual",
-      "techSkill": 1.5
+      "techSkill": 3.5
     },
     "tags": ["technical", "high_downtime"],
     "perks": []

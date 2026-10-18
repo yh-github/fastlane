@@ -769,10 +769,10 @@ describe("Job Engine - workShift", () => {
 
         const advancedRules = advRules;
 
-        // Working heavy physical technical job grants 0.5 Exp, so +0.125 skillTech
+        // Working heavy physical technical job grants 0.5 Exp, so +0.05 skillTech (at 0.10 rate)
         const shiftRes = workShift(player, techJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(shiftRes.success).toBe(true);
-        expect(shiftRes.updated.skillTech).toBeCloseTo(1.15, 2); // 1.0 + 0.125 ~ 1.15 rounded to 0.05
+        expect(shiftRes.updated.skillTech).toBeCloseTo(1.05, 2);
 
         // Prerequisite check: A player with 28 Exp and 3 skillTech meets 30 Exp requirement for tech job
         const applicant = {

@@ -767,7 +767,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 40,
       "experience": 40,
-      "techSkill": 1.5,
+      "techSkill": 3,
       "uniform": "casual",
     },
     "tags": [
@@ -787,7 +787,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 40,
       "experience": 40,
-      "techSkill": 2,
+      "techSkill": 3,
       "uniform": "business",
     },
     "tags": [
@@ -894,6 +894,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 40,
       "experience": 40,
+      "techSkill": 2,
       "uniform": "casual",
     },
     "tags": [
@@ -931,7 +932,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 50,
       "experience": 50,
-      "techSkill": 3,
+      "techSkill": 5,
       "uniform": "casual",
     },
     "tags": [
@@ -951,7 +952,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 60,
       "experience": 60,
-      "techSkill": 3,
+      "techSkill": 5.5,
       "uniform": "business",
     },
     "tags": [
@@ -972,7 +973,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 60,
       "experience": 60,
-      "techSkill": 4,
+      "techSkill": 7.5,
       "uniform": "business",
     },
     "tags": [
@@ -992,7 +993,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 80,
       "experience": 80,
-      "techSkill": 5,
+      "techSkill": 8,
       "uniform": "business",
     },
     "tags": [
@@ -1306,7 +1307,7 @@ exports[`Campaign Jobs Stability Snapshots > matches snapshot for advanced jobs 
       ],
       "dependability": 35,
       "experience": 35,
-      "techSkill": 1.5,
+      "techSkill": 3.5,
       "uniform": "casual",
     },
     "tags": [

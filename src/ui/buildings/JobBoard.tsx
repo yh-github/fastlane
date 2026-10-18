@@ -157,9 +157,9 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
           const effectiveDep = (player.dependability || 0) + (decoupleSkills ? 0 : (techSkill + mgmtSkill));
           const effReqs = calcEffectiveJobRequirements(job, player, isAdvanced, campaign);
           const reqMgmt = isExecMgmt ? Math.floor(job.requirements.experience / 10) : 0;
-          const missingMgmt = isExecMgmt && ((player.skillMgmt || 0) < reqMgmt);
+          const missingMgmt = isExecMgmt && ((player.skillMgmt || 0) < reqMgmt - 0.001);
           const reqTech = (job.requirements as any)?.techSkill ?? (job.requirements as any)?.skillTech;
-          const missingTech = isTechnical && reqTech !== undefined && ((player.skillTech || 0) < reqTech);
+          const missingTech = isTechnical && reqTech !== undefined && ((player.skillTech || 0) < reqTech - 0.001);
           const missingExp = effectiveExp < effReqs.reqExp;
           const missingDep = effectiveDep < effReqs.reqDep;
           const missingDegrees = job.requirements.degrees.filter(d => !player.degrees.includes(d));
