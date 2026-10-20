@@ -293,6 +293,11 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
 
     // 11. Test Pawn Shop Mini Game Cards on mobile viewport (390x844)
     await page.setViewportSize({ width: 390, height: 844 });
+    const orientationDismiss = page.locator('.orientation-prompt-btn-dismiss');
+    if (await orientationDismiss.isVisible()) {
+      await orientationDismiss.click();
+      await expect(orientationDismiss).toBeHidden({ timeout: 3000 });
+    }
     await page.evaluate(() => {
       (window as any).__triggerAppraisalDilemma();
     });
@@ -405,5 +410,105 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
     if (await buildingModal.isVisible()) {
       await page.locator('.building-modal__close').click();
     }
+  });
+
+  test('verifies Settings modal fits phone screens (landscape 844x390 and portrait 390x844) with accessible touch targets', async ({ page }) => {
+    // 1. Phone landscape viewport (844x390, e.g. iPhone 12/13/14)
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.goto('/');
+
+    const startGameBtn = page.locator('.title-screen__btn').first();
+    await expect(startGameBtn).toBeVisible({ timeout: 5000 });
+    await startGameBtn.click();
+
+    const startLifeBtn = page.locator('.action-panel__btn').filter({ hasText: /Start Life|התחל חיים/i }).first();
+    await expect(startLifeBtn).toBeVisible({ timeout: 5000 });
+    await startLifeBtn.click();
+
+    // Close initial apartment modal if open
+    const buildingModal = page.locator('.building-modal');
+    if (await buildingModal.isVisible()) {
+      await page.locator('.building-modal__close').click();
+      await expect(buildingModal).toBeHidden({ timeout: 3000 });
+    }
+
+    // Open Settings modal
+    const settingsBtn = page.locator('#btn-settings');
+    await expect(settingsBtn).toBeVisible();
+    await settingsBtn.click();
+
+    const settingsContent = page.locator('[data-testid="settings-modal-content"]');
+    await expect(settingsContent).toBeVisible();
+
+    // Verify modal fits within the 844x390 phone landscape viewport
+    const landscapeBox = await settingsContent.boundingBox();
+    expect(landscapeBox).not.toBeNull();
+    if (landscapeBox) {
+      expect(landscapeBox.x).toBeGreaterThanOrEqual(0);
+      expect(landscapeBox.y).toBeGreaterThanOrEqual(0);
+      expect(landscapeBox.width).toBeLessThanOrEqual(845);
+      expect(landscapeBox.height).toBeLessThanOrEqual(395);
+    }
+
+    // Verify top close button has accessible tap size (>= 40px)
+    const closeBtn = page.locator('.settings-modal__close');
+    await expect(closeBtn).toBeVisible();
+    const closeBox = await closeBtn.boundingBox();
+    expect(closeBox).not.toBeNull();
+    if (closeBox) {
+      expect(closeBox.width).toBeGreaterThanOrEqual(40);
+      expect(closeBox.height).toBeGreaterThanOrEqual(40);
+    }
+
+    // Verify category quick jump pills are visible
+    const interfacePill = page.locator('[data-testid="pill-goto-interface"]');
+    const graphicsPill = page.locator('[data-testid="pill-goto-graphics"]');
+    await expect(interfacePill).toBeVisible();
+    await expect(graphicsPill).toBeVisible();
+
+    // Test quick jump to Graphics
+    await graphicsPill.click();
+    await expect(page.locator('[data-testid="category-header-graphics"]')).toBeVisible();
+
+    // Verify bottom action buttons (Export Save, Close) are visible and fit without overflow
+    const exportSaveBtn = page.locator('[data-testid="btn-export-save"]');
+    await expect(exportSaveBtn).toBeVisible();
+    const footerCloseBtn = page.locator('.settings-modal-footer .settings-modal-footer__close');
+    await expect(footerCloseBtn).toBeVisible();
+    const footerCloseBox = await footerCloseBtn.boundingBox();
+    expect(footerCloseBox).not.toBeNull();
+    if (footerCloseBox) {
+      expect(footerCloseBox.y + footerCloseBox.height).toBeLessThanOrEqual(395);
+    }
+
+    // Close settings via footer Close button
+    await footerCloseBtn.click();
+    await expect(settingsContent).toBeHidden({ timeout: 3000 });
+
+    // 2. Test in phone portrait mode (390x844)
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    // Dismiss orientation prompt if it appears
+    const orientationDismiss = page.locator('.orientation-prompt-btn-dismiss');
+    if (await orientationDismiss.isVisible()) {
+      await orientationDismiss.click();
+      await expect(orientationDismiss).toBeHidden({ timeout: 3000 });
+    }
+
+    // Reopen settings in portrait mode
+    await settingsBtn.click();
+    await expect(settingsContent).toBeVisible();
+
+    // Verify portrait modal fits within viewport
+    const portraitBox = await settingsContent.boundingBox();
+    expect(portraitBox).not.toBeNull();
+    if (portraitBox) {
+      expect(portraitBox.width).toBeLessThanOrEqual(395);
+      expect(portraitBox.height).toBeLessThanOrEqual(845);
+    }
+
+    // Close via top close button
+    await closeBtn.click();
+    await expect(settingsContent).toBeHidden({ timeout: 3000 });
   });
 });

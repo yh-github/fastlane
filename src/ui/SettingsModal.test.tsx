@@ -457,5 +457,65 @@ describe('SettingsModal', () => {
     fireEvent.click(guiStyleItem);
     expect(setGameState).not.toHaveBeenCalled();
   });
+
+  it('renders category navigation pills and un-folds category when navigating to it', () => {
+    // Mock scrollIntoView
+    const scrollIntoViewMock = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+    render(
+      <SettingsModal
+        gameState={dummyGameState}
+        setGameState={() => {}}
+        onClose={() => {}}
+        logCount={2}
+        onOpenLog={() => {}}
+      />
+    );
+
+    // Verify navigation pills are present
+    const interfacePill = screen.getByTestId('pill-goto-interface');
+    const graphicsPill = screen.getByTestId('pill-goto-graphics');
+    const developerPill = screen.getByTestId('pill-goto-developer');
+    expect(interfacePill).toBeInTheDocument();
+    expect(graphicsPill).toBeInTheDocument();
+    expect(developerPill).toBeInTheDocument();
+
+    // Fold Graphics category
+    const graphicsHeader = screen.getByTestId('category-header-graphics');
+    fireEvent.click(graphicsHeader);
+    expect(screen.queryByText('Crisp Pixel Art')).not.toBeInTheDocument();
+
+    // Click graphics pill -> should unfold Graphics and call scrollIntoView
+    fireEvent.click(graphicsPill);
+    expect(screen.getByText('Crisp Pixel Art')).toBeInTheDocument();
+  });
+
+  it('renders accessible mobile switch toggles reflecting rules state', () => {
+    render(
+      <SettingsModal
+        gameState={{
+          ...dummyGameState,
+          rules: {
+            ...dummyGameState.rules,
+            helpfulUI: true,
+            enableAnimations: false,
+          }
+        }}
+        setGameState={() => {}}
+        onClose={() => {}}
+      />
+    );
+
+    const helpfulItem = screen.getByTestId('setting-helpful-ui');
+    const helpfulInput = helpfulItem.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(helpfulInput).toBeInTheDocument();
+    expect(helpfulInput.checked).toBe(true);
+
+    const animItem = screen.getByTestId('setting-enable-animations');
+    const animInput = animItem.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(animInput).toBeInTheDocument();
+    expect(animInput.checked).toBe(false);
+  });
 });
 
