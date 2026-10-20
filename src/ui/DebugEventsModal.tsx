@@ -163,14 +163,12 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
     } else if (type === 'appliance_break') {
       newEvent.applianceId = selectedApplianceId || player?.inventory.appliances[0]?.id;
     } else if (type === 'apartment_robbery' && stolenApplianceIds.length > 0) {
-      newEvent.stolenItemIds = [...stolenApplianceIds];
+      newEvent.stolenItemIds = stolenApplianceIds;
     }
 
     setGameState(prev => {
       if (!prev) return prev;
-      const currentQueue = prev.debugQueue || [];
-      // Remove any existing instance of the same event for the same scope
-      const filtered = currentQueue.filter(
+      const filtered = (prev.debugQueue || []).filter(
         e => !(e.type === type && (player ? e.playerId === player.id : !e.playerId))
       );
       return {
@@ -199,9 +197,16 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
   const relevantMetas = DEBUG_EVENT_METAS.filter(m => (selectedPlayerId === 'global' ? m.isGlobal : !m.isGlobal));
 
   return (
-    <div className="fullscreen-overlay" style={{ zIndex: 10000 }}>
-      <div className="building-modal" style={{ maxWidth: '650px', maxHeight: '90vh' }}>
-        <button className="building-modal__close" onClick={onClose}>
+    <div className="fullscreen-overlay debug-events-modal-overlay">
+      <div 
+        className="building-modal debug-events-modal-content"
+        data-testid="debug-events-modal-content"
+      >
+        <button 
+          className="building-modal__close debug-events-modal__close" 
+          onClick={onClose}
+          aria-label="Close"
+        >
           ×
         </button>
 
@@ -209,7 +214,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
           <div className="building-modal__face">🛠️</div>
           <div className="building-modal__title-group">
             <h2>{t('debug.modalTitle', { defaultValue: 'Debug Events & Economy' })}</h2>
-            <div style={{ fontSize: '0.8rem', color: '#aaa' }}>
+            <div style={{ fontSize: '0.8rem', color: '#aaa', lineHeight: 1.3 }}>
               {t('debug.modalSubtitle', {
                 defaultValue: 'Playtest rare events by bypassing RNG. Normal preconditions still apply.',
               })}
@@ -217,20 +222,20 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
           </div>
         </div>
 
-        <div className="building-modal__content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="building-modal__content debug-events-modal__body">
           {/* Economy Controls Top Panel */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.4)',
               borderRadius: '8px',
-              padding: '12px 16px',
+              padding: '12px 14px',
               border: '1px solid rgba(0, 229, 255, 0.2)',
             }}
           >
-            <div style={{ fontWeight: 600, color: 'var(--accent-cyan)', marginBottom: '10px', fontSize: '0.9rem' }}>
+            <div style={{ fontWeight: 600, color: 'var(--accent-cyan)', marginBottom: '8px', fontSize: '0.9rem' }}>
               📈 {t('debug.economyTitle', { defaultValue: 'Global Economy Controls' })}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="debug-economy-grid">
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', color: '#bbb', marginBottom: '4px' }}>
                   {t('debug.economicIndex', { defaultValue: 'Economic Index (Reading)' })}:
@@ -243,7 +248,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                     max={maxEconReading}
                     value={gameState.economicIndex}
                     onChange={e => handleUpdateEconomyIndex(Number(e.target.value))}
-                    style={{ flex: 1, accentColor: 'var(--accent-cyan)', cursor: 'pointer' }}
+                    style={{ flex: 1, accentColor: 'var(--accent-cyan)', cursor: 'pointer', height: '28px' }}
                   />
                   <input
                     type="number"
@@ -257,8 +262,9 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                       border: '1px solid #444',
                       color: '#fff',
                       borderRadius: '4px',
-                      padding: '2px 4px',
+                      padding: '4px',
                       textAlign: 'center',
+                      minHeight: '32px'
                     }}
                   />
                 </div>
@@ -279,7 +285,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                     max={3}
                     value={gameState.economicTrend}
                     onChange={e => handleUpdateEconomyTrend(Number(e.target.value))}
-                    style={{ flex: 1, accentColor: 'var(--accent-amber)', cursor: 'pointer' }}
+                    style={{ flex: 1, accentColor: 'var(--accent-amber)', cursor: 'pointer', height: '28px' }}
                   />
                   <input
                     type="number"
@@ -293,8 +299,9 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                       border: '1px solid #444',
                       color: '#fff',
                       borderRadius: '4px',
-                      padding: '2px 4px',
+                      padding: '4px',
                       textAlign: 'center',
+                      minHeight: '32px'
                     }}
                   />
                 </div>
@@ -304,18 +311,14 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
           </div>
 
           {/* Player / Scope Selector Tabs */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
+          <div className="debug-player-tabs" role="tablist">
             <button
               onClick={() => setSelectedPlayerId('global')}
+              className="debug-player-tab"
               style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
                 border: selectedPlayerId === 'global' ? '1px solid var(--accent-cyan)' : '1px solid transparent',
                 background: selectedPlayerId === 'global' ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0,0,0,0.3)',
                 color: selectedPlayerId === 'global' ? 'var(--accent-cyan)' : '#aaa',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '0.85rem',
               }}
             >
               🌐 Global Events
@@ -324,15 +327,11 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
               <button
                 key={p.id}
                 onClick={() => setSelectedPlayerId(p.id)}
+                className="debug-player-tab"
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: '6px',
                   border: selectedPlayerId === p.id ? '1px solid var(--accent-cyan)' : '1px solid transparent',
                   background: selectedPlayerId === p.id ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0,0,0,0.3)',
                   color: selectedPlayerId === p.id ? 'var(--accent-cyan)' : '#aaa',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
                 }}
               >
                 👤 {p.name}
@@ -346,31 +345,33 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
               style={{
                 background: 'rgba(20, 26, 46, 0.75)',
                 borderRadius: '8px',
-                padding: '12px 16px',
+                padding: '12px 14px',
                 border: '1px solid rgba(0, 229, 255, 0.3)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ fontWeight: 600, color: 'var(--accent-cyan)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   🛠️ Player & Apartment Sandbox ({selectedPlayer.name})
                 </div>
                 <button
                   onClick={() => setIsMockupSandboxOpen(true)}
                   style={{
-                    padding: '4px 10px',
+                    padding: '6px 12px',
                     background: 'linear-gradient(135deg, #00e5ff 0%, #0284c7 100%)',
                     color: '#000',
                     border: 'none',
                     borderRadius: '6px',
                     fontWeight: 'bold',
-                    fontSize: '0.75rem',
+                    fontSize: '0.78rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px'
+                    gap: '4px',
+                    minHeight: '34px',
+                    touchAction: 'manipulation'
                   }}
                 >
                   🎨 Open Mockup Playground
@@ -378,38 +379,38 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
               </div>
 
               {/* Cash Row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.8rem', color: '#bbb', minWidth: '85px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.82rem', color: '#bbb', minWidth: '85px' }}>
                   💰 Cash: <strong style={{ color: '#85ffb5' }}>${selectedPlayer.money}</strong>
                 </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => handleUpdatePlayerCash(500)}
-                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 10px', fontSize: '0.76rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     +$500
                   </button>
                   <button
                     onClick={() => handleUpdatePlayerCash(2000)}
-                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 10px', fontSize: '0.76rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     +$2,000
                   </button>
                   <button
                     onClick={() => handleUpdatePlayerCash(10000)}
-                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 10px', fontSize: '0.76rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     +$10,000
                   </button>
                   <button
                     onClick={() => handleUpdatePlayerCash(-500)}
-                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#ff8585', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 10px', fontSize: '0.76rem', background: '#1e293b', color: '#ff8585', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     -$500
                   </button>
                   <button
                     onClick={() => handleSetPlayerCash(0)}
-                    style={{ padding: '2px 8px', fontSize: '0.72rem', background: '#1e293b', color: '#aaa', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 10px', fontSize: '0.76rem', background: '#1e293b', color: '#aaa', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     $0 (Broke)
                   </button>
@@ -417,8 +418,8 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
               </div>
 
               {/* Mess Row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.8rem', color: '#bbb', minWidth: '85px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.82rem', color: '#bbb', minWidth: '85px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   <MessIcon size="1.2em" /> Mess: <strong style={{ color: (selectedPlayer.mess ?? 0) > 20 ? '#e74c3c' : '#f39c12' }}>{selectedPlayer.mess ?? 0}</strong>
                 </span>
                 <input
@@ -427,30 +428,30 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                   max={50}
                   value={selectedPlayer.mess ?? 0}
                   onChange={(e) => handleSetPlayerMess(Number(e.target.value))}
-                  style={{ width: '110px', accentColor: '#f39c12', cursor: 'pointer' }}
+                  style={{ width: '110px', accentColor: '#f39c12', cursor: 'pointer', height: '28px' }}
                 />
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => handleSetPlayerMess(0)}
-                    style={{ padding: '2px 6px', fontSize: '0.72rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 8px', fontSize: '0.76rem', background: '#1e293b', color: '#85ffb5', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     0 (Clean)
                   </button>
                   <button
                     onClick={() => handleSetPlayerMess(15)}
-                    style={{ padding: '2px 6px', fontSize: '0.72rem', background: '#1e293b', color: '#f39c12', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 8px', fontSize: '0.76rem', background: '#1e293b', color: '#f39c12', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     15
                   </button>
                   <button
                     onClick={() => handleSetPlayerMess(30)}
-                    style={{ padding: '2px 6px', fontSize: '0.72rem', background: '#1e293b', color: '#e74c3c', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 8px', fontSize: '0.76rem', background: '#1e293b', color: '#e74c3c', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     30 (Dirty)
                   </button>
                   <button
                     onClick={() => handleSetPlayerMess(50)}
-                    style={{ padding: '2px 6px', fontSize: '0.72rem', background: '#1e293b', color: '#e74c3c', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer' }}
+                    style={{ padding: '4px 8px', fontSize: '0.76rem', background: '#1e293b', color: '#e74c3c', border: '1px solid #334155', borderRadius: '5px', cursor: 'pointer', minHeight: '32px', touchAction: 'manipulation' }}
                   >
                     50 (Max)
                   </button>
@@ -458,11 +459,11 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
               </div>
 
               {/* Housing Row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.8rem', color: '#bbb', minWidth: '85px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.82rem', color: '#bbb', minWidth: '85px' }}>
                   🏠 Housing:
                 </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   {[
                     { id: 'low_cost', name: 'Low-Cost (10)', icon: '🏚️' },
                     { id: 'security_apartments', name: 'Security (15)', icon: '🏢' },
@@ -472,14 +473,16 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                       key={h.id}
                       onClick={() => handleSetPlayerHousing(h.id)}
                       style={{
-                        padding: '3px 8px',
-                        fontSize: '0.72rem',
+                        padding: '5px 10px',
+                        fontSize: '0.76rem',
                         background: selectedPlayer.currentHousingId === h.id ? 'rgba(0, 229, 255, 0.2)' : '#1e293b',
                         color: selectedPlayer.currentHousingId === h.id ? '#00e5ff' : '#ccc',
                         border: selectedPlayer.currentHousingId === h.id ? '1px solid #00e5ff' : '1px solid #334155',
-                        borderRadius: '4px',
+                        borderRadius: '5px',
                         cursor: 'pointer',
-                        fontWeight: selectedPlayer.currentHousingId === h.id ? 'bold' : 'normal'
+                        fontWeight: selectedPlayer.currentHousingId === h.id ? 'bold' : 'normal',
+                        minHeight: '34px',
+                        touchAction: 'manipulation'
                       }}
                     >
                       {h.icon} {h.name}
@@ -490,22 +493,24 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
 
               {/* Durables Toggle Grid */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#aaa', fontWeight: 600 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#aaa', fontWeight: 600 }}>
                     🛋️ Appliances ({selectedPlayer.inventory.appliances.length}) & Books ({selectedPlayer.inventory.books?.length || 0}):
                   </span>
-                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '0.7rem' }}>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '0.72rem' }}>
                     <span style={{ color: '#888' }}>Add Condition:</span>
                     <button
                       onClick={() => setApplianceConditionToAdd('new')}
                       style={{
-                        padding: '1px 5px',
-                        fontSize: '0.68rem',
+                        padding: '3px 8px',
+                        fontSize: '0.72rem',
                         background: applianceConditionToAdd === 'new' ? '#064e3b' : '#111',
                         color: applianceConditionToAdd === 'new' ? '#85ffb5' : '#777',
                         border: '1px solid #334155',
-                        borderRadius: '3px',
-                        cursor: 'pointer'
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        minHeight: '28px',
+                        touchAction: 'manipulation'
                       }}
                     >
                       ✨ New
@@ -513,13 +518,15 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                     <button
                       onClick={() => setApplianceConditionToAdd('used')}
                       style={{
-                        padding: '1px 5px',
-                        fontSize: '0.68rem',
+                        padding: '3px 8px',
+                        fontSize: '0.72rem',
                         background: applianceConditionToAdd === 'used' ? '#075985' : '#111',
                         color: applianceConditionToAdd === 'used' ? '#85c1e9' : '#777',
                         border: '1px solid #334155',
-                        borderRadius: '3px',
-                        cursor: 'pointer'
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        minHeight: '28px',
+                        touchAction: 'manipulation'
                       }}
                     >
                       📦 Used
@@ -527,7 +534,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                   {[
                     'refrigerator', 'freezer', 'stove', 'microwave',
                     'color_tv', 'bw_tv', 'stereo', 'vcr', 'computer', 'hot_tub'
@@ -542,13 +549,15 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                         key={id}
                         onClick={() => handleToggleAppliance(id)}
                         style={{
-                          padding: '3px 7px',
-                          fontSize: '0.7rem',
+                          padding: '4px 9px',
+                          fontSize: '0.74rem',
                           background: owned ? (isNew ? 'rgba(46, 204, 113, 0.2)' : 'rgba(52, 152, 219, 0.2)') : 'rgba(255,255,255,0.03)',
-                          color: owned ? (isNew ? '#85ffb5' : '#85c1e9') : '#666',
+                          color: owned ? (isNew ? '#85ffb5' : '#85c1e9') : '#888',
                           border: owned ? (isNew ? '1px solid #2ecc71' : '1px solid #3498db') : '1px dashed #444',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          minHeight: '32px',
+                          touchAction: 'manipulation'
                         }}
                       >
                         {owned ? (isNew ? '✨' : '📦') : '+'} {displayName}
@@ -565,13 +574,15 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                         key={bId}
                         onClick={() => handleToggleBook(bId)}
                         style={{
-                          padding: '3px 7px',
-                          fontSize: '0.7rem',
+                          padding: '4px 9px',
+                          fontSize: '0.74rem',
                           background: owned ? 'rgba(155, 89, 182, 0.2)' : 'rgba(255,255,255,0.03)',
-                          color: owned ? '#d7bde2' : '#666',
+                          color: owned ? '#d7bde2' : '#888',
                           border: owned ? '1px solid #9b59b6' : '1px dashed #444',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          minHeight: '32px',
+                          touchAction: 'manipulation'
                         }}
                       >
                         {owned ? '📚' : '+'} {displayName}
@@ -584,7 +595,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
           )}
 
           {/* Event List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {relevantMetas.map(meta => {
               const precheck = checkEventPreconditions(
                 meta.type,
@@ -598,21 +609,19 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
               return (
                 <div
                   key={meta.type}
+                  className="debug-event-card"
                   style={{
-                    background: 'rgba(0, 0, 0, 0.35)',
-                    borderRadius: '8px',
                     border: queuedEntry
                       ? '1px solid var(--accent-amber)'
                       : precheck.allowed
                       ? '1px solid rgba(255,255,255,0.1)'
                       : '1px solid rgba(255, 50, 50, 0.2)',
-                    padding: '12px',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                  <div className="debug-event-card__inner">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>
                           {t(meta.titleKey, { defaultValue: meta.type.replaceAll('_', ' ').toUpperCase() })}
                         </span>
                         {queuedEntry && (
@@ -625,6 +634,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                               padding: '1px 6px',
                               borderRadius: '4px',
                               fontWeight: 600,
+                              whiteSpace: 'nowrap'
                             }}
                           >
                             ⚠️ QUEUED
@@ -639,6 +649,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                               padding: '1px 6px',
                               borderRadius: '4px',
                               fontWeight: 600,
+                              whiteSpace: 'nowrap'
                             }}
                           >
                             ✅ READY
@@ -653,23 +664,24 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                               padding: '1px 6px',
                               borderRadius: '4px',
                               fontWeight: 600,
+                              whiteSpace: 'nowrap'
                             }}
                           >
                             ❌ DISABLED
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: '#bbb' }}>
+                      <div style={{ fontSize: '0.78rem', color: '#bbb', lineHeight: 1.35 }}>
                         {t(meta.descKey, { defaultValue: 'Forces this event to occur next turn/trigger.' })}
                       </div>
                       {!precheck.allowed && (
-                        <div style={{ fontSize: '0.75rem', color: '#ff6b8b', marginTop: '4px' }}>
+                        <div style={{ fontSize: '0.74rem', color: '#ff6b8b', marginTop: '4px', lineHeight: 1.3 }}>
                           ⚠️ {precheck.reason}
                         </div>
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <div className="debug-event-card__controls">
                       {/* Configuration toggle if event supports options */}
                       {['market_crash', 'lottery_win', 'appliance_break', 'apartment_robbery'].includes(meta.type) && (
                         <button
@@ -678,10 +690,12 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                             background: 'transparent',
                             border: '1px solid rgba(255,255,255,0.2)',
                             color: '#ccc',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
+                            borderRadius: '5px',
+                            padding: '6px 10px',
                             cursor: 'pointer',
-                            fontSize: '0.75rem',
+                            fontSize: '0.76rem',
+                            minHeight: '36px',
+                            touchAction: 'manipulation'
                           }}
                         >
                           ⚙️ {isExpanded ? 'Hide Options' : 'Options'}
@@ -696,10 +710,12 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                             border: '1px solid var(--accent-magenta)',
                             color: '#fff',
                             borderRadius: '6px',
-                            padding: '6px 12px',
+                            padding: '6px 14px',
                             cursor: 'pointer',
                             fontWeight: 600,
                             fontSize: '0.8rem',
+                            minHeight: '36px',
+                            touchAction: 'manipulation'
                           }}
                         >
                           Dequeue
@@ -713,10 +729,12 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                             border: 'none',
                             color: precheck.allowed ? '#000' : '#666',
                             borderRadius: '6px',
-                            padding: '6px 12px',
+                            padding: '6px 14px',
                             cursor: precheck.allowed ? 'pointer' : 'not-allowed',
                             fontWeight: 600,
                             fontSize: '0.8rem',
+                            minHeight: '36px',
+                            touchAction: 'manipulation'
                           }}
                         >
                           {meta.type === 'street_robbery' ? 'Queue (Next Exit / Turn End)' : 'Queue (Next Turn)'}
@@ -741,9 +759,9 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                           <label style={{ display: 'block', fontSize: '0.75rem', color: '#bbb', marginBottom: '6px' }}>
                             Crash Severity:
                           </label>
-                          <div style={{ display: 'flex', gap: '12px' }}>
+                          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                             {(['minor', 'moderate', 'major'] as const).map(sev => (
-                              <label key={sev} style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                              <label key={sev} style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', minHeight: '30px' }}>
                                 <input
                                   type="radio"
                                   name="crash_sev"
@@ -764,8 +782,8 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                           <label style={{ display: 'block', fontSize: '0.75rem', color: '#bbb', marginBottom: '6px' }}>
                             Lottery Prize Tier:
                           </label>
-                          <div style={{ display: 'flex', gap: '12px' }}>
-                            <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                            <label style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', minHeight: '30px' }}>
                               <input
                                 type="radio"
                                 name="lottery_tier"
@@ -775,7 +793,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                               />
                               Small ($200)
                             </label>
-                            <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                            <label style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', minHeight: '30px' }}>
                               <input
                                 type="radio"
                                 name="lottery_tier"
@@ -785,7 +803,7 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                               />
                               Medium ($500)
                             </label>
-                            <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                            <label style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', minHeight: '30px' }}>
                               <input
                                 type="radio"
                                 name="lottery_tier"
@@ -812,9 +830,11 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                                 background: '#111',
                                 border: '1px solid #444',
                                 color: '#fff',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
+                                padding: '6px 10px',
+                                borderRadius: '5px',
                                 width: '100%',
+                                minHeight: '36px',
+                                fontSize: '0.85rem'
                               }}
                             >
                               {selectedPlayer.inventory.appliances.map((app, idx) => (
@@ -835,11 +855,11 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
                             Items to Steal (leave unchecked for random stolen items):
                           </label>
                           {selectedPlayer.inventory.appliances.length > 0 ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                               {selectedPlayer.inventory.appliances.map((app, idx) => (
                                 <label
                                   key={`${app.id}_${idx}`}
-                                  style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                                  style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', minHeight: '28px' }}
                                 >
                                   <input
                                     type="checkbox"
@@ -870,18 +890,15 @@ export function DebugEventsModal({ gameState, setGameState, campaign, onClose }:
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+        <div className="debug-modal-footer">
           {(gameState.debugQueue?.length || 0) > 0 ? (
             <button
               onClick={handleClearAllQueue}
+              className="action-panel__btn"
               style={{
                 background: 'rgba(255, 64, 129, 0.15)',
                 border: '1px solid var(--accent-magenta)',
                 color: '#fff',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
               }}
             >
               Clear All Queued ({gameState.debugQueue?.length})

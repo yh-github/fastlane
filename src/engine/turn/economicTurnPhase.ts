@@ -145,8 +145,9 @@ export function processEconomicTurnPhase(
     const targetReading = state.economicIndex + 100;
     const diff = targetReading - sim.goods.reading;
     sim.goods.reading = targetReading;
-    sim.main.reading = Math.max(minReading + 100, Math.min(190, sim.main.reading + diff));
-    sim.investments.reading = Math.max(minReading + 100, Math.min(190, sim.investments.reading + diff));
+    const minReadingFloor = econRules.minReading ?? (minReading + 100);
+    sim.main.reading = Math.max(minReadingFloor, Math.min(190, sim.main.reading + diff));
+    sim.investments.reading = Math.max(minReadingFloor, Math.min(190, sim.investments.reading + diff));
   }
   if (state.economicTrend !== undefined && state.economySimulation && sim.goods.index !== state.economicTrend) {
     const diff = state.economicTrend - sim.goods.index;
@@ -175,11 +176,11 @@ export function processEconomicTurnPhase(
   const boomThresholdReading = rawBoomThreshold > 50 ? rawBoomThreshold : rawBoomThreshold + 100;
   const boomThresholdIndex = boomThresholdReading - 100;
 
-  const currentGoodsReading = sim.main.reading;
-  const currentGoodsIndex = sim.main.reading - 100;
+  const currentMainReading = sim.main.reading;
+  const currentMainIndex = sim.main.reading - 100;
 
   if (debugCrash) {
-    if (state.turn >= crashStartWeek && currentGoodsReading >= crashThresholdReading) {
+    if (state.turn >= crashStartWeek && currentMainReading >= crashThresholdReading) {
       const forcedSeverity = debugCrash.crashSeverity || (debugCrash as any).crashType || 'moderate';
       crashSeverity = forcedSeverity;
       if (forcedSeverity === 'minor') {
@@ -194,11 +195,11 @@ export function processEconomicTurnPhase(
         key: 'debug.event_cancelled',
         params: {
           event: 'Market Crash',
-          reason: state.turn < crashStartWeek ? `Requires Turn ${crashStartWeek}+` : `Economy must be ≥ ${crashThresholdIndex} (Current: ${currentGoodsIndex})`,
+          reason: state.turn < crashStartWeek ? `Requires Turn ${crashStartWeek}+` : `Economy must be ≥ ${crashThresholdIndex} (Current: ${currentMainIndex})`,
         },
       });
     }
-  } else if (state.turn >= crashStartWeek && currentGoodsReading >= crashThresholdReading) {
+  } else if (state.turn >= crashStartWeek && currentMainReading >= crashThresholdReading) {
     const crashChance = 1 / (1 + crashDivisor);
     const crashTriggered = resolveDecision(replay, `market_crash_trigger`, () => rng.next() < crashChance);
     if (crashTriggered) {
@@ -217,7 +218,7 @@ export function processEconomicTurnPhase(
   }
 
   if (debugBoom && crashSeverity === 'none') {
-    if (state.turn >= boomStartWeek && currentGoodsReading <= boomThresholdReading) {
+    if (state.turn >= boomStartWeek && currentMainReading <= boomThresholdReading) {
       economicBoom = true;
       currentHeadline = { key: 'newspaper.boom' };
     } else {
@@ -225,11 +226,11 @@ export function processEconomicTurnPhase(
         key: 'debug.event_cancelled',
         params: {
           event: 'Economic Boom',
-          reason: state.turn < boomStartWeek ? `Requires Turn ${boomStartWeek}+` : `Economy must be ≤ ${boomThresholdIndex} (Current: ${currentGoodsIndex})`,
+          reason: state.turn < boomStartWeek ? `Requires Turn ${boomStartWeek}+` : `Economy must be ≤ ${boomThresholdIndex} (Current: ${currentMainIndex})`,
         },
       });
     }
-  } else if (crashSeverity === 'none' && currentGoodsReading <= boomThresholdReading && state.turn >= boomStartWeek) {
+  } else if (crashSeverity === 'none' && currentMainReading <= boomThresholdReading && state.turn >= boomStartWeek) {
     const boomChance = 1 / (1 + boomDivisor);
     const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
     if (boomTriggered) {

@@ -82,6 +82,14 @@ describe('Debug Events Precondition Logic', () => {
 
     state.economicIndex = 10;
     expect(checkEventPreconditions('market_boom', state, mockCampaign).allowed).toBe(true);
+
+    // If economySimulation.main.reading is above threshold (e.g. 130 -> index +30), boom is not allowed
+    if (state.economySimulation) {
+      state.economySimulation.main.reading = 130;
+      expect(checkEventPreconditions('market_boom', state, mockCampaign).allowed).toBe(false);
+      state.economySimulation.main.reading = 100;
+      expect(checkEventPreconditions('market_boom', state, mockCampaign).allowed).toBe(true);
+    }
   });
 
   it('apartment_robbery forbids La Security and requires owned appliances', () => {

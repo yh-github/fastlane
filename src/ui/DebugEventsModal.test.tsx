@@ -140,4 +140,34 @@ describe('DebugEventsModal UI', () => {
     fireEvent.click(openSandboxBtn);
     expect(screen.getByText(/Apartment Visual Mockups/i)).toBeInTheDocument();
   });
+
+  it('renders mobile-responsive debug modal structure and handles close actions', () => {
+    const state = createTestGameState(mockCampaign, [{ name: 'Player 1', isAi: false, goals: {} }], 'node_low_cost');
+    const onClose = vi.fn();
+
+    render(
+      <DebugEventsModal
+        gameState={state}
+        setGameState={() => {}}
+        campaign={mockCampaign}
+        onClose={onClose}
+      />
+    );
+
+    // Verify modal content container has mobile-responsive class
+    const modalContent = screen.getByTestId('debug-events-modal-content');
+    expect(modalContent).toHaveClass('debug-events-modal-content');
+
+    // Verify top close button has accessible close class and calls onClose
+    const closeBtn = modalContent.querySelector('.debug-events-modal__close') as HTMLButtonElement;
+    expect(closeBtn).toBeInTheDocument();
+    fireEvent.click(closeBtn);
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    // Verify footer close button also calls onClose
+    const footerCloseBtn = modalContent.querySelector('.debug-modal-footer .action-panel__btn') as HTMLButtonElement;
+    expect(footerCloseBtn).toBeInTheDocument();
+    fireEvent.click(footerCloseBtn);
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
 });

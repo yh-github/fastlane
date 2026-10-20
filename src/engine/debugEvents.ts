@@ -109,6 +109,9 @@ export function checkEventPreconditions(
       if (state.economicIndex < minIndex) {
         return { allowed: false, reason: `Macro economy must be ≥ ${minIndex} (Current: ${state.economicIndex})` };
       }
+      if (state.economySimulation && (state.economySimulation.main.reading - 100) < minIndex) {
+        return { allowed: false, reason: `Macro economy must be ≥ ${minIndex} (Current: ${state.economySimulation.main.reading - 100})` };
+      }
       return { allowed: true };
     }
 
@@ -121,6 +124,9 @@ export function checkEventPreconditions(
       const maxIndex = rawBoomThreshold > 50 ? rawBoomThreshold - 100 : rawBoomThreshold;
       if (state.economicIndex > maxIndex) {
         return { allowed: false, reason: `Macro economy must be ≤ ${maxIndex} (Current: ${state.economicIndex})` };
+      }
+      if (state.economySimulation && (state.economySimulation.main.reading - 100) > maxIndex) {
+        return { allowed: false, reason: `Macro economy must be ≤ ${maxIndex} (Current: ${state.economySimulation.main.reading - 100})` };
       }
       return { allowed: true };
     }
