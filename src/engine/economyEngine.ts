@@ -68,18 +68,29 @@ export function createDefaultEconomySimulationState(
 }
 
 /**
- * Calculates a price adjusted by a specific sector's reading using Sierra Script 109 math.
- * Formula:
- *   pct = 100 + floor((reading - 100) * 5 / 3)
+ * Calculates a price adjusted by a specific sector's reading using authentic Sierra Script 109 math.
+ * Bytecode formula (script 109):
+ *   if reading < 100: pct = reading - trunc(((100 - reading) * 2) / 3)
+ *   else:             pct = reading + trunc(((reading - 100) * 2) / 3)
  *   pct = clamp(pct, minFloor, maxCeiling)
- *   price = max(1, floor(basePrice * pct / 100))
+ *   part1 = trunc((basePrice * trunc(pct / 10)) / 10)
+ *   part2 = trunc((basePrice * (pct % 10)) / 100)
+ *   price = max(1, part1 + part2)
  */
 export function calcSectorPrice(basePrice: number, reading: number, economyRules?: Partial<EconomyRules>): number {
+  if (basePrice <= 0) return 0;
   const minFloor = economyRules?.priceFloorPercent ?? 50;
   const maxCeiling = economyRules?.priceCeilingPercent ?? 250;
-  let pct = 100 + Math.floor(((reading - 100) * 5) / 3);
+  let pct: number;
+  if (reading < 100) {
+    pct = reading - Math.trunc(((100 - reading) * 2) / 3);
+  } else {
+    pct = reading + Math.trunc(((reading - 100) * 2) / 3);
+  }
   pct = Math.max(minFloor, Math.min(maxCeiling, pct));
-  return Math.max(1, Math.floor((basePrice * pct) / 100));
+  const part1 = Math.trunc((basePrice * Math.trunc(pct / 10)) / 10);
+  const part2 = Math.trunc((basePrice * (pct % 10)) / 100);
+  return Math.max(1, part1 + part2);
 }
 
 /**
@@ -124,23 +135,32 @@ export function calcLiquidAssets(
 }
 
 /**
- * Calculate an economy-adjusted price.
- * Formula: Price = Base + (Base * EconomicIndex) / 60
+ * Calculate an economy-adjusted price using authentic Sierra Script 109 math.
  *
  * @param basePrice     — The base price of the item
- * @param economicIndex — Current index (-30 to +90)
+ * @param economicIndex — Current index (-90 to +90, where 0 represents baseline reading 100)
  * @param isFixedPrice  — If true, returns basePrice without economic adjustment
+ * @param economyRules  — Optional custom economy rules (priceFloorPercent, priceCeilingPercent)
  */
-export function calcEconomyPrice(basePrice: number, economicIndex: number, isFixedPrice?: boolean): number {
-  if (isFixedPrice) return basePrice;
-  return Math.floor(basePrice + (basePrice * economicIndex) / 60);
+export function calcEconomyPrice(
+  basePrice: number,
+  economicIndex: number,
+  isFixedPrice?: boolean,
+  economyRules?: Partial<EconomyRules>
+): number {
+  if (isFixedPrice || basePrice <= 0) return basePrice;
+  return calcSectorPrice(basePrice, economicIndex + 100, economyRules);
 }
 
 /**
  * Calculate price for an item definition or item-like object.
  */
-export function calcItemPrice(item: { basePrice?: number; isFixedPrice?: boolean }, economicIndex: number): number {
-  return calcEconomyPrice(item.basePrice ?? 0, economicIndex, item.isFixedPrice);
+export function calcItemPrice(
+  item: { basePrice?: number; isFixedPrice?: boolean },
+  economicIndex: number,
+  economyRules?: Partial<EconomyRules>
+): number {
+  return calcEconomyPrice(item.basePrice ?? 0, economicIndex, item.isFixedPrice, economyRules);
 }
 
 /**
@@ -182,33 +202,34 @@ export function stepSector(
     low = 1;
   }
 
-  // 3. Step momentum: on crash or boom apply direct shock, otherwise step toward target
+  // 3. Step momentum: on crash or boom apply direct shock, then step toward target
+  // Authentic Sierra SCI bytecode (script 107 lines 45-87, jumping to lines 88-135)
   if (isCrash) {
     if (newIndex > -3) {
       newIndex = Math.max(-3, newIndex - 3);
     } else {
-      newIndex = -3;
+      newIndex = Math.max(-4, newIndex - 1);
     }
   } else if (isBoom) {
     if (newIndex < 3) {
       newIndex = Math.min(3, newIndex + 3);
     } else {
-      newIndex = 3;
+      newIndex = Math.min(4, newIndex + 1);
     }
-  } else {
-    const targetMin = -3 - low;
-    const targetMax = 3 + high;
-    const target = resolveDecision(replay, `${sectorKey}_target`, () => {
-      return Math.floor(rng.next() * (targetMax - targetMin + 1)) + targetMin;
-    });
+  }
 
-    if (target < newIndex) {
-      newIndex -= 1;
-      if (newIndex < targetMin) newIndex = targetMin;
-    } else if (target > newIndex) {
-      newIndex += 1;
-      if (newIndex > targetMax) newIndex = targetMax;
-    }
+  const targetMin = -3 - low;
+  const targetMax = 3 + high;
+  const target = resolveDecision(replay, `${sectorKey}_target`, () => {
+    return Math.floor(rng.next() * (targetMax - targetMin + 1)) + targetMin;
+  });
+
+  if (target < newIndex) {
+    newIndex -= 1;
+    if (newIndex < targetMin) newIndex = targetMin;
+  } else if (target > newIndex) {
+    newIndex += 1;
+    if (newIndex > targetMax) newIndex = targetMax;
   }
 
   // 4. Calculate adjustment range based on newIndex
@@ -240,8 +261,8 @@ export function stepSector(
     adjustment += bonus;
   }
 
-  // 5. Update Reading: add adjustment and parent index coupling (parentIndex / 3)
-  const parentCoupling = Math.floor(parentIndex / 3);
+  // 5. Update Reading: add adjustment and parent index coupling (parentIndex / 3 with authentic truncation)
+  const parentCoupling = Math.trunc(parentIndex / 3);
   let newReading = sector.reading + adjustment + parentCoupling;
 
   if (isCrash) {
@@ -523,6 +544,30 @@ export function calcStockPrice(
 }
 
 /**
+ * Calculates the total market value of a player's stock holdings.
+ */
+export function calcPlayerStockHoldingsValue(
+  player: PlayerState,
+  campaign: CampaignBundle | undefined,
+  economicIndex: number = 0,
+  turn: number = 1,
+  economySimulation?: EconomySimulationState
+): number {
+  if (!campaign?.stocks || !player.inventory?.stocks?.holdings) return 0;
+  let total = 0;
+  for (const stock of campaign.stocks) {
+    if (stock.id === 'tbills') continue;
+    const owned = player.inventory.stocks.holdings[stock.id] || 0;
+    if (owned > 0) {
+      const seed = turn * 997 + stock.id.charCodeAt(0) * 31;
+      const price = calcStockPrice(stock.basePrice, economicIndex, seed, economySimulation, stock.id, campaign?.config?.economyRules);
+      total += owned * price;
+    }
+  }
+  return total;
+}
+
+/**
  * Applies a Market Crash to a player.
  *
  * @param severity — 'minor', 'moderate', or 'major'
@@ -536,15 +581,19 @@ export function applyMarketCrash(
   _replay?: ReplayContext,
   rules?: GameRules,
   statRules?: StatRules,
-  campaign?: CampaignBundle
+  campaign?: CampaignBundle,
+  economicIndex: number = 0,
+  turn: number = 1,
+  economySimulation?: EconomySimulationState
 ): PlayerState {
   let updated = { ...player };
   updated.turnEvents = updated.turnEvents ? [...updated.turnEvents] : [];
 
-  // Calculate total stock value (simplified check > $1000)
-  // We don't have current stock prices here, so we assume if holdings exist, we penalize.
-  // In a full implementation, we'd pass in current prices to sum value.
-  const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
+  // Authentic Sierra script 111 (L0e58): checks if invested assets > $1000
+  const stockValue = calcPlayerStockHoldingsValue(player, campaign, economicIndex, turn, economySimulation);
+  const hasSignificantStocks = campaign?.stocks
+    ? stockValue > 1000
+    : Object.keys(player.inventory?.stocks?.holdings || {}).length > 0;
 
   const currentJob = campaign?.jobs?.find(j => j.id === updated.currentJobId);
   const locMerits = currentJob ? (updated.initiativesByLocation?.[currentJob.locationId] || 0) : 0;
@@ -569,9 +618,10 @@ export function applyMarketCrash(
           updated = applyHappinessChange(updated, -7, 'fired', rules || ({} as any), statRules);
         }
       } else {
-        // Pay cut to 80%
+        // Pay cut to 80% with authentic -3 happiness penalty (Sierra script 111 L1046) and minimum wage of $1 (script 1 L1016)
         updated.turnEvents.push({ key: 'events.marketCrash.wageCut' });
-        updated.currentWage = Math.floor(updated.currentWage * 0.8);
+        updated.currentWage = Math.max(1, Math.floor(updated.currentWage * 0.8));
+        updated = applyHappinessChange(updated, -3, 'market_crash', rules || ({} as any), statRules);
       }
     }
   } else if (severity === 'major') {
@@ -615,23 +665,13 @@ export function applyEconomicBoom(
   economicIndex: number,
   turn: number,
   rules?: GameRules,
-  statRules?: StatRules
+  statRules?: StatRules,
+  economySimulation?: EconomySimulationState
 ): PlayerState {
   let updated = { ...player };
   updated.turnEvents = updated.turnEvents ? [...updated.turnEvents] : [];
 
-  let stockValue = 0;
-  const hasSignificantStocks = Object.keys(player.inventory.stocks.holdings).length > 0;
-  if (hasSignificantStocks && campaign && campaign.stocks) {
-    for (const stock of campaign.stocks) {
-      if (stock.id === 'tbills') continue;
-      const owned = player.inventory.stocks.holdings[stock.id] || 0;
-      if (owned > 0) {
-        const seed = turn * 997 + stock.id.charCodeAt(0) * 31;
-        stockValue += owned * calcStockPrice(stock.basePrice, economicIndex, seed);
-      }
-    }
-  }
+  const stockValue = calcPlayerStockHoldingsValue(player, campaign, economicIndex, turn, economySimulation);
   
   if (stockValue > 1000) {
     updated.turnEvents.push({

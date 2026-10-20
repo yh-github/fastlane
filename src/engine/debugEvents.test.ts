@@ -70,13 +70,17 @@ describe('Debug Events Precondition Logic', () => {
     expect(checkEventPreconditions('market_crash', state, mockCampaign).allowed).toBe(true);
   });
 
-  it('market_boom requires turn >= 8 and economicIndex >= 0', () => {
+  it('market_boom requires turn >= 8 and economicIndex <= 20', () => {
     const state = createTestGameState(mockCampaign, [{ name: 'P1', isAi: false, goals: {} }], 'node_low_cost');
-    state.turn = 8;
-    state.economicIndex = -10;
+    state.turn = 5;
+    state.economicIndex = 0;
     expect(checkEventPreconditions('market_boom', state, mockCampaign).allowed).toBe(false);
 
-    state.economicIndex = 0;
+    state.turn = 8;
+    state.economicIndex = 25;
+    expect(checkEventPreconditions('market_boom', state, mockCampaign).allowed).toBe(false);
+
+    state.economicIndex = 10;
     expect(checkEventPreconditions('market_boom', state, mockCampaign).allowed).toBe(true);
   });
 

@@ -107,7 +107,7 @@ export function checkEventPreconditions(
       const rawCrashThreshold = campaign?.config?.eventRules?.marketCrashThreshold ?? 80;
       const minIndex = rawCrashThreshold > 50 ? rawCrashThreshold - 100 : rawCrashThreshold;
       if (state.economicIndex < minIndex) {
-        return { allowed: false, reason: `Economic index must be ≥ ${minIndex} (Current: ${state.economicIndex})` };
+        return { allowed: false, reason: `Macro economy must be ≥ ${minIndex} (Current: ${state.economicIndex})` };
       }
       return { allowed: true };
     }
@@ -117,8 +117,10 @@ export function checkEventPreconditions(
       if (state.turn < minWeek) {
         return { allowed: false, reason: `Requires Turn ${minWeek}+ (Current: Turn ${state.turn})` };
       }
-      if (state.economicIndex < 0) {
-        return { allowed: false, reason: `Economic index must be ≥ 0 (Current: ${state.economicIndex})` };
+      const rawBoomThreshold = campaign?.config?.eventRules?.economicBoomThreshold ?? 120;
+      const maxIndex = rawBoomThreshold > 50 ? rawBoomThreshold - 100 : rawBoomThreshold;
+      if (state.economicIndex > maxIndex) {
+        return { allowed: false, reason: `Macro economy must be ≤ ${maxIndex} (Current: ${state.economicIndex})` };
       }
       return { allowed: true };
     }

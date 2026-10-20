@@ -117,8 +117,8 @@ describe('Economy Engine', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.75); // Not fired!
       const player = { money: 1000, bankSavings: 1000, happiness: 50, currentJobId: 'some_job', currentWage: 50, inventory: { stocks: { tBills: 5, holdings: {} } } } as unknown as PlayerState;
       const updated = applyMarketCrash(player, 'moderate', new Random(1));
-      // moderate crash drops happiness by 2 (no stocks), wage cut by 20% (50 * 0.8 = 40)
-      expect(updated.happiness).toBe(48);
+      // moderate crash drops happiness by 2 (no stocks) + authentic -3 wage cut happiness penalty = 45 (50 - 2 - 3)
+      expect(updated.happiness).toBe(45);
       expect(updated.currentJobId).toBe('some_job');
       expect(updated.currentWage).toBe(40);
       expect(updated.turnEvents.some(e => e.key === 'events.marketCrash.wageCut')).toBe(true);
@@ -327,20 +327,23 @@ describe('Economy Engine', () => {
 
       // Mock roll 0.5: with index -3, lowerRange = -9, upperRange = 3, range = 13.
       // adjustment = floor(0.5 * 13) - 9 = 6 - 9 = -3.
-      // Reading before crash factor: 100 - 3 = 97.
+      // Mock roll 0.5: shock applies index = -3, target roll (0.5) rolls 0, target step moves index to -2.
+      // With index -2, lowerRange = -7, upperRange = 3, range = 11.
+      // adjustment = floor(0.5 * 11) - 7 = 5 - 7 = -2.
+      // Reading before crash factor: 100 - 2 = 98.
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.5);
 
       // crashSeverity 3 = minor (* 19/20, ~5% drop)
       const steppedMinor = stepSector(sector, 2, 0, defaultRules, new Random(1), true, 3, false);
-      expect(steppedMinor.index).toBe(-3);
-      // Math.floor(97 * 19 / 20) = Math.floor(1843 / 20) = 92
-      expect(steppedMinor.reading).toBe(92);
+      expect(steppedMinor.index).toBe(-2);
+      // Math.floor(98 * 19 / 20) = Math.floor(1862 / 20) = 93
+      expect(steppedMinor.reading).toBe(93);
 
       // crashSeverity 1 = major (* 17/20, ~15% drop)
       const steppedMajor = stepSector(sector, 2, 0, defaultRules, new Random(1), true, 1, false);
-      expect(steppedMajor.index).toBe(-3);
-      // Math.floor(97 * 17 / 20) = Math.floor(1649 / 20) = 82
-      expect(steppedMajor.reading).toBe(82);
+      expect(steppedMajor.index).toBe(-2);
+      // Math.floor(98 * 17 / 20) = Math.floor(1666 / 20) = 83
+      expect(steppedMajor.reading).toBe(83);
     });
 
     it('applies economic boom momentum shock and authentic +10% boost', () => {
@@ -354,14 +357,15 @@ describe('Economy Engine', () => {
         adjustment: 0,
       };
 
-      // Mock roll 0.5: with index 3, lowerRange = -3, upperRange = 9, range = 13.
-      // adjustment = floor(0.5 * 13) - 3 = 6 - 3 = 3.
-      // Reading before boom factor: 100 + 3 = 103.
+      // Mock roll 0.5: boom shock applies index = 3, target roll (0.5) rolls 0, target step moves index to 2.
+      // With index 2, lowerRange = -3, upperRange = 7, range = 11.
+      // adjustment = floor(0.5 * 11) - 3 = 5 - 3 = 2.
+      // Reading before boom factor: 100 + 2 = 102.
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.5);
       const steppedBoom = stepSector(sector, 2, 0, defaultRules, new Random(1), false, 0, true);
-      expect(steppedBoom.index).toBe(3);
-      // Math.floor(103 * 11 / 10) = Math.floor(1133 / 10) = 113
-      expect(steppedBoom.reading).toBe(113);
+      expect(steppedBoom.index).toBe(2);
+      // Math.floor(102 * 11 / 10) = Math.floor(1122 / 10) = 112
+      expect(steppedBoom.reading).toBe(112);
     });
 
     it('incorporates parent sector index coupling (parentIndex / 3)', () => {

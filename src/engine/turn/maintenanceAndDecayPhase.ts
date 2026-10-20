@@ -11,6 +11,7 @@ import { processWeekend, generateWeekendChoices, resolveWeekendChoice } from '..
 import { selectAiWeekendCard } from '../aiEngine';
 import { resetPlayerClock } from '../timeManager';
 import { isBaseVersion } from '../rules';
+import type { EconomicTurnResult } from './types';
 
 function checkPlayerWinConditions(player: PlayerState, state: GameState, campaign: CampaignBundle): boolean {
   for (const cond of campaign.config.winConditions) {
@@ -394,13 +395,7 @@ export function processPostHealthMaintenance(
   campaign: CampaignBundle,
   rng: Random,
   replay: ReplayContext | undefined,
-  economicTurnResult: {
-    newEconomy: number;
-    crashSeverity: 'none' | 'minor' | 'moderate' | 'major';
-    economicBoom: boolean;
-    currentHeadline: GameEvent | null;
-    cancelledGlobalEvents: GameEvent[];
-  }
+  economicTurnResult: EconomicTurnResult
 ): PlayerState {
   let player = p;
 
@@ -510,9 +505,28 @@ export function processPostHealthMaintenance(
 
   // 16. Economic Events
   if (economicTurnResult.crashSeverity !== 'none') {
-    player = applyMarketCrash(player, economicTurnResult.crashSeverity, rng, replay, state.rules, campaign.config.statRules, campaign);
+    player = applyMarketCrash(
+      player,
+      economicTurnResult.crashSeverity,
+      rng,
+      replay,
+      state.rules,
+      campaign.config.statRules,
+      campaign,
+      economicTurnResult.newEconomy,
+      state.turn,
+      economicTurnResult.newEconomySimulation ?? state.economySimulation
+    );
   } else if (economicTurnResult.economicBoom) {
-    player = applyEconomicBoom(player, campaign, economicTurnResult.newEconomy, state.turn, state.rules, campaign.config.statRules);
+    player = applyEconomicBoom(
+      player,
+      campaign,
+      economicTurnResult.newEconomy,
+      state.turn,
+      state.rules,
+      campaign.config.statRules,
+      economicTurnResult.newEconomySimulation ?? state.economySimulation
+    );
   }
 
   if (player.turnFlags.freeNewspaper && player.newspaperHeadline?.key === 'newspaper.robbery') {

@@ -141,7 +141,7 @@ describe('Economy and Job Retention Analysis', () => {
     expect(updatedPlayer.turnEvents.some(e => e.key === 'events.marketCrash.jobLost')).toBe(false);
   });
 
-  it('proves that pay cuts and job loss from the economy ONLY occur during a Market Crash, which requires high economy (>= 80)', () => {
+  it('proves that pay cuts and job loss from the economy ONLY occur during a Market Crash (reading >= 80, i.e. index >= -20)', () => {
     const campaign = structuredClone(baseCampaign);
     const rng = new Random(42);
 
@@ -159,9 +159,11 @@ describe('Economy and Job Retention Analysis', () => {
     const cutState = applyMarketCrash(playerWithHighWage, 'moderate', crashRngNoFire, undefined, campaign.config.gameRules, campaign.config.statRules, campaign);
 
     expect(cutState.currentWage).toBe(40); // 50 * 0.8 = 40
+    // Moderate crash without stocks drops mental by 2, plus authentic -3 wage cut penalty = -5 total drop
+    expect(cutState.mentalCondition).toBe((playerWithHighWage.mentalCondition ?? 50) - 5);
     expect(cutState.turnEvents.some(e => e.key === 'events.marketCrash.wageCut')).toBe(true);
 
-    // But Market Crash CANNOT trigger when economy is low (e.g., -30) because marketCrashThreshold is 80!
+    // Market Crash threshold is 80 (reading 80 = economicIndex -20)
     expect(campaign.config.eventRules.marketCrashThreshold).toBe(80);
   });
 });

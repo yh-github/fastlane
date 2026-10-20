@@ -73,7 +73,7 @@ export function processEconomicTurnPhase(
         });
       }
     } else if (state.turn >= crashStartWeek && newEconomy >= crashThresholdIndex) {
-      const crashChance = 1 / (1 + (crashDivisor * state.players.length));
+      const crashChance = 1 / (1 + crashDivisor);
       const crashTriggered = resolveDecision(replay, `market_crash_trigger`, () => rng.next() < crashChance);
       if (crashTriggered) {
         const roll = resolveDecision(replay, `market_crash_roll`, () => rng.next());
@@ -114,7 +114,7 @@ export function processEconomicTurnPhase(
         });
       }
     } else if (crashSeverity === 'none' && newEconomy <= boomThresholdIndex && state.turn >= boomStartWeek) {
-      const boomChance = 1 / (1 + (boomDivisor * state.players.length));
+      const boomChance = 1 / (1 + boomDivisor);
       const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
       if (boomTriggered) {
         economicBoom = true;
@@ -139,16 +139,20 @@ export function processEconomicTurnPhase(
     ? structuredClone(state.economySimulation) 
     : createDefaultEconomySimulationState(econRules, state.economicIndex, state.economicTrend);
 
-  if (state.economicIndex !== undefined && state.economySimulation && sim.main.reading !== state.economicIndex + 100) {
-    const diff = (state.economicIndex + 100) - sim.main.reading;
-    sim.main.reading = state.economicIndex + 100;
-    sim.goods.reading += diff;
-    sim.investments.reading += diff;
+  // External override sync: only apply if state.economicIndex or trend was externally changed
+  // (e.g. from debug modal or test fixture), avoiding runaway internal feedback loops.
+  if (state.economicIndex !== undefined && state.economySimulation && sim.goods.reading !== state.economicIndex + 100) {
+    const targetReading = state.economicIndex + 100;
+    const diff = targetReading - sim.goods.reading;
+    sim.goods.reading = targetReading;
+    sim.main.reading = Math.max(minReading + 100, Math.min(190, sim.main.reading + diff));
+    sim.investments.reading = Math.max(minReading + 100, Math.min(190, sim.investments.reading + diff));
   }
-  if (state.economicTrend !== undefined && state.economySimulation && sim.main.index !== state.economicTrend) {
-    sim.main.index = state.economicTrend;
+  if (state.economicTrend !== undefined && state.economySimulation && sim.goods.index !== state.economicTrend) {
+    const diff = state.economicTrend - sim.goods.index;
     sim.goods.index = state.economicTrend;
-    sim.investments.index = state.economicTrend;
+    sim.main.index = Math.max(-3, Math.min(3, sim.main.index + diff));
+    sim.investments.index = Math.max(-3, Math.min(3, sim.investments.index + diff));
   }
 
   let crashSeverity: 'none' | 'minor' | 'moderate' | 'major' = 'none';
@@ -195,7 +199,7 @@ export function processEconomicTurnPhase(
       });
     }
   } else if (state.turn >= crashStartWeek && currentGoodsReading >= crashThresholdReading) {
-    const crashChance = 1 / (1 + (crashDivisor * state.players.length));
+    const crashChance = 1 / (1 + crashDivisor);
     const crashTriggered = resolveDecision(replay, `market_crash_trigger`, () => rng.next() < crashChance);
     if (crashTriggered) {
       const roll = resolveDecision(replay, `market_crash_roll`, () => rng.next());
@@ -226,7 +230,7 @@ export function processEconomicTurnPhase(
       });
     }
   } else if (crashSeverity === 'none' && currentGoodsReading <= boomThresholdReading && state.turn >= boomStartWeek) {
-    const boomChance = 1 / (1 + (boomDivisor * state.players.length));
+    const boomChance = 1 / (1 + boomDivisor);
     const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
     if (boomTriggered) {
       economicBoom = true;
