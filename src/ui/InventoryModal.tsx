@@ -54,9 +54,11 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
   const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
   const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0, player.innovationCount || 0) : null;
 
+  const isCurved = rules?.guiStyle === 'authentic' || rules?.authenticCurvedPaths !== false;
+
   return (
     <div 
-      className={`building-modal ${rules?.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}`}
+      className={`building-modal ${isCurved ? 'building-modal--curved' : 'building-modal--schematic'}${rules?.guiStyle === 'authentic' ? ' building-modal--authentic' : ''}`}
       style={{ zIndex: 75, display: 'flex', flexDirection: 'column' }}
       data-testid="inventory-modal"
     >

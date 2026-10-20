@@ -482,7 +482,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
           />
         </div>
 
-        {(!activeModal || (activeModal.type === 'building' && !currentBuildingId)) && activePlayer && (
+        {(!activeModal || (activeModal.type === 'building' && !currentBuildingId)) && activePlayer && gameState.rules.guiStyle !== 'authentic' && (
           <CenterWalkAnimation
             characterIndex={activePlayer.characterIndex ?? 0}
             clothesType={activePlayer.inventory?.selectedClothes || 'casual'}

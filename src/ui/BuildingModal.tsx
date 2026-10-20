@@ -430,10 +430,12 @@ export function BuildingModal({
     </>
   );
 
+  const isCurved = rules?.guiStyle === 'authentic' || rules?.authenticCurvedPaths !== false;
+
   return (
     <div 
       ref={modalRef}
-      className={`building-modal ${rules?.authenticCurvedPaths !== false ? 'building-modal--curved' : 'building-modal--schematic'}${isContentOverflowing ? ' building-modal--compact' : ''}`}
+      className={`building-modal ${isCurved ? 'building-modal--curved' : 'building-modal--schematic'}${rules?.guiStyle === 'authentic' ? ' building-modal--authentic' : ''}${isContentOverflowing ? ' building-modal--compact' : ''}`}
       style={{
         '--modal-margin': `${modalMargin}px`,
         ...(position ? { left: `${position.x}px`, top: `${position.y}px` } : {}),
