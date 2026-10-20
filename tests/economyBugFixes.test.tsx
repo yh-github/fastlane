@@ -4,7 +4,14 @@ import React, { useState } from 'react';
 import { processTurnStart } from '../src/engine/turnProcessor';
 import { createTestGameState, TEST_BASE_CAMPAIGN_CONFIG, TEST_ADVANCED_CAMPAIGN_CONFIG } from '../src/engine/testFactories';
 import { applyForJob } from '../src/engine/job/jobApplication';
-import { calcEconomyPrice } from '../src/engine/economyEngine';
+import {
+  calcEconomyPrice,
+  calcItemPrice,
+  applyMarketCrash,
+  applyEconomicBoom,
+  calcPlayerStockHoldingsValue
+} from '../src/engine/economyEngine';
+import { processEconomicTurnPhase } from '../src/engine/turn/economicTurnPhase';
 import { Random } from '../src/utils/rng';
 import type { CampaignBundle, JobDef } from '../src/engine/dataLoader';
 import type { PlayerState } from '../src/engine/gameState';
@@ -84,6 +91,7 @@ describe('Economy Bug Fixes Verification', () => {
       state.economicIndex = -20; // Exact threshold
       if (state.economySimulation) {
         state.economySimulation.main.reading = 80;
+        state.economySimulation.goods.reading = 80;
       }
       state.players[0].currentJobId = 'factory_cook';
       state.players[0].currentWage = 20;
@@ -106,6 +114,7 @@ describe('Economy Bug Fixes Verification', () => {
       state.economicIndex = 0; // Baseline
       if (state.economySimulation) {
         state.economySimulation.main.reading = 100;
+        state.economySimulation.goods.reading = 100;
       }
       state.players[0].currentJobId = 'factory_cook';
       state.players[0].currentWage = 20;
@@ -128,6 +137,7 @@ describe('Economy Bug Fixes Verification', () => {
       state.economicIndex = -25;
       if (state.economySimulation) {
         state.economySimulation.main.reading = 75; // < 80
+        state.economySimulation.goods.reading = 75;
       }
       state.players[0].currentJobId = 'factory_cook';
       state.players[0].currentWage = 20;
@@ -365,6 +375,176 @@ describe('Economy Bug Fixes Verification', () => {
       await waitFor(() => {
         expect(screen.queryByTestId('action-reason-modal')).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('4. Long-Run Economy Stability & Sector Decoupling', () => {
+    it('proves that main and goods sectors decouple and fluctuate independently without runaway feedback', () => {
+      let state = createTestGameState(
+        mockCampaign,
+        [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }],
+        'node_home'
+      );
+      state.turn = 1;
+      const rng = new Random(12345);
+
+      const gaps: number[] = [];
+      for (let t = 1; t <= 30; t++) {
+        state.turn = t;
+        const res = processEconomicTurnPhase(state, mockCampaign, rng);
+        state = {
+          ...state,
+          economicIndex: res.newEconomy,
+          economicTrend: res.newTrend,
+          economySimulation: res.newEconomySimulation,
+        };
+        if (res.newEconomySimulation) {
+          gaps.push(Math.abs(res.newEconomySimulation.main.reading - res.newEconomySimulation.goods.reading));
+        }
+      }
+
+      // Over 30 turns, main and goods should decouple (not identical every turn)
+      const nonZeroGaps = gaps.filter(g => g > 0);
+      expect(nonZeroGaps.length).toBeGreaterThan(15);
+      // And the max gap should remain bounded (< 50) rather than exponentially exploding
+      const maxGap = Math.max(...gaps);
+      expect(maxGap).toBeLessThan(50);
+    });
+
+    it('proves statistical stability over 200 simulated games: median is near 0 and p90 does not explode', () => {
+      const idxHistory: number[] = [];
+      const N = 200;
+
+      for (let g = 0; g < N; g++) {
+        let state = createTestGameState(
+          mockCampaign,
+          [{ name: 'P1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }],
+          'node_home'
+        );
+        const rng = new Random(9999 + g);
+
+        for (let t = 1; t <= 40; t++) {
+          state.turn = t;
+          const res = processEconomicTurnPhase(state, mockCampaign, rng);
+          state = {
+            ...state,
+            economicIndex: res.newEconomy,
+            economicTrend: res.newTrend,
+            economySimulation: res.newEconomySimulation,
+          };
+          idxHistory.push(res.newEconomy);
+        }
+      }
+
+      idxHistory.sort((a, b) => a - b);
+      const median = idxHistory[Math.floor(idxHistory.length * 0.5)];
+      const p90 = idxHistory[Math.floor(idxHistory.length * 0.9)];
+
+      // Median should stay close to baseline 0 (-15 to +10)
+      expect(median).toBeGreaterThanOrEqual(-15);
+      expect(median).toBeLessThanOrEqual(10);
+
+      // 90th percentile should NOT explode to +85 (stays below +45 in authentic Sierra)
+      expect(p90).toBeLessThanOrEqual(45);
+    });
+  });
+
+  describe('5. Authentic Price and Wage Floors (Script 109)', () => {
+    it('floors prices at 50% of basePrice and minimum 1 dollar even in extreme -90 Floppy depressions', () => {
+      // Base price $100: at -90, previously returned -50 (negative!). With authentic floor, returns 50.
+      expect(calcEconomyPrice(100, -90)).toBe(50);
+      expect(calcItemPrice({ basePrice: 100 }, -90)).toBe(50);
+
+      // Base price $10: at -90, returns $5 (50% floor)
+      expect(calcEconomyPrice(10, -90)).toBe(5);
+
+      // Base price $1: even with 50% floor, never drops below $1
+      expect(calcEconomyPrice(1, -90)).toBe(1);
+      expect(calcEconomyPrice(1, -30)).toBe(1);
+    });
+
+    it('returns 0 for 0 basePrice items', () => {
+      expect(calcEconomyPrice(0, -90)).toBe(0);
+      expect(calcEconomyPrice(0, 50)).toBe(0);
+    });
+  });
+
+  describe('6. Market Crash Wage Cut: -3 Happiness Penalty and $1 Wage Floor', () => {
+    it('applies -3 happiness penalty on wage cut and enforces minimum wage of $1', () => {
+      const player: PlayerState = {
+        id: 'p1',
+        name: 'Player',
+        money: 100,
+        bankSavings: 100,
+        happiness: 50,
+        currentJobId: 'factory_cook',
+        currentWage: 1, // Minimum wage
+        inventory: { stocks: { tBills: 0, holdings: {} } }
+      } as any;
+
+      // Mock RNG >= 0.5 so player is NOT fired (gets wage cut)
+      const rng = new Random(1);
+      vi.spyOn(rng, 'next').mockReturnValue(0.75);
+
+      const updated = applyMarketCrash(player, 'moderate', rng);
+
+      // Happiness drops by 2 (moderate crash, no stocks) + 3 (wage cut penalty) = 5 total drop
+      expect(updated.happiness).toBe(45);
+      // Wage remains at least $1 (never drops to $0)
+      expect(updated.currentWage).toBe(1);
+      expect(updated.turnEvents.some(e => e.key === 'events.marketCrash.wageCut')).toBe(true);
+    });
+  });
+
+  describe('7. Investor Threshold (> $1000) in Crash and Boom', () => {
+    const campaignWithStocks: CampaignBundle = {
+      ...mockCampaign,
+      stocks: [
+        { id: 'gold', name: 'Gold', basePrice: 50, type: 'fluctuating' },
+        { id: 'penny', name: 'Penny Stocks', basePrice: 2, type: 'fluctuating' }
+      ]
+    };
+
+    it('does not penalize player as investor if stock holdings are <= $1000', () => {
+      // 10 shares of gold @ ~$50 = $500 <= $1000
+      const smallInvestor: PlayerState = {
+        id: 'p1',
+        name: 'Small Investor',
+        money: 100,
+        bankSavings: 100,
+        happiness: 50,
+        inventory: { stocks: { tBills: 0, holdings: { gold: 10 } } }
+      } as any;
+
+      const updatedCrash = applyMarketCrash(smallInvestor, 'minor', new Random(1), undefined, undefined, undefined, campaignWithStocks);
+      // Minor crash without >$1000 stocks drops happiness by 1 (not 2)
+      expect(updatedCrash.happiness).toBe(49);
+
+      const updatedBoom = applyEconomicBoom(smallInvestor, campaignWithStocks, 0, 1);
+      // Boom does not grant happiness bonus to small investor
+      expect(updatedBoom.happiness).toBe(50);
+      expect(updatedBoom.turnEvents.some(e => e.key === 'events.economicBoom.investorBonus')).toBe(false);
+    });
+
+    it('penalizes and rewards player as investor if stock holdings are > $1000', () => {
+      // 30 shares of gold @ ~$50 = $1500 > $1000
+      const largeInvestor: PlayerState = {
+        id: 'p1',
+        name: 'Large Investor',
+        money: 100,
+        bankSavings: 100,
+        happiness: 50,
+        inventory: { stocks: { tBills: 0, holdings: { gold: 30 } } }
+      } as any;
+
+      const updatedCrash = applyMarketCrash(largeInvestor, 'minor', new Random(1), undefined, undefined, undefined, campaignWithStocks);
+      // Minor crash with >$1000 stocks drops happiness by 2
+      expect(updatedCrash.happiness).toBe(48);
+
+      const updatedBoom = applyEconomicBoom(largeInvestor, campaignWithStocks, 0, 1);
+      // Boom grants +5 happiness to large investor
+      expect(updatedBoom.happiness).toBe(55);
+      expect(updatedBoom.turnEvents.some(e => e.key === 'events.economicBoom.investorBonus')).toBe(true);
     });
   });
 });

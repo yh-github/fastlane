@@ -84,8 +84,8 @@
   "eventRules": {
     "marketCrashStartWeek": 4,
     "marketCrashDivisor": 20,
-    "economicBoomStartWeek": 4,
-    "economicBoomDivisor": 20,
+    "economicBoomStartWeek": 0,
+    "economicBoomDivisor": 30,
     "marketCrashThreshold": 80,
     "economicBoomThreshold": 120,
     "willyRobberyStartWeek": 1,
