@@ -530,23 +530,23 @@ describe('Turn Processor', () => {
   });
 
   describe('Market Crash', () => {
-    it('does NOT trigger market crash if turn < 8 or economic index < 80', () => {
+    it('does NOT trigger market crash if turn < 8 or economic index < -20', () => {
       let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 7; // turn < 8
-      state.economicIndex = 85;
+      state.economicIndex = 0;
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.0001); // would trigger if eligible
 
       const nextState = processTurnStart(state, mockCampaign);
       expect(nextState.players[0].turnEvents.some(e => e.key.includes('marketCrash'))).toBe(false);
 
-      // Now turn = 8, but economic index = 50 (< 80)
+      // Now turn = 8, but economic index = -25 (< -20)
       state.turn = 8;
-      state.economicIndex = 50;
+      state.economicIndex = -25;
       const nextState2 = processTurnStart(state, mockCampaign);
       expect(nextState2.players[0].turnEvents.some(e => e.key.includes('marketCrash'))).toBe(false);
     });
 
-    it('triggers market crash when turn >= 8 and economic index >= 80, applying penalties to player', () => {
+    it('triggers market crash when turn >= 8 and economic index >= -20, applying penalties to player', () => {
       let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 8;
       state.economicIndex = 85;
@@ -622,7 +622,7 @@ describe('Turn Processor', () => {
       const rngSpy = vi.spyOn(Random.prototype, 'next');
       rngSpy.mockReturnValueOnce(0.5);    // trendChange -> 0
       rngSpy.mockReturnValueOnce(0.5);    // readingMult -> 2
-      // crash check not reached (index 20 < 80)
+      rngSpy.mockReturnValueOnce(0.5);    // crash trigger (0.5 >= 1/31 -> no crash)
       rngSpy.mockReturnValueOnce(0.0001); // boom trigger (< 1/31)
       rngSpy.mockReturnValueOnce(0.99);   // boom trend -> Math.floor(0.99 * 3) + 1 = 3
 
