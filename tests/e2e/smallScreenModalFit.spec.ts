@@ -293,11 +293,6 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
 
     // 11. Test Pawn Shop Mini Game Cards on mobile viewport (390x844)
     await page.setViewportSize({ width: 390, height: 844 });
-    const orientationDismiss = page.locator('.orientation-prompt-btn-dismiss');
-    if (await orientationDismiss.isVisible()) {
-      await orientationDismiss.click();
-      await expect(orientationDismiss).toBeHidden({ timeout: 3000 });
-    }
     await page.evaluate(() => {
       (window as any).__triggerAppraisalDilemma();
     });
@@ -487,6 +482,7 @@ test.describe('Small Screen Modal Fit & Interactions E2E', () => {
 
     // 2. Test in phone portrait mode (390x844)
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(400);
 
     // Dismiss orientation prompt if it appears
     const orientationDismiss = page.locator('.orientation-prompt-btn-dismiss');
