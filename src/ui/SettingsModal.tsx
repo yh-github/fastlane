@@ -17,6 +17,29 @@ interface SettingsModalProps {
   onQuitGame?: () => void;
 }
 
+/**
+ * Mobile-friendly and accessible switch toggle component.
+ * Renders an accessible, real checkbox under the hood while providing
+ * smooth sliding track and thumb visuals optimized for touch screens.
+ */
+function SettingSwitch({ checked, ariaLabel }: { checked: boolean; ariaLabel?: string }) {
+  return (
+    <div className={`settings-switch ${checked ? 'settings-switch--active' : ''}`} aria-hidden="true">
+      <input 
+        type="checkbox" 
+        checked={checked} 
+        readOnly
+        tabIndex={-1}
+        aria-label={ariaLabel}
+        className="settings-switch__input"
+      />
+      <div className="settings-switch__track">
+        <div className="settings-switch__thumb" />
+      </div>
+    </div>
+  );
+}
+
 export function SettingsModal({ gameState, setGameState, campaign, replayData, onClose, onOpenLog, logCount, onQuitGame }: SettingsModalProps) {
   const { t, i18n } = useTranslation();
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
@@ -29,6 +52,19 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
       ...prev,
       [catId]: !prev[catId]
     }));
+  };
+
+  const scrollToCategory = (catId: string) => {
+    setCollapsedCategories(prev => {
+      if (prev[catId]) {
+        return { ...prev, [catId]: false };
+      }
+      return prev;
+    });
+    setTimeout(() => {
+      const el = document.querySelector(`[data-testid="category-header-${catId}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   };
 
   const handleToggleHelpfulUI = () => {
@@ -274,7 +310,7 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
           data-testid="settings-modal-content"
           style={{ display: 'flex', flexDirection: 'column' }}
         >
-          <button className="building-modal__close" onClick={onClose} aria-label="Close">×</button>
+          <button className="building-modal__close settings-modal__close" onClick={onClose} aria-label="Close">×</button>
           <button 
             type="button"
             className="settings-modal__fullscreen-btn"
@@ -291,28 +327,42 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
             </div>
           </div>
 
-          <div className="interaction-panel" style={{ overflowY: 'auto', flex: 1, paddingRight: '4px' }}>
+          {/* Quick Jump Category Pills for Touch & Small Screens */}
+          <div className="settings-category-nav" role="tablist" aria-label={t('settings.categoriesNav', { defaultValue: 'Settings categories' })}>
+            <button
+              type="button"
+              className="settings-category-nav__pill"
+              onClick={() => scrollToCategory('interface')}
+              data-testid="pill-goto-interface"
+            >
+              🧭 {t('settings.categories.interfaceShort', { defaultValue: 'Interface' })}
+            </button>
+            <button
+              type="button"
+              className="settings-category-nav__pill"
+              onClick={() => scrollToCategory('graphics')}
+              data-testid="pill-goto-graphics"
+            >
+              🎨 {t('settings.categories.graphicsShort', { defaultValue: 'Graphics' })}
+            </button>
+            {(campaign || replayData || onOpenLog) && (
+              <button
+                type="button"
+                className="settings-category-nav__pill"
+                onClick={() => scrollToCategory('developer')}
+                data-testid="pill-goto-developer"
+              >
+                🛠️ {t('settings.categories.developerShort', { defaultValue: 'Developer' })}
+              </button>
+            )}
+          </div>
+
+          <div className="interaction-panel settings-modal__body">
             {/* --- Category: Interface & Assistance --- */}
             <div
               className="settings-category-header"
               onClick={() => toggleCategory('interface')}
               data-testid="category-header-interface"
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '8px 12px',
-                background: 'rgba(255, 255, 255, 0.06)',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                userSelect: 'none',
-                fontWeight: 600,
-                fontSize: '0.9rem',
-                color: 'var(--accent-cyan, #00e5ff)',
-                border: '1px solid rgba(0, 229, 255, 0.25)',
-                marginBottom: isInterfaceCollapsed ? '10px' : '6px',
-                transition: 'background 0.15s ease'
-              }}
             >
               <span>🧭 {t('settings.categories.interface', { defaultValue: 'Interface & Assistance' })}</span>
               <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>
@@ -321,33 +371,23 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
             </div>
 
             {!isInterfaceCollapsed && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
+              <div className="settings-items-grid">
                 {/* Mid-Game Language Switcher */}
                 <div 
-                  className="interaction-item"
+                  className="interaction-item settings-item settings-item--fullwidth"
                   data-testid="setting-language-toggle"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>🌐 {t('settings.language', { defaultValue: 'Language' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">🌐 {t('settings.language', { defaultValue: 'Language' })}</div>
+                      <div className="settings-item-desc">
                         {t('settings.languageHelp', { defaultValue: 'Select interface language' })}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '6px' }}>
+                    <div className="settings-lang-group">
                       <button
                         type="button"
-                        className={`action-panel__btn ${(i18n?.language || 'en') === 'en' ? 'action-panel__btn--active' : ''}`}
-                        style={{
-                          padding: '4px 10px',
-                          fontSize: '0.8rem',
-                          background: (i18n?.language || 'en') === 'en' ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)',
-                          color: (i18n?.language || 'en') === 'en' ? '#000' : '#fff',
-                          border: '1px solid rgba(0,229,255,0.4)',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontWeight: (i18n?.language || 'en') === 'en' ? 'bold' : 'normal'
-                        }}
+                        className={`action-panel__btn settings-lang-btn ${(i18n?.language || 'en') === 'en' ? 'settings-lang-btn--active' : ''}`}
                         onClick={() => i18n?.changeLanguage('en')}
                         data-testid="btn-lang-en"
                       >
@@ -355,17 +395,7 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                       </button>
                       <button
                         type="button"
-                        className={`action-panel__btn ${i18n?.language === 'he' ? 'action-panel__btn--active' : ''}`}
-                        style={{
-                          padding: '4px 10px',
-                          fontSize: '0.8rem',
-                          background: i18n?.language === 'he' ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)',
-                          color: i18n?.language === 'he' ? '#000' : '#fff',
-                          border: '1px solid rgba(0,229,255,0.4)',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontWeight: i18n?.language === 'he' ? 'bold' : 'normal'
-                        }}
+                        className={`action-panel__btn settings-lang-btn ${i18n?.language === 'he' ? 'settings-lang-btn--active' : ''}`}
                         onClick={() => i18n?.changeLanguage('he')}
                         data-testid="btn-lang-he"
                       >
@@ -376,84 +406,75 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleHelpfulUI}
                   data-testid="setting-helpful-ui"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.helpfulUI', { defaultValue: 'Helpful Interface' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.helpfulUI', { defaultValue: 'Helpful Interface' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.helpfulUI 
                           ? t('settings.helpfulUIOn', { defaultValue: 'Displays exact prices, wage estimates, and burglary risk (ON)' })
                           : t('settings.helpfulUIOff', { defaultValue: 'Authentic minimal information (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!gameState.rules.helpfulUI} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.helpfulUI} ariaLabel={t('settings.helpfulUI', { defaultValue: 'Helpful Interface' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleAnimations}
                   data-testid="setting-enable-animations"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.animations', { defaultValue: 'Floating Stat Popups & Effects' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.animations', { defaultValue: 'Floating Stat Popups & Effects' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.enableAnimations 
                           ? t('settings.animationsOn', { defaultValue: 'Displays floating numbers and icons when stats change (ON)' })
                           : t('settings.animationsOff', { defaultValue: 'Suppressed stat change popups (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!gameState.rules.enableAnimations} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.enableAnimations} ariaLabel={t('settings.animations', { defaultValue: 'Floating Stat Popups & Effects' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleShowItemImages}
                   data-testid="setting-show-item-images"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.showItemImages', { defaultValue: 'Show Item Graphics' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.showItemImages', { defaultValue: 'Show Item Graphics' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.showItemImages 
                           ? t('settings.itemImagesOn', { defaultValue: 'Graphical icons in shops and inventory (ON)' })
                           : t('settings.itemImagesOff', { defaultValue: 'Text-only item listings (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!gameState.rules.showItemImages} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.showItemImages} ariaLabel={t('settings.showItemImages', { defaultValue: 'Show Item Graphics' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className={`interaction-item ${isAuthenticSupported ? 'interaction-item--clickable' : ''}`}
+                  className={`interaction-item settings-item ${isAuthenticSupported ? 'interaction-item--clickable' : ''}`}
                   onClick={isAuthenticSupported ? handleToggleGuiStyle : undefined}
                   data-testid="setting-gui-style"
                   style={{ opacity: isAuthenticSupported ? 1 : 0.6 }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.guiStyle', { defaultValue: 'GUI Presentation Mode' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.guiStyle', { defaultValue: 'GUI Presentation Mode' })}</div>
+                      <div className="settings-item-desc">
                         {!isAuthenticSupported
                           ? t('settings.guiStyleUnsupported', { defaultValue: 'Authentic 1990 VGA view is not supported by this campaign' })
                           : (gameState.rules.guiStyle === 'authentic')
@@ -461,33 +482,27 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                           : t('settings.guiStyleGenerated', { defaultValue: 'Generated (Modern crisp procedural vector board)' })}
                       </div>
                     </div>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: '4px', 
-                      background: !isAuthenticSupported ? 'rgba(255,255,255,0.06)' : gameState.rules.guiStyle === 'authentic' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(0, 229, 255, 0.2)', 
-                      color: !isAuthenticSupported ? '#64748b' : gameState.rules.guiStyle === 'authentic' ? '#f59e0b' : 'var(--accent-cyan)',
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold',
-                      textTransform: 'uppercase'
-                    }}>
-                      {!isAuthenticSupported
-                        ? 'N/A'
-                        : (gameState.rules.guiStyle === 'authentic')
-                        ? 'AUTHENTIC'
-                        : 'GENERATED'}
-                    </span>
+                    <div className="settings-item-control">
+                      <span className={`settings-badge ${!isAuthenticSupported ? 'settings-badge--disabled' : gameState.rules.guiStyle === 'authentic' ? 'settings-badge--amber' : ''}`}>
+                        {!isAuthenticSupported
+                          ? 'N/A'
+                          : (gameState.rules.guiStyle === 'authentic')
+                          ? 'AUTHENTIC'
+                          : 'GENERATED'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleHudLayout}
                   data-testid="setting-hud-layout"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.hudLayout', { defaultValue: 'HUD Layout Style' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.hudLayout', { defaultValue: 'HUD Layout Style' })}</div>
+                      <div className="settings-item-desc">
                         {(gameState.rules.hudLayout || 'auto') === 'auto'
                           ? t('settings.hudLayoutAuto', { defaultValue: 'Auto (Landscape: Side HUD, Portrait: Top HUD)' })
                           : gameState.rules.hudLayout === 'top'
@@ -495,160 +510,133 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                           : t('settings.hudLayoutSide', { defaultValue: 'Side HUD (Modern widescreen & phone landscape, 2-column sidebar with folding)' })}
                       </div>
                     </div>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: '4px', 
-                      background: 'rgba(0, 229, 255, 0.2)', 
-                      color: 'var(--accent-cyan)',
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold',
-                      border: '1px solid var(--accent-cyan)'
-                    }}>
-                      {(gameState.rules.hudLayout || 'auto').toUpperCase()}
-                    </span>
+                    <div className="settings-item-control">
+                      <span className="settings-badge">
+                        {(gameState.rules.hudLayout || 'auto').toUpperCase()}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleWorkConsoleStyle}
                   data-testid="setting-work-console-style"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.workConsoleStyle', { defaultValue: 'Work Console Style' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.workConsoleStyle', { defaultValue: 'Work Console Style' })}</div>
+                      <div className="settings-item-desc">
                         {(gameState.rules.workConsoleStyle || 'popup') === 'popup'
                           ? t('settings.workConsolePopup', { defaultValue: 'Movable Window (Popup with radio modes - can move aside to watch shop)' })
                           : t('settings.workConsoleFlanking', { defaultValue: 'Flanking Wings (Fixed cards flanking the location window)' })}
                       </div>
                     </div>
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: '4px', 
-                      background: 'rgba(0, 229, 255, 0.2)', 
-                      color: 'var(--accent-cyan)',
-                      fontSize: '0.8rem',
-                      fontWeight: 'bold',
-                      border: '1px solid var(--accent-cyan)'
-                    }}>
-                      {(gameState.rules.workConsoleStyle || 'popup').toUpperCase()}
-                    </span>
+                    <div className="settings-item-control">
+                      <span className="settings-badge">
+                        {(gameState.rules.workConsoleStyle || 'popup').toUpperCase()}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleUseSkills}
                   data-testid="setting-use-skills"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.useSkills', { defaultValue: 'Management & Technical Skills' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.useSkills', { defaultValue: 'Management & Technical Skills' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.useSkills
                           ? t('settings.useSkillsOn', { defaultValue: 'Tracks Management & Technical skills with job bonuses (ON)' })
                           : t('settings.useSkillsOff', { defaultValue: 'Skills disabled (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!gameState.rules.useSkills} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.useSkills} ariaLabel={t('settings.useSkills', { defaultValue: 'Management & Technical Skills' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleDynamicSkillCaps}
                   data-testid="setting-dynamic-skill-caps"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.dynamicSkillCaps', { defaultValue: 'Dynamic Skill Caps' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.dynamicSkillCaps', { defaultValue: 'Dynamic Skill Caps' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.dynamicSkillCaps
                           ? t('settings.dynamicSkillCapsOn', { defaultValue: 'Skill caps scale with completed degrees up to 10.0 (ON)' })
                           : t('settings.dynamicSkillCapsOff', { defaultValue: 'Flat 10.0 skill caps (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!gameState.rules.dynamicSkillCaps} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.dynamicSkillCaps} ariaLabel={t('settings.dynamicSkillCaps', { defaultValue: 'Dynamic Skill Caps' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleWageScaledEmployability}
                   data-testid="setting-wage-scaled-employability"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.wageScaledEmployability', { defaultValue: 'Wage-Scaled Employability' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.wageScaledEmployability', { defaultValue: 'Wage-Scaled Employability' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.wageScaledEmployability
                           ? t('settings.wageScaledEmployabilityOn', { defaultValue: 'Normalized wage competition, qualification margin, and tag modifiers (ON)' })
                           : t('settings.wageScaledEmployabilityOff', { defaultValue: 'Classic employability formula (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!gameState.rules.wageScaledEmployability} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.wageScaledEmployability} ariaLabel={t('settings.wageScaledEmployability', { defaultValue: 'Wage-Scaled Employability' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleShowWindowPositionSize}
                   data-testid="setting-show-window-position-size"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.showWindowPositionSize', { defaultValue: 'Show Window Position & Size' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.showWindowPositionSize', { defaultValue: 'Show Window Position & Size' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.showWindowPositionSize 
                           ? t('settings.showWindowPositionSizeOn', { defaultValue: 'Displays coordinate and dimension overlay on location windows (ON)' })
                           : t('settings.showWindowPositionSizeOff', { defaultValue: 'Hidden window coordinate and dimension overlay (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!gameState.rules.showWindowPositionSize} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.showWindowPositionSize} ariaLabel={t('settings.showWindowPositionSize', { defaultValue: 'Show Window Position & Size' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleAllowWindowMoveResize}
                   data-testid="setting-allow-window-move-resize"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.allowWindowMoveResize', { defaultValue: 'Move & Resize Location Windows' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.allowWindowMoveResize', { defaultValue: 'Move & Resize Location Windows' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.allowWindowMoveResize 
                           ? t('settings.allowWindowMoveResizeOn', { defaultValue: 'Header dragging and corner resize handle enabled (ON)' })
                           : t('settings.allowWindowMoveResizeOff', { defaultValue: 'Fixed location window position and size (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={!!gameState.rules.allowWindowMoveResize} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.allowWindowMoveResize} ariaLabel={t('settings.allowWindowMoveResize', { defaultValue: 'Move & Resize Location Windows' })} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -659,22 +647,6 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
               className="settings-category-header"
               onClick={() => toggleCategory('graphics')}
               data-testid="category-header-graphics"
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '8px 12px',
-                background: 'rgba(255, 255, 255, 0.06)',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                userSelect: 'none',
-                fontWeight: 600,
-                fontSize: '0.9rem',
-                color: 'var(--accent-cyan, #00e5ff)',
-                border: '1px solid rgba(0, 229, 255, 0.25)',
-                marginBottom: isGraphicsCollapsed ? '10px' : '6px',
-                transition: 'background 0.15s ease'
-              }}
             >
               <span>🎨 {t('settings.categories.graphics', { defaultValue: 'Graphics & Sprites' })}</span>
               <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>
@@ -683,73 +655,64 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
             </div>
 
             {!isGraphicsCollapsed && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
+              <div className="settings-items-grid">
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleTogglePixelatedSprites}
                   data-testid="setting-pixelated-sprites"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.pixelatedSprites', { defaultValue: 'Crisp Pixel Art' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.pixelatedSprites', { defaultValue: 'Crisp Pixel Art' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.pixelatedSprites !== false 
                           ? t('settings.pixelatedOn', { defaultValue: 'Nearest-neighbor sharp pixels (ON)' })
                           : t('settings.pixelatedOff', { defaultValue: 'Bilinear smoothed interpolation (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={gameState.rules.pixelatedSprites !== false} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={gameState.rules.pixelatedSprites !== false} ariaLabel={t('settings.pixelatedSprites', { defaultValue: 'Crisp Pixel Art' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleRemoveCharacterBg}
                   data-testid="setting-remove-character-bg"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.removeCharacterBg', { defaultValue: 'Remove Character Background' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.removeCharacterBg', { defaultValue: 'Remove Character Background' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.removeCharacterBg !== false
                           ? t('settings.removeBgOn', { defaultValue: 'Transparent stage background (ON)' })
                           : t('settings.removeBgOff', { defaultValue: 'Original solid character background (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={gameState.rules.removeCharacterBg !== false} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={gameState.rules.removeCharacterBg !== false} ariaLabel={t('settings.removeCharacterBg', { defaultValue: 'Remove Character Background' })} />
+                    </div>
                   </div>
                 </div>
 
                 <div 
-                  className="interaction-item interaction-item--clickable"
+                  className="interaction-item interaction-item--clickable settings-item"
                   onClick={handleToggleAuthenticCurvedPaths}
                   data-testid="setting-authentic-curved-paths"
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{t('settings.authenticCurvedPaths', { defaultValue: 'Authentic Curved Board' })}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.authenticCurvedPaths', { defaultValue: 'Authentic Curved Board' })}</div>
+                      <div className="settings-item-desc">
                         {gameState.rules.authenticCurvedPaths !== false
                           ? t('settings.curvedBoardOn', { defaultValue: 'Authentic 1990 curved sidewalks and proportionate waypoint spacing (ON)' })
                           : t('settings.curvedBoardOff', { defaultValue: 'Simplified schematic rectangular layout (OFF)' })}
                       </div>
                     </div>
-                    <input 
-                      type="checkbox" 
-                      checked={gameState.rules.authenticCurvedPaths !== false} 
-                      readOnly
-                      style={{ cursor: 'pointer', accentColor: 'var(--accent-cyan)' }}
-                    />
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={gameState.rules.authenticCurvedPaths !== false} ariaLabel={t('settings.authenticCurvedPaths', { defaultValue: 'Authentic Curved Board' })} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -762,22 +725,6 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                   className="settings-category-header"
                   onClick={() => toggleCategory('developer')}
                   data-testid="category-header-developer"
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '8px 12px',
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    color: 'var(--accent-cyan, #00e5ff)',
-                    border: '1px solid rgba(0, 229, 255, 0.25)',
-                    marginBottom: isDeveloperCollapsed ? '10px' : '6px',
-                    transition: 'background 0.15s ease'
-                  }}
                 >
                   <span>🛠️ {t('settings.categories.developer', { defaultValue: 'Developer & Tools' })}</span>
                   <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>
@@ -786,29 +733,33 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                 </div>
 
                 {!isDeveloperCollapsed && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                  <div className="settings-items-grid">
                     {onOpenLog && (
                       <div 
-                        className="interaction-item interaction-item--clickable"
+                        className="interaction-item interaction-item--clickable settings-item"
                         onClick={onOpenLog}
                         style={{ border: '1px solid rgba(0, 229, 255, 0.3)' }}
                         data-testid="btn-open-game-log"
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>
-                            📜 {t('settings.viewGameLog', { defaultValue: 'View Game Activity Log' })}
-                          </span>
-                          {typeof logCount === 'number' && logCount > 0 && (
-                            <span style={{
-                              background: 'rgba(0, 229, 255, 0.15)',
-                              color: 'var(--accent-cyan)',
-                              fontSize: '0.75rem',
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              fontWeight: 700
-                            }}>
-                              {logCount}
+                        <div className="settings-item-row">
+                          <div className="settings-item-info">
+                            <span style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>
+                              📜 {t('settings.viewGameLog', { defaultValue: 'View Game Activity Log' })}
                             </span>
+                          </div>
+                          {typeof logCount === 'number' && logCount > 0 && (
+                            <div className="settings-item-control">
+                              <span style={{
+                                background: 'rgba(0, 229, 255, 0.15)',
+                                color: 'var(--accent-cyan)',
+                                fontSize: '0.75rem',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontWeight: 700
+                              }}>
+                                {logCount}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -816,26 +767,30 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
 
                     {campaign && (
                       <div 
-                        className="interaction-item interaction-item--clickable"
+                        className="interaction-item interaction-item--clickable settings-item"
                         onClick={() => setIsDebugModalOpen(true)}
                         style={{ border: '1px solid rgba(0, 229, 255, 0.3)' }}
                         data-testid="btn-open-debug-events"
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>
-                            🛠️ {t('settings.debugEvents', { defaultValue: 'Debug Events & Economy' })}
-                          </span>
-                          {(gameState.debugQueue?.length || 0) > 0 && (
-                            <span style={{
-                              background: 'rgba(255, 179, 0, 0.2)',
-                              color: 'var(--accent-amber)',
-                              fontSize: '0.7rem',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              fontWeight: 700
-                            }}>
-                              {gameState.debugQueue?.length} Queued
+                        <div className="settings-item-row">
+                          <div className="settings-item-info">
+                            <span style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>
+                              🛠️ {t('settings.debugEvents', { defaultValue: 'Debug Events & Economy' })}
                             </span>
+                          </div>
+                          {(gameState.debugQueue?.length || 0) > 0 && (
+                            <div className="settings-item-control">
+                              <span style={{
+                                background: 'rgba(255, 179, 0, 0.2)',
+                                color: 'var(--accent-amber)',
+                                fontSize: '0.7rem',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontWeight: 700
+                              }}>
+                                {gameState.debugQueue?.length} Queued
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -846,7 +801,7 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: 'auto', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="settings-modal-footer">
             {replayData && (
               <button className="action-panel__btn" onClick={handleExportReplay}>
                 Export Replay
@@ -869,7 +824,7 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                 🚪 {t('settings.quitGame', { defaultValue: 'Quit Game' })}
               </button>
             )}
-            <button className="action-panel__btn" onClick={onClose} style={{ marginInlineStart: 'auto' }}>
+            <button className="action-panel__btn settings-modal-footer__close" onClick={onClose} style={{ marginInlineStart: 'auto' }}>
               {t('settings.close', { defaultValue: 'Close' })}
             </button>
           </div>
@@ -878,28 +833,16 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
         {showQuitConfirm && (
           <div 
             data-testid="quit-confirm-dialog"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(5, 5, 16, 0.95)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px',
-              zIndex: 100,
-              borderRadius: '12px',
-              textAlign: 'center'
-            }}
+            className="settings-quit-confirm-dialog"
           >
-            <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>⚠️</div>
+            <div className="settings-quit-confirm-dialog__icon" style={{ fontSize: '2.2rem', marginBottom: '8px' }}>⚠️</div>
             <h3 style={{ margin: '0 0 8px', color: '#ff6b6b' }}>
               {t('settings.quitConfirmTitle', { defaultValue: 'Quit Current Game?' })}
             </h3>
-            <p style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '20px', maxWidth: '320px', lineHeight: 1.4 }}>
+            <p style={{ color: '#ccc', fontSize: '0.88rem', marginBottom: '16px', maxWidth: '320px', lineHeight: 1.4 }}>
               {t('settings.quitConfirmMsg', { defaultValue: 'Are you sure you want to quit? Current game progress will be lost.' })}
             </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 className="action-panel__btn"
                 data-testid="btn-confirm-quit"
