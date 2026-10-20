@@ -12,6 +12,7 @@ import {
   isExecutiveManagementJob,
   getJobInitiativeTier
 } from '../jobTags';
+import { calcEconomyPrice } from '../economyEngine';
 import type { JobApplicationResult } from './jobTypes';
 
 export const DEGREE_NAMES: Record<string, string> = {
@@ -105,7 +106,7 @@ export function applyForJob(
 
   if (isRaise) {
     // Raise logic
-    const newWage = offeredWage ?? job.baseWage;
+    const newWage = offeredWage !== undefined ? offeredWage : calcEconomyPrice(job.baseWage, economicIndex);
     if (newWage === player.currentWage) {
       return { updated, success: false, message: { key: 'action.job.raiseSame' } };
     }
@@ -346,7 +347,7 @@ export function applyForJob(
 
   // Success
   updated.currentJobId = job.id;
-  updated.currentWage = offeredWage ?? job.baseWage; // Lock in the wage
+  updated.currentWage = offeredWage !== undefined ? offeredWage : calcEconomyPrice(job.baseWage, economicIndex); // Lock in the wage
   updated.raisesAtCurrentJob = 0;
   updated.innovationCount = 0;
   updated.depMaxBonus = 0;

@@ -35,14 +35,18 @@ export function processEconomicTurnPhase(
 
     const crashStartWeek = eventRules.marketCrashStartWeek;
     const crashDivisor = eventRules.marketCrashDivisor;
-    const crashThreshold = eventRules.marketCrashThreshold;
+    const rawCrashThreshold = eventRules.marketCrashThreshold;
+    const crashThresholdReading = rawCrashThreshold > 50 ? rawCrashThreshold : rawCrashThreshold + 100;
+    const crashThresholdIndex = crashThresholdReading - 100;
 
     const boomStartWeek = eventRules.economicBoomStartWeek;
     const boomDivisor = eventRules.economicBoomDivisor;
-    const boomThreshold = eventRules.economicBoomThreshold;
+    const rawBoomThreshold = eventRules.economicBoomThreshold;
+    const boomThresholdReading = rawBoomThreshold > 50 ? rawBoomThreshold : rawBoomThreshold + 100;
+    const boomThresholdIndex = boomThresholdReading - 100;
 
     if (debugCrash) {
-      if (state.turn >= crashStartWeek && newEconomy >= crashThreshold) {
+      if (state.turn >= crashStartWeek && newEconomy >= crashThresholdIndex) {
         const forcedSeverity = debugCrash.crashSeverity || (debugCrash as any).crashType || 'moderate';
         crashSeverity = forcedSeverity;
         const trendDrop = -3;
@@ -64,11 +68,11 @@ export function processEconomicTurnPhase(
           key: 'debug.event_cancelled',
           params: {
             event: 'Market Crash',
-            reason: state.turn < crashStartWeek ? `Requires Turn ${crashStartWeek}+` : `Economy must be ≥ ${crashThreshold} (Current: ${newEconomy})`,
+            reason: state.turn < crashStartWeek ? `Requires Turn ${crashStartWeek}+` : `Economy must be ≥ ${crashThresholdIndex} (Current: ${newEconomy})`,
           },
         });
       }
-    } else if (state.turn >= crashStartWeek && newEconomy >= crashThreshold) {
+    } else if (state.turn >= crashStartWeek && newEconomy >= crashThresholdIndex) {
       const crashChance = 1 / (1 + (crashDivisor * state.players.length));
       const crashTriggered = resolveDecision(replay, `market_crash_trigger`, () => rng.next() < crashChance);
       if (crashTriggered) {
@@ -95,7 +99,7 @@ export function processEconomicTurnPhase(
     }
 
     if (debugBoom && crashSeverity === 'none') {
-      if (state.turn >= boomStartWeek && newEconomy >= 0) {
+      if (state.turn >= boomStartWeek && newEconomy <= boomThresholdIndex) {
         economicBoom = true;
         newEconomy = Math.min(90, newEconomy + 6);
         newTrend = 2;
@@ -105,11 +109,11 @@ export function processEconomicTurnPhase(
           key: 'debug.event_cancelled',
           params: {
             event: 'Economic Boom',
-            reason: state.turn < boomStartWeek ? `Requires Turn ${boomStartWeek}+` : `Economy must be ≥ 0 (Current: ${newEconomy})`,
+            reason: state.turn < boomStartWeek ? `Requires Turn ${boomStartWeek}+` : `Economy must be ≤ ${boomThresholdIndex} (Current: ${newEconomy})`,
           },
         });
       }
-    } else if (crashSeverity === 'none' && newEconomy <= boomThreshold && state.turn >= boomStartWeek) {
+    } else if (crashSeverity === 'none' && newEconomy <= boomThresholdIndex && state.turn >= boomStartWeek) {
       const boomChance = 1 / (1 + (boomDivisor * state.players.length));
       const boomTriggered = resolveDecision(replay, `market_boom_trigger`, () => rng.next() < boomChance);
       if (boomTriggered) {
@@ -158,13 +162,14 @@ export function processEconomicTurnPhase(
   const crashStartWeek = eventRules.marketCrashStartWeek;
   const crashDivisor = eventRules.marketCrashDivisor;
   const rawCrashThreshold = eventRules.marketCrashThreshold;
-  const crashThresholdReading = rawCrashThreshold + 100;
-  const crashThresholdIndex = rawCrashThreshold;
+  const crashThresholdReading = rawCrashThreshold > 50 ? rawCrashThreshold : rawCrashThreshold + 100;
+  const crashThresholdIndex = crashThresholdReading - 100;
 
   const boomStartWeek = eventRules.economicBoomStartWeek;
   const boomDivisor = eventRules.economicBoomDivisor;
   const rawBoomThreshold = eventRules.economicBoomThreshold;
   const boomThresholdReading = rawBoomThreshold > 50 ? rawBoomThreshold : rawBoomThreshold + 100;
+  const boomThresholdIndex = boomThresholdReading - 100;
 
   const currentGoodsReading = sim.main.reading;
   const currentGoodsIndex = sim.main.reading - 100;
@@ -216,7 +221,7 @@ export function processEconomicTurnPhase(
         key: 'debug.event_cancelled',
         params: {
           event: 'Economic Boom',
-          reason: state.turn < boomStartWeek ? `Requires Turn ${boomStartWeek}+` : `Economy must be ≤ ${boomThresholdReading} (Current: ${currentGoodsReading})`,
+          reason: state.turn < boomStartWeek ? `Requires Turn ${boomStartWeek}+` : `Economy must be ≤ ${boomThresholdIndex} (Current: ${currentGoodsIndex})`,
         },
       });
     }

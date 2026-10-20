@@ -100,11 +100,12 @@ export function checkEventPreconditions(
 ): PreconditionResult {
   switch (type) {
     case 'market_crash': {
-      const minWeek = 8;
+      const minWeek = campaign?.config?.eventRules?.marketCrashStartWeek ?? 8;
       if (state.turn < minWeek) {
         return { allowed: false, reason: `Requires Turn ${minWeek}+ (Current: Turn ${state.turn})` };
       }
-      const minIndex = 80;
+      const rawCrashThreshold = campaign?.config?.eventRules?.marketCrashThreshold ?? 80;
+      const minIndex = rawCrashThreshold > 50 ? rawCrashThreshold - 100 : rawCrashThreshold;
       if (state.economicIndex < minIndex) {
         return { allowed: false, reason: `Economic index must be ≥ ${minIndex} (Current: ${state.economicIndex})` };
       }
@@ -112,7 +113,7 @@ export function checkEventPreconditions(
     }
 
     case 'market_boom': {
-      const minWeek = 8;
+      const minWeek = campaign?.config?.eventRules?.economicBoomStartWeek ?? 8;
       if (state.turn < minWeek) {
         return { allowed: false, reason: `Requires Turn ${minWeek}+ (Current: Turn ${state.turn})` };
       }

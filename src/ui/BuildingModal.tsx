@@ -10,7 +10,8 @@ import {
   HomeRelax, 
   RentOffice, 
   BankInterface, 
-  PawnShop 
+  PawnShop,
+  ActionReasonModal
 } from './BuildingInteractions';
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
 import { PantryDetailsModal } from './buildings/home/PantryDetailsModal';
@@ -50,6 +51,7 @@ export function BuildingModal({
 }: BuildingModalProps) {
   const { t } = useTranslation();
   const [clerkMessage, setClerkMessage] = useState<string>('');
+  const [terminationNotice, setTerminationNotice] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'shop' | 'pawn'>('shop');
   const [educationTab, setEducationTab] = useState<'available' | 'tree'>('available');
   const [bankTab, setBankTab] = useState<'banking' | 'stocks' | 'loans'>('banking');
@@ -229,6 +231,16 @@ export function BuildingModal({
       setClerkMessage(nextMsg);
       justUpdatedMessageRef.current = true;
     }
+    const isFiringLog = (log: any) => {
+      const checkKey = (k?: string) => k === 'action.job.fired' || k === 'action.job.firedDepLow' || k === 'action.job.firedMistakes';
+      if (Array.isArray(log)) return log.some(l => checkKey(l?.key));
+      return checkKey(log?.key);
+    };
+    if (payload.type === 'work' && isFiringLog(actionLog)) {
+      if (isAdvancedWorkGUI) {
+        setTerminationNotice(nextMsg || t('action.job.fired', { defaultValue: "You're fired!" }));
+      }
+    }
     return actionLog;
   };
 
@@ -246,14 +258,14 @@ export function BuildingModal({
   const rentDue = player.rentPaidUntilWeek <= turn + 1;
   const isRentOfficeOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || !!playerJobHere;
   const isDiscountAndPawn = building.archetype === 'discount_and_pawn';
-  const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
+  const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen || !!clerkMessage);
 
   let currentFace = getClerkFace(building.id, building.archetype);
   if (building.archetype === 'home' && !livesHere) {
     currentFace = '🚫';
   } else if (building.archetype === 'home' && livesHere && isPenthouse) {
     currentFace = '🏙️';
-  } else if (building.id === 'apartment_complex' && !isRentOfficeOpen) {
+  } else if (building.id === 'apartment_complex' && !isRentOfficeOpen && !clerkMessage) {
     currentFace = '🚫';
   }
 
@@ -1020,6 +1032,17 @@ export function BuildingModal({
           data-testid="building-modal-resize-handle"
           onPointerDown={handleResizePointerDown}
           title={t('buildingModal.resizeTooltip', { defaultValue: 'Drag corner to resize window' })}
+        />
+      )}
+
+      {terminationNotice && (
+        <ActionReasonModal
+          title={t('workStation.firedTitle', { defaultValue: 'EMPLOYMENT TERMINATED' })}
+          reason={terminationNotice}
+          onClose={() => {
+            setTerminationNotice(null);
+            setIsWorkDeckOpen(false);
+          }}
         />
       )}
     </div>

@@ -3,8 +3,8 @@
 exports[`Deterministic Replay Regression > replays a real game using fastlane-replay-21-weeks.json 1`] = `
 {
   "campaignId": "The Fast Lane — Improved Version (QoL)",
-  "economicIndex": -8,
-  "economicTrend": 0,
+  "economicIndex": -13,
+  "economicTrend": -2,
   "pawnShopItemsForSale": [],
   "phase": "setup",
   "players": [
@@ -65,7 +65,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 0,
+      "money": 10,
       "nakedTurns": 1,
       "name": "Player 1",
       "newspaperHeadline": {
@@ -94,13 +94,13 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
           "key": "events.doctorVisit_reasons",
           "modifications": [
             {
-              "diff": -102,
+              "diff": -48,
               "stat": "money",
             },
           ],
           "params": {
-            "cost": 102,
-            "reasons": "Relaxation critically low",
+            "cost": 48,
+            "reasons": "Starvation, Relaxation critically low",
           },
         },
         {
@@ -135,19 +135,19 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "weekendResult": {
         "activityModifications": [
           {
-            "diff": -17,
+            "diff": -27,
             "label": "Weekend Cost",
             "stat": "money",
           },
         ],
-        "cost": 17,
+        "cost": 27,
         "event": {
-          "key": "events.weekend.random_16",
+          "key": "events.weekend.random_34",
         },
         "happinessBonus": undefined,
         "modifications": [
           {
-            "diff": -17,
+            "diff": -27,
             "label": "Weekend Cost",
             "stat": "money",
           },
@@ -158,7 +158,7 @@ exports[`Deterministic Replay Regression > replays a real game using fastlane-re
       "xpMaxBonus": 0,
     },
   ],
-  "rngState": 274401491581,
+  "rngState": 298211847150,
   "rules": {
     "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
@@ -209,10 +209,10 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         "happiness": 50,
         "wealth": 50,
       },
-      "happiness": 41,
+      "happiness": 37,
       "hasEarnedIncome": true,
       "hasWon": true,
-      "hoursRemaining": 40,
+      "hoursRemaining": 30,
       "id": "player_1",
       "innovationCount": 0,
       "inventory": {
@@ -248,7 +248,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "loanPaymentDeadline": 0,
       "maxDependability": 40,
       "maxExperience": 20,
-      "money": 197,
+      "money": 68,
       "nakedTurns": 0,
       "name": "TestPlayer",
       "newspaperHeadline": {
@@ -273,6 +273,22 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
               "stat": "happiness",
             },
           ],
+        },
+        {
+          "key": "events.doctorVisit",
+          "modifications": [
+            {
+              "diff": -120,
+              "stat": "money",
+            },
+            {
+              "diff": -4,
+              "stat": "happiness",
+            },
+          ],
+          "params": {
+            "cost": 120,
+          },
         },
         {
           "key": "events.rent.extensionExpired",
@@ -302,14 +318,14 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "weekendResult": {
         "activityModifications": [
           {
-            "diff": -5,
+            "diff": -14,
             "label": "Weekend Cost",
             "stat": "money",
           },
         ],
-        "cost": 5,
+        "cost": 14,
         "event": {
-          "key": "events.weekend.random_2",
+          "key": "events.weekend.random_0",
         },
         "happinessBonus": undefined,
         "maintenanceModifications": [
@@ -326,7 +342,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
         ],
         "modifications": [
           {
-            "diff": -5,
+            "diff": -14,
             "label": "Weekend Cost",
             "stat": "money",
           },
@@ -347,7 +363,7 @@ exports[`Deterministic Replay Regression > replays a recorded game exactly using
       "xpMaxBonus": 0,
     },
   ],
-  "rngState": 42126013741,
+  "rngState": 43957579554,
   "rules": {
     "allowEatingSpoiledFood": true,
     "allowEmployedRentPayment": false,
