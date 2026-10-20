@@ -6,7 +6,7 @@
  * from the campaign bundle to render the world.
  */
 
-import { Application, Graphics, Container, Text, Sprite } from 'pixi.js';
+import { Application, Graphics, Container, Text, Sprite, Assets } from 'pixi.js';
 import type { MapData, BuildingDef } from '../engine/dataLoader';
 import { AUTHENTIC_BOARD_WIDTH, AUTHENTIC_BOARD_HEIGHT, AUTHENTIC_BUILDINGS } from './authenticData';
 
@@ -172,7 +172,8 @@ export async function initMapRenderer(
 
     // Expose exact board bounds and scale via CSS custom properties on viewport
     const viewport = (config.container.closest('.game-viewport') as HTMLElement) || config.container;
-    viewport.style.setProperty('--board-scale', `${scale}`);
+    const canonicalScale = isAuthentic ? (scale * AUTHENTIC_BOARD_WIDTH / config.mapData.width) : scale;
+    viewport.style.setProperty('--board-scale', `${canonicalScale}`);
     viewport.style.setProperty('--board-x', `${boardX}px`);
     viewport.style.setProperty('--board-y', `${boardY}px`);
     viewport.style.setProperty('--board-width', `${boardW}px`);
@@ -192,25 +193,39 @@ export async function initMapRenderer(
 
   if (isAuthentic) {
     // ─── Authentic Sierra Board Layers ─────────────────────────────
-    // 1. Painted background picture
-    const bgSprite = Sprite.from(`${authenticBase}/board.png`);
-    bgSprite.width = AUTHENTIC_BOARD_WIDTH;
-    bgSprite.height = AUTHENTIC_BOARD_HEIGHT;
-    if ((bgSprite.texture as any)?.source) {
-      (bgSprite.texture as any).source.scaleMode = 'nearest';
+    // 1. Preload authentic textures via Assets.load (required in PixiJS v8)
+    const [bgTexture, roofTexture] = await Promise.all([
+      Assets.load(`${authenticBase}/board.png`),
+      Assets.load(`${authenticBase}/roof_patch.png`)
+    ]);
+    if (bgTexture?.source) {
+      bgTexture.source.scaleMode = 'nearest';
     }
+    if (roofTexture?.source) {
+      roofTexture.source.scaleMode = 'nearest';
+    }
+
+    // Painted background picture
+    const bgSprite = new Sprite(bgTexture);
     mapContainer.addChild(bgSprite);
+
+    // Preload player marbles
+    await Promise.all([0, 1, 2, 3].map(i => Assets.load(`${authenticBase}/marbles/marble_${i}.png`)));
 
     // 2. Animated building doors
     const doorsContainer = new Container();
     mapContainer.addChild(doorsContainer);
     for (const [bId, b] of Object.entries(AUTHENTIC_BUILDINGS)) {
-      const door = Sprite.from(`${authenticBase}/doors/${bId}_cel_0.png`);
+      const [doorTexture] = await Promise.all([
+        Assets.load(`${authenticBase}/doors/${bId}_cel_0.png`),
+        Assets.load(`${authenticBase}/doors/${bId}_cel_3.png`)
+      ]);
+      if (doorTexture?.source) {
+        doorTexture.source.scaleMode = 'nearest';
+      }
+      const door = new Sprite(doorTexture);
       door.x = b.doorX;
       door.y = b.doorY;
-      if ((door.texture as any)?.source) {
-        (door.texture as any).source.scaleMode = 'nearest';
-      }
       doorsContainer.addChild(door);
       buildingDoors.set(bId, { sprite: door, basePath: authenticBase });
     }
@@ -221,16 +236,20 @@ export async function initMapRenderer(
 
     // 4. Rooftop Occluders layer (above tokens layer)
     roofsLayer = new Container();
-    const roofPatch = Sprite.from(`${authenticBase}/roof_patch.png`);
+    const roofPatch = new Sprite(roofTexture);
     roofPatch.x = 68;
     roofPatch.y = 131;
-    roofPatch.width = 183;
-    roofPatch.height = 25;
-    if ((roofPatch.texture as any)?.source) {
-      (roofPatch.texture as any).source.scaleMode = 'nearest';
-    }
     roofsLayer.addChild(roofPatch);
     mapContainer.addChild(roofsLayer);
+
+    // Background preload robber frames for interception animation
+    const robberUrls = [
+      ...Array.from({ length: 6 }, (_, i) => `${authenticBase}/robber/run_left_${i}.png`),
+      ...Array.from({ length: 6 }, (_, i) => `${authenticBase}/robber/run_right_${i}.png`),
+      `${authenticBase}/robber/club_left.png`,
+      `${authenticBase}/robber/club_right.png`
+    ];
+    Promise.all(robberUrls.map(u => Assets.load(u))).catch(() => {});
 
     // 5. Interactive Hitboxes layer (on top of roofs for mouse/touch interactivity)
     const hitboxesLayer = new Container();
@@ -513,7 +532,9 @@ export function updatePlayers(players: { position: PlayerPosition, index: number
     const idx = playerTokens.length;
     let token: any;
     if (isAuthentic) {
-      token = Sprite.from(`${authenticBasePath}/marbles/marble_${idx % 4}.png`);
+      const marbleTex = (Assets.get ? Assets.get(`${authenticBasePath}/marbles/marble_${idx % 4}.png`) : null)
+        || (Sprite.from(`${authenticBasePath}/marbles/marble_${idx % 4}.png`) as any)?.texture;
+      token = new Sprite(marbleTex);
       if (token.anchor) {
         token.anchor.set(0.5, 0.5);
       }
@@ -595,9 +616,10 @@ export function updatePlayers(players: { position: PlayerPosition, index: number
     for (const [bId, doorInfo] of buildingDoors.entries()) {
       const isOccupied = occupiedBuildings.has(bId);
       const cel = isOccupied ? 3 : 0;
-      const newSprite = Sprite.from(`${doorInfo.basePath}/doors/${bId}_cel_${cel}.png`);
-      if (newSprite && (newSprite as any).texture && doorInfo.sprite) {
-        doorInfo.sprite.texture = (newSprite as any).texture;
+      const doorTex = (Assets.get ? Assets.get(`${doorInfo.basePath}/doors/${bId}_cel_${cel}.png`) : null)
+        || (Sprite.from(`${doorInfo.basePath}/doors/${bId}_cel_${cel}.png`) as any)?.texture;
+      if (doorTex && doorInfo.sprite) {
+        doorInfo.sprite.texture = doorTex;
       }
     }
   }

@@ -38,10 +38,14 @@ vi.mock('pixi.js', () => {
     scale = { set: vi.fn() };
     anchor = { set: vi.fn() };
     texture = { source: { scaleMode: 'nearest' } };
+    constructor(tex?: any) {
+      if (tex) this.texture = tex;
+    }
     static from = vi.fn(() => new Sprite());
   }
   const Assets = {
-    load: vi.fn().mockResolvedValue({ source: {} })
+    load: vi.fn().mockResolvedValue({ source: {} }),
+    get: vi.fn().mockReturnValue({ source: {} })
   };
   return { Graphics, Container, Application, Text, Sprite, Assets };
 });
