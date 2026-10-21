@@ -96,12 +96,13 @@ roof_im.save(f"{OUT_DIR}/roof_patch.png")
 
 os.makedirs(f"{OUT_DIR}/marbles", exist_ok=True)
 marbles_info = []
+# Loop 2 in view.000 contains the authentic 9x8 spherical shaded player marbles (publicmarble in script.001)
 for c in range(4):
-    cx = c * 26
-    m_im = Image.new("RGBA", (25, 24))
-    for py in range(24):
-        for px in range(25):
-            p = view0_bmp.getpixel((cx + px, 149 + py))
+    cx = c * 10
+    m_im = Image.new("RGBA", (9, 8))
+    for py in range(8):
+        for px in range(9):
+            p = view0_bmp.getpixel((cx + px, 139 + py))
             if p != 255 and p != 0:
                 r, g, b = pal0[p*3 : p*3+3]
                 m_im.putpixel((px, py), (r, g, b, 255))

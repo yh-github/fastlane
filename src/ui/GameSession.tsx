@@ -379,7 +379,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
         foldState={hudFoldState}
         onToggleFold={setHudFoldState}
       />
-      <main className="game-viewport">
+      <main className={`game-viewport ${gameState.rules.guiStyle === 'authentic' ? 'game-viewport--authentic' : ''}`}>
         {isWeekend && activePlayer && (
           <WeekendScreen
             player={activePlayer}
@@ -441,7 +441,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
 
         {/* Unified Bottom Center Clock Widget (shown when authentic curved board, or in Side HUD mode) */}
         {showBottomCenterClock && activePlayer && (
-          <div className="bottom-center-clock" data-testid="bottom-center-clock">
+          <div className={`bottom-center-clock ${gameState.rules.guiStyle === 'authentic' ? 'bottom-center-clock--authentic' : ''}`} data-testid="bottom-center-clock">
             <div className="clock-face">
               {(() => {
                 const totalHours = campaign.config.timeRules.hoursPerTurn;
@@ -482,7 +482,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
           />
         </div>
 
-        {(!activeModal || (activeModal.type === 'building' && !currentBuildingId)) && activePlayer && gameState.rules.guiStyle !== 'authentic' && (
+        {(!activeModal || (activeModal.type === 'building' && !currentBuildingId)) && activePlayer && (
           <CenterWalkAnimation
             characterIndex={activePlayer.characterIndex ?? 0}
             clothesType={activePlayer.inventory?.selectedClothes || 'casual'}

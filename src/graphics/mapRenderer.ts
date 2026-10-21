@@ -224,8 +224,10 @@ export async function initMapRenderer(
         doorTexture.source.scaleMode = 'nearest';
       }
       const door = new Sprite(doorTexture);
-      door.x = b.doorX;
-      door.y = b.doorY;
+      const dw = (doorTexture as any).width || 10;
+      const dh = (doorTexture as any).height || 10;
+      door.x = b.doorX - Math.floor(dw / 2);
+      door.y = b.doorY - dh + 1;
       doorsContainer.addChild(door);
       buildingDoors.set(bId, { sprite: door, basePath: authenticBase });
     }
@@ -238,7 +240,7 @@ export async function initMapRenderer(
     roofsLayer = new Container();
     const roofPatch = new Sprite(roofTexture);
     roofPatch.x = 68;
-    roofPatch.y = 131;
+    roofPatch.y = 139;
     roofsLayer.addChild(roofPatch);
     mapContainer.addChild(roofsLayer);
 
