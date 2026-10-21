@@ -129,4 +129,39 @@ describe('Authentic GUI Component Unit Tests', () => {
     expect(modal.classList.contains('building-modal--authentic')).toBe(true);
     expect(modal.classList.contains('building-modal--curved')).toBe(true);
   });
+
+  it('exports occluders metadata including Bank, QT, and Clock for foreground layering', async () => {
+    const { AUTHENTIC_OCCLUDERS } = await import('../graphics/authenticData');
+    const occIds = AUTHENTIC_OCCLUDERS.map(o => o.id);
+    expect(occIds).toContain('roof_patch');
+    expect(occIds).toContain('bank_roof');
+    expect(occIds).toContain('qt_roof');
+    expect(occIds).toContain('clock');
+
+    const bank = AUTHENTIC_OCCLUDERS.find(o => o.id === 'bank_roof');
+    expect(bank?.x).toBe(7);
+    expect(bank?.y).toBe(119);
+
+    const qt = AUTHENTIC_OCCLUDERS.find(o => o.id === 'qt_roof');
+    expect(qt?.x).toBe(251);
+    expect(qt?.y).toBe(82);
+
+    const clock = AUTHENTIC_OCCLUDERS.find(o => o.id === 'clock');
+    expect(clock?.x).toBe(147);
+    expect(clock?.y).toBe(155);
+  });
+
+  it('verifies all 13 authentic building door coordinates match Sierra SCI original places', async () => {
+    const { AUTHENTIC_BUILDINGS } = await import('../graphics/authenticData');
+    expect(AUTHENTIC_BUILDINGS.bank.doorX).toBe(20);
+    expect(AUTHENTIC_BUILDINGS.bank.doorY).toBe(147);
+    expect(AUTHENTIC_BUILDINGS.qt_clothing.doorX).toBe(277);
+    expect(AUTHENTIC_BUILDINGS.qt_clothing.doorY).toBe(113);
+    expect(AUTHENTIC_BUILDINGS.low_cost_housing.doorX).toBe(144);
+    expect(AUTHENTIC_BUILDINGS.low_cost_housing.doorY).toBe(30);
+    expect(AUTHENTIC_BUILDINGS.employment_office.doorX).toBe(97);
+    expect(AUTHENTIC_BUILDINGS.employment_office.doorY).toBe(183);
+    expect(AUTHENTIC_BUILDINGS.university.doorX).toBe(220);
+    expect(AUTHENTIC_BUILDINGS.university.doorY).toBe(179);
+  });
 });

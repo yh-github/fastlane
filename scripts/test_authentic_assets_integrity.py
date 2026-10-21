@@ -94,11 +94,36 @@ def test_roof_patch_alignment():
     assert pct_131 < 25.0, f"Buggy y=131 should fail (<25%), but got {pct_131:.1f}%"
     print(f"  -> Roof patch verified: {pct_139:.1f}% match at y=139 (vs {pct_131:.1f}% at buggy y=131).")
 
+def test_occluders_alignment():
+    print("Testing Occluders Alignment (Bank, QT, Clock)...")
+    board = Image.open("public/assets/authentic/board.png").convert("RGB")
+    with open("public/assets/authentic/occluders.json") as f:
+        occluders = json.load(f)
+
+    for name, spec in occluders.items():
+        occ_im = Image.open(f"public/assets/authentic/occluders/{name}.png").convert("RGBA")
+        ow, oh = occ_im.size
+        assert (ow, oh) == (spec["w"], spec["h"]), f"Occluder {name} size mismatch: got ({ow}, {oh}), expected ({spec['w']}, {spec['h']})"
+        match = 0
+        total = 0
+        for y in range(oh):
+            for x in range(ow):
+                op = occ_im.getpixel((x, y))
+                if op[3] > 0:
+                    total += 1
+                    bp = board.getpixel((spec["x"] + x, spec["y"] + y))
+                    if op[:3] == bp[:3]:
+                        match += 1
+        pct = (match / total * 100) if total > 0 else 0
+        assert pct == 100.0, f"Occluder {name} at ({spec['x']}, {spec['y']}) match is {pct:.1f}%, expected 100.0%"
+    print(f"  -> All {len(occluders)} rooftop occluders match background 100.0% pixel-perfect.")
+
 if __name__ == "__main__":
     try:
         test_marbles()
         test_doors_alignment()
         test_roof_patch_alignment()
+        test_occluders_alignment()
         print("ALL AUTHENTIC ASSET INTEGRITY TESTS PASSED SUCCESSFULLY!")
     except AssertionError as e:
         print(f"TEST FAILED: {e}", file=sys.stderr)

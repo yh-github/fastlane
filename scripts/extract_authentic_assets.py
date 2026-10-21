@@ -162,4 +162,19 @@ for name, spec in d_specs.items():
 with open(f"{OUT_DIR}/durables.json", "w") as f:
     json.dump(durables, f, indent=2)
 
+print("8. Extracting Building Rooftop Occluders (Bank, QT, Clock)...")
+os.makedirs(f"{OUT_DIR}/occluders", exist_ok=True)
+board_rgba = board.convert("RGBA")
+occluders_meta = {
+    "clock": { "x": 147, "y": 155, "w": 24, "h": 31 },
+    "bank_roof": { "x": 7, "y": 119, "w": 61, "h": 19 },
+    "qt_roof": { "x": 251, "y": 82, "w": 61, "h": 22 },
+}
+for name, spec in occluders_meta.items():
+    crop = board_rgba.crop((spec["x"], spec["y"], spec["x"] + spec["w"], spec["y"] + spec["h"]))
+    crop.save(f"{OUT_DIR}/occluders/{name}.png")
+
+with open(f"{OUT_DIR}/occluders.json", "w") as f:
+    json.dump(occluders_meta, f, indent=2)
+
 print("All authentic assets extracted successfully!")

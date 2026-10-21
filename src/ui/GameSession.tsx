@@ -424,6 +424,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
             }}
             authenticCurvedPaths={gameState.rules.authenticCurvedPaths}
             guiStyle={gameState.rules.guiStyle}
+            enteredBuildingId={(!isTravelling && activeModal?.type === 'building') ? currentBuildingId : null}
           />
         </div>
 

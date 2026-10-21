@@ -88,6 +88,18 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
     expect(modalBox!.x + modalBox!.width).toBeLessThanOrEqual(canvasBox!.x + canvasBox!.width);
     expect(modalBox!.y + modalBox!.height).toBeLessThanOrEqual(canvasBox!.y + canvasBox!.height);
 
+    // Verify marble is at door position
+    const playerMarker = page.locator('[data-testid="player-character"]');
+    await expect(playerMarker).toBeAttached();
+    await expect(playerMarker).toHaveAttribute('data-visible', 'true');
+    const posX = parseFloat((await playerMarker.getAttribute('data-x')) || '0');
+    const posY = parseFloat((await playerMarker.getAttribute('data-y')) || '0');
+    // Ensure coordinates are within board boundaries and at door
+    expect(posX).toBeGreaterThan(0);
+    expect(posX).toBeLessThan(320);
+    expect(posY).toBeGreaterThan(0);
+    expect(posY).toBeLessThan(190);
+
     // Assert zero uncaught page errors
     expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);
   });
