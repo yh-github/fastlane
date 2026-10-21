@@ -324,18 +324,6 @@ export async function initMapRenderer(
       hitBox.on('pointertap', () => {
         config.onNodeClick(b.nodeId);
       });
-      hitBox.on('pointerover', () => {
-        hitBox.clear();
-        hitBox.rect(left, top, right - left, bottom - top);
-        hitBox.fill({ color: 0xffb300, alpha: 0.15 });
-        hitBox.setStrokeStyle({ width: 1, color: 0xffb300, alpha: 0.8 });
-        hitBox.stroke();
-      });
-      hitBox.on('pointerout', () => {
-        hitBox.clear();
-        hitBox.rect(left, top, right - left, bottom - top);
-        hitBox.fill({ color: 0x000000, alpha: 0.001 });
-      });
       hitboxesLayer.addChild(hitBox);
     }
   } else {
@@ -669,51 +657,153 @@ export function highlightReachableNodes(nodeIds: string[]): void {
   console.log('[MapRenderer] Reachable nodes: ', nodeIds);
 }
 
+interface Point2D {
+  x: number;
+  y: number;
+}
+
+function evaluatePolyline(points: Point2D[], cumDistances: number[], totalDistance: number, targetDist: number): Point2D {
+  if (points.length === 0) return { x: 0, y: 0 };
+  if (points.length === 1 || targetDist <= 0) return points[0];
+  if (targetDist >= totalDistance) return points[points.length - 1];
+
+  for (let i = 0; i < cumDistances.length; i++) {
+    if (targetDist <= cumDistances[i]) {
+      const pA = points[i];
+      const pB = points[i + 1];
+      const prevCum = i > 0 ? cumDistances[i - 1] : 0;
+      const segLen = cumDistances[i] - prevCum;
+      if (segLen <= 0.0001) return pB;
+      const t = (targetDist - prevCum) / segLen;
+      return {
+        x: pA.x + (pB.x - pA.x) * t,
+        y: pA.y + (pB.y - pA.y) * t,
+      };
+    }
+  }
+  return points[points.length - 1];
+}
+
+function computePathProgress(u: number, easeOut: boolean): number {
+  if (!easeOut) {
+    return u;
+  }
+  // Steady speed across the road (first 65%), then smooth continuous deceleration down to 0 at destination
+  const splitT = 0.65;
+  const areaFactor = 0.5 * splitT + 0.5; // 0.825
+  const v0 = 1 / areaFactor; // ~1.212
+  const dist1 = v0 * splitT; // ~0.788
+
+  if (u <= splitT) {
+    return v0 * u;
+  }
+  const tau = (u - splitT) / (1 - splitT);
+  const phase2Dist = (1 - dist1) * (tau * (2 - tau));
+  return Math.min(1, dist1 + phase2Dist);
+}
+
 /**
- * Animate the player token along a path of nodes.
+ * Animate the player token along a path of nodes with smooth continuous polyline motion and natural deceleration.
  * @param path - Array of positions to visit in order
- * @param speedMs - Time in milliseconds per step
+ * @param speedMs - Base duration or nominal speed factor
+ * @param onStep - Optional callback fired when step completes
+ * @param options - Additional animation options (e.g. easeOut at end of path)
  */
-export async function animatePlayerPath(path: PlayerPosition[], playerIndex: number, speedMs: number = 300, onStep?: () => void): Promise<void> {
+export async function animatePlayerPath(
+  path: PlayerPosition[],
+  playerIndex: number,
+  speedMs: number = 300,
+  onStep?: () => void,
+  options?: { easeOut?: boolean }
+): Promise<void> {
   if (path.length === 0 || !playerTokens[playerIndex]) return;
   const token = playerTokens[playerIndex];
   token.visible = true;
   const isAuthentic = activeGuiStyle === 'authentic';
   const coordScale = isAuthentic ? (1 / 3.75) : 1;
 
+  // Build the complete list of polyline points starting from current token position
+  const points: Point2D[] = [{ x: token.x, y: token.y }];
   for (const pos of path) {
-    await new Promise<void>((resolve) => {
-      const startX = token.x;
-      const startY = token.y;
-      const targetX = pos.x * coordScale;
-      const targetY = pos.y * coordScale;
-      
-      const startTime = performance.now();
-      
-      function step(now: number) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / speedMs, 1);
-        
-        token.x = startX + (targetX - startX) * progress;
-        token.y = startY + (targetY - startY) * progress;
-        
+    const px = pos.x * coordScale;
+    const py = pos.y * coordScale;
+    const lastP = points[points.length - 1];
+    const dx = px - lastP.x;
+    const dy = py - lastP.y;
+    // Skip negligible duplicate points
+    if (Math.hypot(dx, dy) > 0.1) {
+      points.push({ x: px, y: py });
+    }
+  }
+
+  // Calculate cumulative segment distances
+  const cumDistances: number[] = [];
+  let totalDistance = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const d = Math.hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y);
+    totalDistance += d;
+    cumDistances.push(totalDistance);
+  }
+
+  if (totalDistance < 0.5) {
+    const finalP = points[points.length - 1];
+    token.x = finalP.x;
+    token.y = finalP.y;
+    if (testMarker) {
+      testMarker.dataset.x = token.x.toString();
+      testMarker.dataset.y = token.y.toString();
+    }
+    if (onStep) onStep();
+    return;
+  }
+
+  // Natural velocity-based duration:
+  // In authentic mode (320x190), ~0.24 px/ms (~240 px/sec) gives natural rolling speed.
+  // In generated mode (1200x800), ~0.9 px/ms gives crisp vector travel.
+  const nominalSpeed = isAuthentic ? 0.24 : 0.9;
+  const nominalTotalDuration = (speedMs < 50) ? (speedMs * path.length) : speedMs;
+  const distanceBasedDuration = Math.round(totalDistance / nominalSpeed);
+  const duration = Math.max(280, Math.min(800, Math.max(nominalTotalDuration, distanceBasedDuration)));
+
+  const easeOut = options?.easeOut !== false;
+
+  await new Promise<void>((resolve) => {
+    const startTime = performance.now();
+
+    function step(now: number) {
+      const elapsed = now - startTime;
+      const u = Math.min(elapsed / duration, 1);
+      const progress = computePathProgress(u, easeOut);
+      const targetDist = progress * totalDistance;
+      const pt = evaluatePolyline(points, cumDistances, totalDistance, targetDist);
+
+      token.x = pt.x;
+      token.y = pt.y;
+
+      if (testMarker) {
+        testMarker.dataset.x = token.x.toString();
+        testMarker.dataset.y = token.y.toString();
+      }
+
+      if (u < 1) {
+        requestAnimationFrame(step);
+      } else {
+        const finalP = points[points.length - 1];
+        token.x = finalP.x;
+        token.y = finalP.y;
         if (testMarker) {
           testMarker.dataset.x = token.x.toString();
           testMarker.dataset.y = token.y.toString();
         }
-
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        } else {
-          if (onStep) onStep();
-          (token as any).isAnimating = false;
-          resolve();
-        }
+        if (onStep) onStep();
+        (token as any).isAnimating = false;
+        resolve();
       }
-      (token as any).isAnimating = true;
-      requestAnimationFrame(step);
-    });
-  }
+    }
+
+    (token as any).isAnimating = true;
+    requestAnimationFrame(step);
+  });
 }
 
 /**

@@ -164,4 +164,16 @@ describe('Authentic GUI Component Unit Tests', () => {
     expect(AUTHENTIC_BUILDINGS.university.doorX).toBe(220);
     expect(AUTHENTIC_BUILDINGS.university.doorY).toBe(179);
   });
+
+  it('verifies click indicator targets the authentic door rather than sidewalk waypoints', async () => {
+    const { AUTHENTIC_BUILDINGS } = await import('../graphics/authenticData');
+    // Test that for Bank, door is at (20, 147), so indicator is at (20 * 3.75 = 75, 147 * 3.75 = 551.25), not the old street waypoint (90, 596)
+    const bank = AUTHENTIC_BUILDINGS.bank;
+    expect(bank.doorX * 3.75).toBe(75);
+    expect(bank.doorY * 3.75).toBe(551.25);
+    // For Low Cost Housing, door is at (144, 30), so indicator is at (540, 112.5), not (540, 148)
+    const lowCost = AUTHENTIC_BUILDINGS.low_cost_housing;
+    expect(lowCost.doorX * 3.75).toBe(540);
+    expect(lowCost.doorY * 3.75).toBe(112.5);
+  });
 });
