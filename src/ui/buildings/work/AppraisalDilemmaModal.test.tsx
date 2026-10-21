@@ -222,6 +222,83 @@ describe('AppraisalDilemmaModal', () => {
     expect(screen.getByText(/⚠️ Burnout Risk/i)).toBeInTheDocument();
   });
 
+  it('renders all modifiers including 👔 Leadership, 👥 Social (+ and -), and 💪 Physical without truncation, and activates mobile carousel for 2 cards', () => {
+    window.innerWidth = 390;
+    window.innerHeight = 844;
+
+    const complexDilemma = {
+      gameType: 'work_initiative' as const,
+      title: 'Workplace Initiative: Operational Excellence',
+      options: [
+        {
+          type: 'initiative' as const,
+          title: 'Ethical Scheduling Stand',
+          description: 'Defend exhausted team members against unfair overtime.',
+          mentalAmount: 4.0,
+          socialAmount: 1.0,
+          depAmount: 1.0,
+          standingAmount: 1
+        },
+        {
+          type: 'initiative' as const,
+          title: 'High-Stakes Strategic Overhaul',
+          description: 'Restructure workflows with heavy operational sprint.',
+          leadershipSkillAmount: 0.85,
+          techSkillAmount: 0.35,
+          expAmount: 2.5,
+          depAmount: 2.5,
+          standingAmount: 2,
+          cashAmount: 65,
+          mentalAmount: -2.5,
+          socialAmount: -1.5,
+          physicalAmount: -1.0,
+          burnoutRisk: true
+        }
+      ]
+    };
+
+    render(
+      <AppraisalDilemmaModal
+        dilemma={complexDilemma}
+        player={createTestPlayer({ name: 'Clara' })}
+        onSelectOption={vi.fn()}
+      />
+    );
+
+    // Mobile carousel check: with 2 cards on a 390px phone, carousel mode is active to give cards full width
+    expect(document.body.querySelector('.appraisal-cards-carousel')).not.toBeNull();
+    const pills = document.body.querySelectorAll('.appraisal-carousel-indicator__btn');
+    expect(pills.length).toBe(2);
+
+    // Card 0: Positive Social (+1 👥) is displayed in chips!
+    expect(screen.getByText('+1 👥')).toBeInTheDocument();
+    expect(screen.getByText('+4 🧠')).toBeInTheDocument();
+    expect(screen.getByText('+1 🌟')).toBeInTheDocument();
+
+    // Card 1: Leadership (+0.85 👔), Tech (+0.35 🔧), Negative Social (-1.5 👥), and Physical (-1 💪) are ALL displayed!
+    expect(screen.getByText('+0.85 👔')).toBeInTheDocument();
+    expect(screen.getByText('+0.35 🔧')).toBeInTheDocument();
+    expect(screen.getByText('+2.5 👌')).toBeInTheDocument();
+    expect(screen.getByText('+$65')).toBeInTheDocument();
+    expect(screen.getByText('-2.5 🧠')).toBeInTheDocument();
+    expect(screen.getByText('-1.5 👥')).toBeInTheDocument();
+    expect(screen.getByText('-1 💪')).toBeInTheDocument();
+
+    // Test per-card help for Social and Physical
+    const card0HelpBtn = screen.getByTestId('card-help-btn-0');
+    fireEvent.click(card0HelpBtn);
+    expect(screen.getByText(/👥 Camaraderie \(\+1\)/i)).toBeInTheDocument();
+
+    // Close help
+    const closeBtn = screen.getByRole('button', { name: /close help/i });
+    fireEvent.click(closeBtn);
+
+    const card1HelpBtn = screen.getByTestId('card-help-btn-1');
+    fireEvent.click(card1HelpBtn);
+    expect(screen.getByText(/👥 Social Friction \(-1\.5\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/💪 Physical Strain \(-1\)/i)).toBeInTheDocument();
+  });
+
   it('portals inside .game-viewport when present to protect HUD visibility, and handles direct card clicks', () => {
     window.innerWidth = 1440;
     window.innerHeight = 900;
