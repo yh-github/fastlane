@@ -226,7 +226,7 @@ export function useGameEngine(
         }
         const numHops = Math.max(1, pathResult.path.length - 1);
         const stepSpeedMs = Math.max(10, Math.round(150 / Math.max(1, pathCoords.length / numHops)));
-        await animatePlayerPath(pathCoords, activePlayerIndex, stepSpeedMs);
+        await animatePlayerPath(pathCoords, activePlayerIndex, stepSpeedMs, undefined, { easeOut: true });
       }
       setIsTravelling(false);
       setIsAnimating(false);
@@ -472,9 +472,9 @@ export function useGameEngine(
               { nodeId: nextNodeId, x: targetCoord.x, y: targetCoord.y }
             ];
             const stepSpeedMs = Math.max(12, Math.round(300 / fullHopPath.length));
-            await animatePlayerPath(fullHopPath, activePlayerIndex, stepSpeedMs);
+            await animatePlayerPath(fullHopPath, activePlayerIndex, stepSpeedMs, undefined, { easeOut: isFinalHop });
           } else {
-            await animatePlayerPath([{ nodeId: nextNodeId, x: targetCoord.x, y: targetCoord.y }], activePlayerIndex, 300);
+            await animatePlayerPath([{ nodeId: nextNodeId, x: targetCoord.x, y: targetCoord.y }], activePlayerIndex, 300, undefined, { easeOut: isFinalHop });
           }
 
           pRef = spendHours(pRef, movementCost);
@@ -546,6 +546,9 @@ export function useGameEngine(
           } else if (!activePlayer.isAi && player.position === targetNodeId) {
             const destNode = campaign.map.nodes.find(n => n.id === player.position);
             if (destNode && campaign.buildings.some(b => b.id === destNode.buildingId)) {
+              if (currentState.rules.guiStyle === 'authentic') {
+                await new Promise(r => setTimeout(r, 260));
+              }
               openModal({ type: 'building' });
             }
           }
@@ -652,9 +655,13 @@ export function useGameEngine(
     if (activePlayer?.pendingMiniGame || activePlayer?.pendingAppraisalDilemma) return;
 
     const useAuthentic = (gameStateRef.current?.rules.authenticCurvedPaths !== false) && !!campaign.map.authenticNodes;
+    const isAuthenticGui = gameStateRef.current?.rules.guiStyle === 'authentic';
+    const authBuilding = isAuthenticGui ? Object.values(AUTHENTIC_BUILDINGS).find(b => b.nodeId === nodeId) : null;
     const authPos = useAuthentic ? campaign.map.authenticNodes?.[nodeId] : undefined;
     const node = campaign.map.nodes.find(n => n.id === nodeId);
-    if (authPos) {
+    if (authBuilding) {
+      showMapClick(authBuilding.doorX * 3.75, authBuilding.doorY * 3.75);
+    } else if (authPos) {
       showMapClick(authPos.x, authPos.y);
     } else if (node) {
       showMapClick(node.x, node.y);
@@ -716,9 +723,13 @@ export function useGameEngine(
           if (actions[0].type === 'move') {
             const moveAct = actions[0] as { type: 'move'; nodeId: string };
             const useAuthentic = (stateSnapshot.rules.authenticCurvedPaths !== false) && !!campaign!.map.authenticNodes;
+            const isAuthenticGui = stateSnapshot.rules.guiStyle === 'authentic';
+            const authBuilding = isAuthenticGui ? Object.values(AUTHENTIC_BUILDINGS).find(b => b.nodeId === moveAct.nodeId) : null;
             const authPos = useAuthentic ? campaign!.map.authenticNodes?.[moveAct.nodeId] : undefined;
             const targetNode = campaign!.map.nodes.find(n => n.id === moveAct.nodeId);
-            if (authPos) {
+            if (authBuilding) {
+              showMapClick(authBuilding.doorX * 3.75, authBuilding.doorY * 3.75);
+            } else if (authPos) {
               showMapClick(authPos.x, authPos.y);
             } else if (targetNode) {
               showMapClick(targetNode.x, targetNode.y);
