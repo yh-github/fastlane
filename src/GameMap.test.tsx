@@ -245,9 +245,9 @@ describe('GameMap Character GUI Tests', () => {
     await waitFor(() => {
       const marker = screen.getByTestId('player-character');
       expect(marker).toHaveAttribute('data-visible', 'true');
-      // 540 / 3.75 = 144, 150 / 3.75 = 40
+      // In authentic mode, player marble reaches and stops at the authentic door (doorX: 144, doorY: 30)
       expect(marker).toHaveAttribute('data-x', '144');
-      expect(marker).toHaveAttribute('data-y', '40');
+      expect(marker).toHaveAttribute('data-y', '30');
     });
   });
 });

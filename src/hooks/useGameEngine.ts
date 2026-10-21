@@ -5,6 +5,7 @@ import { spendHours } from '../engine/timeManager';
 import { type CampaignBundle } from '../engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, getEdgeKey } from '../graphics/pathfinding';
 import { animatePlayerPath, pulsePlayer, showMapClick, animateRobberInterception } from '../graphics/mapRenderer';
+import { AUTHENTIC_BUILDINGS } from '../graphics/authenticData';
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
 import { simulateActionVisuals } from '../engine/aiTranslator';
@@ -212,7 +213,13 @@ export function useGameEngine(
               pathCoords.push({ nodeId: v, x: w.x, y: w.y });
             }
           }
-          const targetCoord = (useAuthentic && campaign.map.authenticNodes?.[v]) || campaign.map.nodes.find(n => n.id === v);
+          const isAuthentic = gameStateRef.current?.rules.guiStyle === 'authentic';
+          const authBuilding = isAuthentic ? Object.values(AUTHENTIC_BUILDINGS).find(b => b.nodeId === v) : null;
+          const isFinalHomeHop = i === pathResult.path.length - 2;
+          const defaultTarget = (useAuthentic && campaign.map.authenticNodes?.[v]) || campaign.map.nodes.find(n => n.id === v);
+          const targetCoord = (isFinalHomeHop && authBuilding)
+            ? { x: authBuilding.doorX * 3.75, y: authBuilding.doorY * 3.75 }
+            : defaultTarget;
           if (targetCoord) {
             pathCoords.push({ nodeId: v, x: targetCoord.x, y: targetCoord.y });
           }
@@ -450,9 +457,16 @@ export function useGameEngine(
             e => (e.from === pRef.position && e.to === nextNodeId) || (e.to === pRef.position && e.from === nextNodeId)
           );
 
+          const isAuthentic = currentState.rules.guiStyle === 'authentic';
+          const authBuilding = isAuthentic ? Object.values(AUTHENTIC_BUILDINGS).find(b => b.nodeId === nextNodeId) : null;
+          const isFinalHop = nextNodeId === targetNodeId;
+          const defaultTarget = (useAuthentic && campaign.map.authenticNodes?.[nextNodeId]) || { x: nextNode.x, y: nextNode.y };
+          const targetCoord = (isFinalHop && authBuilding)
+            ? { x: authBuilding.doorX * 3.75, y: authBuilding.doorY * 3.75 }
+            : defaultTarget;
+
           if (useAuthentic && edge?.path && edge.path.length > 0) {
             const rawWaypoints = edge.from === pRef.position ? edge.path : [...edge.path].reverse();
-            const targetCoord = campaign.map.authenticNodes?.[nextNodeId] || { x: nextNode.x, y: nextNode.y };
             const fullHopPath = [
               ...rawWaypoints.map(w => ({ nodeId: nextNodeId, x: w.x, y: w.y })),
               { nodeId: nextNodeId, x: targetCoord.x, y: targetCoord.y }
@@ -460,7 +474,6 @@ export function useGameEngine(
             const stepSpeedMs = Math.max(12, Math.round(300 / fullHopPath.length));
             await animatePlayerPath(fullHopPath, activePlayerIndex, stepSpeedMs);
           } else {
-            const targetCoord = (useAuthentic && campaign.map.authenticNodes?.[nextNodeId]) || { x: nextNode.x, y: nextNode.y };
             await animatePlayerPath([{ nodeId: nextNodeId, x: targetCoord.x, y: targetCoord.y }], activePlayerIndex, 300);
           }
 

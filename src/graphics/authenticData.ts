@@ -30,3 +30,17 @@ export const AUTHENTIC_BUILDINGS: Record<string, AuthenticBuildingPlace> = {
   z_mart:           { doorLoop: 11, doorX: 282, doorY: 34,  hitbox: [10, 251, 43, 311], place: [258, 2],   nodeId: 'node_z_mart' },
   pawn_shop:        { doorLoop: 12, doorX: 221, doorY: 34,  hitbox: [10, 191, 43, 250], place: [201, 4],   nodeId: 'node_pawn_shop' },
 };
+
+export interface AuthenticOccluder {
+  id: string;
+  file: string;
+  x: number;
+  y: number;
+}
+
+export const AUTHENTIC_OCCLUDERS: AuthenticOccluder[] = [
+  { id: 'roof_patch', file: 'roof_patch.png', x: 68, y: 139 },
+  { id: 'bank_roof', file: 'occluders/bank_roof.png', x: 7, y: 119 },
+  { id: 'qt_roof', file: 'occluders/qt_roof.png', x: 251, y: 82 },
+  { id: 'clock', file: 'occluders/clock.png', x: 147, y: 155 },
+];

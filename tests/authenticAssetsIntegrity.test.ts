@@ -11,6 +11,22 @@ describe('Authentic GUI Asset Integrity & Alignment Tests', () => {
     expect(result).toContain('All 4 marbles verified: 9x8 spherical with transparent corners');
     expect(result).toContain('All 13 building doors match background 100.0% pixel-perfect');
     expect(result).toContain('Roof patch verified: 95.1% match at y=139');
+    expect(result).toContain('All 3 rooftop occluders match background 100.0% pixel-perfect');
+  });
+
+  it('validates occluders JSON and binary existence', () => {
+    const occJsonPath = path.resolve(__dirname, '../public/assets/authentic/occluders.json');
+    expect(fs.existsSync(occJsonPath)).toBe(true);
+    const meta = JSON.parse(fs.readFileSync(occJsonPath, 'utf-8'));
+    for (const [name, spec] of Object.entries<any>(meta)) {
+      const p = path.resolve(__dirname, `../public/assets/authentic/occluders/${name}.png`);
+      expect(fs.existsSync(p)).toBe(true);
+      const buf = fs.readFileSync(p);
+      const width = buf.readUInt32BE(16);
+      const height = buf.readUInt32BE(20);
+      expect(width).toBe(spec.w);
+      expect(height).toBe(spec.h);
+    }
   });
 
   it('validates marble file binary headers directly in Node', () => {

@@ -8,7 +8,7 @@
 
 import { Application, Graphics, Container, Text, Sprite, Assets } from 'pixi.js';
 import type { MapData, BuildingDef } from '../engine/dataLoader';
-import { AUTHENTIC_BOARD_WIDTH, AUTHENTIC_BOARD_HEIGHT, AUTHENTIC_BUILDINGS } from './authenticData';
+import { AUTHENTIC_BOARD_WIDTH, AUTHENTIC_BOARD_HEIGHT, AUTHENTIC_BUILDINGS, AUTHENTIC_OCCLUDERS } from './authenticData';
 
 // ─── Renderer Interface ─────────────────────────────────────────
 
@@ -45,7 +45,14 @@ let testMarker: HTMLDivElement | null = null;
 let activeInstanceId = 0;
 let activeGuiStyle: 'generated' | 'authentic' = 'generated';
 let authenticBasePath = '/assets/authentic';
-let buildingDoors: Map<string, { sprite: any; basePath: string }> = new Map();
+interface DoorInfo {
+  sprite: any;
+  basePath: string;
+  currentCel: number;
+  targetCel: number;
+  animating: boolean;
+}
+let buildingDoors: Map<string, DoorInfo> = new Map();
 let roofsLayer: Container | null = null;
 let tokensLayer: Container | null = null;
 
@@ -58,6 +65,49 @@ function safeDestroyApp(targetApp: Application | null): void {
     }
   } catch (err) {
     console.warn('[MapRenderer] Warning during app destroy:', err);
+  }
+}
+
+function animateDoorTo(doorInfo: DoorInfo, targetCel: number, bId: string) {
+  if (doorInfo.targetCel === targetCel && !doorInfo.animating && doorInfo.currentCel === targetCel) return;
+  doorInfo.targetCel = targetCel;
+  if (doorInfo.animating) return;
+
+  doorInfo.animating = true;
+  // Exact authentic Sierra SCI timing: 6 ticks @ 60Hz = 100ms per cel (Wait 6 in script.001 openDoor)
+  const frameDelay = 100;
+
+  function nextStep() {
+    if (!doorInfo.sprite || !doorInfo.sprite.parent || doorInfo.sprite.destroyed) {
+      doorInfo.animating = false;
+      return;
+    }
+    if (doorInfo.currentCel === doorInfo.targetCel) {
+      doorInfo.animating = false;
+      return;
+    }
+    const step = doorInfo.targetCel > doorInfo.currentCel ? 1 : -1;
+    doorInfo.currentCel += step;
+    const doorTex = (Assets.get ? Assets.get(`${doorInfo.basePath}/doors/${bId}_cel_${doorInfo.currentCel}.png`) : null)
+      || (Sprite.from(`${doorInfo.basePath}/doors/${bId}_cel_${doorInfo.currentCel}.png`) as any)?.texture;
+    if (doorTex && doorInfo.sprite) {
+      doorInfo.sprite.texture = doorTex;
+    }
+    setTimeout(nextStep, frameDelay);
+  }
+
+  setTimeout(nextStep, frameDelay);
+}
+
+/**
+ * Open the door of an entered building and close all other doors.
+ * Doors animate sequentially through cels 0 -> 1 -> 2 -> 3 with authentic pacing.
+ */
+export function setEnteredBuilding(buildingId: string | null): void {
+  if (activeGuiStyle !== 'authentic' || buildingDoors.size === 0) return;
+  for (const [bId, doorInfo] of buildingDoors.entries()) {
+    const targetCel = (buildingId === bId) ? 3 : 0;
+    animateDoorTo(doorInfo, targetCel, bId);
   }
 }
 
@@ -216,20 +266,20 @@ export async function initMapRenderer(
     const doorsContainer = new Container();
     mapContainer.addChild(doorsContainer);
     for (const [bId, b] of Object.entries(AUTHENTIC_BUILDINGS)) {
-      const [doorTexture] = await Promise.all([
-        Assets.load(`${authenticBase}/doors/${bId}_cel_0.png`),
-        Assets.load(`${authenticBase}/doors/${bId}_cel_3.png`)
-      ]);
-      if (doorTexture?.source) {
-        doorTexture.source.scaleMode = 'nearest';
-      }
+      const textures = await Promise.all([0, 1, 2, 3].map(c => Assets.load(`${authenticBase}/doors/${bId}_cel_${c}.png`)));
+      textures.forEach(t => {
+        if (t?.source) {
+          t.source.scaleMode = 'nearest';
+        }
+      });
+      const doorTexture = textures[0];
       const door = new Sprite(doorTexture);
       const dw = (doorTexture as any).width || 10;
       const dh = (doorTexture as any).height || 10;
       door.x = b.doorX - Math.floor(dw / 2);
       door.y = b.doorY - dh + 1;
       doorsContainer.addChild(door);
-      buildingDoors.set(bId, { sprite: door, basePath: authenticBase });
+      buildingDoors.set(bId, { sprite: door, basePath: authenticBase, currentCel: 0, targetCel: 0, animating: false });
     }
 
     // 3. Tokens layer (under roofs layer)
@@ -238,11 +288,19 @@ export async function initMapRenderer(
 
     // 4. Rooftop Occluders layer (above tokens layer)
     roofsLayer = new Container();
-    const roofPatch = new Sprite(roofTexture);
-    roofPatch.x = 68;
-    roofPatch.y = 139;
-    roofsLayer.addChild(roofPatch);
     mapContainer.addChild(roofsLayer);
+
+    // Load and place all building rooftop/foreground occluders (roofPatch, bank, qt, clock)
+    for (const occ of AUTHENTIC_OCCLUDERS) {
+      const tex = await Assets.load(`${authenticBase}/${occ.file}`);
+      if (tex?.source) {
+        tex.source.scaleMode = 'nearest';
+      }
+      const sprite = new Sprite(tex);
+      sprite.x = occ.x;
+      sprite.y = occ.y;
+      roofsLayer.addChild(sprite);
+    }
 
     // Background preload robber frames for interception animation
     const robberUrls = [
@@ -601,30 +659,6 @@ export function updatePlayers(players: { position: PlayerPosition, index: number
       testMarker.dataset.visible = 'true';
     }
   });
-
-  // Authentic door animation updates: open door (cel 3) if occupied, closed (cel 0) if not
-  if (isAuthentic && buildingDoors.size > 0) {
-    const occupiedBuildings = new Set<string>();
-    for (const p of players) {
-      if (p.position?.nodeId) {
-        for (const [bId, b] of Object.entries(AUTHENTIC_BUILDINGS)) {
-          if (b.nodeId === p.position.nodeId) {
-            occupiedBuildings.add(bId);
-          }
-        }
-      }
-    }
-
-    for (const [bId, doorInfo] of buildingDoors.entries()) {
-      const isOccupied = occupiedBuildings.has(bId);
-      const cel = isOccupied ? 3 : 0;
-      const doorTex = (Assets.get ? Assets.get(`${doorInfo.basePath}/doors/${bId}_cel_${cel}.png`) : null)
-        || (Sprite.from(`${doorInfo.basePath}/doors/${bId}_cel_${cel}.png`) as any)?.texture;
-      if (doorTex && doorInfo.sprite) {
-        doorInfo.sprite.texture = doorTex;
-      }
-    }
-  }
 }
 
 /**
