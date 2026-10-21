@@ -276,13 +276,17 @@ export const CardView = React.forwardRef<HTMLDivElement, CardViewProps>(({
             {outcomeLabel}
           </div>
           <div style={{
-            fontSize: compact ? '0.78rem' : '0.88rem',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '3px 5px',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: compact ? '0.76rem' : '0.86rem',
             fontWeight: 'bold',
             color: '#f8fafc',
-            marginTop: compact ? '1px' : '2px',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            marginTop: compact ? '2px' : '4px',
+            lineHeight: '1.35',
+            textAlign: 'center'
           }}>
             {outcome}
           </div>
