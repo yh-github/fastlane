@@ -2673,22 +2673,27 @@ button:disabled {
 
 .bottom-center-clock--authentic {
   left: calc(var(--board-x, calc(50% - 600px)) + (596.25px * var(--board-scale, 1)));
-  top: calc(var(--board-y, calc(50% - 400px)) + (637.5px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (648.75px * var(--board-scale, 1)));
   transform: translate(-50%, -50%);
 }
 
 .bottom-center-clock--authentic .clock-face {
-  width: calc(82.5px * var(--board-scale, 1));
-  height: calc(82.5px * var(--board-scale, 1));
+  width: calc(86px * var(--board-scale, 1));
+  height: calc(86px * var(--board-scale, 1));
   min-width: 0;
   min-height: 0;
   border-width: 1px;
 }
 
 .bottom-center-clock--authentic .clock-digital-badge {
-  font-size: calc(9px * var(--board-scale, 1));
-  padding: 1px 4px;
-  margin-top: 1px;
+  position: absolute;
+  top: calc(100% + 2px * var(--board-scale, 1));
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: calc(13px * var(--board-scale, 1));
+  font-weight: 700;
+  padding: calc(2px * var(--board-scale, 1)) calc(6px * var(--board-scale, 1));
+  white-space: nowrap;
 }
 
 .clock-face {

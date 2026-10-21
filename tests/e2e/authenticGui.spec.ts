@@ -61,6 +61,15 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
     // Bottom clock must be contained within canvas bottom
     expect(clockBox!.y + clockBox!.height).toBeLessThanOrEqual(canvasBox!.y + canvasBox!.height + 2);
 
+    // Verify digital badge text and larger font size
+    const digitalBadge = page.locator('#hud-clock-digital');
+    await expect(digitalBadge).toBeVisible();
+    await expect(digitalBadge).toContainText(/Week #?1|שבוע 1/i);
+    const badgeFontSize = await digitalBadge.evaluate((el) => {
+      return parseFloat(window.getComputedStyle(el).fontSize);
+    });
+    expect(badgeFontSize).toBeGreaterThanOrEqual(11);
+
     // 6. Point 4: Verify Location Window opens with building-modal--authentic and fits the courtyard
     // Close initial apartment modal if opened
     const initialModal = page.locator('.building-modal');
