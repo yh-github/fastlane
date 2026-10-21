@@ -173,9 +173,11 @@ describe('AppraisalDilemmaModal', () => {
       />
     );
 
-    // 1. Modifiers appear in the Outcome box on the card face
-    expect(screen.getByText(/\+1\.5 👌,\s*\+1 🤝/)).toBeInTheDocument();
-    expect(screen.getByText(/\+0\.5 👔,\s*-2 🧠/)).toBeInTheDocument();
+    // 1. Modifiers appear in the Outcome box on the card face as badges
+    expect(screen.getByText('+1.5 👌')).toBeInTheDocument();
+    expect(screen.getByText('+1 🤝')).toBeInTheDocument();
+    expect(screen.getByText('+0.5 👔')).toBeInTheDocument();
+    expect(screen.getByText('-2 🧠')).toBeInTheDocument();
 
     // 2. Buttons are clean action buttons (NO stat text crammed into buttons)
     const selectButtons = screen.getAllByRole('button', { name: /select|accept/i });

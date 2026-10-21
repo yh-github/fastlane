@@ -844,7 +844,7 @@ describe("Job Engine - workShift", () => {
     describe('Management Skill (Skill_Mgmt) & Executive Management', () => {
       const advancedRules = advRules;
 
-      it('awards +0.25 skillMgmt on middle_management and +0.50 on executive_management work_work shifts', () => {
+      it('awards +0.05 skillMgmt on middle_management and +0.10 on executive_management work_work shifts', () => {
         const asstJob: JobDef = {
           id: 'zmart_asst_mgr',
           title: 'Assistant Manager',
@@ -887,8 +887,8 @@ describe("Job Engine - workShift", () => {
         expect(res1.success).toBe(true);
         expect(res1.updated.skillMgmt).toBe(0.05);
 
-        // Executive management shift -> +0.10 skillMgmt
-        const execPlayer = { ...player, currentJobId: 'zmart_mgr', currentWage: 8, skillMgmt: 2.0, inventory: { selectedClothes: 'business', businessClothesWeeks: 10 } } as unknown as PlayerState;
+        // Executive management shift -> +0.10 skillMgmt (experience: 50 exceeds execExpMargin to prevent random mistake)
+        const execPlayer = { ...player, currentJobId: 'zmart_mgr', currentWage: 8, experience: 50, skillMgmt: 2.0, inventory: { selectedClothes: 'business', businessClothesWeeks: 10 } } as unknown as PlayerState;
         const res2 = workShift(execPlayer, execJob, 6, advancedRules as any, advStatRules, 'work_work');
         expect(res2.success).toBe(true);
         expect(res2.updated.skillMgmt).toBe(2.10);

@@ -25,33 +25,37 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
 
   if (opt.type === 'initiative') {
     if (opt.burnoutRisk) borderColor = '#ef4444';
-    else if (opt.standingAmount) borderColor = '#38bdf8';
     else if (opt.leadershipSkillAmount) borderColor = '#38bdf8';
     else if (opt.techSkillAmount) borderColor = '#10b981';
+    else if (opt.standingAmount) borderColor = '#facc15';
     else if (opt.mentalAmount && opt.mentalAmount > 0) borderColor = '#a855f7';
+    else if (opt.socialAmount && opt.socialAmount > 0) borderColor = '#6366f1';
     else if (opt.cashAmount) borderColor = '#22c55e';
     else borderColor = '#f59e0b';
 
     icon = opt.icon || (
       opt.burnoutRisk ? '⚠️' :
-      opt.standingAmount ? '🌟' :
       opt.leadershipSkillAmount ? '👔' :
       opt.techSkillAmount ? '🔧' :
+      opt.standingAmount ? '🌟' :
       opt.cashAmount ? '💵' :
-      (opt.mentalAmount && opt.mentalAmount > 0) ? '🧠' : '👌'
+      (opt.mentalAmount && opt.mentalAmount > 0) ? '🧠' :
+      (opt.socialAmount && opt.socialAmount > 0) ? '👥' : '👌'
     );
 
     const parts: string[] = [];
-    if (opt.standingAmount) parts.push(`+${opt.standingAmount} 🌟`);
-    if (opt.cashAmount) parts.push(`+$${opt.cashAmount}`);
-    if (opt.cashCost) parts.push(`-$${opt.cashCost}`);
-    if (opt.expAmount) parts.push(`+${opt.expAmount} 👌`);
-    if (opt.depAmount) parts.push(`+${opt.depAmount} 🤝`);
     if (opt.leadershipSkillAmount) parts.push(`+${opt.leadershipSkillAmount} 👔`);
     if (opt.techSkillAmount) parts.push(`+${opt.techSkillAmount} 🔧`);
+    if (opt.expAmount) parts.push(`+${opt.expAmount} 👌`);
+    if (opt.standingAmount) parts.push(`+${opt.standingAmount} 🌟`);
+    if (opt.depAmount) parts.push(`+${opt.depAmount} 🤝`);
+    if (opt.cashAmount) parts.push(`+$${opt.cashAmount}`);
+    if (opt.cashCost) parts.push(`-$${opt.cashCost}`);
     if (opt.mentalAmount && opt.mentalAmount > 0) parts.push(`+${opt.mentalAmount} 🧠`);
     if (opt.mentalAmount && opt.mentalAmount < 0) parts.push(`${opt.mentalAmount} 🧠`);
+    if (opt.socialAmount && opt.socialAmount > 0) parts.push(`+${opt.socialAmount} 👥`);
     if (opt.socialAmount && opt.socialAmount < 0) parts.push(`${opt.socialAmount} 👥`);
+    if (opt.physicalAmount && opt.physicalAmount > 0) parts.push(`+${opt.physicalAmount} 💪`);
     if (opt.physicalAmount && opt.physicalAmount < 0) parts.push(`${opt.physicalAmount} 💪`);
     rewardText = parts.length > 0 ? parts.join(', ') : 'Standard';
 
@@ -60,20 +64,6 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
     }
 
     const helpParts: React.ReactNode[] = [];
-    if (opt.expAmount) {
-      helpParts.push(
-        <div key="exp" style={{ marginBottom: '4px' }}>
-          <strong>👌 Experience (+{opt.expAmount}):</strong> Builds on-the-job mastery towards promotions.
-        </div>
-      );
-    }
-    if (opt.depAmount) {
-      helpParts.push(
-        <div key="dep" style={{ marginBottom: '4px' }}>
-          <strong>🤝 Dependability (+{opt.depAmount}):</strong> Proves reliability to qualify for raises and avoid demerits.
-        </div>
-      );
-    }
     if (opt.leadershipSkillAmount) {
       helpParts.push(
         <div key="lead" style={{ marginBottom: '4px' }}>
@@ -88,10 +78,24 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
         </div>
       );
     }
+    if (opt.expAmount) {
+      helpParts.push(
+        <div key="exp" style={{ marginBottom: '4px' }}>
+          <strong>👌 Experience (+{opt.expAmount}):</strong> Builds on-the-job mastery towards promotions.
+        </div>
+      );
+    }
     if (opt.standingAmount) {
       helpParts.push(
         <div key="standing" style={{ marginBottom: '4px' }}>
           <strong>🌟 Standing (+{opt.standingAmount}):</strong> Local reputation at this employer, improving raise chances and employability.
+        </div>
+      );
+    }
+    if (opt.depAmount) {
+      helpParts.push(
+        <div key="dep" style={{ marginBottom: '4px' }}>
+          <strong>🤝 Dependability (+{opt.depAmount}):</strong> Proves reliability to qualify for raises and avoid demerits.
         </div>
       );
     }
@@ -123,24 +127,38 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
         </div>
       );
     }
-    if (opt.burnoutRisk) {
+    if (opt.socialAmount && opt.socialAmount > 0) {
       helpParts.push(
-        <div key="burnout" style={{ color: '#fca5a5', marginBottom: '4px' }}>
-          <strong>⚠️ Burnout Risk:</strong> Severe exhaustion increases the risk of mistakes during shifts.
-        </div>
-      );
-    }
-    if (opt.physicalAmount && opt.physicalAmount < 0) {
-      helpParts.push(
-        <div key="phys" style={{ marginBottom: '4px' }}>
-          <strong>💪 Physical Strain ({opt.physicalAmount}):</strong> Strenuous labor reduces physical stamina.
+        <div key="social-pos" style={{ marginBottom: '4px' }}>
+          <strong>👥 Camaraderie (+{opt.socialAmount}):</strong> Standing up for colleagues and collaborative teamwork builds social connection.
         </div>
       );
     }
     if (opt.socialAmount && opt.socialAmount < 0) {
       helpParts.push(
-        <div key="social" style={{ marginBottom: '4px' }}>
-          <strong>👥 Social Friction ({opt.socialAmount}):</strong> Intense deadlines reduce time for social connection.
+        <div key="social-neg" style={{ marginBottom: '4px' }}>
+          <strong>👥 Social Friction ({opt.socialAmount}):</strong> Intense deadlines and pressure strain team relationships.
+        </div>
+      );
+    }
+    if (opt.physicalAmount && opt.physicalAmount > 0) {
+      helpParts.push(
+        <div key="phys-pos" style={{ marginBottom: '4px' }}>
+          <strong>💪 Physical Stamina (+{opt.physicalAmount}):</strong> Active tasks and routine exertion build stamina.
+        </div>
+      );
+    }
+    if (opt.physicalAmount && opt.physicalAmount < 0) {
+      helpParts.push(
+        <div key="phys-neg" style={{ marginBottom: '4px' }}>
+          <strong>💪 Physical Strain ({opt.physicalAmount}):</strong> Strenuous labor reduces physical stamina.
+        </div>
+      );
+    }
+    if (opt.burnoutRisk) {
+      helpParts.push(
+        <div key="burnout" style={{ color: '#fca5a5', marginBottom: '4px' }}>
+          <strong>⚠️ Burnout Risk:</strong> Severe exhaustion increases the risk of mistakes during shifts.
         </div>
       );
     }
@@ -150,6 +168,112 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
         {helpParts}
       </div>
     );
+
+    let outcomeNode: React.ReactNode = undefined;
+    if (parts.length > 0) {
+      outcomeNode = (
+        <div
+          className="initiative-modifiers-chips"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '3px 5px',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          {parts.map((part, pIdx) => {
+            let chipBg = 'rgba(255, 255, 255, 0.08)';
+            let chipBorder = 'rgba(255, 255, 255, 0.2)';
+            let chipColor = '#f8fafc';
+
+            if (part.includes('👔')) {
+              chipBg = 'rgba(56, 189, 248, 0.2)';
+              chipBorder = '#38bdf8';
+              chipColor = '#e0f2fe';
+            } else if (part.includes('🔧')) {
+              chipBg = 'rgba(16, 185, 129, 0.2)';
+              chipBorder = '#10b981';
+              chipColor = '#d1fae5';
+            } else if (part.includes('👌')) {
+              chipBg = 'rgba(245, 158, 11, 0.2)';
+              chipBorder = '#f59e0b';
+              chipColor = '#fef3c7';
+            } else if (part.includes('🌟')) {
+              chipBg = 'rgba(250, 204, 21, 0.2)';
+              chipBorder = '#facc15';
+              chipColor = '#fef08a';
+            } else if (part.includes('🤝')) {
+              chipBg = 'rgba(14, 165, 233, 0.2)';
+              chipBorder = '#0ea5e9';
+              chipColor = '#e0f2fe';
+            } else if (part.includes('+$')) {
+              chipBg = 'rgba(34, 197, 94, 0.2)';
+              chipBorder = '#22c55e';
+              chipColor = '#bbf7d0';
+            } else if (part.includes('-$')) {
+              chipBg = 'rgba(239, 68, 68, 0.2)';
+              chipBorder = '#ef4444';
+              chipColor = '#fecaca';
+            } else if (part.includes('🧠')) {
+              if (part.startsWith('+')) {
+                chipBg = 'rgba(168, 85, 247, 0.2)';
+                chipBorder = '#a855f7';
+                chipColor = '#f3e8ff';
+              } else {
+                chipBg = 'rgba(239, 68, 68, 0.2)';
+                chipBorder = '#ef4444';
+                chipColor = '#fecaca';
+              }
+            } else if (part.includes('👥')) {
+              if (part.startsWith('+')) {
+                chipBg = 'rgba(99, 102, 241, 0.2)';
+                chipBorder = '#6366f1';
+                chipColor = '#e0e7ff';
+              } else {
+                chipBg = 'rgba(239, 68, 68, 0.2)';
+                chipBorder = '#ef4444';
+                chipColor = '#fecaca';
+              }
+            } else if (part.includes('💪')) {
+              if (part.startsWith('+')) {
+                chipBg = 'rgba(249, 115, 22, 0.2)';
+                chipBorder = '#f97316';
+                chipColor = '#ffedd5';
+              } else {
+                chipBg = 'rgba(239, 68, 68, 0.2)';
+                chipBorder = '#ef4444';
+                chipColor = '#fecaca';
+              }
+            }
+
+            return (
+              <React.Fragment key={pIdx}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '2px 6px',
+                    borderRadius: '5px',
+                    fontSize: '0.78rem',
+                    fontWeight: 'bold',
+                    backgroundColor: chipBg,
+                    border: `1px solid ${chipBorder}`,
+                    color: chipColor,
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {part}
+                </span>
+                {pIdx < parts.length - 1 && <span style={{ display: 'none' }}>, </span>}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return { icon, borderColor, rewardText, outcomeNode, shortTag, warning, helpText };
   } else if (opt.type === 'standing') {
     icon = '⭐';
     borderColor = '#38bdf8';
@@ -247,9 +371,9 @@ export function AppraisalDilemmaModal({
   const canShowAllFull = !compactProp && dimensions.width >= neededWidthForFull && dimensions.height >= neededHeightForFull;
   const isCompact = !canShowAllFull;
 
-  // Touch carousel check: narrow mobile width (< 640px) or width too small to fit compact cards side-by-side
-  const neededWidthForCompactRow = count * 115 + (count - 1) * 8 + 48;
-  const isCarouselMode = count > 2 && (dimensions.width < 640 || dimensions.width < neededWidthForCompactRow);
+  // Touch carousel check: active on narrow mobile widths (< 540px) or whenever side-by-side cards cannot fit comfortably (need ~170px per card)
+  const neededWidthForSideBySide = count * 170 + (count - 1) * 8 + 48;
+  const isCarouselMode = count >= 2 && (dimensions.width < 540 || dimensions.width < neededWidthForSideBySide);
 
   const scrollToOption = (idx: number) => {
     setSelectedIdx(idx);
@@ -493,7 +617,7 @@ export function AppraisalDilemmaModal({
                 title={displayTitle}
                 description={displayDesc}
                 warning={details.warning}
-                outcome={details.rewardText}
+                outcome={(details as any).outcomeNode || details.rewardText}
                 outcomeLabel={isInitiative ? 'Modifiers' : 'Reward'}
                 helpText={details.helpText}
                 helpBtnTestId={`card-help-btn-${idx}`}

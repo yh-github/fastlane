@@ -1187,7 +1187,7 @@ button:disabled {
 
 .appraisal-cards-carousel .appraisal-card {
   scroll-snap-align: center !important;
-  flex: 0 0 min(250px, 76vw) !important;
+  flex: 0 0 min(290px, 82vw) !important;
 }
 
 /* Touch indicator pill bar for Appraisal Cards */
