@@ -283,14 +283,14 @@ describe('WorkConsolePopup Component', () => {
     const workWorkRow = screen.getByTestId('work-mode-option-work_work');
     expect(workWorkRow.textContent).not.toContain('-$100 Debt');
     expect(workWorkRow.textContent).not.toContain('-0.5 MAX 💪');
-    expect(workWorkRow.textContent).not.toContain('+0.25 🔧');
+    expect(workWorkRow.textContent).not.toContain('+0.10 🔧');
 
     // 2. Dedicated modifiers panel displays all active modifiers for work_work
     const modPanel = screen.getByTestId('selected-mode-modifiers-panel');
     expect(modPanel).toBeInTheDocument();
     expect(modPanel.textContent).toContain('-$100 Debt');
     expect(modPanel.textContent).toContain('-0.5 MAX 💪');
-    expect(modPanel.textContent).toContain('+0.25 🔧');
+    expect(modPanel.textContent).toContain('+0.10 🔧');
     expect(modPanel.textContent).toContain('⚠️ 1 Demerits');
 
     // 3. Switch mode to show_initiative: panel updates to display initiative modifiers (and resilience since mental cost is 5 >= 3)

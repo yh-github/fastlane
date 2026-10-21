@@ -83,8 +83,8 @@ describe('jobShiftSummary', () => {
     expect(wwLabels).toContain('0 🤝 (Cap: 30)');
     // Experience gain: +1 👌
     expect(wwLabels).toContain('+1 👌');
-    // Tech skill gain on technical job: +0.25 🔧
-    expect(wwLabels).toContain('+0.25 🔧');
+    // Tech skill gain on technical job: +0.10 🔧
+    expect(wwLabels).toContain('+0.10 🔧');
     // Overtime shift permanent physical drop: -0.5 MAX 💪
     expect(wwLabels).toContain('-0.5 MAX 💪');
     // Mental resilience bonus (+1 MAX 🧠) because mental cost is 2 in overtime

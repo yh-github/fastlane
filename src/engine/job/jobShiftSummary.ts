@@ -104,10 +104,10 @@ export function calcWorkShiftSummary(
   const isExecMgmt = useSkills && hasJobTag(job, 'executive_management');
   const isMgmt = isMiddleMgmt || isExecMgmt;
 
-  const techGain = isTech ? roundToResolution(workWorkExpGain * 0.25, 0.05) : 0;
+  const techGain = isTech ? roundToResolution(workWorkExpGain * 0.10, 0.05) : 0;
   const techGainText = techGain > 0 ? `, +${techGain.toFixed(2)} 🔧` : '';
 
-  const mgmtGain = isMiddleMgmt ? roundToResolution(workWorkExpGain * 0.25, 0.05) : (isExecMgmt ? roundToResolution(workWorkExpGain * 0.50, 0.05) : 0);
+  const mgmtGain = isMiddleMgmt ? roundToResolution(workWorkExpGain * 0.05, 0.05) : (isExecMgmt ? roundToResolution(workWorkExpGain * 0.10, 0.05) : 0);
   const mgmtGainText = mgmtGain > 0 ? `, +${mgmtGain.toFixed(2)} 👔` : '';
 
   const isOvertimeShift = actionCount >= overtimeThreshold;
@@ -594,7 +594,7 @@ export function getWorkShiftModifiers(
           type: 'cap'
         });
       } else {
-        const techGain = (m.rewardExp * 0.25).toFixed(2);
+        const techGain = (m.rewardExp * 0.10).toFixed(2);
         badges.push({
           key: 'tech',
           label: `+${techGain} 🔧`,
