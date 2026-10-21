@@ -1,0 +1,132 @@
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { BuildingModal } from './BuildingModal';
+import { InventoryModal } from './InventoryModal';
+
+// Mock dependencies
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: any) => opts?.defaultValue || key,
+    i18n: { language: 'en' }
+  })
+}));
+
+describe('Authentic GUI Component Unit Tests', () => {
+  const baseRules: any = {
+    versionClass: 'base',
+    guiStyle: 'authentic',
+    authenticCurvedPaths: true
+  };
+
+  const mockPlayer: any = {
+    id: 'p1',
+    name: 'Player 1',
+    isAi: false,
+    money: 100,
+    bankSavings: 50,
+    loanDebt: 0,
+    rentDebt: 0,
+    timesDefaulted: 0,
+    loanPaymentDeadline: 0,
+    happiness: 50,
+    relaxation: 50,
+    dependability: 50,
+    experience: 10,
+    degreeExpBoost: 0,
+    degreeDepBoost: 0,
+    degrees: [],
+    enrolledClasses: {},
+    raisesAtCurrentJob: 0,
+    rentExtensionsReceived: 0,
+    inventory: {
+      casualClothesWeeks: 1,
+      dressClothesWeeks: 0,
+      businessClothesWeeks: 0,
+      selectedClothes: 'casual',
+      appliances: [],
+      freshFoodUnits: 0,
+      fastFoodItems: [],
+      lotteryTickets: 0,
+      pawnedItems: [],
+      stocks: { tBills: 0, holdings: {} },
+      books: [],
+      tickets: { baseball: 0, theatre: 0, concert: 0 }
+    },
+    turnFlags: {},
+    turnEvents: [],
+    activeEffects: {},
+    position: 'node1',
+    hoursRemaining: 50,
+    currentHousingId: 'low_cost',
+    currentRentPrice: 300,
+    rentPaidUntilWeek: 4,
+    currentJobId: null,
+    currentWage: 0,
+    goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+    hasWon: false,
+    rentExtensionsDeniedPermanently: false,
+    rentExtensionActive: false,
+    nakedTurns: 0,
+    newspaperHeadline: null
+  };
+
+  const mockCampaign: any = {
+    config: {
+      name: '1990_classic_floppy',
+      timeRules: { hoursPerTurn: 60, jobApplicationCost: 4, workSessionCost: 6, relaxCost: 6, studySessionCost: 6, loanCost: 2 },
+      eventRules: { willyRobberyStartWeek: 4 },
+      statRules: {}
+    },
+    items: [],
+    housing: [{ id: 'low_cost', name: 'Low Cost Apt', baseRent: 300, homeNodeId: 'node1' }],
+    jobs: [],
+    education: [],
+    buildings: [
+      { id: 'apartment_complex', name: 'Rent Office', description: 'Pay rent', archetype: 'housing' }
+    ],
+    map: { nodes: [{ id: 'node1', buildingId: 'apartment_complex' }] },
+    events: [],
+    stocks: [],
+    messages: {},
+    weekends: [],
+    synergies: []
+  };
+
+  it('renders BuildingModal with building-modal--authentic class when guiStyle is authentic', () => {
+    const { container } = render(
+      <BuildingModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        currentBuildingId="apartment_complex"
+        turn={1}
+        economicIndex={100}
+        rules={baseRules}
+        onAction={async () => {}}
+        onClose={() => {}}
+      />
+    );
+
+    const modal = container.querySelector('.building-modal');
+    expect(modal).toBeInTheDocument();
+    expect(modal?.classList.contains('building-modal--authentic')).toBe(true);
+    expect(modal?.classList.contains('building-modal--curved')).toBe(true);
+  });
+
+  it('renders InventoryModal with building-modal--authentic class when guiStyle is authentic', () => {
+    render(
+      <InventoryModal
+        player={mockPlayer}
+        campaign={mockCampaign}
+        turn={1}
+        rules={baseRules}
+        onAction={async () => {}}
+        onClose={() => {}}
+      />
+    );
+
+    const modal = screen.getByTestId('inventory-modal');
+    expect(modal).toBeInTheDocument();
+    expect(modal.classList.contains('building-modal--authentic')).toBe(true);
+    expect(modal.classList.contains('building-modal--curved')).toBe(true);
+  });
+});
