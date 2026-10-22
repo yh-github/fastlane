@@ -130,11 +130,13 @@ describe('Authentic GUI Component Unit Tests', () => {
     expect(modal.classList.contains('building-modal--curved')).toBe(true);
   });
 
-  it('exports occluders metadata including Bank, QT, and Clock for foreground layering', async () => {
+  it('exports occluders metadata including Bank, Factory, Socket City, QT, and Clock for foreground layering', async () => {
     const { AUTHENTIC_OCCLUDERS } = await import('../graphics/authenticData');
     const occIds = AUTHENTIC_OCCLUDERS.map(o => o.id);
     expect(occIds).toContain('roof_patch');
     expect(occIds).toContain('bank_roof');
+    expect(occIds).toContain('factory_roof');
+    expect(occIds).toContain('socket_city_roof');
     expect(occIds).toContain('qt_roof');
     expect(occIds).toContain('clock');
 
@@ -142,13 +144,21 @@ describe('Authentic GUI Component Unit Tests', () => {
     expect(bank?.x).toBe(7);
     expect(bank?.y).toBe(119);
 
+    const factory = AUTHENTIC_OCCLUDERS.find(o => o.id === 'factory_roof');
+    expect(factory?.x).toBe(7);
+    expect(factory?.y).toBe(134);
+
+    const socketCity = AUTHENTIC_OCCLUDERS.find(o => o.id === 'socket_city_roof');
+    expect(socketCity?.x).toBe(251);
+    expect(socketCity?.y).toBe(133);
+
     const qt = AUTHENTIC_OCCLUDERS.find(o => o.id === 'qt_roof');
     expect(qt?.x).toBe(251);
     expect(qt?.y).toBe(82);
 
     const clock = AUTHENTIC_OCCLUDERS.find(o => o.id === 'clock');
     expect(clock?.x).toBe(147);
-    expect(clock?.y).toBe(155);
+    expect(clock?.y).toBe(153);
   });
 
   it('verifies all 13 authentic building door coordinates match Sierra SCI original places', async () => {
