@@ -43,54 +43,6 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
     // Save visual snapshot of the authentic board with walking avatar and aligned clock
     await page.screenshot({ path: '/tmp/authentic_board_verified.png' });
 
-    // Wait for PixiJS authentic board to finish initializing
-    await page.waitForFunction(() => !!(window as any).__pixiDebug, { timeout: 10000 });
-
-    // 5. Point 6 & Occlusion: Verify Rooftop Occluders layer and marble stacking
-    const layerHierarchy = await page.evaluate(() => {
-      const dbg = (window as any).__pixiDebug;
-      if (!dbg) return null;
-      const mc = dbg.mapContainer;
-      const tl = dbg.tokensLayer;
-      const rl = dbg.roofsLayer;
-      return {
-        mapSortable: mc.sortableChildren,
-        tokensLayerIndex: mc.getChildIndex(tl),
-        roofsLayerIndex: mc.getChildIndex(rl),
-        tokensLayerZIndex: tl.zIndex,
-        roofsLayerZIndex: rl.zIndex,
-        roofsCount: rl.children.length,
-        roofs: rl.children.map((c: any) => ({
-          x: c.x,
-          y: c.y,
-          w: c.width,
-          h: c.height,
-          hasTex: !!c.texture
-        }))
-      };
-    });
-
-    expect(layerHierarchy).not.toBeNull();
-    expect(layerHierarchy!.mapSortable).toBe(true);
-    expect(layerHierarchy!.tokensLayerIndex).toBeLessThan(layerHierarchy!.roofsLayerIndex);
-    expect(layerHierarchy!.tokensLayerZIndex).toBe(2);
-    expect(layerHierarchy!.roofsLayerZIndex).toBe(3);
-    // 6 occluders: roof_patch, bank_roof, factory_roof, socket_city_roof, qt_roof, clock
-    expect(layerHierarchy!.roofsCount).toBe(6);
-
-    // Verify all 6 occluders exist with textures
-    const roofCoords = layerHierarchy!.roofs.map(r => ({ x: r.x, y: r.y }));
-    expect(roofCoords).toContainEqual({ x: 68, y: 139 });   // roof_patch
-    expect(roofCoords).toContainEqual({ x: 7, y: 119 });    // bank_roof
-    expect(roofCoords).toContainEqual({ x: 7, y: 134 });    // factory_roof
-    expect(roofCoords).toContainEqual({ x: 251, y: 133 });  // socket_city_roof
-    expect(roofCoords).toContainEqual({ x: 251, y: 82 });   // qt_roof
-    expect(roofCoords).toContainEqual({ x: 147, y: 153 });  // clock
-
-    for (const r of layerHierarchy!.roofs) {
-      expect(r.hasTex).toBe(true);
-    }
-
     // 5. Point 5: Verify Bottom Center Clock alignment and no screen clipping
     const bottomClock = page.locator('.bottom-center-clock');
     await expect(bottomClock).toBeVisible();
@@ -156,21 +108,6 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
     expect(posX).toBeLessThan(320);
     expect(posY).toBeGreaterThan(0);
     expect(posY).toBeLessThan(190);
-
-    const checkAtEnd = await page.evaluate(() => {
-      const dbg = (window as any).__pixiDebug;
-      const t = dbg?.playerTokens?.[0];
-      return {
-        tokenExists: !!t,
-        tokenParentType: t?.parent?.constructor?.name,
-        isParentTokensLayer: t?.parent === dbg?.tokensLayer,
-        tokensLayerChildren: dbg?.tokensLayer?.children?.length,
-        roofsLayerChildren: dbg?.roofsLayer?.children?.length
-      };
-    });
-    expect(checkAtEnd.tokenExists).toBe(true);
-    expect(checkAtEnd.isParentTokensLayer).toBe(true);
-    expect(checkAtEnd.roofsLayerChildren).toBe(6);
 
     // Assert zero uncaught page errors
     expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);

@@ -95,7 +95,7 @@ def test_roof_patch_alignment():
     print(f"  -> Roof patch verified: {pct_139:.1f}% match at y=139 (vs {pct_131:.1f}% at buggy y=131).")
 
 def test_occluders_alignment():
-    print("Testing Occluders Alignment (Bank, Factory, Socket City, QT, Clock)...")
+    print("Testing Occluders Alignment (Bank, QT, Clock)...")
     board = Image.open("public/assets/authentic/board.png").convert("RGB")
     with open("public/assets/authentic/occluders.json") as f:
         occluders = json.load(f)

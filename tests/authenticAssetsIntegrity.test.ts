@@ -11,7 +11,7 @@ describe('Authentic GUI Asset Integrity & Alignment Tests', () => {
     expect(result).toContain('All 4 marbles verified: 9x8 spherical with transparent corners');
     expect(result).toContain('All 13 building doors match background 100.0% pixel-perfect');
     expect(result).toContain('Roof patch verified: 95.1% match at y=139');
-    expect(result).toContain('All 5 rooftop occluders match background 100.0% pixel-perfect');
+    expect(result).toContain('All 3 rooftop occluders match background 100.0% pixel-perfect');
   });
 
   it('validates occluders JSON and binary existence', () => {

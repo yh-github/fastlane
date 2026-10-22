@@ -257,7 +257,6 @@ export async function initMapRenderer(
 
     // Painted background picture
     const bgSprite = new Sprite(bgTexture);
-    bgSprite.zIndex = 0;
     mapContainer.addChild(bgSprite);
 
     // Preload player marbles
@@ -265,7 +264,6 @@ export async function initMapRenderer(
 
     // 2. Animated building doors
     const doorsContainer = new Container();
-    doorsContainer.zIndex = 1;
     mapContainer.addChild(doorsContainer);
     for (const [bId, b] of Object.entries(AUTHENTIC_BUILDINGS)) {
       const textures = await Promise.all([0, 1, 2, 3].map(c => Assets.load(`${authenticBase}/doors/${bId}_cel_${c}.png`)));
@@ -286,15 +284,13 @@ export async function initMapRenderer(
 
     // 3. Tokens layer (under roofs layer)
     tokensLayer = new Container();
-    tokensLayer.zIndex = 2;
     mapContainer.addChild(tokensLayer);
 
     // 4. Rooftop Occluders layer (above tokens layer)
     roofsLayer = new Container();
-    roofsLayer.zIndex = 3;
     mapContainer.addChild(roofsLayer);
 
-    // Load and place all building rooftop/foreground occluders (roofPatch, bank, factory, socketCity, qt, clock)
+    // Load and place all building rooftop/foreground occluders (roofPatch, bank, qt, clock)
     for (const occ of AUTHENTIC_OCCLUDERS) {
       const tex = await Assets.load(`${authenticBase}/${occ.file}`);
       if (tex?.source) {
@@ -317,7 +313,6 @@ export async function initMapRenderer(
 
     // 5. Interactive Hitboxes layer (on top of roofs for mouse/touch interactivity)
     const hitboxesLayer = new Container();
-    hitboxesLayer.zIndex = 4;
     mapContainer.addChild(hitboxesLayer);
     for (const b of Object.values(AUTHENTIC_BUILDINGS)) {
       const [top, left, bottom, right] = b.hitbox;
@@ -331,14 +326,6 @@ export async function initMapRenderer(
       });
       hitboxesLayer.addChild(hitBox);
     }
-    mapContainer.sortableChildren = true;
-    (window as any).__pixiDebug = {
-      app: localApp,
-      mapContainer,
-      tokensLayer,
-      roofsLayer,
-      playerTokens
-    };
   } else {
     // ─── Generated Vector Board Layers ──────────────────────────────
     const edgesLayer = new Graphics();
