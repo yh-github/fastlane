@@ -41,6 +41,8 @@ export interface AuthenticOccluder {
 export const AUTHENTIC_OCCLUDERS: AuthenticOccluder[] = [
   { id: 'roof_patch', file: 'roof_patch.png', x: 68, y: 139 },
   { id: 'bank_roof', file: 'occluders/bank_roof.png', x: 7, y: 119 },
+  { id: 'factory_roof', file: 'occluders/factory_roof.png', x: 7, y: 134 },
+  { id: 'socket_city_roof', file: 'occluders/socket_city_roof.png', x: 251, y: 133 },
   { id: 'qt_roof', file: 'occluders/qt_roof.png', x: 251, y: 82 },
-  { id: 'clock', file: 'occluders/clock.png', x: 147, y: 155 },
+  { id: 'clock', file: 'occluders/clock.png', x: 147, y: 153 },
 ];

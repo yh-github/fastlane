@@ -162,16 +162,23 @@ for name, spec in d_specs.items():
 with open(f"{OUT_DIR}/durables.json", "w") as f:
     json.dump(durables, f, indent=2)
 
-print("8. Extracting Building Rooftop Occluders (Bank, QT, Clock)...")
+print("8. Extracting Building Rooftop Occluders (Bank, Factory, Socket City, QT, Clock)...")
 os.makedirs(f"{OUT_DIR}/occluders", exist_ok=True)
 board_rgba = board.convert("RGBA")
 occluders_meta = {
-    "clock": { "x": 147, "y": 155, "w": 24, "h": 31 },
-    "bank_roof": { "x": 7, "y": 119, "w": 61, "h": 19 },
-    "qt_roof": { "x": 251, "y": 82, "w": 61, "h": 22 },
+    "bank_roof": { "x": 7, "y": 119, "w": 61, "h": 35, "doorCutout": { "x": 9, "y": 17, "w": 9, "h": 12 } },
+    "factory_roof": { "x": 7, "y": 134, "w": 61, "h": 47, "doorCutout": { "x": 38, "y": 37, "w": 10, "h": 11 } },
+    "socket_city_roof": { "x": 251, "y": 133, "w": 61, "h": 48, "doorCutout": { "x": 19, "y": 37, "w": 14, "h": 14 } },
+    "qt_roof": { "x": 251, "y": 82, "w": 61, "h": 36, "doorCutout": { "x": 22, "y": 21, "w": 9, "h": 11 } },
+    "clock": { "x": 147, "y": 153, "w": 24, "h": 30 },
 }
 for name, spec in occluders_meta.items():
     crop = board_rgba.crop((spec["x"], spec["y"], spec["x"] + spec["w"], spec["y"] + spec["h"]))
+    if "doorCutout" in spec:
+        dc = spec["doorCutout"]
+        for dy in range(dc["y"], min(crop.height, dc["y"] + dc["h"])):
+            for dx in range(dc["x"], min(crop.width, dc["x"] + dc["w"])):
+                crop.putpixel((dx, dy), (0, 0, 0, 0))
     crop.save(f"{OUT_DIR}/occluders/{name}.png")
 
 with open(f"{OUT_DIR}/occluders.json", "w") as f:
