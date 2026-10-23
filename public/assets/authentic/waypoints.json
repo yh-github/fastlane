@@ -1,0 +1,1002 @@
+{
+  "totalWaypoints": 170,
+  "boardWidth": 320,
+  "boardHeight": 190,
+  "waypoints": [
+    {
+      "index": 1,
+      "x": 144,
+      "y": 37
+    },
+    {
+      "index": 2,
+      "x": 150,
+      "y": 37
+    },
+    {
+      "index": 3,
+      "x": 156,
+      "y": 38
+    },
+    {
+      "index": 4,
+      "x": 162,
+      "y": 39
+    },
+    {
+      "index": 5,
+      "x": 168,
+      "y": 40
+    },
+    {
+      "index": 6,
+      "x": 174,
+      "y": 40
+    },
+    {
+      "index": 7,
+      "x": 180,
+      "y": 39
+    },
+    {
+      "index": 8,
+      "x": 186,
+      "y": 39
+    },
+    {
+      "index": 9,
+      "x": 192,
+      "y": 39
+    },
+    {
+      "index": 10,
+      "x": 198,
+      "y": 39
+    },
+    {
+      "index": 11,
+      "x": 204,
+      "y": 39
+    },
+    {
+      "index": 12,
+      "x": 210,
+      "y": 40
+    },
+    {
+      "index": 13,
+      "x": 216,
+      "y": 40
+    },
+    {
+      "index": 14,
+      "x": 222,
+      "y": 40
+    },
+    {
+      "index": 15,
+      "x": 228,
+      "y": 40
+    },
+    {
+      "index": 16,
+      "x": 234,
+      "y": 40
+    },
+    {
+      "index": 17,
+      "x": 240,
+      "y": 39
+    },
+    {
+      "index": 18,
+      "x": 246,
+      "y": 38
+    },
+    {
+      "index": 19,
+      "x": 252,
+      "y": 37
+    },
+    {
+      "index": 20,
+      "x": 258,
+      "y": 37
+    },
+    {
+      "index": 21,
+      "x": 264,
+      "y": 38
+    },
+    {
+      "index": 22,
+      "x": 270,
+      "y": 39
+    },
+    {
+      "index": 23,
+      "x": 276,
+      "y": 40
+    },
+    {
+      "index": 24,
+      "x": 282,
+      "y": 39
+    },
+    {
+      "index": 25,
+      "x": 280,
+      "y": 43
+    },
+    {
+      "index": 26,
+      "x": 275,
+      "y": 47
+    },
+    {
+      "index": 27,
+      "x": 270,
+      "y": 52
+    },
+    {
+      "index": 28,
+      "x": 264,
+      "y": 55
+    },
+    {
+      "index": 29,
+      "x": 259,
+      "y": 60
+    },
+    {
+      "index": 30,
+      "x": 257,
+      "y": 66
+    },
+    {
+      "index": 31,
+      "x": 259,
+      "y": 72
+    },
+    {
+      "index": 32,
+      "x": 264,
+      "y": 76
+    },
+    {
+      "index": 33,
+      "x": 270,
+      "y": 79
+    },
+    {
+      "index": 34,
+      "x": 276,
+      "y": 80
+    },
+    {
+      "index": 35,
+      "x": 282,
+      "y": 81
+    },
+    {
+      "index": 36,
+      "x": 288,
+      "y": 83
+    },
+    {
+      "index": 37,
+      "x": 294,
+      "y": 86
+    },
+    {
+      "index": 38,
+      "x": 299,
+      "y": 89
+    },
+    {
+      "index": 39,
+      "x": 304,
+      "y": 94
+    },
+    {
+      "index": 40,
+      "x": 306,
+      "y": 100
+    },
+    {
+      "index": 41,
+      "x": 306,
+      "y": 106
+    },
+    {
+      "index": 42,
+      "x": 304,
+      "y": 112
+    },
+    {
+      "index": 43,
+      "x": 299,
+      "y": 117
+    },
+    {
+      "index": 44,
+      "x": 294,
+      "y": 119
+    },
+    {
+      "index": 45,
+      "x": 288,
+      "y": 120
+    },
+    {
+      "index": 46,
+      "x": 282,
+      "y": 121
+    },
+    {
+      "index": 47,
+      "x": 276,
+      "y": 121
+    },
+    {
+      "index": 48,
+      "x": 281,
+      "y": 126
+    },
+    {
+      "index": 49,
+      "x": 286,
+      "y": 128
+    },
+    {
+      "index": 50,
+      "x": 291,
+      "y": 130
+    },
+    {
+      "index": 51,
+      "x": 296,
+      "y": 133
+    },
+    {
+      "index": 52,
+      "x": 301,
+      "y": 137
+    },
+    {
+      "index": 53,
+      "x": 305,
+      "y": 142
+    },
+    {
+      "index": 54,
+      "x": 305,
+      "y": 148
+    },
+    {
+      "index": 55,
+      "x": 306,
+      "y": 152
+    },
+    {
+      "index": 56,
+      "x": 306,
+      "y": 158
+    },
+    {
+      "index": 57,
+      "x": 306,
+      "y": 164
+    },
+    {
+      "index": 58,
+      "x": 306,
+      "y": 170
+    },
+    {
+      "index": 59,
+      "x": 307,
+      "y": 176
+    },
+    {
+      "index": 60,
+      "x": 307,
+      "y": 182
+    },
+    {
+      "index": 61,
+      "x": 304,
+      "y": 187
+    },
+    {
+      "index": 62,
+      "x": 299,
+      "y": 189
+    },
+    {
+      "index": 63,
+      "x": 294,
+      "y": 189
+    },
+    {
+      "index": 64,
+      "x": 288,
+      "y": 189
+    },
+    {
+      "index": 65,
+      "x": 282,
+      "y": 188
+    },
+    {
+      "index": 66,
+      "x": 276,
+      "y": 187
+    },
+    {
+      "index": 67,
+      "x": 270,
+      "y": 187
+    },
+    {
+      "index": 68,
+      "x": 264,
+      "y": 188
+    },
+    {
+      "index": 69,
+      "x": 258,
+      "y": 188
+    },
+    {
+      "index": 70,
+      "x": 252,
+      "y": 188
+    },
+    {
+      "index": 71,
+      "x": 246,
+      "y": 190
+    },
+    {
+      "index": 72,
+      "x": 240,
+      "y": 191
+    },
+    {
+      "index": 73,
+      "x": 234,
+      "y": 190
+    },
+    {
+      "index": 74,
+      "x": 228,
+      "y": 189
+    },
+    {
+      "index": 75,
+      "x": 222,
+      "y": 188
+    },
+    {
+      "index": 76,
+      "x": 216,
+      "y": 188
+    },
+    {
+      "index": 77,
+      "x": 210,
+      "y": 189
+    },
+    {
+      "index": 78,
+      "x": 204,
+      "y": 189
+    },
+    {
+      "index": 79,
+      "x": 198,
+      "y": 189
+    },
+    {
+      "index": 80,
+      "x": 193,
+      "y": 186
+    },
+    {
+      "index": 81,
+      "x": 188,
+      "y": 184
+    },
+    {
+      "index": 82,
+      "x": 183,
+      "y": 179
+    },
+    {
+      "index": 83,
+      "x": 178,
+      "y": 177
+    },
+    {
+      "index": 84,
+      "x": 172,
+      "y": 175
+    },
+    {
+      "index": 85,
+      "x": 167,
+      "y": 173
+    },
+    {
+      "index": 86,
+      "x": 162,
+      "y": 169
+    },
+    {
+      "index": 87,
+      "x": 158,
+      "y": 169
+    },
+    {
+      "index": 88,
+      "x": 152,
+      "y": 169
+    },
+    {
+      "index": 89,
+      "x": 148,
+      "y": 169
+    },
+    {
+      "index": 90,
+      "x": 143,
+      "y": 170
+    },
+    {
+      "index": 91,
+      "x": 138,
+      "y": 173
+    },
+    {
+      "index": 92,
+      "x": 133,
+      "y": 176
+    },
+    {
+      "index": 93,
+      "x": 128,
+      "y": 180
+    },
+    {
+      "index": 94,
+      "x": 123,
+      "y": 183
+    },
+    {
+      "index": 95,
+      "x": 118,
+      "y": 185
+    },
+    {
+      "index": 96,
+      "x": 113,
+      "y": 187
+    },
+    {
+      "index": 97,
+      "x": 108,
+      "y": 188
+    },
+    {
+      "index": 98,
+      "x": 103,
+      "y": 188
+    },
+    {
+      "index": 99,
+      "x": 97,
+      "y": 188
+    },
+    {
+      "index": 100,
+      "x": 91,
+      "y": 188
+    },
+    {
+      "index": 101,
+      "x": 85,
+      "y": 188
+    },
+    {
+      "index": 102,
+      "x": 79,
+      "y": 187
+    },
+    {
+      "index": 103,
+      "x": 73,
+      "y": 186
+    },
+    {
+      "index": 104,
+      "x": 67,
+      "y": 185
+    },
+    {
+      "index": 105,
+      "x": 61,
+      "y": 185
+    },
+    {
+      "index": 106,
+      "x": 55,
+      "y": 185
+    },
+    {
+      "index": 107,
+      "x": 49,
+      "y": 186
+    },
+    {
+      "index": 108,
+      "x": 43,
+      "y": 187
+    },
+    {
+      "index": 109,
+      "x": 37,
+      "y": 187
+    },
+    {
+      "index": 110,
+      "x": 31,
+      "y": 187
+    },
+    {
+      "index": 111,
+      "x": 25,
+      "y": 187
+    },
+    {
+      "index": 112,
+      "x": 19,
+      "y": 187
+    },
+    {
+      "index": 113,
+      "x": 14,
+      "y": 183
+    },
+    {
+      "index": 114,
+      "x": 11,
+      "y": 178
+    },
+    {
+      "index": 115,
+      "x": 11,
+      "y": 173
+    },
+    {
+      "index": 116,
+      "x": 14,
+      "y": 167
+    },
+    {
+      "index": 117,
+      "x": 19,
+      "y": 162
+    },
+    {
+      "index": 118,
+      "x": 21,
+      "y": 157
+    },
+    {
+      "index": 119,
+      "x": 23,
+      "y": 153
+    },
+    {
+      "index": 120,
+      "x": 24,
+      "y": 149
+    },
+    {
+      "index": 121,
+      "x": 30,
+      "y": 150
+    },
+    {
+      "index": 122,
+      "x": 36,
+      "y": 150
+    },
+    {
+      "index": 123,
+      "x": 42,
+      "y": 150
+    },
+    {
+      "index": 124,
+      "x": 48,
+      "y": 150
+    },
+    {
+      "index": 125,
+      "x": 54,
+      "y": 149
+    },
+    {
+      "index": 126,
+      "x": 59,
+      "y": 146
+    },
+    {
+      "index": 127,
+      "x": 62,
+      "y": 141
+    },
+    {
+      "index": 128,
+      "x": 63,
+      "y": 135
+    },
+    {
+      "index": 129,
+      "x": 62,
+      "y": 129
+    },
+    {
+      "index": 130,
+      "x": 61,
+      "y": 123
+    },
+    {
+      "index": 131,
+      "x": 58,
+      "y": 118
+    },
+    {
+      "index": 132,
+      "x": 54,
+      "y": 114
+    },
+    {
+      "index": 133,
+      "x": 49,
+      "y": 111
+    },
+    {
+      "index": 134,
+      "x": 43,
+      "y": 110
+    },
+    {
+      "index": 135,
+      "x": 37,
+      "y": 109
+    },
+    {
+      "index": 136,
+      "x": 31,
+      "y": 108
+    },
+    {
+      "index": 137,
+      "x": 25,
+      "y": 107
+    },
+    {
+      "index": 138,
+      "x": 19,
+      "y": 105
+    },
+    {
+      "index": 139,
+      "x": 16,
+      "y": 100
+    },
+    {
+      "index": 140,
+      "x": 14,
+      "y": 94
+    },
+    {
+      "index": 141,
+      "x": 13,
+      "y": 88
+    },
+    {
+      "index": 142,
+      "x": 15,
+      "y": 83
+    },
+    {
+      "index": 143,
+      "x": 19,
+      "y": 78
+    },
+    {
+      "index": 144,
+      "x": 24,
+      "y": 74
+    },
+    {
+      "index": 145,
+      "x": 29,
+      "y": 70
+    },
+    {
+      "index": 146,
+      "x": 34,
+      "y": 66
+    },
+    {
+      "index": 147,
+      "x": 39,
+      "y": 63
+    },
+    {
+      "index": 148,
+      "x": 40,
+      "y": 59
+    },
+    {
+      "index": 149,
+      "x": 38,
+      "y": 54
+    },
+    {
+      "index": 150,
+      "x": 33,
+      "y": 50
+    },
+    {
+      "index": 151,
+      "x": 29,
+      "y": 45
+    },
+    {
+      "index": 152,
+      "x": 35,
+      "y": 45
+    },
+    {
+      "index": 153,
+      "x": 41,
+      "y": 45
+    },
+    {
+      "index": 154,
+      "x": 47,
+      "y": 44
+    },
+    {
+      "index": 155,
+      "x": 53,
+      "y": 44
+    },
+    {
+      "index": 156,
+      "x": 58,
+      "y": 42
+    },
+    {
+      "index": 157,
+      "x": 63,
+      "y": 40
+    },
+    {
+      "index": 158,
+      "x": 68,
+      "y": 37
+    },
+    {
+      "index": 159,
+      "x": 74,
+      "y": 37
+    },
+    {
+      "index": 160,
+      "x": 80,
+      "y": 37
+    },
+    {
+      "index": 161,
+      "x": 86,
+      "y": 38
+    },
+    {
+      "index": 162,
+      "x": 92,
+      "y": 38
+    },
+    {
+      "index": 163,
+      "x": 98,
+      "y": 39
+    },
+    {
+      "index": 164,
+      "x": 104,
+      "y": 39
+    },
+    {
+      "index": 165,
+      "x": 109,
+      "y": 39
+    },
+    {
+      "index": 166,
+      "x": 115,
+      "y": 39
+    },
+    {
+      "index": 167,
+      "x": 120,
+      "y": 39
+    },
+    {
+      "index": 168,
+      "x": 126,
+      "y": 38
+    },
+    {
+      "index": 169,
+      "x": 132,
+      "y": 38
+    },
+    {
+      "index": 170,
+      "x": 138,
+      "y": 37
+    }
+  ],
+  "buildings": {
+    "low_cost_housing": {
+      "placeName": "apartmentsP",
+      "placeNum": 0,
+      "nodeId": "node_low_cost",
+      "waypointIndex": 1,
+      "waypointX": 144,
+      "waypointY": 37,
+      "doorLoop": 0,
+      "doorX": 144,
+      "doorY": 30
+    },
+    "rent_office": {
+      "placeName": "rentOfficeP",
+      "placeNum": 1,
+      "nodeId": "node_rent",
+      "waypointIndex": 164,
+      "waypointX": 104,
+      "waypointY": 39,
+      "doorLoop": 1,
+      "doorX": 105,
+      "doorY": 29
+    },
+    "security": {
+      "placeName": "securityP",
+      "placeNum": 2,
+      "nodeId": "node_security",
+      "waypointIndex": 151,
+      "waypointX": 29,
+      "waypointY": 45,
+      "doorLoop": 2,
+      "doorX": 29,
+      "doorY": 44
+    },
+    "blacks_market": {
+      "placeName": "marketP",
+      "placeNum": 3,
+      "nodeId": "node_blacks_market",
+      "waypointIndex": 134,
+      "waypointX": 43,
+      "waypointY": 110,
+      "doorLoop": 3,
+      "doorX": 46,
+      "doorY": 105
+    },
+    "bank": {
+      "placeName": "bankP",
+      "placeNum": 4,
+      "nodeId": "node_bank",
+      "waypointIndex": 120,
+      "waypointX": 24,
+      "waypointY": 149,
+      "doorLoop": 4,
+      "doorX": 20,
+      "doorY": 147
+    },
+    "factory": {
+      "placeName": "factoryP",
+      "placeNum": 5,
+      "nodeId": "node_factory",
+      "waypointIndex": 107,
+      "waypointX": 49,
+      "waypointY": 186,
+      "doorLoop": 5,
+      "doorX": 50,
+      "doorY": 181
+    },
+    "employment_office": {
+      "placeName": "employmentP",
+      "placeNum": 6,
+      "nodeId": "node_employment",
+      "waypointIndex": 99,
+      "waypointX": 97,
+      "waypointY": 188,
+      "doorLoop": 6,
+      "doorX": 97,
+      "doorY": 183
+    },
+    "university": {
+      "placeName": "universityP",
+      "placeNum": 7,
+      "nodeId": "node_university",
+      "waypointIndex": 75,
+      "waypointX": 222,
+      "waypointY": 188,
+      "doorLoop": 7,
+      "doorX": 220,
+      "doorY": 179
+    },
+    "socket_city": {
+      "placeName": "applianceP",
+      "placeNum": 8,
+      "nodeId": "node_socket",
+      "waypointIndex": 66,
+      "waypointX": 276,
+      "waypointY": 187,
+      "doorLoop": 8,
+      "doorX": 277,
+      "doorY": 183
+    },
+    "qt_clothing": {
+      "placeName": "clothingP",
+      "placeNum": 9,
+      "nodeId": "node_qt",
+      "waypointIndex": 47,
+      "waypointX": 276,
+      "waypointY": 121,
+      "doorLoop": 9,
+      "doorX": 277,
+      "doorY": 113
+    },
+    "burger_palace": {
+      "placeName": "fastFoodP",
+      "placeNum": 10,
+      "nodeId": "node_burger",
+      "waypointIndex": 35,
+      "waypointX": 282,
+      "waypointY": 81,
+      "doorLoop": 10,
+      "doorX": 288,
+      "doorY": 75
+    },
+    "z_mart": {
+      "placeName": "discountP",
+      "placeNum": 11,
+      "nodeId": "node_z_mart",
+      "waypointIndex": 24,
+      "waypointX": 282,
+      "waypointY": 39,
+      "doorLoop": 11,
+      "doorX": 282,
+      "doorY": 34
+    },
+    "pawn_shop": {
+      "placeName": "pawnShopP",
+      "placeNum": 12,
+      "nodeId": "node_pawn_shop",
+      "waypointIndex": 14,
+      "waypointX": 222,
+      "waypointY": 40,
+      "doorLoop": 12,
+      "doorX": 221,
+      "doorY": 34
+    }
+  }
+}

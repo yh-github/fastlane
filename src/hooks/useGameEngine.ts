@@ -4,7 +4,7 @@ import { processTurnStart } from '../engine/turnProcessor';
 import { spendHours } from '../engine/timeManager';
 import { type CampaignBundle } from '../engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, getEdgeKey } from '../graphics/pathfinding';
-import { animatePlayerPath, pulsePlayer, showMapClick, animateRobberInterception } from '../graphics/mapRenderer';
+import { animatePlayerPath, pulsePlayer, showMapClick, animateRobberInterception, animateDoorOpen } from '../graphics/mapRenderer';
 import { AUTHENTIC_BUILDINGS } from '../graphics/authenticData';
 import { processStreetRobbery } from '../engine/eventEngine';
 import { executeAITurn } from '../engine/aiEngine';
@@ -218,7 +218,7 @@ export function useGameEngine(
           const isFinalHomeHop = i === pathResult.path.length - 2;
           const defaultTarget = (useAuthentic && campaign.map.authenticNodes?.[v]) || campaign.map.nodes.find(n => n.id === v);
           const targetCoord = (isFinalHomeHop && authBuilding)
-            ? { x: authBuilding.doorX * 3.75, y: authBuilding.doorY * 3.75 }
+            ? { x: authBuilding.waypointX * 3.75, y: authBuilding.waypointY * 3.75 }
             : defaultTarget;
           if (targetCoord) {
             pathCoords.push({ nodeId: v, x: targetCoord.x, y: targetCoord.y });
@@ -462,7 +462,7 @@ export function useGameEngine(
           const isFinalHop = nextNodeId === targetNodeId;
           const defaultTarget = (useAuthentic && campaign.map.authenticNodes?.[nextNodeId]) || { x: nextNode.x, y: nextNode.y };
           const targetCoord = (isFinalHop && authBuilding)
-            ? { x: authBuilding.doorX * 3.75, y: authBuilding.doorY * 3.75 }
+            ? { x: authBuilding.waypointX * 3.75, y: authBuilding.waypointY * 3.75 }
             : defaultTarget;
 
           if (useAuthentic && edge?.path && edge.path.length > 0) {
@@ -546,8 +546,8 @@ export function useGameEngine(
           } else if (!activePlayer.isAi && player.position === targetNodeId) {
             const destNode = campaign.map.nodes.find(n => n.id === player.position);
             if (destNode && campaign.buildings.some(b => b.id === destNode.buildingId)) {
-              if (currentState.rules.guiStyle === 'authentic') {
-                await new Promise(r => setTimeout(r, 260));
+              if (currentState.rules.guiStyle === 'authentic' && destNode.buildingId) {
+                await animateDoorOpen(destNode.buildingId);
               }
               openModal({ type: 'building' });
             }

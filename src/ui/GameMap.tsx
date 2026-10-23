@@ -103,8 +103,8 @@ export const GameMap: React.FC<GameMapProps> = ({
         if (isAuthentic) {
           const authBuilding = Object.values(AUTHENTIC_BUILDINGS).find(b => b.nodeId === p.position);
           if (authBuilding) {
-            posX = authBuilding.doorX * 3.75;
-            posY = authBuilding.doorY * 3.75;
+            posX = authBuilding.waypointX * 3.75;
+            posY = authBuilding.waypointY * 3.75;
           } else {
             const authPos = campaign.map.authenticNodes?.[p.position];
             const node = campaign.map.nodes.find(n => n.id === p.position);

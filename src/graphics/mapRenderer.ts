@@ -68,22 +68,42 @@ function safeDestroyApp(targetApp: Application | null): void {
   }
 }
 
-function animateDoorTo(doorInfo: DoorInfo, targetCel: number, bId: string) {
-  if (doorInfo.targetCel === targetCel && !doorInfo.animating && doorInfo.currentCel === targetCel) return;
+function animateDoorTo(doorInfo: DoorInfo, targetCel: number, bId: string, onComplete?: () => void) {
+  if (doorInfo.targetCel === targetCel && !doorInfo.animating && doorInfo.currentCel === targetCel) {
+    if (onComplete) onComplete();
+    return;
+  }
   doorInfo.targetCel = targetCel;
-  if (doorInfo.animating) return;
+  if (doorInfo.animating) {
+    if (onComplete) {
+      const prevCb = (doorInfo as any)._onComplete;
+      (doorInfo as any)._onComplete = () => {
+        if (prevCb) prevCb();
+        onComplete();
+      };
+    }
+    return;
+  }
 
+  (doorInfo as any)._onComplete = onComplete;
   doorInfo.animating = true;
   // Exact authentic Sierra SCI timing: 6 ticks @ 60Hz = 100ms per cel (Wait 6 in script.001 openDoor)
   const frameDelay = 100;
 
+  function finish() {
+    doorInfo.animating = false;
+    const cb = (doorInfo as any)._onComplete;
+    (doorInfo as any)._onComplete = undefined;
+    if (cb) cb();
+  }
+
   function nextStep() {
     if (!doorInfo.sprite || !doorInfo.sprite.parent || doorInfo.sprite.destroyed) {
-      doorInfo.animating = false;
+      finish();
       return;
     }
     if (doorInfo.currentCel === doorInfo.targetCel) {
-      doorInfo.animating = false;
+      finish();
       return;
     }
     const step = doorInfo.targetCel > doorInfo.currentCel ? 1 : -1;
@@ -92,6 +112,10 @@ function animateDoorTo(doorInfo: DoorInfo, targetCel: number, bId: string) {
       || (Sprite.from(`${doorInfo.basePath}/doors/${bId}_cel_${doorInfo.currentCel}.png`) as any)?.texture;
     if (doorTex && doorInfo.sprite) {
       doorInfo.sprite.texture = doorTex;
+    }
+    if (doorInfo.currentCel === doorInfo.targetCel) {
+      finish();
+      return;
     }
     setTimeout(nextStep, frameDelay);
   }
@@ -109,6 +133,27 @@ export function setEnteredBuilding(buildingId: string | null): void {
     const targetCel = (buildingId === bId) ? 3 : 0;
     animateDoorTo(doorInfo, targetCel, bId);
   }
+}
+
+/**
+ * Smoothly animate opening the door of a building (cel 0 -> 1 -> 2 -> 3) and wait for completion.
+ * Matches authentic Sierra SCI Wait 6 between cels (~100ms per frame, ~300-400ms total).
+ */
+export function animateDoorOpen(buildingId: string): Promise<void> {
+  if (activeGuiStyle !== 'authentic' || buildingDoors.size === 0) return Promise.resolve();
+  const doorInfo = buildingDoors.get(buildingId);
+  if (!doorInfo) return Promise.resolve();
+
+  // Close any other open doors
+  for (const [bId, info] of buildingDoors.entries()) {
+    if (bId !== buildingId && info.currentCel !== 0) {
+      animateDoorTo(info, 0, bId);
+    }
+  }
+
+  return new Promise<void>((resolve) => {
+    animateDoorTo(doorInfo, 3, buildingId, resolve);
+  });
 }
 
 /**

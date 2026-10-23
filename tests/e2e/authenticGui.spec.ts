@@ -97,17 +97,33 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
     expect(modalBox!.x + modalBox!.width).toBeLessThanOrEqual(canvasBox!.x + canvasBox!.width);
     expect(modalBox!.y + modalBox!.height).toBeLessThanOrEqual(canvasBox!.y + canvasBox!.height);
 
-    // Verify marble is at door position
+    // Verify marble is at authentic sidewalk waypoint position outside Rent Office (node_rent / apartment_complex) (104, 39)
     const playerMarker = page.locator('[data-testid="player-character"]');
     await expect(playerMarker).toBeAttached();
     await expect(playerMarker).toHaveAttribute('data-visible', 'true');
-    const posX = parseFloat((await playerMarker.getAttribute('data-x')) || '0');
-    const posY = parseFloat((await playerMarker.getAttribute('data-y')) || '0');
-    // Ensure coordinates are within board boundaries and at door
-    expect(posX).toBeGreaterThan(0);
-    expect(posX).toBeLessThan(320);
-    expect(posY).toBeGreaterThan(0);
-    expect(posY).toBeLessThan(190);
+    expect(parseFloat((await playerMarker.getAttribute('data-x')) || '0')).toBe(104);
+    expect(parseFloat((await playerMarker.getAttribute('data-y')) || '0')).toBe(39);
+
+    // Switch to University and verify sidewalk waypoint (222, 188)
+    await page.evaluate(() => {
+      (window as any).__openBuilding('university');
+    });
+    await expect(playerMarker).toHaveAttribute('data-x', '222');
+    await expect(playerMarker).toHaveAttribute('data-y', '188');
+
+    // Switch to Bank and verify sidewalk waypoint (24, 149)
+    await page.evaluate(() => {
+      (window as any).__openBuilding('bank');
+    });
+    await expect(playerMarker).toHaveAttribute('data-x', '24');
+    await expect(playerMarker).toHaveAttribute('data-y', '149');
+
+    // Switch to Socket City and verify sidewalk waypoint (276, 187)
+    await page.evaluate(() => {
+      (window as any).__openBuilding('socket_city');
+    });
+    await expect(playerMarker).toHaveAttribute('data-x', '276');
+    await expect(playerMarker).toHaveAttribute('data-y', '187');
 
     // Assert zero uncaught page errors
     expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);

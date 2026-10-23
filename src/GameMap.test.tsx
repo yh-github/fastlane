@@ -245,9 +245,9 @@ describe('GameMap Character GUI Tests', () => {
     await waitFor(() => {
       const marker = screen.getByTestId('player-character');
       expect(marker).toHaveAttribute('data-visible', 'true');
-      // In authentic mode, player marble reaches and stops at the authentic door (doorX: 144, doorY: 30)
+      // In authentic mode, player marble reaches and stops at the authentic sidewalk waypoint (waypointX: 144, waypointY: 37)
       expect(marker).toHaveAttribute('data-x', '144');
-      expect(marker).toHaveAttribute('data-y', '30');
+      expect(marker).toHaveAttribute('data-y', '37');
     });
   });
 });
