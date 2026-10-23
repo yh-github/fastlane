@@ -118,12 +118,94 @@ def test_occluders_alignment():
         assert pct == 100.0, f"Occluder {name} at ({spec['x']}, {spec['y']}) match is {pct:.1f}%, expected 100.0%"
     print(f"  -> All {len(occluders)} rooftop occluders match background 100.0% pixel-perfect.")
 
+def test_authentic_waypoints():
+    print("Testing Authentic 170 Waypoints & Building Sidewalk Stops (Point 1 & 2)...")
+    import re
+    with open("original_resources/floppy/script.101.txt") as f:
+        text101 = f.read()
+
+    locals_dict = {}
+    for m in re.finditer(r"local(\d+)\s*=\s*\$([0-9a-fA-F]+)", text101):
+        locals_dict[int(m.group(1))] = int(m.group(2), 16)
+
+    sci_wp = {i: (locals_dict[i], locals_dict[i + 171]) for i in range(1, 171)}
+    assert len(sci_wp) == 170, f"Expected 170 waypoints, got {len(sci_wp)}"
+
+    with open("public/assets/authentic/waypoints.json") as f:
+        wp_data = json.load(f)
+    assert wp_data["totalWaypoints"] == 170
+    for pt in wp_data["waypoints"]:
+        idx = pt["index"]
+        assert (pt["x"], pt["y"]) == sci_wp[idx], f"Waypoint {idx} mismatch in waypoints.json"
+
+    with open("public/campaigns/1990_classic_floppy/map.json") as f:
+        map_data = json.load(f)
+
+    # Building mapping
+    b_to_node = {
+        "apartmentsP": "node_low_cost",
+        "pawnShopP": "node_pawn_shop",
+        "discountP": "node_z_mart",
+        "fastFoodP": "node_burger",
+        "clothingP": "node_qt",
+        "applianceP": "node_socket",
+        "universityP": "node_university",
+        "employmentP": "node_employment",
+        "factoryP": "node_factory",
+        "bankP": "node_bank",
+        "marketP": "node_blacks_market",
+        "securityP": "node_security",
+        "rentOfficeP": "node_rent",
+    }
+    with open("original_resources/floppy/script.001.txt") as f:
+        text001 = f.read()
+    places = {}
+    for m in re.finditer(r"\(instance\s+(\w+)\s+of\s+Place\b(.*?)\n\)", text001, re.DOTALL):
+        name = m.group(1)
+        body = m.group(2)
+        def gp(p):
+            pm = re.search(r"\b" + p + r"\s+\$([0-9a-fA-F]+)", body)
+            return int(pm.group(1), 16) if pm else None
+        places[name] = (gp("index"), gp("doorX"), gp("doorY"))
+
+    node_to_idx = {b_to_node[k]: places[k][0] for k in places}
+
+    for nid, pt in map_data["authenticNodes"].items():
+        idx = node_to_idx[nid]
+        expected_x = round(sci_wp[idx][0] * 3.75, 2)
+        expected_y = round(sci_wp[idx][1] * 3.75, 2)
+        assert abs(pt["x"] - expected_x) < 0.01 and abs(pt["y"] - expected_y) < 0.01, f"authenticNode {nid} ({pt}) does not match expected ({expected_x}, {expected_y})"
+
+    total_edge_waypoints = 0
+    for edge in map_data["edges"]:
+        total_edge_waypoints += edge["waypoints"]
+        from_idx = node_to_idx[edge["from"]]
+        to_idx = node_to_idx[edge["to"]]
+        curr = from_idx
+        path_indices = []
+        while True:
+            curr = (curr % 170) + 1
+            if curr == to_idx:
+                break
+            path_indices.append(curr)
+        assert len(path_indices) + 1 == edge["waypoints"], f"Edge {edge['from']}->{edge['to']} count mismatch"
+        for i, pt in enumerate(edge["path"]):
+            w_idx = path_indices[i]
+            assert pt["index"] == w_idx
+            exp_x = round(sci_wp[w_idx][0] * 3.75, 2)
+            exp_y = round(sci_wp[w_idx][1] * 3.75, 2)
+            assert abs(pt["x"] - exp_x) < 0.01 and abs(pt["y"] - exp_y) < 0.01
+
+    assert total_edge_waypoints == 170, f"Total edge waypoints must be 170, got {total_edge_waypoints}"
+    print("  -> All 170 waypoints and 13 building sidewalk destinations verified 100.0% authentic.")
+
 if __name__ == "__main__":
     try:
         test_marbles()
         test_doors_alignment()
         test_roof_patch_alignment()
         test_occluders_alignment()
+        test_authentic_waypoints()
         print("ALL AUTHENTIC ASSET INTEGRITY TESTS PASSED SUCCESSFULLY!")
     except AssertionError as e:
         print(f"TEST FAILED: {e}", file=sys.stderr)
