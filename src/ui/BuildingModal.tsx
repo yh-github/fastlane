@@ -15,6 +15,7 @@ import {
 } from './BuildingInteractions';
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
 import { PantryDetailsModal } from './buildings/home/PantryDetailsModal';
+import { AuthenticMonolithBurgers } from './buildings/authentic/AuthenticMonolithBurgers';
 import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 import { useDraggableModal } from './hooks/useDraggableModal';
@@ -209,6 +210,8 @@ export function BuildingModal({
   }, [currentBuildingId, educationTab, bankTab, activeTab, isContentOverflowing, measuredRect, isWorkDeckOpen]);
 
   if (!player || !campaign || !currentBuildingId || !building) return null;
+
+  const isAuthenticReplica = rules?.guiStyle === 'authentic' && building.id === 'burger_palace';
 
   // Check if the player's current job is at this building
   const playerJobHere = player.currentJobId 
@@ -435,7 +438,7 @@ export function BuildingModal({
   return (
     <div 
       ref={modalRef}
-      className={`building-modal ${isCurved ? 'building-modal--curved' : 'building-modal--schematic'}${rules?.guiStyle === 'authentic' ? ' building-modal--authentic' : ''}${isContentOverflowing ? ' building-modal--compact' : ''}`}
+      className={`building-modal ${isCurved ? 'building-modal--curved' : 'building-modal--schematic'}${rules?.guiStyle === 'authentic' ? ' building-modal--authentic' : ''}${isAuthenticReplica ? ' building-modal--authentic-replica' : ''}${isContentOverflowing ? ' building-modal--compact' : ''}`}
       style={{
         '--modal-margin': `${modalMargin}px`,
         ...(position ? { left: `${position.x}px`, top: `${position.y}px` } : {}),
@@ -572,7 +575,18 @@ export function BuildingModal({
         </div>
       )}
 
-      {/* Tab Ears protruding above the modal header */}
+      {isAuthenticReplica && building.id === 'burger_palace' ? (
+        <AuthenticMonolithBurgers
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          economicIndex={economicIndex}
+          rules={rules}
+        />
+      ) : (
+        <>
+          {/* Tab Ears protruding above the modal header */}
       {building.archetype === 'education' && (
         <div className="building-modal__tab-ears" data-testid="university-tab-ears">
           <button
@@ -850,6 +864,8 @@ export function BuildingModal({
           </div>
         );
       })()}
+        </>
+      )}
 
       {hasPendingMiniGame && (
         <AppraisalDilemmaModal
@@ -1028,7 +1044,7 @@ export function BuildingModal({
       )}
 
       {/* Corner Resize Handle */}
-      {rules?.allowWindowMoveResize && (
+      {rules?.allowWindowMoveResize && !isAuthenticReplica && (
         <div 
           className="building-modal__resize-handle"
           data-testid="building-modal-resize-handle"
