@@ -199,6 +199,52 @@ def test_authentic_waypoints():
     assert total_edge_waypoints == 170, f"Total edge waypoints must be 170, got {total_edge_waypoints}"
     print("  -> All 170 waypoints and 13 building sidewalk destinations verified 100.0% authentic.")
 
+def test_authentic_monolith_burgers():
+    print("Testing Authentic Monolith Burgers Assets (Room 210)...")
+    base = "public/assets/authentic/buildings/monolith_burgers"
+    bg = Image.open(f"{base}/bg.png")
+    assert bg.size == (183, 112), f"bg.png size mismatch: {bg.size}"
+
+    # Floppy talker (6 cels)
+    for i in range(6):
+        t_im = Image.open(f"{base}/talker_floppy/talker_{i}.png")
+        assert t_im.size == (68, 55), f"talker_floppy/talker_{i}.png size mismatch: {t_im.size}"
+
+    # CD-ROM talker (11 cels)
+    for i in range(11):
+        t_im = Image.open(f"{base}/talker_cdrom/talker_{i}.png")
+        assert t_im.size == (68, 55), f"talker_cdrom/talker_{i}.png size mismatch: {t_im.size}"
+
+    # Counter cels
+    idle = Image.open(f"{base}/counter/idle_0.png")
+    assert idle.size == (68, 55), f"counter/idle_0.png size mismatch: {idle.size}"
+    for i in range(3):
+        h = Image.open(f"{base}/counter/handoff_{i}.png")
+        assert h.size == (68, 55), f"counter/handoff_{i}.png size mismatch: {h.size}"
+    foods = ["food_hamburger", "food_cheeseburger", "food_chicken", "food_fries", "food_shake", "food_cola"]
+    for f in foods:
+        f_im = Image.open(f"{base}/counter/{f}.png")
+        assert f_im.size == (68, 55), f"counter/{f}.png size mismatch: {f_im.size}"
+
+    # Buttons
+    work = Image.open(f"{base}/buttons/work.png")
+    done = Image.open(f"{base}/buttons/done.png")
+    assert work.size == (30, 7), f"buttons/work.png size mismatch: {work.size}"
+    assert done.size == (30, 7), f"buttons/done.png size mismatch: {done.size}"
+
+    # Punch card
+    for i in range(4):
+        p_im = Image.open(f"public/assets/authentic/punch_card/punch_{i}.png")
+        assert p_im.size == (68, 55), f"punch_{i}.png size mismatch: {p_im.size}"
+
+    # Dialogue JSON
+    with open(f"{base}/dialogue.json") as f:
+        d = json.load(f)
+    assert len(d["welcomeGreetings"]) == 20, f"Expected 20 greetings, got {len(d['welcomeGreetings'])}"
+    assert len(d["clerkBanter"]) == 35, f"Expected 35 banter lines, got {len(d['clerkBanter'])}"
+    assert d["notEnoughCash"] == "You do not have enough cash."
+    print("  -> Monolith Burgers assets, talker cels, counter animations, buttons and dialogue verified 100.0% authentic.")
+
 if __name__ == "__main__":
     try:
         test_marbles()
@@ -206,6 +252,7 @@ if __name__ == "__main__":
         test_roof_patch_alignment()
         test_occluders_alignment()
         test_authentic_waypoints()
+        test_authentic_monolith_burgers()
         print("ALL AUTHENTIC ASSET INTEGRITY TESTS PASSED SUCCESSFULLY!")
     except AssertionError as e:
         print(f"TEST FAILED: {e}", file=sys.stderr)

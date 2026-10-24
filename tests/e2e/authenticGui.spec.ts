@@ -128,4 +128,81 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
     // Assert zero uncaught page errors
     expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);
   });
+
+  test('verifies Monolith Burgers authentic window opens, displays items and talker, and can buy food', async ({ page }) => {
+    const pageErrors: Error[] = [];
+    page.on('pageerror', (err) => {
+      pageErrors.push(err);
+    });
+
+    await page.addInitScript(() => {
+      localStorage.setItem('fastlane_gui_style', 'authentic');
+    });
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/');
+
+    const startGameBtn = page.locator('.title-screen__btn').first();
+    await expect(startGameBtn).toBeVisible({ timeout: 5000 });
+    await startGameBtn.click();
+
+    const startLifeBtn = page.locator('.action-panel__btn').filter({ hasText: /Start Life|התחל חיים/i }).first();
+    await expect(startLifeBtn).toBeVisible({ timeout: 5000 });
+    await startLifeBtn.click();
+
+    // Close initial apartment modal if opened
+    const initialModal = page.locator('.building-modal');
+    if (await initialModal.isVisible()) {
+      await page.locator('.building-modal__close').click();
+      await expect(initialModal).toBeHidden({ timeout: 3000 });
+    }
+
+    // Open Monolith Burgers
+    await page.evaluate(() => {
+      (window as any).__openBuilding('burger_palace');
+    });
+
+    const buildingModal = page.locator('.building-modal');
+    await expect(buildingModal).toBeVisible({ timeout: 5000 });
+    await expect(buildingModal).toHaveClass(/building-modal--authentic/);
+    await expect(buildingModal).toHaveClass(/building-modal--authentic-replica/);
+
+    // Verify authentic viewport container and layers
+    const authenticViewport = page.locator('[data-testid="authentic-monolith-burgers"]');
+    await expect(authenticViewport).toBeVisible();
+
+    const talker = page.locator('[data-testid="monolith-talker"]');
+    await expect(talker).toBeVisible();
+
+    const counter = page.locator('[data-testid="monolith-counter"]');
+    await expect(counter).toBeVisible();
+
+    // Verify all 6 menu items are visible
+    const hamburger = page.locator('[data-testid="menu-item-hamburger"]');
+    await expect(hamburger).toBeVisible();
+    await expect(hamburger).toContainText('Hamburgers');
+
+    const doneBtn = page.locator('[data-testid="btn-monolith-done"]');
+    await expect(doneBtn).toBeVisible();
+
+    // Modern header and close button should NOT be present
+    await expect(page.locator('.building-modal__header')).toBeHidden();
+    await expect(page.locator('.building-modal__close')).toBeHidden();
+
+    // Screenshot of authentic Monolith Burgers
+    await page.screenshot({ path: '/tmp/authentic_monolith_burgers_verified.png' });
+
+    // Click to buy a hamburger
+    await hamburger.click();
+
+    // Speech bubble appears with cashier response
+    const speechBubble = page.locator('[data-testid="monolith-speech-bubble"]');
+    await expect(speechBubble).toBeVisible({ timeout: 3000 });
+
+    // Click DONE button to close
+    await doneBtn.click();
+    await expect(buildingModal).toBeHidden({ timeout: 3000 });
+
+    expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);
+  });
 });

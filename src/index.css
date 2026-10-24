@@ -277,6 +277,23 @@ body {
   border-radius: 6px;
 }
 
+.building-modal--authentic.building-modal--authentic-replica,
+.building-modal--authentic:has([data-testid="authentic-monolith-burgers"]) {
+  left: calc(var(--board-x, calc(50% - 600px)) + (255px * var(--board-scale, 1)));
+  top: calc(var(--board-y, calc(50% - 400px)) + (165px * var(--board-scale, 1)));
+  width: calc(686.25px * var(--board-scale, 1));
+  height: calc(420px * var(--board-scale, 1));
+  max-width: calc(686.25px * var(--board-scale, 1));
+  max-height: calc(420px * var(--board-scale, 1));
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+}
+
 .building-modal__header {
   display: flex;
   align-items: center;
