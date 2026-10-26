@@ -205,4 +205,99 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
 
     expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);
   });
+
+  test('verifies Bank authentic window opens, displays talker, piggy bank, options, and can deposit/withdraw', async ({ page }) => {
+    const pageErrors: Error[] = [];
+    page.on('pageerror', (err) => {
+      pageErrors.push(err);
+    });
+
+    await page.addInitScript(() => {
+      localStorage.setItem('fastlane_gui_style', 'authentic');
+    });
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/');
+
+    const startGameBtn = page.locator('.title-screen__btn').first();
+    await expect(startGameBtn).toBeVisible({ timeout: 5000 });
+    await startGameBtn.click();
+
+    const startLifeBtn = page.locator('.action-panel__btn').filter({ hasText: /Start Life|התחל חיים/i }).first();
+    await expect(startLifeBtn).toBeVisible({ timeout: 5000 });
+    await startLifeBtn.click();
+
+    // Close initial apartment modal if opened
+    const initialModal = page.locator('.building-modal');
+    if (await initialModal.isVisible()) {
+      await page.locator('.building-modal__close').click();
+      await expect(initialModal).toBeHidden({ timeout: 3000 });
+    }
+
+    // Open Bank
+    await page.evaluate(() => {
+      (window as any).__openBuilding('bank');
+    });
+
+    const buildingModal = page.locator('.building-modal');
+    await expect(buildingModal).toBeVisible({ timeout: 5000 });
+    await expect(buildingModal).toHaveClass(/building-modal--authentic/);
+    await expect(buildingModal).toHaveClass(/building-modal--authentic-replica/);
+
+    // Verify authentic bank viewport container and layers
+    const authenticViewport = page.locator('[data-testid="authentic-bank"]');
+    await expect(authenticViewport).toBeVisible();
+
+    const talker = page.locator('[data-testid="bank-talker"]');
+    await expect(talker).toBeVisible();
+
+    const piggy = page.locator('[data-testid="bank-piggy"]');
+    await expect(piggy).toBeVisible();
+
+    // Verify all 5 menu options are visible
+    const depositOpt = page.locator('[data-testid="bank-option-deposit"]');
+    await expect(depositOpt).toBeVisible();
+    await expect(depositOpt).toContainText('Deposit');
+
+    const withdrawOpt = page.locator('[data-testid="bank-option-withdraw"]');
+    await expect(withdrawOpt).toBeVisible();
+
+    const loanPaymentOpt = page.locator('[data-testid="bank-option-loan_payment"]');
+    await expect(loanPaymentOpt).toBeVisible();
+
+    const applyLoanOpt = page.locator('[data-testid="bank-option-apply_loan"]');
+    await expect(applyLoanOpt).toBeVisible();
+
+    const seeBrokerOpt = page.locator('[data-testid="bank-option-see_broker"]');
+    await expect(seeBrokerOpt).toBeVisible();
+
+    const doneBtn = page.locator('[data-testid="btn-bank-done"]');
+    await expect(doneBtn).toBeVisible();
+
+    // Modern header and close button should NOT be present
+    await expect(page.locator('.building-modal__header')).toBeHidden();
+    await expect(page.locator('.building-modal__close')).toBeHidden();
+
+    // Screenshot of authentic Bank
+    await page.screenshot({ path: '/tmp/authentic_bank_verified.png' });
+
+    // Click Deposit
+    await depositOpt.click();
+
+    // Speech bubble appears with teller response
+    const speechBubble = page.locator('[data-testid="bank-speech-bubble"]');
+    await expect(speechBubble).toBeVisible({ timeout: 3000 });
+    await expect(speechBubble).toContainText('Thank you for depositing on us.');
+
+    // Click Withdraw
+    await withdrawOpt.click();
+    await expect(speechBubble).toBeVisible({ timeout: 3000 });
+    await expect(speechBubble).toContainText('penalty for early withdrawal');
+
+    // Click DONE button to close
+    await doneBtn.click();
+    await expect(buildingModal).toBeHidden({ timeout: 3000 });
+
+    expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);
+  });
 });

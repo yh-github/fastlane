@@ -278,7 +278,8 @@ body {
 }
 
 .building-modal--authentic.building-modal--authentic-replica,
-.building-modal--authentic:has([data-testid="authentic-monolith-burgers"]) {
+.building-modal--authentic:has([data-testid="authentic-monolith-burgers"]),
+.building-modal--authentic:has([data-testid="authentic-bank"]) {
   left: calc(var(--board-x, calc(50% - 600px)) + (255px * var(--board-scale, 1)));
   top: calc(var(--board-y, calc(50% - 400px)) + (165px * var(--board-scale, 1)));
   width: calc(686.25px * var(--board-scale, 1));

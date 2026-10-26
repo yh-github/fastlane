@@ -245,6 +245,43 @@ def test_authentic_monolith_burgers():
     assert d["notEnoughCash"] == "You do not have enough cash."
     print("  -> Monolith Burgers assets, talker cels, counter animations, buttons and dialogue verified 100.0% authentic.")
 
+def test_authentic_bank():
+    print("Testing Authentic Bank Assets (Room 204)...")
+    base = "public/assets/authentic/buildings/bank"
+    bg = Image.open(f"{base}/bg.png")
+    assert bg.size == (183, 112), f"bg.png size mismatch: {bg.size}"
+
+    # Floppy talker (6 cels)
+    for i in range(6):
+        t_im = Image.open(f"{base}/talker_floppy/talker_{i}.png")
+        assert t_im.size == (68, 55), f"talker_floppy/talker_{i}.png size mismatch: {t_im.size}"
+
+    # CD-ROM talker (11 cels)
+    for i in range(11):
+        t_im = Image.open(f"{base}/talker_cdrom/talker_{i}.png")
+        assert t_im.size == (68, 55), f"talker_cdrom/talker_{i}.png size mismatch: {t_im.size}"
+
+    # Desk piggy bank (5 cels)
+    for i in range(5):
+        p_im = Image.open(f"{base}/desk/piggy_{i}.png")
+        assert p_im.size == (68, 55), f"desk/piggy_{i}.png size mismatch: {p_im.size}"
+
+    # Buttons
+    work = Image.open(f"{base}/buttons/work.png")
+    done = Image.open(f"{base}/buttons/done.png")
+    assert work.size == (30, 7), f"buttons/work.png size mismatch: {work.size}"
+    assert done.size == (30, 7), f"buttons/done.png size mismatch: {done.size}"
+
+    # Dialogue JSON
+    with open(f"{base}/dialogue.json") as f:
+        d = json.load(f)
+    assert len(d["welcomeGreetings"]) == 10, f"Expected 10 greetings, got {len(d['welcomeGreetings'])}"
+    assert d["notEnoughCash"] == "You do not have enough cash."
+    assert d["depositThankYou"] == "Thank you for depositing on us."
+    assert d["withdrawPenalty"] == "There is always a penalty for early withdrawal."
+    assert d["loanPaymentThankYou"] == "Thank You for your payment."
+    print("  -> Bank assets, talker cels, desk piggy animations, buttons and dialogue verified 100.0% authentic.")
+
 if __name__ == "__main__":
     try:
         test_marbles()
@@ -253,6 +290,7 @@ if __name__ == "__main__":
         test_occluders_alignment()
         test_authentic_waypoints()
         test_authentic_monolith_burgers()
+        test_authentic_bank()
         print("ALL AUTHENTIC ASSET INTEGRITY TESTS PASSED SUCCESSFULLY!")
     except AssertionError as e:
         print(f"TEST FAILED: {e}", file=sys.stderr)

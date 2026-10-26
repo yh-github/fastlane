@@ -39,6 +39,13 @@ const mockCampaignFloppy: any = {
       archetype: 'bank',
       spritePath: 'images/bank.png',
       description: 'Bank'
+    },
+    {
+      id: 'pawn_shop',
+      name: "Curly's Pawn Shop",
+      archetype: 'pawnshop',
+      spritePath: 'images/pawn_shop.png',
+      description: 'Pawn shop'
     }
   ],
   items: [
@@ -335,7 +342,7 @@ describe('AuthenticMonolithBurgers Component', () => {
       <BuildingModal
         player={basePlayer}
         campaign={mockCampaignFloppy}
-        currentBuildingId="bank"
+        currentBuildingId="pawn_shop"
         turn={1}
         economicIndex={0}
         rules={authenticRules}
