@@ -16,6 +16,7 @@ import {
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
 import { PantryDetailsModal } from './buildings/home/PantryDetailsModal';
 import { AuthenticMonolithBurgers } from './buildings/authentic/AuthenticMonolithBurgers';
+import { AuthenticBank } from './buildings/authentic/AuthenticBank';
 import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 import { useDraggableModal } from './hooks/useDraggableModal';
@@ -211,7 +212,7 @@ export function BuildingModal({
 
   if (!player || !campaign || !currentBuildingId || !building) return null;
 
-  const isAuthenticReplica = rules?.guiStyle === 'authentic' && building.id === 'burger_palace';
+  const isAuthenticReplica = rules?.guiStyle === 'authentic' && (building.id === 'burger_palace' || (building.id === 'bank' && bankTab === 'banking'));
 
   // Check if the player's current job is at this building
   const playerJobHere = player.currentJobId 
@@ -583,6 +584,20 @@ export function BuildingModal({
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'bank' ? (
+        <AuthenticBank
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          turn={turn}
+          economicIndex={economicIndex}
+          rules={rules}
+          onSeeBroker={() => {
+            handleActionIntercept({ type: 'open_broker' });
+            setBankTab('stocks');
+          }}
         />
       ) : (
         <>
