@@ -1,0 +1,13 @@
+{
+  "welcomeGreetings": [
+    "Welcome to ACNE Employment. Why work for the best when you can work like the rest.",
+    "Welcome to ACNE Employment. We'll either find you a job, or we won't.",
+    "Welcome to ACNE Employment, where your skills and our expertise add up to disappointment!",
+    "Welcome to ACNE Employment, where every lost job is a blemish on your resume!",
+    "Welcome to ACNE Employment. We'll get you a job no matter what it costs you!"
+  ],
+  "congratsJob": "Congratulations.  You got the job.",
+  "congratsRaise": "Congratulations. You have been given a raise.",
+  "requestDenied": "Sorry. We cannot grant your request at this time.",
+  "closing": "Sorry. We're closing. You'll have to come back next week."
+}

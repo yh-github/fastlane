@@ -262,7 +262,8 @@ export function applyForJob(
 
   // Hiring threshold check for normal jobs
   const locMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
-  const isProbation = updated.turnFlags.firedLocationsThisTurn?.includes(job.locationId) ?? false;
+  const enableProbation = rules?.locationProbation ?? isAdvanced;
+  const isProbation = enableProbation && (updated.turnFlags.firedLocationsThisTurn?.includes(job.locationId) ?? false);
   
   // Calculate Employability Score (1–99%)
   let employability: number;

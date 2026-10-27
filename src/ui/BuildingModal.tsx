@@ -18,6 +18,16 @@ import { PantryDetailsModal } from './buildings/home/PantryDetailsModal';
 import { AuthenticMonolithBurgers } from './buildings/authentic/AuthenticMonolithBurgers';
 import { AuthenticBank } from './buildings/authentic/AuthenticBank';
 import { AuthenticBroker } from './buildings/authentic/AuthenticBroker';
+import { AuthenticBlacksMarket } from './buildings/authentic/AuthenticBlacksMarket';
+import { AuthenticQtClothing } from './buildings/authentic/AuthenticQtClothing';
+import { AuthenticSocketCity } from './buildings/authentic/AuthenticSocketCity';
+import { AuthenticZMart } from './buildings/authentic/AuthenticZMart';
+import { AuthenticPawnShop } from './buildings/authentic/AuthenticPawnShop';
+import { AuthenticUniversity } from './buildings/authentic/AuthenticUniversity';
+import { AuthenticEmploymentOffice } from './buildings/authentic/AuthenticEmploymentOffice';
+import { AuthenticFactory } from './buildings/authentic/AuthenticFactory';
+import { AuthenticRentOffice } from './buildings/authentic/AuthenticRentOffice';
+import { AuthenticHome } from './buildings/authentic/AuthenticHome';
 import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 import { useDraggableModal } from './hooks/useDraggableModal';
@@ -37,6 +47,22 @@ interface BuildingModalProps {
   onClose: () => void;
   isReentry?: boolean;
 }
+
+const AUTHENTIC_REPLICA_BUILDING_IDS = new Set([
+  'burger_palace',
+  'bank',
+  'blacks_market',
+  'qt_clothing',
+  'socket_city',
+  'z_mart',
+  'pawn_shop',
+  'university',
+  'employment_office',
+  'factory',
+  'apartment_complex',
+  'low_cost_housing',
+  'security_apartments',
+]);
 
 export function BuildingModal({
   player,
@@ -213,7 +239,7 @@ export function BuildingModal({
 
   if (!player || !campaign || !currentBuildingId || !building) return null;
 
-  const isAuthenticReplica = rules?.guiStyle === 'authentic' && (building.id === 'burger_palace' || (building.id === 'bank' && (bankTab === 'banking' || bankTab === 'stocks')));
+  const isAuthenticReplica = rules?.guiStyle === 'authentic' && (AUTHENTIC_REPLICA_BUILDING_IDS.has(building.id) || building.archetype === 'home');
 
   // Check if the player's current job is at this building
   const playerJobHere = player.currentJobId 
@@ -611,6 +637,91 @@ export function BuildingModal({
             handleActionIntercept({ type: 'open_broker' });
             setBankTab('stocks');
           }}
+        />
+      ) : isAuthenticReplica && building.id === 'blacks_market' ? (
+        <AuthenticBlacksMarket
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          economicIndex={economicIndex}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'qt_clothing' ? (
+        <AuthenticQtClothing
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          economicIndex={economicIndex}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'socket_city' ? (
+        <AuthenticSocketCity
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          economicIndex={economicIndex}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'z_mart' ? (
+        <AuthenticZMart
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          economicIndex={economicIndex}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'pawn_shop' ? (
+        <AuthenticPawnShop
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          economicIndex={economicIndex}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'university' ? (
+        <AuthenticUniversity
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          economicIndex={economicIndex}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'employment_office' ? (
+        <AuthenticEmploymentOffice
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'factory' ? (
+        <AuthenticFactory
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && building.id === 'apartment_complex' ? (
+        <AuthenticRentOffice
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          rules={rules}
+        />
+      ) : isAuthenticReplica && (building.id === 'low_cost_housing' || building.id === 'security_apartments' || building.archetype === 'home') ? (
+        <AuthenticHome
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
         />
       ) : (
         <>

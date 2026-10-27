@@ -16,6 +16,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   const isAdvanced = isAdvancedVersion(rules) || Boolean(rules?.usePhysicalMentalConditions);
+  const enableProbation = rules?.locationProbation ?? isAdvanced;
   const useConditions = Boolean(rules?.usePhysicalMentalConditions);
   const useSkills = Boolean(rules?.useSkills);
 
@@ -27,7 +28,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
       <div className="interaction-panel">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
           {locations.map(loc => {
-            const isFiredThisTurn = player.turnFlags?.firedLocationsThisTurn?.includes(loc);
+            const isFiredThisTurn = enableProbation && (player.turnFlags?.firedLocationsThisTurn?.includes(loc) ?? false);
             const locMistakes = player.mistakesByLocation?.[loc] || 0;
             const locInnovations = player.innovationsByLocation?.[loc] || 0;
 
@@ -85,7 +86,7 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
       return a.id.localeCompare(b.id);
     });
 
-  const isSelectedFired = player.turnFlags?.firedLocationsThisTurn?.includes(selectedLocation);
+  const isSelectedFired = enableProbation && (player.turnFlags?.firedLocationsThisTurn?.includes(selectedLocation) ?? false);
   const selectedLocMistakes = player.mistakesByLocation?.[selectedLocation] || 0;
   const selectedLocInnovations = player.innovationsByLocation?.[selectedLocation] || 0;
   const selectedLocInitiatives = player.initiativesByLocation?.[selectedLocation] || 0;

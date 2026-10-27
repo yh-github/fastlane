@@ -155,6 +155,7 @@
     "economicUpsideBonus": false,
     "dynamicSkillCaps": false,
     "wageScaledEmployability": false,
+    "locationProbation": false,
     "advancedStores": false,
     "showWindowPositionSize": false,
     "allowWindowMoveResize": false

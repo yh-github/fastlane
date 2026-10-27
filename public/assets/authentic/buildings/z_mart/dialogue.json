@@ -1,0 +1,34 @@
+{
+  "welcomeGreetings": [
+    "Welcome to Z-Mart. Home of low cost, low quality, and cheap help.",
+    "Welcome to Z-Mart, where low prices don't always mean low quality!",
+    "Welcome to Z-Mart. Our overhead is so low, the clerks are stoop- shouldered!",
+    "Welcome to Z-Mart. Our overhead is so low, we hire only midgets!",
+    "Welcome to Z-Mart. If we see a line with more than 50 people waiting, we'll open another!",
+    "Welcome to Z-Mart, where our everyday values are other stores' remainders!",
+    "Welcome to Z-Mart, where shoddy merchandise comes home to roost!",
+    "Welcome to Z-Mart, where yesterday's trash is today's bargain!",
+    "Welcome to Z-Mart. If you can't find it here, it must be worth having!",
+    "Welcome to Z-Mart, where Quality is something we often talk about!",
+    "Welcome to Z-Mart, where we've closed over 600 stores from coast- to-coast!"
+  ],
+  "clerkBanter": [
+    "Thank you for shopping at Z-Mart.",
+    "Have a very good day!",
+    "Have you checked out our red light specials?",
+    "Please visit us again soon.",
+    "Can I have a price check on register two please!",
+    "Come back again. We have new specials each week.",
+    "If you want cheap, we got it.",
+    "Save some for our next...customer.",
+    "Well, you get what you pay for!",
+    "Check out our new shipment of Taiwanese microwave cozies!",
+    "Don't forget to look in Aisle 14 for slightly irregular automotive parts!",
+    "Be sure to look for our service department...and if you find it, let us know!",
+    "Have you noticed our 83-piece steak knife set for only $4.95?",
+    "We're having a special on dented or scratched floppy disks...only $3.50 a box!",
+    "Take a look in Aisle 22 for half-price batteries. Sorry, demo models only!",
+    "If you don't see what you're looking for, look underneath something else!"
+  ],
+  "notEnoughCash": "You do not have enough cash."
+}

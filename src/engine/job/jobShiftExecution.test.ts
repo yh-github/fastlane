@@ -7,7 +7,7 @@ import type { PlayerState } from "../gameState";
 import type { JobDef } from "../dataLoader";
 import { TEST_ADVANCED_CAMPAIGN_CONFIG, TEST_BASE_GAME_RULES } from "../testFactories";
 const advStatRules = TEST_ADVANCED_CAMPAIGN_CONFIG.statRules;
-const advRules = { ...TEST_BASE_GAME_RULES, versionClass: 'advanced' as const, usePhysicalMentalConditions: true, useSkills: true, trackSocial: true };
+const advRules = { ...TEST_BASE_GAME_RULES, versionClass: 'advanced' as const, locationProbation: true, usePhysicalMentalConditions: true, useSkills: true, trackSocial: true };
 
 describe("Job Engine - workShift", () => {
   const burgerCook: JobDef = {
@@ -89,6 +89,10 @@ describe("Job Engine - workShift", () => {
       expect(result.success).toBe(false);
       expect(result.messages?.[0]?.key).toBe('action.job.fired');
       expect(result.updated.currentJobId).toBeNull();
+      expect(result.updated.turnFlags?.firedLocationsThisTurn ?? []).toEqual([]);
+
+      const resultProbation = workShift(player, salesManager, 6, { locationProbation: true });
+      expect(resultProbation.updated.turnFlags.firedLocationsThisTurn).toContain(salesManager.locationId);
     });
 
     it('warns the player if dependability is 3 to 5 points below requirement', () => {
@@ -112,7 +116,7 @@ describe("Job Engine - workShift", () => {
     });
 
     describe('Advanced Work Modes & Innovate Progression', () => {
-      const advRules = { ...TEST_BASE_GAME_RULES, versionClass: 'advanced' as const, usePhysicalMentalConditions: true, useSkills: true, trackSocial: true };
+      const advRules = { ...TEST_BASE_GAME_RULES, versionClass: 'advanced' as const, locationProbation: true, usePhysicalMentalConditions: true, useSkills: true, trackSocial: true };
 
       it('only work_work gains standard shift experience; face_time gives $0 wage, scaled dep, and smooth social chance', () => {
         const basePlayer = {
@@ -451,7 +455,7 @@ describe("Job Engine - workShift", () => {
         expect(result.updated.workMistakesThisTurn).toBe(3);
       });
 
-      it('halves employability score when applying to a location where player was fired this turn (Probation)', () => {
+      it('halves employability score when applying to a location where player was fired this turn (Probation enabled)', () => {
         const job: JobDef = {
           id: 'factory_worker',
           title: 'Factory Worker',
@@ -480,9 +484,43 @@ describe("Job Engine - workShift", () => {
           outDecisions: []
         };
 
-        const result = applyForJob(firedPlayer, job, 4, {}, undefined, new Random(1), undefined, 1, replay);
+        const result = applyForJob(firedPlayer, job, 4, {}, undefined, new Random(1), { locationProbation: true }, 1, replay);
         expect(result.success).toBe(false);
         expect(result.message.key).toBe('action.job.noOpeningsProbation');
+      });
+
+      it('does NOT apply probation penalty or halve score when locationProbation is false (Classic / QoL)', () => {
+        const job: JobDef = {
+          id: 'factory_worker',
+          title: 'Factory Worker',
+          locationId: 'factory',
+          baseWage: 8,
+          requirements: { experience: 10, dependability: 20, degrees: [], uniform: 'casual' },
+          perks: []
+        };
+
+        const firedPlayer = {
+          id: 'p_fired',
+          hoursRemaining: 10,
+          currentJobId: null,
+          currentWage: 0,
+          degrees: [],
+          dependability: 30,
+          experience: 30,
+          social: 10,
+          turnFlags: { firedLocationsThisTurn: ['factory'] },
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' }
+        } as unknown as PlayerState;
+
+        // Luck roll = 30 (passes normal employability ~50, would fail halved probation ~25)
+        const replay = {
+          inDecisions: [{ type: 'job_apply_luck', result: 30 }],
+          outDecisions: []
+        };
+
+        const result = applyForJob(firedPlayer, job, 4, {}, undefined, new Random(1), { locationProbation: false }, 1, replay);
+        expect(result.success).toBe(true);
+        expect(result.updated.currentJobId).toBe('factory_worker');
       });
 
       it('interview costs 1 Mental in Advanced mode and fails if mentally exhausted', () => {

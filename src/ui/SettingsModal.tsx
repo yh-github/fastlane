@@ -209,6 +209,19 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
     });
   };
 
+  const handleToggleLocationProbation = () => {
+    setGameState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        rules: {
+          ...prev.rules,
+          locationProbation: !prev.rules.locationProbation
+        }
+      };
+    });
+  };
+
   const handleTogglePixelatedSprites = () => {
     setGameState(prev => {
       if (!prev) return prev;
@@ -596,6 +609,26 @@ export function SettingsModal({ gameState, setGameState, campaign, replayData, o
                     </div>
                     <div className="settings-item-control">
                       <SettingSwitch checked={!!gameState.rules.wageScaledEmployability} ariaLabel={t('settings.wageScaledEmployability', { defaultValue: 'Wage-Scaled Employability' })} />
+                    </div>
+                  </div>
+                </div>
+
+                <div 
+                  className="interaction-item interaction-item--clickable settings-item"
+                  onClick={handleToggleLocationProbation}
+                  data-testid="setting-location-probation"
+                >
+                  <div className="settings-item-row">
+                    <div className="settings-item-info">
+                      <div className="settings-item-title">{t('settings.locationProbation', { defaultValue: 'Workplace Probation on Firing' })}</div>
+                      <div className="settings-item-desc">
+                        {gameState.rules.locationProbation
+                          ? t('settings.locationProbationOn', { defaultValue: 'Fired locations enter probation for the turn, halving hiring chances (ON)' })
+                          : t('settings.locationProbationOff', { defaultValue: 'No probation penalty upon being fired (OFF)' })}
+                      </div>
+                    </div>
+                    <div className="settings-item-control">
+                      <SettingSwitch checked={!!gameState.rules.locationProbation} ariaLabel={t('settings.locationProbation', { defaultValue: 'Workplace Probation on Firing' })} />
                     </div>
                   </div>
                 </div>

@@ -1,0 +1,39 @@
+/**
+ * rentOfficeData.ts
+ * Authentic data, dialogues, and layout coordinates for Rent Office (Room 201).
+ * Source: original_resources/floppy/script.201.txt, text.201, view.701, view.351, view.250.
+ */
+
+export const RENT_OFFICE_DIALOGUE = {
+  welcomeGreetings: [
+    "Welcome to the Rent Office. Don't snivel. Just pay your rent and leave.",
+    "Welcome to the Rent Office. The rent is high, but where else can you get so little for so much.",
+    "Welcome to the Rent Office. We don't charge any extra rent for the cockroaches.",
+    "Welcome to the Rental Office. No waterbeds, pets or velvet toreador paintings, please.",
+    "Welcome to the Rental Office. Where Sunday is Double Rent Increase Day!",
+    "Welcome to the Rental Office. Our closets are so roomy, you'll never want to come out!",
+    "Welcome to the Rental Office. Our security apartments feature 24-hour eunuch guards!",
+    "Welcome to the Rental Office. Come in and meet your slumlo...I mean, your landlord!"
+  ],
+  clerkBanter: [
+    "Just a few rules: no pets, no children, no smoking, no parties!",
+    "You'll love it! 24-hour security, spa, exercise room and free cable!",
+    "A wise choice. Our other building has just been condemned.",
+    "Oh, good! You'll fit right in...EVERYBODY there has an attitude!",
+    "We've just put in a sun deck for your slow-roasting pleasure!",
+    "Ah. Well, I expect you'll find the neighborhood quite challenging.",
+    "Oh. Well, hopefully you'll still be around at rent time.",
+    "Of course, that comes furnished with a disgusting old chair.",
+    "You'll be happy to know that we just put a fresh battery in the smoke detector.",
+    "Just remember, the cockroaches are more frightened of you than you are of them.",
+    "Thank you. See you soon.",
+    "Come back again soon.",
+    "I'm here for all of your renting needs.",
+    "Please tell all your rich friends about m... I mean us.",
+    "Thank You, but please don't call me at 4 in the morning again!"
+  ],
+  notEnoughCash: "You do not have enough cash.",
+  extensionYes: "Sure, you can pay your rent next week.",
+  extensionNo: "Sorry, your rent must be paid now.",
+  paidThankYou: "Thank you. See you soon."
+};

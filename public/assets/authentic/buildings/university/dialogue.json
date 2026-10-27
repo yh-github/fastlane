@@ -1,0 +1,32 @@
+{
+  "welcomeGreetings": [
+    "Welcome to Hi-Tech U. We will learn you for the future.",
+    "Welcome to Hi-Tech U. We'll learn you to talk English good!",
+    "Welcome to Hi-Tech U. Our Geology classes will put rocks in your head!",
+    "Welcome to Hi-Tech U, where you'll never be bored of education!",
+    "Welcome to Hi-Tech U. Enroll now for the third trimester!",
+    "Welcome to Hi-Tech U. All our professors have tweed jackets with elbow patches!",
+    "Welcome to Hi-Tech U. Our diplomas are genuine cheepskin!",
+    "Welcome to Hi-Tech U. Our alumni haven't complained yet!",
+    "Welcome to Hi-Tech U. Next semester is Double Credits Semester!",
+    "Welcome to Hi-Tech U. When it comes to education, we will NOT be undersold!",
+    "Welcome to Hi-Tech U. Already got your BA and MBA? We'll give you the third degree!"
+  ],
+  "clerkBanter": [
+    "Welcome to Hi-Tech U. No matriculating in the dormitories, please!",
+    "Welcome to Hi-Tech U. Enroll now for our fifth quarter!",
+    "Welcome to Hi-Tech U. You come in with a skull full of mush and you leave thinking like a shyster.",
+    "Welcome to Hi-Tech U. Draw Kenny and YOU could win an art scholarship!",
+    "Welcome to Hi-Tech U. Check out our Job Displacement Service!",
+    "Welcome to Hi-Tech U. Need financial assistance? What do we look like, a bank?",
+    "Welcome to Hi-Tech U, where one good term deserves another!",
+    "Welcome to Hi-Tech U. The CIA recruitment center's right here on campus!",
+    "Welcome to Hi-Tech U. Meet Ed Fiz, our Phys Ed instructor!",
+    "Welcome to Hi-Tech U. CPA degrees or 65% x 1.2146/5ths of your money back!",
+    "Welcome to Hi-Tech U. Where our campus ROTC stands for Really Obnoxious Teenage Civilians!",
+    "No time is left to go to class.",
+    "You need to enroll in a class first.",
+    "%d"
+  ],
+  "notEnoughCash": "You do not have enough cash."
+}
