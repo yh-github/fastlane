@@ -1,0 +1,9 @@
+{
+  "notEnoughCash": "You do not have enough cash.",
+  "marketValueHeader": "Market\nValue",
+  "yourHoldingsHeader": "Your\nHoldings",
+  "tBillFee": "A  Broker's fee is deducted for the sale of each T-Bill.",
+  "noShares": "You do not own any shares.",
+  "boughtShare": "You bought 1 share of %s.",
+  "soldShare": "You sold 1 share of %s."
+}

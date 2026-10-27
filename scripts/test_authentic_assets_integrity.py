@@ -225,6 +225,9 @@ def test_authentic_monolith_burgers():
     for f in foods:
         f_im = Image.open(f"{base}/counter/{f}.png")
         assert f_im.size == (68, 55), f"counter/{f}.png size mismatch: {f_im.size}"
+        # Verify clean transparency (corners must be transparent, not solid box)
+        assert f_im.getpixel((0, 0))[3] == 0, f"counter/{f}.png must have transparent top-left corner"
+        assert f_im.getpixel((67, 0))[3] == 0, f"counter/{f}.png must have transparent top-right corner"
 
     # Buttons
     work = Image.open(f"{base}/buttons/work.png")
@@ -282,6 +285,32 @@ def test_authentic_bank():
     assert d["loanPaymentThankYou"] == "Thank You for your payment."
     print("  -> Bank assets, talker cels, desk piggy animations, buttons and dialogue verified 100.0% authentic.")
 
+def test_authentic_broker():
+    print("Testing Authentic Stock Broker Assets (Room 213)...")
+    base = "public/assets/authentic/buildings/broker"
+    bg = Image.open(f"{base}/bg.png")
+    assert bg.size == (183, 112), f"bg.png size mismatch: {bg.size}"
+
+    # 6 Stock banners
+    stocks = ["tbills", "gold", "silver", "pork_bellies", "blue_chip", "penny_stocks"]
+    for s in stocks:
+        s_im = Image.open(f"{base}/items/{s}.png")
+        assert s_im.size == (97, 9), f"items/{s}.png size mismatch: {s_im.size}"
+        assert s_im.getpixel((0, 0))[3] == 0, f"items/{s}.png corner must be transparent"
+
+    # Buttons
+    for btn in ["buy", "sell", "done"]:
+        b_im = Image.open(f"{base}/buttons/{btn}.png")
+        assert b_im.size == (30, 7), f"buttons/{btn}.png size mismatch: {b_im.size}"
+
+    # Dialogue
+    with open(f"{base}/dialogue.json") as f:
+        d = json.load(f)
+    assert d["notEnoughCash"] == "You do not have enough cash."
+    assert d["noShares"] == "You do not own any shares."
+    assert "tBillFee" in d
+    print("  -> Stock Broker assets, banners, buttons and dialogue verified 100.0% authentic.")
+
 if __name__ == "__main__":
     try:
         test_marbles()
@@ -291,6 +320,7 @@ if __name__ == "__main__":
         test_authentic_waypoints()
         test_authentic_monolith_burgers()
         test_authentic_bank()
+        test_authentic_broker()
         print("ALL AUTHENTIC ASSET INTEGRITY TESTS PASSED SUCCESSFULLY!")
     except AssertionError as e:
         print(f"TEST FAILED: {e}", file=sys.stderr)

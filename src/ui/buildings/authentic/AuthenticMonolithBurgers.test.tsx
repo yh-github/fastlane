@@ -184,7 +184,7 @@ describe('AuthenticMonolithBurgers Component', () => {
     expect(colaItem.textContent).toContain('Colas.............. $ 69');
   });
 
-  it('dispatches buy action and animates counter handoff when clicking an affordable item', () => {
+  it('dispatches buy action and locks the food item window to the bought item', () => {
     const onAction = vi.fn();
     render(
       <AuthenticMonolithBurgers
@@ -198,13 +198,42 @@ describe('AuthenticMonolithBurgers Component', () => {
     fireEvent.click(screen.getByTestId('menu-item-hamburger'));
     expect(onAction).toHaveBeenCalledWith({ type: 'buy', itemId: 'hamburger' });
 
-    // Counter animates handoff
+    const counter = screen.getByTestId('monolith-counter');
+    expect(counter.querySelector('img')?.getAttribute('src')).toContain('food_hamburger.png');
+
+    // Speech bubble has tail pointing right
+    expect(screen.getByTestId('speech-tail-right')).toBeInTheDocument();
+
+    // After 3200ms, unlock and resume cycling
     act(() => {
-      vi.advanceTimersByTime(350);
+      vi.advanceTimersByTime(3200);
     });
+  });
+
+  it('cycles food items in the little window when idle', () => {
+    render(
+      <AuthenticMonolithBurgers
+        player={basePlayer}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+        campaign={mockCampaignFloppy}
+      />
+    );
 
     const counter = screen.getByTestId('monolith-counter');
     expect(counter.querySelector('img')?.getAttribute('src')).toContain('food_hamburger.png');
+
+    // Advance 1200ms -> cycles to cheeseburger
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+    expect(counter.querySelector('img')?.getAttribute('src')).toContain('food_cheeseburger.png');
+
+    // Advance 1200ms -> cycles to astro chicken
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+    expect(counter.querySelector('img')?.getAttribute('src')).toContain('food_chicken.png');
   });
 
   it('prevents purchase and displays not enough cash dialogue when player is broke', () => {

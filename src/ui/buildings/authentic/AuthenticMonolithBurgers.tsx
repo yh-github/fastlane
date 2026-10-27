@@ -39,15 +39,15 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
 
   const [activeSpeech, setActiveSpeech] = useState<string>('');
   const [talkerCel, setTalkerCel] = useState<number>(0);
-  const [counterState, setCounterState] = useState<{ mode: 'idle' | 'handoff' | 'food'; file?: string; cel?: number }>({
-    mode: 'idle'
-  });
+  const [cyclingCel, setCyclingCel] = useState<number>(0);
+  const [lockedCel, setLockedCel] = useState<number | null>(null);
   const [isPunchingCard, setIsPunchingCard] = useState<boolean>(false);
   const [punchCel, setPunchCel] = useState<number>(0);
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
 
   const speechTimerRef = useRef<NodeJS.Timeout | null>(null);
   const talkerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
   const animTimersRef = useRef<NodeJS.Timeout[]>([]);
 
   const addAnimTimer = (fn: () => void, ms: number) => {
@@ -55,6 +55,18 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
     animTimersRef.current.push(t);
     return t;
   };
+
+  // Food item display cycling (view.710 loop 1, cels 0..5): cycles when not locked
+  useEffect(() => {
+    if (lockedCel !== null) return;
+    const interval = setInterval(() => {
+      setCyclingCel(prev => (prev + 1) % MONOLITH_MENU_ITEMS.length);
+    }, 1200);
+    return () => clearInterval(interval);
+  }, [lockedCel]);
+
+  const activeCel = lockedCel !== null ? lockedCel : cyclingCel;
+  const activeFoodFile = MONOLITH_MENU_ITEMS[activeCel]?.foodFile ?? 'food_hamburger.png';
 
   // Speak dialogue and animate mouth
   const triggerSpeech = (text: string, durationMs: number = 3200) => {
@@ -119,11 +131,12 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
     // Dispatch buy action
     onAction({ type: 'buy', itemId: mItem.id });
 
-    // Animate clerk handing off food
-    setCounterState({ mode: 'handoff', cel: 0 });
-    addAnimTimer(() => setCounterState({ mode: 'handoff', cel: 1 }), 100);
-    addAnimTimer(() => setCounterState({ mode: 'handoff', cel: 2 }), 200);
-    addAnimTimer(() => setCounterState({ mode: 'food', file: mItem.foodFile }), 300);
+    // Lock food item window display to this bought item for 3200ms
+    setLockedCel(mItem.celNum);
+    if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
+    lockTimerRef.current = setTimeout(() => {
+      setLockedCel(null);
+    }, 3200);
 
     // Pick random banter
     const banter = MONOLITH_BANTER[Math.floor(Math.random() * MONOLITH_BANTER.length)];
@@ -242,27 +255,11 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
             pointerEvents: 'none',
           }}
         >
-          {counterState.mode === 'idle' && (
-            <img
-              src={`${basePath}/counter/idle_0.png`}
-              alt="Counter"
-              style={{ width: '68px', height: '55px', imageRendering: 'pixelated' }}
-            />
-          )}
-          {counterState.mode === 'handoff' && (
-            <img
-              src={`${basePath}/counter/handoff_${counterState.cel ?? 0}.png`}
-              alt="Counter Handoff"
-              style={{ width: '68px', height: '55px', imageRendering: 'pixelated' }}
-            />
-          )}
-          {counterState.mode === 'food' && counterState.file && (
-            <img
-              src={`${basePath}/counter/${counterState.file}`}
-              alt="Food Tray"
-              style={{ width: '68px', height: '55px', imageRendering: 'pixelated' }}
-            />
-          )}
+          <img
+            src={`${basePath}/counter/${activeFoodFile}`}
+            alt="Food Window"
+            style={{ width: '68px', height: '55px', imageRendering: 'pixelated' }}
+          />
         </div>
 
         {/* Layer 4: Interactive Menu Board Items */}
@@ -387,6 +384,34 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
               wordBreak: 'break-word',
             }}
           >
+            {/* Speech bubble tail pointing towards cashier face on the right */}
+            <div
+              data-testid="speech-tail-right"
+              style={{
+                position: 'absolute',
+                right: '-7px',
+                top: '12px',
+                width: 0,
+                height: 0,
+                borderTop: '3.5px solid transparent',
+                borderBottom: '3.5px solid transparent',
+                borderLeft: '7px solid #000000',
+                pointerEvents: 'none',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  right: '1.5px',
+                  top: '-2.5px',
+                  width: 0,
+                  height: 0,
+                  borderTop: '2.5px solid transparent',
+                  borderBottom: '2.5px solid transparent',
+                  borderLeft: '5.5px solid #ffffea',
+                }}
+              />
+            </div>
             {activeSpeech}
           </div>
         )}

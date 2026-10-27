@@ -177,6 +177,7 @@ describe('AuthenticBank Component', () => {
 
     const bubble = screen.getByTestId('bank-speech-bubble');
     expect(bubble).toHaveTextContent('Thank you for depositing on us.');
+    expect(screen.getByTestId('speech-tail-left')).toBeInTheDocument();
 
     // Advances piggy animation
     act(() => {

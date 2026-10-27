@@ -195,9 +195,10 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
     // Click to buy a hamburger
     await hamburger.click();
 
-    // Speech bubble appears with cashier response
+    // Speech bubble appears with cashier response and tail pointing right
     const speechBubble = page.locator('[data-testid="monolith-speech-bubble"]');
     await expect(speechBubble).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('[data-testid="speech-tail-right"]')).toBeVisible();
 
     // Click DONE button to close
     await doneBtn.click();
@@ -284,17 +285,42 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
     // Click Deposit
     await depositOpt.click();
 
-    // Speech bubble appears with teller response
+    // Speech bubble appears with teller response and tail pointing left
     const speechBubble = page.locator('[data-testid="bank-speech-bubble"]');
     await expect(speechBubble).toBeVisible({ timeout: 3000 });
     await expect(speechBubble).toContainText('Thank you for depositing on us.');
+    await expect(page.locator('[data-testid="speech-tail-left"]')).toBeVisible();
 
     // Click Withdraw
     await withdrawOpt.click();
     await expect(speechBubble).toBeVisible({ timeout: 3000 });
     await expect(speechBubble).toContainText('penalty for early withdrawal');
 
-    // Click DONE button to close
+    // Click "See The Broker" to transition to Authentic Broker window
+    await seeBrokerOpt.click();
+
+    const brokerViewport = page.locator('[data-testid="authentic-broker"]');
+    await expect(brokerViewport).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('[data-testid="broker-row-tbills"]')).toBeVisible();
+    await expect(page.locator('[data-testid="broker-row-gold"]')).toBeVisible();
+
+    // Screenshot of authentic Broker
+    await page.screenshot({ path: '/tmp/authentic_broker_verified.png' });
+
+    // Click BUY button in Broker to buy 1 share of T-Bills
+    const brokerBuyBtn = page.locator('[data-testid="btn-broker-buy"]');
+    await brokerBuyBtn.click();
+
+    const brokerSpeech = page.locator('[data-testid="broker-speech-bubble"]');
+    await expect(brokerSpeech).toBeVisible({ timeout: 3000 });
+    await expect(brokerSpeech).toContainText('You bought 1 share');
+
+    // Click DONE button in Broker to return to Bank
+    const brokerDoneBtn = page.locator('[data-testid="btn-broker-done"]');
+    await brokerDoneBtn.click();
+    await expect(authenticViewport).toBeVisible({ timeout: 3000 });
+
+    // Click DONE button to close bank
     await doneBtn.click();
     await expect(buildingModal).toBeHidden({ timeout: 3000 });
 

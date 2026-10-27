@@ -509,6 +509,34 @@ export const AuthenticBank: React.FC<AuthenticBankProps> = ({
               wordBreak: 'break-word',
             }}
           >
+            {/* Speech bubble tail pointing towards teller face on the left */}
+            <div
+              data-testid="speech-tail-left"
+              style={{
+                position: 'absolute',
+                left: '-7px',
+                top: '12px',
+                width: 0,
+                height: 0,
+                borderTop: '3.5px solid transparent',
+                borderBottom: '3.5px solid transparent',
+                borderRight: '7px solid #000000',
+                pointerEvents: 'none',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '1.5px',
+                  top: '-2.5px',
+                  width: 0,
+                  height: 0,
+                  borderTop: '2.5px solid transparent',
+                  borderBottom: '2.5px solid transparent',
+                  borderRight: '5.5px solid #ffffea',
+                }}
+              />
+            </div>
             {loanOffer ? (
               <div>
                 <div style={{ marginBottom: '3px' }}>
