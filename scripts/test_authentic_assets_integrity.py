@@ -8,6 +8,7 @@ Automated validation of authentic Sierra VGA resources:
 """
 
 import sys
+import os
 import json
 from PIL import Image
 
@@ -311,6 +312,41 @@ def test_authentic_broker():
     assert "tBillFee" in d
     print("  -> Stock Broker assets, banners, buttons and dialogue verified 100.0% authentic.")
 
+def test_all_remaining_authentic_buildings():
+    print("Testing All Remaining Authentic Buildings (All Locations)...")
+    buildings_with_talker = [
+        "blacks_market", "employment_office", "factory",
+        "pawn_shop", "qt_clothing", "rent_office",
+        "socket_city", "university", "z_mart"
+    ]
+    for b in buildings_with_talker:
+        base = f"public/assets/authentic/buildings/{b}"
+        bg = Image.open(f"{base}/bg.png")
+        assert bg.size == (183, 112), f"{b} bg size mismatch: {bg.size}"
+        
+        # Check talkers
+        for c in range(6):
+            t_im = Image.open(f"{base}/talker_floppy/talker_{c}.png")
+            assert t_im.size[0] > 0 and t_im.size[1] > 0, f"{b} floppy talker talker_{c} invalid size"
+        for c in range(11):
+            t_im = Image.open(f"{base}/talker_cdrom/talker_{c}.png")
+            assert t_im.size[0] > 0 and t_im.size[1] > 0, f"{b} cdrom talker talker_{c} invalid size"
+            
+        with open(f"{base}/dialogue.json") as f:
+            d = json.load(f)
+            assert len(d) > 0, f"{b} dialogue.json is empty"
+            
+    # Home
+    home_base = "public/assets/authentic/buildings/home"
+    bg_low = Image.open(f"{home_base}/bg_low_cost.png")
+    assert bg_low.size == (183, 112), f"home bg_low_cost size mismatch: {bg_low.size}"
+    bg_sec = Image.open(f"{home_base}/bg_security.png")
+    assert bg_sec.size == (183, 112), f"home bg_security size mismatch: {bg_sec.size}"
+    assert os.path.exists(f"{home_base}/buttons/done.png"), "home done.png missing"
+    assert os.path.exists(f"{home_base}/buttons/relax.png"), "home relax.png missing"
+
+    print("  -> All 10 remaining authentic building locations verified 100.0% authentic.")
+
 if __name__ == "__main__":
     try:
         test_marbles()
@@ -321,6 +357,7 @@ if __name__ == "__main__":
         test_authentic_monolith_burgers()
         test_authentic_bank()
         test_authentic_broker()
+        test_all_remaining_authentic_buildings()
         print("ALL AUTHENTIC ASSET INTEGRITY TESTS PASSED SUCCESSFULLY!")
     except AssertionError as e:
         print(f"TEST FAILED: {e}", file=sys.stderr)

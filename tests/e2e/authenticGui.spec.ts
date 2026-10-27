@@ -326,4 +326,68 @@ test.describe('Authentic GUI Visual & Geometry E2E Tests', () => {
 
     expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);
   });
+
+  test('verifies all remaining authentic location windows open, display authentic talkers and backdrops, and close cleanly', async ({ page }) => {
+    const pageErrors: Error[] = [];
+    page.on('pageerror', (err) => {
+      pageErrors.push(err);
+    });
+
+    await page.addInitScript(() => {
+      localStorage.setItem('fastlane_gui_style', 'authentic');
+    });
+
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/');
+
+    const startGameBtn = page.locator('.title-screen__btn').first();
+    await expect(startGameBtn).toBeVisible({ timeout: 5000 });
+    await startGameBtn.click();
+
+    const startLifeBtn = page.locator('.action-panel__btn').filter({ hasText: /Start Life|התחל חיים/i }).first();
+    await expect(startLifeBtn).toBeVisible({ timeout: 5000 });
+    await startLifeBtn.click();
+
+    // Close initial apartment modal if opened
+    const initialHomeDone = page.locator('[data-testid="btn-home-done"], .building-modal__close').first();
+    if (await initialHomeDone.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await initialHomeDone.click();
+      await expect(page.locator('.building-modal')).toBeHidden({ timeout: 3000 });
+    }
+
+    const testBuildings = [
+      { id: 'blacks_market', testId: 'authentic-blacks-market', doneBtnTestId: 'btn-blacks-market-done' },
+      { id: 'qt_clothing', testId: 'authentic-qt-clothing', doneBtnTestId: 'btn-qt-clothing-done' },
+      { id: 'socket_city', testId: 'authentic-socket-city', doneBtnTestId: 'btn-socket-city-done' },
+      { id: 'z_mart', testId: 'authentic-z-mart', doneBtnTestId: 'btn-z-mart-done' },
+      { id: 'pawn_shop', testId: 'authentic-pawn-shop', doneBtnTestId: 'btn-pawn-done' },
+      { id: 'university', testId: 'authentic-university', doneBtnTestId: 'btn-university-done' },
+      { id: 'employment_office', testId: 'authentic-employment-office', doneBtnTestId: 'btn-employment-done' },
+      { id: 'factory', testId: 'authentic-factory', doneBtnTestId: 'btn-factory-done' },
+      { id: 'apartment_complex', testId: 'authentic-rent-office', doneBtnTestId: 'btn-rent-office-done' },
+      { id: 'low_cost_housing', testId: 'authentic-home', doneBtnTestId: 'btn-home-done' }
+    ];
+
+    for (const b of testBuildings) {
+      await page.evaluate((buildingId) => {
+        if ((window as any).__openBuilding) {
+          (window as any).__openBuilding(buildingId);
+        }
+      }, b.id);
+
+      const modal = page.locator('.building-modal');
+      await expect(modal).toBeVisible({ timeout: 3000 });
+
+      const authenticComp = page.locator(`[data-testid="${b.testId}"]`);
+      await expect(authenticComp).toBeVisible({ timeout: 3000 });
+
+      // Click done button
+      const doneBtn = page.locator(`[data-testid="${b.doneBtnTestId}"]`);
+      await expect(doneBtn).toBeVisible();
+      await doneBtn.click();
+      await expect(modal).toBeHidden({ timeout: 3000 });
+    }
+
+    expect(pageErrors, `Uncaught page errors: ${pageErrors.map(e => e.message).join('; ')}`).toHaveLength(0);
+  });
 });

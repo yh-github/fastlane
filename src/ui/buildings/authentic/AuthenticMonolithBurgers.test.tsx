@@ -46,6 +46,13 @@ const mockCampaignFloppy: any = {
       archetype: 'pawnshop',
       spritePath: 'images/pawn_shop.png',
       description: 'Pawn shop'
+    },
+    {
+      id: 'custom_building',
+      name: 'Custom Venue',
+      archetype: 'custom',
+      spritePath: 'images/custom.png',
+      description: 'Custom'
     }
   ],
   items: [
@@ -366,12 +373,12 @@ describe('AuthenticMonolithBurgers Component', () => {
     expect(screen.getByTestId('authentic-monolith-burgers')).toBeInTheDocument();
   });
 
-  it('renders standard BuildingModal for other buildings even when guiStyle is authentic', () => {
+  it('renders standard BuildingModal for non-replica custom buildings even when guiStyle is authentic', () => {
     const { container } = render(
       <BuildingModal
         player={basePlayer}
         campaign={mockCampaignFloppy}
-        currentBuildingId="pawn_shop"
+        currentBuildingId="custom_building"
         turn={1}
         economicIndex={0}
         rules={authenticRules}

@@ -13,6 +13,7 @@ describe('Authentic GUI Asset Integrity & Alignment Tests', () => {
     expect(result).toContain('Roof patch verified: 95.1% match at y=139');
     expect(result).toContain('All 3 rooftop occluders match background 100.0% pixel-perfect');
     expect(result).toContain('All 170 waypoints and 13 building sidewalk destinations verified 100.0% authentic');
+    expect(result).toContain('All 10 remaining authentic building locations verified 100.0% authentic.');
   });
 
   it('validates occluders JSON and binary existence', () => {

@@ -68,6 +68,7 @@ export function workShiftBase(
   const effectiveDep = player.dependability;
   const fireBuffer = 5;
   if (effectiveDep <= job.requirements.dependability - fireBuffer) {
+    const enableProbation = rules?.locationProbation ?? isAdvancedVersion(rules);
     let updated: PlayerState = {
       ...player,
       currentJobId: null,
@@ -79,7 +80,9 @@ export function workShiftBase(
       xpMaxBonus: 0,
       turnFlags: {
         ...player.turnFlags,
-        firedLocationsThisTurn: Array.from(new Set([...(player.turnFlags.firedLocationsThisTurn || []), job.locationId]))
+        ...(enableProbation ? {
+          firedLocationsThisTurn: Array.from(new Set([...(player.turnFlags.firedLocationsThisTurn || []), job.locationId]))
+        } : {})
       }
     };
     updated = applyHappinessChange(updated, -7, 'fired', rules as GameRules, statRules);
@@ -196,7 +199,9 @@ export function workShift(
       xpMaxBonus: 0,
       turnFlags: {
         ...player.turnFlags,
-        firedLocationsThisTurn: Array.from(new Set([...(player.turnFlags.firedLocationsThisTurn || []), job.locationId]))
+        ...((rules?.locationProbation ?? isAdvanced) ? {
+          firedLocationsThisTurn: Array.from(new Set([...(player.turnFlags.firedLocationsThisTurn || []), job.locationId]))
+        } : {})
       }
     };
     updated = applyHappinessChange(updated, -7, 'fired', rules as GameRules, statRules);
@@ -527,7 +532,9 @@ export function workShift(
       updated = applyHappinessChange(updated, -7, 'fired', rules as GameRules, statRules);
       updated.turnFlags = {
         ...updated.turnFlags,
-        firedLocationsThisTurn: Array.from(new Set([...(updated.turnFlags.firedLocationsThisTurn || []), job.locationId]))
+        ...((rules?.locationProbation ?? isAdvanced) ? {
+          firedLocationsThisTurn: Array.from(new Set([...(updated.turnFlags.firedLocationsThisTurn || []), job.locationId]))
+        } : {})
       };
       messages.push({ key: 'action.job.firedMistakes', params: { title: job.title, count: currentTurnMistakes } });
     }

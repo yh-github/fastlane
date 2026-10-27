@@ -237,6 +237,8 @@ graph TD
 | `trackMess` | Enables domestic apartment mess tracking and cleaning | `false` | `false` | `false` | **`true`** |
 | `trackSocial` | Tracks Social standing stat (1–99) | `false` | `false` | `false` | **`true`** |
 | `spaceCapping` | Limits inventory durables and mess by housing space capacity | `false` | `false` | `false` | **`true`** |
+| `wageScaledEmployability` | Scales job hiring probability with wage competition & qualification margins | `false` | `false` | `false` | **`true`** |
+| `locationProbation` | Being fired places workplace location on probation for the turn (halving hiring odds) | `false` | `false` | `false` | **`true`** |
 | `advancedMaintenance` | Appliances break and require repair rather than auto-fixing | `false` | `false` | `false` | **`true`** |
 | `alternativeWeekends` | Presents card-based weekend choices rather than automated rolls | `false` | `false` | `false` | **`true`** |
 | `showJobTags` | Displays career archetype tags in Employment Office | `false` | `false` | `false` | **`true`** |

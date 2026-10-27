@@ -348,6 +348,13 @@ export interface GameRules {
   wageScaledEmployability: boolean;
 
   /**
+   * ADVANCED: If true, being fired from a workplace places that location on probation for the remainder of the turn,
+   * halving employability odds and preventing immediate re-hiring.
+   * Classic Floppy/CD-ROM: false. QoL Improved: false. Advanced: true.
+   */
+  locationProbation: boolean;
+
+  /**
    * ADVANCED: Consolidates grocery items into a single bulk-order grocery selection (1-12 weeks) and enables ticket multi-buy.
    */
   advancedStores: boolean;
@@ -661,6 +668,7 @@ export const GAME_RULE_KEYS: readonly (keyof GameRules)[] = [
   'economicUpsideBonus',
   'dynamicSkillCaps',
   'wageScaledEmployability',
+  'locationProbation',
   'advancedStores',
   'showWindowPositionSize',
   'allowWindowMoveResize',
@@ -853,6 +861,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   advancedStores: 'Consolidates grocery inventory into a single bulk item (1-12 weeks) and enables ticket multi-buy',
   dynamicSkillCaps: 'Skill caps scale dynamically with completed degrees instead of a flat 10 cap',
   wageScaledEmployability: 'Hiring chances scale dynamically with normalized wage competition, qualification margin, and domain skills',
+  locationProbation: 'Workplace locations place players on probation for the turn upon termination, halving hiring chances',
   showWindowPositionSize: 'Shows coordinate, dimension, and margin tools on building location windows',
   allowWindowMoveResize: 'Allows dragging window headers to move and corner handles to resize location windows',
   economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',

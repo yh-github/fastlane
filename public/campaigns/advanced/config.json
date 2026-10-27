@@ -66,6 +66,7 @@
     "economicUpsideBonus": true,
     "dynamicSkillCaps": true,
     "wageScaledEmployability": true,
+    "locationProbation": true,
     "advancedStores": true
   },
   "statRules": {
