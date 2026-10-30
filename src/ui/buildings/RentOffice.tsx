@@ -14,8 +14,8 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const [confirmMove, setConfirmMove] = useState<{housingId: string, baseCost: number, movingFee: number, totalCost: number, newAptName: string} | null>(null);
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
 
+  const isDebt = (player.rentDebt || 0) > 0;
   const rentDue = player.rentPaidUntilWeek <= turn;
-  const rentOwed = player.rentDebt > 0 ? player.rentDebt : (rentDue ? player.currentRentPrice : 0);
   const isOpen = isRentOfficeOpen(player, turn, campaign, rules);
   const nextOpenWeek = getNextRentOfficeOpenWeek(player, turn);
 
@@ -58,19 +58,35 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <h4 style={{ margin: 0, color: 'var(--accent-cyan)', fontSize: '0.95em' }}>Lease & Payments</h4>
             
-            {rentOwed > 0 && (
+            {isDebt ? (
               <div style={{ padding: '10px', backgroundColor: '#e74c3c', borderRadius: '6px' }}>
-                <strong>{t('rentOffice.rentDue', { amount: rentOwed })}</strong>
-                <br/>
+                <strong style={{ color: '#fff' }}>{t('rentOffice.debtDue', { amount: player.rentDebt, defaultValue: `Garnishment Balance: $${player.rentDebt}` })}</strong>
+                <p style={{ fontSize: '11px', margin: '4px 0 8px 0', color: '#ffdddd' }}>
+                  {t('rentOffice.debtWarning', { defaultValue: 'Your wages are being garnished until this balance is paid.' })}
+                </p>
                 <button 
                   data-testid="btn-pay-rent"
-                  onClick={() => onAction({ type: 'rent_transaction', amount: rentOwed })}
-                  style={{ marginTop: '10px', backgroundColor: '#c0392b' }}
+                  onClick={() => onAction({ type: 'rent_transaction', amount: player.rentDebt })}
+                  style={{ marginTop: '4px', backgroundColor: '#c0392b', width: '100%', fontWeight: 'bold' }}
                 >
-                  {t('rentOffice.payRentDebt')}
+                  {t('rentOffice.payDebtAmount', { amount: player.rentDebt, defaultValue: `Pay Garnishment Balance ($${player.rentDebt})` })}
                 </button>
               </div>
-            )}
+            ) : rentDue ? (
+              <div style={{ padding: '10px', backgroundColor: 'rgba(56, 189, 248, 0.15)', border: '1px solid #38bdf8', borderRadius: '6px' }}>
+                <strong style={{ color: '#38bdf8' }}>{t('rentOffice.rentDue', { amount: player.currentRentPrice, defaultValue: `Rent Due: $${player.currentRentPrice}` })}</strong>
+                <p style={{ fontSize: '11px', margin: '4px 0 8px 0', color: '#ccc' }}>
+                  {t('rentOffice.dueExplanation', { defaultValue: 'Rent is due for the upcoming month (4 weeks).' })}
+                </p>
+                <button 
+                  data-testid="btn-pay-rent"
+                  onClick={() => onAction({ type: 'rent_transaction', amount: player.currentRentPrice })}
+                  style={{ marginTop: '4px', backgroundColor: '#0284c7', width: '100%', fontWeight: 'bold' }}
+                >
+                  {t('rentOffice.payRentAmount', { amount: player.currentRentPrice, defaultValue: `Pay Rent ($${player.currentRentPrice})` })}
+                </button>
+              </div>
+            ) : null}
 
             {currentHousing && (
               <div style={{ padding: '10px', border: '1px solid #4aa', borderRadius: '6px', background: 'rgba(0,0,0,0.2)' }}>
