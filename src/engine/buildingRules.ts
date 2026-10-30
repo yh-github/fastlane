@@ -97,9 +97,9 @@ export function playerLivesAt(
 export function canEnterBuilding(
   buildingId: string,
   player: PlayerState,
-  turn: number,
+  _turn?: number,
   campaign?: CampaignBundle | null,
-  rules?: GameRules
+  _rules?: GameRules
 ): BuildingEntryCheck {
   const building = campaign?.buildings?.find(b => b.id === buildingId);
   const archetype = building?.archetype;
@@ -117,17 +117,6 @@ export function canEnterBuilding(
   if (archetype === 'home' || buildingId === 'low_cost_housing' || buildingId === 'security_apartments') {
     if (!playerLivesAt(player, buildingId, campaign)) {
       return { canEnter: false, reason: 'dont_live_here' };
-    }
-  }
-
-  // Rent Office: can only enter if open
-  if (archetype === 'housing' || buildingId === 'apartment_complex') {
-    if (!isRentOfficeOpen(player, turn, campaign, rules)) {
-      return {
-        canEnter: false,
-        reason: 'rent_office_closed',
-        nextOpenWeek: getNextRentOfficeOpenWeek(player, turn),
-      };
     }
   }
 
