@@ -32,7 +32,7 @@ import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 import { useDraggableModal } from './hooks/useDraggableModal';
 import { calcEffectiveRobberyChance, formatHours } from '../engine/statMath';
-import { isRentOfficeOpen as isRentOfficeOpenRule, getNextRentOfficeOpenWeek, playerLivesAt } from '../engine/buildingRules';
+import { isRentOfficeOpen as isRentOfficeOpenRule, playerLivesAt } from '../engine/buildingRules';
 
 interface BuildingModalProps {
   player: PlayerState | null;
@@ -283,7 +283,6 @@ export function BuildingModal({
     : t(`building.${building.id}`, { defaultValue: building.name });
 
   const isRentOfficeOpen = isRentOfficeOpenRule(player, turn, campaign, rules);
-  const nextOpenWeek = getNextRentOfficeOpenWeek(player, turn);
   const isDiscountAndPawn = building.archetype === 'discount_and_pawn';
   const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen || !!clerkMessage);
 
@@ -709,28 +708,15 @@ export function BuildingModal({
           rules={rules}
         />
       ) : isAuthenticReplica && building.id === 'apartment_complex' ? (
-        (isRentOfficeOpen || Boolean(playerJobHere)) ? (
-          <AuthenticRentOffice
-            player={player}
-            onAction={handleActionIntercept}
-            onClose={onClose}
-            campaign={campaign}
-            rules={rules}
-            turn={turn}
-            economicIndex={economicIndex}
-          />
-        ) : (
-          <div className="interaction-panel" data-testid="rent-office-closed-panel">
-            <h3>{t(`building.${building.id}`, { defaultValue: building.name })}</h3>
-            <p style={{ fontSize: '12px' }}>
-              {t('rentOffice.closed', {
-                week: nextOpenWeek,
-                defaultValue: `The Rent Office is closed. Come back during Week ${nextOpenWeek} to pay your rent or move to a new apartment.`
-              })}
-            </p>
-            <button onClick={onClose} style={{ marginTop: '12px' }}>{t('common.close', { defaultValue: 'Close' })}</button>
-          </div>
-        )
+        <AuthenticRentOffice
+          player={player}
+          onAction={handleActionIntercept}
+          onClose={onClose}
+          campaign={campaign}
+          rules={rules}
+          turn={turn}
+          economicIndex={economicIndex}
+        />
       ) : isAuthenticReplica && (building.id === 'low_cost_housing' || building.id === 'security_apartments' || building.archetype === 'home') ? (
         livesHere ? (
           <AuthenticHome

@@ -161,7 +161,7 @@ describe('Rent Office Employment & Entry (Post-Mortem Verification)', () => {
     expect(capturedAction.jobId).toBe('rent_groundskeeper');
   });
 
-  it('displays closed panel when a non-employee visits rent office on non-rent week in Authentic GUI', async () => {
+  it('displays authentic static closed window (view.697) when a non-employee visits rent office on non-rent week in Authentic GUI', async () => {
     const campaign = await loadCampaign('1990_classic_floppy');
     const rules = { ...campaign.config.gameRules, guiStyle: 'authentic' } as GameRules;
 
@@ -180,10 +180,11 @@ describe('Rent Office Employment & Entry (Post-Mortem Verification)', () => {
       inventory: { appliances: [], clothes: ['casual'], books: [] } as any
     } as PlayerState;
 
+    // In authentic Jones in the Fast Lane, Jones can enter the Rent Office (costing entry time)
     const entryCheck = canEnterBuilding('apartment_complex', player, 1, campaign, rules);
-    expect(entryCheck.canEnter).toBe(false);
-    expect(entryCheck.reason).toBe('rent_office_closed');
+    expect(entryCheck.canEnter).toBe(true);
 
+    const handleClose = vi.fn();
     render(
       <BuildingModal
         player={player}
@@ -193,13 +194,21 @@ describe('Rent Office Employment & Entry (Post-Mortem Verification)', () => {
         economicIndex={0}
         rules={rules}
         onAction={vi.fn()}
-        onClose={vi.fn()}
+        onClose={handleClose}
       />
     );
 
-    // Shows rent office closed panel with Close button
-    expect(screen.getByTestId('rent-office-closed-panel')).toBeInTheDocument();
-    expect(screen.getByText(/The Rent Office is closed/i)).toBeInTheDocument();
+    // Displays the authentic static closed office window (view.697)
+    expect(screen.getByTestId('authentic-rent-office')).toBeInTheDocument();
+    expect(screen.getByTestId('rent-office-bg-closed')).toBeInTheDocument();
+    expect(screen.queryByTestId('rent-office-talker')).toBeNull();
+    expect(screen.queryByTestId('btn-pay-rent')).toBeNull();
     expect(screen.queryByTestId('btn-rent-office-work')).toBeNull();
+
+    // Done / Exit button is present to leave
+    const doneBtn = screen.getByTestId('btn-rent-office-done');
+    expect(doneBtn).toBeInTheDocument();
+    fireEvent.click(doneBtn);
+    expect(handleClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -326,7 +326,7 @@ describe('BuildingModal Authentic Integration for All Locations', () => {
     });
   }
 
-  it('shows closed panel and does not mount authentic-rent-office when rent office is closed', () => {
+  it('mounts authentic-rent-office displaying closed view (view.697) when rent office is closed', () => {
     render(
       <BuildingModal
         player={{ ...basePlayer, rentPaidUntilWeek: 4 }}
@@ -339,8 +339,10 @@ describe('BuildingModal Authentic Integration for All Locations', () => {
         onClose={vi.fn()}
       />
     );
-    expect(screen.queryByTestId('authentic-rent-office')).not.toBeInTheDocument();
-    expect(screen.getByTestId('rent-office-closed-panel')).toBeInTheDocument();
+    expect(screen.getByTestId('authentic-rent-office')).toBeInTheDocument();
+    expect(screen.getByTestId('rent-office-bg-closed')).toBeInTheDocument();
+    expect(screen.queryByTestId('rent-office-talker')).toBeNull();
+    expect(screen.getByTestId('btn-rent-office-done')).toBeInTheDocument();
   });
 
   it('shows dontLiveHere panel and does not mount authentic-home when visiting security_apartments while living in low_cost', () => {

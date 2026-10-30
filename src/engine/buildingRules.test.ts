@@ -142,18 +142,13 @@ describe('buildingRules', () => {
       expect(check.canEnter).toBe(true);
     });
 
-    it('prevents entering rent office when closed for non-employee', () => {
+    it('allows any player to enter rent office even when closed to see the closed notice or work', () => {
       const player = getDummyPlayer({ rentPaidUntilWeek: 4 });
-      const check = canEnterBuilding('apartment_complex', player, 1, dummyCampaign);
-      expect(check.canEnter).toBe(false);
-      expect(check.reason).toBe('rent_office_closed');
-      expect(check.nextOpenWeek).toBe(4);
-    });
+      const checkClosed = canEnterBuilding('apartment_complex', player, 1, dummyCampaign);
+      expect(checkClosed.canEnter).toBe(true);
 
-    it('allows entering rent office when open', () => {
-      const player = getDummyPlayer({ rentPaidUntilWeek: 4 });
-      const check = canEnterBuilding('apartment_complex', player, 4, dummyCampaign);
-      expect(check.canEnter).toBe(true);
+      const checkOpen = canEnterBuilding('apartment_complex', player, 4, dummyCampaign);
+      expect(checkOpen.canEnter).toBe(true);
     });
 
     it('always allows employees to enter their workplace even when rent office is closed to tenants', () => {
