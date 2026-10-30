@@ -56,14 +56,14 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
     return t;
   };
 
-  // Food item display cycling (view.710 loop 1, cels 0..5): cycles when not locked
+  // Food item display cycling (view.710 loop 1, cels 0..5): cycles authentic 60 cycles (~3.2s) when not locked
   useEffect(() => {
-    if (lockedCel !== null) return;
+    if (lockedCel !== null || isPunchingCard) return;
     const interval = setInterval(() => {
       setCyclingCel(prev => (prev + 1) % MONOLITH_MENU_ITEMS.length);
-    }, 1200);
+    }, 3200);
     return () => clearInterval(interval);
-  }, [lockedCel]);
+  }, [lockedCel, isPunchingCard]);
 
   const activeCel = lockedCel !== null ? lockedCel : cyclingCel;
   const activeFoodFile = MONOLITH_MENU_ITEMS[activeCel]?.foodFile ?? 'food_hamburger.png';
@@ -131,12 +131,14 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
     // Dispatch buy action
     onAction({ type: 'buy', itemId: mItem.id });
 
-    // Lock food item window display to this bought item for 3200ms
+    // In authentic Sierra SCI (script.104), purchasing an item locks the item window to that item's cel
+    // without returning to cycling. Also clears punch card display if it was showing.
+    setIsPunchingCard(false);
     setLockedCel(mItem.celNum);
-    if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
-    lockTimerRef.current = setTimeout(() => {
-      setLockedCel(null);
-    }, 3200);
+    if (lockTimerRef.current) {
+      clearTimeout(lockTimerRef.current);
+      lockTimerRef.current = null;
+    }
 
     // Pick random banter
     const banter = MONOLITH_BANTER[Math.floor(Math.random() * MONOLITH_BANTER.length)];
@@ -147,11 +149,8 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
   const handleWorkShift = () => {
     if (!playerJobHere) return;
 
-    const shiftCost = campaign.config.timeRules.workSessionCost ?? 6;
-    const hasEnoughHours = (player.hoursRemaining ?? 0) >= shiftCost;
-
-    if (!hasEnoughHours) {
-      triggerSpeech('You do not have enough time left to work a full shift today.', 2800);
+    if ((player.hoursRemaining ?? 0) <= 0) {
+      triggerSpeech('You do not have enough time left to work today.', 2800);
       return;
     }
 
@@ -162,7 +161,8 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
     addAnimTimer(() => setPunchCel(2), 240);
     addAnimTimer(() => setPunchCel(3), 360);
     addAnimTimer(() => {
-      setIsPunchingCard(false);
+      // In authentic Sierra SCI, the punch clock stays in the item window after work
+      setPunchCel(3);
       onAction({ type: 'work', jobId: playerJobHere.id });
       triggerSpeech('Have a nice day.', 2500);
     }, 480);
@@ -195,7 +195,7 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
         position: 'relative',
         imageRendering: 'pixelated',
         userSelect: 'none',
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: '#000000',
       }}
     >
@@ -243,7 +243,8 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
           }}
         />
 
-        {/* Layer 3: Counter / Items (view.710) */}
+        {/* Layer 3: Item Window (view.710 cels are full 68x55 sprites at nsLeft 0, nsTop $39).
+            The punch card (view.750) occupies this exact same slot. */}
         <div
           data-testid="monolith-counter"
           style={{
@@ -253,12 +254,19 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
             width: '68px',
             height: '55px',
             pointerEvents: 'none',
+            zIndex: 4,
           }}
         >
           <img
+            data-testid="monolith-food-item"
             src={`${basePath}/counter/${activeFoodFile}`}
             alt="Food Window"
-            style={{ width: '68px', height: '55px', imageRendering: 'pixelated' }}
+            style={{
+              width: '68px',
+              height: '55px',
+              display: 'block',
+              imageRendering: 'pixelated',
+            }}
           />
         </div>
 
@@ -281,15 +289,16 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
                 left: `${item.left}px`,
                 top: `${item.top}px`,
                 cursor: 'pointer',
-                fontFamily: 'monospace, "Courier New"',
-                fontSize: '6.5px',
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                fontSize: '6px',
                 fontWeight: 'bold',
-                lineHeight: '7px',
-                color: isHovered ? '#ffffff' : canAfford ? '#682028' : '#8a8a8a',
+                lineHeight: '7.5px',
+                color: isHovered ? '#ffffff' : canAfford ? '#6a2029' : '#9e8e80',
                 backgroundColor: isHovered ? '#8b2020' : 'transparent',
                 padding: '0 1px',
                 whiteSpace: 'pre',
-                letterSpacing: '-0.3px',
+                letterSpacing: '0.1px',
+                textShadow: isHovered ? '0.75px 0.75px 0px #300808' : '0.75px 0.75px 0px #e6ca9c',
                 zIndex: 5,
               }}
               title={`Buy ${item.label} ($${price})`}
@@ -299,7 +308,7 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
           );
         })}
 
-        {/* Layer 5: Buttons (view.250) */}
+        {/* Layer 5: Buttons (view.250 Loop 1 Cel 0 at nsLeft: 75, nsTop: 108 sticking 3px out of 112px window) */}
         {playerJobHere && (
           <img
             data-testid="btn-monolith-work"
@@ -309,14 +318,14 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
             style={{
               position: 'absolute',
               left: '75px',
-              top: '104px',
+              top: '108px',
               width: '30px',
               height: '7px',
               cursor: 'pointer',
               imageRendering: 'pixelated',
-              zIndex: 6,
+              zIndex: 10,
             }}
-            title="Work Shift"
+            title="Work Shift (W)"
           />
         )}
 
@@ -328,12 +337,12 @@ export const AuthenticMonolithBurgers: React.FC<AuthenticMonolithBurgersProps> =
           style={{
             position: 'absolute',
             left: '143px',
-            top: '104px',
+            top: '108px',
             width: '30px',
             height: '7px',
             cursor: 'pointer',
             imageRendering: 'pixelated',
-            zIndex: 6,
+            zIndex: 10,
           }}
           title="Done (Exit)"
         />

@@ -291,7 +291,8 @@ body {
   box-shadow: none !important;
   backdrop-filter: none !important;
   border-radius: 0 !important;
-  overflow: hidden !important;
+  /* Buttons (nsTop 108) intentionally overhang the 112px window by 3px, as in the original. */
+  overflow: visible !important;
 }
 
 .building-modal__header {

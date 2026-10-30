@@ -24,7 +24,9 @@ export type GameAction =
   | { type: 'move_apartment'; housingId: string; cost: number }
   | { type: 'pay_rent_advance'; amount: number }
   | { type: 'pawn_item'; item: PawnableItem; value: number }
+  | { type: 'pawn'; itemId?: string; item?: PawnableItem; value?: number }
   | { type: 'redeem_item'; item: PawnedItem; cost: number }
+  | { type: 'redeem'; itemId?: string; item?: PawnedItem; cost?: number }
   | { type: 'buy_pawn_item'; item: PawnedItem; cost: number }
   | { type: 'change_clothes'; clothes: 'casual' | 'dress' | 'business' | 'none' }
   | { type: 'ask_rent_extension' }

@@ -4,6 +4,7 @@ import type { CampaignBundle } from './dataLoader';
 import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, calculateTravelHours } from '../graphics/pathfinding';
 import { calcEconomyPrice, calcItemPrice } from './economyEngine';
 import { calcLoanAssessment } from './statMath';
+import { canEnterBuilding, isRentOfficeOpen, playerLivesAt } from './buildingRules';
 
 export interface ActionChoice {
   label: string;
@@ -36,8 +37,7 @@ export function getAvailableActions(
     const bDef = campaign.buildings.find(b => b.id === bId);
     
     // Home Building
-    const currentHousingDef = campaign.housing.find(h => h.id === player.currentHousingId);
-    if (bDef?.archetype === 'home' && currentNode?.id === currentHousingDef?.homeNodeId) {
+    if (bDef?.archetype === 'home' && playerLivesAt(player, bDef.id, campaign)) {
       const cost = campaign.config.timeRules.relaxCost;
       const gain = !player.turnFlags.relaxedThisTurn ? 2 : 0;
       const label = helpful 
@@ -47,8 +47,8 @@ export function getAvailableActions(
     }
     
     // Housing / Rent Office
-    if (bDef?.archetype === 'housing') {
-      const rentCost = player.currentRentPrice;
+    if (bDef?.archetype === 'housing' && isRentOfficeOpen(player, state.turn, campaign, state.rules)) {
+      const rentCost = player.rentDebt > 0 ? player.rentDebt : player.currentRentPrice;
       const rentLabel = helpful ? `Pay Rent (-$${rentCost})` : `Pay Rent`;
       options.push({ label: rentLabel, action: { type: 'rent_transaction', amount: rentCost } });
       
@@ -200,7 +200,9 @@ export function getAvailableActions(
     // If outside
     if (currentNode?.buildingId) {
       const bDef = campaign.buildings.find(b => b.id === currentNode.buildingId);
-      options.push({ label: `Enter ${bDef?.name}`, action: { type: 'enter_building' } });
+      if (bDef && canEnterBuilding(bDef.id, player, state.turn, campaign, state.rules).canEnter) {
+        options.push({ label: `Enter ${bDef.name}`, action: { type: 'enter_building' } });
+      }
     }
     
     // Travel options

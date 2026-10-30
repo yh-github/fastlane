@@ -18,5 +18,6 @@ export const EMPLOYMENT_OFFICE_DIALOGUE = {
   notEnoughEdu: "Not enough Education.",
   notEnoughExp: "Not enough Experience.",
   poorHistory: "Poor work History.",
-  noOpenings: "No openings."
+  noOpenings: "No openings.",
+  closingSoon: "Sorry. We're closing. You'll have to come back next week."
 };

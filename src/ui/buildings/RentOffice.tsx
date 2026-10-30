@@ -6,6 +6,7 @@ import type { GameRules } from '../../engine/gameState';
 import { isAdvancedVersion } from '../../engine/rules';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcMovingFee, calcUsedSpace, calcLandlordStanding } from '../../engine/statMath';
+import { isRentOfficeOpen, getNextRentOfficeOpenWeek } from '../../engine/buildingRules';
 import type { InteractionProps } from './types';
 
 export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex = 0, rules }: InteractionProps & { campaign?: CampaignBundle, turn?: number, economicIndex?: number, rules?: GameRules }) {
@@ -13,15 +14,10 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const [confirmMove, setConfirmMove] = useState<{housingId: string, baseCost: number, movingFee: number, totalCost: number, newAptName: string} | null>(null);
   const currentHousing = campaign?.housing.find(h => h.id === player.currentHousingId);
 
-  const rentOwed = player.rentDebt;
-  const isWeek4 = turn % 4 === 0;
   const rentDue = player.rentPaidUntilWeek <= turn;
-  const isJobHere = !!(player.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
-  const isOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || (isJobHere && !!rules?.allowEmployedRentPayment);
-
-  const nextWeek4 = Math.floor(turn / 4) * 4 + 4;
-  const nextRentDueWeek = player.rentPaidUntilWeek > turn ? player.rentPaidUntilWeek : nextWeek4;
-  const nextOpenWeek = Math.min(nextWeek4, nextRentDueWeek);
+  const rentOwed = player.rentDebt > 0 ? player.rentDebt : (rentDue ? player.currentRentPrice : 0);
+  const isOpen = isRentOfficeOpen(player, turn, campaign, rules);
+  const nextOpenWeek = getNextRentOfficeOpenWeek(player, turn);
 
   const availableHousingList = (campaign?.housing || [
     { id: 'low_cost', name: 'Low-Cost Housing', baseRent: 325, spaceCap: 100 },
@@ -67,6 +63,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
                 <strong>{t('rentOffice.rentDue', { amount: rentOwed })}</strong>
                 <br/>
                 <button 
+                  data-testid="btn-pay-rent"
                   onClick={() => onAction({ type: 'rent_transaction', amount: rentOwed })}
                   style={{ marginTop: '10px', backgroundColor: '#c0392b' }}
                 >

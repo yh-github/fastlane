@@ -1,6 +1,7 @@
 import type { PlayerState, GameEvent, PawnedItem } from './gameState';
 import { recalculatePlayerEffects } from './gameState';
 import type { EngineDecision, ReplayContext } from './replayTypes';
+import { calcEconomyPrice } from './economyEngine';
 import type { GameAction, ReducerContext, ReducerResult } from './actions';
 import {
   handleApplyAction,
@@ -132,12 +133,47 @@ export function gameReducer(
     case 'ask_rent_extension':
       res = handleAskRentExtensionAction(nextPlayer, action, context, replayContext);
       break;
-    case 'pawn_item':
-      res = handlePawnItemAction(nextPlayer, action, context);
+    case 'pawn':
+    case 'pawn_item': {
+      let item = (action as any).item;
+      let val = (action as any).value;
+      if (!item && (action as any).itemId) {
+        const id = (action as any).itemId;
+        item = nextPlayer.inventory?.appliances?.find(a => a.id === id) || { id, purchasePrice: 50 };
+      }
+      if (val === undefined && item) {
+        const itemDef = context.campaign?.items?.find(i => i.id === item.id);
+        const basePrice = itemDef?.basePrice ?? item.purchasePrice ?? 50;
+        const payoutRate = context.campaign?.config?.economyRules?.pawnPayoutRate ?? 0.4;
+        const standardVal = Math.floor(calcEconomyPrice(basePrice, context.state.economicIndex) * payoutRate);
+        val = item.isBroken ? Math.floor(standardVal * 0.25) : standardVal;
+      }
+      res = handlePawnItemAction(nextPlayer, { type: 'pawn_item', item, value: val }, context);
       break;
-    case 'redeem_item':
-      res = handleRedeemItemAction(nextPlayer, action, context);
+    }
+    case 'redeem':
+    case 'redeem_item': {
+      let item = (action as any).item;
+      let cost = (action as any).cost;
+      if (!item && (action as any).itemId) {
+        const id = (action as any).itemId;
+        item = nextPlayer.inventory?.pawnedItems?.find(p => p.itemId === id);
+      }
+      if (cost === undefined && item) {
+        const itemDef = context.campaign?.items?.find(i => i.id === item.itemId);
+        const basePrice = itemDef?.basePrice ?? item.originalPrice;
+        const redeemRate = context.campaign?.config?.economyRules?.pawnRedeemRate ?? 0.5;
+        cost = context.rules?.preventPawnArbitrage
+          ? Math.floor(calcEconomyPrice(basePrice, context.state.economicIndex) * redeemRate)
+          : item.redeemCost;
+      }
+      if (item) {
+        res = handleRedeemItemAction(nextPlayer, { type: 'redeem_item', item, cost }, context);
+      } else {
+        res = { nextPlayer, actionLog: { key: 'action.error.noItemToRedeem' } };
+      }
       break;
+    }
     case 'buy_pawn_item':
       res = handleBuyPawnItemAction(nextPlayer, action, context);
       break;

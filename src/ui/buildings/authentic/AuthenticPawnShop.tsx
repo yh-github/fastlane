@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import type { PlayerState, GameRules } from '../../../engine/gameState';
+import type { PlayerState, GameRules, PawnedItem } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
-import { calcItemPrice } from '../../../engine/economyEngine';
+import type { PawnableItem } from '../../../engine/actions/types';
+import { calcEconomyPrice, calcItemPrice } from '../../../engine/economyEngine';
 import { PAWN_SHOP_DIALOGUE } from './pawnShopData';
 
 interface AuthenticPawnShopProps {
   player: PlayerState;
-  onAction: (action: any) => void;
+  onAction: (action: any) => Promise<any> | void;
   onClose: () => void;
   campaign: CampaignBundle;
   economicIndex: number;
   rules?: GameRules;
+  pawnShopItemsForSale?: PawnedItem[];
 }
 
 type PawnShopMode = 'menu' | 'pawn' | 'redeem' | 'buy';
@@ -21,7 +23,8 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
   onClose,
   campaign,
   economicIndex,
-  rules: _rules,
+  rules,
+  pawnShopItemsForSale = [],
 }) => {
   const isCdrom = campaign.config.name === '1990_classic_cdrom';
   const talkerFolder = isCdrom ? 'talker_cdrom' : 'talker_floppy';
@@ -75,49 +78,98 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
     };
   }, []);
 
-  const pawnableItems = useMemo(() => {
-    const ownedApplianceIds = (player.inventory?.appliances ?? []).map(a => a.id);
-    return campaign.items.filter(i => ownedApplianceIds.includes(i.id));
-  }, [player.inventory?.appliances, campaign.items]);
+  const pawnableAppliances = player.inventory?.appliances || [];
+  const pawnableBooks = (player.inventory?.books || []).map(bId => {
+    const bookDef = campaign?.items?.find(i => i.id === bId);
+    return {
+      id: bId,
+      purchasePrice: bookDef?.basePrice || 100,
+      purchaseSource: 'z_mart' as const
+    };
+  });
+  const pawnableItems: PawnableItem[] = useMemo(() => {
+    return [...pawnableAppliances, ...pawnableBooks];
+  }, [pawnableAppliances, pawnableBooks]);
 
-  const pawnedItems = useMemo(() => {
-    const pIds = (player.inventory?.pawnedItems ?? []).map(p => p.itemId);
-    return campaign.items.filter(i => pIds.includes(i.id));
-  }, [player.inventory?.pawnedItems, campaign.items]);
+  const pawnedItems: PawnedItem[] = useMemo(() => {
+    return player.inventory?.pawnedItems ?? [];
+  }, [player.inventory?.pawnedItems]);
 
-  // Items in pawn shop for sale
+  // Items in pawn shop for sale (both standard catalog and forfeited belongings)
   const buyableItems = useMemo(() => {
-    const bld = campaign.buildings.find(b => b.id === 'pawn_shop');
-    return (bld?.inventory ?? []).map(inv => {
-      const def = campaign.items.find(i => i.id === inv.itemId);
+    const bld = campaign.buildings?.find(b => b.id === 'pawn_shop');
+    const storeItems = (bld?.inventory ?? []).map(inv => {
+      const def = campaign.items?.find(i => i.id === inv.itemId);
       const basePrice = inv.priceOverride ?? def?.basePrice ?? 50;
       const price = calcItemPrice({ ...(def ?? {}), basePrice }, economicIndex);
-      return { def, price, itemId: inv.itemId };
+      return { def, price, itemId: inv.itemId, isForfeited: false, pawnedItem: undefined };
     }).filter(e => !!e.def);
-  }, [campaign.buildings, campaign.items, economicIndex]);
 
-  const handlePawnItem = (itemId: string) => {
-    onAction({ type: 'pawn', itemId });
+    const forfeited = (pawnShopItemsForSale ?? []).map(p => {
+      const def = campaign.items?.find(i => i.id === p.itemId);
+      const basePrice = def?.basePrice ?? p.originalPrice;
+      const redeemRate = campaign?.config?.economyRules?.pawnRedeemRate ?? 0.5;
+      const buyCost = rules?.preventPawnArbitrage
+        ? Math.floor(calcEconomyPrice(basePrice, economicIndex) * redeemRate)
+        : Math.floor(p.originalPrice * 0.5);
+      return { def, price: buyCost, itemId: p.itemId, isForfeited: true, pawnedItem: p };
+    });
+
+    return [...storeItems, ...forfeited];
+  }, [campaign.buildings, campaign.items, economicIndex, pawnShopItemsForSale, rules]);
+
+  const handlePawnItem = async (item: PawnableItem) => {
+    const itemDef = campaign?.items?.find(i => i.id === item.id);
+    const basePrice = itemDef?.basePrice ?? item.purchasePrice;
+    const payoutRate = campaign?.config?.economyRules?.pawnPayoutRate ?? 0.4;
+    const standardPawnValue = Math.floor(calcEconomyPrice(basePrice, economicIndex) * payoutRate);
+    const isBroken = (item as any).isBroken;
+    const pawnValue = isBroken ? Math.floor(standardPawnValue * 0.25) : standardPawnValue;
+
+    const res: any = await onAction({ type: 'pawn_item', item, value: pawnValue });
+    const log = Array.isArray(res) ? res[0] : res;
+    if (log?.key === 'action.error.pawnShopFull') {
+      triggerSpeech("Sorry, my shelves are full! I can't take any more items right now.", 3000);
+      return;
+    }
     const banter = PAWN_SHOP_DIALOGUE.clerkBanter[
       Math.floor(Math.random() * PAWN_SHOP_DIALOGUE.clerkBanter.length)
     ];
     triggerSpeech(banter, 3000);
   };
 
-  const handleRedeemItem = (itemId: string) => {
-    onAction({ type: 'redeem', itemId });
-    const banter = PAWN_SHOP_DIALOGUE.clerkBanter[
-      Math.floor(Math.random() * PAWN_SHOP_DIALOGUE.clerkBanter.length)
-    ];
-    triggerSpeech(banter, 3000);
-  };
+  const handleRedeemItem = async (pawned: PawnedItem) => {
+    const itemDef = campaign?.items?.find(i => i.id === pawned.itemId);
+    const basePrice = itemDef?.basePrice ?? pawned.originalPrice;
+    const redeemRate = campaign?.config?.economyRules?.pawnRedeemRate ?? 0.5;
+    const redeemCost = rules?.preventPawnArbitrage
+      ? Math.floor(calcEconomyPrice(basePrice, economicIndex) * redeemRate)
+      : pawned.redeemCost;
 
-  const handleBuyItem = (itemId: string, price: number) => {
-    if (player.money < price) {
+    const res: any = await onAction({ type: 'redeem_item', item: pawned, cost: redeemCost });
+    const log = Array.isArray(res) ? res[0] : res;
+    if (log?.key === 'action.error.notEnoughMoney') {
       triggerSpeech(PAWN_SHOP_DIALOGUE.notEnoughCash, 2800);
       return;
     }
-    onAction({ type: 'buy', itemId });
+    const banter = PAWN_SHOP_DIALOGUE.clerkBanter[
+      Math.floor(Math.random() * PAWN_SHOP_DIALOGUE.clerkBanter.length)
+    ];
+    triggerSpeech(banter, 3000);
+  };
+
+  const handleBuyItem = async (entry: any) => {
+    let res: any;
+    if (entry.isForfeited && entry.pawnedItem) {
+      res = await onAction({ type: 'buy_pawn_item', item: entry.pawnedItem, cost: entry.price });
+    } else {
+      res = await onAction({ type: 'buy', itemId: entry.itemId });
+    }
+    const log = Array.isArray(res) ? res[0] : res;
+    if (log?.key === 'action.error.notEnoughMoney') {
+      triggerSpeech(PAWN_SHOP_DIALOGUE.notEnoughCash, 2800);
+      return;
+    }
     const banter = PAWN_SHOP_DIALOGUE.clerkBanter[
       Math.floor(Math.random() * PAWN_SHOP_DIALOGUE.clerkBanter.length)
     ];
@@ -131,11 +183,8 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
   const handleWorkShift = () => {
     if (!playerJobHere) return;
 
-    const shiftCost = campaign.config.timeRules.workSessionCost ?? 6;
-    const hasEnoughHours = (player.hoursRemaining ?? 0) >= shiftCost;
-
-    if (!hasEnoughHours) {
-      triggerSpeech('You do not have enough time left to work a full shift today.', 2800);
+    if ((player.hoursRemaining ?? 0) <= 0) {
+      triggerSpeech('You do not have enough time left to work today.', 2800);
       return;
     }
 
@@ -146,8 +195,9 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
     addAnimTimer(() => setPunchCel(2), 240);
     addAnimTimer(() => setPunchCel(3), 360);
     addAnimTimer(() => {
-      setIsPunchingCard(false);
-      onAction({ type: 'work' });
+      // Keep punch card in the window after work
+      setPunchCel(3);
+      onAction({ type: 'work', jobId: playerJobHere.id });
       triggerSpeech('Another shift dealing with pawns complete!', 3000);
     }, 550);
   };
@@ -198,7 +248,7 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
         position: 'relative',
         imageRendering: 'pixelated',
         userSelect: 'none',
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: '#000000',
       }}
     >
@@ -262,7 +312,7 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
             padding: '2px 4px',
             boxSizing: 'border-box',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             lineHeight: '7.5px',
             color: '#000',
             zIndex: 10,
@@ -312,7 +362,7 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
             style={{
               cursor: 'pointer',
               fontFamily: 'monospace, "Courier New"',
-              fontSize: '7.5px',
+              fontSize: '6px',
               fontWeight: 'bold',
               color: '#000',
               padding: '2px 4px',
@@ -335,7 +385,7 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
             style={{
               cursor: 'pointer',
               fontFamily: 'monospace, "Courier New"',
-              fontSize: '7.5px',
+              fontSize: '6px',
               fontWeight: 'bold',
               color: '#000',
               padding: '2px 4px',
@@ -358,7 +408,7 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
             style={{
               cursor: 'pointer',
               fontFamily: 'monospace, "Courier New"',
-              fontSize: '7.5px',
+              fontSize: '6px',
               fontWeight: 'bold',
               color: '#000',
               padding: '2px 4px',
@@ -383,49 +433,69 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
           </div>
 
           <div style={{ maxHeight: '55px', overflowY: 'auto' }}>
-            {mode === 'pawn' && pawnableItems.map(item => (
-              <div
-                key={item.id}
-                data-testid={`pawn-item-${item.id}`}
-                onClick={() => handlePawnItem(item.id)}
-                style={{
-                  cursor: 'pointer',
-                  fontFamily: 'monospace',
-                  fontSize: '6px',
-                  padding: '1px 2px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #888',
-                  marginBottom: '2px',
-                }}
-              >
-                Pawn {item.name} (+${Math.round((item.basePrice ?? 50) * 0.5)})
-              </div>
-            ))}
+            {mode === 'pawn' && pawnableItems.map(item => {
+              const itemDef = campaign?.items?.find(i => i.id === item.id);
+              const basePrice = itemDef?.basePrice ?? item.purchasePrice;
+              const payoutRate = campaign?.config?.economyRules?.pawnPayoutRate ?? 0.4;
+              const standardPawnValue = Math.floor(calcEconomyPrice(basePrice, economicIndex) * payoutRate);
+              const isBroken = (item as any).isBroken;
+              const pawnValue = isBroken ? Math.floor(standardPawnValue * 0.25) : standardPawnValue;
+              const itemName = itemDef?.name ?? item.id;
 
-            {mode === 'redeem' && pawnedItems.map(item => (
-              <div
-                key={item.id}
-                data-testid={`redeem-item-${item.id}`}
-                onClick={() => handleRedeemItem(item.id)}
-                style={{
-                  cursor: 'pointer',
-                  fontFamily: 'monospace',
-                  fontSize: '6px',
-                  padding: '1px 2px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #888',
-                  marginBottom: '2px',
-                }}
-              >
-                Redeem {item.name} (-${Math.round((item.basePrice ?? 50) * 0.6)})
-              </div>
-            ))}
+              return (
+                <div
+                  key={item.id}
+                  data-testid={`pawn-item-${item.id}`}
+                  onClick={() => handlePawnItem(item)}
+                  style={{
+                    cursor: 'pointer',
+                    fontFamily: 'monospace',
+                    fontSize: '6px',
+                    padding: '1px 2px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #888',
+                    marginBottom: '2px',
+                  }}
+                >
+                  Pawn {itemName} (+${pawnValue})
+                </div>
+              );
+            })}
 
-            {mode === 'buy' && buyableItems.map(entry => (
+            {mode === 'redeem' && pawnedItems.map(p => {
+              const itemDef = campaign?.items?.find(i => i.id === p.itemId);
+              const basePrice = itemDef?.basePrice ?? p.originalPrice;
+              const redeemRate = campaign?.config?.economyRules?.pawnRedeemRate ?? 0.5;
+              const redeemCost = rules?.preventPawnArbitrage
+                ? Math.floor(calcEconomyPrice(basePrice, economicIndex) * redeemRate)
+                : p.redeemCost;
+              const itemName = itemDef?.name ?? p.itemId;
+
+              return (
+                <div
+                  key={p.itemId}
+                  data-testid={`redeem-item-${p.itemId}`}
+                  onClick={() => handleRedeemItem(p)}
+                  style={{
+                    cursor: 'pointer',
+                    fontFamily: 'monospace',
+                    fontSize: '6px',
+                    padding: '1px 2px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #888',
+                    marginBottom: '2px',
+                  }}
+                >
+                  Redeem {itemName} (-${redeemCost})
+                </div>
+              );
+            })}
+
+            {mode === 'buy' && buyableItems.map((entry, idx) => (
               <div
-                key={entry.itemId}
+                key={`${entry.itemId}-${idx}`}
                 data-testid={`buy-pawn-item-${entry.itemId}`}
-                onClick={() => handleBuyItem(entry.itemId, entry.price)}
+                onClick={() => handleBuyItem(entry)}
                 style={{
                   cursor: 'pointer',
                   fontFamily: 'monospace',
@@ -436,7 +506,7 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
                   marginBottom: '2px',
                 }}
               >
-                {entry.def?.name ?? "Item"} (${entry.price})
+                {entry.def?.name ?? "Item"} (${entry.price}) {entry.isForfeited ? '(Used)' : ''}
               </div>
             ))}
           </div>
@@ -458,7 +528,7 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
         </div>
       )}
 
-      {/* Work & Done Action Buttons (view.250) */}
+      {/* Work & Done Action Buttons (view.250 at nsTop: 108 sticking 3px out of 112px window) */}
       {playerJobHere && (
         <img
           data-testid="btn-pawn-work"
@@ -468,11 +538,11 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
           style={{
             position: 'absolute',
             left: '75px',
-            top: '104px',
+            top: '108px',
             width: '30px',
             height: '7px',
             cursor: 'pointer',
-            zIndex: 5,
+            zIndex: 10,
           }}
           title="Work shift (W)"
         />
@@ -486,11 +556,11 @@ export const AuthenticPawnShop: React.FC<AuthenticPawnShopProps> = ({
         style={{
           position: 'absolute',
           left: '143px',
-          top: '104px',
+          top: '108px',
           width: '30px',
           height: '7px',
           cursor: 'pointer',
-          zIndex: 5,
+          zIndex: 10,
         }}
         title="Done / Exit (Esc / D)"
       />

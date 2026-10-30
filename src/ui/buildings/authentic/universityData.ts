@@ -4,6 +4,20 @@
  * Source: original_resources/floppy/script.207.txt, text.207, view.807, view.357, view.250.
  */
 
+export const UNIVERSITY_COURSE_BOOKS: Record<string, { bookIndex: number; title: string }> = {
+  trade_school: { bookIndex: 0, title: 'Trade School' },
+  electronics: { bookIndex: 1, title: 'Electronics' },
+  pre_engineering: { bookIndex: 2, title: 'Pre-Engineering' },
+  engineering: { bookIndex: 3, title: 'Engineering' },
+  junior_college: { bookIndex: 4, title: 'Junior College' },
+  business_admin: { bookIndex: 5, title: 'Business Admin' },
+  academic: { bookIndex: 6, title: 'Academic' },
+  graduate_school: { bookIndex: 7, title: 'Graduate School' },
+  post_doctoral: { bookIndex: 8, title: 'Post-Doctoral' },
+  research: { bookIndex: 9, title: 'Research' },
+  publishing: { bookIndex: 10, title: 'Publishing' },
+};
+
 export const UNIVERSITY_DIALOGUE = {
   welcomeGreetings: [
     "Welcome to Hi-Tech U. We will learn you for the future.",
@@ -30,5 +44,9 @@ export const UNIVERSITY_DIALOGUE = {
     "Our research department just proved that water is indeed wet!",
     "Welcome to another rigorous trimester of enlightenment!"
   ],
-  notEnoughCash: "You do not have enough cash."
+  notEnoughCash: "You do not have enough cash.",
+  needToEnroll: "You need to enroll in a class first.",
+  noTime: "No time is left to go to class.",
+  selectClass: "Thank You. You may select the class of your choice.",
+  noClasses: "Perhaps next year we will have more classes to offer to you."
 };

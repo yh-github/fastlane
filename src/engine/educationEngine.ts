@@ -71,7 +71,7 @@ export function buyEducationCredit(player: PlayerState, baseTuitionFee: number =
 }
 
 export function calcRequiredLessons(player: PlayerState, degree: EducationDef, rules?: GameRules): number {
-  let required = degree.lessonsRequired;
+  let required = degree.lessonsRequired ?? (degree as any).unitsRequired ?? 10;
   let reduction = 0;
   
   if (player.inventory?.appliances?.some(a => a.id === 'computer')) reduction += 1;

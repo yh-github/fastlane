@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import type { StatModification } from '../engine/gameState';
+import type { StatModification, GameRules } from '../engine/gameState';
 import { StatModifierPills } from './StatModifierPills';
+import { AuthenticStreetRobberyModal } from './authentic/AuthenticStreetRobberyModal';
 
 interface StreetRobberyModalProps {
   lostAmount: number;
@@ -8,6 +9,7 @@ interface StreetRobberyModalProps {
   onClose: () => void;
   modifications?: StatModification[];
   isHelpfulUI?: boolean;
+  rules?: GameRules;
 }
 
 export function StreetRobberyModal({
@@ -15,8 +17,21 @@ export function StreetRobberyModal({
   location,
   onClose,
   modifications,
-  isHelpfulUI = true
+  isHelpfulUI = true,
+  rules,
 }: StreetRobberyModalProps) {
+  if (rules?.guiStyle === 'authentic') {
+    return (
+      <AuthenticStreetRobberyModal
+        lostAmount={lostAmount}
+        location={location}
+        onClose={onClose}
+        modifications={modifications}
+        isHelpfulUI={isHelpfulUI}
+      />
+    );
+  }
+
   const { t } = useTranslation();
   
   const locationName = t(`building.${location}`, { defaultValue: location });

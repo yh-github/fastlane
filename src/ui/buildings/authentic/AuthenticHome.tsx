@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { PlayerState } from '../../../engine/gameState';
-import type { CampaignBundle } from '../../../engine/dataLoader';
+import type { CampaignBundle, BuildingDef } from '../../../engine/dataLoader';
 import { HOME_DIALOGUE } from './homeData';
 
 interface AuthenticHomeProps {
@@ -8,6 +8,7 @@ interface AuthenticHomeProps {
   onAction: (action: any) => void;
   onClose: () => void;
   campaign: CampaignBundle;
+  building?: BuildingDef;
 }
 
 export const AuthenticHome: React.FC<AuthenticHomeProps> = ({
@@ -15,8 +16,11 @@ export const AuthenticHome: React.FC<AuthenticHomeProps> = ({
   onAction,
   onClose,
   campaign,
+  building,
 }) => {
-  const isSecurity = player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments';
+  const isSecurity = building
+    ? (building.id === 'security_apartments' || building.id === 'security' || building.id === 'penthouse')
+    : (player.currentHousingId === 'security' || player.currentHousingId === 'security_apartments' || player.currentHousingId === 'penthouse');
   const basePath = '/assets/authentic/buildings/home';
   const bgPath = isSecurity ? `${basePath}/bg_security.png` : `${basePath}/bg_low_cost.png`;
 
@@ -82,7 +86,7 @@ export const AuthenticHome: React.FC<AuthenticHomeProps> = ({
         position: 'relative',
         imageRendering: 'pixelated',
         userSelect: 'none',
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: '#000000',
       }}
     >
@@ -158,7 +162,7 @@ export const AuthenticHome: React.FC<AuthenticHomeProps> = ({
             padding: '3px 5px',
             boxSizing: 'border-box',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             lineHeight: '8px',
             color: '#000',
             textAlign: 'center',
@@ -178,11 +182,11 @@ export const AuthenticHome: React.FC<AuthenticHomeProps> = ({
         style={{
           position: 'absolute',
           left: '75px',
-          top: '104px',
+          top: '108px',
           width: '30px',
           height: '7px',
           cursor: 'pointer',
-          zIndex: 5,
+          zIndex: 10,
         }}
         title="Relax and recover happiness (R)"
       />
@@ -195,11 +199,11 @@ export const AuthenticHome: React.FC<AuthenticHomeProps> = ({
         style={{
           position: 'absolute',
           left: '143px',
-          top: '104px',
+          top: '108px',
           width: '30px',
           height: '7px',
           cursor: 'pointer',
-          zIndex: 5,
+          zIndex: 10,
         }}
         title="Done / Exit (Esc / D)"
       />

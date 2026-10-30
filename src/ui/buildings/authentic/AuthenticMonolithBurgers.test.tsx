@@ -230,15 +230,18 @@ describe('AuthenticMonolithBurgers Component', () => {
     const counter = screen.getByTestId('monolith-counter');
     expect(counter.querySelector('img')?.getAttribute('src')).toContain('food_hamburger.png');
 
-    // Advance 1200ms -> cycles to cheeseburger
+    // Item window and punch card machine share the exact same 68x55 slot at (0, 57)
+    expect(counter).toHaveStyle({ left: '0px', top: '57px', width: '68px', height: '55px' });
+
+    // Advance 3200ms -> cycles to cheeseburger
     act(() => {
-      vi.advanceTimersByTime(1200);
+      vi.advanceTimersByTime(3200);
     });
     expect(counter.querySelector('img')?.getAttribute('src')).toContain('food_cheeseburger.png');
 
-    // Advance 1200ms -> cycles to astro chicken
+    // Advance 3200ms -> cycles to astro chicken
     act(() => {
-      vi.advanceTimersByTime(1200);
+      vi.advanceTimersByTime(3200);
     });
     expect(counter.querySelector('img')?.getAttribute('src')).toContain('food_chicken.png');
   });
@@ -291,6 +294,8 @@ describe('AuthenticMonolithBurgers Component', () => {
 
     const workBtn = screen.getByTestId('btn-monolith-work');
     expect(workBtn).toBeInTheDocument();
+    // In authentic Sierra SCI, button is at nsTop: $6c (108px), sticking 3px out of 112px window
+    expect(workBtn).toHaveStyle({ top: '108px' });
 
     fireEvent.click(workBtn);
 
@@ -302,7 +307,52 @@ describe('AuthenticMonolithBurgers Component', () => {
     });
 
     expect(onAction).toHaveBeenCalledWith({ type: 'work', jobId: 'burger_cook' });
-    expect(screen.queryByTestId('monolith-punch-card')).not.toBeInTheDocument();
+    // In authentic Sierra SCI, the punch card machine remains in the window after work
+    expect(screen.getByTestId('monolith-punch-card')).toBeInTheDocument();
+  });
+
+  it('allows working when player has only 1/4 of an hour (0.25h) left', () => {
+    const onAction = vi.fn();
+    const lowTimePlayer = { ...basePlayer, currentJobId: 'burger_cook', hoursRemaining: 0.25 };
+    render(
+      <AuthenticMonolithBurgers
+        player={lowTimePlayer}
+        onAction={onAction}
+        onClose={vi.fn()}
+        campaign={mockCampaignFloppy}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('btn-monolith-work'));
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(onAction).toHaveBeenCalledWith({ type: 'work', jobId: 'burger_cook' });
+  });
+
+  it('keeps the purchased food item permanently in the item window without resetting to cycling', () => {
+    render(
+      <AuthenticMonolithBurgers
+        player={basePlayer}
+        onAction={vi.fn()}
+        onClose={vi.fn()}
+        campaign={mockCampaignFloppy}
+      />
+    );
+
+    // Key '1' buys hamburger (cel 0)
+    fireEvent.keyDown(window, { key: '1' });
+    const foodImg = screen.getByTestId('monolith-food-item');
+    expect(foodImg).toHaveAttribute('src', expect.stringContaining('food_hamburger.png'));
+
+    // Advance time by 10 seconds (well past old 3.2s timer)
+    act(() => {
+      vi.advanceTimersByTime(10000);
+    });
+
+    // Remains hamburger permanently
+    expect(screen.getByTestId('monolith-food-item')).toHaveAttribute('src', expect.stringContaining('food_hamburger.png'));
   });
 
   it('calls onClose when clicking DONE button', () => {

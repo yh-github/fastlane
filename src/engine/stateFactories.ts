@@ -1,6 +1,5 @@
 import type { CampaignBundle, CampaignConfig } from './dataLoader';
-import { type GameRules, requireAdvancedStatRules, isAdvancedStatRules } from './rules';
-import { TEST_ADVANCED_CAMPAIGN_CONFIG } from './testFactories';
+import { type GameRules, isAdvancedStatRules, DEFAULT_ADVANCED_STAT_RULES } from './rules';
 import { calcMaxMental } from './statMath';
 import { createDefaultEconomySimulationState } from './economyEngine';
 import type {
@@ -133,7 +132,7 @@ export function createPlayerState(
     ...(rules?.usePhysicalMentalConditions ? (() => {
       const sr = (config.statRules && isAdvancedStatRules(config.statRules))
         ? config.statRules
-        : requireAdvancedStatRules(TEST_ADVANCED_CAMPAIGN_CONFIG.statRules);
+        : DEFAULT_ADVANCED_STAT_RULES;
       const startMess = rules.trackMess ? 3 : 0;
       const startSocial = sr.startingSocial;
       const initMaxMental = calcMaxMental(startMess, rules.trackSocial ? startSocial : 0, 0, undefined, sr);
