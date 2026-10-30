@@ -113,4 +113,77 @@ describe("RentOffice", () => {
     expect(renegotiateBtn).toBeInTheDocument();
     expect(renegotiateBtn.textContent).toContain('(⏳ 1h, -2 🧠)');
   });
+
+  it('renders "Pay Rent" (not "Pay Garnishment Balance") when paying routine rent on week 4 without debt', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 1000,
+      hoursRemaining: 10,
+      currentHousingId: 'low_cost',
+      currentRentPrice: 325,
+      rentPaidUntilWeek: 4,
+      rentDebt: 0,
+      turnFlags: { rentPaidThisTurn: false },
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const mockCampaign = {
+      housing: [
+        { id: 'low_cost', name: 'Low Cost Housing', baseRent: 325, isRobberyImmune: false }
+      ],
+      jobs: [],
+      config: { timeRules: { moveApartmentCost: 4 } }
+    } as any;
+
+    render(
+      <RentOffice
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        turn={4}
+        economicIndex={0}
+      />
+    );
+
+    const payRentBtn = screen.getByTestId('btn-pay-rent');
+    expect(payRentBtn).toBeInTheDocument();
+    expect(payRentBtn.textContent).toContain('Pay Rent ($325)');
+    expect(payRentBtn.textContent).not.toContain('Garnishment');
+  });
+
+  it('renders "Pay Garnishment Balance" only when player actually has rentDebt', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 1000,
+      hoursRemaining: 10,
+      currentHousingId: 'low_cost',
+      currentRentPrice: 325,
+      rentPaidUntilWeek: 4,
+      rentDebt: 150,
+      turnFlags: { rentPaidThisTurn: false },
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const mockCampaign = {
+      housing: [
+        { id: 'low_cost', name: 'Low Cost Housing', baseRent: 325, isRobberyImmune: false }
+      ],
+      jobs: [],
+      config: { timeRules: { moveApartmentCost: 4 } }
+    } as any;
+
+    render(
+      <RentOffice
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        turn={4}
+        economicIndex={0}
+      />
+    );
+
+    const payRentBtn = screen.getByTestId('btn-pay-rent');
+    expect(payRentBtn).toBeInTheDocument();
+    expect(payRentBtn.textContent).toContain('Pay Garnishment Balance ($150)');
+  });
 });
