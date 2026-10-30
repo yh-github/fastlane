@@ -356,6 +356,9 @@ export function useGameEngine(
             } else if (entryCheck.reason === 'dont_live_here') {
               addLog({ key: 'buildingModal.dontLiveHere' }, undefined, player.id);
             }
+            if (currentState.rules.guiStyle !== 'authentic') {
+              openModal({ type: 'building' });
+            }
             return;
           }
           if (currentState.rules.reenterCurrentLocationCost) {
@@ -564,13 +567,17 @@ export function useGameEngine(
           if (player.hoursRemaining <= 0) {
             addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
             await endTurnSequence(updatedPlayers);
-          } else if (!activePlayer.isAi && player.position === targetNodeId && canEnter) {
+          } else if (!activePlayer.isAi && player.position === targetNodeId) {
             const destNode = campaign.map.nodes.find(n => n.id === player.position);
             if (destNode && campaign.buildings.some(b => b.id === destNode.buildingId)) {
-              if (currentState.rules.guiStyle === 'authentic' && destNode.buildingId) {
-                await animateDoorOpen(destNode.buildingId);
+              if (currentState.rules.guiStyle === 'authentic') {
+                if (canEnter && destNode.buildingId) {
+                  await animateDoorOpen(destNode.buildingId);
+                  openModal({ type: 'building' });
+                }
+              } else {
+                openModal({ type: 'building' });
               }
-              openModal({ type: 'building' });
             }
           }
         }

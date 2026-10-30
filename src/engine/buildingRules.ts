@@ -104,6 +104,15 @@ export function canEnterBuilding(
   const building = campaign?.buildings?.find(b => b.id === buildingId);
   const archetype = building?.archetype;
 
+  // Employees can always enter their workplace (e.g. to work their shift)
+  const isEmployedHere = Boolean(
+    player.currentJobId &&
+    campaign?.jobs?.some(j => j.id === player.currentJobId && j.locationId === buildingId)
+  );
+  if (isEmployedHere) {
+    return { canEnter: true };
+  }
+
   // Home buildings: can only enter if the player actually lives here
   if (archetype === 'home' || buildingId === 'low_cost_housing' || buildingId === 'security_apartments') {
     if (!playerLivesAt(player, buildingId, campaign)) {

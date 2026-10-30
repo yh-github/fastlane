@@ -1276,5 +1276,83 @@ describe('BuildingModal Component', () => {
     );
     expect(reentryContainer.querySelector('.speech-bubble')).not.toBeInTheDocument();
   });
+
+  it('renders work console when employed at rent office on a non-rent week (Generated GUI)', () => {
+    const rentOfficeJobCampaign: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [
+        ...mockCampaign.jobs,
+        {
+          id: 'rent_groundskeeper',
+          title: 'Groundskeeper',
+          locationId: 'apartment_complex',
+          baseWage: 6,
+          requirements: { experience: 0, dependability: 0, degrees: [] }
+        } as any
+      ]
+    };
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'rent_groundskeeper',
+          currentWage: 6,
+          rentPaidUntilWeek: 4
+        }}
+        campaign={rentOfficeJobCampaign}
+        currentBuildingId="apartment_complex"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, guiStyle: 'generated', advancedWorkGUI: true, allowEmployedRentPayment: false }}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Closed message for paying rent is present
+    expect(screen.getByText(/The Rent Office is closed/i)).toBeInTheDocument();
+    // But docked bottom WORK button is present and clickable!
+    const workDock = screen.getByTestId('btn-work-dock');
+    expect(workDock).toBeInTheDocument();
+  });
+
+  it('renders AuthenticRentOffice with work button when employed at rent office on non-rent week (Authentic GUI)', () => {
+    const rentOfficeJobCampaign: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [
+        ...mockCampaign.jobs,
+        {
+          id: 'rent_groundskeeper',
+          title: 'Groundskeeper',
+          locationId: 'apartment_complex',
+          baseWage: 6,
+          requirements: { experience: 0, dependability: 0, degrees: [] }
+        } as any
+      ]
+    };
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'rent_groundskeeper',
+          currentWage: 6,
+          rentPaidUntilWeek: 4
+        }}
+        campaign={rentOfficeJobCampaign}
+        currentBuildingId="apartment_complex"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, guiStyle: 'authentic', allowEmployedRentPayment: false }}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('authentic-rent-office')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-rent-office-work')).toBeInTheDocument();
+  });
 });
+
 

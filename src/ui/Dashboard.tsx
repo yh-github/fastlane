@@ -283,7 +283,7 @@ export function Dashboard({
           >
             📊
           </button>
-          {onOpenGoals && (
+          {onOpenGoals && gameState?.rules?.guiStyle === 'authentic' && (
             <button
               id="btn-goals"
               data-testid="btn-goals"

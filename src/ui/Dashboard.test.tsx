@@ -382,4 +382,77 @@ describe('Dashboard Component', () => {
     fireEvent.click(nakedBadge);
     expect(onOpenInventory).toHaveBeenCalledWith('clothes');
   });
+
+  it('does NOT render authentic Goals button in Generated GUI mode', () => {
+    const onOpenGoals = vi.fn();
+    const mockPlayer = {
+      name: 'Player 1',
+      degrees: [],
+      money: 100,
+      happiness: 50,
+      relaxation: 25,
+      dependability: 20,
+      experience: 10,
+      goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      inventory: { selectedClothes: 'casual', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = {
+      rules: { guiStyle: 'generated' }
+    } as any;
+
+    render(
+      <Dashboard 
+        player={mockPlayer} 
+        gameState={mockGameState} 
+        turn={1} 
+        hoursPerTurn={50} 
+        onOpenInventory={() => {}}
+        onOpenGoals={onOpenGoals}
+        onOpenSettings={() => {}}
+        layout="side"
+      />
+    );
+
+    expect(screen.queryByTestId('btn-goals')).not.toBeInTheDocument();
+  });
+
+  it('renders authentic Goals button in Authentic GUI mode and calls onOpenGoals when clicked', () => {
+    const onOpenGoals = vi.fn();
+    const mockPlayer = {
+      name: 'Player 1',
+      degrees: [],
+      money: 100,
+      happiness: 50,
+      relaxation: 25,
+      dependability: 20,
+      experience: 10,
+      goalAllotment: { wealth: 25, happiness: 25, education: 25, career: 25 },
+      inventory: { selectedClothes: 'casual', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = {
+      rules: { guiStyle: 'authentic' }
+    } as any;
+
+    render(
+      <Dashboard 
+        player={mockPlayer} 
+        gameState={mockGameState} 
+        turn={1} 
+        hoursPerTurn={50} 
+        onOpenInventory={() => {}}
+        onOpenGoals={onOpenGoals}
+        onOpenSettings={() => {}}
+        layout="side"
+      />
+    );
+
+    const goalsBtn = screen.getByTestId('btn-goals');
+    expect(goalsBtn).toBeInTheDocument();
+    fireEvent.click(goalsBtn);
+    expect(onOpenGoals).toHaveBeenCalledTimes(1);
+  });
 });

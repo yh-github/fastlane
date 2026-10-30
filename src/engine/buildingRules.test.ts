@@ -84,9 +84,17 @@ describe('buildingRules', () => {
       expect(isRentOfficeOpen(player, 1, dummyCampaign)).toBe(true);
     });
 
-    it('is open when player works at the rent office', () => {
+    it('handles player working at rent office according to allowEmployedRentPayment rule', () => {
       const player = getDummyPlayer({ currentJobId: 'landlord_clerk', rentPaidUntilWeek: 8 });
-      expect(isRentOfficeOpen(player, 1, dummyCampaign)).toBe(true);
+      // When allowEmployedRentPayment is true, rent payment counter is open
+      expect(isRentOfficeOpen(player, 1, dummyCampaign, { allowEmployedRentPayment: true } as any)).toBe(true);
+
+      // When allowEmployedRentPayment is false (as in classic floppy/cdrom/advanced), rent payment counter is closed
+      expect(isRentOfficeOpen(player, 1, dummyCampaign, { allowEmployedRentPayment: false } as any)).toBe(false);
+
+      // But in both cases, the employee can enter the building to work!
+      expect(canEnterBuilding('apartment_complex', player, 1, dummyCampaign, { allowEmployedRentPayment: false } as any).canEnter).toBe(true);
+      expect(canEnterBuilding('apartment_complex', player, 1, dummyCampaign, { allowEmployedRentPayment: true } as any).canEnter).toBe(true);
     });
   });
 
@@ -134,7 +142,7 @@ describe('buildingRules', () => {
       expect(check.canEnter).toBe(true);
     });
 
-    it('prevents entering rent office when closed', () => {
+    it('prevents entering rent office when closed for non-employee', () => {
       const player = getDummyPlayer({ rentPaidUntilWeek: 4 });
       const check = canEnterBuilding('apartment_complex', player, 1, dummyCampaign);
       expect(check.canEnter).toBe(false);
@@ -145,6 +153,19 @@ describe('buildingRules', () => {
     it('allows entering rent office when open', () => {
       const player = getDummyPlayer({ rentPaidUntilWeek: 4 });
       const check = canEnterBuilding('apartment_complex', player, 4, dummyCampaign);
+      expect(check.canEnter).toBe(true);
+    });
+
+    it('always allows employees to enter their workplace even when rent office is closed to tenants', () => {
+      // Even with allowEmployedRentPayment: false and on a non-rent week (turn 1)
+      const rules = { allowEmployedRentPayment: false } as any;
+      const player = getDummyPlayer({ currentJobId: 'landlord_clerk', rentPaidUntilWeek: 8 });
+      
+      // Rent payment counter is closed:
+      expect(isRentOfficeOpen(player, 1, dummyCampaign, rules)).toBe(false);
+
+      // But employee can enter the building to work their shift:
+      const check = canEnterBuilding('apartment_complex', player, 1, dummyCampaign, rules);
       expect(check.canEnter).toBe(true);
     });
   });
