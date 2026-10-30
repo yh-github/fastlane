@@ -76,11 +76,8 @@ export const AuthenticFactory: React.FC<AuthenticFactoryProps> = ({
   const handleWorkShift = () => {
     if (!playerJobHere) return;
 
-    const shiftCost = campaign.config.timeRules.workSessionCost ?? 6;
-    const hasEnoughHours = (player.hoursRemaining ?? 0) >= shiftCost;
-
-    if (!hasEnoughHours) {
-      triggerSpeech('You do not have enough time left to work a full shift today.', 2800);
+    if ((player.hoursRemaining ?? 0) <= 0) {
+      triggerSpeech('You do not have enough time left to work today.', 2800);
       return;
     }
 
@@ -91,8 +88,9 @@ export const AuthenticFactory: React.FC<AuthenticFactoryProps> = ({
     addAnimTimer(() => setPunchCel(2), 240);
     addAnimTimer(() => setPunchCel(3), 360);
     addAnimTimer(() => {
-      setIsPunchingCard(false);
-      onAction({ type: 'work' });
+      // Keep punch card resting on the desk after working
+      setPunchCel(3);
+      onAction({ type: 'work', jobId: playerJobHere.id });
       triggerSpeech('A hard, honest day of industrial labor finished!', 3000);
     }, 550);
   };
@@ -122,7 +120,7 @@ export const AuthenticFactory: React.FC<AuthenticFactoryProps> = ({
         position: 'relative',
         imageRendering: 'pixelated',
         userSelect: 'none',
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: '#000000',
       }}
     >
@@ -186,7 +184,7 @@ export const AuthenticFactory: React.FC<AuthenticFactoryProps> = ({
             padding: '2px 4px',
             boxSizing: 'border-box',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             lineHeight: '7.5px',
             color: '#000',
             zIndex: 10,
@@ -224,7 +222,7 @@ export const AuthenticFactory: React.FC<AuthenticFactoryProps> = ({
         </div>
       )}
 
-      {/* Work & Done Action Buttons (view.250) */}
+      {/* Work & Done Action Buttons (view.250 at nsTop: 108 sticking 3px out of 112px window) */}
       {playerJobHere && (
         <img
           data-testid="btn-factory-work"
@@ -234,11 +232,11 @@ export const AuthenticFactory: React.FC<AuthenticFactoryProps> = ({
           style={{
             position: 'absolute',
             left: '75px',
-            top: '104px',
+            top: '108px',
             width: '30px',
             height: '7px',
             cursor: 'pointer',
-            zIndex: 5,
+            zIndex: 10,
           }}
           title="Work shift (W)"
         />
@@ -252,11 +250,11 @@ export const AuthenticFactory: React.FC<AuthenticFactoryProps> = ({
         style={{
           position: 'absolute',
           left: '143px',
-          top: '104px',
+          top: '108px',
           width: '30px',
           height: '7px',
           cursor: 'pointer',
-          zIndex: 5,
+          zIndex: 10,
         }}
         title="Done / Exit (Esc / D)"
       />

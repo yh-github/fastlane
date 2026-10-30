@@ -1,12 +1,18 @@
 import { useTranslation } from 'react-i18next';
-import type { GameEvent } from '../engine/gameState';
+import type { GameEvent, GameRules } from '../engine/gameState';
+import { AuthenticNewspaperModal } from './authentic/AuthenticNewspaperModal';
 
 interface NewspaperModalProps {
   headline: GameEvent | null;
   onClose: () => void;
+  rules?: GameRules;
 }
 
-export function NewspaperModal({ headline, onClose }: NewspaperModalProps) {
+export function NewspaperModal({ headline, onClose, rules }: NewspaperModalProps) {
+  if (rules?.guiStyle === 'authentic') {
+    return <AuthenticNewspaperModal headline={headline} onClose={onClose} rules={rules} />;
+  }
+
   const { t } = useTranslation();
   if (!headline) return null;
 

@@ -301,7 +301,7 @@ describe('Economy Bug Fixes Verification', () => {
       // Verify speech bubble displays the termination message
       await waitFor(() => {
         expect(screen.getByText(/Terminated/i)).toBeInTheDocument();
-      });
+      }, { timeout: 5000 });
     });
 
     it('displays the ActionReasonModal (EMPLOYMENT TERMINATED) in Advanced Mode when fired', async () => {

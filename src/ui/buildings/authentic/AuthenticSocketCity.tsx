@@ -111,11 +111,8 @@ export const AuthenticSocketCity: React.FC<AuthenticSocketCityProps> = ({
   const handleWorkShift = () => {
     if (!playerJobHere) return;
 
-    const shiftCost = campaign.config.timeRules.workSessionCost ?? 6;
-    const hasEnoughHours = (player.hoursRemaining ?? 0) >= shiftCost;
-
-    if (!hasEnoughHours) {
-      triggerSpeech('You do not have enough time left to work a full shift today.', 2800);
+    if ((player.hoursRemaining ?? 0) <= 0) {
+      triggerSpeech('You do not have enough time left to work today.', 2800);
       return;
     }
 
@@ -126,8 +123,9 @@ export const AuthenticSocketCity: React.FC<AuthenticSocketCityProps> = ({
     addAnimTimer(() => setPunchCel(2), 240);
     addAnimTimer(() => setPunchCel(3), 360);
     addAnimTimer(() => {
-      setIsPunchingCard(false);
-      onAction({ type: 'work' });
+      // Keep punch card in the window after work
+      setPunchCel(3);
+      onAction({ type: 'work', jobId: playerJobHere.id });
       triggerSpeech('Another high-voltage shift at Socket City in the books!', 3000);
     }, 550);
   };
@@ -163,7 +161,7 @@ export const AuthenticSocketCity: React.FC<AuthenticSocketCityProps> = ({
         position: 'relative',
         imageRendering: 'pixelated',
         userSelect: 'none',
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: '#000000',
       }}
     >
@@ -227,7 +225,7 @@ export const AuthenticSocketCity: React.FC<AuthenticSocketCityProps> = ({
             padding: '2px 4px',
             boxSizing: 'border-box',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             lineHeight: '7.5px',
             color: '#000',
             zIndex: 10,
@@ -285,7 +283,7 @@ export const AuthenticSocketCity: React.FC<AuthenticSocketCityProps> = ({
               top: `${item.top}px`,
               cursor: canAfford ? 'pointer' : 'default',
               fontFamily: 'monospace, "Courier New"',
-              fontSize: '6.5px',
+              fontSize: '5px',
               fontWeight: 'bold',
               lineHeight: '7px',
               color: isHovered ? '#ffffff' : canAfford ? '#000000' : '#888888',
@@ -301,7 +299,7 @@ export const AuthenticSocketCity: React.FC<AuthenticSocketCityProps> = ({
         );
       })}
 
-      {/* Work & Done Action Buttons (view.250) */}
+      {/* Work & Done Action Buttons (view.250 at nsTop: 108 sticking 3px out of 112px window) */}
       {playerJobHere && (
         <img
           data-testid="btn-socket-city-work"
@@ -311,11 +309,11 @@ export const AuthenticSocketCity: React.FC<AuthenticSocketCityProps> = ({
           style={{
             position: 'absolute',
             left: '75px',
-            top: '104px',
+            top: '108px',
             width: '30px',
             height: '7px',
             cursor: 'pointer',
-            zIndex: 5,
+            zIndex: 10,
           }}
           title="Work shift (W)"
         />
@@ -329,11 +327,11 @@ export const AuthenticSocketCity: React.FC<AuthenticSocketCityProps> = ({
         style={{
           position: 'absolute',
           left: '143px',
-          top: '104px',
+          top: '108px',
           width: '30px',
           height: '7px',
           cursor: 'pointer',
-          zIndex: 5,
+          zIndex: 10,
         }}
         title="Done / Exit (Esc / D)"
       />

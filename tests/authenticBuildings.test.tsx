@@ -309,9 +309,10 @@ describe('BuildingModal Authentic Integration for All Locations', () => {
 
   for (const { id, testId } of buildingTestCases) {
     it(`mounts authentic replica ${testId} when opening ${id} in authentic guiStyle`, () => {
+      const playerForTest = id === 'apartment_complex' ? { ...basePlayer, rentPaidUntilWeek: 1 } : basePlayer;
       render(
         <BuildingModal
-          player={basePlayer}
+          player={playerForTest}
           campaign={mockCampaign}
           currentBuildingId={id}
           turn={1}
@@ -324,4 +325,45 @@ describe('BuildingModal Authentic Integration for All Locations', () => {
       expect(screen.getByTestId(testId)).toBeInTheDocument();
     });
   }
+
+  it('shows closed panel and does not mount authentic-rent-office when rent office is closed', () => {
+    render(
+      <BuildingModal
+        player={{ ...basePlayer, rentPaidUntilWeek: 4 }}
+        campaign={mockCampaign}
+        currentBuildingId="apartment_complex"
+        turn={1}
+        economicIndex={0}
+        rules={authenticRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.queryByTestId('authentic-rent-office')).not.toBeInTheDocument();
+    expect(screen.getByTestId('rent-office-closed-panel')).toBeInTheDocument();
+  });
+
+  it('shows dontLiveHere panel and does not mount authentic-home when visiting security_apartments while living in low_cost', () => {
+    const campaignWithSecurity = {
+      ...mockCampaign,
+      buildings: [
+        ...mockCampaign.buildings,
+        { id: 'security_apartments', name: 'Security Apartments', archetype: 'home', spritePath: '' }
+      ]
+    };
+    render(
+      <BuildingModal
+        player={{ ...basePlayer, currentHousingId: 'low_cost' }}
+        campaign={campaignWithSecurity}
+        currentBuildingId="security_apartments"
+        turn={1}
+        economicIndex={0}
+        rules={authenticRules}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.queryByTestId('authentic-home')).not.toBeInTheDocument();
+    expect(screen.getByTestId('home-dont-live-here-panel')).toBeInTheDocument();
+  });
 });

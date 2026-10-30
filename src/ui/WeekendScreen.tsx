@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { WeekendCardView } from './WeekendCardView';
 import { StatModifierPills } from './StatModifierPills';
 import { WeekendBreakdownModal } from './WeekendBreakdownModal';
+import { AuthenticWeekendScreen } from './authentic/AuthenticWeekendScreen';
 
 interface WeekendScreenProps {
   player: PlayerState;
@@ -14,6 +15,18 @@ interface WeekendScreenProps {
 }
 
 export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }: WeekendScreenProps) {
+  if (rules?.guiStyle === 'authentic') {
+    return (
+      <AuthenticWeekendScreen
+        player={player}
+        turn={turn}
+        onStartWeek={onStartWeek}
+        onSelectCard={onSelectCard}
+        rules={rules}
+      />
+    );
+  }
+
   const { t } = useTranslation();
   const offeredCards = player.offeredWeekendCards || [];
   const isSelectionMode = offeredCards.length > 0 && !player.weekendResult;

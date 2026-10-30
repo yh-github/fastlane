@@ -23,6 +23,7 @@ import { Random } from '../utils/rng'
 import { calcWealthProgress, calcEducationProgress, calcCareerProgress } from './statMath'
 import { calcLiquidAssets } from './economyEngine'
 import { spendHours } from './timeManager'
+import { canEnterBuilding } from './buildingRules'
 import { calcRequiredLessons } from './educationEngine'
 import { processStreetRobbery } from './eventEngine'
 
@@ -116,9 +117,22 @@ export function processControllerAction(
 
   switch (action.type) {
     case 'enter_building': {
+      const currentBuilding = campaign.map?.nodes?.find(n => n.id === player.position)?.buildingId
+      if (currentBuilding) {
+        const check = canEnterBuilding(currentBuilding, player, state.turn, campaign, state.rules)
+        if (!check.canEnter) {
+          return {
+            state,
+            insideBuilding: false,
+            turnAdvanced: false,
+            actionLog: check.reason === 'rent_office_closed'
+              ? { key: 'rentOffice.closed', params: { week: check.nextOpenWeek ?? 4 } }
+              : { key: 'buildingModal.dontLiveHere' }
+          }
+        }
+      }
       const entryCost = campaign.config.timeRules.buildingEntryCost || 2
       let updatedPlayer = spendHours(player, entryCost)
-      const currentBuilding = campaign.map?.nodes?.find(n => n.id === player.position)?.buildingId
       if (updatedPlayer.turnFlags && currentBuilding) {
         updatedPlayer = {
           ...updatedPlayer,

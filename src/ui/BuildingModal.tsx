@@ -32,6 +32,7 @@ import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 import { useDraggableModal } from './hooks/useDraggableModal';
 import { calcEffectiveRobberyChance, formatHours } from '../engine/statMath';
+import { isRentOfficeOpen as isRentOfficeOpenRule, getNextRentOfficeOpenWeek, playerLivesAt } from '../engine/buildingRules';
 
 interface BuildingModalProps {
   player: PlayerState | null;
@@ -157,10 +158,7 @@ export function BuildingModal({
       setClerkMessage('');
       return;
     }
-    const isWeek4 = turn % 4 === 0;
-    const rentDue = player?.rentPaidUntilWeek !== undefined && player.rentPaidUntilWeek <= turn;
-    const hasJobAtRentOffice = !!(player?.currentJobId && campaign?.jobs.some(j => j.id === player.currentJobId && j.locationId === 'apartment_complex'));
-    const isRentOfficeOpen = isWeek4 || rentDue || !!player?.turnFlags?.rentPaidThisTurn || hasJobAtRentOffice;
+    const isRentOfficeOpen = player ? isRentOfficeOpenRule(player, turn, campaign, rules) : false;
     const shouldShow = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
 
     if (shouldShow) {
@@ -276,8 +274,7 @@ export function BuildingModal({
   };
 
   const housing = campaign.housing.find(h => h.id === player.currentHousingId);
-  const homeNode = campaign.map.nodes.find(n => n.id === housing?.homeNodeId);
-  const livesHere = homeNode?.buildingId === building.id;
+  const livesHere = playerLivesAt(player, building.id, campaign);
   const isPenthouse = player.currentHousingId === 'penthouse';
   const buildingTitle = (building.archetype === 'home' && livesHere)
     ? (housing
@@ -285,9 +282,8 @@ export function BuildingModal({
         : (isPenthouse ? t('housing.penthouse', { defaultValue: 'Penthouse Suite' }) : t(`building.${building.id}`, { defaultValue: building.name })))
     : t(`building.${building.id}`, { defaultValue: building.name });
 
-  const isWeek4 = turn % 4 === 0;
-  const rentDue = player.rentPaidUntilWeek <= turn + 1;
-  const isRentOfficeOpen = isWeek4 || rentDue || player.turnFlags.rentPaidThisTurn || !!playerJobHere;
+  const isRentOfficeOpen = isRentOfficeOpenRule(player, turn, campaign, rules);
+  const nextOpenWeek = getNextRentOfficeOpenWeek(player, turn);
   const isDiscountAndPawn = building.archetype === 'discount_and_pawn';
   const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen || !!clerkMessage);
 
@@ -673,6 +669,8 @@ export function BuildingModal({
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
+          turn={turn}
+          gameSeed={gameSeed}
         />
       ) : isAuthenticReplica && building.id === 'pawn_shop' ? (
         <AuthenticPawnShop
@@ -682,6 +680,7 @@ export function BuildingModal({
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
+          pawnShopItemsForSale={pawnShopItemsForSale}
         />
       ) : isAuthenticReplica && building.id === 'university' ? (
         <AuthenticUniversity
@@ -698,6 +697,7 @@ export function BuildingModal({
           onAction={handleActionIntercept}
           onClose={onClose}
           campaign={campaign}
+          economicIndex={economicIndex}
           rules={rules}
         />
       ) : isAuthenticReplica && building.id === 'factory' ? (
@@ -709,20 +709,44 @@ export function BuildingModal({
           rules={rules}
         />
       ) : isAuthenticReplica && building.id === 'apartment_complex' ? (
-        <AuthenticRentOffice
-          player={player}
-          onAction={handleActionIntercept}
-          onClose={onClose}
-          campaign={campaign}
-          rules={rules}
-        />
+        isRentOfficeOpen ? (
+          <AuthenticRentOffice
+            player={player}
+            onAction={handleActionIntercept}
+            onClose={onClose}
+            campaign={campaign}
+            rules={rules}
+            turn={turn}
+            economicIndex={economicIndex}
+          />
+        ) : (
+          <div className="interaction-panel" data-testid="rent-office-closed-panel">
+            <h3>{t(`building.${building.id}`, { defaultValue: building.name })}</h3>
+            <p style={{ fontSize: '12px' }}>
+              {t('rentOffice.closed', {
+                week: nextOpenWeek,
+                defaultValue: `The Rent Office is closed. Come back during Week ${nextOpenWeek} to pay your rent or move to a new apartment.`
+              })}
+            </p>
+            <button onClick={onClose} style={{ marginTop: '12px' }}>{t('common.close', { defaultValue: 'Close' })}</button>
+          </div>
+        )
       ) : isAuthenticReplica && (building.id === 'low_cost_housing' || building.id === 'security_apartments' || building.archetype === 'home') ? (
-        <AuthenticHome
-          player={player}
-          onAction={handleActionIntercept}
-          onClose={onClose}
-          campaign={campaign}
-        />
+        livesHere ? (
+          <AuthenticHome
+            player={player}
+            onAction={handleActionIntercept}
+            onClose={onClose}
+            campaign={campaign}
+            building={building}
+          />
+        ) : (
+          <div className="interaction-panel" data-testid="home-dont-live-here-panel">
+            <h3>{t(`building.${building.id}`, { defaultValue: building.name })}</h3>
+            <p style={{ fontSize: '12px' }}>{t('buildingModal.dontLiveHere', "You don't live here.")}</p>
+            <button onClick={onClose} style={{ marginTop: '12px' }}>{t('common.close', { defaultValue: 'Close' })}</button>
+          </div>
+        )
       ) : (
         <>
           {/* Tab Ears protruding above the modal header */}
@@ -955,8 +979,9 @@ export function BuildingModal({
       {/* Non-scrollable WORK button on bottom border for Basic mode */}
       {playerJobHere && !isAdvancedWorkGUI && (() => {
         const shiftCost = campaign?.config?.timeRules?.workSessionCost ?? 6;
-        const isWorkDisabled = hasPendingMiniGame || (rules?.allowPartialHours ? player.hoursRemaining <= 0 : player.hoursRemaining < shiftCost);
-        const actualHoursWorked = rules?.allowPartialHours && player.hoursRemaining < shiftCost ? player.hoursRemaining : shiftCost;
+        const allowPartial = rules?.allowPartialHours ?? true;
+        const isWorkDisabled = hasPendingMiniGame || (allowPartial ? player.hoursRemaining <= 0 : player.hoursRemaining < shiftCost);
+        const actualHoursWorked = allowPartial && player.hoursRemaining < shiftCost ? player.hoursRemaining : shiftCost;
         const wageEarned = Math.floor((player.currentWage || playerJobHere.baseWage) * actualHoursWorked);
 
         return (

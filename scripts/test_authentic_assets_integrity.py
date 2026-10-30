@@ -347,6 +347,31 @@ def test_all_remaining_authentic_buildings():
 
     print("  -> All 10 remaining authentic building locations verified 100.0% authentic.")
 
+def test_authentic_university():
+    print("Testing Authentic University Assets (Room 207)...")
+    base = "public/assets/authentic/buildings/university"
+    bg = Image.open(f"{base}/bg.png")
+    assert bg.size == (183, 112), f"bg.png size mismatch: {bg.size}"
+
+    # 11 Course Books (86x9)
+    for i in range(11):
+        b_im = Image.open(f"{base}/books/book_{i}.png")
+        assert b_im.size == (86, 9), f"books/book_{i}.png size mismatch: {b_im.size}"
+
+    # 4 Shelves (111x63)
+    for i in range(4):
+        s_im = Image.open(f"{base}/shelves/shelf_{i}.png")
+        assert s_im.size == (111, 63), f"shelves/shelf_{i}.png size mismatch: {s_im.size}"
+
+    # Buttons: Done, Work, Enroll
+    done = Image.open(f"{base}/buttons/done.png")
+    work = Image.open(f"{base}/buttons/work.png")
+    enroll = Image.open(f"{base}/buttons/enroll.png")
+    assert done.size == (30, 7), f"buttons/done.png size mismatch: {done.size}"
+    assert work.size == (30, 7), f"buttons/work.png size mismatch: {work.size}"
+    assert enroll.size == (38, 7), f"buttons/enroll.png size mismatch: {enroll.size}"
+    print("  -> University assets, 11 course books, 4 shelves, and Enroll button verified 100.0% authentic.")
+
 if __name__ == "__main__":
     try:
         test_marbles()
@@ -357,6 +382,7 @@ if __name__ == "__main__":
         test_authentic_monolith_burgers()
         test_authentic_bank()
         test_authentic_broker()
+        test_authentic_university()
         test_all_remaining_authentic_buildings()
         print("ALL AUTHENTIC ASSET INTEGRITY TESTS PASSED SUCCESSFULLY!")
     except AssertionError as e:

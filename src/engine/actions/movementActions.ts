@@ -5,6 +5,7 @@ import { requireConfig } from '../rules';
 import { spendHours } from '../timeManager';
 import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, calculateTravelHours } from '../../graphics/pathfinding';
 import { processStreetRobbery } from '../eventEngine';
+import { canEnterBuilding } from '../buildingRules';
 
 export function handleMoveAction(
   player: PlayerState,
@@ -19,11 +20,14 @@ export function handleMoveAction(
   if (nextPlayer.position === nodeId) {
     const destNode = context.campaign.map?.nodes?.find(n => n.id === nodeId);
     if (destNode && destNode.buildingId && context.rules?.reenterCurrentLocationCost) {
-      const buildingEntryCost = requireConfig(context.campaign.config.timeRules?.buildingEntryCost, 'timeRules.buildingEntryCost');
-      if (nextPlayer.hoursRemaining > 0) {
-        nextPlayer = spendHours(nextPlayer, buildingEntryCost);
-      } else {
-        actionLog = { key: 'action.error.notEnoughTime' };
+      const canEnter = canEnterBuilding(destNode.buildingId, nextPlayer, context.turn, context.campaign, context.rules).canEnter;
+      if (canEnter) {
+        const buildingEntryCost = requireConfig(context.campaign.config.timeRules?.buildingEntryCost, 'timeRules.buildingEntryCost');
+        if (nextPlayer.hoursRemaining > 0) {
+          nextPlayer = spendHours(nextPlayer, buildingEntryCost);
+        } else {
+          actionLog = { key: 'action.error.notEnoughTime' };
+        }
       }
     }
     return { nextPlayer, actionLog };
@@ -55,16 +59,20 @@ export function handleMoveAction(
     let requiredHours = walkHours;
     
     const destNode = context.campaign.map?.nodes?.find(n => n.id === nodeId);
+    let canEnter = false;
     if (destNode && destNode.buildingId) {
-      const buildingEntryCost = requireConfig(context.campaign.config.timeRules?.buildingEntryCost, 'timeRules.buildingEntryCost');
-      requiredHours += buildingEntryCost;
+      canEnter = canEnterBuilding(destNode.buildingId, nextPlayer, context.turn, context.campaign, context.rules).canEnter;
+      if (canEnter) {
+        const buildingEntryCost = requireConfig(context.campaign.config.timeRules?.buildingEntryCost, 'timeRules.buildingEntryCost');
+        requiredHours += buildingEntryCost;
+      }
     }
 
     if (nextPlayer.hoursRemaining > 0) {
       nextPlayer.position = nodeId;
       nextPlayer = spendHours(nextPlayer, requiredHours);
       if (nextPlayer.turnFlags) {
-        if (destNode?.buildingId) {
+        if (destNode?.buildingId && canEnter) {
           nextPlayer.turnFlags.enteredBuildingThisTurn = destNode.buildingId;
         } else {
           delete nextPlayer.turnFlags.enteredBuildingThisTurn;

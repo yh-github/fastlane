@@ -10,6 +10,7 @@ import {
   calcRaiseThreshold
 } from '../engine/statMath';
 import { getClothesSwitchingRule } from '../engine/rules';
+import { AuthenticInventoryModal } from './authentic/AuthenticInventoryModal';
 
 interface InventoryModalProps {
   player: PlayerState;
@@ -18,11 +19,32 @@ interface InventoryModalProps {
   onAction?: (payload: any) => void;
   onClose: () => void;
   rules?: import('../engine/gameState').GameRules;
+  onOpenGoals?: () => void;
+  onOpenDiploma?: (degreeId: string, degreeName: string) => void;
+  onOpenLottery?: (prizeAmount: number) => void;
   onOpenLog?: () => void;
   scrollToSection?: string | null;
 }
 
-export function InventoryModal({ player, campaign, turn, onAction, onClose, rules, onOpenLog, scrollToSection }: InventoryModalProps) {
+export function InventoryModal({ player, campaign, turn, onAction, onClose, rules, onOpenGoals, onOpenDiploma, onOpenLottery, onOpenLog, scrollToSection }: InventoryModalProps) {
+  if (rules?.guiStyle === 'authentic') {
+    return (
+      <AuthenticInventoryModal
+        player={player}
+        campaign={campaign}
+        turn={turn}
+        onAction={onAction}
+        onClose={onClose}
+        rules={rules}
+        onOpenGoals={onOpenGoals}
+        onOpenDiploma={onOpenDiploma}
+        onOpenLottery={onOpenLottery}
+        onOpenLog={onOpenLog}
+        scrollToSection={scrollToSection}
+      />
+    );
+  }
+
   const { t } = useTranslation();
   const { inventory } = player;
 
@@ -54,11 +76,11 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
   const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
   const raiseThreshold = currentJob ? calcRaiseThreshold(jobReqDep, player.raisesAtCurrentJob || 0, player.innovationCount || 0) : null;
 
-  const isCurved = rules?.guiStyle === 'authentic' || rules?.authenticCurvedPaths !== false;
+  const isCurved = rules?.authenticCurvedPaths !== false;
 
   return (
     <div 
-      className={`building-modal ${isCurved ? 'building-modal--curved' : 'building-modal--schematic'}${rules?.guiStyle === 'authentic' ? ' building-modal--authentic' : ''}`}
+      className={`building-modal ${isCurved ? 'building-modal--curved' : 'building-modal--schematic'}`}
       style={{ zIndex: 75, display: 'flex', flexDirection: 'column' }}
       data-testid="inventory-modal"
     >

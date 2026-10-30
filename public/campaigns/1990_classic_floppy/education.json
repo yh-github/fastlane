@@ -1,14 +1,5 @@
 [
   {
-    "id": "junior_college",
-    "name": "Junior College",
-    "tags": ["management"],
-    "prerequisites": [],
-    "baseTuitionFee": 50,
-    "lessonsRequired": 10,
-    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5, "maxMgmtBoost": 2.5 }
-  },
-  {
     "id": "trade_school",
     "name": "Trade School",
     "tags": ["technical"],
@@ -16,6 +7,15 @@
     "baseTuitionFee": 50,
     "lessonsRequired": 10,
     "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5, "maxTechBoost": 2.5 }
+  },
+  {
+    "id": "junior_college",
+    "name": "Junior College",
+    "tags": ["management"],
+    "prerequisites": [],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5, "maxMgmtBoost": 2.5 }
   },
   {
     "id": "business_admin",

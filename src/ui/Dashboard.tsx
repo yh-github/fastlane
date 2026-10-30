@@ -31,6 +31,7 @@ export interface DashboardProps {
   activeLogFilter?: GoalFilter | null;
   onSelectLogFilter?: (filter: GoalFilter | null) => void;
   onOpenInventory: (section?: string) => void;
+  onOpenGoals?: () => void;
   onOpenSettings: () => void;
   layout?: HudLayoutMode;
   foldState?: HudFoldState;
@@ -128,6 +129,7 @@ export function Dashboard({
   activeLogFilter,
   onSelectLogFilter,
   onOpenInventory,
+  onOpenGoals,
   onOpenSettings,
   layout = gameState?.rules?.hudLayout || 'top',
   foldState = 'full',
@@ -281,6 +283,18 @@ export function Dashboard({
           >
             📊
           </button>
+          {onOpenGoals && (
+            <button
+              id="btn-goals"
+              data-testid="btn-goals"
+              onClick={onOpenGoals}
+              className="side-hud__btn side-hud__btn--goals"
+              title={t('dashboard.goals', { defaultValue: 'Goals' })}
+              aria-label={t('dashboard.goals', { defaultValue: 'Goals' })}
+            >
+              🏆
+            </button>
+          )}
           <button
             id="btn-settings"
             onClick={onOpenSettings}
@@ -404,6 +418,20 @@ export function Dashboard({
         >
           📊 {t('dashboard.status', { defaultValue: 'Status' })}
         </button>
+        {onOpenGoals && gameState?.rules?.guiStyle === 'authentic' && (
+          <button 
+            id="btn-goals"
+            data-testid="btn-goals"
+            onClick={onOpenGoals}
+            style={{
+              padding: '8px 12px', marginRight: '10px',
+              backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '4px',
+              fontWeight: 'bold', cursor: 'pointer'
+            }}
+          >
+            🏆 {t('dashboard.goals', { defaultValue: 'Goals' })}
+          </button>
+        )}
         <button 
           id="btn-settings"
           onClick={onOpenSettings}

@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
+import { calcEconomyPrice } from '../../../engine/economyEngine';
 import { RENT_OFFICE_DIALOGUE } from './rentOfficeData';
 
 interface AuthenticRentOfficeProps {
   player: PlayerState;
-  onAction: (action: any) => void;
+  onAction: (action: any) => Promise<any> | void;
   onClose: () => void;
   campaign: CampaignBundle;
   rules?: GameRules;
+  turn?: number;
+  economicIndex?: number;
 }
 
 export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
@@ -17,6 +20,8 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
   onClose,
   campaign,
   rules: _rules,
+  turn: _turn,
+  economicIndex = 0,
 }) => {
   const isCdrom = campaign.config.name === '1990_classic_cdrom';
   const talkerFolder = isCdrom ? 'talker_cdrom' : 'talker_floppy';
@@ -69,30 +74,46 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
     };
   }, []);
 
-  const currentHousing = campaign.housing.find(h => h.id === player.currentHousingId);
-  const rentCost = (currentHousing?.baseRent ?? 75) * 4;
+  const rentCost = player.rentDebt > 0 ? player.rentDebt : player.currentRentPrice;
+  const isDebt = player.rentDebt > 0;
 
-  const handlePayRent = () => {
-    if (player.money < rentCost) {
+  const handlePayRent = async () => {
+    const res: any = await onAction({ type: 'rent_transaction', amount: rentCost });
+    const log = Array.isArray(res) ? res[0] : res;
+    if (log?.key === 'action.error.notEnoughMoneyRent') {
       triggerSpeech(RENT_OFFICE_DIALOGUE.notEnoughCash, 2800);
       return;
     }
-    onAction({ type: 'pay_rent' });
     triggerSpeech(RENT_OFFICE_DIALOGUE.paidThankYou, 3200);
   };
 
-  const handleMoreTime = () => {
-    // If player has good standing or random check
-    const granted = Math.random() > 0.4;
-    triggerSpeech(granted ? RENT_OFFICE_DIALOGUE.extensionYes : RENT_OFFICE_DIALOGUE.extensionNo, 3200);
+  const handleMoreTime = async () => {
+    const res: any = await onAction({ type: 'ask_rent_extension' });
+    const log = Array.isArray(res) ? res[0] : res;
+    if (log?.key === 'action.rent.extensionApproved' || log?.key === 'action.rent.extensionGranted') {
+      triggerSpeech(RENT_OFFICE_DIALOGUE.extensionYes, 3200);
+    } else if (log?.key === 'rentOffice.notNeeded') {
+      triggerSpeech("You don't need an extension.", 3200);
+    } else if (log?.key === 'action.rent.alreadyGranted') {
+      triggerSpeech("I already gave you an extension! You must pay by next week.", 3200);
+    } else {
+      triggerSpeech(RENT_OFFICE_DIALOGUE.extensionNo, 3200);
+    }
   };
 
-  const handleRentApartment = (housingId: string) => {
+  const handleRentApartment = async (housingId: string) => {
     if (player.currentHousingId === housingId) {
       triggerSpeech('You already live in that building!', 2500);
       return;
     }
-    onAction({ type: 'change_apartment', housingId });
+    const targetHousing = campaign.housing.find(h => h.id === housingId);
+    const moveCost = targetHousing ? calcEconomyPrice(targetHousing.baseRent, economicIndex) : 325;
+    const res: any = await onAction({ type: 'move_apartment', housingId, cost: moveCost });
+    const log = Array.isArray(res) ? res[0] : res;
+    if (log?.key === 'action.error.notEnoughMoneyMove') {
+      triggerSpeech(RENT_OFFICE_DIALOGUE.notEnoughCash, 2800);
+      return;
+    }
     const banter = RENT_OFFICE_DIALOGUE.clerkBanter[
       Math.floor(Math.random() * RENT_OFFICE_DIALOGUE.clerkBanter.length)
     ];
@@ -106,11 +127,8 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
   const handleWorkShift = () => {
     if (!playerJobHere) return;
 
-    const shiftCost = campaign.config.timeRules.workSessionCost ?? 6;
-    const hasEnoughHours = (player.hoursRemaining ?? 0) >= shiftCost;
-
-    if (!hasEnoughHours) {
-      triggerSpeech('You do not have enough time left to work a full shift today.', 2800);
+    if ((player.hoursRemaining ?? 0) <= 0) {
+      triggerSpeech('You do not have enough time left to work today.', 2800);
       return;
     }
 
@@ -121,8 +139,9 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
     addAnimTimer(() => setPunchCel(2), 240);
     addAnimTimer(() => setPunchCel(3), 360);
     addAnimTimer(() => {
-      setIsPunchingCard(false);
-      onAction({ type: 'work' });
+      // Keep punch card in the window after work
+      setPunchCel(3);
+      onAction({ type: 'work', jobId: playerJobHere.id });
       triggerSpeech('Shift ended. Time to count the rent checks!', 3000);
     }, 550);
   };
@@ -164,7 +183,7 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
         position: 'relative',
         imageRendering: 'pixelated',
         userSelect: 'none',
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: '#000000',
       }}
     >
@@ -228,7 +247,7 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
             padding: '2px 4px',
             boxSizing: 'border-box',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             lineHeight: '7.5px',
             color: '#000',
             zIndex: 10,
@@ -274,14 +293,14 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
           style={{
             cursor: 'pointer',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             fontWeight: 'bold',
             color: '#000',
             marginBottom: '4px',
           }}
-          title={`Pay 1 month rent ($${rentCost}) - Press 1`}
+          title={isDebt ? `Pay Rent Arrears ($${rentCost}) - Press 1` : `Pay 1 month rent ($${rentCost}) - Press 1`}
         >
-          1. Pay Rent (1 Month: ${rentCost})
+          1. {isDebt ? `Pay Rent Arrears ($${rentCost})` : `Pay Rent (1 Month: $${rentCost})`}
         </div>
 
         <div
@@ -290,7 +309,7 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
           style={{
             cursor: 'pointer',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             fontWeight: 'bold',
             color: '#000',
             marginBottom: '4px',
@@ -306,7 +325,7 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
           style={{
             cursor: 'pointer',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             fontWeight: 'bold',
             color: '#000',
             marginBottom: '4px',
@@ -322,7 +341,7 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
           style={{
             cursor: 'pointer',
             fontFamily: 'monospace, "Courier New"',
-            fontSize: '6.5px',
+            fontSize: '5px',
             fontWeight: 'bold',
             color: '#000',
           }}
@@ -332,7 +351,7 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
         </div>
       </div>
 
-      {/* Work & Done Action Buttons (view.250) */}
+      {/* Work & Done Action Buttons (view.250 at nsTop: 108 sticking 3px out of 112px window) */}
       {playerJobHere && (
         <img
           data-testid="btn-rent-office-work"
@@ -342,11 +361,11 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
           style={{
             position: 'absolute',
             left: '75px',
-            top: '104px',
+            top: '108px',
             width: '30px',
             height: '7px',
             cursor: 'pointer',
-            zIndex: 5,
+            zIndex: 10,
           }}
           title="Work shift (W)"
         />
@@ -360,11 +379,11 @@ export const AuthenticRentOffice: React.FC<AuthenticRentOfficeProps> = ({
         style={{
           position: 'absolute',
           left: '143px',
-          top: '104px',
+          top: '108px',
           width: '30px',
           height: '7px',
           cursor: 'pointer',
-          zIndex: 5,
+          zIndex: 10,
         }}
         title="Done / Exit (Esc / D)"
       />

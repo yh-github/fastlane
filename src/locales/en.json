@@ -290,7 +290,7 @@
       "due": "Rent is due: ${{amount}} to pay, ${{debt}} owed.",
       "due_nodenied": "Rent is due: ${{amount}} to pay, ${{debt}} owed (Rent extensions no longer available due to past rent debt).",
       "evicted": "You were evicted!",
-      "extensionExpired": "Rent extension expired.",
+      "extensionExpired": "Rent extension: Your extra week has arrived! Visit the Rent Office this week to pay your rent before arrears are charged.",
       "raised": "Economic surge: Due to poor standing, your landlord increased rent to ${{newRent}} (was ${{oldRent}}).",
       "warning": "Warning: Your rent debt is accumulating! If debt exceeds 2 months' rent, you will be evicted."
     },

@@ -12,6 +12,7 @@ import { simulateActionVisuals } from '../engine/aiTranslator';
 import { gameReducer, type GameAction } from '../engine/gameReducer';
 import type { GameEvent } from '../engine/gameState';
 import { Random } from '../utils/rng';
+import { canEnterBuilding } from '../engine/buildingRules';
 import type { ReplayData, EngineDecision, ReplayContext } from '../engine/replayTypes';
 import { calculateStatDiffsAndAnimate, type AppStatus, type LogEntry } from './gameEngine';
 import type { ActiveModal } from '../types/modal';
@@ -348,6 +349,15 @@ export function useGameEngine(
       if (player.position === targetNodeId) {
         const destNode = campaign.map.nodes.find(n => n.id === targetNodeId);
         if (!activePlayer.isAi && campaign!.buildings.some(b => b.id === destNode?.buildingId)) {
+          const entryCheck = canEnterBuilding(destNode!.buildingId!, player, currentState.turn, campaign, currentState.rules);
+          if (!entryCheck.canEnter) {
+            if (entryCheck.reason === 'rent_office_closed') {
+              addLog({ key: 'rentOffice.closed', params: { week: entryCheck.nextOpenWeek ?? 4 } }, undefined, player.id);
+            } else if (entryCheck.reason === 'dont_live_here') {
+              addLog({ key: 'buildingModal.dontLiveHere' }, undefined, player.id);
+            }
+            return;
+          }
           if (currentState.rules.reenterCurrentLocationCost) {
             const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
             player = spendHours(player, entryCost);
@@ -524,15 +534,26 @@ export function useGameEngine(
           addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
           await endTurnSequence(updatedPlayers);
         } else {
-          // If we reached the target destination and it has a building, apply entry cost
+          // If we reached the target destination and it has a building, apply entry cost if accessible
           const destNode = campaign.map.nodes.find(n => n.id === player.position);
+          let canEnter = false;
           if (destNode && destNode.buildingId && player.position === targetNodeId) {
-            const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
-            player = spendHours(player, entryCost);
-            if (player.turnFlags) {
-              player.turnFlags = { ...player.turnFlags, enteredBuildingThisTurn: destNode.buildingId };
+            const entryCheck = canEnterBuilding(destNode.buildingId, player, currentState.turn, campaign, currentState.rules);
+            canEnter = entryCheck.canEnter;
+            if (canEnter) {
+              const entryCost = campaign.config.timeRules.buildingEntryCost || 2;
+              player = spendHours(player, entryCost);
+              if (player.turnFlags) {
+                player.turnFlags = { ...player.turnFlags, enteredBuildingThisTurn: destNode.buildingId };
+              }
+              updatedPlayers[activePlayerIndex] = player;
+            } else {
+              if (entryCheck.reason === 'rent_office_closed') {
+                addLog({ key: 'rentOffice.closed', params: { week: entryCheck.nextOpenWeek ?? 4 } }, undefined, player.id);
+              } else if (entryCheck.reason === 'dont_live_here') {
+                addLog({ key: 'buildingModal.dontLiveHere' }, undefined, player.id);
+              }
             }
-            updatedPlayers[activePlayerIndex] = player;
           }
 
           setGameState(prev => {
@@ -543,7 +564,7 @@ export function useGameEngine(
           if (player.hoursRemaining <= 0) {
             addLog({ key: 'log.outOfTime', params: { name: player.name } }, undefined, player.id);
             await endTurnSequence(updatedPlayers);
-          } else if (!activePlayer.isAi && player.position === targetNodeId) {
+          } else if (!activePlayer.isAi && player.position === targetNodeId && canEnter) {
             const destNode = campaign.map.nodes.find(n => n.id === player.position);
             if (destNode && campaign.buildings.some(b => b.id === destNode.buildingId)) {
               if (currentState.rules.guiStyle === 'authentic' && destNode.buildingId) {

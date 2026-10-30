@@ -8,6 +8,10 @@ import { GameLog } from './GameLog';
 import { WeekendScreen } from './WeekendScreen';
 import { resolveWeekendChoice } from '../engine/weekendEngine';
 import { InventoryModal } from './InventoryModal';
+import { AuthenticGoalsModal } from './authentic/AuthenticGoalsModal';
+import { AuthenticDiplomaModal } from './authentic/AuthenticDiplomaModal';
+import { AuthenticLotteryModal } from './authentic/AuthenticLotteryModal';
+import { AuthenticCashCalculator } from './authentic/AuthenticCashCalculator';
 import { NewspaperModal } from './NewspaperModal';
 import { SettingsModal } from './SettingsModal';
 import { AnimationLayer } from './AnimationLayer';
@@ -91,6 +95,10 @@ export const GameSession: React.FC<GameSessionProps> = ({
 
   const handleOpenInventory = useCallback((section?: string) => {
     openModal({ type: 'inventory', section: section || null });
+  }, [openModal]);
+
+  const handleOpenGoals = useCallback((playerIndex?: number) => {
+    openModal({ type: 'goals', playerIndex: playerIndex });
   }, [openModal]);
 
   const handleOpenLog = useCallback(() => {
@@ -214,6 +222,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
         if (
           activeModal?.type === 'settings' ||
           activeModal?.type === 'inventory' ||
+          activeModal?.type === 'goals' ||
           activeModal?.type === 'log' ||
           activeModal?.type === 'newspaper'
         ) {
@@ -236,6 +245,24 @@ export const GameSession: React.FC<GameSessionProps> = ({
           return;
         }
       }
+      if (e.key === 'F4') {
+        e.preventDefault();
+        if (activeModal?.type === 'inventory') {
+          closeModal();
+        } else {
+          handleOpenInventory();
+        }
+        return;
+      }
+      if (e.key === 'F6') {
+        e.preventDefault();
+        if (activeModal?.type === 'goals') {
+          closeModal();
+        } else {
+          handleOpenGoals();
+        }
+        return;
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -251,6 +278,22 @@ export const GameSession: React.FC<GameSessionProps> = ({
   ]);
 
   const activePlayer = gameState?.players?.[activePlayerIndex] || null;
+
+  const handleOpenDiploma = useCallback((degreeId?: string, degreeName?: string) => {
+    openModal({
+      type: 'diploma',
+      degreeId,
+      degreeName: degreeName || 'University Degree',
+      playerName: activePlayer?.name || 'Player',
+    });
+  }, [openModal, activePlayer?.name]);
+
+  const handleOpenLottery = useCallback((prizeAmount: number = 0) => {
+    openModal({
+      type: 'lottery',
+      prizeAmount,
+    });
+  }, [openModal]);
   const currentBuildingId = (activePlayer && campaign)
     ? (campaign.map.nodes.find((n) => n.id === activePlayer.position)?.buildingId || null)
     : null;
@@ -374,6 +417,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
           }
         }}
         onOpenInventory={handleOpenInventory}
+        onOpenGoals={handleOpenGoals}
         onOpenSettings={() => openModal({ type: 'settings' })}
         layout={effectiveHudLayout}
         foldState={hudFoldState}
@@ -428,8 +472,8 @@ export const GameSession: React.FC<GameSessionProps> = ({
           />
         </div>
 
-        {/* Dynamic Money Badge in Side HUD mode */}
-        {effectiveHudLayout === 'side' && activePlayer && (
+        {/* Dynamic Money Badge in Side HUD mode (suppressed in authentic GUI mode) */}
+        {effectiveHudLayout === 'side' && gameState.rules.guiStyle !== 'authentic' && activePlayer && (
           <div 
             className={`dynamic-money-badge ${activeModal?.type === 'building' && currentBuildingId ? 'dynamic-money-badge--in-location' : 'dynamic-money-badge--center-stage'}`} 
             id="stat-money"
@@ -438,6 +482,11 @@ export const GameSession: React.FC<GameSessionProps> = ({
             <span className="dynamic-money-badge__icon">💰</span>
             <span className="dynamic-money-badge__value">${activePlayer.money}</span>
           </div>
+        )}
+
+        {/* Authentic Cash Calculator (shown in authentic GUI mode when inside a building location) */}
+        {gameState.rules.guiStyle === 'authentic' && activeModal?.type === 'building' && currentBuildingId && activePlayer && (
+          <AuthenticCashCalculator player={activePlayer} />
         )}
 
         {/* Unified Bottom Center Clock Widget (shown when authentic curved board, or in Side HUD mode) */}
@@ -523,6 +572,24 @@ export const GameSession: React.FC<GameSessionProps> = ({
           <NewspaperModal 
             headline={activePlayer?.newspaperHeadline || null} 
             onClose={closeModal} 
+            rules={gameState.rules}
+          />
+        )}
+
+        {activeModal?.type === 'diploma' && (
+          <AuthenticDiplomaModal
+            degreeName={activeModal.degreeName || 'University Degree'}
+            playerName={activeModal.playerName || activePlayer?.name || 'Player'}
+            onClose={closeModal}
+            rules={gameState.rules}
+          />
+        )}
+
+        {activeModal?.type === 'lottery' && (
+          <AuthenticLotteryModal
+            prizeAmount={activeModal.prizeAmount}
+            onClose={closeModal}
+            rules={gameState.rules}
           />
         )}
 
@@ -534,8 +601,23 @@ export const GameSession: React.FC<GameSessionProps> = ({
             onAction={handleAction}
             onClose={closeModal}
             rules={gameState.rules}
+            onOpenGoals={() => handleOpenGoals()}
+            onOpenDiploma={handleOpenDiploma}
+            onOpenLottery={handleOpenLottery}
             onOpenLog={handleOpenLog}
             scrollToSection={activeModal.section || null}
+          />
+        )}
+
+        {activeModal?.type === 'goals' && (
+          <AuthenticGoalsModal
+            players={gameState.players}
+            activePlayerIndex={activePlayerIndex}
+            campaign={campaign}
+            rules={gameState.rules}
+            onClose={closeModal}
+            onOpenStatus={() => handleOpenInventory()}
+            initialSelectedPlayer={activeModal.playerIndex ?? activePlayerIndex}
           />
         )}
 
@@ -594,6 +676,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
             location={streetRobberyNotice.location}
             modifications={streetRobberyNotice.modifications}
             isHelpfulUI={gameState.rules.helpfulUI ?? true}
+            rules={gameState.rules}
             onClose={() => {
               if (streetRobberyNotice.onConfirm) {
                 streetRobberyNotice.onConfirm();

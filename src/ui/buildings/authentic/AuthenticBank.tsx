@@ -219,11 +219,8 @@ export const AuthenticBank: React.FC<AuthenticBankProps> = ({
     setLoanOffer(null);
     if (!playerJobHere) return;
 
-    const shiftCost = campaign.config?.timeRules?.workSessionCost ?? 6;
-    const hasEnoughHours = (player.hoursRemaining ?? 0) >= shiftCost;
-
-    if (!hasEnoughHours) {
-      triggerSpeech('You do not have enough time left to work a full shift today.', 2800);
+    if ((player.hoursRemaining ?? 0) <= 0) {
+      triggerSpeech('You do not have enough time left to work today.', 2800);
       return;
     }
 
@@ -234,7 +231,8 @@ export const AuthenticBank: React.FC<AuthenticBankProps> = ({
     addAnimTimer(() => setPunchCel(2), 240);
     addAnimTimer(() => setPunchCel(3), 360);
     addAnimTimer(() => {
-      setIsPunchingCard(false);
+      // In authentic Sierra SCI, the timeClock punch card stays in the window
+      setPunchCel(3);
       animateDeposit();
       onAction({ type: 'work', jobId: playerJobHere.id });
       triggerSpeech('Have a nice day.', 2500);
@@ -322,7 +320,7 @@ export const AuthenticBank: React.FC<AuthenticBankProps> = ({
         position: 'relative',
         imageRendering: 'pixelated',
         userSelect: 'none',
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: '#000000',
       }}
     >
@@ -407,7 +405,7 @@ export const AuthenticBank: React.FC<AuthenticBankProps> = ({
                 top: `${opt.top}px`,
                 cursor: 'pointer',
                 fontFamily: 'monospace, "Courier New"',
-                fontSize: '6.5px',
+                fontSize: '5px',
                 fontWeight: 'bold',
                 lineHeight: '7px',
                 color: isHovered ? '#ffffff' : '#000000',
@@ -424,7 +422,7 @@ export const AuthenticBank: React.FC<AuthenticBankProps> = ({
           );
         })}
 
-        {/* Layer 5: Buttons (view.250) */}
+        {/* Layer 5: Buttons (view.250 at nsTop: 108 sticking 3px out of 112px window) */}
         {playerJobHere && (
           <img
             data-testid="btn-bank-work"
@@ -434,12 +432,12 @@ export const AuthenticBank: React.FC<AuthenticBankProps> = ({
             style={{
               position: 'absolute',
               left: '77px',
-              top: '104px',
+              top: '108px',
               width: '30px',
               height: '7px',
               cursor: 'pointer',
               imageRendering: 'pixelated',
-              zIndex: 6,
+              zIndex: 10,
             }}
             title="Work Shift (W)"
           />
@@ -453,12 +451,12 @@ export const AuthenticBank: React.FC<AuthenticBankProps> = ({
           style={{
             position: 'absolute',
             left: '144px',
-            top: '104px',
+            top: '108px',
             width: '30px',
             height: '7px',
             cursor: 'pointer',
             imageRendering: 'pixelated',
-            zIndex: 6,
+            zIndex: 10,
           }}
           title="Done (Exit)"
         />

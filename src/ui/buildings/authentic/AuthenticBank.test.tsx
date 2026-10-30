@@ -395,7 +395,8 @@ describe('AuthenticBank Component', () => {
     });
 
     expect(onAction).toHaveBeenCalledWith({ type: 'work', jobId: 'bank_teller' });
-    expect(screen.queryByTestId('bank-punch-card')).not.toBeInTheDocument();
+    // In authentic Sierra SCI, punch card stays in the counter window after work
+    expect(screen.getByTestId('bank-punch-card')).toBeInTheDocument();
   });
 
   it('calls onClose when clicking DONE button', () => {
