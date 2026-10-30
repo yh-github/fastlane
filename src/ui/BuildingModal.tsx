@@ -709,7 +709,7 @@ export function BuildingModal({
           rules={rules}
         />
       ) : isAuthenticReplica && building.id === 'apartment_complex' ? (
-        isRentOfficeOpen ? (
+        (isRentOfficeOpen || Boolean(playerJobHere)) ? (
           <AuthenticRentOffice
             player={player}
             onAction={handleActionIntercept}
