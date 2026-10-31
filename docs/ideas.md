@@ -39,11 +39,27 @@ This document tracks future feature concepts, separated into:
 
 ### Locations, Food, Hospitality & Wellness
 - **Red Pirate (Replacing Monolith Burgers)**:
-  - Combination fast-food restaurant and **Arcade** (spend time and pocket change for a quick Mental recovery valve).
-  - **"Busy Weeks" ("All Hands on Deck!")**:
-    - Rush weeks announced in the newspaper.
-    - *Workers*: Bonus pay/tips or higher Experience/Dependability, but heavier stamina drain and strict attendance (missing shifts costs extra Dependability).
-    - *Customers*: Longer lines, slower service, or variable menu items.
+  - Nautical pirate-themed greasy fast-food joint with an **Arcade** room in the back.
+  - **Menu & Sustenance Strategy**:
+    - *Cheap & Gross (e.g., Scurvy Slaw / Pegleg Patties)*: Dirt cheap (e.g., `$12`–`$18`). Costs **0 hours** to buy so starving players at 0 hours remaining aren't locked out, but inflicts harsh bodily penalties (`-2 Physical`, `-1 Mental`).
+    - *Moderate & Yummy (e.g., Kraken Double Melt & Curly Fries)*: Moderate price (e.g., `$65`–`$85`). Instant mood lift (`+3 Mental`, `+2 Happiness`), but still greasy fast food (`-1 Physical`).
+    - *Sweet Comfort (e.g., Pirate Grog Shake)*: `$35`–`$45`, `+2 Mental`.
+  - **The Arcade**:
+    - Initially a time and pocket-change sink (1–2 hours, ~$5) granting a quick Mental pick-me-up and Happiness boost without generating apartment mess (balancing soul-crushing jobs).
+    - Future potential / Easter egg: A playable retro arcade minigame (like Sierra's Astro Chicken in Space Quest).
+  - **Job Roster (High Downtime + Arcade Tech)**:
+    - All baseline jobs carry the **`high_downtime`** tag (halving weekly Dependability decay from `-3` to `-1.5`):
+      - *Deckhand / Fry Cook* (T1: `always_hiring`, `high_downtime`).
+      - *Counter Swashbuckler* (T1: `frontline_service`, `high_downtime`).
+      - *Arcade Technician* (T2: **`technical`**, `high_downtime`): Requires **`electronics` degree** (or `techSkill >= 2.5`), fixes jammed coin mechs and CRT monitors, earns higher pay and builds `skill_tech`.
+      - *First Mate / Assistant Manager* (T2: `middle_management`, `high_downtime`).
+      - *The Captain / Store Manager* (T3: `executive_management`, `high_downtime`).
+  - **Signature Mechanic: "All Hands on Deck!" (Busy Weeks)**:
+    - *Pacing*: Bag-of-marbles / deck-of-cards shuffle (e.g., 1 busy week in every 4-week window, avoiding consecutive weeks). Frequent enough that savvy players integrate it into their schedule rather than viewing it as freak RNG.
+    - *Worker Incentives*:
+      - Surge pay (`1.5×` base wage) and accelerated career gains (`+1.5` Dep, `+1.5` Exp on `work_work`).
+      - *Absentee Penalty*: If the flag is raised and an employee works **0 shifts**, they suffer a stern reprimand (`-4 Dependability`) and lose their `high_downtime` decay halving for the turn.
+    - *Customer Impact*: Busy kitchen during rush weeks may mean longer lines or slower service.
 - **Cafe / Restaurant**:
   - Healthier dining-out option: restores Physical and Mental condition without kitchen appliances or mess.
   - **Coffee / Espresso Subsystem**: Grants short-term stamina/efficiency buffs during work and study, with trade-offs like caffeine crashes or habit formation.
