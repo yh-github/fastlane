@@ -554,6 +554,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
             pawnShopItemsForSale={gameState.pawnShopItemsForSale}
             economySimulation={gameState.economySimulation}
             gameSeed={gameState.gameSeed ?? gameState.rngState}
+            busyLocations={gameState.busyLocations}
             onAction={handleAction}
             isReentry={isReentry}
             onClose={() => {

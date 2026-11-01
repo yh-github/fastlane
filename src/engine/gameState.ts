@@ -122,6 +122,10 @@ export interface GameState {
   winnerId: string | null;
   /** Active debug queue for playtesting forced events */
   debugQueue?: DebugQueuedEvent[];
+  /** Locations currently experiencing "All Hands on Deck!" busy weeks */
+  busyLocations?: Record<string, boolean>;
+  /** Bag of marbles shuffle for busy weeks */
+  busyWeeksDeck?: boolean[];
 }
 
 export type { DebugEventType, DebugQueuedEvent } from './debugEvents';
@@ -279,6 +283,9 @@ export interface PlayerState {
   skillMgmt?: number;
   /** Alias for skillMgmt under the Leadership skill designation */
   skillLeadership?: number;
+
+  /** Current caffeine tolerance score (0-10) for caffeine habit/withdrawal system */
+  caffeineTolerance?: number;
 
   /** Pending mini-game encounter state (e.g. Pawn Shop appraisal dilemma, Show Initiative cards) */
   pendingMiniGame?: MiniGameState | null;
@@ -492,6 +499,8 @@ export interface TurnFlags {
   drinkHappinessGranted: boolean;
   /** Whether fast food happiness bonus was already granted this turn */
   fastFoodHappinessGranted: boolean;
+  /** Number of coffee cups consumed this turn (for caffeine habit tracking) */
+  coffeeCupsThisTurn?: number;
   /** Whether fresh food purchase happiness was granted this turn */
   freshFoodHappinessGranted: boolean;
   /** Caffeine hours borrowed from next turn */

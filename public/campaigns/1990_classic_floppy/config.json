@@ -158,6 +158,10 @@
     "locationProbation": false,
     "advancedStores": false,
     "showWindowPositionSize": false,
-    "allowWindowMoveResize": false
+    "allowWindowMoveResize": false,
+    "enableCaffeineSystem": false,
+    "enableBusyWeeks": false,
+    "hospitalEmployeeHealthcare": false,
+    "enableArcade": false
   }
 }

@@ -1,6 +1,6 @@
 {
   "versionClass": "advanced",
-  "name": "The Fast Lane — Advanced Edition",
+  "name": "The Fast Lane — Advanced 90's",
   "version": "3.0.0",
   "description": "Experimental campaign for testing new sub-systems and modular game mechanics.",
   "supportedGuiStyles": ["generated"],
@@ -67,7 +67,11 @@
     "dynamicSkillCaps": true,
     "wageScaledEmployability": true,
     "locationProbation": true,
-    "advancedStores": true
+    "advancedStores": true,
+    "enableCaffeineSystem": false,
+    "enableBusyWeeks": false,
+    "hospitalEmployeeHealthcare": false,
+    "enableArcade": false
   },
   "statRules": {
     "enableAdvancedStats": true,

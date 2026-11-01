@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { loadCampaign, type CampaignBundle, type MapNode } from '../src/engine/dataLoader';
 import { buildAdjacencyMap, findShortestPath } from '../src/graphics/pathfinding';
 
-const CAMPAIGN_IDS = ['1990_classic_floppy', '1990_classic_cdrom', 'qol_improved', 'advanced'];
+const CAMPAIGN_IDS = ['1990_classic_floppy', '1990_classic_cdrom', 'qol_improved', 'advanced', 'advanced_2000'];
 
 describe('Campaign Referential & Structural Integrity Audit', () => {
   CAMPAIGN_IDS.forEach((campaignId) => {

@@ -95,6 +95,21 @@ export function buyItem(
         mentalBonus = 0;
       }
     }
+  } else if (item.subcategory === 'coffee' || item.id === 'drip_coffee' || item.id === 'espresso' || item.id === 'double_shot') {
+    newTurnFlags.coffeeCupsThisTurn = (newTurnFlags.coffeeCupsThisTurn || 0) + quantity;
+    const tol = player.caffeineTolerance || 0;
+    if (rules?.enableCaffeineSystem) {
+      if (tol >= 9) {
+        mentalBonus = Math.max(1, Math.floor((item.mentalBonus ?? 2) * 0.5)) * quantity;
+      } else if (tol >= 6) {
+        mentalBonus = Math.max(1, Math.floor((item.mentalBonus ?? 2) * 0.75)) * quantity;
+      } else {
+        mentalBonus = (item.mentalBonus ?? 2) * quantity;
+      }
+    } else {
+      mentalBonus = (item.mentalBonus ?? 2) * quantity;
+    }
+    happinessBonus = (item.happinessBonus ?? 1) * quantity;
   } else if (item.subcategory === 'fast_food') {
     const mealCount = (newTurnFlags.fastFoodMealsThisTurn || 0) + 1;
     newTurnFlags.fastFoodMealsThisTurn = mealCount;
@@ -181,14 +196,14 @@ export function buyItem(
         const minPhys = updated.minPhysicalCondition ?? 1;
         updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) + effect.value);
         updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
-      } else if (effect.stat === 'physical' && rules?.usePhysicalMentalConditions) {
+      } else if (effect.stat === 'physical' && rules?.usePhysicalMentalConditions && item.subcategory !== 'coffee') {
         const maxPhys = updated.physicalConditionMax ?? 50;
         const minPhys = updated.minPhysicalCondition ?? 1;
         updated.physicalCondition = Math.max(minPhys, Math.min(maxPhys, (updated.physicalCondition ?? 50) + effect.value));
       } else if (effect.stat === 'mental_max' && rules?.usePhysicalMentalConditions) {
         updated.mentalConditionMax = Math.max(10, (updated.mentalConditionMax ?? 50) + effect.value);
         updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition ?? 50);
-      } else if (effect.stat === 'mental' && rules?.usePhysicalMentalConditions) {
+      } else if (effect.stat === 'mental' && rules?.usePhysicalMentalConditions && item.subcategory !== 'coffee') {
         updated = applyMentalChange(updated, effect.value, campaign?.config.statRules);
       } else if (effect.stat === 'happiness') {
         if (rules) {
@@ -212,9 +227,25 @@ export function buyItem(
     updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
   }
 
-  if (rules?.usePhysicalMentalConditions && item.category === 'food' && item.subcategory !== 'fast_food' && item.subcategory !== 'canned' && !player.turnFlags?.freshFoodHappinessGranted) {
+  if (rules?.usePhysicalMentalConditions && item.category === 'food' && item.subcategory !== 'fast_food' && item.subcategory !== 'canned' && item.subcategory !== 'coffee' && !player.turnFlags?.freshFoodHappinessGranted) {
     const maxPhys = updated.physicalConditionMax ?? 50;
     updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 50) + 1);
+  }
+
+  if (rules?.usePhysicalMentalConditions && (item.subcategory === 'coffee' || item.id === 'drip_coffee' || item.id === 'espresso' || item.id === 'double_shot')) {
+    const maxPhys = updated.physicalConditionMax ?? 50;
+    const tol = updated.caffeineTolerance || 0;
+    let basePhysGain = 3;
+    if (item.id === 'double_shot') basePhysGain = 6;
+    else if (item.id === 'espresso') basePhysGain = 4;
+    else if (item.id === 'drip_coffee') basePhysGain = 3;
+
+    let effectivePhysGain = basePhysGain;
+    if (rules?.enableCaffeineSystem) {
+      if (tol >= 9) effectivePhysGain = Math.max(1, Math.floor(basePhysGain * 0.4));
+      else if (tol >= 6) effectivePhysGain = Math.max(1, Math.floor(basePhysGain * 0.7));
+    }
+    updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 50) + effectivePhysGain * quantity);
   }
 
   switch (item.category) {
@@ -227,6 +258,8 @@ export function buyItem(
         updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];
       } else if (item.subcategory === 'canned') {
         updated.inventory.cannedFoodUnits = (updated.inventory.cannedFoodUnits || 0) + (item.units || 1);
+      } else if (item.subcategory === 'coffee') {
+        // Coffee is drunk immediately
       } else {
         updated.inventory.freshFoodUnits += (item.units || 1) * quantity;
       }

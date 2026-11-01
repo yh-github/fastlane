@@ -50,6 +50,7 @@ export function handleWorkAction(
   const jobDef = context.campaign.jobs.find(j => j.id === action.jobId);
   if (jobDef) {
     const workSessionCost = requireConfig(context.campaign.config.timeRules?.workSessionCost, 'timeRules.workSessionCost');
+    const isBusy = Boolean(context.rules.enableBusyWeeks && jobDef.locationId && context.state?.busyLocations?.[jobDef.locationId]);
     const result = workShift(
       nextPlayer,
       jobDef,
@@ -60,7 +61,8 @@ export function handleWorkAction(
       context.rng,
       replayContext,
       context.campaign.education,
-      context.campaign
+      context.campaign,
+      isBusy
     );
     nextPlayer = result.updated;
     if (result.messages && result.messages.length > 0) {

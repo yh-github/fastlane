@@ -44,6 +44,7 @@ interface BuildingModalProps {
   pawnShopItemsForSale?: PawnedItem[];
   economySimulation?: EconomySimulationState;
   gameSeed?: number;
+  busyLocations?: Record<string, boolean>;
   onAction: (actionPayload: any) => Promise<any>;
   onClose: () => void;
   isReentry?: boolean;
@@ -75,6 +76,7 @@ export function BuildingModal({
   pawnShopItemsForSale,
   economySimulation,
   gameSeed,
+  busyLocations,
   onAction,
   onClose,
   isReentry = false
@@ -372,6 +374,29 @@ export function BuildingModal({
               rules={rules}
             />
           )}
+          {building.id === 'red_pirate' && rules?.enableBusyWeeks && busyLocations?.['red_pirate'] && (
+            <div style={{ marginBottom: '10px', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.5)', borderRadius: '6px', color: '#b91c1c', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>🚨</span>
+              <span>ALL HANDS ON DECK! Busy week surge hours — 1.5× wages & accelerated advancement!</span>
+            </div>
+          )}
+          {building.id === 'red_pirate' && rules?.enableArcade && (
+            <div style={{ marginBottom: '12px', padding: '10px 14px', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-color, #222)' }}>🕹️ Pirate Arcade Corner</div>
+                <div style={{ fontSize: '11px', opacity: 0.85 }}>Play a retro coin-op game (-1h, -$5, +2 Mental, +2 Happiness)</div>
+              </div>
+              <button
+                type="button"
+                className="game-button btn-secondary"
+                disabled={player.hoursRemaining < 1 || player.money < 5}
+                onClick={() => handleActionIntercept({ type: 'play_arcade' })}
+                style={{ whiteSpace: 'nowrap', padding: '6px 12px' }}
+              >
+                Play Arcade (-$5)
+              </button>
+            </div>
+          )}
           {itemsHere.length > 0 && building.archetype !== 'pawnshop' && (
             <StoreFront 
               player={player} 
@@ -450,6 +475,54 @@ export function BuildingModal({
                 <p style={{ fontSize: '12px' }}>{t('buildingModal.dontLiveHere', "You don't live here.")}</p>
               </div>
             )
+          )}
+          {building.archetype === 'park' && (
+            <div className="interaction-panel park-panel" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', borderBottom: '1px solid var(--border-color, #ccc)', paddingBottom: '6px' }}>
+                🌳 {t(`building.${building.id}`, { defaultValue: building.name })}
+              </div>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted, #666)' }}>
+                {building.description || 'A pleasant green space to stroll, exercise, or rest on a park bench.'}
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="game-button btn-secondary"
+                  disabled={player.hoursRemaining < 1}
+                  onClick={() => handleActionIntercept({ type: 'stroll_park' })}
+                  title={t('park.strollDesc', 'Take a relaxing stroll (-1h, +1 Physical, +1 Mental)')}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
+                >
+                  <span style={{ fontSize: '18px' }}>🚶</span>
+                  <strong>{t('park.stroll', 'Stroll in Park')}</strong>
+                  <span style={{ fontSize: '11px', opacity: 0.85 }}>-1h • +1 Phys / +1 Mental</span>
+                </button>
+                <button
+                  type="button"
+                  className="game-button btn-secondary"
+                  disabled={player.hoursRemaining < 2 || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) <= 2)}
+                  onClick={() => handleActionIntercept({ type: 'jog_park' })}
+                  title={t('park.jogDesc', 'Jog around the trail (-2h, +1 Physical, +1 Max Physical, -1 Mental)')}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
+                >
+                  <span style={{ fontSize: '18px' }}>🏃</span>
+                  <strong>{t('park.jog', 'Jog / Workout')}</strong>
+                  <span style={{ fontSize: '11px', opacity: 0.85 }}>-2h • +1 Max Phys</span>
+                </button>
+                <button
+                  type="button"
+                  className="game-button btn-secondary"
+                  disabled={player.hoursRemaining < 2}
+                  onClick={() => handleActionIntercept({ type: 'rest_bench' })}
+                  title={t('park.restDesc', 'Sit and rest on a park bench (-2h, +1 Physical, +2 Mental)')}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
+                >
+                  <span style={{ fontSize: '18px' }}>🪑</span>
+                  <strong>{t('park.rest', 'Rest on Bench')}</strong>
+                  <span style={{ fontSize: '11px', opacity: 0.85 }}>-2h • +1 Phys / +2 Mental</span>
+                </button>
+              </div>
+            </div>
           )}
         </>
       )}

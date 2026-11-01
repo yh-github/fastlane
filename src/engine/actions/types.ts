@@ -44,7 +44,11 @@ export type GameAction =
   | { type: 'renegotiate_rent' }
   | { type: 'redraw_initiative' }
   | { type: 'close_rummage' }
-  | { type: 'pass_pawn_rummage' };
+  | { type: 'pass_pawn_rummage' }
+  | { type: 'play_arcade' }
+  | { type: 'stroll_park' }
+  | { type: 'jog_park' }
+  | { type: 'rest_bench' };
 
 export interface ReducerContext {
   campaign: CampaignBundle;

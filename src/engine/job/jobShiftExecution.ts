@@ -167,7 +167,8 @@ export function workShift(
   rng?: Random,
   replay?: ReplayContext,
   campaignEducation?: EducationDef[],
-  campaign?: CampaignBundle
+  campaign?: CampaignBundle,
+  isBusyLocation: boolean = false
 ): WorkResult {
   if (isBaseVersion(rules) && !rules?.usePhysicalMentalConditions && !rules?.useSkills) {
     return workShiftBase(player, job, shiftCost, rules, statRules);
@@ -297,9 +298,15 @@ export function workShift(
     } else {
       // work_work
       physicalCost = basePhys * 1.0 + getJobPhysicalCostModifier(job);
+      if (rules?.enableBusyWeeks && isBusyLocation) {
+        physicalCost += 0.5;
+      }
       mentalCost = baseMental * 1.0 + getJobMentalCostModifier(job);
       wageMultiplier = 1.0;
       baseDepGain = 1;
+      if (rules?.enableBusyWeeks && isBusyLocation) {
+        baseDepGain += 0.5;
+      }
     }
 
     // Fatigue: when Physical is below threshold, +1 Mental cost (or 0.5 if halved)
@@ -348,7 +355,8 @@ export function workShift(
   }
 
   // Prorate wage: shiftCost hours = 8 hours of base wage (full shift)
-  const fullShiftWage = Math.floor(updated.currentWage * 8 * wageMultiplier);
+  const busyWageMultiplier = (rules?.enableBusyWeeks && isBusyLocation) ? 1.5 : 1.0;
+  const fullShiftWage = Math.floor(updated.currentWage * 8 * wageMultiplier * busyWageMultiplier);
   const rawWagesEarned = Math.floor(fullShiftWage * ratio);
 
   let wagesEarned = rawWagesEarned;
@@ -661,7 +669,10 @@ export function workShift(
   if (mode === 'work_work' && !physMistake && !mentalMistake && !socialMistake && !execMistake) {
     const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
     const expMult = getJobExpMultiplier(job);
-    const expGain = roundToResolution(((rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? 1 * ratio : 1) * expMult, 0.5);
+    let expGain = roundToResolution(((rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? 1 * ratio : 1) * expMult, 0.5);
+    if (rules?.enableBusyWeeks && isBusyLocation) {
+      expGain = roundToResolution(expGain + 0.5, 0.5);
+    }
     if (updated.experience < effectiveMaxExp) {
       updated.experience = Math.min(effectiveMaxExp, roundToResolution(updated.experience + expGain, 0.5));
     }
@@ -841,6 +852,9 @@ export function workShift(
   const warnBuffer = 3 + (player.innovationCount || 0) + locMerits;
   if (effectiveDep <= job.requirements.dependability - warnBuffer) {
     messages.unshift({ key: 'action.job.warning' });
+  }
+  if (rules?.enableBusyWeeks && isBusyLocation) {
+    messages.push({ key: 'action.job.busyWeekShift', params: { title: job.title } });
   }
   if (totalGarnished > 0) {
     messages.push({ key: 'action.job.garnished', params: { amount: totalGarnished } });

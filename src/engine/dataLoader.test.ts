@@ -95,11 +95,11 @@ describe('dataLoader', () => {
 
   it('loads available campaigns from campaigns.json manifest', async () => {
     const list = getAvailableCampaigns();
-    expect(list.length).toBe(4);
-    expect(list.map(c => c.id)).toEqual(['1990_classic_floppy', '1990_classic_cdrom', 'qol_improved', 'advanced']);
+    expect(list.length).toBe(5);
+    expect(list.map(c => c.id)).toEqual(['1990_classic_floppy', '1990_classic_cdrom', 'qol_improved', 'advanced', 'advanced_2000']);
     
     const asyncList = await loadAvailableCampaigns();
-    expect(asyncList.length).toBe(4);
+    expect(asyncList.length).toBe(5);
     expect(asyncList[0].id).toBe('1990_classic_floppy');
   });
 

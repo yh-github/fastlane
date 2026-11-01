@@ -59,6 +59,10 @@ export async function simulateActionVisuals(action: ControllerAction, ui: Transl
 
     case 'relax':
     case 'change_clothes':
+    case 'play_arcade':
+    case 'stroll_park':
+    case 'jog_park':
+    case 'rest_bench':
       // Inventory actions
       if (action.type === 'relax') {
         ui.setIsBuildingModalOpen(true);

@@ -1,0 +1,37 @@
+{
+  "ticketWeekends": {
+    "baseball": { "text": "You went to the baseball game this weekend and ate hotdogs till you puked." },
+    "theatre": { "text": "You went to the theatre this weekend and saw the one MAN version of Cats." },
+    "concert": { "text": "You had front row seats at a rock concert. The doctor said that the hearing loss shouldn't be permanent." }
+  },
+  "durableWeekends": {
+    "refrigerator": { "text": "You spent the whole weekend watching some of the food in your refrigerator grow mold and spores. It sure was fun." },
+    "freezer": { "text": "You spent the whole weekend watching the water in your refrigerator freeze." },
+    "stove": { "text": "You spent the whole weekend baking oatmeal cookies." },
+    "crt_tv": { "text": "You spent the whole weekend adjusting the rabbit ears on your CRT TV to watch old reruns." },
+    "color_tv": { "text": "You spent the entire weekend watching Star Trek reruns." },
+    "plasma_tv": { "text": "You invited friends over to admire your stunning flat-screen plasma TV." },
+    "vcr": { "text": "You rented some movies and ate artificially flavored buttered popcorn." },
+    "stereo": { "text": "You spent the weekend playing your stereo and patching the plaster your speakers cracked." },
+    "microwave": { "text": "You spent the weekend cleaning your microwave after an experimental reheating disaster." },
+    "hot_tub": { "text": "You and some friends had a hot tub party this weekend." }
+  },
+  "randomWeekends": [
+    "You watched them change the mannequins at QT Clothing this weekend.",
+    "You washed and waxed your marble this weekend right before it rained.",
+    "You stayed home and did absolutely nothing this weekend.",
+    "You spent the weekend hiking around the city parks.",
+    "You listened to the Talking Bear 256 times this weekend.",
+    "You read the 'Wall Street Journal' this weekend.",
+    "You thought about what you would do on your next turn.",
+    "You spent the weekend in a hotel because they had to fumigate your apartment.",
+    "You played in a ping pong tournament this weekend.",
+    "You sat around and played solitaire all weekend.",
+    "You spent the weekend in the laundromat washing your clothes. Now that was exciting.",
+    "You took a friend out to a cheap restaurant this weekend.",
+    "You spent your weekend thinking about work. Eccch.",
+    "You played arcade games at Red Pirate all weekend and almost set a high score.",
+    "This weekend, you closed your curtains, locked your doors, and enjoyed a quiet cup of coffee.",
+    "You went bowling with friends this weekend."
+  ]
+}

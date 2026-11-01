@@ -251,7 +251,8 @@ function processAdvancedPlayerTurn(
       campaign,
       rng,
       replay,
-      previousPlayerWeekends
+      previousPlayerWeekends,
+      player
     );
     p = updatedPlayer;
 
@@ -333,6 +334,30 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   // 1. Economic Changes & Market Crash/Boom Phase
   const econResult = processEconomicTurnPhase(state, campaign, rng, replay);
 
+  // 1b. Busy week deck & location draw
+  let busyDeck = state.busyWeeksDeck ? [...state.busyWeeksDeck] : [];
+  let nextBusyLocations: Record<string, boolean> | undefined = state.busyLocations;
+
+  if (state.rules.enableBusyWeeks) {
+    if (busyDeck.length === 0) {
+      const bag = [true, false, false, false];
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(rng.next() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+      const wasPrevBusy = Boolean(state.busyLocations?.['red_pirate']);
+      if (wasPrevBusy && bag[bag.length - 1] === true) {
+        const nonBusyIdx = bag.findIndex(val => val === false);
+        if (nonBusyIdx !== -1) {
+          [bag[bag.length - 1], bag[nonBusyIdx]] = [bag[nonBusyIdx], bag[bag.length - 1]];
+        }
+      }
+      busyDeck = bag;
+    }
+    const isBusyWeek = busyDeck.pop() ?? false;
+    nextBusyLocations = { red_pirate: isBusyWeek };
+  }
+
   const previousPlayerWeekends: string[] = [];
   const newPawnShopItemsForSale = [...(state.pawnShopItemsForSale || [])];
 
@@ -344,6 +369,15 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       ? processBasePlayerTurn(player, state, campaign, rng, replay, previousPlayerWeekends, econResult, newPawnShopItemsForSale)
       : processAdvancedPlayerTurn(player, state, campaign, rng, replay, previousPlayerWeekends, econResult, newPawnShopItemsForSale)
   );
+
+  if (state.rules.enableBusyWeeks && nextBusyLocations?.['red_pirate']) {
+    for (const p of updatedPlayers) {
+      const curJob = p.currentJobId ? campaign.jobs.find(j => j.id === p.currentJobId) : undefined;
+      if (curJob?.locationId === 'red_pirate') {
+        p.turnEvents.push({ key: 'events.busyWeekSurge', params: { location: 'The Red Pirate' } });
+      }
+    }
+  }
 
   // Check Game Over
   let phase = state.phase;
@@ -369,6 +403,8 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
     turn: state.turn + 1,
     phase,
     winnerId,
+    ...(nextBusyLocations !== undefined ? { busyLocations: nextBusyLocations } : {}),
+    ...(state.rules.enableBusyWeeks ? { busyWeeksDeck: busyDeck } : {}),
   };
 
   if (econResult.newEconomySimulation === undefined && 'economySimulation' in resultState) {
