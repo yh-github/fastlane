@@ -37,7 +37,11 @@ import {
   handleBuyRummageItemAction,
   handleCloseRummageAction,
   handleDiscardInventoryItemAction,
-  handleRenegotiateRentAction
+  handleRenegotiateRentAction,
+  handlePlayArcadeAction,
+  handleParkStrollAction,
+  handleParkJogAction,
+  handleParkRestAction
 } from './actions';
 
 export type { GameAction, ReducerContext, ReducerResult } from './actions';
@@ -206,6 +210,18 @@ export function gameReducer(
       break;
     case 'renegotiate_rent':
       res = handleRenegotiateRentAction(nextPlayer, action, context);
+      break;
+    case 'play_arcade':
+      res = handlePlayArcadeAction(nextPlayer, action, context);
+      break;
+    case 'stroll_park':
+      res = handleParkStrollAction(nextPlayer, action, context);
+      break;
+    case 'jog_park':
+      res = handleParkJogAction(nextPlayer, action, context);
+      break;
+    case 'rest_bench':
+      res = handleParkRestAction(nextPlayer, action, context);
       break;
   }
 

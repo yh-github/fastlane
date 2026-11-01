@@ -368,6 +368,26 @@ export interface GameRules {
    * Allows dragging header and resizing corner handle on building location windows.
    */
   allowWindowMoveResize: boolean;
+
+  /**
+   * ADVANCED 2000: Enables coffee drinking, caffeine tolerance buildup, morning fog/withdrawal, and detox decay.
+   */
+  enableCaffeineSystem: boolean;
+
+  /**
+   * ADVANCED 2000: Enables periodic "All Hands on Deck!" busy weeks at fast-food restaurants (e.g. Red Pirate) with surge pay, accelerated XP/Dep, and absentee penalties.
+   */
+  enableBusyWeeks: boolean;
+
+  /**
+   * ADVANCED 2000: Grants hospital employees healthcare coverage (free/discounted doctor visits and enhanced physical bounce-back).
+   */
+  hospitalEmployeeHealthcare: boolean;
+
+  /**
+   * ADVANCED 2000: Enables playing arcade games at arcade-equipped restaurants (e.g. Red Pirate) for quick mental relief and happiness.
+   */
+  enableArcade: boolean;
 }
 
 export interface EventRules {
@@ -773,6 +793,10 @@ export const GAME_RULE_KEYS: readonly (keyof GameRules)[] = [
   'advancedStores',
   'showWindowPositionSize',
   'allowWindowMoveResize',
+  'enableCaffeineSystem',
+  'enableBusyWeeks',
+  'hospitalEmployeeHealthcare',
+  'enableArcade',
 ] as const;
 
 export const BASE_TIME_RULE_KEYS: readonly (keyof BaseTimeRules)[] = [
@@ -965,6 +989,10 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   locationProbation: 'Workplace locations place players on probation for the turn upon termination, halving hiring chances',
   showWindowPositionSize: 'Shows coordinate, dimension, and margin tools on building location windows',
   allowWindowMoveResize: 'Allows dragging window headers to move and corner handles to resize location windows',
+  enableCaffeineSystem: 'Enables coffee drinking, progressive caffeine tolerance buildup, turn start morning fog/withdrawal, and detox decay',
+  enableBusyWeeks: 'Enables periodic "All Hands on Deck!" busy weeks at fast-food locations with surge pay, accelerated XP/Dep, and absentee penalties',
+  hospitalEmployeeHealthcare: 'Grants hospital employees healthcare coverage (free/discounted doctor visits and enhanced physical bounce-back)',
+  enableArcade: 'Enables playing arcade games at arcade-equipped restaurants for quick mental relief and happiness',
   economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',
   reenterCurrentLocationCost: 'Entering or re-opening the current building location costs standard building entry time (2 hours)',
   pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',

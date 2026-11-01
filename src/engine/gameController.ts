@@ -528,6 +528,14 @@ function buildActionId(choice: ActionChoice, campaign: CampaignBundle): string {
       return `buy_pawn:${action.item.itemId}`
     case 'change_clothes':
       return `change_clothes:${action.clothes}`
+    case 'play_arcade':
+      return 'play_arcade'
+    case 'stroll_park':
+      return 'stroll_park'
+    case 'jog_park':
+      return 'jog_park'
+    case 'rest_bench':
+      return 'rest_bench'
     default:
       return 'unknown'
   }

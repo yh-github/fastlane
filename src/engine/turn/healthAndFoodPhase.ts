@@ -141,7 +141,8 @@ export function processBaseHealthAndFood(
     const doctorPenalty = requireConfig(campaign.config.timeRules.doctorPenalty, 'timeRules.doctorPenalty');
     p = processDoctorVisit(p, doctorPenalty, rng, state.rules.bypassDoctorIfBroke, state.rules, replay, campaign.config.statRules);
     const totalPaid = (moneyBefore - p.money) + ((p.loanDebt || 0) - loanBefore);
-    if (totalPaid > 0 || !state.rules.bypassDoctorIfBroke) {
+    const isHospitalCovered = Boolean(state.rules.hospitalEmployeeHealthcare && p.currentJobId?.startsWith('hospital_'));
+    if (totalPaid > 0 || !state.rules.bypassDoctorIfBroke || isHospitalCovered) {
       const moneyDiff = moneyBefore - p.money;
       const loanDiff = (p.loanDebt || 0) - loanBefore;
       const docMods: StatModification[] = [];
@@ -357,7 +358,8 @@ export function processAdvancedHealthAndFood(
     const doctorPenalty = requireConfig(campaign.config.timeRules.doctorPenalty, 'timeRules.doctorPenalty');
     p = processDoctorVisit(p, doctorPenalty, rng, state.rules.bypassDoctorIfBroke, state.rules, replay, sr);
     const totalPaid = (moneyBefore - p.money) + ((p.loanDebt || 0) - loanBefore);
-    if (totalPaid > 0 || !state.rules.bypassDoctorIfBroke) {
+    const isHospitalCovered = Boolean(state.rules.hospitalEmployeeHealthcare && p.currentJobId?.startsWith('hospital_'));
+    if (totalPaid > 0 || !state.rules.bypassDoctorIfBroke || isHospitalCovered) {
       const moneyDiff = moneyBefore - p.money;
       const loanDiff = (p.loanDebt || 0) - loanBefore;
       const docMods: StatModification[] = [];

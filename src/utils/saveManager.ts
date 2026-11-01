@@ -35,6 +35,7 @@ export function resolveCampaignId(campaignIdOrName: string): string {
   if (match) return match.id;
 
   const lower = campaignIdOrName.toLowerCase();
+  if (lower.includes('2000')) return 'advanced_2000';
   if (lower.includes('advanced')) return 'advanced';
   if (lower.includes('qol') || lower.includes('improved')) return 'qol_improved';
   if (lower.includes('cdrom') || lower.includes('cd-rom') || lower.includes('1992')) return '1990_classic_cdrom';

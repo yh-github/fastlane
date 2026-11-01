@@ -1,0 +1,456 @@
+[
+  {
+    "id": "refrigerator",
+    "name": "Refrigerator",
+    "category": "appliance",
+    "basePrice": 650,
+    "happinessBonus": 1,
+    "lifestyleValue": 1,
+    "space": 40,
+    "tags": ["refrigerator"],
+    "description": "Safe food storage for up to 6 weeks."
+  },
+  {
+    "id": "freezer",
+    "name": "Freezer",
+    "category": "appliance",
+    "basePrice": 513,
+    "happinessBonus": 2,
+    "lifestyleValue": 2,
+    "space": 30,
+    "tags": ["freezer"],
+    "description": "Extends food storage to 12 weeks when paired with Refrigerator."
+  },
+  {
+    "id": "stove",
+    "name": "Stove",
+    "category": "appliance",
+    "basePrice": 490,
+    "happinessBonus": 1,
+    "lifestyleValue": 1,
+    "space": 40,
+    "tags": ["stove"],
+    "description": "+1 Happiness/turn when food is eaten.",
+    "effects": [
+      { "trigger": "on_relax", "stat": "physical", "value": 1 }
+    ]
+  },
+  {
+    "id": "stereo",
+    "name": "Stereo",
+    "category": "appliance",
+    "basePrice": 450,
+    "happinessBonus": 1,
+    "lifestyleValue": 2,
+    "space": 20,
+    "effects": [
+      { "trigger": "on_socialize", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "crt_tv",
+    "name": "CRT Television",
+    "category": "appliance",
+    "basePrice": 140,
+    "happinessBonus": 1,
+    "lifestyleValue": 1,
+    "space": 25,
+    "description": "Bulky cathode-ray tube television. Affordable entertainment.",
+    "effects": [
+      { "trigger": "on_socialize", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "color_tv",
+    "name": "Color CRT TV",
+    "category": "appliance",
+    "basePrice": 349,
+    "happinessBonus": 1,
+    "lifestyleValue": 2,
+    "space": 20,
+    "effects": [
+      { "trigger": "on_socialize", "stat": "social", "value": 2 }
+    ]
+  },
+  {
+    "id": "plasma_tv",
+    "name": "Flat-Screen Plasma TV",
+    "category": "appliance",
+    "basePrice": 650,
+    "happinessBonus": 2,
+    "lifestyleValue": 3,
+    "space": 10,
+    "description": "Cutting-edge Y2K flat-screen display. Sleek profile with vibrant high-definition picture.",
+    "effects": [
+      { "trigger": "on_socialize", "stat": "social", "value": 3 }
+    ]
+  },
+  {
+    "id": "microwave",
+    "name": "Microwave",
+    "category": "appliance",
+    "basePrice": 220,
+    "happinessBonus": 1,
+    "lifestyleValue": 2,
+    "space": 20,
+    "tags": ["microwave"],
+    "effects": [
+      { "trigger": "on_relax", "stat": "physical", "value": 1 },
+      { "trigger": "on_socialize", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "vcr",
+    "name": "VCR",
+    "category": "appliance",
+    "basePrice": 250,
+    "happinessBonus": 1,
+    "lifestyleValue": 2,
+    "space": 10
+  },
+  {
+    "id": "hot_tub",
+    "name": "Hot Tub",
+    "category": "appliance",
+    "basePrice": 1255,
+    "happinessBonus": 3,
+    "lifestyleValue": 5,
+    "mentalBonus": 5,
+    "space": 90,
+    "tags": ["hot_tub"],
+    "effects": [
+      { "trigger": "turn_start", "stat": "physical", "value": 1 },
+      { "trigger": "turn_start", "stat": "mental", "value": 1 },
+      { "trigger": "on_relax", "stat": "physical", "value": 1 },
+      { "trigger": "on_relax", "stat": "mental", "value": 1 },
+      { "trigger": "on_relax", "stat": "mess", "value": 1 },
+      { "trigger": "on_socialize", "stat": "social", "value": 3 },
+      { "trigger": "continuous", "stat": "mess_max", "value": 5 }
+    ]
+  },
+  {
+    "id": "computer",
+    "name": "Computer",
+    "category": "appliance",
+    "basePrice": 1599,
+    "happinessBonus": 2,
+    "lifestyleValue": 3,
+    "space": 40,
+    "tags": ["computer"],
+    "effects": [
+      { "trigger": "continuous", "stat": "mental_max", "value": 3 }
+    ]
+  },
+  {
+    "id": "encyclopedia",
+    "name": "Encyclopedia",
+    "category": "book",
+    "basePrice": 475,
+    "happinessBonus": 1,
+    "lifestyleValue": 1,
+    "space": 20,
+    "effects": [
+      { "trigger": "continuous", "stat": "mental_max", "value": 1 }
+    ]
+  },
+  {
+    "id": "dictionary",
+    "name": "Dictionary",
+    "category": "book",
+    "basePrice": 70,
+    "happinessBonus": 1,
+    "lifestyleValue": 1,
+    "space": 10,
+    "effects": [
+      { "trigger": "continuous", "stat": "mental_max", "value": 1 }
+    ]
+  },
+  {
+    "id": "atlas",
+    "name": "Atlas",
+    "category": "book",
+    "basePrice": 55,
+    "happinessBonus": 1,
+    "lifestyleValue": 1,
+    "space": 10,
+    "effects": [
+      { "trigger": "continuous", "stat": "mental_max", "value": 1 }
+    ]
+  },
+  {
+    "id": "capote",
+    "name": "Works of Capote",
+    "category": "book",
+    "basePrice": 100,
+    "space": 10,
+    "happinessBonus": -2,
+    "lifestyleValue": 1,
+    "mentalBonus": -1,
+    "effects": [
+      { "trigger": "continuous", "stat": "mental_max", "value": 1 }
+    ]
+  },
+  {
+    "id": "casual_clothes",
+    "name": "Casual Clothes",
+    "category": "clothes",
+    "subcategory": "casual",
+    "basePrice": 73,
+    "weeks": 4,
+    "happinessBonus": 0,
+    "description": "Standard everyday casual clothing."
+  },
+  {
+    "id": "dress_clothes",
+    "name": "Dress Clothes",
+    "category": "clothes",
+    "subcategory": "dress",
+    "basePrice": 125,
+    "weeks": 4,
+    "happinessBonus": 1,
+    "lifestyleValue": 1,
+    "description": "Sharp collared attire suitable for professional environments."
+  },
+  {
+    "id": "business_suit",
+    "name": "Business Suit",
+    "category": "clothes",
+    "subcategory": "business",
+    "basePrice": 295,
+    "weeks": 4,
+    "happinessBonus": 2,
+    "lifestyleValue": 2,
+    "description": "High-end corporate suit required for executive roles."
+  },
+  {
+    "id": "scurvy_slaw",
+    "name": "Scurvy Slaw & Pegleg Patties",
+    "category": "food",
+    "subcategory": "fast_food",
+    "basePrice": 15,
+    "happinessBonus": 0,
+    "mentalBonus": -1,
+    "description": "Cheap mystery slaw and deep-fried scraps. Drains your bodily stamina but staves off starvation.",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "physical", "value": -2 },
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "kraken_burger",
+    "name": "Kraken Double Melt & Curly Fries",
+    "category": "food",
+    "subcategory": "fast_food",
+    "basePrice": 75,
+    "happinessBonus": 2,
+    "mentalBonus": 3,
+    "description": "Decadent double patty smothered in melted cheese and pirate sauce. Delicious comfort food.",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "physical", "value": -1 },
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "grog_shake",
+    "name": "Pirate Grog Shake",
+    "category": "food",
+    "subcategory": "fast_food",
+    "basePrice": 40,
+    "happinessBonus": 1,
+    "mentalBonus": 2,
+    "description": "Creamy malted shake with spiced caramel swirl. Sweet mental comfort."
+  },
+  {
+    "id": "drip_coffee",
+    "name": "Fresh Drip Coffee",
+    "category": "food",
+    "subcategory": "coffee",
+    "basePrice": 5,
+    "happinessBonus": 1,
+    "mentalBonus": 2,
+    "description": "A piping hot mug of freshly brewed coffee. Restores physical energy and mental focus.",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "physical", "value": 3 }
+    ]
+  },
+  {
+    "id": "espresso",
+    "name": "Espresso Shot",
+    "category": "food",
+    "subcategory": "coffee",
+    "basePrice": 8,
+    "happinessBonus": 1,
+    "mentalBonus": 3,
+    "description": "Concentrated shot of dark roast espresso. Rapid stamina pick-me-up.",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "physical", "value": 4 }
+    ]
+  },
+  {
+    "id": "double_shot",
+    "name": "Double Shot Espresso",
+    "category": "food",
+    "subcategory": "coffee",
+    "basePrice": 12,
+    "happinessBonus": 1,
+    "mentalBonus": 4,
+    "description": "Heavy-duty double espresso shot for long work shifts and intense study.",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "physical", "value": 6 }
+    ]
+  },
+  {
+    "id": "hamburger",
+    "name": "Hamburger",
+    "category": "food",
+    "subcategory": "fast_food",
+    "basePrice": 79,
+    "happinessBonus": 0,
+    "effects": [
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "cheeseburger",
+    "name": "Cheeseburger",
+    "category": "food",
+    "subcategory": "fast_food",
+    "basePrice": 89,
+    "happinessBonus": 1,
+    "mentalBonus": 1,
+    "effects": [
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "fries",
+    "name": "French Fries",
+    "category": "food",
+    "subcategory": "fast_food",
+    "basePrice": 65,
+    "happinessBonus": 0,
+    "effects": [
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
+  },
+  {
+    "id": "cola",
+    "name": "Cola",
+    "category": "food",
+    "subcategory": "fast_food",
+    "basePrice": 69,
+    "happinessBonus": 1,
+    "mentalBonus": 1
+  },
+  {
+    "id": "food_1week",
+    "name": "1 Week Groceries",
+    "category": "food",
+    "basePrice": 55,
+    "units": 1,
+    "happinessBonus": 1,
+    "mentalBonus": 1
+  },
+  {
+    "id": "food_2weeks",
+    "name": "2 Weeks Groceries",
+    "category": "food",
+    "basePrice": 100,
+    "units": 2,
+    "happinessBonus": 2,
+    "mentalBonus": 2
+  },
+  {
+    "id": "food_4weeks",
+    "name": "4 Weeks Groceries",
+    "category": "food",
+    "basePrice": 190,
+    "units": 4,
+    "happinessBonus": 4,
+    "mentalBonus": 4
+  },
+  {
+    "id": "lottery_tickets",
+    "name": "Lottery Ticket",
+    "category": "tickets",
+    "basePrice": 10,
+    "happinessBonus": 2,
+    "mentalBonus": 1
+  },
+  {
+    "id": "newspaper",
+    "name": "Newspaper",
+    "category": "newspaper",
+    "basePrice": 1,
+    "happinessBonus": 0
+  },
+  {
+    "id": "baseball_tickets",
+    "name": "Baseball Tickets",
+    "category": "tickets",
+    "basePrice": 45,
+    "happinessBonus": 2,
+    "mentalBonus": 1
+  },
+  {
+    "id": "theatre_tickets",
+    "name": "Theatre Tickets",
+    "category": "tickets",
+    "basePrice": 30,
+    "happinessBonus": 2,
+    "mentalBonus": 1
+  },
+  {
+    "id": "concert_tickets",
+    "name": "Concert Tickets",
+    "category": "tickets",
+    "basePrice": 40,
+    "happinessBonus": 2,
+    "mentalBonus": 1
+  },
+  {
+    "id": "dog_food",
+    "name": "Canned Mystery Meat",
+    "category": "food",
+    "subcategory": "canned",
+    "basePrice": 18,
+    "happinessBonus": -1,
+    "mentalBonus": -2.5,
+    "description": "Suspicious cheap canned meat. Lowers mental spirits and permanently reduces max physical fitness upon consumption.",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -3 }
+    ]
+  },
+  {
+    "id": "8track",
+    "name": "8-Track Player",
+    "category": "appliance",
+    "basePrice": 75,
+    "space": 10,
+    "happinessBonus": -1,
+    "lifestyleValue": 1,
+    "mentalBonus": -1,
+    "effects": [
+      { "trigger": "on_socialize", "stat": "social", "value": 0.5 }
+    ]
+  },
+  {
+    "id": "knick_knack",
+    "name": "Curio & Knick-Knack",
+    "category": "junk",
+    "basePrice": 10,
+    "space": 2,
+    "lifestyleValue": 0,
+    "happinessBonus": 1,
+    "mentalBonus": 1
+  },
+  {
+    "id": "spare_parts",
+    "name": "Box of Spare Parts",
+    "category": "junk",
+    "basePrice": 15,
+    "space": 2,
+    "lifestyleValue": 0,
+    "happinessBonus": 0
+  }
+]

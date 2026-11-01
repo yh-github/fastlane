@@ -16,7 +16,12 @@
   },
   {
     "id": "advanced",
-    "name": "Advanced Edition",
+    "name": "Advanced 90's",
     "description": "Testing hub for new sub-systems and advanced modular game mechanics."
+  },
+  {
+    "id": "advanced_2000",
+    "name": "Advanced 2000",
+    "description": "Set around the year 2000. Features the Hospital, Red Pirate with busy weeks, Coffee system, Parks, and new degrees."
   }
 ]

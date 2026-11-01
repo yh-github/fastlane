@@ -196,6 +196,30 @@ export function getAvailableActions(
         options.push({ label: workLabel, action: { type: 'work', jobId: myJob.id } });
       }
     }
+
+    // Park Archetype
+    if (bDef?.archetype === 'park') {
+      options.push({
+        label: helpful ? 'Stroll in Park (-1h, +1 Phys, +1 Mental)' : 'Stroll in Park',
+        action: { type: 'stroll_park' }
+      });
+      options.push({
+        label: helpful ? 'Jog in Park (-2h, +1 Phys, +1 Max Phys, -1 Mental)' : 'Jog in Park',
+        action: { type: 'jog_park' }
+      });
+      options.push({
+        label: helpful ? 'Rest on Bench (-2h, +1 Phys, +1 Mental)' : 'Rest on Bench',
+        action: { type: 'rest_bench' }
+      });
+    }
+
+    // Red Pirate Arcade
+    if (state.rules.enableArcade && bDef?.id === 'red_pirate') {
+      options.push({
+        label: helpful ? 'Play Arcade Machine (-1h, -$5, +2 Mental, +2 Happiness)' : 'Play Arcade Machine',
+        action: { type: 'play_arcade' }
+      });
+    }
   } else {
     // If outside
     if (currentNode?.buildingId) {

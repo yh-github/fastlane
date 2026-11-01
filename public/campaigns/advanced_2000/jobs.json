@@ -1,0 +1,641 @@
+[
+  {
+    "id": "pirate_cook",
+    "title": "Deckhand Cook",
+    "locationId": "red_pirate",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 10,
+      "dependability": 10,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["always_hiring", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "pirate_clerk",
+    "title": "Counter Swashbuckler",
+    "locationId": "red_pirate",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 15,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["frontline_service", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "pirate_arcade_tech",
+    "title": "Arcade Cabinet Technician",
+    "locationId": "red_pirate",
+    "baseWage": 12,
+    "requirements": {
+      "experience": 25,
+      "dependability": 25,
+      "degrees": ["electronics"],
+      "techSkill": 2.5,
+      "uniform": "casual"
+    },
+    "tags": ["technical", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "pirate_asst_mgr",
+    "title": "First Mate",
+    "locationId": "red_pirate",
+    "baseWage": 10,
+    "requirements": {
+      "experience": 25,
+      "dependability": 35,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["middle_management", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "pirate_mgr",
+    "title": "The Captain",
+    "locationId": "red_pirate",
+    "baseWage": 15,
+    "requirements": {
+      "experience": 40,
+      "dependability": 50,
+      "degrees": ["junior_college"],
+      "uniform": "dress"
+    },
+    "tags": ["executive_management", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "hospital_custodian",
+    "title": "Hospital Orderly",
+    "locationId": "hospital",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 15,
+      "dependability": 15,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["always_hiring", "heavy_physical"],
+    "perks": []
+  },
+  {
+    "id": "hospital_receptionist",
+    "title": "Ward Clerk / Receptionist",
+    "locationId": "hospital",
+    "baseWage": 9,
+    "requirements": {
+      "experience": 20,
+      "dependability": 25,
+      "degrees": ["junior_college"],
+      "uniform": "casual"
+    },
+    "tags": ["frontline_service", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "hospital_biomed_tech",
+    "title": "Biomedical IT Technician",
+    "locationId": "hospital",
+    "baseWage": 14,
+    "requirements": {
+      "experience": 30,
+      "dependability": 30,
+      "degrees": ["electronics"],
+      "techSkill": 3.0,
+      "uniform": "casual"
+    },
+    "tags": ["technical", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "hospital_emt",
+    "title": "EMT / Physical Therapist",
+    "locationId": "hospital",
+    "baseWage": 15,
+    "requirements": {
+      "experience": 30,
+      "dependability": 35,
+      "degrees": ["physiology"],
+      "uniform": "casual"
+    },
+    "tags": ["frontline_service"],
+    "perks": []
+  },
+  {
+    "id": "hospital_lab_tech",
+    "title": "Lab Diagnostic Technologist",
+    "locationId": "hospital",
+    "baseWage": 16,
+    "requirements": {
+      "experience": 35,
+      "dependability": 35,
+      "degrees": ["biochemistry"],
+      "techSkill": 2.5,
+      "uniform": "casual"
+    },
+    "tags": ["technical"],
+    "perks": []
+  },
+  {
+    "id": "hospital_nurse",
+    "title": "Staff Nurse (RN)",
+    "locationId": "hospital",
+    "baseWage": 18,
+    "requirements": {
+      "experience": 40,
+      "dependability": 40,
+      "degrees": ["physiology"],
+      "uniform": "casual"
+    },
+    "tags": ["heavy_physical"],
+    "perks": []
+  },
+  {
+    "id": "hospital_head_nurse",
+    "title": "Head Nurse / Floor Supervisor",
+    "locationId": "hospital",
+    "baseWage": 22,
+    "requirements": {
+      "experience": 50,
+      "dependability": 50,
+      "degrees": ["physiology"],
+      "mgmtSkill": 2.0,
+      "uniform": "dress"
+    },
+    "tags": ["middle_management", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "hospital_resident",
+    "title": "Medical Resident",
+    "locationId": "hospital",
+    "baseWage": 19,
+    "requirements": {
+      "experience": 50,
+      "dependability": 50,
+      "degrees": ["medical_school"],
+      "uniform": "dress"
+    },
+    "tags": ["heavy_physical"],
+    "perks": []
+  },
+  {
+    "id": "hospital_physician",
+    "title": "Attending Physician",
+    "locationId": "hospital",
+    "baseWage": 27,
+    "requirements": {
+      "experience": 65,
+      "dependability": 65,
+      "degrees": ["residency"],
+      "uniform": "business"
+    },
+    "tags": ["executive_management"],
+    "perks": []
+  },
+  {
+    "id": "hospital_surgeon",
+    "title": "Chief Surgeon",
+    "locationId": "hospital",
+    "baseWage": 30,
+    "requirements": {
+      "experience": 70,
+      "dependability": 70,
+      "degrees": ["specialty_fellowship"],
+      "techSkill": 5.0,
+      "uniform": "casual"
+    },
+    "tags": ["technical"],
+    "perks": []
+  },
+  {
+    "id": "hospital_director",
+    "title": "Chief of Medicine / Hospital Director",
+    "locationId": "hospital",
+    "baseWage": 35,
+    "requirements": {
+      "experience": 80,
+      "dependability": 80,
+      "degrees": ["business_admin", "residency"],
+      "mgmtSkill": 5.0,
+      "uniform": "business"
+    },
+    "tags": ["executive_management"],
+    "perks": []
+  },
+  {
+    "id": "zmart_clerk",
+    "title": "Clerk",
+    "locationId": "z_mart",
+    "baseWage": 5,
+    "requirements": {
+      "experience": 10,
+      "dependability": 15,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["frontline_service"],
+    "perks": []
+  },
+  {
+    "id": "zmart_asst_mgr",
+    "title": "Assistant Manager",
+    "locationId": "z_mart",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 20,
+      "dependability": 30,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["middle_management"],
+    "perks": []
+  },
+  {
+    "id": "zmart_mgr",
+    "title": "Manager",
+    "locationId": "z_mart",
+    "baseWage": 10,
+    "requirements": {
+      "experience": 40,
+      "dependability": 45,
+      "degrees": ["junior_college"],
+      "uniform": "dress"
+    },
+    "tags": ["executive_management"],
+    "perks": []
+  },
+  {
+    "id": "qt_janitor",
+    "title": "Janitor",
+    "locationId": "qt_clothing",
+    "baseWage": 5,
+    "requirements": {
+      "experience": 10,
+      "dependability": 10,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["always_hiring", "heavy_physical"],
+    "perks": []
+  },
+  {
+    "id": "qt_salesperson",
+    "title": "Salesperson",
+    "locationId": "qt_clothing",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 15,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "dress"
+    },
+    "tags": ["frontline_service", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "qt_asst_mgr",
+    "title": "Assistant Manager",
+    "locationId": "qt_clothing",
+    "baseWage": 8,
+    "requirements": {
+      "experience": 25,
+      "dependability": 30,
+      "degrees": [],
+      "uniform": "dress"
+    },
+    "tags": ["middle_management"],
+    "perks": []
+  },
+  {
+    "id": "qt_mgr",
+    "title": "Manager",
+    "locationId": "qt_clothing",
+    "baseWage": 12,
+    "requirements": {
+      "experience": 40,
+      "dependability": 50,
+      "degrees": ["junior_college"],
+      "uniform": "business"
+    },
+    "tags": ["executive_management"],
+    "perks": []
+  },
+  {
+    "id": "socket_clerk",
+    "title": "Stock Clerk",
+    "locationId": "socket_city",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 10,
+      "dependability": 15,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["frontline_service"],
+    "perks": []
+  },
+  {
+    "id": "socket_salesperson",
+    "title": "Salesperson",
+    "locationId": "socket_city",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 15,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "dress"
+    },
+    "tags": ["frontline_service", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "socket_repairman",
+    "title": "Electronics Repairman",
+    "locationId": "socket_city",
+    "baseWage": 13,
+    "requirements": {
+      "experience": 25,
+      "dependability": 25,
+      "degrees": ["electronics"],
+      "techSkill": 3.0,
+      "uniform": "casual"
+    },
+    "tags": ["technical"],
+    "perks": []
+  },
+  {
+    "id": "socket_mgr",
+    "title": "Manager",
+    "locationId": "socket_city",
+    "baseWage": 16,
+    "requirements": {
+      "experience": 50,
+      "dependability": 50,
+      "degrees": ["business_admin"],
+      "techSkill": 3.0,
+      "uniform": "business"
+    },
+    "tags": ["technical", "middle_management"],
+    "perks": []
+  },
+  {
+    "id": "uni_janitor",
+    "title": "Janitor",
+    "locationId": "university",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 10,
+      "dependability": 10,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["always_hiring", "heavy_physical"],
+    "perks": []
+  },
+  {
+    "id": "uni_teacher",
+    "title": "Lecturer",
+    "locationId": "university",
+    "baseWage": 16,
+    "requirements": {
+      "experience": 50,
+      "dependability": 50,
+      "degrees": ["academic"],
+      "uniform": "dress"
+    },
+    "tags": ["academic_freedom"],
+    "perks": []
+  },
+  {
+    "id": "uni_professor",
+    "title": "Tenured Professor",
+    "locationId": "university",
+    "baseWage": 24,
+    "requirements": {
+      "experience": 70,
+      "dependability": 70,
+      "degrees": ["graduate_school"],
+      "uniform": "business"
+    },
+    "tags": ["academic_freedom"],
+    "perks": []
+  },
+  {
+    "id": "bank_security_guard",
+    "title": "Security Guard",
+    "locationId": "bank",
+    "baseWage": 8,
+    "requirements": {
+      "experience": 20,
+      "dependability": 25,
+      "degrees": [],
+      "uniform": "dress"
+    },
+    "tags": ["look_fit"],
+    "perks": []
+  },
+  {
+    "id": "bank_teller",
+    "title": "Bank Teller",
+    "locationId": "bank",
+    "baseWage": 9,
+    "requirements": {
+      "experience": 25,
+      "dependability": 30,
+      "degrees": ["junior_college"],
+      "uniform": "dress"
+    },
+    "tags": ["frontline_service"],
+    "perks": []
+  },
+  {
+    "id": "bank_asst_mgr",
+    "title": "Assistant Branch Manager",
+    "locationId": "bank",
+    "baseWage": 15,
+    "requirements": {
+      "experience": 45,
+      "dependability": 45,
+      "degrees": ["business_admin"],
+      "uniform": "business"
+    },
+    "tags": ["middle_management"],
+    "perks": []
+  },
+  {
+    "id": "bank_mgr",
+    "title": "Branch Manager",
+    "locationId": "bank",
+    "baseWage": 22,
+    "requirements": {
+      "experience": 60,
+      "dependability": 60,
+      "degrees": ["business_admin"],
+      "uniform": "business"
+    },
+    "tags": ["executive_management"],
+    "perks": []
+  },
+  {
+    "id": "bank_broker",
+    "title": "Investment Broker",
+    "locationId": "bank",
+    "baseWage": 25,
+    "requirements": {
+      "experience": 65,
+      "dependability": 65,
+      "degrees": ["business_admin"],
+      "uniform": "business"
+    },
+    "tags": ["executive_management"],
+    "perks": []
+  },
+  {
+    "id": "blacks_janitor",
+    "title": "Janitor",
+    "locationId": "blacks_market",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 10,
+      "dependability": 10,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["always_hiring", "heavy_physical"],
+    "perks": []
+  },
+  {
+    "id": "blacks_checker",
+    "title": "Checkout Clerk",
+    "locationId": "blacks_market",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 15,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["frontline_service"],
+    "perks": []
+  },
+  {
+    "id": "blacks_butcher",
+    "title": "Meat Cutter",
+    "locationId": "blacks_market",
+    "baseWage": 9,
+    "requirements": {
+      "experience": 25,
+      "dependability": 25,
+      "degrees": ["trade_school"],
+      "uniform": "casual"
+    },
+    "tags": ["heavy_physical"],
+    "perks": []
+  },
+  {
+    "id": "blacks_asst_mgr",
+    "title": "Assistant Grocery Manager",
+    "locationId": "blacks_market",
+    "baseWage": 11,
+    "requirements": {
+      "experience": 35,
+      "dependability": 35,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["middle_management"],
+    "perks": []
+  },
+  {
+    "id": "blacks_mgr",
+    "title": "Store Manager",
+    "locationId": "blacks_market",
+    "baseWage": 16,
+    "requirements": {
+      "experience": 50,
+      "dependability": 50,
+      "degrees": ["junior_college"],
+      "uniform": "dress"
+    },
+    "tags": ["executive_management"],
+    "perks": []
+  },
+  {
+    "id": "rent_groundskeeper",
+    "title": "Groundskeeper",
+    "locationId": "apartment_complex",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 15,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["heavy_physical"],
+    "perks": []
+  },
+  {
+    "id": "rent_mgr",
+    "title": "Property Manager",
+    "locationId": "apartment_complex",
+    "baseWage": 12,
+    "requirements": {
+      "experience": 35,
+      "dependability": 35,
+      "degrees": ["junior_college"],
+      "uniform": "dress"
+    },
+    "tags": ["frontline_service", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "pawn_security_guard",
+    "title": "Security Guard",
+    "locationId": "pawn_shop",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 15,
+      "dependability": 15,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": ["high_downtime", "look_fit"],
+    "perks": []
+  },
+  {
+    "id": "pawn_appraiser",
+    "title": "Counter Appraiser",
+    "locationId": "pawn_shop",
+    "baseWage": 9,
+    "requirements": {
+      "experience": 25,
+      "dependability": 25,
+      "degrees": ["trade_school"],
+      "uniform": "casual"
+    },
+    "tags": ["frontline_service", "high_downtime"],
+    "perks": []
+  },
+  {
+    "id": "pawn_horologist",
+    "title": "Horologist",
+    "locationId": "pawn_shop",
+    "baseWage": 13,
+    "requirements": {
+      "experience": 35,
+      "dependability": 35,
+      "degrees": ["electronics"],
+      "techSkill": 3.5,
+      "uniform": "casual"
+    },
+    "tags": ["technical", "high_downtime"],
+    "perks": []
+  }
+]

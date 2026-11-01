@@ -1,0 +1,10 @@
+[
+  { "id": "wild_willy_bank", "type": "robbery", "trigger": "bank_exit", "probability": 0.032, "effects": { "money": 0, "happiness": -3 } },
+  { "id": "wild_willy_blacks", "type": "robbery", "trigger": "blacks_exit", "probability": 0.019, "effects": { "money": 0, "happiness": -3 } },
+  { "id": "starvation_doctor", "type": "doctor", "trigger": "starvation", "probability": 0.25, "effects": { "hours": -10, "happiness": -4, "costMin": 30, "costMax": 200 } },
+  { "id": "spoilage_doctor", "type": "doctor", "trigger": "spoilage_all", "probability": 0.50, "effects": { "hours": -10, "happiness": -4, "costMin": 30, "costMax": 200 } },
+  { "id": "relaxation_doctor", "type": "doctor", "trigger": "low_relaxation", "probability": 0.20, "effects": { "hours": -10, "happiness": -4, "costMin": 30, "costMax": 200 } },
+  { "id": "market_crash_minor", "type": "crash", "trigger": "turn_start", "severity": "minor", "effects": { "happinessPenaltyStocks": -2, "happinessPenaltyNoStocks": -1 } },
+  { "id": "market_crash_moderate", "type": "crash", "trigger": "turn_start", "severity": "moderate", "effects": { "happinessPenaltyStocks": -4, "happinessPenaltyNoStocks": -2, "fireChance": 0.5, "wageCutRate": 0.8 } },
+  { "id": "market_crash_major", "type": "crash", "trigger": "turn_start", "severity": "major", "effects": { "happinessPenaltyStocks": -8, "happinessPenaltyNoStocks": -3, "fireChance": 1.0, "wipeSavings": true } }
+]

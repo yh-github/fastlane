@@ -1,0 +1,42 @@
+[
+  {
+    "id": "street",
+    "name": "The Streets",
+    "baseRent": 0,
+    "isRobberyImmune": false,
+    "homeNodeId": "node_low_cost",
+    "description": "Living on the streets. It's free, but harsh and unprotected.",
+    "lifestyleValue": 0,
+    "spaceCap": 0
+  },
+  {
+    "id": "low_cost",
+    "name": "Low-Cost Housing",
+    "baseRent": 325,
+    "isRobberyImmune": false,
+    "homeNodeId": "node_low_cost",
+    "description": "Basic apartment. Subject to mishaps and high mess accumulation.",
+    "lifestyleValue": 10,
+    "spaceCap": 100
+  },
+  {
+    "id": "security",
+    "name": "Security Apartments",
+    "baseRent": 475,
+    "isRobberyImmune": true,
+    "homeNodeId": "node_security",
+    "description": "Quiet, secure apartments insulated from city perils.",
+    "lifestyleValue": 30,
+    "spaceCap": 250
+  },
+  {
+    "id": "penthouse",
+    "name": "Penthouse Suite",
+    "baseRent": 850,
+    "isRobberyImmune": true,
+    "homeNodeId": "node_security",
+    "description": "Ultra-luxurious top-floor suite with expansive living space.",
+    "lifestyleValue": 50,
+    "spaceCap": 500
+  }
+]

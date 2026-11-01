@@ -1,0 +1,166 @@
+{
+  "width": 1200,
+  "height": 800,
+  "nodes": [
+    {
+      "id": "node_low_cost",
+      "x": 600,
+      "y": 100,
+      "buildingId": "low_cost_housing",
+      "connections": [
+        "node_rent",
+        "node_pawn_shop"
+      ]
+    },
+    {
+      "id": "node_pawn_shop",
+      "x": 825,
+      "y": 100,
+      "buildingId": "pawn_shop",
+      "connections": [
+        "node_low_cost",
+        "node_z_mart"
+      ]
+    },
+    {
+      "id": "node_z_mart",
+      "x": 1050,
+      "y": 100,
+      "buildingId": "z_mart",
+      "connections": [
+        "node_pawn_shop",
+        "node_burger"
+      ]
+    },
+    {
+      "id": "node_burger",
+      "x": 1050,
+      "y": 300,
+      "buildingId": "red_pirate",
+      "connections": [
+        "node_z_mart",
+        "node_qt"
+      ]
+    },
+    {
+      "id": "node_qt",
+      "x": 1050,
+      "y": 500,
+      "buildingId": "qt_clothing",
+      "connections": [
+        "node_burger",
+        "node_park_east"
+      ]
+    },
+    {
+      "id": "node_park_east",
+      "x": 1050,
+      "y": 600,
+      "buildingId": "eastside_park",
+      "connections": [
+        "node_qt",
+        "node_socket"
+      ]
+    },
+    {
+      "id": "node_socket",
+      "x": 1050,
+      "y": 700,
+      "buildingId": "socket_city",
+      "connections": [
+        "node_park_east",
+        "node_university"
+      ]
+    },
+    {
+      "id": "node_university",
+      "x": 750,
+      "y": 700,
+      "buildingId": "university",
+      "connections": [
+        "node_socket",
+        "node_park_campus"
+      ]
+    },
+    {
+      "id": "node_park_campus",
+      "x": 600,
+      "y": 700,
+      "buildingId": "campus_park",
+      "connections": [
+        "node_university",
+        "node_employment"
+      ]
+    },
+    {
+      "id": "node_employment",
+      "x": 450,
+      "y": 700,
+      "buildingId": "employment_office",
+      "connections": [
+        "node_park_campus",
+        "node_factory"
+      ]
+    },
+    {
+      "id": "node_factory",
+      "x": 150,
+      "y": 700,
+      "buildingId": "hospital",
+      "connections": [
+        "node_employment",
+        "node_bank"
+      ]
+    },
+    {
+      "id": "node_bank",
+      "x": 150,
+      "y": 500,
+      "buildingId": "bank",
+      "connections": [
+        "node_factory",
+        "node_blacks"
+      ]
+    },
+    {
+      "id": "node_blacks",
+      "x": 150,
+      "y": 300,
+      "buildingId": "blacks_market",
+      "connections": [
+        "node_bank",
+        "node_park_west"
+      ]
+    },
+    {
+      "id": "node_park_west",
+      "x": 150,
+      "y": 200,
+      "buildingId": "west_green",
+      "connections": [
+        "node_blacks",
+        "node_security"
+      ]
+    },
+    {
+      "id": "node_security",
+      "x": 150,
+      "y": 100,
+      "buildingId": "security_apartments",
+      "connections": [
+        "node_park_west",
+        "node_rent"
+      ]
+    },
+    {
+      "id": "node_rent",
+      "x": 375,
+      "y": 100,
+      "buildingId": "apartment_complex",
+      "connections": [
+        "node_security",
+        "node_low_cost"
+      ]
+    }
+  ]
+}

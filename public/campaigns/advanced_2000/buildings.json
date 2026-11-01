@@ -1,0 +1,327 @@
+[
+  {
+    "id": "low_cost_housing",
+    "name": "Low-Cost Housing",
+    "archetype": "home",
+    "spritePath": "images/low_cost_housing.png",
+    "description": "Your starting apartment. Subject to mishaps and high mess."
+  },
+  {
+    "id": "security_apartments",
+    "name": "Le Security Apartments",
+    "archetype": "home",
+    "spritePath": "images/security_apartments.png",
+    "description": "High-end apartments safe from robberies and slum mishaps."
+  },
+  {
+    "id": "red_pirate",
+    "name": "The Red Pirate",
+    "archetype": "restaurant",
+    "spritePath": "images/burger_palace.png",
+    "description": "Fast food, arcade cabinets, and grog. Watch out for 'All Hands on Deck' rush weeks!",
+    "inventory": [
+      {
+        "itemId": "scurvy_slaw",
+        "priceOverride": 15
+      },
+      {
+        "itemId": "kraken_burger",
+        "priceOverride": 75
+      },
+      {
+        "itemId": "grog_shake",
+        "priceOverride": 40
+      },
+      {
+        "itemId": "hamburger",
+        "priceOverride": 79
+      },
+      {
+        "itemId": "cheeseburger",
+        "priceOverride": 89
+      },
+      {
+        "itemId": "fries",
+        "priceOverride": 65
+      },
+      {
+        "itemId": "cola",
+        "priceOverride": 69
+      },
+      {
+        "itemId": "drip_coffee",
+        "priceOverride": 5
+      },
+      {
+        "itemId": "espresso",
+        "priceOverride": 8
+      },
+      {
+        "itemId": "double_shot",
+        "priceOverride": 12
+      }
+    ]
+  },
+  {
+    "id": "hospital",
+    "name": "City General Hospital",
+    "archetype": "hospital",
+    "spritePath": "images/factory.png",
+    "description": "24/7 medical center offering emergency healthcare, diagnostic laboratories, and medical careers."
+  },
+  {
+    "id": "employment_office",
+    "name": "Employment Office",
+    "archetype": "employment",
+    "spritePath": "images/employment_office.png",
+    "description": "Look for jobs and apply."
+  },
+  {
+    "id": "university",
+    "name": "Hi-Tech U",
+    "archetype": "education",
+    "spritePath": "images/university.png",
+    "description": "Earn technical, business, and medical degrees to unlock advanced careers."
+  },
+  {
+    "id": "qt_clothing",
+    "name": "QT Clothing",
+    "archetype": "shop",
+    "spritePath": "images/qt_clothing.png",
+    "description": "Quality clothes for work and life.",
+    "inventory": [
+      {
+        "itemId": "business_suit",
+        "priceOverride": 295
+      },
+      {
+        "itemId": "dress_clothes",
+        "priceOverride": 125
+      },
+      {
+        "itemId": "casual_clothes",
+        "priceOverride": 73
+      }
+    ]
+  },
+  {
+    "id": "apartment_complex",
+    "name": "Rent Office",
+    "archetype": "housing",
+    "spritePath": "images/apartments.png",
+    "description": "Pay rent or change apartments."
+  },
+  {
+    "id": "pawn_shop",
+    "name": "Pawn Shop",
+    "archetype": "pawnshop",
+    "spritePath": "images/pawn_shop.png",
+    "description": "Pawn items for quick cash or buy secondhand goods.",
+    "inventory": [
+      {
+        "itemId": "knick_knack",
+        "priceOverride": 10
+      },
+      {
+        "itemId": "spare_parts",
+        "priceOverride": 15
+      }
+    ]
+  },
+  {
+    "id": "z_mart",
+    "name": "Z-Mart",
+    "archetype": "shop",
+    "spritePath": "images/z_mart.png",
+    "description": "General store. Appliances, books, clothes, and tickets.",
+    "inventory": [
+      {
+        "itemId": "refrigerator",
+        "priceOverride": 650,
+        "tags": ["refrigerator"]
+      },
+      {
+        "itemId": "stove",
+        "priceOverride": 490,
+        "tags": ["stove"]
+      },
+      {
+        "itemId": "stereo",
+        "priceOverride": 450
+      },
+      {
+        "itemId": "crt_tv",
+        "priceOverride": 140
+      },
+      {
+        "itemId": "plasma_tv",
+        "priceOverride": 650
+      },
+      {
+        "itemId": "microwave",
+        "priceOverride": 220,
+        "tags": ["microwave"]
+      },
+      {
+        "itemId": "vcr",
+        "priceOverride": 250
+      },
+      {
+        "itemId": "encyclopedia",
+        "priceOverride": 475
+      },
+      {
+        "itemId": "dictionary",
+        "priceOverride": 70
+      },
+      {
+        "itemId": "atlas",
+        "priceOverride": 55
+      },
+      {
+        "itemId": "casual_clothes",
+        "priceOverride": 35
+      },
+      {
+        "itemId": "dress_clothes",
+        "priceOverride": 90
+      },
+      {
+        "itemId": "baseball_tickets",
+        "priceOverride": 45
+      },
+      {
+        "itemId": "theatre_tickets",
+        "priceOverride": 30
+      },
+      {
+        "itemId": "concert_tickets",
+        "priceOverride": 40
+      },
+      {
+        "itemId": "dog_food",
+        "priceOverride": 18
+      },
+      {
+        "itemId": "8track",
+        "priceOverride": 75
+      },
+      {
+        "itemId": "capote",
+        "priceOverride": 100
+      }
+    ]
+  },
+  {
+    "id": "socket_city",
+    "name": "Socket City",
+    "archetype": "shop",
+    "spritePath": "images/socket_city.png",
+    "description": "High-end appliances and modern electronics.",
+    "inventory": [
+      {
+        "itemId": "refrigerator",
+        "priceOverride": 876,
+        "tags": ["refrigerator"]
+      },
+      {
+        "itemId": "freezer",
+        "priceOverride": 513,
+        "tags": ["freezer"]
+      },
+      {
+        "itemId": "stove",
+        "priceOverride": 570,
+        "tags": ["stove"]
+      },
+      {
+        "itemId": "plasma_tv",
+        "priceOverride": 750
+      },
+      {
+        "itemId": "vcr",
+        "priceOverride": 333
+      },
+      {
+        "itemId": "stereo",
+        "priceOverride": 412
+      },
+      {
+        "itemId": "microwave",
+        "priceOverride": 330,
+        "tags": ["microwave"]
+      },
+      {
+        "itemId": "hot_tub",
+        "priceOverride": 1255,
+        "tags": ["hot_tub"]
+      },
+      {
+        "itemId": "computer",
+        "priceOverride": 1599,
+        "tags": ["computer"]
+      }
+    ]
+  },
+  {
+    "id": "bank",
+    "name": "Bank",
+    "archetype": "bank",
+    "spritePath": "images/bank.png",
+    "description": "Save money, get loans, invest in stocks."
+  },
+  {
+    "id": "blacks_market",
+    "name": "Black's Market",
+    "archetype": "grocery",
+    "spritePath": "images/blacks_market.png",
+    "description": "Fresh food, lottery tickets, and newspaper.",
+    "inventory": [
+      {
+        "itemId": "food_1week",
+        "priceOverride": 55
+      },
+      {
+        "itemId": "food_2weeks",
+        "priceOverride": 100
+      },
+      {
+        "itemId": "food_4weeks",
+        "priceOverride": 190
+      },
+      {
+        "itemId": "lottery_tickets",
+        "priceOverride": 10
+      },
+      {
+        "itemId": "newspaper",
+        "priceOverride": 1
+      },
+      {
+        "itemId": "drip_coffee",
+        "priceOverride": 5
+      }
+    ]
+  },
+  {
+    "id": "campus_park",
+    "name": "Campus Commons Park",
+    "archetype": "park",
+    "spritePath": "images/apartments.png",
+    "description": "A green open space between the Employment Office and Hi-Tech U. Great for jogging, reading, or resting on a bench."
+  },
+  {
+    "id": "west_green",
+    "name": "Green Heights Park",
+    "archetype": "park",
+    "spritePath": "images/apartments.png",
+    "description": "A pleasant residential park situated near Security Apartments. Quiet trails and clean air."
+  },
+  {
+    "id": "eastside_park",
+    "name": "Eastside Park",
+    "archetype": "park",
+    "spritePath": "images/apartments.png",
+    "description": "An urban city park connecting QT Clothing and Socket City. A refreshing pause in a busy shopping district."
+  }
+]

@@ -222,7 +222,8 @@ export function processAdvancedMaintenanceAndDecay(
   campaign: CampaignBundle,
   rng: Random,
   replay: ReplayContext | undefined,
-  previousPlayerWeekends: string[]
+  previousPlayerWeekends: string[],
+  previousPlayer?: PlayerState
 ): { updatedPlayer: PlayerState; preRobberyStorage: number } {
   let player = p;
 
@@ -302,6 +303,54 @@ export function processAdvancedMaintenanceAndDecay(
     ensurePlayerCurios(player, state.turn);
   }
 
+  // 5c. Caffeine Tolerance & Morning Fog / Withdrawal (Advanced 2000)
+  if (state.rules.enableCaffeineSystem) {
+    const cups = previousPlayer?.turnFlags?.coffeeCupsThisTurn || 0;
+    let tol = player.caffeineTolerance || 0;
+    if (cups === 0) {
+      tol = Math.max(0, tol - 2);
+    } else if (cups === 2) {
+      tol = Math.min(10, tol + 1);
+    } else if (cups >= 3) {
+      tol = Math.min(10, tol + 2);
+    }
+    player.caffeineTolerance = tol;
+
+    if (tol >= 9) {
+      const minMaxPhys = (campaign.config.statRules && 'minMaxPhysical' in campaign.config.statRules) ? (campaign.config.statRules as any).minMaxPhysical : 20;
+      player.physicalConditionMax = Math.max(minMaxPhys, (player.physicalConditionMax ?? 50) - 1);
+      player.physicalCondition = Math.max(1, (player.physicalCondition ?? 50) - 3);
+      player.physicalCondition = Math.min(player.physicalConditionMax, player.physicalCondition);
+      player.mentalCondition = Math.max(1, (player.mentalCondition ?? 50) - 3);
+      player.turnEvents.push({
+        key: 'events.caffeine_withdrawal_severe',
+        modifications: [
+          { stat: 'physical', diff: -3 },
+          { stat: 'mental', diff: -3 },
+          { stat: 'maxPhysical', diff: -1 }
+        ]
+      });
+    } else if (tol >= 6) {
+      player.physicalCondition = Math.max(1, (player.physicalCondition ?? 50) - 2);
+      player.mentalCondition = Math.max(1, (player.mentalCondition ?? 50) - 2);
+      player.turnEvents.push({
+        key: 'events.caffeine_withdrawal',
+        modifications: [
+          { stat: 'physical', diff: -2 },
+          { stat: 'mental', diff: -2 }
+        ]
+      });
+    } else if (tol >= 3) {
+      player.physicalCondition = Math.max(1, (player.physicalCondition ?? 50) - 1);
+      player.turnEvents.push({
+        key: 'events.caffeine_fog',
+        modifications: [
+          { stat: 'physical', diff: -1 }
+        ]
+      });
+    }
+  }
+
   // 6. Computer Profits (Advanced: Money + Morale + optional Tech Skill)
   const queuedCompProfit = state.debugQueue?.find(e => e.type === 'computer_profit' && (e.playerId === player.id || !e.playerId));
   const computerIncomeChance = player.activeEffects['computer_income_chance'] || 0;
@@ -352,7 +401,17 @@ export function processAdvancedMaintenanceAndDecay(
     player.relaxation = Math.max(threshold, player.relaxation - decay);
   }
   const curJob = player.currentJobId ? campaign.jobs.find(j => j.id === player.currentJobId) : undefined;
-  const isHighDowntime = curJob?.tags?.includes('high_downtime') ?? false;
+  const isBusyLocation = Boolean(
+    state.rules.enableBusyWeeks &&
+    curJob?.locationId &&
+    state.busyLocations?.[curJob.locationId]
+  );
+  const workedLastTurn = previousPlayer
+    ? (Boolean(previousPlayer.turnFlags?.hasWorked) || (previousPlayer.workActionsThisTurn || 0) > 0)
+    : false;
+  const isAbsentOnBusyWeek = isBusyLocation && !workedLastTurn;
+
+  const isHighDowntime = (curJob?.tags?.includes('high_downtime') ?? false) && !isAbsentOnBusyWeek;
   const isExecMgmt = curJob?.tags?.includes('executive_management') ?? false;
   player.dependability = calcDependabilityDecay(
     player.dependability,
@@ -363,6 +422,15 @@ export function processAdvancedMaintenanceAndDecay(
     isHighDowntime,
     isExecMgmt
   );
+
+  if (isAbsentOnBusyWeek) {
+    player.dependability = Math.max(0, player.dependability - 4);
+    player.turnEvents.push({
+      key: 'events.busyWeekAbsentReprimand',
+      params: { job: curJob?.title || 'Job' },
+      modifications: [{ stat: 'dependability', diff: -4 }]
+    });
+  }
 
   // 8. Apartment Robbery
   return processApartmentRobberyStep(player, state, campaign, rng, replay);
@@ -381,12 +449,13 @@ export function processMaintenanceAndDecayPhase(
     economicBoom: boolean;
     currentHeadline: GameEvent | null;
     cancelledGlobalEvents: GameEvent[];
-  }
+  },
+  previousPlayer?: PlayerState
 ): { updatedPlayer: PlayerState; preRobberyStorage: number } {
   if (isBaseVersion(state.rules)) {
     return processBaseMaintenanceAndDecay(p, state, campaign, rng, replay, previousPlayerWeekends);
   }
-  return processAdvancedMaintenanceAndDecay(p, state, campaign, rng, replay, previousPlayerWeekends);
+  return processAdvancedMaintenanceAndDecay(p, state, campaign, rng, replay, previousPlayerWeekends, previousPlayer);
 }
 
 export function processPostHealthMaintenance(

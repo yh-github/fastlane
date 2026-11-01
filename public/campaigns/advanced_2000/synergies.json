@@ -1,0 +1,29 @@
+[
+  {
+    "id": "vcr_crt_tv_social",
+    "name": "VCR CRT TV Socializing",
+    "description": "Provides +1 social bonus during weekend activities with CRT TV.",
+    "requires": ["item:vcr", "item:crt_tv"],
+    "effects": [
+      { "type": "vcr_social_bonus", "value": 1, "operation": "MAX" }
+    ]
+  },
+  {
+    "id": "vcr_color_tv_social",
+    "name": "VCR Color TV Socializing",
+    "description": "Provides +1 social bonus during weekend activities with Color TV.",
+    "requires": ["item:vcr", "item:color_tv"],
+    "effects": [
+      { "type": "vcr_social_bonus", "value": 1, "operation": "MAX" }
+    ]
+  },
+  {
+    "id": "vcr_plasma_tv_social",
+    "name": "VCR Plasma TV Socializing",
+    "description": "Provides +2 social bonus during weekend activities with Flat-Screen Plasma TV.",
+    "requires": ["item:vcr", "item:plasma_tv"],
+    "effects": [
+      { "type": "vcr_social_bonus", "value": 2, "operation": "MAX" }
+    ]
+  }
+]

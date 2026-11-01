@@ -94,32 +94,36 @@ export function processDoctorVisit(
   replay?: ReplayContext,
   statRules?: StatRules
 ): PlayerState {
-  // Bypassed entirely if carrying $0 cash (if rule is enabled)
-  if (player.money <= 0 && bypassDoctorIfBroke) return player;
+  const isHospitalEmployee = !!(rules?.hospitalEmployeeHealthcare && player.currentJobId?.startsWith('hospital_'));
+
+  // Bypassed entirely if carrying $0 cash (if rule is enabled and not hospital employee)
+  if (!isHospitalEmployee && player.money <= 0 && bypassDoctorIfBroke) return player;
 
   const updated = spendHours(player, timePenalty);
   
   if (rules?.usePhysicalMentalConditions) {
     const maxPhys = updated.physicalConditionMax ?? ((statRules && isAdvancedStatRules(statRules)) ? statRules.initialPhysicalMax : 50);
-    const physBounce = (statRules && isAdvancedStatRules(statRules)) ? statRules.doctorPhysicalBounceBack : 4;
+    const physBounce = isHospitalEmployee ? 12 : ((statRules && isAdvancedStatRules(statRules)) ? statRules.doctorPhysicalBounceBack : 4);
     updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 15) + physBounce);
   } else {
     const minHap = statRules ? statRules.minHappiness : 0;
     updated.happiness = Math.max(minHap, updated.happiness - 4);
   }
   
-  // Cost: random between $30 and $200
-  const cost = resolveDecision(replay, `doctor_cost`, () => Math.floor(rng.next() * 171) + 30);
-  if (!bypassDoctorIfBroke && rules?.usePhysicalMentalConditions) {
-    if (updated.money < cost) {
-      const unpaid = cost - updated.money;
-      updated.money = 0;
-      updated.loanDebt = (updated.loanDebt || 0) + unpaid;
+  // Cost: random between $30 and $200 (waived for hospital employee)
+  if (!isHospitalEmployee) {
+    const cost = resolveDecision(replay, `doctor_cost`, () => Math.floor(rng.next() * 171) + 30);
+    if (!bypassDoctorIfBroke && rules?.usePhysicalMentalConditions) {
+      if (updated.money < cost) {
+        const unpaid = cost - updated.money;
+        updated.money = 0;
+        updated.loanDebt = (updated.loanDebt || 0) + unpaid;
+      } else {
+        updated.money -= cost;
+      }
     } else {
-      updated.money -= cost;
+      updated.money = Math.max(0, updated.money - cost);
     }
-  } else {
-    updated.money = Math.max(0, updated.money - cost);
   }
 
   return updated;
