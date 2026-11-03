@@ -3,6 +3,7 @@ import type { PlayerState } from '../../engine/gameState';
 
 interface AuthenticCashCalculatorProps {
   player: PlayerState;
+  onClick?: () => void;
 }
 
 /**
@@ -11,10 +12,12 @@ interface AuthenticCashCalculatorProps {
  * Stamped with '$' and red power key; LCD screen displays current cash balance.
  * Placed in the bottom-right corner of the authentic game board during building location visits.
  */
-export const AuthenticCashCalculator: React.FC<AuthenticCashCalculatorProps> = ({ player }) => {
+export const AuthenticCashCalculator: React.FC<AuthenticCashCalculatorProps> = ({ player, onClick }) => {
   return (
     <div
       data-testid="authentic-cash-calculator"
+      onClick={onClick}
+      title={`Money: $${player.money}`}
       style={{
         position: 'absolute',
         left: 'calc(var(--board-x, calc(50% - 600px)) + (948.75px * var(--board-scale, 1)))',
@@ -22,7 +25,8 @@ export const AuthenticCashCalculator: React.FC<AuthenticCashCalculatorProps> = (
         width: 'calc(221.25px * var(--board-scale, 1))',
         height: 'calc(120px * var(--board-scale, 1))',
         zIndex: 40,
-        pointerEvents: 'none',
+        pointerEvents: onClick ? 'auto' : 'none',
+        cursor: onClick ? 'pointer' : 'default',
         userSelect: 'none',
         imageRendering: 'pixelated',
       }}

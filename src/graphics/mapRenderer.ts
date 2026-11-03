@@ -229,7 +229,8 @@ export async function initMapRenderer(
   let maxY = -Infinity;
   for (const node of config.mapData.nodes) {
     const pos = nodePositionMap.get(node.id) || { x: node.x, y: node.y };
-    const radius = node.buildingId ? 44 : 22;
+    const isParkNode = Boolean(node.buildingId && config.buildings.find(b => b.id === node.buildingId)?.archetype === 'park');
+    const radius = isParkNode ? 22 : (node.buildingId ? 44 : 22);
     minY = Math.min(minY, pos.y - radius);
     maxY = Math.max(maxY, pos.y + radius);
   }
@@ -476,44 +477,75 @@ export async function initMapRenderer(
     
     // Check if it's a building
     if (node.buildingId) {
-      // Extended touch hit area for mobile/touch screens
-      nodeGraphic.circle(0, 0, 52);
-      nodeGraphic.fill({ color: 0x000000, alpha: 0.001 });
-
-      // Outer subtle ambient glow ring
-      nodeGraphic.circle(0, 0, 48);
-      nodeGraphic.setStrokeStyle({ width: 1, color: 0xffb300, alpha: 0.25 });
-      nodeGraphic.stroke();
-
-      // Building nodes: larger, amber glow
-      nodeGraphic.circle(0, 0, 44);
-      nodeGraphic.fill({ color: 0x141428 });
-      nodeGraphic.setStrokeStyle({ width: 3.5, color: 0xffb300, alpha: 0.95 });
-      nodeGraphic.stroke();
-      
       const buildingDef = config.buildings.find(b => b.id === node.buildingId);
-      const name = buildingDef ? buildingDef.name : node.buildingId;
-      
-      const label = new Text({
-        text: name,
-        style: {
-          fill: 0xffffff,
-          fontSize: 20,
-          lineHeight: 22,
-          fontWeight: 'bold',
-          align: 'center',
-          wordWrap: true,
-          wordWrapWidth: 84,
-          stroke: { color: 0x000000, width: 3.5 },
-          dropShadow: { alpha: 0.95, color: 0x000000, blur: 4, distance: 1 }
+      const isPark = buildingDef?.archetype === 'park';
+
+      if (isPark) {
+        // Park: visually distinct compact green dot with tree icon (no text label on the board)
+        nodeGraphic.circle(0, 0, 32);
+        nodeGraphic.fill({ color: 0x000000, alpha: 0.001 });
+
+        // Outer subtle green glow ring
+        nodeGraphic.circle(0, 0, 22);
+        nodeGraphic.setStrokeStyle({ width: 1.5, color: 0x4caf50, alpha: 0.4 });
+        nodeGraphic.stroke();
+
+        // Green circle dot
+        nodeGraphic.circle(0, 0, 18);
+        nodeGraphic.fill({ color: 0x143418 });
+        nodeGraphic.setStrokeStyle({ width: 2.5, color: 0x4caf50, alpha: 0.95 });
+        nodeGraphic.stroke();
+
+        const treeLabel = new Text({
+          text: '🌳',
+          style: {
+            fontSize: 16,
+            align: 'center'
+          }
+        });
+        treeLabel.anchor.set(0.5, 0.5);
+        treeLabel.x = 0;
+        treeLabel.y = 0;
+        nodeGraphic.addChild(treeLabel);
+      } else {
+        // Extended touch hit area for mobile/touch screens
+        nodeGraphic.circle(0, 0, 52);
+        nodeGraphic.fill({ color: 0x000000, alpha: 0.001 });
+
+        // Outer subtle ambient glow ring
+        nodeGraphic.circle(0, 0, 48);
+        nodeGraphic.setStrokeStyle({ width: 1, color: 0xffb300, alpha: 0.25 });
+        nodeGraphic.stroke();
+
+        // Building nodes: larger, amber glow
+        nodeGraphic.circle(0, 0, 44);
+        nodeGraphic.fill({ color: 0x141428 });
+        nodeGraphic.setStrokeStyle({ width: 3.5, color: 0xffb300, alpha: 0.95 });
+        nodeGraphic.stroke();
+        
+        const name = buildingDef ? buildingDef.name : node.buildingId;
+        
+        const label = new Text({
+          text: name,
+          style: {
+            fill: 0xffffff,
+            fontSize: 20,
+            lineHeight: 22,
+            fontWeight: 'bold',
+            align: 'center',
+            wordWrap: true,
+            wordWrapWidth: 84,
+            stroke: { color: 0x000000, width: 3.5 },
+            dropShadow: { alpha: 0.95, color: 0x000000, blur: 4, distance: 1 }
+          }
+        });
+        label.anchor.set(0.5, 0.5);
+        label.x = 0;
+        label.y = 0;
+        nodeGraphic.addChild(label);
+        if (node.buildingId) {
+          buildingLabels.set(node.buildingId, label);
         }
-      });
-      label.anchor.set(0.5, 0.5);
-      label.x = 0;
-      label.y = 0;
-      nodeGraphic.addChild(label);
-      if (node.buildingId) {
-        buildingLabels.set(node.buildingId, label);
       }
       
     } else {

@@ -1448,6 +1448,13 @@ button:disabled {
 }
 
 /* Settings Modal: Decoupled from board-scale, mobile & small-screen responsive */
+.resume-prompt-modal {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  margin: auto !important;
+}
+
 .settings-modal-overlay {
   background: rgba(8, 8, 20, 0.88);
   backdrop-filter: blur(10px);
@@ -2714,6 +2721,31 @@ button:disabled {
   white-space: nowrap;
 }
 
+/* Schematic / Curve OFF Clock: Floats dynamically with cash, never obscuring board nodes */
+.bottom-center-clock--schematic {
+  left: clamp(12px, calc(var(--board-x, calc(50% - 600px)) + (185px * var(--board-scale, 1)) + (830px * var(--board-scale, 1)) - (125px * var(--board-scale, 1))), calc(100vw - 120px));
+  top: clamp(12px, calc(var(--board-y, calc(50% - 400px)) + (126px * var(--board-scale, 1)) + (540px * var(--board-scale, 1)) - (130px * var(--board-scale, 1))), calc(100vh - 130px));
+  transform: translate(-50%, -50%);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 25;
+}
+
+.bottom-center-clock--schematic.bottom-center-clock--in-location {
+  position: fixed;
+  right: calc(max(12px, env(safe-area-inset-right, 12px)) + 125px);
+  bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  left: auto;
+  top: auto;
+  transform: none;
+  z-index: 70;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.bottom-center-clock--schematic.bottom-center-clock--in-location .clock-digital-badge {
+  margin-top: 0;
+}
+
 .clock-face {
   width: calc(58px * var(--board-scale, 1));
   height: calc(58px * var(--board-scale, 1));
@@ -3122,3 +3154,28 @@ button:disabled {
 .orientation-prompt-btn-dismiss:hover {
   color: #ffffff;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   HUD ATTRIBUTE INFO CARD & POPUP
+   ───────────────────────────────────────────────────────────── */
+.hud-info-overlay {
+  animation: fadeIn 0.15s ease-out;
+}
+
+.hud-info-card {
+  box-sizing: border-box;
+}
+
+.hud-info-close-btn:focus-visible,
+.hud-info-card button:focus-visible {
+  outline: 2px solid var(--accent-cyan, #00e5ff);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) or (max-height: 520px) {
+  .hud-info-card {
+    width: 96vw !important;
+    max-height: 90vh !important;
+  }
+}
+

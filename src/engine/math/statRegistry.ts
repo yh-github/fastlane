@@ -95,6 +95,30 @@ export const STAT_REGISTRY: Record<string, StatDescriptor> = {
     labelKey: 'dashboard.wellbeing',
     isDerived: true,
     dependencies: ['physical', 'mental']
+  },
+  skillTech: {
+    id: 'skillTech',
+    labelKey: 'stats.skillTech',
+    isDerived: false,
+    dependencies: ['skillTech', 'tech']
+  },
+  skillMgmt: {
+    id: 'skillMgmt',
+    labelKey: 'stats.skillMgmt',
+    isDerived: false,
+    dependencies: ['skillMgmt', 'mgmt', 'leadership']
+  },
+  caffeine: {
+    id: 'caffeine',
+    labelKey: 'stats.caffeineTolerance',
+    isDerived: false,
+    dependencies: ['caffeine', 'caffeineTolerance']
+  },
+  time: {
+    id: 'time',
+    labelKey: 'stats.time',
+    isDerived: false,
+    dependencies: ['time', 'hours']
   }
 };
 

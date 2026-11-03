@@ -82,4 +82,36 @@ describe('logCategorizer', () => {
     // Employability filter includes 'education' dependency
     expect(isLogMatchingFilter(studyEntry, 'employability')).toBe(true);
   });
+
+  it('correctly categorizes skillTech, skillMgmt, caffeine, social, and time logs', () => {
+    const techEntry: LogEntry = {
+      week: 1,
+      event: { key: 'action.job.shift_tech', params: { title: 'Repair PC' }, modifications: [{ stat: 'skillTech', diff: 0.5 }] }
+    };
+    expect(isLogMatchingFilter(techEntry, 'skillTech')).toBe(true);
+
+    const mgmtEntry: LogEntry = {
+      week: 2,
+      event: { key: 'action.job.shift_leadership', params: { title: 'Lead Team', skillMgmt: 0.25 } }
+    };
+    expect(isLogMatchingFilter(mgmtEntry, 'skillMgmt')).toBe(true);
+
+    const caffeineEntry: LogEntry = {
+      week: 3,
+      event: { key: 'events.caffeine_withdrawal', params: { message: 'Suffering caffeine crash' } }
+    };
+    expect(isLogMatchingFilter(caffeineEntry, 'caffeine')).toBe(true);
+
+    const socialEntry: LogEntry = {
+      week: 4,
+      event: { key: 'events.socialize_guests', params: { socialBonus: 2 } }
+    };
+    expect(isLogMatchingFilter(socialEntry, 'social')).toBe(true);
+
+    const timeEntry: LogEntry = {
+      week: 5,
+      event: { key: 'action.travel', params: { hours: 2, hoursRemaining: 48 } }
+    };
+    expect(isLogMatchingFilter(timeEntry, 'time')).toBe(true);
+  });
 });

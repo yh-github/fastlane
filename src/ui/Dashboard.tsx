@@ -9,12 +9,15 @@ import React from 'react';
 import { type PlayerState, type GameState } from '../engine/gameState';
 import { isAdvancedStatRules } from '../engine/rules';
 import {
-  formatHours
+  formatHours,
+  calcMaxDependability,
+  calcMaxExperience
 } from '../engine/statMath';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../engine/dataLoader';
 import { buildDashboardBadges } from './dashboardBadges';
 import type { GoalFilter } from '../utils/logCategorizer';
+import { HudAttributeInfoModal } from './HudAttributeInfoModal';
 
 export type HudLayoutMode = 'auto' | 'side' | 'top';
 export type HudFoldState = 'full' | 'compact' | 'minimized';
@@ -30,6 +33,7 @@ export interface DashboardProps {
   campaign?: CampaignBundle;
   activeLogFilter?: GoalFilter | null;
   onSelectLogFilter?: (filter: GoalFilter | null) => void;
+  onOpenAttributeCard?: (attributeId: string) => void;
   onOpenInventory: (section?: string) => void;
   onOpenGoals?: () => void;
   onOpenSettings: () => void;
@@ -49,6 +53,7 @@ interface AdvancedStatsStripProps {
   isPhysicalWarning: boolean;
   activeLogFilter?: GoalFilter | null;
   onFilterToggle: (filter: GoalFilter) => void;
+  onOpenAttributeCard: (attributeId: string) => void;
   t: (key: string, options?: any) => string;
 }
 
@@ -62,7 +67,8 @@ function AdvancedStatsStrip({
   isPhysicalCritical,
   isPhysicalWarning,
   activeLogFilter,
-  onFilterToggle,
+  onFilterToggle: _onFilterToggle,
+  onOpenAttributeCard,
   t,
 }: AdvancedStatsStripProps) {
   if (!isAdvancedStatRules(campaign?.config.statRules)) return null;
@@ -83,32 +89,35 @@ function AdvancedStatsStrip({
     >
       {!campaign?.config.winConditions?.some((w) => w.stat === 'lifestyle') && (
         <div
+          title={`${t('stat.lifestyle', { defaultValue: 'Lifestyle' })}: ${Math.floor(lifestyle)} / ${player.goalAllotment.lifestyle || 100}`}
           style={{ cursor: 'pointer', opacity: activeLogFilter && activeLogFilter !== 'lifestyle' ? 0.6 : 1 }}
-          onClick={() => onFilterToggle('lifestyle')}
+          onClick={() => onOpenAttributeCard('lifestyle')}
         >
           <strong>{t('stat.lifestyle')}:</strong> {Math.floor(lifestyle)}
         </div>
       )}
       <div
+        title={`${t('stat.mentalCondition', { defaultValue: 'Mental Condition' })}: ${Math.floor(player.mentalCondition || 0)} / ${player.mentalConditionMax || 50}`}
         style={{
           cursor: 'pointer',
           opacity: activeLogFilter && activeLogFilter !== 'mental' ? 0.6 : 1,
           fontWeight: isMentalCritical ? 'bold' : 'normal',
           color: isMentalCritical ? '#e74c3c' : isMentalWarning ? '#e67e22' : 'inherit',
         }}
-        onClick={() => onFilterToggle('mental')}
+        onClick={() => onOpenAttributeCard('mental')}
       >
         <strong>{t('stat.mentalCondition')}:</strong>{' '}
         {Math.floor(player.mentalCondition || 0)}
       </div>
       <div
+        title={`${t('stat.physicalCondition', { defaultValue: 'Physical Condition' })}: ${Math.floor(player.physicalCondition || 0)} / ${player.physicalConditionMax || 50}`}
         style={{
           cursor: 'pointer',
           opacity: activeLogFilter && activeLogFilter !== 'physical' ? 0.6 : 1,
           fontWeight: isPhysicalCritical ? 'bold' : 'normal',
           color: isPhysicalCritical ? '#e74c3c' : isPhysicalWarning ? '#e67e22' : 'inherit',
         }}
-        onClick={() => onFilterToggle('physical')}
+        onClick={() => onOpenAttributeCard('physical')}
       >
         <strong>{t('stat.physicalCondition')}:</strong>{' '}
         {Math.floor(player.physicalCondition || 0)}
@@ -128,6 +137,7 @@ export function Dashboard({
   campaign,
   activeLogFilter,
   onSelectLogFilter,
+  onOpenAttributeCard,
   onOpenInventory,
   onOpenGoals,
   onOpenSettings,
@@ -137,8 +147,17 @@ export function Dashboard({
 }: DashboardProps) {
   const { t } = useTranslation();
   const [isGoalsFolded, setIsGoalsFolded] = React.useState(true);
+  const [localSelectedAttribute, setLocalSelectedAttribute] = React.useState<string | null>(null);
 
   if (!player) return <header className="dashboard">{t('dashboard.loading')}</header>;
+
+  const handleOpenAttributeCard = (attrId: string) => {
+    if (onOpenAttributeCard) {
+      onOpenAttributeCard(attrId);
+    } else {
+      setLocalSelectedAttribute(attrId);
+    }
+  };
 
   const handleFilterToggle = (filter: GoalFilter) => {
     if (!onSelectLogFilter) return;
@@ -161,6 +180,12 @@ export function Dashboard({
   const trendArrow = trendVal > 0 ? '↑' : trendVal < 0 ? '↓' : '→';
   const formattedTrend = `${trendVal > 0 ? `+${trendVal}` : `${trendVal}`} ${trendArrow}`;
 
+  const currentJob = player.currentJobId ? campaign?.jobs?.find(j => j.id === player.currentJobId) : null;
+  const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
+  const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
+  const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);
+  const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
+
   const {
     victoryBadge,
     goalBadges,
@@ -178,8 +203,29 @@ export function Dashboard({
     economicIndex,
     activeLogFilter,
     onFilterToggle: handleFilterToggle,
+    onOpenAttributeCard: handleOpenAttributeCard,
     t,
   });
+
+  const modalElement = localSelectedAttribute && player ? (
+    <HudAttributeInfoModal
+      attributeId={localSelectedAttribute}
+      player={player}
+      rules={gameState.rules}
+      gameState={gameState}
+      campaign={campaign}
+      turn={turn}
+      economicIndex={economicIndex}
+      economicReading={economicReading}
+      economicTrend={economicTrend}
+      hoursPerTurn={hoursPerTurn}
+      onClose={() => setLocalSelectedAttribute(null)}
+      onOpenFilteredLog={(filter) => {
+        setLocalSelectedAttribute(null);
+        handleFilterToggle(filter);
+      }}
+    />
+  ) : null;
 
   // ─────────────────────────────────────────────────────────────
   // 1. SIDE HUD (Modern Widescreen / Phone Landscape)
@@ -201,6 +247,7 @@ export function Dashboard({
     }
 
     return (
+      <>
       <aside className={`side-hud side-hud--${foldState}`} data-testid={`side-hud-${foldState}`}>
         {/* Folding Controls Bar */}
         <div className="side-hud__folding-header">
@@ -260,6 +307,8 @@ export function Dashboard({
           {gameState.rules.helpfulUI && (
             <div 
               className="side-hud__economy"
+              style={{ cursor: 'pointer' }}
+              onClick={() => handleOpenAttributeCard('economy')}
               title={t('dashboard.economyTooltip', { defaultValue: 'Economic Reading: Price level relative to baseline (higher = higher prices).\nEconomic Trend: Momentum pushing prices up or down (-3 to +3).' })}
             >
               <span>
@@ -326,12 +375,22 @@ export function Dashboard({
                 value={
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                     {victoryBadge.value}
-                    <span style={{ fontSize: '0.65rem', opacity: 0.75 }}>
+                    <span 
+                      style={{ fontSize: '0.65rem', opacity: 0.75, cursor: 'pointer' }}
+                      data-testid="side-hud-goals-toggle"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsGoalsFolded(!isGoalsFolded);
+                      }}
+                    >
                       {isGoalsFolded ? '▸' : '▾'}
                     </span>
                   </span>
                 }
-                onClick={() => setIsGoalsFolded(!isGoalsFolded)}
+                onClick={() => {
+                  setIsGoalsFolded(!isGoalsFolded);
+                  handleOpenAttributeCard('victory');
+                }}
               />
 
               {!isGoalsFolded &&
@@ -346,13 +405,16 @@ export function Dashboard({
           </div>
         </div>
       </aside>
-    );
+      {modalElement}
+    </>
+  );
   }
 
   // ─────────────────────────────────────────────────────────────
   // 2. TOP HUD (Classic Desktop / Phone Portrait)
   // ─────────────────────────────────────────────────────────────
   return (
+    <>
     <header className="dashboard">
       <div className="dashboard-top-row">
         <div className="dashboard-player-info">
@@ -380,6 +442,8 @@ export function Dashboard({
           {gameState.rules.helpfulUI && (
             <div 
               className="dashboard-stat economy"
+              style={{ cursor: 'pointer' }}
+              onClick={() => handleOpenAttributeCard('economy')}
               title={t('dashboard.economyTooltip', { defaultValue: 'Economic Reading: Price level relative to baseline (higher = higher prices).\nEconomic Trend: Momentum pushing prices up or down (-3 to +3).' })}
             >
               <span>
@@ -393,7 +457,12 @@ export function Dashboard({
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div 
+          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+          onClick={() => handleOpenAttributeCard('time')}
+          title={t('hudInfo.timeHover', { defaultValue: `Hours: ${formatHours(player.hoursRemaining)} / ${hoursPerTurn} hrs` })}
+          data-testid="hud-top-clock"
+        >
           <div style={{
             width: '24px',
             height: '24px',
@@ -457,15 +526,32 @@ export function Dashboard({
         isPhysicalWarning={stats.isPhysicalWarning}
         activeLogFilter={activeLogFilter}
         onFilterToggle={handleFilterToggle}
+        onOpenAttributeCard={handleOpenAttributeCard}
         t={t}
       />
 
       {(gameState.rules as any).showDetailedStats && !isAdvancedStatRules(campaign?.config.statRules) && (
         <div className="hud-advanced-stats" style={{ display: 'flex', gap: '15px', padding: '5px 10px', backgroundColor: '#eef', borderRadius: '4px', fontSize: '0.9em', marginTop: '10px' }}>
-          <div><strong>{t('stat.dependability')}:</strong> {Math.floor(player.dependability)}</div>
-          <div><strong>{t('stat.experience')}:</strong> {Math.floor(player.experience)}</div>
+          <div 
+            title={`${t('stat.dependability', { defaultValue: 'Dependability' })}: ${Math.floor(player.dependability)} / ${maxDep}`}
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleOpenAttributeCard('dependability')}
+          >
+            <strong>{t('stat.dependability')}:</strong> {Math.floor(player.dependability)}
+          </div>
+          <div 
+            title={`${t('stat.experience', { defaultValue: 'Experience' })}: ${Math.floor(player.experience)} / ${maxExp}`}
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleOpenAttributeCard('experience')}
+          >
+            <strong>{t('stat.experience')}:</strong> {Math.floor(player.experience)}
+          </div>
           {(gameState.rules as any).useRelaxationStat && (
-            <div>
+            <div 
+              title={`${t('stat.relaxation', { defaultValue: 'Relaxation' })}: ${Math.floor(player.relaxation || 0)} / ${player.relaxationMax ?? 50}`}
+              style={{ cursor: 'pointer' }}
+              onClick={() => handleOpenAttributeCard('relaxation')}
+            >
               <strong>{t('stat.relaxation')}:</strong> {Math.floor(player.relaxation || 0)}
             </div>
           )}
@@ -478,6 +564,8 @@ export function Dashboard({
         ))}
       </div>
     </header>
+    {modalElement}
+    </>
   );
 }
 
@@ -490,15 +578,18 @@ interface StatBadgeProps {
   warning?: boolean;
   badge?: string;
   isActive?: boolean;
+  hoverText?: string;
   onClick?: () => void;
 }
 
-function StatBadge({ label, value, icon, id, danger, warning, badge, isActive, onClick }: StatBadgeProps) {
+function StatBadge({ label, value, icon, id, danger, warning, badge, isActive, hoverText, onClick }: StatBadgeProps) {
   const activeStyle: React.CSSProperties = isActive ? {
     borderColor: '#00e5ff',
     boxShadow: '0 0 10px rgba(0, 229, 255, 0.7)',
     backgroundColor: 'rgba(0, 229, 255, 0.15)'
   } : {};
+
+  const tooltipValue = hoverText || `${label}: ${typeof value === 'string' || typeof value === 'number' ? value : ''}`;
 
   return (
     <div
@@ -506,6 +597,14 @@ function StatBadge({ label, value, icon, id, danger, warning, badge, isActive, o
       title={label}
       id={id}
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       style={{
         cursor: onClick ? 'pointer' : 'default',
         transition: 'background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
@@ -518,6 +617,8 @@ function StatBadge({ label, value, icon, id, danger, warning, badge, isActive, o
       <span className="stat-badge__icon">{icon}</span>
       <span 
         className="stat-badge__value" 
+        title={tooltipValue}
+        data-testid={id ? `${id}-value` : undefined}
         style={danger ? { color: '#ff3333', fontWeight: 'bold', textShadow: '0 0 8px rgba(255,51,51,0.6)' } : (warning ? { color: '#e67e22', fontWeight: 'bold', textShadow: '0 0 8px rgba(230,126,34,0.4)' } : {})}
       >
         {value}

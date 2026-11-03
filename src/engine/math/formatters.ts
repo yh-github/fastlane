@@ -24,3 +24,15 @@ export function formatQuarterHours(hours: number): string {
   if (whole === 0 && fracStr) return fracStr;
   return `${whole}${fracStr}`;
 }
+
+/**
+ * Formats hours remaining for summary screens with reasonable rounding and approximation marker.
+ * If hours has a fractional component, prefixes with '~' and rounds to the nearest whole integer
+ * (e.g. 15.857142857142858 -> "~16h left").
+ * If hours is an exact integer, formats cleanly without '~' (e.g. 36 -> "36h left", 0 -> "0h left").
+ */
+export function formatApproxHoursLeft(hours: number): string {
+  const rounded = Math.round(hours);
+  const isApprox = Math.abs(hours - rounded) > 0.001;
+  return `${isApprox ? '~' : ''}${rounded}h left`;
+}

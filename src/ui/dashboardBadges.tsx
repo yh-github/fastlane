@@ -24,6 +24,7 @@ export interface DashboardBadgeData {
   warning?: boolean;
   badge?: string;
   isActive?: boolean;
+  hoverText?: string;
   onClick?: () => void;
 }
 
@@ -36,6 +37,7 @@ export interface BuildDashboardBadgesParams {
   economicIndex?: number;
   activeLogFilter?: GoalFilter | null;
   onFilterToggle?: (filter: GoalFilter) => void;
+  onOpenAttributeCard?: (attributeId: string) => void;
   t: (key: string, options?: any) => string;
 }
 
@@ -73,6 +75,7 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     economicIndex = 0,
     activeLogFilter,
     onFilterToggle,
+    onOpenAttributeCard,
     t,
   } = params;
 
@@ -153,11 +156,14 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
   const useSkills = Boolean(rules.useSkills);
 
   // 1. Victory Badge (Top-most icon on the right column)
+  const victoryLabel = t('dashboard.victory', { defaultValue: 'Victory' });
   const victoryBadge: DashboardBadgeData = {
     id: 'stat-victory',
-    label: t('dashboard.victory', { defaultValue: 'Victory' }),
+    label: victoryLabel,
     value: `${victoryPercent}%`,
     icon: '🏆',
+    hoverText: `${victoryLabel}: ${victoryPercent}% / 100%`,
+    onClick: onOpenAttributeCard ? () => onOpenAttributeCard('victory') : undefined,
   };
 
   // 2. Dynamic Goal Badges for all win conditions (including career)
@@ -181,83 +187,111 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     else if (cond.stat === 'lifestyle') icon = (player.lifestyle || 0) > 50 ? '🧐' : '😎';
     else if (cond.stat === 'wellbeing') icon = '🧘';
 
+    const goalLabel = t(`dashboard.${cond.stat}`, { defaultValue: cond.label });
     goalBadges.push({
       id: `stat-${cond.stat}`,
-      label: t(`dashboard.${cond.stat}`, { defaultValue: cond.label }),
+      label: goalLabel,
       value: `${current}/${target}`,
       icon,
+      hoverText: `${goalLabel}: ${current} / ${target}`,
       isActive: activeLogFilter === (cond.stat as any),
-      onClick: () => onFilterToggle?.(cond.stat as GoalFilter),
+      onClick: onOpenAttributeCard
+        ? () => onOpenAttributeCard(cond.stat)
+        : () => onFilterToggle?.(cond.stat as GoalFilter),
     });
   }
 
   // 3. Career Attributes (Left column: Employability, Dep, Exp, Mgmt, Tech - strict order, only when helpfulUI)
   const careerAttributes: DashboardBadgeData[] = [];
   if (rules.helpfulUI) {
+    const empLabel = t('dashboard.employability', { defaultValue: 'Employability' });
     careerAttributes.push({
       id: 'stat-employability',
-      label: t('dashboard.employability', { defaultValue: 'Employability' }),
+      label: empLabel,
       value: `${employabilityScore}%`,
       icon: '👨‍💼',
+      hoverText: `${empLabel}: ${employabilityScore}% / 100%`,
       isActive: activeLogFilter === 'employability',
-      onClick: () => onFilterToggle?.('employability'),
+      onClick: onOpenAttributeCard
+        ? () => onOpenAttributeCard('employability')
+        : () => onFilterToggle?.('employability'),
     });
 
+    const depLabel = t('dashboard.dependability', { defaultValue: 'Dependability' });
     careerAttributes.push({
       id: 'stat-dependability',
-      label: t('dashboard.dependability', { defaultValue: 'Dependability' }),
+      label: depLabel,
       value: `${player.dependability}/${maxDep}`,
       icon: '🤝',
+      hoverText: `${depLabel}: ${Math.floor(player.dependability)} / ${maxDep}`,
       isActive: activeLogFilter === 'dependability',
-      onClick: () => onFilterToggle?.('dependability'),
+      onClick: onOpenAttributeCard
+        ? () => onOpenAttributeCard('dependability')
+        : () => onFilterToggle?.('dependability'),
     });
 
+    const expLabel = t('dashboard.experience', { defaultValue: 'Experience' });
     careerAttributes.push({
       id: 'stat-experience',
-      label: t('dashboard.experience', { defaultValue: 'Experience' }),
+      label: expLabel,
       value: `${player.experience}/${maxExp}`,
       icon: '👌',
+      hoverText: `${expLabel}: ${Math.floor(player.experience)} / ${maxExp}`,
       isActive: activeLogFilter === 'experience',
-      onClick: () => onFilterToggle?.('experience'),
+      onClick: onOpenAttributeCard
+        ? () => onOpenAttributeCard('experience')
+        : () => onFilterToggle?.('experience'),
     });
 
     if (useSkills && campaign?.config?.statRules) {
       const maxMgmt = calcMaxSkillCap(player, 'skillMgmt', campaign?.education, campaign.config.statRules, rules);
       const maxTech = calcMaxSkillCap(player, 'skillTech', campaign?.education, campaign.config.statRules, rules);
+      const mgmtLabel = t('dashboard.skillMgmt', { defaultValue: 'Leadership' });
       careerAttributes.push({
         id: 'stat-skill-mgmt',
-        label: t('dashboard.skillMgmt', { defaultValue: 'Leadership' }),
+        label: mgmtLabel,
         value: `${(player.skillMgmt ?? 0).toFixed(2)}/${maxMgmt.toFixed(1)}`,
         icon: '👔',
+        hoverText: `${mgmtLabel}: ${(player.skillMgmt ?? 0).toFixed(2)} / ${maxMgmt.toFixed(1)}`,
+        onClick: onOpenAttributeCard ? () => onOpenAttributeCard('skillMgmt') : undefined,
       });
 
+      const techLabel = t('dashboard.skillTech', { defaultValue: 'Tech' });
       careerAttributes.push({
         id: 'stat-skill-tech',
-        label: t('dashboard.skillTech', { defaultValue: 'Tech' }),
+        label: techLabel,
         value: `${(player.skillTech ?? 0).toFixed(2)}/${maxTech.toFixed(1)}`,
         icon: '🔧',
+        hoverText: `${techLabel}: ${(player.skillTech ?? 0).toFixed(2)} / ${maxTech.toFixed(1)}`,
+        onClick: onOpenAttributeCard ? () => onOpenAttributeCard('skillTech') : undefined,
       });
     }
   }
 
   // 4. Life & Resource Badges (Right column under goals: Money, Physical, Mental, Social, Relaxation)
+  const moneyLabel = t('dashboard.money', { defaultValue: 'Money' });
   const lifeBadges: DashboardBadgeData[] = [
     {
       id: 'stat-money',
-      label: t('dashboard.money', { defaultValue: 'Money' }),
+      label: moneyLabel,
       value: `$${player.money}`,
       icon: '💰',
+      hoverText: `${moneyLabel}: $${player.money}`,
       isActive: activeLogFilter === 'money',
-      onClick: () => onFilterToggle?.('money'),
+      onClick: onOpenAttributeCard
+        ? () => onOpenAttributeCard('money')
+        : () => onFilterToggle?.('money'),
     },
   ];
 
   if (rules.usePhysicalMentalConditions) {
+    const physLabel = t('dashboard.physical', { defaultValue: 'Physical' });
     lifeBadges.push({
       id: 'stat-physical',
-      label: t('dashboard.physical', { defaultValue: 'Physical' }),
+      label: physLabel,
       value: `${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`,
       icon: '💪',
+      hoverText: `${physLabel}: ${Math.floor(player.physicalCondition || 0)} / ${player.physicalConditionMax || 50}`,
       danger: isPhysicalCritical,
       warning: !isPhysicalCritical && isPhysicalWarning,
       badge:
@@ -265,14 +299,18 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
           ? `Max ${player.physicalConditionMax} ↓`
           : undefined,
       isActive: activeLogFilter === 'physical',
-      onClick: () => onFilterToggle?.('physical'),
+      onClick: onOpenAttributeCard
+        ? () => onOpenAttributeCard('physical')
+        : () => onFilterToggle?.('physical'),
     });
 
+    const mentalLabel = t('dashboard.mental', { defaultValue: 'Mental' });
     lifeBadges.push({
       id: 'stat-mental',
-      label: t('dashboard.mental', { defaultValue: 'Mental' }),
+      label: mentalLabel,
       value: `${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`,
       icon: '🧠',
+      hoverText: `${mentalLabel}: ${Math.floor(player.mentalCondition || 0)} / ${player.mentalConditionMax || 50}`,
       danger: isMentalCritical,
       warning: !isMentalCritical && isMentalWarning,
       badge:
@@ -280,32 +318,64 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
           ? `Max ${player.mentalConditionMax} ↓`
           : undefined,
       isActive: activeLogFilter === 'mental',
-      onClick: () => onFilterToggle?.('mental'),
+      onClick: onOpenAttributeCard
+        ? () => onOpenAttributeCard('mental')
+        : () => onFilterToggle?.('mental'),
     });
 
     if (rules.trackSocial) {
+      const socLabel = t('dashboard.social', { defaultValue: 'Social' });
       lifeBadges.push({
         id: 'stat-social',
-        label: t('dashboard.social', { defaultValue: 'Social' }),
+        label: socLabel,
         value: `${player.social ?? 9}/99`,
         icon: '👥',
+        hoverText: `${socLabel}: ${player.social ?? 9} / 99`,
+        onClick: onOpenAttributeCard ? () => onOpenAttributeCard('social') : undefined,
+      });
+    }
+
+    if (rules.enableCaffeineSystem && rules.helpfulUI) {
+      const tol = player.caffeineTolerance ?? 0;
+      const isDanger = tol >= 9;
+      const isWarning = tol >= 6;
+      let badgeStatus: string | undefined;
+      if (isDanger) badgeStatus = 'Crash';
+      else if (isWarning) badgeStatus = 'Withdrawal';
+      else if (tol >= 3) badgeStatus = 'Fog';
+
+      const cafLabel = t('dashboard.caffeine', { defaultValue: 'Caffeine' });
+      lifeBadges.push({
+        id: 'stat-caffeine',
+        label: cafLabel,
+        value: `${tol}/10`,
+        icon: '☕',
+        hoverText: `${cafLabel}: ${tol} / 10`,
+        danger: isDanger,
+        warning: isWarning,
+        badge: badgeStatus,
+        onClick: onOpenAttributeCard ? () => onOpenAttributeCard('caffeine') : undefined,
       });
     }
   } else {
     if (rules.helpfulUI) {
       const relaxationMax = player.relaxationMax ?? campaign?.config?.statRules?.maxRelaxation ?? 50;
       const displayRelaxation = relaxationMax ? `${player.relaxation}/${relaxationMax}` : `${player.relaxation}`;
+      const relaxLabel = t('dashboard.relaxation', { defaultValue: 'Relaxation' });
       lifeBadges.push({
         id: 'stat-relaxation',
-        label: t('dashboard.relaxation', { defaultValue: 'Relaxation' }),
+        label: relaxLabel,
         value: displayRelaxation,
         icon: '🛌',
+        hoverText: `${relaxLabel}: ${Math.floor(player.relaxation || 0)} / ${relaxationMax}`,
         danger: Boolean(
           rules.enableRelaxationDoctor &&
             player.relaxation <= (rules.relaxationDoctorThreshold ?? 10)
         ),
         isActive: activeLogFilter === 'relaxation',
-        onClick: () => onFilterToggle?.('relaxation'),
+        onClick: onOpenAttributeCard
+          ? () => onOpenAttributeCard('relaxation')
+          : () => onFilterToggle?.('relaxation'),
       });
     }
   }

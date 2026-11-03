@@ -14,6 +14,7 @@ import { AuthenticLotteryModal } from './authentic/AuthenticLotteryModal';
 import { AuthenticCashCalculator } from './authentic/AuthenticCashCalculator';
 import { NewspaperModal } from './NewspaperModal';
 import { SettingsModal } from './SettingsModal';
+import { HudAttributeInfoModal } from './HudAttributeInfoModal';
 import { AnimationLayer } from './AnimationLayer';
 import { useGameAnimations } from '../hooks/useGameAnimations';
 import { useGameEngine } from '../hooks/useGameEngine';
@@ -71,6 +72,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
   const previousModalRef = useRef<ActiveModal>(null);
   const [activeLogFilter, setActiveLogFilter] = useState<GoalFilter | null>(null);
   const [hudFoldState, setHudFoldState] = useState<HudFoldState>('full');
+  const [selectedHudAttribute, setSelectedHudAttribute] = useState<string | null>(null);
 
   const openModal = useCallback((modal: ActiveModal) => {
     setActiveModal((current) => {
@@ -211,6 +213,10 @@ export const GameSession: React.FC<GameSessionProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (selectedHudAttribute) {
+          setSelectedHudAttribute(null);
+          return;
+        }
         if (streetRobberyNotice) {
           if (streetRobberyNotice.onConfirm) {
             streetRobberyNotice.onConfirm();
@@ -395,7 +401,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
   const effectiveHudLayout: 'side' | 'top' = hudSetting === 'auto'
     ? (isLandscape ? 'side' : 'top')
     : hudSetting;
-  const isAuthenticCurvedBoard = gameState.rules.authenticCurvedPaths !== false;
+  const isAuthenticCurvedBoard = gameState.rules.authenticCurvedPaths !== false && Boolean(campaign.map.authenticNodes);
   const showBottomCenterClock = Boolean(activePlayer && (isAuthenticCurvedBoard || effectiveHudLayout === 'side'));
 
   return (
@@ -416,6 +422,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
             handleOpenLog();
           }
         }}
+        onOpenAttributeCard={(attrId) => setSelectedHudAttribute(attrId)}
         onOpenInventory={handleOpenInventory}
         onOpenGoals={handleOpenGoals}
         onOpenSettings={() => openModal({ type: 'settings' })}
@@ -424,6 +431,26 @@ export const GameSession: React.FC<GameSessionProps> = ({
         onToggleFold={setHudFoldState}
       />
       <main className={`game-viewport ${gameState.rules.guiStyle === 'authentic' ? 'game-viewport--authentic' : ''}`}>
+        {selectedHudAttribute && activePlayer && (
+          <HudAttributeInfoModal
+            attributeId={selectedHudAttribute}
+            player={activePlayer}
+            rules={gameState.rules}
+            gameState={gameState}
+            campaign={campaign}
+            turn={gameState.turn}
+            economicIndex={gameState.economicIndex}
+            economicReading={gameState.economicReading ?? gameState.economicIndex}
+            economicTrend={gameState.economicTrend}
+            hoursPerTurn={campaign.config.timeRules.hoursPerTurn}
+            onClose={() => setSelectedHudAttribute(null)}
+            onOpenFilteredLog={(filter) => {
+              setSelectedHudAttribute(null);
+              setActiveLogFilter(filter);
+              handleOpenLog();
+            }}
+          />
+        )}
         {isWeekend && activePlayer && (
           <WeekendScreen
             player={activePlayer}
@@ -478,6 +505,9 @@ export const GameSession: React.FC<GameSessionProps> = ({
             className={`dynamic-money-badge ${activeModal?.type === 'building' && currentBuildingId ? 'dynamic-money-badge--in-location' : 'dynamic-money-badge--center-stage'}`} 
             id="stat-money"
             data-testid="stat-money"
+            title={`Money: $${activePlayer.money}`}
+            onClick={() => setSelectedHudAttribute('money')}
+            style={{ cursor: 'pointer' }}
           >
             <span className="dynamic-money-badge__icon">💰</span>
             <span className="dynamic-money-badge__value">${activePlayer.money}</span>
@@ -486,12 +516,27 @@ export const GameSession: React.FC<GameSessionProps> = ({
 
         {/* Authentic Cash Calculator (shown in authentic GUI mode when inside a building location) */}
         {gameState.rules.guiStyle === 'authentic' && activeModal?.type === 'building' && currentBuildingId && activePlayer && (
-          <AuthenticCashCalculator player={activePlayer} />
+          <AuthenticCashCalculator 
+            player={activePlayer} 
+            onClick={() => setSelectedHudAttribute('money')}
+          />
         )}
 
         {/* Unified Bottom Center Clock Widget (shown when authentic curved board, or in Side HUD mode) */}
         {showBottomCenterClock && activePlayer && (
-          <div className={`bottom-center-clock ${gameState.rules.guiStyle === 'authentic' ? 'bottom-center-clock--authentic' : ''}`} data-testid="bottom-center-clock">
+          <div 
+            className={`bottom-center-clock ${
+              gameState.rules.guiStyle === 'authentic' 
+                ? 'bottom-center-clock--authentic' 
+                : !isAuthenticCurvedBoard 
+                  ? `bottom-center-clock--schematic ${activeModal?.type === 'building' && currentBuildingId ? 'bottom-center-clock--in-location' : ''}` 
+                  : ''
+            }`} 
+            data-testid="bottom-center-clock"
+            title={`Hours: ${formatQuarterHours(activePlayer.hoursRemaining)} / ${campaign.config.timeRules.hoursPerTurn} hrs`}
+            onClick={() => setSelectedHudAttribute('time')}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="clock-face">
               {(() => {
                 const totalHours = campaign.config.timeRules.hoursPerTurn;

@@ -9,6 +9,7 @@
 - **Fail Fast over Wrong State**: Fallbacks are an anti-pattern as they hide missing configurations. Errors and crashes are preferred over silent wrong state due to missing configuration values.
 
 ## UI Design & Soft Disabling
+- **Reasonable Number Rounding**: Follow `.agents/rules/number-formatting.md`. Never display raw unrounded IEEE-754 floats in UI text, tooltips, dialogs, or summary cards. In summary cards or overviews, use rounded integers with `~` for non-integers (e.g. `~16h left`).
 - **Default to Soft Disabling**: Unless explicitly requested otherwise, game action buttons should be **softly disabled** rather than hard disabled (`disabled={true}`).
 - **Definition of Soft Disabling**:
   - The button visually appears disabled/unavailable (e.g. `opacity: 0.55`, muted/grayed-out borders and background, `cursor: 'pointer'`).

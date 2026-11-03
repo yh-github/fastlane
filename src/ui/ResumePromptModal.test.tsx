@@ -139,4 +139,31 @@ describe('ResumePromptModal', () => {
     fireEvent.click(discardBtn);
     expect(onDiscard).toHaveBeenCalledTimes(1);
   });
+
+  it('formats unrounded fractional hours with reasonable rounding and approximation marker (~16h left)', () => {
+    const unroundedSave: AutoSaveData = {
+      ...dummySaveData,
+      gameState: {
+        ...dummyGameState,
+        players: [
+          {
+            ...dummyGameState.players[0],
+            hoursRemaining: 15.857142857142858,
+          },
+        ],
+      },
+    };
+
+    render(
+      <ResumePromptModal
+        savedGame={unroundedSave}
+        onResume={() => {}}
+        onStartNew={() => {}}
+        onClose={() => {}}
+      />
+    );
+
+    expect(screen.getByText(/~16h left/i)).toBeInTheDocument();
+    expect(screen.queryByText(/15\.857/)).not.toBeInTheDocument();
+  });
 });

@@ -188,8 +188,6 @@ export default function App() {
     screenContent = (
       <TitleScreen
         onStartGame={handleStartCampaign}
-        savedGame={savedGame}
-        onResumeGame={handleResumeGame}
       />
     );
   } else if (screen === 'setup') {

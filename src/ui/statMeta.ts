@@ -86,6 +86,13 @@ export function getStatMeta(
         textIcon: '🛌',
         label: translate('stats.relaxation', { defaultValue: 'Relaxation' })
       };
+    case 'caffeine':
+    case 'caffeineTolerance':
+      return {
+        icon: '☕',
+        textIcon: '☕',
+        label: translate('stats.caffeineTolerance', { defaultValue: 'Caffeine Tolerance' })
+      };
     case 'happiness':
       return {
         icon: '😊',

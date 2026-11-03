@@ -157,14 +157,10 @@ describe('Auto-Save Integration', () => {
     // Prompt closed
     expect(screen.queryByTestId('resume-prompt-modal')).not.toBeInTheDocument();
 
-    // Title screen still offers "Continue Saved Game"
-    const titleResumeBtn = screen.getByTestId('btn-title-resume');
-    expect(titleResumeBtn).toBeInTheDocument();
-
-    // Clicking title resume button resumes the game
-    fireEvent.click(titleResumeBtn);
-    await screen.findByText(/^AutoSaver/i);
-    expect(screen.getByText(/Week 5/i)).toBeInTheDocument();
+    // Title screen shows Start Game without redundant resume button
+    const startGameBtn = screen.getByText(/New Game|titleScreen\.startGame/i);
+    expect(startGameBtn).toBeInTheDocument();
+    expect(screen.queryByTestId('btn-title-resume')).not.toBeInTheDocument();
   });
 
   it('auto-saves state to localStorage during active gameplay', async () => {
