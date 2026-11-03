@@ -6,6 +6,7 @@ import { applyForJob, workShift } from '../jobEngine';
 import { spendHours } from '../timeManager';
 import { calcUsedSpace, calcHousingSpaceCap, calcMaxSkillCap } from '../statMath';
 import { generateInitiativeCards, getJobInitiativeTier } from '../job/jobInitiativeDeck';
+import { applyParkCardEffects } from './parkActions';
 
 export function handleApplyAction(
   player: PlayerState,
@@ -200,6 +201,14 @@ export function handleResolveAppraisalDilemmaAction(
         mental: choice.mentalAmount ?? 0,
         social: choice.socialAmount ?? 0
       }
+    };
+  } else if (choice.type === 'park_encounter') {
+    const res = applyParkCardEffects(nextPlayer, choice, context);
+    nextPlayer = res.nextPlayer;
+    actionLog = {
+      key: 'action.park.cardResolved',
+      params: { title: choice.title },
+      modifications: res.modifications
     };
   }
 

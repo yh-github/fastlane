@@ -7,6 +7,13 @@
   "baseCampaign": "advanced",
   "replaceFiles": ["buildings", "jobs", "education", "map"],
 
+  "statRules": {
+    "initialPhysicalMax": 65,
+    "mentalMaxBaseValue": 65,
+    "startingPhysicalCondition": 50,
+    "startingMentalCondition": 50
+  },
+
   "gameRules": {
     "versionClass": "advanced",
     "enableCaffeineSystem": true,

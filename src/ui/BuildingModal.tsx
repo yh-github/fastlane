@@ -515,49 +515,35 @@ export function BuildingModal({
                 🌳 {t(`building.${building.id}`, { defaultValue: building.name })}
               </div>
               <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted, #666)' }}>
-                {building.description || 'A pleasant green space to stroll, exercise, or rest on a park bench.'}
+                {building.description || 'A pleasant green space to relax outdoors, condition your fitness, and meet the community.'}
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
                 <button
                   type="button"
                   className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 2}
-                  onClick={() => handleActionIntercept({ type: 'stroll_park' })}
-                  title={t('park.strollDesc', rules?.usePhysicalMentalConditions ? 'Take a refreshing stroll (⏳ -2h • +1 💪 • +1 🧠 • Fresh Air buff)' : 'Take a refreshing stroll (⏳ -2h • +1 😊 • +1 🛌)')}
+                  disabled={player.hoursRemaining < 3}
+                  onClick={() => handleActionIntercept({ type: 'relax_park' })}
+                  title={t('park.relaxDesc', rules?.usePhysicalMentalConditions ? 'Spend peaceful time relaxing outdoors (⏳ -3h • Free • +2 💪 • +2 🧠 • Encounters)' : 'Spend peaceful time relaxing outdoors (⏳ -3h • +2 😊 • +2 🛌)')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                 >
-                  <span style={{ fontSize: '18px' }}>🚶</span>
-                  <strong>{t('park.stroll', 'Stroll in Park')}</strong>
+                  <span style={{ fontSize: '20px' }}>🌳</span>
+                  <strong>{t('park.relax', 'Relax in Park')}</strong>
                   <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                    {rules?.usePhysicalMentalConditions ? '⏳ -2h • +1 💪 • +1 🧠' : '⏳ -2h • +1 😊 • +1 🛌'}
+                    {rules?.usePhysicalMentalConditions ? '⏳ -3h • +2 💪 • +2 🧠 • Free' : '⏳ -3h • +2 😊 • +2 🛌'}
                   </span>
                 </button>
                 <button
                   type="button"
                   className="game-button btn-secondary"
                   disabled={player.hoursRemaining < 3 || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) < 15)}
-                  onClick={() => handleActionIntercept({ type: 'jog_park' })}
-                  title={t('park.jogDesc', rules?.usePhysicalMentalConditions ? 'Jog around the trail (⏳ -3h • +1 💪 • +1 Max 💪 • -2 🧠)' : 'Jog around the trail (⏳ -3h • +2 🛌 • -1 😊)')}
+                  onClick={() => handleActionIntercept({ type: 'workout_park' })}
+                  title={t('park.workoutDesc', rules?.usePhysicalMentalConditions ? 'Fitness & cardiovascular conditioning (⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠)' : 'Fitness workout (⏳ -3h • +2 🛌 • -1 😊)')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                 >
-                  <span style={{ fontSize: '18px' }}>🏃</span>
-                  <strong>{t('park.jog', 'Jog / Workout')}</strong>
+                  <span style={{ fontSize: '20px' }}>🏃</span>
+                  <strong>{t('park.workout', 'Workout in Park')}</strong>
                   <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                    {rules?.usePhysicalMentalConditions ? '⏳ -3h • +1 💪 • +1 Max 💪 • -2 🧠' : '⏳ -3h • +2 🛌'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 3}
-                  onClick={() => handleActionIntercept({ type: 'rest_bench' })}
-                  title={t('park.restDesc', rules?.usePhysicalMentalConditions ? 'Sit and rest on a park bench (⏳ -3h • +2 💪 • +1 🧠 • Free food/mess)' : 'Sit and rest on a park bench (⏳ -3h • +2 🛌 • +1 😊)')}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
-                >
-                  <span style={{ fontSize: '18px' }}>🪑</span>
-                  <strong>{t('park.rest', 'Rest on Bench')}</strong>
-                  <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                    {rules?.usePhysicalMentalConditions ? '⏳ -3h • +2 💪 • +1 🧠' : '⏳ -3h • +2 🛌 • +1 😊'}
+                    {rules?.usePhysicalMentalConditions ? '⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠' : '⏳ -3h • +2 🛌 • -1 😊'}
                   </span>
                 </button>
               </div>

@@ -306,16 +306,17 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     );
 
     // Park face is tree icon 🌳, not a human face 🤔
-    expect(screen.getByText('🌳')).toBeInTheDocument();
+    expect(screen.getAllByText('🌳').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Campus Commons Park')).toBeInTheDocument();
     // No welcoming speech bubble
     expect(screen.queryByText(/How can I help you today/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Welcome/i)).not.toBeInTheDocument();
 
-    // Standard button icons
-    expect(screen.getByText(/⏳ -2h • \+1 💪 • \+1 🧠/i)).toBeInTheDocument();
-    expect(screen.getByText(/⏳ -3h • \+1 💪 • \+1 Max 💪 • -2 🧠/i)).toBeInTheDocument();
-    expect(screen.getByText(/⏳ -3h • \+2 💪 • \+1 🧠/i)).toBeInTheDocument();
+    // Consolidated buttons: Relax & Workout
+    expect(screen.getByText('Relax in Park')).toBeInTheDocument();
+    expect(screen.getByText(/⏳ -3h • \+2 💪 • \+2 🧠 • Free/i)).toBeInTheDocument();
+    expect(screen.getByText('Workout in Park')).toBeInTheDocument();
+    expect(screen.getByText(/⏳ -3h • \+1 Max 💪 • -1 💪 • \+1 🧠/i)).toBeInTheDocument();
   });
 
   // Coffee card & no "Nutrition happiness"

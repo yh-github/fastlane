@@ -39,6 +39,8 @@ import {
   handleDiscardInventoryItemAction,
   handleRenegotiateRentAction,
   handlePlayArcadeAction,
+  handleRelaxParkAction,
+  handleWorkoutParkAction,
   handleParkStrollAction,
   handleParkJogAction,
   handleParkRestAction
@@ -213,6 +215,12 @@ export function gameReducer(
       break;
     case 'play_arcade':
       res = handlePlayArcadeAction(nextPlayer, action, context);
+      break;
+    case 'relax_park':
+      res = handleRelaxParkAction(nextPlayer, action, context);
+      break;
+    case 'workout_park':
+      res = handleWorkoutParkAction(nextPlayer, action, context);
       break;
     case 'stroll_park':
       res = handleParkStrollAction(nextPlayer, action, context);

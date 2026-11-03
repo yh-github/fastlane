@@ -1,4 +1,4 @@
-import type { PlayerState, StatModification, GameEvent } from '../gameState';
+import type { PlayerState, StatModification, GameEvent, MiniGameOption, MiniGameState, ParkDecksState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
 import { requireAdvancedStatRules } from '../rules';
@@ -78,223 +78,433 @@ export function handlePlayArcadeAction(
   };
 }
 
-function resolveParkEncounter(
-  player: PlayerState,
-  activity: 'stroll' | 'bench' | 'jog',
-  context: ReducerContext
-): { nextPlayer: PlayerState; extraEvents: GameEvent[] } {
-  let nextPlayer = structuredClone(player);
-  const extraEvents: GameEvent[] = [];
+// ── PARK CARD DECKS DEFINITION ──
 
-  const enableEncounters = context.rules.enableParkSystem ?? context.rules.usePhysicalMentalConditions;
-  if (!enableEncounters) {
-    return { nextPlayer, extraEvents };
+export const PARK_RELAX_CARDS: MiniGameOption[] = [
+  {
+    type: 'park_encounter',
+    cardId: 'park_chess',
+    title: 'Park Chess Match',
+    description: 'An elderly grandmaster invites you for a match in the shaded pavilion.',
+    badge: 'Mind Game',
+    icon: '♟️',
+    socialAmount: 2,
+    mentalAmount: 1,
+    maxMentalAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'park_dog',
+    title: 'Friendly Golden Retriever',
+    description: 'An energetic dog fetches a tennis ball and happily nudges your leg.',
+    badge: 'Wholesome',
+    icon: '🐕',
+    socialAmount: 1,
+    mentalAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'park_busker',
+    title: 'Acoustic Busker',
+    description: 'A talented street musician plays soothing melodies beside the fountain.',
+    badge: 'Music',
+    icon: '🎸',
+    mentalAmount: 2
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'park_sunbathing',
+    title: 'Sunny Meadow Rest',
+    description: 'Warm sunshine and a gentle breeze help you completely unwind on the grass.',
+    badge: 'Fresh Air',
+    icon: '☀️',
+    physicalAmount: 1,
+    mentalAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'park_dropped_bill',
+    title: 'Found Loose Cash',
+    description: 'You spot a crisp five-dollar bill tucked under the bench slats.',
+    badge: 'Lucky',
+    icon: '💵',
+    cashAmount: 5,
+    mentalAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'park_reading',
+    title: 'Reading Under the Oak',
+    description: 'You lose yourself in a captivating paperback under a broad ancient oak.',
+    badge: 'Literature',
+    icon: '📖',
+    mentalAmount: 2
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'park_duck_pond',
+    title: 'Feeding the Ducks',
+    description: 'Watching ducklings glide peacefully across the pond brings calm and smiles.',
+    badge: 'Nature',
+    icon: '🦆',
+    socialAmount: 1,
+    mentalAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'park_sketch_artist',
+    title: 'Street Caricaturist',
+    description: 'A friendly student artist sketches a cheerful portrait that makes you laugh.',
+    badge: 'Art',
+    icon: '🎨',
+    socialAmount: 1,
+    mentalAmount: 1
   }
+];
 
-  const rng = context.rng;
-  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
-  const actionCounter = (nextPlayer.turnFlags?.parkStrollsThisTurn || 0) +
-                        (nextPlayer.turnFlags?.parkBenchesThisTurn || 0) +
-                        (nextPlayer.turnFlags?.parkJogsThisTurn || 0);
+export const PARK_WORKOUT_CARDS: MiniGameOption[] = [
+  {
+    type: 'park_encounter',
+    cardId: 'workout_runners_high',
+    title: "Runner's High",
+    description: 'A sudden rush of endorphins dissolves your fatigue during the final stretch.',
+    badge: 'Cardio',
+    icon: '🏃',
+    maxPhysAmount: 1,
+    mentalAmount: 2
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'workout_paced_runner',
+    title: 'Paced by a Veteran',
+    description: 'An experienced marathoner matches your pace and shares pacing tips.',
+    badge: 'Technique',
+    icon: '👟',
+    maxPhysAmount: 1,
+    socialAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'workout_sprint_intervals',
+    title: 'Sprint Intervals',
+    description: 'High-intensity bursts push your lactate threshold and explosive conditioning.',
+    badge: 'Speed',
+    icon: '⚡',
+    maxPhysAmount: 1,
+    physicalAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'workout_calisthenics',
+    title: 'Park Calisthenics Routine',
+    description: 'Pull-ups and dips on the outdoor fitness bars develop functional strength.',
+    badge: 'Strength',
+    icon: '🤸',
+    maxPhysAmount: 1,
+    mentalAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'workout_hill_sprints',
+    title: 'Hill Sprints Push',
+    description: 'You charge up the steep park hill until your lungs burn. Brutal, but builds peak endurance.',
+    badge: 'Endurance',
+    icon: '⛰️',
+    maxPhysAmount: 2,
+    physicalAmount: -3
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'workout_stretching_circle',
+    title: 'Outdoor Yoga Group',
+    description: 'You join a welcoming group for deep breathing and hip openers on the lawn.',
+    badge: 'Flexibility',
+    icon: '🧘',
+    maxPhysAmount: 1,
+    socialAmount: 1,
+    mentalAmount: 1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'workout_hydration',
+    title: 'Chilled Spring Water',
+    description: 'Ice-cold artesian water refreshes your body and prevents cramping.',
+    badge: 'Vitality',
+    icon: '💧',
+    maxPhysAmount: 1,
+    physicalAmount: 2
+  }
+];
 
-  // 1. Street Pickpocketing / Mugging Risk if holding significant unbanked cash
-  if (nextPlayer.money >= 150) {
-    const baseTheftChance = activity === 'bench' ? 0.25 : (activity === 'stroll' ? 0.12 : 0.08);
-    const theftBonus = nextPlayer.money >= 300 ? 0.10 : 0;
-    const theftChance = baseTheftChance + theftBonus;
-    const theftRoll = resolveDecision(
-      replayContext,
-      `park_theft_${nextPlayer.id}_${context.turn}_${actionCounter}`,
-      () => rng.next()
-    );
+export const PARK_HAZARD_CARDS: MiniGameOption[] = [
+  {
+    type: 'park_encounter',
+    cardId: 'hazard_persistent_bee',
+    title: 'Persistent Bee',
+    description: 'A relentless bumblebee buzzes inches from your face and refuses to leave.',
+    icon: '🐝',
+    mentalAmount: -1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'hazard_picnic_ants',
+    title: 'Picnic Ants',
+    description: 'A trail of red ants invades your sitting spot and ruins your peace.',
+    icon: '🐜',
+    mentalAmount: -1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'hazard_dog_poop',
+    title: 'Stepped in Dog Mess',
+    description: 'An irresponsible pet owner ruined your shoes and completely spoiled your mood.',
+    icon: '💩',
+    durabilityAmount: -1,
+    mentalAmount: -1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'hazard_sudden_squall',
+    title: 'Sudden Cold Rain',
+    description: 'Dark clouds break with an icy downpour, leaving you shivering.',
+    icon: '🌧️',
+    physicalAmount: -1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'hazard_boombox',
+    title: 'Blasting Boombox',
+    description: 'A noisy group cranks distorted bass on a cheap stereo nearby.',
+    icon: '📻',
+    mentalAmount: -1
+  },
+  {
+    type: 'park_encounter',
+    cardId: 'hazard_pickpocket',
+    title: 'Sly Pickpocket',
+    description: 'A suspicious bump in the crowd tests your alertness.',
+    icon: '🦹',
+    mentalAmount: -1
+  }
+];
 
-    if (theftRoll < theftChance) {
-      const rate = activity === 'bench' ? 0.20 : 0.15;
-      const stolen = Math.min(100, Math.max(25, Math.floor(nextPlayer.money * rate)));
-      nextPlayer.money = Math.max(0, nextPlayer.money - stolen);
-      const mentalLoss = activity === 'bench' ? 2 : 1;
-      const mods: StatModification[] = [{ stat: 'money', diff: -stolen }];
-      if (context.rules.usePhysicalMentalConditions) {
-        nextPlayer.mentalCondition = Math.max(1, (nextPlayer.mentalCondition ?? 50) - mentalLoss);
-        mods.push({ stat: 'mental', diff: -mentalLoss });
-      } else {
-        nextPlayer.happiness = Math.max(0, nextPlayer.happiness - 2);
-        mods.push({ stat: 'happiness', diff: -2 });
-      }
-
-      extraEvents.push({
-        key: 'events.park.pickpocket',
-        params: { stolen, loss: stolen },
-        modifications: mods
-      });
-      return { nextPlayer, extraEvents };
+export function chooseBestParkCard(options: MiniGameOption[]): number {
+  let bestIdx = 0;
+  let bestScore = -Infinity;
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i];
+    const score =
+      (opt.maxPhysAmount || 0) * 15 +
+      (opt.maxMentalAmount || 0) * 15 +
+      (opt.mentalAmount || 0) * 4 +
+      (opt.physicalAmount || 0) * 3 +
+      (opt.socialAmount || 0) * 2 +
+      (opt.cashAmount || 0) * 0.5 +
+      (opt.durabilityAmount || 0) * 2;
+    if (score > bestScore) {
+      bestScore = score;
+      bestIdx = i;
     }
   }
-
-  // 2. Outdoor Environmental & Social Encounters (~35% chance)
-  const encounterChance = activity === 'bench' ? 0.40 : 0.35;
-  const encounterRoll = resolveDecision(
-    replayContext,
-    `park_event_trigger_${nextPlayer.id}_${context.turn}_${actionCounter}`,
-    () => rng.next()
-  );
-
-  if (encounterRoll >= encounterChance) {
-    return { nextPlayer, extraEvents };
-  }
-
-  const poolRoll = resolveDecision(
-    replayContext,
-    `park_event_pick_${nextPlayer.id}_${context.turn}_${actionCounter}`,
-    () => Math.floor(rng.next() * 6)
-  );
-
-  if (poolRoll === 0) {
-    // Sunny breeze / peaceful weather
-    if (context.rules.usePhysicalMentalConditions) {
-      const maxPhys = nextPlayer.physicalConditionMax ?? 50;
-      const maxMental = nextPlayer.mentalConditionMax ?? 50;
-      nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + 1);
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + 1);
-      extraEvents.push({
-        key: 'events.park.sunnyBreeze',
-        modifications: [{ stat: 'physical', diff: 1 }, { stat: 'mental', diff: 1 }]
-      });
-    } else {
-      nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
-      extraEvents.push({
-        key: 'events.park.sunnyBreeze',
-        modifications: [{ stat: 'happiness', diff: 2 }]
-      });
-    }
-  } else if (poolRoll === 1) {
-    // Street busker music
-    if (context.rules.usePhysicalMentalConditions) {
-      const maxMental = nextPlayer.mentalConditionMax ?? 50;
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + 2);
-      extraEvents.push({
-        key: 'events.park.busker',
-        modifications: [{ stat: 'mental', diff: 2 }]
-      });
-    } else {
-      nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
-      extraEvents.push({
-        key: 'events.park.busker',
-        modifications: [{ stat: 'happiness', diff: 2 }]
-      });
-    }
-  } else if (poolRoll === 2) {
-    // Friendly dog
-    const mods: StatModification[] = [];
-    if (context.rules.trackSocial) {
-      nextPlayer.social = Math.min(99, (nextPlayer.social ?? 50) + 1);
-      mods.push({ stat: 'social', diff: 1 });
-    }
-    if (context.rules.usePhysicalMentalConditions) {
-      const maxMental = nextPlayer.mentalConditionMax ?? 50;
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + 1);
-      mods.push({ stat: 'mental', diff: 1 });
-    } else {
-      nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 1);
-      mods.push({ stat: 'happiness', diff: 1 });
-    }
-    extraEvents.push({
-      key: 'events.park.friendlyDog',
-      modifications: mods
-    });
-  } else if (poolRoll === 3) {
-    // Found loose cash
-    nextPlayer.money += 5;
-    const mods: StatModification[] = [{ stat: 'money', diff: 5 }];
-    if (context.rules.usePhysicalMentalConditions) {
-      const maxMental = nextPlayer.mentalConditionMax ?? 50;
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + 1);
-      mods.push({ stat: 'mental', diff: 1 });
-    } else {
-      nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 1);
-      mods.push({ stat: 'happiness', diff: 1 });
-    }
-    extraEvents.push({
-      key: 'events.park.foundMoney',
-      modifications: mods
-    });
-  } else if (poolRoll === 4) {
-    // Sudden rainstorm
-    if (context.rules.usePhysicalMentalConditions) {
-      nextPlayer.physicalCondition = Math.max(1, (nextPlayer.physicalCondition ?? 50) - 1);
-      extraEvents.push({
-        key: 'events.park.suddenRain',
-        modifications: [{ stat: 'physical', diff: -1 }]
-      });
-    } else {
-      nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - 1);
-      extraEvents.push({
-        key: 'events.park.suddenRain',
-        modifications: [{ stat: 'relaxation', diff: -1 }]
-      });
-    }
-  } else {
-    // Pushy solicitor / aggressive petitioner
-    const mods: StatModification[] = [];
-    if (context.rules.usePhysicalMentalConditions) {
-      nextPlayer.mentalCondition = Math.max(1, (nextPlayer.mentalCondition ?? 50) - 1);
-      mods.push({ stat: 'mental', diff: -1 });
-    } else {
-      nextPlayer.happiness = Math.max(0, nextPlayer.happiness - 1);
-      mods.push({ stat: 'happiness', diff: -1 });
-    }
-    if (context.rules.trackSocial) {
-      nextPlayer.social = Math.max(1, (nextPlayer.social ?? 50) - 1);
-      mods.push({ stat: 'social', diff: -1 });
-    }
-    extraEvents.push({
-      key: 'events.park.solicitor',
-      modifications: mods
-    });
-  }
-
-  return { nextPlayer, extraEvents };
+  return bestIdx;
 }
 
-export function handleParkStrollAction(
+export function applyParkCardEffects(
   player: PlayerState,
-  _action: { type: 'stroll_park' },
+  choice: MiniGameOption,
+  context: ReducerContext
+): { nextPlayer: PlayerState; modifications: StatModification[] } {
+  const nextPlayer = structuredClone(player);
+  const mods: StatModification[] = [];
+
+  if (choice.cashAmount) {
+    nextPlayer.money = Math.max(0, nextPlayer.money + choice.cashAmount);
+    mods.push({ stat: 'money', diff: choice.cashAmount });
+  }
+
+  if (context.rules.usePhysicalMentalConditions) {
+    if (choice.mentalAmount) {
+      const maxMental = nextPlayer.mentalConditionMax ?? 50;
+      nextPlayer.mentalCondition = Math.max(1, Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + choice.mentalAmount));
+      mods.push({ stat: 'mental', diff: choice.mentalAmount });
+    }
+    if (choice.physicalAmount) {
+      const maxPhys = nextPlayer.physicalConditionMax ?? 50;
+      nextPlayer.physicalCondition = Math.max(1, Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + choice.physicalAmount));
+      mods.push({ stat: 'physical', diff: choice.physicalAmount });
+    }
+    if (choice.maxPhysAmount) {
+      const globalMax = 100;
+      const curMax = nextPlayer.physicalConditionMax ?? 50;
+      if (curMax < globalMax) {
+        const gain = Math.min(globalMax - curMax, choice.maxPhysAmount);
+        nextPlayer.physicalConditionMax = curMax + gain;
+        mods.push({ stat: 'maxPhysical', diff: gain });
+      }
+    }
+    if (choice.maxMentalAmount) {
+      const globalMax = 100;
+      const curMax = nextPlayer.mentalConditionMax ?? 50;
+      if (curMax < globalMax) {
+        const gain = Math.min(globalMax - curMax, choice.maxMentalAmount);
+        nextPlayer.mentalConditionMax = curMax + gain;
+        mods.push({ stat: 'maxMental', diff: gain });
+      }
+    }
+  } else {
+    // Classic rules fallback
+    if (choice.mentalAmount) {
+      nextPlayer.happiness = Math.max(0, Math.min(100, nextPlayer.happiness + choice.mentalAmount));
+      mods.push({ stat: 'happiness', diff: choice.mentalAmount });
+    }
+    if (choice.physicalAmount) {
+      nextPlayer.relaxation = Math.max(0, Math.min(100, nextPlayer.relaxation + choice.physicalAmount));
+      mods.push({ stat: 'relaxation', diff: choice.physicalAmount });
+    }
+  }
+
+  if (choice.socialAmount && context.rules.trackSocial) {
+    nextPlayer.social = Math.max(1, Math.min(99, (nextPlayer.social ?? 50) + choice.socialAmount));
+    mods.push({ stat: 'social', diff: choice.socialAmount });
+  }
+
+  if (choice.durabilityAmount && nextPlayer.inventory?.selectedClothes) {
+    const sel = nextPlayer.inventory.selectedClothes;
+    if (sel === 'casual') {
+      nextPlayer.inventory.casualClothesWeeks = Math.max(0, (nextPlayer.inventory.casualClothesWeeks || 0) + choice.durabilityAmount);
+    } else if (sel === 'dress') {
+      nextPlayer.inventory.dressClothesWeeks = Math.max(0, (nextPlayer.inventory.dressClothesWeeks || 0) + choice.durabilityAmount);
+    } else if (sel === 'business') {
+      nextPlayer.inventory.businessClothesWeeks = Math.max(0, (nextPlayer.inventory.businessClothesWeeks || 0) + choice.durabilityAmount);
+    }
+  }
+
+  return { nextPlayer, modifications: mods };
+}
+
+function shuffleArray<T>(array: T[], rng: { next: () => number }, replayContext: ReplayContext, seedKey: string): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const roll = resolveDecision(replayContext, `${seedKey}_shuffle_${i}`, () => rng.next());
+    const j = Math.floor(roll * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+export function drawParkCards(
+  player: PlayerState,
+  deckType: 'relax' | 'workout' | 'hazard',
+  count: number,
+  context: ReducerContext,
+  decisionPrefix: string
+): { cards: MiniGameOption[]; updatedDecks: ParkDecksState } {
+  const decks: ParkDecksState = player.parkDecks
+    ? structuredClone(player.parkDecks)
+    : {
+        relax: { drawPile: [], discardPile: [] },
+        workout: { drawPile: [], discardPile: [] },
+        hazard: { drawPile: [], discardPile: [] }
+      };
+
+  const deck = decks[deckType];
+  const cardPool = (
+    deckType === 'relax' ? PARK_RELAX_CARDS :
+    deckType === 'workout' ? PARK_WORKOUT_CARDS :
+    PARK_HAZARD_CARDS
+  );
+  const allCardIds = cardPool.map(c => c.cardId!);
+
+  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
+
+  if (deck.drawPile.length < count) {
+    let pool = [...deck.discardPile];
+    deck.discardPile = [];
+    if (pool.length === 0) {
+      pool = [...allCardIds];
+    }
+    const shuffled = shuffleArray(pool, context.rng, replayContext, `${decisionPrefix}_reshuffle_${deckType}`);
+    deck.drawPile = [...deck.drawPile, ...shuffled];
+  }
+
+  if (deck.drawPile.length < count) {
+    const extra = allCardIds.filter(id => !deck.drawPile.includes(id));
+    const shuffled = shuffleArray(extra, context.rng, replayContext, `${decisionPrefix}_refill_${deckType}`);
+    deck.drawPile = [...deck.drawPile, ...shuffled];
+  }
+
+  const drawnIds = deck.drawPile.splice(0, count);
+  deck.discardPile.push(...drawnIds);
+
+  const cardMap = new Map<string, MiniGameOption>();
+  for (const c of cardPool) {
+    cardMap.set(c.cardId!, c);
+  }
+
+  const drawnCards: MiniGameOption[] = drawnIds.map(id => {
+    let card = structuredClone(cardMap.get(id) || cardPool[0]);
+    if (card.cardId === 'hazard_pickpocket') {
+      if (player.money >= 150) {
+        const stolen = Math.min(100, Math.max(25, Math.floor(player.money * 0.15)));
+        card = {
+          ...card,
+          cashAmount: -stolen,
+          mentalAmount: -2,
+          description: `A pickpocket bumped into you and lifted $${stolen} cash!`
+        };
+      } else {
+        card = {
+          ...card,
+          cashAmount: 0,
+          mentalAmount: -1,
+          description: `A pickpocket bumped into you and found nothing in your pockets!`
+        };
+      }
+    }
+    return card;
+  });
+
+  return { cards: drawnCards, updatedDecks: decks };
+}
+
+// ── CORE ACTIONS ──
+
+export function handleRelaxParkAction(
+  player: PlayerState,
+  _action: { type: 'relax_park' } | { type: 'stroll_park' } | { type: 'rest_bench' },
   context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
-  const strollCost = 2;
-  if (nextPlayer.hoursRemaining < strollCost) {
+  const costHours = 3;
+  if (nextPlayer.hoursRemaining < costHours) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
 
-  nextPlayer = spendHours(nextPlayer, strollCost);
+  nextPlayer = spendHours(nextPlayer, costHours);
 
-  const strolls = nextPlayer.turnFlags?.parkStrollsThisTurn || 0;
+  const relaxes = nextPlayer.turnFlags?.parkRelaxesThisTurn || 0;
   nextPlayer.turnFlags = {
     ...nextPlayer.turnFlags,
-    parkStrollsThisTurn: strolls + 1,
-    hasFreshAir: true
+    parkRelaxesThisTurn: relaxes + 1,
+    parkStrollsThisTurn: (nextPlayer.turnFlags?.parkStrollsThisTurn || 0) + 1,
+    parkBenchesThisTurn: (nextPlayer.turnFlags?.parkBenchesThisTurn || 0) + 1
   };
 
   const actionLogs: GameEvent[] = [];
+  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
 
   if (context.rules.usePhysicalMentalConditions) {
     const maxPhys = nextPlayer.physicalConditionMax ?? 50;
     const maxMental = nextPlayer.mentalConditionMax ?? 50;
+
     let physGain = 0;
     let mentalGain = 0;
-
-    if (strolls === 0) {
-      // First stroll: Full refresh (+1 Phys, +1 Mental)
+    if (relaxes === 0) {
+      physGain = 2;
+      mentalGain = 2;
+    } else if (relaxes === 1) {
       physGain = 1;
       mentalGain = 1;
-    } else if (strolls === 1) {
-      // Second stroll: Moderate mental refresh (+0 Phys, +1 Mental)
-      mentalGain = 1;
-    } else {
-      // 3rd+ stroll: Diminishing returns (+0, +0)
-      physGain = 0;
-      mentalGain = 0;
     }
 
     if (physGain > 0) {
@@ -309,17 +519,18 @@ export function handleParkStrollAction(
     if (mentalGain > 0) mods.push({ stat: 'mental', diff: mentalGain });
 
     actionLogs.push({
-      key: strolls < 2 ? 'action.park.stroll' : 'action.park.strollDiminished',
+      key: relaxes === 0 ? 'action.park.relax' : (relaxes === 1 ? 'action.park.relaxDiminished' : 'action.park.relaxExhausted'),
       modifications: mods
     });
   } else {
     // Classic rules
     let hapGain = 0;
     let relGain = 0;
-    if (strolls === 0) {
+    if (relaxes === 0) {
+      hapGain = 2;
+      relGain = 2;
+    } else if (relaxes === 1) {
       hapGain = 1;
-      relGain = 1;
-    } else if (strolls === 1) {
       relGain = 1;
     }
 
@@ -331,16 +542,71 @@ export function handleParkStrollAction(
     if (relGain > 0) mods.push({ stat: 'relaxation', diff: relGain });
 
     actionLogs.push({
-      key: strolls < 2 ? 'action.park.stroll' : 'action.park.strollDiminished',
+      key: relaxes === 0 ? 'action.park.relax' : (relaxes === 1 ? 'action.park.relaxDiminished' : 'action.park.relaxExhausted'),
       modifications: mods
     });
   }
 
-  // Outdoor random encounter
-  const encounterRes = resolveParkEncounter(nextPlayer, 'stroll', context);
-  nextPlayer = encounterRes.nextPlayer;
-  if (encounterRes.extraEvents.length > 0) {
-    actionLogs.push(...encounterRes.extraEvents);
+  // Encounters logic
+  const enableEncounters = context.rules.enableParkSystem ?? context.rules.usePhysicalMentalConditions;
+  if (enableEncounters) {
+    const isBadRoll = resolveDecision(
+      replayContext,
+      `park_roll_bad_${nextPlayer.id}_${context.turn}_${relaxes}`,
+      () => context.rng.next() < 0.25
+    );
+
+    if (isBadRoll) {
+      const { cards: [hazardCard], updatedDecks } = drawParkCards(
+        nextPlayer,
+        'hazard',
+        1,
+        context,
+        `park_hazard_${nextPlayer.id}_${context.turn}_${relaxes}`
+      );
+      nextPlayer.parkDecks = updatedDecks;
+      const res = applyParkCardEffects(nextPlayer, hazardCard, context);
+      nextPlayer = res.nextPlayer;
+      actionLogs.push({
+        key: 'events.park.hazard',
+        params: { title: hazardCard.title, desc: hazardCard.description },
+        modifications: res.modifications
+      });
+    } else {
+      const { cards, updatedDecks } = drawParkCards(
+        nextPlayer,
+        'relax',
+        3,
+        context,
+        `park_relax_${nextPlayer.id}_${context.turn}_${relaxes}`
+      );
+      nextPlayer.parkDecks = updatedDecks;
+
+      if (nextPlayer.isAi) {
+        const bestIdx = chooseBestParkCard(cards);
+        const chosenCard = cards[bestIdx];
+        const res = applyParkCardEffects(nextPlayer, chosenCard, context);
+        nextPlayer = res.nextPlayer;
+        actionLogs.push({
+          key: 'action.park.cardResolved',
+          params: { title: chosenCard.title },
+          modifications: res.modifications
+        });
+      } else {
+        const miniGameState: MiniGameState = {
+          gameType: 'park_encounter',
+          title: 'Park Encounter',
+          subtitle: 'Choose how to spend your time in the park:',
+          options: cards
+        };
+        nextPlayer.pendingMiniGame = miniGameState;
+        nextPlayer.pendingAppraisalDilemma = miniGameState;
+        actionLogs.push({
+          key: 'action.park.cardsDrawn',
+          params: { count: cards.length }
+        });
+      }
+    }
   }
 
   return {
@@ -349,99 +615,175 @@ export function handleParkStrollAction(
   };
 }
 
-export function handleParkJogAction(
+export function handleWorkoutParkAction(
   player: PlayerState,
-  _action: { type: 'jog_park' },
+  _action: { type: 'workout_park' } | { type: 'jog_park' },
   context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
-  const jogCost = 3;
-  if (nextPlayer.hoursRemaining < jogCost) {
+  const costHours = 3;
+  if (nextPlayer.hoursRemaining < costHours) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
+
   if (context.rules.usePhysicalMentalConditions && (nextPlayer.physicalCondition ?? 50) < 15) {
     return { nextPlayer, actionLog: { key: 'action.error.tooPhysicallyExhausted' } };
   }
 
-  nextPlayer = spendHours(nextPlayer, jogCost);
+  nextPlayer = spendHours(nextPlayer, costHours);
 
-  const jogs = nextPlayer.turnFlags?.parkJogsThisTurn || 0;
+  const workouts = nextPlayer.turnFlags?.parkWorkoutsThisTurn || 0;
   nextPlayer.turnFlags = {
     ...nextPlayer.turnFlags,
-    parkJogsThisTurn: jogs + 1,
-    hasFreshAir: true
+    parkWorkoutsThisTurn: workouts + 1,
+    parkJogsThisTurn: (nextPlayer.turnFlags?.parkJogsThisTurn || 0) + 1
   };
 
   const actionLogs: GameEvent[] = [];
+  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
 
-  if (context.rules.usePhysicalMentalConditions) {
-    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
-    const globalMax = statRules.initialPhysicalMax ?? 100;
-    const curMax = nextPlayer.physicalConditionMax ?? 50;
+  const phys = nextPlayer.physicalCondition ?? 50;
+  const mental = nextPlayer.mentalCondition ?? 50;
+  let hadFatigueMistake = false;
 
-    if (jogs === 0) {
-      // First jog: Builds athletic endurance (+1 Physical, +1 Max Phys, -2 Mental)
-      nextPlayer.mentalCondition = Math.max(1, (nextPlayer.mentalCondition ?? 50) - 2);
-      let maxDiff = 0;
-      if (curMax < globalMax) {
-        nextPlayer.physicalConditionMax = Math.min(globalMax, curMax + 1);
-        maxDiff = 1;
-      }
-      nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax ?? 50, (nextPlayer.physicalCondition ?? 50) + 1);
+  if (context.rules.usePhysicalMentalConditions && (phys < 20 || mental < 20)) {
+    const mistakeChance = Math.min(
+      0.60,
+      Math.max(0, (20 - phys) * 0.05) + Math.max(0, (20 - mental) * 0.05)
+    );
+    hadFatigueMistake = resolveDecision(
+      replayContext,
+      `park_workout_fatigue_${nextPlayer.id}_${context.turn}_${workouts}`,
+      () => context.rng.next() < mistakeChance
+    );
+  }
 
-      const mods: StatModification[] = [
-        { stat: 'physical', diff: 1 },
-        { stat: 'mental', diff: -2 }
-      ];
-      if (maxDiff > 0) {
-        mods.push({ stat: 'maxPhysical', diff: maxDiff });
-      }
-
-      actionLogs.push({
-        key: 'action.park.jog',
-        modifications: mods
-      });
-    } else {
-      // 2nd+ jog: Overexertion & muscle strain (-2 Physical, -1 Mental)
-      nextPlayer.physicalCondition = Math.max(1, (nextPlayer.physicalCondition ?? 50) - 2);
-      nextPlayer.mentalCondition = Math.max(1, (nextPlayer.mentalCondition ?? 50) - 1);
-
-      actionLogs.push({
-        key: 'action.park.jogOverexertion',
-        modifications: [
-          { stat: 'physical', diff: -2 },
-          { stat: 'mental', diff: -1 }
-        ]
-      });
-    }
+  if (hadFatigueMistake) {
+    nextPlayer.physicalCondition = Math.max(1, phys - 2);
+    actionLogs.push({
+      key: 'action.park.workoutPulledMuscle',
+      modifications: [{ stat: 'physical', diff: -2 }]
+    });
   } else {
-    // Classic rules
-    if (jogs === 0) {
-      nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + 2);
-      nextPlayer.happiness = Math.max(0, nextPlayer.happiness - 1);
-      actionLogs.push({
-        key: 'action.park.jog',
-        modifications: [
-          { stat: 'relaxation', diff: 2 },
-          { stat: 'happiness', diff: -1 }
-        ]
-      });
+    if (context.rules.usePhysicalMentalConditions) {
+      const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+      const globalMax = statRules.initialPhysicalMax ?? 100;
+      const curMax = nextPlayer.physicalConditionMax ?? 50;
+
+      if (workouts === 0) {
+        let maxDiff = 0;
+        if (curMax < globalMax) {
+          nextPlayer.physicalConditionMax = Math.min(globalMax, curMax + 1);
+          maxDiff = 1;
+        }
+        nextPlayer.physicalCondition = Math.max(1, Math.min(nextPlayer.physicalConditionMax ?? 50, phys - 1));
+        nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, mental + 1);
+
+        const mods: StatModification[] = [
+          { stat: 'physical', diff: -1 },
+          { stat: 'mental', diff: 1 }
+        ];
+        if (maxDiff > 0) mods.push({ stat: 'maxPhysical', diff: maxDiff });
+
+        actionLogs.push({
+          key: 'action.park.workout',
+          modifications: mods
+        });
+      } else {
+        // Overtraining
+        nextPlayer.physicalCondition = Math.max(1, phys - 2);
+        nextPlayer.mentalCondition = Math.max(1, mental - 1);
+
+        actionLogs.push({
+          key: 'action.park.workoutOvertraining',
+          modifications: [
+            { stat: 'physical', diff: -2 },
+            { stat: 'mental', diff: -1 }
+          ]
+        });
+      }
     } else {
-      nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - 1);
-      actionLogs.push({
-        key: 'action.park.jogOverexertion',
-        modifications: [
-          { stat: 'relaxation', diff: -1 }
-        ]
-      });
+      // Classic rules
+      if (workouts === 0) {
+        nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + 2);
+        nextPlayer.happiness = Math.max(0, nextPlayer.happiness - 1);
+        actionLogs.push({
+          key: 'action.park.workout',
+          modifications: [
+            { stat: 'relaxation', diff: 2 },
+            { stat: 'happiness', diff: -1 }
+          ]
+        });
+      } else {
+        nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - 1);
+        actionLogs.push({
+          key: 'action.park.workoutOvertraining',
+          modifications: [{ stat: 'relaxation', diff: -1 }]
+        });
+      }
     }
   }
 
-  // Outdoor random encounter
-  const encounterRes = resolveParkEncounter(nextPlayer, 'jog', context);
-  nextPlayer = encounterRes.nextPlayer;
-  if (encounterRes.extraEvents.length > 0) {
-    actionLogs.push(...encounterRes.extraEvents);
+  // Encounters logic (skipped if player had a fatigue mistake injury)
+  const enableEncounters = context.rules.enableParkSystem ?? context.rules.usePhysicalMentalConditions;
+  if (enableEncounters && !hadFatigueMistake) {
+    const isBadRoll = resolveDecision(
+      replayContext,
+      `park_workout_bad_${nextPlayer.id}_${context.turn}_${workouts}`,
+      () => context.rng.next() < 0.25
+    );
+
+    if (isBadRoll) {
+      const { cards: [hazardCard], updatedDecks } = drawParkCards(
+        nextPlayer,
+        'hazard',
+        1,
+        context,
+        `park_hazard_workout_${nextPlayer.id}_${context.turn}_${workouts}`
+      );
+      nextPlayer.parkDecks = updatedDecks;
+      const res = applyParkCardEffects(nextPlayer, hazardCard, context);
+      nextPlayer = res.nextPlayer;
+      actionLogs.push({
+        key: 'events.park.hazard',
+        params: { title: hazardCard.title, desc: hazardCard.description },
+        modifications: res.modifications
+      });
+    } else {
+      const { cards, updatedDecks } = drawParkCards(
+        nextPlayer,
+        'workout',
+        3,
+        context,
+        `park_workout_deck_${nextPlayer.id}_${context.turn}_${workouts}`
+      );
+      nextPlayer.parkDecks = updatedDecks;
+
+      if (nextPlayer.isAi) {
+        const bestIdx = chooseBestParkCard(cards);
+        const chosenCard = cards[bestIdx];
+        const res = applyParkCardEffects(nextPlayer, chosenCard, context);
+        nextPlayer = res.nextPlayer;
+        actionLogs.push({
+          key: 'action.park.cardResolved',
+          params: { title: chosenCard.title },
+          modifications: res.modifications
+        });
+      } else {
+        const miniGameState: MiniGameState = {
+          gameType: 'park_encounter',
+          title: 'Park Workout Encounter',
+          subtitle: 'Select an athletic training focus:',
+          options: cards
+        };
+        nextPlayer.pendingMiniGame = miniGameState;
+        nextPlayer.pendingAppraisalDilemma = miniGameState;
+        actionLogs.push({
+          key: 'action.park.cardsDrawn',
+          params: { count: cards.length }
+        });
+      }
+    }
   }
 
   return {
@@ -450,98 +792,28 @@ export function handleParkJogAction(
   };
 }
 
-export function handleParkRestAction(
+// ── BACKWARDS-COMPATIBLE ALIASES ──
+
+export function handleParkStrollAction(
   player: PlayerState,
-  _action: { type: 'rest_bench' },
+  action: { type: 'stroll_park' },
   context: ReducerContext
 ): ActionHandlerResult {
-  let nextPlayer = structuredClone(player);
-  const restCost = 3;
-  if (nextPlayer.hoursRemaining < restCost) {
-    return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
-  }
+  return handleRelaxParkAction(player, action, context);
+}
 
-  nextPlayer = spendHours(nextPlayer, restCost);
+export function handleParkRestAction(
+  player: PlayerState,
+  action: { type: 'rest_bench' },
+  context: ReducerContext
+): ActionHandlerResult {
+  return handleRelaxParkAction(player, action, context);
+}
 
-  const rests = nextPlayer.turnFlags?.parkBenchesThisTurn || 0;
-  nextPlayer.turnFlags = {
-    ...nextPlayer.turnFlags,
-    parkBenchesThisTurn: rests + 1
-  };
-
-  const actionLogs: GameEvent[] = [];
-
-  if (context.rules.usePhysicalMentalConditions) {
-    const maxPhys = nextPlayer.physicalConditionMax ?? 50;
-    const maxMental = nextPlayer.mentalConditionMax ?? 50;
-
-    if (rests === 0) {
-      // 1st Bench Rest: (+2 Physical, +1 Mental). Safe free rest without food or mess!
-      nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + 2);
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + 1);
-      actionLogs.push({
-        key: 'action.park.rest',
-        modifications: [
-          { stat: 'physical', diff: 2 },
-          { stat: 'mental', diff: 1 }
-        ]
-      });
-    } else if (rests === 1) {
-      // 2nd Bench Rest: (+1 Physical, +0 Mental)
-      nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + 1);
-      actionLogs.push({
-        key: 'action.park.restDiminished',
-        modifications: [
-          { stat: 'physical', diff: 1 }
-        ]
-      });
-    } else {
-      // 3rd+ Bench Rest: Sleeping on hard benches all day causes stiff neck (-1 Mental)
-      nextPlayer.mentalCondition = Math.max(1, (nextPlayer.mentalCondition ?? 50) - 1);
-      actionLogs.push({
-        key: 'action.park.restStiff',
-        modifications: [
-          { stat: 'mental', diff: -1 }
-        ]
-      });
-    }
-  } else {
-    // Classic rules
-    if (rests === 0) {
-      nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + 2);
-      nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 1);
-      actionLogs.push({
-        key: 'action.park.rest',
-        modifications: [
-          { stat: 'relaxation', diff: 2 },
-          { stat: 'happiness', diff: 1 }
-        ]
-      });
-    } else if (rests === 1) {
-      nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + 1);
-      actionLogs.push({
-        key: 'action.park.restDiminished',
-        modifications: [
-          { stat: 'relaxation', diff: 1 }
-        ]
-      });
-    } else {
-      actionLogs.push({
-        key: 'action.park.restStiff',
-        modifications: []
-      });
-    }
-  }
-
-  // Outdoor random encounter (higher risk on bench)
-  const encounterRes = resolveParkEncounter(nextPlayer, 'bench', context);
-  nextPlayer = encounterRes.nextPlayer;
-  if (encounterRes.extraEvents.length > 0) {
-    actionLogs.push(...encounterRes.extraEvents);
-  }
-
-  return {
-    nextPlayer,
-    actionLog: actionLogs.length === 1 ? actionLogs[0] : actionLogs
-  };
+export function handleParkJogAction(
+  player: PlayerState,
+  action: { type: 'jog_park' },
+  context: ReducerContext
+): ActionHandlerResult {
+  return handleWorkoutParkAction(player, action, context);
 }
