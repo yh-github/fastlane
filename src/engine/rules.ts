@@ -388,6 +388,11 @@ export interface GameRules {
    * ADVANCED 2000: Enables playing arcade games at arcade-equipped restaurants (e.g. Red Pirate) for quick mental relief and happiness.
    */
   enableArcade: boolean;
+
+  /**
+   * ADVANCED 2000: Enables dynamic park interactions (stroll, jog, bench rest), cabin fever from indoor over-relaxation, and outdoor random events.
+   */
+  enableParkSystem?: boolean;
 }
 
 export interface EventRules {
@@ -993,6 +998,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   enableBusyWeeks: 'Enables periodic "All Hands on Deck!" busy weeks at fast-food locations with surge pay, accelerated XP/Dep, and absentee penalties',
   hospitalEmployeeHealthcare: 'Grants hospital employees healthcare coverage (free/discounted doctor visits and enhanced physical bounce-back)',
   enableArcade: 'Enables playing arcade games at arcade-equipped restaurants for quick mental relief and happiness',
+  enableParkSystem: 'Enables dynamic park interactions (stroll, jog, bench rest), cabin fever from indoor over-relaxation, and outdoor random events',
   economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',
   reenterCurrentLocationCost: 'Entering or re-opening the current building location costs standard building entry time (2 hours)',
   pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',

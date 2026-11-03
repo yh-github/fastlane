@@ -521,43 +521,43 @@ export function BuildingModal({
                 <button
                   type="button"
                   className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 1}
+                  disabled={player.hoursRemaining < 2}
                   onClick={() => handleActionIntercept({ type: 'stroll_park' })}
-                  title={t('park.strollDesc', rules?.usePhysicalMentalConditions ? 'Take a relaxing stroll (⏳ -1h • +1 💪 • +1 🧠)' : 'Take a relaxing stroll (⏳ -1h • +1 😊 • +1 🛌)')}
+                  title={t('park.strollDesc', rules?.usePhysicalMentalConditions ? 'Take a refreshing stroll (⏳ -2h • +1 💪 • +1 🧠 • Fresh Air buff)' : 'Take a refreshing stroll (⏳ -2h • +1 😊 • +1 🛌)')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                 >
                   <span style={{ fontSize: '18px' }}>🚶</span>
                   <strong>{t('park.stroll', 'Stroll in Park')}</strong>
                   <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                    {rules?.usePhysicalMentalConditions ? '⏳ -1h • +1 💪 • +1 🧠' : '⏳ -1h • +1 😊 • +1 🛌'}
+                    {rules?.usePhysicalMentalConditions ? '⏳ -2h • +1 💪 • +1 🧠' : '⏳ -2h • +1 😊 • +1 🛌'}
                   </span>
                 </button>
                 <button
                   type="button"
                   className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 2 || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) <= 2)}
+                  disabled={player.hoursRemaining < 3 || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) < 15)}
                   onClick={() => handleActionIntercept({ type: 'jog_park' })}
-                  title={t('park.jogDesc', rules?.usePhysicalMentalConditions ? 'Jog around the trail (⏳ -2h • +1 💪 • +1 Max 💪 • -1 🧠)' : 'Jog around the trail (⏳ -2h • +2 🛌)')}
+                  title={t('park.jogDesc', rules?.usePhysicalMentalConditions ? 'Jog around the trail (⏳ -3h • +1 💪 • +1 Max 💪 • -2 🧠)' : 'Jog around the trail (⏳ -3h • +2 🛌 • -1 😊)')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                 >
                   <span style={{ fontSize: '18px' }}>🏃</span>
                   <strong>{t('park.jog', 'Jog / Workout')}</strong>
                   <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                    {rules?.usePhysicalMentalConditions ? '⏳ -2h • +1 💪 • +1 Max 💪 • -1 🧠' : '⏳ -2h • +2 🛌'}
+                    {rules?.usePhysicalMentalConditions ? '⏳ -3h • +1 💪 • +1 Max 💪 • -2 🧠' : '⏳ -3h • +2 🛌'}
                   </span>
                 </button>
                 <button
                   type="button"
                   className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 2}
+                  disabled={player.hoursRemaining < 3}
                   onClick={() => handleActionIntercept({ type: 'rest_bench' })}
-                  title={t('park.restDesc', rules?.usePhysicalMentalConditions ? 'Sit and rest on a park bench (⏳ -2h • +1 💪 • +2 🧠)' : 'Sit and rest on a park bench (⏳ -2h • +2 🛌 • +1 😊)')}
+                  title={t('park.restDesc', rules?.usePhysicalMentalConditions ? 'Sit and rest on a park bench (⏳ -3h • +2 💪 • +1 🧠 • Free food/mess)' : 'Sit and rest on a park bench (⏳ -3h • +2 🛌 • +1 😊)')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                 >
                   <span style={{ fontSize: '18px' }}>🪑</span>
                   <strong>{t('park.rest', 'Rest on Bench')}</strong>
                   <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                    {rules?.usePhysicalMentalConditions ? '⏳ -2h • +1 💪 • +2 🧠' : '⏳ -2h • +2 🛌 • +1 😊'}
+                    {rules?.usePhysicalMentalConditions ? '⏳ -3h • +2 💪 • +1 🧠' : '⏳ -3h • +2 🛌 • +1 😊'}
                   </span>
                 </button>
               </div>

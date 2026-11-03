@@ -313,9 +313,9 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     expect(screen.queryByText(/Welcome/i)).not.toBeInTheDocument();
 
     // Standard button icons
-    expect(screen.getByText(/⏳ -1h • \+1 💪 • \+1 🧠/i)).toBeInTheDocument();
-    expect(screen.getByText(/⏳ -2h • \+1 💪 • \+1 Max 💪 • -1 🧠/i)).toBeInTheDocument();
-    expect(screen.getByText(/⏳ -2h • \+1 💪 • \+2 🧠/i)).toBeInTheDocument();
+    expect(screen.getByText(/⏳ -2h • \+1 💪 • \+1 🧠/i)).toBeInTheDocument();
+    expect(screen.getByText(/⏳ -3h • \+1 💪 • \+1 Max 💪 • -2 🧠/i)).toBeInTheDocument();
+    expect(screen.getByText(/⏳ -3h • \+2 💪 • \+1 🧠/i)).toBeInTheDocument();
   });
 
   // Coffee card & no "Nutrition happiness"

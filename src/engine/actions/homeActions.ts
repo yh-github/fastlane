@@ -40,8 +40,36 @@ export function handleRelaxAction(
       const mentalBonus = relaxEffects.get('mental') || 0;
       const extraMess = relaxEffects.get('mess') || 0;
 
+      const isParkSystem = Boolean(context.rules.enableParkSystem);
+      const homeRelaxes = (nextPlayer.turnFlags.homeRelaxesThisTurn || 0) + 1;
+      nextPlayer.turnFlags.homeRelaxesThisTurn = homeRelaxes;
+
+      let freshAirBonus = false;
+      let cabinFeverPenalty = false;
+
+      let extraPhysFromAir = 0;
+      let extraMentalFromAir = 0;
+      if (isParkSystem && nextPlayer.turnFlags.hasFreshAir) {
+        freshAirBonus = true;
+        nextPlayer.turnFlags.hasFreshAir = false;
+        extraPhysFromAir = 1;
+        extraMentalFromAir = 2;
+      }
+
+      let cabinFeverLoss = 0;
+      if (isParkSystem && homeRelaxes >= 3) {
+        const hasBeenOutside = Boolean(
+          (nextPlayer.turnFlags.parkStrollsThisTurn || 0) > 0 ||
+          (nextPlayer.turnFlags.parkJogsThisTurn || 0) > 0
+        );
+        if (!hasBeenOutside) {
+          cabinFeverPenalty = true;
+          cabinFeverLoss = 2;
+        }
+      }
+
       const mentalStat = nextPlayer.mentalCondition ?? 50;
-      const rawPhysGain = 1 + Math.floor(mentalStat / 25) + physBonus;
+      const rawPhysGain = 1 + Math.floor(mentalStat / 25) + physBonus + extraPhysFromAir;
       const physGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
         ? Math.max(0.5, roundToResolution(rawPhysGain * ratio, conditionRes))
         : rawPhysGain;
@@ -64,7 +92,7 @@ export function handleRelaxAction(
       const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
       const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
       const socialMentalBonus = Math.floor((nextPlayer.social || 0) / 15);
-      const rawMentalGain = Math.max(0, firstBonus + 3 - messPenalty) + mentalBonus + socialMentalBonus;
+      const rawMentalGain = Math.max(0, firstBonus + 3 - messPenalty - cabinFeverLoss) + mentalBonus + socialMentalBonus + extraMentalFromAir;
       const mentalGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
         ? Math.max(0.5, roundToResolution(rawMentalGain * ratio, conditionRes))
         : rawMentalGain;
@@ -82,7 +110,10 @@ export function handleRelaxAction(
 
       nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
       const physDesc = maxPhysGain > 0 ? `+${maxPhysGain} Max Physical` : `+${physGain} Physical`;
-      statsStr = ` (${physDesc}, +${mentalGain} Mental)`;
+      let noteStr = '';
+      if (freshAirBonus) noteStr += ', Fresh Air buff';
+      if (cabinFeverPenalty) noteStr += ', Cabin Fever';
+      statsStr = ` (${physDesc}, +${mentalGain} Mental${noteStr})`;
       actionLog = { key: 'action.relax', params: { stats: statsStr } };
     } else {
       // Unfed Relaxing
