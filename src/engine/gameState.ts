@@ -547,6 +547,16 @@ export interface TurnFlags {
   curioNoveltyGranted?: boolean;
   /** Number of fast food meals purchased this turn (first is free of time, subsequent cost 1 hour) */
   fastFoodMealsThisTurn?: number;
+  /** Number of times player relaxed at home this turn (for cabin fever) */
+  homeRelaxesThisTurn?: number;
+  /** Whether the player has the Fresh Air morale boost from a park visit */
+  hasFreshAir?: boolean;
+  /** Number of park strolls taken this turn */
+  parkStrollsThisTurn?: number;
+  /** Number of bench rests taken this turn */
+  parkBenchesThisTurn?: number;
+  /** Number of jogs taken this turn */
+  parkJogsThisTurn?: number;
   /** Clothes worn or utilized during the turn */
   clothesWornThisTurn?: Array<'casual' | 'dress' | 'business'>;
 }

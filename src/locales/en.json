@@ -65,6 +65,18 @@
     "relax": "Relaxed at home{{stats}}",
     "relax_unfed": "Relaxed without food in your inventory!{{stats}}",
     "clean": "Cleaned the apartment{{stats}}",
+    "park": {
+      "stroll": "Took a refreshing 2-hour stroll along the park paths{{stats}}",
+      "strollDiminished": "Strolled the park paths again, enjoying familiar views{{stats}}",
+      "jog": "Completed a vigorous 3-hour jog along the park trails{{stats}}",
+      "jogOverexertion": "Over-trained on the trail! Pushed too hard without adequate recovery{{stats}}",
+      "rest": "Rested on a park bench for 3 hours, catching a free breather{{stats}}",
+      "restDiminished": "Rested on a park bench again{{stats}}",
+      "restStiff": "Slept on a wooden bench too long, leaving your neck stiff and groggy{{stats}}"
+    },
+    "arcade": {
+      "played": "Played arcade games at the diner{{stats}}"
+    },
     "appliance": {
       "diySuccess": "DIY Fix successful! Repaired {{appliance}} (Success chance: {{chance}}%).",
       "diyFailure": "DIY Fix failed. {{appliance}} is still broken (Success chance: {{chance}}%).",
@@ -252,6 +264,15 @@
     }
   },
   "events": {
+    "park": {
+      "pickpocket": "Street pickpocket! A thief swiped ${{stolen}} from your pocket while you were in the park.",
+      "sunnyBreeze": "Sunny breeze! Warm sunshine and a gentle breeze lifted your spirits.",
+      "busker": "Park busker! A street musician played a peaceful acoustic melody by the fountain.",
+      "friendlyDog": "Friendly dog! A cheerful golden retriever trotted over for a friendly pat.",
+      "foundMoney": "Lucky find! You spotted a $5 bill dropped on the park lawn.",
+      "suddenRain": "Sudden downpour! Dark rainclouds opened up, soaking you in cold rain.",
+      "solicitor": "Pushy solicitor! An aggressive petitioner cornered you, souring your mood."
+    },
     "robbery": {
       "willy": "Wild Willy robbed you in the street!",
       "apartment": "Your apartment was robbed! Stolen: {{items}}"
@@ -505,6 +526,14 @@
     "technical_desc": "Requires technical aptitude. Shift work, innovation, and freelance computing build Skill Tech, which reduces requirements and boosts hiring odds for technical jobs.",
     "look_fit": "Look Fit",
     "look_fit_desc": "Requires Physical Condition >= 30 at interview. Physical fitness scales employability (+2% per point above 30). 0.5x Experience gain without cumulative burnout."
+  },
+  "park": {
+    "stroll": "Stroll in Park",
+    "strollDesc": "Take a refreshing stroll (⏳ -2h • +1 💪 • +1 🧠 • Fresh Air buff)",
+    "jog": "Jog / Workout",
+    "jogDesc": "Jog around the trail (⏳ -3h • +1 💪 • +1 Max 💪 • -2 🧠)",
+    "rest": "Rest on Bench",
+    "restDesc": "Sit and rest on a park bench (⏳ -3h • +2 💪 • +1 🧠 • Free food/mess)"
   },
   "gameOver": {
     "congrats": "Congratulations!",
