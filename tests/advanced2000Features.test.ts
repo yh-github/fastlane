@@ -62,6 +62,49 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(degIds).toContain('residency');
       expect(degIds).toContain('specialty_fellowship');
     });
+
+    it('preserves standard clothing durability in QT Clothing (9w/9w/13w) and used overrides in Z-Mart (7w/7w/3w)', () => {
+      const casual = campaign2000.items.find(i => i.id === 'casual_clothes')!;
+      const dress = campaign2000.items.find(i => i.id === 'dress_clothes')!;
+      const suit = campaign2000.items.find(i => i.id === 'business_suit')!;
+      expect(casual.weeks).toBe(9);
+      expect(dress.weeks).toBe(9);
+      expect(suit.weeks).toBe(13);
+
+      const zMart = campaign2000.buildings.find(b => b.id === 'z_mart')!;
+      expect(zMart.inventory?.find(i => i.itemId === 'casual_clothes')?.weeksOverride).toBe(7);
+      expect(zMart.inventory?.find(i => i.itemId === 'dress_clothes')?.weeksOverride).toBe(7);
+      expect(zMart.inventory?.find(i => i.itemId === 'business_suit')?.weeksOverride).toBe(3);
+    });
+
+    it('includes base refrigeration synergy so refrigerator preserves fresh food in advanced_2000', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_security', campaign2000.config);
+      player.currentHousingId = 'security';
+      player.inventory.appliances = [{
+        id: 'refrigerator',
+        purchasePrice: 650,
+        purchaseSource: 'z_mart',
+        condition: 'used'
+      }];
+      player.inventory.freshFoodUnits = 2;
+
+      const state: GameState = {
+        turn: 10,
+        players: [player],
+        economicIndex: 100,
+        rules: campaign2000.config.gameRules,
+        pawnShopItemsForSale: [],
+        rngState: 42,
+        phase: 'playing',
+      };
+
+      const nextState = processTurnStart(state, campaign2000);
+      const nextP = nextState.players[0];
+      expect(nextP.activeEffects['set_food_storage']).toBe(6);
+      // 2 units -> 1 eaten, 1 preserved (0 spoiled)
+      expect(nextP.inventory.freshFoodUnits).toBe(1);
+      expect(nextP.turnEvents.some(e => e.key.startsWith('events.foodSpoiled'))).toBe(false);
+    });
   });
 
   describe('Coffee Subsystem & Caffeine Tolerance', () => {
@@ -415,18 +458,65 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(res.updatedPlayer.mentalCondition).toBe(32);
     });
 
-    it('play_arcade consumes 1 hour and $5 for +2 Mental and +2 Happiness', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_burger_palace', campaign2000.config);
+    it('supports authentic curved paths and contains all 16 authentic nodes and edges in advanced_2000', () => {
+      expect(campaign2000.config.gameRules.authenticCurvedPaths).toBe(true);
+      expect(campaign2000.map.authenticNodes).toBeDefined();
+      expect(Object.keys(campaign2000.map.authenticNodes || {}).length).toBe(16);
+      expect(campaign2000.map.authenticNodes?.['node_park_campus']).toEqual({ x: 592.5, y: 633.75 });
+      expect(campaign2000.map.authenticNodes?.['node_park_east']).toEqual({ x: 1147.5, y: 592.5 });
+      expect(campaign2000.map.authenticNodes?.['node_park_west']).toEqual({ x: 56.25, y: 311.25 });
+      expect(campaign2000.map.edges).toBeDefined();
+      expect(campaign2000.map.edges?.length).toBe(16);
+    });
+
+    it('removes normal monolith burger items from Red Pirate and retains pirate menu & coffee', () => {
+      const redPirate = campaign2000.buildings.find(b => b.id === 'red_pirate')!;
+      const itemIds = redPirate.inventory?.map(i => i.itemId) || [];
+      expect(itemIds).not.toContain('hamburger');
+      expect(itemIds).not.toContain('cheeseburger');
+      expect(itemIds).not.toContain('fries');
+      expect(itemIds).not.toContain('cola');
+      expect(itemIds).toContain('scurvy_slaw');
+      expect(itemIds).toContain('kraken_burger');
+      expect(itemIds).toContain('grog_shake');
+      expect(itemIds).toContain('drip_coffee');
+    });
+
+    it('play_arcade consumes 1 hour and $5 for +2 Mental and +1 Social without boosting Happiness, with diminishing returns and fatigue', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_burger', campaign2000.config);
       player.hoursRemaining = 20;
       player.money = 50;
       player.mentalCondition = 30;
+      player.social = 10;
       player.happiness = 40;
+      player.physicalCondition = 40;
 
-      const res = gameReducer(player, { type: 'play_arcade' }, setupContext(player));
-      expect(res.updatedPlayer.hoursRemaining).toBe(19);
-      expect(res.updatedPlayer.money).toBe(45);
-      expect(res.updatedPlayer.mentalCondition).toBe(32);
-      expect(res.updatedPlayer.happiness).toBe(42);
+      // Play 1: +2 Mental, +1 Social, 0 Happiness
+      const res1 = gameReducer(player, { type: 'play_arcade' }, setupContext(player));
+      expect(res1.updatedPlayer.hoursRemaining).toBe(19);
+      expect(res1.updatedPlayer.money).toBe(45);
+      expect(res1.updatedPlayer.mentalCondition).toBe(32);
+      expect(res1.updatedPlayer.social).toBe(11);
+      expect(res1.updatedPlayer.happiness).toBe(40); // Happiness unchanged in 2000 mode!
+      expect(res1.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(1);
+
+      // Play 2: +2 Mental, +1 Social
+      const res2 = gameReducer(res1.updatedPlayer, { type: 'play_arcade' }, setupContext(res1.updatedPlayer));
+      expect(res2.updatedPlayer.mentalCondition).toBe(34);
+      expect(res2.updatedPlayer.social).toBe(12);
+      expect(res2.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(2);
+
+      // Play 3: Diminishing returns (+1 Mental, +0 Social)
+      const res3 = gameReducer(res2.updatedPlayer, { type: 'play_arcade' }, setupContext(res2.updatedPlayer));
+      expect(res3.updatedPlayer.mentalCondition).toBe(35);
+      expect(res3.updatedPlayer.social).toBe(12);
+      expect(res3.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(3);
+
+      // Play 4: Playing all day causes physical fatigue / eye strain (-1 Physical, +0 Mental)
+      const res4 = gameReducer(res3.updatedPlayer, { type: 'play_arcade' }, setupContext(res3.updatedPlayer));
+      expect(res4.updatedPlayer.physicalCondition).toBe(39);
+      expect(res4.updatedPlayer.mentalCondition).toBe(35);
+      expect(res4.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(4);
     });
   });
 });

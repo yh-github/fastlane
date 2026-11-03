@@ -1,8 +1,0 @@
-[
-  { "id": "tbills", "name": "T-Bills", "type": "fixed", "basePrice": 100, "sellFeePercent": 3 },
-  { "id": "gold", "name": "Gold", "type": "fluctuating", "basePrice": 413, "minPrice": 206, "maxPrice": 1032 },
-  { "id": "silver", "name": "Silver", "type": "fluctuating", "basePrice": 14, "minPrice": 7, "maxPrice": 35 },
-  { "id": "pork_bellies", "name": "Pork Bellies", "type": "fluctuating", "basePrice": 20, "minPrice": 10, "maxPrice": 50 },
-  { "id": "blue_chip", "name": "Blue Chip Stocks", "type": "fluctuating", "basePrice": 49, "minPrice": 24, "maxPrice": 122 },
-  { "id": "penny_stocks", "name": "Penny Stocks", "type": "fluctuating", "basePrice": 7, "minPrice": 3, "maxPrice": 17 }
-]

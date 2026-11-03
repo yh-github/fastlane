@@ -234,6 +234,32 @@ describe('Campaign Referential & Structural Integrity Audit', () => {
         expect(typeof player.happiness).toBe('number');
         expect(typeof player.relaxation).toBe('number');
       });
+
+      it('verifies appliance synergies exist for functional appliances in the campaign', async () => {
+        if (!campaign) campaign = await loadCampaign(campaignId);
+        const tags = new Set<string>();
+        campaign.items.forEach(i => i.tags?.forEach(t => tags.add(t)));
+
+        // If campaign has appliances with refrigerator tag, base_refrigeration synergy must exist and provide set_food_storage
+        if (tags.has('refrigerator')) {
+          const fridgeSynergy = campaign.synergies.find(s =>
+            s.requires.includes('tag:refrigerator') &&
+            s.effects.some(e => e.type === 'set_food_storage' && e.value >= 6)
+          );
+          expect(
+            fridgeSynergy,
+            `Campaign "${campaignId}" has refrigerator appliances but lacks set_food_storage synergy`
+          ).toBeDefined();
+        }
+      });
+
+      it('verifies standard clothing items have valid durability weeks >= 7', async () => {
+        if (!campaign) campaign = await loadCampaign(campaignId);
+        const clothes = campaign.items.filter(i => i.category === 'clothes');
+        for (const c of clothes) {
+          expect(c.weeks, `Clothing "${c.id}" in "${campaignId}" has missing or low weeks: ${c.weeks}`).toBeGreaterThanOrEqual(7);
+        }
+      });
     });
   });
 });

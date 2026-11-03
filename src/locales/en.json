@@ -56,7 +56,8 @@
     "skillMgmt": "Leadership",
     "weekNumber": "Week #{{turn}}",
     "lifestyle": "Lifestyle",
-    "wellbeing": "Well-being"
+    "wellbeing": "Well-being",
+    "caffeine": "Caffeine"
   },
   "action": {
     "buy": "Purchased {{itemName}}",
@@ -306,6 +307,9 @@
     },
     "applianceBroke": "Your {{appliance}} broke! Repair cost: ${{repairCost}}",
     "applianceBrokeNeedRepair": "Your {{appliance}} broke down! It will not function until repaired.",
+    "caffeine_fog": "Morning Brain Fog: Your body is missing its caffeine fix, leaving you sluggish.",
+    "caffeine_withdrawal": "Caffeine Withdrawal: Headaches and irritability set in as your caffeine dependency spikes.",
+    "caffeine_withdrawal_severe": "Severe Caffeine Crash: Chronic reliance has drained your stamina and broken your sleep cycle!",
     "pawnExpired": "A pawned item expired.",
     "computerProfit": "You made ${{profit}} profit from your computer.",
     "weekend": {
@@ -1465,7 +1469,8 @@
     "dependability": "Dependability",
     "experience": "Experience",
     "relaxation": "Relaxation",
-    "space": "Space"
+    "space": "Space",
+    "caffeineTolerance": "Caffeine Tolerance"
   },
   "orientation": {
     "title": "Please Rotate Your Device",

@@ -56,7 +56,8 @@
     "skillMgmt": "מנהיגות",
     "weekNumber": "שבוע #{{turn}}",
     "lifestyle": "סגנון חיים",
-    "wellbeing": "רווחה אישית"
+    "wellbeing": "רווחה אישית",
+    "caffeine": "קפאין"
   },
   "action": {
     "buy": "נרכש {{itemName}}",
@@ -306,6 +307,9 @@
     },
     "applianceBroke": "ה{{appliance}} שלך נשבר! עלות תיקון: {{repairCost}}$",
     "applianceBrokeNeedRepair": "ה{{appliance}} שלך התקלקל! הוא לא יפעל עד שיתוקן.",
+    "caffeine_fog": "ערפול בוקר: הגוף שלך מתגעגע לקפאין, ואתה מרגיש איטי ועייף.",
+    "caffeine_withdrawal": "תסמיני גמילה מקפאין: כאבי ראש ועצבנות עקב תלות בקפאין.",
+    "caffeine_withdrawal_severe": "קריסת קפאין חמורה: תלות כרונית בקפאין פגעה בסיבולת ובשינה שלך!",
     "pawnExpired": "פריט ממושכן פג תוקף.",
     "computerProfit": "הרווחת {{profit}}$ מהמחשב שלך.",
     "weekend": {
@@ -1288,7 +1292,8 @@
     "dependability": "אמינות",
     "experience": "ניסיון",
     "relaxation": "רוגע",
-    "space": "מקום"
+    "space": "מקום",
+    "caffeineTolerance": "סבילות לקפאין"
   },
   "orientation": {
     "title": "אנא סובב את המכשיר",

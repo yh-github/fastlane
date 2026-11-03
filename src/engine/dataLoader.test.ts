@@ -152,6 +152,35 @@ describe('dataLoader', () => {
     expect(businessInZMart).toBeUndefined();
   });
 
+  it('loads advanced_2000 inheriting from advanced with replaceFiles for buildings, jobs, education, and map', async () => {
+    const a2000 = await loadCampaign('advanced_2000');
+    expect(a2000.config.baseCampaign).toBe('advanced');
+    expect(a2000.config.replaceFiles).toEqual(['buildings', 'jobs', 'education', 'map']);
+
+    // Replaced files have exact standalone rosters without zombie base entities
+    expect(a2000.buildings.find(b => b.id === 'factory')).toBeUndefined();
+    expect(a2000.buildings.find(b => b.id === 'burger_palace')).toBeUndefined();
+    expect(a2000.buildings.find(b => b.id === 'hospital')).toBeDefined();
+    expect(a2000.buildings.find(b => b.id === 'red_pirate')).toBeDefined();
+
+    expect(a2000.jobs.find(j => j.id === 'factory_scrap_sorter')).toBeUndefined();
+    expect(a2000.jobs.find(j => j.id === 'hospital_custodian')).toBeDefined();
+    expect(a2000.jobs.find(j => j.id === 'hospital_receptionist')).toBeDefined();
+
+    expect(a2000.education.find(d => d.id === 'pre_engineering')).toBeUndefined();
+    expect(a2000.education.find(d => d.id === 'medical_school')).toBeDefined();
+
+    // Inherited files receive base data plus deltas
+    expect(a2000.items.find(i => i.id === 'refrigerator')).toBeDefined();
+    expect(a2000.items.find(i => i.id === 'casual_clothes')?.weeks).toBe(9);
+    expect(a2000.items.find(i => i.id === 'drip_coffee')).toBeDefined();
+
+    expect(a2000.synergies.find(s => s.id === 'base_refrigeration')).toBeDefined();
+    expect(a2000.synergies.find(s => s.id === 'vcr_plasma_tv_social')).toBeDefined();
+
+    expect(a2000.housing.find(h => h.id === 'penthouse')).toBeDefined();
+  });
+
   describe('validateConfig', () => {
     it('throws when config is missing or invalid versionClass', async () => {
       const floppy = await loadCampaign('1990_classic_floppy');
@@ -196,6 +225,15 @@ describe('dataLoader', () => {
         statRules: { ...advanced.config.statRules, physicalDoctorThreshold: undefined },
       };
       expect(() => validateConfig(badConfig)).toThrow('Missing required configuration: statRules.physicalDoctorThreshold');
+    });
+
+    it('throws when replaceFiles is not an array', async () => {
+      const advanced = await loadCampaign('advanced');
+      const badConfig = {
+        ...advanced.config,
+        replaceFiles: 'invalid_string' as any,
+      };
+      expect(() => validateConfig(badConfig)).toThrow('config.json: "replaceFiles" must be an array of file keys');
     });
   });
 });

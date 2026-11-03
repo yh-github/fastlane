@@ -36,6 +36,9 @@ export function TurnEventsQueue({ events, onComplete, rules }: TurnEventsQueuePr
   if (currentEvent.key.includes('doctor')) {
     icon = '⚕️';
     color = '#e74c3c';
+  } else if (currentEvent.key.includes('caffeine')) {
+    icon = '☕';
+    color = '#e67e22';
   } else if (currentEvent.key.includes('starvation')) {
     icon = '💀';
     color = '#c0392b';

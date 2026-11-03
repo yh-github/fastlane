@@ -535,6 +535,8 @@ export interface TurnFlags {
   ticketHappinessGranted?: boolean;
   /** Number of ticket purchases granting mental bonus this turn (capped up to 4) */
   ticketBonusCount?: number;
+  /** Number of times arcade was played this turn */
+  arcadePlaysThisTurn?: number;
   /** Total mental condition drops this turn */
   mentalDropsThisTurn?: number;
   /** Locations the player was fired from this turn (causes probation penalty) */

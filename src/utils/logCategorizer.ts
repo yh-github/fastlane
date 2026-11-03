@@ -15,7 +15,12 @@ export type GoalFilter =
   | 'lifestyle'
   | 'mental'
   | 'physical'
-  | 'wellbeing';
+  | 'wellbeing'
+  | 'social'
+  | 'skillTech'
+  | 'skillMgmt'
+  | 'caffeine'
+  | 'time';
 
 /**
   * getLogCategories — Maps a log entry to applicable goals and attributes.
@@ -118,6 +123,7 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
   }
 
   // Parameter string inspection
+  const p = (params || {}) as any;
   const paramStr = JSON.stringify(params).toLowerCase();
   const keyLower = key.toLowerCase();
 
@@ -139,8 +145,46 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
   if (paramStr.includes('happiness') || keyLower.includes('happiness')) {
     categories.add('happiness');
   }
+  if (paramStr.includes('skilltech') || keyLower.includes('tech') || keyLower.includes('computer') || keyLower.includes('repair')) {
+    categories.add('skillTech');
+  }
+  if (paramStr.includes('skillmgmt') || keyLower.includes('mgmt') || keyLower.includes('leadership') || keyLower.includes('initiative') || keyLower.includes('appraisal')) {
+    categories.add('skillMgmt');
+  }
+  if (paramStr.includes('caffeine') || keyLower.includes('caffeine') || keyLower.includes('coffee')) {
+    categories.add('caffeine');
+  }
+  if (paramStr.includes('social') || keyLower.includes('social') || keyLower.includes('porch') || keyLower.includes('guest')) {
+    categories.add('social');
+  }
+  if (paramStr.includes('mental') || keyLower.includes('mental') || keyLower.includes('spirits')) {
+    categories.add('mental');
+    categories.add('wellbeing');
+  }
+  if (paramStr.includes('physical') || keyLower.includes('physical') || keyLower.includes('doctor') || keyLower.includes('hospital')) {
+    categories.add('physical');
+    categories.add('wellbeing');
+  }
+  if (paramStr.includes('lifestyle') || keyLower.includes('lifestyle') || keyLower.includes('appliance') || keyLower.includes('curio')) {
+    categories.add('lifestyle');
+  }
+  if (p.hours !== undefined || p.hoursSpent !== undefined || p.hoursRemaining !== undefined || p.time !== undefined || keyLower.includes('hour') || keyLower.includes('walk') || keyLower.includes('travel')) {
+    categories.add('time');
+  }
+
+  // Check array of modifications in event or params if present
+  const modifications = entry.event.modifications || (p as any).modifications;
+  if (Array.isArray(modifications)) {
+    for (const mod of modifications) {
+      if (mod?.stat) {
+        categories.add(mod.stat as GoalFilter);
+        if (mod.stat === 'skillTech' || mod.stat === 'tech') categories.add('skillTech');
+        if (mod.stat === 'skillMgmt' || mod.stat === 'mgmt' || mod.stat === 'leadership') categories.add('skillMgmt');
+        if (mod.stat === 'mental' || mod.stat === 'physical') categories.add('wellbeing');
+      }
+    }
+  }
   // Check if money increased or decreased, or if event involves cash/money transaction
-  const p = params as any;
   const hasMoneyParam = p.diff?.includes('$') || 
     p.amount !== undefined || p.wagesEarned !== undefined || p.cost !== undefined || 
     p.price !== undefined || p.value !== undefined || p.profit !== undefined || 

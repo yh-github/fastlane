@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import type { AutoSaveData } from '../utils/saveManager';
 import { getCampaignDisplayName } from '../utils/saveManager';
+import { formatApproxHoursLeft } from '../engine/math/formatters';
 
 export interface ResumePromptModalProps {
   savedGame: AutoSaveData;
@@ -63,24 +64,31 @@ export const ResumePromptModal: React.FC<ResumePromptModalProps> = ({
       }}
     >
       <div
-        className="building-modal"
+        className="resume-prompt-modal"
         data-testid="resume-prompt-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="resume-prompt-title"
         style={{
+          position: 'relative',
+          left: 'auto',
+          top: 'auto',
+          margin: 'auto',
           width: 'min(480px, 92vw)',
+          height: 'auto',
+          maxHeight: '90vh',
           padding: '24px 28px',
           background: 'var(--panel-bg, #1a1a2e)',
           border: '2px solid var(--accent-cyan, #00f0ff)',
           borderRadius: '14px',
           boxShadow: '0 12px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 240, 255, 0.25)',
           color: '#fff',
-          position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
+          boxSizing: 'border-box',
+          overflowY: 'auto',
         }}
       >
         <button
@@ -158,7 +166,7 @@ export const ResumePromptModal: React.FC<ResumePromptModalProps> = ({
               {t('autoSave.turn', { turn: savedGame.gameState.turn, defaultValue: `Week ${savedGame.gameState.turn}` })}:
             </span>
             <span style={{ fontWeight: 600, color: '#fbbf24', fontSize: '0.9rem' }}>
-              ${activePlayer ? activePlayer.money : 0} • {activePlayer ? activePlayer.hoursRemaining : 0}h left
+              ${activePlayer ? Math.round(activePlayer.money) : 0} • {formatApproxHoursLeft(activePlayer ? activePlayer.hoursRemaining : 0)}
             </span>
           </div>
 

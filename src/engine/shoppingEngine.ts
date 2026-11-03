@@ -95,7 +95,7 @@ export function buyItem(
         mentalBonus = 0;
       }
     }
-  } else if (item.subcategory === 'coffee' || item.id === 'drip_coffee' || item.id === 'espresso' || item.id === 'double_shot') {
+  } else if (item.category === 'coffee' || item.subcategory === 'coffee' || item.id === 'drip_coffee' || item.id === 'espresso' || item.id === 'double_shot') {
     newTurnFlags.coffeeCupsThisTurn = (newTurnFlags.coffeeCupsThisTurn || 0) + quantity;
     const tol = player.caffeineTolerance || 0;
     if (rules?.enableCaffeineSystem) {
@@ -196,14 +196,14 @@ export function buyItem(
         const minPhys = updated.minPhysicalCondition ?? 1;
         updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) + effect.value);
         updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
-      } else if (effect.stat === 'physical' && rules?.usePhysicalMentalConditions && item.subcategory !== 'coffee') {
+      } else if (effect.stat === 'physical' && rules?.usePhysicalMentalConditions && item.subcategory !== 'coffee' && item.category !== 'coffee') {
         const maxPhys = updated.physicalConditionMax ?? 50;
         const minPhys = updated.minPhysicalCondition ?? 1;
         updated.physicalCondition = Math.max(minPhys, Math.min(maxPhys, (updated.physicalCondition ?? 50) + effect.value));
       } else if (effect.stat === 'mental_max' && rules?.usePhysicalMentalConditions) {
         updated.mentalConditionMax = Math.max(10, (updated.mentalConditionMax ?? 50) + effect.value);
         updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition ?? 50);
-      } else if (effect.stat === 'mental' && rules?.usePhysicalMentalConditions && item.subcategory !== 'coffee') {
+      } else if (effect.stat === 'mental' && rules?.usePhysicalMentalConditions && item.subcategory !== 'coffee' && item.category !== 'coffee') {
         updated = applyMentalChange(updated, effect.value, campaign?.config.statRules);
       } else if (effect.stat === 'happiness') {
         if (rules) {
@@ -232,7 +232,7 @@ export function buyItem(
     updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 50) + 1);
   }
 
-  if (rules?.usePhysicalMentalConditions && (item.subcategory === 'coffee' || item.id === 'drip_coffee' || item.id === 'espresso' || item.id === 'double_shot')) {
+  if (rules?.usePhysicalMentalConditions && (item.category === 'coffee' || item.subcategory === 'coffee' || item.id === 'drip_coffee' || item.id === 'espresso' || item.id === 'double_shot')) {
     const maxPhys = updated.physicalConditionMax ?? 50;
     const tol = updated.caffeineTolerance || 0;
     let basePhysGain = 3;
@@ -263,6 +263,9 @@ export function buyItem(
       } else {
         updated.inventory.freshFoodUnits += (item.units || 1) * quantity;
       }
+      break;
+    case 'coffee':
+      // Coffee is drunk immediately (does not count as food/eating)
       break;
     case 'clothes':
       if (item.subcategory === 'casual') updated.inventory.casualClothesWeeks += (item.weeks || 4);

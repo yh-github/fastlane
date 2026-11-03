@@ -5,6 +5,7 @@ import { formatDegreeName } from '../../engine/jobEngine';
 export function getClerkFace(id: string, archetype: string): string {
   switch (id) {
     case 'burger_palace': return '🧑‍🍳'; // Burger Palace: Cook / Chef
+    case 'red_pirate': return '🏴‍☠️'; // Red Pirate: Pirate flag emoji
     case 'qt_clothing': return '💁‍♂️'; // QT Clothing: Male clerk (often pink shirt)
     case 'bank': return '👩‍💼'; // Bank: Female in a suit
     case 'z_mart':
@@ -12,10 +13,14 @@ export function getClerkFace(id: string, archetype: string): string {
     case 'socket_city': return '👨‍💻'; // Socket City: Technologist
     case 'blacks_market': return '👨‍🦰'; // Black's Market: Red haired man
     case 'pawn_shop': return '👳🏽‍♂️'; // Pawn Shop: Brown man with turban
+    case 'campus_park':
+    case 'west_green':
+    case 'eastside_park': return '🌳';
   }
 
   // Fallbacks by archetype
   switch (archetype) {
+    case 'park': return '🌳';
     case 'employment': return '👨‍💼';
     case 'workplace': return '👩‍🏭';
     case 'restaurant': return '🧑‍🍳';

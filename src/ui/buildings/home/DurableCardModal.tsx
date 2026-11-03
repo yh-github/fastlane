@@ -74,6 +74,13 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     ? t('homeApartment.wardrobe', { defaultValue: 'Wardrobe Closet' })
     : (itemDef ? getItemDisplayName(itemDef.id, itemDef, t, !!rules?.usePhysicalMentalConditions, !!rules?.advancedStores) : itemId);
   const isBook = Boolean(durable?.isBook || itemDef?.category === 'book');
+  const isCoffee = Boolean(
+    itemDef?.category === 'coffee' ||
+    itemDef?.subcategory === 'coffee' ||
+    itemId === 'drip_coffee' ||
+    itemId === 'espresso' ||
+    itemId === 'double_shot'
+  );
 
   const currentAppliance = isBook 
     ? undefined 
@@ -159,6 +166,11 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     isOwned = weeks > 0;
     ownedCount = weeks;
     ownershipDetailText = isOwned ? `✓ Owned (${weeks} wks left)` : t('storeFront.notOwned', { defaultValue: 'Not Owned' });
+  } else if (isCoffee) {
+    const cups = player?.turnFlags?.coffeeCupsThisTurn || 0;
+    isOwned = false;
+    ownedCount = cups;
+    ownershipDetailText = cups > 0 ? `☕ Consumed this turn: ${cups} cup${cups > 1 ? 's' : ''}` : '☕ Consumed immediately';
   } else if (itemDef?.category === 'food') {
     if (itemDef.subcategory === 'fast_food') {
       ownedCount = player?.inventory.fastFoodItems.filter(f => f.itemId === itemId).length || 0;
@@ -209,13 +221,15 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
   const conditionLabel = isWardrobe
     ? `👔 Wardrobe (${player?.inventory.selectedClothes || 'none'})`
-    : (!isOwned 
-        ? '🏬 Not Owned' 
-        : (isSpareParts 
-            ? `⚙️ Spare Parts (${player?.inventory.spareParts || 0})` 
-            : (isCurio 
-                ? `🏺 Curio Collection (${totalCurios})` 
-                : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable?.isBook || itemDef?.category === 'book' ? '📚 Book' : '📦 Used'))))));
+    : (isCoffee
+        ? '☕ Freshly Brewed'
+        : (!isOwned 
+            ? '🏬 Not Owned' 
+            : (isSpareParts 
+                ? `⚙️ Spare Parts (${player?.inventory.spareParts || 0})` 
+                : (isCurio 
+                    ? `🏺 Curio Collection (${totalCurios})` 
+                    : (isBroken ? '⚠️ BROKEN' : (isNew ? '✨ Brand New' : (durable?.isBook || itemDef?.category === 'book' ? '📚 Book' : '📦 Used')))))));
 
 
   // Compile mechanical effects:
@@ -225,13 +239,15 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   }
   const effectBadges: EffectBadge[] = [];
 
+  const formatDelta = (val: number) => (val > 0 ? `+${val}` : `${val}`);
+
   // Core gameplay appliance mechanics:
   if (itemId === 'refrigerator') {
     effectBadges.push({ label: '🧊 Preserves up to 6 Fresh Food/turn' });
   } else if (itemId === 'freezer') {
     effectBadges.push({ label: '🧊 Stores up to 12 Food (Needs Refrigerator)' });
     if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
-      effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
+      effectBadges.push({ label: `🎁 One-time: ${formatDelta(itemDef.happinessBonus)} 😊 on buy`, isOneTime: true });
     }
   } else if (itemId === 'stove') {
     if (!rules?.usePhysicalMentalConditions) {
@@ -245,12 +261,12 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     effectBadges.push({ label: '🎓 Bonus Study Credit (-1 Lesson)' });
     effectBadges.push({ label: '💻 Freelance Income ($10–$150/turn chance)' });
     if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
-      effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
+      effectBadges.push({ label: `🎁 One-time: ${formatDelta(itemDef.happinessBonus)} 😊 on buy`, isOneTime: true });
     }
   } else if (itemId === 'hot_tub') {
     effectBadges.push({ label: '🛁 Prevents relaxation collapse' });
     if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
-      effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
+      effectBadges.push({ label: `🎁 One-time: ${formatDelta(itemDef.happinessBonus)} 😊 on buy`, isOneTime: true });
     }
   }
 
@@ -267,21 +283,21 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   if (itemDef?.effects) {
     for (const eff of itemDef.effects) {
       if (eff.trigger === 'on_relax') {
-        if (eff.stat === 'physical') effectBadges.push({ label: `+${eff.value} 💪 On Relax` });
-        else if (eff.stat === 'mental') effectBadges.push({ label: `+${eff.value} 🧠 On Relax` });
+        if (eff.stat === 'physical') effectBadges.push({ label: `${formatDelta(eff.value)} 💪 On Relax` });
+        else if (eff.stat === 'mental') effectBadges.push({ label: `${formatDelta(eff.value)} 🧠 On Relax` });
         else if (eff.stat === 'mess') effectBadges.push({
           label: (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-              +{eff.value} <MessIcon /> On Relax
+              {formatDelta(eff.value)} <MessIcon /> On Relax
             </span>
           )
         });
       } else if (eff.trigger === 'on_socialize') {
-        if (eff.stat === 'social') effectBadges.push({ label: `+${eff.value} 👥 On Socialize` });
+        if (eff.stat === 'social') effectBadges.push({ label: `${formatDelta(eff.value)} 👥 On Socialize` });
       } else if (eff.trigger === 'continuous' && eff.stat === 'mental_max') {
-        effectBadges.push({ label: `+${eff.value} Max 🧠 (Continuous)` });
+        effectBadges.push({ label: `${formatDelta(eff.value)} Max 🧠 (Continuous)` });
       } else if (eff.trigger === 'turn_start') {
-        effectBadges.push({ label: `+${eff.value} ${eff.stat === 'physical' ? '💪' : '🧠'} Every Turn` });
+        effectBadges.push({ label: `${formatDelta(eff.value)} ${eff.stat === 'physical' ? '💪' : '🧠'} Every Turn` });
       }
     }
   }
@@ -297,7 +313,44 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     itemId !== 'hot_tub' &&
     !effectBadges.some(b => b.isOneTime)
   ) {
-    effectBadges.push({ label: `🎁 One-time: +${itemDef.happinessBonus} 😊 on buy`, isOneTime: true });
+    effectBadges.push({ label: `🎁 One-time: ${formatDelta(itemDef.happinessBonus)} 😊 on buy`, isOneTime: true });
+  }
+
+  if (isCoffee) {
+    effectBadges.push({ label: '⚡ Rapid Stamina & Mental Focus' });
+    if (rules?.enableCaffeineSystem) {
+      const tol = player?.caffeineTolerance || 0;
+      const cups = player?.turnFlags?.coffeeCupsThisTurn || 0;
+
+      if (rules?.helpfulUI) {
+        let tolBadge = `☕ Tolerance: ${tol}/10`;
+        if (tol >= 9) tolBadge += ' (Severe Crash • 50% 🧠 / 40% 💪 potency)';
+        else if (tol >= 6) tolBadge += ' (Withdrawal • 75% 🧠 / 70% 💪 potency)';
+        else if (tol >= 3) tolBadge += ' (Morning Fog • Full potency)';
+        else tolBadge += ' (Clean • Full potency)';
+        effectBadges.push({ label: tolBadge });
+
+        if (cups === 0) {
+          effectBadges.push({ label: '☕ 0 cups this turn: Detox (-2 tol next turn)' });
+        } else if (cups === 1) {
+          effectBadges.push({ label: '☕ 1 cup this turn: Maintains tolerance' });
+        } else if (cups === 2) {
+          effectBadges.push({ label: '☕ 2 cups this turn: Builds habit (+1 tol next turn)' });
+        } else {
+          effectBadges.push({ label: `☕ ${cups} cups this turn: Heavy habit (+2 tol next turn)` });
+        }
+
+        if (tol >= 9) {
+          effectBadges.push({ label: '⚠️ Next Turn: -3 💪, -3 🧠, -1 Max 💪' });
+        } else if (tol >= 6) {
+          effectBadges.push({ label: '⚠️ Next Turn: -2 💪, -2 🧠' });
+        } else if (tol >= 3) {
+          effectBadges.push({ label: '⚠️ Next Turn: -1 💪 (Morning fog)' });
+        }
+      } else if (tol > 0) {
+        effectBadges.push({ label: `☕ Tolerance: ${tol}/10` });
+      }
+    }
   }
 
   if (isSpareParts) {
@@ -324,7 +377,9 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
   const spaceCost = isSpareParts || isCurio
     ? 2
-    : ((itemDef?.space && itemDef.space > 0) ? itemDef.space : (DEFAULT_APPLIANCE_SPACE[itemId] ?? (isBook ? 10 : 20)));
+    : (isCoffee || itemDef?.category === 'food' || itemDef?.category === 'clothes' || itemDef?.category === 'ticket'
+        ? (itemDef?.space ?? 0)
+        : ((itemDef?.space && itemDef.space > 0) ? itemDef.space : (DEFAULT_APPLIANCE_SPACE[itemId] ?? (isBook ? 10 : 20))));
   const lifestyleVal = isVcrWithoutTv ? 0 : (isCurio ? Math.min(15, Math.floor(2.8 * Math.sqrt(totalCurios))) : (itemDef?.lifestyleValue ?? 0));
 
   // Explicit on_buy modifiers
@@ -335,28 +390,33 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   const onBuyModifiers: OnBuyModifier[] = [];
 
   if (itemDef?.happinessBonus && !rules?.usePhysicalMentalConditions) {
-    onBuyModifiers.push({ label: `+${itemDef.happinessBonus} on buy`, icon: '😊' });
+    onBuyModifiers.push({ label: `${formatDelta(itemDef.happinessBonus)} on buy`, icon: '😊' });
   }
 
   // Mental bonus on purchase
   if (isLottery && rules?.usePhysicalMentalConditions) {
     const mentalPerPack = itemDef?.mentalBonus ?? 1;
     const totalMental = rules?.advancedStores ? mentalPerPack * buyQuantity : mentalPerPack;
-    onBuyModifiers.push({ label: `+${totalMental} on buy`, icon: '🧠' });
+    onBuyModifiers.push({ label: `${formatDelta(totalMental)} on buy`, icon: '🧠' });
   } else if (itemDef?.mentalBonus && rules?.usePhysicalMentalConditions && itemDef.category !== 'ticket') {
-    onBuyModifiers.push({ label: `+${itemDef.mentalBonus} on buy`, icon: '🧠' });
+    const hasExplicitMentalEffect = itemDef?.effects?.some(
+      e => (e.trigger === 'on_purchase' || (e.trigger as string) === 'on_buy') && e.stat === 'mental'
+    );
+    if (!hasExplicitMentalEffect) {
+      onBuyModifiers.push({ label: `${formatDelta(itemDef.mentalBonus)} on buy`, icon: '🧠' });
+    }
   }
 
   if (itemDef?.effects) {
     for (const eff of itemDef.effects) {
       if (eff.trigger === 'on_purchase' || (eff.trigger as string) === 'on_buy') {
-        if (eff.stat === 'physical_max') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Max Physical`, icon: '💪' });
-        else if (eff.stat === 'physical') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Physical`, icon: '💪' });
-        else if (eff.stat === 'mental_max') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Max Mental`, icon: '🧠' });
-        else if (eff.stat === 'mental') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} on buy`, icon: '🧠' });
-        else if (eff.stat === 'happiness') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Happiness`, icon: '😊' });
-        else if (eff.stat === 'social') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} on buy`, icon: '👥' });
-        else if (eff.stat === 'mess') onBuyModifiers.push({ label: `${eff.value > 0 ? '+' : ''}${eff.value} Mess`, icon: '🧹' });
+        if (eff.stat === 'physical_max') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Max Physical`, icon: '💪' });
+        else if (eff.stat === 'physical') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Physical`, icon: '💪' });
+        else if (eff.stat === 'mental_max') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Max Mental`, icon: '🧠' });
+        else if (eff.stat === 'mental') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '🧠' });
+        else if (eff.stat === 'happiness') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Happiness`, icon: '😊' });
+        else if (eff.stat === 'social') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '👥' });
+        else if (eff.stat === 'mess') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Mess`, icon: '🧹' });
       }
     }
   }
@@ -367,6 +427,8 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     if (rules?.usePhysicalMentalConditions) {
       onBuyModifiers.push({ label: '+1 Lifestyle prestige', icon: '✨' });
     }
+  } else if (isCoffee) {
+    onBuyModifiers.push({ label: 'Drinks immediately (Not food)', icon: '☕' });
   } else if (itemDef?.category === 'food') {
     if (itemDef.subcategory === 'fast_food') {
       if (givesSocial) {
@@ -382,11 +444,8 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     } else if (itemDef.subcategory === 'canned') {
       onBuyModifiers.push({ label: '+1 Pantry unit (Never spoils)', icon: '🥫' });
     } else {
-      const foodUnits = isBulkGrocery ? buyQuantity : 1;
+      const foodUnits = isBulkGrocery ? buyQuantity : (itemDef?.units || 1);
       onBuyModifiers.push({ label: `+${foodUnits} Fresh food (Preserves with Fridge)`, icon: '🥗' });
-      if (rules?.usePhysicalMentalConditions && !player?.turnFlags?.freshFoodHappinessGranted) {
-        onBuyModifiers.push({ label: '+1 Nutrition happiness', icon: '😊' });
-      }
     }
   } else if (itemDef?.category === 'ticket' && !isLottery) {
     if (rules?.usePhysicalMentalConditions) {
@@ -408,15 +467,17 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
         ? '👔 WARDROBE'
         : (itemDef?.category === 'clothes'
             ? '👔 CLOTHING'
-            : (itemDef?.category === 'food'
-                ? '🥗 FOOD'
-                : (itemDef?.category === 'ticket'
-                    ? '🎟️ TICKET'
-                    : (isSpareParts
-                        ? '⚙️ SPARE PARTS'
-                        : (isCurio
-                            ? '🏺 CURIO'
-                            : '🛋️ APPLIANCE'))))));
+            : (isCoffee
+                ? '☕ COFFEE'
+                : (itemDef?.category === 'food'
+                    ? '🥗 FOOD'
+                    : (itemDef?.category === 'ticket'
+                        ? '🎟️ TICKET'
+                        : (isSpareParts
+                            ? '⚙️ SPARE PARTS'
+                            : (isCurio
+                                ? '🏺 CURIO'
+                                : '🛋️ APPLIANCE')))))));
 
   return createPortal(
     <div 
@@ -621,7 +682,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
             </div>
           )}
 
-          {(Boolean(rules?.spaceCapping) || Boolean(lifestyleVal > 0 && rules?.usePhysicalMentalConditions)) && (
+          {(Boolean(rules?.spaceCapping && spaceCost > 0) || Boolean(lifestyleVal > 0 && rules?.usePhysicalMentalConditions)) && (
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -630,7 +691,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
               borderBottom: effectBadges.length > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
               paddingBottom: '3px'
             }}>
-              {rules?.spaceCapping ? (
+              {rules?.spaceCapping && spaceCost > 0 ? (
                 <span>Space: <strong style={{ color: hasSpace ? '#00e5ff' : '#f87171' }}>{spaceCost} space</strong></span>
               ) : <span />}
               {lifestyleVal > 0 && rules?.usePhysicalMentalConditions && (

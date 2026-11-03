@@ -156,8 +156,14 @@ describe('Dashboard Component', () => {
     expect(employabilityBadge).toBeInTheDocument();
     expect(employabilityBadge.textContent).toContain('46');
 
-    // Click employability badge to trigger filter
-    employabilityBadge.click();
+    // Click employability badge to pop up info card
+    fireEvent.click(employabilityBadge);
+    expect(screen.getByTestId('hud-info-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('hud-info-current').textContent).toContain('46');
+
+    // Click link to filtered log on info card
+    const viewLogBtn = screen.getByTestId('hud-info-view-log');
+    fireEvent.click(viewLogBtn);
     expect(onSelectLogFilter).toHaveBeenCalledWith('employability');
   });
 

@@ -31,6 +31,19 @@ import defaultCampaigns from '../campaigns/campaigns.json';
 
 // ─── Campaign Data Types ────────────────────────────────────────
 
+export type CampaignFileKey =
+  | 'buildings'
+  | 'jobs'
+  | 'items'
+  | 'education'
+  | 'housing'
+  | 'events'
+  | 'stocks'
+  | 'map'
+  | 'messages'
+  | 'weekends'
+  | 'synergies';
+
 export interface BaseCampaignConfig {
   versionClass: 'base';
   name: string;
@@ -45,6 +58,7 @@ export interface BaseCampaignConfig {
   eventRules: EventRules;
   gameRules: GameRules;
   baseCampaign?: string;
+  replaceFiles?: CampaignFileKey[];
   hasCannedFood?: boolean;
   supportedGuiStyles: GuiStyle[];
 }
@@ -63,6 +77,7 @@ export interface AdvancedCampaignConfig {
   eventRules: EventRules;
   gameRules: GameRules;
   baseCampaign?: string;
+  replaceFiles?: CampaignFileKey[];
   hasCannedFood?: boolean;
   supportedGuiStyles: GuiStyle[];
 }
@@ -140,7 +155,7 @@ export interface ItemEffect {
 export interface ItemDef {
   id: string;
   name: string;
-  category: 'appliance' | 'clothes' | 'food' | 'book' | 'ticket' | 'junk';
+  category: 'appliance' | 'clothes' | 'food' | 'book' | 'ticket' | 'junk' | 'coffee';
   subcategory?: string;
   store?: string;
   basePrice?: number;
@@ -289,6 +304,10 @@ function deepMerge<T>(base: any, delta: any): T {
   if (delta === undefined || delta === null) return base as T;
 
   if (Array.isArray(base) && Array.isArray(delta)) {
+    if (delta.some((dItem: any) => dItem && typeof dItem === 'object' && dItem._replace === true)) {
+      return delta.filter((dItem: any) => !(dItem && dItem._replace === true)) as unknown as T;
+    }
+
     if (delta.length > 0 && typeof delta[0] === 'object' && delta[0] !== null && 'id' in delta[0]) {
       const merged = [...base];
       for (const dItem of delta) {
@@ -371,6 +390,10 @@ export function validateConfig(config: unknown): asserts config is CampaignConfi
   if (!Array.isArray(c.winConditions)) throw new Error('config.json: missing "winConditions"');
   if (!Array.isArray(c.supportedGuiStyles) || c.supportedGuiStyles.length === 0) {
     throw new Error('config.json: missing "supportedGuiStyles"');
+  }
+
+  if (c.replaceFiles !== undefined && !Array.isArray(c.replaceFiles)) {
+    throw new Error('config.json: "replaceFiles" must be an array of file keys');
   }
 
   const tr = requireConfig(c.timeRules as Record<string, unknown>, 'timeRules');
@@ -522,6 +545,14 @@ export async function loadCampaign(campaignId: string): Promise<CampaignBundle> 
   let finalBundle: CampaignBundle;
   if (baseBundle) {
     finalBundle = deepMerge<CampaignBundle>(baseBundle, partialBundle);
+    const replaceList = finalBundle.config.replaceFiles;
+    if (Array.isArray(replaceList)) {
+      for (const key of replaceList) {
+        if (key in partialBundle && (partialBundle as any)[key] !== undefined) {
+          (finalBundle as any)[key] = (partialBundle as any)[key];
+        }
+      }
+    }
   } else {
     finalBundle = {
       config,

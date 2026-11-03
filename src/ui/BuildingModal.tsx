@@ -161,7 +161,7 @@ export function BuildingModal({
       return;
     }
     const isRentOfficeOpen = player ? isRentOfficeOpenRule(player, turn, campaign, rules) : false;
-    const shouldShow = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
+    const shouldShow = building.archetype !== 'home' && building.archetype !== 'park' && (building.id !== 'apartment_complex' || isRentOfficeOpen);
 
     if (shouldShow) {
       let greetingKey = `clerkDialogs.${building.id}.greeting`;
@@ -286,7 +286,7 @@ export function BuildingModal({
 
   const isRentOfficeOpen = isRentOfficeOpenRule(player, turn, campaign, rules);
   const isDiscountAndPawn = building.archetype === 'discount_and_pawn';
-  const shouldShowSpeechBubble = building.archetype !== 'home' && (building.id !== 'apartment_complex' || isRentOfficeOpen || !!clerkMessage);
+  const shouldShowSpeechBubble = building.archetype !== 'home' && building.archetype !== 'park' && (building.id !== 'apartment_complex' || isRentOfficeOpen || !!clerkMessage);
 
   let currentFace = getClerkFace(building.id, building.archetype);
   if (building.archetype === 'home' && !livesHere) {
@@ -295,6 +295,8 @@ export function BuildingModal({
     currentFace = '🏙️';
   } else if (building.id === 'apartment_complex' && !isRentOfficeOpen && !clerkMessage) {
     currentFace = '🚫';
+  } else if (building.archetype === 'park') {
+    currentFace = '🌳';
   }
 
   const renderBuildingServices = () => (
@@ -374,29 +376,60 @@ export function BuildingModal({
               rules={rules}
             />
           )}
-          {building.id === 'red_pirate' && rules?.enableBusyWeeks && busyLocations?.['red_pirate'] && (
+          {building.id === 'red_pirate' && rules?.enableBusyWeeks && busyLocations?.['red_pirate'] && Boolean(playerJobHere) && (
             <div style={{ marginBottom: '10px', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.5)', borderRadius: '6px', color: '#b91c1c', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>🚨</span>
               <span>ALL HANDS ON DECK! Busy week surge hours — 1.5× wages & accelerated advancement!</span>
             </div>
           )}
-          {building.id === 'red_pirate' && rules?.enableArcade && (
-            <div style={{ marginBottom: '12px', padding: '10px 14px', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-color, #222)' }}>🕹️ Pirate Arcade Corner</div>
-                <div style={{ fontSize: '11px', opacity: 0.85 }}>Play a retro coin-op game (-1h, -$5, +2 Mental, +2 Happiness)</div>
+          {building.id === 'red_pirate' && rules?.enableArcade && (() => {
+            const plays = player.turnFlags?.arcadePlaysThisTurn || 0;
+            const isPhysMental = Boolean(rules?.usePhysicalMentalConditions);
+            const trackSocial = Boolean(rules?.trackSocial);
+
+            let benefitDisplay: React.ReactNode;
+            if (isPhysMental) {
+              if (plays < 2) {
+                benefitDisplay = (
+                  <span>⏳ -1h • 💰 -$5 • +2 🧠{trackSocial ? ' • +1 👥' : ''}</span>
+                );
+              } else if (plays === 2) {
+                benefitDisplay = (
+                  <span>⏳ -1h • 💰 -$5 • +1 🧠 (Diminishing returns)</span>
+                );
+              } else {
+                benefitDisplay = (
+                  <span style={{ color: '#f87171' }}>⏳ -1h • 💰 -$5 • -1 💪 (Fatigue / Eye strain)</span>
+                );
+              }
+            } else {
+              if (plays < 2) {
+                benefitDisplay = <span>⏳ -1h • 💰 -$5 • +2 😊</span>;
+              } else if (plays === 2) {
+                benefitDisplay = <span>⏳ -1h • 💰 -$5 • +1 😊</span>;
+              } else {
+                benefitDisplay = <span style={{ color: '#f87171' }}>⏳ -1h • 💰 -$5 • 0 😊 (Bored)</span>;
+              }
+            }
+
+            return (
+              <div style={{ marginBottom: '12px', padding: '10px 14px', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-color, #222)' }}>🕹️ {t('arcade.title', { defaultValue: 'Pirate Arcade Corner' })}</div>
+                  <div style={{ fontSize: '11px', opacity: 0.85, marginTop: '2px' }}>{benefitDisplay}</div>
+                </div>
+                <button
+                  type="button"
+                  className="game-button btn-secondary"
+                  disabled={player.hoursRemaining < 1 || player.money < 5}
+                  onClick={() => handleActionIntercept({ type: 'play_arcade' })}
+                  style={{ whiteSpace: 'nowrap', padding: '6px 12px' }}
+                >
+                  Play Arcade (💰 $5)
+                </button>
               </div>
-              <button
-                type="button"
-                className="game-button btn-secondary"
-                disabled={player.hoursRemaining < 1 || player.money < 5}
-                onClick={() => handleActionIntercept({ type: 'play_arcade' })}
-                style={{ whiteSpace: 'nowrap', padding: '6px 12px' }}
-              >
-                Play Arcade (-$5)
-              </button>
-            </div>
-          )}
+            );
+          })()}
           {itemsHere.length > 0 && building.archetype !== 'pawnshop' && (
             <StoreFront 
               player={player} 
@@ -490,36 +523,42 @@ export function BuildingModal({
                   className="game-button btn-secondary"
                   disabled={player.hoursRemaining < 1}
                   onClick={() => handleActionIntercept({ type: 'stroll_park' })}
-                  title={t('park.strollDesc', 'Take a relaxing stroll (-1h, +1 Physical, +1 Mental)')}
+                  title={t('park.strollDesc', rules?.usePhysicalMentalConditions ? 'Take a relaxing stroll (⏳ -1h • +1 💪 • +1 🧠)' : 'Take a relaxing stroll (⏳ -1h • +1 😊 • +1 🛌)')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                 >
                   <span style={{ fontSize: '18px' }}>🚶</span>
                   <strong>{t('park.stroll', 'Stroll in Park')}</strong>
-                  <span style={{ fontSize: '11px', opacity: 0.85 }}>-1h • +1 Phys / +1 Mental</span>
+                  <span style={{ fontSize: '11px', opacity: 0.85 }}>
+                    {rules?.usePhysicalMentalConditions ? '⏳ -1h • +1 💪 • +1 🧠' : '⏳ -1h • +1 😊 • +1 🛌'}
+                  </span>
                 </button>
                 <button
                   type="button"
                   className="game-button btn-secondary"
                   disabled={player.hoursRemaining < 2 || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) <= 2)}
                   onClick={() => handleActionIntercept({ type: 'jog_park' })}
-                  title={t('park.jogDesc', 'Jog around the trail (-2h, +1 Physical, +1 Max Physical, -1 Mental)')}
+                  title={t('park.jogDesc', rules?.usePhysicalMentalConditions ? 'Jog around the trail (⏳ -2h • +1 💪 • +1 Max 💪 • -1 🧠)' : 'Jog around the trail (⏳ -2h • +2 🛌)')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                 >
                   <span style={{ fontSize: '18px' }}>🏃</span>
                   <strong>{t('park.jog', 'Jog / Workout')}</strong>
-                  <span style={{ fontSize: '11px', opacity: 0.85 }}>-2h • +1 Max Phys</span>
+                  <span style={{ fontSize: '11px', opacity: 0.85 }}>
+                    {rules?.usePhysicalMentalConditions ? '⏳ -2h • +1 💪 • +1 Max 💪 • -1 🧠' : '⏳ -2h • +2 🛌'}
+                  </span>
                 </button>
                 <button
                   type="button"
                   className="game-button btn-secondary"
                   disabled={player.hoursRemaining < 2}
                   onClick={() => handleActionIntercept({ type: 'rest_bench' })}
-                  title={t('park.restDesc', 'Sit and rest on a park bench (-2h, +1 Physical, +2 Mental)')}
+                  title={t('park.restDesc', rules?.usePhysicalMentalConditions ? 'Sit and rest on a park bench (⏳ -2h • +1 💪 • +2 🧠)' : 'Sit and rest on a park bench (⏳ -2h • +2 🛌 • +1 😊)')}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                 >
                   <span style={{ fontSize: '18px' }}>🪑</span>
                   <strong>{t('park.rest', 'Rest on Bench')}</strong>
-                  <span style={{ fontSize: '11px', opacity: 0.85 }}>-2h • +1 Phys / +2 Mental</span>
+                  <span style={{ fontSize: '11px', opacity: 0.85 }}>
+                    {rules?.usePhysicalMentalConditions ? '⏳ -2h • +1 💪 • +2 🧠' : '⏳ -2h • +2 🛌 • +1 😊'}
+                  </span>
                 </button>
               </div>
             </div>
