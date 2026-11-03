@@ -200,16 +200,12 @@ export function getAvailableActions(
     // Park Archetype
     if (bDef?.archetype === 'park') {
       options.push({
-        label: helpful ? 'Stroll in Park (-2h, +1 Phys, +1 Mental, Fresh Air)' : 'Stroll in Park',
-        action: { type: 'stroll_park' }
+        label: helpful ? 'Relax in Park (-3h, Free Rest & Encounters)' : 'Relax in Park',
+        action: { type: 'relax_park' }
       });
       options.push({
-        label: helpful ? 'Jog in Park (-3h, +1 Phys, +1 Max Phys, -2 Mental)' : 'Jog in Park',
-        action: { type: 'jog_park' }
-      });
-      options.push({
-        label: helpful ? 'Rest on Bench (-3h, +2 Phys, +1 Mental)' : 'Rest on Bench',
-        action: { type: 'rest_bench' }
+        label: helpful ? 'Workout in Park (-3h, +1 Max Phys, -1 Phys, +1 Mental)' : 'Workout in Park',
+        action: { type: 'workout_park' }
       });
     }
 

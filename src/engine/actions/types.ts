@@ -48,7 +48,9 @@ export type GameAction =
   | { type: 'play_arcade' }
   | { type: 'stroll_park' }
   | { type: 'jog_park' }
-  | { type: 'rest_bench' };
+  | { type: 'rest_bench' }
+  | { type: 'relax_park' }
+  | { type: 'workout_park' };
 
 export interface ReducerContext {
   campaign: CampaignBundle;

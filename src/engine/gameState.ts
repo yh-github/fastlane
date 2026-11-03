@@ -305,6 +305,20 @@ export interface PlayerState {
   recentWeekendTiers?: WeekendDeckTier[];
   recentWeekendPicks?: Array<{ tier: WeekendDeckTier; type: string; targetStat?: string }>;
   offeredWeekendCards?: WeekendCard[];
+
+  // ── Park Encounter Decks ──
+  parkDecks?: ParkDecksState;
+}
+
+export interface ParkDeckState {
+  drawPile: string[];
+  discardPile: string[];
+}
+
+export interface ParkDecksState {
+  relax: ParkDeckState;
+  workout: ParkDeckState;
+  hazard: ParkDeckState;
 }
 
 export type WeekendDeckTier = 'free' | 'cheap' | 'medium' | 'expensive';
@@ -409,7 +423,7 @@ export interface OwnedCurio {
 }
 
 export interface MiniGameOption {
-  type: 'cash' | 'standing' | 'item' | 'skill' | 'initiative';
+  type: 'cash' | 'standing' | 'item' | 'skill' | 'initiative' | 'park_encounter';
   title: string;
   description: string;
   cashAmount?: number;
@@ -421,10 +435,14 @@ export interface MiniGameOption {
   standingAmount?: number;
   socialAmount?: number;
   physicalAmount?: number;
+  maxPhysAmount?: number;
+  maxMentalAmount?: number;
+  durabilityAmount?: number;
   cashCost?: number;
   burnoutRisk?: boolean;
   badge?: string;
   icon?: string;
+  cardId?: string;
   itemType?: 'knick_knack' | 'spare_parts';
 }
 
@@ -551,11 +569,15 @@ export interface TurnFlags {
   homeRelaxesThisTurn?: number;
   /** Whether the player has the Fresh Air morale boost from a park visit */
   hasFreshAir?: boolean;
-  /** Number of park strolls taken this turn */
+  /** Number of times player relaxed in park this turn */
+  parkRelaxesThisTurn?: number;
+  /** Number of times player worked out in park this turn */
+  parkWorkoutsThisTurn?: number;
+  /** Number of park strolls taken this turn (deprecated alias) */
   parkStrollsThisTurn?: number;
-  /** Number of bench rests taken this turn */
+  /** Number of bench rests taken this turn (deprecated alias) */
   parkBenchesThisTurn?: number;
-  /** Number of jogs taken this turn */
+  /** Number of jogs taken this turn (deprecated alias) */
   parkJogsThisTurn?: number;
   /** Clothes worn or utilized during the turn */
   clothesWornThisTurn?: Array<'casual' | 'dress' | 'business'>;

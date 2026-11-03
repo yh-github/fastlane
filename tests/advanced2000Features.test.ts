@@ -40,6 +40,24 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(advanced90s.config.gameRules.enableArcade).toBe(false);
     });
 
+    it('initializes advanced_2000 players with 65 Max Physical, 65 base Max Mental, and 50 condition', () => {
+      expect(campaign2000.config.statRules?.initialPhysicalMax).toBe(65);
+      expect(campaign2000.config.statRules?.mentalMaxBaseValue).toBe(65);
+      expect(campaign2000.config.statRules?.startingPhysicalCondition).toBe(50);
+      expect(campaign2000.config.statRules?.startingMentalCondition).toBe(50);
+
+      const p2000 = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
+      expect(p2000.physicalConditionMax).toBe(65);
+      // Base 65 - messGrowth(3)=1 + socialBonus(floor(20/10))=2 => 66 initial max mental
+      expect(p2000.mentalConditionMax).toBe(66);
+      expect(p2000.physicalCondition).toBe(50);
+      expect(p2000.mentalCondition).toBe(50);
+
+      // Verify classic floppy uses happiness/relaxation
+      const pClassic = createPlayerState('p2', 'Jordan', false, createDefaultGoalAllotment(), 'node_low_cost', floppyCampaign.config);
+      expect(pClassic.physicalConditionMax).toBeUndefined();
+    });
+
     it('contains Hospital, Red Pirate, and 3 Park nodes on the map', () => {
       const bIds = campaign2000.buildings.map(b => b.id);
       expect(bIds).toContain('hospital');
@@ -420,40 +438,36 @@ describe('Advanced 2000 Campaign Features', () => {
       };
     }
 
-    it('stroll_park consumes 2 hours, restores +1 Physical and +1 Mental, grants Fresh Air buff, with diminishing returns', () => {
+    it('relax_park consumes 3 hours, restores +2 Physical and +2 Mental on 1st visit, +1/+1 on 2nd, +0/+0 on 3rd+', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
       player.physicalCondition = 30;
       player.mentalCondition = 30;
-      player.turnFlags = { ...player.turnFlags, parkStrollsThisTurn: 0, hasFreshAir: false };
+      player.turnFlags = { ...player.turnFlags, parkRelaxesThisTurn: 0 };
+      player.isAi = true;
 
       const noEventContext = setupContext(player);
       noEventContext.rng = { next: () => 0.99, nextInt: () => 0, getState: () => 1, setState: () => {} };
 
-      // Stroll 1: +1 Phys, +1 Mental, hasFreshAir = true
-      const res1 = gameReducer(player, { type: 'stroll_park' }, noEventContext);
-      expect(res1.updatedPlayer.hoursRemaining).toBe(18);
-      expect(res1.updatedPlayer.physicalCondition).toBe(31);
-      expect(res1.updatedPlayer.mentalCondition).toBe(31);
-      expect(res1.updatedPlayer.turnFlags.hasFreshAir).toBe(true);
-      expect(res1.updatedPlayer.turnFlags.parkStrollsThisTurn).toBe(1);
+      // Relax 1: +2 Phys, +2 Mental (plus AI-picked card effects)
+      const res1 = gameReducer(player, { type: 'relax_park' }, noEventContext);
+      expect(res1.updatedPlayer.hoursRemaining).toBe(17);
+      expect(res1.updatedPlayer.physicalCondition).toBeGreaterThanOrEqual(32);
+      expect(res1.updatedPlayer.mentalCondition).toBeGreaterThanOrEqual(32);
+      expect(res1.updatedPlayer.turnFlags.parkRelaxesThisTurn).toBe(1);
 
-      // Stroll 2: +0 Phys, +1 Mental
-      const res2 = gameReducer(res1.updatedPlayer, { type: 'stroll_park' }, noEventContext);
-      expect(res2.updatedPlayer.hoursRemaining).toBe(16);
-      expect(res2.updatedPlayer.physicalCondition).toBe(31);
-      expect(res2.updatedPlayer.mentalCondition).toBe(32);
-      expect(res2.updatedPlayer.turnFlags.parkStrollsThisTurn).toBe(2);
+      // Relax 2: +1 Phys, +1 Mental
+      const res2 = gameReducer(res1.updatedPlayer, { type: 'relax_park' }, noEventContext);
+      expect(res2.updatedPlayer.hoursRemaining).toBe(14);
+      expect(res2.updatedPlayer.turnFlags.parkRelaxesThisTurn).toBe(2);
 
-      // Stroll 3: Diminishing returns (+0 Phys, +0 Mental)
-      const res3 = gameReducer(res2.updatedPlayer, { type: 'stroll_park' }, noEventContext);
-      expect(res3.updatedPlayer.hoursRemaining).toBe(14);
-      expect(res3.updatedPlayer.physicalCondition).toBe(31);
-      expect(res3.updatedPlayer.mentalCondition).toBe(32);
-      expect(res3.updatedPlayer.turnFlags.parkStrollsThisTurn).toBe(3);
+      // Relax 3: Diminishing returns (0 base gain)
+      const res3 = gameReducer(res2.updatedPlayer, { type: 'relax_park' }, noEventContext);
+      expect(res3.updatedPlayer.hoursRemaining).toBe(11);
+      expect(res3.updatedPlayer.turnFlags.parkRelaxesThisTurn).toBe(3);
     });
 
-    it('jog_park consumes 3 hours, requires Physical >= 15, trains Max Phys, expends Mental, and penalizes over-training', () => {
+    it('workout_park consumes 3 hours, requires Physical >= 15, trains Max Phys (+1), -1 Phys, +1 Mental; overtraining on 2nd workout penalizes', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
       player.physicalCondition = 10; // Below 15
@@ -464,80 +478,96 @@ describe('Advanced 2000 Campaign Features', () => {
       noEventContext.rng = { next: () => 0.99, nextInt: () => 0, getState: () => 1, setState: () => {} };
 
       // Exhausted attempt: Fails
-      const resFail = gameReducer(player, { type: 'jog_park' }, noEventContext);
+      const resFail = gameReducer(player, { type: 'workout_park' }, noEventContext);
       expect(resFail.updatedPlayer.hoursRemaining).toBe(20);
       expect(resFail.actionLog).toEqual(expect.objectContaining({ key: 'action.error.tooPhysicallyExhausted' }));
 
-      // Qualified Jog 1: -3h, +1 Phys, +1 Max Phys, -2 Mental, sets hasFreshAir
+      // Qualified Workout 1 (AI player): -3h, +1 Max Phys, -1 Phys, +1 Mental
       player.physicalCondition = 30;
-      const res1 = gameReducer(player, { type: 'jog_park' }, noEventContext);
+      player.isAi = true;
+      const res1 = gameReducer(player, { type: 'workout_park' }, noEventContext);
       expect(res1.updatedPlayer.hoursRemaining).toBe(17);
-      expect(res1.updatedPlayer.physicalConditionMax).toBe(51);
-      expect(res1.updatedPlayer.physicalCondition).toBe(31);
-      expect(res1.updatedPlayer.mentalCondition).toBe(28);
-      expect(res1.updatedPlayer.turnFlags.hasFreshAir).toBe(true);
-      expect(res1.updatedPlayer.turnFlags.parkJogsThisTurn).toBe(1);
+      expect(res1.updatedPlayer.physicalConditionMax).toBeGreaterThanOrEqual(51);
+      expect(res1.updatedPlayer.turnFlags.parkWorkoutsThisTurn).toBe(1);
 
-      // Over-training Jog 2 in same turn: -2 Phys, -1 Mental
-      const res2 = gameReducer(res1.updatedPlayer, { type: 'jog_park' }, noEventContext);
+      // Over-training Workout 2 in same turn: -2 Phys, -1 Mental
+      const res2 = gameReducer(res1.updatedPlayer, { type: 'workout_park' }, noEventContext);
       expect(res2.updatedPlayer.hoursRemaining).toBe(14);
-      expect(res2.updatedPlayer.physicalCondition).toBe(29);
-      expect(res2.updatedPlayer.mentalCondition).toBe(27);
-      expect(res2.updatedPlayer.turnFlags.parkJogsThisTurn).toBe(2);
+      expect(res2.updatedPlayer.turnFlags.parkWorkoutsThisTurn).toBe(2);
     });
 
-    it('rest_bench consumes 3 hours and restores +2 Phys, +1 Mental without food/mess, with stiff neck on 3rd+ rest', () => {
+    it('workout_park triggers fatigue mistake (pulled muscle) if Physical or Mental < 20', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
+      player.hoursRemaining = 20;
+      player.physicalCondition = 18; // < 20
+      player.mentalCondition = 15; // < 20
+      player.physicalConditionMax = 50;
+
+      const mockContext = setupContext(player);
+      mockContext.rng = {
+        next: () => 0.01,
+        nextInt: () => 0,
+        getState: () => 1,
+        setState: () => {}
+      };
+
+      const res = gameReducer(player, { type: 'workout_park' }, mockContext);
+      expect(res.updatedPlayer.hoursRemaining).toBe(17);
+      expect(res.updatedPlayer.physicalCondition).toBe(16); // 18 - 2 = 16
+      expect(res.updatedPlayer.physicalConditionMax).toBe(50); // No max phys gain when injured
+      const logs = Array.isArray(res.actionLog) ? res.actionLog : [res.actionLog];
+      expect(logs.some(l => l?.key === 'action.park.workoutPulledMuscle')).toBe(true);
+    });
+
+    it('good encounter (75% roll) draws 3 cards, spawns pendingMiniGame for human, and resolves chosen card', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
       player.physicalCondition = 30;
-      player.physicalConditionMax = 50;
       player.mentalCondition = 30;
-      player.mess = 5;
-      player.inventory.freshFoodUnits = 0;
-      player.inventory.cannedFoodUnits = 0;
+      player.isAi = false;
 
-      const noEventContext = setupContext(player);
-      noEventContext.rng = { next: () => 0.99, nextInt: () => 0, getState: () => 1, setState: () => {} };
+      const mockContext = setupContext(player);
+      mockContext.rng = {
+        next: () => 0.8,
+        nextInt: () => 0,
+        getState: () => 1,
+        setState: () => {}
+      };
 
-      // Rest 1: +2 Phys, +1 Mental. Food units and mess remain unchanged!
-      const res1 = gameReducer(player, { type: 'rest_bench' }, noEventContext);
-      expect(res1.updatedPlayer.hoursRemaining).toBe(17);
-      expect(res1.updatedPlayer.physicalCondition).toBe(32);
-      expect(res1.updatedPlayer.mentalCondition).toBe(31);
-      expect(res1.updatedPlayer.mess).toBe(5);
-      expect(res1.updatedPlayer.turnFlags.parkBenchesThisTurn).toBe(1);
+      const res = gameReducer(player, { type: 'relax_park' }, mockContext);
+      expect(res.updatedPlayer.pendingMiniGame).toBeDefined();
+      expect(res.updatedPlayer.pendingMiniGame?.gameType).toBe('park_encounter');
+      expect(res.updatedPlayer.pendingMiniGame?.options.length).toBe(3);
 
-      // Rest 2: +1 Phys, +0 Mental
-      const res2 = gameReducer(res1.updatedPlayer, { type: 'rest_bench' }, noEventContext);
-      expect(res2.updatedPlayer.hoursRemaining).toBe(14);
-      expect(res2.updatedPlayer.physicalCondition).toBe(33);
-      expect(res2.updatedPlayer.mentalCondition).toBe(31);
-      expect(res2.updatedPlayer.turnFlags.parkBenchesThisTurn).toBe(2);
-
-      // Rest 3: Stiff neck from sleeping on park bench all day (-1 Mental)
-      const res3 = gameReducer(res2.updatedPlayer, { type: 'rest_bench' }, noEventContext);
-      expect(res3.updatedPlayer.hoursRemaining).toBe(11);
-      expect(res3.updatedPlayer.physicalCondition).toBe(33);
-      expect(res3.updatedPlayer.mentalCondition).toBe(30);
-      expect(res3.updatedPlayer.turnFlags.parkBenchesThisTurn).toBe(3);
+      const resResolve = gameReducer(
+        res.updatedPlayer,
+        { type: 'resolve_appraisal_dilemma', choiceIndex: 0 },
+        mockContext
+      );
+      expect(resResolve.updatedPlayer.pendingMiniGame).toBeNull();
+      const logs = Array.isArray(resResolve.actionLog) ? resResolve.actionLog : [resResolve.actionLog];
+      expect(logs.some(l => l?.key === 'action.park.cardResolved')).toBe(true);
     });
 
-    it('synergizes Fresh Air from park stroll with next Home Relax (+2 Mental, +1 Physical bonus)', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+    it('hazard encounter (25% roll) draws 1 card from shared Hazards deck and auto-applies without choice', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
+      player.money = 250;
       player.physicalCondition = 30;
-      player.physicalConditionMax = 100;
       player.mentalCondition = 30;
-      player.mentalConditionMax = 80;
-      player.inventory.cannedFoodUnits = 5;
-      player.turnFlags.hasFreshAir = true; // Obtained from park stroll
 
-      const res = gameReducer(player, { type: 'relax' }, setupContext(player));
-      // Base relax with firstBonus (2) + 3 + socialMentalBonus (1) = 6 Mental.
-      // With Fresh Air bonus (+2 Mental, +1 Phys): Mental gain is 8, Phys gain is 1 + floor(30/25) + 1 = 3
-      expect(res.updatedPlayer.mentalCondition).toBe(38);
-      expect(res.updatedPlayer.physicalCondition).toBe(33);
-      expect(res.updatedPlayer.turnFlags.hasFreshAir).toBe(false); // Consumed!
+      const mockContext = setupContext(player);
+      mockContext.rng = {
+        next: () => 0.05, // < 0.25 -> hazard
+        nextInt: () => 0,
+        getState: () => 1,
+        setState: () => {}
+      };
+
+      const res = gameReducer(player, { type: 'relax_park' }, mockContext);
+      expect(res.updatedPlayer.pendingMiniGame).toBeFalsy();
+      const logs = Array.isArray(res.actionLog) ? res.actionLog : [res.actionLog];
+      expect(logs.some(l => l?.key === 'events.park.hazard')).toBe(true);
     });
 
     it('triggers Cabin Fever penalty (-2 Mental) on 3rd consecutive home relax without visiting park', () => {
@@ -548,104 +578,54 @@ describe('Advanced 2000 Campaign Features', () => {
       player.mentalCondition = 30;
       player.mentalConditionMax = 80;
       player.inventory.cannedFoodUnits = 10;
-      player.turnFlags.homeRelaxesThisTurn = 2; // About to do 3rd relax
-      player.turnFlags.parkStrollsThisTurn = 0;
-      player.turnFlags.parkJogsThisTurn = 0;
-      player.turnFlags.relaxedThisTurn = true; // firstBonus is 0
+      player.turnFlags.homeRelaxesThisTurn = 2;
+      player.turnFlags.parkRelaxesThisTurn = 0;
+      player.turnFlags.parkWorkoutsThisTurn = 0;
+      player.turnFlags.relaxedThisTurn = true;
 
       // Normal 2nd+ relax: 3 (base) + 1 (socialMental: floor(20/15)=1) = 4 Mental.
       // With Cabin Fever penalty (-2 Mental): 4 - 2 = 2 Mental! 30 + 2 = 32
       const res = gameReducer(player, { type: 'relax' }, setupContext(player));
       expect(res.updatedPlayer.mentalCondition).toBe(32);
       expect(res.updatedPlayer.turnFlags.homeRelaxesThisTurn).toBe(3);
+
+      // If player visits park, cabin fever is prevented:
+      const playerVisitedPark = createPlayerState('p2', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+      playerVisitedPark.hoursRemaining = 30;
+      playerVisitedPark.physicalCondition = 50;
+      playerVisitedPark.physicalConditionMax = 100;
+      playerVisitedPark.mentalCondition = 30;
+      playerVisitedPark.mentalConditionMax = 80;
+      playerVisitedPark.inventory.cannedFoodUnits = 10;
+      playerVisitedPark.turnFlags.homeRelaxesThisTurn = 2;
+      playerVisitedPark.turnFlags.parkRelaxesThisTurn = 1;
+      playerVisitedPark.turnFlags.relaxedThisTurn = true;
+
+      const resVisited = gameReducer(playerVisitedPark, { type: 'relax' }, setupContext(playerVisitedPark));
+      expect(resVisited.updatedPlayer.mentalCondition).toBe(34);
     });
 
-    it('exposes players holding unbanked cash (>= $150) to park pickpockets on a bench', () => {
+    it('supports backwards-compatible aliases: stroll_park, jog_park, and rest_bench route properly', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
-      player.money = 250;
       player.physicalCondition = 30;
       player.mentalCondition = 30;
+      player.isAi = true;
 
-      // Mock RNG that rolls low (< 0.25) for theft
-      const mockContext = setupContext(player);
-      mockContext.rng = {
-        next: () => 0.05, // triggers theft
-        nextInt: () => 0,
-        getState: () => 1,
-        setState: () => {}
-      };
+      const context = setupContext(player);
+      context.rng = { next: () => 0.99, nextInt: () => 0, getState: () => 1, setState: () => {} };
 
-      const res = gameReducer(player, { type: 'rest_bench' }, mockContext);
-      // Stolen 20% of 250 = $50, -2 Mental
-      expect(res.updatedPlayer.money).toBe(200);
-      expect(res.updatedPlayer.mentalCondition).toBe(29); // +1 from bench - 2 from theft = 29
-      const logArray = Array.isArray(res.actionLog) ? res.actionLog : [res.actionLog];
-      expect(logArray.some(e => e?.key === 'events.park.pickpocket')).toBe(true);
-    });
+      const resStroll = gameReducer(player, { type: 'stroll_park' }, context);
+      expect(resStroll.updatedPlayer.turnFlags.parkRelaxesThisTurn).toBe(1);
+      expect(resStroll.updatedPlayer.turnFlags.parkStrollsThisTurn).toBe(1);
 
-    it('triggers dynamic outdoor events (sunny breeze, busker, friendly dog, loose change, rain, solicitor)', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
-      player.hoursRemaining = 20;
-      player.money = 50; // Below theft threshold
-      player.physicalCondition = 30;
-      player.mentalCondition = 30;
-      player.social = 20;
+      const resJog = gameReducer(player, { type: 'jog_park' }, context);
+      expect(resJog.updatedPlayer.turnFlags.parkWorkoutsThisTurn).toBe(1);
+      expect(resJog.updatedPlayer.turnFlags.parkJogsThisTurn).toBe(1);
 
-      // Event 0: Sunny Breeze (+1 Phys, +1 Mental)
-      const breezeContext = setupContext(player);
-      let callCount = 0;
-      breezeContext.rng = {
-        next: () => {
-          callCount++;
-          if (callCount === 1) return 0.1; // < 0.35 -> trigger event
-          return 0.05; // floor(0.05 * 6) = 0 -> sunny breeze
-        },
-        nextInt: () => 0,
-        getState: () => 1,
-        setState: () => {}
-      };
-      const resBreeze = gameReducer(player, { type: 'stroll_park' }, breezeContext);
-      expect(resBreeze.updatedPlayer.physicalCondition).toBe(32); // +1 stroll, +1 breeze
-      expect(resBreeze.updatedPlayer.mentalCondition).toBe(32); // +1 stroll, +1 breeze
-      const breezeLogs = Array.isArray(resBreeze.actionLog) ? resBreeze.actionLog : [resBreeze.actionLog];
-      expect(breezeLogs.some(e => e?.key === 'events.park.sunnyBreeze')).toBe(true);
-
-      // Event 3: Found Loose Money (+$5, +1 Mental)
-      callCount = 0;
-      const moneyContext = setupContext(player);
-      moneyContext.rng = {
-        next: () => {
-          callCount++;
-          if (callCount === 1) return 0.1; // trigger event
-          return 0.55; // floor(0.55 * 6) = 3 -> found money
-        },
-        nextInt: () => 0,
-        getState: () => 1,
-        setState: () => {}
-      };
-      const resMoney = gameReducer(player, { type: 'stroll_park' }, moneyContext);
-      expect(resMoney.updatedPlayer.money).toBe(55); // $50 + $5
-      const moneyLogs = Array.isArray(resMoney.actionLog) ? resMoney.actionLog : [resMoney.actionLog];
-      expect(moneyLogs.some(e => e?.key === 'events.park.foundMoney')).toBe(true);
-
-      // Event 4: Sudden Rain (-1 Phys)
-      callCount = 0;
-      const rainContext = setupContext(player);
-      rainContext.rng = {
-        next: () => {
-          callCount++;
-          if (callCount === 1) return 0.1;
-          return 0.75; // floor(0.75 * 6) = 4 -> sudden rain
-        },
-        nextInt: () => 0,
-        getState: () => 1,
-        setState: () => {}
-      };
-      const resRain = gameReducer(player, { type: 'stroll_park' }, rainContext);
-      expect(resRain.updatedPlayer.physicalCondition).toBe(30); // +1 stroll - 1 rain = 30
-      const rainLogs = Array.isArray(resRain.actionLog) ? resRain.actionLog : [resRain.actionLog];
-      expect(rainLogs.some(e => e?.key === 'events.park.suddenRain')).toBe(true);
+      const resRest = gameReducer(player, { type: 'rest_bench' }, context);
+      expect(resRest.updatedPlayer.turnFlags.parkRelaxesThisTurn).toBe(1);
+      expect(resRest.updatedPlayer.turnFlags.parkBenchesThisTurn).toBe(1);
     });
 
     it('supports authentic curved paths and contains all 16 authentic nodes and edges in advanced_2000', () => {

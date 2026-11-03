@@ -23,8 +23,10 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
   let warning: React.ReactNode = undefined;
   let helpText: React.ReactNode = undefined;
 
-  if (opt.type === 'initiative') {
+  if (opt.type === 'initiative' || opt.type === 'park_encounter') {
     if (opt.burnoutRisk) borderColor = '#ef4444';
+    else if (opt.maxPhysAmount) borderColor = '#f97316';
+    else if (opt.maxMentalAmount) borderColor = '#a855f7';
     else if (opt.leadershipSkillAmount) borderColor = '#38bdf8';
     else if (opt.techSkillAmount) borderColor = '#10b981';
     else if (opt.standingAmount) borderColor = '#facc15';
@@ -35,6 +37,8 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
 
     icon = opt.icon || (
       opt.burnoutRisk ? '⚠️' :
+      opt.maxPhysAmount ? '💪' :
+      opt.maxMentalAmount ? '🧠' :
       opt.leadershipSkillAmount ? '👔' :
       opt.techSkillAmount ? '🔧' :
       opt.standingAmount ? '🌟' :
@@ -44,6 +48,8 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
     );
 
     const parts: string[] = [];
+    if (opt.maxPhysAmount) parts.push(`+${opt.maxPhysAmount} Max 💪`);
+    if (opt.maxMentalAmount) parts.push(`+${opt.maxMentalAmount} Max 🧠`);
     if (opt.leadershipSkillAmount) parts.push(`+${opt.leadershipSkillAmount} 👔`);
     if (opt.techSkillAmount) parts.push(`+${opt.techSkillAmount} 🔧`);
     if (opt.expAmount) parts.push(`+${opt.expAmount} 👌`);
@@ -57,6 +63,7 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
     if (opt.socialAmount && opt.socialAmount < 0) parts.push(`${opt.socialAmount} 👥`);
     if (opt.physicalAmount && opt.physicalAmount > 0) parts.push(`+${opt.physicalAmount} 💪`);
     if (opt.physicalAmount && opt.physicalAmount < 0) parts.push(`${opt.physicalAmount} 💪`);
+    if (opt.durabilityAmount) parts.push(`${opt.durabilityAmount} Wk Clothes 👔`);
     rewardText = parts.length > 0 ? parts.join(', ') : 'Standard';
 
     if (opt.burnoutRisk) {
@@ -64,6 +71,27 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
     }
 
     const helpParts: React.ReactNode[] = [];
+    if (opt.maxPhysAmount) {
+      helpParts.push(
+        <div key="maxPhys" style={{ marginBottom: '4px' }}>
+          <strong>💪 Max Physical (+{opt.maxPhysAmount}):</strong> Raises cardiovascular endurance and max physical condition cap.
+        </div>
+      );
+    }
+    if (opt.maxMentalAmount) {
+      helpParts.push(
+        <div key="maxMental" style={{ marginBottom: '4px' }}>
+          <strong>🧠 Max Mental (+{opt.maxMentalAmount}):</strong> Expands cognitive capacity and long-term stress resilience.
+        </div>
+      );
+    }
+    if (opt.durabilityAmount) {
+      helpParts.push(
+        <div key="durability" style={{ marginBottom: '4px' }}>
+          <strong>👔 Clothing Wear ({opt.durabilityAmount} wks):</strong> Durability wear on your equipped clothes.
+        </div>
+      );
+    }
     if (opt.leadershipSkillAmount) {
       helpParts.push(
         <div key="lead" style={{ marginBottom: '4px' }}>
@@ -348,6 +376,7 @@ export function AppraisalDilemmaModal({
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const isInitiative = dilemma.gameType === 'work_initiative';
+  const isPark = dilemma.gameType === 'park_encounter';
 
   useEffect(() => {
     const handleResize = () => {
@@ -416,8 +445,10 @@ export function AppraisalDilemmaModal({
 
   const modalTitle = isInitiative
     ? (dilemma.title || t('appraisalDilemma.initiativeTitle', { defaultValue: 'Workplace Initiative' }))
+    : isPark
+    ? (dilemma.title || t('appraisalDilemma.parkTitle', { defaultValue: 'Park Encounter' }))
     : t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' });
-  const headerIcons = isInitiative ? '🌟 👔 👌' : '🔍 ⚖️ 🏷️';
+  const headerIcons = isInitiative ? '🌟 👔 👌' : isPark ? '🌳 🍃 ☀️' : '🔍 ⚖️ 🏷️';
 
   return createPortal(
     <div
@@ -479,6 +510,8 @@ export function AppraisalDilemmaModal({
             <div style={{ fontSize: '0.82rem', color: '#94a3b8', margin: '2px 0 0 0' }}>
               {isInitiative ? (
                 dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
+              ) : isPark ? (
+                dilemma.subtitle || t('appraisalDilemma.parkSubtitle', { defaultValue: 'Choose how to spend your time in the park:' })
               ) : (
                 <>
                   {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
@@ -496,6 +529,8 @@ export function AppraisalDilemmaModal({
             <div style={{ fontSize: '0.92rem', color: '#94a3b8' }}>
               {isInitiative ? (
                 dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
+              ) : isPark ? (
+                dilemma.subtitle || t('appraisalDilemma.parkSubtitle', { defaultValue: 'Choose how to spend your time in the park:' })
               ) : (
                 <>
                   {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
@@ -618,7 +653,7 @@ export function AppraisalDilemmaModal({
                 description={displayDesc}
                 warning={details.warning}
                 outcome={(details as any).outcomeNode || details.rewardText}
-                outcomeLabel={isInitiative ? 'Modifiers' : 'Reward'}
+                outcomeLabel={isInitiative ? 'Modifiers' : isPark ? 'Effects' : 'Reward'}
                 helpText={details.helpText}
                 helpBtnTestId={`card-help-btn-${idx}`}
                 helpPanelTestId={`card-help-panel-${idx}`}

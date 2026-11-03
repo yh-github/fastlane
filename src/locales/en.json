@@ -66,6 +66,14 @@
     "relax_unfed": "Relaxed without food in your inventory!{{stats}}",
     "clean": "Cleaned the apartment{{stats}}",
     "park": {
+      "relax": "Spent 3 peaceful hours relaxing in the park{{stats}}",
+      "relaxDiminished": "Relaxed in the park again{{stats}}",
+      "relaxExhausted": "Lingered in the park all day, enjoying familiar scenery{{stats}}",
+      "workout": "Completed a 3-hour workout in the park{{stats}}",
+      "workoutOvertraining": "Over-trained in the park! Pushed too hard without adequate recovery{{stats}}",
+      "workoutPulledMuscle": "Pulled a muscle due to severe fatigue!(-2 Physical)",
+      "cardsDrawn": "Drew {{count}} park encounter opportunities",
+      "cardResolved": "Park encounter resolved: {{title}}",
       "stroll": "Took a refreshing 2-hour stroll along the park paths{{stats}}",
       "strollDiminished": "Strolled the park paths again, enjoying familiar views{{stats}}",
       "jog": "Completed a vigorous 3-hour jog along the park trails{{stats}}",
@@ -265,6 +273,7 @@
   },
   "events": {
     "park": {
+      "hazard": "Park Hazard: {{title}} — {{desc}}",
       "pickpocket": "Street pickpocket! A thief swiped ${{stolen}} from your pocket while you were in the park.",
       "sunnyBreeze": "Sunny breeze! Warm sunshine and a gentle breeze lifted your spirits.",
       "busker": "Park busker! A street musician played a peaceful acoustic melody by the fountain.",
@@ -528,8 +537,12 @@
     "look_fit_desc": "Requires Physical Condition >= 30 at interview. Physical fitness scales employability (+2% per point above 30). 0.5x Experience gain without cumulative burnout."
   },
   "park": {
+    "relax": "Relax in Park",
+    "relaxDesc": "Spend peaceful time relaxing outdoors (⏳ -3h • Free • +2 💪 • +2 🧠 • Encounters)",
+    "workout": "Workout in Park",
+    "workoutDesc": "Fitness & cardiovascular conditioning (⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠)",
     "stroll": "Stroll in Park",
-    "strollDesc": "Take a refreshing stroll (⏳ -2h • +1 💪 • +1 🧠 • Fresh Air buff)",
+    "strollDesc": "Take a refreshing stroll (⏳ -2h • +1 💪 • +1 🧠)",
     "jog": "Jog / Workout",
     "jogDesc": "Jog around the trail (⏳ -3h • +1 💪 • +1 Max 💪 • -2 🧠)",
     "rest": "Rest on Bench",
@@ -1362,6 +1375,8 @@
   "appraisalDilemma": {
     "title": "Appraisal Dilemma",
     "subtitle": "A customer brought in:",
+    "parkTitle": "Park Encounter",
+    "parkSubtitle": "Choose how to spend your time in the park:",
     "redrawButton": "Brainstorm Alternatives (⏳ 1 hr, -1.0 🧠)",
     "option_cash": {
       "title": "Fast Cash Commission",

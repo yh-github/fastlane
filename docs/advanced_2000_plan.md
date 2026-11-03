@@ -41,6 +41,35 @@ In the initial iteration, `stroll_park` cost 1 hour and granted `+1 Physical, +1
 
 *This item is large and intertwined; it is broken into four distinct sub-phases.*
 
+### AI Suggestions & Proposed Architecture
+```mermaid
+flowchart TD
+    subgraph Trade_School_Track["Vocational Trade Track"]
+        TS["Trade School ($350)"] --> ELEC["Electronics ($550)"]
+        TS --> NURS["Practical Nursing ($500)"]
+        ELEC --> BIO_IT["Biomedical IT Tech\n(3.0 Tech Skill)"]
+        ELEC --> ARC["Arcade Tech (Red Pirate)"]
+        NURS --> EMT["EMT / Paramedic\n(35 Exp / 35 Dep)"]
+        NURS --> RN["Staff Nurse\n(45 Exp / 45 Dep)"]
+    end
+
+    subgraph University_PreMed_Track["University Pre-Med & Medical Track"]
+        JC["Junior College ($600)"] --> PHYS["Physiology ($750)"]
+        JC --> BA["Business Admin ($1,000)"]
+        JC --> ACAD["Academic Degree ($1,000)"]
+        PHYS --> BIOCHEM["Biochemistry ($900)"]
+        BIOCHEM & ACAD --> MED["Medical School (M.D.) ($2,500)"]
+        MED --> RES["Residency ($1,200)"]
+        RES --> FELLOW["Specialty Fellowship ($1,500)"]
+    end
+
+    RN & JC --> NURSE_SUP["Nursing Supervisor\n(2.0 Mgmt Skill)"]
+    MED --> DOC_RES["Resident Physician\n(60 Exp / 60 Dep)"]
+    FELLOW --> SURG["Attending Surgeon\n(75 Exp / 75 Dep, 5.0 Tech Skill)"]
+    RES & BA --> CHIEF["Chief of Medicine\n(85 Exp / 85 Dep, 5.0 Mgmt Skill)"]
+    BA & ACAD --> BROKER["Stock Broker\n(70 Exp / 70 Dep)"]
+```
+
 ### Sub-Phase 2A: Baseline Alignment for Classic Locations & Broker
 - Restore the exact classic `advanced` job definitions for established locations:
   - Z-Mart, QT Clothing, Socket City, Bank, University, Black's Market, and Apartment Complex.
