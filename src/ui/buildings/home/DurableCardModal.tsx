@@ -370,7 +370,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     }
   }
 
-  const hasTv = player?.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+  const hasTv = player?.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv' || a.id === 'crt_tv' || a.id === 'plasma_tv') && !a.isBroken);
   const isVcrWithoutTv = itemId === 'vcr' && isOwned && !hasTv;
   if (itemId === 'vcr' && isVcrWithoutTv && rules?.usePhysicalMentalConditions) {
     effectBadges.push({ label: '⚠️ Requires TV (Inactive)' });
@@ -607,7 +607,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
             <span style={{ fontSize: '1.8rem' }}>👔</span>
           ) : (
             <img 
-              src={`/assets/raw_images/${itemId}.png`} 
+              src={itemId === 'crt_tv' ? '/assets/raw_images/color_tv.png' : `/assets/raw_images/${itemId}.png`} 
               alt={itemName}
               style={{ 
                 maxWidth: '40px', 

@@ -19,6 +19,7 @@
     "enableCaffeineSystem": true,
     "enableBusyWeeks": true,
     "hospitalEmployeeHealthcare": true,
+    "delayRobberyFoodSpoilage": true,
     "enableArcade": true,
     "enableParkSystem": true
   }

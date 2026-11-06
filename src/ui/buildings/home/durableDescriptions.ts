@@ -7,6 +7,8 @@ export const DEFAULT_APPLIANCE_SPACE: Record<string, number> = {
   microwave: 20,
   color_tv: 20,
   bw_tv: 20,
+  crt_tv: 25,
+  plasma_tv: 10,
   tv: 20,
   stereo: 20,
   '8track': 20,
@@ -67,9 +69,14 @@ export function getGameplayDescription(id: string, rules?: GameRules, isBook?: b
         ? 'Quickly reheat meals. Restores +1 Physical when relaxing and +1 Social when socializing.'
         : 'Quickly reheat meals. Awards +1 Happiness every turn.';
     case 'color_tv':
+    case 'crt_tv':
       return rules?.usePhysicalMentalConditions
-        ? 'Color television set. Boosts guest socializing (+2 Social) and enhances apartment lifestyle.'
-        : 'Color television set. Living room entertainment for your apartment.';
+        ? 'Cathode-ray color television set. Boosts guest socializing (+2 Social) and enhances apartment lifestyle.'
+        : 'Cathode-ray color television set. Living room entertainment for your apartment.';
+    case 'plasma_tv':
+      return rules?.usePhysicalMentalConditions
+        ? 'High-end flat-screen plasma television. Major boost to guest socializing (+3 Social) and premium apartment lifestyle.'
+        : 'High-end flat-screen plasma television. State-of-the-art living room luxury.';
     case 'bw_tv':
       return rules?.usePhysicalMentalConditions
         ? 'Vintage black-and-white television. Boosts guest socializing (+1 Social) and enables VCR socializing synergy.'

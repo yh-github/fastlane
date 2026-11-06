@@ -270,7 +270,7 @@
     "name": "Black's Market",
     "archetype": "grocery",
     "spritePath": "images/blacks_market.png",
-    "description": "Fresh food, lottery tickets, and newspaper.",
+    "description": "Fresh food, coffee, and newspaper.",
     "inventory": [
       {
         "itemId": "food_1week",
@@ -283,10 +283,6 @@
       {
         "itemId": "food_4weeks",
         "priceOverride": 190
-      },
-      {
-        "itemId": "lottery_tickets",
-        "priceOverride": 10
       },
       {
         "itemId": "newspaper",

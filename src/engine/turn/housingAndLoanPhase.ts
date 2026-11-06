@@ -26,12 +26,13 @@ export function processHousingAndLoanPhase(
           const { standing } = calcLandlordStanding(p, state.rules, state.turn, campaign.jobs);
           let newRent = p.currentRentPrice;
 
-          if (standing < 15) {
-            // Full market surge hike for very poor standing (< 15)
-            newRent = marketRent;
-          } else if (standing < 30) {
-            // Partial compromise surge hike (50% of difference) for poor standing (< 30)
-            newRent = p.currentRentPrice + Math.round(diff * 0.5);
+          // Hike proportion scales inversely with landlord standing, anchored to economic gap:
+          // Critical standing (< 15) receives full 100% market surge;
+          // Higher standing mitigates the surge (down to a minimum 15% floor for excellent standing).
+          const hikePct = standing < 15 ? 1.0 : Math.max(0.15, Math.min(1.0, (100 - standing) / 100));
+          const increase = Math.round(diff * hikePct);
+          if (increase > 0) {
+            newRent = Math.min(marketRent, p.currentRentPrice + increase);
           }
 
           if (newRent > p.currentRentPrice) {

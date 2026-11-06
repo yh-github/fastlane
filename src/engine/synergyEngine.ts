@@ -95,7 +95,8 @@ export function recalculateLifestyle(player: PlayerState, campaign: CampaignBund
 
   const itemCounts: Record<string, number> = {};
   const hasStereo = player.inventory.appliances.some(a => a.id === 'stereo' && !a.isBroken);
-  const hasTv = player.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+  const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
+  const hasTv = player.inventory.appliances.some(a => isAnyTv(a.id) && !a.isBroken);
 
   for (const app of player.inventory.appliances) {
     if (app.isBroken) continue;
@@ -178,8 +179,9 @@ export function collectItemEffects(
 
   const seenItemIds = new Set<string>();
   const hasStereo = player.inventory?.appliances?.some(a => a.id === 'stereo' && !a.isBroken);
-  const hasColorTv = player.inventory?.appliances?.some(a => a.id === 'color_tv' && !a.isBroken);
-  const hasTv = player.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+  const hasColorTv = player.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'crt_tv' || a.id === 'plasma_tv') && !a.isBroken);
+  const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
+  const hasTv = player.inventory?.appliances?.some(a => isAnyTv(a.id) && !a.isBroken);
 
   // Process appliances
   for (const app of player.inventory?.appliances || []) {

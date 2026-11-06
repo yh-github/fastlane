@@ -119,6 +119,30 @@ describe('Turn Processor', () => {
       expect(p.turnEvents.some(e => e.key.startsWith('events.foodSpoiled.ateSpoiled'))).toBe(false);
     });
 
+    it('preserves food during turn refrigerator is stolen when delayRobberyFoodSpoilage is true', () => {
+      let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+      state.turn = 4;
+      state.rules.delayRobberyFoodSpoilage = true;
+      state.players[0].inventory.appliances.push({ id: 'refrigerator', purchasePrice: 500, purchaseSource: 'socket_city' });
+      state.players[0].inventory.freshFoodUnits = 4;
+      const replayContext = {
+        inDecisions: [
+          { type: 'apartment_robbery', result: true },
+          { type: 'apartment_robbery_item_refrigerator', result: true }
+        ],
+        outDecisions: []
+      };
+
+      const nextState = processTurnStart(state, mockCampaign, replayContext);
+      const p = nextState.players[0];
+
+      // Refrigerator was stolen
+      expect(p.inventory.appliances.some(a => a.id === 'refrigerator')).toBe(false);
+      // Food was not spoiled immediately; 1 unit eaten, 3 remain
+      expect(p.inventory.freshFoodUnits).toBe(3);
+      expect(p.turnFlags.hasEaten).toBe(true);
+    });
+
     it('bunches mental reductions together into a single modification when eating spoiled food', () => {
       let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 1;
@@ -429,7 +453,7 @@ describe('Turn Processor', () => {
       expect(player.turnEvents.some(e => e.key === 'events.rent.raised')).toBe(false);
     });
 
-    it('applies partial 50% surge hike when rentPaymentsAtCurrentRate >= 2 and standing is poor (15 <= standing < 30)', () => {
+    it('applies standing-proportional surge hike when rentPaymentsAtCurrentRate >= 2 and standing is poor (standing 25 -> 75% of diff)', () => {
       let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 3;
       state.rules.fluctuatingRent = true;
@@ -438,18 +462,18 @@ describe('Turn Processor', () => {
       state.players[0].currentRentPrice = 325;
       state.players[0].rentPaidUntilWeek = 4;
       state.players[0].rentPaymentsAtCurrentRate = 2; // Paid 2 times at current rate
-      state.players[0].rentExtensionsAsked = 2; // -10 standing -> standing 25 (15 <= 25 < 30)
+      state.players[0].rentExtensionsAsked = 2; // -10 standing -> standing 25
 
       const nextState = processTurnStart(state, mockCampaign);
       const player = nextState.players[0];
 
-      // Partial hike: 325 + round(162 * 0.5) = 325 + 81 = 406
-      expect(player.currentRentPrice).toBe(406);
+      // Proportional hike: 325 + round(162 * 0.75) = 325 + 122 = 447
+      expect(player.currentRentPrice).toBe(447);
       expect(player.rentPaymentsAtCurrentRate).toBe(0); // Resets to 0
       expect(player.turnEvents.some(e => e.key === 'events.rent.raised')).toBe(true);
       const dueEvent = player.turnEvents.find(e => e.key === 'events.rent.due');
       expect(dueEvent).toBeDefined();
-      expect(dueEvent?.params?.amount).toBe(406);
+      expect(dueEvent?.params?.amount).toBe(447);
     });
 
     it('applies full 100% surge hike when rentPaymentsAtCurrentRate >= 2 and standing is critical (< 15)', () => {
@@ -474,7 +498,7 @@ describe('Turn Processor', () => {
       expect(dueEvent?.params?.amount).toBe(487);
     });
 
-    it('protects good tenants (standing >= 30) from rent increases during economic surge under fluctuatingRent', () => {
+    it('scales rent increases for good tenants (standing 50 -> 50% of surge diff) while shielding them from full market hike', () => {
       let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
       state.turn = 3;
       state.rules.fluctuatingRent = true;
@@ -483,13 +507,14 @@ describe('Turn Processor', () => {
       state.players[0].currentRentPrice = 325;
       state.players[0].rentPaidUntilWeek = 4;
       state.players[0].rentPaymentsAtCurrentRate = 2;
-      state.players[0].rentPaymentsMade = 5; // standing >= 30
+      state.players[0].rentPaymentsMade = 5; // standing = 35 + 15 = 50 -> hikePct = 0.50
 
       const nextState = processTurnStart(state, mockCampaign);
       const player = nextState.players[0];
 
-      expect(player.currentRentPrice).toBe(325);
-      expect(player.turnEvents.some(e => e.key === 'events.rent.raised')).toBe(false);
+      // 325 + round(162 * 0.5) = 406 (shields 81 dollars compared to 487 market rent)
+      expect(player.currentRentPrice).toBe(406);
+      expect(player.turnEvents.some(e => e.key === 'events.rent.raised')).toBe(true);
     });
 
     it('does NOT raise rent if fluctuatingRent is false, even with poor standing and economic surge', () => {

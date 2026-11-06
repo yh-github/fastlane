@@ -3,6 +3,7 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
 import { requireAdvancedStatRules } from '../rules';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
+import { roundToResolution } from '../statMath';
 
 export function handlePlayArcadeAction(
   player: PlayerState,
@@ -476,11 +477,14 @@ export function handleRelaxParkAction(
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   const costHours = 3;
-  if (nextPlayer.hoursRemaining < costHours) {
+  const allowPartial = Boolean(context.rules.allowPartialHours || context.rules.proportionalDivisibleActions);
+  if (nextPlayer.hoursRemaining <= 0 || (!allowPartial && nextPlayer.hoursRemaining < costHours)) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
 
-  nextPlayer = spendHours(nextPlayer, costHours);
+  const actualHours = Math.min(costHours, nextPlayer.hoursRemaining);
+  const ratio = actualHours / costHours;
+  nextPlayer = spendHours(nextPlayer, actualHours);
 
   const relaxes = nextPlayer.turnFlags?.parkRelaxesThisTurn || 0;
   nextPlayer.turnFlags = {
@@ -496,6 +500,7 @@ export function handleRelaxParkAction(
   if (context.rules.usePhysicalMentalConditions) {
     const maxPhys = nextPlayer.physicalConditionMax ?? 50;
     const maxMental = nextPlayer.mentalConditionMax ?? 50;
+    const conditionRes = context.rules.conditionResolution ?? 0.5;
 
     let physGain = 0;
     let mentalGain = 0;
@@ -505,6 +510,11 @@ export function handleRelaxParkAction(
     } else if (relaxes === 1) {
       physGain = 1;
       mentalGain = 1;
+    }
+
+    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+      if (physGain > 0) physGain = Math.max(conditionRes, roundToResolution(physGain * ratio, conditionRes));
+      if (mentalGain > 0) mentalGain = Math.max(conditionRes, roundToResolution(mentalGain * ratio, conditionRes));
     }
 
     if (physGain > 0) {
@@ -532,6 +542,11 @@ export function handleRelaxParkAction(
     } else if (relaxes === 1) {
       hapGain = 1;
       relGain = 1;
+    }
+
+    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+      if (hapGain > 0) hapGain = Math.max(0.5, roundToResolution(hapGain * ratio, 0.5));
+      if (relGain > 0) relGain = Math.max(0.5, roundToResolution(relGain * ratio, 0.5));
     }
 
     if (hapGain > 0) nextPlayer.happiness = Math.min(100, nextPlayer.happiness + hapGain);
@@ -622,7 +637,8 @@ export function handleWorkoutParkAction(
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   const costHours = 3;
-  if (nextPlayer.hoursRemaining < costHours) {
+  const allowPartial = Boolean(context.rules.allowPartialHours || context.rules.proportionalDivisibleActions);
+  if (nextPlayer.hoursRemaining <= 0 || (!allowPartial && nextPlayer.hoursRemaining < costHours)) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
 
@@ -630,7 +646,9 @@ export function handleWorkoutParkAction(
     return { nextPlayer, actionLog: { key: 'action.error.tooPhysicallyExhausted' } };
   }
 
-  nextPlayer = spendHours(nextPlayer, costHours);
+  const actualHours = Math.min(costHours, nextPlayer.hoursRemaining);
+  const ratio = actualHours / costHours;
+  nextPlayer = spendHours(nextPlayer, actualHours);
 
   const workouts = nextPlayer.turnFlags?.parkWorkoutsThisTurn || 0;
   nextPlayer.turnFlags = {
@@ -669,19 +687,32 @@ export function handleWorkoutParkAction(
       const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
       const globalMax = statRules.initialPhysicalMax ?? 100;
       const curMax = nextPlayer.physicalConditionMax ?? 50;
+      const conditionRes = context.rules.conditionResolution ?? 0.5;
 
       if (workouts === 0) {
         let maxDiff = 0;
-        if (curMax < globalMax) {
-          nextPlayer.physicalConditionMax = Math.min(globalMax, curMax + 1);
-          maxDiff = 1;
+        let baseMaxBoost = 1;
+        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+          baseMaxBoost = roundToResolution(1 * ratio, conditionRes);
         }
-        nextPlayer.physicalCondition = Math.max(1, Math.min(nextPlayer.physicalConditionMax ?? 50, phys - 1));
-        nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, mental + 1);
+        if (curMax < globalMax && baseMaxBoost > 0) {
+          maxDiff = Math.min(globalMax - curMax, baseMaxBoost);
+          nextPlayer.physicalConditionMax = curMax + maxDiff;
+        }
+
+        let physCost = 1;
+        let mentalGain = 1;
+        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+          physCost = Math.max(conditionRes, roundToResolution(physCost * ratio, conditionRes));
+          mentalGain = Math.max(conditionRes, roundToResolution(mentalGain * ratio, conditionRes));
+        }
+
+        nextPlayer.physicalCondition = Math.max(1, Math.min(nextPlayer.physicalConditionMax ?? 50, phys - physCost));
+        nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, mental + mentalGain);
 
         const mods: StatModification[] = [
-          { stat: 'physical', diff: -1 },
-          { stat: 'mental', diff: 1 }
+          { stat: 'physical', diff: -physCost },
+          { stat: 'mental', diff: mentalGain }
         ];
         if (maxDiff > 0) mods.push({ stat: 'maxPhysical', diff: maxDiff });
 
@@ -691,34 +722,51 @@ export function handleWorkoutParkAction(
         });
       } else {
         // Overtraining
-        nextPlayer.physicalCondition = Math.max(1, phys - 2);
-        nextPlayer.mentalCondition = Math.max(1, mental - 1);
+        let physCost = 2;
+        let mentalCost = 1;
+        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+          physCost = Math.max(conditionRes, roundToResolution(physCost * ratio, conditionRes));
+          mentalCost = Math.max(conditionRes, roundToResolution(mentalCost * ratio, conditionRes));
+        }
+
+        nextPlayer.physicalCondition = Math.max(1, phys - physCost);
+        nextPlayer.mentalCondition = Math.max(1, mental - mentalCost);
 
         actionLogs.push({
           key: 'action.park.workoutOvertraining',
           modifications: [
-            { stat: 'physical', diff: -2 },
-            { stat: 'mental', diff: -1 }
+            { stat: 'physical', diff: -physCost },
+            { stat: 'mental', diff: -mentalCost }
           ]
         });
       }
     } else {
       // Classic rules
       if (workouts === 0) {
-        nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + 2);
-        nextPlayer.happiness = Math.max(0, nextPlayer.happiness - 1);
+        let relGain = 2;
+        let hapCost = 1;
+        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+          relGain = Math.max(0.5, roundToResolution(relGain * ratio, 0.5));
+          hapCost = Math.max(0.5, roundToResolution(hapCost * ratio, 0.5));
+        }
+        nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + relGain);
+        nextPlayer.happiness = Math.max(0, nextPlayer.happiness - hapCost);
         actionLogs.push({
           key: 'action.park.workout',
           modifications: [
-            { stat: 'relaxation', diff: 2 },
-            { stat: 'happiness', diff: -1 }
+            { stat: 'relaxation', diff: relGain },
+            { stat: 'happiness', diff: -hapCost }
           ]
         });
       } else {
-        nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - 1);
+        let relCost = 1;
+        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+          relCost = Math.max(0.5, roundToResolution(relCost * ratio, 0.5));
+        }
+        nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - relCost);
         actionLogs.push({
           key: 'action.park.workoutOvertraining',
-          modifications: [{ stat: 'relaxation', diff: -1 }]
+          modifications: [{ stat: 'relaxation', diff: -relCost }]
         });
       }
     }

@@ -17,7 +17,7 @@ export const BASE_APPLIANCE_SLOTS: ApplianceSlotDef[] = [
   { slotId: 'freezer', candidateIds: ['freezer'], fallbackId: 'freezer', defaultName: 'Freezer' },
   { slotId: 'stove', candidateIds: ['stove'], fallbackId: 'stove', defaultName: 'Stove' },
   { slotId: 'microwave', candidateIds: ['microwave'], fallbackId: 'microwave', defaultName: 'Microwave' },
-  { slotId: 'tv', candidateIds: ['color_tv', 'bw_tv'], fallbackId: 'color_tv', defaultName: 'TV', emptyLabelKey: 'item.tv' },
+  { slotId: 'tv', candidateIds: ['plasma_tv', 'crt_tv', 'color_tv', 'bw_tv'], fallbackId: 'color_tv', defaultName: 'TV', emptyLabelKey: 'item.tv' },
   { slotId: 'stereo', candidateIds: ['stereo', '8track'], fallbackId: 'stereo', defaultName: 'Stereo', emptyLabelKey: 'item.stereo' },
   { slotId: 'vcr', candidateIds: ['vcr'], fallbackId: 'vcr', defaultName: 'VCR' },
   { slotId: 'computer', candidateIds: ['computer'], fallbackId: 'computer', defaultName: 'Computer' },
@@ -219,7 +219,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               }}
             >
               <img
-                src={`/assets/raw_images/${activeItemId}.png`}
+                src={activeItemId === 'crt_tv' ? '/assets/raw_images/color_tv.png' : `/assets/raw_images/${activeItemId}.png`}
                 alt={itemName}
                 className="durable-card-item__img"
                 style={{
