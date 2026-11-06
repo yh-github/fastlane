@@ -607,19 +607,17 @@ export function resolveWeekendChoice(
   // 3. Handle Free Park Walk
   if (card.id === 'free_park_walk') {
     const physicalGain = 2;
-    const mentalGain = 1;
+    const messIncrease = 2;
 
     if (rules?.usePhysicalMentalConditions) {
       const maxPhys = updatedPlayer.physicalConditionMax ?? advStatRules?.initialPhysicalMax ?? 50;
       updatedPlayer.physicalCondition = Math.min(maxPhys, (updatedPlayer.physicalCondition ?? 50) + physicalGain);
       modifications.push({ stat: 'physical', diff: physicalGain });
+    }
 
-      const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
-      updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + mentalGain);
-      modifications.push({ stat: 'mental', diff: mentalGain });
-    } else {
-      updatedPlayer = applyHappinessChange(updatedPlayer, mentalGain, 'weekend_bonus', rules || ({} as any), statRules);
-      modifications.push({ stat: 'happiness', diff: mentalGain });
+    if (rules?.trackMess) {
+      updatedPlayer.mess = (updatedPlayer.mess || 0) + messIncrease;
+      modifications.push({ stat: 'mess', diff: messIncrease });
     }
 
     if (updatedPlayer.inventory?.tickets) {
@@ -627,7 +625,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-    return finalizeWeekendResult(0, mentalGain);
+    return finalizeWeekendResult(0);
   }
 
   // 4. Handle Free Porch Chat

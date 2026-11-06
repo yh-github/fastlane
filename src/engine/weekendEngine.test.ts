@@ -508,11 +508,10 @@ describe('Weekend Engine', () => {
           ]
         } as unknown as PlayerState;
 
-        // Resolve park walk: +2 physical condition, +1 mental condition, 0 mess
+        // Resolve park walk: +2 physical condition, +2 mess
         const resWalk = resolveWeekendChoice(player, 'free_park_walk', new Random(1), { usePhysicalMentalConditions: true, trackMess: true } as any);
         expect(resWalk.physicalCondition).toBe(37);
-        expect(resWalk.mentalCondition).toBe(36);
-        expect(resWalk.mess).toBeUndefined();
+        expect(resWalk.mess).toBe(2);
         expect(resWalk.money).toBe(300); // Free ($0)
 
         // Resolve porch chat: +2 social, +2 mess
@@ -621,8 +620,7 @@ describe('Weekend Engine', () => {
 
         const resParkWalk = resolveWeekendChoice(basePlayer, 'free_park_walk', new Random(1), rules);
         expect(resParkWalk.physicalCondition).toBe(22);
-        expect(resParkWalk.mentalCondition).toBe(21);
-        expect(resParkWalk.mess).toBe(10); // 0 mess added
+        expect(resParkWalk.mess).toBe(12); // +2 mess
 
         const resPorchChat = resolveWeekendChoice(basePlayer, 'free_porch_chat', new Random(1), rules);
         expect(resPorchChat.social).toBe(22);

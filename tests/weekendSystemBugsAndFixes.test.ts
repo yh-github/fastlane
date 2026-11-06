@@ -144,8 +144,8 @@ describe('Weekend System Bug & Enhancement Verification', () => {
     });
   });
 
-  describe('Bug 3: free_park_walk should grant Physical + Mental and NOT increase mess', () => {
-    it('free_park_walk awards +2 physical, +1 mental, and 0 mess', () => {
+  describe('Free Weekend Mechanics: free_park_walk balances +2 physical with +2 mess penalty', () => {
+    it('free_park_walk awards +2 physical and +2 mess (consistent with leisure free activities neglecting chores)', () => {
       const player = createTestPlayer({
         physicalCondition: 30,
         mentalCondition: 30,
@@ -155,8 +155,8 @@ describe('Weekend System Bug & Enhancement Verification', () => {
 
       const res = resolveWeekendChoice(player, 'free_park_walk', new Random(1), rules, mockCampaign.config.statRules, mockCampaign);
       expect(res.physicalCondition).toBe(32);
-      expect(res.mentalCondition).toBe(31);
-      expect(res.mess).toBe(5); // Should NOT have increased by 2!
+      expect(res.mentalCondition).toBe(30); // No mental gain
+      expect(res.mess).toBe(7); // +2 mess from dishes in sink / neglected chores
     });
   });
 

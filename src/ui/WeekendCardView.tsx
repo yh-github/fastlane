@@ -108,7 +108,7 @@ export const WeekendCardView = React.forwardRef<HTMLDivElement, WeekendCardViewP
     if (card.type === 'walk') {
       return (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-          +2 💪, +1 🧠
+          +2 💪, +2 <MessIcon />
         </span>
       );
     }
