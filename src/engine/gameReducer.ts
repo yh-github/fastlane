@@ -43,7 +43,11 @@ import {
   handleWorkoutParkAction,
   handleParkStrollAction,
   handleParkJogAction,
-  handleParkRestAction
+  handleParkRestAction,
+  handleHospitalUrgentCareAction,
+  handleHospitalTherapyAction,
+  handleHospitalDonateBloodAction,
+  handleHospitalCafeteriaAction
 } from './actions';
 
 export type { GameAction, ReducerContext, ReducerResult } from './actions';
@@ -230,6 +234,18 @@ export function gameReducer(
       break;
     case 'rest_bench':
       res = handleParkRestAction(nextPlayer, action, context);
+      break;
+    case 'hospital_urgent_care':
+      res = handleHospitalUrgentCareAction(nextPlayer, action, context);
+      break;
+    case 'hospital_therapy':
+      res = handleHospitalTherapyAction(nextPlayer, action, context);
+      break;
+    case 'hospital_donate_blood':
+      res = handleHospitalDonateBloodAction(nextPlayer, action, context);
+      break;
+    case 'hospital_cafeteria':
+      res = handleHospitalCafeteriaAction(nextPlayer, action, context);
       break;
   }
 

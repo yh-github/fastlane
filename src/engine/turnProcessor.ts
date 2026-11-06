@@ -47,6 +47,7 @@ function resetCommonTurnState(player: PlayerState, state: GameState, campaign: C
     workMistakesThisTurn: 0,
     jobsRejectedThisTurn: [],
     fastFoodMealsThisTurn: 0,
+    ...(state.rules.enableCaffeineSystem ? { caffeineIntake: 0 } : {}),
     ...(state.rules.clothingDecaysAll === false || (state.rules.clothesSwitching && state.rules.clothesSwitching !== 'autoBest')
       ? { clothesWornThisTurn: [] }
       : {})

@@ -96,20 +96,23 @@ export function buyItem(
       }
     }
   } else if (item.category === 'coffee' || item.subcategory === 'coffee' || item.id === 'drip_coffee' || item.id === 'espresso' || item.id === 'double_shot') {
+    const prevIntake = player.turnFlags?.caffeineIntake || 0;
+    const isFirstCoffee = prevIntake === 0;
+    const unitCaffeine = item.caffeineUnits ?? (item.id === 'double_shot' ? 28 : (item.id === 'espresso' ? 18 : 10));
+    const addedCaffeine = unitCaffeine * quantity;
+    const newIntake = prevIntake + addedCaffeine;
+
     newTurnFlags.coffeeCupsThisTurn = (newTurnFlags.coffeeCupsThisTurn || 0) + quantity;
-    const tol = player.caffeineTolerance || 0;
-    if (rules?.enableCaffeineSystem) {
-      if (tol >= 9) {
-        mentalBonus = Math.max(1, Math.floor((item.mentalBonus ?? 2) * 0.5)) * quantity;
-      } else if (tol >= 6) {
-        mentalBonus = Math.max(1, Math.floor((item.mentalBonus ?? 2) * 0.75)) * quantity;
-      } else {
-        mentalBonus = (item.mentalBonus ?? 2) * quantity;
-      }
+    newTurnFlags.caffeineIntake = newIntake;
+
+    happinessBonus = 0;
+    if (isFirstCoffee) {
+      if (item.id === 'double_shot') mentalBonus = 4;
+      else if (item.id === 'espresso') mentalBonus = 3;
+      else mentalBonus = 2;
     } else {
-      mentalBonus = (item.mentalBonus ?? 2) * quantity;
+      mentalBonus = 0;
     }
-    happinessBonus = (item.happinessBonus ?? 1) * quantity;
   } else if (item.subcategory === 'fast_food') {
     const mealCount = (newTurnFlags.fastFoodMealsThisTurn || 0) + 1;
     newTurnFlags.fastFoodMealsThisTurn = mealCount;
@@ -233,19 +236,34 @@ export function buyItem(
   }
 
   if (rules?.usePhysicalMentalConditions && (item.category === 'coffee' || item.subcategory === 'coffee' || item.id === 'drip_coffee' || item.id === 'espresso' || item.id === 'double_shot')) {
-    const maxPhys = updated.physicalConditionMax ?? 50;
-    const tol = updated.caffeineTolerance || 0;
-    let basePhysGain = 3;
-    if (item.id === 'double_shot') basePhysGain = 6;
-    else if (item.id === 'espresso') basePhysGain = 4;
-    else if (item.id === 'drip_coffee') basePhysGain = 3;
-
-    let effectivePhysGain = basePhysGain;
-    if (rules?.enableCaffeineSystem) {
-      if (tol >= 9) effectivePhysGain = Math.max(1, Math.floor(basePhysGain * 0.4));
-      else if (tol >= 6) effectivePhysGain = Math.max(1, Math.floor(basePhysGain * 0.7));
+    const prevIntake = player.turnFlags?.caffeineIntake || 0;
+    const isFirstCoffee = prevIntake === 0;
+    if (isFirstCoffee) {
+      let physBonus = 1;
+      if (item.id === 'double_shot') physBonus = 2;
+      else if (item.id === 'espresso') physBonus = 1.5;
+      const maxPhys = updated.physicalConditionMax ?? 50;
+      updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 50) + physBonus);
     }
-    updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 50) + effectivePhysGain * quantity);
+
+    if (rules?.enableCaffeineSystem && (updated.turnFlags?.caffeineIntake || 0) > 20) {
+      const minPhys = updated.minPhysicalCondition ?? 1;
+      updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) - 1);
+      updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
+
+      updated.resilienceBonus = (updated.resilienceBonus || 0) - 1;
+      updated.mentalConditionMax = Math.max(10, (updated.mentalConditionMax ?? 50) - 1);
+      updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition ?? 50);
+
+      if (!updated.turnEvents) updated.turnEvents = [];
+      updated.turnEvents.push({
+        key: 'events.caffeine_overdose',
+        modifications: [
+          { stat: 'physical_max', diff: -1 },
+          { stat: 'mental_max', diff: -1 }
+        ]
+      });
+    }
   }
 
   switch (item.category) {

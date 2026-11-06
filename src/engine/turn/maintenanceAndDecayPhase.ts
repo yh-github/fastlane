@@ -235,11 +235,11 @@ export function processAdvancedMaintenanceAndDecay(
   // 4. Weekend (Alternative Card System or Classic)
   if (state.rules.alternativeWeekends) {
     if (player.isAi) {
-      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng);
+      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng, campaign, state.rules, previousPlayer);
       const bestCardId = selectAiWeekendCard(pWithChoices, cards);
-      player = resolveWeekendChoice(pWithChoices, bestCardId, rng, state.rules, campaign.config.statRules);
+      player = resolveWeekendChoice(pWithChoices, bestCardId, rng, state.rules, campaign.config.statRules, campaign);
     } else {
-      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng);
+      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng, campaign, state.rules, previousPlayer);
       player = pWithChoices;
       player.offeredWeekendCards = cards;
       player.weekendResult = undefined;
@@ -303,49 +303,20 @@ export function processAdvancedMaintenanceAndDecay(
     ensurePlayerCurios(player, state.turn);
   }
 
-  // 5c. Caffeine Tolerance & Morning Fog / Withdrawal (Advanced 2000)
+  // 5c. Caffeine Tolerance & Half-Life Decay (Advanced 2000)
   if (state.rules.enableCaffeineSystem) {
-    const cups = previousPlayer?.turnFlags?.coffeeCupsThisTurn || 0;
-    let tol = player.caffeineTolerance || 0;
-    if (cups === 0) {
-      tol = Math.max(0, tol - 2);
-    } else if (cups === 2) {
-      tol = Math.min(10, tol + 1);
-    } else if (cups >= 3) {
-      tol = Math.min(10, tol + 2);
-    }
-    player.caffeineTolerance = tol;
+    const intake = previousPlayer?.turnFlags?.caffeineIntake
+      ?? (previousPlayer?.turnFlags?.coffeeCupsThisTurn ? previousPlayer.turnFlags.coffeeCupsThisTurn * 10 : 0);
+    const oldTol = player.caffeineTolerance || 0;
+    const newTol = Math.min(10, Math.floor((oldTol + intake) / 2));
+    player.caffeineTolerance = newTol;
 
-    if (tol >= 9) {
-      const minMaxPhys = (campaign.config.statRules && 'minMaxPhysical' in campaign.config.statRules) ? (campaign.config.statRules as any).minMaxPhysical : 20;
-      player.physicalConditionMax = Math.max(minMaxPhys, (player.physicalConditionMax ?? 50) - 1);
-      player.physicalCondition = Math.max(1, (player.physicalCondition ?? 50) - 3);
-      player.physicalCondition = Math.min(player.physicalConditionMax, player.physicalCondition);
-      player.mentalCondition = Math.max(1, (player.mentalCondition ?? 50) - 3);
+    if (newTol !== oldTol) {
       player.turnEvents.push({
-        key: 'events.caffeine_withdrawal_severe',
+        key: 'events.caffeine_tolerance_update',
+        params: { oldTol, intake, newTol },
         modifications: [
-          { stat: 'physical', diff: -3 },
-          { stat: 'mental', diff: -3 },
-          { stat: 'maxPhysical', diff: -1 }
-        ]
-      });
-    } else if (tol >= 6) {
-      player.physicalCondition = Math.max(1, (player.physicalCondition ?? 50) - 2);
-      player.mentalCondition = Math.max(1, (player.mentalCondition ?? 50) - 2);
-      player.turnEvents.push({
-        key: 'events.caffeine_withdrawal',
-        modifications: [
-          { stat: 'physical', diff: -2 },
-          { stat: 'mental', diff: -2 }
-        ]
-      });
-    } else if (tol >= 3) {
-      player.physicalCondition = Math.max(1, (player.physicalCondition ?? 50) - 1);
-      player.turnEvents.push({
-        key: 'events.caffeine_fog',
-        modifications: [
-          { stat: 'physical', diff: -1 }
+          { stat: 'caffeineTolerance', diff: newTol - oldTol }
         ]
       });
     }

@@ -26,9 +26,9 @@ In the initial iteration, `stroll_park` cost 1 hour and granted `+1 Physical, +1
 4. **Lack of Privacy & Public Exposure (Random Events)**:
    - At home, you control your environment. In a public park, you are exposed.
    - Parks should feature dynamic random encounters:
-     - **Positive**: Sunny day / gentle breeze (`+1 Physical`), busker music (`+2 Mental`), finding loose pocket change (`+$5`), friendly dog (`+1 Social`).
+     - **Positive**: Sunny day / gentle breeze (`+1 Physical`), busker music (`+2 Mental`), finding loose pocket change (`` `+$5` ``), friendly dog (`+1 Social`).
      - **Negative**: Sudden downpour (`-1 Physical`, damp clothes), pushy solicitor / panhandler (`-1 Mental`), pickpocket / mugging risk.
-     - **Situational Risk Scaling**: Carrying large amounts of unbanked cash (`>$200`) increases mugging risk, creating a natural game-loop incentive to deposit money before idling in parks.
+     - **Situational Risk Scaling**: Carrying large amounts of unbanked cash (`` `> $200` ``) increases mugging risk, creating a natural game-loop incentive to deposit money before idling in parks.
 5. **Action Restructuring**:
    - Consolidate micro-actions from 1-hour spam into substantive 2-hour or 3-hour commitments:
      - **Park Stroll** (2h or 3h): Refreshing walk, clears head, gives `fresh_air` buff.
@@ -126,39 +126,106 @@ flowchart TD
 
 ## 3. Hospital Actions: Game-First Design
 
-Rather than adding hospital actions solely for narrative flavor or symmetry, every interaction must serve a distinct, non-redundant mechanical role in the game loop:
+Rather than adding hospital actions solely for narrative flavor or symmetry, every interaction serves a distinct, calibrated mechanical role in the game loop:
 
 1. **Walk-in Urgent Clinic (Proactive Stabilization)**:
-   - *Game problem solved*: In the base game, medical treatment only occurs randomly after a catastrophic collapse or starvation.
-   - *Mechanic*: Spend 2 hours and `` `$50` `` (free for hospital employees) to proactively treat ailments, recover `+6 Physical`, and reset physical drop penalties before an emergency strikes.
-2. **Psychiatric Counseling / Therapy (Burnout Treatment)**:
-   - *Game problem solved*: When mental condition drops continuously, resilience and happiness spiral downward. Ordinary sleep cannot rapidly reverse burnout.
-   - *Mechanic*: Spend 2 hours and `` `$60` `` for clinical therapy (`+6 Mental`, clears mental drop streak).
-3. **Emergency Blood Donation (High-Stakes Rescue Cash)**:
-   - *Game problem solved*: When completely broke (`` `$0` ``), unable to afford food or travel, players often enter an unwinnable death spiral.
-   - *Mechanic*: Donate blood: gain `` `$40` `` immediate cash and `+1 Social`, at the cost of `-3 Physical condition` and 2 hours. High risk, desperate relief.
-4. **Hospital Cafeteria (Emergency Low-Cost Meal)**:
-   - Cheap institutional food (`` `$10` ``) available without traveling to a grocery store, providing hunger relief with zero or slight negative happiness.
+   - *Game problem solved*: In the base game, medical treatment only occurs reactively after a catastrophic collapse, exhaustion, or starvation.
+   - *Mechanic*: Spend 6 hours and `` `$80` `` (50% employee discount = `` `$40` `` for Hospital staff).
+     - **Critical (\( \text{Physical} < 20 \))**: Emergency stabilization! Restores `+8` to `+12 Physical` (lifting player to at least `20`), and repairs `+1 Max Physical` if damaged below `65`.
+     - **Worn Down (\( 20 \le \text{Physical} < 35 \))**: Restores `+5 Physical` (superior to low-morale home relax and produces zero mess).
+     - **Healthy (\( \text{Physical} \ge 35 \))**: Restores only `+1 Physical`. Nurse Carla scolds you for clogging the ER over a paper cut.
+2. **Psychiatric Counseling / Therapy (Burnout Treatment & Max Mental)**:
+   - *Game problem solved*: When mental condition or resilience drops, home sleep cannot sustainably raise your cognitive ceiling.
+   - *Mechanic*: Spend 6 hours and `` `$120` `` (50% employee discount = `` `$60` `` for Hospital staff).
+     - Awards **`+1 resilienceBonus`** (permanently expanding `mentalConditionMax` by `+1` across turns) and `+3 current Mental`.
+3. **Emergency Blood Donation (The Desperation Safety Valve)**:
+   - *Game problem solved*: When completely broke (`` `$0` ``), unable to afford food or transit, players face a game-over trap.
+   - *Mechanic*: Spend 2 hours, requires `Physical >= 20`, strictly once per turn.
+     - Payout: **`` `$40` `` cash** immediate payout, `+1 Social`, with a physical cost of `-3 net Physical` (`-4` draw offset by `+1` juice/cookie).
+4. **Hospital Cafeteria (Institutional Convenience Meal)**:
+   - *Game problem solved*: Avoids starving over the weekend if a player works/visits the hospital and lacks a refrigerator or time to travel to grocery stores.
+   - *Mechanic*: Spend 1 hour and `` `$20` `` (staff discount = `` `$12` ``).
+     - Counts as 1 weekly fast food meal (`fastFoodItems` / food sustenance) and grants `+1 Physical`, at the cost of **`-2 Mental`** (bland mystery meat tray).
 5. **Hospital Character / Face**:
-   - Replace default factory welder emoji with `👩‍⚕️` (Triage Nurse Carla) with authentic reception dialogue reacting to player health status.
+   - Triage Nurse Carla (`👩‍⚕️`) with authentic 1990s Sierra-style humorous dialogue dynamically reacting to health, cash, and employment status.
 
 ---
 
-## 4. Coffee Subsystem & The "All-Nighter" / High-Caffeine Mechanics
+## 4. Coffee Subsystem: Exhaustion Masking, Mistake Mitigation, and Grinding Sprints
 
-### Framing & Turn Structure Analysis
-- *The "All-Nighter" Dilemma*: Because turns represent 1 week (Monday–Friday) followed by the Weekend, a single "all-nighter" can feel conceptually disconnected if framed as a 48-hour weekend.
-- **Refined Gameplay Concepts**:
-  - **Concept A: The "Caffeine-Fueled Weekend Sprint" (Weekend Card)**:
-    - If `coffeeCupsThisTurn >= 3`, a special weekend card enters the draw pool:
-      - *Thesis / Cramming Sprint*: Complete 2 free university lesson credits over the weekend.
-      - *Moonlighting Freelance*: Earn `` `$120` `` cash +2 Exp, +2 Dep.
-      - *Creative / Gaming Binge*: `+6 Mental`, `+4 Happiness`, but start Monday with `-2 Physical`.
-  - **Concept B: Mid-Turn "Overdrive / Burning the Midnight Oil" Action**:
-    - High caffeine enables a mid-week push: spend beyond normal weekly hours (e.g. take a shift or study session even with 0 hours remaining, incurring next turn's `caffeineDebt` or physical exhaustion).
-  - **Concept C: Coffee as an Active Replacement for the Lottery**:
-    - Classic lottery tickets at Z-Mart were passive, low-agency coin flips.
-    - Coffee can incorporate a "Cup Scratch-Off / Loyalty Promotion" (e.g. every 5th coffee has a chance to win store credit or cash prizes), blending high-agency stamina management with casual lottery excitement.
+### Pharmacological & Gameplay Rationale
+In Fast Lane, each turn represents a 60-hour workweek followed by the Weekend phase. Competitive career climbing (hospital residency, surgery, university degrees) creates an intense time crunch where players cannot afford 12 hours of domestic recovery every turn.
+As established in neurochemical research (`docs/coffee_research.md`), caffeine does not restore true metabolic energy; it **competitively antagonizes adenosine receptors (\(A_1\) / \(A_{2A}\))**, masking sleep debt (**Process S masking**):
+- **Caffeine does not replace real rest.** Only the first coffee purchased in a turn grants a small ritual comfort boost (`+1 to +2 Physical`, `+2 to +4 Mental`).
+- **Caffeine masks exhaustion and mitigates work mistakes.** It raises *perceived* Physical and Mental condition during work shift mistake checks, allowing players with low actual condition to work high-tier shifts without blunders or demotions.
+- **The Downside (The Wellbeing Sacrifice):** Working while masked continues to drain actual Physical and Mental condition. Over-caffeinating or working while redlined nibbles away at **Max Physical (`physicalConditionMax`) and Max Mental (`resilienceBonus` / `mentalConditionMax`)**, sacrificing the **Wellbeing** victory condition in exchange for rapid Career, Education, and Wealth velocity.
+
+### Minimal State Tracking (Unified Scale, Zero Extra Trackers)
+Both variables use the **exact same unit** (Condition Buffer points):
+1. **`player.caffeineTolerance`** (persistent integer on `PlayerState`, default `0`): Chronic receptor up-regulation carried across turns.
+2. **`player.turnFlags.caffeineIntake`** (turn-scoped integer on `PlayerTurnFlags`, default `0`, reset each turn in `resetCommonTurnState`): Acute caffeine consumed during the current turn.
+
+*(Note: No separate "First Cup" boolean flag is needed because `caffeineIntake === 0` prior to purchase identifies the first purchase of the turn. No "Free Lesson Tracker" is needed because the Cramming Weekend card directly adds progress to `player.enrolledClasses[degreeId]`).*
+
+### Weekly Ration Economics & Retail Items (`on_purchase` in `shoppingEngine.ts`)
+Following Fast Lane's food abstraction (where buying a burger represents a daily meal ration for the week), coffee items represent a **Weekly Daily Ration**:
+- **Drip Coffee Daily Ration** (`drip_coffee`): `` `$25` `` | **`+10 Caffeine`** | 1st purchase of turn: `+1 Physical, +2 Mental` | Social: `0`
+- **Espresso Daily Ration** (`espresso`): `` `$45` `` | **`+18 Caffeine`** | 1st purchase of turn: `+1.5 Physical, +3 Mental` | Social: `0`
+- **Double Shot Daily Ration** (`double_shot`): `` `$70` `` | **`+28 Caffeine`** | 1st purchase of turn: `+2 Physical, +4 Mental` | Social: `0`
+
+### Exact Formulas & Engine Hooks (No "Monday Morning" Ambiguity)
+
+#### Hook 1: Mistake Mitigation Buffer (`jobShiftExecution.ts` & `jobShiftSummary.ts`)
+During any work shift, net caffeine buffer \(B\) offsets low Physical and Mental condition in mistake probability checks:
+\[
+B = \max\left(0, \text{caffeineIntake} - \text{caffeineTolerance}\right)
+\]
+\[
+\text{Effective Physical} = \min\left(\text{physicalConditionMax}, \text{physicalCondition} + B\right)
+\]
+\[
+\text{Effective Mental} = \min\left(\text{mentalConditionMax}, \text{mentalCondition} + B\right)
+\]
+- Mistake probabilities (`physMistakeChance`, `mentalMistakeChance`) use `Effective Physical` and `Effective Mental` against `physMistakeThreshold` and `mentalMistakeThreshold`.
+- Shift stamina costs still deduct from **actual** `physicalCondition` and `mentalCondition`.
+
+#### Hook 2: The Downside — Max Condition Nibble (Wellbeing Cost)
+1. **Acute Overdose Strain (On Purchase in `shoppingEngine.ts`)**:
+   - Safe weekly intake ceiling is **`20` Caffeine** (1 Drip Coffee `10` or 1 Espresso `18` is safe).
+   - If a coffee purchase pushes `caffeineIntake > 20` (e.g. buying a Double Shot `28` or stacking multiple rations in one turn), the player immediately suffers **`-1 Max Physical`** (`physicalConditionMax - 1`) and **`-1 Max Mental`** (`resilienceBonus - 1`, `mentalConditionMax - 1`).
+2. **Redline Burnout (On Work Shift Execution in `jobShiftExecution.ts`)**:
+   - If a player executes a work shift while their pre-shift **actual Physical Condition < 15** (relying on caffeine to push through exhaustion), deduct **`-0.5 Max Physical`** (using the same pattern as Overtime shift max-physical decay).
+   - If pre-shift **actual Mental Condition < 15**, deduct **`-1 Max Mental`** (`resilienceBonus - 1`).
+
+#### Hook 3: Turn-Boundary Half-Life Clearance (`processAdvancedMaintenanceAndDecay` in `maintenanceAndDecayPhase.ts`)
+At the turn boundary (when `processTurnStart` runs):
+\[
+\text{caffeineTolerance}_{\text{next}} = \left\lfloor \frac{\text{caffeineTolerance} + \text{caffeineIntake}}{2} \right\rfloor
+\]
+- **Natural Habituation Treadmill**: Drinking the same dose \(I\) every turn causes `caffeineTolerance` to converge toward \(I\) (\(0 \to 0.5I \to 0.75I \to 0.875I\)), halving the net buffer each turn until the player either escalates their dose into the Overdose zone (`> 20`) or takes a slow recovery turn.
+- **Half-Life Detox**: Taking a coffee-free turn (`caffeineIntake == 0`) halves `caffeineTolerance` each turn (`floor(T / 2)`).
+- **Emergent Crash**: Because `caffeineIntake` resets to `0` at turn start while actual `physicalCondition` and `mentalCondition` remain low from last turn's shifts, the player starts the new turn unmasked and must either rest or buy more coffee before working.
+
+#### Hook 4: High-Caffeine Weekend Sprints (`generateWeekendChoices` & `resolveWeekendChoice` in `weekendEngine.ts`)
+Checked during `processAdvancedMaintenanceAndDecay` using `previousPlayer.turnFlags.caffeineIntake`:
+- **Trigger**: When last turn's net buffer \(B \ge 12\) (or `caffeineIntake >= 18`), one of the 3 offered weekend card slots is guaranteed to be a **High-Caffeine Weekend Sprint** card:
+  1. **Thesis / Cramming Sprint** (`weekend_cramming_sprint`):
+     - *Offered when*: Player has at least one active enrolled course in `player.enrolledClasses`.
+     - *Effect*: Costs `` `$60` `` (capped at player's cash), `-4 Physical condition`, `+2 Mental condition`, and directly adds **1 lesson of progress** (`100 / calcRequiredLessons(...)` %) to their active enrolled course in `player.enrolledClasses` (triggering graduation if it reaches `100%`).
+  2. **Overtime Shift / Professional Grind** (`weekend_overtime_grind`):
+     - *Offered when*: Player is employed (fallback when not enrolled in a course, or 50/50 when both apply).
+     - *Effect*: Costs `` `$50` `` (capped at cash), `-4 Physical condition`, `-2 Mental condition`, and grants **`+1 Experience`**, **`+1 Dependability`**, and **`+0.2 Skill`** (`skillTech` for `technical` jobs, `skillMgmt` for `middle_management` / `executive_management` jobs).
+
+### Helpful GUI & Full Transparency Requirements
+1. **HUD Badge (`dashboardBadges.tsx` & `hudAttributeInfo.ts`)**:
+   - `stat-caffeine` badge shows **`☕ Buf +${B} (Tol ${T})`** (or `☕ Tol ${T}` when `B === 0`).
+   - Clicking opens the Caffeine attribute modal showing: Current Turn Intake (`I`), Current Tolerance (`T`), Net Mistake Buffer (`B = max(0, I - T)`), and Next Turn Projected Tolerance (`floor((T + I) / 2)`).
+2. **Shop Card (`DurableCardModal.tsx`)**:
+   - Displays exact Caffeine added (`+10`, `+18`, `+28`), resulting Net Mistake Buffer (`+B`), 1st-purchase comfort boost status, Overdose warning badge (`⚠️ Intake > 20: -1 Max 💪, -1 Max 🧠`), Weekend Sprint eligibility (`🔥 Unlocks Weekend Sprint`), and Next Turn Tolerance forecast.
+3. **Work Shift Cards & `?` Breakdown Modal (`jobShiftSummary.ts` & `WorkShiftCards.tsx`)**:
+   - Work shift cards display the **buffered** mistake probability (`physMistakeChance`, `mentalMistakeChance`, `totalMistakeChance`).
+   - The `?` strategy breakdown explicitly states the calculation: e.g., `Physical: 18 actual + 12 ☕ buffer = 30 effective (meets threshold ≥ 25 → 0.0% risk; 14.0% without caffeine)`.
+   - Shift cards show a `☕ Shield +B` modifier badge when caffeine is reducing mistake chance, and show `, -0.5 Max 💪` / `, -1 Max 🧠` on `rewardText` + warning badge when pre-shift actual condition is `< 15` (Redline Burnout).
 
 ---
 
@@ -169,4 +236,4 @@ Rather than adding hospital actions solely for narrative flavor or symmetry, eve
 4. **Step 2C**: Education DAG overhaul (Trade School nursing track, Medical School prerequisites).
 5. **Step 2D**: Prune Hospital jobs to 9 tiers.
 6. **Step 3**: Hospital Building Actions & Triage Receptionist.
-7. **Step 4**: High-caffeine weekend sprints and coffee/lottery integration.
+7. **Step 4**: Coffee Subsystem: Weekly rations, mistake buffer formulas, Max Condition burnout, and Weekend Sprint cards.

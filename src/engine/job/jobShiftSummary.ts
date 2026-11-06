@@ -75,6 +75,7 @@ export function calcWorkShiftSummary(
   }
 
   const curPhys = player.physicalCondition ?? 50;
+  const curMental = player.mentalCondition ?? 50;
   const fatigueThreshold = getJobPhysicalFatigueThreshold(job);
   const fatigueMental = curPhys < fatigueThreshold ? 1.0 : 0.0;
   const halfFatigueMental = curPhys < fatigueThreshold ? 0.5 : 0.0;
@@ -112,7 +113,11 @@ export function calcWorkShiftSummary(
 
   const isOvertimeShift = actionCount >= overtimeThreshold;
   const isHeavyGrindShift = actionCount >= grindThreshold && hasJobTag(job, 'heavy_physical');
-  const maxPhysDropText = useConditions && (isOvertimeShift || isHeavyGrindShift) ? ', -0.5 Max 💪' : '';
+  const isCaffeineActive = Boolean(rules?.enableCaffeineSystem && (player.turnFlags?.caffeineIntake || 0) > 0);
+  const isCaffeineRedlinePhys = isCaffeineActive && curPhys < 15;
+  const isCaffeineRedlineMental = isCaffeineActive && curMental < 15;
+  const maxPhysDropText = useConditions && (isOvertimeShift || isHeavyGrindShift || isCaffeineRedlinePhys) ? ', -0.5 Max 💪' : '';
+  const maxMentalDropText = useConditions && isCaffeineRedlineMental ? ', -1 Max 🧠' : '';
 
   const modes: WorkShiftOption[] = [
     {
@@ -123,7 +128,7 @@ export function calcWorkShiftSummary(
       rewardDep: workWorkDepGain,
       rewardExp: workWorkExpGain,
       rewardSocial: socialMod,
-      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}${techGainText}${mgmtGainText}${maxPhysDropText}`,
+      rewardText: `+${workWorkDepGain} 🤝, +${workWorkExpGain} 👌${socialGainText}${techGainText}${mgmtGainText}${maxPhysDropText}${maxMentalDropText}`,
       color: '#2ecc71',
       isDefault: true,
       disabled: false
@@ -207,7 +212,6 @@ export function calcWorkShiftSummary(
   const socialMistakeThreshold = getJobSocialMistakeThreshold(job, statRules);
   const socialMistakeRate = getJobSocialMistakeRate(statRules);
   const isExecJob = hasJobTag(job, 'executive_management');
-  const curMental = player.mentalCondition ?? 50;
 
   const execExpMargin = getExecutiveMistakeExpMargin(statRules);
   const execExpRate = getExecutiveMistakeRate(statRules);
@@ -218,12 +222,18 @@ export function calcWorkShiftSummary(
     ? Math.min(1.0, Math.max(0, (execExpMargin - expMargin) * execExpRate))
     : 0;
 
+  const caffeineBuffer = rules?.enableCaffeineSystem
+    ? Math.max(0, (player.turnFlags?.caffeineIntake || 0) - (player.caffeineTolerance || 0))
+    : 0;
+  const effectivePhys = Math.min(player.physicalConditionMax ?? 50, curPhys + caffeineBuffer);
+  const effectiveMental = Math.min(player.mentalConditionMax ?? 50, curMental + caffeineBuffer);
+
   for (const m of modes) {
-    const physChance = (isAdvanced && m.physCost > 0 && curPhys < physMistakeThreshold)
-      ? Math.min(1.0, Math.max(0, (physMistakeThreshold - curPhys) * physMistakeRate))
+    const physChance = (isAdvanced && m.physCost > 0 && effectivePhys < physMistakeThreshold)
+      ? Math.min(1.0, Math.max(0, (physMistakeThreshold - effectivePhys) * physMistakeRate))
       : 0;
-    const mentalChance = (isAdvanced && (m.mentalCost > 0 || isExecJob) && curMental < mentalMistakeThreshold)
-      ? Math.min(1.0, Math.max(0, (mentalMistakeThreshold - curMental) * mentalMistakeRate * mentalMultiplier))
+    const mentalChance = (isAdvanced && (m.mentalCost > 0 || isExecJob) && effectiveMental < mentalMistakeThreshold)
+      ? Math.min(1.0, Math.max(0, (mentalMistakeThreshold - effectiveMental) * mentalMistakeRate * mentalMultiplier))
       : 0;
     const modifiesSocial = isFrontline ||
                            (m.id === 'look_busy' && lbSocialPenalty > 0) ||
@@ -247,37 +257,47 @@ export function calcWorkShiftSummary(
       const mentalMods: ModifierBreakdownItem[] = [];
       const mistakeBreakdown: MistakeBreakdownItem[] = [];
 
+      const unbufferedPhysRisk = Math.max(0, (physMistakeThreshold - curPhys) * physMistakeRate * 100);
       mistakeBreakdown.push({
         type: 'physical',
         label: 'Physical Fatigue',
         icon: '💪',
-        currentStat: curPhys,
+        currentStat: effectivePhys,
         threshold: physMistakeThreshold,
         ratePerPoint: physMistakeRate,
         chance: physChance,
         isTriggered: physChance > 0,
         explanation: m.physCost === 0
           ? 'No physical effort required for this action.'
-          : (curPhys >= physMistakeThreshold
-              ? `Physical condition (${curPhys}) meets safety threshold (≥ ${physMistakeThreshold}).`
-              : `${(physMistakeThreshold - curPhys).toFixed(1)} pts below threshold (${physMistakeThreshold}) × ${(physMistakeRate * 100).toFixed(1)}%/pt = ${(physChance * 100).toFixed(1)}%`)
+          : (caffeineBuffer > 0
+              ? (effectivePhys >= physMistakeThreshold
+                  ? `Physical: ${curPhys} actual + ${caffeineBuffer} ☕ buffer = ${effectivePhys} effective (meets threshold ≥ ${physMistakeThreshold} → 0.0% risk; ${unbufferedPhysRisk.toFixed(1)}% without caffeine).`
+                  : `Physical: ${curPhys} actual + ${caffeineBuffer} ☕ buffer = ${effectivePhys} effective (${(physMistakeThreshold - effectivePhys).toFixed(1)} pts below threshold ${physMistakeThreshold}) × ${(physMistakeRate * 100).toFixed(1)}%/pt = ${(physChance * 100).toFixed(1)}%`)
+              : (curPhys >= physMistakeThreshold
+                  ? `Physical condition (${curPhys}) meets safety threshold (≥ ${physMistakeThreshold}).`
+                  : `${(physMistakeThreshold - curPhys).toFixed(1)} pts below threshold (${physMistakeThreshold}) × ${(physMistakeRate * 100).toFixed(1)}%/pt = ${(physChance * 100).toFixed(1)}%`))
       });
 
       const effectiveMentalRate = mentalMistakeRate * mentalMultiplier;
+      const unbufferedMentalRisk = Math.max(0, (mentalMistakeThreshold - curMental) * effectiveMentalRate * 100);
       mistakeBreakdown.push({
         type: 'mental',
         label: 'Mental Exhaustion',
         icon: '🧠',
-        currentStat: curMental,
+        currentStat: effectiveMental,
         threshold: mentalMistakeThreshold,
         ratePerPoint: effectiveMentalRate,
         chance: mentalChance,
         isTriggered: mentalChance > 0,
         explanation: (m.mentalCost === 0 && !isExecJob)
           ? 'No mental demand required for this action.'
-          : (curMental >= mentalMistakeThreshold
-              ? `Mental condition (${curMental}) meets safety threshold (≥ ${mentalMistakeThreshold}).`
-              : `${(mentalMistakeThreshold - curMental).toFixed(1)} pts below threshold (${mentalMistakeThreshold}) × ${(effectiveMentalRate * 100).toFixed(1)}%/pt = ${(mentalChance * 100).toFixed(1)}%`)
+          : (caffeineBuffer > 0
+              ? (effectiveMental >= mentalMistakeThreshold
+                  ? `Mental: ${curMental} actual + ${caffeineBuffer} ☕ buffer = ${effectiveMental} effective (meets threshold ≥ ${mentalMistakeThreshold} → 0.0% risk; ${unbufferedMentalRisk.toFixed(1)}% without caffeine).`
+                  : `Mental: ${curMental} actual + ${caffeineBuffer} ☕ buffer = ${effectiveMental} effective (${(mentalMistakeThreshold - effectiveMental).toFixed(1)} pts below threshold ${mentalMistakeThreshold}) × ${(effectiveMentalRate * 100).toFixed(1)}%/pt = ${(mentalChance * 100).toFixed(1)}%`)
+              : (curMental >= mentalMistakeThreshold
+                  ? `Mental condition (${curMental}) meets safety threshold (≥ ${mentalMistakeThreshold}).`
+                  : `${(mentalMistakeThreshold - curMental).toFixed(1)} pts below threshold (${mentalMistakeThreshold}) × ${(effectiveMentalRate * 100).toFixed(1)}%/pt = ${(mentalChance * 100).toFixed(1)}%`))
       });
 
       if (modifiesSocial) {
@@ -711,6 +731,35 @@ export function getWorkShiftModifiers(
       border: 'rgba(192, 132, 252, 0.45)',
       type: 'reward'
     });
+  }
+
+  // 9b. Caffeine Shield & Redline Burnout
+  if (effectiveRules?.enableCaffeineSystem && (player.turnFlags?.caffeineIntake || 0) > 0) {
+    const buf = Math.max(0, (player.turnFlags?.caffeineIntake || 0) - (player.caffeineTolerance || 0));
+    if (buf > 0) {
+      badges.push({
+        key: 'caffeine_shield',
+        label: `☕ Shield +${buf}`,
+        color: '#38bdf8',
+        bg: 'rgba(56, 189, 248, 0.18)',
+        border: 'rgba(56, 189, 248, 0.45)',
+        type: 'reward'
+      });
+    }
+    if (useConditions && (m.id === 'work_work' || m.id === 'show_initiative' || m.id === 'innovate')) {
+      const isRedlinePhys = curPhys < 15;
+      const isRedlineMental = curMental < 15;
+      if (isRedlinePhys || isRedlineMental) {
+        badges.push({
+          key: 'caffeine_redline',
+          label: '⚠️ Redline Burnout',
+          color: '#ef4444',
+          bg: 'rgba(239, 68, 68, 0.22)',
+          border: '#ef4444',
+          type: 'warning'
+        });
+      }
+    }
   }
 
   // 10. Rent Debt Wage Garnishment

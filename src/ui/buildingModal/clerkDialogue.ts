@@ -6,6 +6,7 @@ export function getClerkFace(id: string, archetype: string): string {
   switch (id) {
     case 'burger_palace': return '🧑‍🍳'; // Burger Palace: Cook / Chef
     case 'red_pirate': return '🏴‍☠️'; // Red Pirate: Pirate flag emoji
+    case 'hospital': return '👩‍⚕️'; // Hospital: Nurse Carla
     case 'qt_clothing': return '💁‍♂️'; // QT Clothing: Male clerk (often pink shirt)
     case 'bank': return '👩‍💼'; // Bank: Female in a suit
     case 'z_mart':
@@ -23,6 +24,7 @@ export function getClerkFace(id: string, archetype: string): string {
     case 'park': return '🌳';
     case 'employment': return '👨‍💼';
     case 'workplace': return '👩‍🏭';
+    case 'hospital': return '👩‍⚕️';
     case 'restaurant': return '🧑‍🍳';
     case 'education': return '👨‍🏫';
     case 'discount_and_pawn': return '🧔🏽‍♂️';
@@ -388,6 +390,15 @@ export function computeClerkResponse(
         return t('action.error.notEnoughMoneyRent', { defaultValue: 'You do not have enough cash.' });
       }
     } else if (payload.type === 'renegotiate_rent') {
+      if (mainLog?.key) {
+        return String(t(mainLog.key, { ...(mainLog.params || {}) }));
+      }
+    } else if (
+      payload.type === 'hospital_urgent_care' ||
+      payload.type === 'hospital_therapy' ||
+      payload.type === 'hospital_donate_blood' ||
+      payload.type === 'hospital_cafeteria'
+    ) {
       if (mainLog?.key) {
         return String(t(mainLog.key, { ...(mainLog.params || {}) }));
       }

@@ -337,20 +337,25 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
 
     if (rules.enableCaffeineSystem && rules.helpfulUI) {
       const tol = player.caffeineTolerance ?? 0;
-      const isDanger = tol >= 9;
-      const isWarning = tol >= 6;
+      const intake = player.turnFlags?.caffeineIntake ?? 0;
+      const buf = Math.max(0, intake - tol);
+      const isDanger = intake > 20 || tol >= 9;
+      const isWarning = intake >= 18 || tol >= 6;
       let badgeStatus: string | undefined;
-      if (isDanger) badgeStatus = 'Crash';
-      else if (isWarning) badgeStatus = 'Withdrawal';
+      if (intake > 20) badgeStatus = 'Overdose';
+      else if (buf >= 12) badgeStatus = 'Sprint';
+      else if (buf > 0) badgeStatus = `+${buf} Buf`;
+      else if (tol >= 6) badgeStatus = 'Withdrawal';
       else if (tol >= 3) badgeStatus = 'Fog';
 
       const cafLabel = t('dashboard.caffeine', { defaultValue: 'Caffeine' });
+      const displayVal = buf > 0 ? `+${buf} (${tol} tol)` : `${tol}/10`;
       lifeBadges.push({
         id: 'stat-caffeine',
         label: cafLabel,
-        value: `${tol}/10`,
+        value: displayVal,
         icon: '☕',
-        hoverText: `${cafLabel}: ${tol} / 10`,
+        hoverText: `${cafLabel}: Intake ${intake}, Tolerance ${tol}, Mistake Buffer +${buf}`,
         danger: isDanger,
         warning: isWarning,
         badge: badgeStatus,

@@ -166,6 +166,7 @@ export interface ItemDef {
   units?: number;
   tags?: string[];
   isFixedPrice?: boolean;
+  caffeineUnits?: number;
   effects?: ItemEffect[];
   space?: number;
   description?: string;

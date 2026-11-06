@@ -9,3 +9,4 @@ export * from './housingActions';
 export * from './pawnActions';
 export * from './maintenanceActions';
 export * from './parkActions';
+export * from './hospitalActions';
