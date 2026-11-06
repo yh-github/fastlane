@@ -80,6 +80,7 @@ export const AuthenticBlacksMarket: React.FC<AuthenticBlacksMarketProps> = ({
       const def = campaign.items.find(i => i.id === mItem.id);
       if (def) {
         const invEntry = bld?.inventory?.find(inv => inv.itemId === mItem.id);
+        if (bld?.inventory && !invEntry) continue;
         const basePrice = invEntry?.priceOverride ?? def.basePrice ?? 0;
         const price = calcItemPrice({ ...def, basePrice }, economicIndex);
         map.set(mItem.id, { itemDef: def, price });

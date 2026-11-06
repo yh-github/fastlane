@@ -128,6 +128,42 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(nextP.inventory.freshFoodUnits).toBe(1);
       expect(nextP.turnEvents.some(e => e.key.startsWith('events.foodSpoiled'))).toBe(false);
     });
+
+    it('removes lottery tickets from store inventory in advanced_2000', () => {
+      const blacksMarket = campaign2000.buildings.find(b => b.id === 'blacks_market');
+      expect(blacksMarket).toBeDefined();
+      const hasLottery = blacksMarket?.inventory?.some(inv => inv.itemId === 'lottery_tickets');
+      expect(hasLottery).toBe(false);
+    });
+
+    it('turn transition clears any leftover pendingMiniGame or pendingAppraisalDilemma so next turn is never softlocked', () => {
+      const player = createPlayerState('p1', 'Player 1', 1, 0, 0, createDefaultGoalAllotment(), 'advanced');
+      player.pendingMiniGame = {
+        title: 'Park Encounter',
+        gameType: 'park_encounter',
+        tier: 1,
+        options: []
+      } as any;
+      player.pendingAppraisalDilemma = {
+        itemTitle: 'Appraisal',
+        options: []
+      } as any;
+
+      const state: GameState = {
+        turn: 19,
+        players: [player],
+        economicIndex: 100,
+        rules: campaign2000.config.gameRules,
+        pawnShopItemsForSale: [],
+        rngState: 42,
+        phase: 'playing',
+      };
+
+      const nextState = processTurnStart(state, campaign2000);
+      const nextP = nextState.players[0];
+      expect(nextP.pendingMiniGame).toBeNull();
+      expect(nextP.pendingAppraisalDilemma).toBeNull();
+    });
   });
 
   describe('Coffee Subsystem & Caffeine Tolerance', () => {
@@ -489,21 +525,20 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(orderly.tags).not.toContain('high_downtime');
 
       const nurse = hospitalJobs.find(j => j.id === 'hospital_nurse')!;
-      expect(nurse.baseWage).toBe(18);
+      expect(nurse.baseWage).toBe(15);
       expect(nurse.requirements.degrees).toEqual(['physiology']);
       expect(nurse.tags).toContain('clinical');
 
       const surgeon = hospitalJobs.find(j => j.id === 'hospital_surgeon')!;
-      expect(surgeon.baseWage).toBe(32);
+      expect(surgeon.baseWage).toBe(24);
       expect(surgeon.requirements.degrees).toEqual(['medical_school']);
-      expect(surgeon.requirements.techSkill).toBe(5.0);
       expect(surgeon.tags).toContain('clinical');
       expect(surgeon.tags).toContain('technical');
 
       const chief = hospitalJobs.find(j => j.id === 'hospital_director')!;
-      expect(chief.baseWage).toBe(36);
-      expect(chief.requirements.degrees).toEqual(['medical_school', 'business_admin']);
-      expect(chief.requirements.mgmtSkill).toBe(5.0);
+      expect(chief.baseWage).toBe(25);
+      expect(chief.requirements.degrees).toEqual(['medical_school']);
+      expect(chief.requirements.mgmtSkill).toBe(2.5);
       expect(chief.tags).toContain('executive_management');
       expect(chief.tags).toContain('clinical');
     });
@@ -517,17 +552,17 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(broker.requirements.uniform).toBe('business');
 
       const zmartClerk = campaign2000.jobs.find(j => j.id === 'zmart_clerk')!;
-      expect(zmartClerk.baseWage).toBe(5);
+      expect(zmartClerk.baseWage).toBe(4);
       expect(zmartClerk.requirements.experience).toBe(10);
       expect(zmartClerk.requirements.dependability).toBe(10);
 
       const zmartMgr = campaign2000.jobs.find(j => j.id === 'zmart_mgr')!;
-      expect(zmartMgr.baseWage).toBe(8);
+      expect(zmartMgr.baseWage).toBe(7);
       expect(zmartMgr.requirements.experience).toBe(30);
       expect(zmartMgr.requirements.dependability).toBe(30);
 
       const uniLab = campaign2000.jobs.find(j => j.id === 'uni_lab_assistant')!;
-      expect(uniLab.baseWage).toBe(10);
+      expect(uniLab.baseWage).toBe(8);
       expect(uniLab.requirements.degrees).toEqual(['biochemistry']);
       expect(uniLab.tags).toContain('technical');
     });

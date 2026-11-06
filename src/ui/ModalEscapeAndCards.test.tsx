@@ -234,6 +234,40 @@ describe('Modal Escape and Card Popups', () => {
     expect(unownedImg).toHaveClass('durable-card-item__img');
   });
 
+  it('places crt_tv and plasma_tv into the standard TV slot instead of extra slots in ApartmentFurnishings', () => {
+    const playerWithCrt = {
+      ...mockPlayer,
+      inventory: {
+        ...mockPlayer.inventory,
+        appliances: [{ id: 'crt_tv', condition: 'new', isBroken: false }]
+      }
+    };
+    const campaignWithCrt: CampaignBundle = {
+      ...mockCampaign,
+      items: [
+        { id: 'crt_tv', name: 'CRT Color TV', category: 'appliance', basePrice: 400 },
+        { id: 'plasma_tv', name: 'Plasma TV', category: 'appliance', basePrice: 1200 }
+      ]
+    } as any;
+
+    render(
+      <ApartmentFurnishings
+        player={playerWithCrt as any}
+        campaign={campaignWithCrt}
+        rules={baseRules}
+        onInspectDurable={vi.fn()}
+      />
+    );
+
+    // crt_tv is owned and occupies the TV slot
+    expect(screen.getByTestId('durable-card-crt_tv')).toBeInTheDocument();
+    // Does NOT render an extra unowned durable-card-tv slot
+    expect(screen.queryByTestId('durable-card-tv')).not.toBeInTheDocument();
+    // CRT image maps to color_tv.png
+    const img = screen.getByAltText('CRT Color TV') as HTMLImageElement;
+    expect(img.src).toContain('/assets/raw_images/color_tv.png');
+  });
+
   it('displays real space fallback, clear gameplay mechanics, and one-time badges in DurableCardModal', () => {
     const handleClose = vi.fn();
     const campaignWithoutItemSpace: CampaignBundle = {

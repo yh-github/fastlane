@@ -2642,7 +2642,7 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
     "clothingDecaysAll": false,
     "conditionResolution": 0.5,
     "delayBookSetCredit": false,
-    "delayRobberyFoodSpoilage": false,
+    "delayRobberyFoodSpoilage": true,
     "depthScaledDegreeBonus": true,
     "dynamicSkillCaps": true,
     "economicUpsideBonus": true,

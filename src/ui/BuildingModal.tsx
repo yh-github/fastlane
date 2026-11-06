@@ -89,6 +89,13 @@ export function BuildingModal({
   const [educationTab, setEducationTab] = useState<'available' | 'tree'>('available');
   const [bankTab, setBankTab] = useState<'banking' | 'stocks' | 'loans'>('banking');
   const [isWorkDeckOpen, setIsWorkDeckOpen] = useState(false);
+
+  const hasPendingMiniGame = !!(player?.pendingMiniGame || player?.pendingAppraisalDilemma);
+
+  const safeClose = useCallback(() => {
+    if (hasPendingMiniGame) return;
+    onClose();
+  }, [hasPendingMiniGame, onClose]);
   const [selectedWorkMode, setSelectedWorkMode] = useState<import('../engine/jobEngine').WorkMode>(() => {
     try {
       const saved = sessionStorage.getItem('fastlane_selected_work_mode');
@@ -127,6 +134,10 @@ export function BuildingModal({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (hasPendingMiniGame) {
+          e.stopImmediatePropagation();
+          return;
+        }
         if (isBreakInModalOpen) {
           e.stopImmediatePropagation();
           setIsBreakInModalOpen(false);
@@ -141,7 +152,7 @@ export function BuildingModal({
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isBreakInModalOpen, isPantryModalOpen]);
+  }, [hasPendingMiniGame, isBreakInModalOpen, isPantryModalOpen]);
 
   // Helper to pick random string if translation is an array
   const getRandomMessage = useCallback((key: string, defaultValue: string) => {
@@ -262,7 +273,6 @@ export function BuildingModal({
   const workConsoleStyle = rules?.workConsoleStyle || 'popup';
 
   const itemsHere = getAvailableItemsForBuilding(building, campaign, turn, player.id, gameSeed);
-  const hasPendingMiniGame = !!(player?.pendingMiniGame || player?.pendingAppraisalDilemma);
 
   const handleActionIntercept = async (payload: any) => {
     if (hasPendingMiniGame && payload.type !== 'resolve_appraisal_dilemma' && payload.type !== 'resolve_mini_game') {
@@ -538,36 +548,46 @@ export function BuildingModal({
               <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted, #666)' }}>
                 {building.description || 'A pleasant green space to relax outdoors, condition your fitness, and meet the community.'}
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-                <button
-                  type="button"
-                  className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 3}
-                  onClick={() => handleActionIntercept({ type: 'relax_park' })}
-                  title={t('park.relaxDesc', rules?.usePhysicalMentalConditions ? 'Spend peaceful time relaxing outdoors (⏳ -3h • Free • +2 💪 • +2 🧠 • Encounters)' : 'Spend peaceful time relaxing outdoors (⏳ -3h • +2 😊 • +2 🛌)')}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
-                >
-                  <span style={{ fontSize: '20px' }}>🌳</span>
-                  <strong>{t('park.relax', 'Relax in Park')}</strong>
-                  <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                    {rules?.usePhysicalMentalConditions ? '⏳ -3h • +2 💪 • +2 🧠 • Free' : '⏳ -3h • +2 😊 • +2 🛌'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 3 || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) < 15)}
-                  onClick={() => handleActionIntercept({ type: 'workout_park' })}
-                  title={t('park.workoutDesc', rules?.usePhysicalMentalConditions ? 'Fitness & cardiovascular conditioning (⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠)' : 'Fitness workout (⏳ -3h • +2 🛌 • -1 😊)')}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
-                >
-                  <span style={{ fontSize: '20px' }}>🏃</span>
-                  <strong>{t('park.workout', 'Workout in Park')}</strong>
-                  <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                    {rules?.usePhysicalMentalConditions ? '⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠' : '⏳ -3h • +2 🛌 • -1 😊'}
-                  </span>
-                </button>
-              </div>
+              {(() => {
+                const allowPartialPark = Boolean(rules?.allowPartialHours || rules?.proportionalDivisibleActions);
+                const actualHours = allowPartialPark ? Math.min(3, player.hoursRemaining) : 3;
+                const hoursLabel = `⏳ -${formatHours(actualHours > 0 ? actualHours : 3)}h`;
+                const isRelaxDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3);
+                const isWorkoutDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3) || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) < 15);
+
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                    <button
+                      type="button"
+                      className="game-button btn-secondary"
+                      disabled={isRelaxDisabled}
+                      onClick={() => handleActionIntercept({ type: 'relax_park' })}
+                      title={t('park.relaxDesc', rules?.usePhysicalMentalConditions ? `Spend peaceful time relaxing outdoors (${hoursLabel} • Free • +2 💪 • +2 🧠 • Encounters)` : `Spend peaceful time relaxing outdoors (${hoursLabel} • +2 😊 • +2 🛌)`)}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
+                    >
+                      <span style={{ fontSize: '20px' }}>🌳</span>
+                      <strong>{t('park.relax', 'Relax in Park')}</strong>
+                      <span style={{ fontSize: '11px', opacity: 0.85 }}>
+                        {rules?.usePhysicalMentalConditions ? `${hoursLabel} • +2 💪 • +2 🧠 • Free` : `${hoursLabel} • +2 😊 • +2 🛌`}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="game-button btn-secondary"
+                      disabled={isWorkoutDisabled}
+                      onClick={() => handleActionIntercept({ type: 'workout_park' })}
+                      title={t('park.workoutDesc', rules?.usePhysicalMentalConditions ? `Fitness & cardiovascular conditioning (${hoursLabel} • +1 Max 💪 • -1 💪 • +1 🧠)` : `Fitness workout (${hoursLabel} • +2 🛌 • -1 😊)`)}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
+                    >
+                      <span style={{ fontSize: '20px' }}>🏃</span>
+                      <strong>{t('park.workout', 'Workout in Park')}</strong>
+                      <span style={{ fontSize: '11px', opacity: 0.85 }}>
+                        {rules?.usePhysicalMentalConditions ? `${hoursLabel} • +1 Max 💪 • -1 💪 • +1 🧠` : `${hoursLabel} • +2 🛌 • -1 😊`}
+                      </span>
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </>
@@ -721,7 +741,7 @@ export function BuildingModal({
         <AuthenticMonolithBurgers
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
@@ -730,7 +750,7 @@ export function BuildingModal({
         <AuthenticBroker
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           onReturn={() => setBankTab('banking')}
           campaign={campaign}
           turn={turn}
@@ -742,7 +762,7 @@ export function BuildingModal({
         <AuthenticBank
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           turn={turn}
           economicIndex={economicIndex}
@@ -756,7 +776,7 @@ export function BuildingModal({
         <AuthenticBlacksMarket
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
@@ -765,7 +785,7 @@ export function BuildingModal({
         <AuthenticQtClothing
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
@@ -774,7 +794,7 @@ export function BuildingModal({
         <AuthenticSocketCity
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
@@ -783,7 +803,7 @@ export function BuildingModal({
         <AuthenticZMart
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
@@ -794,7 +814,7 @@ export function BuildingModal({
         <AuthenticPawnShop
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
@@ -804,7 +824,7 @@ export function BuildingModal({
         <AuthenticUniversity
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
@@ -813,7 +833,7 @@ export function BuildingModal({
         <AuthenticEmploymentOffice
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           economicIndex={economicIndex}
           rules={rules}
@@ -822,7 +842,7 @@ export function BuildingModal({
         <AuthenticFactory
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           rules={rules}
         />
@@ -830,7 +850,7 @@ export function BuildingModal({
         <AuthenticRentOffice
           player={player}
           onAction={handleActionIntercept}
-          onClose={onClose}
+          onClose={safeClose}
           campaign={campaign}
           rules={rules}
           turn={turn}
@@ -841,7 +861,7 @@ export function BuildingModal({
           <AuthenticHome
             player={player}
             onAction={handleActionIntercept}
-            onClose={onClose}
+            onClose={safeClose}
             campaign={campaign}
             building={building}
           />
@@ -849,7 +869,7 @@ export function BuildingModal({
           <div className="interaction-panel" data-testid="home-dont-live-here-panel">
             <h3>{t(`building.${building.id}`, { defaultValue: building.name })}</h3>
             <p style={{ fontSize: '12px' }}>{t('buildingModal.dontLiveHere', "You don't live here.")}</p>
-            <button onClick={onClose} style={{ marginTop: '12px' }}>{t('common.close', { defaultValue: 'Close' })}</button>
+            <button onClick={safeClose} style={{ marginTop: '12px' }}>{t('common.close', { defaultValue: 'Close' })}</button>
           </div>
         )
       ) : (
@@ -913,7 +933,7 @@ export function BuildingModal({
       )}
 
       {!hasPendingMiniGame && (
-        <button className="building-modal__close" onClick={onClose}>&times;</button>
+        <button className="building-modal__close" onClick={safeClose}>&times;</button>
       )}
       
       <div 

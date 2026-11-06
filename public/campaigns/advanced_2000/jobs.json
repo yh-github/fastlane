@@ -3,7 +3,7 @@
     "id": "pirate_cook",
     "title": "Deckhand Cook",
     "locationId": "red_pirate",
-    "baseWage": 6,
+    "baseWage": 5,
     "requirements": {
       "experience": 10,
       "dependability": 10,
@@ -20,7 +20,7 @@
     "id": "pirate_clerk",
     "title": "Counter Swashbuckler",
     "locationId": "red_pirate",
-    "baseWage": 7,
+    "baseWage": 6,
     "requirements": {
       "experience": 15,
       "dependability": 20,
@@ -37,7 +37,7 @@
     "id": "pirate_arcade_tech",
     "title": "Arcade Cabinet Technician",
     "locationId": "red_pirate",
-    "baseWage": 12,
+    "baseWage": 11,
     "requirements": {
       "experience": 25,
       "dependability": 25,
@@ -57,7 +57,7 @@
     "id": "pirate_asst_mgr",
     "title": "First Mate",
     "locationId": "red_pirate",
-    "baseWage": 10,
+    "baseWage": 8,
     "requirements": {
       "experience": 25,
       "dependability": 35,
@@ -74,7 +74,7 @@
     "id": "pirate_mgr",
     "title": "The Captain",
     "locationId": "red_pirate",
-    "baseWage": 15,
+    "baseWage": 12,
     "requirements": {
       "experience": 40,
       "dependability": 50,
@@ -115,7 +115,7 @@
       "experience": 20,
       "dependability": 25,
       "degrees": [
-        "junior_college"
+        "life_sciences"
       ],
       "uniform": "casual"
     },
@@ -128,14 +128,14 @@
     "id": "hospital_biomed_tech",
     "title": "Biomedical IT Technician",
     "locationId": "hospital",
-    "baseWage": 14,
+    "baseWage": 12,
     "requirements": {
       "experience": 30,
       "dependability": 30,
       "degrees": [
         "electronics"
       ],
-      "techSkill": 3,
+      "techSkill": 2,
       "uniform": "casual"
     },
     "tags": [
@@ -147,10 +147,10 @@
     "id": "hospital_nurse",
     "title": "Staff Nurse (RN)",
     "locationId": "hospital",
-    "baseWage": 18,
+    "baseWage": 15,
     "requirements": {
-      "experience": 40,
-      "dependability": 45,
+      "experience": 35,
+      "dependability": 40,
       "degrees": [
         "physiology"
       ],
@@ -166,15 +166,14 @@
     "id": "hospital_head_nurse",
     "title": "Nursing Supervisor",
     "locationId": "hospital",
-    "baseWage": 22,
+    "baseWage": 18,
     "requirements": {
-      "experience": 50,
-      "dependability": 55,
+      "experience": 45,
+      "dependability": 50,
       "degrees": [
-        "physiology",
-        "junior_college"
+        "physiology"
       ],
-      "mgmtSkill": 2,
+      "mgmtSkill": 1.5,
       "uniform": "dress"
     },
     "tags": [
@@ -187,10 +186,10 @@
     "id": "hospital_resident",
     "title": "Resident Physician",
     "locationId": "hospital",
-    "baseWage": 20,
+    "baseWage": 16,
     "requirements": {
-      "experience": 55,
-      "dependability": 60,
+      "experience": 50,
+      "dependability": 55,
       "degrees": [
         "medical_school"
       ],
@@ -205,13 +204,12 @@
     "id": "hospital_physician",
     "title": "Attending Physician",
     "locationId": "hospital",
-    "baseWage": 27,
+    "baseWage": 21,
     "requirements": {
       "experience": 65,
-      "dependability": 70,
+      "dependability": 65,
       "degrees": [
-        "medical_school",
-        "academic"
+        "medical_school"
       ],
       "uniform": "business"
     },
@@ -224,14 +222,13 @@
     "id": "hospital_surgeon",
     "title": "Attending Surgeon",
     "locationId": "hospital",
-    "baseWage": 32,
+    "baseWage": 24,
     "requirements": {
       "experience": 75,
       "dependability": 75,
       "degrees": [
         "medical_school"
       ],
-      "techSkill": 5,
       "uniform": "casual"
     },
     "tags": [
@@ -244,15 +241,14 @@
     "id": "hospital_director",
     "title": "Chief of Medicine / Medical Director",
     "locationId": "hospital",
-    "baseWage": 36,
+    "baseWage": 25,
     "requirements": {
       "experience": 80,
-      "dependability": 85,
+      "dependability": 80,
       "degrees": [
-        "medical_school",
-        "business_admin"
+        "medical_school"
       ],
-      "mgmtSkill": 5,
+      "mgmtSkill": 2.5,
       "uniform": "business"
     },
     "tags": [
@@ -265,7 +261,7 @@
     "id": "zmart_clerk",
     "title": "Clerk",
     "locationId": "z_mart",
-    "baseWage": 5,
+    "baseWage": 4,
     "requirements": {
       "experience": 10,
       "dependability": 10,
@@ -281,7 +277,7 @@
     "id": "zmart_asst_mgr",
     "title": "Assistant Manager",
     "locationId": "z_mart",
-    "baseWage": 7,
+    "baseWage": 6,
     "requirements": {
       "experience": 20,
       "dependability": 20,
@@ -297,7 +293,7 @@
     "id": "zmart_mgr",
     "title": "Manager",
     "locationId": "z_mart",
-    "baseWage": 8,
+    "baseWage": 7,
     "requirements": {
       "experience": 30,
       "dependability": 30,
@@ -315,7 +311,7 @@
     "id": "qt_salesperson",
     "title": "Salesperson",
     "locationId": "qt_clothing",
-    "baseWage": 8,
+    "baseWage": 7,
     "requirements": {
       "experience": 30,
       "dependability": 30,
@@ -368,7 +364,7 @@
     "id": "socket_salesperson",
     "title": "Salesperson",
     "locationId": "socket_city",
-    "baseWage": 7,
+    "baseWage": 5,
     "requirements": {
       "experience": 30,
       "dependability": 30,
@@ -425,7 +421,7 @@
     "id": "uni_janitor",
     "title": "Janitor",
     "locationId": "university",
-    "baseWage": 5,
+    "baseWage": 4,
     "requirements": {
       "experience": 10,
       "dependability": 10,
@@ -475,7 +471,7 @@
     "id": "uni_lab_assistant",
     "title": "Lab Research Assistant",
     "locationId": "university",
-    "baseWage": 10,
+    "baseWage": 8,
     "requirements": {
       "experience": 25,
       "dependability": 25,
@@ -566,7 +562,7 @@
     "id": "blacks_janitor",
     "title": "Janitor",
     "locationId": "blacks_market",
-    "baseWage": 6,
+    "baseWage": 5,
     "requirements": {
       "experience": 10,
       "dependability": 10,
@@ -653,7 +649,7 @@
     "id": "rent_groundskeeper",
     "title": "Groundskeeper",
     "locationId": "apartment_complex",
-    "baseWage": 7,
+    "baseWage": 6,
     "requirements": {
       "experience": 10,
       "dependability": 20,
@@ -669,7 +665,7 @@
     "id": "rent_mgr",
     "title": "Apartment Manager",
     "locationId": "apartment_complex",
-    "baseWage": 9,
+    "baseWage": 8,
     "requirements": {
       "experience": 30,
       "dependability": 30,

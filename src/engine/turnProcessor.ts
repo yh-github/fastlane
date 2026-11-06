@@ -84,6 +84,14 @@ function finalizePlayerControlAndPosition(
   const housing = campaign.housing.find(h => h.id === p.currentHousingId);
   p.position = housing?.homeNodeId || (p.currentHousingId === 'security' || p.currentHousingId === 'penthouse' ? 'node_security' : 'node_low_cost');
 
+  // Clear any unhandled mini-game or appraisal dilemma so it never bleeds into or locks the next turn
+  if (p.pendingMiniGame) {
+    p.pendingMiniGame = null;
+  }
+  if (p.pendingAppraisalDilemma) {
+    p.pendingAppraisalDilemma = null;
+  }
+
   return p;
 }
 

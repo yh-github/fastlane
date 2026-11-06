@@ -42,7 +42,7 @@ export const AuthenticHome: React.FC<AuthenticHomeProps> = ({
   }, []);
 
   const hasAppliance = (id: string) => player.inventory?.appliances?.some(a => a.id === id);
-  const hasTv = hasAppliance('color_tv') || hasAppliance('bw_tv');
+  const hasTv = hasAppliance('color_tv') || hasAppliance('bw_tv') || hasAppliance('crt_tv') || hasAppliance('plasma_tv');
   const hasVcr = hasAppliance('vcr');
   const hasStereo = hasAppliance('stereo');
   const hasBooks = (player.inventory?.books?.length ?? 0) > 0;

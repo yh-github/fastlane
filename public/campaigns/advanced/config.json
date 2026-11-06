@@ -43,6 +43,7 @@
     "turnStartAtHome": true,
     "trackMess": true,
     "trackSocial": true,
+    "delayRobberyFoodSpoilage": true,
     "maskEarlyJobRejections": false,
     "percentageEducation": true,
     "depthScaledDegreeBonus": true,
