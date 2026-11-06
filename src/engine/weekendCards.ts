@@ -374,14 +374,13 @@ export function buildCardFromId(
       };
     }
 
-    const stats: ('mental' | 'social' | 'dependability' | 'physical')[] = ['mental', 'social', 'dependability', 'physical'];
+    const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
     const targetStat = stats[Math.floor(rng.next() * stats.length)];
-    const iconMap = { mental: '🧠', social: '👥', dependability: '🤝', physical: '💪' };
+    const iconMap = { mental: '🧠', social: '👥', dependability: '🤝' };
     const typeMap: Record<string, WeekendCardType> = {
       mental: 'culture',
       social: 'social',
-      dependability: 'career',
-      physical: 'sports'
+      dependability: 'career'
     };
     const cardType: WeekendCardType = typeMap[targetStat] || 'culture';
 
