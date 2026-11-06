@@ -34,15 +34,15 @@
       },
       {
         "itemId": "drip_coffee",
-        "priceOverride": 5
+        "priceOverride": 25
       },
       {
         "itemId": "espresso",
-        "priceOverride": 8
+        "priceOverride": 45
       },
       {
         "itemId": "double_shot",
-        "priceOverride": 12
+        "priceOverride": 70
       }
     ]
   },
@@ -294,7 +294,7 @@
       },
       {
         "itemId": "drip_coffee",
-        "priceOverride": 5
+        "priceOverride": 25
       }
     ]
   },

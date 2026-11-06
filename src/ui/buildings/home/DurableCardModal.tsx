@@ -168,9 +168,10 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     ownershipDetailText = isOwned ? `✓ Owned (${weeks} wks left)` : t('storeFront.notOwned', { defaultValue: 'Not Owned' });
   } else if (isCoffee) {
     const cups = player?.turnFlags?.coffeeCupsThisTurn || 0;
+    const intake = player?.turnFlags?.caffeineIntake || 0;
     isOwned = false;
     ownedCount = cups;
-    ownershipDetailText = cups > 0 ? `☕ Consumed this turn: ${cups} cup${cups > 1 ? 's' : ''}` : '☕ Consumed immediately';
+    ownershipDetailText = intake > 0 ? `☕ Intake this week: ${intake} (${cups} ration${cups > 1 ? 's' : ''})` : '☕ Consumed immediately';
   } else if (itemDef?.category === 'food') {
     if (itemDef.subcategory === 'fast_food') {
       ownedCount = player?.inventory.fastFoodItems.filter(f => f.itemId === itemId).length || 0;
@@ -317,36 +318,36 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   }
 
   if (isCoffee) {
-    effectBadges.push({ label: '⚡ Rapid Stamina & Mental Focus' });
+    const itemCaffeine = itemDef?.caffeineUnits ?? (itemId === 'double_shot' ? 28 : (itemId === 'espresso' ? 18 : 10));
+    effectBadges.push({ label: `☕ +${itemCaffeine} Caffeine Weekly Ration` });
+
+    const intake = player?.turnFlags?.caffeineIntake ?? 0;
+    const isFirstCoffee = intake === 0;
+    if (isFirstCoffee) {
+      const physBonus = itemId === 'double_shot' ? '+2' : (itemId === 'espresso' ? '+1.5' : '+1');
+      const mentBonus = itemId === 'double_shot' ? '+4' : (itemId === 'espresso' ? '+3' : '+2');
+      effectBadges.push({ label: `🎁 1st Purchase: ${physBonus} 💪, ${mentBonus} 🧠 Comfort Boost`, isOneTime: true });
+    } else {
+      effectBadges.push({ label: '☕ Comfort boost already claimed this week' });
+    }
+
     if (rules?.enableCaffeineSystem) {
       const tol = player?.caffeineTolerance || 0;
-      const cups = player?.turnFlags?.coffeeCupsThisTurn || 0;
+      const curBuf = Math.max(0, intake - tol);
+      const newIntake = intake + itemCaffeine;
+      const newBuf = Math.max(0, newIntake - tol);
+      const nextTol = Math.floor((tol + newIntake) / 2);
 
       if (rules?.helpfulUI) {
-        let tolBadge = `☕ Tolerance: ${tol}/10`;
-        if (tol >= 9) tolBadge += ' (Severe Crash • 50% 🧠 / 40% 💪 potency)';
-        else if (tol >= 6) tolBadge += ' (Withdrawal • 75% 🧠 / 70% 💪 potency)';
-        else if (tol >= 3) tolBadge += ' (Morning Fog • Full potency)';
-        else tolBadge += ' (Clean • Full potency)';
-        effectBadges.push({ label: tolBadge });
+        effectBadges.push({ label: `🛡️ Mistake Buffer: +${curBuf} → +${newBuf}` });
 
-        if (cups === 0) {
-          effectBadges.push({ label: '☕ 0 cups this turn: Detox (-2 tol next turn)' });
-        } else if (cups === 1) {
-          effectBadges.push({ label: '☕ 1 cup this turn: Maintains tolerance' });
-        } else if (cups === 2) {
-          effectBadges.push({ label: '☕ 2 cups this turn: Builds habit (+1 tol next turn)' });
-        } else {
-          effectBadges.push({ label: `☕ ${cups} cups this turn: Heavy habit (+2 tol next turn)` });
+        if (newIntake > 20) {
+          effectBadges.push({ label: '⚠️ Overdose (>20 ☕): -1 Max 💪, -1 Max 🧠 on buy' });
+        } else if (newIntake >= 18 || newBuf >= 12) {
+          effectBadges.push({ label: '🔥 Unlocks Weekend Sprint Card' });
         }
 
-        if (tol >= 9) {
-          effectBadges.push({ label: '⚠️ Next Turn: -3 💪, -3 🧠, -1 Max 💪' });
-        } else if (tol >= 6) {
-          effectBadges.push({ label: '⚠️ Next Turn: -2 💪, -2 🧠' });
-        } else if (tol >= 3) {
-          effectBadges.push({ label: '⚠️ Next Turn: -1 💪 (Morning fog)' });
-        }
+        effectBadges.push({ label: `📉 Next Turn Tolerance: ${tol} → ${nextTol}` });
       } else if (tol > 0) {
         effectBadges.push({ label: `☕ Tolerance: ${tol}/10` });
       }

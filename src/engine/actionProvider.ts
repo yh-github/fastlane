@@ -216,6 +216,30 @@ export function getAvailableActions(
         action: { type: 'play_arcade' }
       });
     }
+
+    // Hospital Archetype / Building
+    if (bDef?.id === 'hospital' || bDef?.archetype === 'hospital') {
+      options.push({
+        label: helpful ? 'Walk-in Urgent Care (-6h, Proactive Emergency Stabilization)' : 'Walk-in Urgent Care',
+        action: { type: 'hospital_urgent_care' }
+      });
+      options.push({
+        label: helpful ? 'Psychiatric Counseling (-6h, +1 Max Mental, +3 Mental)' : 'Psychiatric Counseling',
+        action: { type: 'hospital_therapy' }
+      });
+      if (!player.turnFlags?.donatedBloodThisTurn) {
+        options.push({
+          label: helpful ? 'Donate Blood (-2h, -$3 Phys, +$40 Cash, +1 Social)' : 'Donate Blood',
+          action: { type: 'hospital_donate_blood' }
+        });
+      }
+      if (!player.turnFlags?.ateHospitalCafeteriaThisTurn) {
+        options.push({
+          label: helpful ? 'Hospital Cafeteria Meal (-1h, Weekly Food, +1 Phys, -2 Mental)' : 'Hospital Cafeteria Meal',
+          action: { type: 'hospital_cafeteria' }
+        });
+      }
+    }
   } else {
     // If outside
     if (currentNode?.buildingId) {

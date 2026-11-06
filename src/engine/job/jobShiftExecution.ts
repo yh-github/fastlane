@@ -407,6 +407,24 @@ export function workShift(
           updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition);
         }
       }
+
+      if (rules?.enableCaffeineSystem && ((player.turnFlags?.caffeineIntake || 0) > 0)) {
+        if (oldPhys < 15) {
+          const minMaxPhys = advStatRules.minMaxPhysical;
+          const curMaxPhys = updated.physicalConditionMax ?? advStatRules.initialPhysicalMax;
+          const newMaxPhys = Math.max(minMaxPhys, roundToResolution(curMaxPhys - 0.5, 0.5));
+          if (newMaxPhys < curMaxPhys) {
+            maxPhysDrop = roundToResolution(curMaxPhys - newMaxPhys, 0.5);
+            updated.physicalConditionMax = newMaxPhys;
+            updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition);
+          }
+        }
+        if (oldMental < 15) {
+          updated.resilienceBonus = (updated.resilienceBonus || 0) - 1;
+          updated.mentalConditionMax = Math.max(10, (updated.mentalConditionMax || 50) - 1);
+          updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition);
+        }
+      }
     }
   }
 
@@ -428,19 +446,25 @@ export function workShift(
   let execMistake = false;
 
   if (useConditions) {
+    const caffeineBuffer = rules?.enableCaffeineSystem
+      ? Math.max(0, (player.turnFlags?.caffeineIntake || 0) - (player.caffeineTolerance || 0))
+      : 0;
+    const effectivePhys = Math.min(updated.physicalConditionMax ?? 50, oldPhys + caffeineBuffer);
+    const effectiveMental = Math.min(updated.mentalConditionMax ?? 50, oldMental + caffeineBuffer);
+
     const physMistakeThreshold = getJobPhysicalMistakeThreshold(job, statRules);
     const physMistakeRate = getJobPhysicalMistakeRate(statRules);
-    if (physicalCost > 0 && oldPhys < physMistakeThreshold) {
-      const physChance = (physMistakeThreshold - oldPhys) * physMistakeRate;
+    if (physicalCost > 0 && effectivePhys < physMistakeThreshold) {
+      const physChance = (physMistakeThreshold - effectivePhys) * physMistakeRate;
       physMistake = resolveDecision(replay, `work_phys_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < physChance);
     }
 
     const mentalMistakeThreshold = getJobMentalMistakeThreshold(job, statRules);
     const mentalMistakeRate = getJobMentalMistakeRate(statRules);
     const isExecMgmt = hasJobTag(job, 'executive_management');
-    if ((mentalCost > 0 || isExecMgmt) && oldMental < mentalMistakeThreshold) {
+    if ((mentalCost > 0 || isExecMgmt) && effectiveMental < mentalMistakeThreshold) {
       const mentalMultiplier = hasJobTag(job, 'heavy_physical') ? 0.5 : 1.0;
-      const mentalChance = (mentalMistakeThreshold - oldMental) * mentalMistakeRate * mentalMultiplier;
+      const mentalChance = (mentalMistakeThreshold - effectiveMental) * mentalMistakeRate * mentalMultiplier;
       mentalMistake = resolveDecision(replay, `work_mental_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < mentalChance);
     }
   }

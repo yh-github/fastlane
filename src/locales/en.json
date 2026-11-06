@@ -220,6 +220,18 @@
       "mustPayFirst": "You must pay rent at least once at your current rate before you can renegotiate.",
       "renegotiateMistake": "You made a {{type}} blunder during lease renegotiation! Landlord refused to discuss terms."
     },
+    "hospital": {
+      "urgentCareCritical": "Emergency resuscitation complete! The medical team administered IV fluids and stabilized your condition (+{{gain}} Physical).",
+      "urgentCareModerate": "Restorative medical treatment completed. Prescriptions and medical rest stabilized your body (+{{gain}} Physical).",
+      "urgentCareHealthy": "Nurse Carla hands you an ice pack: 'Stop wasting emergency room time with minor paper cuts!' (+{{gain}} Physical).",
+      "urgentCareSuccess": "Medical care completed (+{{gain}} Physical).",
+      "therapySuccess": "Psychiatric counseling session complete. You unpacked cognitive stressors, permanently expanding mental resilience (+1 Max Mental, +{{gain}} Mental).",
+      "bloodDonationSuccess": "Blood donation complete. You received ${{reward}} in cash and a complimentary juice box (-3 Physical, +1 Social).",
+      "cafeteriaSuccess": "You ate the cafeteria daily mystery meat special. It filled your belly for the week, but left your spirit dimmed (+1 Physical, -2 Mental).",
+      "alreadyDonatedBlood": "You have already donated blood this turn. You must wait a week before giving more whole blood.",
+      "bloodDonationTooWeak": "Your physical condition is critically low (below 20). Phlebotomy refused for your safety.",
+      "alreadyAteCafeteria": "You have already eaten at the cafeteria this week."
+    },
     "error": {
       "mustResolveDilemma": "You must resolve the customer dilemma before doing anything else.",
       "noKnickKnacksToPawn": "You have no curios to pawn.",
@@ -268,10 +280,18 @@
       "maxEnrolledClasses": "You cannot enroll in more than {{max}} classes at once.",
       "cannotTransact": "Transaction could not be completed.",
       "notEnoughTimeEducation": "No time is left to go to class.",
-      "notEnoughHours": "No time is left to renegotiate rent."
+      "notEnoughHours": "No time is left to renegotiate rent.",
+      "notEnoughTimeHospital": "You do not have enough hours left for this hospital service.",
+      "notEnoughMoneyHospital": "You do not have enough cash to afford this medical service."
     }
   },
   "events": {
+    "caffeine_overdose": "Caffeine overdose! Excessive intake strained your cardiovascular system (-1 Max Physical, -1 Max Mental).",
+    "caffeine_tolerance_update": "Caffeine tolerance updated ({{oldTol}} → {{newTol}}).",
+    "weekend": {
+      "cramming_sprint": "Wired on continuous coffee, you locked yourself in the library all weekend, power-reading textbooks and drafting thesis notes.",
+      "overtime_grind": "You answered the emergency call and spent 36 consecutive hours at the workplace tackling backlogs and covering weekend shifts."
+    },
     "park": {
       "hazard": "Park Hazard: {{title}} — {{desc}}",
       "pickpocket": "Street pickpocket! A thief swiped ${{stolen}} from your pocket while you were in the park.",
@@ -513,7 +533,9 @@
       "ticket_concert": "Rock Concert",
       "parkWalkTitle": "City Park Walk & Jog",
       "porchChatTitle": "Stoop Chat with Neighbors",
-      "ticketResaleTitle": "Scalp / Resell Tickets"
+      "ticketResaleTitle": "Scalp / Resell Tickets",
+      "crammingSprintTitle": "Thesis & Cramming Sprint",
+      "overtimeGrindTitle": "Weekend Overtime Grind"
     }
   },
   "tag": {
@@ -550,6 +572,29 @@
     "rest": "Rest on Bench",
     "restDesc": "Sit and rest on a park bench (⏳ -3h • +2 💪 • +1 🧠 • Free food/mess)"
   },
+  "hospital": {
+    "staffPerkActive": "Hospital Staff Benefit: 50% discount on urgent care & counseling, 40% discount on cafeteria!",
+    "staffRate": "Staff Rate",
+    "urgentCareTitle": "Walk-in Urgent Care",
+    "urgentCareBtn": "Receive Care",
+    "urgentCareCriticalPreview": "Critical Triage: Emergency IV & stabilization (+8 to +12 Physical, repairs Max Physical)",
+    "urgentCareModeratePreview": "Restorative Care: Prescription therapy & clinical rest (+5 Physical)",
+    "urgentCareHealthyPreview": "Routine Consultation: Minor observation (+1 Physical)",
+    "therapyTitle": "Psychiatric Counseling",
+    "therapyBtn": "Attend Session",
+    "therapyDesc": "Clinical cognitive therapy. Permanently expands cognitive capacity (+1 Max Mental) and restores +3 Mental.",
+    "bloodDonationTitle": "Emergency Blood Donation",
+    "donateBloodBtn": "Donate Blood (+$40)",
+    "donatedBtn": "Donated",
+    "donatedBadge": "✓ Donated this week",
+    "tooWeakToDonate": "⚠️ Too weak to donate. Requires Physical Condition >= 20.",
+    "bloodDonationDesc": "Emergency cash relief for healthy donors. Includes free juice & cookie.",
+    "cafeteriaTitle": "Basement Cafeteria",
+    "cafeteriaBtn": "Buy Meal Tray",
+    "cafeteriaFedBtn": "Fed",
+    "cafeteriaFedBadge": "✓ Fed for the week",
+    "cafeteriaDesc": "Convenient institutional steam-table meal. Prevents weekend starvation without refrigerator or groceries."
+  },
   "gameOver": {
     "congrats": "Congratulations!",
     "hasWon": "has won the game!",
@@ -557,6 +602,7 @@
     "playAgain": "Play Again"
   },
   "building": {
+    "hospital": "City General Hospital",
     "burger_palace": "Monolith Burgers",
     "z_mart": "Z-Mart",
     "socket_city": "Socket City",
@@ -573,6 +619,30 @@
     "security_apartments": "Le Security Apartments"
   },
   "clerkDialogs": {
+    "hospital": {
+      "greeting": [
+        "Welcome to City General Hospital. Average wait time is four hours. If any organs detach while waiting, please alert the desk.",
+        "Insurance? Oh, we take cash, certified checks, or your firstborn's kidney.",
+        "Please don't touch the clipboard. It was sanitized in 1988 and we're not doing it again.",
+        "The cafeteria special today is 'Surgeon's Choice.' We advise against asking what that means."
+      ],
+      "greetingCritical": [
+        "Please tell me that wheezing sound isn't your lungs. Sit down before you collapse on my clean linoleum!",
+        "You look like something the pathology department misplaced. Urgent Care is door number two."
+      ],
+      "greetingBroke": [
+        "No insurance card and empty pockets? Well, the Blood Bank is down the hall. We pay $40 a pint. Roll up your sleeve.",
+        "If you're completely broke, don't worry: our billing department will find you in twenty years."
+      ],
+      "greetingBurntOut": [
+        "Staring blankly into the middle distance again? Dr. Freud is in Room 104. Though frankly, twenty minutes staring at the wall is free.",
+        "You look like you haven't had a good night's sleep since high school graduation. Counseling is open."
+      ],
+      "greetingStaff": [
+        "Oh, it's you. If you're on shift, the ER is backed up twelve patients deep. If you're here to eat, the meatloaf today has a suspicious bounce.",
+        "Back already? Remember: charting before coffee, coffee before grand rounds!"
+      ]
+    },
     "pawn_shop": {
       "greeting": [
         "Welcome to the Pawn Shop. Nothing is too hot for us to handle.",

@@ -400,7 +400,7 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     expect(screen.getByText('Withdrawal')).toBeInTheDocument();
     unmount();
 
-    // 2. Coffee card in shop under helpfulUI presents tolerance, potency, detox/habit forecast, and withdrawal warning
+    // 2. Coffee card in shop under helpfulUI presents mistake buffer shift and tolerance forecast
     const dripCoffee = campaign2000.items.find(i => i.id === 'drip_coffee')!;
     render(
       <ItemCardModal
@@ -415,8 +415,7 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
       />
     );
 
-    expect(screen.getByText(/☕ Tolerance: 7\/10 \(Withdrawal • 75% 🧠 \/ 70% 💪 potency\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/☕ 1 cup this turn: Maintains tolerance/i)).toBeInTheDocument();
-    expect(screen.getByText(/⚠️ Next Turn: -2 💪, -2 🧠/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mistake Buffer: \+0 → \+3/i)).toBeInTheDocument();
+    expect(screen.getByText(/Next Turn Tolerance: 7 → 8/i)).toBeInTheDocument();
   });
 });

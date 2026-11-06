@@ -470,35 +470,42 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
       };
 
     case 'caffeine':
+      const tol = player.caffeineTolerance ?? 0;
+      const intake = player.turnFlags?.caffeineIntake ?? 0;
+      const buf = Math.max(0, intake - tol);
+      const nextTol = Math.floor((tol + intake) / 2);
       return {
         id: 'caffeine',
-        name: t('stats.caffeine', { defaultValue: 'Caffeine Tolerance' }),
+        name: t('stats.caffeineTolerance', { defaultValue: 'Caffeine Tolerance' }),
         category: t('hudInfo.categoryLife', { defaultValue: 'Habit & Fatigue' }),
         icon: '☕',
-        currentValue: player.caffeineTolerance ?? 0,
+        currentValue: tol,
         maxValue: 10,
-        currentFormatted: `${player.caffeineTolerance ?? 0}`,
+        currentFormatted: buf > 0 ? `+${buf} (Tol ${tol})` : `${tol}`,
         maxFormatted: '10',
-        percentage: Math.min(100, Math.round(((player.caffeineTolerance ?? 0) / 10) * 100)),
-        statusBadge: (player.caffeineTolerance ?? 0) >= 9
-          ? t('hudInfo.caffeineCrash', { defaultValue: 'Crash Risk' })
-          : (player.caffeineTolerance ?? 0) >= 6
+        percentage: Math.min(100, Math.round((tol / 10) * 100)),
+        statusBadge: intake > 20
+          ? t('hudInfo.caffeineOverdose', { defaultValue: 'Overdose (>20)' })
+          : (buf >= 12
+          ? t('hudInfo.caffeineSprint', { defaultValue: 'Wired (Sprint)' })
+          : (buf > 0
+          ? t('hudInfo.caffeineShield', { defaultValue: `Shield +${buf}` })
+          : (tol >= 6
           ? t('hudInfo.caffeineWithdrawal', { defaultValue: 'Withdrawal' })
-          : (player.caffeineTolerance ?? 0) >= 3
-          ? t('hudInfo.caffeineFog', { defaultValue: 'Brain Fog' })
-          : undefined,
-        statusColor: (player.caffeineTolerance ?? 0) >= 9 ? '#ff3333' : (player.caffeineTolerance ?? 0) >= 6 ? '#e67e22' : undefined,
+          : (tol >= 3 ? t('hudInfo.caffeineFog', { defaultValue: 'Brain Fog' }) : undefined)))),
+        statusColor: intake > 20 ? '#ff3333' : (buf > 0 ? '#2ecc71' : (tol >= 6 ? '#e67e22' : undefined)),
         description: t('hudInfo.caffeineDesc', {
-          defaultValue: 'Habituation and physical dependence on caffeine. While a cup of coffee grants temporary energy, high tolerance causes fog, withdrawal, and crashes.'
+          defaultValue: `Weekly Intake: ${intake} | Tolerance: ${tol} | Net Mistake Buffer: +${buf}. Projected Next Turn Tolerance: ${nextTol}.`
         }),
         maxExplanation: t('hudInfo.caffeineMax', {
-          defaultValue: 'Tolerance ranges from 0 to 10. Levels 3+ induce fog, 6+ trigger withdrawal, and 9+ risk sudden crash.'
+          defaultValue: 'Mistake Buffer = max(0, Intake - Tolerance). Tolerance reduces buffer point-for-point. Intake > 20 causes Overdose, damaging Max Physical and Max Mental.'
         }),
         increases: [
-          t('hudInfo.cafInc1', { defaultValue: 'Consuming coffee or energy drinks at restaurants or break rooms' }),
+          t('hudInfo.cafInc1', { defaultValue: 'Consuming weekly coffee rations increases Intake (Drip +10, Espresso +18, Double Shot +28)' }),
+          t('hudInfo.cafInc2', { defaultValue: 'Tolerance updates at turn boundary: floor((Tolerance + Intake) / 2)' }),
         ],
         decreases: [
-          t('hudInfo.cafDec1', { defaultValue: 'Decays naturally each turn that you refrain from drinking caffeine' }),
+          t('hudInfo.cafDec1', { defaultValue: 'Refraining from coffee (0 intake) halves tolerance at turn boundary: floor(Tolerance / 2)' }),
         ],
         logFilter: 'caffeine',
       };

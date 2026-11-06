@@ -331,7 +331,7 @@ export interface WeekendDeckState {
 export interface WeekendCard {
   id: string;
   tier: WeekendDeckTier;
-  type: 'random' | 'durable' | 'ticket' | 'ticket_resale' | 'clean' | 'rest' | 'walk' | 'chat';
+  type: 'random' | 'durable' | 'ticket' | 'ticket_resale' | 'clean' | 'rest' | 'walk' | 'chat' | 'study' | 'work';
   eventKey: string;
   fluff: string;
   titleKey: string;
@@ -519,6 +519,8 @@ export interface TurnFlags {
   fastFoodHappinessGranted: boolean;
   /** Number of coffee cups consumed this turn (for caffeine habit tracking) */
   coffeeCupsThisTurn?: number;
+  /** Acute caffeine units consumed this turn (for mistake buffer and overdose checks) */
+  caffeineIntake?: number;
   /** Whether fresh food purchase happiness was granted this turn */
   freshFoodHappinessGranted: boolean;
   /** Caffeine hours borrowed from next turn */
@@ -579,6 +581,10 @@ export interface TurnFlags {
   parkBenchesThisTurn?: number;
   /** Number of jogs taken this turn (deprecated alias) */
   parkJogsThisTurn?: number;
+  /** Whether the player donated blood this turn (max 1 per turn) */
+  donatedBloodThisTurn?: boolean;
+  /** Whether the player ate at the hospital cafeteria this turn */
+  ateHospitalCafeteriaThisTurn?: boolean;
   /** Clothes worn or utilized during the turn */
   clothesWornThisTurn?: Array<'casual' | 'dress' | 'business'>;
 }

@@ -68,38 +68,35 @@
     "name": "Fresh Drip Coffee",
     "category": "coffee",
     "subcategory": "coffee",
-    "basePrice": 5,
-    "happinessBonus": 1,
+    "basePrice": 25,
+    "caffeineUnits": 10,
+    "happinessBonus": 0,
     "mentalBonus": 2,
-    "description": "A piping hot mug of freshly brewed coffee. Restores physical energy and mental focus.",
-    "effects": [
-      { "trigger": "on_purchase", "stat": "physical", "value": 3 }
-    ]
+    "description": "Weekly morning drip coffee ration. Keeps the fog away and sharpens basic focus.",
+    "effects": []
   },
   {
     "id": "espresso",
     "name": "Espresso Shot",
     "category": "coffee",
     "subcategory": "coffee",
-    "basePrice": 8,
-    "happinessBonus": 1,
+    "basePrice": 45,
+    "caffeineUnits": 18,
+    "happinessBonus": 0,
     "mentalBonus": 3,
-    "description": "Concentrated shot of dark roast espresso. Rapid stamina pick-me-up.",
-    "effects": [
-      { "trigger": "on_purchase", "stat": "physical", "value": 4 }
-    ]
+    "description": "Weekly daily espresso ration. Cuts through fatigue and maintains sharp cognitive vigilance.",
+    "effects": []
   },
   {
     "id": "double_shot",
     "name": "Double Shot Espresso",
     "category": "coffee",
     "subcategory": "coffee",
-    "basePrice": 12,
-    "happinessBonus": 1,
+    "basePrice": 70,
+    "caffeineUnits": 28,
+    "happinessBonus": 0,
     "mentalBonus": 4,
-    "description": "Heavy-duty double espresso shot for long work shifts and intense study.",
-    "effects": [
-      { "trigger": "on_purchase", "stat": "physical", "value": 6 }
-    ]
+    "description": "Heavy-duty daily double espresso ration for grueling shifts and exam sprints.",
+    "effects": []
   }
 ]

@@ -15,6 +15,7 @@ import {
 } from './BuildingInteractions';
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
 import { PantryDetailsModal } from './buildings/home/PantryDetailsModal';
+import { HospitalServices } from './buildings/HospitalServices';
 import { AuthenticMonolithBurgers } from './buildings/authentic/AuthenticMonolithBurgers';
 import { AuthenticBank } from './buildings/authentic/AuthenticBank';
 import { AuthenticBroker } from './buildings/authentic/AuthenticBroker';
@@ -165,6 +166,17 @@ export function BuildingModal({
 
     if (shouldShow) {
       let greetingKey = `clerkDialogs.${building.id}.greeting`;
+      if (building.id === 'hospital' && player) {
+        if (player.physicalCondition !== undefined && player.physicalCondition < 25) {
+          greetingKey = 'clerkDialogs.hospital.greetingCritical';
+        } else if (player.money <= 0) {
+          greetingKey = 'clerkDialogs.hospital.greetingBroke';
+        } else if (player.mentalCondition !== undefined && player.mentalCondition < 25) {
+          greetingKey = 'clerkDialogs.hospital.greetingBurntOut';
+        } else if (player.currentJobId?.startsWith('hospital_')) {
+          greetingKey = 'clerkDialogs.hospital.greetingStaff';
+        }
+      }
       if (building.id === 'discount_and_pawn' || building.archetype === 'discount_and_pawn') {
         greetingKey = 'clerkDialogs.z_mart.greeting';
       }
@@ -465,6 +477,15 @@ export function BuildingModal({
               economicIndex={economicIndex}
               rules={rules}
               onAction={handleActionIntercept}
+            />
+          )}
+          {(building.id === 'hospital' || building.archetype === 'hospital') && (
+            <HospitalServices
+              player={player}
+              onAction={handleActionIntercept}
+              economicIndex={economicIndex}
+              rules={rules}
+              campaign={campaign}
             />
           )}
           {building.archetype === 'bank' && (

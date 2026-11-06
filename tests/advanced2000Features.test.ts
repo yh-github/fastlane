@@ -7,6 +7,8 @@ import { workShift } from '../src/engine/job/jobShiftExecution';
 import { calcLandlordStanding } from '../src/engine/statMath';
 import { gameReducer } from '../src/engine/gameReducer';
 import { buyItem } from '../src/engine/shoppingEngine';
+import { generateWeekendChoices, resolveWeekendChoice } from '../src/engine/weekendEngine';
+import { calcWorkShiftSummary } from '../src/engine/job/jobShiftSummary';
 import { Random } from '../src/utils/rng';
 import type { GameState, PlayerState } from '../src/engine/gameState';
 
@@ -157,90 +159,146 @@ describe('Advanced 2000 Campaign Features', () => {
       return { player, state };
     }
 
-    it('drinking coffee provides immediate physical/mental boosts and tracks cups drank', () => {
+    it('drinking coffee accumulates caffeineIntake and provides comfort boost on 1st purchase only', () => {
       const { player } = createTestState(0);
       const dripDef = campaign2000.items.find(i => i.id === 'drip_coffee')!;
 
-      const result = buyItem(player, dripDef, campaign2000.config.gameRules, campaign2000, 1);
-      expect(result.updated.turnFlags.coffeeCupsThisTurn).toBe(1);
-      expect(result.updated.physicalCondition).toBeGreaterThan(40);
-      expect(result.updated.mentalCondition).toBeGreaterThan(40);
-      // Immediate consumption does not consume fridge or pantry food units
-      expect(result.updated.inventory.cannedFoodUnits).toBe(4);
-      expect(result.updated.inventory.freshFoodUnits).toBe(0);
+      // 1st cup of the week: provides comfort boost (+1 Phys, +2 Mental) and 10 caffeine units
+      const result1 = buyItem(player, dripDef, campaign2000.config.gameRules, campaign2000, 1);
+      expect(result1.updated.turnFlags.caffeineIntake).toBe(10);
+      expect(result1.updated.physicalCondition).toBe(41);
+      expect(result1.updated.mentalCondition).toBe(42);
+      expect(result1.updated.inventory.cannedFoodUnits).toBe(4);
+      expect(result1.updated.inventory.freshFoodUnits).toBe(0);
+
+      // 2nd cup in the same week: adds 10 caffeine units (total 20), but no additional comfort boost
+      const result2 = buyItem(result1.updated, dripDef, campaign2000.config.gameRules, campaign2000, 1);
+      expect(result2.updated.turnFlags.caffeineIntake).toBe(20);
+      expect(result2.updated.physicalCondition).toBe(41);
+      expect(result2.updated.mentalCondition).toBe(42);
     });
 
-    it('diminishes coffee benefits at high tolerance levels (tolerance >= 6 and >= 9)', () => {
-      const { player: freshPlayer } = createTestState(0);
-      const { player: tolerantPlayer } = createTestState(9);
-      const doubleDef = campaign2000.items.find(i => i.id === 'double_shot')!;
+    it('overdose triggers when caffeineIntake exceeds 20, immediately docking Max Physical and Max Mental', () => {
+      const { player } = createTestState(0);
+      player.physicalConditionMax = 50;
+      player.mentalConditionMax = 50;
+      player.resilienceBonus = 0;
+      const doubleDef = campaign2000.items.find(i => i.id === 'double_shot')!; // 28 units
 
-      const freshResult = buyItem(freshPlayer, doubleDef, campaign2000.config.gameRules, campaign2000, 1);
-      const tolerantResult = buyItem(tolerantPlayer, doubleDef, campaign2000.config.gameRules, campaign2000, 1);
-
-      const freshPhysGain = (freshResult.updated.physicalCondition ?? 0) - 40;
-      const tolPhysGain = (tolerantResult.updated.physicalCondition ?? 0) - 40;
-      expect(freshPhysGain).toBeGreaterThan(tolPhysGain);
+      const result = buyItem(player, doubleDef, campaign2000.config.gameRules, campaign2000, 1);
+      expect(result.updated.turnFlags.caffeineIntake).toBe(28);
+      // Overdose penalty: -1 Max Phys, -1 Max Mental (and resilienceBonus -1)
+      expect(result.updated.physicalConditionMax).toBe(49);
+      expect(result.updated.mentalConditionMax).toBe(49);
+      expect(result.updated.resilienceBonus).toBe(-1);
+      const odEvent = result.updated.turnEvents.find(e => e.key === 'events.caffeine_overdose');
+      expect(odEvent).toBeDefined();
     });
 
-    it('updates tolerance during turn maintenance based on cups consumed', () => {
-      // 0 cups -> detox (-2 tolerance)
-      const { player: pDetox, state: sDetox } = createTestState(5);
-      pDetox.turnFlags.coffeeCupsThisTurn = 0;
+    it('caffeine buffer reduces work mistake chance without directly healing underlying fatigue', () => {
+      const { player } = createTestState(0);
+      const cookJob = campaign2000.jobs.find(j => j.id === 'pirate_cook')!;
+      player.currentJobId = cookJob.id;
+      player.physicalCondition = 8;
+      player.mentalCondition = 8;
+
+      // Without caffeine (Intake = 0, Buffer = 0): mistakes are possible
+      const unbuffered = calcWorkShiftSummary(player, cookJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
+      const unbufferedWork = unbuffered.modes.find(o => o.id === 'work_work')!;
+      expect(unbufferedWork.modifierBreakdown?.mistakeBreakdown?.some(m => m.chance > 0)).toBe(true);
+
+      // With Espresso (Intake = 18, Buffer = 18 against Tol 0):
+      player.turnFlags = { ...player.turnFlags, caffeineIntake: 18 };
+      const buffered = calcWorkShiftSummary(player, cookJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
+      const bufferedWork = buffered.modes.find(o => o.id === 'work_work')!;
+      // Effective phys: 8 + 18 = 26 (exceeds safety threshold 10), eliminating fatigue mistake chance
+      const physMistake = bufferedWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
+      expect(physMistake?.chance).toBe(0);
+      // Underlying physical condition remains completely unhealed at 8
+      expect(player.physicalCondition).toBe(8);
+    });
+
+    it('redline burnout docks max condition when working a shift with actual condition < 15 on caffeine', () => {
+      const { player } = createTestState(0);
+      const cookJob = campaign2000.jobs.find(j => j.id === 'pirate_cook')!;
+      player.currentJobId = cookJob.id;
+      player.currentWage = cookJob.baseWage;
+      player.hoursRemaining = 40;
+      player.physicalCondition = 12; // < 15 triggers redline phys
+      player.mentalCondition = 12;   // < 15 triggers redline mental
+      player.physicalConditionMax = 50;
+      player.mentalConditionMax = 50;
+      player.resilienceBonus = 0;
+      player.turnFlags = { ...player.turnFlags, caffeineIntake: 10 };
+
+      const result = workShift(player, cookJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 'work_work');
+      expect(result.success).toBe(true);
+      expect(result.updated.physicalConditionMax).toBe(49.5); // -0.5 Max Phys
+      expect(result.updated.mentalConditionMax).toBe(49);   // -1 Max Mental
+    });
+
+    it('updates tolerance at turn maintenance via pharmacokinetic half-life formula: floor((tol + intake) / 2)', () => {
+      // 0 intake -> detox decay: floor((6 + 0) / 2) = 3
+      const { player: pDetox, state: sDetox } = createTestState(6);
+      pDetox.turnFlags.caffeineIntake = 0;
       const nextDetox = processTurnStart({ ...sDetox, players: [pDetox] }, campaign2000);
       expect(nextDetox.players[0].caffeineTolerance).toBe(3);
 
-      // 1 cup -> maintain tolerance
-      const { player: pMaint, state: sMaint } = createTestState(5);
-      pMaint.turnFlags.coffeeCupsThisTurn = 1;
-      const nextMaint = processTurnStart({ ...sMaint, players: [pMaint] }, campaign2000);
-      expect(nextMaint.players[0].caffeineTolerance).toBe(5);
+      // Low intake (10) on low tolerance (2): floor((2 + 10) / 2) = 6
+      const { player: pLow, state: sLow } = createTestState(2);
+      pLow.turnFlags.caffeineIntake = 10;
+      const nextLow = processTurnStart({ ...sLow, players: [pLow] }, campaign2000);
+      expect(nextLow.players[0].caffeineTolerance).toBe(6);
 
-      // 2 cups -> +1 tolerance
-      const { player: pTwo, state: sTwo } = createTestState(5);
-      pTwo.turnFlags.coffeeCupsThisTurn = 2;
-      const nextTwo = processTurnStart({ ...sTwo, players: [pTwo] }, campaign2000);
-      expect(nextTwo.players[0].caffeineTolerance).toBe(6);
+      // Moderate intake (10) on tolerance (6): floor((6 + 10) / 2) = 8
+      const { player: pMid, state: sMid } = createTestState(6);
+      pMid.turnFlags.caffeineIntake = 10;
+      const nextMid = processTurnStart({ ...sMid, players: [pMid] }, campaign2000);
+      expect(nextMid.players[0].caffeineTolerance).toBe(8);
 
-      // 3+ cups -> +2 tolerance
-      const { player: pThree, state: sThree } = createTestState(5);
-      pThree.turnFlags.coffeeCupsThisTurn = 3;
-      const nextThree = processTurnStart({ ...sThree, players: [pThree] }, campaign2000);
-      expect(nextThree.players[0].caffeineTolerance).toBe(7);
+      // High intake (28) on tolerance (8): floor((8 + 28) / 2) = 18 -> capped at 10
+      const { player: pHigh, state: sHigh } = createTestState(8);
+      pHigh.turnFlags.caffeineIntake = 28;
+      const nextHigh = processTurnStart({ ...sHigh, players: [pHigh] }, campaign2000);
+      expect(nextHigh.players[0].caffeineTolerance).toBe(10);
     });
 
-    it('applies morning fog penalty at tolerance 3-5 (-1 Physical)', () => {
-      const { player, state } = createTestState(4);
-      player.turnFlags.coffeeCupsThisTurn = 1; // stays at 4
+    it('generates high-caffeine weekend sprint cards when intake >= 18 or buffer >= 12, and resolves them correctly', () => {
+      const { player } = createTestState(0);
+      player.turnFlags.caffeineIntake = 18;
+      player.caffeineTolerance = 0;
+      player.currentJobId = 'pirate_cook';
+      const rng = new Random(42);
+
+      // 1. Overtime Grind sprint card generation (player has job, no classes)
+      const { cards } = generateWeekendChoices(player, 1, campaign2000.weekends, rng, campaign2000, campaign2000.config.gameRules, player);
+      const grindCard = cards.find(c => c.id === 'weekend_overtime_grind');
+      expect(grindCard).toBeDefined();
+
+      // Resolve overtime grind: costs $50, 4 Phys, 2 Mental; awards +1 Exp, +1 Dep
+      player.money = 100;
+      player.experience = 5;
+      player.dependability = 50;
       player.physicalCondition = 40;
       player.mentalCondition = 40;
+      player.offeredWeekendCards = cards;
+      const grindResult = resolveWeekendChoice(player, 'weekend_overtime_grind', rng, campaign2000.config.gameRules, campaign2000.config.statRules, campaign2000);
+      expect(grindResult.money).toBe(50);
+      expect(grindResult.experience).toBe(6);
+      expect(grindResult.dependability).toBe(51);
+      expect(grindResult.physicalCondition).toBe(36);
+      expect(grindResult.mentalCondition).toBe(38);
 
-      const nextState = processTurnStart({ ...state, players: [player] }, campaign2000);
-      const nextP = nextState.players[0];
-      const fogEvt = nextP.turnEvents.find(e => e.key === 'events.caffeine_fog');
-      expect(fogEvt).toBeDefined();
-    });
+      // 2. Cramming Sprint when enrolled in degree (no job)
+      const enrolledPlayer = { ...player, currentJobId: null, enrolledClasses: { cert_tech: 0 } };
+      const { cards: cramChoices } = generateWeekendChoices(enrolledPlayer, 1, campaign2000.weekends, rng, campaign2000, campaign2000.config.gameRules, enrolledPlayer);
+      const cramCard = cramChoices.find(c => c.id === 'weekend_cramming_sprint');
+      expect(cramCard).toBeDefined();
 
-    it('applies moderate withdrawal penalty at tolerance 6-8 (-2 Physical, -2 Mental)', () => {
-      const { player, state } = createTestState(7);
-      player.turnFlags.coffeeCupsThisTurn = 1; // stays at 7
-
-      const nextState = processTurnStart({ ...state, players: [player] }, campaign2000);
-      const nextP = nextState.players[0];
-      const withEvt = nextP.turnEvents.find(e => e.key === 'events.caffeine_withdrawal');
-      expect(withEvt).toBeDefined();
-    });
-
-    it('applies severe withdrawal penalty at tolerance 9-10 (-3 Phys, -3 Mental, -1 Max Phys)', () => {
-      const { player, state } = createTestState(9);
-      player.turnFlags.coffeeCupsThisTurn = 1; // stays at 9
-      const initMaxPhys = player.physicalConditionMax ?? 100;
-
-      const nextState = processTurnStart({ ...state, players: [player] }, campaign2000);
-      const nextP = nextState.players[0];
-      const sevEvt = nextP.turnEvents.find(e => e.key === 'events.caffeine_withdrawal_severe');
-      expect(sevEvt).toBeDefined();
-      expect(nextP.physicalConditionMax).toBe(initMaxPhys - 1);
+      // Resolve cramming sprint: advances enrolled course by 1 lesson worth
+      enrolledPlayer.offeredWeekendCards = cramChoices;
+      const cramResult = resolveWeekendChoice(enrolledPlayer, 'weekend_cramming_sprint', rng, campaign2000.config.gameRules, campaign2000.config.statRules, campaign2000);
+      expect(cramResult.enrolledClasses['cert_tech']).toBeGreaterThan(0);
     });
   });
 
@@ -812,6 +870,225 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(res4.updatedPlayer.physicalCondition).toBe(39);
       expect(res4.updatedPlayer.mentalCondition).toBe(35);
       expect(res4.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(4);
+    });
+  });
+
+  describe('Hospital Interactive Building Actions', () => {
+    function setupHospitalContext(player: PlayerState) {
+      return {
+        campaign: campaign2000,
+        rules: campaign2000.config.gameRules,
+        turn: 1,
+        economicIndex: 0,
+        rng: new Random(1),
+        state: {
+          turn: 1,
+          players: [player],
+          economicIndex: 0,
+          rules: campaign2000.config.gameRules,
+          pawnShopItemsForSale: [],
+          rngState: 1,
+          phase: 'playing' as const
+        }
+      };
+    }
+
+    it('urgent care provides proportional healing (critical < 20 lifts to 20 and repairs Max Phys, moderate +5, healthy +1)', () => {
+      // 1. Critical tier (Physical = 10, max = 50 < 65)
+      const pCritical = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      pCritical.hoursRemaining = 20;
+      pCritical.money = 200;
+      pCritical.physicalCondition = 10;
+      pCritical.physicalConditionMax = 50;
+
+      const resCrit = gameReducer(pCritical, { type: 'hospital_urgent_care' }, setupHospitalContext(pCritical));
+      expect(resCrit.updatedPlayer.hoursRemaining).toBe(14);
+      expect(resCrit.updatedPlayer.money).toBe(120); // $200 - $80
+      expect(resCrit.updatedPlayer.physicalCondition).toBe(20); // Lifted to 20
+      expect(resCrit.updatedPlayer.physicalConditionMax).toBe(51); // Repaired +1 Max Phys
+      expect(resCrit.actionLog).toEqual(expect.objectContaining({ key: 'action.hospital.urgentCareCritical' }));
+
+      // 2. Moderate tier (Physical = 25)
+      const pMod = createPlayerState('p2', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      pMod.hoursRemaining = 20;
+      pMod.money = 200;
+      pMod.physicalCondition = 25;
+      pMod.physicalConditionMax = 65;
+
+      const resMod = gameReducer(pMod, { type: 'hospital_urgent_care' }, setupHospitalContext(pMod));
+      expect(resMod.updatedPlayer.physicalCondition).toBe(30); // +5
+      expect(resMod.actionLog).toEqual(expect.objectContaining({ key: 'action.hospital.urgentCareModerate' }));
+
+      // 3. Healthy tier (Physical = 40)
+      const pHealthy = createPlayerState('p3', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      pHealthy.hoursRemaining = 20;
+      pHealthy.money = 200;
+      pHealthy.physicalCondition = 40;
+      pHealthy.physicalConditionMax = 65;
+
+      const resHealthy = gameReducer(pHealthy, { type: 'hospital_urgent_care' }, setupHospitalContext(pHealthy));
+      expect(resHealthy.updatedPlayer.physicalCondition).toBe(41); // +1
+      expect(resHealthy.actionLog).toEqual(expect.objectContaining({ key: 'action.hospital.urgentCareHealthy' }));
+    });
+
+    it('urgent care grants 50% employee discount for Hospital staff ($40 instead of $80)', () => {
+      const staffPlayer = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      staffPlayer.currentJobId = 'hospital_nurse';
+      staffPlayer.hoursRemaining = 20;
+      staffPlayer.money = 100;
+      staffPlayer.physicalCondition = 25;
+
+      const res = gameReducer(staffPlayer, { type: 'hospital_urgent_care' }, setupHospitalContext(staffPlayer));
+      expect(res.updatedPlayer.money).toBe(60); // Paid only $40
+      expect(res.updatedPlayer.physicalCondition).toBe(30);
+    });
+
+    it('urgent care rejects player if hours < 6 or money < cost', () => {
+      const brokePlayer = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      brokePlayer.hoursRemaining = 20;
+      brokePlayer.money = 30; // Needs $80
+
+      const resNoMoney = gameReducer(brokePlayer, { type: 'hospital_urgent_care' }, setupHospitalContext(brokePlayer));
+      expect(resNoMoney.updatedPlayer.money).toBe(30);
+      expect(resNoMoney.actionLog).toEqual(expect.objectContaining({ key: 'action.error.notEnoughMoneyHospital' }));
+
+      const tiredPlayer = createPlayerState('p2', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      tiredPlayer.hoursRemaining = 4; // Needs 6
+      tiredPlayer.money = 200;
+
+      const resNoTime = gameReducer(tiredPlayer, { type: 'hospital_urgent_care' }, setupHospitalContext(tiredPlayer));
+      expect(resNoTime.updatedPlayer.hoursRemaining).toBe(4);
+      expect(resNoTime.actionLog).toEqual(expect.objectContaining({ key: 'action.error.notEnoughTimeHospital' }));
+    });
+
+    it('psychiatric therapy permanently expands Max Mental (+1 resilienceBonus) and restores +3 Mental', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      player.hoursRemaining = 20;
+      player.money = 200;
+      player.mentalCondition = 30;
+      player.mentalConditionMax = 66;
+      player.resilienceBonus = 0;
+
+      const res = gameReducer(player, { type: 'hospital_therapy' }, setupHospitalContext(player));
+      expect(res.updatedPlayer.hoursRemaining).toBe(14);
+      expect(res.updatedPlayer.money).toBe(80); // $200 - $120
+      expect(res.updatedPlayer.resilienceBonus).toBe(1);
+      expect(res.updatedPlayer.mentalConditionMax).toBe(67); // Expanded by 1
+      expect(res.updatedPlayer.mentalCondition).toBe(33); // +3 Mental
+      expect(res.actionLog).toEqual(expect.objectContaining({ key: 'action.hospital.therapySuccess' }));
+    });
+
+    it('psychiatric therapy grants 50% employee discount for Hospital staff ($60 instead of $120)', () => {
+      const staffPlayer = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      staffPlayer.currentJobId = 'hospital_nurse';
+      staffPlayer.hoursRemaining = 20;
+      staffPlayer.money = 100;
+      staffPlayer.mentalCondition = 30;
+
+      const res = gameReducer(staffPlayer, { type: 'hospital_therapy' }, setupHospitalContext(staffPlayer));
+      expect(res.updatedPlayer.money).toBe(40); // Paid $60
+      expect(res.updatedPlayer.mentalCondition).toBe(33);
+      expect(res.updatedPlayer.resilienceBonus).toBe(1);
+    });
+
+    it('emergency blood donation pays +$40, inflicts -3 Physical net, grants +1 Social, and enforces once-per-turn limit', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      player.hoursRemaining = 20;
+      player.money = 0;
+      player.physicalCondition = 35;
+      player.social = 20;
+
+      // First donation: Success
+      const res1 = gameReducer(player, { type: 'hospital_donate_blood' }, setupHospitalContext(player));
+      expect(res1.updatedPlayer.hoursRemaining).toBe(18);
+      expect(res1.updatedPlayer.money).toBe(40); // +$40 cash payout!
+      expect(res1.updatedPlayer.physicalCondition).toBe(32); // -3 net Physical
+      expect(res1.updatedPlayer.social).toBe(21); // +1 Social
+      expect(res1.updatedPlayer.turnFlags.donatedBloodThisTurn).toBe(true);
+      expect(res1.actionLog).toEqual(expect.objectContaining({ key: 'action.hospital.bloodDonationSuccess' }));
+
+      // Second donation in same turn: Fails
+      const res2 = gameReducer(res1.updatedPlayer, { type: 'hospital_donate_blood' }, setupHospitalContext(res1.updatedPlayer));
+      expect(res2.updatedPlayer.money).toBe(40);
+      expect(res2.updatedPlayer.hoursRemaining).toBe(18);
+      expect(res2.actionLog).toEqual(expect.objectContaining({ key: 'action.hospital.alreadyDonatedBlood' }));
+    });
+
+    it('emergency blood donation is refused if player is too weak (Physical < 20)', () => {
+      const weakPlayer = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      weakPlayer.hoursRemaining = 20;
+      weakPlayer.money = 0;
+      weakPlayer.physicalCondition = 15; // Below 20
+
+      const res = gameReducer(weakPlayer, { type: 'hospital_donate_blood' }, setupHospitalContext(weakPlayer));
+      expect(res.updatedPlayer.money).toBe(0);
+      expect(res.updatedPlayer.hoursRemaining).toBe(20);
+      expect(res.actionLog).toEqual(expect.objectContaining({ key: 'action.hospital.bloodDonationTooWeak' }));
+    });
+
+    it('hospital cafeteria provides weekly food sustenance (+1 Phys, -2 Mental, $20 cost), with staff discount ($12)', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      player.hoursRemaining = 10;
+      player.money = 50;
+      player.physicalCondition = 30;
+      player.mentalCondition = 30;
+      player.inventory.fastFoodItems = [];
+
+      const res = gameReducer(player, { type: 'hospital_cafeteria' }, setupHospitalContext(player));
+      expect(res.updatedPlayer.hoursRemaining).toBe(9);
+      expect(res.updatedPlayer.money).toBe(30); // $50 - $20
+      expect(res.updatedPlayer.physicalCondition).toBe(31); // +1 Phys
+      expect(res.updatedPlayer.mentalCondition).toBe(28); // -2 Mental
+      expect(res.updatedPlayer.turnFlags.ateHospitalCafeteriaThisTurn).toBe(true);
+      expect(res.updatedPlayer.inventory.fastFoodItems).toHaveLength(1);
+      expect(res.updatedPlayer.inventory.fastFoodItems[0].itemId).toBe('hospital_tray');
+
+      // Staff discount test
+      const staff = createPlayerState('p2', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      staff.currentJobId = 'hospital_orderly';
+      staff.hoursRemaining = 10;
+      staff.money = 50;
+
+      const resStaff = gameReducer(staff, { type: 'hospital_cafeteria' }, setupHospitalContext(staff));
+      expect(resStaff.updatedPlayer.money).toBe(38); // Paid $12
+    });
+
+    it('prevents death spiral: broke player donates blood and buys cafeteria meal to avoid weekend starvation', () => {
+      const brokePlayer = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      brokePlayer.hoursRemaining = 10;
+      brokePlayer.money = 0; // Completely broke!
+      brokePlayer.physicalCondition = 25;
+      brokePlayer.mentalCondition = 30;
+      brokePlayer.inventory.freshFoodUnits = 0;
+      brokePlayer.inventory.fastFoodItems = [];
+      brokePlayer.inventory.cannedFoodUnits = 0;
+
+      // 1. Donate blood -> gain $40
+      const afterBlood = gameReducer(brokePlayer, { type: 'hospital_donate_blood' }, setupHospitalContext(brokePlayer));
+      expect(afterBlood.updatedPlayer.money).toBe(40);
+      expect(afterBlood.updatedPlayer.physicalCondition).toBe(22);
+
+      // 2. Buy cafeteria meal -> spend $20, have 1 food unit
+      const afterFood = gameReducer(afterBlood.updatedPlayer, { type: 'hospital_cafeteria' }, setupHospitalContext(afterBlood.updatedPlayer));
+      expect(afterFood.updatedPlayer.money).toBe(20);
+      expect(afterFood.updatedPlayer.inventory.fastFoodItems).toHaveLength(1);
+
+      // 3. Process turn start: verify NO starvation event occurred!
+      const state: GameState = {
+        turn: 2,
+        players: [afterFood.updatedPlayer],
+        economicIndex: 100,
+        rules: campaign2000.config.gameRules,
+        pawnShopItemsForSale: [],
+        rngState: 42,
+        phase: 'playing'
+      };
+
+      const nextState = processTurnStart(state, campaign2000);
+      const nextPlayer = nextState.players[0];
+
+      expect(nextPlayer.turnEvents.some(e => e.key === 'events.starvation')).toBe(false);
+      expect(nextPlayer.money).toBe(20); // Preserved remaining cash
     });
   });
 });

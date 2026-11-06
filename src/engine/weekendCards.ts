@@ -2,6 +2,43 @@ import type { WeekendDef } from './dataLoader';
 import type { Random } from '../utils/rng';
 import type { PlayerState, WeekendCard, WeekendDeckTier } from './gameState';
 
+export const SPRINT_WEEKEND_CARDS: Record<string, WeekendCard> = {
+  weekend_cramming_sprint: {
+    id: 'weekend_cramming_sprint',
+    tier: 'expensive',
+    type: 'study',
+    eventKey: 'events.weekend.cramming_sprint',
+    titleKey: 'weekendScreen.card.crammingSprintTitle',
+    fluff: 'Wired on continuous coffee, you locked yourself in the library all weekend, power-reading textbooks and drafting thesis notes.',
+    icon: '📚',
+    costMin: 60,
+    costMax: 60,
+    targetStat: 'mental',
+    potentialBonusMin: 2,
+    potentialBonusMax: 2,
+    secondaryStat: 'physical',
+    potentialSecondaryBonusMin: -4,
+    potentialSecondaryBonusMax: -4
+  },
+  weekend_overtime_grind: {
+    id: 'weekend_overtime_grind',
+    tier: 'expensive',
+    type: 'work',
+    eventKey: 'events.weekend.overtime_grind',
+    titleKey: 'weekendScreen.card.overtimeGrindTitle',
+    fluff: 'You answered the emergency call and spent 36 consecutive hours at the workplace tackling backlogs and covering weekend shifts.',
+    icon: '💼',
+    costMin: 50,
+    costMax: 50,
+    targetStat: 'dependability',
+    potentialBonusMin: 1,
+    potentialBonusMax: 1,
+    secondaryStat: 'physical',
+    potentialSecondaryBonusMin: -4,
+    potentialSecondaryBonusMax: -4
+  }
+};
+
 export const FREE_WEEKEND_CARDS: Record<string, WeekendCard> = {
   free_stay_home: {
     id: 'free_stay_home',
@@ -195,6 +232,10 @@ export function buildCardFromId(
   player: PlayerState,
   rng: Random
 ): WeekendCard {
+  if (SPRINT_WEEKEND_CARDS[cardId]) {
+    return { ...SPRINT_WEEKEND_CARDS[cardId] };
+  }
+
   if (tier === 'free' || cardId.startsWith('free_') || cardId.startsWith('broke_')) {
     if (cardId === 'broke_stay_home') return { ...FREE_WEEKEND_CARDS.free_stay_home, id: 'broke_stay_home', eventKey: 'events.weekend.broke_rest' };
     if (cardId === 'broke_deep_clean') return { ...FREE_WEEKEND_CARDS.free_deep_clean, id: 'broke_deep_clean', eventKey: 'events.weekend.broke_clean' };

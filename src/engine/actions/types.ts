@@ -50,7 +50,11 @@ export type GameAction =
   | { type: 'jog_park' }
   | { type: 'rest_bench' }
   | { type: 'relax_park' }
-  | { type: 'workout_park' };
+  | { type: 'workout_park' }
+  | { type: 'hospital_urgent_care' }
+  | { type: 'hospital_therapy' }
+  | { type: 'hospital_donate_blood' }
+  | { type: 'hospital_cafeteria' };
 
 export interface ReducerContext {
   campaign: CampaignBundle;

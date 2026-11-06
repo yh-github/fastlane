@@ -1353,6 +1353,51 @@ describe('BuildingModal Component', () => {
     expect(screen.getByTestId('authentic-rent-office')).toBeInTheDocument();
     expect(screen.getByTestId('btn-rent-office-work')).toBeInTheDocument();
   });
+
+  it('renders Hospital building modal with Carla face and all 4 hospital services', () => {
+    const hospitalCampaign: CampaignBundle = {
+      ...mockCampaign,
+      buildings: [
+        ...mockCampaign.buildings,
+        {
+          id: 'hospital',
+          name: 'City General Hospital',
+          archetype: 'hospital',
+          spritePath: 'images/factory.png',
+          description: '24/7 medical center'
+        } as any
+      ]
+    };
+
+    render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          physicalCondition: 30,
+          mentalCondition: 30,
+          hoursRemaining: 20,
+          money: 200
+        }}
+        campaign={hospitalCampaign}
+        currentBuildingId="hospital"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, guiStyle: 'generated', hospitalEmployeeHealthcare: true }}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Nurse Carla face and hospital title
+    expect(screen.getByText('👩‍⚕️')).toBeInTheDocument();
+    expect(screen.getByText(/City General Hospital/i)).toBeInTheDocument();
+
+    // 4 Hospital services
+    expect(screen.getByText(/Walk-in Urgent Care/i)).toBeInTheDocument();
+    expect(screen.getByText(/Psychiatric Counseling/i)).toBeInTheDocument();
+    expect(screen.getByText(/Emergency Blood Donation/i)).toBeInTheDocument();
+    expect(screen.getByText(/Basement Cafeteria/i)).toBeInTheDocument();
+  });
 });
 
 
