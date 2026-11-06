@@ -5,6 +5,7 @@ import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle, JobDef } from '../../../engine/dataLoader';
 import { calcWorkShiftSummary, getWorkShiftModifiers, type WorkShiftOption, type WorkMode } from '../../../engine/jobEngine';
 import { formatHours } from '../../../engine/statMath';
+import { hasJobTag } from '../../../engine/jobTags';
 import { WorkCardHelpModal } from './WorkCardHelpModal';
 import { ActionReasonModal } from '../ActionReasonModal';
 import { WorkConsolePopup } from './WorkConsolePopup';
@@ -271,14 +272,18 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
       glowColor: 'rgba(16, 185, 129, 0.35)'
     },
     look_busy: {
-      actionName: t('workStation.actionLookBusy', { defaultValue: 'Coast' }),
-      icon: '👀',
+      actionName: hasJobTag(job, 'clinical')
+        ? t('workStation.actionCharting', { defaultValue: 'Charting' })
+        : t('workStation.actionLookBusy', { defaultValue: 'Coast' }),
+      icon: hasJobTag(job, 'clinical') ? '📋' : '👀',
       themeColor: '#f59e0b',
       glowColor: 'rgba(245, 158, 11, 0.35)'
     },
     face_time: {
-      actionName: t('workStation.actionFaceTime', { defaultValue: 'Network' }),
-      icon: '🤝',
+      actionName: hasJobTag(job, 'clinical')
+        ? t('workStation.actionGrandRounds', { defaultValue: 'Grand Rounds' })
+        : t('workStation.actionFaceTime', { defaultValue: 'Network' }),
+      icon: hasJobTag(job, 'clinical') ? '🩺' : '🤝',
       themeColor: '#0ea5e9',
       glowColor: 'rgba(14, 165, 233, 0.35)'
     },

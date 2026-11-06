@@ -39,84 +39,88 @@ In the initial iteration, `stroll_park` cost 1 hour and granted `+1 Physical, +1
 
 ## 2. Jobs, Hospital Ladder, Skills, and Education Overhaul
 
-*This item is large and intertwined; it is broken into four distinct sub-phases.*
+*This phase establishes the 9-tier hospital career ladder, aligns classic jobs to baseline parity, establishes the Life Sciences degree branch, and implements clinical shift adaptations.*
 
-### AI Suggestions & Proposed Architecture
+### Architecture & Education Tracks
 ```mermaid
 flowchart TD
-    subgraph Trade_School_Track["Vocational Trade Track"]
-        TS["Trade School ($350)"] --> ELEC["Electronics ($550)"]
-        TS --> NURS["Practical Nursing ($500)"]
+    subgraph Vocational_Track["Vocational Trade Track"]
+        TS["Trade School"] --> ELEC["Electronics"]
         ELEC --> BIO_IT["Biomedical IT Tech\n(3.0 Tech Skill)"]
         ELEC --> ARC["Arcade Tech (Red Pirate)"]
-        NURS --> EMT["EMT / Paramedic\n(35 Exp / 35 Dep)"]
-        NURS --> RN["Staff Nurse\n(45 Exp / 45 Dep)"]
     end
 
-    subgraph University_PreMed_Track["University Pre-Med & Medical Track"]
-        JC["Junior College ($600)"] --> PHYS["Physiology ($750)"]
-        JC --> BA["Business Admin ($1,000)"]
-        JC --> ACAD["Academic Degree ($1,000)"]
-        PHYS --> BIOCHEM["Biochemistry ($900)"]
-        BIOCHEM & ACAD --> MED["Medical School (M.D.) ($2,500)"]
-        MED --> RES["Residency ($1,200)"]
-        RES --> FELLOW["Specialty Fellowship ($1,500)"]
+    subgraph Business_Academia_Track["Business & Liberal Arts Track"]
+        JC["Junior College"] --> BA["Business Admin"]
+        JC --> ACAD["Academic Degree"]
+        BA & ACAD --> BROKER["Investment Broker\n(70 Exp / 70 Dep)"]
     end
 
-    RN & JC --> NURSE_SUP["Nursing Supervisor\n(2.0 Mgmt Skill)"]
-    MED --> DOC_RES["Resident Physician\n(60 Exp / 60 Dep)"]
-    FELLOW --> SURG["Attending Surgeon\n(75 Exp / 75 Dep, 5.0 Tech Skill)"]
-    RES & BA --> CHIEF["Chief of Medicine\n(85 Exp / 85 Dep, 5.0 Mgmt Skill)"]
-    BA & ACAD --> BROKER["Stock Broker\n(70 Exp / 70 Dep)"]
+    subgraph Life_Sciences_Track["Life Sciences & Medical Track"]
+        LS["Life Sciences (Foundations)"] --> PHYS["Physiology & Anatomy"]
+        LS --> BIOCHEM["Biochemistry"]
+        PHYS & BIOCHEM --> MED["Medical School (M.D.)"]
+    end
+
+    BIOCHEM --> LAB_ASST["University Lab Assistant\n(25 Exp / 25 Dep)"]
+    PHYS --> RN["Staff Nurse\n(40 Exp / 45 Dep)"]
+    RN & JC --> NURSE_SUP["Nursing Supervisor\n(50 Exp / 55 Dep, 2.0 Mgmt Skill)"]
+    MED --> DOC_RES["Resident Physician\n(55 Exp / 60 Dep)"]
+    MED & ACAD --> DOC_ATT["Attending Physician\n(65 Exp / 70 Dep)"]
+    MED --> SURG["Attending Surgeon\n(75 Exp / 75 Dep, 5.0 Tech Skill)"]
+    MED & BA --> CHIEF["Chief of Medicine\n(80 Exp / 85 Dep, 5.0 Mgmt Skill)"]
 ```
 
 ### Sub-Phase 2A: Baseline Alignment for Classic Locations & Broker
-- Restore the exact classic `advanced` job definitions for established locations:
-  - Z-Mart, QT Clothing, Socket City, Bank, University, Black's Market, and Apartment Complex.
-  - Fix unintended stat drift (e.g. Z-Mart clerk returning to 10 Exp / 10 Dep, manager to 30 Exp / 30 Dep).
-- Restore the **Broker** to its iconic pinnacle requirements:
-  - `70 Experience`, `70 Dependability`, `["business_admin", "academic"]`.
-  - Gives the `academic` degree a high-earning financial application outside of academia.
+- **100% Classic Baseline Parity**:
+  - Revert all legacy locations (Z-Mart, QT Clothing, Socket City, Bank, University, Black's Market, Rent Office) strictly back to their classic `advanced` values:
+    - Restores exact wages, experience/dependability thresholds, uniforms, and degree requirements.
+    - Eliminates unintended stat drift (e.g. Z-Mart Clerk returning to 10 Exp / 10 Dep, Manager to 30 Exp / 30 Dep).
+  - Any future job re-theming or wage adjustments will be handled in dedicated gameplay-first iterations with distinct modern job titles (e.g. dot-com era roles), rather than silently altering classic staples.
+- **Restore the Iconic Broker**:
+  - Requirements: `70 Experience`, `70 Dependability`, `["business_admin", "academic"]`, business uniform, `` `$22` `` wage.
+  - Solidifies the `academic` degree's high-earning financial application outside of academia.
 
-### Sub-Phase 2B: The Skill System Audit (`skillTech`, `skillMgmt`)
-- **Do we keep skills?**:
-  - Yes: Skills prevent high-tier jobs from being raw stat grinds and allow technical and managerial careers to feel mechanically distinct.
-  - In Advanced 2000, `skillTech` powers Socket City, the Arcade Technician, and Hospital surgical/biomedical roles. `skillMgmt` powers corporate and hospital administrative leadership.
-- **Skill Decay ("Rust")**:
-  - Should skills decay if unused?
-  - *Recommendation*: If implemented, it should be gentle and forgiving:
-    - Only begins after 2 consecutive turns without practicing the skill (working a relevant shift, leading an initiative, or studying).
-    - Decays by `-0.1` per turn.
-    - **Hard floor**: Completed degrees provide permanent skill baselines (e.g. Business Administration guarantees `skillMgmt` never drops below `2.5`). You can get rusty, but you never forget your foundational education.
-- **Should we add a third skill (Clinical / Medical)?**:
-  - *Caution against skill bloat*: Adding `skillClinical` on top of technical and management skills adds HUD clutter and cognitive load. The medical ladder can be fully and cleanly gated using the deep medical degree chain plus existing `skillTech` (surgical dexterity) and `skillMgmt` (nursing supervision/hospital director).
+### Sub-Phase 2B: The `clinical` Tag & Hospital Shift Adaptations
+- **No 3rd Abstract Skill**:
+  - Medical roles are gated naturally by strict Dependability bars, existing skills (`skillTech` and `skillMgmt`), and the Life Sciences education branch.
+- **The Mechanical Role of the `clinical` Tag**:
+  1. **"Grand Rounds" (Replaces `face_time`)**:
+     - At the Hospital, staff do not schmooze the water cooler. Instead, they attend Clinical Case Review / Grand Rounds.
+     - Consumes Mental stamina and time to review complex patient cases with senior staff, clearing location demerits and rebuilding Dependability.
+  2. **"Charting & Paperwork" (Replaces `look_busy`)**:
+     - Instead of hiding behind stockroom shelves, medical staff retreat to the nursing station to write up patient charts and update medical records.
+     - Mechanics: Halves physical drain, awards base `+1 Dependability` (completing medical charts on time builds dependability!), but grants `0 Experience`.
+  3. **High-Stakes Mistakes (`-2 Mental Shock`)**:
+     - A mistake on a `clinical` shift reflects patient risk and acute professional scrutiny.
+     - Triggers an immediate extra penalty of `-2 Mental condition` (clinical stress/guilt) alongside standard mistake demerits.
+  4. **The "Noble Aura" (Rent Office Standing Bonus)**:
+     - Healthcare workers gain an explicit bonus during lease renegotiations at the Rent Office (landlords appreciate reputable, stable healthcare tenants).
+  5. **Zero Downtime**:
+     - Unlike retail or pawn shops, Hospital jobs are fast-paced and high-pressure; none carry the `high_downtime` tag.
 
-### Sub-Phase 2C: Education DAG Restructure (Trade School vs. Junior College)
-- **The Issue**: Currently, `junior_college` unlocks Business, Academic, and all Medical degrees, while `trade_school` only unlocks `electronics`. Furthermore, players could rush an M.D. in 3 degrees without ever studying Physiology.
-- **The Restructured DAG**:
-  - **Trade School Vocational Track**:
-    - `trade_school` ──> `electronics` (Biomedical Tech, Socket City Repair)
-    - `trade_school` ──> `practical_nursing` (EMT, Staff Nurse)
-    - *Result*: Trade School becomes the rapid, debt-friendly vocational healthcare pathway.
-  - **University / Pre-Med Academic Track**:
-    - `junior_college` ──> `physiology` (Foundations of Health)
-    - `physiology` ──> `biochemistry` (Cellular & Organic Chemistry)
-    - `biochemistry` + `academic` ──> `medical_school` (M.D.) (Requires full bachelor foundation)
-    - `medical_school` ──> `residency` (Clinical training)
-    - `residency` ──> `specialty_fellowship` (Surgical specialization)
-  - Tuition and lesson counts scaled so M.D. is an authentic prestige journey.
+### Sub-Phase 2C: Education Overhaul — The 3-Track System
+1. **Vocational Track**: `trade_school` ──> `electronics`.
+2. **Business & Academic Track**: `junior_college` ──> `business_admin` & `academic`.
+3. **Life Sciences & Medical Track**:
+   - `life_sciences` (Foundations of Health & Biology, tuition `` `$50` ``, 10 lessons).
+   - `physiology` (requires `life_sciences`, tuition `` `$50` ``, 10 lessons). Unlocks Staff Nurse.
+   - `biochemistry` (requires `life_sciences`, tuition `` `$50` ``, 10 lessons). Unlocks University Lab Assistant.
+   - `medical_school` (M.D.) (requires `["physiology", "biochemistry"]`, tuition `` `$60` ``, 12 lessons). Unlocks Doctor tiers.
 
-### Sub-Phase 2D: Hospital Job Ladder Pruning
-- Prune Hospital jobs from 11 down to 9 (matching the classic Factory's 9 jobs):
-  1. **Hospital Orderly** (Entry / Heavy Physical, 10 Exp / 10 Dep, no degree)
-  2. **Ward Clerk / Receptionist** (Frontline Service, 20 Exp / 20 Dep, `junior_college`)
-  3. **Biomedical IT Tech** (Technical, 30 Exp / 30 Dep, `trade_school` + `electronics`, 3.0 `skillTech`)
-  4. **EMT / Paramedic** (Frontline Urgent, 35 Exp / 35 Dep, `trade_school` + `practical_nursing`)
-  5. **Staff Nurse (RN)** (Clinical Physical, 45 Exp / 45 Dep, `practical_nursing`)
-  6. **Nursing Supervisor** (Middle Management, 55 Exp / 55 Dep, `practical_nursing` + `junior_college`, 2.0 `skillMgmt`)
-  7. **Resident Physician** (Clinical Overtime, 60 Exp / 60 Dep, `medical_school`)
-  8. **Attending Surgeon** (High Technical Clinical, 75 Exp / 75 Dep, `specialty_fellowship`, 5.0 `skillTech`)
-  9. **Chief of Medicine / Medical Director** (Executive Pinnacle, 85 Exp / 85 Dep, `residency` + `business_admin`, 5.0 `skillMgmt`)
+### Sub-Phase 2D: The 9 Hospital Jobs & University Lab Assistant
+- **Hospital Ladder (9 In-Hospital Tiers)**:
+  1. **Hospital Orderly**: Entry level / Heavy Physical (15 Exp / 20 Dep, no degree, casual uniform, wage `` `$7` ``). Tags: `["always_hiring", "heavy_physical"]`.
+  2. **Ward Clerk / Receptionist**: Frontline Service / Administrative (20 Exp / 25 Dep, `junior_college` or `life_sciences`, casual uniform, wage `` `$9` ``). Tags: `["frontline_service"]`.
+  3. **Biomedical IT Tech**: Technical Support (30 Exp / 30 Dep, `electronics`, 3.0 `skillTech`, casual uniform, wage `` `$14` ``). Tags: `["technical"]`.
+  4. **Staff Nurse (RN)**: Bedside Care (40 Exp / 45 Dep, `physiology`, casual uniform, wage `` `$18` ``). Tags: `["frontline_service", "clinical"]`.
+  5. **Nursing Supervisor**: Clinical Middle Management (50 Exp / 55 Dep, `physiology` + `junior_college`, 2.0 `skillMgmt`, dress uniform, wage `` `$22` ``). Tags: `["middle_management", "clinical"]`.
+  6. **Resident Physician**: Post-MD Clinical Overtime (55 Exp / 60 Dep, `medical_school`, dress uniform, wage `` `$20` ``). Tags: `["clinical"]`.
+  7. **Attending Physician**: Board Certified Clinical (65 Exp / 70 Dep, `medical_school` + `academic`, business uniform, wage `` `$27` ``). Tags: `["clinical"]`.
+  8. **Attending Surgeon**: Specialized Surgical Clinical (75 Exp / 75 Dep, `medical_school`, 5.0 `skillTech`, casual/scrubs uniform, wage `` `$32` ``). Tags: `["clinical", "technical"]`.
+  9. **Chief of Medicine / Medical Director**: Hospital Executive (80 Exp / 85 Dep, `medical_school` + `business_admin`, 5.0 `skillMgmt`, business uniform, wage `` `$36` ``). Tags: `["executive_management", "clinical"]`.
+- **University Role**:
+  - Add **`uni_lab_assistant` (Lab Research Assistant)**: 25 Exp / 25 Dep, requires `biochemistry`, casual uniform, wage `` `$10` ``. Tags: `["technical"]`. Gives `biochemistry` an immediate academic application outside the hospital.
 
 ---
 

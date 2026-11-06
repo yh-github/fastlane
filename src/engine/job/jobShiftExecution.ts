@@ -282,7 +282,7 @@ export function workShift(
       physicalCost = basePhys * 0.5 + getLookBusyPhysicalCostModifier(job);
       mentalCost = baseMental * 0.5;
       wageMultiplier = 1.0;
-      baseDepGain = 0;
+      baseDepGain = hasJobTag(job, 'clinical') ? 1 : 0;
     } else if (mode === 'face_time') {
       physicalCost = basePhys * 0.5;
       mentalCost = baseMental * 1.0 + 2.0;
@@ -505,6 +505,10 @@ export function workShift(
     const extraSocialPenalty = getJobWorkMistakeSocialPenalty(job);
     if (extraSocialPenalty > 0) {
       updated.social = Math.max(1, (updated.social || 1) - extraSocialPenalty);
+    }
+    if (hasJobTag(job, 'clinical') && useConditions) {
+      // Clinical mistakes inflict acute psychological guilt and scrutiny (-2 Mental)
+      updated.mentalCondition = Math.max(0, (updated.mentalCondition ?? 50) - 2);
     }
 
     updated.mistakesByLocation = {

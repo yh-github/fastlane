@@ -36,51 +36,6 @@
     "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5, "maxMgmtBoost": 5.0 }
   },
   {
-    "id": "physiology",
-    "name": "Physiology & Health Sciences",
-    "tags": ["clinical"],
-    "prerequisites": ["junior_college"],
-    "baseTuitionFee": 50,
-    "lessonsRequired": 10,
-    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
-  },
-  {
-    "id": "biochemistry",
-    "name": "Biochemistry",
-    "tags": ["technical", "clinical"],
-    "prerequisites": ["junior_college"],
-    "baseTuitionFee": 50,
-    "lessonsRequired": 10,
-    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5, "maxTechBoost": 1.5 }
-  },
-  {
-    "id": "medical_school",
-    "name": "Medical School (M.D.)",
-    "tags": ["clinical"],
-    "prerequisites": ["biochemistry"],
-    "baseTuitionFee": 60,
-    "lessonsRequired": 12,
-    "rewards": { "happiness": 10, "dependability": 8, "maxDepBoost": 10, "maxExpBoost": 10 }
-  },
-  {
-    "id": "residency",
-    "name": "Clinical Residency",
-    "tags": ["clinical"],
-    "prerequisites": ["medical_school"],
-    "baseTuitionFee": 60,
-    "lessonsRequired": 12,
-    "rewards": { "happiness": 10, "dependability": 10, "maxDepBoost": 10, "maxExpBoost": 10 }
-  },
-  {
-    "id": "specialty_fellowship",
-    "name": "Surgical & Specialty Fellowship",
-    "tags": ["clinical", "technical"],
-    "prerequisites": ["residency"],
-    "baseTuitionFee": 75,
-    "lessonsRequired": 12,
-    "rewards": { "happiness": 10, "dependability": 10, "maxDepBoost": 15, "maxExpBoost": 15, "maxTechBoost": 2.5 }
-  },
-  {
     "id": "academic",
     "name": "Academic",
     "tags": ["academic"],
@@ -103,6 +58,42 @@
     "name": "Publishing & Research",
     "tags": ["academic"],
     "prerequisites": ["graduate_school"],
+    "baseTuitionFee": 60,
+    "lessonsRequired": 12,
+    "rewards": { "happiness": 10, "dependability": 10, "maxDepBoost": 10, "maxExpBoost": 10 }
+  },
+  {
+    "id": "life_sciences",
+    "name": "Life Sciences Foundations",
+    "tags": ["clinical"],
+    "prerequisites": [],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "physiology",
+    "name": "Physiology & Anatomy",
+    "tags": ["clinical"],
+    "prerequisites": ["life_sciences"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5 }
+  },
+  {
+    "id": "biochemistry",
+    "name": "Biochemistry",
+    "tags": ["technical", "clinical"],
+    "prerequisites": ["life_sciences"],
+    "baseTuitionFee": 50,
+    "lessonsRequired": 10,
+    "rewards": { "happiness": 5, "dependability": 5, "maxDepBoost": 5, "maxExpBoost": 5, "maxTechBoost": 1.5 }
+  },
+  {
+    "id": "medical_school",
+    "name": "Medical School (M.D.)",
+    "tags": ["clinical"],
+    "prerequisites": ["physiology", "biochemistry"],
     "baseTuitionFee": 60,
     "lessonsRequired": 12,
     "rewards": { "happiness": 10, "dependability": 10, "maxDepBoost": 10, "maxExpBoost": 10 }

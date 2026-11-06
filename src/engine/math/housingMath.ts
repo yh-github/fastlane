@@ -9,7 +9,8 @@ import {
   requireAdvancedStatRules,
   requireAdvancedEconomyRules
 } from '../rules';
-import type { CampaignBundle } from '../dataLoader';
+import type { CampaignBundle, JobDef } from '../dataLoader';
+import { hasJobTag } from '../jobTags';
 
 /**
  * Calculate mess growth based on current mess.
@@ -96,7 +97,8 @@ export interface LandlordStandingBreakdown {
 export function calcLandlordStanding(
   player: PlayerState,
   rules: GameRules,
-  currentTurn: number = 1
+  currentTurn: number = 1,
+  campaignJobs?: JobDef[]
 ): { standing: number; breakdown: LandlordStandingBreakdown[] } {
   let baseline = 35;
   let baselineLabel = 'Baseline';
@@ -189,6 +191,14 @@ export function calcLandlordStanding(
     if (depBonus > 0) {
       standing += depBonus;
       breakdown.push({ label: `Dependability (${dependability})`, value: depBonus });
+    }
+  }
+
+  if (campaignJobs && player.currentJobId) {
+    const curJob = campaignJobs.find(j => j.id === player.currentJobId);
+    if (curJob && hasJobTag(curJob, 'clinical')) {
+      standing += 10;
+      breakdown.push({ label: 'Healthcare Worker Standing', value: 10 });
     }
   }
 

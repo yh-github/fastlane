@@ -4,6 +4,7 @@ import { createPlayerState, createDefaultGoalAllotment } from '../src/engine/sta
 import { processTurnStart } from '../src/engine/turnProcessor';
 import { processDoctorVisit } from '../src/engine/eventEngine';
 import { workShift } from '../src/engine/job/jobShiftExecution';
+import { calcLandlordStanding } from '../src/engine/statMath';
 import { gameReducer } from '../src/engine/gameReducer';
 import { buyItem } from '../src/engine/shoppingEngine';
 import { Random } from '../src/utils/rng';
@@ -72,13 +73,15 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(nodeIds).toContain('node_park_east');
     });
 
-    it('contains progressive healthcare education degrees', () => {
+    it('contains progressive healthcare education degrees in Life Sciences track', () => {
       const degIds = campaign2000.education.map(d => d.id);
+      expect(degIds).toContain('life_sciences');
       expect(degIds).toContain('physiology');
       expect(degIds).toContain('biochemistry');
       expect(degIds).toContain('medical_school');
-      expect(degIds).toContain('residency');
-      expect(degIds).toContain('specialty_fellowship');
+
+      const medSchool = campaign2000.education.find(d => d.id === 'medical_school')!;
+      expect(medSchool.prerequisites).toEqual(['physiology', 'biochemistry']);
     });
 
     it('preserves standard clothing durability in QT Clothing (9w/9w/13w) and used overrides in Z-Mart (7w/7w/3w)', () => {
@@ -415,6 +418,128 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(updated.money).toBeLessThan(500);
       // Standard bounce-back (+4 in statRules)
       expect(updated.physicalCondition).toBe(14);
+    });
+
+    it('contains exactly 9 Hospital jobs with calibrated progression and tags', () => {
+      const hospitalJobs = campaign2000.jobs.filter(j => j.locationId === 'hospital');
+      expect(hospitalJobs).toHaveLength(9);
+
+      const orderly = hospitalJobs.find(j => j.id === 'hospital_custodian')!;
+      expect(orderly.baseWage).toBe(7);
+      expect(orderly.requirements.dependability).toBe(20);
+      expect(orderly.tags).toContain('heavy_physical');
+      expect(orderly.tags).not.toContain('high_downtime');
+
+      const nurse = hospitalJobs.find(j => j.id === 'hospital_nurse')!;
+      expect(nurse.baseWage).toBe(18);
+      expect(nurse.requirements.degrees).toEqual(['physiology']);
+      expect(nurse.tags).toContain('clinical');
+
+      const surgeon = hospitalJobs.find(j => j.id === 'hospital_surgeon')!;
+      expect(surgeon.baseWage).toBe(32);
+      expect(surgeon.requirements.degrees).toEqual(['medical_school']);
+      expect(surgeon.requirements.techSkill).toBe(5.0);
+      expect(surgeon.tags).toContain('clinical');
+      expect(surgeon.tags).toContain('technical');
+
+      const chief = hospitalJobs.find(j => j.id === 'hospital_director')!;
+      expect(chief.baseWage).toBe(36);
+      expect(chief.requirements.degrees).toEqual(['medical_school', 'business_admin']);
+      expect(chief.requirements.mgmtSkill).toBe(5.0);
+      expect(chief.tags).toContain('executive_management');
+      expect(chief.tags).toContain('clinical');
+    });
+
+    it('restores classic job baselines across legacy locations and preserves iconic Broker', () => {
+      const broker = campaign2000.jobs.find(j => j.id === 'bank_broker')!;
+      expect(broker.baseWage).toBe(22);
+      expect(broker.requirements.experience).toBe(70);
+      expect(broker.requirements.dependability).toBe(70);
+      expect(broker.requirements.degrees).toEqual(['business_admin', 'academic']);
+      expect(broker.requirements.uniform).toBe('business');
+
+      const zmartClerk = campaign2000.jobs.find(j => j.id === 'zmart_clerk')!;
+      expect(zmartClerk.baseWage).toBe(5);
+      expect(zmartClerk.requirements.experience).toBe(10);
+      expect(zmartClerk.requirements.dependability).toBe(10);
+
+      const zmartMgr = campaign2000.jobs.find(j => j.id === 'zmart_mgr')!;
+      expect(zmartMgr.baseWage).toBe(8);
+      expect(zmartMgr.requirements.experience).toBe(30);
+      expect(zmartMgr.requirements.dependability).toBe(30);
+
+      const uniLab = campaign2000.jobs.find(j => j.id === 'uni_lab_assistant')!;
+      expect(uniLab.baseWage).toBe(10);
+      expect(uniLab.requirements.degrees).toEqual(['biochemistry']);
+      expect(uniLab.tags).toContain('technical');
+    });
+
+    it('clinical shift Charting (look_busy) grants dependability without experience', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      const nurseJob = campaign2000.jobs.find(j => j.id === 'hospital_nurse')!;
+      player.currentJobId = nurseJob.id;
+      player.currentWage = nurseJob.baseWage;
+      player.hoursRemaining = 40;
+      player.money = 100;
+      player.physicalCondition = 50;
+      player.mentalCondition = 50;
+      player.dependability = 45;
+      player.experience = 40;
+
+      const res = workShift(
+        player,
+        nurseJob,
+        6,
+        campaign2000.config.gameRules,
+        campaign2000.config.statRules,
+        'look_busy',
+        new Random(1),
+        undefined,
+        campaign2000.education,
+        campaign2000
+      );
+
+      // Gains +1 Dep from Charting, 0 Exp
+      expect(res.updated.dependability).toBe(46);
+      expect(res.updated.experience).toBe(40);
+    });
+
+    it('clinical mistakes inflict extra -2 Mental stress shock', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      const nurseJob = campaign2000.jobs.find(j => j.id === 'hospital_nurse')!;
+      player.currentJobId = nurseJob.id;
+      player.currentWage = nurseJob.baseWage;
+      player.hoursRemaining = 40;
+      player.physicalCondition = 5;
+      player.mentalCondition = 50;
+      player.dependability = 45;
+
+      const res = workShift(
+        player,
+        nurseJob,
+        6,
+        campaign2000.config.gameRules,
+        campaign2000.config.statRules,
+        'work_work',
+        new Random(1),
+        { inDecisions: [{ type: `work_phys_mistake_${player.id}_1`, result: true }] },
+        campaign2000.education,
+        campaign2000
+      );
+
+      // Condition was low -> mistake occurred -> normal mental cost (1) + clinical mistake shock (2) = 47
+      expect(res.updated.mentalCondition).toBe(47);
+    });
+
+    it('awards landlord standing bonus for healthcare workers with clinical jobs', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_security', campaign2000.config);
+      player.currentJobId = 'hospital_nurse';
+      player.currentHousingId = 'security';
+      player.dependability = 20;
+
+      const { standing, breakdown } = calcLandlordStanding(player, campaign2000.config.gameRules, 1, campaign2000.jobs);
+      expect(breakdown.some(b => b.label === 'Healthcare Worker Standing')).toBe(true);
+      expect(standing).toBe(61); // 55 baseline - 4 mess + 10 healthcare = 61
     });
   });
 

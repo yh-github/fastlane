@@ -30,7 +30,7 @@ export function RentOffice({ player, onAction, campaign, turn = 1, economicIndex
   const marketRent = currentHousing
     ? calcEconomyPrice(currentHousing.baseRent, economicIndex)
     : player.currentRentPrice;
-  const landlordStandingInfo = (showLandlordStanding && rules) ? calcLandlordStanding(player, rules, turn) : null;
+  const landlordStandingInfo = (showLandlordStanding && rules) ? calcLandlordStanding(player, rules, turn, campaign?.jobs) : null;
 
   const rentAdvanceCost = player.currentRentPrice;
 

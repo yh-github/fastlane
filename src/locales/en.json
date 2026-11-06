@@ -534,7 +534,9 @@
     "technical": "Technical",
     "technical_desc": "Requires technical aptitude. Shift work, innovation, and freelance computing build Skill Tech, which reduces requirements and boosts hiring odds for technical jobs.",
     "look_fit": "Look Fit",
-    "look_fit_desc": "Requires Physical Condition >= 30 at interview. Physical fitness scales employability (+2% per point above 30). 0.5x Experience gain without cumulative burnout."
+    "look_fit_desc": "Requires Physical Condition >= 30 at interview. Physical fitness scales employability (+2% per point above 30). 0.5x Experience gain without cumulative burnout.",
+    "clinical": "Clinical",
+    "clinical_desc": "High-stakes patient care role. Charting earns dependability without experience. Mistakes carry severe mental stress (-2 Mental). Healthcare workers enjoy landlord goodwill at the Rent Office."
   },
   "park": {
     "relax": "Relax in Park",
@@ -1004,6 +1006,10 @@
     "innovations": "Innovations: {{count}}",
     "initiatives": "Initiatives: {{count}}",
     "actionShowInitiative": "Show Initiative",
+    "actionGrandRounds": "Grand Rounds",
+    "shortGrandRounds": "Rounds",
+    "actionCharting": "Charting",
+    "shortCharting": "Charting",
     "mistakesThisTurn": "Mistakes this turn: {{count}}/3",
     "locationMistakes": "Location Incidents: {{count}}",
     "workBtnText": "WORK"
