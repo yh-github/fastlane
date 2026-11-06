@@ -168,16 +168,16 @@ export const FREE_WEEKEND_CARDS: Record<string, WeekendCard> = {
     type: 'walk',
     eventKey: 'events.weekend.free_park_walk',
     titleKey: 'weekendScreen.card.parkWalkTitle',
-    fluff: 'You spent hours wandering the city parks enjoying nature and quiet fresh air.',
+    fluff: 'You took long refreshing walks and exercised in the city park, but left dishes in the sink.',
     icon: '🌳',
     costMin: 0,
     costMax: 0,
     targetStat: 'physical',
     potentialBonusMin: 2,
     potentialBonusMax: 2,
-    secondaryStat: 'mental',
-    potentialSecondaryBonusMin: 1,
-    potentialSecondaryBonusMax: 1
+    secondaryStat: 'mess',
+    potentialSecondaryBonusMin: 2,
+    potentialSecondaryBonusMax: 2
   },
   free_porch_chat: {
     id: 'free_porch_chat',
