@@ -32,10 +32,10 @@
     "subcategory": "fast_food",
     "basePrice": 15,
     "happinessBonus": 0,
-    "mentalBonus": -1,
-    "description": "Cheap mystery slaw and deep-fried scraps. Drains your bodily stamina but staves off starvation.",
+    "mentalBonus": 0,
+    "description": "Cheap diner slaw and fried patties. Quick fast food that staves off hunger.",
     "effects": [
-      { "trigger": "on_purchase", "stat": "physical", "value": -2 },
+      { "trigger": "on_purchase", "stat": "physical", "value": -1 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },
@@ -45,11 +45,10 @@
     "category": "food",
     "subcategory": "fast_food",
     "basePrice": 75,
-    "happinessBonus": 2,
-    "mentalBonus": 3,
+    "happinessBonus": 0,
+    "mentalBonus": 2,
     "description": "Decadent double patty smothered in melted cheese and pirate sauce. Delicious comfort food.",
     "effects": [
-      { "trigger": "on_purchase", "stat": "physical", "value": -1 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },
@@ -59,9 +58,12 @@
     "category": "food",
     "subcategory": "fast_food",
     "basePrice": 40,
-    "happinessBonus": 1,
-    "mentalBonus": 2,
-    "description": "Creamy malted shake with spiced caramel swirl. Sweet mental comfort."
+    "happinessBonus": 0,
+    "mentalBonus": 1,
+    "description": "Creamy malted shake with spiced caramel swirl. Sweet mental comfort.",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "social", "value": 1 }
+    ]
   },
   {
     "id": "drip_coffee",

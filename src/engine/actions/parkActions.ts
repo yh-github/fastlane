@@ -30,23 +30,15 @@ export function handlePlayArcadeAction(
   if (context.rules.usePhysicalMentalConditions) {
     const modifications: StatModification[] = [{ stat: 'money', diff: -5 }];
 
-    if (playsThisTurn < 2) {
-      // Plays 1 & 2: Good for mental health (+2) and social (+1)
-      const maxMental = nextPlayer.mentalConditionMax ?? 50;
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + 2);
-      modifications.push({ stat: 'mental', diff: 2 });
-
-      if (context.rules.trackSocial) {
-        nextPlayer.social = Math.min(100, (nextPlayer.social ?? 0) + 1);
-        modifications.push({ stat: 'social', diff: 1 });
-      }
-    } else if (playsThisTurn === 2) {
-      // Play 3: Diminishing returns (+1 mental, 0 social)
+    if (playsThisTurn === 0) {
+      // Play 1: Modest mental relief (+1 mental, 0 social)
       const maxMental = nextPlayer.mentalConditionMax ?? 50;
       nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + 1);
       modifications.push({ stat: 'mental', diff: 1 });
+    } else if (playsThisTurn === 1) {
+      // Play 2: Diminishing returns (0 mental, 0 social)
     } else {
-      // Play 4+: Playing all day causes physical fatigue / eye strain (-1 physical)
+      // Play 3+: Fatigue / Eye strain from playing too long (-1 physical)
       nextPlayer.physicalCondition = Math.max(1, (nextPlayer.physicalCondition ?? 50) - 1);
       modifications.push({ stat: 'physical', diff: -1 });
     }
@@ -62,10 +54,7 @@ export function handlePlayArcadeAction(
 
   // Classic rules (usePhysicalMentalConditions is false)
   const modifications: StatModification[] = [{ stat: 'money', diff: -5 }];
-  if (playsThisTurn < 2) {
-    nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
-    modifications.push({ stat: 'happiness', diff: 2 });
-  } else if (playsThisTurn === 2) {
+  if (playsThisTurn === 0) {
     nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 1);
     modifications.push({ stat: 'happiness', diff: 1 });
   }

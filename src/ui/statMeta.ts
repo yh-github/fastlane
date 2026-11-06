@@ -102,7 +102,7 @@ export function getStatMeta(
     case 'mess':
       return {
         icon: React.createElement(MessIcon, null),
-        textIcon: '🧹',
+        textIcon: '🗑️',
         label: translate('stats.mess', { defaultValue: 'Apartment Mess' })
       };
     case 'lifestyle':
