@@ -12,6 +12,7 @@ import { AuthenticGoalsModal } from './authentic/AuthenticGoalsModal';
 import { AuthenticDiplomaModal } from './authentic/AuthenticDiplomaModal';
 import { AuthenticLotteryModal } from './authentic/AuthenticLotteryModal';
 import { AuthenticCashCalculator } from './authentic/AuthenticCashCalculator';
+import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
 import { NewspaperModal } from './NewspaperModal';
 import { SettingsModal } from './SettingsModal';
 import { HudAttributeInfoModal } from './HudAttributeInfoModal';
@@ -128,6 +129,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
     streetRobberyNotice,
     setStreetRobberyNotice,
     isTravelling,
+    addLog,
   } = useGameEngine(
     campaign,
     initialGameState,
@@ -242,6 +244,10 @@ export const GameSession: React.FC<GameSessionProps> = ({
         const isWknd = Boolean(activeP && !activeP.turnFlags?.hasSeenWeekend && (gameState?.turn ?? 0) > 1);
 
         if (activeModal?.type === 'building' && currentBldId && !isWknd) {
+          const hasDilemma = Boolean(activeP && (activeP.pendingMiniGame || activeP.pendingAppraisalDilemma));
+          if (hasDilemma) {
+            return;
+          }
           closeModal();
           if (activeP && activeP.hoursRemaining <= 0) {
             handleAction({ type: 'end-turn' });
@@ -458,7 +464,15 @@ export const GameSession: React.FC<GameSessionProps> = ({
             rules={gameState.rules}
             onSelectCard={(cardId: string) => {
               const rng = new Random(gameState.rngState);
-              const resolvedPlayer = resolveWeekendChoice(activePlayer, cardId, rng, gameState.rules, campaign.config.statRules);
+              const resolvedPlayer = resolveWeekendChoice(
+                activePlayer,
+                cardId,
+                rng,
+                gameState.rules,
+                campaign.config.statRules,
+                campaign,
+                gameState.turn
+              );
               const newPlayers = [...gameState.players];
               newPlayers[activePlayerIndex] = resolvedPlayer;
               setGameState({
@@ -467,7 +481,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
                 rngState: rng.getState(),
               });
               if (resolvedPlayer.weekendResult) {
-                // Log event
+                addLog(resolvedPlayer.weekendResult.event, gameState.turn, activePlayer.id);
               }
             }}
             onStartWeek={() => {
@@ -490,6 +504,10 @@ export const GameSession: React.FC<GameSessionProps> = ({
             players={gameState.players} 
             activePlayerIndex={activePlayerIndex}
             onNodeClick={isAiTurn ? () => {} : (nodeId) => {
+              const activeP = gameState?.players?.[activePlayerIndex];
+              if (activeP && (activeP.pendingMiniGame || activeP.pendingAppraisalDilemma)) {
+                return;
+              }
               closeModal();
               handleNodeClick(nodeId);
             }}
@@ -611,6 +629,17 @@ export const GameSession: React.FC<GameSessionProps> = ({
                 handleAction({ type: 'exit_building' });
               }
             }}
+          />
+        )}
+
+        {/* Fallback for appraisal dilemma / workplace initiative / park encounter mini-games */}
+        {activePlayer && (activePlayer.pendingMiniGame || activePlayer.pendingAppraisalDilemma) && activeModal?.type !== 'building' && (
+          <AppraisalDilemmaModal
+            dilemma={(activePlayer.pendingMiniGame || activePlayer.pendingAppraisalDilemma)!}
+            player={activePlayer}
+            campaign={campaign}
+            onSelectOption={(idx) => handleAction({ type: 'resolve_mini_game', choiceIndex: idx })}
+            onRedraw={() => handleAction({ type: 'redraw_initiative' })}
           />
         )}
 

@@ -7,7 +7,7 @@ import { calcEconomyPrice } from '../economyEngine';
 import { roundToResolution, calcMaxMess, safeDecrementPhysical, safeDecrementMental, calcMaxSkillCap } from '../statMath';
 import { applyHappinessChange } from '../statEffects';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
-import { removeApplianceCardFromDeck } from '../weekendEngine';
+import { addApplianceCardToDeck, removeApplianceCardFromDeck } from '../weekendEngine';
 import { ensurePlayerCurios } from '../curioCatalog';
 
 export interface DiySuccessChanceBreakdown {
@@ -188,6 +188,9 @@ export function handleApplianceMaintenanceAction(
 
     if (isSuccess) {
       nextPlayer.inventory.appliances[appIndex] = { ...app, isBroken: false, condition: 'used' };
+      if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
+        nextPlayer = addApplianceCardToDeck(nextPlayer, app.id, context.rng);
+      }
 
       // Reward: +3 Mental Condition (or +1 Happiness), +0.5 skill_tech
       if (context.rules.usePhysicalMentalConditions) {
@@ -233,6 +236,9 @@ export function handleApplianceMaintenanceAction(
     nextPlayer = spendHours(nextPlayer, 1);
     nextPlayer.money -= repairCost;
     nextPlayer.inventory.appliances[appIndex] = { ...app, isBroken: false, condition: 'new' };
+    if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
+      nextPlayer = addApplianceCardToDeck(nextPlayer, app.id, context.rng);
+    }
 
     actionLog = { key: 'action.appliance.repairmanSuccess', params: { appliance: applianceName, cost: repairCost } };
     return { nextPlayer, actionLog };

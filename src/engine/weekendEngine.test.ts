@@ -170,18 +170,22 @@ describe('Weekend Engine', () => {
       expect(cards.length).toBe(2);
       expect(cards[0].costMax).toBe(0);
       expect(cards[1].costMax).toBe(0);
-      expect(cards.some(c => c.id === 'broke_stay_home')).toBe(true);
-      expect(cards.some(c => c.id === 'broke_deep_clean')).toBe(true);
+      const freeCardIds = ['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat', 'broke_stay_home', 'broke_deep_clean'];
+      expect(freeCardIds).toContain(cards[0].id);
+      expect(freeCardIds).toContain(cards[1].id);
+      expect(cards[0].id).not.toBe(cards[1].id);
 
       // Resolve Rest
-      const afterRest = resolveWeekendChoice(updated, 'broke_stay_home', new Random(1), { usePhysicalMentalConditions: true, trackMess: true } as any);
+      const playerWithRest = { ...updated, offeredWeekendCards: [{ ...FREE_WEEKEND_CARDS.free_stay_home, id: 'broke_stay_home' }] };
+      const afterRest = resolveWeekendChoice(playerWithRest, 'broke_stay_home', new Random(1), { usePhysicalMentalConditions: true, trackMess: true } as any);
       expect(afterRest.mentalCondition).toBe(32);
       expect(afterRest.physicalCondition).toBe(41);
       expect(afterRest.mess).toBe(17);
       expect(afterRest.money).toBe(2);
 
       // Resolve Clean
-      const afterClean = resolveWeekendChoice(updated, 'broke_deep_clean', new Random(1), { usePhysicalMentalConditions: true, trackMess: true } as any);
+      const playerWithClean = { ...updated, offeredWeekendCards: [{ ...FREE_WEEKEND_CARDS.free_deep_clean, id: 'broke_deep_clean' }] };
+      const afterClean = resolveWeekendChoice(playerWithClean, 'broke_deep_clean', new Random(1), { usePhysicalMentalConditions: true, trackMess: true } as any);
       expect(afterClean.physicalCondition).toBe(38); // -2
       expect(afterClean.mess).toBe(5); // 15 - 10
       expect(afterClean.money).toBe(2);
@@ -463,6 +467,8 @@ describe('Weekend Engine', () => {
           social: 20,
           physicalCondition: 35,
           physicalConditionMax: 50,
+          mentalCondition: 35,
+          mentalConditionMax: 50,
           inventory: { appliances: [], tickets: { baseball: 0, theatre: 0, concert: 0 } },
           offeredWeekendCards: [
             {
@@ -502,10 +508,11 @@ describe('Weekend Engine', () => {
           ]
         } as unknown as PlayerState;
 
-        // Resolve park walk: +2 physical condition, +2 mess
+        // Resolve park walk: +2 physical condition, +1 mental condition, 0 mess
         const resWalk = resolveWeekendChoice(player, 'free_park_walk', new Random(1), { usePhysicalMentalConditions: true, trackMess: true } as any);
         expect(resWalk.physicalCondition).toBe(37);
-        expect(resWalk.mess).toBe(2);
+        expect(resWalk.mentalCondition).toBe(36);
+        expect(resWalk.mess).toBeUndefined();
         expect(resWalk.money).toBe(300); // Free ($0)
 
         // Resolve porch chat: +2 social, +2 mess
@@ -614,7 +621,8 @@ describe('Weekend Engine', () => {
 
         const resParkWalk = resolveWeekendChoice(basePlayer, 'free_park_walk', new Random(1), rules);
         expect(resParkWalk.physicalCondition).toBe(22);
-        expect(resParkWalk.mess).toBe(12); // +2 mess
+        expect(resParkWalk.mentalCondition).toBe(21);
+        expect(resParkWalk.mess).toBe(10); // 0 mess added
 
         const resPorchChat = resolveWeekendChoice(basePlayer, 'free_porch_chat', new Random(1), rules);
         expect(resPorchChat.social).toBe(22);

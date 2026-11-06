@@ -288,10 +288,6 @@
   "events": {
     "caffeine_overdose": "Caffeine overdose! Excessive intake strained your cardiovascular system (-1 Max Physical, -1 Max Mental).",
     "caffeine_tolerance_update": "Caffeine tolerance updated ({{oldTol}} → {{newTol}}).",
-    "weekend": {
-      "cramming_sprint": "Wired on continuous coffee, you locked yourself in the library all weekend, power-reading textbooks and drafting thesis notes.",
-      "overtime_grind": "You answered the emergency call and spent 36 consecutive hours at the workplace tackling backlogs and covering weekend shifts."
-    },
     "park": {
       "hazard": "Park Hazard: {{title}} — {{desc}}",
       "pickpocket": "Street pickpocket! A thief swiped ${{stolen}} from your pocket while you were in the park.",
@@ -364,6 +360,19 @@
     "computerProfit": "You made ${{profit}} profit from your computer.",
     "weekend": {
       "too_broke": "You were too broke to do anything this weekend.",
+      "cramming_sprint": "Wired on continuous coffee, you locked yourself in the library all weekend, power-reading textbooks and drafting thesis notes.",
+      "overtime_grind": "You answered the emergency call and spent 36 consecutive hours at the workplace tackling backlogs and covering weekend shifts.",
+      "free_stay_home": "You stayed home all weekend resting in bed and watching TV. You feel refreshed, but dishes and laundry piled up.",
+      "free_deep_clean": "You spent the entire weekend scrubbing every floor and surface until your apartment was spotless.",
+      "free_park_walk": "You spent hours wandering the city parks enjoying nature and quiet fresh air.",
+      "free_porch_chat": "You sat on the front porch chatting for hours with neighbors, leaving cups and clutter around.",
+      "broke_rest": "You stayed home all weekend resting in bed and watching TV. You feel refreshed, but dishes and laundry piled up.",
+      "broke_clean": "You spent the entire weekend scrubbing every floor and surface until your apartment was spotless.",
+      "ticket_resale_baseball": "You found buyers outside the stadium and sold your baseball tickets for cash.",
+      "ticket_resale_theatre": "You found theatregoers outside the box office and sold your theatre tickets for cash.",
+      "ticket_resale_concert": "You found music fans outside the venue and sold your concert tickets for cash.",
+      "durable_crt_tv": "You spent the whole weekend adjusting the rabbit ears on your CRT TV to watch old reruns.",
+      "durable_plasma_tv": "You invited friends over to admire your stunning flat-screen plasma TV.",
       "ticket_baseball": "You went to the baseball game this weekend and ate hotdogs till you puked.",
       "ticket_theatre": "You went to the theatre this weekend and saw the one MAN version of Cats.",
       "ticket_concert": "You had front row seats at a rock concert. The doctor said that the hearing loss shouldn't be permanent.",

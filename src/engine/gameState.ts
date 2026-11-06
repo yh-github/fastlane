@@ -328,10 +328,26 @@ export interface WeekendDeckState {
   discardPile: string[];
 }
 
+export type WeekendCardType =
+  | 'random'
+  | 'durable'
+  | 'ticket'
+  | 'ticket_resale'
+  | 'clean'
+  | 'rest'
+  | 'walk'
+  | 'chat'
+  | 'study'
+  | 'work'
+  | 'culture'
+  | 'social'
+  | 'career'
+  | 'sports';
+
 export interface WeekendCard {
   id: string;
   tier: WeekendDeckTier;
-  type: 'random' | 'durable' | 'ticket' | 'ticket_resale' | 'clean' | 'rest' | 'walk' | 'chat' | 'study' | 'work';
+  type: WeekendCardType;
   eventKey: string;
   fluff: string;
   titleKey: string;
