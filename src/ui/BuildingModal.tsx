@@ -411,13 +411,13 @@ export function BuildingModal({
 
             let benefitDisplay: React.ReactNode;
             if (isPhysMental) {
-              if (plays < 2) {
+              if (plays === 0) {
                 benefitDisplay = (
-                  <span>⏳ -1h • 💰 -$5 • +2 🧠{trackSocial ? ' • +1 👥' : ''}</span>
+                  <span>⏳ -1h • 💰 -$5 • +1 🧠</span>
                 );
-              } else if (plays === 2) {
+              } else if (plays === 1) {
                 benefitDisplay = (
-                  <span>⏳ -1h • 💰 -$5 • +1 🧠 (Diminishing returns)</span>
+                  <span>⏳ -1h • 💰 -$5 • 0 🧠 (Diminishing returns)</span>
                 );
               } else {
                 benefitDisplay = (
@@ -425,9 +425,7 @@ export function BuildingModal({
                 );
               }
             } else {
-              if (plays < 2) {
-                benefitDisplay = <span>⏳ -1h • 💰 -$5 • +2 😊</span>;
-              } else if (plays === 2) {
+              if (plays === 0) {
                 benefitDisplay = <span>⏳ -1h • 💰 -$5 • +1 😊</span>;
               } else {
                 benefitDisplay = <span style={{ color: '#f87171' }}>⏳ -1h • 💰 -$5 • 0 😊 (Bored)</span>;

@@ -209,27 +209,22 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     player.happiness = 40;
     player.physicalCondition = 40;
 
-    // Play 1: Mental +2, Social +1, NO Happiness increase
+    // Play 1: Mental +1, Social 0, NO Happiness increase
     const r1 = gameReducer(player, { type: 'play_arcade' }, setupContext(player));
-    expect(r1.updatedPlayer.mentalCondition).toBe(32);
-    expect(r1.updatedPlayer.social).toBe(11);
+    expect(r1.updatedPlayer.mentalCondition).toBe(31);
+    expect(r1.updatedPlayer.social).toBe(10);
     expect(r1.updatedPlayer.happiness).toBe(40);
     expect(r1.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(1);
 
-    // Play 2: Mental +2, Social +1
+    // Play 2: Diminishing returns: Mental 0, Social 0
     const r2 = gameReducer(r1.updatedPlayer, { type: 'play_arcade' }, setupContext(r1.updatedPlayer));
-    expect(r2.updatedPlayer.mentalCondition).toBe(34);
-    expect(r2.updatedPlayer.social).toBe(12);
+    expect(r2.updatedPlayer.mentalCondition).toBe(31);
+    expect(r2.updatedPlayer.social).toBe(10);
 
-    // Play 3: Diminishing returns: Mental +1, Social 0
+    // Play 3+: Playing all day causes physical fatigue / eye strain: Physical -1
     const r3 = gameReducer(r2.updatedPlayer, { type: 'play_arcade' }, setupContext(r2.updatedPlayer));
-    expect(r3.updatedPlayer.mentalCondition).toBe(35);
-    expect(r3.updatedPlayer.social).toBe(12);
-
-    // Play 4+: Playing all day causes physical fatigue / eye strain: Physical -1
-    const r4 = gameReducer(r3.updatedPlayer, { type: 'play_arcade' }, setupContext(r3.updatedPlayer));
-    expect(r4.updatedPlayer.physicalCondition).toBe(39);
-    expect(r4.updatedPlayer.mentalCondition).toBe(35);
+    expect(r3.updatedPlayer.physicalCondition).toBe(39);
+    expect(r3.updatedPlayer.mentalCondition).toBe(31);
 
     // Check UI uses standard icons and dynamic feedback
     render(
@@ -245,8 +240,8 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
       />
     );
 
-    // Check standard icons on arcade corner: ⏳ -1h • 💰 -$5 • +2 🧠 • +1 👥
-    expect(screen.getByText(/⏳ -1h • 💰 -\$5 • \+2 🧠 • \+1 👥/i)).toBeInTheDocument();
+    // Check standard icons on arcade corner: ⏳ -1h • 💰 -$5 • +1 🧠
+    expect(screen.getByText(/⏳ -1h • 💰 -\$5 • \+1 🧠/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Play Arcade \(💰 \$5\)/i })).toBeInTheDocument();
   });
 
@@ -284,8 +279,8 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
 
     // Must NOT contain +-1
     expect(screen.queryByText(/\+-1/)).not.toBeInTheDocument();
-    // Must contain clean "-1 on buy"
-    expect(screen.getByText(/-1 on buy/i)).toBeInTheDocument();
+    // Must contain clean "-1 Physical"
+    expect(screen.getByText(/-1 Physical/i)).toBeInTheDocument();
   });
 
   // 9. Parks: No clerk face, no welcome speech bubble, standard button icons
