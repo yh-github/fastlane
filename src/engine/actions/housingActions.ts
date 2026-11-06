@@ -236,7 +236,7 @@ export function handleRenegotiateRentAction(
     return { nextPlayer, actionLog };
   }
 
-  const { standing } = calcLandlordStanding(nextPlayer, context.rules, context.turn);
+  const { standing } = calcLandlordStanding(nextPlayer, context.rules, context.turn, context.campaign?.jobs);
 
   if (standing >= 50) {
     // Full reduction to market price; gain 1 mental (net -1)

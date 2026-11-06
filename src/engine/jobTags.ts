@@ -14,7 +14,8 @@ export type JobTag =
   | 'executive_management'
   | 'high_downtime'
   | 'technical'
-  | 'look_fit';
+  | 'look_fit'
+  | 'clinical';
 
 export interface JobTagDefinition {
   id: JobTag;
@@ -67,6 +68,11 @@ export const JOB_TAG_REGISTRY: Record<JobTag, JobTagDefinition> = {
     id: 'look_fit',
     nameKey: 'tag.look_fit',
     descKey: 'tag.look_fit_desc'
+  },
+  clinical: {
+    id: 'clinical',
+    nameKey: 'tag.clinical',
+    descKey: 'tag.clinical_desc'
   }
 };
 

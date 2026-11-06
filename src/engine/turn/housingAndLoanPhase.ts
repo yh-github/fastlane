@@ -23,7 +23,7 @@ export function processHousingAndLoanPhase(
         const diff = marketRent - p.currentRentPrice;
         // Require at least $10 surge difference to trigger a renegotiation increase
         if (diff >= 10) {
-          const { standing } = calcLandlordStanding(p, state.rules, state.turn);
+          const { standing } = calcLandlordStanding(p, state.rules, state.turn, campaign.jobs);
           let newRent = p.currentRentPrice;
 
           if (standing < 15) {
