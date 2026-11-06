@@ -522,26 +522,39 @@ export function selectAiWeekendCard(player: PlayerState, cards: WeekendCard[]): 
   const physical = player.physicalCondition ?? 50;
 
   for (const card of cards) {
-    const avgCost = (card.costMin + card.costMax) / 2;
-    if (avgCost > currentMoney) {
+    if (card.costMin > currentMoney) {
       continue; // Unaffordable
     }
+    const avgCost = (card.costMin + card.costMax) / 2;
+    const effectiveCost = Math.min(avgCost, currentMoney);
 
     let utility = 0;
 
     // Money penalty: spending hurts more if low on funds
-    const moneyBuffer = currentMoney - avgCost;
+    const moneyBuffer = currentMoney - effectiveCost;
     if (moneyBuffer < 20) {
       utility -= 40;
     } else if (moneyBuffer < 50) {
       utility -= 15;
     } else {
-      utility -= avgCost * 0.1;
+      utility -= effectiveCost * 0.1;
     }
 
     // Special bonus evaluation
     if (card.isSpecial) {
       utility += (card.specialBonus ?? 3) * 10;
+    }
+
+    // Ticket resale evaluation
+    if (card.type === 'ticket_resale') {
+      const payout = card.resalePayout || 0;
+      if (currentMoney < 15) {
+        utility += payout * 1.5 + 40;
+      } else if (currentMoney < 50) {
+        utility += payout * 0.8 + 20;
+      } else {
+        utility += payout * 0.3;
+      }
     }
 
     // Stat gain evaluation
@@ -555,10 +568,28 @@ export function selectAiWeekendCard(player: PlayerState, cards: WeekendCard[]): 
     } else if (card.targetStat === 'social') {
       const socialDeficit = Math.max(0, 50 - social);
       utility += avgBonus * (socialDeficit > 20 ? 12 : 5);
+    } else if (card.targetStat === 'physical') {
+      const physDeficit = Math.max(0, 60 - physical);
+      utility += avgBonus * (physDeficit > 20 ? 15 : 6);
     } else if (card.targetStat === 'mess') {
       if (mess > 20) utility += 15;
       else if (mess > 10) utility += 5;
       if (physical < 20) utility -= 10;
+    }
+
+    // Secondary stat evaluation for tickets
+    if (card.type === 'ticket' && card.secondaryStat === 'social') {
+      const socBonus = card.potentialSecondaryBonusMin ?? 1;
+      const socialDeficit = Math.max(0, 50 - social);
+      utility += socBonus * (socialDeficit > 20 ? 12 : 5);
+    }
+
+    // Sprint cards evaluation
+    if (card.id === 'weekend_cramming_sprint') {
+      const hasClasses = Object.keys(player.enrolledClasses || {}).length > 0;
+      if (hasClasses) utility += 35;
+    } else if (card.id === 'weekend_overtime_grind') {
+      if (player.currentJobId) utility += 25;
     }
 
     // Broke options

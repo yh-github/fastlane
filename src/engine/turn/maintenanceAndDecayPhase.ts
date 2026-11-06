@@ -7,7 +7,7 @@ import { calcLiquidAssets, applyMarketCrash, applyEconomicBoom } from '../econom
 import { applyHappinessChange, applyMentalChange } from '../statEffects';
 import { CURIO_CATALOG, ensurePlayerCurios } from '../curioCatalog';
 import { processApartmentRobbery, processDonations } from '../eventEngine';
-import { processWeekend, generateWeekendChoices, resolveWeekendChoice } from '../weekendEngine';
+import { processWeekend, generateWeekendChoices, resolveWeekendChoice, removeApplianceCardFromDeck } from '../weekendEngine';
 import { selectAiWeekendCard } from '../aiEngine';
 import { resetPlayerClock } from '../timeManager';
 import { isBaseVersion } from '../rules';
@@ -457,6 +457,9 @@ export function processPostHealthMaintenance(
       const targetApp = candidateApps.find(a => a.id === queuedAppBreak.applianceId) || candidateApps[0];
       if (isAdvancedMaint) {
         targetApp.isBroken = true;
+        if (state.rules.alternativeWeekends && player.weekendDecks) {
+          player = removeApplianceCardFromDeck(player, targetApp.id);
+        }
         player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
         player.turnEvents.push({
           key: 'events.applianceBrokeNeedRepair',
@@ -483,6 +486,9 @@ export function processPostHealthMaintenance(
         if (breakTrigger) {
           if (isAdvancedMaint) {
             app.isBroken = true;
+            if (state.rules.alternativeWeekends && player.weekendDecks) {
+              player = removeApplianceCardFromDeck(player, app.id);
+            }
             player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
             player.turnEvents.push({
               key: 'events.applianceBrokeNeedRepair',
@@ -515,6 +521,9 @@ export function processPostHealthMaintenance(
       if (breakTrigger) {
         if (isAdvancedMaint) {
           app.isBroken = true;
+          if (state.rules.alternativeWeekends && player.weekendDecks) {
+            player = removeApplianceCardFromDeck(player, app.id);
+          }
           player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
           player.turnEvents.push({
             key: 'events.applianceBrokeNeedRepair',

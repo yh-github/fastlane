@@ -1,6 +1,94 @@
 import type { WeekendDef } from './dataLoader';
 import type { Random } from '../utils/rng';
-import type { PlayerState, WeekendCard, WeekendDeckTier } from './gameState';
+import type { PlayerState, WeekendCard, WeekendCardType, WeekendDeckTier } from './gameState';
+
+export interface EventSouvenirDef {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+}
+
+export const EVENT_SOUVENIRS: Record<'baseball' | 'theatre' | 'concert', EventSouvenirDef[]> = {
+  baseball: [
+    {
+      id: 'ticket_stub_baseball',
+      name: 'Commemorative Baseball Ticket Stub',
+      icon: '🎟️',
+      description: 'A creased, vintage ticket stub from an unforgettable extra-innings baseball game.'
+    },
+    {
+      id: 'foul_ball',
+      name: 'Foul Ball Souvenir',
+      icon: '⚾',
+      description: 'A scuffed official leather baseball caught in the stands during the 7th inning stretch.'
+    },
+    {
+      id: 'team_pennant',
+      name: 'Vintage Team Pennant',
+      icon: '🧢',
+      description: 'A felt stadium pennant celebrating your city\'s home run heroes.'
+    },
+    {
+      id: 'autographed_card',
+      name: 'Signed Rookie Baseball Card',
+      icon: '🃏',
+      description: 'A limited-edition player card autographed by the starting pitcher outside the dugout.'
+    }
+  ],
+  theatre: [
+    {
+      id: 'ticket_stub_theatre',
+      name: 'Embossed Theatre Ticket Stub',
+      icon: '🎟️',
+      description: 'A gold-embossed theatre ticket stub from a captivating stage performance.'
+    },
+    {
+      id: 'playbill',
+      name: 'Opening Night Playbill',
+      icon: '🎭',
+      description: 'A glossy souvenir playbill complete with director notes and cast biographies.'
+    },
+    {
+      id: 'signed_program',
+      name: 'Autographed Show Program',
+      icon: '📜',
+      description: 'A limited cast program signed by the lead actor at the stage door after the curtain call.'
+    },
+    {
+      id: 'stage_prop_replica',
+      name: 'Miniature Mask Prop Replica',
+      icon: '🎭',
+      description: 'A detailed theatrical mask curio commemorating the dramatic performance.'
+    }
+  ],
+  concert: [
+    {
+      id: 'ticket_stub_concert',
+      name: 'Holographic Concert Ticket Stub',
+      icon: '🎟️',
+      description: 'A holographic concert ticket stub from an ear-splitting rock performance.'
+    },
+    {
+      id: 'guitar_pick',
+      name: 'Touring Band Guitar Pick',
+      icon: '🎸',
+      description: 'A custom celluloid guitar pick flicked into the crowd by the lead guitarist.'
+    },
+    {
+      id: 'backstage_pass',
+      name: 'Laminated Backstage VIP Pass',
+      icon: '🪪',
+      description: 'A collectible backstage VIP pass worn during an electric encore set.'
+    },
+    {
+      id: 'drumstick',
+      name: 'Cracked Concert Drumstick',
+      icon: '🥁',
+      description: 'A splintered wooden drumstick tossed from the stage after the drum solo.'
+    }
+  ]
+};
 
 export const SPRINT_WEEKEND_CARDS: Record<string, WeekendCard> = {
   weekend_cramming_sprint: {
@@ -31,8 +119,8 @@ export const SPRINT_WEEKEND_CARDS: Record<string, WeekendCard> = {
     costMin: 50,
     costMax: 50,
     targetStat: 'dependability',
-    potentialBonusMin: 1,
-    potentialBonusMax: 1,
+    potentialBonusMin: 2,
+    potentialBonusMax: 3,
     secondaryStat: 'physical',
     potentialSecondaryBonusMin: -4,
     potentialSecondaryBonusMax: -4
@@ -286,14 +374,21 @@ export function buildCardFromId(
       };
     }
 
-    const stats: ('mental' | 'social' | 'dependability')[] = ['mental', 'social', 'dependability'];
+    const stats: ('mental' | 'social' | 'dependability' | 'physical')[] = ['mental', 'social', 'dependability', 'physical'];
     const targetStat = stats[Math.floor(rng.next() * stats.length)];
-    const iconMap = { mental: '🧠', social: '👥', dependability: '🤝' };
+    const iconMap = { mental: '🧠', social: '👥', dependability: '🤝', physical: '💪' };
+    const typeMap: Record<string, WeekendCardType> = {
+      mental: 'culture',
+      social: 'social',
+      dependability: 'career',
+      physical: 'sports'
+    };
+    const cardType: WeekendCardType = typeMap[targetStat] || 'culture';
 
     return {
       id: cardId,
       tier,
-      type: 'random',
+      type: cardType,
       eventKey: `events.weekend.random_${idx}`,
       titleKey: `weekendScreen.card.${tier}Title`,
       fluff,
@@ -308,8 +403,13 @@ export function buildCardFromId(
 
   if (cardId.startsWith('durable_')) {
     const appName = cardId.replace('durable_', '');
+    const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
+    const app = player.inventory?.appliances?.find(a => a.id === appName && !a.isBroken);
+    if (!app) {
+      return buildCardFromId('random_0', 'cheap', weekendData, player, rng);
+    }
     if (appName === 'vcr') {
-      const hasTv = player.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+      const hasTv = player.inventory?.appliances?.some(a => isAnyTv(a.id) && !a.isBroken);
       if (!hasTv) {
         return buildCardFromId('random_0', 'cheap', weekendData, player, rng);
       }

@@ -86,7 +86,10 @@ export const WeekendCardView = React.forwardRef<HTMLDivElement, WeekendCardViewP
       return `+$${card.resalePayout || 0} Cash`;
     }
     if (card.isSpecial) {
-      return `+${card.potentialBonusMin}..+${card.potentialBonusMax} 🧠`;
+      const bonusStr = card.potentialBonusMin === card.potentialBonusMax
+        ? `+${card.potentialBonusMin}`
+        : `+${card.potentialBonusMin}..+${card.potentialBonusMax}`;
+      return `${bonusStr} 🧠`;
     }
     if (card.type === 'clean') {
       return (
@@ -105,7 +108,7 @@ export const WeekendCardView = React.forwardRef<HTMLDivElement, WeekendCardViewP
     if (card.type === 'walk') {
       return (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-          +2 💪, +2 <MessIcon />
+          +2 💪, +1 🧠
         </span>
       );
     }
@@ -113,6 +116,20 @@ export const WeekendCardView = React.forwardRef<HTMLDivElement, WeekendCardViewP
       return (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
           +2 👥, +2 <MessIcon />
+        </span>
+      );
+    }
+    if (card.id === 'weekend_cramming_sprint') {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          +1 Lesson 🎓, +2 🧠, -4 💪
+        </span>
+      );
+    }
+    if (card.id === 'weekend_overtime_grind') {
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+          +1 Exp 💼, +1 Dep 🤝, +0.2 Skill ⚡, -4 💪, -2 🧠
         </span>
       );
     }
@@ -131,7 +148,10 @@ export const WeekendCardView = React.forwardRef<HTMLDivElement, WeekendCardViewP
     }
     const statIcon = card.targetStat === 'mental' ? '🧠' : card.targetStat === 'social' ? '👥' : card.targetStat === 'physical' ? '💪' : '🤝';
     const statLabel = t(`weekendScreen.${card.targetStat}`, { defaultValue: card.targetStat });
-    return `+${card.potentialBonusMin}..+${card.potentialBonusMax} ${statIcon} (${statLabel})`;
+    const bonusStr = card.potentialBonusMin === card.potentialBonusMax
+      ? `+${card.potentialBonusMin}`
+      : `+${card.potentialBonusMin}..+${card.potentialBonusMax}`;
+    return `${bonusStr} ${statIcon} (${statLabel})`;
   };
 
   return (

@@ -3,7 +3,6 @@ import type { Random } from '../utils/rng';
 import { applyHappinessChange } from './statEffects';
 import type { PlayerState, GameEvent, GameRules, WeekendCard, WeekendDeckTier, StatModification } from './gameState';
 import { type StatRules, isAdvancedStatRules } from './rules';
-import { CURIO_CATALOG } from './curioCatalog';
 import { calcRequiredLessons } from './educationEngine';
 import { roundToResolution } from './statMath';
 
@@ -23,8 +22,8 @@ function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney
 // ─────────────────────────────────────────────────────────────────────────────
 // ALTERNATIVE WEEKEND DECK ENGINE
 // ─────────────────────────────────────────────────────────────────────────────
-export { FREE_WEEKEND_CARDS } from './weekendCards';
-import { buildTicketCards, buildCardFromId } from './weekendCards';
+export { FREE_WEEKEND_CARDS, EVENT_SOUVENIRS } from './weekendCards';
+import { buildTicketCards, buildCardFromId, EVENT_SOUVENIRS } from './weekendCards';
 
 export function initPlayerWeekendDecks(player: PlayerState, weekendData: WeekendDef, rng: Random): PlayerState {
   const freeCards = ['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat'];
@@ -33,20 +32,38 @@ export function initPlayerWeekendDecks(player: PlayerState, weekendData: Weekend
   const expensiveCards: string[] = [];
 
   const count = weekendData.randomWeekends?.length || 42;
-  for (let i = 0; i < count; i++) {
-    const cardId = `random_${i}`;
-    if (i < 28) {
-      cheapCards.push(cardId);
-    } else if (i < 35) {
-      mediumCards.push(cardId);
-    } else {
-      expensiveCards.push(cardId);
+  if (count >= 42) {
+    for (let i = 0; i < count; i++) {
+      const cardId = `random_${i}`;
+      if (i < 28) {
+        cheapCards.push(cardId);
+      } else if (i < 35) {
+        mediumCards.push(cardId);
+      } else {
+        expensiveCards.push(cardId);
+      }
+    }
+  } else {
+    // Proportional distribution for campaigns with custom / fewer random weekends (e.g. Advanced 2000)
+    // ~50% cheap, ~25% medium, ~25% expensive
+    const cheapCutoff = Math.max(1, Math.floor(count * 0.50));
+    const mediumCutoff = Math.max(cheapCutoff + 1, Math.floor(count * 0.75));
+    for (let i = 0; i < count; i++) {
+      const cardId = `random_${i}`;
+      if (i < cheapCutoff) {
+        cheapCards.push(cardId);
+      } else if (i < mediumCutoff) {
+        mediumCards.push(cardId);
+      } else {
+        expensiveCards.push(cardId);
+      }
     }
   }
 
   // Owned appliances: add durable_${id} to cheap deck
   if (player.inventory?.appliances) {
-    const hasTv = player.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+    const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
+    const hasTv = player.inventory.appliances.some(a => isAnyTv(a.id) && !a.isBroken);
     for (const app of player.inventory.appliances) {
       if (app.isBroken) continue;
       if (app.id === 'vcr' && !hasTv) continue;
@@ -84,7 +101,8 @@ export function initPlayerWeekendDecks(player: PlayerState, weekendData: Weekend
 
 export function addApplianceCardToDeck(player: PlayerState, applianceId: string, rng?: Random): PlayerState {
   if (!player.weekendDecks) return player;
-  const hasTv = player.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+  const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
+  const hasTv = player.inventory?.appliances?.some(a => isAnyTv(a.id) && !a.isBroken);
   if (applianceId === 'vcr' && !hasTv) {
     return player;
   }
@@ -98,7 +116,7 @@ export function addApplianceCardToDeck(player: PlayerState, applianceId: string,
   }
 
   // If a TV was added, check if player has an unbroken VCR that needs to be added
-  if (applianceId === 'color_tv' || applianceId === 'bw_tv') {
+  if (isAnyTv(applianceId)) {
     const hasVcr = player.inventory?.appliances?.some(a => a.id === 'vcr' && !a.isBroken);
     if (hasVcr) {
       const vcrCardId = 'durable_vcr';
@@ -118,6 +136,7 @@ export function addApplianceCardToDeck(player: PlayerState, applianceId: string,
 
 export function removeApplianceCardFromDeck(player: PlayerState, applianceId: string): PlayerState {
   if (!player.weekendDecks) return player;
+  const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
   const cardId = `durable_${applianceId}`;
   const currentDecks = {
     ...player.weekendDecks,
@@ -127,8 +146,8 @@ export function removeApplianceCardFromDeck(player: PlayerState, applianceId: st
     }
   };
   // If a TV was removed, check if player has any unbroken TV remaining. If not, remove durable_vcr too!
-  if (applianceId === 'color_tv' || applianceId === 'bw_tv') {
-    const hasTv = player.inventory?.appliances?.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+  if (isAnyTv(applianceId)) {
+    const hasTv = player.inventory?.appliances?.some(a => isAnyTv(a.id) && !a.isBroken);
     if (!hasTv) {
       const vcrCardId = 'durable_vcr';
       currentDecks.cheap = {
@@ -168,41 +187,22 @@ export function generateWeekendChoices(
   else if (tickets.theatre > 0 && weekendData.ticketWeekends?.theatre) heldTicketType = 'theatre';
   else if (tickets.concert > 0 && weekendData.ticketWeekends?.concert) heldTicketType = 'concert';
 
-  // 1. Broke players without tickets (money < 5): Offer exactly two $0 cards
+  // 1. Broke players without tickets (money < 5): Offer exactly two distinct $0 cards from the free pool
   if (updatedPlayer.money < 5 && !heldTicketType) {
-    const brokeCards: WeekendCard[] = [
-      {
-        id: 'broke_stay_home',
-        tier: 'free',
-        type: 'rest',
-        eventKey: 'events.weekend.broke_rest',
-        titleKey: 'weekendScreen.card.stayHomeTitle',
-        fluff: 'You stayed home all weekend resting in bed and watching TV. You feel refreshed, but dishes and laundry piled up.',
-        icon: '🛋️',
-        costMin: 0,
-        costMax: 0,
-        targetStat: 'mental',
-        potentialBonusMin: 2,
-        potentialBonusMax: 2,
-        secondaryStat: 'physical',
-        potentialSecondaryBonusMin: 1,
-        potentialSecondaryBonusMax: 1
-      },
-      {
-        id: 'broke_deep_clean',
-        tier: 'free',
-        type: 'clean',
-        eventKey: 'events.weekend.broke_clean',
-        titleKey: 'weekendScreen.card.deepCleanTitle',
-        fluff: 'You spent the entire weekend scrubbing every floor and surface until your apartment was spotless.',
-        icon: '🧹',
-        costMin: 0,
-        costMax: 0,
-        targetStat: 'mess',
-        potentialBonusMin: 8,
-        potentialBonusMax: 12
-      }
-    ];
+    if (!decks.free || decks.free.drawPile.length < 2) {
+      const allFree = ['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat'];
+      const combined = [...(decks.free?.drawPile || []), ...(decks.free?.discardPile || [])];
+      const remaining = allFree.filter(id => !combined.includes(id));
+      decks.free = {
+        drawPile: rng.shuffle([...combined, ...remaining]),
+        discardPile: []
+      };
+    }
+    const id1 = decks.free.drawPile.pop() || 'free_stay_home';
+    const id2 = decks.free.drawPile.pop() || 'free_deep_clean';
+    const card1 = buildCardFromId(id1, 'free', weekendData, updatedPlayer, rng);
+    const card2 = buildCardFromId(id2, 'free', weekendData, updatedPlayer, rng);
+    const brokeCards = [card1, card2];
     updatedPlayer.offeredWeekendCards = brokeCards;
     return { player: updatedPlayer, cards: brokeCards };
   }
@@ -271,6 +271,15 @@ export function generateWeekendChoices(
     });
   };
 
+  // Stat and type momentum bias from recent picks
+  const recentPicks = updatedPlayer.recentWeekendPicks || [];
+  const statMomentum: Record<string, number> = {};
+  const typeMomentum: Record<string, number> = {};
+  for (const p of recentPicks) {
+    if (p.targetStat) statMomentum[p.targetStat] = (statMomentum[p.targetStat] || 0) + 1;
+    if (p.type) typeMomentum[p.type] = (typeMomentum[p.type] || 0) + 1;
+  }
+
   for (let slot = 0; slot < slotsNeeded; slot++) {
     let candidateCard: WeekendCard | null = null;
     let attempts = 0;
@@ -300,7 +309,31 @@ export function generateWeekendChoices(
         }
       }
 
-      const cardId = deck.drawPile.pop();
+      // Sample candidate cards from the draw pile and apply stat/type momentum weighting
+      const sampleCount = Math.min(6, deck.drawPile.length);
+      const candidateIds = deck.drawPile.slice(-sampleCount);
+      let chosenCandidateIndex = candidateIds.length - 1;
+
+      if (candidateIds.length > 1) {
+        const candidateScores = candidateIds.map(cid => {
+          const testCard = buildCardFromId(cid, selectedTier, weekendData, updatedPlayer, rng);
+          const statScore = testCard.targetStat ? (statMomentum[testCard.targetStat] || 0) : 0;
+          const typeScore = testCard.type ? (typeMomentum[testCard.type] || 0) : 0;
+          return 1.0 + statScore * 1.5 + typeScore * 0.75;
+        });
+        const totalScore = candidateScores.reduce((sum, s) => sum + s, 0);
+        let randScore = rng.next() * totalScore;
+        for (let i = 0; i < candidateScores.length; i++) {
+          if (randScore <= candidateScores[i]) {
+            chosenCandidateIndex = i;
+            break;
+          }
+          randScore -= candidateScores[i];
+        }
+      }
+
+      const actualIndexInPile = deck.drawPile.length - sampleCount + chosenCandidateIndex;
+      const [cardId] = deck.drawPile.splice(actualIndexInPile, 1);
       if (!cardId) continue;
 
       const card = buildCardFromId(cardId, selectedTier, weekendData, updatedPlayer, rng);
@@ -311,20 +344,28 @@ export function generateWeekendChoices(
         continue;
       }
 
-      if (attempts < 25) {
-        // Constraint 2: Never 3 cards of the exact same type
-        if (drawnCards.length >= 2) {
-          const type0 = drawnCards[0].type;
-          const allSameTypeSoFar = drawnCards.every(c => c.type === type0);
-          if (allSameTypeSoFar && card.type === type0) {
-            deck.drawPile.unshift(cardId);
-            continue;
-          }
+      // Constraint 2: Never 3 cards of the exact same type
+      if (drawnCards.length >= 2) {
+        const type0 = drawnCards[0].type;
+        const allSameTypeSoFar = drawnCards.every(c => c.type === type0);
+        if (allSameTypeSoFar && card.type === type0) {
+          deck.drawPile.unshift(cardId);
+          continue;
         }
+      }
 
-        // Constraint 3: If two cards share the same type, they cannot share the same tier
-        const sameTypeCard = drawnCards.find(c => c.type === card.type);
-        if (sameTypeCard && sameTypeCard.tier === card.tier) {
+      // Constraint 3: If two cards share the same type, they cannot share the same tier
+      const sameTypeCard = drawnCards.find(c => c.type === card.type);
+      if (sameTypeCard && sameTypeCard.tier === card.tier) {
+        deck.drawPile.unshift(cardId);
+        continue;
+      }
+
+      // Constraint 4: Never 3 cards of the exact same target stat
+      if (card.targetStat && drawnCards.length >= 2) {
+        const stat0 = drawnCards[0].targetStat;
+        const allSameStatSoFar = drawnCards.every(c => c.targetStat === stat0);
+        if (allSameStatSoFar && card.targetStat === stat0) {
           deck.drawPile.unshift(cardId);
           continue;
         }
@@ -340,8 +381,20 @@ export function generateWeekendChoices(
         fallbackDeck.drawPile = rng.shuffle([...fallbackDeck.discardPile]);
         fallbackDeck.discardPile = [];
       }
-      const cardId = fallbackDeck.drawPile.pop() || 'random_0';
-      candidateCard = buildCardFromId(cardId, 'cheap', weekendData, updatedPlayer, rng);
+      let fallbackId = fallbackDeck.drawPile.find(id => {
+        if (drawnCards.some(c => c.id === id)) return false;
+        const testCard = buildCardFromId(id, 'cheap', weekendData, updatedPlayer, rng);
+        if (drawnCards.length >= 2 && drawnCards.every(c => c.type === drawnCards[0].type) && testCard.type === drawnCards[0].type) {
+          return false;
+        }
+        return true;
+      });
+      if (!fallbackId) {
+        fallbackId = fallbackDeck.drawPile.pop() || 'random_0';
+      } else {
+        fallbackDeck.drawPile = fallbackDeck.drawPile.filter(id => id !== fallbackId);
+      }
+      candidateCard = buildCardFromId(fallbackId, 'cheap', weekendData, updatedPlayer, rng);
     }
 
     drawnCards.push(candidateCard);
@@ -442,7 +495,8 @@ export function resolveWeekendChoice(
   rng: Random,
   rules?: GameRules,
   statRules?: StatRules,
-  campaign?: CampaignBundle
+  campaign?: CampaignBundle,
+  turnNumber?: number
 ): PlayerState {
   let updatedPlayer: PlayerState = {
     ...player,
@@ -553,17 +607,19 @@ export function resolveWeekendChoice(
   // 3. Handle Free Park Walk
   if (card.id === 'free_park_walk') {
     const physicalGain = 2;
-    const messIncrease = 2;
+    const mentalGain = 1;
 
     if (rules?.usePhysicalMentalConditions) {
       const maxPhys = updatedPlayer.physicalConditionMax ?? advStatRules?.initialPhysicalMax ?? 50;
       updatedPlayer.physicalCondition = Math.min(maxPhys, (updatedPlayer.physicalCondition ?? 50) + physicalGain);
       modifications.push({ stat: 'physical', diff: physicalGain });
-    }
 
-    if (rules?.trackMess) {
-      updatedPlayer.mess = (updatedPlayer.mess || 0) + messIncrease;
-      modifications.push({ stat: 'mess', diff: messIncrease });
+      const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
+      updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + mentalGain);
+      modifications.push({ stat: 'mental', diff: mentalGain });
+    } else {
+      updatedPlayer = applyHappinessChange(updatedPlayer, mentalGain, 'weekend_bonus', rules || ({} as any), statRules);
+      modifications.push({ stat: 'happiness', diff: mentalGain });
     }
 
     if (updatedPlayer.inventory?.tickets) {
@@ -571,7 +627,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-    return finalizeWeekendResult(0);
+    return finalizeWeekendResult(0, mentalGain);
   }
 
   // 4. Handle Free Porch Chat
@@ -647,22 +703,25 @@ export function resolveWeekendChoice(
       modifications.push({ stat: 'social', diff: socialBonus });
     }
 
-    // Souvenir (Curio) roll: 10% per ticket, up to 35%
+    // Souvenir (Event Curio) roll: 10% per ticket, up to 35%
     const ticketCount = card.ticketCount || 1;
     const souvenirChance = Math.min(0.35, ticketCount * 0.10);
     let acquiredSouvenir: { id: string; name: string; icon: string } | undefined = undefined;
 
     if (rng.next() < souvenirChance) {
-      const curioIndex = Math.floor(rng.next() * CURIO_CATALOG.length);
-      const curioItem = CURIO_CATALOG[curioIndex] || CURIO_CATALOG[0];
+      const ticketType = (card.id.replace('ticket_', '') as 'baseball' | 'theatre' | 'concert');
+      const souvenirs = EVENT_SOUVENIRS[ticketType] || EVENT_SOUVENIRS.baseball;
+      const curioItem = souvenirs[Math.floor(rng.next() * souvenirs.length)] || souvenirs[0];
       const existingCurios = updatedPlayer.inventory?.curios ? [...updatedPlayer.inventory.curios] : [];
+      const turnNum = turnNumber ?? 1;
+      const souvenirId = `${curioItem.id}_${updatedPlayer.id}_t${turnNum}_${existingCurios.length}`;
       const newCurio = {
-        id: `${curioItem.id}_souvenir_${Date.now()}_${existingCurios.length}`,
+        id: souvenirId,
         catalogId: curioItem.id,
         name: curioItem.name,
         icon: curioItem.icon,
         flavorText: curioItem.description,
-        acquiredWeek: 1
+        acquiredWeek: turnNum
       };
       existingCurios.push(newCurio);
       if (!updatedPlayer.inventory) {
@@ -913,7 +972,8 @@ export function processWeekend(
     for (const app of shuffledAppliances) {
       if (app.isBroken) continue;
       if (app.id === 'vcr') {
-        const hasTv = newPlayer.inventory.appliances.some(a => (a.id === 'color_tv' || a.id === 'bw_tv') && !a.isBroken);
+        const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
+        const hasTv = newPlayer.inventory.appliances.some(a => isAnyTv(a.id) && !a.isBroken);
         if (!hasTv) continue;
       }
       if (weekendData.durableWeekends[app.id]) {
