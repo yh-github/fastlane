@@ -212,7 +212,7 @@ export function getAvailableActions(
     // Red Pirate Arcade
     if (state.rules.enableArcade && bDef?.id === 'red_pirate') {
       options.push({
-        label: helpful ? 'Play Arcade Machine (-1h, -$5, +2 Mental, +2 Happiness)' : 'Play Arcade Machine',
+        label: helpful ? 'Play Arcade Machine (-3h, -$10, +2 Mental)' : 'Play Arcade Machine',
         action: { type: 'play_arcade' }
       });
     }

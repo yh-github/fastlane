@@ -11,15 +11,15 @@ export function handlePlayArcadeAction(
   context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
-  if (nextPlayer.hoursRemaining < 1) {
+  if (nextPlayer.hoursRemaining < 3) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
-  if (nextPlayer.money < 5) {
+  if (nextPlayer.money < 10) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughMoney' } };
   }
 
-  nextPlayer = spendHours(nextPlayer, 1);
-  nextPlayer.money -= 5;
+  nextPlayer = spendHours(nextPlayer, 3);
+  nextPlayer.money -= 10;
 
   const playsThisTurn = nextPlayer.turnFlags?.arcadePlaysThisTurn || 0;
   nextPlayer.turnFlags = {
@@ -28,19 +28,18 @@ export function handlePlayArcadeAction(
   };
 
   if (context.rules.usePhysicalMentalConditions) {
-    const modifications: StatModification[] = [{ stat: 'money', diff: -5 }];
+    const modifications: StatModification[] = [{ stat: 'money', diff: -10 }];
+    const maxMental = nextPlayer.mentalConditionMax ?? 50;
+    const conditionRes = context.rules.conditionResolution ?? 0.5;
 
-    if (playsThisTurn === 0) {
-      // Play 1: Modest mental relief (+1 mental, 0 social)
-      const maxMental = nextPlayer.mentalConditionMax ?? 50;
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + 1);
-      modifications.push({ stat: 'mental', diff: 1 });
-    } else if (playsThisTurn === 1) {
-      // Play 2: Diminishing returns (0 mental, 0 social)
-    } else {
-      // Play 3+: Fatigue / Eye strain from playing too long (-1 physical)
-      nextPlayer.physicalCondition = Math.max(1, (nextPlayer.physicalCondition ?? 50) - 1);
-      modifications.push({ stat: 'physical', diff: -1 });
+    // +2 Mental on both first and non-first buys
+    nextPlayer.mentalCondition = Math.min(maxMental, roundToResolution((nextPlayer.mentalCondition ?? 50) + 2, conditionRes));
+    modifications.push({ stat: 'mental', diff: 2 });
+
+    if (playsThisTurn > 0) {
+      // Non-first buys: -0.5 Physical fatigue
+      nextPlayer.physicalCondition = Math.max(1, roundToResolution((nextPlayer.physicalCondition ?? 50) - 0.5, conditionRes));
+      modifications.push({ stat: 'physical', diff: -0.5 });
     }
 
     return {
@@ -53,10 +52,10 @@ export function handlePlayArcadeAction(
   }
 
   // Classic rules (usePhysicalMentalConditions is false)
-  const modifications: StatModification[] = [{ stat: 'money', diff: -5 }];
+  const modifications: StatModification[] = [{ stat: 'money', diff: -10 }];
   if (playsThisTurn === 0) {
-    nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 1);
-    modifications.push({ stat: 'happiness', diff: 1 });
+    nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
+    modifications.push({ stat: 'happiness', diff: 2 });
   }
 
   return {
