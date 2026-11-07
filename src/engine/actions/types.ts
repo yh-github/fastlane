@@ -54,7 +54,8 @@ export type GameAction =
   | { type: 'hospital_urgent_care' }
   | { type: 'hospital_therapy' }
   | { type: 'hospital_donate_blood' }
-  | { type: 'hospital_cafeteria' };
+  | { type: 'hospital_cafeteria' }
+  | { type: 'prep_meal'; mealType: 'home_cooked' | 'canned' | 'fast_food' };
 
 export interface ReducerContext {
   campaign: CampaignBundle;

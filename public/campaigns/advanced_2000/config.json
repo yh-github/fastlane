@@ -21,6 +21,7 @@
     "hospitalEmployeeHealthcare": true,
     "delayRobberyFoodSpoilage": true,
     "enableArcade": true,
-    "enableParkSystem": true
+    "enableParkSystem": true,
+    "enableCookingSystem": true
   }
 }

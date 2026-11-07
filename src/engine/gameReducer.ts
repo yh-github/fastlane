@@ -15,6 +15,7 @@ import {
   handleCleaningServiceAction,
   handleSocializeAction,
   handleChangeClothesAction,
+  handlePrepMealAction,
   handleMoveAction,
   handleBankTransactionAction,
   handleOpenBrokerAction,
@@ -97,6 +98,9 @@ export function gameReducer(
       break;
     case 'relax':
       res = handleRelaxAction(nextPlayer, action, context);
+      break;
+    case 'prep_meal':
+      res = handlePrepMealAction(nextPlayer, action, context);
       break;
     case 'clean':
       res = handleCleanAction(nextPlayer, action, context);

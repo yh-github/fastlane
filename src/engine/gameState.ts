@@ -268,6 +268,10 @@ export interface PlayerState {
   resilienceBonus?: number;
   social?: number;
   mess?: number;
+  /** Current nutrition tier for the turn (Advanced Cooking System) */
+  nutritionTier?: 'none' | 'canned' | 'fast_food' | 'home_cooked';
+  /** Number of consecutive weeks the player has eaten canned food */
+  consecutiveCannedWeeks?: number;
   homeTimeHistory?: number[];
   homeTimeThisTurn?: number;
   workActionsThisTurn?: number;
@@ -527,6 +531,8 @@ export interface TurnFlags {
   rentExtensionRefusedThisTurn?: boolean;
   /** Whether the player has eaten this turn (prevents starvation) */
   hasEaten: boolean;
+  /** Meal prepared/eaten this turn (Advanced Cooking System) */
+  mealPreparedThisTurn?: 'home_cooked' | 'canned' | 'fast_food';
   /** Whether the player has worked this turn (for dep/exp gain) */
   hasWorked: boolean;
   /** Whether cola/shake happiness was already granted this turn */
