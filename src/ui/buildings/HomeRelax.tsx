@@ -193,7 +193,9 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
     </span>
   );
 
-  const hasFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0 || (player.inventory?.cannedFoodUnits || 0) > 0;
+  const hasRawFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0 || (player.inventory?.cannedFoodUnits || 0) > 0;
+  const isFed = rules?.enableCookingSystem ? Boolean(player.turnFlags?.hasEaten) : hasRawFood;
+  const hasFood = isFed;
 
   const relaxEffects = collectItemEffects(player, campaign, 'on_relax');
   const physBonus = relaxEffects.get('physical') || 0;
@@ -322,9 +324,22 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           ⚠️ {t('action.unfedRelaxModal.title', { defaultValue: 'Relax Without Food?' })}
         </h3>
         <p style={{ fontSize: '0.9em', lineHeight: '1.4', marginBottom: '16px' }}>
-          {t('action.unfedRelaxModal.warning', { defaultValue: 'You have no food in your inventory! Relaxing while starving will permanently reduce your Max Physical and Max Mental capacity by 1.' })}
+          {rules?.enableCookingSystem && hasRawFood
+            ? t('action.unfedRelaxModal.cookingWarning', { defaultValue: 'You have ingredients in your pantry but have not prepared or eaten any meals this week! Relaxing unfed will permanently reduce your Max Physical and Max Mental capacity by 1.' })
+            : t('action.unfedRelaxModal.warning', { defaultValue: 'You have no food in your inventory! Relaxing while starving will permanently reduce your Max Physical and Max Mental capacity by 1.' })}
         </p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+          {rules?.enableCookingSystem && hasRawFood && (
+            <button
+              onClick={() => {
+                setShowUnfedWarning(false);
+                setShowPantryPopup(true);
+              }}
+              style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              🍳 {t('action.unfedRelaxModal.cookFirst', { defaultValue: 'Prepare Food First' })}
+            </button>
+          )}
           <button
             onClick={() => setShowUnfedWarning(false)}
             style={{ padding: '6px 12px', background: '#555', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
@@ -394,6 +409,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           onServiceClick={() => handleHomeAction({ type: 'call_cleaning_service' })}
           hasFridge={hasFridge}
           hasFreezer={hasFreezer}
+          onPantryClick={() => setShowPantryPopup(true)}
           economicIndex={economicIndex}
           turn={turn}
           onAction={handleHomeAction}
@@ -813,6 +829,8 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
         <PantryDetailsModal
           player={player}
           campaign={campaign}
+          rules={rules}
+          onAction={handleHomeAction}
           onClose={() => setShowPantryPopup(false)}
         />
       )}

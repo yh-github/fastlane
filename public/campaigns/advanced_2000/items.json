@@ -100,5 +100,38 @@
     "mentalBonus": 4,
     "description": "Heavy-duty daily double espresso ration for grueling shifts and exam sprints.",
     "effects": []
+  },
+  {
+    "id": "stove",
+    "name": "Stove & Range",
+    "category": "appliance",
+    "basePrice": 490,
+    "happinessBonus": 1,
+    "lifestyleValue": 1,
+    "space": 40,
+    "tags": ["stove"],
+    "description": "Essential kitchen heat source for preparing nutritious Home-Cooked Meals."
+  },
+  {
+    "id": "microwave",
+    "name": "Microwave Oven",
+    "category": "appliance",
+    "basePrice": 220,
+    "happinessBonus": 1,
+    "lifestyleValue": 2,
+    "space": 20,
+    "tags": ["microwave"],
+    "description": "Cuts meal prep and thawing time by ~50% and reduces kitchen mess."
+  },
+  {
+    "id": "freezer",
+    "name": "Deep Freezer",
+    "category": "appliance",
+    "basePrice": 513,
+    "happinessBonus": 2,
+    "lifestyleValue": 2,
+    "space": 30,
+    "tags": ["freezer"],
+    "description": "Deep freeze food storage for up to 6 weeks. Extends to 12 weeks when paired with Refrigerator."
   }
 ]

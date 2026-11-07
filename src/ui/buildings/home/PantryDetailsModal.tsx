@@ -1,17 +1,22 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PlayerState } from '../../../engine/gameState';
+import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
+import type { GameAction } from '../../../engine/actions/types';
 
 interface PantryDetailsModalProps {
   player: PlayerState;
   campaign?: CampaignBundle;
+  rules?: GameRules;
+  onAction?: (action: GameAction) => void;
   onClose: () => void;
 }
 
 export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
   player,
   campaign,
+  rules,
+  onAction,
   onClose
 }) => {
   const { t } = useTranslation();
@@ -28,14 +33,45 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
   }, [onClose]);
 
   const hasFridge = player.inventory?.appliances?.some(
-    a => a.id === 'refrigerator' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('refrigerator')
+    a => (a.id === 'refrigerator' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('refrigerator')) && !a.isBroken
   ) ?? false;
   const hasFreezer = player.inventory?.appliances?.some(
-    a => a.id === 'freezer' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('freezer')
+    a => (a.id === 'freezer' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('freezer')) && !a.isBroken
+  ) ?? false;
+  const hasStove = player.inventory?.appliances?.some(
+    a => (a.id === 'stove' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken
+  ) ?? false;
+  const hasMicrowave = player.inventory?.appliances?.some(
+    a => (a.id === 'microwave' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('microwave')) && !a.isBroken
   ) ?? false;
 
   const freshUnits = player.inventory?.freshFoodUnits || 0;
+  const cannedUnits = player.inventory?.cannedFoodUnits || 0;
   const fastFoodItems = player.inventory?.fastFoodItems || [];
+
+  const hasEaten = Boolean(player.turnFlags?.hasEaten);
+  const currentPhys = player.physicalCondition ?? 50;
+
+  // Cooking calculations
+  let cookTime = hasMicrowave ? 1.5 : 2.5;
+  if (hasFreezer && !hasFridge && !hasMicrowave) {
+    cookTime += 1.0;
+  }
+  const canCookHome = freshUnits >= 1 && hasStove && currentPhys >= 1.5 && player.hoursRemaining >= cookTime;
+  const cookDisabledReason = !hasStove
+    ? 'Requires working Stove'
+    : freshUnits < 1
+    ? 'No Fresh Food'
+    : currentPhys < 1.5
+    ? 'Too exhausted (need ≥ 1.5 💪)'
+    : player.hoursRemaining < cookTime
+    ? `Need ${cookTime}h`
+    : '';
+
+  const cannedTime = hasMicrowave ? 0.5 : 1.0;
+  const canPrepCanned = cannedUnits >= 1 && player.hoursRemaining >= cannedTime;
+
+  const canEatFastFood = fastFoodItems.length >= 1;
 
   return (
     <div
@@ -124,8 +160,8 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             }}
           >
             <span style={{ color: '#94a3b8' }}>Appliance Status:</span>
-            <span style={{ fontWeight: 'bold', color: hasFridge ? '#2ecc71' : '#e67e22' }}>
-              {hasFridge ? (hasFreezer ? '🧊 Refrigerator + Freezer' : '🧊 Refrigerator Active') : '⚠️ No Fridge'}
+            <span style={{ fontWeight: 'bold', color: hasFridge || hasFreezer ? '#2ecc71' : '#e67e22', fontSize: '0.8rem' }}>
+              {hasFridge && hasFreezer ? '🧊 Fridge + Freezer' : hasFridge ? '🧊 Refrigerator Active' : hasFreezer ? '❄️ Deep Freezer Active' : '⚠️ No Cold Storage'}
             </span>
           </div>
 
@@ -135,6 +171,15 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             </span>
             <span style={{ fontWeight: 'bold', color: freshUnits > 0 ? '#2ecc71' : '#e74c3c' }}>
               {freshUnits} {t('inventoryModal.units', { defaultValue: 'units' })}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
+              <span>🥫</span> {t('homeRelax.cannedReserves', { defaultValue: 'Canned Food' })}:
+            </span>
+            <span style={{ fontWeight: 'bold', color: cannedUnits > 0 ? '#38bdf8' : '#64748b' }}>
+              {cannedUnits} {t('inventoryModal.units', { defaultValue: 'units' })}
             </span>
           </div>
 
@@ -164,7 +209,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             </div>
           )}
 
-          {freshUnits === 0 && fastFoodItems.length === 0 && (
+          {freshUnits === 0 && cannedUnits === 0 && fastFoodItems.length === 0 && (
             <div
               style={{
                 padding: '6px 8px',
@@ -179,6 +224,152 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* Weekly Meal Preparation Section (Advanced Cooking System) */}
+        {rules?.enableCookingSystem && (
+          <div
+            data-testid="cooking-module-section"
+            style={{
+              background: 'rgba(0, 0, 0, 0.45)',
+              border: `1.5px solid ${hasEaten ? '#059669' : '#f59e0b'}`,
+              borderRadius: '8px',
+              padding: '12px 14px',
+              marginBottom: '16px',
+              maxWidth: '340px',
+              width: '100%',
+              fontSize: '0.82rem',
+              textAlign: 'start',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.88rem' }}>
+                🍳 Weekly Meal Prep
+              </span>
+              <span style={{
+                background: hasEaten ? '#064e3b' : '#78350f',
+                color: hasEaten ? '#6ee7b7' : '#fde68a',
+                fontSize: '0.68rem',
+                fontWeight: 'bold',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                border: `1px solid ${hasEaten ? '#059669' : '#d97706'}`
+              }}>
+                {hasEaten ? '✓ Fed & Fuelled' : '⚠️ Unfed'}
+              </span>
+            </div>
+
+            {hasEaten ? (
+              <div style={{ color: '#a7f3d0', fontSize: '0.75rem', lineHeight: 1.35 }}>
+                Your weekly nutrition is secured ({player.nutritionTier || 'prepared'})! Relaxing will provide full physical & mental recovery.
+              </div>
+            ) : (
+              <div style={{ color: '#fed7aa', fontSize: '0.75rem', lineHeight: 1.35 }}>
+                Prepare your food for the week. Relaxing without eating causes permanent exhaustion penalties.
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+              {/* Option 1: Home Cooked */}
+              <button
+                type="button"
+                data-testid="btn-cook-home-meal"
+                disabled={!canCookHome}
+                onClick={() => onAction?.({ type: 'prep_meal', mealType: 'home_cooked' })}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  background: canCookHome ? 'linear-gradient(135deg, #065f46 0%, #047857 100%)' : 'rgba(255,255,255,0.06)',
+                  border: canCookHome ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.1)',
+                  color: canCookHome ? '#fff' : '#64748b',
+                  cursor: canCookHome ? 'pointer' : 'not-allowed',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '0.82rem' }}>🍳 Home Cooked (Stove)</div>
+                  <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>
+                    ⏳ {cookTime}h • -1.0 💪 • +{hasMicrowave ? 1 : 2} 🧹 → Net +1.5 💪, +2.0 🧠
+                  </div>
+                </div>
+                {!canCookHome && (
+                  <span style={{ fontSize: '0.65rem', color: '#f87171', maxWidth: '80px', textAlign: 'right' }}>
+                    {cookDisabledReason}
+                  </span>
+                )}
+              </button>
+
+              {/* Option 2: Canned Stew */}
+              <button
+                type="button"
+                data-testid="btn-cook-canned"
+                disabled={!canPrepCanned}
+                onClick={() => onAction?.({ type: 'prep_meal', mealType: 'canned' })}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  background: canPrepCanned ? 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' : 'rgba(255,255,255,0.06)',
+                  border: canPrepCanned ? '1px solid #64748b' : '1px solid rgba(255,255,255,0.1)',
+                  color: canPrepCanned ? '#fff' : '#64748b',
+                  cursor: canPrepCanned ? 'pointer' : 'not-allowed',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '0.82rem' }}>🥫 Canned Stew / Rations</div>
+                  <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>
+                    ⏳ {cannedTime}h • 0 💪 • -1.5 🧠 (Emergency food)
+                  </div>
+                </div>
+                {!canPrepCanned && (
+                  <span style={{ fontSize: '0.65rem', color: '#f87171' }}>
+                    {cannedUnits < 1 ? 'No Cans' : `Need ${cannedTime}h`}
+                  </span>
+                )}
+              </button>
+
+              {/* Option 3: Fast Food */}
+              <button
+                type="button"
+                data-testid="btn-eat-fast-food"
+                disabled={!canEatFastFood}
+                onClick={() => onAction?.({ type: 'prep_meal', mealType: 'fast_food' })}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  background: canEatFastFood ? 'linear-gradient(135deg, #854d0e 0%, #a16207 100%)' : 'rgba(255,255,255,0.06)',
+                  border: canEatFastFood ? '1px solid #eab308' : '1px solid rgba(255,255,255,0.1)',
+                  color: canEatFastFood ? '#fff' : '#64748b',
+                  cursor: canEatFastFood ? 'pointer' : 'not-allowed',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '0.82rem' }}>🍔 Eat Fast Food</div>
+                  <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>
+                    ⏳ 0h • 0 💪 • +1.0 🧠 • +1.0 👥
+                  </div>
+                </div>
+                {!canEatFastFood && (
+                  <span style={{ fontSize: '0.65rem', color: '#f87171' }}>
+                    No Fast Food
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         <button
           type="button"

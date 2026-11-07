@@ -393,6 +393,11 @@ export interface GameRules {
    * ADVANCED 2000: Enables dynamic park interactions (stroll, jog, bench rest), cabin fever from indoor over-relaxation, and outdoor random events.
    */
   enableParkSystem?: boolean;
+
+  /**
+   * ADVANCED 2000: Enables weekly meal preparation, stove cooking, microwave prep/thaw bonuses, standalone freezer storage, and eliminates the infinite can exploit.
+   */
+  enableCookingSystem?: boolean;
 }
 
 export interface EventRules {
@@ -999,6 +1004,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   hospitalEmployeeHealthcare: 'Grants hospital employees healthcare coverage (free/discounted doctor visits and enhanced physical bounce-back)',
   enableArcade: 'Enables playing arcade games at arcade-equipped restaurants for quick mental relief and happiness',
   enableParkSystem: 'Enables dynamic park interactions (stroll, jog, bench rest), cabin fever from indoor over-relaxation, and outdoor random events',
+  enableCookingSystem: 'Enables weekly meal preparation, stove cooking, microwave prep/thaw bonuses, standalone freezer storage, and eliminates the infinite can exploit',
   economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',
   reenterCurrentLocationCost: 'Entering or re-opening the current building location costs standard building entry time (2 hours)',
   pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',

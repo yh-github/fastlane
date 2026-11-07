@@ -63,6 +63,7 @@ interface HomeApartmentViewProps {
   // Pantry props
   hasFridge: boolean;
   hasFreezer: boolean;
+  onPantryClick?: () => void;
 
   // Maintenance & Actions
   economicIndex?: number;
@@ -115,7 +116,8 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   serviceSubtext,
   onServiceClick,
   hasFridge,
-  hasFreezer
+  hasFreezer,
+  onPantryClick
 }) => {
   const { t } = useTranslation();
   const [activeWing, setActiveWing] = useState<'leisure' | 'chores' | null>(null);
@@ -558,6 +560,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             onServiceClick={onServiceClick}
             hasFridge={hasFridge}
             hasFreezer={hasFreezer}
+            onPantryClick={onPantryClick}
           />,
           modalParent
         ) : (
@@ -590,6 +593,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             onServiceClick={onServiceClick}
             hasFridge={hasFridge}
             hasFreezer={hasFreezer}
+            onPantryClick={onPantryClick}
           />
         )
       )}

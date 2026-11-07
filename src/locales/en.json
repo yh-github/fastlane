@@ -65,6 +65,11 @@
     "relax": "Relaxed at home{{stats}}",
     "relax_unfed": "Relaxed without food in your inventory!{{stats}}",
     "clean": "Cleaned the apartment{{stats}}",
+    "cook": {
+      "home_cooked": "Cooked a nutritious home meal on the stove (-{{time}}h, +{{physGain}} Physical, +{{mentalGain}} Mental, +{{mess}} Mess)",
+      "canned": "Pried open canned rations (-{{time}}h, -1.5 Mental)",
+      "fast_food": "Ate takeout {{item}} (+1 Mental, +1 Social)"
+    },
     "park": {
       "relax": "Spent 3 peaceful hours relaxing in the park{{stats}}",
       "relaxDiminished": "Relaxed in the park again{{stats}}",
@@ -233,6 +238,13 @@
       "alreadyAteCafeteria": "You have already eaten at the cafeteria this week."
     },
     "error": {
+      "needStove": "You need a working stove to cook a home meal!",
+      "noFreshFood": "You have no fresh groceries to cook!",
+      "noCannedFood": "You have no canned food!",
+      "noFastFood": "You have no fast food meals in your pantry!",
+      "tooExhaustedToCook": "Too exhausted to cook a proper meal! Rest first or eat canned/fast food.",
+      "notEnoughTimeCook": "Not enough time to cook this week!",
+      "notEnoughTimePrep": "Not enough time to prep food!",
       "mustResolveDilemma": "You must resolve the customer dilemma before doing anything else.",
       "noKnickKnacksToPawn": "You have no curios to pawn.",
       "noRummageItem": "That item is no longer available in the bins.",
@@ -288,6 +300,11 @@
   "events": {
     "caffeine_overdose": "Caffeine overdose! Excessive intake strained your cardiovascular system (-1 Max Physical, -1 Max Mental).",
     "caffeine_tolerance_update": "Caffeine tolerance updated ({{oldTol}} → {{newTol}}).",
+    "cook": {
+      "home_cooked": "Cooked a nutritious home meal on the stove (-{{time}}h, +{{physGain}} Physical, +{{mentalGain}} Mental, +{{mess}} Mess)",
+      "canned": "Pried open canned rations (-{{time}}h, -1.5 Mental)",
+      "fast_food": "Ate takeout {{item}} (+1 Mental, +1 Social)"
+    },
     "park": {
       "hazard": "Park Hazard: {{title}} — {{desc}}",
       "pickpocket": "Street pickpocket! A thief swiped ${{stolen}} from your pocket while you were in the park.",

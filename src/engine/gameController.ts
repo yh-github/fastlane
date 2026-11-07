@@ -500,6 +500,8 @@ function buildActionId(choice: ActionChoice, campaign: CampaignBundle): string {
       return `study:${action.degreeId}`
     case 'relax':
       return 'relax'
+    case 'prep_meal':
+      return `prep_meal:${action.mealType}`
     case 'bank_transaction':
       return action.amount > 0 ? `deposit_${action.amount}` : `withdraw_${Math.abs(action.amount)}`
     case 'take_loan':

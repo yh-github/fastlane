@@ -16,5 +16,14 @@
     "effects": [
       { "type": "vcr_social_bonus", "value": 2, "operation": "MAX" }
     ]
+  },
+  {
+    "id": "standalone_freezer",
+    "name": "Standalone Freezer Storage",
+    "description": "Safe food storage for up to 6 weeks using a standalone freezer without a refrigerator.",
+    "requires": ["tag:freezer"],
+    "effects": [
+      { "type": "set_food_storage", "value": 6, "operation": "MAX" }
+    ]
   }
 ]

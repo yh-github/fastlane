@@ -407,7 +407,6 @@ export function BuildingModal({
           {building.id === 'red_pirate' && rules?.enableArcade && (() => {
             const plays = player.turnFlags?.arcadePlaysThisTurn || 0;
             const isPhysMental = Boolean(rules?.usePhysicalMentalConditions);
-            const trackSocial = Boolean(rules?.trackSocial);
 
             let benefitDisplay: React.ReactNode;
             if (isPhysMental) {

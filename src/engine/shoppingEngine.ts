@@ -126,7 +126,7 @@ export function buyItem(
     if (!player.turnFlags?.freshFoodHappinessGranted) {
       newTurnFlags.freshFoodHappinessGranted = true;
       if (rules?.usePhysicalMentalConditions) {
-        happinessBonus = 1;
+        happinessBonus = rules?.enableCookingSystem ? 0 : 1;
         mentalBonus = 0;
       }
     } else {
@@ -195,6 +195,10 @@ export function buyItem(
   // Generic on_purchase item effects
   for (const effect of item.effects || []) {
     if (effect.trigger === 'on_purchase') {
+      // In Advanced Cooking System, food effects apply on_eat rather than on_purchase
+      if (rules?.enableCookingSystem && item.category === 'food') {
+        continue;
+      }
       if (effect.stat === 'physical_max' && rules?.usePhysicalMentalConditions) {
         const minPhys = updated.minPhysicalCondition ?? 1;
         updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) + effect.value);
@@ -224,13 +228,13 @@ export function buyItem(
 
   // Backward compatibility fallback for dog_food if not explicitly defined in effects
   const hasDogFoodPurchaseEffect = item.effects?.some(e => e.trigger === 'on_purchase' && e.stat === 'physical_max');
-  if (rules?.usePhysicalMentalConditions && item.id === 'dog_food' && !hasDogFoodPurchaseEffect) {
+  if (rules?.usePhysicalMentalConditions && !rules?.enableCookingSystem && item.id === 'dog_food' && !hasDogFoodPurchaseEffect) {
     const minPhys = updated.minPhysicalCondition ?? 1;
     updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) - 3);
     updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
   }
 
-  if (rules?.usePhysicalMentalConditions && item.category === 'food' && item.subcategory !== 'fast_food' && item.subcategory !== 'canned' && item.subcategory !== 'coffee' && !player.turnFlags?.freshFoodHappinessGranted) {
+  if (rules?.usePhysicalMentalConditions && !rules?.enableCookingSystem && item.category === 'food' && item.subcategory !== 'fast_food' && item.subcategory !== 'canned' && item.subcategory !== 'coffee' && !player.turnFlags?.freshFoodHappinessGranted) {
     const maxPhys = updated.physicalConditionMax ?? 50;
     updated.physicalCondition = Math.min(maxPhys, (updated.physicalCondition ?? 50) + 1);
   }

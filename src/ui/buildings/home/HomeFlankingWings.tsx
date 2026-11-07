@@ -52,6 +52,7 @@ export interface HomeFlankingWingsProps {
   // Pantry props
   hasFridge: boolean;
   hasFreezer: boolean;
+  onPantryClick?: () => void;
 }
 
 export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
@@ -81,7 +82,8 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
   serviceSubtext: _serviceSubtext,
   onServiceClick,
   hasFridge,
-  hasFreezer
+  hasFreezer,
+  onPantryClick
 }) => {
   const { t } = useTranslation();
   const [activeHelp, setActiveHelp] = useState<HomeActionType | null>(null);
@@ -810,6 +812,41 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                     ? `⚠️ ${freshFoodUnits} fresh spoils at turn end!` 
                     : t('homeRelax.pantryStable', { defaultValue: '✓ Stable (no perishables)' }))}
             </div>
+            {rules?.enableCookingSystem && (
+              <div style={{
+                marginTop: '4px',
+                paddingTop: '4px',
+                borderTop: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
+              }}>
+                <div style={{
+                  fontSize: '0.66rem',
+                  fontWeight: 'bold',
+                  color: player.turnFlags?.hasEaten ? '#86efac' : '#f59e0b'
+                }}>
+                  {player.turnFlags?.hasEaten ? '✓ Meals Prepared' : '⚠️ Unfed this Week'}
+                </div>
+                <button
+                  type="button"
+                  data-testid="btn-open-pantry-cooking"
+                  onClick={onPantryClick}
+                  style={{
+                    background: player.turnFlags?.hasEaten ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    border: '1px solid #10b981',
+                    borderRadius: '4px',
+                    color: '#fff',
+                    padding: '4px 6px',
+                    fontSize: '0.70rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🍳 {player.turnFlags?.hasEaten ? 'Kitchen & Pantry' : 'Prepare Meals'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

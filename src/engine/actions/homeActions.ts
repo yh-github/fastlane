@@ -33,8 +33,11 @@ export function handleRelaxAction(
     const conditionRes = context.rules.conditionResolution;
 
     const hasFood = (nextPlayer.inventory?.freshFoodUnits || 0) > 0 || (nextPlayer.inventory?.fastFoodItems?.length || 0) > 0 || (nextPlayer.inventory?.cannedFoodUnits || 0) > 0;
+    const isFed = context.rules.enableCookingSystem
+      ? Boolean(nextPlayer.turnFlags?.hasEaten)
+      : hasFood;
 
-    if (hasFood) {
+    if (isFed) {
       const relaxEffects = collectItemEffects(nextPlayer, context.campaign, 'on_relax');
       const physBonus = relaxEffects.get('physical') || 0;
       const mentalBonus = relaxEffects.get('mental') || 0;
@@ -388,4 +391,169 @@ export function handleChangeClothesAction(
 
   const actionLog = { key: 'action.clothes.changed', params: { clothes: action.clothes } };
   return { nextPlayer, actionLog };
+}
+
+export function handlePrepMealAction(
+  player: PlayerState,
+  action: { type: 'prep_meal'; mealType: 'home_cooked' | 'canned' | 'fast_food' },
+  context: ReducerContext
+): ActionHandlerResult {
+  let nextPlayer = structuredClone(player);
+  let actionLog;
+
+  const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+  const maxPhysical = nextPlayer.physicalConditionMax ?? statRules.initialPhysicalMax;
+  const maxMental = nextPlayer.mentalConditionMax ?? 50;
+
+  const hasStove = nextPlayer.inventory.appliances?.some(
+    a => (a.id === 'stove' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken
+  );
+  const hasMicrowave = nextPlayer.inventory.appliances?.some(
+    a => (a.id === 'microwave' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('microwave')) && !a.isBroken
+  );
+  const hasFridge = nextPlayer.inventory.appliances?.some(
+    a => (a.id === 'refrigerator' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('refrigerator')) && !a.isBroken
+  );
+  const hasFreezer = nextPlayer.inventory.appliances?.some(
+    a => (a.id === 'freezer' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('freezer')) && !a.isBroken
+  );
+
+  if (action.mealType === 'home_cooked') {
+    if ((nextPlayer.inventory.freshFoodUnits || 0) < 1) {
+      return { nextPlayer, actionLog: { key: 'action.error.noFreshFood' } };
+    }
+    if (!hasStove) {
+      return { nextPlayer, actionLog: { key: 'action.error.needStove' } };
+    }
+
+    // Exhaustion safeguard: player must have >= 1.5 Physical to cook on stove
+    const currentPhys = nextPlayer.physicalCondition ?? maxPhysical;
+    if (currentPhys < 1.5) {
+      return { nextPlayer, actionLog: { key: 'action.error.tooExhaustedToCook' } };
+    }
+
+    // Time: Base 2.5h, 1.5h with microwave
+    // If standalone freezer without fridge and without microwave: +1.0h thaw delay
+    let timeNeeded = hasMicrowave ? 1.5 : 2.5;
+    if (hasFreezer && !hasFridge && !hasMicrowave) {
+      timeNeeded += 1.0;
+    }
+
+    if (nextPlayer.hoursRemaining < timeNeeded) {
+      return { nextPlayer, actionLog: { key: 'action.error.notEnoughTimeCook' } };
+    }
+
+    // Deduct time
+    nextPlayer = spendHours(nextPlayer, timeNeeded);
+
+    // Consume 1 fresh food unit
+    nextPlayer.inventory.freshFoodUnits--;
+
+    // Labor cost: 1.0 Physical
+    const minPhysical = nextPlayer.minPhysicalCondition ?? statRules.initialMinPhysical;
+    nextPlayer.physicalCondition = safeDecrementPhysical(nextPlayer.physicalCondition ?? maxPhysical, 1.0, minPhysical);
+
+    // Mess produced: 2 mess (1 with microwave)
+    const messAdded = hasMicrowave ? 1 : 2;
+    if (context.rules.trackMess) {
+      const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
+      nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + messAdded);
+    }
+
+    // Immediate yield: +2.5 Physical (net +1.5 Physical), +2.0 Mental
+    const physGain = 2.5;
+    const mentalGain = 2.0;
+    nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
+    nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
+
+    nextPlayer.turnFlags.hasEaten = true;
+    nextPlayer.turnFlags.mealPreparedThisTurn = 'home_cooked';
+    nextPlayer.nutritionTier = 'home_cooked';
+    nextPlayer.consecutiveCannedWeeks = 0;
+
+    actionLog = {
+      key: 'action.cook.home_cooked',
+      params: { time: timeNeeded, physGain: 1.5, mentalGain: 2.0, mess: messAdded }
+    };
+    return { nextPlayer, actionLog };
+  }
+
+  if (action.mealType === 'canned') {
+    if ((nextPlayer.inventory.cannedFoodUnits || 0) < 1) {
+      return { nextPlayer, actionLog: { key: 'action.error.noCannedFood' } };
+    }
+
+    const timeNeeded = hasMicrowave ? 0.5 : 1.0;
+    if (nextPlayer.hoursRemaining < timeNeeded) {
+      return { nextPlayer, actionLog: { key: 'action.error.notEnoughTimePrep' } };
+    }
+
+    // Deduct time
+    nextPlayer = spendHours(nextPlayer, timeNeeded);
+
+    // Consume 1 canned food unit
+    nextPlayer.inventory.cannedFoodUnits = (nextPlayer.inventory.cannedFoodUnits || 0) - 1;
+
+    // Mess: 1 mess without microwave, 0 with microwave
+    const messAdded = hasMicrowave ? 0 : 1;
+    if (context.rules.trackMess && messAdded > 0) {
+      const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
+      nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + messAdded);
+    }
+
+    // Mental penalty: -1.5 Mental
+    const minMental = nextPlayer.mentalConditionMin ?? statRules.minMentalCondition;
+    nextPlayer.mentalCondition = safeDecrementMental(nextPlayer.mentalCondition ?? maxMental, 1.5, minMental);
+
+    // Malnutrition penalty for consecutive canned weeks
+    const prevCannedWeeks = nextPlayer.consecutiveCannedWeeks || 0;
+    if (prevCannedWeeks >= 1) {
+      const minPhys = nextPlayer.minPhysicalCondition ?? statRules.initialMinPhysical;
+      nextPlayer.physicalConditionMax = Math.max(minPhys, (nextPlayer.physicalConditionMax ?? maxPhysical) - 1);
+      nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax, nextPlayer.physicalCondition ?? maxPhysical);
+    }
+    nextPlayer.consecutiveCannedWeeks = prevCannedWeeks + 1;
+
+    nextPlayer.turnFlags.hasEaten = true;
+    nextPlayer.turnFlags.mealPreparedThisTurn = 'canned';
+    nextPlayer.nutritionTier = 'canned';
+
+    actionLog = {
+      key: 'action.cook.canned',
+      params: { time: timeNeeded }
+    };
+    return { nextPlayer, actionLog };
+  }
+
+  if (action.mealType === 'fast_food') {
+    if (!nextPlayer.inventory.fastFoodItems || nextPlayer.inventory.fastFoodItems.length === 0) {
+      return { nextPlayer, actionLog: { key: 'action.error.noFastFood' } };
+    }
+
+    // Consume 1 fast food meal
+    const eatenMeal = nextPlayer.inventory.fastFoodItems[0];
+    nextPlayer.inventory.fastFoodItems = nextPlayer.inventory.fastFoodItems.slice(1);
+
+    // Immediate yield: +1 Mental, +1 Social
+    nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + 1);
+    if (context.rules.trackSocial) {
+      nextPlayer.social = Math.min(statRules.maxSocial, (nextPlayer.social || 0) + 1);
+    }
+
+    nextPlayer.turnFlags.hasEaten = true;
+    nextPlayer.turnFlags.mealPreparedThisTurn = 'fast_food';
+    nextPlayer.nutritionTier = 'fast_food';
+    nextPlayer.consecutiveCannedWeeks = 0;
+
+    const itemDef = context.campaign.items.find(i => i.id === eatenMeal.itemId);
+    const itemName = itemDef?.name || eatenMeal.itemId;
+
+    actionLog = {
+      key: 'action.cook.fast_food',
+      params: { item: itemName }
+    };
+    return { nextPlayer, actionLog };
+  }
+
+  return { nextPlayer };
 }

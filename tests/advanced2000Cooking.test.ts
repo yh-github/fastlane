@@ -1,0 +1,406 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { loadCampaign, type CampaignBundle } from '../src/engine/dataLoader';
+import { createPlayerState, createDefaultGoalAllotment } from '../src/engine/stateFactories';
+import { gameReducer } from '../src/engine/gameReducer';
+import { recalculatePlayerEffects } from '../src/engine/gameState';
+import { processAdvancedHealthAndFood } from '../src/engine/turn/healthAndFoodPhase';
+import { buyItem } from '../src/engine/shoppingEngine';
+import { Random } from '../src/utils/rng';
+import type { GameState, PlayerState } from '../src/engine/gameState';
+import type { ReducerContext } from '../src/engine/actions/types';
+
+describe('Advanced 2000 - Cooking Module', () => {
+  let campaign2000: CampaignBundle;
+  let campaignFloppy: CampaignBundle;
+
+  beforeEach(async () => {
+    campaign2000 = await loadCampaign('advanced_2000');
+    campaignFloppy = await loadCampaign('1990_classic_floppy');
+  });
+
+  function createTestContext(player: PlayerState, campaign: CampaignBundle): { state: GameState; context: ReducerContext } {
+    const state: GameState = {
+      gameId: 'test-cooking',
+      turn: 1,
+      currentPlayerIndex: 0,
+      players: [player],
+      activeEffects: {},
+      rules: campaign.config.gameRules,
+      messages: [],
+      economicIndex: 0,
+      bank: { currentSavingsRate: 0.05, currentLoanRate: 0.1 },
+      stocks: []
+    };
+
+    const context: ReducerContext = {
+      campaign,
+      rules: campaign.config.gameRules,
+      turn: 1,
+      economicIndex: 0,
+      rng: new Random(42),
+      state
+    };
+
+    return { state, context };
+  }
+
+  function makePlayer(campaign: CampaignBundle): PlayerState {
+    const p = createPlayerState('p1', 'Player 1', false, createDefaultGoalAllotment(), 'board', campaign.config);
+    return recalculatePlayerEffects(p, campaign);
+  }
+
+  describe('Campaign Config & Rule Gating', () => {
+    it('enables enableCookingSystem in advanced_2000 config', () => {
+      expect(campaign2000.config.gameRules.enableCookingSystem).toBe(true);
+    });
+
+    it('does not enable enableCookingSystem in classic campaigns', () => {
+      expect(campaignFloppy.config.gameRules.enableCookingSystem).toBeFalsy();
+    });
+  });
+
+  describe('Fixing the Infinite Can Exploit', () => {
+    it('in advanced_2000: possessing a can in cupboard without prepping/eating causes Unfed Relaxing', () => {
+      let player = makePlayer(campaign2000);
+      player.currentHousingId = 'low_cost';
+      player.hoursRemaining = 50;
+      player.physicalCondition = 40;
+      player.physicalConditionMax = 65;
+      player.mentalCondition = 40;
+      player.mentalConditionMax = 65;
+      player.inventory.cannedFoodUnits = 1; // Owns a can, but hasn't prepped/eaten it!
+      player.turnFlags.hasEaten = false;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'relax' }, context);
+      const p = result.updatedPlayer;
+
+      // Exploit killed: Relaxing unfed applies penalties
+      expect(p.physicalConditionMax).toBe(64); // -1 Max Physical penalty
+      expect(p.mentalConditionMax).toBe(64); // -1 Max Mental penalty
+      expect(p.inventory.cannedFoodUnits).toBe(1); // Can wasn't consumed by relaxing
+    });
+
+    it('in classic floppy: possessing food still gives classic fed relaxing', () => {
+      let player = makePlayer(campaignFloppy);
+      player.hoursRemaining = 50;
+      player.inventory.cannedFoodUnits = 1;
+      player.happiness = 50;
+
+      const { context } = createTestContext(player, campaignFloppy);
+      const result = gameReducer(player, { type: 'relax' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.happiness).toBeGreaterThan(50);
+    });
+  });
+
+  describe('Weekly Meal Prep: Home Cooking (Stove & Microwave)', () => {
+    it('requires a working stove to cook home meal', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 2;
+      player.inventory.appliances = []; // No stove!
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.turnFlags.hasEaten).toBe(false);
+      expect(p.inventory.freshFoodUnits).toBe(2);
+    });
+
+    it('requires fresh groceries to cook home meal', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 0; // No fresh groceries
+      player.inventory.appliances = [{ id: 'stove', purchasePrice: 490, condition: 'new' }];
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.turnFlags.hasEaten).toBe(false);
+    });
+
+    it('safeguards against death spiral: prevents cooking if Physical < 1.5', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 2;
+      player.inventory.appliances = [{ id: 'stove', purchasePrice: 490, condition: 'new' }];
+      player.physicalCondition = 1.0; // Exhausted!
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      const p = result.updatedPlayer;
+
+      // Prevented from cooking to avoid health collapse
+      expect(p.turnFlags.hasEaten).toBe(false);
+      expect(p.physicalCondition).toBe(1.0);
+      expect(p.inventory.freshFoodUnits).toBe(2);
+    });
+
+    it('successfully cooks home meal on stove: costs 2.5h, 1.0 Physical, yields net +1.5 Physical, +2.0 Mental, +2 Mess', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 2;
+      player.inventory.appliances = [
+        { id: 'stove', purchasePrice: 490, condition: 'new' },
+        { id: 'refrigerator', purchasePrice: 650, condition: 'new' }
+      ];
+      player.physicalCondition = 30;
+      player.physicalConditionMax = 65;
+      player.mentalCondition = 30;
+      player.mentalConditionMax = 65;
+      player.mess = 0;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.hoursRemaining).toBe(47.5); // 50 - 2.5h
+      expect(p.inventory.freshFoodUnits).toBe(1); // 1 consumed
+      expect(p.mess).toBe(2); // +2 mess produced
+      // Physical: 30 - 1.0 (prep labor) + 2.5 (eat nourishment) = 31.5 (net +1.5)
+      expect(p.physicalCondition).toBe(31.5);
+      // Mental: 30 + 2.0 = 32.0
+      expect(p.mentalCondition).toBe(32);
+      expect(p.turnFlags.hasEaten).toBe(true);
+      expect(p.nutritionTier).toBe('home_cooked');
+    });
+
+    it('microwave synergy: cuts home cooking time to 1.5h and mess to +1', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 2;
+      player.inventory.appliances = [
+        { id: 'stove', purchasePrice: 490, condition: 'new' },
+        { id: 'refrigerator', purchasePrice: 650, condition: 'new' },
+        { id: 'microwave', purchasePrice: 220, condition: 'new' }
+      ];
+      player.physicalCondition = 30;
+      player.mentalCondition = 30;
+      player.mess = 0;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.hoursRemaining).toBe(48.5); // 50 - 1.5h (1 hour saved by microwave!)
+      expect(p.mess).toBe(1); // only +1 mess with microwave!
+      expect(p.turnFlags.hasEaten).toBe(true);
+    });
+  });
+
+  describe('Standalone Freezer & Microwave Defrost Synergy', () => {
+    it('activates standalone_freezer synergy: provides 6 storage units without refrigerator', () => {
+      let player = makePlayer(campaign2000);
+      player.inventory.appliances = [{ id: 'freezer', purchasePrice: 513, condition: 'new' }];
+      player = recalculatePlayerEffects(player, campaign2000);
+
+      // Verify activeEffects has set_food_storage: 6
+      expect(player.activeEffects['set_food_storage']).toBe(6);
+
+      player.inventory.freshFoodUnits = 6;
+      player.turnFlags.hasEaten = true; // Already ate so no food consumed
+
+      const { state } = createTestContext(player, campaign2000);
+      const preRobberyStorage = player.activeEffects['set_food_storage'] || 0;
+      // Process end of turn food phase
+      const after = processAdvancedHealthAndFood(player, state, campaign2000, new Random(1), undefined, preRobberyStorage);
+
+      // With standalone freezer, 6 fresh food units do NOT spoil!
+      expect(after.inventory.freshFoodUnits).toBe(6);
+    });
+
+    it('freezer without fridge or microwave incurs +1.0h thawing penalty (3.5h total)', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 2;
+      player.inventory.appliances = [
+        { id: 'stove', purchasePrice: 490, condition: 'new' },
+        { id: 'freezer', purchasePrice: 513, condition: 'new' }
+        // No fridge, no microwave
+      ];
+      player.physicalCondition = 30;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      const p = result.updatedPlayer;
+
+      // Base 2.5h + 1.0h thaw delay = 3.5h
+      expect(p.hoursRemaining).toBe(46.5);
+      expect(p.turnFlags.hasEaten).toBe(true);
+    });
+
+    it('microwave eliminates freezer thaw penalty and cuts cooking time to 1.5h', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 2;
+      player.inventory.appliances = [
+        { id: 'stove', purchasePrice: 490, condition: 'new' },
+        { id: 'freezer', purchasePrice: 513, condition: 'new' },
+        { id: 'microwave', purchasePrice: 220, condition: 'new' }
+      ];
+      player.physicalCondition = 30;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      const p = result.updatedPlayer;
+
+      // Instant microwave defrost + prep boost = 1.5h
+      expect(p.hoursRemaining).toBe(48.5);
+      expect(p.turnFlags.hasEaten).toBe(true);
+    });
+  });
+
+  describe('Weekly Meal Prep: Canned Food (Low Effort Survival Fallback)', () => {
+    it('heats canned rations: costs 1.0h without microwave, 0.0 Physical, produces +1 mess, lowers Mental by 1.5', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.cannedFoodUnits = 2;
+      player.physicalCondition = 1.0; // Exhausted
+      player.mentalCondition = 40;
+      player.mess = 0;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'canned' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.hoursRemaining).toBe(49.0); // 1 hour prep
+      expect(p.physicalCondition).toBe(1.0); // 0 Physical cost: safe from exhaustion!
+      expect(p.mentalCondition).toBe(38.5); // -1.5 Mental (salty mystery meat)
+      expect(p.mess).toBe(1);
+      expect(p.inventory.cannedFoodUnits).toBe(1);
+      expect(p.turnFlags.hasEaten).toBe(true);
+      expect(p.consecutiveCannedWeeks).toBe(1);
+    });
+
+    it('microwave cuts canned prep time to 0.5h and produces 0 mess', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.cannedFoodUnits = 2;
+      player.inventory.appliances = [{ id: 'microwave', purchasePrice: 220, condition: 'new' }];
+      player.mess = 0;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'canned' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.hoursRemaining).toBe(49.5); // 0.5h
+      expect(p.mess).toBe(0); // 0 mess
+      expect(p.turnFlags.hasEaten).toBe(true);
+    });
+
+    it('eating canned food multiple weeks in a row degrades physicalConditionMax by 1', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.cannedFoodUnits = 2;
+      player.physicalConditionMax = 65;
+      player.consecutiveCannedWeeks = 1; // Already lived on canned rations last week
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'canned' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.physicalConditionMax).toBe(64); // Malnutrition penalty applied!
+      expect(p.consecutiveCannedWeeks).toBe(2);
+    });
+  });
+
+  describe('Weekly Meal Prep: Fast Food', () => {
+    it('consumes fast food meal at home: 0h, 0 Physical, +1 Mental, +1 Social', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.fastFoodItems = [{ itemId: 'kraken_burger', happinessBonus: 0 }];
+      player.mentalCondition = 30;
+      player.social = 10;
+      player.consecutiveCannedWeeks = 3;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'fast_food' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.hoursRemaining).toBe(50); // 0h
+      expect(p.inventory.fastFoodItems.length).toBe(0);
+      expect(p.mentalCondition).toBe(31); // +1 Mental
+      expect(p.social).toBe(11); // +1 Social
+      expect(p.turnFlags.hasEaten).toBe(true);
+      expect(p.consecutiveCannedWeeks).toBe(0); // Resets canned streak!
+    });
+  });
+
+  describe('Relaxing Fed after Cooking', () => {
+    it('cooking home meal unlocks full Fed Relaxing and Max Physical rehabilitation', () => {
+      let player = makePlayer(campaign2000);
+      player.currentHousingId = 'low_cost';
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 1;
+      player.inventory.appliances = [{ id: 'stove', purchasePrice: 490, condition: 'new' }];
+      player.physicalCondition = 50;
+      player.physicalConditionMax = 50; // Damaged max (global max is 65)
+      player.mentalCondition = 50;
+      player.mentalConditionMax = 65;
+
+      const { context } = createTestContext(player, campaign2000);
+      // 1. Cook meal
+      const resultAfterCook = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      expect(resultAfterCook.updatedPlayer.turnFlags.hasEaten).toBe(true);
+
+      // 2. Relax at home
+      const resultAfterRelax = gameReducer(resultAfterCook.updatedPlayer, { type: 'relax' }, context);
+      const p = resultAfterRelax.updatedPlayer;
+
+      // Relaxing at full health while Fed rehabilitates physicalConditionMax!
+      expect(p.physicalConditionMax).toBeGreaterThan(50);
+    });
+  });
+
+  describe('End-of-Turn Deductions & Spoilage', () => {
+    it('does not double-deduct food units at turn end if player already prepped/ate during the turn', () => {
+      let player = makePlayer(campaign2000);
+      player.inventory.appliances = [{ id: 'refrigerator', purchasePrice: 650, condition: 'new' }];
+      player = recalculatePlayerEffects(player, campaign2000);
+      player.inventory.freshFoodUnits = 3;
+      player.turnFlags.hasEaten = true; // Prepped meal during the turn
+
+      const { state } = createTestContext(player, campaign2000);
+      const preRobberyStorage = player.activeEffects['set_food_storage'] || 0;
+      const after = processAdvancedHealthAndFood(player, state, campaign2000, new Random(1), undefined, preRobberyStorage);
+
+      // Fresh food is preserved at 3 units, NOT reduced to 2!
+      expect(after.inventory.freshFoodUnits).toBe(3);
+    });
+
+    it('auto-consumes fallback food at turn end if player forgot to cook', () => {
+      let player = makePlayer(campaign2000);
+      player.inventory.appliances = [{ id: 'refrigerator', purchasePrice: 650, condition: 'new' }];
+      player = recalculatePlayerEffects(player, campaign2000);
+      player.inventory.freshFoodUnits = 3;
+      player.turnFlags.hasEaten = false; // Forgot to cook!
+
+      const { state } = createTestContext(player, campaign2000);
+      const preRobberyStorage = player.activeEffects['set_food_storage'] || 0;
+      const after = processAdvancedHealthAndFood(player, state, campaign2000, new Random(1), undefined, preRobberyStorage);
+
+      // Fallback consumes 1 fresh food unit so player does not starve
+      expect(after.inventory.freshFoodUnits).toBe(2);
+      expect(after.turnFlags.hasEaten).toBe(true);
+    });
+  });
+
+  describe('Deferred on_purchase Food Modifiers', () => {
+    it('buying fresh food or canned mystery meat in advanced_2000 does not apply on_purchase stat mods at store checkout', () => {
+      let player = makePlayer(campaign2000);
+      player.money = 200;
+      player.physicalCondition = 50;
+      player.physicalConditionMax = 65;
+
+      const cannedItem = campaign2000.items.find(i => i.id === 'dog_food')!;
+      const result = buyItem(player, cannedItem, campaign2000.config.gameRules, campaign2000);
+
+      // Canned food purchased: -3 physicalConditionMax was NOT applied at checkout!
+      expect(result.updated.physicalConditionMax).toBe(65);
+    });
+  });
+});
