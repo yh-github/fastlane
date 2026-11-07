@@ -4,6 +4,7 @@ import { createPlayerState, createDefaultGoalAllotment } from '../src/engine/sta
 import { gameReducer } from '../src/engine/gameReducer';
 import { recalculatePlayerEffects } from '../src/engine/gameState';
 import { processAdvancedHealthAndFood } from '../src/engine/turn/healthAndFoodPhase';
+import { processTurnStart } from '../src/engine/turnProcessor';
 import { buyItem } from '../src/engine/shoppingEngine';
 import { Random } from '../src/utils/rng';
 import type { GameState, PlayerState } from '../src/engine/gameState';
@@ -401,6 +402,66 @@ describe('Advanced 2000 - Cooking Module', () => {
 
       // Canned food purchased: -3 physicalConditionMax was NOT applied at checkout!
       expect(result.updated.physicalConditionMax).toBe(65);
+    });
+  });
+
+  describe('Cross-Turn Food Reset & Red Pirate Fast Food', () => {
+    it('buying fast food at Red Pirate while unfed immediately feeds the player for Turn 1', () => {
+      let player = makePlayer(campaign2000);
+      player.money = 100;
+      player.turnFlags.hasEaten = false;
+      const burger = campaign2000.items.find(i => i.id === 'pirate_burger' || i.subcategory === 'fast_food')!;
+
+      const result = buyItem(player, burger, campaign2000.config.gameRules, campaign2000);
+      expect(result.success).toBe(true);
+      expect(result.updated.turnFlags.hasEaten).toBe(true);
+      expect(result.updated.nutritionTier).toBe('fast_food');
+      // Meal was eaten immediately, so inventory is empty
+      expect(result.updated.inventory.fastFoodItems.length).toBe(0);
+    });
+
+    it('buying extra fast food while already fed stores it in inventory as takeout', () => {
+      let player = makePlayer(campaign2000);
+      player.money = 100;
+      player.turnFlags.hasEaten = true; // Already ate!
+      const burger = campaign2000.items.find(i => i.id === 'pirate_burger' || i.subcategory === 'fast_food')!;
+
+      const result = buyItem(player, burger, campaign2000.config.gameRules, campaign2000);
+      expect(result.success).toBe(true);
+      expect(result.updated.inventory.fastFoodItems.length).toBe(1);
+    });
+
+    it('player who bought food at Red Pirate in Turn 1 starts Turn 2 UNFED and cannot relax fed without new food', () => {
+      let player = makePlayer(campaign2000);
+      player.money = 100;
+      player.turnFlags.hasEaten = false;
+      const burger = campaign2000.items.find(i => i.id === 'pirate_burger' || i.subcategory === 'fast_food')!;
+
+      // 1. Buy burger in Turn 1 -> eaten immediately
+      const buyRes = buyItem(player, burger, campaign2000.config.gameRules, campaign2000);
+      let turn1Player = buyRes.updated;
+      expect(turn1Player.turnFlags.hasEaten).toBe(true);
+
+      // 2. Advance to Turn 2 via processTurnStart
+      const { state: state1 } = createTestContext(turn1Player, campaign2000);
+      state1.turn = 1;
+      const state2 = processTurnStart(state1, campaign2000);
+
+      const turn2Player = state2.players[0];
+      // Critical check: Turn 2 player MUST start with hasEaten = false!
+      expect(turn2Player.turnFlags.hasEaten).toBe(false);
+
+      // 3. Relaxing at turn start of Turn 2 results in Unfed Relaxing (-1 Max Phys, -1 Max Mental)!
+      const context2: ReducerContext = {
+        campaign: campaign2000,
+        rules: campaign2000.config.gameRules,
+        turn: 2,
+        economicIndex: 0,
+        rng: new Random(42),
+        state: state2
+      };
+      const relaxRes = gameReducer(turn2Player, { type: 'relax' }, context2);
+      expect(relaxRes.actionLog?.params?.stats).toContain('-1 Max Physical, -1 Max Mental');
     });
   });
 });

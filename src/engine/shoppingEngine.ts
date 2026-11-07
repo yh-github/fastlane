@@ -277,7 +277,22 @@ export function buyItem(
         if (givesFastFoodSocial(item, rules) && mealCount > 1 && updated.hoursRemaining !== undefined) {
           updated.hoursRemaining = Math.max(0, updated.hoursRemaining - 1);
         }
-        updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];
+        if (rules?.enableCookingSystem && !player.turnFlags?.hasEaten) {
+          // In cooking system, eating at fast food restaurant immediately feeds player for this turn
+          newTurnFlags.hasEaten = true;
+          updated.nutritionTier = 'fast_food';
+          newTurnFlags.mealPreparedThisTurn = 'fast_food';
+          if (rules.usePhysicalMentalConditions) {
+            updated.mentalCondition = Math.min(updated.mentalConditionMax ?? 50, (updated.mentalCondition ?? 50) + 1);
+            if (rules.trackSocial) {
+              const sr = campaign?.config.statRules;
+              const maxSoc = (sr && 'maxSocial' in sr ? (sr as any).maxSocial : 100);
+              updated.social = Math.min(maxSoc, (updated.social ?? 0) + 1);
+            }
+          }
+        } else {
+          updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];
+        }
       } else if (item.subcategory === 'canned') {
         updated.inventory.cannedFoodUnits = (updated.inventory.cannedFoodUnits || 0) + (item.units || 1);
       } else if (item.subcategory === 'coffee') {

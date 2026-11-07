@@ -650,6 +650,50 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
               </span>
             </button>
 
+            {/* Kitchen & Meal Prep Button */}
+            {rules?.enableCookingSystem && (
+              <button
+                type="button"
+                data-testid="btn-docked-kitchen"
+                onClick={onPantryClick}
+                style={{
+                  padding: '5px 14px',
+                  borderRadius: '6px',
+                  border: !player.turnFlags?.hasEaten ? '2px solid #f59e0b' : '1.5px solid rgba(245, 158, 11, 0.5)',
+                  background: !player.turnFlags?.hasEaten
+                    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%)'
+                    : 'linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(120, 53, 15, 0.85) 100%)',
+                  color: !player.turnFlags?.hasEaten ? '#000' : '#fde68a',
+                  fontSize: '0.80rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: !player.turnFlags?.hasEaten
+                    ? '0 0 14px rgba(245, 158, 11, 0.8), 0 4px 10px rgba(0,0,0,0.7)'
+                    : '0 3px 8px rgba(0,0,0,0.6)',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <span>🍳</span>
+                <span>{player.turnFlags?.hasEaten ? t('homeRelax.btnKitchen', { defaultValue: 'Kitchen' }) : t('homeRelax.btnCookMeals', { defaultValue: 'Meal Prep (Unfed!)' })}</span>
+                {!player.turnFlags?.hasEaten && (
+                  <span style={{
+                    background: '#dc2626',
+                    color: '#fff',
+                    fontSize: '0.62rem',
+                    fontWeight: 900,
+                    padding: '1px 5px',
+                    borderRadius: '8px'
+                  }}>
+                    ⚠️
+                  </span>
+                )}
+              </button>
+            )}
+
             {/* Chores Button */}
             <button
               type="button"
@@ -697,6 +741,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
           rules={rules}
           economicIndex={economicIndex}
           onAction={onAction}
+          onOpenKitchen={onPantryClick}
           onClose={() => setInspectedDurable(null)}
         />
       )}

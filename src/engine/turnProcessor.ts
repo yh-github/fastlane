@@ -327,11 +327,18 @@ function processAdvancedPlayerTurn(
 
     p = recalculatePlayerEffects(p, campaign);
     p = state.rules.usePhysicalMentalConditions
-      ? processAdvancedHealthAndFood(p, state, campaign, rng, replay, preRobberyStorage)
+      ? processAdvancedHealthAndFood(p, state, campaign, rng, replay, preRobberyStorage, player)
       : processBaseHealthAndFood(p, state, campaign, rng, replay, preRobberyStorage);
     p = processHousingAndLoanPhase(p, state, campaign);
     p = processPostHealthMaintenance(p, state, campaign, rng, replay, econResult);
     p = processPawnExpiration(p, state, newPawnShopItemsForSale);
+  }
+
+  // Under Cooking System, meals must be prepared/eaten anew each turn
+  if (state.rules.enableCookingSystem) {
+    p.turnFlags.hasEaten = false;
+    p.turnFlags.mealPreparedThisTurn = undefined;
+    p.turnFlags.fastFoodMealsThisTurn = 0;
   }
 
   return finalizePlayerControlAndPosition(p, campaign, rng, replay, econResult);

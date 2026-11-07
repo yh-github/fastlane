@@ -305,6 +305,42 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
             )}
           </div>
 
+          {/* Unfed Meal Prep Prompt */}
+          {rules?.enableCookingSystem && !player.turnFlags?.hasEaten && (
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '6px',
+              padding: '5px 8px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span style={{ color: '#fca5a5', fontSize: '0.66rem', fontWeight: 700 }}>
+                ⚠️ Unfed this week!
+              </span>
+              <button
+                type="button"
+                data-testid="btn-relax-cook-first"
+                onClick={onPantryClick}
+                style={{
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  border: '1px solid #10b981',
+                  borderRadius: '4px',
+                  color: '#fff',
+                  padding: '3px 8px',
+                  fontSize: '0.66rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                🍳 Cook / Prep Food
+              </button>
+            </div>
+          )}
+
           {/* Action Button */}
           <button
             data-testid="btn-relax"
