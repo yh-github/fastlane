@@ -30,7 +30,7 @@
     "name": "Scurvy Slaw & Pegleg Patties",
     "category": "food",
     "subcategory": "fast_food",
-    "basePrice": 15,
+    "basePrice": 65,
     "happinessBonus": 0,
     "mentalBonus": 0,
     "description": "Cheap diner slaw and fried patties. Quick fast food that staves off hunger.",
@@ -44,7 +44,7 @@
     "name": "Kraken Double Melt & Curly Fries",
     "category": "food",
     "subcategory": "fast_food",
-    "basePrice": 75,
+    "basePrice": 120,
     "happinessBonus": 0,
     "mentalBonus": 2,
     "description": "Decadent double patty smothered in melted cheese and pirate sauce. Delicious comfort food.",
@@ -53,14 +53,14 @@
     ]
   },
   {
-    "id": "grog_shake",
-    "name": "Pirate Grog Shake",
+    "id": "buccaneer_stew",
+    "name": "Buccaneer Grog Stew & Biscuit",
     "category": "food",
     "subcategory": "fast_food",
-    "basePrice": 40,
+    "basePrice": 85,
     "happinessBonus": 0,
     "mentalBonus": 1,
-    "description": "Creamy malted shake with spiced caramel swirl. Sweet mental comfort.",
+    "description": "Hearty slow-simmered beef stew spiced with grog and served with a flaky biscuit. Warm comfort food.",
     "effects": [
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]

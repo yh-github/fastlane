@@ -209,22 +209,24 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     player.happiness = 40;
     player.physicalCondition = 40;
 
-    // Play 1: Mental +1, Social 0, NO Happiness increase
+    // Play 1: Mental +2, Social 0, NO Happiness increase
     const r1 = gameReducer(player, { type: 'play_arcade' }, setupContext(player));
-    expect(r1.updatedPlayer.mentalCondition).toBe(31);
+    expect(r1.updatedPlayer.mentalCondition).toBe(32);
+    expect(r1.updatedPlayer.physicalCondition).toBe(40);
     expect(r1.updatedPlayer.social).toBe(10);
     expect(r1.updatedPlayer.happiness).toBe(40);
     expect(r1.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(1);
 
-    // Play 2: Diminishing returns: Mental 0, Social 0
+    // Play 2: Mental +2, Physical -0.5, Social 0
     const r2 = gameReducer(r1.updatedPlayer, { type: 'play_arcade' }, setupContext(r1.updatedPlayer));
-    expect(r2.updatedPlayer.mentalCondition).toBe(31);
+    expect(r2.updatedPlayer.mentalCondition).toBe(34);
+    expect(r2.updatedPlayer.physicalCondition).toBe(39.5);
     expect(r2.updatedPlayer.social).toBe(10);
 
-    // Play 3+: Playing all day causes physical fatigue / eye strain: Physical -1
+    // Play 3+: Mental +2, Physical -0.5
     const r3 = gameReducer(r2.updatedPlayer, { type: 'play_arcade' }, setupContext(r2.updatedPlayer));
     expect(r3.updatedPlayer.physicalCondition).toBe(39);
-    expect(r3.updatedPlayer.mentalCondition).toBe(31);
+    expect(r3.updatedPlayer.mentalCondition).toBe(36);
 
     // Check UI uses standard icons and dynamic feedback
     render(
@@ -240,9 +242,9 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
       />
     );
 
-    // Check standard icons on arcade corner: ⏳ -1h • 💰 -$5 • +1 🧠
-    expect(screen.getByText(/⏳ -1h • 💰 -\$5 • \+1 🧠/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Play Arcade \(💰 \$5\)/i })).toBeInTheDocument();
+    // Check standard icons on arcade corner: ⏳ -3h • 💰 -$10 • +2 🧠
+    expect(screen.getByText(/⏳ -3h • 💰 -\$10 • \+2 🧠/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Play Arcade \(💰 \$10\)/i })).toBeInTheDocument();
   });
 
   // 6. Monolith Burger items removed from Red Pirate
@@ -255,7 +257,7 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     expect(itemIds).not.toContain('cola');
     expect(itemIds).toContain('scurvy_slaw');
     expect(itemIds).toContain('kraken_burger');
-    expect(itemIds).toContain('grog_shake');
+    expect(itemIds).toContain('buccaneer_stew');
     expect(itemIds).toContain('drip_coffee');
   });
 

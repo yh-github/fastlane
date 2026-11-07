@@ -342,14 +342,19 @@ describe('Advanced 2000 Campaign Features', () => {
     it('Red Pirate food menu matches Monolith Burger balancing', () => {
       const slaw = campaign2000.items.find(i => i.id === 'scurvy_slaw')!;
       const burger = campaign2000.items.find(i => i.id === 'kraken_burger')!;
+      const stew = campaign2000.items.find(i => i.id === 'buccaneer_stew')!;
 
-      expect(slaw.basePrice).toBe(15);
+      expect(slaw.basePrice).toBe(65);
       expect(slaw.mentalBonus).toBe(0);
       expect(slaw.effects?.some(e => e.stat === 'social')).toBe(true);
 
-      expect(burger.basePrice).toBe(75);
+      expect(burger.basePrice).toBe(120);
       expect(burger.happinessBonus).toBe(0);
       expect(burger.mentalBonus).toBe(2); // +2 Mental, like Astro Chicken
+
+      expect(stew.name).toBe('Buccaneer Grog Stew & Biscuit');
+      expect(stew.basePrice).toBe(85);
+      expect(stew.mentalBonus).toBe(1);
     });
 
     it('All Red Pirate jobs have high_downtime tag', () => {
@@ -869,11 +874,11 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(itemIds).not.toContain('cola');
       expect(itemIds).toContain('scurvy_slaw');
       expect(itemIds).toContain('kraken_burger');
-      expect(itemIds).toContain('grog_shake');
+      expect(itemIds).toContain('buccaneer_stew');
       expect(itemIds).toContain('drip_coffee');
     });
 
-    it('play_arcade consumes 1 hour and $5 for +1 Mental (0 Social) with diminishing returns and fatigue', () => {
+    it('play_arcade consumes 3 hours and $10 for +2 Mental (play 1) and +2 Mental, -0.5 Physical (play 2+)', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_burger', campaign2000.config);
       player.hoursRemaining = 20;
       player.money = 50;
@@ -882,25 +887,31 @@ describe('Advanced 2000 Campaign Features', () => {
       player.happiness = 40;
       player.physicalCondition = 40;
 
-      // Play 1: +1 Mental, 0 Social, 0 Happiness
+      // Play 1: +2 Mental, 0 Social, 0 Happiness
       const res1 = gameReducer(player, { type: 'play_arcade' }, setupContext(player));
-      expect(res1.updatedPlayer.hoursRemaining).toBe(19);
-      expect(res1.updatedPlayer.money).toBe(45);
-      expect(res1.updatedPlayer.mentalCondition).toBe(31);
+      expect(res1.updatedPlayer.hoursRemaining).toBe(17);
+      expect(res1.updatedPlayer.money).toBe(40);
+      expect(res1.updatedPlayer.mentalCondition).toBe(32);
+      expect(res1.updatedPlayer.physicalCondition).toBe(40);
       expect(res1.updatedPlayer.social).toBe(10); // No free Social
       expect(res1.updatedPlayer.happiness).toBe(40);
       expect(res1.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(1);
 
-      // Play 2: Diminishing returns (0 Mental, 0 Social)
+      // Play 2: +2 Mental, -0.5 Physical
       const res2 = gameReducer(res1.updatedPlayer, { type: 'play_arcade' }, setupContext(res1.updatedPlayer));
-      expect(res2.updatedPlayer.mentalCondition).toBe(31);
+      expect(res2.updatedPlayer.hoursRemaining).toBe(14);
+      expect(res2.updatedPlayer.money).toBe(30);
+      expect(res2.updatedPlayer.mentalCondition).toBe(34);
+      expect(res2.updatedPlayer.physicalCondition).toBe(39.5);
       expect(res2.updatedPlayer.social).toBe(10);
       expect(res2.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(2);
 
-      // Play 3+: Fatigue / Eye strain (-1 Physical, 0 Mental)
+      // Play 3+: +2 Mental, -0.5 Physical
       const res3 = gameReducer(res2.updatedPlayer, { type: 'play_arcade' }, setupContext(res2.updatedPlayer));
+      expect(res3.updatedPlayer.hoursRemaining).toBe(11);
+      expect(res3.updatedPlayer.money).toBe(20);
       expect(res3.updatedPlayer.physicalCondition).toBe(39);
-      expect(res3.updatedPlayer.mentalCondition).toBe(31);
+      expect(res3.updatedPlayer.mentalCondition).toBe(36);
       expect(res3.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(3);
     });
   });

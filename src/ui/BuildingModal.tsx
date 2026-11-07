@@ -412,22 +412,18 @@ export function BuildingModal({
             if (isPhysMental) {
               if (plays === 0) {
                 benefitDisplay = (
-                  <span>⏳ -1h • 💰 -$5 • +1 🧠</span>
-                );
-              } else if (plays === 1) {
-                benefitDisplay = (
-                  <span>⏳ -1h • 💰 -$5 • 0 🧠 (Diminishing returns)</span>
+                  <span>⏳ -3h • 💰 -$10 • +2 🧠</span>
                 );
               } else {
                 benefitDisplay = (
-                  <span style={{ color: '#f87171' }}>⏳ -1h • 💰 -$5 • -1 💪 (Fatigue / Eye strain)</span>
+                  <span style={{ color: '#f87171' }}>⏳ -3h • 💰 -$10 • +2 🧠 • -0.5 💪 (Fatigue)</span>
                 );
               }
             } else {
               if (plays === 0) {
-                benefitDisplay = <span>⏳ -1h • 💰 -$5 • +1 😊</span>;
+                benefitDisplay = <span>⏳ -3h • 💰 -$10 • +2 😊</span>;
               } else {
-                benefitDisplay = <span style={{ color: '#f87171' }}>⏳ -1h • 💰 -$5 • 0 😊 (Bored)</span>;
+                benefitDisplay = <span style={{ color: '#f87171' }}>⏳ -3h • 💰 -$10 • 0 😊 (Bored)</span>;
               }
             }
 
@@ -440,11 +436,11 @@ export function BuildingModal({
                 <button
                   type="button"
                   className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 1 || player.money < 5}
+                  disabled={player.hoursRemaining < 3 || player.money < 10}
                   onClick={() => handleActionIntercept({ type: 'play_arcade' })}
                   style={{ whiteSpace: 'nowrap', padding: '6px 12px' }}
                 >
-                  Play Arcade (💰 $5)
+                  Play Arcade (💰 $10)
                 </button>
               </div>
             );

@@ -22,15 +22,15 @@
     "inventory": [
       {
         "itemId": "scurvy_slaw",
-        "priceOverride": 15
+        "priceOverride": 65
       },
       {
         "itemId": "kraken_burger",
-        "priceOverride": 75
+        "priceOverride": 120
       },
       {
-        "itemId": "grog_shake",
-        "priceOverride": 40
+        "itemId": "buccaneer_stew",
+        "priceOverride": 85
       },
       {
         "itemId": "drip_coffee",
