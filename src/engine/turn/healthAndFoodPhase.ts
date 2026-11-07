@@ -182,7 +182,8 @@ export function processAdvancedHealthAndFood(
   campaign: CampaignBundle,
   rng: Random,
   replay?: ReplayContext,
-  preRobberyStorage: number = 0
+  preRobberyStorage: number = 0,
+  previousTurnPlayer?: PlayerState
 ): PlayerState {
   let p = player;
   let spoiledFoodSickMultiplier = 1;
@@ -191,8 +192,14 @@ export function processAdvancedHealthAndFood(
   const doctorReasons: string[] = [];
   const sr = requireAdvancedStatRules(campaign.config.statRules);
 
+  const alreadyAteThisTurn = Boolean(previousTurnPlayer?.turnFlags?.hasEaten ?? p.turnFlags?.hasEaten);
+  if (alreadyAteThisTurn) {
+    p.turnFlags.hasEaten = true;
+  }
   const hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
-  p.inventory.fastFoodItems = [];
+  if (!state.rules.enableCookingSystem || !alreadyAteThisTurn || maxStorage === 0) {
+    p.inventory.fastFoodItems = [];
+  }
   const hasCannedFood = (p.inventory.cannedFoodUnits || 0) > 0;
 
   let ateSpoiledThisTurn = false;

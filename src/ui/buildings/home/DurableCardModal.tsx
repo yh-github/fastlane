@@ -29,6 +29,7 @@ export interface ItemCardModalProps {
   mode?: 'home' | 'shop';
   priceOverride?: number;
   onAction?: (action: GameAction) => void;
+  onOpenKitchen?: () => void;
   onClose: () => void;
 }
 
@@ -46,6 +47,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   mode = 'home',
   priceOverride,
   onAction,
+  onOpenKitchen,
   onClose
 }) => {
   const { t } = useTranslation();
@@ -1211,6 +1213,38 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
             })}
           </div>
         ) : null}
+
+        {/* Open Kitchen Button for cooking appliances */}
+        {rules?.enableCookingSystem && isOwned && (itemId === 'stove' || itemId === 'microwave' || itemId === 'refrigerator' || itemId === 'freezer') && onOpenKitchen && (
+          <button
+            type="button"
+            data-testid="btn-durable-open-kitchen"
+            onClick={() => {
+              onClose();
+              onOpenKitchen();
+            }}
+            style={{
+              padding: '8px 14px',
+              background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+              border: '1px solid #10b981',
+              borderRadius: '6px',
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(5, 150, 105, 0.4)',
+              width: '100%',
+              marginTop: '4px'
+            }}
+          >
+            <span>🍳</span>
+            <span>{t('homeRelax.btnKitchen', { defaultValue: 'Open Kitchen & Meal Prep' })}</span>
+          </button>
+        )}
 
         {/* Close Button */}
         <button

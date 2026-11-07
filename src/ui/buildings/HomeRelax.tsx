@@ -844,6 +844,10 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           rules={rules}
           economicIndex={economicIndex}
           onAction={handleHomeAction}
+          onOpenKitchen={() => {
+            setInspectedDurable(null);
+            setShowPantryPopup(true);
+          }}
           onClose={() => setInspectedDurable(null)}
         />
       )}
