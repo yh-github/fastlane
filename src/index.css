@@ -2314,10 +2314,16 @@ button:disabled {
 
 .anim-mistake {
   color: #ff3333;
-  font-size: 1.5rem !important;
-  border: 2px solid #ff3333;
-  box-shadow: 0 0 15px rgba(255, 51, 51, 0.6);
-  animation: mistakePulse 0.6s infinite alternate;
+  font-size: 1.6rem !important;
+  font-weight: 900;
+  letter-spacing: 1px;
+  background: rgba(30, 0, 0, 0.85) !important;
+  border: 2px solid #ef4444 !important;
+  border-radius: 8px !important;
+  padding: 6px 14px !important;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), inset 0 0 10px rgba(239, 68, 68, 0.4);
+  animation: mistakePulse 0.5s infinite alternate;
+  z-index: 10000;
 }
 
 .anim-breakthrough {
@@ -2335,17 +2341,80 @@ button:disabled {
 
 @keyframes screenShake {
   0% { transform: translate(0, 0) rotate(0deg); }
-  15% { transform: translate(-8px, 6px) rotate(-1.5deg); }
-  30% { transform: translate(8px, -6px) rotate(1.5deg); }
-  45% { transform: translate(-6px, -4px) rotate(-1deg); }
-  60% { transform: translate(6px, 4px) rotate(1deg); }
-  75% { transform: translate(-3px, 2px) rotate(-0.5deg); }
-  90% { transform: translate(3px, -2px) rotate(0.5deg); }
+  15% { transform: translate(-10px, 8px) rotate(-1.5deg); }
+  30% { transform: translate(10px, -8px) rotate(1.5deg); }
+  45% { transform: translate(-8px, -5px) rotate(-1deg); }
+  60% { transform: translate(8px, 5px) rotate(1deg); }
+  75% { transform: translate(-4px, 3px) rotate(-0.5deg); }
+  90% { transform: translate(4px, -3px) rotate(0.5deg); }
   100% { transform: translate(0, 0) rotate(0deg); }
 }
 
 .screen-shake {
   animation: screenShake 0.45s ease-in-out !important;
+}
+
+.screen-shake::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 99999;
+  box-shadow: inset 0 0 100px 30px rgba(239, 68, 68, 0.75);
+  animation: screenRedFlash 0.45s ease-out forwards;
+}
+
+@keyframes screenRedFlash {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes cardMistakeShake {
+  0% { transform: translate(0, 0) scale(1); }
+  15% { transform: translate(-8px, 2px) rotate(-1deg) scale(1.02); }
+  30% { transform: translate(8px, -2px) rotate(1deg) scale(1.02); }
+  45% { transform: translate(-5px, -2px) rotate(-0.5deg); }
+  60% { transform: translate(5px, 2px) rotate(0.5deg); }
+  75% { transform: translate(-3px, 1px); }
+  90% { transform: translate(3px, -1px); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.university-class-card--mistake {
+  animation: cardMistakeShake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), inset 0 0 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+.study-action-alert {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  text-align: center;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.study-action-alert--mistake {
+  background-color: rgba(239, 68, 68, 0.25);
+  border: 1.5px solid #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+.study-action-alert--error {
+  background-color: rgba(243, 156, 18, 0.2);
+  border: 1.5px solid #f39c12;
+  color: #f39c12;
 }
 
 

@@ -145,6 +145,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
         </div>
 
         <button
+          id={`work-${job.id}`}
           data-testid="work-mode-work_work"
           data-action-target={`work-${job.id}`}
           onClick={() => onAction({ type: 'work', jobId: job.id })}
@@ -501,6 +502,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
         {/* Row 4: Consolidated Mode Button */}
         <div style={{ flexShrink: 0 }}>
           <button
+            id={`work-mode-${m.id}`}
             data-testid={`work-mode-${m.id}`}
             data-action-target={isWorkWork ? `work-${job.id}` : undefined}
             onClick={() => {

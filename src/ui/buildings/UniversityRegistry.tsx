@@ -38,6 +38,7 @@ export function UniversityRegistry({
   const setTab = onTabChange ?? setInternalTab;
   const [showEnrollConfirm, setShowEnrollConfirm] = useState(false);
   const [actionAlert, setActionAlert] = useState<{ degreeId: string; type: 'mistake' | 'error'; message: string } | null>(null);
+  const [mistakeDegreeId, setMistakeDegreeId] = useState<string | null>(null);
 
   const degreesList: EducationDef[] = availableDegrees || campaign?.education || (campaign as any)?.degrees || [];
   const rootDegrees = degreesList.filter((d: EducationDef) => d.prerequisites.length === 0);
@@ -145,7 +146,7 @@ export function UniversityRegistry({
               return (
                 <div 
                   key={deg.id} 
-                  className="interaction-item university-class-card" 
+                  className={`interaction-item university-class-card ${mistakeDegreeId === deg.id ? 'university-class-card--mistake' : ''}`} 
                   data-testid={isClickableUnenrolled ? `unenrolled-class-${deg.id}` : undefined}
                   onClick={handleCardClick}
                   style={{ 
@@ -208,6 +209,7 @@ export function UniversityRegistry({
                         return (
                           <>
                             <button 
+                              id={`study-${deg.id}`}
                               data-testid={`study-${deg.id}`}
                               data-action-target={`study-${deg.id}`}
                               style={{ width: '100%', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1, cursor: 'pointer' }} 
@@ -215,6 +217,10 @@ export function UniversityRegistry({
                                 const res = await onAction({ type: 'study', degreeId: deg.id });
                                 const log = Array.isArray(res) ? res[0] : res;
                                 if (log?.key === 'action.education.mistake') {
+                                  setMistakeDegreeId(deg.id);
+                                  setTimeout(() => {
+                                    setMistakeDegreeId(prev => (prev === deg.id ? null : prev));
+                                  }, 800);
                                   setActionAlert({
                                     degreeId: deg.id,
                                     type: 'mistake',
@@ -294,18 +300,10 @@ export function UniversityRegistry({
                             {actionAlert?.degreeId === deg.id && (
                               <div 
                                 data-testid={`study-alert-${deg.id}`}
-                                style={{
-                                  marginTop: '6px',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '0.8rem',
-                                  fontWeight: 'bold',
-                                  backgroundColor: actionAlert.type === 'mistake' ? 'rgba(231, 76, 60, 0.2)' : 'rgba(243, 156, 18, 0.2)',
-                                  border: `1px solid ${actionAlert.type === 'mistake' ? '#e74c3c' : '#f39c12'}`,
-                                  color: actionAlert.type === 'mistake' ? '#ff6b6b' : '#f39c12',
-                                }}
+                                className={`study-action-alert study-action-alert--${actionAlert.type}`}
                               >
-                                ⚠️ {actionAlert.message}
+                                <span style={{ fontSize: '1rem' }}>{actionAlert.type === 'mistake' ? '💥' : '⚠️'}</span>
+                                <span>{actionAlert.message}</span>
                               </div>
                             )}
                           </>

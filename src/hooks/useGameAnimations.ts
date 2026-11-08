@@ -56,8 +56,8 @@ export function useGameAnimations() {
     }
 
     // Fallback: If target was requested but is folded/hidden,
-    // float directly upwards above the source location as an in-situ popup
-    if (opts.targetId && !isTargetVisible) {
+    // or if only source was provided (in-situ float popup)
+    if ((opts.targetId && !isTargetVisible) || (opts.sourceId && !opts.targetId)) {
       endX = startX;
       endY = startY - 70;
     }

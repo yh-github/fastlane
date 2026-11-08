@@ -1118,6 +1118,7 @@ export function BuildingModal({
             }}
           >
             <button
+              id={`work-${playerJobHere.id}`}
               data-action-target={`work-${playerJobHere.id}`}
               data-testid="btn-work"
               onClick={() => handleActionIntercept({ type: 'work', jobId: playerJobHere.id })}
