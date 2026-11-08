@@ -1321,6 +1321,8 @@ export function BuildingModal({
         <PantryDetailsModal
           player={player}
           campaign={campaign || undefined}
+          rules={rules}
+          onAction={handleActionIntercept}
           onClose={() => setIsPantryModalOpen(false)}
         />
       )}

@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
@@ -8,7 +9,7 @@ interface PantryDetailsModalProps {
   player: PlayerState;
   campaign?: CampaignBundle;
   rules?: GameRules;
-  onAction?: (action: GameAction) => void;
+  onAction?: (action: GameAction) => void | Promise<any>;
   onClose: () => void;
 }
 
@@ -20,6 +21,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
   onClose
 }) => {
   const { t } = useTranslation();
+  const [actionFeedback, setActionFeedback] = useState<{ message: string; isError?: boolean } | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -73,20 +75,43 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
 
   const canEatFastFood = fastFoodItems.length >= 1;
 
-  return (
+  const handlePrep = async (mealType: 'home_cooked' | 'canned' | 'fast_food') => {
+    setActionFeedback(null);
+    if (!onAction) return;
+    try {
+      const res = await onAction({ type: 'prep_meal', mealType });
+      if (res) {
+        const log = Array.isArray(res) ? res[0] : res;
+        if (log?.key?.includes('error')) {
+          setActionFeedback({ message: String(t(log.key, log.params || { defaultValue: log.key })), isError: true });
+          return;
+        }
+      }
+      if (mealType === 'home_cooked') {
+        setActionFeedback({ message: '🍳 Cooked and ate home meal! Net +1.5 💪, +2.0 🧠', isError: false });
+      } else if (mealType === 'canned') {
+        setActionFeedback({ message: '🥫 Heated canned rations. Staved off hunger, but spirits dropped (-1.5 🧠).', isError: false });
+      } else {
+        setActionFeedback({ message: '🍔 Ate fast food takeout! (+1.0 🧠, +1.0 👥)', isError: false });
+      }
+    } catch (err: any) {
+      setActionFeedback({ message: err?.message || 'Action failed', isError: true });
+    }
+  };
+
+  const modalContent = (
     <div
       data-testid="pantry-details-modal"
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(3px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
-        zIndex: 100,
-        borderRadius: '12px'
+        zIndex: 1150
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -107,7 +132,9 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          position: 'relative'
+          position: 'relative',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }}
       >
         <button
@@ -141,7 +168,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             border: '1px solid rgba(255, 255, 255, 0.1)',
             borderRadius: '8px',
             padding: '12px 16px',
-            marginBottom: '18px',
+            marginBottom: '16px',
             maxWidth: '340px',
             width: '100%',
             fontSize: '0.85rem',
@@ -185,7 +212,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
 
           {fastFoodItems.length > 0 && (
             <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '6px' }}>
-              <div style={{ color: '#94a3b8', marginBottom: '4px', fontSize: '0.8rem' }}>Fast Food:</div>
+              <div style={{ color: '#94a3b8', marginBottom: '4px', fontSize: '0.8rem' }}>Fast Food Takeout:</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {fastFoodItems.map((ff, idx) => {
                   const itemDef = campaign?.items?.find(i => i.id === ff.itemId);
@@ -261,6 +288,23 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
               </span>
             </div>
 
+            {actionFeedback && (
+              <div
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  background: actionFeedback.isError ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.25)',
+                  border: `1px solid ${actionFeedback.isError ? '#ef4444' : '#10b981'}`,
+                  color: actionFeedback.isError ? '#fca5a5' : '#6ee7b7',
+                  fontSize: '0.78rem',
+                  fontWeight: 'bold',
+                  textAlign: 'center'
+                }}
+              >
+                {actionFeedback.message}
+              </div>
+            )}
+
             {hasEaten ? (
               <div style={{ color: '#a7f3d0', fontSize: '0.75rem', lineHeight: 1.35 }}>
                 Your weekly nutrition is secured ({player.nutritionTier || 'prepared'})! Relaxing will provide full physical & mental recovery.
@@ -277,7 +321,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                 type="button"
                 data-testid="btn-cook-home-meal"
                 disabled={!canCookHome}
-                onClick={() => onAction?.({ type: 'prep_meal', mealType: 'home_cooked' })}
+                onClick={() => handlePrep('home_cooked')}
                 style={{
                   padding: '8px 10px',
                   borderRadius: '6px',
@@ -309,7 +353,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                 type="button"
                 data-testid="btn-cook-canned"
                 disabled={!canPrepCanned}
-                onClick={() => onAction?.({ type: 'prep_meal', mealType: 'canned' })}
+                onClick={() => handlePrep('canned')}
                 style={{
                   padding: '8px 10px',
                   borderRadius: '6px',
@@ -341,7 +385,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                 type="button"
                 data-testid="btn-eat-fast-food"
                 disabled={!canEatFastFood}
-                onClick={() => onAction?.({ type: 'prep_meal', mealType: 'fast_food' })}
+                onClick={() => handlePrep('fast_food')}
                 style={{
                   padding: '8px 10px',
                   borderRadius: '6px',
@@ -368,6 +412,33 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                 )}
               </button>
             </div>
+
+            {hasEaten && (
+              <button
+                type="button"
+                data-testid="btn-pantry-done"
+                onClick={onClose}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  border: '1px solid #10b981',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  marginTop: '6px',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>✓</span>
+                <span>{t('homeRelax.btnReadyToRelax', { defaultValue: 'Ready to Relax (Back to Apartment)' })}</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -391,4 +462,6 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
