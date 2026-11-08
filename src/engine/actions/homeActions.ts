@@ -395,7 +395,7 @@ export function handleChangeClothesAction(
 
 export function handlePrepMealAction(
   player: PlayerState,
-  action: { type: 'prep_meal'; mealType: 'home_cooked' | 'canned' | 'fast_food' },
+  action: { type: 'prep_meal'; mealType: 'home_cooked' | 'microwave' | 'cold_meal' | 'canned' | 'fast_food' },
   context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
@@ -474,6 +474,77 @@ export function handlePrepMealAction(
     actionLog = {
       key: 'action.cook.home_cooked',
       params: { time: timeNeeded, physGain: 1.5, mentalGain: 2.0, mess: messAdded }
+    };
+    return { nextPlayer, actionLog };
+  }
+
+  if (action.mealType === 'microwave') {
+    if ((nextPlayer.inventory.freshFoodUnits || 0) < 1) {
+      return { nextPlayer, actionLog: { key: 'action.error.noFreshFood' } };
+    }
+    if (!hasMicrowave) {
+      return { nextPlayer, actionLog: { key: 'action.error.needMicrowave' } };
+    }
+
+    const timeNeeded = 1.0;
+    if (nextPlayer.hoursRemaining < timeNeeded) {
+      return { nextPlayer, actionLog: { key: 'action.error.notEnoughTimeCook' } };
+    }
+
+    nextPlayer = spendHours(nextPlayer, timeNeeded);
+    nextPlayer.inventory.freshFoodUnits--;
+
+    const messAdded = 1;
+    if (context.rules.trackMess) {
+      const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
+      nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + messAdded);
+    }
+
+    const physGain = 0.5;
+    const mentalGain = 1.0;
+    nextPlayer.physicalCondition = Math.min(maxPhysical, (nextPlayer.physicalCondition ?? maxPhysical) + physGain);
+    nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
+
+    nextPlayer.turnFlags.hasEaten = true;
+    nextPlayer.turnFlags.mealPreparedThisTurn = 'microwave';
+    nextPlayer.nutritionTier = 'microwave';
+    nextPlayer.consecutiveCannedWeeks = 0;
+
+    actionLog = {
+      key: 'action.cook.microwave',
+      params: { time: timeNeeded, physGain: 0.5, mentalGain: 1.0, mess: messAdded }
+    };
+    return { nextPlayer, actionLog };
+  }
+
+  if (action.mealType === 'cold_meal') {
+    if ((nextPlayer.inventory.freshFoodUnits || 0) < 1) {
+      return { nextPlayer, actionLog: { key: 'action.error.noFreshFood' } };
+    }
+
+    let timeNeeded = 0.5;
+    if (hasFreezer && !hasFridge && !hasMicrowave) {
+      timeNeeded += 1.0; // frozen without microwave requires thaw delay
+    }
+
+    if (nextPlayer.hoursRemaining < timeNeeded) {
+      return { nextPlayer, actionLog: { key: 'action.error.notEnoughTimePrep' } };
+    }
+
+    nextPlayer = spendHours(nextPlayer, timeNeeded);
+    nextPlayer.inventory.freshFoodUnits--;
+
+    const mentalGain = 0.5;
+    nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
+
+    nextPlayer.turnFlags.hasEaten = true;
+    nextPlayer.turnFlags.mealPreparedThisTurn = 'cold_meal';
+    nextPlayer.nutritionTier = 'cold_meal';
+    nextPlayer.consecutiveCannedWeeks = 0;
+
+    actionLog = {
+      key: 'action.cook.cold_meal',
+      params: { time: timeNeeded, mentalGain: 0.5 }
     };
     return { nextPlayer, actionLog };
   }

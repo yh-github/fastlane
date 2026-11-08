@@ -37,6 +37,7 @@ export function UniversityRegistry({
   const tab = activeTab ?? internalTab;
   const setTab = onTabChange ?? setInternalTab;
   const [showEnrollConfirm, setShowEnrollConfirm] = useState(false);
+  const [actionAlert, setActionAlert] = useState<{ degreeId: string; type: 'mistake' | 'error'; message: string } | null>(null);
 
   const degreesList: EducationDef[] = availableDegrees || campaign?.education || (campaign as any)?.degrees || [];
   const rootDegrees = degreesList.filter((d: EducationDef) => d.prerequisites.length === 0);
@@ -205,72 +206,109 @@ export function UniversityRegistry({
                         const studyRatio = hoursToStudy / standardCost;
 
                         return (
-                          <button 
-                            data-testid={`study-${deg.id}`}
-                            data-action-target={`study-${deg.id}`}
-                            style={{ width: '100%', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1, cursor: 'pointer' }} 
-                            onClick={() => onAction({ type: 'study', degreeId: deg.id })} 
-                          >
-                            🎓 {rules?.helpfulUI ? t('university.studyBtn', { cost: formatHours(hoursToStudy), defaultValue: `Study (⏳ ${formatHours(hoursToStudy)}h)` }) : t('university.studyBtnBasic', { defaultValue: 'Study' })}
-                            {rules?.usePhysicalMentalConditions && rules?.helpfulUI && (() => {
-                              const sRules = isAdvancedStatRules(campaign.config.statRules) ? campaign.config.statRules : undefined;
-                              const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
-                              const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;
-                              const studyGrindThresh = sRules?.studyGrindThreshold ?? 4;
-
-                              let mCost = sRules?.studyMentalCost ?? sRules?.studyNormalMentalCost ?? 1;
-                              let pCost = sRules?.studyNormalPhysicalCost ?? 0;
-                              let studyTierLabel = '';
-
-                              let depBonus = 0;
-                              const currentJob = campaign.jobs.find(j => j.id === player.currentJobId);
-                              const hasAcademicFreedom = currentJob?.tags?.includes('academic_freedom');
-
-                              if (nextStudyAction >= studyOvertimeThresh) {
-                                mCost = sRules?.studyOvertimeMentalCost ?? 2;
-                                pCost = sRules?.studyOvertimePhysicalCost ?? 1;
-                                studyTierLabel = ' [Hyper]';
-                                if (hasAcademicFreedom) {
-                                  depBonus = 2;
+                          <>
+                            <button 
+                              data-testid={`study-${deg.id}`}
+                              data-action-target={`study-${deg.id}`}
+                              style={{ width: '100%', background: '#3498db', opacity: player.hoursRemaining <= 0 ? 0.6 : 1, cursor: 'pointer' }} 
+                              onClick={async () => {
+                                const res = await onAction({ type: 'study', degreeId: deg.id });
+                                const log = Array.isArray(res) ? res[0] : res;
+                                if (log?.key === 'action.education.mistake') {
+                                  setActionAlert({
+                                    degreeId: deg.id,
+                                    type: 'mistake',
+                                    message: String(t('action.education.mistake', { defaultValue: 'Study mistake: lesson progress lost.', ...(log.params as any) }))
+                                  });
+                                } else if (log?.key?.startsWith?.('action.error.')) {
+                                  setActionAlert({
+                                    degreeId: deg.id,
+                                    type: 'error',
+                                    message: String(t(log.key, { defaultValue: 'Cannot study right now.' }))
+                                  });
+                                } else {
+                                  setActionAlert(null);
                                 }
-                              } else if (nextStudyAction >= studyGrindThresh) {
-                                mCost = sRules?.studyGrindMentalCost ?? 2;
-                                pCost = sRules?.studyGrindPhysicalCost ?? 0;
-                                studyTierLabel = ' [Grind]';
-                                if (hasAcademicFreedom) {
+                              }} 
+                            >
+                              🎓 {rules?.helpfulUI ? t('university.studyBtn', { cost: formatHours(hoursToStudy), defaultValue: `Study (⏳ ${formatHours(hoursToStudy)}h)` }) : t('university.studyBtnBasic', { defaultValue: 'Study' })}
+                              {rules?.usePhysicalMentalConditions && rules?.helpfulUI && (() => {
+                                const sRules = isAdvancedStatRules(campaign.config.statRules) ? campaign.config.statRules : undefined;
+                                const nextStudyAction = (player.studyActionsThisTurn || 0) + 1;
+                                const studyOvertimeThresh = sRules?.studyOvertimeThreshold ?? 8;
+                                const studyGrindThresh = sRules?.studyGrindThreshold ?? 4;
+
+                                let mCost = sRules?.studyMentalCost ?? sRules?.studyNormalMentalCost ?? 1;
+                                let pCost = sRules?.studyNormalPhysicalCost ?? 0;
+                                let studyTierLabel = '';
+
+                                let depBonus = 0;
+                                const currentJob = campaign.jobs.find(j => j.id === player.currentJobId);
+                                const hasAcademicFreedom = currentJob?.tags?.includes('academic_freedom');
+
+                                if (nextStudyAction >= studyOvertimeThresh) {
+                                  mCost = sRules?.studyOvertimeMentalCost ?? 2;
+                                  pCost = sRules?.studyOvertimePhysicalCost ?? 1;
+                                  studyTierLabel = ' [Hyper]';
+                                  if (hasAcademicFreedom) {
+                                    depBonus = 2;
+                                  }
+                                } else if (nextStudyAction >= studyGrindThresh) {
+                                  mCost = sRules?.studyGrindMentalCost ?? 2;
+                                  pCost = sRules?.studyGrindPhysicalCost ?? 0;
+                                  studyTierLabel = ' [Grind]';
+                                  if (hasAcademicFreedom) {
+                                    depBonus = 1;
+                                  }
+                                } else if (hasAcademicFreedom) {
                                   depBonus = 1;
                                 }
-                              } else if (hasAcademicFreedom) {
-                                depBonus = 1;
-                              }
 
-                              const prereqDepth = getPrerequisiteChainDepth(deg.id, campaign.education);
-                              mCost += prereqDepth;
+                                const prereqDepth = getPrerequisiteChainDepth(deg.id, campaign.education);
+                                mCost += prereqDepth;
 
-                              const scaledMCost = roundToResolution(mCost * studyRatio, 0.5);
-                              const scaledPCost = roundToResolution(pCost * studyRatio, 0.5);
-                              const scaledDepBonus = roundToResolution(depBonus * studyRatio, 0.5);
+                                const scaledMCost = roundToResolution(mCost * studyRatio, 0.5);
+                                const scaledPCost = roundToResolution(pCost * studyRatio, 0.5);
+                                const scaledDepBonus = roundToResolution(depBonus * studyRatio, 0.5);
 
-                              const curPhys = player.physicalCondition ?? 50;
-                              const curMental = player.mentalCondition ?? 50;
-                              const physChance = (curPhys < 10 && scaledPCost > 0) ? (10 - curPhys) * 2.5 : 0;
-                              const mentalChance = (curMental < 10 && scaledMCost > 0) ? (10 - curMental) * 2.5 : 0;
-                              const totalMistakeChance = physChance + mentalChance;
+                                const curPhys = player.physicalCondition ?? 50;
+                                const curMental = player.mentalCondition ?? 50;
+                                const physChance = (curPhys < 10 && scaledPCost > 0) ? (10 - curPhys) * 2.5 : 0;
+                                const mentalChance = (curMental < 10 && scaledMCost > 0) ? (10 - curMental) * 2.5 : 0;
+                                const totalMistakeChance = physChance + mentalChance;
 
-                              return (
-                                <>
-                                  <span style={{ fontSize: '11px', marginLeft: '5px' }}>
-                                    (-{scaledMCost} 🧠{scaledPCost > 0 ? `, -${scaledPCost} 💪` : ''}{scaledDepBonus > 0 ? `, +${scaledDepBonus} 🤝` : ''}{studyTierLabel})
-                                  </span>
-                                  {totalMistakeChance > 0 && (
-                                    <span style={{ color: '#ffb300', fontSize: '11px', marginLeft: '6px', fontWeight: 'bold' }}>
-                                      ⚠️ {totalMistakeChance.toFixed(1)}%
+                                return (
+                                  <>
+                                    <span style={{ fontSize: '11px', marginLeft: '5px' }}>
+                                      (-{scaledMCost} 🧠{scaledPCost > 0 ? `, -${scaledPCost} 💪` : ''}{scaledDepBonus > 0 ? `, +${scaledDepBonus} 🤝` : ''}{studyTierLabel})
                                     </span>
-                                  )}
-                                </>
-                              );
-                            })()}
-                          </button>
+                                    {totalMistakeChance > 0 && (
+                                      <span style={{ color: '#ffb300', fontSize: '11px', marginLeft: '6px', fontWeight: 'bold' }}>
+                                        ⚠️ {totalMistakeChance.toFixed(1)}%
+                                      </span>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </button>
+                            {actionAlert?.degreeId === deg.id && (
+                              <div 
+                                data-testid={`study-alert-${deg.id}`}
+                                style={{
+                                  marginTop: '6px',
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 'bold',
+                                  backgroundColor: actionAlert.type === 'mistake' ? 'rgba(231, 76, 60, 0.2)' : 'rgba(243, 156, 18, 0.2)',
+                                  border: `1px solid ${actionAlert.type === 'mistake' ? '#e74c3c' : '#f39c12'}`,
+                                  color: actionAlert.type === 'mistake' ? '#ff6b6b' : '#f39c12',
+                                }}
+                              >
+                                ⚠️ {actionAlert.message}
+                              </div>
+                            )}
+                          </>
                         );
                       })() : (
                         <button 

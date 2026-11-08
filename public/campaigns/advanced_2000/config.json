@@ -11,7 +11,11 @@
     "initialPhysicalMax": 65,
     "mentalMaxBaseValue": 65,
     "startingPhysicalCondition": 50,
-    "startingMentalCondition": 50
+    "startingMentalCondition": 50,
+    "workMistakePhysicalThreshold": 18,
+    "workMistakeHeavyPhysicalThreshold": 28,
+    "workMistakeMentalThreshold": 18,
+    "workMistakeExecutiveMentalThreshold": 28
   },
 
   "gameRules": {
