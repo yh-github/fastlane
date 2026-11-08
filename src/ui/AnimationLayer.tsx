@@ -29,7 +29,7 @@ export function AnimationLayer({ animations, onAnimationComplete }: AnimationLay
 
 function AnimatedElement({ anim, onComplete }: { anim: FloatingAnimation; onComplete: () => void }) {
   const [style, setStyle] = useState({
-    transform: `translate(${anim.startX}px, ${anim.startY}px) scale(0.5)`,
+    transform: `translate(${anim.startX}px, ${anim.startY}px) translate(-50%, -50%) scale(0.5)`,
     opacity: 0,
     transition: 'none',
   });
@@ -43,14 +43,14 @@ function AnimatedElement({ anim, onComplete }: { anim: FloatingAnimation; onComp
     // 1 frame delay to allow initial position to render without transition
     const reqId = requestAnimationFrame(() => {
       setStyle({
-        transform: `translate(${anim.startX}px, ${anim.startY}px) scale(1)`,
+        transform: `translate(${anim.startX}px, ${anim.startY}px) translate(-50%, -50%) scale(1)`,
         opacity: 1,
         transition: 'none',
       });
       
       requestAnimationFrame(() => {
         setStyle({
-          transform: `translate(${anim.endX}px, ${anim.endY}px) scale(1)`,
+          transform: `translate(${anim.endX}px, ${anim.endY}px) translate(-50%, -50%) scale(1)`,
           opacity: 1,
           transition: `transform ${anim.duration || 1000}ms cubic-bezier(0.25, 1, 0.5, 1), opacity ${anim.duration || 1000}ms ease-out`,
         });

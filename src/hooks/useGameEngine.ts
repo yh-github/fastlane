@@ -640,14 +640,29 @@ export function useGameEngine(
         const diffStr = calculateStatDiffsAndAnimate(player, oldPlayer, prevState.rules, triggerAnim);
         
         for (const log of logsArray) {
-          if (log.key === 'action.job.mistake' || log.key === 'action.education.mistake' || log.key === 'action.job.firedMistakes') {
+          if (
+            log.key === 'action.job.mistake' ||
+            log.key === 'action.education.mistake' ||
+            log.key === 'action.job.firedMistakes' ||
+            log.key === 'action.rent.renegotiateMistake'
+          ) {
             if (triggerScreenShake) triggerScreenShake(500);
             if (prevState.rules.enableAnimations) {
-              triggerAnim('text', '💥 MISTAKE!', { customClass: 'anim-mistake' });
+              let sourceId: string | undefined = undefined;
+              if (payload.type === 'study' && payload.degreeId) {
+                sourceId = `study-${payload.degreeId}`;
+              } else if (payload.type === 'work') {
+                sourceId = payload.mode ? `work-mode-${payload.mode}` : (payload.jobId ? `work-${payload.jobId}` : 'btn-work');
+              }
+              triggerAnim('text', '💥 MISTAKE!', { customClass: 'anim-mistake', sourceId });
             }
           } else if (log.key?.startsWith('action.job.innovateCap')) {
             if (prevState.rules.enableAnimations) {
-              triggerAnim('text', '💡 INNOVATION!', { customClass: 'anim-breakthrough' });
+              let sourceId: string | undefined = undefined;
+              if (payload.type === 'work') {
+                sourceId = payload.mode ? `work-mode-${payload.mode}` : (payload.jobId ? `work-${payload.jobId}` : 'btn-work');
+              }
+              triggerAnim('text', '💡 INNOVATION!', { customClass: 'anim-breakthrough', sourceId });
             }
           }
         }

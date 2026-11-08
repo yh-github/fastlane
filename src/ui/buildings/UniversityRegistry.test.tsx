@@ -231,10 +231,17 @@ describe("UniversityRegistry", () => {
     );
 
     const studyBtn = screen.getByTestId('study-trade_school');
+    expect(studyBtn).toHaveAttribute('id', 'study-trade_school');
     fireEvent.click(studyBtn);
 
     const alert = await screen.findByTestId('study-alert-trade_school');
     expect(alert).toBeInTheDocument();
+    expect(alert).toHaveClass('study-action-alert--mistake');
+    expect(alert.textContent).toContain('💥');
     expect(alert.textContent).toContain('Study mistake: lesson progress lost.');
+
+    // Card receives active mistake animation class
+    const card = studyBtn.closest('.university-class-card');
+    expect(card).toHaveClass('university-class-card--mistake');
   });
 });

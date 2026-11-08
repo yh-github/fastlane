@@ -151,6 +151,10 @@ export const AuthenticUniversity: React.FC<AuthenticUniversityProps> = ({
       triggerSpeech(UNIVERSITY_DIALOGUE.noTime, 2800);
       return;
     }
+    if (log?.key === 'action.education.mistake') {
+      triggerSpeech(`Exhaustion overtakes you! You couldn't concentrate on ${degree.name} and made no progress.`, 3500);
+      return;
+    }
     triggerSpeech(`Attending class in ${degree.name}... Keep up the hard work!`, 3000);
   };
 

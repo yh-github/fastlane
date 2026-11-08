@@ -25,4 +25,37 @@ describe('useGameAnimations hook', () => {
 
     expect(result.current.floatingAnims).toHaveLength(0);
   });
+
+  it('anchors in-situ floating animation to source element and floats upward', () => {
+    const dummyBtn = document.createElement('button');
+    dummyBtn.id = 'study-trade_school';
+    dummyBtn.getBoundingClientRect = () => ({
+      left: 100,
+      top: 200,
+      width: 80,
+      height: 40,
+      right: 180,
+      bottom: 240,
+      x: 100,
+      y: 200,
+      toJSON: () => {}
+    });
+    document.body.appendChild(dummyBtn);
+
+    const { result } = renderHook(() => useGameAnimations());
+
+    act(() => {
+      result.current.triggerAnim('text', '💥 MISTAKE!', { sourceId: 'study-trade_school' });
+    });
+
+    expect(result.current.floatingAnims).toHaveLength(1);
+    const anim = result.current.floatingAnims[0];
+    // Center of dummyBtn: left(100) + width/2(40) = 140, top(200) + height/2(20) = 220
+    expect(anim.startX).toBe(140);
+    expect(anim.startY).toBe(220);
+    expect(anim.endX).toBe(140);
+    expect(anim.endY).toBe(150); // 220 - 70
+
+    document.body.removeChild(dummyBtn);
+  });
 });
