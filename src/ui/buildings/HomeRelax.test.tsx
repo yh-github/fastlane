@@ -536,5 +536,115 @@ describe("HomeRelax", () => {
 
       expect(await screen.findByText(/Ate fast food takeout/i)).toBeInTheDocument();
     });
+
+    it('allows preparing cold groceries meal without any appliances', async () => {
+      const mockPlayer = {
+        id: 'p1',
+        hoursRemaining: 30,
+        turnFlags: { hasEaten: false },
+        inventory: {
+          freshFoodUnits: 1,
+          cannedFoodUnits: 0,
+          fastFoodItems: [],
+          appliances: [],
+          books: []
+        },
+        currentHousingId: 'low_cost'
+      } as any;
+
+      const mockCampaign = {
+        housing: [{ id: 'low_cost', name: 'Low Cost' }],
+        items: [],
+        config: { timeRules: { relaxCost: 6 }, statRules: {} }
+      } as any;
+
+      const mockOnAction = vi.fn().mockResolvedValue({
+        key: 'action.cook.cold_meal',
+        params: { time: 0.5, mentalGain: 0.5 }
+      });
+
+      render(
+        <HomeRelax
+          player={mockPlayer}
+          onAction={mockOnAction}
+          campaign={mockCampaign}
+          rules={{
+            advancedHomeGUI: true,
+            usePhysicalMentalConditions: true,
+            enableCookingSystem: true
+          } as any}
+          economicIndex={0}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('btn-docked-kitchen'));
+      expect(await screen.findByTestId('pantry-details-modal')).toBeInTheDocument();
+
+      const coldMealBtn = screen.getByTestId('btn-cook-cold-meal');
+      expect(coldMealBtn).not.toBeDisabled();
+      fireEvent.click(coldMealBtn);
+
+      expect(mockOnAction).toHaveBeenCalledWith({
+        type: 'prep_meal',
+        mealType: 'cold_meal'
+      });
+
+      expect(await screen.findByText(/Prepared cold groceries/i)).toBeInTheDocument();
+    });
+
+    it('allows heating fresh groceries with only a microwave', async () => {
+      const mockPlayer = {
+        id: 'p1',
+        hoursRemaining: 30,
+        turnFlags: { hasEaten: false },
+        inventory: {
+          freshFoodUnits: 1,
+          cannedFoodUnits: 0,
+          fastFoodItems: [],
+          appliances: [{ id: 'microwave', purchasePrice: 220, condition: 'new' }], // Microwave only, no stove!
+          books: []
+        },
+        currentHousingId: 'low_cost'
+      } as any;
+
+      const mockCampaign = {
+        housing: [{ id: 'low_cost', name: 'Low Cost' }],
+        items: [{ id: 'microwave', name: 'Microwave', category: 'appliance', tags: ['microwave'] }],
+        config: { timeRules: { relaxCost: 6 }, statRules: {} }
+      } as any;
+
+      const mockOnAction = vi.fn().mockResolvedValue({
+        key: 'action.cook.microwave',
+        params: { time: 1.0, physGain: 0.5, mentalGain: 1.0 }
+      });
+
+      render(
+        <HomeRelax
+          player={mockPlayer}
+          onAction={mockOnAction}
+          campaign={mockCampaign}
+          rules={{
+            advancedHomeGUI: true,
+            usePhysicalMentalConditions: true,
+            enableCookingSystem: true
+          } as any}
+          economicIndex={0}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('btn-docked-kitchen'));
+      expect(await screen.findByTestId('pantry-details-modal')).toBeInTheDocument();
+
+      const microwaveBtn = screen.getByTestId('btn-cook-microwave');
+      expect(microwaveBtn).not.toBeDisabled();
+      fireEvent.click(microwaveBtn);
+
+      expect(mockOnAction).toHaveBeenCalledWith({
+        type: 'prep_meal',
+        mealType: 'microwave'
+      });
+
+      expect(await screen.findByText(/Heated fresh meal in microwave/i)).toBeInTheDocument();
+    });
   });
 });

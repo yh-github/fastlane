@@ -239,6 +239,7 @@
     },
     "error": {
       "needStove": "You need a working stove to cook a home meal!",
+      "needMicrowave": "You need a working microwave to heat a microwave meal!",
       "noFreshFood": "You have no fresh groceries to cook!",
       "noCannedFood": "You have no canned food!",
       "noFastFood": "You have no fast food meals in your pantry!",
