@@ -255,6 +255,97 @@ describe('Advanced 2000 - Cooking Module', () => {
     });
   });
 
+  describe('Weekly Meal Prep: Microwave & Cold Groceries (No Stove Required)', () => {
+    it('heats fresh groceries in microwave: 1.0h, 0 Physical labor, +1 mess, yields +0.5 Physical, +1.0 Mental', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 2;
+      player.inventory.appliances = [
+        { id: 'microwave', purchasePrice: 220, condition: 'new' } // No stove!
+      ];
+      player.physicalCondition = 30;
+      player.physicalConditionMax = 65;
+      player.mentalCondition = 30;
+      player.mentalConditionMax = 65;
+      player.mess = 0;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'microwave' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.turnFlags.hasEaten).toBe(true);
+      expect(p.turnFlags.mealPreparedThisTurn).toBe('microwave');
+      expect(p.nutritionTier).toBe('microwave');
+      expect(p.hoursRemaining).toBe(49.0); // 1.0h deducted
+      expect(p.inventory.freshFoodUnits).toBe(1); // 1 consumed
+      expect(p.physicalCondition).toBe(30.5); // +0.5 Physical
+      expect(p.mentalCondition).toBe(31.0); // +1.0 Mental
+      expect(p.mess).toBe(1); // +1 mess
+    });
+
+    it('requires a microwave appliance to use microwave meal prep', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 2;
+      player.inventory.appliances = []; // No microwave!
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'microwave' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.turnFlags.hasEaten).toBe(false);
+      expect(p.inventory.freshFoodUnits).toBe(2);
+    });
+
+    it('eats cold groceries (sandwich/salad) with zero appliances: 0.5h, 0 Physical, 0 mess, yields +0.5 Mental and feeds player', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 1;
+      player.inventory.appliances = []; // Zero appliances!
+      player.physicalCondition = 20;
+      player.mentalCondition = 30;
+      player.mess = 0;
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'cold_meal' }, context);
+      const p = result.updatedPlayer;
+
+      expect(p.turnFlags.hasEaten).toBe(true);
+      expect(p.turnFlags.mealPreparedThisTurn).toBe('cold_meal');
+      expect(p.nutritionTier).toBe('cold_meal');
+      expect(p.hoursRemaining).toBe(49.5); // 0.5h deducted
+      expect(p.inventory.freshFoodUnits).toBe(0); // 1 consumed
+      expect(p.physicalCondition).toBe(20); // 0 Physical cost / gain
+      expect(p.mentalCondition).toBe(30.5); // +0.5 Mental
+      expect(p.mess).toBe(0); // 0 mess
+    });
+
+    it('unlocks fed relaxing after preparing a cold meal or microwave meal', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 1;
+      player.inventory.appliances = [];
+      player.physicalCondition = 40;
+      player.physicalConditionMax = 65;
+      player.mentalCondition = 40;
+      player.mentalConditionMax = 65;
+
+      const { context } = createTestContext(player, campaign2000);
+      // 1. Prepare cold meal
+      const cookResult = gameReducer(player, { type: 'prep_meal', mealType: 'cold_meal' }, context);
+      expect(cookResult.updatedPlayer.turnFlags.hasEaten).toBe(true);
+
+      // 2. Relax
+      const relaxResult = gameReducer(cookResult.updatedPlayer, { type: 'relax' }, context);
+      const p = relaxResult.updatedPlayer;
+
+      // Unlocks fed relaxing: no starvation penalties, condition max intact
+      expect(p.physicalConditionMax).toBe(65);
+      expect(p.mentalConditionMax).toBe(65);
+      expect(p.physicalCondition).toBeGreaterThan(40);
+    });
+  });
+
   describe('Weekly Meal Prep: Canned Food (Low Effort Survival Fallback)', () => {
     it('heats canned rations: costs 1.0h without microwave, 0.0 Physical, produces +1 mess, lowers Mental by 1.5', () => {
       let player = makePlayer(campaign2000);
