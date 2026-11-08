@@ -75,7 +75,26 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
 
   const canEatFastFood = fastFoodItems.length >= 1;
 
-  const handlePrep = async (mealType: 'home_cooked' | 'canned' | 'fast_food') => {
+  // Microwave fresh food calculation
+  const canMicrowave = freshUnits >= 1 && hasMicrowave && player.hoursRemaining >= 1.0;
+  const microwaveDisabledReason = !hasMicrowave
+    ? 'Requires Microwave'
+    : freshUnits < 1
+    ? 'No Fresh Food'
+    : player.hoursRemaining < 1.0
+    ? 'Need 1.0h'
+    : '';
+
+  // Cold / simple groceries prep (no appliances needed)
+  const coldTime = (hasFreezer && !hasFridge && !hasMicrowave) ? 1.5 : 0.5;
+  const canColdMeal = freshUnits >= 1 && player.hoursRemaining >= coldTime;
+  const coldDisabledReason = freshUnits < 1
+    ? 'No Fresh Food'
+    : player.hoursRemaining < coldTime
+    ? `Need ${coldTime}h`
+    : '';
+
+  const handlePrep = async (mealType: 'home_cooked' | 'microwave' | 'cold_meal' | 'canned' | 'fast_food') => {
     setActionFeedback(null);
     if (!onAction) return;
     try {
@@ -89,6 +108,10 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
       }
       if (mealType === 'home_cooked') {
         setActionFeedback({ message: '🍳 Cooked and ate home meal! Net +1.5 💪, +2.0 🧠', isError: false });
+      } else if (mealType === 'microwave') {
+        setActionFeedback({ message: '⚡ Heated fresh meal in microwave! +0.5 💪, +1.0 🧠', isError: false });
+      } else if (mealType === 'cold_meal') {
+        setActionFeedback({ message: '🥗 Prepared cold groceries (sandwich/salad)! +0.5 🧠 (Fed)', isError: false });
       } else if (mealType === 'canned') {
         setActionFeedback({ message: '🥫 Heated canned rations. Staved off hunger, but spirits dropped (-1.5 🧠).', isError: false });
       } else {
@@ -316,7 +339,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-              {/* Option 1: Home Cooked */}
+              {/* Option 1: Home Cooked (Stove) */}
               <button
                 type="button"
                 data-testid="btn-cook-home-meal"
@@ -342,13 +365,77 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                   </div>
                 </div>
                 {!canCookHome && (
-                  <span style={{ fontSize: '0.65rem', color: '#f87171', maxWidth: '80px', textAlign: 'right' }}>
+                  <span style={{ fontSize: '0.65rem', color: '#f87171', maxWidth: '85px', textAlign: 'right' }}>
                     {cookDisabledReason}
                   </span>
                 )}
               </button>
 
-              {/* Option 2: Canned Stew */}
+              {/* Option 2: Microwave Meal */}
+              <button
+                type="button"
+                data-testid="btn-cook-microwave"
+                disabled={!canMicrowave}
+                onClick={() => handlePrep('microwave')}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  background: canMicrowave ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'rgba(255,255,255,0.06)',
+                  border: canMicrowave ? '1px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                  color: canMicrowave ? '#fff' : '#64748b',
+                  cursor: canMicrowave ? 'pointer' : 'not-allowed',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '0.82rem' }}>⚡ Microwave Meal</div>
+                  <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>
+                    ⏳ 1.0h • 0 💪 • +1 🧹 → +0.5 💪, +1.0 🧠
+                  </div>
+                </div>
+                {!canMicrowave && (
+                  <span style={{ fontSize: '0.65rem', color: '#f87171', maxWidth: '85px', textAlign: 'right' }}>
+                    {microwaveDisabledReason}
+                  </span>
+                )}
+              </button>
+
+              {/* Option 3: Cold / Raw Groceries Prep */}
+              <button
+                type="button"
+                data-testid="btn-cook-cold-meal"
+                disabled={!canColdMeal}
+                onClick={() => handlePrep('cold_meal')}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  background: canColdMeal ? 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)' : 'rgba(255,255,255,0.06)',
+                  border: canColdMeal ? '1px solid #2dd4bf' : '1px solid rgba(255,255,255,0.1)',
+                  color: canColdMeal ? '#fff' : '#64748b',
+                  cursor: canColdMeal ? 'pointer' : 'not-allowed',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '0.82rem' }}>🥗 Cold Meal (Sandwich & Salad)</div>
+                  <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>
+                    ⏳ {coldTime}h • 0 💪 • 0 🧹 → +0.5 🧠 (No appliances needed)
+                  </div>
+                </div>
+                {!canColdMeal && (
+                  <span style={{ fontSize: '0.65rem', color: '#f87171', maxWidth: '85px', textAlign: 'right' }}>
+                    {coldDisabledReason}
+                  </span>
+                )}
+              </button>
+
+              {/* Option 4: Canned Stew */}
               <button
                 type="button"
                 data-testid="btn-cook-canned"
@@ -380,7 +467,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                 )}
               </button>
 
-              {/* Option 3: Fast Food */}
+              {/* Option 5: Fast Food Takeout */}
               <button
                 type="button"
                 data-testid="btn-eat-fast-food"
@@ -400,7 +487,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '0.82rem' }}>🍔 Eat Fast Food</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '0.82rem' }}>🍔 Eat Fast Food Takeout</div>
                   <div style={{ fontSize: '0.68rem', opacity: 0.85 }}>
                     ⏳ 0h • 0 💪 • +1.0 🧠 • +1.0 👥
                   </div>

@@ -644,5 +644,45 @@ describe('Translation Interpolation & Template Verification', () => {
       expect(noOpeningsText).not.toContain('{');
       expect(noOpeningsText).not.toContain('}');
     });
+
+    it('verifies computeClerkResponse reports study mistakes instead of praise in en and he', () => {
+      const mockUniversityDef = {
+        id: 'university',
+        name: 'Hi-Tech U',
+        archetype: 'university'
+      } as any;
+
+      const mistakeLog = {
+        key: 'action.education.mistake',
+        params: { name: 'Computer Science', type: 'Mental', stats: ' (-1 Mental)' }
+      };
+
+      // Test English
+      i18n.changeLanguage('en');
+      const textEn = computeClerkResponse(
+        { type: 'study', degreeId: 'cs' },
+        mistakeLog,
+        mockUniversityDef,
+        i18n.t,
+        (_k, d) => d
+      );
+      expect(textEn).toContain('Made a mistake studying Computer Science (Mental)!');
+      expect(textEn).not.toContain('Good job studying');
+      expect(textEn).not.toContain('{');
+      expect(textEn).not.toContain('}');
+
+      // Test Hebrew
+      i18n.changeLanguage('he');
+      const textHe = computeClerkResponse(
+        { type: 'study', degreeId: 'cs' },
+        mistakeLog,
+        mockUniversityDef,
+        i18n.t,
+        (_k, d) => d
+      );
+      expect(textHe).toContain('שגית במהלך הלימודים ב-Computer Science (Mental)!');
+      expect(textHe).not.toContain('{');
+      expect(textHe).not.toContain('}');
+    });
   });
 });

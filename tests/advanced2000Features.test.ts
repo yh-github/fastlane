@@ -273,6 +273,97 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(result.updated.mentalConditionMax).toBe(49);   // -1 Max Mental
     });
 
+    it('calibrates mistake thresholds: normal jobs trigger below 18 while heavy_physical and executive_management trigger below 28', () => {
+      const { player } = createTestState(0);
+      const cookJob = campaign2000.jobs.find(j => j.id === 'pirate_cook')!; // normal job (threshold 18)
+      const orderlyJob = campaign2000.jobs.find(j => j.id === 'hospital_custodian')!; // heavy_physical (threshold 28)
+      const brokerJob = campaign2000.jobs.find(j => j.id === 'bank_broker')!; // executive_management (threshold 28)
+
+      // Test at Condition 22:
+      // 1. Normal job: Phys 22 meets threshold 18 -> 0% risk
+      player.physicalCondition = 22;
+      player.mentalCondition = 22;
+      player.experience = 100; // prevent executive experience blunder
+      const cookSummary = calcWorkShiftSummary(player, cookJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
+      const cookWork = cookSummary.modes.find(o => o.id === 'work_work')!;
+      const cookPhysMistake = cookWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
+      expect(cookPhysMistake?.chance).toBe(0);
+
+      // 2. Heavy Physical job: Phys 22 is 6 pts below threshold 28 -> (28 - 22) * 0.025 = 15.0% risk
+      const orderlySummary = calcWorkShiftSummary(player, orderlyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
+      const orderlyWork = orderlySummary.modes.find(o => o.id === 'work_work')!;
+      const orderlyPhysMistake = orderlyWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
+      expect(orderlyPhysMistake?.chance).toBeCloseTo(0.15, 3);
+
+      // 3. Executive Management job: Mental 22 is 6 pts below threshold 28 -> (28 - 22) * 0.025 = 15.0% risk
+      const brokerSummary = calcWorkShiftSummary(player, brokerJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
+      const brokerWork = brokerSummary.modes.find(o => o.id === 'work_work')!;
+      const brokerMentalMistake = brokerWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'mental');
+      expect(brokerMentalMistake?.chance).toBeCloseTo(0.15, 3);
+
+      // 4. Caffeine Sweet Spot: Consuming Drip Coffee (+10 buffer) buffers effective condition to 32 (>= 28)
+      player.turnFlags = { ...player.turnFlags, caffeineIntake: 10 };
+      const bufferedOrderly = calcWorkShiftSummary(player, orderlyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
+      const bufferedOrderlyWork = bufferedOrderly.modes.find(o => o.id === 'work_work')!;
+      const bufPhysMistake = bufferedOrderlyWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
+      expect(bufPhysMistake?.chance).toBe(0);
+
+      // Because actual condition 22 >= 15, working this shift does NOT inflict Redline Burnout
+      player.currentJobId = orderlyJob.id;
+      player.currentWage = orderlyJob.baseWage;
+      player.hoursRemaining = 20;
+      player.physicalConditionMax = 50;
+      player.mentalConditionMax = 50;
+      const orderlyShiftRes = workShift(player, orderlyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 'work_work');
+      expect(orderlyShiftRes.success).toBe(true);
+      expect(orderlyShiftRes.updated.physicalConditionMax).toBe(50); // No redline penalty
+      expect(orderlyShiftRes.updated.mentalConditionMax).toBe(50);
+    });
+
+    it('triggers caffeine withdrawal upon detoxing (0 intake with tolerance >= 3)', () => {
+      // 1. Severe crash at high tolerance (>= 6) with 0 intake: -1 Phys, -2 Mental
+      const { player: pSevere, state: sSevere } = createTestState(6);
+      pSevere.turnFlags.caffeineIntake = 0;
+      pSevere.physicalCondition = 40;
+      pSevere.mentalCondition = 40;
+      const nextSevere = processTurnStart({ ...sSevere, players: [pSevere] }, campaign2000);
+      expect(nextSevere.players[0].caffeineTolerance).toBe(3); // floor(6/2)
+      expect(nextSevere.players[0].physicalCondition).toBe(39); // -1
+      expect(nextSevere.players[0].mentalCondition).toBe(38);  // -2
+      expect(nextSevere.players[0].turnEvents.some(e => e.key === 'events.caffeine_withdrawal_severe')).toBe(true);
+
+      // 2. Moderate withdrawal at mid tolerance (>= 3, < 6) with 0 intake: -1 Mental
+      const { player: pMod, state: sMod } = createTestState(4);
+      pMod.turnFlags.caffeineIntake = 0;
+      pMod.physicalCondition = 40;
+      pMod.mentalCondition = 40;
+      const nextMod = processTurnStart({ ...sMod, players: [pMod] }, campaign2000);
+      expect(nextMod.players[0].caffeineTolerance).toBe(2); // floor(4/2)
+      expect(nextMod.players[0].physicalCondition).toBe(40); // untouched
+      expect(nextMod.players[0].mentalCondition).toBe(39);  // -1
+      expect(nextMod.players[0].turnEvents.some(e => e.key === 'events.caffeine_withdrawal')).toBe(true);
+
+      // 3. No withdrawal when coffee was consumed (intake > 0)
+      const { player: pDrank, state: sDrank } = createTestState(6);
+      pDrank.turnFlags.caffeineIntake = 10;
+      pDrank.physicalCondition = 40;
+      pDrank.mentalCondition = 40;
+      const nextDrank = processTurnStart({ ...sDrank, players: [pDrank] }, campaign2000);
+      expect(nextDrank.players[0].caffeineTolerance).toBe(8); // floor((6+10)/2)
+      expect(nextDrank.players[0].turnEvents.some(e => e.key.includes('withdrawal'))).toBe(false);
+
+      // 4. No withdrawal when tolerance was negligible (< 3)
+      const { player: pLow, state: sLow } = createTestState(2);
+      pLow.turnFlags.caffeineIntake = 0;
+      pLow.physicalCondition = 40;
+      pLow.mentalCondition = 40;
+      const nextLow = processTurnStart({ ...sLow, players: [pLow] }, campaign2000);
+      expect(nextLow.players[0].caffeineTolerance).toBe(1); // floor(2/2)
+      expect(nextLow.players[0].physicalCondition).toBe(40);
+      expect(nextLow.players[0].mentalCondition).toBe(40);
+      expect(nextLow.players[0].turnEvents.some(e => e.key.includes('withdrawal'))).toBe(false);
+    });
+
     it('updates tolerance at turn maintenance via pharmacokinetic half-life formula: floor((tol + intake) / 2)', () => {
       // 0 intake -> detox decay: floor((6 + 0) / 2) = 3
       const { player: pDetox, state: sDetox } = createTestState(6);

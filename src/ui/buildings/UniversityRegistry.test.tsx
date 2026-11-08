@@ -199,4 +199,42 @@ describe("UniversityRegistry", () => {
     expect(mockSpeak).toHaveBeenCalledWith('You are not enrolled in this class.');
   });
 
+  it('displays study alert when study action returns mistake', async () => {
+    const mockPlayer = {
+      name: 'Tester',
+      money: 1000,
+      hoursRemaining: 10,
+      degrees: [],
+      enrolledClasses: { 'trade_school': 20 },
+      inventory: {}
+    } as any;
+
+    const mockCampaign = {
+      degrees: [
+        { id: 'trade_school', name: 'Trade School', baseTuitionFee: 100, lessonsRequired: 10, prerequisites: [] }
+      ],
+      config: { timeRules: { studySessionCost: 6 }, statRules: {} }
+    } as any;
+
+    const mockOnAction = vi.fn().mockResolvedValue({
+      key: 'action.education.mistake',
+      params: { name: 'Trade School', type: 'Mental', stats: ' (-1 Mental)' }
+    });
+
+    render(
+      <UniversityRegistry
+        player={mockPlayer}
+        onAction={mockOnAction}
+        campaign={mockCampaign}
+        rules={{ percentageEducation: true, helpfulUI: true } as any}
+      />
+    );
+
+    const studyBtn = screen.getByTestId('study-trade_school');
+    fireEvent.click(studyBtn);
+
+    const alert = await screen.findByTestId('study-alert-trade_school');
+    expect(alert).toBeInTheDocument();
+    expect(alert.textContent).toContain('Study mistake: lesson progress lost.');
+  });
 });
