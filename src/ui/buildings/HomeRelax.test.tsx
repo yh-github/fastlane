@@ -398,4 +398,143 @@ describe("HomeRelax", () => {
     expect(screen.getByText(/\+1 🧠/i)).toBeInTheDocument();
   });
 
+  describe('Advanced Home Cooking System & Modal Interaction', () => {
+    it('opens PantryDetailsModal when clicking docked kitchen button under useAdvancedHome', async () => {
+      const mockPlayer = {
+        id: 'p1',
+        hoursRemaining: 30,
+        money: 200,
+        physicalCondition: 40,
+        mentalCondition: 40,
+        turnFlags: { hasEaten: false },
+        inventory: {
+          freshFoodUnits: 2,
+          cannedFoodUnits: 1,
+          fastFoodItems: [{ itemId: 'scurvy_slaw', happinessBonus: 0 }],
+          appliances: [{ id: 'stove', purchasePrice: 490, condition: 'new' }],
+          books: []
+        },
+        currentHousingId: 'low_cost'
+      } as any;
+
+      const mockCampaign = {
+        housing: [{ id: 'low_cost', name: 'Low Cost Housing' }],
+        items: [
+          { id: 'stove', name: 'Stove & Range', category: 'appliance', tags: ['stove'] },
+          { id: 'scurvy_slaw', name: 'Scurvy Slaw', category: 'food', subcategory: 'fast_food' }
+        ],
+        config: {
+          timeRules: { relaxCost: 6 },
+          statRules: { initialPhysicalMax: 65, mentalMaxBaseValue: 65 }
+        }
+      } as any;
+
+      const mockOnAction = vi.fn().mockResolvedValue({
+        key: 'action.cook.home_cooked',
+        params: { time: 2.5, physGain: 1.5, mentalGain: 2.0, mess: 2 }
+      });
+
+      render(
+        <HomeRelax
+          player={mockPlayer}
+          onAction={mockOnAction}
+          campaign={mockCampaign}
+          rules={{
+            advancedHomeGUI: true,
+            usePhysicalMentalConditions: true,
+            enableCookingSystem: true
+          } as any}
+          economicIndex={0}
+        />
+      );
+
+      // Verify docked kitchen button is present
+      const kitchenBtn = screen.getByTestId('btn-docked-kitchen');
+      expect(kitchenBtn).toBeInTheDocument();
+      expect(kitchenBtn.textContent).toContain('Meal Prep');
+
+      // Click to open PantryDetailsModal
+      fireEvent.click(kitchenBtn);
+
+      // Verify PantryDetailsModal is now visible
+      const modal = await screen.findByTestId('pantry-details-modal');
+      expect(modal).toBeInTheDocument();
+      expect(screen.getByTestId('cooking-module-section')).toBeInTheDocument();
+
+      // Click Home Cooked meal
+      const cookHomeBtn = screen.getByTestId('btn-cook-home-meal');
+      expect(cookHomeBtn).not.toBeDisabled();
+      fireEvent.click(cookHomeBtn);
+
+      expect(mockOnAction).toHaveBeenCalledWith({
+        type: 'prep_meal',
+        mealType: 'home_cooked'
+      });
+
+      // Verify inline feedback message appears
+      expect(await screen.findByText(/Cooked and ate home meal/i)).toBeInTheDocument();
+
+      // Close modal
+      const closeBtn = screen.getByTestId('btn-close-pantry-popup');
+      fireEvent.click(closeBtn);
+      expect(screen.queryByTestId('pantry-details-modal')).not.toBeInTheDocument();
+    });
+
+    it('allows eating fast food takeout from the pantry modal', async () => {
+      const mockPlayer = {
+        id: 'p1',
+        hoursRemaining: 30,
+        turnFlags: { hasEaten: false },
+        inventory: {
+          freshFoodUnits: 0,
+          cannedFoodUnits: 0,
+          fastFoodItems: [{ itemId: 'kraken_burger', happinessBonus: 2 }],
+          appliances: [],
+          books: []
+        },
+        currentHousingId: 'low_cost'
+      } as any;
+
+      const mockCampaign = {
+        housing: [{ id: 'low_cost', name: 'Low Cost' }],
+        items: [
+          { id: 'kraken_burger', name: 'Kraken Burger', category: 'food', subcategory: 'fast_food' }
+        ],
+        config: { timeRules: { relaxCost: 6 }, statRules: {} }
+      } as any;
+
+      const mockOnAction = vi.fn().mockResolvedValue({
+        key: 'action.cook.fast_food',
+        params: { item: 'Kraken Burger' }
+      });
+
+      render(
+        <HomeRelax
+          player={mockPlayer}
+          onAction={mockOnAction}
+          campaign={mockCampaign}
+          rules={{
+            advancedHomeGUI: true,
+            usePhysicalMentalConditions: true,
+            enableCookingSystem: true
+          } as any}
+          economicIndex={0}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('btn-docked-kitchen'));
+      expect(await screen.findByTestId('pantry-details-modal')).toBeInTheDocument();
+
+      const eatFastFoodBtn = screen.getByTestId('btn-eat-fast-food');
+      expect(eatFastFoodBtn).not.toBeDisabled();
+      fireEvent.click(eatFastFoodBtn);
+
+      expect(mockOnAction).toHaveBeenCalledWith({
+        type: 'prep_meal',
+        mealType: 'fast_food'
+      });
+
+      expect(await screen.findByText(/Ate fast food takeout/i)).toBeInTheDocument();
+    });
+  });
 });

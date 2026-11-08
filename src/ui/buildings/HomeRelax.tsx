@@ -415,6 +415,15 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           onAction={handleHomeAction}
         />
         {unfedWarningPortal}
+        {showPantryPopup && (
+          <PantryDetailsModal
+            player={player}
+            campaign={campaign}
+            rules={rules}
+            onAction={handleHomeAction}
+            onClose={() => setShowPantryPopup(false)}
+          />
+        )}
       </>
     );
   }
