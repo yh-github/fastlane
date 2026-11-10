@@ -438,6 +438,56 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
         logFilter: 'mental',
       };
 
+    case 'nutrition':
+    case 'diet': {
+      const hasEaten = Boolean(player.turnFlags?.hasEaten);
+      const tier = player.nutritionTier;
+      let currentVal = hasEaten
+        ? (tier
+            ? (tier === 'home_cooked'
+                ? 'Home Cooked'
+                : tier === 'microwave'
+                ? 'Microwave'
+                : tier === 'cold_meal'
+                ? 'Cold Meal'
+                : tier === 'fast_food'
+                ? 'Fast Food'
+                : tier === 'canned'
+                ? 'Canned'
+                : tier)
+            : 'Fed')
+        : 'Unfed';
+      return {
+        id: 'nutrition',
+        name: t('dashboard.diet', { defaultValue: 'Diet & Nutrition' }),
+        category: t('hudInfo.categoryLife', { defaultValue: 'Physical & Mental Health' }),
+        icon: hasEaten ? '🥗' : '🍽️',
+        currentValue: currentVal,
+        maxValue: null,
+        currentFormatted: currentVal,
+        maxFormatted: '',
+        percentage: null,
+        statusBadge: hasEaten ? `✓ ${currentVal}` : '⚠️ Unfed',
+        statusColor: hasEaten ? '#10b981' : '#f59e0b',
+        description: t('hudAttribute.dietDesc', {
+          defaultValue:
+            'Dietary sustenance for the week. In Advanced 2000, possessing food in cupboards is not enough—you must prepare and eat meals before relaxing. Relaxing while unfed inflicts permanent exhaustion damage (-1 Max Physical & Mental capacity).'
+        }),
+        increases: [
+          'Prepare Fresh Food at Home (Stove: Net +1.5 Physical, +2.0 Mental)',
+          'Microwave Fresh Food (Microwave: +0.5 Physical, +1.0 Mental)',
+          'Cold Meal (Sandwich & Salad: +0.5 Mental)',
+          'Dine at Fast Food Restaurant (+1.0 Mental, +1.0 Social)',
+          'Heat Canned Rations (-1.5 Mental, emergency survival)',
+        ],
+        decreases: [
+          'Unfed Relaxing (-1 Max Physical & -1 Max Mental per turn unfed)',
+          'Consecutive Canned Diet (-1 Max Physical per subsequent week)',
+        ],
+        logFilter: 'physical' as GoalFilter,
+      };
+    }
+
     case 'social':
       return {
         id: 'social',

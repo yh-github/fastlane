@@ -6,6 +6,8 @@ import { recalculatePlayerEffects } from '../src/engine/gameState';
 import { processAdvancedHealthAndFood } from '../src/engine/turn/healthAndFoodPhase';
 import { processTurnStart } from '../src/engine/turnProcessor';
 import { buyItem } from '../src/engine/shoppingEngine';
+import { buildDashboardBadges } from '../src/ui/dashboardBadges';
+import { getHudAttributeInfo } from '../src/ui/hudAttributeInfo';
 import { Random } from '../src/utils/rng';
 import type { GameState, PlayerState } from '../src/engine/gameState';
 import type { ReducerContext } from '../src/engine/actions/types';
@@ -511,7 +513,7 @@ describe('Advanced 2000 - Cooking Module', () => {
       expect(result.updated.inventory.fastFoodItems.length).toBe(0);
     });
 
-    it('buying extra fast food while already fed stores it in inventory as takeout', () => {
+    it('buying extra fast food while already fed is consumed on the spot without creating takeout in pantry', () => {
       let player = makePlayer(campaign2000);
       player.money = 100;
       player.turnFlags.hasEaten = true; // Already ate!
@@ -519,7 +521,8 @@ describe('Advanced 2000 - Cooking Module', () => {
 
       const result = buyItem(player, burger, campaign2000.config.gameRules, campaign2000);
       expect(result.success).toBe(true);
-      expect(result.updated.inventory.fastFoodItems.length).toBe(1);
+      expect(result.updated.turnFlags.hasEaten).toBe(true);
+      expect(result.updated.inventory.fastFoodItems.length).toBe(0);
     });
 
     it('player who bought food at Red Pirate in Turn 1 starts Turn 2 UNFED and cannot relax fed without new food', () => {
@@ -553,6 +556,71 @@ describe('Advanced 2000 - Cooking Module', () => {
       };
       const relaxRes = gameReducer(turn2Player, { type: 'relax' }, context2);
       expect(relaxRes.actionLog?.params?.stats).toContain('-1 Max Physical, -1 Max Mental');
+    });
+  });
+
+  describe('Dashboard Status & Nutrition Indicator', () => {
+    it('shows stat-nutrition badge as Unfed with warning when player has not eaten', () => {
+      const player = makePlayer(campaign2000);
+      player.turnFlags.hasEaten = false;
+      player.inventory.freshFoodUnits = 3; // Has food in pantry, but hasn't eaten!
+
+      const badges = buildDashboardBadges({
+        player,
+        rules: campaign2000.config.gameRules,
+        campaign: campaign2000,
+        turn: 1,
+        t: (k: string, opts?: any) => opts?.defaultValue || k
+      });
+
+      const nutritionBadge = badges.lifeBadges.find(b => b.id === 'stat-nutrition');
+      expect(nutritionBadge).toBeDefined();
+      expect(nutritionBadge?.value).toBe('Unfed');
+      expect(nutritionBadge?.warning).toBe(true);
+      expect(nutritionBadge?.badge).toContain('Unfed');
+      expect(nutritionBadge?.icon).toBe('🍽️');
+    });
+
+    it('shows stat-nutrition badge as Home Cooked with checkmark when player has cooked and eaten', () => {
+      const player = makePlayer(campaign2000);
+      player.turnFlags.hasEaten = true;
+      player.nutritionTier = 'home_cooked';
+
+      const badges = buildDashboardBadges({
+        player,
+        rules: campaign2000.config.gameRules,
+        campaign: campaign2000,
+        turn: 1,
+        t: (k: string, opts?: any) => opts?.defaultValue || k
+      });
+
+      const nutritionBadge = badges.lifeBadges.find(b => b.id === 'stat-nutrition');
+      expect(nutritionBadge).toBeDefined();
+      expect(nutritionBadge?.value).toBe('Home Cooked');
+      expect(nutritionBadge?.warning).toBeFalsy();
+      expect(nutritionBadge?.badge).toContain('Home Cooked');
+      expect(nutritionBadge?.icon).toBe('🥗');
+    });
+
+    it('returns detailed attribute info when inspecting nutrition / diet', () => {
+      const player = makePlayer(campaign2000);
+      player.turnFlags.hasEaten = false;
+
+      const info = getHudAttributeInfo({
+        attributeId: 'nutrition',
+        player,
+        rules: campaign2000.config.gameRules,
+        campaign: campaign2000,
+        turn: 1,
+        t: (k: string, opts?: any) => opts?.defaultValue || k
+      });
+
+      expect(info.id).toBe('nutrition');
+      expect(info.name).toContain('Diet');
+      expect(info.currentValue).toBe('Unfed');
+      expect(info.statusBadge).toContain('Unfed');
+      expect(info.description).toContain('Advanced 2000');
+      expect(info.decreases.some(d => d.includes('Unfed Relaxing'))).toBe(true);
     });
   });
 });

@@ -480,15 +480,15 @@ describe("HomeRelax", () => {
       expect(screen.queryByTestId('pantry-details-modal')).not.toBeInTheDocument();
     });
 
-    it('allows eating fast food takeout from the pantry modal', async () => {
+    it('allows preparing canned food rations from the pantry modal', async () => {
       const mockPlayer = {
         id: 'p1',
         hoursRemaining: 30,
         turnFlags: { hasEaten: false },
         inventory: {
           freshFoodUnits: 0,
-          cannedFoodUnits: 0,
-          fastFoodItems: [{ itemId: 'kraken_burger', happinessBonus: 2 }],
+          cannedFoodUnits: 1,
+          fastFoodItems: [],
           appliances: [],
           books: []
         },
@@ -497,15 +497,13 @@ describe("HomeRelax", () => {
 
       const mockCampaign = {
         housing: [{ id: 'low_cost', name: 'Low Cost' }],
-        items: [
-          { id: 'kraken_burger', name: 'Kraken Burger', category: 'food', subcategory: 'fast_food' }
-        ],
+        items: [],
         config: { timeRules: { relaxCost: 6 }, statRules: {} }
       } as any;
 
       const mockOnAction = vi.fn().mockResolvedValue({
-        key: 'action.cook.fast_food',
-        params: { item: 'Kraken Burger' }
+        key: 'action.cook.canned',
+        params: { time: 1.0 }
       });
 
       render(
@@ -525,16 +523,16 @@ describe("HomeRelax", () => {
       fireEvent.click(screen.getByTestId('btn-docked-kitchen'));
       expect(await screen.findByTestId('pantry-details-modal')).toBeInTheDocument();
 
-      const eatFastFoodBtn = screen.getByTestId('btn-eat-fast-food');
-      expect(eatFastFoodBtn).not.toBeDisabled();
-      fireEvent.click(eatFastFoodBtn);
+      const cannedBtn = screen.getByTestId('btn-cook-canned');
+      expect(cannedBtn).not.toBeDisabled();
+      fireEvent.click(cannedBtn);
 
       expect(mockOnAction).toHaveBeenCalledWith({
         type: 'prep_meal',
-        mealType: 'fast_food'
+        mealType: 'canned'
       });
 
-      expect(await screen.findByText(/Ate fast food takeout/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Heated canned rations/i)).toBeInTheDocument();
     });
 
     it('allows preparing cold groceries meal without any appliances', async () => {

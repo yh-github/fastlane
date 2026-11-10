@@ -57,7 +57,18 @@
     "weekNumber": "Week #{{turn}}",
     "lifestyle": "Lifestyle",
     "wellbeing": "Well-being",
-    "caffeine": "Caffeine"
+    "caffeine": "Caffeine",
+    "diet": "Diet",
+    "unfed": "Unfed",
+    "unfedBadge": "Unfed",
+    "tierHomeCooked": "Home Cooked",
+    "tierMicrowave": "Microwave",
+    "tierColdMeal": "Cold Meal",
+    "tierFastFood": "Fast Food",
+    "tierCanned": "Canned",
+    "tierFed": "Fed",
+    "dietFedDesc": "Fed for this week. Relaxing provides full recovery.",
+    "dietUnfedDesc": "Prepare food at home or eat out before relaxing."
   },
   "action": {
     "buy": "Purchased {{itemName}}",

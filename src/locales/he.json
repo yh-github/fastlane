@@ -57,7 +57,18 @@
     "weekNumber": "שבוע #{{turn}}",
     "lifestyle": "סגנון חיים",
     "wellbeing": "רווחה אישית",
-    "caffeine": "קפאין"
+    "caffeine": "קפאין",
+    "diet": "תזונה",
+    "unfed": "לא אכל/ה",
+    "unfedBadge": "לא אכל/ה",
+    "tierHomeCooked": "בישול ביתי",
+    "tierMicrowave": "מיקרוגל",
+    "tierColdMeal": "ארוחה קרה",
+    "tierFastFood": "מזון מהיר",
+    "tierCanned": "שימורים",
+    "tierFed": "שבע/ה",
+    "dietFedDesc": "אכלת השבוע. מנוחה תספק התאוששות מלאה.",
+    "dietUnfedDesc": "הכן אוכל בבית או אכול בחוץ לפני מנוחה."
   },
   "action": {
     "buy": "נרכש {{itemName}}",
