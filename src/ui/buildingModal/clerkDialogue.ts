@@ -169,7 +169,8 @@ export function computeClerkResponse(
     log?.key?.includes?.('.error') ||
     log?.key === 'action.loan.refused' ||
     log?.key === 'action.rent.extensionDenied' ||
-    log?.key === 'action.education.mistake';
+    log?.key === 'action.education.mistake' ||
+    log?.key === 'action.education.failedCourse';
   const mainLog = Array.isArray(actionLog) ? actionLog[0] : actionLog;
 
   if (mainLog?.key === 'action.error.cannotWork') {
@@ -226,8 +227,10 @@ export function computeClerkResponse(
         return t('action.error.notEnoughMoney', { defaultValue: 'You do not have enough cash.' });
       }
     } else if (payload.type === 'study') {
-      if (mainLog?.key === 'action.education.mistake') {
-        return String(t('action.education.mistake', mainLog.params as any));
+      if (mainLog?.key === 'action.education.failedCourse') {
+        return String(t('action.education.failedCourse', mainLog.params as any));
+      } else if (mainLog?.key === 'action.education.mistake') {
+        return String(t('action.education.mistake', { strikes: 1, ...(mainLog.params as any) }));
       } else if (mainLog?.key === 'action.education.graduated') {
         return String(t('action.education.graduated', mainLog.params as any));
       } else if (mainLog?.key === 'action.error.notEnoughTime') {
@@ -238,7 +241,9 @@ export function computeClerkResponse(
         return getRandomMessage(`clerkDialogs.university.studySuccess`, 'Good job studying!');
       }
     } else if (payload.type === 'enroll') {
-      if (success) {
+      if (mainLog?.key === 'action.error.classFailedThisTurn') {
+        return String(t('action.error.classFailedThisTurn', mainLog.params as any));
+      } else if (success) {
         return getRandomMessage(`clerkDialogs.university.enrollSuccess`, 'Welcome to the class!');
       } else {
         return t('action.error.notEnoughMoneyTuition', { defaultValue: 'You do not have enough cash.' });

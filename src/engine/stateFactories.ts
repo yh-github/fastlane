@@ -34,6 +34,7 @@ export function createDefaultTurnFlags(): TurnFlags {
     ticketBonusCount: 0,
     mentalDropsThisTurn: 0,
     firedLocationsThisTurn: [],
+    failedClassesThisTurn: [],
     workMistakesThisTurn: 0,
     curioNoveltyGranted: false,
     fastFoodMealsThisTurn: 0,

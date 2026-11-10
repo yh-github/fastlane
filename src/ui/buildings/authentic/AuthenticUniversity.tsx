@@ -151,8 +151,12 @@ export const AuthenticUniversity: React.FC<AuthenticUniversityProps> = ({
       triggerSpeech(UNIVERSITY_DIALOGUE.noTime, 2800);
       return;
     }
+    if (log?.key === 'action.education.failedCourse') {
+      triggerSpeech(`Academic failure! You accumulated 3 strikes in ${degree.name}. You have been dropped from this course.`, 4000);
+      return;
+    }
     if (log?.key === 'action.education.mistake') {
-      triggerSpeech(`Exhaustion overtakes you! You couldn't concentrate on ${degree.name} and made no progress.`, 3500);
+      triggerSpeech(`Exhaustion overtakes you! You couldn't concentrate on ${degree.name}, lost 10% progress, and received a strike.`, 3500);
       return;
     }
     triggerSpeech(`Attending class in ${degree.name}... Keep up the hard work!`, 3000);
@@ -160,6 +164,10 @@ export const AuthenticUniversity: React.FC<AuthenticUniversityProps> = ({
 
   const handleBookClick = (deg: any) => {
     setSelectedDegreeId(deg.id);
+    if (player.turnFlags?.failedClassesThisTurn?.includes(deg.id)) {
+      triggerSpeech(`You were dropped from ${deg.name} this semester! Retake is available next week.`, 3500);
+      return;
+    }
     if (isEnrolledIn(deg.id)) {
       handleStudy(deg);
       return;

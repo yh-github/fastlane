@@ -238,10 +238,90 @@ describe("UniversityRegistry", () => {
     expect(alert).toBeInTheDocument();
     expect(alert).toHaveClass('study-action-alert--mistake');
     expect(alert.textContent).toContain('💥');
-    expect(alert.textContent).toContain('Study mistake: lesson progress lost.');
+    expect(alert.textContent).toContain('Study mistake: -10% progress lost and received a strike.');
 
     // Card receives active mistake animation class
     const card = studyBtn.closest('.university-class-card');
     expect(card).toHaveClass('university-class-card--mistake');
+  });
+
+  it('renders minimal strikes badge and opens academic standards modal on ? click', () => {
+    const mockPlayer = {
+      name: 'Tester',
+      money: 1000,
+      hoursRemaining: 10,
+      degrees: [],
+      enrolledClasses: { 'trade_school': 40 },
+      academicStrikes: { 'trade_school': 2 },
+      inventory: {}
+    } as any;
+
+    const mockCampaign = {
+      education: [
+        { id: 'trade_school', name: 'Trade School', baseTuitionFee: 100, lessonsRequired: 10, prerequisites: [] }
+      ],
+      config: { timeRules: { studySessionCost: 6 }, statRules: { workMistakeMentalThreshold: 18 } }
+    } as any;
+
+    render(
+      <UniversityRegistry
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ percentageEducation: true, helpfulUI: true, usePhysicalMentalConditions: true } as any}
+      />
+    );
+
+    // Minimal badge on card shows 2/3 strikes
+    const strikeBadge = screen.getByTestId('class-strikes-trade_school');
+    expect(strikeBadge).toBeInTheDocument();
+    expect(strikeBadge.textContent).toBe('⚠️ 2/3');
+
+    // Click '?' button to view standards modal
+    const helpBtn = screen.getByTestId('degree-help-trade_school');
+    fireEvent.click(helpBtn);
+
+    expect(screen.getByTestId('academic-standards-modal')).toBeInTheDocument();
+    expect(screen.getByText(/Cognitive Rigor/i)).toBeInTheDocument();
+    expect(screen.getByText(/18 Mental/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\/3 Strikes/i)).toBeInTheDocument();
+
+    // Close modal
+    const closeBtn = screen.getByTestId('btn-close-academic-help');
+    fireEvent.click(closeBtn);
+    expect(screen.queryByTestId('academic-standards-modal')).not.toBeInTheDocument();
+  });
+
+  it('renders disabled suspended button when class was failed this turn', () => {
+    const mockPlayer = {
+      name: 'Tester',
+      money: 1000,
+      hoursRemaining: 10,
+      degrees: [],
+      enrolledClasses: {},
+      enrolledCredits: 1,
+      turnFlags: { failedClassesThisTurn: ['trade_school'] },
+      inventory: {}
+    } as any;
+
+    const mockCampaign = {
+      education: [
+        { id: 'trade_school', name: 'Trade School', baseTuitionFee: 100, lessonsRequired: 10, prerequisites: [] }
+      ],
+      config: { timeRules: { studySessionCost: 6 }, statRules: {} }
+    } as any;
+
+    render(
+      <UniversityRegistry
+        player={mockPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ percentageEducation: true, helpfulUI: true } as any}
+      />
+    );
+
+    const suspendedBtn = screen.getByTestId('choose-class-trade_school');
+    expect(suspendedBtn).toBeDisabled();
+    expect(suspendedBtn.textContent).toContain('Suspended (Retake Next Week)');
   });
 });

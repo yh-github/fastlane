@@ -654,7 +654,7 @@ describe('Translation Interpolation & Template Verification', () => {
 
       const mistakeLog = {
         key: 'action.education.mistake',
-        params: { name: 'Computer Science', type: 'Mental', stats: ' (-1 Mental)' }
+        params: { name: 'Computer Science', type: 'Mental', strikes: 1, stats: ' (-1 Mental)' }
       };
 
       // Test English

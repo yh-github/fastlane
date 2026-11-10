@@ -524,8 +524,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
             id="stat-money"
             data-testid="stat-money"
             title={`Money: $${activePlayer.money}`}
-            onClick={() => setSelectedHudAttribute('money')}
-            style={{ cursor: 'pointer' }}
+            style={{ pointerEvents: 'none' }}
           >
             <span className="dynamic-money-badge__icon">💰</span>
             <span className="dynamic-money-badge__value">${activePlayer.money}</span>
@@ -536,7 +535,6 @@ export const GameSession: React.FC<GameSessionProps> = ({
         {gameState.rules.guiStyle === 'authentic' && activeModal?.type === 'building' && currentBuildingId && activePlayer && (
           <AuthenticCashCalculator 
             player={activePlayer} 
-            onClick={() => setSelectedHudAttribute('money')}
           />
         )}
 

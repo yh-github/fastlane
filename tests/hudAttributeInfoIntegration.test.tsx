@@ -308,7 +308,7 @@ describe('HUD Improvement Integration: Hover Tooltips & Info Cards Across All Ve
     expect(screen.getByText('Victory Progress')).toBeInTheDocument();
   });
 
-  it('in GameSession: clicking on-board Dynamic Money Badge or Bottom Center Clock pops up info card', async () => {
+  it('in GameSession: Dynamic Money Badge is non-clickable while Bottom Center Clock pops up info card', async () => {
     const sideGameState: GameState = {
       ...mockGameState,
       rules: {
@@ -330,16 +330,12 @@ describe('HUD Improvement Integration: Hover Tooltips & Info Cards Across All Ve
       await new Promise(r => setTimeout(r, 0));
     });
 
-    // 1. Click dynamic money badge on the board
+    // 1. Verify dynamic money badge on the board is non-clickable (pointer-events: none) and does not open explanation modal
     const moneyOnBoard = screen.getByTestId('stat-money');
     expect(moneyOnBoard).toBeInTheDocument();
+    expect(moneyOnBoard).toHaveStyle({ pointerEvents: 'none' });
     fireEvent.click(moneyOnBoard);
 
-    expect(screen.getByTestId('hud-info-modal')).toBeInTheDocument();
-    expect(screen.getByText('Money (Cash on Hand)')).toBeInTheDocument();
-
-    // Press Escape to dismiss
-    fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.queryByTestId('hud-info-modal')).not.toBeInTheDocument();
 
     // 2. Click bottom center clock on the board

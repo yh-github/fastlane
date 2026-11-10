@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { TurnEventsQueue } from './TurnEventsQueue';
 import type { GameEvent } from '../engine/gameState';
 
@@ -120,6 +120,56 @@ describe('TurnEventsQueue', () => {
     expect(screen.getByText(/\+\$75/i)).toBeInTheDocument();
     expect(screen.queryByText(/\+3 🧠/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/\+0.25 🔧/i)).not.toBeInTheDocument();
+  });
+
+  it('prevents accidental skipping via armDelayMs cooldown timer', () => {
+    vi.useFakeTimers();
+    const onComplete = vi.fn();
+    const events: GameEvent[] = [
+      { key: 'events.rent.paid', params: { amount: 150 } },
+      { key: 'events.curioDecor', params: { bonus: 2 } }
+    ];
+
+    render(
+      <TurnEventsQueue
+        events={events}
+        onComplete={onComplete}
+        armDelayMs={350}
+      />
+    );
+
+    const nextBtn = screen.getByTestId('turn-event-next-btn');
+    expect(nextBtn).toBeDisabled();
+
+    // Clicking during arming window is blocked
+    fireEvent.click(nextBtn);
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+
+    // Advance 350ms
+    act(() => {
+      vi.advanceTimersByTime(350);
+    });
+
+    expect(nextBtn).not.toBeDisabled();
+    fireEvent.click(nextBtn);
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+
+    // The second event is also protected by arming cooldown
+    const continueBtn = screen.getByTestId('turn-event-next-btn');
+    expect(continueBtn).toBeDisabled();
+    fireEvent.click(continueBtn);
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Advance 350ms again
+    act(() => {
+      vi.advanceTimersByTime(350);
+    });
+
+    expect(continueBtn).not.toBeDisabled();
+    fireEvent.click(continueBtn);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+
+    vi.useRealTimers();
   });
 });
 

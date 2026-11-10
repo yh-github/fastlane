@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GameEvent, GameRules } from '../engine/gameState';
 import { getEventModifications } from '../engine/eventModifiers';
@@ -8,11 +8,28 @@ interface TurnEventsQueueProps {
   events: GameEvent[];
   onComplete: () => void;
   rules?: GameRules;
+  armDelayMs?: number;
 }
 
-export function TurnEventsQueue({ events, onComplete, rules }: TurnEventsQueueProps) {
+export function TurnEventsQueue({ events, onComplete, rules, armDelayMs }: TurnEventsQueueProps) {
   const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const effectiveArmDelay = armDelayMs !== undefined
+    ? armDelayMs
+    : ((typeof process !== 'undefined' && process.env.NODE_ENV === 'test') ? 0 : 350);
+
+  const [isArmed, setIsArmed] = useState<boolean>(() => effectiveArmDelay <= 0);
+
+  useEffect(() => {
+    if (effectiveArmDelay <= 0) {
+      setIsArmed(true);
+      return;
+    }
+    setIsArmed(false);
+    const timer = setTimeout(() => setIsArmed(true), effectiveArmDelay);
+    return () => clearTimeout(timer);
+  }, [currentIndex, effectiveArmDelay]);
 
   if (!events || events.length === 0 || currentIndex >= events.length) {
     onComplete();
@@ -75,10 +92,24 @@ export function TurnEventsQueue({ events, onComplete, rules }: TurnEventsQueuePr
   }
 
   return (
-    <div className="modal-overlay" style={{
-      position: 'fixed', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
-      backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100
-    }}>
+    <div 
+      className="modal-overlay" 
+      onClick={(e) => e.stopPropagation()}
+      data-testid="turn-events-overlay"
+      data-armed={isArmed}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (!isArmed) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleNext();
+        }
+      }}
+      style={{
+        position: 'fixed', top: 0, insetInlineStart: 0, width: '100%', height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100
+      }}
+    >
       <style>
         {`
           @keyframes popIn {
@@ -87,12 +118,16 @@ export function TurnEventsQueue({ events, onComplete, rules }: TurnEventsQueuePr
           }
         `}
       </style>
-      <div className="modal-content" style={{
-        backgroundColor: '#2c3e50', color: '#fff', padding: '40px', borderRadius: '12px',
-        maxWidth: '500px', width: '90%', textAlign: 'center', border: `4px solid ${color}`,
-        boxShadow: `0 0 30px ${color}66`,
-        animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
-      }}>
+      <div 
+        className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: '#2c3e50', color: '#fff', padding: '40px', borderRadius: '12px',
+          maxWidth: '500px', width: '90%', textAlign: 'center', border: `4px solid ${color}`,
+          boxShadow: `0 0 30px ${color}66`,
+          animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+        }}
+      >
         <div style={{ fontSize: '72px', marginBottom: '20px', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
           {icon}
         </div>
@@ -108,11 +143,29 @@ export function TurnEventsQueue({ events, onComplete, rules }: TurnEventsQueuePr
         />
         
         <div style={{ marginTop: '30px' }}>
-          <button onClick={handleNext} style={{
-            padding: '12px 30px', fontSize: '1.2em', cursor: 'pointer',
-            backgroundColor: color, color: '#000', border: 'none', borderRadius: '8px',
-            fontWeight: 'bold', boxShadow: `0 0 15px ${color}`, textTransform: 'uppercase'
-          }}>
+          <button 
+            data-testid="turn-event-next-btn"
+            disabled={!isArmed}
+            onClick={() => {
+              if (!isArmed) return;
+              handleNext();
+            }} 
+            style={{
+              padding: '12px 30px', 
+              fontSize: '1.2em', 
+              cursor: isArmed ? 'pointer' : 'not-allowed',
+              backgroundColor: isArmed ? color : '#475569', 
+              color: isArmed ? '#000' : '#cbd5e1', 
+              border: 'none', 
+              borderRadius: '8px',
+              fontWeight: 'bold', 
+              boxShadow: isArmed ? `0 0 15px ${color}` : 'none', 
+              textTransform: 'uppercase',
+              opacity: isArmed ? 1 : 0.65,
+              transition: 'all 0.15s ease',
+              pointerEvents: isArmed ? 'auto' : 'none'
+            }}
+          >
             {currentIndex < events.length - 1 ? t('ui.next', 'Next') : t('ui.continue', 'Continue')}
           </button>
         </div>

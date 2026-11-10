@@ -113,7 +113,8 @@
       "creditPurchased": "Purchased university enrollment credit. Available credits: {{credits}}",
       "graduated": "Graduated with {{name}}!{{stats}}",
       "studied": "Studied for {{name}} ({{current}}/{{required}}){{stats}}",
-      "mistake": "Made a mistake studying {{name}} ({{type}})! Lost lesson progress{{stats}}"
+      "mistake": "Made a mistake studying {{name}} ({{type}})! Lost 10% progress and received an Academic Strike ({{strikes}}/3){{stats}}",
+      "failedCourse": "Course failed! Reached 3 academic strikes in {{name}}. Progress wiped and tuition forfeited.{{stats}}"
     },
     "job": {
       "worked": "Worked at {{title}} and earned ${{wagesEarned}}{{stats}}",
@@ -238,6 +239,7 @@
       "alreadyAteCafeteria": "You have already eaten at the cafeteria this week."
     },
     "error": {
+      "hospitalStaffOnly": "The hospital cafeteria is restricted to hospital employees only.",
       "needStove": "You need a working stove to cook a home meal!",
       "needMicrowave": "You need a working microwave to heat a microwave meal!",
       "noFreshFood": "You have no fresh groceries to cook!",
@@ -260,6 +262,7 @@
       "notEnoughTimeWork": "There aren't enough hours left this turn for a work shift (Needs {{cost}} hrs, you have {{remaining}} hrs).",
       "missingPrereq": "Prerequisite required: {{prereq}}",
       "notEnoughMoneyTuition": "Not enough money for tuition.",
+      "classFailedThisTurn": "Course failed this semester! You are suspended from {{name}} until next week.",
       "alreadyHaveDegree": "You already have this degree.",
       "cannotStudy": "Cannot study this.",
       "notEnoughMoneyBuyBack": "Not enough money to buy back.",
@@ -600,8 +603,13 @@
     "restDesc": "Sit and rest on a park bench (⏳ -3h • +2 💪 • +1 🧠 • Free food/mess)"
   },
   "hospital": {
-    "staffPerkActive": "Hospital Staff Benefit: 50% discount on urgent care & counseling, 40% discount on cafeteria!",
+    "staffPerkActive": "Hospital Staff Benefit: 50% discount on urgent care & counseling, exclusive access to staff cafeteria!",
     "staffRate": "Staff Rate",
+    "treatmentsBtn": "Medical & Psychiatric Treatments...",
+    "treatmentsModalTitle": "Hospital Clinical Treatments",
+    "treatmentsModalSubtitle": "Select between Physical Triage & Restorative Care or Psychiatric Counseling.",
+    "treatmentsNeitherBtn": "Neither (Close)",
+    "staffOnlyCafeteria": "Hospital staff only (Requires employment at Hospital)",
     "urgentCareTitle": "Walk-in Urgent Care",
     "urgentCareBtn": "Receive Care",
     "urgentCareCriticalPreview": "Critical Triage: Emergency IV & stabilization (+8 to +12 Physical, repairs Max Physical)",
@@ -1462,6 +1470,8 @@
     "enrollConfirmTitle": "University Enrollment",
     "enrollConfirmMsg": "Enroll in university course for ${{fee}}? You will receive 1 course credit to choose any eligible class.",
     "confirmEnroll": "Enroll (${{fee}})",
+    "classSuspended": "Suspended (Retake Next Week)",
+    "academicPolicyTitle": "Academic Standards & Standing",
     "availableStatus": "Available"
   },
   "education": {
@@ -1482,6 +1492,7 @@
     "subtitle": "A customer brought in:",
     "parkTitle": "Park Encounter",
     "parkSubtitle": "Choose how to spend your time in the park:",
+    "armingPrompt": "Reviewing...",
     "redrawButton": "Brainstorm Alternatives (⏳ 1 hr, -1.0 🧠)",
     "option_cash": {
       "title": "Fast Cash Commission",

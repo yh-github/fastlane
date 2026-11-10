@@ -91,13 +91,23 @@ export function handleStudyAction(
       let physMistake = false;
       let mentalMistake = false;
 
-      if (physicalCost > 0 && curPhys < 10) {
-        const physChance = (10 - curPhys) * 0.025;
+      const caffeineBuffer = context.rules.enableCaffeineSystem
+        ? Math.max(0, (nextPlayer.turnFlags?.caffeineIntake || 0) - (nextPlayer.caffeineTolerance || 0))
+        : 0;
+      const effectivePhys = Math.min(nextPlayer.physicalConditionMax ?? 50, curPhys + caffeineBuffer);
+      const effectiveMental = Math.min(nextPlayer.mentalConditionMax ?? 50, curMental + caffeineBuffer);
+
+      const basePhysThreshold = statRules.workMistakePhysicalThreshold ?? 10;
+      const baseMentalThreshold = statRules.workMistakeMentalThreshold ?? 10;
+      const effectiveMentalThreshold = baseMentalThreshold + (2 * prereqDepth);
+
+      if (physicalCost > 0 && effectivePhys < basePhysThreshold) {
+        const physChance = (basePhysThreshold - effectivePhys) * 0.025;
         physMistake = resolveDecision(replayContext, `study_phys_mistake_${nextPlayer.id}_${actionCount}`, () => context.rng.next() < physChance);
       }
 
-      if (mentalCost > 0 && curMental < 10) {
-        const mentalChance = (10 - curMental) * 0.025;
+      if (mentalCost > 0 && effectiveMental < effectiveMentalThreshold) {
+        const mentalChance = (effectiveMentalThreshold - effectiveMental) * 0.025;
         mentalMistake = resolveDecision(replayContext, `study_mental_mistake_${nextPlayer.id}_${actionCount}`, () => context.rng.next() < mentalChance);
       }
 
@@ -170,8 +180,40 @@ export function handleStudyAction(
           nextPlayer.mentalConditionMax = Math.max(1, (nextPlayer.mentalConditionMax ?? 50) - 1);
           nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax, nextPlayer.mentalCondition);
         }
+
+        // Progress rollback: -10 pp in percentage mode, -1 lesson in discrete mode, floored at 0
+        nextPlayer.enrolledClasses = { ...(nextPlayer.enrolledClasses || {}) };
+        if (isPercentage) {
+          nextPlayer.enrolledClasses[degDef.id] = Math.max(0, currentProgress - 10);
+        } else {
+          nextPlayer.enrolledClasses[degDef.id] = Math.max(0, (nextPlayer.enrolledClasses[degDef.id] || 0) - 1);
+        }
+
+        // Academic strikes: increment strike for this course
+        nextPlayer.academicStrikes = { ...(nextPlayer.academicStrikes || {}) };
+        const currentStrikes = (nextPlayer.academicStrikes[degDef.id] || 0) + 1;
+        nextPlayer.academicStrikes[degDef.id] = currentStrikes;
+
         const mistakeTypes = [physMistake ? 'Physical' : null, mentalMistake ? 'Mental' : null].filter(Boolean).join(' & ');
-        actionLog = { key: 'action.education.mistake', params: { name: degDef.name, type: mistakeTypes, stats: statsStr } };
+
+        if (currentStrikes >= 3) {
+          delete nextPlayer.enrolledClasses[degDef.id];
+          delete nextPlayer.enrolledClasses[`${degDef.id}_req`];
+          delete nextPlayer.academicStrikes[degDef.id];
+          nextPlayer.turnFlags = {
+            ...nextPlayer.turnFlags,
+            failedClassesThisTurn: Array.from(new Set([...(nextPlayer.turnFlags.failedClassesThisTurn || []), degDef.id]))
+          };
+          actionLog = {
+            key: 'action.education.failedCourse',
+            params: { name: degDef.name, type: mistakeTypes, strikes: currentStrikes, stats: statsStr }
+          };
+        } else {
+          actionLog = {
+            key: 'action.education.mistake',
+            params: { name: degDef.name, type: mistakeTypes, strikes: currentStrikes, stats: statsStr }
+          };
+        }
       } else {
         // Study progress
         nextPlayer.enrolledClasses = { ...(nextPlayer.enrolledClasses || {}) };
@@ -209,6 +251,9 @@ export function handleStudyAction(
           nextPlayer.degrees = [...nextPlayer.degrees, degDef.id];
           delete nextPlayer.enrolledClasses[degDef.id];
           delete nextPlayer.enrolledClasses[`${degDef.id}_req`];
+          if (nextPlayer.academicStrikes) {
+            delete nextPlayer.academicStrikes[degDef.id];
+          }
 
           const prereqDepth = getPrerequisiteChainDepth(degDef.id, context.campaign.education);
           let depReward: number;

@@ -70,6 +70,24 @@ export function PawnShop({
 
   const isEffectiveCompact = compact || isCompactRummage;
 
+  const [isRummageArmed, setIsRummageArmed] = useState<boolean>(() => {
+    return typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+  });
+
+  useEffect(() => {
+    if (!player.pendingPawnRummage || player.pendingPawnRummage.length === 0) {
+      setIsRummageArmed(false);
+      return;
+    }
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      setIsRummageArmed(true);
+      return;
+    }
+    setIsRummageArmed(false);
+    const timer = setTimeout(() => setIsRummageArmed(true), 350);
+    return () => clearTimeout(timer);
+  }, [player.pendingPawnRummage]);
+
   const pawnableAppliances = player.inventory.appliances || [];
   const pawnableBooks = (player.inventory.books || []).map(bId => {
     const bookDef = campaign?.items.find(i => i.id === bId);
@@ -198,7 +216,7 @@ export function PawnShop({
                     }
 
                     const handleBuyRummaged = async () => {
-                      if (!canBuy) return;
+                      if (!canBuy || !isRummageArmed) return;
                       await onAction({
                         type: 'buy_rummage_item',
                         itemIndex: idx
@@ -258,21 +276,26 @@ export function PawnShop({
                           <button
                             data-testid={`buy-rummage-item-${idx}`}
                             onClick={handleBuyRummaged}
-                            disabled={!canBuy}
+                            disabled={!canBuy || !isRummageArmed}
                             style={{
                               padding: compact ? '5px 10px' : '6px 12px',
                               borderRadius: '6px',
                               fontWeight: 'bold',
                               fontSize: compact ? '0.78rem' : '0.82rem',
                               minHeight: compact ? '32px' : undefined,
-                              background: canBuy ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#374151',
-                              color: canBuy ? '#fff' : '#6b7280',
+                              background: (canBuy && isRummageArmed) ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#374151',
+                              color: (canBuy && isRummageArmed) ? '#fff' : '#6b7280',
                               border: 'none',
-                              cursor: canBuy ? 'pointer' : 'not-allowed',
-                              boxShadow: canBuy ? '0 0 8px rgba(16, 185, 129, 0.4)' : 'none'
+                              cursor: (canBuy && isRummageArmed) ? 'pointer' : 'not-allowed',
+                              boxShadow: (canBuy && isRummageArmed) ? '0 0 8px rgba(16, 185, 129, 0.4)' : 'none',
+                              opacity: isRummageArmed ? 1 : 0.65,
+                              pointerEvents: isRummageArmed ? 'auto' : 'none',
+                              transition: 'all 0.15s ease'
                             }}
                           >
-                            {t('pawnShop.btnTakeBargain', { defaultValue: 'Take Item' })}
+                            {isRummageArmed
+                              ? t('pawnShop.btnTakeBargain', { defaultValue: 'Take Item' })
+                              : t('appraisalDilemma.armingPrompt', { defaultValue: 'Reviewing...' })}
                           </button>
                         </div>
                       </div>

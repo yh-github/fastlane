@@ -17,6 +17,11 @@ export function enrollInDegree(player: PlayerState, degree: EducationDef, econom
     return { updated: player, success: false, message: { key: 'action.error.alreadyHaveDegree' } };
   }
 
+  // Check if class was failed this turn (suspension lockout)
+  if (player.turnFlags?.failedClassesThisTurn?.includes(degree.id)) {
+    return { updated: player, success: false, message: { key: 'action.error.classFailedThisTurn', params: { name: degree.name } } };
+  }
+
   // Check prerequisites
   for (const prereq of degree.prerequisites) {
     if (!player.degrees.includes(prereq)) {

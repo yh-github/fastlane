@@ -468,7 +468,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(result.updated.experience).toBe(30); // no XP gain on mistake
     });
 
-    it('study mistake halts lesson progress and reduces max stat', () => {
+    it('study mistake rolls back lesson progress, adds strike, and reduces max stat', () => {
       player.enrolledClasses = { cs_degree: 2 };
       player.physicalCondition = 50;
       player.mentalCondition = 5; // below 10 -> mistake risk
@@ -477,7 +477,8 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       context.engineDecisions = [{ type: `study_mental_mistake_${player.id}_1`, result: true }];
 
       const { updatedPlayer: nextPlayer, actionLog: log } = gameReducer(player, { type: 'study', degreeId: 'cs_degree' }, context);
-      expect(nextPlayer.enrolledClasses['cs_degree']).toBe(2); // no lesson progress
+      expect(nextPlayer.enrolledClasses['cs_degree']).toBe(1); // rolls back 1 lesson
+      expect(nextPlayer.academicStrikes?.['cs_degree']).toBe(1); // receives strike 1/3
       expect(nextPlayer.mentalConditionMax).toBe(49);
       expect((log as any).key).toBe('action.education.mistake');
     });

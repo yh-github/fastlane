@@ -311,6 +311,35 @@ body {
   overflow-y: auto;
   padding-inline-end: 6px;
   min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 229, 255, 0.45) rgba(0, 0, 0, 0.25);
+}
+
+.building-modal__content::-webkit-scrollbar,
+.store-front-grid::-webkit-scrollbar,
+.interaction-panel::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.building-modal__content::-webkit-scrollbar-track,
+.store-front-grid::-webkit-scrollbar-track,
+.interaction-panel::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+}
+
+.building-modal__content::-webkit-scrollbar-thumb,
+.store-front-grid::-webkit-scrollbar-thumb,
+.interaction-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.45);
+  border-radius: 4px;
+}
+
+.building-modal__content::-webkit-scrollbar-thumb:hover,
+.store-front-grid::-webkit-scrollbar-thumb:hover,
+.interaction-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.75);
 }
 
 .building-modal:has(.home-apartment-panel) .building-modal__content,
@@ -737,6 +766,38 @@ body {
     padding: 6px 10px !important;
     margin-bottom: 8px !important;
     gap: 8px !important;
+  }
+
+  .arcade-corner {
+    padding: 6px 10px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .arcade-corner button {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+  }
+
+  .store-front-grid {
+    gap: 6px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .arcade-corner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    padding: 6px 8px !important;
+  }
+
+  .arcade-corner button {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .store-front-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -2907,7 +2968,7 @@ button:disabled {
   box-shadow: 0 0 12px rgba(255, 179, 0, 0.45);
   z-index: 25;
   transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  pointer-events: auto;
+  pointer-events: none;
   max-width: calc(100vw - 24px);
   box-sizing: border-box;
 }

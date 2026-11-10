@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { WeekendScreen } from './WeekendScreen';
 import { createTestPlayer } from '../engine/testFactories';
 
@@ -489,6 +489,58 @@ describe('WeekendScreen', () => {
       expect(container.querySelector('.weekend-cards-carousel')).not.toBeNull();
       const indicatorPills = container.querySelectorAll('.weekend-carousel-indicator__btn');
       expect(indicatorPills.length).toBe(2);
+    });
+
+    it('prevents accidental card confirmation via armDelayMs cooldown timer', () => {
+      vi.useFakeTimers();
+      const onSelectCard = vi.fn();
+      const player = createTestPlayer({
+        name: 'Jordan',
+        offeredWeekendCards: [
+          {
+            id: 'card_cheap',
+            tier: 'cheap',
+            type: 'random',
+            eventKey: 'events.cheap',
+            titleKey: 'weekendScreen.card.cheapTitle',
+            fluff: 'Cozy weekend at home reading books.',
+            icon: '☕',
+            costMin: 0,
+            costMax: 10,
+            targetStat: 'mental',
+            potentialBonusMin: 1,
+            potentialBonusMax: 2
+          }
+        ]
+      });
+
+      render(
+        <WeekendScreen
+          player={player}
+          turn={3}
+          onStartWeek={vi.fn()}
+          onSelectCard={onSelectCard}
+          armDelayMs={450}
+        />
+      );
+
+      const confirmBtn = screen.getByTestId('btn-lock-in-weekend');
+      expect(confirmBtn).toBeDisabled();
+
+      // Clicking during grace period is blocked
+      fireEvent.click(confirmBtn);
+      expect(onSelectCard).not.toHaveBeenCalled();
+
+      // Advance 450ms
+      act(() => {
+        vi.advanceTimersByTime(450);
+      });
+
+      expect(confirmBtn).not.toBeDisabled();
+      fireEvent.click(confirmBtn);
+      expect(onSelectCard).toHaveBeenCalledWith('card_cheap');
+
+      vi.useRealTimers();
     });
   });
 

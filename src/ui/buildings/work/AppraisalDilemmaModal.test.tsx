@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { AppraisalDilemmaModal } from './AppraisalDilemmaModal';
 import { createTestPlayer } from '../../../engine/testFactories';
 
@@ -330,5 +330,52 @@ describe('AppraisalDilemmaModal', () => {
 
     // Cleanup
     document.body.removeChild(viewport);
+  });
+
+  it('prevents accidental clicks on phone via armDelayMs cooldown timer', () => {
+    vi.useFakeTimers();
+    window.innerWidth = 390;
+    window.innerHeight = 844;
+
+    const onSelectOption = vi.fn();
+    const player = createTestPlayer({ name: 'Clara' });
+
+    render(
+      <AppraisalDilemmaModal
+        dilemma={dummyDilemma}
+        player={player}
+        onSelectOption={onSelectOption}
+        armDelayMs={500}
+      />
+    );
+
+    const confirmBtn = screen.getByTestId('btn-confirm-appraisal-choice');
+    expect(confirmBtn).toBeDisabled();
+    expect(confirmBtn).toHaveTextContent('Reviewing...');
+
+    // Attempting to click immediately (accidental click/spam) is blocked
+    fireEvent.click(confirmBtn);
+    expect(onSelectOption).not.toHaveBeenCalled();
+
+    // Advance 300ms (still within grace period)
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    fireEvent.click(confirmBtn);
+    expect(onSelectOption).not.toHaveBeenCalled();
+
+    // Advance remaining 200ms (500ms total)
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
+    // Button is now armed and active
+    expect(confirmBtn).not.toBeDisabled();
+    expect(confirmBtn).toHaveTextContent(/Confirm/);
+
+    fireEvent.click(confirmBtn);
+    expect(onSelectOption).toHaveBeenCalledWith(0);
+
+    vi.useRealTimers();
   });
 });

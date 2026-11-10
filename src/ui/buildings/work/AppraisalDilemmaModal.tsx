@@ -13,6 +13,7 @@ interface AppraisalDilemmaModalProps {
   player?: PlayerState;
   campaign?: CampaignBundle;
   compact?: boolean;
+  armDelayMs?: number;
 }
 
 function getOptionDetails(opt: any, hasSpace: boolean) {
@@ -365,9 +366,28 @@ export function AppraisalDilemmaModal({
   onRedraw,
   player,
   campaign,
-  compact: compactProp
+  compact: compactProp,
+  armDelayMs
 }: AppraisalDilemmaModalProps) {
   const { t } = useTranslation();
+
+  const effectiveArmDelay = armDelayMs !== undefined
+    ? armDelayMs
+    : ((typeof process !== 'undefined' && process.env.NODE_ENV === 'test') ? 0 : 500);
+
+  const [isArmed, setIsArmed] = useState<boolean>(() => effectiveArmDelay <= 0);
+
+  useEffect(() => {
+    if (effectiveArmDelay <= 0) {
+      setIsArmed(true);
+      return;
+    }
+    setIsArmed(false);
+    const timer = setTimeout(() => {
+      setIsArmed(true);
+    }, effectiveArmDelay);
+    return () => clearTimeout(timer);
+  }, [dilemma, effectiveArmDelay]);
 
   const [dimensions, setDimensions] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1024,
@@ -414,18 +434,21 @@ export function AppraisalDilemmaModal({
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isArmed) return;
     const newIdx = (selectedIdx - 1 + count) % count;
     scrollToOption(newIdx);
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isArmed) return;
     const newIdx = (selectedIdx + 1) % count;
     scrollToOption(newIdx);
   };
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isArmed) return;
     if (e.key === 'ArrowLeft') {
       const newIdx = Math.max(0, selectedIdx - 1);
       scrollToOption(newIdx);
@@ -452,8 +475,9 @@ export function AppraisalDilemmaModal({
 
   return createPortal(
     <div
-      className="building-modal-overlay appraisal-dilemma-overlay"
+      className={`building-modal-overlay appraisal-dilemma-overlay ${!isArmed ? 'appraisal-dilemma-overlay--arming' : ''}`}
       data-testid="appraisal-dilemma-modal"
+      data-armed={isArmed}
       role="dialog"
       aria-modal="true"
       aria-label={modalTitle}
@@ -480,6 +504,7 @@ export function AppraisalDilemmaModal({
       <div
         className="building-modal-content"
         data-testid="appraisal-dilemma-content"
+        data-armed={isArmed}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'linear-gradient(145deg, #1e293b, #0f172a)',
@@ -546,6 +571,7 @@ export function AppraisalDilemmaModal({
           <div className="appraisal-carousel-indicator" role="tablist" aria-label="Appraisal options selector">
             <button
               type="button"
+              disabled={!isArmed}
               onClick={handlePrev}
               style={{
                 background: 'rgba(255,255,255,0.08)',
@@ -553,14 +579,15 @@ export function AppraisalDilemmaModal({
                 borderRadius: '50%',
                 width: '24px',
                 height: '24px',
-                color: '#fff',
+                color: isArmed ? '#fff' : '#64748b',
                 fontSize: '11px',
                 fontWeight: 'bold',
-                cursor: 'pointer',
+                cursor: isArmed ? 'pointer' : 'default',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 0
+                padding: 0,
+                pointerEvents: isArmed ? 'auto' : 'none'
               }}
               title="Previous option"
             >
@@ -576,9 +603,17 @@ export function AppraisalDilemmaModal({
                   key={idx}
                   data-testid={`appraisal-pill-${idx}`}
                   role="tab"
+                  disabled={!isArmed}
                   aria-selected={isSelected}
                   className={`appraisal-carousel-indicator__btn ${isSelected ? 'appraisal-carousel-indicator__btn--active' : ''}`}
-                  onClick={() => scrollToOption(idx)}
+                  onClick={() => {
+                    if (!isArmed) return;
+                    scrollToOption(idx);
+                  }}
+                  style={{
+                    pointerEvents: isArmed ? 'auto' : 'none',
+                    opacity: isArmed ? 1 : 0.65
+                  }}
                 >
                   <span>{details.icon}</span>
                   <span>{idx + 1}. {details.shortTag}</span>
@@ -588,6 +623,7 @@ export function AppraisalDilemmaModal({
 
             <button
               type="button"
+              disabled={!isArmed}
               onClick={handleNext}
               style={{
                 background: 'rgba(255,255,255,0.08)',
@@ -595,14 +631,15 @@ export function AppraisalDilemmaModal({
                 borderRadius: '50%',
                 width: '24px',
                 height: '24px',
-                color: '#fff',
+                color: isArmed ? '#fff' : '#64748b',
                 fontSize: '11px',
                 fontWeight: 'bold',
-                cursor: 'pointer',
+                cursor: isArmed ? 'pointer' : 'default',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 0
+                padding: 0,
+                pointerEvents: isArmed ? 'auto' : 'none'
               }}
               title="Next option"
             >
@@ -615,13 +652,16 @@ export function AppraisalDilemmaModal({
         <div
           data-testid="appraisal-cards-container"
           className={isCarouselMode ? "appraisal-cards-carousel" : "appraisal-cards-grid"}
-          style={!isCarouselMode ? {
-            display: 'grid',
-            gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
-            gap: isCompact ? '8px' : '12px',
-            marginBottom: isCompact ? '6px' : '12px',
-            alignItems: 'stretch'
-          } : undefined}
+          style={{
+            ...(!isCarouselMode ? {
+              display: 'grid',
+              gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
+              gap: isCompact ? '8px' : '12px',
+              marginBottom: isCompact ? '6px' : '12px',
+              alignItems: 'stretch'
+            } : {}),
+            pointerEvents: isArmed ? 'auto' : 'none'
+          }}
         >
           {dilemma.options.map((opt, idx) => {
             const details = getOptionDetails(opt, hasSpace);
@@ -639,6 +679,7 @@ export function AppraisalDilemmaModal({
                 compact={isCompact}
                 isSelected={isSelected}
                 onSelect={() => {
+                  if (!isArmed) return;
                   setSelectedIdx(idx);
                   if (isCarouselMode) {
                     scrollToOption(idx);
@@ -646,7 +687,10 @@ export function AppraisalDilemmaModal({
                     onSelectOption(idx);
                   }
                 }}
-                onConfirm={() => onSelectOption(idx)}
+                onConfirm={() => {
+                  if (!isArmed) return;
+                  onSelectOption(idx);
+                }}
                 borderColor={details.borderColor}
                 icon={details.icon}
                 title={displayTitle}
@@ -672,8 +716,11 @@ export function AppraisalDilemmaModal({
               <button
                 type="button"
                 data-testid="btn-redraw-initiative"
-                disabled={!canAffordRedraw}
-                onClick={onRedraw}
+                disabled={!isArmed || !canAffordRedraw}
+                onClick={() => {
+                  if (!isArmed) return;
+                  onRedraw();
+                }}
                 style={{
                   background: canAffordRedraw ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                   border: canAffordRedraw ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.15)',
@@ -682,11 +729,13 @@ export function AppraisalDilemmaModal({
                   fontWeight: 'bold',
                   padding: '6px 14px',
                   borderRadius: '6px',
-                  cursor: canAffordRedraw ? 'pointer' : 'not-allowed',
+                  cursor: (isArmed && canAffordRedraw) ? 'pointer' : 'not-allowed',
                   transition: 'all 0.15s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  gap: '6px',
+                  opacity: isArmed ? 1 : 0.65,
+                  pointerEvents: isArmed ? 'auto' : 'none'
                 }}
               >
                 <span>🔄</span>
@@ -703,7 +752,7 @@ export function AppraisalDilemmaModal({
           const { borderColor, rewardText } = details;
 
           return (
-            <div className="appraisal-confirm-bar">
+            <div className="appraisal-confirm-bar" style={{ opacity: isArmed ? 1 : 0.8, transition: 'opacity 0.2s ease' }}>
               <div style={{ minWidth: 0, flex: 1, textAlign: 'left' }}>
                 <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
                   {t('appraisalDilemma.chosenOptionPrompt', { defaultValue: 'Selected Option:' })}
@@ -714,23 +763,32 @@ export function AppraisalDilemmaModal({
               </div>
               <button
                 data-testid="btn-confirm-appraisal-choice"
-                onClick={() => onSelectOption(selectedIdx)}
+                disabled={!isArmed}
+                onClick={() => {
+                  if (!isArmed) return;
+                  onSelectOption(selectedIdx);
+                }}
                 style={{
-                  background: borderColor,
-                  color: '#000',
+                  background: isArmed ? borderColor : '#475569',
+                  color: isArmed ? '#000' : '#cbd5e1',
                   fontWeight: 'bold',
                   fontSize: '0.86rem',
                   padding: '8px 16px',
                   borderRadius: '6px',
                   border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: `0 0 10px ${borderColor}`,
+                  cursor: isArmed ? 'pointer' : 'not-allowed',
+                  boxShadow: isArmed ? `0 0 10px ${borderColor}` : 'none',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
-                  minHeight: '38px'
+                  minHeight: '38px',
+                  opacity: isArmed ? 1 : 0.65,
+                  transition: 'all 0.2s ease',
+                  pointerEvents: isArmed ? 'auto' : 'none'
                 }}
               >
-                {t('appraisalDilemma.acceptAction', { defaultValue: 'Confirm' })} ({rewardText})
+                {isArmed
+                  ? `${t('appraisalDilemma.acceptAction', { defaultValue: 'Confirm' })} (${rewardText})`
+                  : t('appraisalDilemma.armingPrompt', { defaultValue: 'Reviewing...' })}
               </button>
             </div>
           );

@@ -66,7 +66,16 @@ export const AuthenticEmploymentOffice: React.FC<AuthenticEmploymentOfficeProps>
 
   const employers = campaign.buildings.filter(b => campaign.jobs.some(j => j.locationId === b.id));
   const selectedBuilding = employers.find(b => b.id === selectedBldId);
-  const jobsForBld = selectedBldId ? campaign.jobs.filter(j => j.locationId === selectedBldId) : [];
+  const jobsForBld = selectedBldId
+    ? campaign.jobs
+        .filter(j => j.locationId === selectedBldId)
+        .sort((a, b) => {
+          if (a.baseWage !== b.baseWage) return a.baseWage - b.baseWage;
+          if (a.requirements.experience !== b.requirements.experience) return a.requirements.experience - b.requirements.experience;
+          if (a.requirements.dependability !== b.requirements.dependability) return a.requirements.dependability - b.requirements.dependability;
+          return a.id.localeCompare(b.id);
+        })
+    : [];
 
   const handleApply = async (job: any) => {
     if ((player.hoursRemaining ?? 0) < 4) {
