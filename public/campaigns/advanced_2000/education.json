@@ -59,7 +59,7 @@
     "tags": ["academic"],
     "prerequisites": ["graduate_school"],
     "baseTuitionFee": 60,
-    "lessonsRequired": 12,
+    "lessonsRequired": 10,
     "rewards": { "happiness": 10, "dependability": 10, "maxDepBoost": 10, "maxExpBoost": 10 }
   },
   {
@@ -95,7 +95,7 @@
     "tags": ["clinical"],
     "prerequisites": ["physiology", "biochemistry"],
     "baseTuitionFee": 60,
-    "lessonsRequired": 12,
+    "lessonsRequired": 10,
     "rewards": { "happiness": 10, "dependability": 10, "maxDepBoost": 10, "maxExpBoost": 10 }
   }
 ]

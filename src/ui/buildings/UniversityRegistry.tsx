@@ -54,9 +54,9 @@ export function UniversityRegistry({
     .filter(deg => deg.prerequisites.every(prereq => (player.degrees || []).includes(prereq)))
     .filter(deg => !(player.degrees || []).includes(deg.id));
 
-  const hasExtraCreditBonus = eligibleDegrees.some(deg => calcRequiredLessons(player, deg) < deg.lessonsRequired);
+  const hasExtraCreditBonus = eligibleDegrees.some(deg => calcRequiredLessons(player, deg, rules) < deg.lessonsRequired);
   const bonusLessonReduction = eligibleDegrees.length > 0 
-    ? Math.max(0, ...eligibleDegrees.map(deg => deg.lessonsRequired - calcRequiredLessons(player, deg)))
+    ? Math.max(0, ...eligibleDegrees.map(deg => deg.lessonsRequired - calcRequiredLessons(player, deg, rules)))
     : 0;
 
   return (
@@ -128,7 +128,7 @@ export function UniversityRegistry({
             }}
           >
             {eligibleDegrees.map(deg => {
-              const required = calcRequiredLessons(player, deg);
+              const required = calcRequiredLessons(player, deg, rules);
               const isEnrolled = player.enrolledClasses?.[deg.id] !== undefined;
               const lessonsCompleted = player.enrolledClasses?.[deg.id] || 0;
               const isClickableUnenrolled = !isEnrolled && enrolledCredits === 0;

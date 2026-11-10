@@ -1403,6 +1403,56 @@ describe('BuildingModal Component', () => {
     expect(screen.getByTestId('treatment-card-physical')).toBeInTheDocument();
     expect(screen.getByTestId('treatment-card-mental')).toBeInTheDocument();
   });
+
+  it('renders university classes with study button and bottom WORK button without content collapse when employed at university', () => {
+    const jobJanitor = {
+      id: 'job_uni_janitor',
+      title: 'Janitor',
+      baseWage: 6,
+      locationId: 'university',
+      requirements: { dependability: 10, experience: 0, degrees: [] }
+    };
+
+    const uniCampaign: CampaignBundle = {
+      ...mockCampaign,
+      jobs: [jobJanitor as any],
+      buildings: [
+        { id: 'university', name: 'University', description: 'Study and take classes', archetype: 'education' } as any
+      ],
+      education: [
+        { id: 'trade_school', name: 'Trade School', baseTuitionFee: 50, lessonsRequired: 10, prerequisites: [] } as any,
+        { id: 'life_sciences', name: 'Life Sciences Foundations', baseTuitionFee: 50, lessonsRequired: 10, prerequisites: [] } as any
+      ]
+    };
+
+    const { container } = render(
+      <BuildingModal
+        player={{
+          ...mockPlayer,
+          currentJobId: 'job_uni_janitor',
+          currentWage: 6,
+          hoursRemaining: 20,
+          enrolledClasses: { life_sciences: 5 }
+        }}
+        campaign={uniCampaign}
+        currentBuildingId="university"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, advancedWorkGUI: true, percentageEducation: true }}
+        onAction={vi.fn().mockResolvedValue({})}
+        onClose={vi.fn()}
+      />
+    );
+
+    // Both University study button, enroll button, and WORK toggle button must be present in the document
+    expect(screen.getByTestId('study-life_sciences')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-toggle-work')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-enroll')).toBeInTheDocument();
+
+    // Verify services container is flex: 1 0 auto (does not shrink below content)
+    const servicesContainer = container.querySelector('.building-modal__content > div');
+    expect(servicesContainer).toHaveStyle({ flex: '1 0 auto' });
+  });
 });
 
 

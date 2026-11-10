@@ -336,7 +336,7 @@ export function getGameSummary(
     if (degDef) {
       enrolledClasses[degId] = {
         completed: lessonsCompleted,
-        required: calcRequiredLessons(player, degDef),
+        required: calcRequiredLessons(player, degDef, state.rules),
         degreeName: degDef.name,
       }
     }
