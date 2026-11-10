@@ -342,13 +342,14 @@ export const GameSession: React.FC<GameSessionProps> = ({
   useEffect(() => {
     if (!gameState || !activePlayer) return;
     if (typeof window !== 'undefined') {
-      (window as any).__openBuilding = (buildingId: string) => {
+      (window as any).__openBuilding = (buildingId: string, playerOverrides?: any) => {
         const node = campaign?.map.nodes.find((n) => n.buildingId === buildingId);
         if (node && activePlayer) {
           const newPlayers = [...gameState.players];
           newPlayers[activePlayerIndex] = {
             ...activePlayer,
             position: node.id,
+            ...(playerOverrides || {})
           };
           setGameState({ ...gameState, players: newPlayers });
           openModal({ type: 'building' });
