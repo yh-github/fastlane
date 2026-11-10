@@ -277,7 +277,7 @@ export function buyItem(
         if (givesFastFoodSocial(item, rules) && mealCount > 1 && updated.hoursRemaining !== undefined) {
           updated.hoursRemaining = Math.max(0, updated.hoursRemaining - 1);
         }
-        if (rules?.enableCookingSystem && !player.turnFlags?.hasEaten) {
+        if (rules?.enableCookingSystem) {
           // In cooking system, eating at fast food restaurant immediately feeds player for this turn
           newTurnFlags.hasEaten = true;
           updated.nutritionTier = 'fast_food';
