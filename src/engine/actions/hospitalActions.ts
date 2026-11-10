@@ -280,7 +280,15 @@ export function handleHospitalCafeteriaAction(
   const isHospitalStaff = Boolean(
     context.rules.hospitalEmployeeHealthcare && nextPlayer.currentJobId?.startsWith('hospital_')
   );
-  const baseFee = isHospitalStaff ? 12 : 20;
+
+  if (!isHospitalStaff) {
+    return {
+      nextPlayer,
+      actionLog: { key: 'action.error.hospitalStaffOnly' }
+    };
+  }
+
+  const baseFee = 40;
   const price = calcEconomyPrice(baseFee, context.economicIndex);
 
   if (nextPlayer.money < price) {

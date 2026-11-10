@@ -1160,35 +1160,42 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(res.actionLog).toEqual(expect.objectContaining({ key: 'action.hospital.bloodDonationTooWeak' }));
     });
 
-    it('hospital cafeteria provides weekly food sustenance (+1 Phys, -2 Mental, $20 cost), with staff discount ($12)', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
-      player.hoursRemaining = 10;
-      player.money = 50;
-      player.physicalCondition = 30;
-      player.mentalCondition = 30;
-      player.inventory.fastFoodItems = [];
+    it('hospital cafeteria is restricted to hospital staff ($40 cost), non-staff is rejected', () => {
+      const nonStaff = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      nonStaff.hoursRemaining = 10;
+      nonStaff.money = 50;
+      nonStaff.physicalCondition = 30;
+      nonStaff.mentalCondition = 30;
+      nonStaff.inventory.fastFoodItems = [];
 
-      const res = gameReducer(player, { type: 'hospital_cafeteria' }, setupHospitalContext(player));
-      expect(res.updatedPlayer.hoursRemaining).toBe(9);
-      expect(res.updatedPlayer.money).toBe(30); // $50 - $20
-      expect(res.updatedPlayer.physicalCondition).toBe(31); // +1 Phys
-      expect(res.updatedPlayer.mentalCondition).toBe(28); // -2 Mental
-      expect(res.updatedPlayer.turnFlags.ateHospitalCafeteriaThisTurn).toBe(true);
-      expect(res.updatedPlayer.inventory.fastFoodItems).toHaveLength(1);
-      expect(res.updatedPlayer.inventory.fastFoodItems[0].itemId).toBe('hospital_tray');
+      // Non-staff attempt: rejected
+      const resNonStaff = gameReducer(nonStaff, { type: 'hospital_cafeteria' }, setupHospitalContext(nonStaff));
+      expect(resNonStaff.actionLog).toEqual(expect.objectContaining({ key: 'action.error.hospitalStaffOnly' }));
+      expect(resNonStaff.updatedPlayer.money).toBe(50);
+      expect(resNonStaff.updatedPlayer.inventory.fastFoodItems).toHaveLength(0);
 
-      // Staff discount test
+      // Staff test ($40 cost)
       const staff = createPlayerState('p2', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
-      staff.currentJobId = 'hospital_orderly';
+      staff.currentJobId = 'hospital_custodian';
       staff.hoursRemaining = 10;
       staff.money = 50;
+      staff.physicalCondition = 30;
+      staff.mentalCondition = 30;
+      staff.inventory.fastFoodItems = [];
 
       const resStaff = gameReducer(staff, { type: 'hospital_cafeteria' }, setupHospitalContext(staff));
-      expect(resStaff.updatedPlayer.money).toBe(38); // Paid $12
+      expect(resStaff.updatedPlayer.hoursRemaining).toBe(9);
+      expect(resStaff.updatedPlayer.money).toBe(10); // $50 - $40
+      expect(resStaff.updatedPlayer.physicalCondition).toBe(31); // +1 Phys
+      expect(resStaff.updatedPlayer.mentalCondition).toBe(28); // -2 Mental
+      expect(resStaff.updatedPlayer.turnFlags.ateHospitalCafeteriaThisTurn).toBe(true);
+      expect(resStaff.updatedPlayer.inventory.fastFoodItems).toHaveLength(1);
+      expect(resStaff.updatedPlayer.inventory.fastFoodItems[0].itemId).toBe('hospital_tray');
     });
 
-    it('prevents death spiral: broke player donates blood and buys cafeteria meal to avoid weekend starvation', () => {
+    it('prevents death spiral: broke hospital worker donates blood and buys cafeteria meal to avoid weekend starvation', () => {
       const brokePlayer = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      brokePlayer.currentJobId = 'hospital_custodian';
       brokePlayer.hoursRemaining = 10;
       brokePlayer.money = 0; // Completely broke!
       brokePlayer.physicalCondition = 25;
@@ -1202,9 +1209,9 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(afterBlood.updatedPlayer.money).toBe(40);
       expect(afterBlood.updatedPlayer.physicalCondition).toBe(22);
 
-      // 2. Buy cafeteria meal -> spend $20, have 1 food unit
+      // 2. Buy cafeteria meal -> spend $40, have 1 food unit
       const afterFood = gameReducer(afterBlood.updatedPlayer, { type: 'hospital_cafeteria' }, setupHospitalContext(afterBlood.updatedPlayer));
-      expect(afterFood.updatedPlayer.money).toBe(20);
+      expect(afterFood.updatedPlayer.money).toBe(0);
       expect(afterFood.updatedPlayer.inventory.fastFoodItems).toHaveLength(1);
 
       // 3. Process turn start: verify NO starvation event occurred!
@@ -1222,7 +1229,7 @@ describe('Advanced 2000 Campaign Features', () => {
       const nextPlayer = nextState.players[0];
 
       expect(nextPlayer.turnEvents.some(e => e.key === 'events.starvation')).toBe(false);
-      expect(nextPlayer.money).toBe(20); // Preserved remaining cash
+      expect(nextPlayer.money).toBe(0); // Spent $40 on cafeteria meal
     });
   });
 });

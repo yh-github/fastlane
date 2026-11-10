@@ -428,9 +428,23 @@ export function BuildingModal({
             }
 
             return (
-              <div style={{ marginBottom: '12px', padding: '10px 14px', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-color, #222)' }}>🕹️ {t('arcade.title', { defaultValue: 'Pirate Arcade Corner' })}</div>
+              <div 
+                className="arcade-corner"
+                style={{ 
+                  marginBottom: isContentOverflowing ? '6px' : '10px', 
+                  padding: isContentOverflowing ? '6px 10px' : '8px 12px', 
+                  background: 'rgba(245, 158, 11, 0.12)', 
+                  border: '1px solid rgba(245, 158, 11, 0.4)', 
+                  borderRadius: '6px', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  gap: '8px',
+                  flexShrink: 0
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-color, #222)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>🕹️ {t('arcade.title', { defaultValue: 'Pirate Arcade Corner' })}</div>
                   <div style={{ fontSize: '11px', opacity: 0.85, marginTop: '2px' }}>{benefitDisplay}</div>
                 </div>
                 <button
@@ -438,7 +452,7 @@ export function BuildingModal({
                   className="game-button btn-secondary"
                   disabled={player.hoursRemaining < 3 || player.money < 10}
                   onClick={() => handleActionIntercept({ type: 'play_arcade' })}
-                  style={{ whiteSpace: 'nowrap', padding: '6px 12px' }}
+                  style={{ whiteSpace: 'nowrap', padding: '6px 12px', flexShrink: 0 }}
                 >
                   Play Arcade (💰 $10)
                 </button>
@@ -1021,7 +1035,7 @@ export function BuildingModal({
         }}
       >
         {/* Full-width shop / services content */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: building.archetype === 'home' ? '0px' : '14px', flex: '1 1 auto', minHeight: 0, height: '100%', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: building.archetype === 'home' ? '0px' : '10px', flex: '1 1 auto', minHeight: 0 }}>
           {renderBuildingServices()}
         </div>
 

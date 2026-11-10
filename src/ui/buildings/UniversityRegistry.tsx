@@ -39,6 +39,7 @@ export function UniversityRegistry({
   const [showEnrollConfirm, setShowEnrollConfirm] = useState(false);
   const [actionAlert, setActionAlert] = useState<{ degreeId: string; type: 'mistake' | 'error'; message: string } | null>(null);
   const [mistakeDegreeId, setMistakeDegreeId] = useState<string | null>(null);
+  const [helpDegreeId, setHelpDegreeId] = useState<string | null>(null);
 
   const degreesList: EducationDef[] = availableDegrees || campaign?.education || (campaign as any)?.degrees || [];
   const rootDegrees = degreesList.filter((d: EducationDef) => d.prerequisites.length === 0);
@@ -165,7 +166,50 @@ export function UniversityRegistry({
                 >
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: compact ? '2px' : '4px' }}>
-                      <strong style={{ fontSize: compact ? '0.88rem' : '1rem' }}>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <strong style={{ fontSize: compact ? '0.88rem' : '1rem' }}>{t(`education.${deg.id}`, { defaultValue: deg.name })}</strong>
+                        {rules?.usePhysicalMentalConditions && (
+                          <button
+                            type="button"
+                            data-testid={`degree-help-${deg.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHelpDegreeId(deg.id);
+                            }}
+                            title="Course Standards & Mistake Info"
+                            style={{
+                              background: 'none',
+                              border: '1px solid rgba(255,255,255,0.2)',
+                              borderRadius: '50%',
+                              width: '16px',
+                              height: '16px',
+                              padding: 0,
+                              color: '#94a3b8',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              lineHeight: 1
+                            }}
+                          >
+                            ?
+                          </button>
+                        )}
+                      </div>
+                      {isEnrolled && (player.academicStrikes?.[deg.id] || 0) > 0 && (
+                        <span 
+                          data-testid={`class-strikes-${deg.id}`}
+                          style={{ 
+                            color: (player.academicStrikes?.[deg.id] || 0) >= 2 ? '#ef4444' : '#f59e0b', 
+                            fontSize: '0.78rem', 
+                            fontWeight: 'bold' 
+                          }}
+                          title={`${player.academicStrikes?.[deg.id] || 0}/3 Academic Strikes (3 strikes fails course)`}
+                        >
+                          ⚠️ {player.academicStrikes?.[deg.id]}/3
+                        </span>
+                      )}
                     </div>
                     
                     {isEnrolled && (
@@ -216,7 +260,7 @@ export function UniversityRegistry({
                               onClick={async () => {
                                 const res = await onAction({ type: 'study', degreeId: deg.id });
                                 const log = Array.isArray(res) ? res[0] : res;
-                                if (log?.key === 'action.education.mistake') {
+                                if (log?.key === 'action.education.failedCourse') {
                                   setMistakeDegreeId(deg.id);
                                   setTimeout(() => {
                                     setMistakeDegreeId(prev => (prev === deg.id ? null : prev));
@@ -224,7 +268,17 @@ export function UniversityRegistry({
                                   setActionAlert({
                                     degreeId: deg.id,
                                     type: 'mistake',
-                                    message: String(t('action.education.mistake', { defaultValue: 'Study mistake: lesson progress lost.', ...(log.params as any) }))
+                                    message: String(t('action.education.failedCourse', { defaultValue: 'Course failed: 3 academic strikes reached. Re-enrollment suspended until next week.', ...(log.params as any) }))
+                                  });
+                                } else if (log?.key === 'action.education.mistake') {
+                                  setMistakeDegreeId(deg.id);
+                                  setTimeout(() => {
+                                    setMistakeDegreeId(prev => (prev === deg.id ? null : prev));
+                                  }, 800);
+                                  setActionAlert({
+                                    degreeId: deg.id,
+                                    type: 'mistake',
+                                    message: String(t('action.education.mistake', { defaultValue: 'Study mistake: -10% progress lost and received a strike.', ...(log.params as any) }))
                                   });
                                 } else if (log?.key?.startsWith?.('action.error.')) {
                                   setActionAlert({
@@ -249,7 +303,7 @@ export function UniversityRegistry({
                                 let studyTierLabel = '';
 
                                 let depBonus = 0;
-                                const currentJob = campaign.jobs.find(j => j.id === player.currentJobId);
+                                const currentJob = campaign.jobs?.find(j => j.id === player.currentJobId);
                                 const hasAcademicFreedom = currentJob?.tags?.includes('academic_freedom');
 
                                 if (nextStudyAction >= studyOvertimeThresh) {
@@ -277,11 +331,25 @@ export function UniversityRegistry({
                                 const scaledPCost = roundToResolution(pCost * studyRatio, 0.5);
                                 const scaledDepBonus = roundToResolution(depBonus * studyRatio, 0.5);
 
+                                const caffeineBuffer = rules?.enableCaffeineSystem
+                                  ? Math.max(0, (player.turnFlags?.caffeineIntake || 0) - (player.caffeineTolerance || 0))
+                                  : 0;
                                 const curPhys = player.physicalCondition ?? 50;
                                 const curMental = player.mentalCondition ?? 50;
-                                const physChance = (curPhys < 10 && scaledPCost > 0) ? (10 - curPhys) * 2.5 : 0;
-                                const mentalChance = (curMental < 10 && scaledMCost > 0) ? (10 - curMental) * 2.5 : 0;
-                                const totalMistakeChance = physChance + mentalChance;
+                                const effectivePhys = Math.min(player.physicalConditionMax ?? 50, curPhys + caffeineBuffer);
+                                const effectiveMental = Math.min(player.mentalConditionMax ?? 50, curMental + caffeineBuffer);
+
+                                const basePhysThreshold = (campaign.config?.statRules as any)?.workMistakePhysicalThreshold ?? 10;
+                                const baseMentalThreshold = (campaign.config?.statRules as any)?.workMistakeMentalThreshold ?? 10;
+                                const effectiveMentalThreshold = baseMentalThreshold + (2 * prereqDepth);
+
+                                const physChance = (effectivePhys < basePhysThreshold && scaledPCost > 0) 
+                                  ? Math.min(100, Math.max(0, (basePhysThreshold - effectivePhys) * 2.5)) 
+                                  : 0;
+                                const mentalChance = (effectiveMental < effectiveMentalThreshold && scaledMCost > 0) 
+                                  ? Math.min(100, Math.max(0, (effectiveMentalThreshold - effectiveMental) * 2.5)) 
+                                  : 0;
+                                const totalMistakeChance = Math.min(100, physChance + mentalChance);
 
                                 return (
                                   <>
@@ -308,29 +376,53 @@ export function UniversityRegistry({
                             )}
                           </>
                         );
-                      })() : (
-                        <button 
-                          data-testid={`choose-class-${deg.id}`}
-                          data-action-target={`enroll-${deg.id}`}
-                          style={{ 
-                            width: '100%', 
-                            background: 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)', 
-                            color: '#000', 
-                            fontWeight: 'bold',
-                            border: '1px solid #2ecc71',
-                            borderRadius: '4px',
-                            padding: compact ? '4px 8px' : '6px 12px',
-                            fontSize: compact ? '0.82rem' : '0.90rem',
-                            cursor: 'pointer' 
-                          }} 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAction({ type: 'enroll', degreeId: deg.id });
-                          }} 
-                        >
-                          🎓 {t('university.chooseClassBtn', { defaultValue: 'Choose Class' })}
-                        </button>
-                      )}
+                      })() : (() => {
+                        const isSuspended = player.turnFlags?.failedClassesThisTurn?.includes(deg.id);
+                        if (isSuspended) {
+                          return (
+                            <button 
+                              data-testid={`choose-class-${deg.id}`}
+                              disabled={true}
+                              style={{ 
+                                width: '100%', 
+                                background: '#333', 
+                                color: '#888', 
+                                fontWeight: 'bold',
+                                border: '1px solid #555',
+                                borderRadius: '4px',
+                                padding: compact ? '4px 8px' : '6px 12px',
+                                fontSize: compact ? '0.82rem' : '0.90rem',
+                                cursor: 'not-allowed' 
+                              }} 
+                            >
+                              ❌ {t('university.classSuspended', { defaultValue: 'Suspended (Retake Next Week)' })}
+                            </button>
+                          );
+                        }
+                        return (
+                          <button 
+                            data-testid={`choose-class-${deg.id}`}
+                            data-action-target={`enroll-${deg.id}`}
+                            style={{ 
+                              width: '100%', 
+                              background: 'linear-gradient(180deg, #2ecc71 0%, #27ae60 100%)', 
+                              color: '#000', 
+                              fontWeight: 'bold',
+                              border: '1px solid #2ecc71',
+                              borderRadius: '4px',
+                              padding: compact ? '4px 8px' : '6px 12px',
+                              fontSize: compact ? '0.82rem' : '0.90rem',
+                              cursor: 'pointer' 
+                            }} 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAction({ type: 'enroll', degreeId: deg.id });
+                            }} 
+                          >
+                            🎓 {t('university.chooseClassBtn', { defaultValue: 'Choose Class' })}
+                          </button>
+                        );
+                      })()}
                     </div>
                   )}
                   </div>
@@ -459,6 +551,89 @@ export function UniversityRegistry({
         );
 
         return modalParent ? createPortal(confirmDialog, modalParent) : confirmDialog;
+      })()}
+
+      {/* Course Info & Academic Standards Help Modal */}
+      {helpDegreeId && (() => {
+        const targetDeg = degreesList.find(d => d.id === helpDegreeId);
+        if (!targetDeg) return null;
+        const prereqDepth = getPrerequisiteChainDepth(targetDeg.id, campaign.education);
+        const baseMentalThreshold = (campaign.config?.statRules as any)?.workMistakeMentalThreshold ?? 10;
+        const effectiveThreshold = baseMentalThreshold + (2 * prereqDepth);
+        const currentStrikes = player.academicStrikes?.[targetDeg.id] || 0;
+
+        const helpModal = (
+          <div
+            data-testid="academic-standards-modal"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(5, 5, 16, 0.95)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px',
+              zIndex: 100,
+              borderRadius: '12px',
+              textAlign: 'left',
+              backdropFilter: 'blur(4px)'
+            }}
+          >
+            <div style={{ maxWidth: '380px', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <h3 style={{ margin: 0, color: 'var(--accent-cyan, #00e5ff)', fontSize: '1.1rem' }}>
+                  📚 {targetDeg.name} (Tier {prereqDepth})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setHelpDegreeId(null)}
+                  style={{ background: 'none', border: 'none', color: '#888', fontSize: '1.2rem', cursor: 'pointer', padding: '0 4px' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ fontSize: '0.85rem', color: '#ddd', lineHeight: 1.45, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 12px', borderRadius: '6px' }}>
+                  <div style={{ fontWeight: 'bold', color: '#38bdf8', marginBottom: '3px' }}>
+                    🧠 Cognitive Rigor
+                  </div>
+                  <div>
+                    Mistakes trigger below <strong>{effectiveThreshold} Mental</strong> (Base {baseMentalThreshold} + {2 * prereqDepth} Tier difficulty).
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>
+                    ☕ Coffee & espresso provide an acute buffer against cognitive mistakes.
+                  </div>
+                </div>
+
+                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 12px', borderRadius: '6px' }}>
+                  <div style={{ fontWeight: 'bold', color: '#f59e0b', marginBottom: '3px' }}>
+                    ⚠️ Academic Standards ({currentStrikes}/3 Strikes)
+                  </div>
+                  <div>
+                    Each study mistake loses <strong>10% progress</strong> (floored at 0%) and adds <strong>1 Strike</strong>.
+                  </div>
+                  <div style={{ fontSize: '0.80rem', color: '#ef4444', marginTop: '5px' }}>
+                    3 Strikes results in course failure: progress is wiped, tuition is forfeit, and re-enrollment is suspended until next week.
+                  </div>
+                </div>
+              </div>
+
+              <button
+                className="action-panel__btn"
+                type="button"
+                data-testid="btn-close-academic-help"
+                onClick={() => setHelpDegreeId(null)}
+                style={{ width: '100%', marginTop: '16px', padding: '8px 0', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                {t('common.close', { defaultValue: 'Close' })}
+              </button>
+            </div>
+          </div>
+        );
+
+        return modalParent ? createPortal(helpModal, modalParent) : helpModal;
       })()}
     </div>
   );

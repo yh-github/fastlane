@@ -308,6 +308,23 @@
     ]
   },
   {
+    "id": "qt_janitor",
+    "title": "Janitor",
+    "locationId": "qt_clothing",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 10,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "perks": [],
+    "tags": [
+      "always_hiring",
+      "heavy_physical"
+    ]
+  },
+  {
     "id": "qt_salesperson",
     "title": "Salesperson",
     "locationId": "qt_clothing",
@@ -375,6 +392,22 @@
     "tags": [
       "frontline_service",
       "high_downtime"
+    ]
+  },
+  {
+    "id": "socket_clerk",
+    "title": "Clerk",
+    "locationId": "socket_city",
+    "baseWage": 6,
+    "requirements": {
+      "experience": 10,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "perks": [],
+    "tags": [
+      "frontline_service"
     ]
   },
   {
@@ -678,39 +711,6 @@
     "tags": [
       "frontline_service",
       "high_downtime"
-    ]
-  },
-  {
-    "id": "qt_janitor",
-    "title": "Janitor",
-    "locationId": "qt_clothing",
-    "baseWage": 6,
-    "requirements": {
-      "experience": 10,
-      "dependability": 20,
-      "degrees": [],
-      "uniform": "casual"
-    },
-    "perks": [],
-    "tags": [
-      "always_hiring",
-      "heavy_physical"
-    ]
-  },
-  {
-    "id": "socket_clerk",
-    "title": "Clerk",
-    "locationId": "socket_city",
-    "baseWage": 6,
-    "requirements": {
-      "experience": 10,
-      "dependability": 20,
-      "degrees": [],
-      "uniform": "casual"
-    },
-    "perks": [],
-    "tags": [
-      "frontline_service"
     ]
   },
   {

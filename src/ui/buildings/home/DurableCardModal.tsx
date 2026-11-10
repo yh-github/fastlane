@@ -482,6 +482,20 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
                                 ? '🏺 CURIO'
                                 : '🛋️ APPLIANCE')))))));
 
+  const fallbackEmoji = isCoffee
+    ? '☕'
+    : (itemDef?.category === 'food'
+        ? (itemDef.subcategory === 'fast_food' ? '🍔' : '🥗')
+        : (itemDef?.category === 'clothes'
+            ? '👔'
+            : (itemDef?.category === 'book'
+                ? '📚'
+                : (itemDef?.category === 'ticket'
+                    ? '🎟️'
+                    : (isSpareParts
+                        ? '⚙️'
+                        : (isCurio ? '🏺' : '🛋️'))))));
+
   return createPortal(
     <div 
       data-testid="durable-card-modal-backdrop"
@@ -608,19 +622,34 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
           {isWardrobe ? (
             <span style={{ fontSize: '1.8rem' }}>👔</span>
           ) : (
-            <img 
-              src={itemId === 'crt_tv' ? '/assets/raw_images/color_tv.png' : `/assets/raw_images/${itemId}.png`} 
-              alt={itemName}
-              style={{ 
-                maxWidth: '40px', 
-                maxHeight: '40px', 
-                objectFit: 'contain',
-                filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.7))'
-              }}
-              onError={(e) => { 
-                (e.target as HTMLImageElement).style.display = 'none'; 
-              }}
-            />
+            <>
+              <img 
+                src={itemId === 'crt_tv' ? '/assets/raw_images/color_tv.png' : `/assets/raw_images/${itemId}.png`} 
+                alt={itemName}
+                style={{ 
+                  maxWidth: '40px', 
+                  maxHeight: '40px', 
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.7))'
+                }}
+                onError={(e) => { 
+                  const target = e.target as HTMLElement;
+                  target.style.display = 'none'; 
+                  if (target.nextElementSibling) {
+                    (target.nextElementSibling as HTMLElement).style.display = 'inline-block';
+                  }
+                }}
+              />
+              <span 
+                style={{ 
+                  display: (isCoffee || !itemDef) ? 'inline-block' : 'none', 
+                  fontSize: '1.8rem',
+                  lineHeight: 1
+                }}
+              >
+                {fallbackEmoji}
+              </span>
+            </>
           )}
         </div>
 
@@ -646,19 +675,23 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
           )}
         </div>
 
-        {/* Gameplay Narrative (Home Apartment Inspection) */}
-        {!isShop && getGameplayDescription(itemId, rules, isBook) && (
-          <p style={{
-            fontSize: '0.74rem',
-            lineHeight: '1.35',
-            color: '#cbd5e1',
-            textAlign: 'center',
-            margin: 0,
-            padding: '0 2px'
-          }}>
-            {getGameplayDescription(itemId, rules, isBook)}
-          </p>
-        )}
+        {/* Gameplay Narrative Description */}
+        {(() => {
+          const desc = itemDef?.description || getGameplayDescription(itemId, rules, isBook);
+          if (!desc) return null;
+          return (
+            <p style={{
+              fontSize: '0.74rem',
+              lineHeight: '1.35',
+              color: '#cbd5e1',
+              textAlign: 'center',
+              margin: 0,
+              padding: '0 2px'
+            }}>
+              {desc}
+            </p>
+          );
+        })()}
 
         {/* Specs & Effect Chips */}
         <div style={{

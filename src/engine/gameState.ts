@@ -223,6 +223,8 @@ export interface PlayerState {
   degrees: string[];
   /** Classes currently being studied (mapped to lessons completed) */
   enrolledClasses: Record<string, number>;
+  /** Academic strikes accumulated per enrolled class (3 strikes = course failure) */
+  academicStrikes?: Record<string, number>;
   /** Number of prepaid enrollment credits available to enroll in classes */
   enrolledCredits?: number;
 
@@ -583,6 +585,8 @@ export interface TurnFlags {
   mentalDropsThisTurn?: number;
   /** Locations the player was fired from this turn (causes probation penalty) */
   firedLocationsThisTurn?: string[];
+  /** Degrees failed this turn (blocks re-enrollment until next turn) */
+  failedClassesThisTurn?: string[];
   /** Work mistakes made this turn */
   workMistakesThisTurn?: number;
   /** Whether curio purchase novelty mental bonus (+1) was already granted this turn */

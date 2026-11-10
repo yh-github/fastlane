@@ -12,26 +12,38 @@ interface WeekendScreenProps {
   onStartWeek: () => void;
   onSelectCard?: (cardId: string) => void;
   rules?: GameRules;
+  armDelayMs?: number;
 }
 
-export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }: WeekendScreenProps) {
-  if (rules?.guiStyle === 'authentic') {
-    return (
-      <AuthenticWeekendScreen
-        player={player}
-        turn={turn}
-        onStartWeek={onStartWeek}
-        onSelectCard={onSelectCard}
-        rules={rules}
-      />
-    );
+export function WeekendScreen(props: WeekendScreenProps) {
+  if (props.rules?.guiStyle === 'authentic') {
+    return <AuthenticWeekendScreen {...props} />;
   }
+  return <GeneratedWeekendScreen {...props} />;
+}
 
+function GeneratedWeekendScreen({ player, turn, onStartWeek, onSelectCard, rules, armDelayMs }: WeekendScreenProps) {
   const { t } = useTranslation();
   const offeredCards = player.offeredWeekendCards || [];
   const isSelectionMode = offeredCards.length > 0 && !player.weekendResult;
   const [selectedCardId, setSelectedCardId] = useState<string>(offeredCards[0]?.id || '');
   const [showBreakdownModal, setShowBreakdownModal] = useState(false);
+
+  const effectiveArmDelay = armDelayMs !== undefined
+    ? armDelayMs
+    : ((typeof process !== 'undefined' && process.env.NODE_ENV === 'test') ? 0 : 450);
+
+  const [isArmed, setIsArmed] = useState<boolean>(() => effectiveArmDelay <= 0);
+
+  useEffect(() => {
+    if (effectiveArmDelay <= 0) {
+      setIsArmed(true);
+      return;
+    }
+    setIsArmed(false);
+    const timer = setTimeout(() => setIsArmed(true), effectiveArmDelay);
+    return () => clearTimeout(timer);
+  }, [effectiveArmDelay]);
 
   const isHelpfulUI = rules?.helpfulUI ?? true;
 
@@ -110,6 +122,7 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
   // ───────────────────────────────────────────────────────────────────────────
   if (isSelectionMode) {
     const handleConfirm = (cardId: string) => {
+      if (!isArmed) return;
       if (onSelectCard) {
         onSelectCard(cardId);
       }
@@ -224,23 +237,30 @@ export function WeekendScreen({ player, turn, onStartWeek, onSelectCard, rules }
                 : t('weekendScreen.selectedPrompt', { defaultValue: 'Ready to commit your plans?' })}
             </span>
             <button
+              data-testid="btn-lock-in-weekend"
+              disabled={!isArmed}
               onClick={() => handleConfirm(selectedCardId)}
               style={{
                 padding: isCompact ? '8px 18px' : '10px 24px',
                 fontSize: isCompact ? '0.9rem' : '1rem',
                 minHeight: isCompact ? '38px' : '42px',
-                cursor: 'pointer',
-                backgroundColor: '#00e5ff',
-                color: '#000',
+                cursor: isArmed ? 'pointer' : 'not-allowed',
+                backgroundColor: isArmed ? '#00e5ff' : '#475569',
+                color: isArmed ? '#000' : '#cbd5e1',
                 border: 'none',
                 borderRadius: '8px',
                 fontWeight: 'bold',
-                boxShadow: '0 0 10px #00e5ff',
+                boxShadow: isArmed ? '0 0 10px #00e5ff' : 'none',
                 whiteSpace: 'nowrap',
-                flexShrink: 0
+                flexShrink: 0,
+                opacity: isArmed ? 1 : 0.65,
+                transition: 'all 0.15s ease',
+                pointerEvents: isArmed ? 'auto' : 'none'
               }}
             >
-              {t('weekendScreen.confirmSelection', { defaultValue: 'Lock In Weekend' })}
+              {isArmed
+                ? t('weekendScreen.confirmSelection', { defaultValue: 'Lock In Weekend' })
+                : t('appraisalDilemma.armingPrompt', { defaultValue: 'Reviewing...' })}
             </button>
           </div>
         )}

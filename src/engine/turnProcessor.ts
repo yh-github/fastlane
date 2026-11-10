@@ -44,6 +44,7 @@ function resetCommonTurnState(player: PlayerState, state: GameState, campaign: C
     loanPayableWarning: false,
     mentalDropsThisTurn: 0,
     firedLocationsThisTurn: [],
+    failedClassesThisTurn: [],
     workMistakesThisTurn: 0,
     jobsRejectedThisTurn: [],
     fastFoodMealsThisTurn: 0,

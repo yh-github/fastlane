@@ -1392,11 +1392,16 @@ describe('BuildingModal Component', () => {
     expect(screen.getByText('👩‍⚕️')).toBeInTheDocument();
     expect(screen.getByText(/City General Hospital/i)).toBeInTheDocument();
 
-    // 4 Hospital services
-    expect(screen.getByText(/Walk-in Urgent Care/i)).toBeInTheDocument();
-    expect(screen.getByText(/Psychiatric Counseling/i)).toBeInTheDocument();
+    // Hospital services
+    const treatmentsBtn = screen.getByTestId('btn-open-treatments');
+    expect(treatmentsBtn).toBeInTheDocument();
     expect(screen.getByText(/Emergency Blood Donation/i)).toBeInTheDocument();
     expect(screen.getByText(/Basement Cafeteria/i)).toBeInTheDocument();
+
+    // Clicking treatments opens the cards modal with physical and mental care
+    fireEvent.click(treatmentsBtn);
+    expect(screen.getByTestId('treatment-card-physical')).toBeInTheDocument();
+    expect(screen.getByTestId('treatment-card-mental')).toBeInTheDocument();
   });
 });
 

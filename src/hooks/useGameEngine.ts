@@ -643,6 +643,7 @@ export function useGameEngine(
           if (
             log.key === 'action.job.mistake' ||
             log.key === 'action.education.mistake' ||
+            log.key === 'action.education.failedCourse' ||
             log.key === 'action.job.firedMistakes' ||
             log.key === 'action.rent.renegotiateMistake'
           ) {
@@ -654,7 +655,8 @@ export function useGameEngine(
               } else if (payload.type === 'work') {
                 sourceId = payload.mode ? `work-mode-${payload.mode}` : (payload.jobId ? `work-${payload.jobId}` : 'btn-work');
               }
-              triggerAnim('text', '💥 MISTAKE!', { customClass: 'anim-mistake', sourceId });
+              const animText = log.key === 'action.education.failedCourse' ? '❌ COURSE FAILED!' : '💥 MISTAKE!';
+              triggerAnim('text', animText, { customClass: 'anim-mistake', sourceId });
             }
           } else if (log.key?.startsWith('action.job.innovateCap')) {
             if (prevState.rules.enableAnimations) {

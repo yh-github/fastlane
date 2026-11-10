@@ -113,7 +113,8 @@
       "creditPurchased": "נרכשה נקודת זכות להרשמה לאוניברסיטה. נקודות זמינות: {{credits}}",
       "graduated": "סיימת בהצטיינות {{name}}!{{stats}}",
       "studied": "למדת עבור {{name}} ({{current}}/{{required}}){{stats}}",
-      "mistake": "שגית במהלך הלימודים ב-{{name}} ({{type}})! ההתקדמות נמחקה{{stats}}"
+      "mistake": "שגית במהלך הלימודים ב-{{name}} ({{type}})! איבדת 10% התקדמות וקיבלת אזהרה אקדמית ({{strikes}}/3){{stats}}",
+      "failedCourse": "נכשלת בקורס! הגעת ל-3 אזהרות אקדמיות ב-{{name}}. ההתקדמות אופסה ושכר הלימוד אבד.{{stats}}"
     },
     "job": {
       "worked": "עבדת ב{{title}} והרווחת {{wagesEarned}}${{stats}}",
@@ -238,6 +239,7 @@
       "alreadyAteCafeteria": "כבר אכלת בקפיטריה השבוע."
     },
     "error": {
+      "hospitalStaffOnly": "קפיטריית בית החולים מיועדת לעובדי בית החולים בלבד.",
       "needStove": "דרושים כיריים תקינים כדי לבשל ארוחה ביתית!",
       "needMicrowave": "דרוש מיקרוגל תקין כדי לחמם ארוחה במיקרוגל!",
       "noFreshFood": "אין לך מצרכים טריים לבישול!",
@@ -260,6 +262,7 @@
       "notEnoughTimeWork": "אין מספיק שעות שנותרו בתור זה למשמרת עבודה (דרושות {{cost}} שעות, נותרו לך {{remaining}} שעות).",
       "missingPrereq": "דרישות קדם חסרות: {{prereq}}",
       "notEnoughMoneyTuition": "אין מספיק כסף לשכר לימוד.",
+      "classFailedThisTurn": "נכשלת בקורס השבוע! הושעית מ-{{name}} עד לשבוע הבא.",
       "alreadyHaveDegree": "כבר יש לך תואר זה.",
       "cannotStudy": "לא ניתן ללמוד זאת.",
       "notEnoughMoneyBuyBack": "אין מספיק כסף לקנות בחזרה.",
@@ -524,8 +527,13 @@
     "restDesc": "שב לנוח על ספסל בפארק (⏳ 3- שעות • 2+ 💪 • 1+ 🧠 • ללא צורך באוכל/לכלוך)"
   },
   "hospital": {
-    "staffPerkActive": "הטבת עובד בית חולים: 50% הנחה על טיפול דחוף וייעוץ, 40% הנחה בקפיטריה!",
+    "staffPerkActive": "הטבת עובד בית חולים: 50% הנחה על טיפולים דחופים וייעוץ, וגישה בלעדית לקפיטריית הצוות!",
     "staffRate": "תעריף עובד",
+    "treatmentsBtn": "טיפולים רפואיים ופסיכיאטריים...",
+    "treatmentsModalTitle": "טיפולים קליניים בבית החולים",
+    "treatmentsModalSubtitle": "בחר בין טיפול חירום ושיקום גופני לבין ייעוץ פסיכיאטרי.",
+    "treatmentsNeitherBtn": "אף אחד מהם (סגור)",
+    "staffOnlyCafeteria": "לעובדי בית חולים בלבד (דרושה עבודה בבית החולים)",
     "urgentCareTitle": "מרפאה דחופה / מיון",
     "urgentCareBtn": "קבל טיפול",
     "urgentCareCriticalPreview": "טריאז' קריטי: עירוי חירום וייצוב (+8 עד +12 כושר גופני, תיקון מקס' גופני)",
@@ -903,6 +911,8 @@
     "enrollConfirmTitle": "הרשמה לאוניברסיטה",
     "enrollConfirmMsg": "האם להירשם לאוניברסיטה בעלות של ${{fee}}? תקבל נקודת זכות אחת לבחירת כל קורס זמין.",
     "confirmEnroll": "הירשם (${{fee}})",
+    "classSuspended": "מושעה (ניתן להירשם שוב בשבוע הבא)",
+    "academicPolicyTitle": "תקנון אקדמי וסטנדרטים לימודיים",
     "availableStatus": "זמין"
   },
   "job": {
@@ -1076,6 +1086,7 @@
     "subtitle": "לקוח הביא להערכה:",
     "parkTitle": "מפגש בפארק",
     "parkSubtitle": "בחר כיצד לבלות את זמנך בפארק:",
+    "armingPrompt": "בודק אפשרויות...",
     "redrawButton": "סיעור מוחות ליוזמות אחרות (⏳ שעה אחת, -1.0 🧠)",
     "option_cash": {
       "title": "עמלת מזומן מהירה",

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StatModification, GameRules } from '../engine/gameState';
 import { StatModifierPills } from './StatModifierPills';
@@ -10,30 +11,51 @@ interface StreetRobberyModalProps {
   modifications?: StatModification[];
   isHelpfulUI?: boolean;
   rules?: GameRules;
+  armDelayMs?: number;
 }
 
-export function StreetRobberyModal({
+export function StreetRobberyModal(props: StreetRobberyModalProps) {
+  if (props.rules?.guiStyle === 'authentic') {
+    return (
+      <AuthenticStreetRobberyModal
+        lostAmount={props.lostAmount}
+        location={props.location}
+        onClose={props.onClose}
+        modifications={props.modifications}
+        isHelpfulUI={props.isHelpfulUI}
+      />
+    );
+  }
+  return <GeneratedStreetRobberyModal {...props} />;
+}
+
+function GeneratedStreetRobberyModal({
   lostAmount,
   location,
   onClose,
   modifications,
   isHelpfulUI = true,
-  rules,
+  rules: _rules,
+  armDelayMs,
 }: StreetRobberyModalProps) {
-  if (rules?.guiStyle === 'authentic') {
-    return (
-      <AuthenticStreetRobberyModal
-        lostAmount={lostAmount}
-        location={location}
-        onClose={onClose}
-        modifications={modifications}
-        isHelpfulUI={isHelpfulUI}
-      />
-    );
-  }
-
   const { t } = useTranslation();
   
+  const effectiveArmDelay = armDelayMs !== undefined
+    ? armDelayMs
+    : ((typeof process !== 'undefined' && process.env.NODE_ENV === 'test') ? 0 : 350);
+
+  const [isArmed, setIsArmed] = useState<boolean>(() => effectiveArmDelay <= 0);
+
+  useEffect(() => {
+    if (effectiveArmDelay <= 0) {
+      setIsArmed(true);
+      return;
+    }
+    setIsArmed(false);
+    const timer = setTimeout(() => setIsArmed(true), effectiveArmDelay);
+    return () => clearTimeout(timer);
+  }, [effectiveArmDelay]);
+
   const locationName = t(`building.${location}`, { defaultValue: location });
 
   const effectiveModifications: StatModification[] = modifications && modifications.length > 0
@@ -90,21 +112,32 @@ export function StreetRobberyModal({
           <StatModifierPills modifications={effectiveModifications} isHelpfulUI={isHelpfulUI} />
         </div>
         <button 
-          onClick={onClose}
+          data-testid="street-robbery-ok-btn"
+          disabled={!isArmed}
+          onClick={() => {
+            if (!isArmed) return;
+            onClose();
+          }}
           style={{
-            backgroundColor: '#e74c3c',
-            color: '#fff',
+            backgroundColor: isArmed ? '#e74c3c' : '#475569',
+            color: isArmed ? '#fff' : '#cbd5e1',
             border: 'none',
             padding: '12px 24px',
             borderRadius: '6px',
             fontSize: '1em',
             fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-            transition: 'background-color 0.2s'
+            cursor: isArmed ? 'pointer' : 'not-allowed',
+            boxShadow: isArmed ? '0 4px 6px rgba(0,0,0,0.2)' : 'none',
+            transition: 'all 0.2s',
+            opacity: isArmed ? 1 : 0.65,
+            pointerEvents: isArmed ? 'auto' : 'none'
           }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#c0392b'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#e74c3c'}
+          onMouseOver={(e) => {
+            if (isArmed) e.currentTarget.style.backgroundColor = '#c0392b';
+          }}
+          onMouseOut={(e) => {
+            if (isArmed) e.currentTarget.style.backgroundColor = '#e74c3c';
+          }}
         >
           OK
         </button>

@@ -21,7 +21,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
   const clothesRule = getClothesSwitchingRule(rules);
 
   return (
-    <div className="interaction-panel store-front-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <div className="interaction-panel store-front-panel" style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0 }}>
       {sellsClothes && clothesRule !== 'autoBest' && (
         <div 
           className="fitting-room-panel" 
@@ -70,9 +70,8 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
         className="store-front-grid"
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', 
           gap: '8px', 
-          overflowY: 'auto', 
           padding: '2px 4px' 
         }}
       >
@@ -142,9 +141,23 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
             blockedTooltip = !hasTime ? 'Not enough time (Costs 1 hour for 2nd+ fast food meal)' : (!hasSpace ? `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)` : undefined);
           }
 
+          const isCoffeeItem = Boolean(
+            item.category === 'coffee' ||
+            item.subcategory === 'coffee' ||
+            item.id === 'drip_coffee' ||
+            item.id === 'espresso' ||
+            item.id === 'double_shot'
+          );
+          const shouldOpenCard = Boolean(
+            rules?.helpfulUI ||
+            rules?.usePhysicalMentalConditions ||
+            rules?.versionClass === 'advanced' ||
+            isCoffeeItem
+          );
+
           const handleClick = () => {
-            if (!canBuy && !rules?.helpfulUI) return;
-            if (rules?.helpfulUI) {
+            if (!canBuy && !shouldOpenCard) return;
+            if (shouldOpenCard) {
               setModalItem(item);
             } else {
               onAction({ type: 'buy', itemId: item.id });
@@ -182,9 +195,25 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                     src={`/assets/raw_images/${item.id}.png`} 
                     alt={item.name} 
                     style={{ width: '28px', height: '28px', objectFit: 'contain', flexShrink: 0 }}
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    onError={(e) => { 
+                      const target = e.target as HTMLElement;
+                      target.style.display = 'none';
+                      if (target.nextElementSibling) {
+                        (target.nextElementSibling as HTMLElement).style.display = 'inline-block';
+                      }
+                    }}
                   />
                 )}
+                <span
+                  style={{
+                    display: rules?.showItemImages ? 'none' : 'inline-block',
+                    fontSize: '18px',
+                    lineHeight: 1,
+                    flexShrink: 0
+                  }}
+                >
+                  {isCoffeeItem ? '☕' : (item.category === 'food' ? '🍔' : (item.category === 'clothes' ? '👔' : (item.category === 'book' ? '📚' : (item.category === 'ticket' ? '🎟️' : '📦'))))}
+                </span>
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
                   <span style={{ fontSize: '13px', fontWeight: '500', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {getItemDisplayName(item.id, item, t, !!rules?.usePhysicalMentalConditions, !!rules?.advancedStores)}
