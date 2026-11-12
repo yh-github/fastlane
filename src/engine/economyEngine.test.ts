@@ -135,7 +135,7 @@ describe('Economy Engine', () => {
       expect(updated.turnEvents.some(e => e.key === 'events.marketCrash.bankSavingsLost')).toBe(true);
     });
 
-    it('shields player from market crash layoffs if they hold 2+ merits at their workplace in advanced mode', () => {
+    it('shields player from market crash layoffs if they hold 2+ merits in advanced mode by reducing firing to a pay cut', () => {
       vi.spyOn(Random.prototype, 'next').mockReturnValue(0.01); // Would normally trigger firing
       const mockCampaign = {
         jobs: [{ id: 'clerk', locationId: 'zmart' }]
@@ -146,24 +146,37 @@ describe('Economy Engine', () => {
         money: 1000,
         bankSavings: 500,
         happiness: 50,
+        mentalCondition: 50,
         currentJobId: 'clerk',
         currentWage: 20,
         initiativesByLocation: { zmart: 2 },
         inventory: { stocks: { tBills: 0, holdings: {} } }
       } as unknown as PlayerState;
 
-      // Moderate crash: spared from firing
+      // Moderate crash: spared from firing -> reduced to "just" a pay cut!
       const moderateUpdated = applyMarketCrash(player, 'moderate', new Random(1), undefined, advancedRules, undefined, mockCampaign);
       expect(moderateUpdated.currentJobId).toBe('clerk');
+      expect(moderateUpdated.currentWage).toBe(16); // 20 * 0.8 = 16
+      expect(moderateUpdated.mentalCondition).toBe(45); // 50 - 2 (moderate crash) - 3 (pay cut) = 45
       expect(moderateUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobSparedMerits')).toBe(true);
       expect(moderateUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobLost')).toBe(false);
 
-      // Major crash: savings wiped, but job is shielded by merits!
+      // Major crash: savings wiped, but job is shielded by merits by reducing to a pay cut!
       const majorUpdated = applyMarketCrash(player, 'major', new Random(1), undefined, advancedRules, undefined, mockCampaign);
       expect(majorUpdated.currentJobId).toBe('clerk');
+      expect(majorUpdated.currentWage).toBe(16); // 20 * 0.8 = 16
+      expect(majorUpdated.mentalCondition).toBe(44); // 50 - 3 (major crash) - 3 (pay cut) = 44
       expect(majorUpdated.bankSavings).toBe(0);
       expect(majorUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobSparedMerits')).toBe(true);
       expect(majorUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobLost')).toBe(false);
+
+      // Direct pay cut branch: merits do NOT protect from "just" pay cuts!
+      vi.spyOn(Random.prototype, 'next').mockReturnValue(0.75); // Pay cut branch
+      const payCutUpdated = applyMarketCrash(player, 'moderate', new Random(1), undefined, advancedRules, undefined, mockCampaign);
+      expect(payCutUpdated.currentJobId).toBe('clerk');
+      expect(payCutUpdated.currentWage).toBe(16); // 20 * 0.8 = 16
+      expect(payCutUpdated.turnEvents.some(e => e.key === 'events.marketCrash.wageCut')).toBe(true);
+      expect(payCutUpdated.turnEvents.some(e => e.key === 'events.marketCrash.jobSparedMerits')).toBe(false);
     });
   });
 

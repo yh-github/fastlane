@@ -205,9 +205,10 @@ export function handleResolveAppraisalDilemmaAction(
   } else if (choice.type === 'park_encounter') {
     const res = applyParkCardEffects(nextPlayer, choice, context);
     nextPlayer = res.nextPlayer;
+    const isHazard = choice.cardId?.startsWith('hazard_');
     actionLog = {
-      key: 'action.park.cardResolved',
-      params: { title: choice.title },
+      key: isHazard ? 'events.park.hazard' : 'action.park.cardResolved',
+      params: { title: choice.title, desc: choice.description },
       modifications: res.modifications
     };
   }
