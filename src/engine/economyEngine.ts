@@ -608,7 +608,10 @@ export function applyMarketCrash(
     if (updated.currentJobId !== null) {
       if (rng.next() < 0.5) {
         if (hasMeritShield) {
+          // In Advanced mode: Merits reduce firing to "just" a pay cut (keeps job, but wage reduced to 80% with -3 happiness penalty)
           updated.turnEvents.push({ key: 'events.marketCrash.jobSparedMerits' });
+          updated.currentWage = Math.max(1, Math.floor(updated.currentWage * 0.8));
+          updated = applyHappinessChange(updated, -3, 'market_crash', rules || ({} as any), statRules);
         } else {
           updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
           updated.currentJobId = null;
@@ -619,6 +622,7 @@ export function applyMarketCrash(
         }
       } else {
         // Pay cut to 80% with authentic -3 happiness penalty (Sierra script 111 L1046) and minimum wage of $1 (script 1 L1016)
+        // Merit shield does NOT protect from direct pay cuts
         updated.turnEvents.push({ key: 'events.marketCrash.wageCut' });
         updated.currentWage = Math.max(1, Math.floor(updated.currentWage * 0.8));
         updated = applyHappinessChange(updated, -3, 'market_crash', rules || ({} as any), statRules);
@@ -637,10 +641,12 @@ export function applyMarketCrash(
     }
     updated = applyHappinessChange(updated, hasSignificantStocks ? -8 : -3, 'market_crash', rules || ({} as any), statRules);
     
-    // 100% chance to lose job (unless shielded by 2+ merits in advanced mode)
+    // 100% chance to lose job (unless shielded by 2+ merits in advanced mode, which reduces it to a pay cut)
     if (updated.currentJobId !== null) {
       if (hasMeritShield) {
         updated.turnEvents.push({ key: 'events.marketCrash.jobSparedMerits' });
+        updated.currentWage = Math.max(1, Math.floor(updated.currentWage * 0.8));
+        updated = applyHappinessChange(updated, -3, 'market_crash', rules || ({} as any), statRules);
       } else {
         updated.turnEvents.push({ key: 'events.marketCrash.jobLost' });
         updated.currentJobId = null;
