@@ -408,7 +408,9 @@ export function processAdvancedMaintenanceAndDecay(
   const workedLastTurn = previousPlayer
     ? (Boolean(previousPlayer.turnFlags?.hasWorked) || (previousPlayer.workActionsThisTurn || 0) > 0)
     : false;
-  const isAbsentOnBusyWeek = isBusyLocation && !workedLastTurn;
+  // Rookie protection: If player was just hired this turn (hiredThisTurn or tenure === 0), exempt from absentee penalty
+  const isNewlyHired = Boolean(previousPlayer?.turnFlags?.hiredThisTurn || player.turnFlags?.hiredThisTurn || player.jobTenure === 0);
+  const isAbsentOnBusyWeek = isBusyLocation && !workedLastTurn && !isNewlyHired;
 
   const isHighDowntime = (curJob?.tags?.includes('high_downtime') ?? false) && !isAbsentOnBusyWeek;
   const isExecMgmt = curJob?.tags?.includes('executive_management') ?? false;
@@ -424,11 +426,49 @@ export function processAdvancedMaintenanceAndDecay(
 
   if (isAbsentOnBusyWeek) {
     player.dependability = Math.max(0, player.dependability - 4);
-    player.turnEvents.push({
-      key: 'events.busyWeekAbsentReprimand',
-      params: { job: curJob?.title || 'Job' },
-      modifications: [{ stat: 'dependability', diff: -4 }]
-    });
+    
+    // Add demerit to location mistakes
+    const locId = curJob?.locationId || 'red_pirate';
+    const curMistakes = (player.mistakesByLocation?.[locId] || 0) + 1;
+    player.mistakesByLocation = {
+      ...(player.mistakesByLocation || {}),
+      [locId]: curMistakes
+    };
+
+    const terminationThreshold = 3 + (player.initiativesByLocation?.[locId] || 0);
+    const fireBuffer = 5;
+    const isFiredForDep = player.dependability <= (curJob?.requirements.dependability || 10) - fireBuffer;
+    const isFiredForMistakes = curMistakes >= terminationThreshold;
+
+    if (isFiredForMistakes || isFiredForDep) {
+      player.currentJobId = null;
+      player.currentJobTier = undefined;
+      player.currentWage = 0;
+      player.raisesAtCurrentJob = 0;
+      player.innovationCount = 0;
+      player.depMaxBonus = 0;
+      player.xpMaxBonus = 0;
+      delete player.jobTenure;
+      player.turnFlags = {
+        ...player.turnFlags,
+        firedLocationsThisTurn: Array.from(new Set([...(player.turnFlags?.firedLocationsThisTurn || []), locId]))
+      };
+      player = applyHappinessChange(player, -7, 'fired', state.rules, campaign.config.statRules);
+      player.turnEvents.push({
+        key: 'events.busyWeekAbsentFired',
+        params: { job: curJob?.title || 'Job', count: curMistakes },
+        modifications: [
+          { stat: 'dependability', diff: -4 },
+          { stat: 'happiness', diff: -7 }
+        ]
+      });
+    } else {
+      player.turnEvents.push({
+        key: 'events.busyWeekAbsentReprimand',
+        params: { job: curJob?.title || 'Job', demerits: curMistakes, maxDemerits: terminationThreshold },
+        modifications: [{ stat: 'dependability', diff: -4 }]
+      });
+    }
   }
 
   // 8. Apartment Robbery

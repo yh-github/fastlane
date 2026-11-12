@@ -528,7 +528,7 @@ describe('Advanced 2000 Campaign Features', () => {
         true // busy
       );
 
-      expect(busyRes.wagesEarned).toBe(Math.floor(normalRes.wagesEarned * 1.5));
+      expect(busyRes.wagesEarned).toBe(Math.floor(normalRes.wagesEarned * 1.15));
       expect(busyRes.updated.dependability).toBeGreaterThan(normalRes.updated.dependability);
       expect(busyRes.updated.experience).toBeGreaterThan(normalRes.updated.experience);
       expect(busyRes.updated.physicalCondition).toBeLessThan(normalRes.updated.physicalCondition ?? 50);
@@ -537,6 +537,7 @@ describe('Advanced 2000 Campaign Features', () => {
     it('penalizes employees who work 0 shifts during a busy week (-4 Dep and reprimand)', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
       player.currentJobId = 'pirate_cook';
+      player.jobTenure = 1;
       player.dependability = 50;
       player.turnFlags.hasWorked = false;
       player.workActionsThisTurn = 0;
@@ -560,6 +561,116 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(reprimandEvt).toBeDefined();
       // Dependability dropped by at least 4 due to absentee reprimand + natural decay
       expect(nextP.dependability).toBeLessThanOrEqual(46);
+      expect(nextP.mistakesByLocation?.['red_pirate']).toBe(1);
+    });
+
+    it('protects newly hired employees from rush week absentee penalties on the turn they were hired', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+      player.currentJobId = 'pirate_cook';
+      player.dependability = 50;
+      player.turnFlags.hasWorked = false;
+      player.turnFlags.hiredThisTurn = true; // Just hired this turn!
+      player.workActionsThisTurn = 0;
+      player.inventory.freshFoodUnits = 4;
+
+      const state: GameState = {
+        turn: 2,
+        players: [player],
+        economicIndex: 100,
+        rules: campaign2000.config.gameRules,
+        pawnShopItemsForSale: [],
+        rngState: 42,
+        phase: 'playing',
+        busyLocations: { red_pirate: true }
+      };
+
+      const nextState = processTurnStart(state, campaign2000);
+      const nextP = nextState.players[0];
+
+      const reprimandEvt = nextP.turnEvents.find(e => e.key === 'events.busyWeekAbsentReprimand');
+      expect(reprimandEvt).toBeUndefined();
+      expect(nextP.mistakesByLocation?.['red_pirate'] ?? 0).toBe(0);
+    });
+
+    it('guarantees the first full turn after hiring at Red Pirate is NOT a busy week (rookie protection)', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+      player.currentJobId = 'pirate_cook';
+      player.turnFlags.hiredThisTurn = true;
+      player.jobTenure = 0;
+
+      // Force a deck where the top card would be true (busy)
+      const state: GameState = {
+        turn: 2,
+        players: [player],
+        economicIndex: 100,
+        rules: campaign2000.config.gameRules,
+        pawnShopItemsForSale: [],
+        rngState: 42,
+        phase: 'playing',
+        busyLocations: { red_pirate: false },
+        busyWeeksDeck: [true, false, false, false] // Popping would yield true
+      };
+
+      const nextState = processTurnStart(state, campaign2000);
+      // Rookie protection must prevent next turn from being busy
+      expect(nextState.busyLocations?.['red_pirate']).toBe(false);
+      // And player tenure increments for the upcoming turn
+      expect(nextState.players[0].jobTenure).toBe(1);
+    });
+
+    it('logs demerits on rush week absence and fires employee upon reaching 3 demerits', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+      player.currentJobId = 'pirate_cook';
+      player.dependability = 50;
+      player.turnFlags.hasWorked = false;
+      player.workActionsThisTurn = 0;
+      player.inventory.freshFoodUnits = 4;
+      player.mistakesByLocation = { red_pirate: 2 }; // Already has 2 demerits!
+
+      const state: GameState = {
+        turn: 5,
+        players: [player],
+        economicIndex: 100,
+        rules: campaign2000.config.gameRules,
+        pawnShopItemsForSale: [],
+        rngState: 42,
+        phase: 'playing',
+        busyLocations: { red_pirate: true }
+      };
+
+      const nextState = processTurnStart(state, campaign2000);
+      const nextP = nextState.players[0];
+
+      // Reached 3 demerits -> FIRED
+      expect(nextP.currentJobId).toBeNull();
+      const firedEvt = nextP.turnEvents.find(e => e.key === 'events.busyWeekAbsentFired');
+      expect(firedEvt).toBeDefined();
+    });
+
+    it('clears 1 demerit when working during All Hands on Deck', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+      player.currentJobId = 'pirate_cook';
+      player.mistakesByLocation = { red_pirate: 1 };
+      player.hoursRemaining = 20;
+
+      const cookJob = campaign2000.jobs.find(j => j.id === 'pirate_cook')!;
+      const result = workShift(
+        player,
+        cookJob,
+        6,
+        campaign2000.config.gameRules,
+        campaign2000.config.statRules,
+        'work_work',
+        new Random(1),
+        undefined,
+        campaign2000.education,
+        campaign2000,
+        true // busy
+      );
+
+      // Successfully working rush shift clears the demerit
+      expect(result.updated.mistakesByLocation?.['red_pirate']).toBe(0);
+      expect(result.messages.some(m => m.key === 'action.job.busyWeekClearedMistake')).toBe(true);
     });
   });
 
@@ -753,7 +864,7 @@ describe('Advanced 2000 Campaign Features', () => {
       };
     }
 
-    it('relax_park consumes 3 hours, restores +2 Physical and +2 Mental on 1st visit, +1/+1 on 2nd, +0/+0 on 3rd+', () => {
+    it('relax_park consumes 3 hours and awards card-driven encounter modifiers without double-dipping base stats', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
       player.physicalCondition = 30;
@@ -764,25 +875,24 @@ describe('Advanced 2000 Campaign Features', () => {
       const noEventContext = setupContext(player);
       noEventContext.rng = { next: () => 0.99, nextInt: () => 0, getState: () => 1, setState: () => {} };
 
-      // Relax 1: +2 Phys, +2 Mental (plus AI-picked card effects)
+      // Relax 1: -3h, card-driven modifier chosen by AI
       const res1 = gameReducer(player, { type: 'relax_park' }, noEventContext);
       expect(res1.updatedPlayer.hoursRemaining).toBe(17);
-      expect(res1.updatedPlayer.physicalCondition).toBeGreaterThanOrEqual(32);
-      expect(res1.updatedPlayer.mentalCondition).toBeGreaterThanOrEqual(32);
+      expect(res1.updatedPlayer.mentalCondition).toBeGreaterThanOrEqual(31);
       expect(res1.updatedPlayer.turnFlags.parkRelaxesThisTurn).toBe(1);
 
-      // Relax 2: +1 Phys, +1 Mental
+      // Relax 2: -3h
       const res2 = gameReducer(res1.updatedPlayer, { type: 'relax_park' }, noEventContext);
       expect(res2.updatedPlayer.hoursRemaining).toBe(14);
       expect(res2.updatedPlayer.turnFlags.parkRelaxesThisTurn).toBe(2);
 
-      // Relax 3: Diminishing returns (0 base gain)
+      // Relax 3: -3h
       const res3 = gameReducer(res2.updatedPlayer, { type: 'relax_park' }, noEventContext);
       expect(res3.updatedPlayer.hoursRemaining).toBe(11);
       expect(res3.updatedPlayer.turnFlags.parkRelaxesThisTurn).toBe(3);
     });
 
-    it('workout_park consumes 3 hours, requires Physical >= 15, trains Max Phys (+1), -1 Phys, +1 Mental; overtraining on 2nd workout penalizes', () => {
+    it('workout_park consumes 3 hours, requires Physical >= 15, trains Max Phys from workout cards; overtraining on 2nd workout penalizes', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
       player.physicalCondition = 10; // Below 15
@@ -797,7 +907,7 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(resFail.updatedPlayer.hoursRemaining).toBe(20);
       expect(resFail.actionLog).toEqual(expect.objectContaining({ key: 'action.error.tooPhysicallyExhausted' }));
 
-      // Qualified Workout 1 (AI player): -3h, +1 Max Phys, -1 Phys, +1 Mental
+      // Qualified Workout 1 (AI player): -3h, workout card chosen by AI grants +1 Max Phys
       player.physicalCondition = 30;
       player.isAi = true;
       const res1 = gameReducer(player, { type: 'workout_park' }, noEventContext);
@@ -864,12 +974,13 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(logs.some(l => l?.key === 'action.park.cardResolved')).toBe(true);
     });
 
-    it('hazard encounter (25% roll) draws 1 card from shared Hazards deck and auto-applies without choice', () => {
+    it('hazard encounter (25% roll) draws 1 card from shared Hazards deck and prompts human with park_hazard miniGame', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
       player.money = 250;
       player.physicalCondition = 30;
       player.mentalCondition = 30;
+      player.isAi = false;
 
       const mockContext = setupContext(player);
       mockContext.rng = {
@@ -880,8 +991,18 @@ describe('Advanced 2000 Campaign Features', () => {
       };
 
       const res = gameReducer(player, { type: 'relax_park' }, mockContext);
-      expect(res.updatedPlayer.pendingMiniGame).toBeFalsy();
-      const logs = Array.isArray(res.actionLog) ? res.actionLog : [res.actionLog];
+      expect(res.updatedPlayer.pendingMiniGame).toBeDefined();
+      expect(res.updatedPlayer.pendingMiniGame?.gameType).toBe('park_hazard');
+      expect(res.updatedPlayer.pendingMiniGame?.options.length).toBe(1);
+
+      // Resolving the hazard applies the modifiers and clears pendingMiniGame
+      const resResolve = gameReducer(
+        res.updatedPlayer,
+        { type: 'resolve_mini_game', choiceIndex: 0 },
+        mockContext
+      );
+      expect(resResolve.updatedPlayer.pendingMiniGame).toBeNull();
+      const logs = Array.isArray(resResolve.actionLog) ? resResolve.actionLog : [resResolve.actionLog];
       expect(logs.some(l => l?.key === 'events.park.hazard')).toBe(true);
     });
 

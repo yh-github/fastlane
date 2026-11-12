@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { initMapRenderer, updatePlayers, updateBuildingLabels, setEnteredBuilding } from '../graphics/mapRenderer';
+import { initMapRenderer, updatePlayers, updateBuildingLabels, updateBusyLocations, setEnteredBuilding } from '../graphics/mapRenderer';
 import { AUTHENTIC_BUILDINGS } from '../graphics/authenticData';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { PlayerState } from '../engine/gameState';
@@ -13,6 +13,7 @@ interface GameMapProps {
   authenticCurvedPaths?: boolean;
   guiStyle?: 'generated' | 'authentic';
   enteredBuildingId?: string | null;
+  busyLocations?: Record<string, boolean>;
 }
 
 export const GameMap: React.FC<GameMapProps> = ({
@@ -22,7 +23,8 @@ export const GameMap: React.FC<GameMapProps> = ({
   onNodeClick,
   authenticCurvedPaths,
   guiStyle,
-  enteredBuildingId
+  enteredBuildingId,
+  busyLocations
 }) => {
   const { t, i18n } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,6 +93,13 @@ export const GameMap: React.FC<GameMapProps> = ({
       setEnteredBuilding(enteredBuildingId || null);
     }
   }, [enteredBuildingId, isMapReady, guiStyle]);
+
+  // Update on-board flags for busy locations (All Hands on Deck)
+  useEffect(() => {
+    if (isMapReady) {
+      updateBusyLocations(busyLocations);
+    }
+  }, [busyLocations, isMapReady]);
 
   useEffect(() => {
     if (isMapReady && players.length > 0 && campaign) {

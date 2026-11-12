@@ -240,6 +240,13 @@ export function applyForJob(
     updated.currentJobId = job.id;
     updated.currentWage = offeredWage ?? job.baseWage;
     updated.raisesAtCurrentJob = 0;
+    if (rules?.enableBusyWeeks) {
+      updated.jobTenure = 0;
+    }
+    updated.turnFlags = {
+      ...updated.turnFlags,
+      hiredThisTurn: true
+    };
     updated.innovationCount = 0;
     updated.depMaxBonus = 0;
     updated.xpMaxBonus = 0;
@@ -350,6 +357,13 @@ export function applyForJob(
   updated.currentJobId = job.id;
   updated.currentWage = offeredWage !== undefined ? offeredWage : calcEconomyPrice(job.baseWage, economicIndex); // Lock in the wage
   updated.raisesAtCurrentJob = 0;
+  if (rules?.enableBusyWeeks) {
+    updated.jobTenure = 0;
+  }
+  updated.turnFlags = {
+    ...updated.turnFlags,
+    hiredThisTurn: true
+  };
   updated.innovationCount = 0;
   updated.depMaxBonus = 0;
   updated.xpMaxBonus = 0;

@@ -50,7 +50,10 @@ export function TurnEventsQueue({ events, onComplete, rules, armDelayMs }: TurnE
   let icon = '🔔';
   let color = '#00e5ff';
   
-  if (currentEvent.key.includes('doctor')) {
+  if (currentEvent.key.includes('busyWeek')) {
+    icon = '🏴‍☠️';
+    color = '#ef4444';
+  } else if (currentEvent.key.includes('doctor')) {
     icon = '⚕️';
     color = '#e74c3c';
   } else if (currentEvent.key.includes('caffeine')) {

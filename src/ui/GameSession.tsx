@@ -13,6 +13,7 @@ import { AuthenticDiplomaModal } from './authentic/AuthenticDiplomaModal';
 import { AuthenticLotteryModal } from './authentic/AuthenticLotteryModal';
 import { AuthenticCashCalculator } from './authentic/AuthenticCashCalculator';
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
+import { ParkHazardModal } from './buildings/park/ParkHazardModal';
 import { NewspaperModal } from './NewspaperModal';
 import { SettingsModal } from './SettingsModal';
 import { HudAttributeInfoModal } from './HudAttributeInfoModal';
@@ -515,6 +516,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
             authenticCurvedPaths={gameState.rules.authenticCurvedPaths}
             guiStyle={gameState.rules.guiStyle}
             enteredBuildingId={(!isTravelling && activeModal?.type === 'building') ? currentBuildingId : null}
+            busyLocations={gameState.busyLocations}
           />
         </div>
 
@@ -632,15 +634,39 @@ export const GameSession: React.FC<GameSessionProps> = ({
         )}
 
         {/* Fallback for appraisal dilemma / workplace initiative / park encounter mini-games */}
-        {activePlayer && (activePlayer.pendingMiniGame || activePlayer.pendingAppraisalDilemma) && activeModal?.type !== 'building' && (
-          <AppraisalDilemmaModal
-            dilemma={(activePlayer.pendingMiniGame || activePlayer.pendingAppraisalDilemma)!}
-            player={activePlayer}
-            campaign={campaign}
-            onSelectOption={(idx) => handleAction({ type: 'resolve_mini_game', choiceIndex: idx })}
-            onRedraw={() => handleAction({ type: 'redraw_initiative' })}
-          />
-        )}
+        {activePlayer && (activePlayer.pendingMiniGame || activePlayer.pendingAppraisalDilemma) && activeModal?.type !== 'building' && (() => {
+          const dilemma = (activePlayer.pendingMiniGame || activePlayer.pendingAppraisalDilemma)!;
+          if (dilemma.gameType === 'park_hazard') {
+            const hazardCard = dilemma.options[0];
+            if (hazardCard?.cardId === 'hazard_pickpocket' && (hazardCard.cashAmount ?? 0) < 0) {
+              return (
+                <StreetRobberyModal
+                  lostAmount={Math.abs(hazardCard.cashAmount || 0)}
+                  location={t('building.park', { defaultValue: 'Park' })}
+                  modifications={hazardCard.mentalAmount ? [{ stat: 'mental', diff: hazardCard.mentalAmount }] : []}
+                  isHelpfulUI={gameState.rules?.helpfulUI ?? true}
+                  rules={gameState.rules}
+                  onClose={() => handleAction({ type: 'resolve_mini_game', choiceIndex: 0 })}
+                />
+              );
+            }
+            return (
+              <ParkHazardModal
+                hazard={hazardCard}
+                onClose={() => handleAction({ type: 'resolve_mini_game', choiceIndex: 0 })}
+              />
+            );
+          }
+          return (
+            <AppraisalDilemmaModal
+              dilemma={dilemma}
+              player={activePlayer}
+              campaign={campaign}
+              onSelectOption={(idx) => handleAction({ type: 'resolve_mini_game', choiceIndex: idx })}
+              onRedraw={() => handleAction({ type: 'redraw_initiative' })}
+            />
+          );
+        })()}
 
         {activeModal?.type === 'newspaper' && (
           <NewspaperModal 

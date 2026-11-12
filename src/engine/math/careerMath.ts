@@ -258,7 +258,7 @@ export function calcDependabilityDecay(
     const socialOffset = Math.floor((social || 0) / 25);
     let depLoss = Math.max(1, baseDepLoss - socialOffset);
     if (isHighDowntime) {
-      depLoss = Math.max(1, Math.floor(depLoss / 2));
+      depLoss = Math.max(0.5, depLoss / 2);
     }
     if (isExecutiveManagement) {
       depLoss += 1;

@@ -129,6 +129,8 @@
     },
     "job": {
       "worked": "Worked at {{title}} and earned ${{wagesEarned}}{{stats}}",
+      "busyWeekShift": "All Hands on Deck! You weathered the rush week at {{title}} (+surge wage & extra Dependability).",
+      "busyWeekClearedMistake": "All Hands on Deck! Your dedicated rush shift cleared a demerit from your employment record.",
       "gotJob": "You got the job as {{title}}!",
       "hired": "You got the job as {{title}}!",
       "rejected": "Your application was rejected: {{reasons}}",
@@ -313,6 +315,9 @@
     }
   },
   "events": {
+    "busyWeekSurge": "ALL HANDS ON DECK!\n{{location}} is slammed with a rush week! All crew must report for duty. Earn bonus Dependability (+rush pay), but failing to work will result in a demerit and reprimand!",
+    "busyWeekAbsentReprimand": "ABSENTEE REPRIMAND!\nYou failed to report for duty during 'All Hands on Deck' at {{job}}!\nThe Captain issued a formal demerit ({{demerits}}/{{maxDemerits}}) and your Dependability dropped by 4.",
+    "busyWeekAbsentFired": "FIRED FROM {{job}}!\nYou failed to report for duty during 'All Hands on Deck' after repeated warnings.\nThe Captain terminated your employment for dereliction of duty!",
     "caffeine_overdose": "Caffeine overdose! Excessive intake strained your cardiovascular system (-1 Max Physical, -1 Max Mental).",
     "caffeine_tolerance_update": "Caffeine tolerance updated ({{oldTol}} → {{newTol}}).",
     "cook": {
@@ -347,7 +352,7 @@
     "lowSpiritsBounceBack": "You are burnt out! You took a mental health leave (+{{amount}} Mental Condition).",
     "marketCrash": {
       "jobLost": "The stock market crashed! You lost your job due to company cutbacks.",
-      "jobSparedMerits": "Downsizing avoided! Your exemplary workplace standing and merits shielded you from company layoffs.",
+      "jobSparedMerits": "Downsizing avoided! Your workplace merits shielded you from company layoffs, but your wage was cut by 20%.",
       "wageCut": "Market crash! Your wage was cut by 20% due to company downsizing.",
       "bankSavingsLost": "Market crash! The banking system collapsed and you lost all ${{amount}} of your bank savings!"
     },
@@ -606,6 +611,19 @@
     "relaxDesc": "Spend peaceful time relaxing outdoors (⏳ -3h • Free • +2 💪 • +2 🧠 • Encounters)",
     "workout": "Workout in Park",
     "workoutDesc": "Fitness & cardiovascular conditioning (⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠)",
+    "relaxEncounterDesc": "Spend peaceful time relaxing outdoors (⏳ -3h • Free • 🎴 Draw 3 Encounter Cards)",
+    "workoutEncounterDesc": "Fitness & cardiovascular conditioning (⏳ -3h • Free • 🎴 Draw 3 Workout Cards)",
+    "helpRelaxTitle": "🌳 Park Relax — Encounter & Outcome Assessment",
+    "helpWorkoutTitle": "🏃 Park Workout — Training & Hazard Assessment",
+    "tabOverview": "Overview & Odds",
+    "tabCardsRelax": "Encounter Cards (8)",
+    "tabCardsWorkout": "Workout Focus (7)",
+    "tabHazards": "Hazards Deck (6)",
+    "timeCostLabel": "Activity Time Required:",
+    "expectedRangesTitle": "Expected Card Modifiers Range (Good Outcomes)",
+    "hazardBanner": "Park Hazard Encountered!",
+    "penaltiesIncurred": "Penalties Incurred",
+    "hazardAcknowledge": "⚠️ Acknowledge & Move On",
     "stroll": "Stroll in Park",
     "strollDesc": "Take a refreshing stroll (⏳ -2h • +1 💪 • +1 🧠)",
     "jog": "Jog / Workout",

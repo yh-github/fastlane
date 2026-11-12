@@ -309,11 +309,12 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     expect(screen.queryByText(/How can I help you today/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Welcome/i)).not.toBeInTheDocument();
 
-    // Consolidated buttons: Relax & Workout
+    // Consolidated buttons: Relax & Workout with card encounter notes and help buttons
     expect(screen.getByText('Relax in Park')).toBeInTheDocument();
-    expect(screen.getByText(/⏳ -3h • \+2 💪 • \+2 🧠 • Free/i)).toBeInTheDocument();
+    expect(screen.getByTestId('park-help-relax')).toBeInTheDocument();
     expect(screen.getByText('Workout in Park')).toBeInTheDocument();
-    expect(screen.getByText(/⏳ -3h • \+1 Max 💪 • -1 💪 • \+1 🧠/i)).toBeInTheDocument();
+    expect(screen.getByTestId('park-help-workout')).toBeInTheDocument();
+    expect(screen.getAllByText(/⏳ -3h • 🎴 3 Cards • Free/i).length).toBe(2);
   });
 
   // Coffee card & no "Nutrition happiness"
