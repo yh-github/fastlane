@@ -371,7 +371,24 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
       }
       busyDeck = bag;
     }
-    const isBusyWeek = busyDeck.pop() ?? false;
+
+    // Rookie protection: Prevent busy week on the first full turn after hiring at Red Pirate
+    const hasRookieAtRedPirate = state.players.some(p => {
+      const curJob = p.currentJobId ? campaign.jobs.find(j => j.id === p.currentJobId) : undefined;
+      return curJob?.locationId === 'red_pirate' && (p.jobTenure === 0 || p.turnFlags?.hiredThisTurn);
+    });
+
+    let isBusyWeek = busyDeck.pop() ?? false;
+    if (isBusyWeek && hasRookieAtRedPirate) {
+      const nonBusyIdx = busyDeck.findIndex(val => val === false);
+      if (nonBusyIdx !== -1) {
+        busyDeck[nonBusyIdx] = true;
+        isBusyWeek = false;
+      } else {
+        busyDeck.push(true);
+        isBusyWeek = false;
+      }
+    }
     nextBusyLocations = { red_pirate: isBusyWeek };
   }
 
@@ -381,11 +398,21 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
   // Dispatch to Base vs. Advanced player turn pipeline
   const useBasePipeline = isBaseVersion(state.rules) && !state.rules.usePhysicalMentalConditions && !state.rules.trackMess && !state.rules.trackSocial && !state.rules.useHomeTimeRobbery && !state.rules.alternativeWeekends;
 
-  const updatedPlayers = state.players.map(player =>
-    useBasePipeline
+  const updatedPlayers = state.players.map(player => {
+    const updated = useBasePipeline
       ? processBasePlayerTurn(player, state, campaign, rng, replay, previousPlayerWeekends, econResult, newPawnShopItemsForSale)
-      : processAdvancedPlayerTurn(player, state, campaign, rng, replay, previousPlayerWeekends, econResult, newPawnShopItemsForSale)
-  );
+      : processAdvancedPlayerTurn(player, state, campaign, rng, replay, previousPlayerWeekends, econResult, newPawnShopItemsForSale);
+    
+    // Update job tenure for next turn (gated by enableBusyWeeks to preserve classic snapshots)
+    if (state.rules.enableBusyWeeks) {
+      if (updated.currentJobId !== null) {
+        updated.jobTenure = (updated.jobTenure ?? 0) + 1;
+      } else {
+        delete updated.jobTenure;
+      }
+    }
+    return updated;
+  });
 
   if (state.rules.enableBusyWeeks && nextBusyLocations?.['red_pirate']) {
     for (const p of updatedPlayers) {

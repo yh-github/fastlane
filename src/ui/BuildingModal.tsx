@@ -14,6 +14,9 @@ import {
   ActionReasonModal
 } from './BuildingInteractions';
 import { AppraisalDilemmaModal } from './buildings/work/AppraisalDilemmaModal';
+import { ParkHazardModal } from './buildings/park/ParkHazardModal';
+import { ParkAssessmentModal } from './buildings/park/ParkAssessmentModal';
+import { StreetRobberyModal } from './StreetRobberyModal';
 import { PantryDetailsModal } from './buildings/home/PantryDetailsModal';
 import { HospitalServices } from './buildings/HospitalServices';
 import { AuthenticMonolithBurgers } from './buildings/authentic/AuthenticMonolithBurgers';
@@ -89,6 +92,7 @@ export function BuildingModal({
   const [educationTab, setEducationTab] = useState<'available' | 'tree'>('available');
   const [bankTab, setBankTab] = useState<'banking' | 'stocks' | 'loans'>('banking');
   const [isWorkDeckOpen, setIsWorkDeckOpen] = useState(false);
+  const [helpParkMode, setHelpParkMode] = useState<'relax' | 'workout' | null>(null);
 
   const hasPendingMiniGame = !!(player?.pendingMiniGame || player?.pendingAppraisalDilemma);
 
@@ -138,6 +142,11 @@ export function BuildingModal({
           e.stopImmediatePropagation();
           return;
         }
+        if (helpParkMode) {
+          e.stopImmediatePropagation();
+          setHelpParkMode(null);
+          return;
+        }
         if (isBreakInModalOpen) {
           e.stopImmediatePropagation();
           setIsBreakInModalOpen(false);
@@ -152,7 +161,7 @@ export function BuildingModal({
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [hasPendingMiniGame, isBreakInModalOpen, isPantryModalOpen]);
+  }, [hasPendingMiniGame, isBreakInModalOpen, isPantryModalOpen, helpParkMode]);
 
   // Helper to pick random string if translation is an array
   const getRandomMessage = useCallback((key: string, defaultValue: string) => {
@@ -399,9 +408,25 @@ export function BuildingModal({
             />
           )}
           {building.id === 'red_pirate' && rules?.enableBusyWeeks && busyLocations?.['red_pirate'] && Boolean(playerJobHere) && (
-            <div style={{ marginBottom: '10px', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.5)', borderRadius: '6px', color: '#b91c1c', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>🚨</span>
-              <span>ALL HANDS ON DECK! Busy week surge hours — 1.5× wages & accelerated advancement!</span>
+            <div 
+              data-testid="busy-week-banner"
+              style={{ 
+                marginBottom: isContentOverflowing ? '4px' : '6px', 
+                padding: isContentOverflowing ? '4px 8px' : '5px 10px', 
+                background: 'rgba(239, 68, 68, 0.15)', 
+                border: '1px solid rgba(239, 68, 68, 0.4)', 
+                borderRadius: '6px', 
+                color: '#ef4444', 
+                fontWeight: 'bold', 
+                fontSize: isContentOverflowing ? '11px' : '12px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                lineHeight: '1.2'
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>🏴‍☠️</span>
+              <span>ALL HANDS ON DECK! Mandatory rush shift required (+bonus Dep & wage).</span>
             </div>
           )}
           {building.id === 'red_pirate' && rules?.enableArcade && (() => {
@@ -558,40 +583,116 @@ export function BuildingModal({
               {(() => {
                 const allowPartialPark = Boolean(rules?.allowPartialHours || rules?.proportionalDivisibleActions);
                 const actualHours = allowPartialPark ? Math.min(3, player.hoursRemaining) : 3;
+                const ratio = actualHours / 3;
+                const isPartial = allowPartialPark && actualHours < 3;
                 const hoursLabel = `⏳ -${formatHours(actualHours > 0 ? actualHours : 3)}h`;
                 const isRelaxDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3);
                 const isWorkoutDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3) || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) < 15);
+                const isEncounterPark = Boolean(rules?.enableParkSystem ?? rules?.usePhysicalMentalConditions);
 
                 return (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-                    <button
-                      type="button"
-                      className="game-button btn-secondary"
-                      disabled={isRelaxDisabled}
-                      onClick={() => handleActionIntercept({ type: 'relax_park' })}
-                      title={t('park.relaxDesc', rules?.usePhysicalMentalConditions ? `Spend peaceful time relaxing outdoors (${hoursLabel} • Free • +2 💪 • +2 🧠 • Encounters)` : `Spend peaceful time relaxing outdoors (${hoursLabel} • +2 😊 • +2 🛌)`)}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
-                    >
-                      <span style={{ fontSize: '20px' }}>🌳</span>
-                      <strong>{t('park.relax', 'Relax in Park')}</strong>
-                      <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                        {rules?.usePhysicalMentalConditions ? `${hoursLabel} • +2 💪 • +2 🧠 • Free` : `${hoursLabel} • +2 😊 • +2 🛌`}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className="game-button btn-secondary"
-                      disabled={isWorkoutDisabled}
-                      onClick={() => handleActionIntercept({ type: 'workout_park' })}
-                      title={t('park.workoutDesc', rules?.usePhysicalMentalConditions ? `Fitness & cardiovascular conditioning (${hoursLabel} • +1 Max 💪 • -1 💪 • +1 🧠)` : `Fitness workout (${hoursLabel} • +2 🛌 • -1 😊)`)}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
-                    >
-                      <span style={{ fontSize: '20px' }}>🏃</span>
-                      <strong>{t('park.workout', 'Workout in Park')}</strong>
-                      <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                        {rules?.usePhysicalMentalConditions ? `${hoursLabel} • +1 Max 💪 • -1 💪 • +1 🧠` : `${hoursLabel} • +2 🛌 • -1 😊`}
-                      </span>
-                    </button>
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        type="button"
+                        className="game-button btn-secondary"
+                        disabled={isRelaxDisabled}
+                        onClick={() => handleActionIntercept({ type: 'relax_park' })}
+                        title={isEncounterPark
+                          ? t('park.relaxEncounterDesc', `Spend peaceful time relaxing outdoors (${hoursLabel} • Free • 🎴 Draw 3 Encounter Cards)`)
+                          : t('park.relaxDesc', `Spend peaceful time relaxing outdoors (${hoursLabel} • +2 😊 • +2 🛌)`)}
+                        style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
+                      >
+                        <span style={{ fontSize: '20px' }}>🌳</span>
+                        <strong>{t('park.relax', 'Relax in Park')}</strong>
+                        <span style={{ fontSize: '11px', opacity: 0.85 }}>
+                          {isEncounterPark
+                            ? (isPartial ? `${hoursLabel} • 🎴 Partial (${Math.round(ratio * 100)}%) • Free` : `${hoursLabel} • 🎴 3 Cards • Free`)
+                            : `${hoursLabel} • +2 😊 • +2 🛌`}
+                        </span>
+                      </button>
+                      {isEncounterPark && (
+                        <button
+                          type="button"
+                          data-testid="park-help-relax"
+                          className="btn-help-inline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setHelpParkMode('relax');
+                          }}
+                          title="View expected outcomes and card probabilities"
+                          style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '6px',
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            padding: 0,
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            color: '#fff',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            zIndex: 2
+                          }}
+                        >
+                          ?
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        type="button"
+                        className="game-button btn-secondary"
+                        disabled={isWorkoutDisabled}
+                        onClick={() => handleActionIntercept({ type: 'workout_park' })}
+                        title={isEncounterPark
+                          ? t('park.workoutEncounterDesc', `Fitness & cardiovascular conditioning (${hoursLabel} • Free • 🎴 Draw 3 Workout Cards)`)
+                          : t('park.workoutDesc', `Fitness workout (${hoursLabel} • +2 🛌 • -1 😊)`)}
+                        style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
+                      >
+                        <span style={{ fontSize: '20px' }}>🏃</span>
+                        <strong>{t('park.workout', 'Workout in Park')}</strong>
+                        <span style={{ fontSize: '11px', opacity: 0.85 }}>
+                          {isEncounterPark
+                            ? (isPartial ? `${hoursLabel} • 🎴 Partial (${Math.round(ratio * 100)}%) • Free` : `${hoursLabel} • 🎴 3 Cards • Free`)
+                            : `${hoursLabel} • +2 🛌 • -1 😊`}
+                        </span>
+                      </button>
+                      {isEncounterPark && (
+                        <button
+                          type="button"
+                          data-testid="park-help-workout"
+                          className="btn-help-inline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setHelpParkMode('workout');
+                          }}
+                          title="View training pool, odds, and expected modifiers"
+                          style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '6px',
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            padding: 0,
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            color: '#fff',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            zIndex: 2
+                          }}
+                        >
+                          ?
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -1086,6 +1187,9 @@ export function BuildingModal({
               <span data-testid="btn-work-dock" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '0.95rem' }}>💼</span>
                 <span>{t('workStation.workBtnShort', { defaultValue: 'WORK' })}</span>
+                {building.id === 'red_pirate' && rules?.enableBusyWeeks && busyLocations?.['red_pirate'] && (
+                  <span style={{ fontSize: '0.68rem', background: '#ef4444', color: '#fff', borderRadius: '4px', padding: '1px 4px', fontWeight: 'bold' }}>🏴‍☠️ RUSH</span>
+                )}
               </span>
             </button>
           </div>
@@ -1164,14 +1268,48 @@ export function BuildingModal({
         </>
       )}
 
-      {hasPendingMiniGame && (
-        <AppraisalDilemmaModal
-          dilemma={(player.pendingMiniGame || player.pendingAppraisalDilemma)!}
+      {hasPendingMiniGame && (() => {
+        const dilemma = (player.pendingMiniGame || player.pendingAppraisalDilemma)!;
+        if (dilemma.gameType === 'park_hazard') {
+          const hazardCard = dilemma.options[0];
+          if (hazardCard?.cardId === 'hazard_pickpocket' && (hazardCard.cashAmount ?? 0) < 0) {
+            return (
+              <StreetRobberyModal
+                lostAmount={Math.abs(hazardCard.cashAmount || 0)}
+                location={building ? (building.name || building.id) : 'park'}
+                modifications={hazardCard.mentalAmount ? [{ stat: 'mental', diff: hazardCard.mentalAmount }] : []}
+                isHelpfulUI={rules?.helpfulUI ?? true}
+                rules={rules}
+                onClose={() => handleActionIntercept({ type: 'resolve_mini_game', choiceIndex: 0 })}
+              />
+            );
+          }
+          return (
+            <ParkHazardModal
+              hazard={hazardCard}
+              onClose={() => handleActionIntercept({ type: 'resolve_mini_game', choiceIndex: 0 })}
+            />
+          );
+        }
+
+        return (
+          <AppraisalDilemmaModal
+            dilemma={dilemma}
+            player={player}
+            campaign={campaign}
+            compact={isContentOverflowing}
+            onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_mini_game', choiceIndex: idx })}
+            onRedraw={() => handleActionIntercept({ type: 'redraw_initiative' })}
+          />
+        );
+      })()}
+
+      {helpParkMode && (
+        <ParkAssessmentModal
+          mode={helpParkMode}
           player={player}
-          campaign={campaign}
-          compact={isContentOverflowing}
-          onSelectOption={(idx) => handleActionIntercept({ type: 'resolve_mini_game', choiceIndex: idx })}
-          onRedraw={() => handleActionIntercept({ type: 'redraw_initiative' })}
+          rules={rules}
+          onClose={() => setHelpParkMode(null)}
         />
       )}
 

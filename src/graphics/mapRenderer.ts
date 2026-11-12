@@ -41,6 +41,8 @@ export interface PlayerPosition {
 let app: Application | null = null;
 let playerTokens: any[] = [];
 let buildingLabels: Map<string, Text> = new Map();
+let buildingFlagIndicators: Map<string, Container> = new Map();
+let busyFlagMarkers: Map<string, HTMLDivElement> = new Map();
 let testMarker: HTMLDivElement | null = null;
 let activeInstanceId = 0;
 let activeGuiStyle: 'generated' | 'authentic' = 'generated';
@@ -204,6 +206,8 @@ export async function initMapRenderer(
 
   app = localApp;
   buildingLabels.clear();
+  buildingFlagIndicators.clear();
+  busyFlagMarkers.clear();
   localApp.canvas.style.position = 'absolute';
   localApp.canvas.style.top = '0';
   localApp.canvas.style.left = '0';
@@ -545,6 +549,44 @@ export async function initMapRenderer(
         nodeGraphic.addChild(label);
         if (node.buildingId) {
           buildingLabels.set(node.buildingId, label);
+
+          if (node.buildingId === 'red_pirate') {
+            const flagContainer = new Container();
+            flagContainer.x = 0;
+            flagContainer.y = -50;
+            flagContainer.visible = false;
+
+            const pole = new Graphics();
+            pole.moveTo(0, 16);
+            pole.lineTo(0, -18);
+            pole.setStrokeStyle({ width: 2.5, color: 0xcccccc });
+            pole.stroke();
+            flagContainer.addChild(pole);
+
+            const flagText = new Text({
+              text: '🏴‍☠️',
+              style: {
+                fontSize: 26,
+                dropShadow: { alpha: 0.9, color: 0x000000, blur: 4, distance: 1 }
+              }
+            });
+            flagText.anchor.set(0.1, 0.5);
+            flagText.x = 0;
+            flagText.y = -10;
+            flagContainer.addChild(flagText);
+
+            nodeGraphic.addChild(flagContainer);
+            buildingFlagIndicators.set(node.buildingId, flagContainer);
+
+            if (config.container) {
+              const marker = document.createElement('div');
+              marker.dataset.testid = `map-busy-flag-${node.buildingId}`;
+              marker.dataset.visible = 'false';
+              marker.style.display = 'none';
+              config.container.appendChild(marker);
+              busyFlagMarkers.set(node.buildingId, marker);
+            }
+          }
         }
       }
       
@@ -607,6 +649,9 @@ export async function initMapRenderer(
       roofsLayer = null;
       tokensLayer = null;
       buildingLabels.clear();
+      buildingFlagIndicators.clear();
+      busyFlagMarkers.forEach(m => m.remove());
+      busyFlagMarkers.clear();
       if (testMarker) {
         testMarker.remove();
         testMarker = null;
@@ -641,6 +686,27 @@ export function getBuildingLabel(buildingId: string): string | undefined {
  */
 export function getBuildingLabelStyle(buildingId: string): any {
   return (buildingLabels.get(buildingId) as any)?.style;
+}
+
+/**
+ * Dynamically update busy week on-board indicators (e.g. All Hands on Deck flags).
+ */
+export function updateBusyLocations(busyLocations?: Record<string, boolean>): void {
+  for (const [bId, container] of buildingFlagIndicators.entries()) {
+    const isBusy = Boolean(busyLocations?.[bId]);
+    container.visible = isBusy;
+    const marker = busyFlagMarkers.get(bId);
+    if (marker) {
+      marker.dataset.visible = isBusy ? 'true' : 'false';
+    }
+  }
+}
+
+/**
+ * Query whether a building has an active visible flag on the map.
+ */
+export function isBuildingFlagVisible(buildingId: string): boolean {
+  return buildingFlagIndicators.get(buildingId)?.visible ?? false;
 }
 
 /**

@@ -305,7 +305,7 @@ export function workShift(
       wageMultiplier = 1.0;
       baseDepGain = 1;
       if (rules?.enableBusyWeeks && isBusyLocation) {
-        baseDepGain += 0.5;
+        baseDepGain += 1.5;
       }
     }
 
@@ -355,7 +355,7 @@ export function workShift(
   }
 
   // Prorate wage: shiftCost hours = 8 hours of base wage (full shift)
-  const busyWageMultiplier = (rules?.enableBusyWeeks && isBusyLocation) ? 1.5 : 1.0;
+  const busyWageMultiplier = (rules?.enableBusyWeeks && isBusyLocation) ? 1.15 : 1.0;
   const fullShiftWage = Math.floor(updated.currentWage * 8 * wageMultiplier * busyWageMultiplier);
   const rawWagesEarned = Math.floor(fullShiftWage * ratio);
 
@@ -735,7 +735,6 @@ export function workShift(
 
   let socialGain = 0;
   if (mode === 'face_time' && !physMistake && !mentalMistake && !socialMistake && !execMistake) {
-    // Clear 1 location mistake if any exist (Face Time defensive benefit)
     const curLocMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
     if (curLocMistakes > 0) {
       updated.mistakesByLocation = {
@@ -755,6 +754,18 @@ export function workShift(
     if (isSocSuccess) {
       socialGain = 1;
       updated.social = Math.min(99, curSoc + 1);
+    }
+  }
+
+  // Busy Week Surge Duty: Working an all-hands rush shift clears 1 demerit at this workplace
+  if (rules?.enableBusyWeeks && isBusyLocation && !physMistake && !mentalMistake && !socialMistake && !execMistake) {
+    const curLocMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
+    if (curLocMistakes > 0 && mode !== 'face_time') {
+      updated.mistakesByLocation = {
+        ...(updated.mistakesByLocation || {}),
+        [job.locationId]: Math.max(0, curLocMistakes - 1)
+      };
+      messages.push({ key: 'action.job.busyWeekClearedMistake' });
     }
   }
 

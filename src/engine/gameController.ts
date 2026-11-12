@@ -361,6 +361,12 @@ export function getGameSummary(
   if (player.loanDebt > 0 && player.turnFlags.loanPayableWarning) {
     warnings.push('LOAN PAYMENT DUE!')
   }
+  const isEmployedAtRedPirate = player.currentJobId ? campaign.jobs.some(j => j.id === player.currentJobId && j.locationId === 'red_pirate') : false;
+  const isRedPirateBusy = Boolean(state.rules?.enableBusyWeeks && state.busyLocations?.['red_pirate']);
+  const hasWorkedThisTurn = Boolean(player.turnFlags.hasWorked) || (player.workActionsThisTurn || 0) > 0;
+  if (isEmployedAtRedPirate && isRedPirateBusy && !hasWorkedThisTurn) {
+    warnings.push('🏴‍☠️ ALL HANDS ON DECK — Shift required at Red Pirate this week!');
+  }
 
   // Build available actions with semantic IDs
   const availableActions = getControllerActions(player, state, campaign, insideBuilding)

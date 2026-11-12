@@ -191,6 +191,8 @@ export interface PlayerState {
   currentWage: number;
   /** Number of raises received at current job (resets on job change) */
   raisesAtCurrentJob: number;
+  /** Number of turns completed at current job (resets to 0 upon hiring) */
+  jobTenure?: number;
   /** Whether the player has earned any income/wages this game (activates wealth goal progress) */
   hasEarnedIncome?: boolean;
   /** Bad luck protection bonus for job openings (0 to 30) */
@@ -531,6 +533,8 @@ export interface PawnedItem {
 export interface TurnFlags {
   relaxedThisTurn?: boolean;
   rentExtensionRefusedThisTurn?: boolean;
+  /** Whether the player was hired for a job during this turn */
+  hiredThisTurn?: boolean;
   /** Whether the player has eaten this turn (prevents starvation) */
   hasEaten: boolean;
   /** Meal prepared/eaten this turn (Advanced Cooking System) */
