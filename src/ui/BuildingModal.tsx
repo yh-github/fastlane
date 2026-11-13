@@ -35,7 +35,7 @@ import { AuthenticHome } from './buildings/authentic/AuthenticHome';
 import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 import { useDraggableModal } from './hooks/useDraggableModal';
-import { calcEffectiveRobberyChance, formatHours } from '../engine/statMath';
+import { calcEffectiveRobberyChance, formatHours, roundToResolution } from '../engine/statMath';
 import { isRentOfficeOpen as isRentOfficeOpenRule, playerLivesAt } from '../engine/buildingRules';
 
 interface BuildingModalProps {
@@ -589,6 +589,68 @@ export function BuildingModal({
                 const isRelaxDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3);
                 const isWorkoutDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3) || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) < 15);
                 const isEncounterPark = Boolean(rules?.enableParkSystem ?? rules?.usePhysicalMentalConditions);
+                const conditionRes = rules?.conditionResolution ?? 0.5;
+
+                const relaxesThisTurn = player.turnFlags?.parkRelaxesThisTurn || 0;
+                const workoutsThisTurn = player.turnFlags?.parkWorkoutsThisTurn || 0;
+
+                // Dynamic baseline stat summary
+                let relaxStatSummary = '';
+                if (rules?.usePhysicalMentalConditions) {
+                  let pGain = relaxesThisTurn === 0 ? 2 : (relaxesThisTurn === 1 ? 1 : 0);
+                  let mGain = relaxesThisTurn === 0 ? 2 : (relaxesThisTurn === 1 ? 1 : 0);
+                  if (isPartial) {
+                    if (pGain > 0) pGain = Math.max(conditionRes, roundToResolution(pGain * ratio, conditionRes));
+                    if (mGain > 0) mGain = Math.max(conditionRes, roundToResolution(mGain * ratio, conditionRes));
+                  }
+                  relaxStatSummary = pGain > 0 || mGain > 0 ? `+${pGain} 💪 • +${mGain} 🧠` : '+0 😴';
+                } else {
+                  let hGain = relaxesThisTurn === 0 ? 2 : (relaxesThisTurn === 1 ? 1 : 0);
+                  let rGain = relaxesThisTurn === 0 ? 2 : (relaxesThisTurn === 1 ? 1 : 0);
+                  if (isPartial) {
+                    if (hGain > 0) hGain = Math.max(0.5, roundToResolution(hGain * ratio, 0.5));
+                    if (rGain > 0) rGain = Math.max(0.5, roundToResolution(rGain * ratio, 0.5));
+                  }
+                  relaxStatSummary = `+${hGain} 😊 • +${rGain} 🛌`;
+                }
+
+                let workoutStatSummary = '';
+                if (rules?.usePhysicalMentalConditions) {
+                  if (workoutsThisTurn > 0) {
+                    let pCost = 2;
+                    let mCost = 1;
+                    if (isPartial) {
+                      pCost = Math.max(conditionRes, roundToResolution(pCost * ratio, conditionRes));
+                      mCost = Math.max(conditionRes, roundToResolution(mCost * ratio, conditionRes));
+                    }
+                    workoutStatSummary = `-${pCost} 💪 • -${mCost} 🧠`;
+                  } else {
+                    let maxB = 1;
+                    let pCost = 1;
+                    let mGain = 1;
+                    if (isPartial) {
+                      maxB = roundToResolution(1 * ratio, conditionRes);
+                      pCost = Math.max(conditionRes, roundToResolution(pCost * ratio, conditionRes));
+                      mGain = Math.max(conditionRes, roundToResolution(mGain * ratio, conditionRes));
+                    }
+                    const maxPart = maxB > 0 ? `+${maxB} Max 💪 • ` : '';
+                    workoutStatSummary = `${maxPart}-${pCost} 💪 • +${mGain} 🧠`;
+                  }
+                } else {
+                  if (workoutsThisTurn > 0) {
+                    let rCost = 1;
+                    if (isPartial) rCost = Math.max(0.5, roundToResolution(rCost * ratio, 0.5));
+                    workoutStatSummary = `-${rCost} 🛌`;
+                  } else {
+                    let rGain = 2;
+                    let hCost = 1;
+                    if (isPartial) {
+                      rGain = Math.max(0.5, roundToResolution(rGain * ratio, 0.5));
+                      hCost = Math.max(0.5, roundToResolution(hCost * ratio, 0.5));
+                    }
+                    workoutStatSummary = `+${rGain} 🛌 • -${hCost} 😊`;
+                  }
+                }
 
                 return (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
@@ -599,16 +661,16 @@ export function BuildingModal({
                         disabled={isRelaxDisabled}
                         onClick={() => handleActionIntercept({ type: 'relax_park' })}
                         title={isEncounterPark
-                          ? t('park.relaxEncounterDesc', `Spend peaceful time relaxing outdoors (${hoursLabel} • Free • 🎴 Draw 3 Encounter Cards)`)
-                          : t('park.relaxDesc', `Spend peaceful time relaxing outdoors (${hoursLabel} • +2 😊 • +2 🛌)`)}
+                          ? t('park.relaxEncounterDesc', `Spend peaceful time relaxing outdoors (${hoursLabel} • ${relaxStatSummary} • 🎴 1 Event Card)`)
+                          : t('park.relaxDesc', `Spend peaceful time relaxing outdoors (${hoursLabel} • ${relaxStatSummary})`)}
                         style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                       >
                         <span style={{ fontSize: '20px' }}>🌳</span>
                         <strong>{t('park.relax', 'Relax in Park')}</strong>
                         <span style={{ fontSize: '11px', opacity: 0.85 }}>
                           {isEncounterPark
-                            ? (isPartial ? `${hoursLabel} • 🎴 Partial (${Math.round(ratio * 100)}%) • Free` : `${hoursLabel} • 🎴 3 Cards • Free`)
-                            : `${hoursLabel} • +2 😊 • +2 🛌`}
+                            ? `${hoursLabel} • ${relaxStatSummary} • 🎴 1 Event Card${isPartial ? ` (${Math.round(ratio * 100)}%)` : ''}`
+                            : `${hoursLabel} • ${relaxStatSummary}`}
                         </span>
                       </button>
                       {isEncounterPark && (
@@ -650,16 +712,18 @@ export function BuildingModal({
                         disabled={isWorkoutDisabled}
                         onClick={() => handleActionIntercept({ type: 'workout_park' })}
                         title={isEncounterPark
-                          ? t('park.workoutEncounterDesc', `Fitness & cardiovascular conditioning (${hoursLabel} • Free • 🎴 Draw 3 Workout Cards)`)
-                          : t('park.workoutDesc', `Fitness workout (${hoursLabel} • +2 🛌 • -1 😊)`)}
+                          ? t('park.workoutEncounterDesc', `Fitness & cardiovascular conditioning (${hoursLabel} • ${workoutStatSummary} • 🎴 1 Event Card)`)
+                          : t('park.workoutDesc', `Fitness workout (${hoursLabel} • ${workoutStatSummary})`)}
                         style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                       >
                         <span style={{ fontSize: '20px' }}>🏃</span>
                         <strong>{t('park.workout', 'Workout in Park')}</strong>
                         <span style={{ fontSize: '11px', opacity: 0.85 }}>
                           {isEncounterPark
-                            ? (isPartial ? `${hoursLabel} • 🎴 Partial (${Math.round(ratio * 100)}%) • Free` : `${hoursLabel} • 🎴 3 Cards • Free`)
-                            : `${hoursLabel} • +2 🛌 • -1 😊`}
+                            ? (workoutsThisTurn > 0
+                                ? `${hoursLabel} • ${workoutStatSummary} (Overtraining)`
+                                : `${hoursLabel} • ${workoutStatSummary} • 🎴 1 Event Card${isPartial ? ` (${Math.round(ratio * 100)}%)` : ''}`)
+                            : `${hoursLabel} • ${workoutStatSummary}`}
                         </span>
                       </button>
                       {isEncounterPark && (
@@ -1061,12 +1125,18 @@ export function BuildingModal({
             <h2>{buildingTitle}</h2>
             {rules?.helpfulUI && building.archetype === 'home' && livesHere && (() => {
               const robberyRate = (calcEffectiveRobberyChance(player, rules, turn, campaign) * 100).toFixed(1);
-              const isBaseHome = !rules?.advancedHomeGUI && !rules?.usePhysicalMentalConditions;
               const freshUnits = player.inventory?.freshFoodUnits || 0;
+              const cannedUnits = player.inventory?.cannedFoodUnits || 0;
               const fastFoodCount = player.inventory?.fastFoodItems?.length || 0;
+              const hasFridge = player.inventory?.appliances?.some(
+                a => (a.id === 'refrigerator' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('refrigerator')) && !a.isBroken
+              ) ?? false;
+              const hasFreezer = player.inventory?.appliances?.some(
+                a => (a.id === 'freezer' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('freezer')) && !a.isBroken
+              ) ?? false;
 
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginInlineEnd: '48px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginInlineEnd: '48px', marginTop: '10px', flexWrap: 'wrap' }}>
                   <button 
                     type="button"
                     data-testid="home-burglary-badge"
@@ -1089,35 +1159,40 @@ export function BuildingModal({
                     🔓 {robberyRate}%
                   </button>
 
-                  {isBaseHome && (
-                    <button
-                      type="button"
-                      data-testid="pantry-pill-badge"
-                      onClick={() => setIsPantryModalOpen(true)}
-                      title={t('homeRelax.pantryPillTooltip', { defaultValue: 'Pantry & Food Supplies' })}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        background: freshUnits > 0 ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)',
-                        border: `1px solid ${freshUnits > 0 ? 'rgba(46, 204, 113, 0.5)' : 'rgba(231, 76, 60, 0.5)'}`,
-                        color: freshUnits > 0 ? '#2ecc71' : '#ff7675',
-                        borderRadius: '12px',
-                        padding: '2px 8px',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <span>🥗</span>
-                      <span>{freshUnits}</span>
-                      {fastFoodCount > 0 && (
-                        <span style={{ fontSize: '11px', color: '#f1c40f', marginLeft: '2px' }}>
-                          🍔 {fastFoodCount}
-                        </span>
-                      )}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    data-testid="pantry-pill-badge"
+                    onClick={() => setIsPantryModalOpen(true)}
+                    title={t('homeRelax.pantryPillTooltip', { defaultValue: 'Pantry & Food Supplies' })}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      background: (freshUnits > 0 || cannedUnits > 0) ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)',
+                      border: `1px solid ${(freshUnits > 0 || cannedUnits > 0) ? 'rgba(46, 204, 113, 0.5)' : 'rgba(231, 76, 60, 0.5)'}`,
+                      color: (freshUnits > 0 || cannedUnits > 0) ? '#2ecc71' : '#ff7675',
+                      borderRadius: '12px',
+                      padding: '2px 8px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span>🥗 {freshUnits}</span>
+                    {(cannedUnits > 0 || rules?.enableCookingSystem) && (
+                      <span style={{ color: '#fbbf24' }}>🥫 {cannedUnits}</span>
+                    )}
+                    {fastFoodCount > 0 && (
+                      <span style={{ fontSize: '11px', color: '#f1c40f' }}>
+                        🍔 {fastFoodCount}
+                      </span>
+                    )}
+                    {(hasFreezer || hasFridge) && (
+                      <span style={{ fontSize: '11px', color: '#38bdf8' }}>
+                        {hasFreezer ? '❄️' : '🧊'}
+                      </span>
+                    )}
+                  </button>
                 </div>
               );
             })()}

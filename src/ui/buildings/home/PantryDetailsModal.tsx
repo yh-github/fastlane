@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import type { PlayerState, GameRules } from '../../../engine/gameState';
+import { type PlayerState, type GameRules, isPlayerFed } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { GameAction } from '../../../engine/actions/types';
 
@@ -51,7 +51,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
   const cannedUnits = player.inventory?.cannedFoodUnits || 0;
   const fastFoodItems = player.inventory?.fastFoodItems || [];
 
-  const hasEaten = Boolean(player.turnFlags?.hasEaten);
+  const hasEaten = isPlayerFed(player, rules);
   const currentPhys = player.physicalCondition ?? 50;
 
   // Cooking calculations

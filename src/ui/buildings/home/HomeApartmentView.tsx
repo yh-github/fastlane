@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../../engine/dataLoader';
-import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
+import { type PlayerState, type GameRules, type OwnedAppliance, isPlayerFed } from '../../../engine/gameState';
 import { DurableCardModal } from './DurableCardModal';
 import { ApartmentFurnishings } from './ApartmentFurnishings';
 import { CuriosFlankingWings } from './CuriosFlankingWings';
@@ -120,6 +120,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   onPantryClick
 }) => {
   const { t } = useTranslation();
+  const isFed = isPlayerFed(player, rules);
   const [activeWing, setActiveWing] = useState<'leisure' | 'chores' | null>(null);
   const [isCuriosWingsOpen, setIsCuriosWingsOpen] = useState(false);
   const [inspectedDurable, setInspectedDurable] = useState<{
@@ -561,6 +562,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             hasFridge={hasFridge}
             hasFreezer={hasFreezer}
             onPantryClick={onPantryClick}
+            onAction={onAction}
           />,
           modalParent
         ) : (
@@ -594,6 +596,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             hasFridge={hasFridge}
             hasFreezer={hasFreezer}
             onPantryClick={onPantryClick}
+            onAction={onAction}
           />
         )
       )}
@@ -659,18 +662,18 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                 style={{
                   padding: '5px 14px',
                   borderRadius: '6px',
-                  border: !player.turnFlags?.hasEaten ? '2px solid #f59e0b' : '1.5px solid rgba(245, 158, 11, 0.5)',
-                  background: !player.turnFlags?.hasEaten
+                  border: !isFed ? '2px solid #f59e0b' : '1.5px solid rgba(245, 158, 11, 0.5)',
+                  background: !isFed
                     ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%)'
                     : 'linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(120, 53, 15, 0.85) 100%)',
-                  color: !player.turnFlags?.hasEaten ? '#000' : '#fde68a',
+                  color: !isFed ? '#000' : '#fde68a',
                   fontSize: '0.80rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  boxShadow: !player.turnFlags?.hasEaten
+                  boxShadow: !isFed
                     ? '0 0 14px rgba(245, 158, 11, 0.8), 0 4px 10px rgba(0,0,0,0.7)'
                     : '0 3px 8px rgba(0,0,0,0.6)',
                   transition: 'all 0.15s ease',
@@ -678,19 +681,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
                 }}
               >
                 <span>🍳</span>
-                <span>{player.turnFlags?.hasEaten ? t('homeRelax.btnKitchen', { defaultValue: 'Kitchen' }) : t('homeRelax.btnCookMeals', { defaultValue: 'Meal Prep (Unfed!)' })}</span>
-                {!player.turnFlags?.hasEaten && (
-                  <span style={{
-                    background: '#dc2626',
-                    color: '#fff',
-                    fontSize: '0.62rem',
-                    fontWeight: 900,
-                    padding: '1px 5px',
-                    borderRadius: '8px'
-                  }}>
-                    ⚠️
-                  </span>
-                )}
+                <span>{isFed ? t('homeRelax.btnKitchen', { defaultValue: 'Kitchen' }) : t('homeRelax.btnCookMeals', { defaultValue: 'Meal Prep' })}</span>
               </button>
             )}
 

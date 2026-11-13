@@ -637,4 +637,56 @@ describe('Modal Escape and Card Popups', () => {
     const buyButton = screen.getByRole('button', { name: /BUY/i });
     expect(buyButton).toBeEnabled();
   });
+
+  it('displays cooking system effects for stove, microwave, and freezer when enableCookingSystem is true', () => {
+    const cookingRules: GameRules = {
+      ...baseRules,
+      usePhysicalMentalConditions: true,
+      enableCookingSystem: true
+    };
+    const legacyStyleCampaign: CampaignBundle = {
+      ...mockCampaign,
+      items: [
+        { id: 'stove', name: 'Stove & Range', category: 'appliance', effects: [{ trigger: 'on_relax', stat: 'physical', value: 1 }] },
+        { id: 'microwave', name: 'Microwave Oven', category: 'appliance', effects: [{ trigger: 'on_relax', stat: 'physical', value: 1 }, { trigger: 'on_socialize', stat: 'social', value: 1 }] },
+        { id: 'freezer', name: 'Deep Freezer', category: 'appliance' }
+      ]
+    } as any;
+
+    const { rerender } = render(
+      <DurableCardModal
+        durable={{ id: 'stove', isOwned: true }}
+        player={mockPlayer}
+        campaign={legacyStyleCampaign}
+        rules={cookingRules}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByText('🍳 Cook Fresh: +1.5 💪, +2 🧠 (2.5h, +2 Mess)')).toBeInTheDocument();
+    expect(screen.queryByText(/\+1 💪 On Relax/i)).not.toBeInTheDocument();
+
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'microwave', isOwned: true }}
+        player={mockPlayer}
+        campaign={legacyStyleCampaign}
+        rules={cookingRules}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByText('⚡ Microwave Fresh: +0.5 💪, +1 🧠 (1h, 0 💪 cost)')).toBeInTheDocument();
+    expect(screen.queryByText(/\+1 💪 On Relax/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\+1 👥 On Socialize/i)).not.toBeInTheDocument();
+
+    rerender(
+      <DurableCardModal
+        durable={{ id: 'freezer', isOwned: true }}
+        player={mockPlayer}
+        campaign={legacyStyleCampaign}
+        rules={cookingRules}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByText('🧊 Stores 6 Food Standalone (12 with Refrigerator)')).toBeInTheDocument();
+  });
 });

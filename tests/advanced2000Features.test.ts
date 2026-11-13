@@ -864,7 +864,7 @@ describe('Advanced 2000 Campaign Features', () => {
       };
     }
 
-    it('relax_park consumes 3 hours and awards card-driven encounter modifiers without double-dipping base stats', () => {
+    it('relax_park consumes 3 hours and awards baseline recovery plus card-driven encounter modifiers', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_park_campus', campaign2000.config);
       player.hoursRemaining = 20;
       player.physicalCondition = 30;

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PlayerState, GameState } from '../engine/gameState';
+import { type PlayerState, type GameState, isPlayerFed } from '../engine/gameState';
 import type { CampaignBundle, JobDef } from '../engine/dataLoader';
 import type { GameRules } from '../engine/rules';
 import {
@@ -324,27 +324,20 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     });
 
     if (rules.enableCookingSystem) {
-      const hasEaten = Boolean(player.turnFlags?.hasEaten);
-      const dietLabel = t('dashboard.diet', { defaultValue: 'Diet' });
-      let tierName = t('dashboard.unfed', { defaultValue: 'Unfed' });
-      if (hasEaten) {
-        if (player.nutritionTier === 'home_cooked') tierName = t('dashboard.tierHomeCooked', { defaultValue: 'Home Cooked' });
-        else if (player.nutritionTier === 'microwave') tierName = t('dashboard.tierMicrowave', { defaultValue: 'Microwave' });
-        else if (player.nutritionTier === 'cold_meal') tierName = t('dashboard.tierColdMeal', { defaultValue: 'Cold Meal' });
-        else if (player.nutritionTier === 'fast_food') tierName = t('dashboard.tierFastFood', { defaultValue: 'Fast Food' });
-        else if (player.nutritionTier === 'canned') tierName = t('dashboard.tierCanned', { defaultValue: 'Canned' });
-        else tierName = t('dashboard.tierFed', { defaultValue: 'Fed' });
-      }
+      const isFed = isPlayerFed(player, rules);
+      const foodLabel = t('dashboard.food', { defaultValue: 'Food' });
+      const fedStatusText = isFed
+        ? t('dashboard.nutritionFed', { defaultValue: 'Fed' })
+        : t('dashboard.nutritionUnfed', { defaultValue: 'Unfed' });
       lifeBadges.push({
         id: 'stat-nutrition',
-        label: dietLabel,
-        value: tierName,
-        icon: hasEaten ? '🥗' : '🍽️',
-        hoverText: hasEaten
-          ? `${dietLabel}: ${tierName} (${t('dashboard.dietFedDesc', { defaultValue: 'Fed for this week. Relaxing provides full recovery.' })})`
-          : `${dietLabel}: ${t('dashboard.unfed', { defaultValue: 'Unfed' })} (${t('dashboard.dietUnfedDesc', { defaultValue: 'Prepare food at home or eat out before relaxing.' })})`,
-        warning: !hasEaten,
-        badge: hasEaten ? `✓ ${tierName}` : `⚠️ ${t('dashboard.unfedBadge', { defaultValue: 'Unfed' })}`,
+        label: foodLabel,
+        value: fedStatusText,
+        icon: isFed ? '🥗' : '🍽️',
+        hoverText: isFed
+          ? `${foodLabel}: ${fedStatusText} (${t('dashboard.dietFedDesc', { defaultValue: 'Fed for this week. Relaxing provides full recovery.' })})`
+          : `${foodLabel}: ${fedStatusText} (${t('dashboard.dietUnfedDesc', { defaultValue: 'Prepare food at home or eat out before relaxing.' })})`,
+        warning: !isFed,
         onClick: onOpenAttributeCard ? () => onOpenAttributeCard('nutrition') : undefined,
       });
     }

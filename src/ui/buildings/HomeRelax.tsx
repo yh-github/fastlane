@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../engine/dataLoader';
-import { type GameRules, collectItemEffects, type OwnedAppliance } from '../../engine/gameState';
+import { type GameRules, collectItemEffects, type OwnedAppliance, isPlayerFed } from '../../engine/gameState';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap, calcSocializeParameters, formatHours } from '../../engine/statMath';
 import { HomeApartmentView } from './home/HomeApartmentView';
@@ -194,7 +194,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   );
 
   const hasRawFood = (player.inventory?.freshFoodUnits || 0) > 0 || (player.inventory?.fastFoodItems?.length || 0) > 0 || (player.inventory?.cannedFoodUnits || 0) > 0;
-  const isFed = rules?.enableCookingSystem ? Boolean(player.turnFlags?.hasEaten) : hasRawFood;
+  const isFed = isPlayerFed(player, rules);
   const hasFood = isFed;
 
   const relaxEffects = collectItemEffects(player, campaign, 'on_relax');
@@ -649,6 +649,90 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
             </button>
           </div>
         )}
+
+        {/* Direct Meal Prep Section (Fallback classic panel when enableCookingSystem is active) */}
+        {rules?.enableCookingSystem && (() => {
+          const freshUnits = player.inventory?.freshFoodUnits || 0;
+          const cannedUnits = player.inventory?.cannedFoodUnits || 0;
+          const hasStove = player.inventory?.appliances?.some(
+            a => (a.id === 'stove' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken
+          ) ?? false;
+          const hasMicrowave = player.inventory?.appliances?.some(
+            a => (a.id === 'microwave' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('microwave')) && !a.isBroken
+          ) ?? false;
+          const curPhys = player.physicalCondition ?? 50;
+          let cookTime = hasMicrowave ? 1.5 : 2.5;
+          if (hasFreezer && !hasFridge && !hasMicrowave) cookTime += 1.0;
+          const coldTime = (hasFreezer && !hasFridge && !hasMicrowave) ? 1.5 : 0.5;
+          const cannedTime = hasMicrowave ? 0.5 : 1.0;
+          const freshMethod = (hasStove && curPhys >= 1.5 && player.hoursRemaining >= cookTime)
+            ? 'home_cooked'
+            : (hasMicrowave && player.hoursRemaining >= 1.0)
+              ? 'microwave'
+              : 'cold_meal';
+          const freshHours = freshMethod === 'home_cooked' ? cookTime : (freshMethod === 'microwave' ? 1.0 : coldTime);
+          const canCookFresh = freshUnits >= 1 && player.hoursRemaining >= freshHours;
+          const canEatCanned = cannedUnits >= 1 && player.hoursRemaining >= cannedTime;
+
+          return (
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.35)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <h4 style={{ margin: 0, color: '#f59e0b', fontSize: '0.85em' }}>🍳 Kitchen & Pantry (🥗 {freshUnits} • 🥫 {cannedUnits})</h4>
+                <button
+                  type="button"
+                  onClick={() => setShowPantryPopup(true)}
+                  style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#cbd5e1', borderRadius: '4px', padding: '2px 6px', fontSize: '0.72em', cursor: 'pointer' }}
+                >
+                  Details
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {freshUnits > 0 && (
+                  <button
+                    type="button"
+                    disabled={!canCookFresh}
+                    onClick={() => handleHomeAction({ type: 'prep_meal', mealType: freshMethod })}
+                    style={{
+                      backgroundColor: canCookFresh ? '#059669' : '#444',
+                      color: canCookFresh ? '#fff' : '#bbb',
+                      border: 'none',
+                      padding: '6px 10px',
+                      borderRadius: '4px',
+                      cursor: canCookFresh ? 'pointer' : 'not-allowed',
+                      fontWeight: 'bold',
+                      fontSize: '0.82em'
+                    }}
+                  >
+                    {freshMethod === 'home_cooked'
+                      ? `🍳 Cook Fresh (${cookTime}h)`
+                      : freshMethod === 'microwave'
+                        ? `⚡ Microwave Fresh (1h)`
+                        : `🥗 Eat Cold (${coldTime}h)`}
+                  </button>
+                )}
+                {cannedUnits > 0 && (
+                  <button
+                    type="button"
+                    disabled={!canEatCanned}
+                    onClick={() => handleHomeAction({ type: 'prep_meal', mealType: 'canned' })}
+                    style={{
+                      backgroundColor: canEatCanned ? '#d97706' : '#444',
+                      color: canEatCanned ? '#fff' : '#bbb',
+                      border: 'none',
+                      padding: '6px 10px',
+                      borderRadius: '4px',
+                      cursor: canEatCanned ? 'pointer' : 'not-allowed',
+                      fontWeight: 'bold',
+                      fontSize: '0.82em'
+                    }}
+                  >
+                    🥫 Eat Canned ({cannedTime}h)
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Apartment Furnishings & Belongings Centerpiece */}
         <ApartmentFurnishings

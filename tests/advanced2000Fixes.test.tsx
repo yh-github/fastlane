@@ -314,7 +314,8 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     expect(screen.getByTestId('park-help-relax')).toBeInTheDocument();
     expect(screen.getByText('Workout in Park')).toBeInTheDocument();
     expect(screen.getByTestId('park-help-workout')).toBeInTheDocument();
-    expect(screen.getAllByText(/⏳ -3h • 🎴 3 Cards • Free/i).length).toBe(2);
+    expect(screen.getByText(/⏳ -3h • \+2 💪 • \+2 🧠 • 🎴 1 Event Card/i)).toBeInTheDocument();
+    expect(screen.getByText(/⏳ -3h • \+1 Max 💪 • -1 💪 • \+1 🧠 • 🎴 1 Event Card/i)).toBeInTheDocument();
   });
 
   // Coffee card & no "Nutrition happiness"
