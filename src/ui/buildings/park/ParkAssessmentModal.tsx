@@ -8,6 +8,7 @@ import {
   scaleParkCard
 } from '../../../engine/actions/parkActions';
 import { formatHours } from '../../../engine/math/formatters';
+import { roundToResolution } from '../../../engine/statMath';
 import { StatModifierPills } from '../../StatModifierPills';
 
 export interface ParkAssessmentModalProps {
@@ -251,6 +252,53 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {activeTab === 'overview' && (
             <>
+              {/* Baseline Benefits Box */}
+              <div
+                style={{
+                  background: 'rgba(34, 197, 94, 0.08)',
+                  border: '1px solid rgba(34, 197, 94, 0.25)',
+                  borderRadius: '8px',
+                  padding: '12px 14px'
+                }}
+              >
+                <div style={{ fontSize: '11px', color: '#86efac', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 'bold' }}>
+                  {t('park.baselineTitle', { defaultValue: 'Guaranteed Activity Baseline (Applied on Click)' })}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  {mode === 'relax' ? (
+                    <>
+                      <span style={{ fontSize: '13px', color: '#4ade80', fontWeight: 'bold' }}>
+                        +{isPartial ? Math.max(conditionRes, roundToResolution(2 * ratio, conditionRes)) : 2} 💪 Physical
+                      </span>
+                      <span style={{ fontSize: '13px', color: '#a855f7', fontWeight: 'bold' }}>
+                        +{isPartial ? Math.max(conditionRes, roundToResolution(2 * ratio, conditionRes)) : 2} 🧠 Mental
+                      </span>
+                      {player.turnFlags?.parkRelaxesThisTurn ? (
+                        <span style={{ fontSize: '11px', color: '#facc15' }}>
+                          ({t('park.diminishedRepeat', { defaultValue: 'Diminished on repeat visits' })})
+                        </span>
+                      ) : null}
+                    </>
+                  ) : isOvertraining ? (
+                    <span style={{ fontSize: '13px', color: '#ef4444', fontWeight: 'bold' }}>
+                      -2 💪 Physical, -1 🧠 Mental (Overtraining Exhaustion)
+                    </span>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: '13px', color: '#fdba74', fontWeight: 'bold' }}>
+                        +{isPartial ? roundToResolution(1 * ratio, conditionRes) : 1} Max 💪
+                      </span>
+                      <span style={{ fontSize: '13px', color: '#f87171', fontWeight: 'bold' }}>
+                        -{isPartial ? Math.max(conditionRes, roundToResolution(1 * ratio, conditionRes)) : 1} 💪 Physical
+                      </span>
+                      <span style={{ fontSize: '13px', color: '#a855f7', fontWeight: 'bold' }}>
+                        +{isPartial ? Math.max(conditionRes, roundToResolution(1 * ratio, conditionRes)) : 1} 🧠 Mental
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
               {/* Timing & Scaling Box */}
               <div
                 style={{
@@ -281,13 +329,13 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
                 <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
                   <div style={{ fontSize: '11px', color: '#86efac', textTransform: 'uppercase' }}>🌟 Encounter Odds</div>
                   <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#4ade80' }}>75%</div>
-                  <div style={{ fontSize: '11px', color: '#cbd5e1' }}>Draw 3, pick 1</div>
+                  <div style={{ fontSize: '11px', color: '#cbd5e1' }}>1 Card (Pick 1 of 3)</div>
                 </div>
 
                 <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
                   <div style={{ fontSize: '11px', color: '#fca5a5', textTransform: 'uppercase' }}>⚠️ Hazard Risk</div>
                   <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#f87171' }}>25%</div>
-                  <div style={{ fontSize: '11px', color: '#cbd5e1' }}>1 incident card</div>
+                  <div style={{ fontSize: '11px', color: '#cbd5e1' }}>1 Mishap Card</div>
                 </div>
 
                 {mode === 'workout' && (
@@ -306,7 +354,7 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
               {/* Expected Outcome Ranges */}
               <div style={{ background: 'rgba(0, 0, 0, 0.25)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', padding: '12px 14px' }}>
                 <h4 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase' }}>
-                  {t('park.expectedRangesTitle', { defaultValue: 'Expected Card Modifiers Range (Good Outcomes)' })}
+                  {t('park.expectedRangesTitle', { defaultValue: 'Expected Event Card Bonus Range (Good Outcomes)' })}
                 </h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {maxPhysRange.max > 0 && (

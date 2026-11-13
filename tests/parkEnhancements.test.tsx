@@ -441,5 +441,78 @@ describe('Park System Enhancements (Advanced 2000)', () => {
         }
       }
     });
+
+    it('awards baseline rest on click alongside event card pendingMiniGame', () => {
+      const player = createPlayerState(
+        'p1',
+        'Alex',
+        false,
+        createDefaultGoalAllotment(),
+        'node_park_campus',
+        campaign2000.config
+      );
+      player.hoursRemaining = 20;
+      player.physicalCondition = 30;
+      player.mentalCondition = 30;
+
+      const context = {
+        campaign: campaign2000,
+        rules: campaign2000.config.gameRules,
+        turn: 1,
+        economicIndex: 100,
+        rng: {
+          next: () => 0.8, // good encounter
+          nextInt: () => 0,
+          getState: () => 1,
+          setState: () => {}
+        } as any,
+        state: {} as any
+      };
+
+      const res = handleRelaxParkAction(player, { type: 'relax_park' }, context);
+      // Baseline rest is +2 Physical, +2 Mental
+      expect(res.nextPlayer.physicalCondition).toBe(32);
+      expect(res.nextPlayer.mentalCondition).toBe(32);
+      expect(res.nextPlayer.hoursRemaining).toBe(17);
+      expect(res.nextPlayer.pendingMiniGame).toBeDefined();
+      expect(res.nextPlayer.pendingMiniGame?.options.length).toBe(3);
+    });
+
+    it('awards baseline workout conditioning on click alongside event card pendingMiniGame', () => {
+      const player = createPlayerState(
+        'p1',
+        'Alex',
+        false,
+        createDefaultGoalAllotment(),
+        'node_park_campus',
+        campaign2000.config
+      );
+      player.hoursRemaining = 20;
+      player.physicalCondition = 30;
+      player.physicalConditionMax = 50;
+      player.mentalCondition = 30;
+
+      const context = {
+        campaign: campaign2000,
+        rules: campaign2000.config.gameRules,
+        turn: 1,
+        economicIndex: 100,
+        rng: {
+          next: () => 0.8, // good encounter
+          nextInt: () => 0,
+          getState: () => 1,
+          setState: () => {}
+        } as any,
+        state: {} as any
+      };
+
+      const res = handleWorkoutParkAction(player, { type: 'workout_park' }, context);
+      // Baseline workout: +1 Max Phys, -1 Phys, +1 Mental
+      expect(res.nextPlayer.physicalConditionMax).toBe(51);
+      expect(res.nextPlayer.physicalCondition).toBe(29);
+      expect(res.nextPlayer.mentalCondition).toBe(31);
+      expect(res.nextPlayer.hoursRemaining).toBe(17);
+      expect(res.nextPlayer.pendingMiniGame).toBeDefined();
+    });
   });
 });
