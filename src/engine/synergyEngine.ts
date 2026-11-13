@@ -183,6 +183,9 @@ export function collectItemEffects(
   const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
   const hasTv = player.inventory?.appliances?.some(a => isAnyTv(a.id) && !a.isBroken);
 
+  const cookingEnabled = Boolean(campaign?.config?.gameRules?.enableCookingSystem);
+  const advConditions = Boolean(campaign?.config?.gameRules?.usePhysicalMentalConditions);
+
   // Process appliances
   for (const app of player.inventory?.appliances || []) {
     if (app.isBroken) continue;
@@ -193,9 +196,27 @@ export function collectItemEffects(
     seenItemIds.add(app.id);
 
     const itemDef = campaign.items?.find(i => i.id === app.id);
-    for (const effect of itemDef?.effects || []) {
+    if (cookingEnabled && (app.id === 'stove' || app.id === 'microwave')) {
+      // Under the Advanced Cooking system, stove and microwave benefits come from meal prep
+      continue;
+    }
+
+    const effectsList = itemDef?.effects || [];
+    for (const effect of effectsList) {
       if (effect.trigger === trigger) {
         totals.set(effect.stat, (totals.get(effect.stat) || 0) + effect.value);
+      }
+    }
+
+    if (!cookingEnabled && advConditions && effectsList.length === 0) {
+      if (app.id === 'stove' && trigger === 'on_relax') {
+        totals.set('physical', (totals.get('physical') || 0) + 1);
+      } else if (app.id === 'microwave') {
+        if (trigger === 'on_relax') {
+          totals.set('physical', (totals.get('physical') || 0) + 1);
+        } else if (trigger === 'on_socialize') {
+          totals.set('social', (totals.get('social') || 0) + 1);
+        }
       }
     }
   }

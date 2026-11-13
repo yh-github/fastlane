@@ -639,6 +639,25 @@ export function markClothesWorn(
   };
 }
 
+/**
+ * Single source of truth for whether a player is considered fed for the turn
+ * (prevents starvation penalties when relaxing or ending the turn).
+ */
+export function isPlayerFed(player: PlayerState, rules?: GameRules): boolean {
+  if (rules?.enableCookingSystem) {
+    return Boolean(
+      player.turnFlags?.hasEaten ||
+      player.turnFlags?.ateHospitalCafeteriaThisTurn
+    );
+  }
+  return Boolean(
+    player.turnFlags?.hasEaten ||
+    (player.inventory?.freshFoodUnits || 0) > 0 ||
+    (player.inventory?.fastFoodItems?.length || 0) > 0 ||
+    (player.inventory?.cannedFoodUnits || 0) > 0
+  );
+}
+
 export interface PlayerConfig {
   name: string;
   isAi: boolean;

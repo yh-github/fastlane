@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { loadCampaign, type CampaignBundle } from '../src/engine/dataLoader';
 import { createPlayerState, createDefaultGoalAllotment } from '../src/engine/stateFactories';
 import { gameReducer } from '../src/engine/gameReducer';
-import { recalculatePlayerEffects } from '../src/engine/gameState';
+import { recalculatePlayerEffects, isPlayerFed } from '../src/engine/gameState';
 import { processAdvancedHealthAndFood } from '../src/engine/turn/healthAndFoodPhase';
 import { processTurnStart } from '../src/engine/turnProcessor';
 import { buyItem } from '../src/engine/shoppingEngine';
@@ -560,7 +560,7 @@ describe('Advanced 2000 - Cooking Module', () => {
   });
 
   describe('Dashboard Status & Nutrition Indicator', () => {
-    it('shows stat-nutrition badge as Unfed with warning when player has not eaten', () => {
+    it('shows stat-nutrition badge as binary Unfed with warning (no floating badge) when player has not eaten', () => {
       const player = makePlayer(campaign2000);
       player.turnFlags.hasEaten = false;
       player.inventory.freshFoodUnits = 3; // Has food in pantry, but hasn't eaten!
@@ -575,13 +575,14 @@ describe('Advanced 2000 - Cooking Module', () => {
 
       const nutritionBadge = badges.lifeBadges.find(b => b.id === 'stat-nutrition');
       expect(nutritionBadge).toBeDefined();
+      expect(nutritionBadge?.label).toBe('Food');
       expect(nutritionBadge?.value).toBe('Unfed');
       expect(nutritionBadge?.warning).toBe(true);
-      expect(nutritionBadge?.badge).toContain('Unfed');
+      expect(nutritionBadge?.badge).toBeUndefined();
       expect(nutritionBadge?.icon).toBe('🍽️');
     });
 
-    it('shows stat-nutrition badge as Home Cooked with checkmark when player has cooked and eaten', () => {
+    it('shows stat-nutrition badge as binary Fed without floating badge when player has cooked and eaten', () => {
       const player = makePlayer(campaign2000);
       player.turnFlags.hasEaten = true;
       player.nutritionTier = 'home_cooked';
@@ -596,9 +597,10 @@ describe('Advanced 2000 - Cooking Module', () => {
 
       const nutritionBadge = badges.lifeBadges.find(b => b.id === 'stat-nutrition');
       expect(nutritionBadge).toBeDefined();
-      expect(nutritionBadge?.value).toBe('Home Cooked');
+      expect(nutritionBadge?.label).toBe('Food');
+      expect(nutritionBadge?.value).toBe('Fed');
       expect(nutritionBadge?.warning).toBeFalsy();
-      expect(nutritionBadge?.badge).toContain('Home Cooked');
+      expect(nutritionBadge?.badge).toBeUndefined();
       expect(nutritionBadge?.icon).toBe('🥗');
     });
 
@@ -616,11 +618,41 @@ describe('Advanced 2000 - Cooking Module', () => {
       });
 
       expect(info.id).toBe('nutrition');
-      expect(info.name).toContain('Diet');
+      expect(info.name).toContain('Food');
       expect(info.currentValue).toBe('Unfed');
       expect(info.statusBadge).toContain('Unfed');
       expect(info.description).toContain('Advanced 2000');
       expect(info.decreases.some(d => d.includes('Unfed Relaxing'))).toBe(true);
+    });
+
+    it('treats Hospital Cafeteria meals as fed for Home Relaxing (single source of truth) and allows repeat purchases', () => {
+      const staff = makePlayer(campaign2000);
+      staff.currentJobId = 'hospital_custodian';
+      staff.hoursRemaining = 20;
+      staff.money = 120;
+      staff.physicalCondition = 30;
+      staff.mentalCondition = 30;
+
+      expect(isPlayerFed(staff, campaign2000.config.gameRules)).toBe(false);
+
+      // 1st cafeteria meal sets hasEaten = true and counts as fed
+      const { state: s1, context: c1 } = createTestContext(staff, campaign2000);
+      const afterCafe1 = gameReducer(staff, { type: 'hospital_cafeteria' }, c1);
+      expect(afterCafe1.updatedPlayer.turnFlags.ateHospitalCafeteriaThisTurn).toBe(true);
+      expect(afterCafe1.updatedPlayer.turnFlags.hasEaten).toBe(true);
+      expect(isPlayerFed(afterCafe1.updatedPlayer, campaign2000.config.gameRules)).toBe(true);
+
+      // Relaxing at home right after eating at Hospital Cafeteria grants full fed bonuses (no Max penalty)
+      const { context: cRelax } = createTestContext(afterCafe1.updatedPlayer, campaign2000);
+      const afterRelax = gameReducer(afterCafe1.updatedPlayer, { type: 'relax' }, cRelax);
+      expect(afterRelax.actionLog?.key).toBe('action.relax');
+      expect(afterRelax.actionLog?.params?.stats).not.toContain('-1 Max Physical');
+
+      // 2nd cafeteria meal is still allowed if staff has money and hours
+      const { context: c2 } = createTestContext(afterRelax.updatedPlayer, campaign2000);
+      const afterCafe2 = gameReducer(afterRelax.updatedPlayer, { type: 'hospital_cafeteria' }, c2);
+      expect(afterCafe2.actionLog?.key).toBe('action.hospital.cafeteriaSuccess');
+      expect(afterCafe2.updatedPlayer.money).toBe(40); // 120 - 40 - 40
     });
   });
 });

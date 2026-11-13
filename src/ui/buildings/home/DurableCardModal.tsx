@@ -248,17 +248,33 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   if (itemId === 'refrigerator') {
     effectBadges.push({ label: '🧊 Preserves up to 6 Fresh Food/turn' });
   } else if (itemId === 'freezer') {
-    effectBadges.push({ label: '🧊 Stores up to 12 Food (Needs Refrigerator)' });
+    if (rules?.enableCookingSystem) {
+      effectBadges.push({ label: '🧊 Stores 6 Food Standalone (12 with Refrigerator)' });
+    } else {
+      effectBadges.push({ label: '🧊 Stores up to 12 Food (Needs Refrigerator)' });
+    }
     if (!rules?.usePhysicalMentalConditions && itemDef?.happinessBonus) {
       effectBadges.push({ label: `🎁 One-time: ${formatDelta(itemDef.happinessBonus)} 😊 on buy`, isOneTime: true });
     }
   } else if (itemId === 'stove') {
-    if (!rules?.usePhysicalMentalConditions) {
+    if (rules?.enableCookingSystem) {
+      effectBadges.push({ label: '🍳 Cook Fresh: +1.5 💪, +2 🧠 (2.5h, +2 Mess)' });
+      effectBadges.push({ label: '⚡ With Microwave: 1.5h prep, +1 Mess' });
+    } else if (!rules?.usePhysicalMentalConditions) {
       effectBadges.push({ label: '🍳 +1 😊/turn' });
+    } else if (!itemDef?.effects || itemDef.effects.length === 0) {
+      effectBadges.push({ label: '+1 💪 On Relax' });
     }
   } else if (itemId === 'microwave') {
-    if (!rules?.usePhysicalMentalConditions) {
+    if (rules?.enableCookingSystem) {
+      effectBadges.push({ label: '⚡ Microwave Fresh: +0.5 💪, +1 🧠 (1h, 0 💪 cost)' });
+      effectBadges.push({ label: '⏱️ Cuts Stove & Canned Prep Time & -1 Mess' });
+      effectBadges.push({ label: '🧊 Thaws Frozen Food Instantly (No +1h Delay)' });
+    } else if (!rules?.usePhysicalMentalConditions) {
       effectBadges.push({ label: '⚡ +1 😊/turn' });
+    } else if (!itemDef?.effects || itemDef.effects.length === 0) {
+      effectBadges.push({ label: '+1 💪 On Relax' });
+      effectBadges.push({ label: '+1 👥 On Socialize' });
     }
   } else if (itemId === 'computer') {
     effectBadges.push({ label: '🎓 Bonus Study Credit (-1 Lesson)' });
@@ -283,7 +299,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   }
 
   // Stat triggers from effects list:
-  if (itemDef?.effects) {
+  if (itemDef?.effects && !((rules?.enableCookingSystem || !rules?.usePhysicalMentalConditions) && (itemId === 'stove' || itemId === 'microwave'))) {
     for (const eff of itemDef.effects) {
       if (eff.trigger === 'on_relax') {
         if (eff.stat === 'physical') effectBadges.push({ label: `${formatDelta(eff.value)} 💪 On Relax` });
@@ -677,7 +693,10 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
         {/* Gameplay Narrative Description */}
         {(() => {
-          const desc = itemDef?.description || getGameplayDescription(itemId, rules, isBook);
+          const isRuleDrivenKitchenAppliance = itemId === 'stove' || itemId === 'microwave' || itemId === 'freezer' || itemId === 'refrigerator';
+          const desc = isRuleDrivenKitchenAppliance
+            ? (getGameplayDescription(itemId, rules, isBook) || itemDef?.description)
+            : (itemDef?.description || getGameplayDescription(itemId, rules, isBook));
           if (!desc) return null;
           return (
             <p style={{

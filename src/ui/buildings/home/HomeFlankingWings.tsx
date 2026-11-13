@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PlayerState, GameRules } from '../../../engine/gameState';
+import { type PlayerState, type GameRules, isPlayerFed } from '../../../engine/gameState';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import { formatHours, messGrowth } from '../../../engine/statMath';
 import { HomeCardHelpModal, type HomeActionType } from './HomeCardHelpModal';
@@ -53,6 +53,7 @@ export interface HomeFlankingWingsProps {
   hasFridge: boolean;
   hasFreezer: boolean;
   onPantryClick?: () => void;
+  onAction?: (action: any) => void | Promise<any>;
 }
 
 export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
@@ -83,10 +84,12 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
   onServiceClick,
   hasFridge,
   hasFreezer,
-  onPantryClick
+  onPantryClick,
+  onAction
 }) => {
   const { t } = useTranslation();
   const [activeHelp, setActiveHelp] = useState<HomeActionType | null>(null);
+  const isFed = isPlayerFed(player, rules);
 
   const usePhysicalMental = !!rules?.usePhysicalMentalConditions;
   const trackMess = !!rules?.trackMess;
@@ -128,6 +131,36 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
   const freshFoodUnits = player.inventory?.freshFoodUnits || 0;
   const cannedFoodUnits = player.inventory?.cannedFoodUnits || 0;
   const fastFoodCount = player.inventory?.fastFoodItems?.length || 0;
+
+  const hasStove = player.inventory?.appliances?.some(
+    a => (a.id === 'stove' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken
+  ) ?? false;
+  const hasMicrowave = player.inventory?.appliances?.some(
+    a => (a.id === 'microwave' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('microwave')) && !a.isBroken
+  ) ?? false;
+  const curPhys = player.physicalCondition ?? 50;
+  let cookTime = hasMicrowave ? 1.5 : 2.5;
+  if (hasFreezer && !hasFridge && !hasMicrowave) {
+    cookTime += 1.0;
+  }
+  const coldTime = (hasFreezer && !hasFridge && !hasMicrowave) ? 1.5 : 0.5;
+  const cannedTime = hasMicrowave ? 0.5 : 1.0;
+
+  type FreshMealType = 'home_cooked' | 'microwave' | 'cold_meal';
+  let bestFreshMethod: FreshMealType = 'cold_meal';
+  let freshHoursNeeded = coldTime;
+  let freshBtnLabel = `🥗 Eat Cold (${coldTime}h • +0.5 🧠)`;
+  if (hasStove && curPhys >= 1.5 && player.hoursRemaining >= cookTime) {
+    bestFreshMethod = 'home_cooked';
+    freshHoursNeeded = cookTime;
+    freshBtnLabel = `🍳 Cook Fresh (${cookTime}h • +1.5 💪, +2 🧠)`;
+  } else if (hasMicrowave && player.hoursRemaining >= 1.0) {
+    bestFreshMethod = 'microwave';
+    freshHoursNeeded = 1.0;
+    freshBtnLabel = `⚡ Microwave Fresh (1h • +0.5 💪, +1 🧠)`;
+  }
+  const canCookFresh = freshFoodUnits >= 1 && player.hoursRemaining >= freshHoursNeeded;
+  const canEatCanned = cannedFoodUnits >= 1 && player.hoursRemaining >= cannedTime;
 
   const showLeisure = activeWing === undefined ? true : activeWing === 'leisure';
   const showChores = activeWing === undefined ? true : activeWing === 'chores';
@@ -306,7 +339,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
           </div>
 
           {/* Unfed Meal Prep Prompt */}
-          {rules?.enableCookingSystem && !player.turnFlags?.hasEaten && (
+          {rules?.enableCookingSystem && !isFed && (
             <div style={{
               background: 'rgba(239, 68, 68, 0.15)',
               border: '1px solid rgba(239, 68, 68, 0.4)',
@@ -318,12 +351,20 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               gap: '6px'
             }}>
               <span style={{ color: '#fca5a5', fontSize: '0.66rem', fontWeight: 700 }}>
-                ⚠️ Unfed this week!
+                ⚠️ Not fed yet
               </span>
               <button
                 type="button"
                 data-testid="btn-relax-cook-first"
-                onClick={onPantryClick}
+                onClick={() => {
+                  if (onAction && canCookFresh) {
+                    onAction({ type: 'prep_meal', mealType: bestFreshMethod });
+                  } else if (onAction && canEatCanned) {
+                    onAction({ type: 'prep_meal', mealType: 'canned' });
+                  } else {
+                    onPantryClick?.();
+                  }
+                }}
                 style={{
                   background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                   border: '1px solid #10b981',
@@ -336,7 +377,11 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                   whiteSpace: 'nowrap'
                 }}
               >
-                🍳 Cook / Prep Food
+                {canCookFresh
+                  ? `🍳 Prep Fresh (${freshHoursNeeded}h)`
+                  : canEatCanned
+                    ? `🥫 Eat Can (${cannedTime}h)`
+                    : '🍳 Open Kitchen'}
               </button>
             </div>
           )}
@@ -857,30 +902,76 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                 flexDirection: 'column',
                 gap: '4px'
               }}>
-                <div style={{
-                  fontSize: '0.66rem',
-                  fontWeight: 'bold',
-                  color: player.turnFlags?.hasEaten ? '#86efac' : '#f59e0b'
-                }}>
-                  {player.turnFlags?.hasEaten ? '✓ Meals Prepared' : '⚠️ Unfed this Week'}
-                </div>
-                <button
-                  type="button"
-                  data-testid="btn-open-pantry-cooking"
-                  onClick={onPantryClick}
-                  style={{
-                    background: player.turnFlags?.hasEaten ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    border: '1px solid #10b981',
-                    borderRadius: '4px',
-                    color: '#fff',
-                    padding: '4px 6px',
-                    fontSize: '0.70rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}
-                >
-                  🍳 {player.turnFlags?.hasEaten ? 'Kitchen & Pantry' : 'Prepare Meals'}
-                </button>
+                {onAction && (
+                  <>
+                    {freshFoodUnits > 0 && (
+                      <button
+                        type="button"
+                        data-testid="btn-wing-cook-fresh"
+                        disabled={!canCookFresh}
+                        onClick={() => onAction({ type: 'prep_meal', mealType: bestFreshMethod })}
+                        style={{
+                          background: canCookFresh ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : '#374151',
+                          border: `1px solid ${canCookFresh ? '#10b981' : '#4b5563'}`,
+                          borderRadius: '4px',
+                          color: canCookFresh ? '#fff' : '#9ca3af',
+                          padding: '5px 6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 'bold',
+                          cursor: canCookFresh ? 'pointer' : 'not-allowed',
+                          textAlign: 'left'
+                        }}
+                      >
+                        {freshBtnLabel}
+                      </button>
+                    )}
+                    {cannedFoodUnits > 0 && (
+                      <button
+                        type="button"
+                        data-testid="btn-wing-eat-canned"
+                        disabled={!canEatCanned}
+                        onClick={() => onAction({ type: 'prep_meal', mealType: 'canned' })}
+                        style={{
+                          background: canEatCanned ? 'rgba(217, 119, 6, 0.25)' : '#374151',
+                          border: `1px solid ${canEatCanned ? '#f59e0b' : '#4b5563'}`,
+                          borderRadius: '4px',
+                          color: canEatCanned ? '#fde68a' : '#9ca3af',
+                          padding: '5px 6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 'bold',
+                          cursor: canEatCanned ? 'pointer' : 'not-allowed',
+                          textAlign: 'left'
+                        }}
+                      >
+                        🥫 Eat Canned ({cannedTime}h • -1.5 🧠)
+                      </button>
+                    )}
+                    {freshFoodUnits === 0 && cannedFoodUnits === 0 && (
+                      <div style={{ fontSize: '0.66rem', color: isFed ? '#86efac' : '#94a3b8' }}>
+                        {isFed ? '✓ Fed for the week' : 'No groceries in pantry'}
+                      </div>
+                    )}
+                  </>
+                )}
+                {(!onAction || onPantryClick) && (
+                  <button
+                    type="button"
+                    data-testid="btn-open-pantry-cooking"
+                    onClick={onPantryClick}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                      borderRadius: '4px',
+                      color: '#cbd5e1',
+                      padding: '3px 6px',
+                      fontSize: '0.64rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ⚙️ {t('homeRelax.btnKitchenOptions', { defaultValue: 'All Prep Options...' })}
+                  </button>
+                )}
               </div>
             )}
           </div>

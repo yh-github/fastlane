@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PlayerState, GameState } from '../engine/gameState';
+import { type PlayerState, type GameState, isPlayerFed } from '../engine/gameState';
 import type { GameRules } from '../engine/rules';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { GoalFilter } from '../utils/logCategorizer';
@@ -440,44 +440,34 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
 
     case 'nutrition':
     case 'diet': {
-      const hasEaten = Boolean(player.turnFlags?.hasEaten);
-      const tier = player.nutritionTier;
-      let currentVal = hasEaten
-        ? (tier
-            ? (tier === 'home_cooked'
-                ? 'Home Cooked'
-                : tier === 'microwave'
-                ? 'Microwave'
-                : tier === 'cold_meal'
-                ? 'Cold Meal'
-                : tier === 'fast_food'
-                ? 'Fast Food'
-                : tier === 'canned'
-                ? 'Canned'
-                : tier)
-            : 'Fed')
-        : 'Unfed';
+      const isFed = isPlayerFed(player, rules);
+      const currentVal = isFed
+        ? t('dashboard.nutritionFed', { defaultValue: 'Fed' })
+        : t('dashboard.nutritionUnfed', { defaultValue: 'Unfed' });
+      const freshUnits = player.inventory?.freshFoodUnits || 0;
+      const cannedUnits = player.inventory?.cannedFoodUnits || 0;
       return {
         id: 'nutrition',
-        name: t('dashboard.diet', { defaultValue: 'Diet & Nutrition' }),
+        name: t('dashboard.food', { defaultValue: 'Food & Nutrition' }),
         category: t('hudInfo.categoryLife', { defaultValue: 'Physical & Mental Health' }),
-        icon: hasEaten ? '🥗' : '🍽️',
+        icon: isFed ? '🥗' : '🍽️',
         currentValue: currentVal,
         maxValue: null,
         currentFormatted: currentVal,
         maxFormatted: '',
         percentage: null,
-        statusBadge: hasEaten ? `✓ ${currentVal}` : '⚠️ Unfed',
-        statusColor: hasEaten ? '#10b981' : '#f59e0b',
+        statusBadge: isFed ? '✓ Fed' : 'Unfed',
+        statusColor: isFed ? '#10b981' : '#f59e0b',
         description: t('hudAttribute.dietDesc', {
           defaultValue:
-            'Dietary sustenance for the week. In Advanced 2000, possessing food in cupboards is not enough—you must prepare and eat meals before relaxing. Relaxing while unfed inflicts permanent exhaustion damage (-1 Max Physical & Mental capacity).'
+            'Dietary sustenance for the week. In Advanced 2000, possessing food in cupboards is not enough—you must prepare and eat meals (or dine out) before relaxing. Relaxing while unfed inflicts permanent exhaustion damage (-1 Max Physical & Mental capacity).'
         }),
+        maxExplanation: `Pantry supplies at home: ${freshUnits} Fresh Groceries, ${cannedUnits} Canned Provisions.`,
         increases: [
           'Prepare Fresh Food at Home (Stove: Net +1.5 Physical, +2.0 Mental)',
           'Microwave Fresh Food (Microwave: +0.5 Physical, +1.0 Mental)',
           'Cold Meal (Sandwich & Salad: +0.5 Mental)',
-          'Dine at Fast Food Restaurant (+1.0 Mental, +1.0 Social)',
+          'Dine at Fast Food Restaurant or Hospital Cafeteria',
           'Heat Canned Rations (-1.5 Mental, emergency survival)',
         ],
         decreases: [

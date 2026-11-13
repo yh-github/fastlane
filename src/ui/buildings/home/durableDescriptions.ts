@@ -63,15 +63,21 @@ export function getGameplayDescription(id: string, rules?: GameRules, isBook?: b
     case 'refrigerator':
       return 'Prevents fresh grocery spoilage for up to 6 food units at turn end. Without a refrigerator, unpreserved food rots into mess.';
     case 'freezer':
-      return 'Expands food preservation capacity from 6 up to 12 units per turn. Requires an active Refrigerator to function; does not prevent spoilage on its own.';
+      return rules?.enableCookingSystem
+        ? 'Deep freeze food storage. Preserves up to 6 Fresh Food units standalone (requires thawing unless paired with a Refrigerator or Microwave), or expands storage to 12 units when paired with a Refrigerator.'
+        : 'Expands food preservation capacity from 6 up to 12 units per turn. Requires an active Refrigerator to function; does not prevent spoilage on its own.';
     case 'stove':
-      return rules?.usePhysicalMentalConditions
-        ? 'Cook hot meals at home. Restores +1 Physical when relaxing.'
-        : 'Cook hot meals at home. Awards +1 Happiness every turn.';
+      return rules?.enableCookingSystem
+        ? 'Essential kitchen heat source for cooking Fresh Groceries into Home-Cooked Meals (+1.5 net Physical, +2 Mental, 2.5h prep, +2 Mess; 1.5h & +1 Mess with Microwave).'
+        : (rules?.usePhysicalMentalConditions
+            ? 'Cook hot meals at home. Restores +1 Physical when relaxing.'
+            : 'Cook hot meals at home. Awards +1 Happiness every turn.');
     case 'microwave':
-      return rules?.usePhysicalMentalConditions
-        ? 'Quickly reheat meals. Restores +1 Physical when relaxing and +1 Social when socializing.'
-        : 'Quickly reheat meals. Awards +1 Happiness every turn.';
+      return rules?.enableCookingSystem
+        ? 'Reheats Fresh Groceries into quick Microwave Meals (1h, 0 Physical cost, +0.5 Physical, +1 Mental, +1 Mess). Also cuts Stove and Canned prep time by ~50%, reduces cooking Mess by 1, and eliminates Freezer thaw delay.'
+        : (rules?.usePhysicalMentalConditions
+            ? 'Quickly reheat meals. Restores +1 Physical when relaxing and +1 Social when socializing.'
+            : 'Quickly reheat meals. Awards +1 Happiness every turn.');
     case 'color_tv':
     case 'crt_tv':
       return rules?.usePhysicalMentalConditions

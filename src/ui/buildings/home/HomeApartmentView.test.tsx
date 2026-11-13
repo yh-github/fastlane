@@ -661,5 +661,79 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
       clothes: 'dress'
     });
   });
+
+  it('triggers 1-click prep_meal directly from the Chores Kitchen card without modal hop', () => {
+    const onAction = vi.fn();
+    const cookingPlayer: any = {
+      ...basePlayer,
+      physicalCondition: 40,
+      turnFlags: { hasEaten: false },
+      inventory: {
+        freshFoodUnits: 2,
+        cannedFoodUnits: 1,
+        fastFoodItems: [],
+        appliances: [{ id: 'stove', condition: 'new', purchaseSource: 'socket_city' }],
+        books: []
+      }
+    };
+
+    render(
+      <HomeApartmentView
+        player={cookingPlayer}
+        campaign={mockCampaign}
+        rules={{ enableCookingSystem: true, usePhysicalMentalConditions: true, trackMess: true } as any}
+        housingName="Low-Cost Housing"
+        actionFeedback={null}
+        durablesSpace={5}
+        totalUsedSpace={10}
+        spaceCap={10}
+        freeSpace={0}
+        overflow={0}
+        isOvercapacity={false}
+        durablesPct={50}
+        messPct={50}
+        currentMess={5}
+        maxMessHousing={50}
+        messIcon="🗑️"
+        messLabel="Clean"
+        messBarColor="#2ecc71"
+        messPercentage={10}
+        hoursToRelax={6}
+        isRelaxDisabled={false}
+        hasFood={false}
+        physGain={1}
+        mentalGain={1}
+        scaledMess={1}
+        classicGain={0}
+        classicFirstBonus={0}
+        onRelaxClick={vi.fn()}
+        socialParams={{ minReward: 0, maxReward: 0, minCashNeeded: 0, maxCashNeeded: 0, timeCost: 3 }}
+        onSocializeClick={vi.fn()}
+        hoursToClean={3}
+        cleanPhysGain={2}
+        isCleanDisabled={false}
+        onCleanClick={vi.fn()}
+        cleaningServiceCost={100}
+        cleaningServicePrice={100}
+        isServiceDisabled={false}
+        onServiceClick={vi.fn()}
+        hasFridge={false}
+        hasFreezer={false}
+        onPantryClick={vi.fn()}
+        onAction={onAction}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-wing-chores'));
+    const cookFreshBtn = screen.getByTestId('btn-wing-cook-fresh');
+    expect(cookFreshBtn).toBeInTheDocument();
+    fireEvent.click(cookFreshBtn);
+    expect(onAction).toHaveBeenCalledWith({ type: 'prep_meal', mealType: 'home_cooked' });
+
+    const eatCannedBtn = screen.getByTestId('btn-wing-eat-canned');
+    expect(eatCannedBtn).toBeInTheDocument();
+    fireEvent.click(eatCannedBtn);
+    expect(onAction).toHaveBeenCalledWith({ type: 'prep_meal', mealType: 'canned' });
+  });
 });
 

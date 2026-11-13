@@ -110,7 +110,8 @@
     "lifestyleValue": 1,
     "space": 40,
     "tags": ["stove"],
-    "description": "Essential kitchen heat source for preparing nutritious Home-Cooked Meals."
+    "description": "Essential kitchen heat source for preparing nutritious Home-Cooked Meals.",
+    "effects": []
   },
   {
     "id": "microwave",
@@ -121,7 +122,8 @@
     "lifestyleValue": 2,
     "space": 20,
     "tags": ["microwave"],
-    "description": "Cuts meal prep and thawing time by ~50% and reduces kitchen mess."
+    "description": "Cuts meal prep and thawing time by ~50% and reduces kitchen mess.",
+    "effects": []
   },
   {
     "id": "freezer",

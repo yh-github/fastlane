@@ -1,5 +1,5 @@
 import type { PlayerState } from '../gameState';
-import { collectItemEffects, markClothesWorn } from '../gameState';
+import { collectItemEffects, markClothesWorn, isPlayerFed } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { requireConfig, requireAdvancedStatRules, requireAdvancedTimeRules, requireAdvancedEconomyRules, getClothesSwitchingRule } from '../rules';
 import { spendHours } from '../timeManager';
@@ -32,10 +32,7 @@ export function handleRelaxAction(
     const maxMental = nextPlayer.mentalConditionMax ?? 50;
     const conditionRes = context.rules.conditionResolution;
 
-    const hasFood = (nextPlayer.inventory?.freshFoodUnits || 0) > 0 || (nextPlayer.inventory?.fastFoodItems?.length || 0) > 0 || (nextPlayer.inventory?.cannedFoodUnits || 0) > 0;
-    const isFed = context.rules.enableCookingSystem
-      ? Boolean(nextPlayer.turnFlags?.hasEaten)
-      : hasFood;
+    const isFed = isPlayerFed(nextPlayer, context.rules);
 
     if (isFed) {
       const relaxEffects = collectItemEffects(nextPlayer, context.campaign, 'on_relax');
