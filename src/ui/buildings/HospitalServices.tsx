@@ -22,18 +22,23 @@ export const HospitalServices: React.FC<HospitalServicesProps> = ({
 }) => {
   const { t } = useTranslation();
   const [isTreatmentsModalOpen, setIsTreatmentsModalOpen] = useState(false);
+  const [helpTopic, setHelpTopic] = useState<'doctor' | 'blood' | 'cafeteria' | null>(null);
 
   useEffect(() => {
-    if (!isTreatmentsModalOpen) return;
+    if (!isTreatmentsModalOpen && !helpTopic) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopImmediatePropagation();
-        setIsTreatmentsModalOpen(false);
+        if (helpTopic) {
+          setHelpTopic(null);
+        } else if (isTreatmentsModalOpen) {
+          setIsTreatmentsModalOpen(false);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isTreatmentsModalOpen]);
+  }, [isTreatmentsModalOpen, helpTopic]);
 
   const isHospitalStaff = Boolean(
     rules?.hospitalEmployeeHealthcare && player.currentJobId?.startsWith('hospital_')
@@ -56,7 +61,7 @@ export const HospitalServices: React.FC<HospitalServicesProps> = ({
   // Status flags
   const hasDonatedBlood = Boolean(player.turnFlags?.donatedBloodThisTurn);
   const isTooWeakToDonate = curPhys < 20;
-  const hasAteCafeteria = Boolean(player.turnFlags?.ateHospitalCafeteriaThisTurn);
+  const canEatCafeteria = isHospitalStaff && player.hoursRemaining >= 1 && player.money >= cafeteriaCost;
 
   // Proportional Urgent Care preview
   let urgentCareTierText = '';
@@ -78,171 +83,335 @@ export const HospitalServices: React.FC<HospitalServicesProps> = ({
     <div className="interaction-panel" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {isHospitalStaff && (
         <div style={{
-          padding: '8px 12px',
+          padding: '6px 10px',
           background: 'rgba(56, 189, 248, 0.12)',
           border: '1px solid rgba(56, 189, 248, 0.4)',
           borderRadius: '6px',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          fontSize: '12px',
+          gap: '6px',
+          fontSize: '0.75rem',
           color: '#38bdf8'
         }}>
           <span>🩺</span>
-          <strong>{t('hospital.staffPerkActive', { defaultValue: 'Hospital Staff Benefit: 50% discount on urgent care & counseling, exclusive access to staff cafeteria!' })}</strong>
+          <strong>{t('hospital.staffPerkActiveCompact', { defaultValue: 'Staff Perk: 50% treatment discount & Cafeteria access' })}</strong>
         </div>
       )}
 
-      {/* 1. Combined Clinical Treatments Button */}
-      <div 
+      {/* 1. Clinical Treatments Card */}
+      <div
         data-testid="hospital-treatments-panel"
         style={{
-          padding: '12px 14px',
-          background: 'rgba(255, 255, 255, 0.04)',
-          border: '1px solid #334155',
+          padding: '10px 12px',
+          background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(12, 26, 44, 0.96) 100%)',
+          border: '1px solid #38bdf8',
           borderRadius: '8px',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '12px'
+          flexDirection: 'column',
+          gap: '8px'
         }}
       >
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.2rem' }}>🩺</span>
-            <strong style={{ fontSize: '0.95rem', color: '#f8fafc' }}>
-              {t('hospital.treatmentsModalTitle', { defaultValue: 'Hospital Clinical Treatments' })}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+            <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>🩺</span>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {t('hospital.treatmentsModalTitle', { defaultValue: 'Clinical Treatments' })}
             </strong>
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '3px' }}>
-            {t('hospital.treatmentsModalSubtitle', { defaultValue: 'Select between Physical Triage & Restorative Care or Psychiatric Counseling.' })}
-          </div>
-          <div style={{ fontSize: '0.78rem', color: '#38bdf8', marginTop: '4px' }}>
-            {curPhys < 35 ? (
-              <span style={{ color: curPhys < 20 ? '#f87171' : '#fbbf24' }}>
-                ⚠️ {curPhys < 20 ? 'Critical condition: Urgent Care recommended' : 'Injured / Fatigued: Restorative Care available'}
-              </span>
-            ) : (
-              <span>Urgent Care & Cognitive Counseling available</span>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <span style={{
+              fontSize: '0.72rem',
+              background: 'rgba(56, 189, 248, 0.15)',
+              color: '#7dd3fc',
+              padding: '2px 7px',
+              borderRadius: '4px',
+              fontWeight: 700
+            }}>
+              ⏳ {formatHours(6)} • From ${urgentCareCost}
+            </span>
+            <button
+              type="button"
+              data-testid="btn-hospital-help-doctor"
+              onClick={() => setHelpTopic('doctor')}
+              aria-label="Help & Details"
+              title="Help & Details"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#cbd5e1',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                padding: 0,
+                flexShrink: 0
+              }}
+            >
+              ?
+            </button>
           </div>
         </div>
+        {curPhys < 35 && (
+          <div style={{ fontSize: '0.74rem', color: curPhys < 20 ? '#f87171' : '#fbbf24', fontWeight: 600 }}>
+            ⚠️ {curPhys < 20 ? 'Critical condition: Urgent Care recommended' : 'Injured / Fatigued: Restorative Care available'}
+          </div>
+        )}
         <button
           type="button"
           data-testid="btn-open-treatments"
           className="game-button btn-primary"
           onClick={() => setIsTreatmentsModalOpen(true)}
-          style={{ whiteSpace: 'nowrap', padding: '8px 16px', fontSize: '0.85rem' }}
+          style={{ width: '100%', padding: '8px 12px', fontSize: '0.84rem' }}
         >
           {t('hospital.treatmentsBtn', { defaultValue: 'Medical & Psychiatric Treatments...' })}
         </button>
       </div>
 
-      {/* 2. Blood Donation */}
+      {/* 2. Blood Donation Card */}
       <div style={{
-        padding: '12px 14px',
-        background: 'rgba(255, 255, 255, 0.04)',
-        border: hasDonatedBlood ? '1px solid #22c55e' : (isTooWeakToDonate ? '1px solid #f87171' : '1px solid #334155'),
+        padding: '10px 12px',
+        background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(35, 14, 18, 0.96) 100%)',
+        border: hasDonatedBlood ? '1px solid #22c55e' : (isTooWeakToDonate ? '1px solid #f87171' : '1px solid rgba(239, 68, 68, 0.5)'),
         borderRadius: '8px',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '12px'
+        flexDirection: 'column',
+        gap: '8px'
       }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.2rem' }}>🩸</span>
-            <strong style={{ fontSize: '0.95rem', color: '#f8fafc' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+            <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>🩸</span>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {t('hospital.bloodDonationTitle', { defaultValue: 'Emergency Blood Donation' })}
             </strong>
-            {hasDonatedBlood && (
-              <span style={{ fontSize: '10px', background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                {t('hospital.donatedBadge', { defaultValue: '✓ Donated this week' })}
-              </span>
-            )}
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '3px' }}>
-            ⏳ {formatHours(2)} • 💰 <strong style={{ color: '#4ade80' }}>+$40 Cash Payout</strong> • -3 Physical • +1 Social
-          </div>
-          <div style={{ fontSize: '0.78rem', color: isTooWeakToDonate ? '#f87171' : '#94a3b8', marginTop: '4px' }}>
-            {isTooWeakToDonate
-              ? t('hospital.tooWeakToDonate', { defaultValue: '⚠️ Too weak to donate. Requires Physical Condition >= 20.' })
-              : t('hospital.bloodDonationDesc', { defaultValue: 'Emergency cash relief for healthy donors. Includes free juice & cookie.' })}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <span style={{
+              fontSize: '0.72rem',
+              background: 'rgba(34, 197, 94, 0.15)',
+              color: '#86efac',
+              padding: '2px 7px',
+              borderRadius: '4px',
+              fontWeight: 700
+            }}>
+              ⏳ {formatHours(2)} • +$40 • -3 💪
+            </span>
+            <button
+              type="button"
+              data-testid="btn-hospital-help-blood"
+              onClick={() => setHelpTopic('blood')}
+              aria-label="Help & Details"
+              title="Help & Details"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#cbd5e1',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                padding: 0,
+                flexShrink: 0
+              }}
+            >
+              ?
+            </button>
           </div>
         </div>
+        {isTooWeakToDonate && (
+          <div style={{ fontSize: '0.74rem', color: '#f87171', fontWeight: 600 }}>
+            ⚠️ {t('hospital.tooWeakToDonate', { defaultValue: 'Too weak to donate (Requires Physical >= 20)' })}
+          </div>
+        )}
         <button
           type="button"
+          data-testid="btn-hospital-donate-blood"
           className="game-button"
           disabled={player.hoursRemaining < 2 || hasDonatedBlood || isTooWeakToDonate}
           onClick={() => onAction({ type: 'hospital_donate_blood' })}
           style={{
-            whiteSpace: 'nowrap',
-            padding: '8px 14px',
-            fontSize: '0.85rem',
-            background: hasDonatedBlood ? 'rgba(255,255,255,0.1)' : 'rgba(239, 68, 68, 0.25)',
+            width: '100%',
+            padding: '8px 12px',
+            fontSize: '0.84rem',
+            background: hasDonatedBlood ? 'rgba(255,255,255,0.08)' : 'rgba(239, 68, 68, 0.25)',
             border: '1px solid rgba(239, 68, 68, 0.6)',
             color: hasDonatedBlood ? '#94a3b8' : '#fca5a5'
           }}
         >
           {hasDonatedBlood
-            ? t('hospital.donatedBtn', { defaultValue: 'Donated' })
+            ? t('hospital.donatedBtn', { defaultValue: '✓ Donated this week' })
             : t('hospital.donateBloodBtn', { defaultValue: 'Donate Blood (+$40)' })}
         </button>
       </div>
 
-      {/* 3. Hospital Cafeteria (Staff only, $40 base fee) */}
+      {/* 3. Basement Cafeteria Card (Staff only, $40 base fee) */}
       <div style={{
-        padding: '12px 14px',
-        background: 'rgba(255, 255, 255, 0.04)',
-        border: hasAteCafeteria ? '1px solid #22c55e' : '1px solid #334155',
+        padding: '10px 12px',
+        background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 22, 12, 0.96) 100%)',
+        border: isHospitalStaff ? '1px solid #f59e0b' : '1px solid #334155',
         borderRadius: '8px',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '12px',
-        opacity: isHospitalStaff ? 1 : 0.75
+        flexDirection: 'column',
+        gap: '8px',
+        opacity: isHospitalStaff ? 1 : 0.8
       }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '1.2rem' }}>🍲</span>
-            <strong style={{ fontSize: '0.95rem', color: '#f8fafc' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+            <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>🍲</span>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {t('hospital.cafeteriaTitle', { defaultValue: 'Basement Cafeteria' })}
             </strong>
-            {hasAteCafeteria && (
-              <span style={{ fontSize: '10px', background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                {t('hospital.cafeteriaFedBadge', { defaultValue: '✓ Fed for the week' })}
-              </span>
-            )}
-            {!isHospitalStaff && (
-              <span style={{ fontSize: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                🔒 {t('hospital.staffOnlyCafeteria', { defaultValue: 'Staff Only' })}
-              </span>
-            )}
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '3px' }}>
-            ⏳ {formatHours(1)} • 💰 ${cafeteriaCost} • +1 Physical • -2 Mental
-          </div>
-          <div style={{ fontSize: '0.78rem', color: isHospitalStaff ? '#94a3b8' : '#f87171', marginTop: '4px' }}>
-            {isHospitalStaff
-              ? t('hospital.cafeteriaDesc', { defaultValue: 'Convenient institutional steam-table meal. Prevents weekend starvation without refrigerator or groceries.' })
-              : t('hospital.staffOnlyCafeteria', { defaultValue: 'Hospital staff only (Requires employment at Hospital)' })}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <span style={{
+              fontSize: '0.72rem',
+              background: isHospitalStaff ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              color: isHospitalStaff ? '#fde68a' : '#fca5a5',
+              padding: '2px 7px',
+              borderRadius: '4px',
+              fontWeight: 700
+            }}>
+              {isHospitalStaff ? `⏳ ${formatHours(1)} • $${cafeteriaCost} • +1 💪 -2 🧠` : `🔒 Staff Only`}
+            </span>
+            <button
+              type="button"
+              data-testid="btn-hospital-help-cafeteria"
+              onClick={() => setHelpTopic('cafeteria')}
+              aria-label="Help & Details"
+              title="Help & Details"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#cbd5e1',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                padding: 0,
+                flexShrink: 0
+              }}
+            >
+              ?
+            </button>
           </div>
         </div>
         <button
           type="button"
           data-testid="btn-hospital-cafeteria"
           className="game-button btn-secondary"
-          disabled={!isHospitalStaff || player.hoursRemaining < 1 || player.money < cafeteriaCost || hasAteCafeteria}
+          disabled={!canEatCafeteria}
           onClick={() => onAction({ type: 'hospital_cafeteria' })}
-          style={{ whiteSpace: 'nowrap', padding: '8px 14px', fontSize: '0.85rem' }}
+          style={{ width: '100%', padding: '8px 12px', fontSize: '0.84rem' }}
         >
-          {hasAteCafeteria
-            ? t('hospital.cafeteriaFedBtn', { defaultValue: 'Fed' })
-            : !isHospitalStaff
+          {!isHospitalStaff
             ? 'Staff Only'
             : `${t('hospital.cafeteriaBtn', { defaultValue: 'Buy Meal Tray' })} ($${cafeteriaCost})`}
         </button>
       </div>
+
+      {/* Help Modal for Service Details */}
+      {helpTopic && typeof document !== 'undefined' && createPortal(
+        <div
+          data-testid="hospital-service-help-modal"
+          onClick={() => setHelpTopic(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.72)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10001,
+            padding: '16px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '380px',
+              background: 'linear-gradient(165deg, #0f172a 0%, #090d16 100%)',
+              border: '2px solid #38bdf8',
+              borderRadius: '12px',
+              padding: '16px 18px',
+              color: '#f8fafc',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.85)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <strong style={{ fontSize: '1rem', color: '#38bdf8' }}>
+                {helpTopic === 'doctor' && `🩺 ${t('hospital.treatmentsModalTitle', { defaultValue: 'Hospital Clinical Treatments' })}`}
+                {helpTopic === 'blood' && `🩸 ${t('hospital.bloodDonationTitle', { defaultValue: 'Emergency Blood Donation' })}`}
+                {helpTopic === 'cafeteria' && `🍲 ${t('hospital.cafeteriaTitle', { defaultValue: 'Basement Staff Cafeteria' })}`}
+              </strong>
+              <button
+                type="button"
+                data-testid="btn-close-hospital-help"
+                onClick={() => setHelpTopic(null)}
+                aria-label="Close"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.84rem', lineHeight: 1.45, color: '#cbd5e1' }}>
+              {helpTopic === 'doctor' && t('hospital.treatmentsModalSubtitle', {
+                defaultValue: 'Select between Physical Triage & Restorative Care (6h, restores Physical and repairs Max Physical) or Psychiatric Counseling (6h, +1 Max Mental permanent & +3 Mental). Hospital employees get a 50% discount.'
+              })}
+              {helpTopic === 'blood' && t('hospital.bloodDonationDesc', {
+                defaultValue: 'Emergency cash relief for healthy donors (Physical >= 20). Costs 2 hours and 3 Physical for +$40 Cash Payout and +1 Social. Limited to once per week.'
+              })}
+              {helpTopic === 'cafeteria' && t('hospital.cafeteriaDesc', {
+                defaultValue: 'Convenient institutional steam-table meal for Hospital staff ($40 base, 1h). Satisfies your weekly nutrition requirement (prevents starvation at home and turn end), restoring +1 Physical while costing -2 Mental.'
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={() => setHelpTopic(null)}
+              style={{
+                alignSelf: 'flex-end',
+                padding: '6px 14px',
+                background: '#38bdf8',
+                color: '#000',
+                fontWeight: 'bold',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.82rem'
+              }}
+            >
+              {t('buildingModal.close', { defaultValue: 'Close' })}
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Treatments Cards Modal Dialog */}
       {isTreatmentsModalOpen && typeof document !== 'undefined' && createPortal(
