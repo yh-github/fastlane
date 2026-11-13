@@ -167,4 +167,36 @@ describe('HospitalServices', () => {
     fireEvent.click(staffCafeteriaBtn);
     expect(onAction).toHaveBeenCalledWith({ type: 'hospital_cafeteria' });
   });
+
+  it('keeps hospital cafeteria enabled even after eating once and opens service help modal on ? click', () => {
+    const fedStaffPlayer = createTestPlayer({
+      money: 100,
+      hoursRemaining: 10,
+      currentJobId: 'hospital_custodian',
+      turnFlags: { ateHospitalCafeteriaThisTurn: true, hasEaten: true } as any
+    });
+    const onAction = vi.fn().mockResolvedValue({});
+
+    render(
+      <HospitalServices
+        player={fedStaffPlayer}
+        onAction={onAction}
+        economicIndex={0}
+        rules={{ hospitalEmployeeHealthcare: true } as any}
+      />
+    );
+
+    const cafeteriaBtn = screen.getByTestId('btn-hospital-cafeteria');
+    expect(cafeteriaBtn).not.toBeDisabled();
+    fireEvent.click(cafeteriaBtn);
+    expect(onAction).toHaveBeenCalledWith({ type: 'hospital_cafeteria' });
+
+    const helpBtn = screen.getByTestId('btn-hospital-help-cafeteria');
+    fireEvent.click(helpBtn);
+    expect(screen.getByTestId('hospital-service-help-modal')).toBeInTheDocument();
+    expect(screen.getByText(/Satisfies your weekly nutrition requirement/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('btn-close-hospital-help'));
+    expect(screen.queryByTestId('hospital-service-help-modal')).not.toBeInTheDocument();
+  });
 });

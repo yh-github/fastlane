@@ -270,13 +270,6 @@ export function handleHospitalCafeteriaAction(
     };
   }
 
-  if (nextPlayer.turnFlags?.ateHospitalCafeteriaThisTurn) {
-    return {
-      nextPlayer,
-      actionLog: { key: 'action.hospital.alreadyAteCafeteria' }
-    };
-  }
-
   const isHospitalStaff = Boolean(
     context.rules.hospitalEmployeeHealthcare && nextPlayer.currentJobId?.startsWith('hospital_')
   );
@@ -303,8 +296,13 @@ export function handleHospitalCafeteriaAction(
 
   nextPlayer.turnFlags = {
     ...nextPlayer.turnFlags,
-    ateHospitalCafeteriaThisTurn: true
+    ateHospitalCafeteriaThisTurn: true,
+    hasEaten: true
   };
+  if (context.rules.enableCookingSystem) {
+    nextPlayer.nutritionTier = 'fast_food';
+    nextPlayer.turnFlags.mealPreparedThisTurn = 'fast_food';
+  }
 
   // Add 1 fast food meal to inventory (consumed at turn start to prevent starvation)
   nextPlayer.inventory.fastFoodItems = [

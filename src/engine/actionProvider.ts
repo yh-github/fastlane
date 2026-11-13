@@ -236,7 +236,7 @@ export function getAvailableActions(
       const isHospitalStaff = Boolean(
         state.rules.hospitalEmployeeHealthcare && player.currentJobId?.startsWith('hospital_')
       );
-      if (!player.turnFlags?.ateHospitalCafeteriaThisTurn && isHospitalStaff) {
+      if (isHospitalStaff) {
         options.push({
           label: helpful ? 'Hospital Cafeteria Meal (-1h, Weekly Food, +1 Phys, -2 Mental)' : 'Hospital Cafeteria Meal',
           action: { type: 'hospital_cafeteria' }
