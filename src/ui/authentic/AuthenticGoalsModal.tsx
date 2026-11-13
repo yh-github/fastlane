@@ -16,8 +16,8 @@ interface AuthenticGoalsModalProps {
 export const AuthenticGoalsModal: React.FC<AuthenticGoalsModalProps> = ({
   players,
   activePlayerIndex = 0,
-  campaign: _campaign,
-  rules: _rules,
+  campaign,
+  rules,
   onClose,
   onOpenStatus,
   initialSelectedPlayer
@@ -59,7 +59,14 @@ export const AuthenticGoalsModal: React.FC<AuthenticGoalsModalProps> = ({
       const monStat = (p.money || 0) + (p.bankSavings || 0);
       const hapStat = p.happiness ?? p.lifestyle ?? 0;
       const eduStat = (p.degrees?.length || 0) * 25;
-      const carStat = p.dependability ? calcCareerProgress(p.dependability, !!p.currentJobId) : 0;
+      const currentJob = p.currentJobId ? campaign?.jobs?.find(j => j.id === p.currentJobId) : null;
+      const carStat = calcCareerProgress(p.dependability || 0, !!p.currentJobId, {
+        job: currentJob,
+        allJobs: campaign?.jobs,
+        raisesAtCurrentJob: p.raisesAtCurrentJob,
+        rules,
+        statRules: campaign?.config?.statRules,
+      });
 
       const sumTarget = monGoal + hapGoal + eduGoal + carGoal;
       const sumAchieved = Math.min(monStat, monGoal) +

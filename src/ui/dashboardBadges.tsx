@@ -1,6 +1,6 @@
 import React from 'react';
 import { type PlayerState, type GameState, isPlayerFed } from '../engine/gameState';
-import type { CampaignBundle, JobDef } from '../engine/dataLoader';
+import type { CampaignBundle } from '../engine/dataLoader';
 import type { GameRules } from '../engine/rules';
 import {
   calcEducationProgress,
@@ -80,7 +80,14 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
   } = params;
 
   const education = calcEducationProgress(player.degrees.length);
-  const career = calcCareerProgress(player.dependability, player.currentJobId !== null);
+  const currentJob = player.currentJobId ? campaign?.jobs?.find(j => j.id === player.currentJobId) : null;
+  const career = calcCareerProgress(player.dependability, player.currentJobId !== null, {
+    job: currentJob,
+    allJobs: campaign?.jobs,
+    raisesAtCurrentJob: player.raisesAtCurrentJob,
+    rules,
+    statRules: campaign?.config?.statRules,
+  });
   const hasEarnedIncome = player.hasEarnedIncome ?? (turn > 1 || !!player.turnFlags?.hasWorked);
   const wealth = calcWealthProgress(
     calcLiquidAssets(player, campaign, economicIndex, turn, gameState?.economySimulation),
@@ -130,7 +137,6 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     player.social || 0
   );
 
-  const currentJob = player.currentJobId ? campaign?.jobs?.find((j: JobDef) => j.id === player.currentJobId) : null;
   const jobReqDep = currentJob ? currentJob.requirements.dependability : 0;
   const jobReqExp = currentJob ? currentJob.requirements.experience : 0;
   const maxDep = calcMaxDependability(jobReqDep, player.degreeDepBoost || 0, player.depMaxBonus || 0);

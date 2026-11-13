@@ -327,7 +327,13 @@ export function getGameSummary(
   const liquidAssets = calcLiquidAssets(player, campaign, state.economicIndex, state.turn, state.economySimulation)
   const wealthProgress = calcWealthProgress(liquidAssets)
   const educationProgress = calcEducationProgress(player.degrees.length)
-  const careerProgress = calcCareerProgress(player.dependability, player.currentJobId !== null)
+  const careerProgress = calcCareerProgress(player.dependability, player.currentJobId !== null, {
+    job: jobDef,
+    allJobs: campaign.jobs,
+    raisesAtCurrentJob: player.raisesAtCurrentJob,
+    rules: state.rules,
+    statRules: campaign.config.statRules,
+  })
 
   // Build enrolled classes with progress info
   const enrolledClasses: Record<string, { completed: number; required: number; degreeName: string }> = {}

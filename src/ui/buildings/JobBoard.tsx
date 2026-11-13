@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { JobDef, BuildingDef, CampaignBundle } from '../../engine/dataLoader';
 import { isAdvancedVersion, isAdvancedStatRules } from '../../engine/rules';
 import { calcEconomyPrice } from '../../engine/economyEngine';
-import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, calcEffectiveJobRequirements, formatHours } from '../../engine/statMath';
+import { calcEmployabilityScore, calcAdvancedJobEmployabilityScore, calcEffectiveJobRequirements, getJobCareerTier, getJobCareerCap, formatHours } from '../../engine/statMath';
 import { formatDegreeName } from '../../engine/jobEngine';
 import type { InteractionProps } from './types';
 
@@ -228,7 +228,19 @@ export function JobBoard({ player, onAction, availableJobs, buildings, economicI
                 </div>
                 {rules?.helpfulUI && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#888', marginBottom: '6px' }}>
-                    <span>{t('jobBoard.base')}: ${job.baseWage}/hr</span>
+                    <span>
+                      {t('jobBoard.base')}: ${job.baseWage}/hr
+                      {rules?.tieredCareerGoal && (
+                        <span
+                          style={{ marginLeft: '6px', color: '#93c5fd', fontWeight: 'bold' }}
+                          title={t('jobBoard.careerCapTooltip', {
+                            defaultValue: 'Maximum Career Goal points achievable in this job tier',
+                          })}
+                        >
+                          · 💼 T{getJobCareerTier(job, availableJobs)} (Max {getJobCareerCap(job, availableJobs, campaign?.config?.statRules)})
+                        </span>
+                      )}
+                    </span>
                     <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                       <span style={{ color: isAlwaysHiring ? (hasMissingReqs ? '#e74c3c' : '#2ecc71') : (jobScore >= 70 ? '#2ecc71' : (jobScore >= 45 ? '#00e5ff' : '#f39c12')), fontWeight: 'bold' }}>
                         {isAlwaysHiring 

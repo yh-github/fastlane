@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { calcMaxSkillCap, calcAdvancedJobEmployabilityScore, calcEffectiveJobRequirements } from './careerMath';
+import {
+  calcMaxSkillCap,
+  calcAdvancedJobEmployabilityScore,
+  calcEffectiveJobRequirements,
+  getJobCareerTier,
+  getJobCareerCap,
+  calcCareerProgress,
+} from './careerMath';
 import type { EducationDef, JobDef } from '../dataLoader';
 import type { PlayerState } from '../gameState';
 import type { GameRules, StatRules } from '../rules';
@@ -405,6 +412,82 @@ describe('careerMath', () => {
       expect(res.reqDep).toBe(26); // 30 - 4
       expect(res.reqExp).toBe(26); // 30 - 4
       expect(res.isAdjacent).toBe(true);
+    });
+  });
+
+  describe('tieredCareerGoal', () => {
+    const mkJob = (id: string, baseWage: number, careerTier?: 1 | 2 | 3 | 4 | 5): JobDef => ({
+      id,
+      title: id,
+      locationId: 'loc',
+      baseWage,
+      requirements: { experience: 0, dependability: 0, degrees: [], uniform: 'casual' },
+      perks: [],
+      ...(careerTier ? { careerTier } : {}),
+    });
+
+    const sampleJobs: JobDef[] = [
+      mkJob('janitor', 4),      // Tier 1 ($4-$7)
+      mkJob('clerk', 7),        // Tier 1
+      mkJob('teller', 10),      // Tier 2 ($8-$11)
+      mkJob('butcher', 12),     // Tier 3 ($12-$15)
+      mkJob('bank_mgr', 19),    // Tier 4 ($16-$19)
+      mkJob('broker', 22),      // Tier 5 ($20-$25)
+      mkJob('gen_mgr', 25),     // Tier 5
+    ];
+
+    const tieredRules = { tieredCareerGoal: true } as GameRules;
+    const classicRules = { tieredCareerGoal: false } as GameRules;
+
+    it('classifies jobs into Tiers 1-5 based on normalized wage and supports explicit careerTier override', () => {
+      expect(getJobCareerTier(sampleJobs[0], sampleJobs)).toBe(1);
+      expect(getJobCareerTier(sampleJobs[1], sampleJobs)).toBe(1);
+      expect(getJobCareerTier(sampleJobs[2], sampleJobs)).toBe(2);
+      expect(getJobCareerTier(sampleJobs[3], sampleJobs)).toBe(3);
+      expect(getJobCareerTier(sampleJobs[4], sampleJobs)).toBe(4);
+      expect(getJobCareerTier(sampleJobs[5], sampleJobs)).toBe(5);
+      expect(getJobCareerTier(sampleJobs[6], sampleJobs)).toBe(5);
+
+      const overridden = mkJob('special_low_wage', 5, 4);
+      expect(getJobCareerTier(overridden, sampleJobs)).toBe(4);
+      expect(getJobCareerCap(overridden, sampleJobs)).toBe(85);
+    });
+
+    it('returns 0 when unemployed regardless of rule', () => {
+      expect(calcCareerProgress(80, false, { job: sampleJobs[6], allJobs: sampleJobs, rules: tieredRules })).toBe(0);
+      expect(calcCareerProgress(80, false, { job: sampleJobs[6], allJobs: sampleJobs, rules: classicRules })).toBe(0);
+    });
+
+    it('preserves classic 1.25 * dep formula when tieredCareerGoal is false', () => {
+      expect(calcCareerProgress(80, true, { job: sampleJobs[0], allJobs: sampleJobs, rules: classicRules })).toBe(100);
+      expect(calcCareerProgress(40, true, { job: sampleJobs[0], allJobs: sampleJobs, rules: classicRules })).toBe(50);
+    });
+
+    it('caps lower-tier jobs at their tier cap even at max dependability', () => {
+      // Janitor (Tier 1, cap 25) at Dep 80 -> 25
+      expect(calcCareerProgress(80, true, { job: sampleJobs[0], allJobs: sampleJobs, rules: tieredRules })).toBe(25);
+      // Teller (Tier 2, cap 45) at Dep 80 -> 45
+      expect(calcCareerProgress(80, true, { job: sampleJobs[2], allJobs: sampleJobs, rules: tieredRules })).toBe(45);
+      // Butcher (Tier 3, cap 65) at Dep 80 -> 65
+      expect(calcCareerProgress(80, true, { job: sampleJobs[3], allJobs: sampleJobs, rules: tieredRules })).toBe(65);
+      // Bank Mgr (Tier 4, cap 85) at Dep 80 -> 85
+      expect(calcCareerProgress(80, true, { job: sampleJobs[4], allJobs: sampleJobs, rules: tieredRules })).toBe(85);
+    });
+
+    it('scales within the tier by dependability and raises up to the tier cap', () => {
+      // Broker (Tier 5, cap 100): base 75 + 25 * (dep + raises*5)/80
+      expect(calcCareerProgress(0, true, { job: sampleJobs[5], allJobs: sampleJobs, raisesAtCurrentJob: 0, rules: tieredRules })).toBe(75);
+      expect(calcCareerProgress(60, true, { job: sampleJobs[5], allJobs: sampleJobs, raisesAtCurrentJob: 0, rules: tieredRules })).toBe(93);
+      expect(calcCareerProgress(80, true, { job: sampleJobs[5], allJobs: sampleJobs, raisesAtCurrentJob: 0, rules: tieredRules })).toBe(100);
+      // Raises count toward performance share (+5 effective Dep per raise)
+      expect(calcCareerProgress(70, true, { job: sampleJobs[5], allJobs: sampleJobs, raisesAtCurrentJob: 2, rules: tieredRules })).toBe(100);
+    });
+
+    it('ensures any Tier 5 job at realistic Dep beats a maxed-out Tier 4 job', () => {
+      const maxedTier4 = calcCareerProgress(99, true, { job: sampleJobs[4], allJobs: sampleJobs, raisesAtCurrentJob: 3, rules: tieredRules });
+      const entryTier5 = calcCareerProgress(50, true, { job: sampleJobs[5], allJobs: sampleJobs, raisesAtCurrentJob: 0, rules: tieredRules });
+      expect(maxedTier4).toBe(85);
+      expect(entryTier5).toBeGreaterThan(maxedTier4);
     });
   });
 });

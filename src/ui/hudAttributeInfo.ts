@@ -6,6 +6,8 @@ import type { GoalFilter } from '../utils/logCategorizer';
 import {
   calcEducationProgress,
   calcCareerProgress,
+  getJobCareerTier,
+  getJobCareerCap,
   calcWealthProgress,
   calcWellbeingScore,
   calcEmployabilityScore,
@@ -80,7 +82,14 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
   const maxExp = calcMaxExperience(jobReqExp, player.degreeExpBoost || 0, player.xpMaxBonus || 0);
 
   const education = calcEducationProgress(player.degrees?.length || 0);
-  const career = calcCareerProgress(player.dependability || 0, player.currentJobId !== null);
+  const statRules = campaign?.config?.statRules;
+  const career = calcCareerProgress(player.dependability || 0, player.currentJobId !== null, {
+    job: currentJob,
+    allJobs: campaign?.jobs,
+    raisesAtCurrentJob: player.raisesAtCurrentJob,
+    rules,
+    statRules,
+  });
   const hasEarnedIncome = player.hasEarnedIncome ?? (turn > 1 || !!player.turnFlags?.hasWorked);
   const liquidAssets = calcLiquidAssets(player, campaign, economicIndex, turn, gameState?.economySimulation);
   const wealth = calcWealthProgress(liquidAssets, hasEarnedIncome);
@@ -94,7 +103,6 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
     player.social || 0
   );
 
-  const statRules = campaign?.config?.statRules;
   const maxMgmt = campaign?.education && statRules
     ? calcMaxSkillCap(player, 'skillMgmt', campaign.education, statRules, rules)
     : 30;
@@ -669,8 +677,11 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
         logFilter: 'education',
       };
 
-    case 'career':
+    case 'career': {
       const targetCareer = player.goalAllotment.career || 0;
+      const isTiered = !!rules?.tieredCareerGoal;
+      const tier = currentJob ? getJobCareerTier(currentJob, campaign?.jobs) : 0;
+      const tierCap = currentJob ? getJobCareerCap(currentJob, campaign?.jobs, statRules) : 0;
       return {
         id: 'career',
         name: t('dashboard.career', { defaultValue: 'Career Goal' }),
@@ -681,21 +692,39 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
         currentFormatted: `${career}`,
         maxFormatted: `${targetCareer}`,
         percentage: targetCareer > 0 ? Math.min(100, Math.round((career / targetCareer) * 100)) : 100,
-        description: t('hudInfo.careerDesc', {
-          defaultValue: 'Your professional career achievement milestone. Advance in the workforce and build dependability to reach victory.'
-        }),
-        maxExplanation: t('hudInfo.careerMax', {
-          defaultValue: `Target: Reach ${targetCareer} career points to complete this victory goal.`
-        }),
-        increases: [
-          t('hudInfo.carInc1', { defaultValue: 'Holding a steady job and building high Dependability' }),
-          t('hudInfo.carInc2', { defaultValue: 'Securing promotions to senior job tiers' }),
-        ],
+        description: isTiered
+          ? t('hudInfo.careerTieredDesc', {
+              defaultValue: 'Your professional career achievement milestone. Capped by your current job tier (25/45/65/85/100) and boosted by dependability & raises.'
+            })
+          : t('hudInfo.careerDesc', {
+              defaultValue: 'Your professional career achievement milestone. Advance in the workforce and build dependability to reach victory.'
+            }),
+        maxExplanation: isTiered
+          ? (currentJob
+              ? t('hudInfo.careerTieredMax', {
+                  defaultValue: `Current Job: Tier ${tier}/5 (Max ${tierCap} pts). Target: ${targetCareer} career points.`
+                })
+              : t('hudInfo.careerTieredUnemployed', {
+                  defaultValue: `Unemployed (0 pts). Target: ${targetCareer} career points.`
+                }))
+          : t('hudInfo.careerMax', {
+              defaultValue: `Target: Reach ${targetCareer} career points to complete this victory goal.`
+            }),
+        increases: isTiered
+          ? [
+              t('hudInfo.carTieredInc1', { defaultValue: 'Getting hired into higher-tier jobs (Tier 1–5 unlock caps of 25/45/65/85/100)' }),
+              t('hudInfo.carTieredInc2', { defaultValue: 'Building Dependability and earning raises to reach your current tier cap' }),
+            ]
+          : [
+              t('hudInfo.carInc1', { defaultValue: 'Holding a steady job and building high Dependability' }),
+              t('hudInfo.carInc2', { defaultValue: 'Securing promotions to senior job tiers' }),
+            ],
         decreases: [
           t('hudInfo.carDec1', { defaultValue: 'Being unemployed or suffering workplace demerits' }),
         ],
         logFilter: 'career',
       };
+    }
 
     case 'lifestyle':
       const targetLifestyle = player.goalAllotment.lifestyle || 100;

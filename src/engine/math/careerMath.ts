@@ -314,13 +314,81 @@ export function calcRaiseThreshold(jobRequiredDep: number, raisesReceived: numbe
   return jobRequiredDep + 5 * Math.max(0, raisesReceived - innovationCount);
 }
 
+export type CareerTier = 1 | 2 | 3 | 4 | 5;
+
+export const DEFAULT_CAREER_TIER_CAPS: readonly [number, number, number, number, number] = [25, 45, 65, 85, 100];
+
 /**
- * Calculate current Career stat (0-100) based on Dependability.
- * 80 Dependability = 100 Career.
- * Must have a job to have a Career stat > 0.
+ * Determines the Career Tier (1-5) for a job.
+ * Uses explicit `job.careerTier` if provided, otherwise derives it from normalized `baseWage`
+ * across the campaign's job wage range (defaulting to 4..25).
+ *   Tier 1 ($4-$7):   Cap 25 (Entry-level)
+ *   Tier 2 ($8-$11):  Cap 45 (Skilled / Frontline)
+ *   Tier 3 ($12-$15): Cap 65 (Supervisor / Specialist)
+ *   Tier 4 ($16-$19): Cap 85 (Senior Mgmt / Professional)
+ *   Tier 5 ($20-$25): Cap 100 (Executive / Elite)
  */
-export function calcCareerProgress(dependability: number, hasJob: boolean): number {
+export function getJobCareerTier(job: JobDef, allJobs?: JobDef[]): CareerTier {
+  if (job.careerTier !== undefined && job.careerTier >= 1 && job.careerTier <= 5) {
+    return job.careerTier;
+  }
+  let minW = 4;
+  let maxW = 25;
+  if (allJobs && allJobs.length > 0) {
+    const wages = allJobs.map(j => j.baseWage).filter(w => w > 0);
+    if (wages.length > 0) {
+      minW = Math.min(...wages);
+      maxW = Math.max(...wages);
+    }
+  }
+  const ratio = maxW > minW ? Math.max(0, Math.min(1, (job.baseWage - minW) / (maxW - minW))) : 0;
+  if (ratio >= 0.75) return 5;
+  if (ratio >= 0.55) return 4;
+  if (ratio >= 0.35) return 3;
+  if (ratio >= 0.18) return 2;
+  return 1;
+}
+
+/**
+ * Returns the maximum Career Goal score achievable while holding the given job.
+ */
+export function getJobCareerCap(job: JobDef, allJobs?: JobDef[], statRules?: Partial<StatRules>): number {
+  const tier = getJobCareerTier(job, allJobs);
+  const caps = statRules?.careerTierCaps ?? DEFAULT_CAREER_TIER_CAPS;
+  return caps[tier - 1] ?? DEFAULT_CAREER_TIER_CAPS[tier - 1];
+}
+
+export interface CareerProgressOptions {
+  job?: JobDef | null;
+  allJobs?: JobDef[];
+  raisesAtCurrentJob?: number;
+  rules?: Partial<GameRules>;
+  statRules?: Partial<StatRules>;
+}
+
+/**
+ * Calculate current Career stat (0-100).
+ * - Classic / QoL: 1.25 * Dependability (80 Dependability = 100 Career), 0 if unemployed.
+ * - Advanced (`tieredCareerGoal`): Anchored by the current job's Career Tier cap (25/45/65/85/100)
+ *   with `careerBaseShare` (75%) awarded for holding the job and the remaining 25% scaled by
+ *   effective dependability (Dependability + raises * careerRaiseBonus) up to `careerPerformanceDepTarget` (80).
+ */
+export function calcCareerProgress(
+  dependability: number,
+  hasJob: boolean,
+  options?: CareerProgressOptions
+): number {
   if (!hasJob) return 0;
+  if (options?.rules?.tieredCareerGoal && options.job) {
+    const cap = getJobCareerCap(options.job, options.allJobs, options.statRules);
+    const baseShare = options.statRules?.careerBaseShare ?? 0.75;
+    const depTarget = options.statRules?.careerPerformanceDepTarget ?? 80;
+    const raiseBonus = options.statRules?.careerRaiseBonus ?? 5;
+    const effectiveDep = Math.max(0, dependability) + (options.raisesAtCurrentJob ?? 0) * raiseBonus;
+    const perfRatio = depTarget > 0 ? Math.min(1, effectiveDep / depTarget) : 1;
+    const score = cap * (baseShare + (1 - baseShare) * perfRatio);
+    return Math.min(cap, Math.floor(score));
+  }
   return Math.min(100, Math.floor(1.25 * dependability));
 }
 
