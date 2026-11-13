@@ -536,80 +536,84 @@ export function handleRelaxParkAction(
   const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
   const enableEncounters = Boolean(context.rules.enableParkSystem ?? context.rules.usePhysicalMentalConditions);
 
-  if (!enableEncounters) {
-    if (context.rules.usePhysicalMentalConditions) {
-      const maxPhys = nextPlayer.physicalConditionMax ?? 50;
-      const maxMental = nextPlayer.mentalConditionMax ?? 50;
-      const conditionRes = context.rules.conditionResolution ?? 0.5;
-
-      let physGain = 0;
-      let mentalGain = 0;
-      if (relaxes === 0) {
-        physGain = 2;
-        mentalGain = 2;
-      } else if (relaxes === 1) {
-        physGain = 1;
-        mentalGain = 1;
-      }
-
-      if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-        if (physGain > 0) physGain = Math.max(conditionRes, roundToResolution(physGain * ratio, conditionRes));
-        if (mentalGain > 0) mentalGain = Math.max(conditionRes, roundToResolution(mentalGain * ratio, conditionRes));
-      }
-
-      if (physGain > 0) {
-        nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + physGain);
-      }
-      if (mentalGain > 0) {
-        nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + mentalGain);
-      }
-
-      const mods: StatModification[] = [];
-      if (physGain > 0) mods.push({ stat: 'physical', diff: physGain });
-      if (mentalGain > 0) mods.push({ stat: 'mental', diff: mentalGain });
-
-      actionLogs.push({
-        key: relaxes === 0 ? 'action.park.relax' : (relaxes === 1 ? 'action.park.relaxDiminished' : 'action.park.relaxExhausted'),
-        modifications: mods
-      });
-    } else {
-      // Classic rules
-      let hapGain = 0;
-      let relGain = 0;
-      if (relaxes === 0) {
-        hapGain = 2;
-        relGain = 2;
-      } else if (relaxes === 1) {
-        hapGain = 1;
-        relGain = 1;
-      }
-
-      if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-        if (hapGain > 0) hapGain = Math.max(0.5, roundToResolution(hapGain * ratio, 0.5));
-        if (relGain > 0) relGain = Math.max(0.5, roundToResolution(relGain * ratio, 0.5));
-      }
-
-      if (hapGain > 0) nextPlayer.happiness = Math.min(100, nextPlayer.happiness + hapGain);
-      if (relGain > 0) nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + relGain);
-
-      const mods: StatModification[] = [];
-      if (hapGain > 0) mods.push({ stat: 'happiness', diff: hapGain });
-      if (relGain > 0) mods.push({ stat: 'relaxation', diff: relGain });
-
-      actionLogs.push({
-        key: relaxes === 0 ? 'action.park.relax' : (relaxes === 1 ? 'action.park.relaxDiminished' : 'action.park.relaxExhausted'),
-        modifications: mods
-      });
-    }
-  } else {
-    // Advanced 2000 Card-Driven Encounter System:
-    // Time cost is deterministic; modifiers are left for the Cards / Hazards!
+  // Apply deterministic baseline rest
+  if (context.rules.usePhysicalMentalConditions) {
+    const maxPhys = nextPlayer.physicalConditionMax ?? 50;
+    const maxMental = nextPlayer.mentalConditionMax ?? 50;
     const conditionRes = context.rules.conditionResolution ?? 0.5;
-    const isBadRoll = resolveDecision(
-      replayContext,
-      `park_roll_bad_${nextPlayer.id}_${context.turn}_${relaxes}`,
-      () => context.rng.next() < 0.25
-    );
+
+    let physGain = 0;
+    let mentalGain = 0;
+    if (relaxes === 0) {
+      physGain = 2;
+      mentalGain = 2;
+    } else if (relaxes === 1) {
+      physGain = 1;
+      mentalGain = 1;
+    }
+
+    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+      if (physGain > 0) physGain = Math.max(conditionRes, roundToResolution(physGain * ratio, conditionRes));
+      if (mentalGain > 0) mentalGain = Math.max(conditionRes, roundToResolution(mentalGain * ratio, conditionRes));
+    }
+
+    if (physGain > 0) {
+      nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + physGain);
+    }
+    if (mentalGain > 0) {
+      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + mentalGain);
+    }
+
+    const mods: StatModification[] = [];
+    if (physGain > 0) mods.push({ stat: 'physical', diff: physGain });
+    if (mentalGain > 0) mods.push({ stat: 'mental', diff: mentalGain });
+
+    actionLogs.push({
+      key: relaxes === 0 ? 'action.park.relax' : (relaxes === 1 ? 'action.park.relaxDiminished' : 'action.park.relaxExhausted'),
+      modifications: mods
+    });
+  } else {
+    // Classic rules
+    let hapGain = 0;
+    let relGain = 0;
+    if (relaxes === 0) {
+      hapGain = 2;
+      relGain = 2;
+    } else if (relaxes === 1) {
+      hapGain = 1;
+      relGain = 1;
+    }
+
+    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+      if (hapGain > 0) hapGain = Math.max(0.5, roundToResolution(hapGain * ratio, 0.5));
+      if (relGain > 0) relGain = Math.max(0.5, roundToResolution(relGain * ratio, 0.5));
+    }
+
+    if (hapGain > 0) nextPlayer.happiness = Math.min(100, nextPlayer.happiness + hapGain);
+    if (relGain > 0) nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + relGain);
+
+    const mods: StatModification[] = [];
+    if (hapGain > 0) mods.push({ stat: 'happiness', diff: hapGain });
+    if (relGain > 0) mods.push({ stat: 'relaxation', diff: relGain });
+
+    actionLogs.push({
+      key: relaxes === 0 ? 'action.park.relax' : (relaxes === 1 ? 'action.park.relaxDiminished' : 'action.park.relaxExhausted'),
+      modifications: mods
+    });
+  }
+
+  if (!enableEncounters) {
+    return { nextPlayer, actionLog: actionLogs[0] };
+  }
+
+  // Advanced 2000 Encounter System:
+  // Baseline stats applied above; now draw 1 Event Card (75% encounter, 25% hazard)
+  const conditionRes = context.rules.conditionResolution ?? 0.5;
+  const isBadRoll = resolveDecision(
+    replayContext,
+    `park_roll_bad_${nextPlayer.id}_${context.turn}_${relaxes}`,
+    () => context.rng.next() < 0.25
+  );
 
     if (isBadRoll) {
       const { cards: [rawHazardCard], updatedDecks } = drawParkCards(
@@ -688,7 +692,6 @@ export function handleRelaxParkAction(
         });
       }
     }
-  }
 
   return {
     nextPlayer,
@@ -753,98 +756,9 @@ export function handleWorkoutParkAction(
     return { nextPlayer, actionLog: actionLogs[0] };
   }
 
-  if (!enableEncounters) {
-    // Non-encounters / classic rules fallback
+  // Overtraining on 2nd+ workout: pushes too hard without adequate recovery
+  if (workouts > 0) {
     if (context.rules.usePhysicalMentalConditions) {
-      const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
-      const globalMax = statRules.initialPhysicalMax ?? 100;
-      const curMax = nextPlayer.physicalConditionMax ?? 50;
-
-      if (workouts === 0) {
-        let maxDiff = 0;
-        let baseMaxBoost = 1;
-        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-          baseMaxBoost = roundToResolution(1 * ratio, conditionRes);
-        }
-        if (curMax < globalMax && baseMaxBoost > 0) {
-          maxDiff = Math.min(globalMax - curMax, baseMaxBoost);
-          nextPlayer.physicalConditionMax = curMax + maxDiff;
-        }
-
-        let physCost = 1;
-        let mentalGain = 1;
-        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-          physCost = Math.max(conditionRes, roundToResolution(physCost * ratio, conditionRes));
-          mentalGain = Math.max(conditionRes, roundToResolution(mentalGain * ratio, conditionRes));
-        }
-
-        nextPlayer.physicalCondition = Math.max(1, Math.min(nextPlayer.physicalConditionMax ?? 50, phys - physCost));
-        nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, mental + mentalGain);
-
-        const mods: StatModification[] = [
-          { stat: 'physical', diff: -physCost },
-          { stat: 'mental', diff: mentalGain }
-        ];
-        if (maxDiff > 0) mods.push({ stat: 'maxPhysical', diff: maxDiff });
-
-        actionLogs.push({
-          key: 'action.park.workout',
-          modifications: mods
-        });
-      } else {
-        // Overtraining
-        let physCost = 2;
-        let mentalCost = 1;
-        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-          physCost = Math.max(conditionRes, roundToResolution(physCost * ratio, conditionRes));
-          mentalCost = Math.max(conditionRes, roundToResolution(mentalCost * ratio, conditionRes));
-        }
-
-        nextPlayer.physicalCondition = Math.max(1, phys - physCost);
-        nextPlayer.mentalCondition = Math.max(1, mental - mentalCost);
-
-        actionLogs.push({
-          key: 'action.park.workoutOvertraining',
-          modifications: [
-            { stat: 'physical', diff: -physCost },
-            { stat: 'mental', diff: -mentalCost }
-          ]
-        });
-      }
-    } else {
-      // Classic rules
-      if (workouts === 0) {
-        let relGain = 2;
-        let hapCost = 1;
-        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-          relGain = Math.max(0.5, roundToResolution(relGain * ratio, 0.5));
-          hapCost = Math.max(0.5, roundToResolution(hapCost * ratio, 0.5));
-        }
-        nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + relGain);
-        nextPlayer.happiness = Math.max(0, nextPlayer.happiness - hapCost);
-        actionLogs.push({
-          key: 'action.park.workout',
-          modifications: [
-            { stat: 'relaxation', diff: relGain },
-            { stat: 'happiness', diff: -hapCost }
-          ]
-        });
-      } else {
-        let relCost = 1;
-        if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-          relCost = Math.max(0.5, roundToResolution(relCost * ratio, 0.5));
-        }
-        nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - relCost);
-        actionLogs.push({
-          key: 'action.park.workoutOvertraining',
-          modifications: [{ stat: 'relaxation', diff: -relCost }]
-        });
-      }
-    }
-  } else {
-    // Encounters active
-    if (workouts > 0) {
-      // Overtraining on 2nd workout: pushes too hard without adequate recovery
       let physCost = 2;
       let mentalCost = 1;
       if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
@@ -861,14 +775,85 @@ export function handleWorkoutParkAction(
           { stat: 'mental', diff: -mentalCost }
         ]
       });
-      return { nextPlayer, actionLog: actionLogs[0] };
+    } else {
+      let relCost = 1;
+      if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+        relCost = Math.max(0.5, roundToResolution(relCost * ratio, 0.5));
+      }
+      nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - relCost);
+      actionLogs.push({
+        key: 'action.park.workoutOvertraining',
+        modifications: [{ stat: 'relaxation', diff: -relCost }]
+      });
+    }
+    return { nextPlayer, actionLog: actionLogs[0] };
+  }
+
+  // First workout baseline conditioning:
+  if (context.rules.usePhysicalMentalConditions) {
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const globalMax = statRules.initialPhysicalMax ?? 100;
+    const curMax = nextPlayer.physicalConditionMax ?? 50;
+
+    let maxDiff = 0;
+    let baseMaxBoost = 1;
+    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+      baseMaxBoost = roundToResolution(1 * ratio, conditionRes);
+    }
+    if (curMax < globalMax && baseMaxBoost > 0) {
+      maxDiff = Math.min(globalMax - curMax, baseMaxBoost);
+      nextPlayer.physicalConditionMax = curMax + maxDiff;
     }
 
-    const isBadRoll = resolveDecision(
-      replayContext,
-      `park_workout_bad_${nextPlayer.id}_${context.turn}_${workouts}`,
-      () => context.rng.next() < 0.25
-    );
+    let physCost = 1;
+    let mentalGain = 1;
+    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+      physCost = Math.max(conditionRes, roundToResolution(physCost * ratio, conditionRes));
+      mentalGain = Math.max(conditionRes, roundToResolution(mentalGain * ratio, conditionRes));
+    }
+
+    nextPlayer.physicalCondition = Math.max(1, Math.min(nextPlayer.physicalConditionMax ?? 50, phys - physCost));
+    nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, mental + mentalGain);
+
+    const mods: StatModification[] = [
+      { stat: 'physical', diff: -physCost },
+      { stat: 'mental', diff: mentalGain }
+    ];
+    if (maxDiff > 0) mods.push({ stat: 'maxPhysical', diff: maxDiff });
+
+    actionLogs.push({
+      key: 'action.park.workout',
+      modifications: mods
+    });
+  } else {
+    // Classic rules
+    let relGain = 2;
+    let hapCost = 1;
+    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+      relGain = Math.max(0.5, roundToResolution(relGain * ratio, 0.5));
+      hapCost = Math.max(0.5, roundToResolution(hapCost * ratio, 0.5));
+    }
+    nextPlayer.relaxation = Math.min(100, nextPlayer.relaxation + relGain);
+    nextPlayer.happiness = Math.max(0, nextPlayer.happiness - hapCost);
+    actionLogs.push({
+      key: 'action.park.workout',
+      modifications: [
+        { stat: 'relaxation', diff: relGain },
+        { stat: 'happiness', diff: -hapCost }
+      ]
+    });
+  }
+
+  if (!enableEncounters) {
+    return { nextPlayer, actionLog: actionLogs[0] };
+  }
+
+  // Encounters active: draw 1 Event Card (25% hazard, 75% workout cards)
+  const isBadRoll = resolveDecision(
+    replayContext,
+    `park_workout_bad_${nextPlayer.id}_${context.turn}_${workouts}`,
+    () => context.rng.next() < 0.25
+  );
 
     if (isBadRoll) {
       const { cards: [rawHazardCard], updatedDecks } = drawParkCards(
@@ -947,7 +932,6 @@ export function handleWorkoutParkAction(
         });
       }
     }
-  }
 
   return {
     nextPlayer,

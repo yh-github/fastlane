@@ -608,11 +608,13 @@
   },
   "park": {
     "relax": "Relax in Park",
-    "relaxDesc": "Spend peaceful time relaxing outdoors (⏳ -3h • Free • +2 💪 • +2 🧠 • Encounters)",
+    "relaxDesc": "Spend peaceful time relaxing outdoors (⏳ -3h • +2 💪 • +2 🧠 • 🎴 1 Event Card)",
     "workout": "Workout in Park",
-    "workoutDesc": "Fitness & cardiovascular conditioning (⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠)",
-    "relaxEncounterDesc": "Spend peaceful time relaxing outdoors (⏳ -3h • Free • 🎴 Draw 3 Encounter Cards)",
-    "workoutEncounterDesc": "Fitness & cardiovascular conditioning (⏳ -3h • Free • 🎴 Draw 3 Workout Cards)",
+    "workoutDesc": "Fitness & cardiovascular conditioning (⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠 • 🎴 1 Event Card)",
+    "relaxEncounterDesc": "Spend peaceful time relaxing outdoors (⏳ -3h • +2 💪 • +2 🧠 • 🎴 1 Event Card)",
+    "workoutEncounterDesc": "Fitness & cardiovascular conditioning (⏳ -3h • +1 Max 💪 • -1 💪 • +1 🧠 • 🎴 1 Event Card)",
+    "baselineTitle": "Guaranteed Activity Baseline (Applied on Click)",
+    "diminishedRepeat": "Diminished on repeat visits",
     "helpRelaxTitle": "🌳 Park Relax — Encounter & Outcome Assessment",
     "helpWorkoutTitle": "🏃 Park Workout — Training & Hazard Assessment",
     "tabOverview": "Overview & Odds",
@@ -620,7 +622,7 @@
     "tabCardsWorkout": "Workout Focus (7)",
     "tabHazards": "Hazards Deck (6)",
     "timeCostLabel": "Activity Time Required:",
-    "expectedRangesTitle": "Expected Card Modifiers Range (Good Outcomes)",
+    "expectedRangesTitle": "Expected Event Card Bonus Range (Good Outcomes)",
     "hazardBanner": "Park Hazard Encountered!",
     "penaltiesIncurred": "Penalties Incurred",
     "hazardAcknowledge": "⚠️ Acknowledge & Move On",
@@ -629,7 +631,7 @@
     "jog": "Jog / Workout",
     "jogDesc": "Jog around the trail (⏳ -3h • +1 💪 • +1 Max 💪 • -2 🧠)",
     "rest": "Rest on Bench",
-    "restDesc": "Sit and rest on a park bench (⏳ -3h • +2 💪 • +1 🧠 • Free food/mess)"
+    "restDesc": "Sit and rest on a park bench (⏳ -3h • +2 💪 • +1 🧠)"
   },
   "hospital": {
     "staffPerkActive": "Hospital Staff Benefit: 50% discount on urgent care & counseling, exclusive access to staff cafeteria!",
