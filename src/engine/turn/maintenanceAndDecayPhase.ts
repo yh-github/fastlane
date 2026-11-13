@@ -23,7 +23,14 @@ function checkPlayerWinConditions(player: PlayerState, state: GameState, campaig
     } else if (cond.stat === 'education') {
       progress = calcEducationProgress(player.degrees.length);
     } else if (cond.stat === 'career') {
-      progress = calcCareerProgress(player.dependability, player.currentJobId !== null);
+      const currentJob = player.currentJobId ? campaign.jobs.find(j => j.id === player.currentJobId) : null;
+      progress = calcCareerProgress(player.dependability, player.currentJobId !== null, {
+        job: currentJob,
+        allJobs: campaign.jobs,
+        raisesAtCurrentJob: player.raisesAtCurrentJob,
+        rules: state.rules,
+        statRules: campaign.config.statRules,
+      });
     } else if (cond.stat === 'happiness') {
       progress = player.happiness;
     } else if (cond.stat === 'lifestyle') {

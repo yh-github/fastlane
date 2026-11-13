@@ -139,6 +139,8 @@ export interface JobDef {
   perks: string[];
   tags?: string[];
   description?: string;
+  /** Optional explicit career tier (1-5) for tieredCareerGoal rule */
+  careerTier?: 1 | 2 | 3 | 4 | 5;
 }
 
 export type EffectTrigger = 'turn_start' | 'on_relax' | 'on_socialize' | 'continuous' | 'on_purchase';

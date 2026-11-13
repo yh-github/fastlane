@@ -398,6 +398,12 @@ export interface GameRules {
    * ADVANCED 2000: Enables weekly meal preparation, stove cooking, microwave prep/thaw bonuses, standalone freezer storage, and eliminates the infinite can exploit.
    */
   enableCookingSystem?: boolean;
+
+  /**
+   * ADVANCED: If true, Career goal progress is anchored by the tier/prestige of the job you hold
+   * (Tier 1..5 capped at 25/45/65/85/100) plus performance (dependability & raises), rather than raw dependability alone.
+   */
+  tieredCareerGoal?: boolean;
 }
 
 export interface EventRules {
@@ -441,6 +447,14 @@ export interface BaseStatRules {
   maxDependability: number;
   dependabilityWeeklyDecay: number;
   startingCasualClothesWeeks: number;
+  /** Tiered Career Goal: max career points per job tier (1-5). Default [25, 45, 65, 85, 100]. */
+  careerTierCaps?: [number, number, number, number, number];
+  /** Tiered Career Goal: base share of tier cap awarded just for holding the job. Default 0.75. */
+  careerBaseShare?: number;
+  /** Tiered Career Goal: effective dependability (Dep + raise bonus) needed to reach 100% of tier cap. Default 80. */
+  careerPerformanceDepTarget?: number;
+  /** Tiered Career Goal: effective dependability bonus per raise at current job. Default 5. */
+  careerRaiseBonus?: number;
 }
 
 export interface AdvancedStatRules extends BaseStatRules {
@@ -556,6 +570,10 @@ export const DEFAULT_ADVANCED_STAT_RULES: AdvancedStatRules = {
   maxDependability: 100,
   dependabilityWeeklyDecay: 3,
   startingCasualClothesWeeks: 6,
+  careerTierCaps: [25, 45, 65, 85, 100],
+  careerBaseShare: 0.75,
+  careerPerformanceDepTarget: 80,
+  careerRaiseBonus: 5,
   enableAdvancedStats: true,
   mentalWarningThreshold: 20,
   physicalWarningThreshold: 20,
@@ -1005,6 +1023,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   enableArcade: 'Enables playing arcade games at arcade-equipped restaurants for quick mental relief and happiness',
   enableParkSystem: 'Enables dynamic park interactions (stroll, jog, bench rest), cabin fever from indoor over-relaxation, and outdoor random events',
   enableCookingSystem: 'Enables weekly meal preparation, stove cooking, microwave prep/thaw bonuses, standalone freezer storage, and eliminates the infinite can exploit',
+  tieredCareerGoal: 'Career goal progress is capped by your current job tier (25/45/65/85/100) plus dependability and raises',
   economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',
   reenterCurrentLocationCost: 'Entering or re-opening the current building location costs standard building entry time (2 hours)',
   pixelatedSprites: 'Renders character sprites with crisp pixelation (nearest-neighbor) instead of smooth filtering',

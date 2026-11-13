@@ -3,6 +3,7 @@ import type { CampaignBundle } from './dataLoader';
 import { getStoreForItem } from './dataLoader';
 import type { GameAction } from './gameReducer';
 import { calcItemPrice } from './economyEngine';
+import { calcCareerProgress } from './statMath';
 
 function getBuildingNodeByArchetype(campaign: CampaignBundle, archetype: string): string | null {
   const building = campaign.buildings.find(b => b.archetype === archetype);
@@ -403,7 +404,13 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
           let score = job.baseWage * 10;
           
           const maxDepForJob = 20 + job.requirements.dependability + s.degrees.length * 5;
-          const sustainableCareerProgress = Math.floor(1.25 * (maxDepForJob - 3));
+          const sustainableCareerProgress = calcCareerProgress(maxDepForJob - 3, true, {
+            job,
+            allJobs: campaign.jobs,
+            raisesAtCurrentJob: job.id === s.jobId ? player.raisesAtCurrentJob : 0,
+            rules: gameState.rules,
+            statRules: campaign.config.statRules,
+          });
           
           if (targetCareerProgress > 0 && sustainableCareerProgress >= targetCareerProgress) {
               score += 10000;
@@ -423,7 +430,13 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
     if (currentJob) {
        currentScore = currentJob.baseWage * 10;
        const maxDepForCurrentJob = 20 + currentJob.requirements.dependability + s.degrees.length * 5;
-       const currentSustainableCareerProgress = Math.floor(1.25 * (maxDepForCurrentJob - 3));
+       const currentSustainableCareerProgress = calcCareerProgress(maxDepForCurrentJob - 3, true, {
+         job: currentJob,
+         allJobs: campaign.jobs,
+         raisesAtCurrentJob: player.raisesAtCurrentJob,
+         rules: gameState.rules,
+         statRules: campaign.config.statRules,
+       });
        if (targetCareerProgress > 0 && currentSustainableCareerProgress >= targetCareerProgress) {
            currentScore += 10000;
        } else if (currentSustainableCareerProgress < targetCareerProgress) {
@@ -461,7 +474,17 @@ export function executeAITurn(player: PlayerState, gameState: GameState, campaig
   // Work less if we met our goals and don't need money.
   const needsMoney = s.money < targetWealth + rentBuffer;
   // Work is needed for dependability and career progress
-  const needsCareer = s.dep < targetCareer;
+  const currentJobForWork = s.jobId ? campaign.jobs.find(j => j.id === s.jobId) : null;
+  const currentCareerProgress = calcCareerProgress(s.dep, !!s.jobId, {
+    job: currentJobForWork,
+    allJobs: campaign.jobs,
+    raisesAtCurrentJob: player.raisesAtCurrentJob,
+    rules: gameState.rules,
+    statRules: campaign.config.statRules,
+  });
+  const needsCareer = gameState.rules.tieredCareerGoal
+    ? currentCareerProgress < player.goalAllotment.career && s.dep < (campaign.config.statRules?.careerPerformanceDepTarget ?? 80)
+    : s.dep < targetCareer;
   if ((needsMoney || needsCareer) && s.jobId && s.hours >= 6) {
      const work = tryAction(`Work_${s.jobId}`);
      if (work) return [work];
