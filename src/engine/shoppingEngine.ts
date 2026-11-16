@@ -195,8 +195,9 @@ export function buyItem(
   // Generic on_purchase item effects
   for (const effect of item.effects || []) {
     if (effect.trigger === 'on_purchase') {
-      // In Advanced Cooking System, food effects apply on_eat rather than on_purchase
-      if (rules?.enableCookingSystem && item.category === 'food') {
+      // In Advanced Cooking System, fresh groceries & canned goods apply on_eat rather than on_purchase,
+      // but fast food meals apply their immediate modifiers upon purchase.
+      if (rules?.enableCookingSystem && item.category === 'food' && item.subcategory !== 'fast_food') {
         continue;
       }
       if (effect.stat === 'physical_max' && rules?.usePhysicalMentalConditions) {
@@ -282,17 +283,8 @@ export function buyItem(
           newTurnFlags.hasEaten = true;
           updated.nutritionTier = 'fast_food';
           newTurnFlags.mealPreparedThisTurn = 'fast_food';
-          if (rules.usePhysicalMentalConditions) {
-            updated.mentalCondition = Math.min(updated.mentalConditionMax ?? 50, (updated.mentalCondition ?? 50) + 1);
-            if (rules.trackSocial) {
-              const sr = campaign?.config.statRules;
-              const maxSoc = (sr && 'maxSocial' in sr ? (sr as any).maxSocial : 100);
-              updated.social = Math.min(maxSoc, (updated.social ?? 0) + 1);
-            }
-          }
-        } else {
-          updated.inventory.fastFoodItems = [...updated.inventory.fastFoodItems, { itemId: item.id, happinessBonus: item.happinessBonus }];
         }
+        updated.inventory.fastFoodItems = [...(updated.inventory.fastFoodItems || []), { itemId: item.id, happinessBonus: item.happinessBonus }];
       } else if (item.subcategory === 'canned') {
         updated.inventory.cannedFoodUnits = (updated.inventory.cannedFoodUnits || 0) + (item.units || 1);
       } else if (item.subcategory === 'coffee') {

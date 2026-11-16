@@ -189,7 +189,7 @@ export const PantryCard: React.FC<PantryCardProps> = ({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
               {fastFoodItems.map((ff, idx) => {
                 const itemDef = campaign?.items?.find(i => i.id === ff.itemId);
-                const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : ff.itemId;
+                const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : (ff.itemId === 'hospital_tray' ? t('item.hospital_tray', { defaultValue: 'Hospital Cafeteria Meal' }) : ff.itemId);
                 return (
                   <span
                     key={idx}

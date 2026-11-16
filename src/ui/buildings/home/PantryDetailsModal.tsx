@@ -110,7 +110,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
     ? `Need ${cannedTime}h`
     : '';
 
-  const handlePrep = async (mealType: 'home_cooked' | 'microwave' | 'cold_meal' | 'canned') => {
+  const handlePrep = async (mealType: 'home_cooked' | 'microwave' | 'cold_meal' | 'canned' | 'fast_food') => {
     setActionFeedback(null);
     if (!onAction) return;
     try {
@@ -130,6 +130,8 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
         setActionFeedback({ message: '🥗 Prepared cold groceries (sandwich/salad)! +0.5 🧠 (Fed)', isError: false });
       } else if (mealType === 'canned') {
         setActionFeedback({ message: '🥫 Heated canned rations. Staved off hunger, but spirits dropped (-1.5 🧠).', isError: false });
+      } else if (mealType === 'fast_food') {
+        setActionFeedback({ message: '🍔 Ate fast food takeout! Quick fuel (+1.0 🧠, +1 👥).', isError: false });
       }
     } catch (err: any) {
       setActionFeedback({ message: err?.message || 'Action failed', isError: true });
@@ -247,13 +249,13 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             </span>
           </div>
 
-          {!rules?.enableCookingSystem && fastFoodItems.length > 0 && (
+          {fastFoodItems.length > 0 && (
             <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '6px' }}>
               <div style={{ color: '#94a3b8', marginBottom: '4px', fontSize: '0.8rem' }}>Fast Food Takeout:</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {fastFoodItems.map((ff, idx) => {
                   const itemDef = campaign?.items?.find(i => i.id === ff.itemId);
-                  const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : ff.itemId;
+                  const itemName = itemDef ? t(`item.${itemDef.id}`, { defaultValue: itemDef.name }) : (ff.itemId === 'hospital_tray' ? t('item.hospital_tray', { defaultValue: 'Hospital Cafeteria Meal' }) : ff.itemId);
                   return (
                     <span
                       key={idx}
@@ -273,7 +275,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             </div>
           )}
 
-          {freshUnits === 0 && cannedUnits === 0 && (!rules?.enableCookingSystem ? fastFoodItems.length === 0 : true) && (
+          {freshUnits === 0 && cannedUnits === 0 && fastFoodItems.length === 0 && (
             <div
               style={{
                 padding: '6px 8px',
@@ -456,6 +458,39 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                       </span>
                     )}
                   </button>
+
+                  {/* Option 3: Eat Fast Food Takeout */}
+                  {fastFoodItems.length > 0 && (
+                    <button
+                      type="button"
+                      data-testid="btn-cook-fast-food"
+                      onClick={() => handlePrep('fast_food')}
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '6px',
+                        background: 'linear-gradient(135deg, #7c2d12 0%, #9a3412 100%)',
+                        border: '1px solid #ea580c',
+                        color: '#ffedd5',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.84rem' }}>
+                          🍔 Eat Fast Food Takeout
+                        </div>
+                        <div style={{ fontSize: '0.68rem', opacity: 0.9, marginTop: '2px' }}>
+                          ⏳ 0h Prep • 0 💪 • +1 🧠, +1 👥 (Instant takeout meal)
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: '#fed7aa', fontWeight: 'bold' }}>
+                        Eat ({fastFoodItems.length})
+                      </span>
+                    </button>
+                  )}
                 </div>
               </>
             )}

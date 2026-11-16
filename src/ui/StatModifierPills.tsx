@@ -22,6 +22,14 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
 
   const getStatInfo = (stat: string) => getStatMeta(stat, t);
 
+  const normalizeStat = (s: string) => {
+    if (s === 'physical_max' || s === 'physicalConditionMax') return 'physicalMax';
+    if (s === 'mental_max' || s === 'mentalConditionMax') return 'mentalMax';
+    if (s === 'physicalCondition') return 'physical';
+    if (s === 'mentalCondition') return 'mental';
+    return s;
+  };
+
   const filteredMods = modifications.filter(mod => {
     if (mod.diff === 0 && !mod.isCapped) return false;
     if (isHelpfulUI) return true;
@@ -30,12 +38,13 @@ export const StatModifierPills: React.FC<StatModifierPillsProps> = ({
 
   const mergedMods: StatModification[] = [];
   for (const mod of filteredMods) {
-    const existing = mergedMods.find(m => m.stat === mod.stat);
+    const norm = normalizeStat(mod.stat);
+    const existing = mergedMods.find(m => normalizeStat(m.stat) === norm);
     if (existing) {
       existing.diff += mod.diff;
       if (mod.isCapped) existing.isCapped = true;
     } else {
-      mergedMods.push({ ...mod });
+      mergedMods.push({ ...mod, stat: norm as any });
     }
   }
   const displayMods = mergedMods.filter(m => m.diff !== 0 || m.isCapped);

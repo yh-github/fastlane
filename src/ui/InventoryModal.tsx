@@ -201,12 +201,12 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.food', 'Food')}</h3>
               <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
-                <li>{t('inventoryModal.freshFood', 'Fresh Food')}: {inventory.freshFoodUnits} {t('inventoryModal.units', 'units')}</li>
+                <li>{t('inventoryModal.freshFood', 'Fresh Food')}: {inventory.freshFoodUnits || 0} {t('inventoryModal.units', 'units')}</li>
                 {showCannedFood && (
                   <li>{t('inventoryModal.cannedFood', 'Canned Food')}: {inventory.cannedFoodUnits || 0} {t('inventoryModal.units', 'units')}</li>
                 )}
                 {showFastFood && (
-                  <li>{t('inventoryModal.fastFood', 'Fast Food')}: {inventory.fastFoodItems.length} {t('inventoryModal.meals', 'meals')}</li>
+                  <li>{t('inventoryModal.fastFood', 'Fast Food')}: {(inventory.fastFoodItems || []).length} {t('inventoryModal.meals', 'meals')}</li>
                 )}
               </ul>
             </div>
@@ -373,10 +373,10 @@ export function InventoryModal({ player, campaign, turn, onAction, onClose, rule
         <div>
           <h3 style={{ color: '#f39c12', marginBottom: '5px' }}>{t('inventoryModal.entertainment', 'Entertainment')}</h3>
           <ul style={{ margin: 0, paddingInlineStart: '20px' }}>
-            <li>{t('inventoryModal.baseballTickets', 'Baseball Tickets')}: {inventory.tickets.baseball}</li>
-            <li>{t('inventoryModal.theatreTickets', 'Theatre Tickets')}: {inventory.tickets.theatre}</li>
-            <li>{t('inventoryModal.concertTickets', 'Concert Tickets')}: {inventory.tickets.concert}</li>
-            <li>{t('inventoryModal.lotteryTickets', 'Lottery Tickets')}: {inventory.lotteryTickets}</li>
+            <li>{t('inventoryModal.baseballTickets', 'Baseball Tickets')}: {inventory.tickets?.baseball || 0}</li>
+            <li>{t('inventoryModal.theatreTickets', 'Theatre Tickets')}: {inventory.tickets?.theatre || 0}</li>
+            <li>{t('inventoryModal.concertTickets', 'Concert Tickets')}: {inventory.tickets?.concert || 0}</li>
+            <li>{t('inventoryModal.lotteryTickets', 'Lottery Tickets')}: {inventory.lotteryTickets || 0}</li>
           </ul>
         </div>
 

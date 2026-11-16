@@ -408,34 +408,41 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   }
   const onBuyModifiers: OnBuyModifier[] = [];
 
-  if (itemDef?.happinessBonus && !rules?.usePhysicalMentalConditions) {
-    onBuyModifiers.push({ label: `${formatDelta(itemDef.happinessBonus)} on buy`, icon: '😊' });
-  }
+  const hasPreviewStatMods = Boolean(
+    actionPreview && actionPreview.modifications.some(m => m.stat !== 'money' && m.diff !== 0)
+  );
 
-  // Mental bonus on purchase
-  if (isLottery && rules?.usePhysicalMentalConditions) {
-    const mentalPerPack = itemDef?.mentalBonus ?? 1;
-    const totalMental = rules?.advancedStores ? mentalPerPack * buyQuantity : mentalPerPack;
-    onBuyModifiers.push({ label: `${formatDelta(totalMental)} on buy`, icon: '🧠' });
-  } else if (itemDef?.mentalBonus && rules?.usePhysicalMentalConditions && itemDef.category !== 'ticket') {
-    const hasExplicitMentalEffect = itemDef?.effects?.some(
-      e => (e.trigger === 'on_purchase' || (e.trigger as string) === 'on_buy') && e.stat === 'mental'
-    );
-    if (!hasExplicitMentalEffect) {
-      onBuyModifiers.push({ label: `${formatDelta(itemDef.mentalBonus)} on buy`, icon: '🧠' });
+  // If actionPreview did not provide stat pills (e.g. fallback or mock tests), provide fallback numeric modifiers:
+  if (!hasPreviewStatMods) {
+    if (itemDef?.happinessBonus && !rules?.usePhysicalMentalConditions) {
+      onBuyModifiers.push({ label: `${formatDelta(itemDef.happinessBonus)} on buy`, icon: '😊' });
     }
-  }
 
-  if (itemDef?.effects) {
-    for (const eff of itemDef.effects) {
-      if (eff.trigger === 'on_purchase' || (eff.trigger as string) === 'on_buy') {
-        if (eff.stat === 'physical_max') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Max Physical`, icon: '💪' });
-        else if (eff.stat === 'physical') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Physical`, icon: '💪' });
-        else if (eff.stat === 'mental_max') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Max Mental`, icon: '🧠' });
-        else if (eff.stat === 'mental') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '🧠' });
-        else if (eff.stat === 'happiness') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Happiness`, icon: '😊' });
-        else if (eff.stat === 'social') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '👥' });
-        else if (eff.stat === 'mess') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Mess`, icon: '🧹' });
+    // Mental bonus on purchase
+    if (isLottery && rules?.usePhysicalMentalConditions) {
+      const mentalPerPack = itemDef?.mentalBonus ?? 1;
+      const totalMental = rules?.advancedStores ? mentalPerPack * buyQuantity : mentalPerPack;
+      onBuyModifiers.push({ label: `${formatDelta(totalMental)} on buy`, icon: '🧠' });
+    } else if (itemDef?.mentalBonus && rules?.usePhysicalMentalConditions && itemDef.category !== 'ticket') {
+      const hasExplicitMentalEffect = itemDef?.effects?.some(
+        e => (e.trigger === 'on_purchase' || (e.trigger as string) === 'on_buy') && e.stat === 'mental'
+      );
+      if (!hasExplicitMentalEffect) {
+        onBuyModifiers.push({ label: `${formatDelta(itemDef.mentalBonus)} on buy`, icon: '🧠' });
+      }
+    }
+
+    if (itemDef?.effects) {
+      for (const eff of itemDef.effects) {
+        if (eff.trigger === 'on_purchase' || (eff.trigger as string) === 'on_buy') {
+          if (eff.stat === 'physical_max') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Max 💪`, icon: '💪' });
+          else if (eff.stat === 'physical') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '💪' });
+          else if (eff.stat === 'mental_max') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Max 🧠`, icon: '🧠' });
+          else if (eff.stat === 'mental') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '🧠' });
+          else if (eff.stat === 'happiness') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '😊' });
+          else if (eff.stat === 'social') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '👥' });
+          else if (eff.stat === 'mess') onBuyModifiers.push({ label: `${formatDelta(eff.value)} mess`, icon: '🧹' });
+        }
       }
     }
   }

@@ -28,9 +28,11 @@ export function getStatMeta(
         label: translate('stats.mental', { defaultValue: 'Mental Condition' })
       };
     case 'mentalMax':
+    case 'mental_max':
+    case 'mentalConditionMax':
       return {
-        icon: '🧠',
-        textIcon: '🧠',
+        icon: 'Max 🧠',
+        textIcon: 'Max 🧠',
         label: translate('stats.mentalMax', { defaultValue: 'Max Mental' })
       };
     case 'physical':
@@ -41,9 +43,11 @@ export function getStatMeta(
         label: translate('stats.physical', { defaultValue: 'Physical Condition' })
       };
     case 'physicalMax':
+    case 'physical_max':
+    case 'physicalConditionMax':
       return {
-        icon: '💪',
-        textIcon: '💪',
+        icon: 'Max 💪',
+        textIcon: 'Max 💪',
         label: translate('stats.physicalMax', { defaultValue: 'Max Physical' })
       };
     case 'dependability':
