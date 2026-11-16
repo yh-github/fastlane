@@ -237,3 +237,44 @@ Checked during `processAdvancedMaintenanceAndDecay` using `previousPlayer.turnFl
 5. **Step 2D**: Prune Hospital jobs to 9 tiers.
 6. **Step 3**: Hospital Building Actions & Triage Receptionist.
 7. **Step 4**: Coffee Subsystem: Weekly rations, mistake buffer formulas, Max Condition burnout, and Weekend Sprint cards.
+
+---
+
+## HIGH-PRIORITY NEXT BACKLOG: Work & Risk Revamp (Phase 2)
+
+> [!IMPORTANT]
+> **Priority: HIGH — Next items to design & implement for `advanced_2000` (with strong candidates for eventual backport to `advanced` / Advanced 90's).**
+> Phase 1 (implemented separately) covers: Soul-Crushing Jobs at Exp cap, `Show Leadership` (`show_initiative`) cost parity & `< 6h` rushed penalty + short-term mistake consequences, Grind/Overtime mistake threshold escalation & non-exec Exp risk, and `frontline_service` Social nerf (Option B: shift 3–7 tapered roll + Social penalty on all frontline mistakes).
+
+### P1. Mistake → Insight (Delayed Upside for Calculated Risk-Taking)
+- **Goal:** Reward informed risk-taking (and occasionally failing) without encouraging reckless mistake spamming, while staying multiplayer-fair.
+- **Core Idea:**
+  - The **first** workplace mistake per turn (especially on `show_initiative`, `technical`, or high-stakes shifts)—or clearing a mistake via `face_time` / reflection—grants an **`insight` / `lessonsLearned`** charge (capped at 1/turn so spamming mistakes is never profitable).
+  - **Delayed Payoff (Next Turn / Weekend / Follow-up):**
+    - Converts on weekend/turn start into `+Exp`, `+0.10–0.20` domain skill (`Skill_Tech` / `Skill_MGMT`), or a temporary/permanent mistake-reduction buffer at that job tier; **OR**
+    - Unlocks a **"Post-Mortem / Turnaround"** initiative card in `Show Leadership` that pays out high `Standing` (merits), `Dependability`, and `Skill` only when holding `insight > 0`.
+
+### P2. Social as a Spendable Resource (Weekend Events & `Show Leadership`)
+- **Goal:** Now that `frontline_service` Social farming is nerfed and `HOST` / Weekend investments matter more, give players meaningful ways to *spend* Social score for non-Social gains.
+- **Core Ideas:**
+  - **Weekend Events / Cards:**
+    - *Exclusive Networking / Calling in Favors*: Pay `2–4 Social` (optionally + cash) to gain employability/interview boost, `Dependability` floor protection, Mental recovery without cash, or mitigate a negative weekend event.
+  - **`Show Leadership` (`show_initiative`) Cards:**
+    - *Cover for Team / Take the Blame*: Pay `2–3 Social` to clear `1` location mistake and gain `+Dep` / `+Standing`.
+    - *Push Unpopular Reform*: Pay `2 Social` for outsized `Skill_MGMT` / `Skill_Tech` + `Exp` (paired with elevated mistake risk).
+
+### P3. `Skill_Tech` & `Skill_MGMT` Tuning for `advanced_2000` (Post-Factory Split)
+- **Goal:** Ensure skills are neither irrelevant nor arbitrary binary walls across the restored Factory + classic locations.
+- **Issues to Address:**
+  - Several `middle_management` and `executive_management` jobs outside Hospital/Factory (Bank, Black's Market, QT, Red Pirate, Z-Mart) currently have `mgmtSkill: 0` requirements.
+  - `Skill_Tech` is heavily required at Factory/Socket City/Pawn Shop/Red Pirate, but has little soft benefit once hired or on non-gated roles.
+- **Ideas:**
+  - Audit and add graduated `mgmtSkill` gates on mid/executive management jobs (scaled by wage tier).
+  - Add **soft skill scaling** beyond gating: excess `Skill_Tech` (on `technical` jobs) and excess `Skill_MGMT` (on management jobs) reduce mistake probability or boost `Show Leadership` / raise outcomes.
+
+### P4. Custom Work Modes (Tag-Specific Replacements for Disabled Slots) & Fulfilling Jobs
+- **Goal:** Explore replacing disabled work slots (`Face Time` disabled on `heavy_physical`; `Coast` disabled on `middle_management`) with meaningful risk/reward modes while keeping `always_hiring` entry jobs clean as an in-game tutorial.
+- **Open Questions to Analyze Before Implementing:**
+  - **`heavy_physical` replacement for `Face Time`:** e.g., a high-risk/high-reward *"Push / Heavy Lift"* mode (`+wage`, `+Phys cost`, higher mistake chance). Needs base wage rebalance analysis because `heavy_physical` jobs already pay higher base wages than same-tier jobs, and needs thematic justification for why it replaces office politics.
+  - **`middle_management` replacement for `Coast`:** e.g., *"Delegate"* (lower Phys, normal wage, `0 Exp`, Social mistake risk). Needs comparison against `work_work` and `show_initiative`.
+  - **Fulfilling / Career-Peak Jobs (Future):** Consider jobs (e.g. specialized `technical` or `executive_management` roles) with an explicit `fulfilling` bonus rather than just exemption from the Soul-Crushing Exp-cap penalty, so staying in a master role is a viable strategy.
