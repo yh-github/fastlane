@@ -14,9 +14,9 @@ A modern reimagining of *Jones in the Fast Lane* — built with TypeScript, Reac
 The project strictly separates **engine logic** from **campaign data**:
 
 ```
-/src        → All application code (engine, graphics, UI)
-/campaigns  → 100% data-driven content (JSON + sprites, NO engine code)
-/public     → Global static assets (UI chrome, favicon)
+/src                → All application code (engine, graphics, UI)
+/public/campaigns   → 100% data-driven content (JSON + sprites, NO engine code)
+/public             → Global static assets (UI chrome, favicon)
 ```
 
 This enables:
@@ -36,8 +36,15 @@ npm run dev
 For a comprehensive guide mapping all **game concepts to specific files**, architecture diagrams, execution pipelines, and development recipes, see:
 👉 **[`docs/CODE_GUIDE.md`](./docs/CODE_GUIDE.md)**
 
-For the authoritative breakdown of the **original Sierra SCI implementation**, how Base replicates it, and how QoL Improved and Advanced diverge via optional rules, see:
+For the authoritative breakdown of the **original Sierra SCI implementation**, how Base replicates it, and how QoL Improved and the **Advanced** family (`advanced`, `advanced_2000`, `scrubs`) diverge via optional rules and campaign data, see:
 👉 **[`docs/implementation_and_variants_guide.md`](./docs/implementation_and_variants_guide.md)**
+
+## Campaign Versions
+
+Campaigns are organized into two families (registered in [`public/campaigns/campaigns.json`](./public/campaigns/campaigns.json)):
+
+- **Classic / Base Family**: `1990_classic_floppy` → `1990_classic_cdrom` → `qol_improved`
+- **Advanced Family**: `advanced` (Advanced 90's) → `advanced_2000` (Advanced 2000) → `scrubs` (Scrubs, medical edition)
 
 ## Project Structure
 
@@ -46,7 +53,7 @@ For the authoritative breakdown of the **original Sierra SCI implementation**, h
 | `src/engine/` | Core game loop: domain action reducers (`src/engine/actions/`), turn lifecycle (`src/engine/turn/`), stat math, economy |
 | `src/graphics/` | PixiJS canvas rendering and pathfinding |
 | `src/ui/` | React components (Dashboard, Building Modals in `src/ui/buildings/`, HUD, GameLog) |
-| `campaigns/classic_1990/` | Base game data (buildings, jobs, items, map, events, config) |
+| `public/campaigns/` | Campaign JSON bundles (`1990_classic_floppy`, `1990_classic_cdrom`, `qol_improved`, `advanced`, `advanced_2000`, `scrubs`) |
 | `docs/` | Game Design Documents and Developer Code Guide |
 
 ## Sprint Roadmap

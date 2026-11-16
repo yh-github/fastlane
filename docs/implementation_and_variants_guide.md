@@ -3,14 +3,14 @@
 This document is the **authoritative reference** for the mechanics of *The Fast Lane*, documenting:
 1. The **authentic Sierra SCI bytecode implementation** (from the original 1990 Floppy and 1992 CD-ROM releases).
 2. How our **Base campaigns** (`1990_classic_floppy` and `1990_classic_cdrom`) replicate the original game 1:1, including historical quirks and bugs.
-3. How **Quality-of-Life Improved** (`qol_improved`) and **Advanced Edition** (`advanced`) modify, modernize, and expand the gameplay using modular **Optional Rules**.
+3. How **Quality-of-Life Improved** (`qol_improved`) and the **Advanced Edition family** (`advanced`, `advanced_2000`, `scrubs`) modify, modernize, and expand the gameplay using modular **Optional Rules** and campaign data overrides.
 
 > [!CAUTION]
 > ### Golden Rule for AI Agents & Contributors
 > **NEVER modify core engine math or fix bugs directly inside `1990_classic_floppy` or `1990_classic_cdrom`.**
 > 
 > If Sierra's original bytecode had a flaw, quirk, or harsh mechanic, the Classic Floppy and CD-ROM versions **must preserve it**.
-> Any bugfix, quality-of-life improvement, or balance adjustment **must be gated behind an optional rule toggle** in [`src/engine/rules.ts`](file:///home/yoavh/code/antigravity/fastlane/src/engine/rules.ts). The rule is enabled (`true`) for `qol_improved` and `advanced`, while remaining disabled (`false` or original behavior) for `1990_classic_floppy` and `1990_classic_cdrom`.
+> Any bugfix, quality-of-life improvement, or balance adjustment **must be gated behind an optional rule toggle** in [`src/engine/rules.ts`](file:///home/yoavh/code/antigravity/fastlane/src/engine/rules.ts). The rule is enabled (`true`) for `qol_improved` and the Advanced campaigns as appropriate, while remaining disabled (`false` or original behavior) for `1990_classic_floppy` and `1990_classic_cdrom`.
 
 ---
 
@@ -22,10 +22,12 @@ The game uses a tiered inheritance model for campaign data and configurations:
 graph TD
     Floppy["1990_classic_floppy<br/>(Root Authentic 1990 Baseline)"] --> CDROM["1990_classic_cdrom<br/>(1992 CD-ROM Guardrails)"]
     CDROM --> QoL["qol_improved<br/>(Modern Quality-of-Life & Bugfixes)"]
-    QoL --> Advanced["advanced<br/>(Granular Life Simulation Overhaul)"]
+    QoL --> Advanced["advanced<br/>(Advanced 90's: Life Sim Overhaul)"]
+    Advanced --> Adv2000["advanced_2000<br/>(Advanced 2000: Y2K, Parks, Red Pirate, Coffee, Cooking)"]
+    Adv2000 --> Scrubs["scrubs<br/>(Scrubs: Hospital, Medical Track, Healthcare)"]
 ```
 
-### The 4 Campaign Editions
+### The 6 Campaign Editions
 
 1. **`1990_classic_floppy` (Authentic 1990 Floppy Disk)**:
    * 1:1 replication of the original 1990 Sierra SCI0/SCI1 engine.
@@ -50,13 +52,27 @@ graph TD
    * Reveals explicit job rejection reasons from turn 1 (`maskEarlyJobRejections: false`).
    * Provides predictive financial journalism in the newspaper (`predictiveNewspaperStockTips: true`).
 
-4. **`advanced` (Advanced Life Simulation Edition)**:
+4. **`advanced` ("Advanced 90's" — Life Simulation Edition)**:
    * Built on top of `qol_improved`.
    * Expands the game into a deep, interconnected life simulation.
-   * Replaces abstract Relaxation with distinct **Physical Condition** and **Mental Condition**.
+   * Replaces abstract Relaxation with distinct **Physical Condition** and **Mental Condition** (`initialPhysicalMax: 100`, `mentalMaxBaseValue: 86`).
    * Introduces domestic living mechanics: apartment **Mess & Cleaning**, **Space Capping**, and appliance breakdowns.
    * Adds **Social Standing** (1–99), **Work & Study Grind/Overtime Tiers**, and interactive **Card-Based Weekends**.
    * Introduces a 5th Victory Goal (**Wellbeing**) and depth-scaled degree bonuses (`depthScaledDegreeBonus: true`).
+
+5. **`advanced_2000` ("Advanced 2000" — Y2K Urban Edition)**:
+   * Built on top of `advanced`. Retains the **Factory** and the full classic **11-degree education tree** (`pre_engineering` / `engineering`, `post_doctoral` / `research` / `publishing`), alongside restored classic job baselines (`z_mart`, `qt_clothing`, `socket_city`, `bank`, `blacks_market`, `apartment_complex`, `university`, `pawn_shop`).
+   * **The Red Pirate** replaces Monolith Burgers (`enableBusyWeeks: true` rush weeks + `enableArcade: true` arcade cabinets, pirate menu items).
+   * **3 City Parks** (`campus_park`, `west_green`, `eastside_park`) on the 16-node authentic ring (`enableParkSystem: true`: stroll, bench rest, trail jog, cabin fever, outdoor encounters).
+   * **Coffee / Caffeine Subsystem** (`enableCaffeineSystem: true`): weekly rations (`drip_coffee`, `espresso`, `double_shot`), mistake-mitigation buffer, tolerance half-life decay, overdose/redline max-condition nibble, and high-caffeine weekend sprint cards.
+   * **Cooking System** (`enableCookingSystem: true`): weekly meal prep, stove/microwave bonuses, standalone freezer storage, and removal of the infinite canned-food exploit.
+   * **Y2K Items & Rules**: replaces `bw_tv`/`color_tv` with `crt_tv`/`plasma_tv`, removes `lottery_tickets`, updates `weekends.json`, and calibrates condition caps & mistake thresholds (`initialPhysicalMax: 65`, `mentalMaxBaseValue: 65`, `startingPhysicalCondition: 50`, `startingMentalCondition: 50`, mistake thresholds `18` / `28`).
+
+6. **`scrubs` ("Scrubs" — Medical Edition, stubbed for expansion)**:
+   * Built on top of `advanced_2000`, inheriting Red Pirate, Parks, Coffee, Cooking, Y2K items/weekends, and the `65/65` & `18/28` stat thresholds.
+   * **City General Hospital** replaces the Factory (`hospital_*` 9-tier clinical career ladder, `uni_lab_assistant`, urgent care, psychiatric therapy, blood donation, hospital cafeteria with `hospital_tray`, and `hospitalEmployeeHealthcare: true`).
+   * **Life Sciences & Medical Degree Track**: replaces `pre_engineering`/`engineering` and `post_doctoral`/`research` with `life_sciences` → `physiology` & `biochemistry` → `medical_school` (M.D.) and `Publishing & Research`.
+   * Serves as the dedicated base for future medical-themed city swaps (private clinic, vet, drugstore, etc.).
 
 ---
 
@@ -250,6 +266,22 @@ graph TD
 | `economicBoomStartWeek` | Earliest turn week when economic booms can occur | `4` | `8` | `8` | `8` |
 | `willyRobberyStartWeek` | Earliest turn week when Willy muggings can occur | `1` | `4` | `4` | `4` |
 
+### Additional Rules in `advanced_2000` & `scrubs`
+
+Both `advanced_2000` and `scrubs` inherit all `advanced` toggles above and enable:
+
+| Rule / Stat Key | Description | `advanced` | `advanced_2000` | `scrubs` |
+|---|---|:---:|:---:|:---:|
+| `enableCaffeineSystem` | Coffee rations, mistake-mitigation buffer, tolerance decay, weekend sprints | `false` | **`true`** | **`true`** |
+| `enableBusyWeeks` | Periodic "All Hands on Deck!" rush weeks at The Red Pirate | `false` | **`true`** | **`true`** |
+| `enableArcade` | Arcade cabinet games at The Red Pirate | `false` | **`true`** | **`true`** |
+| `enableParkSystem` | Dynamic park actions, cabin fever, and outdoor encounters | `false` | **`true`** | **`true`** |
+| `enableCookingSystem` | Weekly meal prep, stove/microwave bonuses, standalone freezer | `false` | **`true`** | **`true`** |
+| `hospitalEmployeeHealthcare` | Free/discounted hospital healthcare & clinical employee perks | `false` | `false` | **`true`** |
+| `initialPhysicalMax` / `mentalMaxBaseValue` | Base Physical and Mental condition ceilings | `100` / `86` | **`65` / `65`** | **`65` / `65`** |
+| `workMistakePhysicalThreshold` / `Heavy` | Physical mistake thresholds (Normal / Heavy Physical) | `10` / `20` | **`18` / `28`** | **`18` / `28`** |
+| `workMistakeMentalThreshold` / `Executive` | Mental mistake thresholds (Normal / Executive) | `10` / `20` | **`18` / `28`** | **`18` / `28`** |
+
 ---
 
 ## 4. Checklist for Future Engine & Rule Modifications
@@ -263,7 +295,7 @@ Before making changes to any game engine math or rules, follow this checklist:
    * Check [`original_resources/README.md`](file:///home/yoavh/code/antigravity/fastlane/original_resources/README.md) and the corresponding `original_resources/floppy/script.*.txt` file to verify how Sierra actually handled the mechanic.
 3. **Configure the Campaign JSONs**:
    * Set the default value in `DEFAULT_GAME_RULES` in [`src/engine/rules.ts`](file:///home/yoavh/code/antigravity/fastlane/src/engine/rules.ts).
-   * Update `public/campaigns/1990_classic_floppy/config.json`, `public/campaigns/1990_classic_cdrom/config.json`, `public/campaigns/qol_improved/config.json`, and `public/campaigns/advanced/config.json`.
+   * Update the relevant `config.json` files under `public/campaigns/` (`1990_classic_floppy`, `1990_classic_cdrom`, `qol_improved`, `advanced`, `advanced_2000`, `scrubs`) and the catalog manifests (`public/campaigns/campaigns.json`, `src/campaigns/campaigns.json`).
 4. **Update the Comparison UI & Documentation**:
    * Ensure `RULE_DESCRIPTIONS` in [`src/engine/rules.ts`](file:///home/yoavh/code/antigravity/fastlane/src/engine/rules.ts) has a clear human-readable description.
    * Verify the rule appears properly in the in-game **Rules Comparison Screen** ([`src/ui/RulesScreen.tsx`](file:///home/yoavh/code/antigravity/fastlane/src/ui/RulesScreen.tsx)).

@@ -12,22 +12,25 @@ import { calcWorkShiftSummary } from '../src/engine/job/jobShiftSummary';
 import { Random } from '../src/utils/rng';
 import type { GameState, PlayerState } from '../src/engine/gameState';
 
-describe('Advanced 2000 Campaign Features', () => {
+describe('Advanced 2000 & Scrubs Campaign Features', () => {
   let campaign2000: CampaignBundle;
+  let scrubsCampaign: CampaignBundle;
   let floppyCampaign: CampaignBundle;
 
   beforeEach(async () => {
     campaign2000 = await loadCampaign('advanced_2000');
+    scrubsCampaign = await loadCampaign('scrubs');
     floppyCampaign = await loadCampaign('1990_classic_floppy');
   });
 
   describe('Campaign Loading & Isolation', () => {
-    it('loads advanced_2000 with standalone configs and custom rules enabled', () => {
+    it('loads advanced_2000 with standalone configs and custom rules enabled (hospital healthcare off)', () => {
       expect(campaign2000.config.name).toBe('The Fast Lane — Advanced 2000');
       expect(campaign2000.config.gameRules.enableCaffeineSystem).toBe(true);
       expect(campaign2000.config.gameRules.enableBusyWeeks).toBe(true);
-      expect(campaign2000.config.gameRules.hospitalEmployeeHealthcare).toBe(true);
+      expect(campaign2000.config.gameRules.hospitalEmployeeHealthcare).toBe(false);
       expect(campaign2000.config.gameRules.enableArcade).toBe(true);
+      expect(scrubsCampaign.config.gameRules.hospitalEmployeeHealthcare).toBe(true);
     });
 
     it('confirms classic floppy and advanced 90s do not have advanced 2000 rules enabled', async () => {
@@ -61,9 +64,10 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(pClassic.physicalConditionMax).toBeUndefined();
     });
 
-    it('contains Hospital, Red Pirate, and 3 Park nodes on the map', () => {
+    it('contains Factory, Red Pirate, and 3 Park nodes on the map in advanced_2000, and Hospital in scrubs', () => {
       const bIds = campaign2000.buildings.map(b => b.id);
-      expect(bIds).toContain('hospital');
+      expect(bIds).toContain('factory');
+      expect(bIds).not.toContain('hospital');
       expect(bIds).toContain('red_pirate');
       expect(bIds).toContain('campus_park');
       expect(bIds).toContain('west_green');
@@ -73,16 +77,28 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(nodeIds).toContain('node_park_campus');
       expect(nodeIds).toContain('node_park_west');
       expect(nodeIds).toContain('node_park_east');
+
+      const scrubsBIds = scrubsCampaign.buildings.map(b => b.id);
+      expect(scrubsBIds).toContain('hospital');
+      expect(scrubsBIds).not.toContain('factory');
     });
 
-    it('contains progressive healthcare education degrees in Life Sciences track', () => {
-      const degIds = campaign2000.education.map(d => d.id);
+    it('restores classic degree tree in advanced_2000 and keeps Life Sciences track in scrubs', () => {
+      const deg2000Ids = campaign2000.education.map(d => d.id);
+      expect(deg2000Ids).toContain('pre_engineering');
+      expect(deg2000Ids).toContain('engineering');
+      expect(deg2000Ids).toContain('post_doctoral');
+      expect(deg2000Ids).toContain('research');
+      expect(deg2000Ids).not.toContain('life_sciences');
+      expect(deg2000Ids).not.toContain('medical_school');
+
+      const degIds = scrubsCampaign.education.map(d => d.id);
       expect(degIds).toContain('life_sciences');
       expect(degIds).toContain('physiology');
       expect(degIds).toContain('biochemistry');
       expect(degIds).toContain('medical_school');
 
-      const medSchool = campaign2000.education.find(d => d.id === 'medical_school')!;
+      const medSchool = scrubsCampaign.education.find(d => d.id === 'medical_school')!;
       expect(medSchool.prerequisites).toEqual(['physiology', 'biochemistry']);
     });
 
@@ -276,7 +292,7 @@ describe('Advanced 2000 Campaign Features', () => {
     it('calibrates mistake thresholds: normal jobs trigger below 18 while heavy_physical and executive_management trigger below 28', () => {
       const { player } = createTestState(0);
       const cookJob = campaign2000.jobs.find(j => j.id === 'pirate_cook')!; // normal job (threshold 18)
-      const orderlyJob = campaign2000.jobs.find(j => j.id === 'hospital_custodian')!; // heavy_physical (threshold 28)
+      const heavyJob = campaign2000.jobs.find(j => j.id === 'qt_janitor')!; // heavy_physical (threshold 28)
       const brokerJob = campaign2000.jobs.find(j => j.id === 'bank_broker')!; // executive_management (threshold 28)
 
       // Test at Condition 22:
@@ -290,10 +306,10 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(cookPhysMistake?.chance).toBe(0);
 
       // 2. Heavy Physical job: Phys 22 is 6 pts below threshold 28 -> (28 - 22) * 0.025 = 15.0% risk
-      const orderlySummary = calcWorkShiftSummary(player, orderlyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
-      const orderlyWork = orderlySummary.modes.find(o => o.id === 'work_work')!;
-      const orderlyPhysMistake = orderlyWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
-      expect(orderlyPhysMistake?.chance).toBeCloseTo(0.15, 3);
+      const heavySummary = calcWorkShiftSummary(player, heavyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
+      const heavyWork = heavySummary.modes.find(o => o.id === 'work_work')!;
+      const heavyPhysMistake = heavyWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
+      expect(heavyPhysMistake?.chance).toBeCloseTo(0.15, 3);
 
       // 3. Executive Management job: Mental 22 is 6 pts below threshold 28 -> (28 - 22) * 0.025 = 15.0% risk
       const brokerSummary = calcWorkShiftSummary(player, brokerJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
@@ -303,21 +319,21 @@ describe('Advanced 2000 Campaign Features', () => {
 
       // 4. Caffeine Sweet Spot: Consuming Drip Coffee (+10 buffer) buffers effective condition to 32 (>= 28)
       player.turnFlags = { ...player.turnFlags, caffeineIntake: 10 };
-      const bufferedOrderly = calcWorkShiftSummary(player, orderlyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
-      const bufferedOrderlyWork = bufferedOrderly.modes.find(o => o.id === 'work_work')!;
-      const bufPhysMistake = bufferedOrderlyWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
+      const bufferedHeavy = calcWorkShiftSummary(player, heavyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
+      const bufferedHeavyWork = bufferedHeavy.modes.find(o => o.id === 'work_work')!;
+      const bufPhysMistake = bufferedHeavyWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
       expect(bufPhysMistake?.chance).toBe(0);
 
       // Because actual condition 22 >= 15, working this shift does NOT inflict Redline Burnout
-      player.currentJobId = orderlyJob.id;
-      player.currentWage = orderlyJob.baseWage;
+      player.currentJobId = heavyJob.id;
+      player.currentWage = heavyJob.baseWage;
       player.hoursRemaining = 20;
       player.physicalConditionMax = 50;
       player.mentalConditionMax = 50;
-      const orderlyShiftRes = workShift(player, orderlyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 'work_work');
-      expect(orderlyShiftRes.success).toBe(true);
-      expect(orderlyShiftRes.updated.physicalConditionMax).toBe(50); // No redline penalty
-      expect(orderlyShiftRes.updated.mentalConditionMax).toBe(50);
+      const heavyShiftRes = workShift(player, heavyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 'work_work');
+      expect(heavyShiftRes.success).toBe(true);
+      expect(heavyShiftRes.updated.physicalConditionMax).toBe(50); // No redline penalty
+      expect(heavyShiftRes.updated.mentalConditionMax).toBe(50);
     });
 
     it('triggers caffeine withdrawal upon detoxing (0 intake with tolerance >= 3)', () => {
@@ -674,9 +690,9 @@ describe('Advanced 2000 Campaign Features', () => {
     });
   });
 
-  describe('The Hospital & Healthcare Perk', () => {
+  describe('The Hospital & Healthcare Perk (Scrubs)', () => {
     it('covers doctor visit fee ($0) and grants +12 physical bounce-back for hospital employees', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', scrubsCampaign.config);
       player.currentJobId = 'hospital_orderly';
       player.money = 0; // Broke employee
       player.physicalCondition = 10;
@@ -687,9 +703,9 @@ describe('Advanced 2000 Campaign Features', () => {
         4,
         new Random(1),
         true, // bypassDoctorIfBroke is true, but employee benefit bypasses check!
-        campaign2000.config.gameRules,
+        scrubsCampaign.config.gameRules,
         undefined,
-        campaign2000.config.statRules
+        scrubsCampaign.config.statRules
       );
 
       // Free visit
@@ -700,7 +716,7 @@ describe('Advanced 2000 Campaign Features', () => {
     });
 
     it('charges non-hospital employees and uses standard bounce-back', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', scrubsCampaign.config);
       player.currentJobId = 'pirate_cook';
       player.money = 500;
       player.physicalCondition = 10;
@@ -711,9 +727,9 @@ describe('Advanced 2000 Campaign Features', () => {
         4,
         new Random(1),
         true,
-        campaign2000.config.gameRules,
+        scrubsCampaign.config.gameRules,
         undefined,
-        campaign2000.config.statRules
+        scrubsCampaign.config.statRules
       );
 
       // Charged money
@@ -722,8 +738,11 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(updated.physicalCondition).toBe(14);
     });
 
-    it('contains exactly 9 Hospital jobs with calibrated progression and tags', () => {
-      const hospitalJobs = campaign2000.jobs.filter(j => j.locationId === 'hospital');
+    it('contains exactly 9 Hospital jobs in scrubs and 9 Factory jobs in advanced_2000', () => {
+      const factoryJobs = campaign2000.jobs.filter(j => j.locationId === 'factory');
+      expect(factoryJobs).toHaveLength(9);
+
+      const hospitalJobs = scrubsCampaign.jobs.filter(j => j.locationId === 'hospital');
       expect(hospitalJobs).toHaveLength(9);
 
       const orderly = hospitalJobs.find(j => j.id === 'hospital_custodian')!;
@@ -769,15 +788,15 @@ describe('Advanced 2000 Campaign Features', () => {
       expect(zmartMgr.requirements.experience).toBe(30);
       expect(zmartMgr.requirements.dependability).toBe(30);
 
-      const uniLab = campaign2000.jobs.find(j => j.id === 'uni_lab_assistant')!;
+      const uniLab = scrubsCampaign.jobs.find(j => j.id === 'uni_lab_assistant')!;
       expect(uniLab.baseWage).toBe(8);
       expect(uniLab.requirements.degrees).toEqual(['biochemistry']);
       expect(uniLab.tags).toContain('technical');
     });
 
     it('clinical shift Charting (look_busy) grants dependability without experience', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
-      const nurseJob = campaign2000.jobs.find(j => j.id === 'hospital_nurse')!;
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', scrubsCampaign.config);
+      const nurseJob = scrubsCampaign.jobs.find(j => j.id === 'hospital_nurse')!;
       player.currentJobId = nurseJob.id;
       player.currentWage = nurseJob.baseWage;
       player.hoursRemaining = 40;
@@ -791,13 +810,13 @@ describe('Advanced 2000 Campaign Features', () => {
         player,
         nurseJob,
         6,
-        campaign2000.config.gameRules,
-        campaign2000.config.statRules,
+        scrubsCampaign.config.gameRules,
+        scrubsCampaign.config.statRules,
         'look_busy',
         new Random(1),
         undefined,
-        campaign2000.education,
-        campaign2000
+        scrubsCampaign.education,
+        scrubsCampaign
       );
 
       // Gains +1 Dep from Charting, 0 Exp
@@ -806,8 +825,8 @@ describe('Advanced 2000 Campaign Features', () => {
     });
 
     it('clinical mistakes inflict extra -2 Mental stress shock', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
-      const nurseJob = campaign2000.jobs.find(j => j.id === 'hospital_nurse')!;
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', scrubsCampaign.config);
+      const nurseJob = scrubsCampaign.jobs.find(j => j.id === 'hospital_nurse')!;
       player.currentJobId = nurseJob.id;
       player.currentWage = nurseJob.baseWage;
       player.hoursRemaining = 40;
@@ -819,13 +838,13 @@ describe('Advanced 2000 Campaign Features', () => {
         player,
         nurseJob,
         6,
-        campaign2000.config.gameRules,
-        campaign2000.config.statRules,
+        scrubsCampaign.config.gameRules,
+        scrubsCampaign.config.statRules,
         'work_work',
         new Random(1),
         { inDecisions: [{ type: `work_phys_mistake_${player.id}_1`, result: true }] },
-        campaign2000.education,
-        campaign2000
+        scrubsCampaign.education,
+        scrubsCampaign
       );
 
       // Condition was low -> mistake occurred -> normal mental cost (1) + clinical mistake shock (2) = 47
@@ -833,12 +852,12 @@ describe('Advanced 2000 Campaign Features', () => {
     });
 
     it('awards landlord standing bonus for healthcare workers with clinical jobs', () => {
-      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_security', campaign2000.config);
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_security', scrubsCampaign.config);
       player.currentJobId = 'hospital_nurse';
       player.currentHousingId = 'security';
       player.dependability = 20;
 
-      const { standing, breakdown } = calcLandlordStanding(player, campaign2000.config.gameRules, 1, campaign2000.jobs);
+      const { standing, breakdown } = calcLandlordStanding(player, scrubsCampaign.config.gameRules, 1, scrubsCampaign.jobs);
       expect(breakdown.some(b => b.label === 'Healthcare Worker Standing')).toBe(true);
       expect(standing).toBe(61); // 55 baseline - 4 mess + 10 healthcare = 61
     });
@@ -1128,11 +1147,11 @@ describe('Advanced 2000 Campaign Features', () => {
     });
   });
 
-  describe('Hospital Interactive Building Actions', () => {
+  describe('Hospital Interactive Building Actions (Scrubs)', () => {
     function setupHospitalContext(player: PlayerState) {
       return {
-        campaign: campaign2000,
-        rules: campaign2000.config.gameRules,
+        campaign: scrubsCampaign,
+        rules: scrubsCampaign.config.gameRules,
         turn: 1,
         economicIndex: 0,
         rng: new Random(1),
@@ -1140,7 +1159,7 @@ describe('Advanced 2000 Campaign Features', () => {
           turn: 1,
           players: [player],
           economicIndex: 0,
-          rules: campaign2000.config.gameRules,
+          rules: scrubsCampaign.config.gameRules,
           pawnShopItemsForSale: [],
           rngState: 1,
           phase: 'playing' as const
@@ -1150,7 +1169,7 @@ describe('Advanced 2000 Campaign Features', () => {
 
     it('urgent care provides proportional healing (critical < 20 lifts to 20 and repairs Max Phys, moderate +5, healthy +1)', () => {
       // 1. Critical tier (Physical = 10, max = 50 < 65)
-      const pCritical = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', campaign2000.config);
+      const pCritical = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_factory', scrubsCampaign.config);
       pCritical.hoursRemaining = 20;
       pCritical.money = 200;
       pCritical.physicalCondition = 10;
@@ -1340,13 +1359,13 @@ describe('Advanced 2000 Campaign Features', () => {
         turn: 2,
         players: [afterFood.updatedPlayer],
         economicIndex: 100,
-        rules: campaign2000.config.gameRules,
+        rules: scrubsCampaign.config.gameRules,
         pawnShopItemsForSale: [],
         rngState: 42,
         phase: 'playing'
       };
 
-      const nextState = processTurnStart(state, campaign2000);
+      const nextState = processTurnStart(state, scrubsCampaign);
       const nextPlayer = nextState.players[0];
 
       expect(nextPlayer.turnEvents.some(e => e.key === 'events.starvation')).toBe(false);

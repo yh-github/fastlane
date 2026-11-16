@@ -106,7 +106,7 @@
       "id": "node_factory",
       "x": 150,
       "y": 700,
-      "buildingId": "hospital",
+      "buildingId": "factory",
       "connections": [
         "node_employment",
         "node_bank"

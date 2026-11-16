@@ -1,0 +1,197 @@
+[
+  { "id": "factory_scrap_sorter", "_remove": true },
+  { "id": "factory_assembly", "_remove": true },
+  { "id": "factory_secretary", "_remove": true },
+  { "id": "factory_machinist_helper", "_remove": true },
+  { "id": "factory_exec_secretary", "_remove": true },
+  { "id": "factory_machinist", "_remove": true },
+  { "id": "factory_dept_mgr", "_remove": true },
+  { "id": "factory_engineer", "_remove": true },
+  { "id": "factory_gen_mgr", "_remove": true },
+  {
+    "id": "hospital_custodian",
+    "title": "Hospital Orderly",
+    "locationId": "hospital",
+    "baseWage": 7,
+    "requirements": {
+      "experience": 15,
+      "dependability": 20,
+      "degrees": [],
+      "uniform": "casual"
+    },
+    "tags": [
+      "always_hiring",
+      "heavy_physical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "hospital_receptionist",
+    "title": "Ward Clerk / Receptionist",
+    "locationId": "hospital",
+    "baseWage": 9,
+    "requirements": {
+      "experience": 20,
+      "dependability": 25,
+      "degrees": [
+        "life_sciences"
+      ],
+      "uniform": "casual"
+    },
+    "tags": [
+      "frontline_service"
+    ],
+    "perks": []
+  },
+  {
+    "id": "hospital_biomed_tech",
+    "title": "Biomedical IT Technician",
+    "locationId": "hospital",
+    "baseWage": 12,
+    "requirements": {
+      "experience": 30,
+      "dependability": 30,
+      "degrees": [
+        "electronics"
+      ],
+      "techSkill": 2,
+      "uniform": "casual"
+    },
+    "tags": [
+      "technical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "hospital_nurse",
+    "title": "Staff Nurse (RN)",
+    "locationId": "hospital",
+    "baseWage": 15,
+    "requirements": {
+      "experience": 35,
+      "dependability": 40,
+      "degrees": [
+        "physiology"
+      ],
+      "uniform": "casual"
+    },
+    "tags": [
+      "frontline_service",
+      "clinical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "hospital_head_nurse",
+    "title": "Nursing Supervisor",
+    "locationId": "hospital",
+    "baseWage": 18,
+    "requirements": {
+      "experience": 45,
+      "dependability": 50,
+      "degrees": [
+        "physiology"
+      ],
+      "mgmtSkill": 1.5,
+      "uniform": "dress"
+    },
+    "tags": [
+      "middle_management",
+      "clinical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "hospital_resident",
+    "title": "Resident Physician",
+    "locationId": "hospital",
+    "baseWage": 16,
+    "requirements": {
+      "experience": 50,
+      "dependability": 55,
+      "degrees": [
+        "medical_school"
+      ],
+      "uniform": "dress"
+    },
+    "tags": [
+      "clinical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "hospital_physician",
+    "title": "Attending Physician",
+    "locationId": "hospital",
+    "baseWage": 21,
+    "requirements": {
+      "experience": 65,
+      "dependability": 65,
+      "degrees": [
+        "medical_school"
+      ],
+      "uniform": "business"
+    },
+    "tags": [
+      "clinical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "hospital_surgeon",
+    "title": "Attending Surgeon",
+    "locationId": "hospital",
+    "baseWage": 24,
+    "requirements": {
+      "experience": 75,
+      "dependability": 75,
+      "degrees": [
+        "medical_school"
+      ],
+      "uniform": "casual"
+    },
+    "tags": [
+      "clinical",
+      "technical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "hospital_director",
+    "title": "Chief of Medicine / Medical Director",
+    "locationId": "hospital",
+    "baseWage": 25,
+    "requirements": {
+      "experience": 80,
+      "dependability": 80,
+      "degrees": [
+        "medical_school"
+      ],
+      "mgmtSkill": 2.5,
+      "uniform": "business"
+    },
+    "tags": [
+      "executive_management",
+      "clinical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "uni_lab_assistant",
+    "title": "Lab Research Assistant",
+    "locationId": "university",
+    "baseWage": 8,
+    "requirements": {
+      "experience": 25,
+      "dependability": 25,
+      "degrees": [
+        "biochemistry"
+      ],
+      "uniform": "casual"
+    },
+    "tags": [
+      "technical"
+    ],
+    "perks": []
+  }
+]

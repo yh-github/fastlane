@@ -1,0 +1,13 @@
+{
+  "versionClass": "advanced",
+  "name": "The Fast Lane — Scrubs",
+  "version": "1.0.0",
+  "description": "Medical-themed edition built on Advanced 2000. Features City General Hospital, Life Sciences & Medical degree track, and hospital employee healthcare.",
+  "supportedGuiStyles": ["generated"],
+  "baseCampaign": "advanced_2000",
+  "replaceFiles": ["education"],
+  "gameRules": {
+    "versionClass": "advanced",
+    "hospitalEmployeeHealthcare": true
+  }
+}

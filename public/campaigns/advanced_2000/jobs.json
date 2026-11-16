@@ -90,50 +90,66 @@
     "perks": []
   },
   {
-    "id": "hospital_custodian",
-    "title": "Hospital Orderly",
-    "locationId": "hospital",
+    "id": "factory_scrap_sorter",
+    "title": "Scrap Sorter",
+    "locationId": "factory",
     "baseWage": 7,
     "requirements": {
-      "experience": 15,
+      "experience": 20,
       "dependability": 20,
       "degrees": [],
       "uniform": "casual"
     },
-    "tags": [
-      "always_hiring",
-      "heavy_physical"
-    ],
+    "tags": [],
     "perks": []
   },
   {
-    "id": "hospital_receptionist",
-    "title": "Ward Clerk / Receptionist",
-    "locationId": "hospital",
-    "baseWage": 9,
-    "requirements": {
-      "experience": 20,
-      "dependability": 25,
-      "degrees": [
-        "life_sciences"
-      ],
-      "uniform": "casual"
-    },
-    "tags": [
-      "frontline_service"
-    ],
-    "perks": []
-  },
-  {
-    "id": "hospital_biomed_tech",
-    "title": "Biomedical IT Technician",
-    "locationId": "hospital",
-    "baseWage": 12,
+    "id": "factory_assembly",
+    "title": "Assembly Worker",
+    "locationId": "factory",
+    "baseWage": 8,
     "requirements": {
       "experience": 30,
       "dependability": 30,
       "degrees": [
-        "electronics"
+        "trade_school"
+      ],
+      "uniform": "casual"
+    },
+    "tags": [
+      "technical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "factory_secretary",
+    "title": "Secretary",
+    "locationId": "factory",
+    "baseWage": 9,
+    "requirements": {
+      "experience": 40,
+      "dependability": 40,
+      "degrees": [
+        "junior_college"
+      ],
+      "uniform": "dress"
+    },
+    "tags": [
+      "frontline_service",
+      "high_downtime"
+    ],
+    "perks": []
+  },
+  {
+    "id": "factory_machinist_helper",
+    "title": "Machinist's Helper",
+    "locationId": "factory",
+    "baseWage": 10,
+    "requirements": {
+      "experience": 40,
+      "dependability": 40,
+      "degrees": [
+        "pre_engineering"
       ],
       "techSkill": 2,
       "uniform": "casual"
@@ -144,116 +160,102 @@
     "perks": []
   },
   {
-    "id": "hospital_nurse",
-    "title": "Staff Nurse (RN)",
-    "locationId": "hospital",
-    "baseWage": 15,
-    "requirements": {
-      "experience": 35,
-      "dependability": 40,
-      "degrees": [
-        "physiology"
-      ],
-      "uniform": "casual"
-    },
-    "tags": [
-      "frontline_service",
-      "clinical"
-    ],
-    "perks": []
-  },
-  {
-    "id": "hospital_head_nurse",
-    "title": "Nursing Supervisor",
-    "locationId": "hospital",
+    "id": "factory_exec_secretary",
+    "title": "Executive Secretary",
+    "locationId": "factory",
     "baseWage": 18,
     "requirements": {
-      "experience": 45,
+      "experience": 50,
       "dependability": 50,
       "degrees": [
-        "physiology"
-      ],
-      "mgmtSkill": 1.5,
-      "uniform": "dress"
-    },
-    "tags": [
-      "middle_management",
-      "clinical"
-    ],
-    "perks": []
-  },
-  {
-    "id": "hospital_resident",
-    "title": "Resident Physician",
-    "locationId": "hospital",
-    "baseWage": 16,
-    "requirements": {
-      "experience": 50,
-      "dependability": 55,
-      "degrees": [
-        "medical_school"
-      ],
-      "uniform": "dress"
-    },
-    "tags": [
-      "clinical"
-    ],
-    "perks": []
-  },
-  {
-    "id": "hospital_physician",
-    "title": "Attending Physician",
-    "locationId": "hospital",
-    "baseWage": 21,
-    "requirements": {
-      "experience": 65,
-      "dependability": 65,
-      "degrees": [
-        "medical_school"
+        "business_admin"
       ],
       "uniform": "business"
     },
     "tags": [
-      "clinical"
+      "middle_management",
+      "high_downtime"
     ],
     "perks": []
   },
   {
-    "id": "hospital_surgeon",
-    "title": "Attending Surgeon",
-    "locationId": "hospital",
-    "baseWage": 24,
+    "id": "factory_machinist",
+    "title": "Machinist",
+    "locationId": "factory",
+    "baseWage": 19,
     "requirements": {
-      "experience": 75,
-      "dependability": 75,
+      "experience": 50,
+      "dependability": 50,
       "degrees": [
-        "medical_school"
+        "engineering"
       ],
+      "techSkill": 5,
       "uniform": "casual"
     },
     "tags": [
-      "clinical",
       "technical"
     ],
     "perks": []
   },
   {
-    "id": "hospital_director",
-    "title": "Chief of Medicine / Medical Director",
-    "locationId": "hospital",
+    "id": "factory_dept_mgr",
+    "title": "Department Manager",
+    "locationId": "factory",
+    "baseWage": 22,
+    "requirements": {
+      "experience": 60,
+      "dependability": 60,
+      "degrees": [
+        "junior_college",
+        "engineering"
+      ],
+      "techSkill": 5.5,
+      "uniform": "business"
+    },
+    "tags": [
+      "technical",
+      "middle_management"
+    ],
+    "perks": []
+  },
+  {
+    "id": "factory_engineer",
+    "title": "Engineer",
+    "locationId": "factory",
+    "baseWage": 23,
+    "requirements": {
+      "experience": 60,
+      "dependability": 60,
+      "degrees": [
+        "junior_college",
+        "engineering"
+      ],
+      "techSkill": 7.5,
+      "uniform": "business"
+    },
+    "tags": [
+      "technical"
+    ],
+    "perks": []
+  },
+  {
+    "id": "factory_gen_mgr",
+    "title": "General Manager",
+    "locationId": "factory",
     "baseWage": 25,
     "requirements": {
       "experience": 80,
       "dependability": 80,
       "degrees": [
-        "medical_school"
+        "business_admin",
+        "engineering"
       ],
-      "mgmtSkill": 2.5,
+      "techSkill": 8,
       "uniform": "business"
     },
     "tags": [
-      "executive_management",
-      "clinical"
+      "technical",
+      "executive_management"
     ],
     "perks": []
   },
@@ -499,24 +501,6 @@
     "tags": [
       "academic_freedom"
     ]
-  },
-  {
-    "id": "uni_lab_assistant",
-    "title": "Lab Research Assistant",
-    "locationId": "university",
-    "baseWage": 8,
-    "requirements": {
-      "experience": 25,
-      "dependability": 25,
-      "degrees": [
-        "biochemistry"
-      ],
-      "uniform": "casual"
-    },
-    "tags": [
-      "technical"
-    ],
-    "perks": []
   },
   {
     "id": "bank_teller",

@@ -1,0 +1,15 @@
+[
+  {
+    "id": "hospital_tray",
+    "name": "Hospital Cafeteria Meal",
+    "category": "food",
+    "subcategory": "fast_food",
+    "basePrice": 40,
+    "happinessBonus": 0,
+    "mentalBonus": -2,
+    "description": "Bland institutional cafeteria stew and sterile gelatin. Nutritious but depressing.",
+    "effects": [
+      { "trigger": "on_purchase", "stat": "physical", "value": 1 }
+    ]
+  }
+]

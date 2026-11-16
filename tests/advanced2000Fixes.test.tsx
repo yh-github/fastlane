@@ -111,7 +111,7 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
 
     // Regular buildings have their text labels on the board
     expect(getBuildingLabel('red_pirate')).toBe('The Red Pirate');
-    expect(getBuildingLabel('hospital')).toBe('City General Hospital');
+    expect(getBuildingLabel('factory')).toBe('Factory');
 
     // Parks do NOT have text labels on the board
     expect(getBuildingLabel('campus_park')).toBeUndefined();
@@ -281,8 +281,10 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
 
     // Must NOT contain +-1
     expect(screen.queryByText(/\+-1/)).not.toBeInTheDocument();
-    // Must contain clean "-1 Physical"
-    expect(screen.getByText(/-1 Physical/i)).toBeInTheDocument();
+    // Must contain clean "-1" in physical pill and accessible title
+    const pill = screen.getByTestId('stat-pill-physical');
+    expect(pill.textContent).toContain('-1');
+    expect(pill).toHaveAttribute('title', expect.stringContaining('-1 Physical Condition'));
   });
 
   // 9. Parks: No clerk face, no welcome speech bubble, standard button icons

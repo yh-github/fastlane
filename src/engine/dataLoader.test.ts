@@ -95,11 +95,11 @@ describe('dataLoader', () => {
 
   it('loads available campaigns from campaigns.json manifest', async () => {
     const list = getAvailableCampaigns();
-    expect(list.length).toBe(5);
-    expect(list.map(c => c.id)).toEqual(['1990_classic_floppy', '1990_classic_cdrom', 'qol_improved', 'advanced', 'advanced_2000']);
+    expect(list.length).toBe(6);
+    expect(list.map(c => c.id)).toEqual(['1990_classic_floppy', '1990_classic_cdrom', 'qol_improved', 'advanced', 'advanced_2000', 'scrubs']);
     
     const asyncList = await loadAvailableCampaigns();
-    expect(asyncList.length).toBe(5);
+    expect(asyncList.length).toBe(6);
     expect(asyncList[0].id).toBe('1990_classic_floppy');
   });
 
@@ -152,33 +152,62 @@ describe('dataLoader', () => {
     expect(businessInZMart).toBeUndefined();
   });
 
-  it('loads advanced_2000 inheriting from advanced with replaceFiles for buildings, jobs, education, and map', async () => {
+  it('loads advanced_2000 inheriting from advanced with Factory and restored degree tree', async () => {
     const a2000 = await loadCampaign('advanced_2000');
     expect(a2000.config.baseCampaign).toBe('advanced');
-    expect(a2000.config.replaceFiles).toEqual(['buildings', 'jobs', 'education', 'map']);
+    expect(a2000.config.replaceFiles).toEqual(['buildings', 'jobs', 'map']);
 
-    // Replaced files have exact standalone rosters without zombie base entities
-    expect(a2000.buildings.find(b => b.id === 'factory')).toBeUndefined();
+    // Replaced files have Factory & Red Pirate without burger_palace or hospital
+    expect(a2000.buildings.find(b => b.id === 'factory')).toBeDefined();
+    expect(a2000.buildings.find(b => b.id === 'hospital')).toBeUndefined();
     expect(a2000.buildings.find(b => b.id === 'burger_palace')).toBeUndefined();
-    expect(a2000.buildings.find(b => b.id === 'hospital')).toBeDefined();
     expect(a2000.buildings.find(b => b.id === 'red_pirate')).toBeDefined();
 
-    expect(a2000.jobs.find(j => j.id === 'factory_scrap_sorter')).toBeUndefined();
-    expect(a2000.jobs.find(j => j.id === 'hospital_custodian')).toBeDefined();
-    expect(a2000.jobs.find(j => j.id === 'hospital_receptionist')).toBeDefined();
+    expect(a2000.jobs.find(j => j.id === 'factory_scrap_sorter')).toBeDefined();
+    expect(a2000.jobs.find(j => j.id === 'hospital_custodian')).toBeUndefined();
+    expect(a2000.jobs.find(j => j.id === 'uni_lab_assistant')).toBeUndefined();
 
-    expect(a2000.education.find(d => d.id === 'pre_engineering')).toBeUndefined();
-    expect(a2000.education.find(d => d.id === 'medical_school')).toBeDefined();
+    // Inherited classic education tree restored
+    expect(a2000.education.find(d => d.id === 'pre_engineering')).toBeDefined();
+    expect(a2000.education.find(d => d.id === 'engineering')).toBeDefined();
+    expect(a2000.education.find(d => d.id === 'post_doctoral')).toBeDefined();
+    expect(a2000.education.find(d => d.id === 'research')).toBeDefined();
+    expect(a2000.education.find(d => d.id === 'medical_school')).toBeUndefined();
 
     // Inherited files receive base data plus deltas
     expect(a2000.items.find(i => i.id === 'refrigerator')).toBeDefined();
     expect(a2000.items.find(i => i.id === 'casual_clothes')?.weeks).toBe(9);
     expect(a2000.items.find(i => i.id === 'drip_coffee')).toBeDefined();
+    expect(a2000.items.find(i => i.id === 'hospital_tray')).toBeUndefined();
 
     expect(a2000.synergies.find(s => s.id === 'base_refrigeration')).toBeDefined();
     expect(a2000.synergies.find(s => s.id === 'vcr_plasma_tv_social')).toBeDefined();
 
     expect(a2000.housing.find(h => h.id === 'penthouse')).toBeDefined();
+  });
+
+  it('loads scrubs inheriting from advanced_2000 with Hospital, medical degrees, and hospital_tray', async () => {
+    const scrubs = await loadCampaign('scrubs');
+    expect(scrubs.config.baseCampaign).toBe('advanced_2000');
+    expect(scrubs.config.replaceFiles).toEqual(['education']);
+    expect(scrubs.config.gameRules.hospitalEmployeeHealthcare).toBe(true);
+
+    expect(scrubs.buildings.find(b => b.id === 'factory')).toBeUndefined();
+    expect(scrubs.buildings.find(b => b.id === 'hospital')).toBeDefined();
+    expect(scrubs.buildings.find(b => b.id === 'red_pirate')).toBeDefined();
+
+    const factoryNode = scrubs.map.nodes.find(n => n.id === 'node_factory');
+    expect(factoryNode?.buildingId).toBe('hospital');
+
+    expect(scrubs.jobs.find(j => j.id === 'factory_scrap_sorter')).toBeUndefined();
+    expect(scrubs.jobs.find(j => j.id === 'hospital_custodian')).toBeDefined();
+    expect(scrubs.jobs.find(j => j.id === 'hospital_receptionist')).toBeDefined();
+    expect(scrubs.jobs.find(j => j.id === 'uni_lab_assistant')).toBeDefined();
+
+    expect(scrubs.education.find(d => d.id === 'pre_engineering')).toBeUndefined();
+    expect(scrubs.education.find(d => d.id === 'medical_school')).toBeDefined();
+    expect(scrubs.items.find(i => i.id === 'hospital_tray')).toBeDefined();
+    expect(scrubs.items.find(i => i.id === 'drip_coffee')).toBeDefined();
   });
 
   describe('validateConfig', () => {

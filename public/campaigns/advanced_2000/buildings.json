@@ -47,11 +47,11 @@
     ]
   },
   {
-    "id": "hospital",
-    "name": "City General Hospital",
-    "archetype": "hospital",
+    "id": "factory",
+    "name": "Factory",
+    "archetype": "workplace",
     "spritePath": "images/factory.png",
-    "description": "24/7 medical center offering emergency healthcare, diagnostic laboratories, and medical careers."
+    "description": "Blue-collar and white-collar jobs."
   },
   {
     "id": "employment_office",
@@ -65,7 +65,7 @@
     "name": "Hi-Tech U",
     "archetype": "education",
     "spritePath": "images/university.png",
-    "description": "Earn technical, business, and medical degrees to unlock advanced careers."
+    "description": "Earn technical, business, and academic degrees to unlock advanced careers."
   },
   {
     "id": "qt_clothing",

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "factory",
+    "_remove": true
+  },
+  {
+    "id": "hospital",
+    "name": "City General Hospital",
+    "archetype": "hospital",
+    "spritePath": "images/factory.png",
+    "description": "24/7 medical center offering emergency healthcare, diagnostic laboratories, and medical careers."
+  },
+  {
+    "id": "university",
+    "description": "Earn technical, business, and medical degrees to unlock advanced careers."
+  }
+]

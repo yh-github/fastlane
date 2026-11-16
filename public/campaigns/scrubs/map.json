@@ -1,0 +1,8 @@
+{
+  "nodes": [
+    {
+      "id": "node_factory",
+      "buildingId": "hospital"
+    }
+  ]
+}

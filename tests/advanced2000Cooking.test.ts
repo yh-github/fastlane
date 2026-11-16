@@ -499,7 +499,7 @@ describe('Advanced 2000 - Cooking Module', () => {
   });
 
   describe('Cross-Turn Food Reset & Red Pirate Fast Food', () => {
-    it('buying fast food at Red Pirate while unfed immediately feeds the player for Turn 1', () => {
+    it('buying fast food at Red Pirate while unfed immediately feeds the player for Turn 1 and adds to inventory', () => {
       let player = makePlayer(campaign2000);
       player.money = 100;
       player.turnFlags.hasEaten = false;
@@ -509,11 +509,12 @@ describe('Advanced 2000 - Cooking Module', () => {
       expect(result.success).toBe(true);
       expect(result.updated.turnFlags.hasEaten).toBe(true);
       expect(result.updated.nutritionTier).toBe('fast_food');
-      // Meal was eaten immediately, so inventory is empty
-      expect(result.updated.inventory.fastFoodItems.length).toBe(0);
+      // Fast food appears in inventory as fastfood
+      expect(result.updated.inventory.fastFoodItems.length).toBe(1);
+      expect(result.updated.inventory.fastFoodItems[0].itemId).toBe(burger.id);
     });
 
-    it('buying extra fast food while already fed is consumed on the spot without creating takeout in pantry', () => {
+    it('buying extra fast food while already fed adds takeout meal to inventory', () => {
       let player = makePlayer(campaign2000);
       player.money = 100;
       player.turnFlags.hasEaten = true; // Already ate!
@@ -522,7 +523,7 @@ describe('Advanced 2000 - Cooking Module', () => {
       const result = buyItem(player, burger, campaign2000.config.gameRules, campaign2000);
       expect(result.success).toBe(true);
       expect(result.updated.turnFlags.hasEaten).toBe(true);
-      expect(result.updated.inventory.fastFoodItems.length).toBe(0);
+      expect(result.updated.inventory.fastFoodItems.length).toBe(1);
     });
 
     it('player who bought food at Red Pirate in Turn 1 starts Turn 2 UNFED and cannot relax fed without new food', () => {
@@ -625,31 +626,32 @@ describe('Advanced 2000 - Cooking Module', () => {
       expect(info.decreases.some(d => d.includes('Unfed Relaxing'))).toBe(true);
     });
 
-    it('treats Hospital Cafeteria meals as fed for Home Relaxing (single source of truth) and allows repeat purchases', () => {
-      const staff = makePlayer(campaign2000);
+    it('treats Hospital Cafeteria meals as fed for Home Relaxing (single source of truth) and allows repeat purchases (Scrubs)', async () => {
+      const scrubs = await loadCampaign('scrubs');
+      const staff = makePlayer(scrubs);
       staff.currentJobId = 'hospital_custodian';
       staff.hoursRemaining = 20;
       staff.money = 120;
       staff.physicalCondition = 30;
       staff.mentalCondition = 30;
 
-      expect(isPlayerFed(staff, campaign2000.config.gameRules)).toBe(false);
+      expect(isPlayerFed(staff, scrubs.config.gameRules)).toBe(false);
 
       // 1st cafeteria meal sets hasEaten = true and counts as fed
-      const { state: s1, context: c1 } = createTestContext(staff, campaign2000);
+      const { context: c1 } = createTestContext(staff, scrubs);
       const afterCafe1 = gameReducer(staff, { type: 'hospital_cafeteria' }, c1);
       expect(afterCafe1.updatedPlayer.turnFlags.ateHospitalCafeteriaThisTurn).toBe(true);
       expect(afterCafe1.updatedPlayer.turnFlags.hasEaten).toBe(true);
-      expect(isPlayerFed(afterCafe1.updatedPlayer, campaign2000.config.gameRules)).toBe(true);
+      expect(isPlayerFed(afterCafe1.updatedPlayer, scrubs.config.gameRules)).toBe(true);
 
       // Relaxing at home right after eating at Hospital Cafeteria grants full fed bonuses (no Max penalty)
-      const { context: cRelax } = createTestContext(afterCafe1.updatedPlayer, campaign2000);
+      const { context: cRelax } = createTestContext(afterCafe1.updatedPlayer, scrubs);
       const afterRelax = gameReducer(afterCafe1.updatedPlayer, { type: 'relax' }, cRelax);
       expect(afterRelax.actionLog?.key).toBe('action.relax');
       expect(afterRelax.actionLog?.params?.stats).not.toContain('-1 Max Physical');
 
       // 2nd cafeteria meal is still allowed if staff has money and hours
-      const { context: c2 } = createTestContext(afterRelax.updatedPlayer, campaign2000);
+      const { context: c2 } = createTestContext(afterRelax.updatedPlayer, scrubs);
       const afterCafe2 = gameReducer(afterRelax.updatedPlayer, { type: 'hospital_cafeteria' }, c2);
       expect(afterCafe2.actionLog?.key).toBe('action.hospital.cafeteriaSuccess');
       expect(afterCafe2.updatedPlayer.money).toBe(40); // 120 - 40 - 40

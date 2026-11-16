@@ -9,19 +9,33 @@ import { calcRequiredLessons } from '../src/engine/educationEngine';
 import { Random } from '../src/utils/rng';
 import { UniversityRegistry } from '../src/ui/buildings/UniversityRegistry';
 
-describe('Advanced 2000 Education Progress & Extra Credit Discounts', () => {
-  it('all degrees in advanced_2000 curriculum have base lessonsRequired of 10', async () => {
-    const campaign = await loadCampaign('advanced_2000');
-    for (const degree of campaign.education) {
-      expect(
-        degree.lessonsRequired,
-        `Degree ${degree.id} (${degree.name}) should have 10 base lessons, but got ${degree.lessonsRequired}`
-      ).toBe(10);
+describe('Advanced 2000 & Scrubs Education Progress & Extra Credit Discounts', () => {
+  it('all degrees in advanced_2000 and scrubs curricula have base lessonsRequired of 10', async () => {
+    for (const id of ['advanced_2000', 'scrubs']) {
+      const campaign = await loadCampaign(id);
+      for (const degree of campaign.education) {
+        expect(
+          degree.lessonsRequired,
+          `[${id}] Degree ${degree.id} (${degree.name}) should have 10 base lessons, but got ${degree.lessonsRequired}`
+        ).toBe(10);
+      }
     }
   });
 
-  it('progresses by 12.5 pp per 6h study click for publishing and medical_school when owning computer and all 3 books (-2 lessons)', async () => {
+  it('restores full classic degree tree in advanced_2000 (including pre_engineering, engineering, post_doctoral, research)', async () => {
     const campaign = await loadCampaign('advanced_2000');
+    const degIds = campaign.education.map(d => d.id);
+    expect(degIds).toContain('pre_engineering');
+    expect(degIds).toContain('engineering');
+    expect(degIds).toContain('post_doctoral');
+    expect(degIds).toContain('research');
+    expect(degIds).toContain('publishing');
+    expect(degIds).not.toContain('life_sciences');
+    expect(degIds).not.toContain('medical_school');
+  });
+
+  it('progresses by 12.5 pp per 6h study click for publishing and medical_school in scrubs when owning computer and all 3 books (-2 lessons)', async () => {
+    const campaign = await loadCampaign('scrubs');
     const baseInitialState = createInitialGameState(
       campaign,
       [{ name: 'Player 1', isAi: false, goals: { wealth: 25, happiness: 25, education: 25, career: 25 } }],
@@ -73,7 +87,7 @@ describe('Advanced 2000 Education Progress & Extra Credit Discounts', () => {
   });
 
   it('renders UniversityRegistry with -2 lessons Extra Credit badge and correct required lessons for publishing', async () => {
-    const campaign = await loadCampaign('advanced_2000');
+    const campaign = await loadCampaign('scrubs');
     const mockPlayer = {
       name: 'Player 1',
       money: 5000,
