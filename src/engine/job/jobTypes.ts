@@ -15,7 +15,7 @@ export interface ModifierBreakdownItem {
 }
 
 export interface MistakeBreakdownItem {
-  type: 'physical' | 'mental' | 'social' | 'executive';
+  type: 'physical' | 'mental' | 'social' | 'executive' | 'experience' | 'initiative';
   label: string;
   icon: string;
   currentStat: number;
@@ -55,6 +55,7 @@ export interface WorkShiftOption {
   id: WorkMode;
   physCost: number;
   mentalCost: number;
+  soulCrushingPenalty?: number;
   wage: number;
   rewardDep: number;
   rewardExp: number;
@@ -68,6 +69,8 @@ export interface WorkShiftOption {
   mentalMistakeChance?: number;
   socialMistakeChance?: number;
   execMistakeChance?: number;
+  newJobMistakeChance?: number;
+  initiativeMistakeChance?: number;
   totalMistakeChance?: number;
   modifierBreakdown?: WorkShiftModifierBreakdown;
   modifiers?: WorkShiftModifierBadge[];

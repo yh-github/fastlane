@@ -404,6 +404,21 @@ export interface GameRules {
    * (Tier 1..5 capped at 25/45/65/85/100) plus performance (dependability & raises), rather than raw dependability alone.
    */
   tieredCareerGoal?: boolean;
+
+  /**
+   * ADVANCED 2000: Removes early-shift guaranteed +1 Social on frontline_service jobs; shifts 3+ roll a Social-tapered chance for +1 Social.
+   */
+  nerfFrontlineSocial?: boolean;
+
+  /**
+   * ADVANCED 2000: Inflicts -1 Mental stagnation penalty when working standard/coast shifts at a non-fulfilling job whose Experience cap is reached.
+   */
+  enableSoulCrushingJobs?: boolean;
+
+  /**
+   * ADVANCED 2000: Enforces work_work modifier parity, full costs + mistake risk for rushed (<6h) Show Leadership shifts, and tier-scaled initiative mistake risk.
+   */
+  enableInitiativeRevamp?: boolean;
 }
 
 export interface EventRules {
@@ -539,6 +554,10 @@ export interface AdvancedStatRules extends BaseStatRules {
   workMistakeSocialChancePerPoint?: number;
   workMistakeExecutiveExpMargin?: number;
   workMistakeExecutiveExpChancePerPoint?: number;
+  workMistakeGrindThresholdBonus?: number;
+  workMistakeOvertimeThresholdBonus?: number;
+  workMistakeNewJobExpMargin?: number;
+  workMistakeNewJobExpChancePerPoint?: number;
 }
 
 export type StatRules = BaseStatRules | AdvancedStatRules;
@@ -1023,6 +1042,9 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   enableArcade: 'Enables playing arcade games at arcade-equipped restaurants for quick mental relief and happiness',
   enableParkSystem: 'Enables dynamic park interactions (stroll, jog, bench rest), cabin fever from indoor over-relaxation, and outdoor random events',
   enableCookingSystem: 'Enables weekly meal preparation, stove cooking, microwave prep/thaw bonuses, standalone freezer storage, and eliminates the infinite can exploit',
+  nerfFrontlineSocial: 'Removes early-shift guaranteed Social on frontline_service jobs; shifts 3+ roll a Social-tapered chance for +1 Social',
+  enableSoulCrushingJobs: 'Inflicts -1 Mental stagnation penalty when working standard or coast shifts at a non-fulfilling job at Experience cap',
+  enableInitiativeRevamp: 'Enforces work_work cost parity, full-cost/mistake penalties for rushed (<6h) Show Leadership shifts, and tier-scaled initiative risk',
   tieredCareerGoal: 'Career goal progress is capped by your current job tier (25/45/65/85/100) plus dependability and raises',
   economicUpsideBonus: 'Fixes authentic Sierra bytecode typo to enable intended upside risk bonuses when market rolls hit upper range',
   reenterCurrentLocationCost: 'Entering or re-opening the current building location costs standard building entry time (2 hours)',
@@ -1236,5 +1258,9 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   generalSocialEmployabilityRate: 'Employability percentage bonus rate per point of social standing for standard jobs',
   socialEmployabilityBaseline: 'Neutral baseline social standing for frontline service jobs',
   frontlineSocialEmployabilityRate: 'Employability multiplier applied to social deviation from baseline for frontline service jobs',
-  tagCompetitionModifiers: 'Applicant competition modifiers applied based on job characteristics (e.g. heavy physical labor, downtime)'
+  tagCompetitionModifiers: 'Applicant competition modifiers applied based on job characteristics (e.g. heavy physical labor, downtime)',
+  workMistakeGrindThresholdBonus: 'Extra Physical and Mental safety threshold added during Grind shifts (4-7)',
+  workMistakeOvertimeThresholdBonus: 'Extra Physical and Mental safety threshold added during Overtime shifts (8+)',
+  workMistakeNewJobExpMargin: 'Experience margin above requirement for non-executive jobs during Grind/Overtime to avoid inexperience mistakes',
+  workMistakeNewJobExpChancePerPoint: 'Inexperience mistake probability per Experience point below margin during non-executive Grind/Overtime shifts'
 };

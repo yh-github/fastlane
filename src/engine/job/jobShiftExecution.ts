@@ -13,7 +13,7 @@ import type { JobDef, EducationDef, CampaignBundle } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { applyHappinessChange } from '../statEffects';
-import { isBaseVersion, isAdvancedVersion, requireAdvancedStatRules, type StatRules } from '../rules';
+import { isBaseVersion, isAdvancedVersion, requireAdvancedStatRules, type StatRules, type AdvancedStatRules } from '../rules';
 import { generateInitiativeCards, getJobInitiativeTier } from './jobInitiativeDeck';
 import {
   hasJobTag,
@@ -25,6 +25,7 @@ import {
   getLookBusySocialPenalty,
   getJobExpMultiplier,
   getJobSocialModifier,
+  getFrontlineSocialGainChance,
   getJobWorkMistakeSocialPenalty,
   getLookBusyPhysicalCostModifier,
   getJobPhysicalFatigueThreshold,
@@ -36,7 +37,11 @@ import {
   getJobSocialMistakeRate,
   getExecutiveMistakeExpMargin,
   getExecutiveMistakeRate,
-  isManagementJob
+  getNewJobMistakeChance,
+  getInitiativeExecutionMistakeChance,
+  getInitiativeRushedMistakeChance,
+  isManagementJob,
+  isJobSoulCrushingAtCap
 } from '../jobTags';
 import type { WorkMode, WorkResult } from './jobTypes';
 
@@ -237,7 +242,8 @@ export function workShift(
     actionSocialCost = getLookBusySocialPenalty(job);
   } else if (mode === 'work_work') {
     const actionCount = (player.workActionsThisTurn || 0) + 1;
-    const sMod = getJobSocialModifier(job, actionCount);
+    const overtimeThreshold = (statRules as AdvancedStatRules | undefined)?.workOvertimeThreshold ?? 8;
+    const sMod = getJobSocialModifier(job, actionCount, rules, overtimeThreshold);
     if (sMod < 0) actionSocialCost = -sMod;
   }
   if (isAdvanced && actionSocialCost > 0 && (player.social ?? 50) - actionSocialCost < 1) {
@@ -254,6 +260,7 @@ export function workShift(
 
   let physicalCost = 0;
   let mentalCost = 0;
+  let soulCrushingPenalty = 0;
   let wageMultiplier = 1.0;
   let baseDepGain = 1;
 
@@ -291,8 +298,16 @@ export function workShift(
     } else if (isInitiative) {
       const isExecMgmt = hasJobTag(job, 'executive_management');
       const isMiddleMgmt = hasJobTag(job, 'middle_management');
-      physicalCost = basePhys * 1.5;
-      mentalCost = baseMental * 1.5 + 2.0;
+      if (rules?.enableInitiativeRevamp) {
+        physicalCost = basePhys * 1.5 + getJobPhysicalCostModifier(job);
+        if (rules?.enableBusyWeeks && isBusyLocation) {
+          physicalCost += 0.5;
+        }
+        mentalCost = baseMental * 1.5 + 2.0 + getJobMentalCostModifier(job);
+      } else {
+        physicalCost = basePhys * 1.5;
+        mentalCost = baseMental * 1.5 + 2.0;
+      }
       wageMultiplier = 0.4;
       baseDepGain = isExecMgmt ? 2.0 : (isMiddleMgmt ? 1.5 : 1.0);
     } else {
@@ -323,15 +338,38 @@ export function workShift(
     if (rules?.proportionalDivisibleActions && hoursToWork < shiftCost) {
       const conditionRes = rules.conditionResolution ?? 0.5;
       const physRes = (physicalCost % 0.5 !== 0) ? Math.min(conditionRes, 0.25) : conditionRes;
-      physicalCost = Math.max(0, roundToResolution(physicalCost * ratio, physRes));
-      mentalCost = Math.max(0, roundToResolution(mentalCost * ratio, conditionRes));
+      if (!(isInitiative && rules?.enableInitiativeRevamp)) {
+        physicalCost = Math.max(0, roundToResolution(physicalCost * ratio, physRes));
+        mentalCost = Math.max(0, roundToResolution(mentalCost * ratio, conditionRes));
+      }
       baseDepGain = roundToResolution(baseDepGain * ratio, 0.5);
+    }
+
+    if (mode === 'work_work' || mode === 'look_busy') {
+      const isSkillTechCapped = Boolean(
+        useSkills &&
+        hasJobTag(job, 'technical') &&
+        (player.skillTech || 0) >= calcMaxSkillCap(player, 'skillTech', campaignEducation, advStatRules, rules as GameRules)
+      );
+      if (isJobSoulCrushingAtCap(
+        job,
+        player.experience ?? 0,
+        player.degreeExpBoost || 0,
+        player.xpMaxBonus || 0,
+        isSkillTechCapped,
+        rules
+      )) {
+        const conditionRes = rules?.conditionResolution ?? 0.5;
+        soulCrushingPenalty = (rules?.proportionalDivisibleActions && hoursToWork < shiftCost)
+          ? Math.max(0.5, roundToResolution(1 * ratio, conditionRes))
+          : 1;
+      }
     }
 
     // Strict stat floor check: currentStat - cost >= 1.0
     const curMental = player.mentalCondition ?? 50;
     const physLow = curPhys - physicalCost < 1.0;
-    const mentalLow = curMental - mentalCost < 1.0;
+    const mentalLow = curMental - (mentalCost + soulCrushingPenalty) < 1.0;
 
     if (physLow && mentalLow) {
       return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.error.tooExhausted' }] };
@@ -387,7 +425,11 @@ export function workShift(
 
   if (useConditions) {
     updated.physicalCondition = oldPhys - physicalCost;
-    updated.mentalCondition = oldMental - mentalCost;
+    updated.mentalCondition = oldMental - mentalCost - soulCrushingPenalty;
+
+    if (soulCrushingPenalty > 0) {
+      messages.push({ key: 'action.job.soulCrushing', params: { amount: soulCrushingPenalty } });
+    }
 
     if (mentalCost >= advStatRules.resilienceDropThreshold) {
       updated.resilienceBonus = (updated.resilienceBonus || 0) + 1;
@@ -444,6 +486,8 @@ export function workShift(
   let mentalMistake = false;
   let socialMistake = false;
   let execMistake = false;
+  let newJobMistake = false;
+  let initiativeMistake = false;
 
   if (useConditions) {
     const caffeineBuffer = rules?.enableCaffeineSystem
@@ -452,14 +496,14 @@ export function workShift(
     const effectivePhys = Math.min(updated.physicalConditionMax ?? 50, oldPhys + caffeineBuffer);
     const effectiveMental = Math.min(updated.mentalConditionMax ?? 50, oldMental + caffeineBuffer);
 
-    const physMistakeThreshold = getJobPhysicalMistakeThreshold(job, statRules);
+    const physMistakeThreshold = getJobPhysicalMistakeThreshold(job, statRules, actionCount);
     const physMistakeRate = getJobPhysicalMistakeRate(statRules);
     if (physicalCost > 0 && effectivePhys < physMistakeThreshold) {
       const physChance = (physMistakeThreshold - effectivePhys) * physMistakeRate;
       physMistake = resolveDecision(replay, `work_phys_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < physChance);
     }
 
-    const mentalMistakeThreshold = getJobMentalMistakeThreshold(job, statRules);
+    const mentalMistakeThreshold = getJobMentalMistakeThreshold(job, statRules, actionCount);
     const mentalMistakeRate = getJobMentalMistakeRate(statRules);
     const isExecMgmt = hasJobTag(job, 'executive_management');
     if ((mentalCost > 0 || isExecMgmt) && effectiveMental < mentalMistakeThreshold) {
@@ -483,12 +527,22 @@ export function workShift(
         () => (rng ? rng.next() : Math.random()) < execMistakeChance
       );
     }
+  } else if (isAdvanced && (mode === 'work_work' || isInitiative)) {
+    // Non-executive inexperience mistake risk during Grind/Overtime shifts
+    const newJobChance = getNewJobMistakeChance(job, updated.experience || 0, actionCount, statRules);
+    if (newJobChance > 0) {
+      newJobMistake = resolveDecision(
+        replay,
+        `work_newjob_mistake_${player.id}_${actionCount}`,
+        () => (rng ? rng.next() : Math.random()) < newJobChance
+      );
+    }
   }
 
   const isFrontline = hasJobTag(job, 'frontline_service');
   const modifiesSocial = isFrontline ||
                          (mode === 'look_busy' && lookBusySocPenalty > 0) ||
-                         (mode === 'work_work' && getJobSocialModifier(job, actionCount) !== 0) ||
+                         (mode === 'work_work' && getJobSocialModifier(job, actionCount, rules, overtimeThreshold) !== 0) ||
                          (mode === 'face_time');
   const socialMistakeThreshold = getJobSocialMistakeThreshold(job, statRules);
   const socialMistakeRate = getJobSocialMistakeRate(statRules);
@@ -497,7 +551,21 @@ export function workShift(
     socialMistake = resolveDecision(replay, `work_social_mistake_${player.id}_${actionCount}`, () => (rng ? rng.next() : Math.random()) < socialChance);
   }
 
-  if (physMistake || mentalMistake || socialMistake || execMistake) {
+  if (isAdvanced && isInitiative && rules?.enableInitiativeRevamp) {
+    const baseInitChance = getInitiativeExecutionMistakeChance(job, rules);
+    const rushedInitChance = getInitiativeRushedMistakeChance(hoursToWork, shiftCost, rules);
+    const totalInitChance = 1 - (1 - baseInitChance) * (1 - rushedInitChance);
+    if (totalInitChance > 0) {
+      initiativeMistake = resolveDecision(
+        replay,
+        `work_initiative_mistake_${player.id}_${actionCount}`,
+        () => (rng ? rng.next() : Math.random()) < totalInitChance
+      );
+    }
+  }
+
+  const anyMistake = physMistake || mentalMistake || socialMistake || execMistake || newJobMistake || initiativeMistake;
+  if (anyMistake) {
     const curMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
     let mistakesAdded = 0;
     if (physMistake) {
@@ -522,6 +590,25 @@ export function workShift(
       updated.mentalConditionMax = Math.max(1, (updated.mentalConditionMax ?? 50) - 1);
       updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition ?? 50);
       messages.push({ key: 'action.job.executiveMistake' });
+    }
+    if (newJobMistake) {
+      mistakesAdded++;
+      updated.dependability = Math.max(0, updated.dependability - 1);
+    }
+    if (initiativeMistake) {
+      mistakesAdded++;
+    }
+    if (isInitiative && rules?.enableInitiativeRevamp) {
+      const curStanding = updated.initiativesByLocation?.[job.locationId] || 0;
+      if (curStanding > 0) {
+        updated.initiativesByLocation = {
+          ...(updated.initiativesByLocation || {}),
+          [job.locationId]: curStanding - 1
+        };
+      } else {
+        updated.dependability = Math.max(0, updated.dependability - 1);
+      }
+      messages.push({ key: 'action.job.initiativeFailed' });
     }
 
     // Penalty = NUM_OF_MISTAKES (current counter before adding this turn's mistakes)
@@ -550,7 +637,9 @@ export function workShift(
       physMistake ? 'Physical' : null,
       mentalMistake ? 'Mental' : null,
       socialMistake ? 'Social' : null,
-      execMistake ? 'Executive' : null
+      execMistake ? 'Executive' : null,
+      newJobMistake ? 'Inexperience' : null,
+      initiativeMistake ? (hoursToWork < shiftCost ? 'Rushed Initiative' : 'Initiative') : null
     ].filter(Boolean).join(' & ');
     messages.push({ key: 'action.job.mistake', params: { type: mistakeTypes, penalty: curMistakes, total: curMistakes + mistakesAdded } });
 
@@ -584,7 +673,9 @@ export function workShift(
       const rawStandingGain = isExecMgmt ? 2 : 1;
       const curStanding = updated.initiativesByLocation?.[job.locationId] || 0;
       const standingGain = Math.max(0, Math.min(rawStandingGain, tier - curStanding));
-      const depGain = isExecMgmt ? 2.0 : (isMiddleMgmt ? 1.5 : (baseDepGain > 0 ? baseDepGain : 1.0));
+      const depGain = rules?.enableInitiativeRevamp
+        ? baseDepGain
+        : (isExecMgmt ? 2.0 : (isMiddleMgmt ? 1.5 : (baseDepGain > 0 ? baseDepGain : 1.0)));
 
       // Base location initiative tracking (capped at job tier max)
       if (standingGain > 0) {
@@ -694,7 +785,8 @@ export function workShift(
     }
   }
 
-  if (mode === 'work_work' && !physMistake && !mentalMistake && !socialMistake && !execMistake) {
+  let socialGain = 0;
+  if (mode === 'work_work' && !anyMistake) {
     const effectiveMaxExp = 10 + job.requirements.experience + (updated.degreeExpBoost || 0) + (updated.xpMaxBonus || 0);
     const expMult = getJobExpMultiplier(job);
     let expGain = roundToResolution(((rules?.proportionalDivisibleActions && hoursToWork < shiftCost) ? 1 * ratio : 1) * expMult, 0.5);
@@ -727,14 +819,26 @@ export function workShift(
       }
     }
 
-    const socialMod = getJobSocialModifier(job, actionCount);
+    const socialMod = getJobSocialModifier(job, actionCount, rules, overtimeThreshold);
     if (socialMod !== 0) {
       updated.social = Math.max(1, Math.min(99, (updated.social || 1) + socialMod));
+    } else {
+      const frontlineChance = getFrontlineSocialGainChance(job, actionCount, updated.social ?? 1, ratio, rules, overtimeThreshold);
+      if (frontlineChance > 0) {
+        const isSocSuccess = resolveDecision(
+          replay,
+          `work_frontline_social_${player.id}_${actionCount}`,
+          () => (rng ? rng.next() : Math.random()) < frontlineChance
+        );
+        if (isSocSuccess) {
+          socialGain = 1;
+          updated.social = Math.min(99, (updated.social || 1) + 1);
+        }
+      }
     }
   }
 
-  let socialGain = 0;
-  if (mode === 'face_time' && !physMistake && !mentalMistake && !socialMistake && !execMistake) {
+  if (mode === 'face_time' && !anyMistake) {
     const curLocMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
     if (curLocMistakes > 0) {
       updated.mistakesByLocation = {
@@ -758,7 +862,7 @@ export function workShift(
   }
 
   // Busy Week Surge Duty: Working an all-hands rush shift clears 1 demerit at this workplace
-  if (rules?.enableBusyWeeks && isBusyLocation && !physMistake && !mentalMistake && !socialMistake && !execMistake) {
+  if (rules?.enableBusyWeeks && isBusyLocation && !anyMistake) {
     const curLocMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
     if (curLocMistakes > 0 && mode !== 'face_time') {
       updated.mistakesByLocation = {
@@ -883,7 +987,8 @@ export function workShift(
   const statCosts: string[] = [];
   if (physicalCost > 0) statCosts.push(`-${physicalCost} Physical`);
   if (maxPhysDrop > 0) statCosts.push(`-${maxPhysDrop} Max Physical`);
-  if (mentalCost > 0) statCosts.push(`-${mentalCost} Mental`);
+  const totalMentalDrop = mentalCost + soulCrushingPenalty;
+  if (totalMentalDrop > 0) statCosts.push(`-${totalMentalDrop} Mental`);
   if (socialGain > 0) statCosts.push(`+${socialGain} Social`);
   const statsStr = statCosts.length > 0 ? ` (${statCosts.join(', ')})` : '';
   messages.unshift({ key: 'action.job.worked', params: { title: job.title, wagesEarned, stats: statsStr } });

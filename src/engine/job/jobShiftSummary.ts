@@ -1,6 +1,6 @@
 import type { PlayerState, GameRules } from '../gameState';
 import type { JobDef, EducationDef, CampaignBundle } from '../dataLoader';
-import { isAdvancedVersion, isAdvancedStatRules, requireAdvancedStatRules, type StatRules } from '../rules';
+import { isAdvancedVersion, isAdvancedStatRules, requireAdvancedStatRules, type StatRules, type AdvancedStatRules } from '../rules';
 import { roundToResolution, calcMaxSkillCap } from '../statMath';
 import {
   hasJobTag,
@@ -12,6 +12,7 @@ import {
   getLookBusySocialPenalty,
   getJobExpMultiplier,
   getJobSocialModifier,
+  getFrontlineSocialGainChance,
   getLookBusyPhysicalCostModifier,
   getJobPhysicalFatigueThreshold,
   getJobPhysicalMistakeThreshold,
@@ -21,7 +22,11 @@ import {
   getJobSocialMistakeThreshold,
   getJobSocialMistakeRate,
   getExecutiveMistakeExpMargin,
-  getExecutiveMistakeRate
+  getExecutiveMistakeRate,
+  getNewJobMistakeChance,
+  getInitiativeExecutionMistakeChance,
+  getInitiativeRushedMistakeChance,
+  isJobSoulCrushingAtCap
 } from '../jobTags';
 import type { 
   ShiftTier, 
@@ -90,7 +95,8 @@ export function calcWorkShiftSummary(
   const physRes = (lbPhysTagMod % 0.5 !== 0 || physTagMod % 0.5 !== 0) ? Math.min(conditionRes, 0.25) : conditionRes;
   const mentalTagMod = getJobMentalCostModifier(job);
   const expMult = getJobExpMultiplier(job);
-  const socialMod = getJobSocialModifier(job, actionCount);
+  const socialMod = getJobSocialModifier(job, actionCount, rules, overtimeThreshold);
+  const frontlineSocialChance = getFrontlineSocialGainChance(job, actionCount, player.social || 1, workRatio, rules, overtimeThreshold);
   const isFTAllowed = isFaceTimeAllowed(job);
   const isLBAllowed = isLookBusyAllowed(job);
   const lbDepPenalty = getLookBusyDepPenalty(job);
@@ -99,7 +105,11 @@ export function calcWorkShiftSummary(
 
   const workWorkDepGain = roundToResolution(1 * workRatio, 0.5);
   const workWorkExpGain = roundToResolution(1 * expMult * workRatio, 0.5);
-  const socialGainText = socialMod > 0 ? `, +${socialMod} 👥` : (socialMod < 0 ? `, ${socialMod} 👥` : '');
+  const socialGainText = socialMod > 0
+    ? `, +${socialMod} 👥`
+    : (socialMod < 0
+        ? `, ${socialMod} 👥`
+        : (frontlineSocialChance > 0 ? `, ~${Math.round(frontlineSocialChance * 100)}% 👥` : ''));
   const isTech = useSkills && hasJobTag(job, 'technical');
   const isMiddleMgmt = useSkills && hasJobTag(job, 'middle_management');
   const isExecMgmt = useSkills && hasJobTag(job, 'executive_management');
@@ -119,11 +129,32 @@ export function calcWorkShiftSummary(
   const maxPhysDropText = useConditions && (isOvertimeShift || isHeavyGrindShift || isCaffeineRedlinePhys) ? ', -0.5 Max 💪' : '';
   const maxMentalDropText = useConditions && isCaffeineRedlineMental ? ', -1 Max 🧠' : '';
 
+  const isSkillTechCappedSummary = Boolean(
+    useConditions &&
+    useSkills &&
+    advStatRules &&
+    hasJobTag(job, 'technical') &&
+    (player.skillTech || 0) >= calcMaxSkillCap(player, 'skillTech', campaignEducation, advStatRules, rules as GameRules)
+  );
+  const soulCrushingPenalty = isJobSoulCrushingAtCap(
+    job,
+    player.experience ?? 0,
+    player.degreeExpBoost || 0,
+    player.xpMaxBonus || 0,
+    isSkillTechCappedSummary,
+    rules
+  )
+    ? (rules?.proportionalDivisibleActions && hoursToWork < shiftCost
+        ? Math.max(0.5, roundToResolution(1 * workRatio, conditionRes))
+        : 1)
+    : 0;
+
   const modes: WorkShiftOption[] = [
     {
       id: 'work_work',
       physCost: isAdvanced ? Math.max(0, roundToResolution((basePhys * 1.0 + physTagMod) * workRatio, physRes)) : 0,
-      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 1.0 + mentalTagMod + fatigueMental) * workRatio, conditionRes)) : 0,
+      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 1.0 + mentalTagMod + fatigueMental) * workRatio, conditionRes) + soulCrushingPenalty) : 0,
+      soulCrushingPenalty,
       wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
       rewardDep: workWorkDepGain,
       rewardExp: workWorkExpGain,
@@ -136,7 +167,8 @@ export function calcWorkShiftSummary(
     {
       id: 'look_busy',
       physCost: isAdvanced ? Math.max(0, roundToResolution((basePhys * 0.5 + lbPhysTagMod) * workRatio, physRes)) : 0,
-      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 0.5 + halfFatigueMental) * workRatio, conditionRes)) : 0,
+      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 0.5 + halfFatigueMental) * workRatio, conditionRes) + soulCrushingPenalty) : 0,
+      soulCrushingPenalty,
       wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
       rewardDep: lbDepPenalty > 0 ? -lbDepPenalty : 0,
       rewardExp: 0,
@@ -167,10 +199,20 @@ export function calcWorkShiftSummary(
     },
     {
       id: 'show_initiative',
-      physCost: isAdvanced ? Math.max(0, roundToResolution(basePhys * 1.5 * workRatio, conditionRes)) : 0,
-      mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 1.5 + 2.0 + fatigueMental) * workRatio, conditionRes)) : 0,
+      physCost: isAdvanced
+        ? (rules?.enableInitiativeRevamp
+            ? Math.max(0, roundToResolution(basePhys * 1.5 + physTagMod, physRes))
+            : Math.max(0, roundToResolution(basePhys * 1.5 * workRatio, conditionRes)))
+        : 0,
+      mentalCost: isAdvanced
+        ? (rules?.enableInitiativeRevamp
+            ? Math.max(0, roundToResolution(baseMental * 1.5 + 2.0 + mentalTagMod + fatigueMental, conditionRes))
+            : Math.max(0, roundToResolution((baseMental * 1.5 + 2.0 + fatigueMental) * workRatio, conditionRes)))
+        : 0,
       wage: Math.floor((player.currentWage || job.baseWage) * 8 * 0.4 * (hoursToWork / shiftCost)),
-      rewardDep: isExecMgmt ? 2 : (isMiddleMgmt ? 1.5 : 1),
+      rewardDep: rules?.enableInitiativeRevamp
+        ? roundToResolution((isExecMgmt ? 2 : (isMiddleMgmt ? 1.5 : 1)) * workRatio, 0.5)
+        : (isExecMgmt ? 2 : (isMiddleMgmt ? 1.5 : 1)),
       rewardExp: 0,
       rewardSocial: 0,
       rewardText: (player.experience ?? 0) >= (job.requirements?.experience ?? 0) + 10
@@ -203,9 +245,9 @@ export function calcWorkShiftSummary(
     }
   }
 
-  const physMistakeThreshold = getJobPhysicalMistakeThreshold(job, statRules);
+  const physMistakeThreshold = getJobPhysicalMistakeThreshold(job, statRules, actionCount);
   const physMistakeRate = getJobPhysicalMistakeRate(statRules);
-  const mentalMistakeThreshold = getJobMentalMistakeThreshold(job, statRules);
+  const mentalMistakeThreshold = getJobMentalMistakeThreshold(job, statRules, actionCount);
   const mentalMistakeRate = getJobMentalMistakeRate(statRules);
   const mentalMultiplier = hasJobTag(job, 'heavy_physical') ? 0.5 : 1.0;
   const isFrontline = hasJobTag(job, 'frontline_service');
@@ -220,6 +262,11 @@ export function calcWorkShiftSummary(
   const expMargin = playerExp - reqExp;
   const execChance = (isAdvanced && isExecJob)
     ? Math.min(1.0, Math.max(0, (execExpMargin - expMargin) * execExpRate))
+    : 0;
+  const newJobExpMargin = (statRules as AdvancedStatRules | undefined)?.workMistakeNewJobExpMargin ?? 0;
+  const newJobExpRate = (statRules as AdvancedStatRules | undefined)?.workMistakeNewJobExpChancePerPoint ?? 0;
+  const baseNewJobChance = isAdvanced
+    ? getNewJobMistakeChance(job, playerExp, actionCount, statRules)
     : 0;
 
   const caffeineBuffer = rules?.enableCaffeineSystem
@@ -242,13 +289,25 @@ export function calcWorkShiftSummary(
     const socialChance = (isAdvanced && modifiesSocial && curSocial < socialMistakeThreshold)
       ? Math.min(1.0, Math.max(0, (socialMistakeThreshold - curSocial) * socialMistakeRate))
       : 0;
+    const newJobChance = (m.id === 'work_work' || m.id === 'show_initiative' || m.id === 'innovate')
+      ? baseNewJobChance
+      : 0;
+    const baseInitChance = (isAdvanced && (m.id === 'show_initiative' || m.id === 'innovate'))
+      ? getInitiativeExecutionMistakeChance(job, rules)
+      : 0;
+    const rushedInitChance = (isAdvanced && (m.id === 'show_initiative' || m.id === 'innovate'))
+      ? getInitiativeRushedMistakeChance(hoursToWork, shiftCost, rules)
+      : 0;
+    const initChance = 1 - (1 - baseInitChance) * (1 - rushedInitChance);
 
     m.physMistakeChance = physChance;
     m.mentalMistakeChance = mentalChance;
     m.socialMistakeChance = socialChance;
     m.execMistakeChance = execChance;
+    m.newJobMistakeChance = newJobChance;
+    m.initiativeMistakeChance = initChance;
     m.totalMistakeChance = isAdvanced
-      ? (1 - (1 - physChance) * (1 - mentalChance) * (1 - socialChance) * (1 - execChance))
+      ? (1 - (1 - physChance) * (1 - mentalChance) * (1 - socialChance) * (1 - execChance) * (1 - newJobChance) * (1 - initChance))
       : 0;
 
     // Detailed modifier breakdown for '?' strategy & help display
@@ -330,6 +389,41 @@ export function calcWorkShiftSummary(
             ? `Experience (+${expMargin} over req ${reqExp}) meets executive safety buffer (+${execExpMargin}).`
             : `${(execExpMargin - expMargin).toFixed(1)} Exp below safety buffer (+${execExpMargin} over req ${reqExp}) × ${(execExpRate * 100).toFixed(1)}%/pt = ${(execChance * 100).toFixed(1)}%`
         });
+      } else if (
+        newJobExpMargin > 0 &&
+        newJobExpRate > 0 &&
+        actionCount >= grindThreshold &&
+        (m.id === 'work_work' || m.id === 'show_initiative' || m.id === 'innovate')
+      ) {
+        mistakeBreakdown.push({
+          type: 'experience',
+          label: 'Inexperience (Grind/Overtime)',
+          icon: '🆕',
+          currentStat: playerExp,
+          threshold: reqExp + newJobExpMargin,
+          ratePerPoint: newJobExpRate,
+          chance: newJobChance,
+          isTriggered: newJobChance > 0,
+          explanation: expMargin >= newJobExpMargin
+            ? `Experience (+${expMargin} over req ${reqExp}) meets rookie safety buffer (+${newJobExpMargin}) for Grind/Overtime.`
+            : `${(newJobExpMargin - expMargin).toFixed(1)} Exp below rookie buffer (+${newJobExpMargin} over req ${reqExp}) during ${tier} × ${(newJobExpRate * 100).toFixed(1)}%/pt = ${(newJobChance * 100).toFixed(1)}%`
+        });
+      }
+
+      if ((m.id === 'show_initiative' || m.id === 'innovate') && initChance > 0) {
+        mistakeBreakdown.push({
+          type: 'initiative',
+          label: rushedInitChance > 0 ? 'Initiative & Rushed Risk' : 'Initiative Execution Risk',
+          icon: '🎯',
+          currentStat: hoursToWork,
+          threshold: shiftCost,
+          ratePerPoint: 0.10,
+          chance: initChance,
+          isTriggered: initChance > 0,
+          explanation: rushedInitChance > 0
+            ? `Base tier risk (${(baseInitChance * 100).toFixed(0)}%) + rushed (${shiftCost - hoursToWork}h short × 10%/h = ${(rushedInitChance * 100).toFixed(0)}%) → ${(initChance * 100).toFixed(1)}% combined.`
+            : `Stepping up to lead (Tier ${getJobInitiativeTier(job)}) carries a ${(baseInitChance * 100).toFixed(0)}% base execution risk.`
+        });
       }
 
       let modeBasePhys = basePhys;
@@ -349,7 +443,7 @@ export function calcWorkShiftSummary(
         physMods.push({ label: `Overtime tier (shift #${actionCount} ≥ ${overtimeThreshold})`, amount: 1 });
       }
 
-      if (m.id === 'work_work' && physTagMod !== 0) {
+      if ((m.id === 'work_work' || (rules?.enableInitiativeRevamp && (m.id === 'show_initiative' || m.id === 'innovate'))) && physTagMod !== 0) {
         physMods.push({ label: hasJobTag(job, 'heavy_physical') ? 'Heavy Physical job requirement' : 'Job physical modifier', amount: physTagMod });
       } else if (m.id === 'look_busy' && lbPhysTagMod !== 0) {
         physMods.push({ label: 'Job physical modifier', amount: lbPhysTagMod });
@@ -361,7 +455,7 @@ export function calcWorkShiftSummary(
         mentalMods.push({ label: `Overtime fatigue (worked ≥ ${overtimeThreshold} shifts this turn)`, amount: modeBaseMental > 0 ? modeBaseMental : 2 });
       }
 
-      if (m.id === 'work_work' && mentalTagMod !== 0) {
+      if ((m.id === 'work_work' || (rules?.enableInitiativeRevamp && (m.id === 'show_initiative' || m.id === 'innovate'))) && mentalTagMod !== 0) {
         const isExec = hasJobTag(job, 'executive_management');
         const isMid = hasJobTag(job, 'middle_management');
         mentalMods.push({
@@ -379,6 +473,10 @@ export function calcWorkShiftSummary(
         mentalMods.push({ label: 'Networking social & mental burden', amount: 2.0 });
       } else if (m.id === 'show_initiative' || m.id === 'innovate') {
         mentalMods.push({ label: 'Leadership responsibility & problem solving', amount: 2.0 });
+      }
+
+      if ((m.soulCrushingPenalty || 0) > 0) {
+        mentalMods.push({ label: 'Soul-crushing stagnation (at Exp cap)', amount: m.soulCrushingPenalty! });
       }
 
       m.modifierBreakdown = {
@@ -436,6 +534,8 @@ export function getWorkShiftModifiers(
     actionCount: number;
     hoursToWork: number;
     shiftCost: number;
+    workRatio?: number;
+    overtimeThreshold?: number;
     locationMistakes?: number;
     turnMistakes?: number;
   },
@@ -590,14 +690,60 @@ export function getWorkShiftModifiers(
       type: 'penalty'
     });
   } else if (hasJobTag(job, 'frontline_service') && m.id === 'work_work') {
-    badges.push({
-      key: 'social_grind',
-      label: '0 👥 Social (Grind)',
-      color: '#94a3b8',
-      bg: 'rgba(148, 163, 184, 0.12)',
-      border: 'rgba(148, 163, 184, 0.25)',
-      type: 'cap'
-    });
+    if (effectiveRules?.nerfFrontlineSocial) {
+      const workRatioForBadge = summary.workRatio ?? (
+        effectiveRules?.proportionalDivisibleActions && summary.hoursToWork < summary.shiftCost && summary.shiftCost > 0
+          ? summary.hoursToWork / summary.shiftCost
+          : 1
+      );
+      const overtimeThresholdForBadge = summary.overtimeThreshold ?? (statRules as AdvancedStatRules | undefined)?.workOvertimeThreshold ?? 8;
+      const frontlineChance = getFrontlineSocialGainChance(
+        job,
+        summary.actionCount,
+        player.social || 1,
+        workRatioForBadge,
+        effectiveRules,
+        overtimeThresholdForBadge
+      );
+      if (summary.actionCount < 3) {
+        badges.push({
+          key: 'social_early',
+          label: '0 👥 (Shift 3+)',
+          color: '#94a3b8',
+          bg: 'rgba(148, 163, 184, 0.12)',
+          border: 'rgba(148, 163, 184, 0.25)',
+          type: 'cap'
+        });
+      } else if (frontlineChance > 0) {
+        const pct = Math.max(0, Math.min(100, Math.round(frontlineChance * 100)));
+        badges.push({
+          key: 'social_frontline',
+          label: `👥 ~${pct}% Social`,
+          color: '#f472b6',
+          bg: 'rgba(244, 114, 182, 0.18)',
+          border: 'rgba(244, 114, 182, 0.45)',
+          type: 'reward'
+        });
+      } else {
+        badges.push({
+          key: 'social_cap',
+          label: '0 👥 (Max 80)',
+          color: '#94a3b8',
+          bg: 'rgba(148, 163, 184, 0.12)',
+          border: 'rgba(148, 163, 184, 0.25)',
+          type: 'cap'
+        });
+      }
+    } else {
+      badges.push({
+        key: 'social_grind',
+        label: '0 👥 Social (Grind)',
+        color: '#94a3b8',
+        bg: 'rgba(148, 163, 184, 0.12)',
+        border: 'rgba(148, 163, 184, 0.25)',
+        type: 'cap'
+      });
+    }
   }
 
   // 5. Technical Skill gain
@@ -721,8 +867,9 @@ export function getWorkShiftModifiers(
     });
   }
 
-  // 9. Mental Resilience bonus (+1 MAX 🧠)
-  if (useConditions && m.mentalCost >= requireAdvancedStatRules(statRules).resilienceDropThreshold) {
+  // 9. Mental Resilience bonus (+1 MAX 🧠) — excludes soul-crushing stagnation drain
+  const effortMentalCost = Math.max(0, m.mentalCost - (m.soulCrushingPenalty || 0));
+  if (useConditions && effortMentalCost >= requireAdvancedStatRules(statRules).resilienceDropThreshold) {
     badges.push({
       key: 'resilience',
       label: '+1 MAX 🧠',
@@ -730,6 +877,18 @@ export function getWorkShiftModifiers(
       bg: 'rgba(192, 132, 252, 0.18)',
       border: 'rgba(192, 132, 252, 0.45)',
       type: 'reward'
+    });
+  }
+
+  // 9a. Soul-crushing stagnation penalty at Exp cap
+  if ((m.soulCrushingPenalty || 0) > 0) {
+    badges.push({
+      key: 'soul_crushing',
+      label: `-${m.soulCrushingPenalty} 🧠 Stagnant`,
+      color: '#f87171',
+      bg: 'rgba(239, 68, 68, 0.18)',
+      border: 'rgba(239, 68, 68, 0.45)',
+      type: 'penalty'
     });
   }
 
@@ -797,6 +956,16 @@ export function getWorkShiftModifiers(
       border: 'rgba(251, 191, 36, 0.45)',
       type: 'reward'
     });
+    if (effectiveRules?.enableInitiativeRevamp && summary.hoursToWork < summary.shiftCost) {
+      badges.push({
+        key: 'initiative_rushed',
+        label: `⚠️ Rushed (${summary.hoursToWork}/${summary.shiftCost}h)`,
+        color: '#ef4444',
+        bg: 'rgba(239, 68, 68, 0.22)',
+        border: '#ef4444',
+        type: 'warning'
+      });
+    }
   }
 
   // 11. Coasting with 0 rewards

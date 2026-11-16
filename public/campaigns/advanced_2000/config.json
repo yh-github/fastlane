@@ -15,7 +15,11 @@
     "workMistakePhysicalThreshold": 18,
     "workMistakeHeavyPhysicalThreshold": 28,
     "workMistakeMentalThreshold": 18,
-    "workMistakeExecutiveMentalThreshold": 28
+    "workMistakeExecutiveMentalThreshold": 28,
+    "workMistakeGrindThresholdBonus": 5,
+    "workMistakeOvertimeThresholdBonus": 10,
+    "workMistakeNewJobExpMargin": 10,
+    "workMistakeNewJobExpChancePerPoint": 0.003
   },
 
   "gameRules": {
@@ -26,6 +30,9 @@
     "delayRobberyFoodSpoilage": true,
     "enableArcade": true,
     "enableParkSystem": true,
-    "enableCookingSystem": true
+    "enableCookingSystem": true,
+    "nerfFrontlineSocial": true,
+    "enableSoulCrushingJobs": true,
+    "enableInitiativeRevamp": true
   }
 }

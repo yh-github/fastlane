@@ -230,5 +230,172 @@ describe('jobShiftSummary', () => {
     expect(physItem?.ratePerPoint).toBe(0.05);
     expect(physItem?.chance).toBeCloseTo(0.25, 4);
   });
+
+  it('displays Option B frontline_service Social preview badges when nerfFrontlineSocial is enabled', () => {
+    const frontlineJob: JobDef = {
+      id: 'frontline_teller',
+      title: 'Teller',
+      locationId: 'bank',
+      baseWage: 10,
+      requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'dress' },
+      tags: ['frontline_service'],
+      perks: []
+    };
+    const rules = { ...TEST_ADVANCED_GAME_RULES, nerfFrontlineSocial: true };
+
+    const shift1 = calcWorkShiftSummary(
+      { hoursRemaining: 6, currentWage: 10, physicalCondition: 50, mentalCondition: 50, degrees: [], workActionsThisTurn: 0, social: 30 } as unknown as PlayerState,
+      frontlineJob,
+      6,
+      rules,
+      TEST_ADVANCED_CAMPAIGN_CONFIG.statRules
+    );
+    expect(shift1.modes.find(m => m.id === 'work_work')?.modifiers?.map(b => b.label)).toContain('0 👥 (Shift 3+)');
+
+    const shift3 = calcWorkShiftSummary(
+      { hoursRemaining: 6, currentWage: 10, physicalCondition: 50, mentalCondition: 50, degrees: [], workActionsThisTurn: 2, social: 30 } as unknown as PlayerState,
+      frontlineJob,
+      6,
+      rules,
+      TEST_ADVANCED_CAMPAIGN_CONFIG.statRules
+    );
+    // (80 - 30) / 100 = 50%
+    expect(shift3.modes.find(m => m.id === 'work_work')?.modifiers?.map(b => b.label)).toContain('👥 ~50% Social');
+
+    const shift3Capped = calcWorkShiftSummary(
+      { hoursRemaining: 6, currentWage: 10, physicalCondition: 50, mentalCondition: 50, degrees: [], workActionsThisTurn: 2, social: 85 } as unknown as PlayerState,
+      frontlineJob,
+      6,
+      rules,
+      TEST_ADVANCED_CAMPAIGN_CONFIG.statRules
+    );
+    expect(shift3Capped.modes.find(m => m.id === 'work_work')?.modifiers?.map(b => b.label)).toContain('0 👥 (Max 80)');
+  });
+
+  it('includes Grind/Overtime threshold bonuses and non-exec inexperience risk in mistakeBreakdown', () => {
+    const job: JobDef = {
+      id: 'factory_scrap_sorter',
+      title: 'Scrap Sorter',
+      locationId: 'factory',
+      baseWage: 7,
+      requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'casual' },
+      tags: [],
+      perks: []
+    };
+    const statRules = {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules,
+      workMistakePhysicalThreshold: 18,
+      workMistakeMentalThreshold: 18,
+      workMistakeGrindThresholdBonus: 5,
+      workMistakeOvertimeThresholdBonus: 10,
+      workMistakeNewJobExpMargin: 10,
+      workMistakeNewJobExpChancePerPoint: 0.003
+    };
+
+    const grindSummary = calcWorkShiftSummary(
+      {
+        hoursRemaining: 12,
+        currentWage: 7,
+        physicalCondition: 21,
+        mentalCondition: 50,
+        experience: 20,
+        degrees: [],
+        workActionsThisTurn: 3, // shift 4 -> Grind
+        social: 50
+      } as unknown as PlayerState,
+      job,
+      6,
+      TEST_ADVANCED_GAME_RULES,
+      statRules
+    );
+
+    const ww = grindSummary.modes.find(m => m.id === 'work_work')!;
+    const physItem = ww.modifierBreakdown?.mistakeBreakdown?.find(b => b.type === 'physical');
+    expect(physItem?.threshold).toBe(23); // 18 + 5
+    expect(ww.physMistakeChance).toBeCloseTo(0.05, 4); // (23 - 21) * 0.025 = 5%
+
+    const expItem = ww.modifierBreakdown?.mistakeBreakdown?.find(b => b.type === 'experience');
+    expect(expItem).toBeDefined();
+    expect(expItem?.chance).toBeCloseTo(0.03, 4); // (10 - 0) * 0.003 = 3%
+    expect(ww.newJobMistakeChance).toBeCloseTo(0.03, 4);
+  });
+
+  it('surfaces soul-crushing Mental penalty and Stagnant badge without triggering resilience badge', () => {
+    const clerkJob: JobDef = {
+      id: 'zmart_clerk',
+      title: 'Clerk',
+      locationId: 'z_mart',
+      baseWage: 4,
+      requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
+      tags: ['frontline_service'],
+      perks: []
+    };
+    const rules = { ...TEST_ADVANCED_GAME_RULES, enableSoulCrushingJobs: true };
+    const statRules = { ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules, resilienceDropThreshold: 1 };
+
+    const summary = calcWorkShiftSummary(
+      {
+        hoursRemaining: 6,
+        currentWage: 4,
+        physicalCondition: 50,
+        mentalCondition: 50,
+        experience: 20, // at cap (10 + 10)
+        degrees: [],
+        workActionsThisTurn: 0,
+        social: 50
+      } as unknown as PlayerState,
+      clerkJob,
+      6,
+      rules,
+      statRules
+    );
+
+    const ww = summary.modes.find(m => m.id === 'work_work')!;
+    expect(ww.mentalCost).toBe(1);
+    expect(ww.soulCrushingPenalty).toBe(1);
+    const labels = ww.modifiers!.map(b => b.label);
+    expect(labels).toContain('-1 🧠 Stagnant');
+    expect(labels).not.toContain('+1 MAX 🧠');
+  });
+
+  it('reflects un-discounted costs, rushed mistake risk, and tag parity for Show Leadership revamp', () => {
+    const midMgmtJob: JobDef = {
+      id: 'bank_asst_mgr',
+      title: 'Assistant Manager',
+      locationId: 'bank',
+      baseWage: 14,
+      requirements: { experience: 40, dependability: 40, degrees: [], uniform: 'dress' },
+      tags: ['middle_management'],
+      perks: []
+    };
+    const rules = { ...TEST_ADVANCED_GAME_RULES, enableInitiativeRevamp: true };
+    const summary = calcWorkShiftSummary(
+      {
+        hoursRemaining: 2, // rushed: 4h short -> +40% rushed risk on top of 10% Tier 2 base
+        currentWage: 14,
+        physicalCondition: 50,
+        mentalCondition: 50,
+        experience: 50,
+        degrees: [],
+        workActionsThisTurn: 0,
+        social: 50
+      } as unknown as PlayerState,
+      midMgmtJob,
+      6,
+      rules,
+      TEST_ADVANCED_CAMPAIGN_CONFIG.statRules
+    );
+
+    const si = summary.modes.find(m => m.id === 'show_initiative')!;
+    // Un-discounted full costs with middle_management +1 mental parity
+    expect(si.physCost).toBe(1.5);
+    expect(si.mentalCost).toBe(3);
+    // Scaled Dep (1.5 * 2/6 = 0.5)
+    expect(si.rewardDep).toBe(0.5);
+    // Combined risk: 1 - (1 - 0.10) * (1 - 0.40) = 0.46
+    expect(si.initiativeMistakeChance).toBeCloseTo(0.46, 4);
+    expect(si.modifiers!.map(b => b.label)).toContain('⚠️ Rushed (2/6h)');
+    expect(si.modifierBreakdown?.mistakeBreakdown?.some(b => b.type === 'initiative')).toBe(true);
+  });
 });
 

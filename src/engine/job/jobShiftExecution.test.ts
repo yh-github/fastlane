@@ -5,6 +5,7 @@ import { applyForJob } from "./jobApplication";
 import { calcWorkShiftSummary } from "./jobShiftSummary";
 import type { PlayerState } from "../gameState";
 import type { JobDef } from "../dataLoader";
+import type { ReplayContext } from "../replayTypes";
 import { TEST_ADVANCED_CAMPAIGN_CONFIG, TEST_BASE_GAME_RULES } from "../testFactories";
 const advStatRules = TEST_ADVANCED_CAMPAIGN_CONFIG.statRules;
 const advRules = { ...TEST_BASE_GAME_RULES, versionClass: 'advanced' as const, locationProbation: true, usePhysicalMentalConditions: true, useSkills: true, trackSocial: true };
@@ -1471,6 +1472,418 @@ describe("Job Engine - workShift", () => {
         const res = workShift(overtimePlayer, salesManager, 6, advRules, advStatRules, 'show_initiative');
         expect(res.success).toBe(true);
         expect(res.updated.physicalConditionMax).toBe(49.5); // Dropped by 0.5
+      });
+    });
+
+    describe('nerfFrontlineSocial (Option B)', () => {
+      const frontlineJob: JobDef = {
+        id: 'frontline_teller',
+        title: 'Teller',
+        locationId: 'bank',
+        baseWage: 10,
+        requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'dress' },
+        tags: ['frontline_service'],
+        perks: []
+      };
+
+      const a2000Rules = { ...advRules, nerfFrontlineSocial: true };
+
+      it('grants 0 Social on shifts 1-2, tapered roll on shifts 3-7, and -1 Social on overtime shift 8+', () => {
+        const basePlayer = {
+          id: 'p_fl',
+          hoursRemaining: 60,
+          currentJobId: 'frontline_teller',
+          currentWage: 10,
+          experience: 20,
+          dependability: 20,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          social: 30, // >= 20 frontline social mistake threshold -> 0% social mistake
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        // Shift 1 & 2: no Social gain even without mistake
+        const shift1 = workShift({ ...basePlayer, workActionsThisTurn: 0 }, frontlineJob, 6, a2000Rules as any, advStatRules, 'work_work');
+        expect(shift1.updated.social).toBe(30);
+
+        const shift2 = workShift({ ...basePlayer, workActionsThisTurn: 1 }, frontlineJob, 6, a2000Rules as any, advStatRules, 'work_work');
+        expect(shift2.updated.social).toBe(30);
+
+        // Shift 3: rolls work_frontline_social_p_fl_3; success grants +1, fail grants 0
+        const replayWin: ReplayContext = { inDecisions: [{ type: 'work_frontline_social_p_fl_3', result: true }], outDecisions: [] };
+        const shift3Win = workShift({ ...basePlayer, workActionsThisTurn: 2 }, frontlineJob, 6, a2000Rules as any, advStatRules, 'work_work', new Random(1), replayWin);
+        expect(shift3Win.updated.social).toBe(31);
+
+        const replayLose: ReplayContext = { inDecisions: [{ type: 'work_frontline_social_p_fl_3', result: false }], outDecisions: [] };
+        const shift3Lose = workShift({ ...basePlayer, workActionsThisTurn: 2 }, frontlineJob, 6, a2000Rules as any, advStatRules, 'work_work', new Random(1), replayLose);
+        expect(shift3Lose.updated.social).toBe(30);
+
+        // Shift 3 at Social >= 80: 0% chance, never rolls
+        const replayHigh: ReplayContext = { inDecisions: [], outDecisions: [] };
+        const shift3High = workShift({ ...basePlayer, social: 80, workActionsThisTurn: 2 }, frontlineJob, 6, a2000Rules as any, advStatRules, 'work_work', new Random(1), replayHigh);
+        expect(shift3High.updated.social).toBe(80);
+        expect(replayHigh.outDecisions.length).toBe(0);
+
+        // Shift 8 (overtime): -1 Social burnout
+        const shift8 = workShift({ ...basePlayer, workActionsThisTurn: 7 }, frontlineJob, 6, a2000Rules as any, advStatRules, 'work_work');
+        expect(shift8.updated.social).toBe(29);
+      });
+
+      it('inflicts -1 Social on any physical/mental mistake in a frontline_service job', () => {
+        const tiredFrontline = {
+          id: 'p_fl_tired',
+          hoursRemaining: 12,
+          currentJobId: 'frontline_teller',
+          currentWage: 10,
+          experience: 20,
+          dependability: 20,
+          physicalCondition: 5, // triggers physical mistake
+          mentalCondition: 50,
+          social: 30, // safe from social mistake
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        const replay: ReplayContext = {
+          inDecisions: [{ type: 'work_phys_mistake_p_fl_tired_1', result: true }],
+          outDecisions: []
+        };
+        const res = workShift(tiredFrontline, frontlineJob, 6, a2000Rules as any, advStatRules, 'work_work', new Random(1), replay);
+        expect(res.updated.social).toBe(29);
+      });
+    });
+
+    describe('Grind/Overtime Mistake Escalation & Non-Executive Inexperience Risk', () => {
+      const factoryJob: JobDef = {
+        id: 'factory_scrap_sorter',
+        title: 'Scrap Sorter',
+        locationId: 'factory',
+        baseWage: 7,
+        requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'casual' },
+        tags: [],
+        perks: []
+      };
+
+      const escalatedStatRules = {
+        ...advStatRules,
+        workMistakePhysicalThreshold: 18,
+        workMistakeMentalThreshold: 18,
+        workMistakeGrindThresholdBonus: 5,
+        workMistakeOvertimeThresholdBonus: 10,
+        workMistakeNewJobExpMargin: 10,
+        workMistakeNewJobExpChancePerPoint: 0.003
+      };
+
+      it('raises physical/mental mistake thresholds by +5 in Grind and +10 in Overtime, mitigated by caffeine', () => {
+        const playerAt21 = {
+          id: 'p_grind',
+          hoursRemaining: 60,
+          currentJobId: 'factory_scrap_sorter',
+          currentWage: 7,
+          experience: 30, // >= 20 + 10 so no inexperience risk
+          dependability: 20,
+          physicalCondition: 21, // safe on normal (18), unsafe on grind (23)
+          physicalConditionMax: 50,
+          mentalCondition: 50,
+          social: 50,
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        // Normal shift 1: Phys 21 >= 18 -> 0% risk (no decision recorded)
+        const normalReplay: ReplayContext = { inDecisions: [], outDecisions: [] };
+        workShift({ ...playerAt21, workActionsThisTurn: 0 }, factoryJob, 6, advRules, escalatedStatRules, 'work_work', new Random(1), normalReplay);
+        expect(normalReplay.outDecisions.length).toBe(0);
+
+        // Grind shift 4: Phys 21 < 23 -> triggers physical mistake roll!
+        const grindReplay: ReplayContext = { inDecisions: [{ type: 'work_phys_mistake_p_grind_4', result: true }], outDecisions: [] };
+        const grindRes = workShift({ ...playerAt21, workActionsThisTurn: 3 }, factoryJob, 6, advRules, escalatedStatRules, 'work_work', new Random(1), grindReplay);
+        expect(grindRes.updated.mistakesByLocation?.factory).toBe(1);
+
+        // Coffee buffer (+10) pushes effectivePhys to 31 >= 28 (Overtime threshold) -> 0% risk!
+        const caffReplay: ReplayContext = { inDecisions: [], outDecisions: [] };
+        const caffRules = { ...advRules, enableCaffeineSystem: true };
+        workShift(
+          { ...playerAt21, workActionsThisTurn: 7, turnFlags: { caffeineIntake: 10 } as any },
+          factoryJob,
+          6,
+          caffRules as any,
+          escalatedStatRules,
+          'work_work',
+          new Random(1),
+          caffReplay
+        );
+        expect(caffReplay.outDecisions.length).toBe(0);
+      });
+
+      it('applies non-executive inexperience risk only during Grind/Overtime when Exp < req + margin', () => {
+        const rookie = {
+          id: 'p_rookie',
+          hoursRemaining: 60,
+          currentJobId: 'factory_scrap_sorter',
+          currentWage: 7,
+          experience: 20, // 0 margin over req 20
+          dependability: 20,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          social: 50,
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        // Normal shift 1: no inexperience roll
+        const normalReplay: ReplayContext = { inDecisions: [], outDecisions: [] };
+        workShift({ ...rookie, workActionsThisTurn: 0 }, factoryJob, 6, advRules, escalatedStatRules, 'work_work', new Random(1), normalReplay);
+        expect(normalReplay.outDecisions.length).toBe(0);
+
+        // Grind shift 4: triggers work_newjob_mistake_p_rookie_4
+        const grindReplay: ReplayContext = { inDecisions: [{ type: 'work_newjob_mistake_p_rookie_4', result: true }], outDecisions: [] };
+        const grindRes = workShift({ ...rookie, workActionsThisTurn: 3 }, factoryJob, 6, advRules, escalatedStatRules, 'work_work', new Random(1), grindReplay);
+        expect(grindRes.updated.mistakesByLocation?.factory).toBe(1);
+        expect(grindRes.updated.dependability).toBe(19); // -1 Dep operational mistake penalty
+        expect(grindRes.messages?.some(m => m.key === 'action.job.mistake' && String(m.params?.type).includes('Inexperience'))).toBe(true);
+      });
+    });
+
+    describe('Soul-Crushing Jobs at Exp Cap', () => {
+      const clerkJob: JobDef = {
+        id: 'zmart_clerk',
+        title: 'Clerk',
+        locationId: 'z_mart',
+        baseWage: 4,
+        requirements: { experience: 10, dependability: 10, degrees: [], uniform: 'casual' },
+        tags: ['frontline_service'],
+        perks: []
+      };
+      const techJob: JobDef = {
+        id: 'socket_repairman',
+        title: 'Electronics Repairman',
+        locationId: 'socket_city',
+        baseWage: 11,
+        requirements: { experience: 40, dependability: 40, degrees: [], uniform: 'casual' },
+        tags: ['technical'],
+        perks: []
+      };
+      const profJob: JobDef = {
+        id: 'uni_professor',
+        title: 'Professor',
+        locationId: 'university',
+        baseWage: 20,
+        requirements: { experience: 50, dependability: 50, degrees: [], uniform: 'dress' },
+        tags: ['academic_freedom'],
+        perks: []
+      };
+
+      const soulRules = { ...advRules, enableSoulCrushingJobs: true };
+
+      it('inflicts -1 Mental on work_work and look_busy at Exp cap without granting resilience, but spares show_initiative', () => {
+        const cappedWorker = {
+          id: 'p_soul',
+          hoursRemaining: 24,
+          currentJobId: 'zmart_clerk',
+          currentWage: 4,
+          experience: 20, // base cap = 10 + 10 = 20
+          dependability: 20,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          mentalConditionMax: 50,
+          social: 50,
+          resilienceBonus: 0,
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        // Normal shift at cap -> -1 Mental, no resilience gain
+        const wwRes = workShift(cappedWorker, clerkJob, 6, soulRules as any, { ...advStatRules, resilienceDropThreshold: 1 }, 'work_work');
+        expect(wwRes.success).toBe(true);
+        expect(wwRes.updated.mentalCondition).toBe(49);
+        expect(wwRes.updated.mentalConditionMax).toBe(50);
+        expect(wwRes.messages?.some(m => m.key === 'action.job.soulCrushing')).toBe(true);
+
+        // Look busy at cap -> -1 Mental
+        const lbRes = workShift(cappedWorker, clerkJob, 6, soulRules as any, advStatRules, 'look_busy');
+        expect(lbRes.updated.mentalCondition).toBe(49);
+
+        // Show initiative at cap -> NOT soul-crushing (only normal 2.0 Mental cost)
+        const siRes = workShift(cappedWorker, clerkJob, 6, soulRules as any, advStatRules, 'show_initiative');
+        expect(siRes.updated.mentalCondition).toBe(48);
+        expect(siRes.messages?.some(m => m.key === 'action.job.soulCrushing')).toBe(false);
+
+        // Below Exp cap -> no soul-crushing penalty
+        const uncappedRes = workShift({ ...cappedWorker, experience: 19 }, clerkJob, 6, soulRules as any, advStatRules, 'work_work');
+        expect(uncappedRes.updated.mentalCondition).toBe(50);
+      });
+
+      it('exempts academic_freedom, and only penalizes technical jobs when Skill_Tech is also capped', () => {
+        const cappedTech = {
+          id: 'p_tech',
+          hoursRemaining: 24,
+          currentJobId: 'socket_repairman',
+          currentWage: 11,
+          experience: 50, // req 40 + 10 = 50
+          dependability: 40,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          skillTech: 2.0, // below default baseSkillCap (2.5) / maxSkillCap (10)
+          degrees: [],
+          inventory: { casualClothesWeeks: 10, dressClothesWeeks: 10, selectedClothes: 'dress' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        // Tech skill uncapped -> exempt from soul-crushing
+        const techUncappedSkill = workShift(cappedTech, techJob, 6, soulRules as any, advStatRules, 'work_work');
+        expect(techUncappedSkill.updated.mentalCondition).toBe(50);
+
+        // Tech skill at cap (10 with dynamicSkillCaps off, or 2.5 with dynamicSkillCaps) -> triggers -1 Mental
+        const techAtCap = workShift({ ...cappedTech, skillTech: 10 }, techJob, 6, soulRules as any, advStatRules, 'work_work');
+        expect(techAtCap.updated.mentalCondition).toBe(49);
+
+        // Academic freedom -> always exempt even at Exp 100
+        const profRes = workShift({ ...cappedTech, currentJobId: 'uni_professor', dependability: 50, experience: 100 }, profJob, 6, soulRules as any, advStatRules, 'work_work');
+        expect(profRes.updated.mentalCondition).toBe(50);
+        expect(profRes.messages?.some(m => m.key === 'action.job.soulCrushing')).toBe(false);
+      });
+    });
+
+    describe('Show Leadership (show_initiative) Revamp', () => {
+      const heavyJob: JobDef = {
+        id: 'factory_heavy',
+        title: 'Heavy Lifter',
+        locationId: 'factory',
+        baseWage: 10,
+        requirements: { experience: 20, dependability: 20, degrees: [], uniform: 'casual' },
+        tags: ['heavy_physical'],
+        perks: []
+      };
+      const midMgmtFrontline: JobDef = {
+        id: 'bank_asst_mgr',
+        title: 'Assistant Manager',
+        locationId: 'bank',
+        baseWage: 14,
+        requirements: { experience: 40, dependability: 40, degrees: [], uniform: 'dress' },
+        tags: ['middle_management', 'frontline_service'],
+        perks: []
+      };
+      const revampRules = { ...advRules, proportionalDivisibleActions: true, enableInitiativeRevamp: true, enableBusyWeeks: true };
+
+      it('inherits work_work physical, mental, and busy-week cost modifiers', () => {
+        const heavyPlayer = {
+          id: 'p_init_heavy',
+          hoursRemaining: 12,
+          currentJobId: 'factory_heavy',
+          currentWage: 10,
+          experience: 30, // >= 20 + 10
+          dependability: 20,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          social: 50,
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        const replaySafe: ReplayContext = {
+          inDecisions: [{ type: 'work_initiative_mistake_p_init_heavy_1', result: false }],
+          outDecisions: []
+        };
+        const resHeavy = workShift(heavyPlayer, heavyJob, 6, revampRules as any, advStatRules, 'show_initiative', new Random(1), replaySafe, undefined, undefined, true);
+        expect(resHeavy.success).toBe(true);
+        // Phys = 1*1.5 + 0.5 (heavy_physical) + 0.5 (busy week) = 2.5
+        expect(resHeavy.updated.physicalCondition).toBe(47.5);
+
+        const midPlayer = {
+          ...heavyPlayer,
+          id: 'p_init_mid',
+          currentJobId: 'bank_asst_mgr',
+          experience: 50,
+          dependability: 40,
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' }
+        } as unknown as PlayerState;
+        const replayMid: ReplayContext = {
+          inDecisions: [{ type: 'work_initiative_mistake_p_init_mid_1', result: false }],
+          outDecisions: []
+        };
+        const resMid = workShift(midPlayer, midMgmtFrontline, 6, revampRules as any, advStatRules, 'show_initiative', new Random(1), replayMid);
+        expect(resMid.success).toBe(true);
+        // Mental = 0*1.5 + 2.0 + 1.0 (middle_management) = 3.0
+        expect(resMid.updated.mentalCondition).toBe(47);
+      });
+
+      it('charges full 6h Physical/Mental costs when rushed (<6h) while still delivering full cards on success', () => {
+        const rushedPlayer = {
+          id: 'p_rush',
+          hoursRemaining: 2, // 4h short of 6h -> 40% rushed risk
+          currentJobId: 'bank_asst_mgr',
+          currentWage: 14,
+          experience: 50,
+          dependability: 40,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          social: 50,
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        const replayWin: ReplayContext = {
+          inDecisions: [{ type: 'work_initiative_mistake_p_rush_1', result: false }],
+          outDecisions: []
+        };
+        const res = workShift(rushedPlayer, midMgmtFrontline, 6, revampRules as any, advStatRules, 'show_initiative', new Random(1), replayWin);
+        expect(res.success).toBe(true);
+        expect(res.updated.hoursRemaining).toBe(0);
+        // Full 6h costs (no 2/6 discount): Phys 1.5, Mental 3.0
+        expect(res.updated.physicalCondition).toBe(48.5);
+        expect(res.updated.mentalCondition).toBe(47);
+        // Scaled wage (14*8*0.4*(2/6) = 14) and scaled baseDepGain (1.5*(2/6) = 0.5)
+        expect(res.wagesEarned).toBe(14);
+        expect(res.updated.dependability).toBe(40.5);
+        // Full initiative cards offered
+        expect(res.updated.pendingMiniGame?.gameType).toBe('work_initiative');
+        expect(res.updated.pendingMiniGame?.options.length).toBe(2);
+      });
+
+      it('forfeits card rewards, deducts standing/Dep, and hits Social on frontline initiative failure', () => {
+        const failPlayer = {
+          id: 'p_init_fail',
+          hoursRemaining: 3,
+          currentJobId: 'bank_asst_mgr',
+          currentWage: 14,
+          experience: 50,
+          dependability: 40,
+          physicalCondition: 50,
+          mentalCondition: 50,
+          social: 30,
+          initiativesByLocation: { bank: 2 },
+          inventory: { dressClothesWeeks: 10, selectedClothes: 'dress' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        const replayFail: ReplayContext = {
+          inDecisions: [{ type: 'work_initiative_mistake_p_init_fail_1', result: true }],
+          outDecisions: []
+        };
+        const res = workShift(failPlayer, midMgmtFrontline, 6, revampRules as any, advStatRules, 'show_initiative', new Random(1), replayFail);
+        expect(res.success).toBe(true);
+        expect(res.updated.pendingMiniGame).toBeFalsy();
+        expect(res.updated.initiativesByLocation?.bank).toBe(1); // Lost 1 standing
+        expect(res.updated.mistakesByLocation?.bank).toBe(1);
+        expect(res.updated.social).toBe(29); // frontline_service Social penalty on mistake
+        expect(res.messages?.some(m => m.key === 'action.job.initiativeFailed')).toBe(true);
+        expect(res.messages?.some(m => m.key === 'action.job.mistake' && String(m.params?.type).includes('Rushed Initiative'))).toBe(true);
+
+        // If standing was already 0, deducts 1 extra Dependability instead
+        const zeroStandingRes = workShift(
+          { ...failPlayer, id: 'p_init_fail0', initiativesByLocation: { bank: 0 } },
+          midMgmtFrontline,
+          6,
+          revampRules as any,
+          advStatRules,
+          'show_initiative',
+          new Random(1),
+          { inDecisions: [{ type: 'work_initiative_mistake_p_init_fail0_1', result: true }], outDecisions: [] }
+        );
+        expect(zeroStandingRes.updated.initiativesByLocation?.bank).toBe(0);
+        expect(zeroStandingRes.updated.dependability).toBe(39);
       });
     });
   });

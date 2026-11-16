@@ -3,7 +3,7 @@
  */
 
 import type { JobDef } from './dataLoader';
-import type { StatRules, AdvancedStatRules } from './rules';
+import type { StatRules, AdvancedStatRules, GameRules } from './rules';
 
 export type JobTag =
   | 'always_hiring'
@@ -116,14 +116,34 @@ export function getJobPhysicalFatigueThreshold(job: JobDef | undefined | null, s
 }
 
 /**
- * Get the physical mistake threshold for this job.
+ * Get extra Physical/Mental mistake safety threshold added during Grind or Overtime shifts.
  */
-export function getJobPhysicalMistakeThreshold(job: JobDef | undefined | null, statRules?: StatRules): number {
+export function getWorkMistakeTierThresholdBonus(actionCount: number = 1, statRules?: StatRules): number {
   const advStats = statRules as AdvancedStatRules | undefined;
-  if (hasJobTag(job, 'heavy_physical')) {
-    return advStats?.workMistakeHeavyPhysicalThreshold ?? 20;
+  const grindThreshold = advStats?.workGrindThreshold ?? 4;
+  const overtimeThreshold = advStats?.workOvertimeThreshold ?? 8;
+  if (actionCount >= overtimeThreshold) {
+    return advStats?.workMistakeOvertimeThresholdBonus ?? 0;
   }
-  return advStats?.workMistakePhysicalThreshold ?? 10;
+  if (actionCount >= grindThreshold) {
+    return advStats?.workMistakeGrindThresholdBonus ?? 0;
+  }
+  return 0;
+}
+
+/**
+ * Get the physical mistake threshold for this job (including Grind/Overtime escalation).
+ */
+export function getJobPhysicalMistakeThreshold(
+  job: JobDef | undefined | null,
+  statRules?: StatRules,
+  actionCount: number = 1
+): number {
+  const advStats = statRules as AdvancedStatRules | undefined;
+  const base = hasJobTag(job, 'heavy_physical')
+    ? (advStats?.workMistakeHeavyPhysicalThreshold ?? 20)
+    : (advStats?.workMistakePhysicalThreshold ?? 10);
+  return base + getWorkMistakeTierThresholdBonus(actionCount, statRules);
 }
 
 /**
@@ -144,15 +164,19 @@ export function getJobMentalCostModifier(job: JobDef | undefined | null): number
 }
 
 /**
- * Get the mental mistake threshold for this job.
+ * Get the mental mistake threshold for this job (including Grind/Overtime escalation).
  * Executive management roles elevate the threshold due to high strategic pressure and scrutiny.
  */
-export function getJobMentalMistakeThreshold(job: JobDef | undefined | null, statRules?: StatRules): number {
+export function getJobMentalMistakeThreshold(
+  job: JobDef | undefined | null,
+  statRules?: StatRules,
+  actionCount: number = 1
+): number {
   const advStats = statRules as AdvancedStatRules | undefined;
-  if (hasJobTag(job, 'executive_management')) {
-    return advStats?.workMistakeExecutiveMentalThreshold ?? 20;
-  }
-  return advStats?.workMistakeMentalThreshold ?? 10;
+  const base = hasJobTag(job, 'executive_management')
+    ? (advStats?.workMistakeExecutiveMentalThreshold ?? 20)
+    : (advStats?.workMistakeMentalThreshold ?? 10);
+  return base + getWorkMistakeTierThresholdBonus(actionCount, statRules);
 }
 
 /**
@@ -192,6 +216,28 @@ export function getExecutiveMistakeExpMargin(statRules?: StatRules): number {
  */
 export function getExecutiveMistakeRate(statRules?: StatRules): number {
   return (statRules as AdvancedStatRules | undefined)?.workMistakeExecutiveExpChancePerPoint ?? 0.005;
+}
+
+/**
+ * Get the inexperience mistake risk for non-executive jobs during Grind or Overtime shifts.
+ */
+export function getNewJobMistakeChance(
+  job: JobDef | undefined | null,
+  playerExp: number,
+  actionCount: number = 1,
+  statRules?: StatRules
+): number {
+  if (!job || hasJobTag(job, 'executive_management')) return 0;
+  const advStats = statRules as AdvancedStatRules | undefined;
+  const grindThreshold = advStats?.workGrindThreshold ?? 4;
+  if (actionCount < grindThreshold) return 0;
+
+  const margin = advStats?.workMistakeNewJobExpMargin ?? 0;
+  const rate = advStats?.workMistakeNewJobExpChancePerPoint ?? 0;
+  if (margin <= 0 || rate <= 0) return 0;
+
+  const expMargin = playerExp - (job.requirements?.experience || 0);
+  return Math.min(1.0, Math.max(0, (margin - expMargin) * rate));
 }
 
 /**
@@ -246,18 +292,52 @@ export function getJobExpMultiplier(job: JobDef | undefined | null): number {
 }
 
 /**
- * Get Social gain or loss during work_work for frontline_service.
+ * Get deterministic Social gain or loss during work_work for frontline_service.
+ * When `nerfFrontlineSocial` is enabled, deterministic +1 on shifts 1-3 is removed
+ * (shifts 3-7 instead use `getFrontlineSocialGainChance`, while Overtime 8+ still loses -1).
  */
-export function getJobSocialModifier(job: JobDef | undefined | null, actionCount: number): number {
+export function getJobSocialModifier(
+  job: JobDef | undefined | null,
+  actionCount: number,
+  rules?: Partial<GameRules>,
+  overtimeThreshold: number = 8
+): number {
   let mod = 0;
   if (hasJobTag(job, 'frontline_service')) {
-    if (actionCount < 4) {
-      mod += 1;
-    } else if (actionCount >= 8) {
-      mod -= 1;
+    if (rules?.nerfFrontlineSocial) {
+      if (actionCount >= overtimeThreshold) {
+        mod -= 1;
+      }
+    } else {
+      if (actionCount < 4) {
+        mod += 1;
+      } else if (actionCount >= overtimeThreshold) {
+        mod -= 1;
+      }
     }
   }
   return mod;
+}
+
+/**
+ * Get the probability of gaining +1 Social on a clean frontline_service work_work shift
+ * when `nerfFrontlineSocial` is enabled (Option B: shifts 3 to overtimeThreshold-1, tapered by current Social up to 80).
+ */
+export function getFrontlineSocialGainChance(
+  job: JobDef | undefined | null,
+  actionCount: number,
+  currentSocial: number,
+  ratio: number = 1,
+  rules?: Partial<GameRules>,
+  overtimeThreshold: number = 8
+): number {
+  if (!rules?.nerfFrontlineSocial || !hasJobTag(job, 'frontline_service')) {
+    return 0;
+  }
+  if (actionCount < 3 || actionCount >= overtimeThreshold) {
+    return 0;
+  }
+  return Math.max(0, Math.min(1, ((80 - currentSocial) / 100) * ratio));
 }
 
 /**
@@ -296,6 +376,39 @@ export function isManagementJob(job: JobDef | undefined | null): boolean {
  */
 export function isExecutiveManagementJob(job: JobDef | undefined | null): boolean {
   return hasJobTag(job, 'executive_management');
+}
+
+/**
+ * Determine whether working standard/coast shifts on this job inflicts a "soul-crushing"
+ * Mental stagnation penalty because the player has reached its Experience cap.
+ *
+ * Exempt: executive_management, academic_freedom, clinical, and technical (unless Skill_Tech is also capped).
+ */
+export function isJobSoulCrushingAtCap(
+  job: JobDef | undefined | null,
+  playerExperience: number,
+  degreeExpBoost: number = 0,
+  xpMaxBonus: number = 0,
+  isSkillTechCapped: boolean = false,
+  rules?: Partial<GameRules>
+): boolean {
+  if (!job || !rules?.enableSoulCrushingJobs || !rules?.usePhysicalMentalConditions) {
+    return false;
+  }
+  if (
+    hasJobTag(job, 'executive_management') ||
+    hasJobTag(job, 'academic_freedom') ||
+    hasJobTag(job, 'clinical')
+  ) {
+    return false;
+  }
+  if (hasJobTag(job, 'technical')) {
+    if (!rules?.useSkills || !isSkillTechCapped) {
+      return false;
+    }
+  }
+  const effectiveMaxExp = 10 + (job.requirements?.experience ?? 0) + degreeExpBoost + xpMaxBonus;
+  return playerExperience >= effectiveMaxExp;
 }
 
 export interface JobSpecialRequirement {
@@ -359,6 +472,29 @@ export function getJobInitiativeTier(job: JobDef | undefined | null): JobInitiat
     return 2;
   }
   return 1;
+}
+
+/**
+ * Base mistake probability when taking a Show Leadership initiative (scales by job tier).
+ */
+export function getInitiativeExecutionMistakeChance(
+  job: JobDef | undefined | null,
+  rules?: Partial<GameRules>
+): number {
+  if (!job || !rules?.enableInitiativeRevamp) return 0;
+  return getJobInitiativeTier(job) * 0.05;
+}
+
+/**
+ * Extra mistake probability when rushing Show Leadership with fewer than full shift hours.
+ */
+export function getInitiativeRushedMistakeChance(
+  hoursToWork: number,
+  shiftCost: number,
+  rules?: Partial<GameRules>
+): number {
+  if (!rules?.enableInitiativeRevamp || hoursToWork >= shiftCost) return 0;
+  return Math.min(1.0, Math.max(0, (shiftCost - hoursToWork) * 0.10));
 }
 
 
