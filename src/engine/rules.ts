@@ -370,7 +370,7 @@ export interface GameRules {
   allowWindowMoveResize: boolean;
 
   /**
-   * ADVANCED 2000: Enables coffee drinking, caffeine tolerance buildup, morning fog/withdrawal, and detox decay.
+   * ADVANCED 2000: Enables coffee drinking (+1 Phys / +2 Mental on 1st cup, +5 Mistake Buffer per cup up to +10) and high-coffee Weekend Sprint cards.
    */
   enableCaffeineSystem: boolean;
 
@@ -1036,7 +1036,7 @@ export const RULE_DESCRIPTIONS: Record<string, string> = {
   locationProbation: 'Workplace locations place players on probation for the turn upon termination, halving hiring chances',
   showWindowPositionSize: 'Shows coordinate, dimension, and margin tools on building location windows',
   allowWindowMoveResize: 'Allows dragging window headers to move and corner handles to resize location windows',
-  enableCaffeineSystem: 'Enables coffee drinking, progressive caffeine tolerance buildup, turn start morning fog/withdrawal, and detox decay',
+  enableCaffeineSystem: 'Enables coffee drinking (+5 Mistake Buffer per cup up to +10) and unlocks Weekend Sprint cards after high coffee intake',
   enableBusyWeeks: 'Enables periodic "All Hands on Deck!" busy weeks at fast-food locations with surge pay, accelerated XP/Dep, and absentee penalties',
   hospitalEmployeeHealthcare: 'Grants hospital employees healthcare coverage (free/discounted doctor visits and enhanced physical bounce-back)',
   enableArcade: 'Enables playing arcade games at arcade-equipped restaurants for quick mental relief and happiness',

@@ -47,7 +47,7 @@ const mockPlayer: PlayerState = {
     pawnedItems: [],
     stocks: { tBills: 0, holdings: {} },
   },
-  turnFlags: { hasWorked: true },
+  turnFlags: { hasWorked: true, coffeeCupsThisTurn: 2, caffeineIntake: 10 },
   turnEvents: [],
   activeEffects: {},
   position: 'node_home',
@@ -190,7 +190,7 @@ describe('getHudAttributeInfo Helper', () => {
     expect(info.logFilter).toBe('mental');
   });
 
-  it('builds accurate info for Caffeine tolerance showing withdrawal status', () => {
+  it('builds accurate info for Coffee boost showing sprint ready status', () => {
     const info = getHudAttributeInfo({
       attributeId: 'caffeine',
       player: mockPlayer,
@@ -199,9 +199,9 @@ describe('getHudAttributeInfo Helper', () => {
       campaign: mockCampaign,
     });
     expect(info.id).toBe('caffeine');
-    expect(info.currentFormatted).toBe('7');
+    expect(info.currentFormatted).toBe('+10 (2 cups)');
     expect(info.maxFormatted).toBe('10');
-    expect(info.statusBadge).toBe('Withdrawal');
+    expect(info.statusBadge).toBe('Sprint Ready');
     expect(info.logFilter).toBe('caffeine');
   });
 

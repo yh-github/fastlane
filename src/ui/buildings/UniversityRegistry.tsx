@@ -6,7 +6,7 @@ import type { PlayerState, GameRules } from '../../engine/gameState';
 import { isAdvancedStatRules } from '../../engine/rules';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../../engine/educationEngine';
-import { roundToResolution, formatHours } from '../../engine/statMath';
+import { roundToResolution, formatHours, calcCaffeineBuffer } from '../../engine/statMath';
 import type { InteractionProps } from './types';
 
 export interface UniversityRegistryProps extends InteractionProps {
@@ -331,9 +331,7 @@ export function UniversityRegistry({
                                 const scaledPCost = roundToResolution(pCost * studyRatio, 0.5);
                                 const scaledDepBonus = roundToResolution(depBonus * studyRatio, 0.5);
 
-                                const caffeineBuffer = rules?.enableCaffeineSystem
-                                  ? Math.max(0, (player.turnFlags?.caffeineIntake || 0) - (player.caffeineTolerance || 0))
-                                  : 0;
+                                const caffeineBuffer = calcCaffeineBuffer(player, rules);
                                 const curPhys = player.physicalCondition ?? 50;
                                 const curMental = player.mentalCondition ?? 50;
                                 const effectivePhys = Math.min(player.physicalConditionMax ?? 50, curPhys + caffeineBuffer);

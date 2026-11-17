@@ -122,14 +122,14 @@ export const WeekendCardView = React.forwardRef<HTMLDivElement, WeekendCardViewP
     if (card.id === 'weekend_cramming_sprint') {
       return (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-          +1 Lesson 🎓, +2 🧠, -4 💪
+          +1 Lesson 🎓, -1 💪, -2 🧠
         </span>
       );
     }
     if (card.id === 'weekend_overtime_grind') {
       return (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-          +1 Exp 💼, +1 Dep 🤝, +0.2 Skill ⚡, -4 💪, -2 🧠
+          +1 Exp 💼, +1 Dep 🤝, +0.2 Skill ⚡, -1 💪, -2 🧠
         </span>
       );
     }

@@ -310,51 +310,9 @@ export function processAdvancedMaintenanceAndDecay(
     ensurePlayerCurios(player, state.turn);
   }
 
-  // 5c. Caffeine Tolerance & Half-Life Decay (Advanced 2000)
+  // 5c. Streamlined Caffeine System: negative tolerance/withdrawal effects deferred
   if (state.rules.enableCaffeineSystem) {
-    const intake = previousPlayer?.turnFlags?.caffeineIntake
-      ?? (previousPlayer?.turnFlags?.coffeeCupsThisTurn ? previousPlayer.turnFlags.coffeeCupsThisTurn * 10 : 0);
-    const oldTol = player.caffeineTolerance || 0;
-    const newTol = Math.min(10, Math.floor((oldTol + intake) / 2));
-    player.caffeineTolerance = newTol;
-
-    if (newTol !== oldTol) {
-      player.turnEvents.push({
-        key: 'events.caffeine_tolerance_update',
-        params: { oldTol, intake, newTol },
-        modifications: [
-          { stat: 'caffeineTolerance', diff: newTol - oldTol }
-        ]
-      });
-    }
-
-    // Detox Withdrawal: Going cold turkey (0 intake) while harboring significant tolerance
-    if (intake === 0 && oldTol >= 3) {
-      if (oldTol >= 6) {
-        // Severe crash: chronic dependency drained stamina and disrupted sleep
-        const physDrop = 1;
-        const mentalDrop = 2;
-        player.physicalCondition = Math.max(player.minPhysicalCondition ?? 1, (player.physicalCondition ?? 50) - physDrop);
-        player.mentalCondition = Math.max(player.mentalConditionMin ?? 1, (player.mentalCondition ?? 50) - mentalDrop);
-        player.turnEvents.push({
-          key: 'events.caffeine_withdrawal_severe',
-          modifications: [
-            { stat: 'physical', diff: -physDrop },
-            { stat: 'mental', diff: -mentalDrop }
-          ]
-        });
-      } else {
-        // Moderate withdrawal: headaches and irritability from missing caffeine fix
-        const mentalDrop = 1;
-        player.mentalCondition = Math.max(player.mentalConditionMin ?? 1, (player.mentalCondition ?? 50) - mentalDrop);
-        player.turnEvents.push({
-          key: 'events.caffeine_withdrawal',
-          modifications: [
-            { stat: 'mental', diff: -mentalDrop }
-          ]
-        });
-      }
-    }
+    player.caffeineTolerance = 0;
   }
 
   // 6. Computer Profits (Advanced: Money + Morale + optional Tech Skill)

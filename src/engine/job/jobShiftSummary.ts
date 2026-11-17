@@ -1,7 +1,7 @@
 import type { PlayerState, GameRules } from '../gameState';
 import type { JobDef, EducationDef, CampaignBundle } from '../dataLoader';
 import { isAdvancedVersion, isAdvancedStatRules, requireAdvancedStatRules, type StatRules, type AdvancedStatRules } from '../rules';
-import { roundToResolution, calcMaxSkillCap, formatHours } from '../statMath';
+import { roundToResolution, calcMaxSkillCap, formatHours, calcCaffeineBuffer } from '../statMath';
 import {
   hasJobTag,
   getJobPhysicalCostModifier,
@@ -128,11 +128,8 @@ export function calcWorkShiftSummary(
 
   const isOvertimeShift = actionCount >= overtimeThreshold;
   const isHeavyGrindShift = actionCount >= grindThreshold && hasJobTag(job, 'heavy_physical');
-  const isCaffeineActive = Boolean(rules?.enableCaffeineSystem && (player.turnFlags?.caffeineIntake || 0) > 0);
-  const isCaffeineRedlinePhys = isCaffeineActive && curPhys < 15;
-  const isCaffeineRedlineMental = isCaffeineActive && curMental < 15;
-  const maxPhysDropText = useConditions && (isOvertimeShift || isHeavyGrindShift || isCaffeineRedlinePhys) ? ', -0.5 Max 💪' : '';
-  const maxMentalDropText = useConditions && isCaffeineRedlineMental ? ', -1 Max 🧠' : '';
+  const maxPhysDropText = useConditions && (isOvertimeShift || isHeavyGrindShift) ? ', -0.5 Max 💪' : '';
+  const maxMentalDropText = '';
 
   const isSkillTechCappedSummary = Boolean(
     useConditions &&
@@ -277,9 +274,7 @@ export function calcWorkShiftSummary(
     ? getNewJobMistakeChance(job, playerExp, actionCount, statRules)
     : 0;
 
-  const caffeineBuffer = rules?.enableCaffeineSystem
-    ? Math.max(0, (player.turnFlags?.caffeineIntake || 0) - (player.caffeineTolerance || 0))
-    : 0;
+  const caffeineBuffer = calcCaffeineBuffer(player, rules);
   const effectivePhys = Math.min(player.physicalConditionMax ?? 50, curPhys + caffeineBuffer);
   const effectiveMental = Math.min(player.mentalConditionMax ?? 50, curMental + caffeineBuffer);
 
@@ -900,9 +895,9 @@ export function getWorkShiftModifiers(
     });
   }
 
-  // 9b. Caffeine Shield & Redline Burnout
-  if (effectiveRules?.enableCaffeineSystem && (player.turnFlags?.caffeineIntake || 0) > 0) {
-    const buf = Math.max(0, (player.turnFlags?.caffeineIntake || 0) - (player.caffeineTolerance || 0));
+  // 9b. Caffeine Shield
+  if (effectiveRules?.enableCaffeineSystem) {
+    const buf = calcCaffeineBuffer(player, effectiveRules);
     if (buf > 0) {
       badges.push({
         key: 'caffeine_shield',
@@ -912,20 +907,6 @@ export function getWorkShiftModifiers(
         border: 'rgba(56, 189, 248, 0.45)',
         type: 'reward'
       });
-    }
-    if (useConditions && (m.id === 'work_work' || m.id === 'show_initiative' || m.id === 'innovate')) {
-      const isRedlinePhys = curPhys < 15;
-      const isRedlineMental = curMental < 15;
-      if (isRedlinePhys || isRedlineMental) {
-        badges.push({
-          key: 'caffeine_redline',
-          label: '⚠️ Redline Burnout',
-          color: '#ef4444',
-          bg: 'rgba(239, 68, 68, 0.22)',
-          border: '#ef4444',
-          type: 'warning'
-        });
-      }
     }
   }
 

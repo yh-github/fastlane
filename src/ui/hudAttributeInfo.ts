@@ -15,6 +15,8 @@ import {
   calcMaxExperience,
   calcMaxSkillCap,
   formatHours,
+  calcCaffeineBuffer,
+  hasHighCoffeeIntake,
 } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 
@@ -430,7 +432,7 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
           defaultValue: 'Psychological well-being, focus, and stress resistance. Low morale causes burnout, work mistakes, and demerits.'
         }),
         maxExplanation: t('hudInfo.mentalMax', {
-          defaultValue: `Maximum mental capacity is ${player.mentalConditionMax || 50}. Persistent stress or caffeine crashes can depress this cap.`
+          defaultValue: `Maximum mental capacity is ${player.mentalConditionMax || 50}. Persistent stress and untreated mistakes can depress this cap.`
         }),
         increases: [
           t('hudInfo.menInc1', { defaultValue: 'Leisure activities at home: listening to stereo, watching TV, or reading books' }),
@@ -439,7 +441,7 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
         ],
         decreases: [
           t('hudInfo.menDec1', { defaultValue: 'Workplace stress, appraisals, and long work hours' }),
-          t('hudInfo.menDec2', { defaultValue: 'Caffeine withdrawal, fog, and crash effects' }),
+          t('hudInfo.menDec2', { defaultValue: 'Exhausting weekend sprints and neglected rest' }),
           t('hudInfo.menDec3', { defaultValue: 'Debt pressure from overdue loans or pending rent eviction' }),
           t('hudInfo.menDec4', { defaultValue: 'Trauma from muggings or living in dirty apartments' }),
         ],
@@ -517,46 +519,43 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
         logFilter: 'social',
       };
 
-    case 'caffeine':
-      const tol = player.caffeineTolerance ?? 0;
+    case 'caffeine': {
       const intake = player.turnFlags?.caffeineIntake ?? 0;
-      const buf = Math.max(0, intake - tol);
-      const nextTol = Math.floor((tol + intake) / 2);
+      const cups = player.turnFlags?.coffeeCupsThisTurn ?? Math.floor(intake / 5);
+      const buf = calcCaffeineBuffer(player, rules);
+      const isHighCoffee = hasHighCoffeeIntake(player, rules);
       return {
         id: 'caffeine',
-        name: t('stats.caffeineTolerance', { defaultValue: 'Caffeine Tolerance' }),
-        category: t('hudInfo.categoryLife', { defaultValue: 'Habit & Fatigue' }),
+        name: t('stats.caffeineBoost', { defaultValue: 'Coffee Focus Boost' }),
+        category: t('hudInfo.categoryLife', { defaultValue: 'Focus & Energy' }),
         icon: '☕',
-        currentValue: tol,
+        currentValue: buf,
         maxValue: 10,
-        currentFormatted: buf > 0 ? `+${buf} (Tol ${tol})` : `${tol}`,
+        currentFormatted: buf > 0 ? `+${buf} (${cups} cup${cups === 1 ? '' : 's'})` : '0',
         maxFormatted: '10',
-        percentage: Math.min(100, Math.round((tol / 10) * 100)),
-        statusBadge: intake > 20
-          ? t('hudInfo.caffeineOverdose', { defaultValue: 'Overdose (>20)' })
-          : (buf >= 12
-          ? t('hudInfo.caffeineSprint', { defaultValue: 'Wired (Sprint)' })
+        percentage: Math.min(100, Math.round((buf / 10) * 100)),
+        statusBadge: isHighCoffee
+          ? t('hudInfo.caffeineSprint', { defaultValue: 'Sprint Ready' })
           : (buf > 0
           ? t('hudInfo.caffeineShield', { defaultValue: `Shield +${buf}` })
-          : (tol >= 6
-          ? t('hudInfo.caffeineWithdrawal', { defaultValue: 'Withdrawal' })
-          : (tol >= 3 ? t('hudInfo.caffeineFog', { defaultValue: 'Brain Fog' }) : undefined)))),
-        statusColor: intake > 20 ? '#ff3333' : (buf > 0 ? '#2ecc71' : (tol >= 6 ? '#e67e22' : undefined)),
+          : undefined),
+        statusColor: buf > 0 ? '#2ecc71' : undefined,
         description: t('hudInfo.caffeineDesc', {
-          defaultValue: `Weekly Intake: ${intake} | Tolerance: ${tol} | Net Mistake Buffer: +${buf}. Projected Next Turn Tolerance: ${nextTol}.`
+          defaultValue: `Cups this week: ${cups} | Mistake Buffer: +${buf}/10.${isHighCoffee ? ' High coffee intake achieved: Special Weekend Sprint unlocked!' : ' Drink 2+ cups to unlock a Special Weekend Sprint.'}`
         }),
         maxExplanation: t('hudInfo.caffeineMax', {
-          defaultValue: 'Mistake Buffer = max(0, Intake - Tolerance). Tolerance reduces buffer point-for-point. Intake > 20 causes Overdose, damaging Max Physical and Max Mental.'
+          defaultValue: 'Each cup of Fresh Drip Coffee adds +5 Mistake Buffer (capped at +10). 1st cup also grants +1 Physical & +2 Mental. Drinking 2+ cups unlocks a Special Weekend Sprint (-1 Phys, -2 Mental).'
         }),
         increases: [
-          t('hudInfo.cafInc1', { defaultValue: 'Consuming weekly coffee rations increases Intake (Drip +10, Espresso +18, Double Shot +28)' }),
-          t('hudInfo.cafInc2', { defaultValue: 'Tolerance updates at turn boundary: floor((Tolerance + Intake) / 2)' }),
+          t('hudInfo.cafInc1', { defaultValue: 'Drinking Fresh Drip Coffee (+5 Mistake Buffer per cup, capped at +10)' }),
+          t('hudInfo.cafInc2', { defaultValue: 'Drinking 2+ cups in a week unlocks a Special Weekend Sprint card' }),
         ],
         decreases: [
-          t('hudInfo.cafDec1', { defaultValue: 'Refraining from coffee (0 intake) halves tolerance at turn boundary: floor(Tolerance / 2)' }),
+          t('hudInfo.cafDec1', { defaultValue: 'Resets to 0 at the start of each new week' }),
         ],
         logFilter: 'caffeine',
       };
+    }
 
     case 'relaxation':
       const relaxationMax = player.relaxationMax ?? campaign?.config?.statRules?.maxRelaxation ?? 50;

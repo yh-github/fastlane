@@ -4,7 +4,7 @@ import type { ReplayContext } from '../replayTypes';
 import { requireConfig, requireAdvancedStatRules } from '../rules';
 import { enrollInDegree, buyEducationCredit, study, calcRequiredLessons, formatDegreeProgress, getPrerequisiteChainDepth } from '../educationEngine';
 import { spendHours } from '../timeManager';
-import { roundToResolution } from '../statMath';
+import { roundToResolution, calcCaffeineBuffer } from '../statMath';
 import { resolveDecision } from '../replayTypes';
 import { applyHappinessChange } from '../statEffects';
 
@@ -91,9 +91,7 @@ export function handleStudyAction(
       let physMistake = false;
       let mentalMistake = false;
 
-      const caffeineBuffer = context.rules.enableCaffeineSystem
-        ? Math.max(0, (nextPlayer.turnFlags?.caffeineIntake || 0) - (nextPlayer.caffeineTolerance || 0))
-        : 0;
+      const caffeineBuffer = calcCaffeineBuffer(nextPlayer, context.rules);
       const effectivePhys = Math.min(nextPlayer.physicalConditionMax ?? 50, curPhys + caffeineBuffer);
       const effectiveMental = Math.min(nextPlayer.mentalConditionMax ?? 50, curMental + caffeineBuffer);
 

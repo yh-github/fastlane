@@ -4,7 +4,7 @@ import { TEST_BASE_GAME_RULES, TEST_ADVANCED_CAMPAIGN_CONFIG } from './testFacto
 import { gameReducer, type ReducerContext } from './gameReducer';
 import { type CampaignBundle } from './dataLoader';
 import { Random } from '../utils/rng';
-import { calcDependabilityDecay, calcEmployabilityScore } from './statMath';
+import { calcDependabilityDecay, calcEmployabilityScore, calcCaffeineBuffer, hasHighCoffeeIntake } from './statMath';
 import { workShift } from './jobEngine';
 import { processDoctorVisit } from './eventEngine';
 
@@ -510,6 +510,73 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(updated.physicalCondition).toBe(9); // 5 + 4 (bounce back)
       expect(updated.money).toBe(0);
       expect(updated.loanDebt).toBe(400); // 500 - 100 paid = 400 loan debt
+    });
+  });
+
+  describe('Streamlined Coffee System', () => {
+    it('grants +1 Phys / +2 Mental on 1st cup, +5 buffer per cup capped at +10, and no negative overdose/tolerance penalties', () => {
+      const caffRules = { ...rules, enableCaffeineSystem: true };
+      const caffCampaign: CampaignBundle = {
+        ...campaign,
+        items: [
+          {
+            id: 'drip_coffee',
+            name: 'Fresh Drip Coffee',
+            category: 'coffee',
+            subcategory: 'coffee',
+            basePrice: 25,
+            caffeineUnits: 5,
+            happinessBonus: 0,
+            mentalBonus: 2,
+            description: 'Coffee'
+          }
+        ],
+        buildings: [
+          {
+            id: 'red_pirate',
+            name: 'The Red Pirate',
+            archetype: 'restaurant',
+            spritePath: 'images/burger_palace.png',
+            description: 'Red Pirate',
+            inventory: [{ itemId: 'drip_coffee', priceOverride: 25 }]
+          }
+        ]
+      };
+
+      player.position = 'node_diner';
+      player.physicalCondition = 30;
+      player.physicalConditionMax = 50;
+      player.mentalCondition = 30;
+      player.mentalConditionMax = 50;
+
+      const caffContext: ReducerContext = { ...context, rules: caffRules, campaign: caffCampaign };
+
+      // 1st cup: +1 Phys, +2 Mental, +5 buffer, not yet high coffee
+      const cup1 = gameReducer(player, { type: 'buy', itemId: 'drip_coffee' }, caffContext).updatedPlayer;
+      expect(cup1.physicalCondition).toBe(31);
+      expect(cup1.mentalCondition).toBe(32);
+      expect(cup1.turnFlags.coffeeCupsThisTurn).toBe(1);
+      expect(calcCaffeineBuffer(cup1, caffRules)).toBe(5);
+      expect(hasHighCoffeeIntake(cup1, caffRules)).toBe(false);
+
+      // 2nd cup: no extra condition boost, +10 buffer, unlocks high coffee
+      const cup2 = gameReducer(cup1, { type: 'buy', itemId: 'drip_coffee' }, caffContext).updatedPlayer;
+      expect(cup2.physicalCondition).toBe(31);
+      expect(cup2.mentalCondition).toBe(32);
+      expect(cup2.turnFlags.coffeeCupsThisTurn).toBe(2);
+      expect(calcCaffeineBuffer(cup2, caffRules)).toBe(10);
+      expect(hasHighCoffeeIntake(cup2, caffRules)).toBe(true);
+
+      // 3rd+ cup: buffer stays capped at +10, no max-stat overdose penalty
+      const cup3 = gameReducer(cup2, { type: 'buy', itemId: 'drip_coffee' }, caffContext).updatedPlayer;
+      const cup5 = gameReducer(
+        gameReducer(cup3, { type: 'buy', itemId: 'drip_coffee' }, caffContext).updatedPlayer,
+        { type: 'buy', itemId: 'drip_coffee' },
+        caffContext
+      ).updatedPlayer;
+      expect(calcCaffeineBuffer(cup5, caffRules)).toBe(10);
+      expect(cup5.physicalConditionMax).toBe(50);
+      expect(cup5.mentalConditionMax).toBe(50);
     });
   });
 });

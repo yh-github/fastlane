@@ -279,13 +279,13 @@ describe('HUD Improvement Integration: Hover Tooltips & Info Cards Across All Ve
     const empValue = empBadge.querySelector('.stat-badge__value');
     expect(empValue?.getAttribute('title')).toContain('Employability:');
 
-    // Click Caffeine badge in right column
-    const cafBadge = screen.getByTitle('Caffeine');
+    // Click Coffee badge in right column
+    const cafBadge = screen.getByTitle('Coffee');
     fireEvent.click(cafBadge);
 
     expect(screen.getByTestId('hud-info-modal')).toBeInTheDocument();
-    expect(screen.getByText('Caffeine Tolerance')).toBeInTheDocument();
-    expect(screen.getByTestId('hud-info-current').textContent).toBe('4');
+    expect(screen.getByText('Coffee Focus Boost')).toBeInTheDocument();
+    expect(screen.getByTestId('hud-info-current').textContent).toBe('0');
     expect(screen.getByTestId('hud-info-max').textContent).toBe('10');
 
     // Close info card

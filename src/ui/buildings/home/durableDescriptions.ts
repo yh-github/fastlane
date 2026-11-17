@@ -118,13 +118,8 @@ export function getGameplayDescription(id: string, rules?: GameRules, isBook?: b
         ? 'Collectibles salvaged from pawn shop rummage bins. Furnishes aesthetic charm (+2.8 × √Count, max +15) and triggers weekend appraisal events.'
         : 'Collectibles salvaged from pawn shop rummage bins. Unique knick-knacks for your home shelves.';
     case 'drip_coffee':
-      return 'Fresh drip coffee ration. Keeps the morning fog away, provides a caffeine buffer against work mistakes, and sharpens basic focus.';
-    case 'espresso':
-      return 'Espresso shot ration. Concentrated caffeine that cuts through fatigue and maintains sharp cognitive vigilance during demanding shifts.';
-    case 'double_shot':
-      return 'Heavy-duty double shot espresso ration for grueling shifts, intense study sessions, and exam sprints.';
     case 'coffee':
-      return 'Freshly brewed coffee ration. Restores focus and raises caffeine buffer to mitigate work mistakes.';
+      return 'Weekly coffee ration. Grants +1 Physical & +2 Mental on your 1st cup, adds +5 Mistake Buffer per cup (up to +10), and 2+ cups unlocks a Special Weekend Sprint.';
     default:
       return 'A quality piece of home furnishings that elevates your standard of living and makes your apartment feel like home.';
   }

@@ -71,34 +71,10 @@
     "category": "coffee",
     "subcategory": "coffee",
     "basePrice": 25,
-    "caffeineUnits": 10,
+    "caffeineUnits": 5,
     "happinessBonus": 0,
     "mentalBonus": 2,
-    "description": "Weekly morning drip coffee ration. Keeps the fog away and sharpens basic focus.",
-    "effects": []
-  },
-  {
-    "id": "espresso",
-    "name": "Espresso Shot",
-    "category": "coffee",
-    "subcategory": "coffee",
-    "basePrice": 45,
-    "caffeineUnits": 18,
-    "happinessBonus": 0,
-    "mentalBonus": 3,
-    "description": "Weekly daily espresso ration. Cuts through fatigue and maintains sharp cognitive vigilance.",
-    "effects": []
-  },
-  {
-    "id": "double_shot",
-    "name": "Double Shot Espresso",
-    "category": "coffee",
-    "subcategory": "coffee",
-    "basePrice": 70,
-    "caffeineUnits": 28,
-    "happinessBonus": 0,
-    "mentalBonus": 4,
-    "description": "Heavy-duty daily double espresso ration for grueling shifts and exam sprints.",
+    "description": "Weekly coffee ration (+1 Phys, +2 Mental on 1st cup). Adds +5 Mistake Buffer per cup (max +10); 2+ cups unlocks a Weekend Sprint.",
     "effects": []
   },
   {

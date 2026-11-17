@@ -374,12 +374,11 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     expect(screen.queryByText(/Nutrition happiness/i)).not.toBeInTheDocument();
   });
 
-  it('HelpfulGUI displays Caffeine tolerance and status on Dashboard and ItemCardModal', () => {
+  it('HelpfulGUI displays Coffee boost and status on Dashboard and ItemCardModal', () => {
     const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_burger', campaign2000.config);
-    player.caffeineTolerance = 7;
-    player.turnFlags = { ...player.turnFlags, coffeeCupsThisTurn: 1 };
+    player.turnFlags = { ...player.turnFlags, coffeeCupsThisTurn: 1, caffeineIntake: 5 };
 
-    // 1. Dashboard displays caffeine badge with withdrawal warning
+    // 1. Dashboard displays coffee buffer badge
     const { unmount } = render(
       <Dashboard
         player={player}
@@ -397,11 +396,11 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
       />
     );
 
-    expect(screen.getByText('7/10')).toBeInTheDocument();
-    expect(screen.getByText('Withdrawal')).toBeInTheDocument();
+    expect(screen.getByText('+5 (1☕)')).toBeInTheDocument();
+    expect(screen.getByText('+5 Shield')).toBeInTheDocument();
     unmount();
 
-    // 2. Coffee card in shop under helpfulUI presents mistake buffer shift and tolerance forecast
+    // 2. Coffee card in shop under helpfulUI presents mistake buffer shift and sprint unlock
     const dripCoffee = campaign2000.items.find(i => i.id === 'drip_coffee')!;
     render(
       <ItemCardModal
@@ -416,7 +415,7 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
       />
     );
 
-    expect(screen.getByText(/Mistake Buffer: \+0 → \+3/i)).toBeInTheDocument();
-    expect(screen.getByText(/Next Turn Tolerance: 7 → 8/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mistake Buffer: \+5 → \+10/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unlocks Weekend Sprint \(-1 💪, -2 🧠\)/i)).toBeInTheDocument();
   });
 });

@@ -7,7 +7,7 @@ import type { GameAction } from '../../../engine/actions/types';
 import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../../../engine/actions/maintenanceActions';
 import { calcItemPrice, calcEconomyPrice } from '../../../engine/economyEngine';
 import { calcBulkGroceryBasePrice } from '../../../engine/actions/shoppingActions';
-import { calcUsedSpace, calcHousingSpaceCap } from '../../../engine/statMath';
+import { calcUsedSpace, calcHousingSpaceCap, calcCaffeineBuffer, hasHighCoffeeIntake } from '../../../engine/statMath';
 import { getItemDisplayName } from '../../../utils/itemUtils';
 import { MessIcon } from '../../icons/MessIcon';
 import { previewAction } from '../../../engine/actionPreview';
@@ -79,9 +79,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   const isCoffee = Boolean(
     itemDef?.category === 'coffee' ||
     itemDef?.subcategory === 'coffee' ||
-    itemId === 'drip_coffee' ||
-    itemId === 'espresso' ||
-    itemId === 'double_shot'
+    itemId === 'drip_coffee'
   );
 
   const currentAppliance = isBook 
@@ -169,11 +167,11 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     ownedCount = weeks;
     ownershipDetailText = isOwned ? `✓ Owned (${weeks} wks left)` : t('storeFront.notOwned', { defaultValue: 'Not Owned' });
   } else if (isCoffee) {
-    const cups = player?.turnFlags?.coffeeCupsThisTurn || 0;
-    const intake = player?.turnFlags?.caffeineIntake || 0;
+    const cups = player?.turnFlags?.coffeeCupsThisTurn ?? Math.floor((player?.turnFlags?.caffeineIntake || 0) / 5);
+    const buf = calcCaffeineBuffer(player, rules);
     isOwned = false;
     ownedCount = cups;
-    ownershipDetailText = intake > 0 ? `☕ Intake this week: ${intake} (${cups} ration${cups > 1 ? 's' : ''})` : '☕ Consumed immediately';
+    ownershipDetailText = cups > 0 ? `☕ Cups this week: ${cups} (Buffer +${buf}/10)` : '☕ Consumed immediately';
   } else if (itemDef?.category === 'food') {
     if (itemDef.subcategory === 'fast_food') {
       ownedCount = player?.inventory.fastFoodItems.filter(f => f.itemId === itemId).length || 0;
@@ -336,38 +334,39 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   }
 
   if (isCoffee) {
-    const itemCaffeine = itemDef?.caffeineUnits ?? (itemId === 'double_shot' ? 28 : (itemId === 'espresso' ? 18 : 10));
-    effectBadges.push({ label: `☕ +${itemCaffeine} Caffeine Weekly Ration` });
+    const itemCaffeine = itemDef?.caffeineUnits ?? 5;
+    effectBadges.push({ label: `☕ +${itemCaffeine} Mistake Buffer per cup (max +10)` });
 
     const intake = player?.turnFlags?.caffeineIntake ?? 0;
+    const cups = player?.turnFlags?.coffeeCupsThisTurn ?? Math.floor(intake / 5);
     const isFirstCoffee = intake === 0;
     if (isFirstCoffee) {
-      const physBonus = itemId === 'double_shot' ? '+2' : (itemId === 'espresso' ? '+1.5' : '+1');
-      const mentBonus = itemId === 'double_shot' ? '+4' : (itemId === 'espresso' ? '+3' : '+2');
-      effectBadges.push({ label: `🎁 1st Purchase: ${physBonus} 💪, ${mentBonus} 🧠 Comfort Boost`, isOneTime: true });
+      effectBadges.push({ label: '🎁 1st Cup: +1 💪, +2 🧠 Comfort Boost', isOneTime: true });
     } else {
-      effectBadges.push({ label: '☕ Comfort boost already claimed this week' });
+      effectBadges.push({ label: '☕ 1st-cup boost already claimed this week' });
     }
 
     if (rules?.enableCaffeineSystem) {
-      const tol = player?.caffeineTolerance || 0;
-      const curBuf = Math.max(0, intake - tol);
+      const curBuf = calcCaffeineBuffer(player, rules);
       const newIntake = intake + itemCaffeine;
-      const newBuf = Math.max(0, newIntake - tol);
-      const nextTol = Math.floor((tol + newIntake) / 2);
+      const newCups = cups + 1;
+      const newBuf = Math.min(10, newIntake);
+      const alreadyHigh = hasHighCoffeeIntake(player, rules);
 
       if (rules?.helpfulUI) {
-        effectBadges.push({ label: `🛡️ Mistake Buffer: +${curBuf} → +${newBuf}` });
-
-        if (newIntake > 20) {
-          effectBadges.push({ label: '⚠️ Overdose (>20 ☕): -1 Max 💪, -1 Max 🧠 on buy' });
-        } else if (newIntake >= 18 || newBuf >= 12) {
-          effectBadges.push({ label: '🔥 Unlocks Weekend Sprint Card' });
+        if (curBuf >= 10) {
+          effectBadges.push({ label: '🛡️ Mistake Buffer already at max (+10)' });
+        } else {
+          effectBadges.push({ label: `🛡️ Mistake Buffer: +${curBuf} → +${newBuf}` });
         }
 
-        effectBadges.push({ label: `📉 Next Turn Tolerance: ${tol} → ${nextTol}` });
-      } else if (tol > 0) {
-        effectBadges.push({ label: `☕ Tolerance: ${tol}/10` });
+        if (alreadyHigh) {
+          effectBadges.push({ label: '🔥 Weekend Sprint already unlocked (-1 💪, -2 🧠)' });
+        } else if (newCups >= 2 || newIntake >= 10) {
+          effectBadges.push({ label: '🔥 Unlocks Weekend Sprint (-1 💪, -2 🧠)' });
+        } else {
+          effectBadges.push({ label: '🔥 Drink 2 cups this week to unlock Weekend Sprint' });
+        }
       }
     }
   }

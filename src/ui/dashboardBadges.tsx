@@ -11,6 +11,8 @@ import {
   calcMaxDependability,
   calcMaxExperience,
   calcMaxSkillCap,
+  calcCaffeineBuffer,
+  hasHighCoffeeIntake,
 } from '../engine/statMath';
 import { calcLiquidAssets } from '../engine/economyEngine';
 import type { GoalFilter } from '../utils/logCategorizer';
@@ -361,28 +363,24 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     }
 
     if (rules.enableCaffeineSystem && rules.helpfulUI) {
-      const tol = player.caffeineTolerance ?? 0;
       const intake = player.turnFlags?.caffeineIntake ?? 0;
-      const buf = Math.max(0, intake - tol);
-      const isDanger = intake > 20 || tol >= 9;
-      const isWarning = intake >= 18 || tol >= 6;
+      const cups = player.turnFlags?.coffeeCupsThisTurn ?? Math.floor(intake / 5);
+      const buf = calcCaffeineBuffer(player, rules);
+      const isHighCoffee = hasHighCoffeeIntake(player, rules);
       let badgeStatus: string | undefined;
-      if (intake > 20) badgeStatus = 'Overdose';
-      else if (buf >= 12) badgeStatus = 'Sprint';
-      else if (buf > 0) badgeStatus = `+${buf} Buf`;
-      else if (tol >= 6) badgeStatus = 'Withdrawal';
-      else if (tol >= 3) badgeStatus = 'Fog';
+      if (isHighCoffee) badgeStatus = 'Sprint Ready';
+      else if (buf > 0) badgeStatus = `+${buf} Shield`;
 
-      const cafLabel = t('dashboard.caffeine', { defaultValue: 'Caffeine' });
-      const displayVal = buf > 0 ? `+${buf} (${tol} tol)` : `${tol}/10`;
+      const cafLabel = t('dashboard.caffeine', { defaultValue: 'Coffee' });
+      const displayVal = buf > 0 ? `+${buf} (${cups}☕)` : '0☕';
       lifeBadges.push({
         id: 'stat-caffeine',
         label: cafLabel,
         value: displayVal,
         icon: '☕',
-        hoverText: `${cafLabel}: Intake ${intake}, Tolerance ${tol}, Mistake Buffer +${buf}`,
-        danger: isDanger,
-        warning: isWarning,
+        hoverText: `${cafLabel}: ${cups} cup(s), Mistake Buffer +${buf}/10${isHighCoffee ? ' (Weekend Sprint unlocked)' : ''}`,
+        danger: false,
+        warning: false,
         badge: badgeStatus,
         onClick: onOpenAttributeCard ? () => onOpenAttributeCard('caffeine') : undefined,
       });

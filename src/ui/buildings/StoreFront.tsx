@@ -144,9 +144,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
           const isCoffeeItem = Boolean(
             item.category === 'coffee' ||
             item.subcategory === 'coffee' ||
-            item.id === 'drip_coffee' ||
-            item.id === 'espresso' ||
-            item.id === 'double_shot'
+            item.id === 'drip_coffee'
           );
           const shouldOpenCard = Boolean(
             rules?.helpfulUI ||

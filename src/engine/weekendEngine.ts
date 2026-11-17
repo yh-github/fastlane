@@ -4,7 +4,7 @@ import { applyHappinessChange } from './statEffects';
 import type { PlayerState, GameEvent, GameRules, WeekendCard, WeekendDeckTier, StatModification } from './gameState';
 import { type StatRules, isAdvancedStatRules } from './rules';
 import { calcRequiredLessons } from './educationEngine';
-import { roundToResolution } from './statMath';
+import { roundToResolution, hasHighCoffeeIntake } from './statMath';
 
 // Helper to determine cost based on price range
 function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number, rng: Random): number {
@@ -187,6 +187,22 @@ export function generateWeekendChoices(
   else if (tickets.theatre > 0 && weekendData.ticketWeekends?.theatre) heldTicketType = 'theatre';
   else if (tickets.concert > 0 && weekendData.ticketWeekends?.concert) heldTicketType = 'concert';
 
+  const isCaffeineRule = Boolean(rules?.enableCaffeineSystem ?? campaign?.config?.gameRules?.enableCaffeineSystem);
+  const coffeeSourcePlayer = previousPlayer ?? player;
+  const isSprintEligible = hasHighCoffeeIntake(coffeeSourcePlayer, { enableCaffeineSystem: isCaffeineRule });
+  const hasEnrolledClasses = Object.keys(player.enrolledClasses || {}).length > 0;
+  const hasJob = player.currentJobId !== null;
+  const pickSprintCard = (): WeekendCard | null => {
+    if (!isSprintEligible || (!hasEnrolledClasses && !hasJob)) return null;
+    let sprintCardId = 'weekend_cramming_sprint';
+    if (hasJob && !hasEnrolledClasses) {
+      sprintCardId = 'weekend_overtime_grind';
+    } else if (hasJob && hasEnrolledClasses) {
+      sprintCardId = rng.next() < 0.5 ? 'weekend_cramming_sprint' : 'weekend_overtime_grind';
+    }
+    return buildCardFromId(sprintCardId, 'free', weekendData, updatedPlayer, rng);
+  };
+
   // 1. Broke players without tickets (money < 5): Offer exactly two distinct $0 cards from the free pool
   if (updatedPlayer.money < 5 && !heldTicketType) {
     if (!decks.free || decks.free.drawPile.length < 2) {
@@ -198,11 +214,11 @@ export function generateWeekendChoices(
         discardPile: []
       };
     }
+    const sprintCard = pickSprintCard();
     const id1 = decks.free.drawPile.pop() || 'free_stay_home';
-    const id2 = decks.free.drawPile.pop() || 'free_deep_clean';
     const card1 = buildCardFromId(id1, 'free', weekendData, updatedPlayer, rng);
-    const card2 = buildCardFromId(id2, 'free', weekendData, updatedPlayer, rng);
-    const brokeCards = [card1, card2];
+    const card2 = sprintCard ?? buildCardFromId(decks.free.drawPile.pop() || 'free_deep_clean', 'free', weekendData, updatedPlayer, rng);
+    const brokeCards = sprintCard ? [sprintCard, card1] : [card1, card2];
     updatedPlayer.offeredWeekendCards = brokeCards;
     return { player: updatedPlayer, cards: brokeCards };
   }
@@ -223,26 +239,12 @@ export function generateWeekendChoices(
     }
   }
 
-  // 2b. High-Caffeine Weekend Sprint Guarantee (Advanced 2000)
-  const isCaffeineRule = Boolean(rules?.enableCaffeineSystem ?? campaign?.config?.gameRules?.enableCaffeineSystem);
-  const intake = previousPlayer?.turnFlags?.caffeineIntake
-    ?? player.turnFlags?.caffeineIntake
-    ?? (previousPlayer?.turnFlags?.coffeeCupsThisTurn ? previousPlayer.turnFlags.coffeeCupsThisTurn * 10 : 0);
-  const tol = previousPlayer?.caffeineTolerance ?? player.caffeineTolerance ?? 0;
-  const netBuffer = Math.max(0, intake - tol);
-  const isSprintEligible = isCaffeineRule && (intake >= 18 || netBuffer >= 12);
-
-  if (isSprintEligible && drawnCards.length < 3) {
-    const hasEnrolledClasses = Object.keys(player.enrolledClasses || {}).length > 0;
-    const hasJob = player.currentJobId !== null;
-    let sprintCardId = 'weekend_cramming_sprint';
-    if (hasJob && !hasEnrolledClasses) {
-      sprintCardId = 'weekend_overtime_grind';
-    } else if (hasJob && hasEnrolledClasses) {
-      sprintCardId = rng.next() < 0.5 ? 'weekend_cramming_sprint' : 'weekend_overtime_grind';
+  // 2b. High-Coffee Weekend Sprint Guarantee (Advanced 2000)
+  if (drawnCards.length < 3) {
+    const sprintCard = pickSprintCard();
+    if (sprintCard) {
+      drawnCards.push(sprintCard);
     }
-    const sprintCard = buildCardFromId(sprintCardId, 'expensive', weekendData, updatedPlayer, rng);
-    drawnCards.push(sprintCard);
   }
 
   const slotsNeeded = 3 - drawnCards.length;
@@ -462,14 +464,17 @@ function maintainDecksOnChoice(
   allCards: WeekendCard[],
   rng: Random
 ): void {
+  const isSpecialSprint = (c: WeekendCard) =>
+    c.id === 'weekend_cramming_sprint' || c.id === 'weekend_overtime_grind';
+
   if (player.weekendDecks) {
     const chosenTier = chosenCard.tier;
-    if (chosenTier && player.weekendDecks[chosenTier]) {
+    if (chosenTier && player.weekendDecks[chosenTier] && !isSpecialSprint(chosenCard)) {
       player.weekendDecks[chosenTier].discardPile.push(chosenCard.id);
     }
 
     for (const other of allCards) {
-      if (other.id !== chosenCard.id && other.type !== 'ticket' && other.type !== 'ticket_resale') {
+      if (other.id !== chosenCard.id && other.type !== 'ticket' && other.type !== 'ticket_resale' && !isSpecialSprint(other)) {
         const oTier = other.tier;
         if (oTier && player.weekendDecks[oTier]) {
           player.weekendDecks[oTier].drawPile.push(other.id);
@@ -744,24 +749,19 @@ export function resolveWeekendChoice(
     return finalizeWeekendResult(cost, mentalBonus, acquiredSouvenir);
   }
 
-  // 6b. Handle High-Caffeine Weekend Sprints (Advanced 2000)
+  // 6b. Handle High-Coffee Weekend Sprints (Advanced 2000)
   if (card.id === 'weekend_cramming_sprint') {
-    const rawCost = 60;
-    const cost = Math.min(rawCost, updatedPlayer.money);
-    updatedPlayer.money -= cost;
-    if (cost > 0) modifications.push({ stat: 'money', diff: -cost });
-
-    const physCost = 4;
-    const mentalBonus = 2;
+    const physCost = 1;
+    const mentalCost = 2;
 
     if (rules?.usePhysicalMentalConditions) {
       const minPhys = advStatRules?.minPhysicalCondition ?? 1;
       updatedPlayer.physicalCondition = Math.max(minPhys, (updatedPlayer.physicalCondition ?? 50) - physCost);
       modifications.push({ stat: 'physical', diff: -physCost });
 
-      const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
-      updatedPlayer.mentalCondition = Math.min(maxMental, (updatedPlayer.mentalCondition ?? 50) + mentalBonus);
-      modifications.push({ stat: 'mental', diff: mentalBonus });
+      const minMental = advStatRules?.minMentalCondition ?? 1;
+      updatedPlayer.mentalCondition = Math.max(minMental, (updatedPlayer.mentalCondition ?? 50) - mentalCost);
+      modifications.push({ stat: 'mental', diff: -mentalCost });
     }
 
     // Apply academic progress to active enrolled course
@@ -800,16 +800,11 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-    return finalizeWeekendResult(cost, mentalBonus);
+    return finalizeWeekendResult(0, 0);
   }
 
   if (card.id === 'weekend_overtime_grind') {
-    const rawCost = 50;
-    const cost = Math.min(rawCost, updatedPlayer.money);
-    updatedPlayer.money -= cost;
-    if (cost > 0) modifications.push({ stat: 'money', diff: -cost });
-
-    const physCost = 4;
+    const physCost = 1;
     const mentalCost = 2;
 
     if (rules?.usePhysicalMentalConditions) {
@@ -840,7 +835,7 @@ export function resolveWeekendChoice(
     }
 
     maintainDecksOnChoice(updatedPlayer, card, cards, rng);
-    return finalizeWeekendResult(cost, 0);
+    return finalizeWeekendResult(0, 0);
   }
 
   // 7. Regular / Paid Cards

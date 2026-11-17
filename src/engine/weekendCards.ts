@@ -93,37 +93,37 @@ export const EVENT_SOUVENIRS: Record<'baseball' | 'theatre' | 'concert', EventSo
 export const SPRINT_WEEKEND_CARDS: Record<string, WeekendCard> = {
   weekend_cramming_sprint: {
     id: 'weekend_cramming_sprint',
-    tier: 'expensive',
+    tier: 'free',
     type: 'study',
     eventKey: 'events.weekend.cramming_sprint',
     titleKey: 'weekendScreen.card.crammingSprintTitle',
     fluff: 'Wired on continuous coffee, you locked yourself in the library all weekend, power-reading textbooks and drafting thesis notes.',
     icon: '📚',
-    costMin: 60,
-    costMax: 60,
+    costMin: 0,
+    costMax: 0,
     targetStat: 'mental',
-    potentialBonusMin: 2,
-    potentialBonusMax: 2,
+    potentialBonusMin: -2,
+    potentialBonusMax: -2,
     secondaryStat: 'physical',
-    potentialSecondaryBonusMin: -4,
-    potentialSecondaryBonusMax: -4
+    potentialSecondaryBonusMin: -1,
+    potentialSecondaryBonusMax: -1
   },
   weekend_overtime_grind: {
     id: 'weekend_overtime_grind',
-    tier: 'expensive',
+    tier: 'free',
     type: 'work',
     eventKey: 'events.weekend.overtime_grind',
     titleKey: 'weekendScreen.card.overtimeGrindTitle',
     fluff: 'You answered the emergency call and spent 36 consecutive hours at the workplace tackling backlogs and covering weekend shifts.',
     icon: '💼',
-    costMin: 50,
-    costMax: 50,
-    targetStat: 'dependability',
-    potentialBonusMin: 2,
-    potentialBonusMax: 3,
+    costMin: 0,
+    costMax: 0,
+    targetStat: 'mental',
+    potentialBonusMin: -2,
+    potentialBonusMax: -2,
     secondaryStat: 'physical',
-    potentialSecondaryBonusMin: -4,
-    potentialSecondaryBonusMax: -4
+    potentialSecondaryBonusMin: -1,
+    potentialSecondaryBonusMax: -1
   }
 };
 

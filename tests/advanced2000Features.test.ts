@@ -211,40 +211,45 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       return { player, state };
     }
 
-    it('drinking coffee accumulates caffeineIntake and provides comfort boost on 1st purchase only', () => {
+    it('drinking coffee accumulates caffeineIntake (+5 per cup) and provides comfort boost on 1st purchase only', () => {
       const { player } = createTestState(0);
       const dripDef = campaign2000.items.find(i => i.id === 'drip_coffee')!;
+      expect(campaign2000.items.find(i => i.id === 'espresso')).toBeUndefined();
+      expect(campaign2000.items.find(i => i.id === 'double_shot')).toBeUndefined();
 
-      // 1st cup of the week: provides comfort boost (+1 Phys, +2 Mental) and 10 caffeine units
+      // 1st cup of the week: provides comfort boost (+1 Phys, +2 Mental) and 5 caffeine units
       const result1 = buyItem(player, dripDef, campaign2000.config.gameRules, campaign2000, 1);
-      expect(result1.updated.turnFlags.caffeineIntake).toBe(10);
+      expect(result1.updated.turnFlags.coffeeCupsThisTurn).toBe(1);
+      expect(result1.updated.turnFlags.caffeineIntake).toBe(5);
       expect(result1.updated.physicalCondition).toBe(41);
       expect(result1.updated.mentalCondition).toBe(42);
       expect(result1.updated.inventory.cannedFoodUnits).toBe(4);
       expect(result1.updated.inventory.freshFoodUnits).toBe(0);
 
-      // 2nd cup in the same week: adds 10 caffeine units (total 20), but no additional comfort boost
+      // 2nd cup in the same week: adds 5 caffeine units (total 10), no additional comfort boost
       const result2 = buyItem(result1.updated, dripDef, campaign2000.config.gameRules, campaign2000, 1);
-      expect(result2.updated.turnFlags.caffeineIntake).toBe(20);
+      expect(result2.updated.turnFlags.coffeeCupsThisTurn).toBe(2);
+      expect(result2.updated.turnFlags.caffeineIntake).toBe(10);
       expect(result2.updated.physicalCondition).toBe(41);
       expect(result2.updated.mentalCondition).toBe(42);
     });
 
-    it('overdose triggers when caffeineIntake exceeds 20, immediately docking Max Physical and Max Mental', () => {
+    it('has no negative overdose, redline burnout, or withdrawal penalties in the streamlined system', () => {
       const { player } = createTestState(0);
       player.physicalConditionMax = 50;
       player.mentalConditionMax = 50;
       player.resilienceBonus = 0;
-      const doubleDef = campaign2000.items.find(i => i.id === 'double_shot')!; // 28 units
+      const dripDef = campaign2000.items.find(i => i.id === 'drip_coffee')!;
 
-      const result = buyItem(player, doubleDef, campaign2000.config.gameRules, campaign2000, 1);
-      expect(result.updated.turnFlags.caffeineIntake).toBe(28);
-      // Overdose penalty: -1 Max Phys, -1 Max Mental (and resilienceBonus -1)
-      expect(result.updated.physicalConditionMax).toBe(49);
-      expect(result.updated.mentalConditionMax).toBe(49);
-      expect(result.updated.resilienceBonus).toBe(-1);
-      const odEvent = result.updated.turnEvents.find(e => e.key === 'events.caffeine_overdose');
-      expect(odEvent).toBeDefined();
+      // Buying 5 cups causes no overdose max-stat penalty
+      let cur = player;
+      for (let i = 0; i < 5; i++) {
+        cur = buyItem(cur, dripDef, campaign2000.config.gameRules, campaign2000, 1).updated;
+      }
+      expect(cur.turnFlags.caffeineIntake).toBe(25);
+      expect(cur.physicalConditionMax).toBe(50);
+      expect(cur.mentalConditionMax).toBe(50);
+      expect(cur.turnEvents.some(e => e.key === 'events.caffeine_overdose')).toBe(false);
     });
 
     it('caffeine buffer reduces work mistake chance without directly healing underlying fatigue', () => {
@@ -259,34 +264,34 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       const unbufferedWork = unbuffered.modes.find(o => o.id === 'work_work')!;
       expect(unbufferedWork.modifierBreakdown?.mistakeBreakdown?.some(m => m.chance > 0)).toBe(true);
 
-      // With Espresso (Intake = 18, Buffer = 18 against Tol 0):
-      player.turnFlags = { ...player.turnFlags, caffeineIntake: 18 };
+      // With 2 cups (Intake = 10, Buffer = 10):
+      player.turnFlags = { ...player.turnFlags, coffeeCupsThisTurn: 2, caffeineIntake: 10 };
       const buffered = calcWorkShiftSummary(player, cookJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
       const bufferedWork = buffered.modes.find(o => o.id === 'work_work')!;
-      // Effective phys: 8 + 18 = 26 (exceeds safety threshold 10), eliminating fatigue mistake chance
+      // Effective phys: 8 + 10 = 18 (meets base threshold 18), eliminating fatigue mistake chance
       const physMistake = bufferedWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
       expect(physMistake?.chance).toBe(0);
       // Underlying physical condition remains completely unhealed at 8
       expect(player.physicalCondition).toBe(8);
     });
 
-    it('redline burnout docks max condition when working a shift with actual condition < 15 on caffeine', () => {
+    it('working while caffeinated at condition < 15 does not inflict redline max-stat burnout', () => {
       const { player } = createTestState(0);
       const cookJob = campaign2000.jobs.find(j => j.id === 'pirate_cook')!;
       player.currentJobId = cookJob.id;
       player.currentWage = cookJob.baseWage;
       player.hoursRemaining = 40;
-      player.physicalCondition = 12; // < 15 triggers redline phys
-      player.mentalCondition = 12;   // < 15 triggers redline mental
+      player.physicalCondition = 12;
+      player.mentalCondition = 12;
       player.physicalConditionMax = 50;
       player.mentalConditionMax = 50;
       player.resilienceBonus = 0;
-      player.turnFlags = { ...player.turnFlags, caffeineIntake: 10 };
+      player.turnFlags = { ...player.turnFlags, coffeeCupsThisTurn: 2, caffeineIntake: 10 };
 
       const result = workShift(player, cookJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 'work_work');
       expect(result.success).toBe(true);
-      expect(result.updated.physicalConditionMax).toBe(49.5); // -0.5 Max Phys
-      expect(result.updated.mentalConditionMax).toBe(49);   // -1 Max Mental
+      expect(result.updated.physicalConditionMax).toBe(50);
+      expect(result.updated.mentalConditionMax).toBe(50);
     });
 
     it('calibrates mistake thresholds: normal jobs trigger below 18 while heavy_physical and executive_management trigger below 28', () => {
@@ -317,108 +322,45 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       const brokerMentalMistake = brokerWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'mental');
       expect(brokerMentalMistake?.chance).toBeCloseTo(0.15, 3);
 
-      // 4. Caffeine Sweet Spot: Consuming Drip Coffee (+10 buffer) buffers effective condition to 32 (>= 28)
-      player.turnFlags = { ...player.turnFlags, caffeineIntake: 10 };
+      // 4. Coffee Buffer: Consuming 2 cups (+10 buffer) buffers effective condition to 32 (>= 28)
+      player.turnFlags = { ...player.turnFlags, coffeeCupsThisTurn: 2, caffeineIntake: 10 };
       const bufferedHeavy = calcWorkShiftSummary(player, heavyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 0);
       const bufferedHeavyWork = bufferedHeavy.modes.find(o => o.id === 'work_work')!;
       const bufPhysMistake = bufferedHeavyWork.modifierBreakdown?.mistakeBreakdown?.find(m => m.type === 'physical');
       expect(bufPhysMistake?.chance).toBe(0);
-
-      // Because actual condition 22 >= 15, working this shift does NOT inflict Redline Burnout
-      player.currentJobId = heavyJob.id;
-      player.currentWage = heavyJob.baseWage;
-      player.hoursRemaining = 20;
-      player.physicalConditionMax = 50;
-      player.mentalConditionMax = 50;
-      const heavyShiftRes = workShift(player, heavyJob, 8, campaign2000.config.gameRules, campaign2000.config.statRules, 'work_work');
-      expect(heavyShiftRes.success).toBe(true);
-      expect(heavyShiftRes.updated.physicalConditionMax).toBe(50); // No redline penalty
-      expect(heavyShiftRes.updated.mentalConditionMax).toBe(50);
     });
 
-    it('triggers caffeine withdrawal upon detoxing (0 intake with tolerance >= 3)', () => {
-      // 1. Severe crash at high tolerance (>= 6) with 0 intake: -1 Phys, -2 Mental
-      const { player: pSevere, state: sSevere } = createTestState(6);
-      pSevere.turnFlags.caffeineIntake = 0;
-      pSevere.physicalCondition = 40;
-      pSevere.mentalCondition = 40;
-      const nextSevere = processTurnStart({ ...sSevere, players: [pSevere] }, campaign2000);
-      expect(nextSevere.players[0].caffeineTolerance).toBe(3); // floor(6/2)
-      expect(nextSevere.players[0].physicalCondition).toBe(39); // -1
-      expect(nextSevere.players[0].mentalCondition).toBe(38);  // -2
-      expect(nextSevere.players[0].turnEvents.some(e => e.key === 'events.caffeine_withdrawal_severe')).toBe(true);
-
-      // 2. Moderate withdrawal at mid tolerance (>= 3, < 6) with 0 intake: -1 Mental
-      const { player: pMod, state: sMod } = createTestState(4);
-      pMod.turnFlags.caffeineIntake = 0;
-      pMod.physicalCondition = 40;
-      pMod.mentalCondition = 40;
-      const nextMod = processTurnStart({ ...sMod, players: [pMod] }, campaign2000);
-      expect(nextMod.players[0].caffeineTolerance).toBe(2); // floor(4/2)
-      expect(nextMod.players[0].physicalCondition).toBe(40); // untouched
-      expect(nextMod.players[0].mentalCondition).toBe(39);  // -1
-      expect(nextMod.players[0].turnEvents.some(e => e.key === 'events.caffeine_withdrawal')).toBe(true);
-
-      // 3. No withdrawal when coffee was consumed (intake > 0)
-      const { player: pDrank, state: sDrank } = createTestState(6);
-      pDrank.turnFlags.caffeineIntake = 10;
-      pDrank.physicalCondition = 40;
-      pDrank.mentalCondition = 40;
-      const nextDrank = processTurnStart({ ...sDrank, players: [pDrank] }, campaign2000);
-      expect(nextDrank.players[0].caffeineTolerance).toBe(8); // floor((6+10)/2)
-      expect(nextDrank.players[0].turnEvents.some(e => e.key.includes('withdrawal'))).toBe(false);
-
-      // 4. No withdrawal when tolerance was negligible (< 3)
-      const { player: pLow, state: sLow } = createTestState(2);
-      pLow.turnFlags.caffeineIntake = 0;
-      pLow.physicalCondition = 40;
-      pLow.mentalCondition = 40;
-      const nextLow = processTurnStart({ ...sLow, players: [pLow] }, campaign2000);
-      expect(nextLow.players[0].caffeineTolerance).toBe(1); // floor(2/2)
-      expect(nextLow.players[0].physicalCondition).toBe(40);
-      expect(nextLow.players[0].mentalCondition).toBe(40);
-      expect(nextLow.players[0].turnEvents.some(e => e.key.includes('withdrawal'))).toBe(false);
+    it('clears tolerance at turn maintenance without withdrawal penalties', () => {
+      const { player: pCold, state: sCold } = createTestState(6);
+      pCold.turnFlags.caffeineIntake = 0;
+      pCold.physicalCondition = 40;
+      pCold.mentalCondition = 40;
+      const nextCold = processTurnStart({ ...sCold, players: [pCold] }, campaign2000);
+      expect(nextCold.players[0].caffeineTolerance).toBe(0);
+      expect(nextCold.players[0].physicalCondition).toBe(40);
+      expect(nextCold.players[0].mentalCondition).toBe(40);
+      expect(nextCold.players[0].turnEvents.some(e => e.key.includes('withdrawal'))).toBe(false);
     });
 
-    it('updates tolerance at turn maintenance via pharmacokinetic half-life formula: floor((tol + intake) / 2)', () => {
-      // 0 intake -> detox decay: floor((6 + 0) / 2) = 3
-      const { player: pDetox, state: sDetox } = createTestState(6);
-      pDetox.turnFlags.caffeineIntake = 0;
-      const nextDetox = processTurnStart({ ...sDetox, players: [pDetox] }, campaign2000);
-      expect(nextDetox.players[0].caffeineTolerance).toBe(3);
-
-      // Low intake (10) on low tolerance (2): floor((2 + 10) / 2) = 6
-      const { player: pLow, state: sLow } = createTestState(2);
-      pLow.turnFlags.caffeineIntake = 10;
-      const nextLow = processTurnStart({ ...sLow, players: [pLow] }, campaign2000);
-      expect(nextLow.players[0].caffeineTolerance).toBe(6);
-
-      // Moderate intake (10) on tolerance (6): floor((6 + 10) / 2) = 8
-      const { player: pMid, state: sMid } = createTestState(6);
-      pMid.turnFlags.caffeineIntake = 10;
-      const nextMid = processTurnStart({ ...sMid, players: [pMid] }, campaign2000);
-      expect(nextMid.players[0].caffeineTolerance).toBe(8);
-
-      // High intake (28) on tolerance (8): floor((8 + 28) / 2) = 18 -> capped at 10
-      const { player: pHigh, state: sHigh } = createTestState(8);
-      pHigh.turnFlags.caffeineIntake = 28;
-      const nextHigh = processTurnStart({ ...sHigh, players: [pHigh] }, campaign2000);
-      expect(nextHigh.players[0].caffeineTolerance).toBe(10);
-    });
-
-    it('generates high-caffeine weekend sprint cards when intake >= 18 or buffer >= 12, and resolves them correctly', () => {
+    it('generates high-coffee weekend sprint cards only after high coffee intake (2+ cups), costing $0, -1 Phys, -2 Mental', () => {
       const { player } = createTestState(0);
-      player.turnFlags.caffeineIntake = 18;
-      player.caffeineTolerance = 0;
       player.currentJobId = 'pirate_cook';
       const rng = new Random(42);
 
-      // 1. Overtime Grind sprint card generation (player has job, no classes)
+      // 1. 1 cup is NOT high coffee intake -> no sprint card
+      player.turnFlags.coffeeCupsThisTurn = 1;
+      player.turnFlags.caffeineIntake = 5;
+      const lowChoices = generateWeekendChoices(player, 1, campaign2000.weekends, rng, campaign2000, campaign2000.config.gameRules, player);
+      expect(lowChoices.cards.some(c => c.id === 'weekend_overtime_grind' || c.id === 'weekend_cramming_sprint')).toBe(false);
+
+      // 2. 2 cups IS high coffee intake -> Overtime Grind sprint card (player has job, no classes)
+      player.turnFlags.coffeeCupsThisTurn = 2;
+      player.turnFlags.caffeineIntake = 10;
       const { cards } = generateWeekendChoices(player, 1, campaign2000.weekends, rng, campaign2000, campaign2000.config.gameRules, player);
       const grindCard = cards.find(c => c.id === 'weekend_overtime_grind');
       expect(grindCard).toBeDefined();
 
-      // Resolve overtime grind: costs $50, 4 Phys, 2 Mental; awards +1 Exp, +1 Dep
+      // Resolve overtime grind: costs $0, -1 Phys, -2 Mental; awards +1 Exp, +1 Dep
       player.money = 100;
       player.experience = 5;
       player.dependability = 50;
@@ -426,21 +368,23 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       player.mentalCondition = 40;
       player.offeredWeekendCards = cards;
       const grindResult = resolveWeekendChoice(player, 'weekend_overtime_grind', rng, campaign2000.config.gameRules, campaign2000.config.statRules, campaign2000);
-      expect(grindResult.money).toBe(50);
+      expect(grindResult.money).toBe(100);
       expect(grindResult.experience).toBe(6);
       expect(grindResult.dependability).toBe(51);
-      expect(grindResult.physicalCondition).toBe(36);
+      expect(grindResult.physicalCondition).toBe(39);
       expect(grindResult.mentalCondition).toBe(38);
 
-      // 2. Cramming Sprint when enrolled in degree (no job)
+      // 3. Cramming Sprint when enrolled in degree (no job): costs $0, -1 Phys, -2 Mental, advances 1 lesson
       const enrolledPlayer = { ...player, currentJobId: null, enrolledClasses: { cert_tech: 0 } };
       const { cards: cramChoices } = generateWeekendChoices(enrolledPlayer, 1, campaign2000.weekends, rng, campaign2000, campaign2000.config.gameRules, enrolledPlayer);
       const cramCard = cramChoices.find(c => c.id === 'weekend_cramming_sprint');
       expect(cramCard).toBeDefined();
 
-      // Resolve cramming sprint: advances enrolled course by 1 lesson worth
       enrolledPlayer.offeredWeekendCards = cramChoices;
       const cramResult = resolveWeekendChoice(enrolledPlayer, 'weekend_cramming_sprint', rng, campaign2000.config.gameRules, campaign2000.config.statRules, campaign2000);
+      expect(cramResult.money).toBe(100);
+      expect(cramResult.physicalCondition).toBe(39);
+      expect(cramResult.mentalCondition).toBe(38);
       expect(cramResult.enrolledClasses['cert_tech']).toBeGreaterThan(0);
     });
   });
@@ -687,6 +631,32 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       // Successfully working rush shift clears the demerit
       expect(result.updated.mistakesByLocation?.['red_pirate']).toBe(0);
       expect(result.messages.some(m => m.key === 'action.job.busyWeekClearedMistake')).toBe(true);
+    });
+
+    it('disables look_busy (Coast) during All Hands on Deck rush week', () => {
+      const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
+      const cookJob = campaign2000.jobs.find(j => j.id === 'pirate_cook')!;
+      player.currentJobId = cookJob.id;
+      player.currentWage = 10;
+      player.hoursRemaining = 40;
+
+      const result = workShift(
+        player,
+        cookJob,
+        6,
+        campaign2000.config.gameRules,
+        campaign2000.config.statRules,
+        'look_busy',
+        new Random(1),
+        undefined,
+        campaign2000.education,
+        campaign2000,
+        true // busy
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.wagesEarned).toBe(0);
+      expect(result.messages?.some(m => m.key === 'action.job.lookBusyDisabledBusyWeek')).toBe(true);
     });
   });
 

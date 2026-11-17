@@ -713,6 +713,69 @@ describe('Weekend Engine', () => {
         expect(resolved.weekendResult?.souvenir).toBeDefined();
         expect(resolved.weekendResult?.souvenir?.name).toBe(resolved.inventory.curios![0].name);
       });
+
+      it('offers special weekend sprint only after high coffee intake (2+ cups) and costs -1 Phys, -2 Mental, $0', () => {
+        const caffRules = { enableCaffeineSystem: true, usePhysicalMentalConditions: true, useSkills: true } as any;
+        const mockCamp = {
+          config: { gameRules: caffRules, statRules: { minPhysicalCondition: 1, minMentalCondition: 1 } },
+          education: [{ id: 'eng', name: 'Engineering', requiredLessons: 10 }],
+          jobs: [{ id: 'dev', title: 'Developer', tags: ['technical'] }]
+        } as any;
+
+        const basePlayer = {
+          id: 'p_coffee',
+          money: 100,
+          physicalCondition: 30,
+          physicalConditionMax: 50,
+          mentalCondition: 30,
+          mentalConditionMax: 50,
+          experience: 5,
+          dependability: 20,
+          skillTech: 1.0,
+          currentJobId: 'dev',
+          enrolledClasses: {},
+          inventory: { appliances: [], tickets: { baseball: 0, theatre: 0, concert: 0 } },
+          turnFlags: { coffeeCupsThisTurn: 1, caffeineIntake: 5 }
+        } as unknown as PlayerState;
+
+        // 1 cup is NOT high coffee intake -> no sprint card
+        const lowRes = generateWeekendChoices(basePlayer, 2, fullMockWeekendData, new Random(1), mockCamp, caffRules, basePlayer);
+        expect(lowRes.cards.some(c => c.id === 'weekend_overtime_grind' || c.id === 'weekend_cramming_sprint')).toBe(false);
+
+        // 2 cups IS high coffee intake -> guarantees overtime grind sprint card when employed
+        const highCoffeePlayer = {
+          ...basePlayer,
+          turnFlags: { coffeeCupsThisTurn: 2, caffeineIntake: 10 }
+        } as unknown as PlayerState;
+        const highRes = generateWeekendChoices(highCoffeePlayer, 2, fullMockWeekendData, new Random(1), mockCamp, caffRules, highCoffeePlayer);
+        const sprintCard = highRes.cards.find(c => c.id === 'weekend_overtime_grind');
+        expect(sprintCard).toBeDefined();
+        expect(sprintCard?.costMin).toBe(0);
+        expect(sprintCard?.costMax).toBe(0);
+
+        const resolvedWork = resolveWeekendChoice(highRes.player, 'weekend_overtime_grind', new Random(1), caffRules, mockCamp.config.statRules as any, mockCamp);
+        expect(resolvedWork.money).toBe(100);
+        expect(resolvedWork.physicalCondition).toBe(29); // -1 Physical
+        expect(resolvedWork.mentalCondition).toBe(28);   // -2 Mental
+        expect(resolvedWork.experience).toBe(6);
+        expect(resolvedWork.dependability).toBe(21);
+        expect(resolvedWork.skillTech).toBe(1.2);
+
+        // Enrolled student gets cramming sprint costing $0, -1 Phys, -2 Mental, +1 lesson
+        const studentPlayer = {
+          ...highCoffeePlayer,
+          currentJobId: null,
+          enrolledClasses: { eng: 2 }
+        } as unknown as PlayerState;
+        const studRes = generateWeekendChoices(studentPlayer, 2, fullMockWeekendData, new Random(1), mockCamp, caffRules, studentPlayer);
+        const cramCard = studRes.cards.find(c => c.id === 'weekend_cramming_sprint');
+        expect(cramCard).toBeDefined();
+        const resolvedStudy = resolveWeekendChoice(studRes.player, 'weekend_cramming_sprint', new Random(1), caffRules, mockCamp.config.statRules as any, mockCamp);
+        expect(resolvedStudy.money).toBe(100);
+        expect(resolvedStudy.physicalCondition).toBe(29); // -1 Physical
+        expect(resolvedStudy.mentalCondition).toBe(28);   // -2 Mental
+        expect(resolvedStudy.enrolledClasses['eng']).toBe(3);
+      });
     });
   });
 });

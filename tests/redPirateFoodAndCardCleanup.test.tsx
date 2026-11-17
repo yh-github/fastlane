@@ -5,6 +5,7 @@ import { loadCampaign, type CampaignBundle } from '../src/engine/dataLoader';
 import { buyItem } from '../src/engine/shoppingEngine';
 import { handleHospitalCafeteriaAction } from '../src/engine/actions/hospitalActions';
 import { handlePrepMealAction } from '../src/engine/actions/homeActions';
+import { processTurnStart } from '../src/engine/turnProcessor';
 import { ItemCardModal } from '../src/ui/buildings/home/DurableCardModal';
 import { PantryDetailsModal } from '../src/ui/buildings/home/PantryDetailsModal';
 import { createPlayerState, createDefaultGoalAllotment } from '../src/engine/stateFactories';
@@ -145,13 +146,13 @@ describe('Red Pirate Food & Coffee - Item Card Modal Clean-Up', () => {
     expect(screen.getByText(/Fast meal/i)).toBeInTheDocument();
   });
 
-  it('inspecting Double Shot Espresso clearly differentiates +2 💪 Comfort Boost from -1 Max 💪 Overdose', () => {
-    const player = createPlayer({ turnFlags: { hasEaten: false, caffeineIntake: 0, fastFoodMealsThisTurn: 0 } });
-    const doubleShot = campaign2000.items.find(i => i.id === 'double_shot')!;
+  it('inspecting Fresh Drip Coffee shows 1st-cup Comfort Boost without overdose penalty or duplicate buy text', () => {
+    const player = createPlayer({ turnFlags: { hasEaten: false, caffeineIntake: 0, coffeeCupsThisTurn: 0, fastFoodMealsThisTurn: 0 } });
+    const dripCoffee = campaign2000.items.find(i => i.id === 'drip_coffee')!;
 
     render(
       <ItemCardModal
-        item={doubleShot}
+        item={dripCoffee}
         player={player}
         campaign={campaign2000}
         rules={campaign2000.config.gameRules}
@@ -161,24 +162,20 @@ describe('Red Pirate Food & Coffee - Item Card Modal Clean-Up', () => {
       />
     );
 
-    // 1. Stat pills must show both current physical boost and max physical penalty
+    // 1. Stat pills show 1st-cup +1 💪 and +2 🧠 without any Max penalty
     const pills = screen.getByTestId('stat-modifier-pills');
     expect(pills).toBeInTheDocument();
-
-    // Must show "+2" with "💪"
-    expect(pills.textContent).toContain('+2');
+    expect(pills.textContent).toContain('+1');
     expect(pills.textContent).toContain('💪');
-
-    // Must clearly label the overdose penalty as "Max 💪", NOT identical bare "💪"
-    expect(pills.textContent).toContain('Max 💪');
-    expect(pills.textContent).toContain('-1 Max 💪');
-    expect(pills.textContent).toContain('-1 Max 🧠');
+    expect(pills.textContent).toContain('+2');
+    expect(pills.textContent).toContain('🧠');
+    expect(pills.textContent).not.toContain('Max 💪');
 
     // 2. Drinks immediately badge is shown
     expect(screen.getByText(/Drinks immediately \(Not food\)/i)).toBeInTheDocument();
 
-    // 3. No redundant "+4 on buy" text underneath pills
-    expect(screen.queryByText(/\+4 on buy/i)).not.toBeInTheDocument();
+    // 3. No redundant "+2 on buy" text underneath pills
+    expect(screen.queryByText(/\+2 on buy/i)).not.toBeInTheDocument();
   });
 });
 
@@ -217,13 +214,40 @@ describe('Pantry Details Modal - Fast Food Takeout Display', () => {
     // 2. Does NOT show "Pantry is empty" warning when player has takeout
     expect(screen.queryByText(/Pantry is empty/i)).not.toBeInTheDocument();
 
-    // 3. Shows Eat Takeout button in Weekly Meal Prep
-    const eatBtn = screen.getByTestId('btn-cook-fast-food');
-    expect(eatBtn).toBeInTheDocument();
-    expect(eatBtn.textContent).toContain('Eat Fast Food Takeout');
-    expect(eatBtn.textContent).toContain('Eat (2)');
+    // 3. Does NOT show Eat Takeout button in Weekly Meal Prep (fast food is consumed on purchase, not at home)
+    expect(screen.queryByTestId('btn-cook-fast-food')).not.toBeInTheDocument();
+  });
 
-    fireEvent.click(eatBtn);
-    expect(handleAction).toHaveBeenCalledWith({ type: 'prep_meal', mealType: 'fast_food' });
+  it('clears fastFoodItems across turn transition even when player has a fridge and already ate', () => {
+    const basePlayer = createPlayer();
+    const player = createPlayer({
+      turnFlags: {
+        ...basePlayer.turnFlags,
+        hasEaten: true,
+        caffeineIntake: 0,
+        fastFoodMealsThisTurn: 1
+      },
+      activeEffects: { set_food_storage: 6 },
+      inventory: {
+        ...basePlayer.inventory,
+        appliances: ['refrigerator'],
+        fastFoodItems: [{ itemId: 'kraken_burger', happinessBonus: 0 }]
+      }
+    });
+
+    const nextState = processTurnStart(
+      {
+        turn: 1,
+        players: [player],
+        economicIndex: 100,
+        rules: campaign2000.config.gameRules,
+        pawnShopItemsForSale: [],
+        rngState: 42,
+        phase: 'playing'
+      },
+      campaign2000
+    );
+
+    expect(nextState.players[0].inventory.fastFoodItems).toEqual([]);
   });
 });

@@ -43,6 +43,37 @@ export function safeDecrementMental(current: number, cost: number, minMental: nu
   return Math.max(minMental, current - cost);
 }
 
+export const CAFFEINE_BUFFER_CAP = 10;
+export const HIGH_COFFEE_CUPS_THRESHOLD = 2;
+export const HIGH_COFFEE_INTAKE_THRESHOLD = 10;
+
+/**
+ * Compute the weekly caffeine mistake-mitigation buffer (0..10).
+ * Each cup of coffee adds +5 buffer (5 caffeine units), capped at +10.
+ */
+export function calcCaffeineBuffer(
+  player: Pick<PlayerState, 'turnFlags'> | undefined | null,
+  rules?: Partial<Pick<GameRules, 'enableCaffeineSystem'>> | null
+): number {
+  if (!rules?.enableCaffeineSystem || !player) return 0;
+  const intake = player.turnFlags?.caffeineIntake || 0;
+  return Math.max(0, Math.min(CAFFEINE_BUFFER_CAP, intake));
+}
+
+/**
+ * Returns true when the player had high coffee intake this week (2+ cups / >= 10 units),
+ * unlocking a Special Weekend Sprint card on the following weekend.
+ */
+export function hasHighCoffeeIntake(
+  player: Pick<PlayerState, 'turnFlags'> | undefined | null,
+  rules?: Partial<Pick<GameRules, 'enableCaffeineSystem'>> | null
+): boolean {
+  if (!rules?.enableCaffeineSystem || !player) return false;
+  const cups = player.turnFlags?.coffeeCupsThisTurn || 0;
+  const intake = player.turnFlags?.caffeineIntake || 0;
+  return cups >= HIGH_COFFEE_CUPS_THRESHOLD || intake >= HIGH_COFFEE_INTAKE_THRESHOLD;
+}
+
 /**
  * Calculate Wellbeing score.
  * Formula: Wellbeing_Score = Math.ceil((Physical + Mental) / 2)

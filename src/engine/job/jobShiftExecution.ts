@@ -8,7 +8,7 @@ import {
 } from '../gameState';
 import { spendHours } from '../timeManager';
 import { processRentDebt } from '../economyEngine';
-import { roundToResolution, calcMaxSkillCap } from '../statMath';
+import { roundToResolution, calcMaxSkillCap, calcCaffeineBuffer } from '../statMath';
 import type { JobDef, EducationDef, CampaignBundle } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
@@ -258,6 +258,10 @@ export function workShift(
     return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.lookBusyDisabled' }] };
   }
 
+  if (mode === 'look_busy' && rules?.enableBusyWeeks && isBusyLocation) {
+    return { updated: player, wagesEarned: 0, success: false, messages: [{ key: 'action.job.lookBusyDisabledBusyWeek' }] };
+  }
+
   let physicalCost = 0;
   let mentalCost = 0;
   let soulCrushingPenalty = 0;
@@ -449,24 +453,6 @@ export function workShift(
           updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition);
         }
       }
-
-      if (rules?.enableCaffeineSystem && ((player.turnFlags?.caffeineIntake || 0) > 0)) {
-        if (oldPhys < 15) {
-          const minMaxPhys = advStatRules.minMaxPhysical;
-          const curMaxPhys = updated.physicalConditionMax ?? advStatRules.initialPhysicalMax;
-          const newMaxPhys = Math.max(minMaxPhys, roundToResolution(curMaxPhys - 0.5, 0.5));
-          if (newMaxPhys < curMaxPhys) {
-            maxPhysDrop = roundToResolution(curMaxPhys - newMaxPhys, 0.5);
-            updated.physicalConditionMax = newMaxPhys;
-            updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition);
-          }
-        }
-        if (oldMental < 15) {
-          updated.resilienceBonus = (updated.resilienceBonus || 0) - 1;
-          updated.mentalConditionMax = Math.max(10, (updated.mentalConditionMax || 50) - 1);
-          updated.mentalCondition = Math.min(updated.mentalConditionMax, updated.mentalCondition);
-        }
-      }
     }
   }
 
@@ -490,9 +476,7 @@ export function workShift(
   let initiativeMistake = false;
 
   if (useConditions) {
-    const caffeineBuffer = rules?.enableCaffeineSystem
-      ? Math.max(0, (player.turnFlags?.caffeineIntake || 0) - (player.caffeineTolerance || 0))
-      : 0;
+    const caffeineBuffer = calcCaffeineBuffer(player, rules);
     const effectivePhys = Math.min(updated.physicalConditionMax ?? 50, oldPhys + caffeineBuffer);
     const effectiveMental = Math.min(updated.mentalConditionMax ?? 50, oldMental + caffeineBuffer);
 
