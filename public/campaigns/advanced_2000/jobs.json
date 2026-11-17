@@ -39,12 +39,11 @@
     "locationId": "red_pirate",
     "baseWage": 11,
     "requirements": {
-      "experience": 25,
-      "dependability": 25,
+      "experience": 30,
+      "dependability": 30,
       "degrees": [
         "electronics"
       ],
-      "techSkill": 2.5,
       "uniform": "casual"
     },
     "tags": [
@@ -60,7 +59,7 @@
     "baseWage": 8,
     "requirements": {
       "experience": 25,
-      "dependability": 35,
+      "dependability": 25,
       "degrees": [],
       "uniform": "casual"
     },
@@ -151,7 +150,7 @@
       "degrees": [
         "pre_engineering"
       ],
-      "techSkill": 2,
+      "techSkill": 1,
       "uniform": "casual"
     },
     "tags": [
@@ -418,13 +417,12 @@
     "locationId": "socket_city",
     "baseWage": 11,
     "requirements": {
-      "experience": 40,
+      "experience": 35,
       "dependability": 40,
       "degrees": [
         "electronics"
       ],
-      "uniform": "casual",
-      "techSkill": 3
+      "uniform": "casual"
     },
     "perks": [],
     "tags": [
@@ -437,14 +435,14 @@
     "locationId": "socket_city",
     "baseWage": 14,
     "requirements": {
-      "experience": 40,
-      "dependability": 40,
+      "experience": 45,
+      "dependability": 45,
       "degrees": [
         "electronics",
         "junior_college"
       ],
       "uniform": "business",
-      "techSkill": 3
+      "techSkill": 2
     },
     "perks": [],
     "tags": [
@@ -760,7 +758,7 @@
       "degrees": [
         "electronics"
       ],
-      "techSkill": 3.5,
+      "techSkill": 2.5,
       "uniform": "casual"
     },
     "tags": [
