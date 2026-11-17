@@ -14,6 +14,7 @@ export interface WorkConsolePopupProps {
   job: JobDef;
   campaign?: CampaignBundle;
   rules?: GameRules;
+  busyLocations?: Record<string, boolean>;
   onAction: (action: any) => void;
   onClose?: () => void;
   modalRef?: React.RefObject<HTMLDivElement | null>;
@@ -26,6 +27,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
   job,
   campaign,
   rules,
+  busyLocations,
   onAction,
   onClose,
   modalRef,
@@ -85,8 +87,9 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
   const effectiveRules = rules || campaign?.config?.gameRules;
   const statRules = campaign?.config?.statRules;
   const shiftCost = campaign?.config?.timeRules?.workSessionCost ?? 6;
+  const isBusyLocation = Boolean(effectiveRules?.enableBusyWeeks && job.locationId && busyLocations?.[job.locationId]);
 
-  const summary = calcWorkShiftSummary(player, job, shiftCost, effectiveRules, statRules, campaign?.education, campaign);
+  const summary = calcWorkShiftSummary(player, job, shiftCost, effectiveRules, statRules, campaign?.education, campaign, isBusyLocation);
   const { hoursToWork, modes, turnMistakes, locationMistakes } = summary;
 
   // Ensure selectedMode is valid among modes; default to work_work

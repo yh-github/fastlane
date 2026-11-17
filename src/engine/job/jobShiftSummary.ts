@@ -1,7 +1,7 @@
 import type { PlayerState, GameRules } from '../gameState';
 import type { JobDef, EducationDef, CampaignBundle } from '../dataLoader';
 import { isAdvancedVersion, isAdvancedStatRules, requireAdvancedStatRules, type StatRules, type AdvancedStatRules } from '../rules';
-import { roundToResolution, calcMaxSkillCap } from '../statMath';
+import { roundToResolution, calcMaxSkillCap, formatHours } from '../statMath';
 import {
   hasJobTag,
   getJobPhysicalCostModifier,
@@ -45,7 +45,8 @@ export function calcWorkShiftSummary(
   rules?: GameRules | Partial<GameRules>,
   statRules?: StatRules,
   campaignEducation?: EducationDef[],
-  campaign?: CampaignBundle
+  campaign?: CampaignBundle,
+  isBusyLocation: boolean = false
 ): WorkShiftSummary {
   const isAdvanced = isAdvancedVersion(rules) || Boolean(rules?.usePhysicalMentalConditions);
   const useConditions = Boolean(rules?.usePhysicalMentalConditions);
@@ -98,7 +99,11 @@ export function calcWorkShiftSummary(
   const socialMod = getJobSocialModifier(job, actionCount, rules, overtimeThreshold);
   const frontlineSocialChance = getFrontlineSocialGainChance(job, actionCount, player.social || 1, workRatio, rules, overtimeThreshold);
   const isFTAllowed = isFaceTimeAllowed(job);
-  const isLBAllowed = isLookBusyAllowed(job);
+  const isLBDisabledByBusyWeek = Boolean(rules?.enableBusyWeeks && isBusyLocation);
+  const isLBAllowed = isLookBusyAllowed(job) && !isLBDisabledByBusyWeek;
+  const lbDisabledReasonKey = isLBDisabledByBusyWeek
+    ? 'action.job.lookBusyDisabledBusyWeek'
+    : (!isLBAllowed ? 'action.job.lookBusyDisabled' : undefined);
   const lbDepPenalty = getLookBusyDepPenalty(job);
   const lbSocialPenalty = getLookBusySocialPenalty(job);
   const lbSocialText = lbSocialPenalty > 0 ? `, -${lbSocialPenalty} 👥` : '';
@@ -149,13 +154,16 @@ export function calcWorkShiftSummary(
         : 1)
     : 0;
 
+  const effectiveHourlyWage = player.currentWage || job.baseWage;
+  const busyWageMultiplier = (rules?.enableBusyWeeks && isBusyLocation) ? 1.15 : 1.0;
+
   const modes: WorkShiftOption[] = [
     {
       id: 'work_work',
       physCost: isAdvanced ? Math.max(0, roundToResolution((basePhys * 1.0 + physTagMod) * workRatio, physRes)) : 0,
       mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 1.0 + mentalTagMod + fatigueMental) * workRatio, conditionRes) + soulCrushingPenalty) : 0,
       soulCrushingPenalty,
-      wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
+      wage: Math.floor(Math.floor(effectiveHourlyWage * 8 * 1.0 * busyWageMultiplier) * (hoursToWork / shiftCost)),
       rewardDep: workWorkDepGain,
       rewardExp: workWorkExpGain,
       rewardSocial: socialMod,
@@ -169,17 +177,17 @@ export function calcWorkShiftSummary(
       physCost: isAdvanced ? Math.max(0, roundToResolution((basePhys * 0.5 + lbPhysTagMod) * workRatio, physRes)) : 0,
       mentalCost: isAdvanced ? Math.max(0, roundToResolution((baseMental * 0.5 + halfFatigueMental) * workRatio, conditionRes) + soulCrushingPenalty) : 0,
       soulCrushingPenalty,
-      wage: Math.floor((player.currentWage || job.baseWage) * 8 * (hoursToWork / shiftCost)),
+      wage: Math.floor(Math.floor(effectiveHourlyWage * 8 * 1.0 * busyWageMultiplier) * (hoursToWork / shiftCost)),
       rewardDep: lbDepPenalty > 0 ? -lbDepPenalty : 0,
       rewardExp: 0,
       rewardSocial: lbSocialPenalty > 0 ? -lbSocialPenalty : 0,
       rewardText: !isLBAllowed
-        ? 'action.job.lookBusyDisabled'
+        ? (lbDisabledReasonKey || 'action.job.lookBusyDisabled')
         : (lbDepPenalty > 0 ? `-${lbDepPenalty} 🤝, +0 👌${lbSocialText}` : `+0 🤝, +0 👌${lbSocialText}`),
       color: '#3498db',
       isDefault: false,
       disabled: !isLBAllowed,
-      disabledReasonKey: !isLBAllowed ? 'action.job.lookBusyDisabled' : undefined
+      disabledReasonKey: lbDisabledReasonKey
     },
     {
       id: 'face_time',
@@ -209,7 +217,7 @@ export function calcWorkShiftSummary(
             ? Math.max(0, roundToResolution(baseMental * 1.5 + 2.0 + mentalTagMod + fatigueMental, conditionRes))
             : Math.max(0, roundToResolution((baseMental * 1.5 + 2.0 + fatigueMental) * workRatio, conditionRes)))
         : 0,
-      wage: Math.floor((player.currentWage || job.baseWage) * 8 * 0.4 * (hoursToWork / shiftCost)),
+      wage: Math.floor(Math.floor(effectiveHourlyWage * 8 * 0.4 * busyWageMultiplier) * (hoursToWork / shiftCost)),
       rewardDep: rules?.enableInitiativeRevamp
         ? roundToResolution((isExecMgmt ? 2 : (isMiddleMgmt ? 1.5 : 1)) * workRatio, 0.5)
         : (isExecMgmt ? 2 : (isMiddleMgmt ? 1.5 : 1)),
@@ -415,13 +423,13 @@ export function calcWorkShiftSummary(
           type: 'initiative',
           label: rushedInitChance > 0 ? 'Initiative & Rushed Risk' : 'Initiative Execution Risk',
           icon: '🎯',
-          currentStat: hoursToWork,
+          currentStat: Number(formatHours(hoursToWork)),
           threshold: shiftCost,
           ratePerPoint: 0.10,
           chance: initChance,
           isTriggered: initChance > 0,
           explanation: rushedInitChance > 0
-            ? `Base tier risk (${(baseInitChance * 100).toFixed(0)}%) + rushed (${shiftCost - hoursToWork}h short × 10%/h = ${(rushedInitChance * 100).toFixed(0)}%) → ${(initChance * 100).toFixed(1)}% combined.`
+            ? `Base tier risk (${(baseInitChance * 100).toFixed(0)}%) + rushed (${formatHours(shiftCost - hoursToWork)}h short × 10%/h = ${(rushedInitChance * 100).toFixed(0)}%) → ${(initChance * 100).toFixed(1)}% combined.`
             : `Stepping up to lead (Tier ${getJobInitiativeTier(job)}) carries a ${(baseInitChance * 100).toFixed(0)}% base execution risk.`
         });
       }
@@ -959,7 +967,7 @@ export function getWorkShiftModifiers(
     if (effectiveRules?.enableInitiativeRevamp && summary.hoursToWork < summary.shiftCost) {
       badges.push({
         key: 'initiative_rushed',
-        label: `⚠️ Rushed (${summary.hoursToWork}/${summary.shiftCost}h)`,
+        label: `⚠️ Rushed (${formatHours(summary.hoursToWork)}/${summary.shiftCost}h)`,
         color: '#ef4444',
         bg: 'rgba(239, 68, 68, 0.22)',
         border: '#ef4444',

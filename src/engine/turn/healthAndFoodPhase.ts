@@ -197,9 +197,7 @@ export function processAdvancedHealthAndFood(
     p.turnFlags.hasEaten = true;
   }
   const hasEatenFastFood = p.inventory.fastFoodItems.length > 0;
-  if (!state.rules.enableCookingSystem || !alreadyAteThisTurn || maxStorage === 0) {
-    p.inventory.fastFoodItems = [];
-  }
+  p.inventory.fastFoodItems = [];
   const hasCannedFood = (p.inventory.cannedFoodUnits || 0) > 0;
 
   let ateSpoiledThisTurn = false;

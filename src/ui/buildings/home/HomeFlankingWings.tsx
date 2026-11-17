@@ -361,8 +361,6 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                     onAction({ type: 'prep_meal', mealType: bestFreshMethod });
                   } else if (onAction && canEatCanned) {
                     onAction({ type: 'prep_meal', mealType: 'canned' });
-                  } else if (onAction && fastFoodCount > 0) {
-                    onAction({ type: 'prep_meal', mealType: 'fast_food' });
                   } else {
                     onPantryClick?.();
                   }
@@ -383,9 +381,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                   ? `🍳 Prep Fresh (${freshHoursNeeded}h)`
                   : canEatCanned
                     ? `🥫 Eat Can (${cannedTime}h)`
-                    : fastFoodCount > 0
-                      ? '🍔 Eat Takeout (0h)'
-                      : '🍳 Open Kitchen'}
+                    : '🍳 Open Kitchen'}
               </button>
             </div>
           )}
@@ -950,27 +946,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                         🥫 Eat Canned ({cannedTime}h • -1.5 🧠)
                       </button>
                     )}
-                    {fastFoodCount > 0 && (
-                      <button
-                        type="button"
-                        data-testid="btn-wing-eat-fastfood"
-                        onClick={() => onAction({ type: 'prep_meal', mealType: 'fast_food' })}
-                        style={{
-                          background: 'rgba(234, 88, 12, 0.25)',
-                          border: '1px solid #ea580c',
-                          borderRadius: '4px',
-                          color: '#ffedd5',
-                          padding: '5px 6px',
-                          fontSize: '0.68rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          textAlign: 'left'
-                        }}
-                      >
-                        🍔 Eat Takeout (0h • +1 🧠, +1 👥)
-                      </button>
-                    )}
-                    {freshFoodUnits === 0 && cannedFoodUnits === 0 && fastFoodCount === 0 && (
+                    {freshFoodUnits === 0 && cannedFoodUnits === 0 && (
                       <div style={{ fontSize: '0.66rem', color: isFed ? '#86efac' : '#94a3b8' }}>
                         {isFed ? '✓ Fed for the week' : 'No food in pantry'}
                       </div>

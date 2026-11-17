@@ -397,5 +397,73 @@ describe('jobShiftSummary', () => {
     expect(si.modifiers!.map(b => b.label)).toContain('⚠️ Rushed (2/6h)');
     expect(si.modifierBreakdown?.mistakeBreakdown?.some(b => b.type === 'initiative')).toBe(true);
   });
+
+  it('rounds fractional hours in Show Leadership rushed badge and mistake breakdown', () => {
+    const midMgmtJob: JobDef = {
+      id: 'bank_asst_mgr',
+      title: 'Assistant Manager',
+      locationId: 'bank',
+      baseWage: 14,
+      requirements: { experience: 40, dependability: 40, degrees: [], uniform: 'dress' },
+      tags: ['middle_management'],
+      perks: []
+    };
+    const rules = { ...TEST_ADVANCED_GAME_RULES, enableInitiativeRevamp: true };
+    const summary = calcWorkShiftSummary(
+      {
+        hoursRemaining: 4 + 1 / 7, // 4.142857...
+        currentWage: 14,
+        physicalCondition: 50,
+        mentalCondition: 50,
+        experience: 50,
+        degrees: [],
+        workActionsThisTurn: 0,
+        social: 50
+      } as unknown as PlayerState,
+      midMgmtJob,
+      6,
+      rules,
+      TEST_ADVANCED_CAMPAIGN_CONFIG.statRules
+    );
+
+    const si = summary.modes.find(m => m.id === 'show_initiative')!;
+    expect(si.modifiers!.map(b => b.label)).toContain('⚠️ Rushed (4.14/6h)');
+    const initBreakdown = si.modifierBreakdown?.mistakeBreakdown?.find(b => b.type === 'initiative');
+    expect(initBreakdown?.currentStat).toBe(4.14);
+    expect(initBreakdown?.explanation).toContain('1.86h short');
+  });
+
+  it('applies 1.15x rush week wage multiplier when enableBusyWeeks and isBusyLocation are true', () => {
+    const pirateJob: JobDef = {
+      id: 'pirate_cook',
+      title: 'Galley Cook',
+      locationId: 'red_pirate',
+      baseWage: 10,
+      requirements: { experience: 0, dependability: 10, degrees: [], uniform: 'casual' },
+      tags: ['high_downtime'],
+      perks: []
+    };
+    const busyRules = { ...TEST_ADVANCED_GAME_RULES, enableBusyWeeks: true };
+    const player = {
+      hoursRemaining: 40,
+      currentWage: 10,
+      physicalCondition: 50,
+      mentalCondition: 50,
+      experience: 20,
+      degrees: [],
+      workActionsThisTurn: 0,
+      social: 50
+    } as unknown as PlayerState;
+
+    const normalSummary = calcWorkShiftSummary(player, pirateJob, 6, busyRules, TEST_ADVANCED_CAMPAIGN_CONFIG.statRules, undefined, undefined, false);
+    const busySummary = calcWorkShiftSummary(player, pirateJob, 6, busyRules, TEST_ADVANCED_CAMPAIGN_CONFIG.statRules, undefined, undefined, true);
+
+    expect(normalSummary.modes.find(m => m.id === 'work_work')!.wage).toBe(80);
+    expect(busySummary.modes.find(m => m.id === 'work_work')!.wage).toBe(92);
+    expect(busySummary.modes.find(m => m.id === 'look_busy')!.wage).toBe(92);
+    expect(busySummary.modes.find(m => m.id === 'look_busy')!.disabled).toBe(true);
+    expect(busySummary.modes.find(m => m.id === 'look_busy')!.disabledReasonKey).toBe('action.job.lookBusyDisabledBusyWeek');
+    expect(busySummary.modes.find(m => m.id === 'show_initiative')!.wage).toBe(36);
+  });
 });
 

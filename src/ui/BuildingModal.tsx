@@ -1279,6 +1279,7 @@ export function BuildingModal({
           job={playerJobHere}
           campaign={campaign}
           rules={rules}
+          busyLocations={busyLocations}
           layoutMode={workConsoleStyle}
           modalRef={modalRef}
           selectedMode={selectedWorkMode}
@@ -1293,7 +1294,9 @@ export function BuildingModal({
         const allowPartial = rules?.allowPartialHours ?? true;
         const isWorkDisabled = hasPendingMiniGame || (allowPartial ? player.hoursRemaining <= 0 : player.hoursRemaining < shiftCost);
         const actualHoursWorked = allowPartial && player.hoursRemaining < shiftCost ? player.hoursRemaining : shiftCost;
-        const wageEarned = Math.floor((player.currentWage || playerJobHere.baseWage) * actualHoursWorked);
+        const isBusyHere = Boolean(rules?.enableBusyWeeks && playerJobHere.locationId && busyLocations?.[playerJobHere.locationId]);
+        const busyWageMultiplier = isBusyHere ? 1.15 : 1.0;
+        const wageEarned = Math.floor((player.currentWage || playerJobHere.baseWage) * actualHoursWorked * busyWageMultiplier);
 
         return (
           <div 

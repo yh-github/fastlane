@@ -154,6 +154,7 @@
       "interviewMistake": "Interview disaster! Severe mental exhaustion caused you to fumble the interview! No openings for this position.",
       "faceTimeDisabled": "Face Time is not available for heavy physical labor positions.",
       "lookBusyDisabled": "Look Busy is not available for middle management positions.",
+      "lookBusyDisabledBusyWeek": "You can't coast during an All Hands on Deck rush week!",
       "mistake": "Made a mistake at work ({{type}})! Lost {{penalty}} Dependability (Total reputation penalties at this location: {{total}})",
       "socialMistake": "Customer / Coworker clash! Your low social energy caused an embarrassing incident (-1 Social, +1 Incident).",
       "needMoreSocial": "Too anti-social & irritable (Social too low) to handle this right now.",

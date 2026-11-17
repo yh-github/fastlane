@@ -15,6 +15,7 @@ export interface WorkShiftCardsProps {
   job: JobDef;
   campaign?: CampaignBundle;
   rules?: GameRules;
+  busyLocations?: Record<string, boolean>;
   onAction: (action: any) => void;
   onClose?: () => void;
   layoutMode?: 'flanking' | 'grid' | 'popup';
@@ -29,6 +30,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
   job,
   campaign,
   rules,
+  busyLocations,
   onAction,
   onClose,
   layoutMode = 'grid',
@@ -74,6 +76,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
   const isAdvanced = !!effectiveRules?.usePhysicalMentalConditions;
   const isHelpful = effectiveRules ? effectiveRules.helpfulUI !== false : true;
   const shiftCost = campaign?.config.timeRules?.workSessionCost ?? 6;
+  const isBusyLocation = Boolean(effectiveRules?.enableBusyWeeks && job.locationId && busyLocations?.[job.locationId]);
 
   // Movable Popup Work Console (Advanced Mode)
   if (isAdvanced && layoutMode === 'popup') {
@@ -83,6 +86,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
         job={job}
         campaign={campaign}
         rules={rules}
+        busyLocations={busyLocations}
         onAction={onAction}
         onClose={onClose}
         modalRef={modalRef}
@@ -95,7 +99,8 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
   // Classic Mode (Non-Advanced): streamlined visual card
   if (!isAdvanced) {
     const canWork = player.hoursRemaining > 0;
-    const wageEarned = Math.floor((player.currentWage || job.baseWage) * 8);
+    const busyWageMultiplier = isBusyLocation ? 1.15 : 1.0;
+    const wageEarned = Math.floor((player.currentWage || job.baseWage) * 8 * busyWageMultiplier);
 
     const classicCard = (
       <div
@@ -257,7 +262,7 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
   }
 
   // Advanced Mode: Full 4-Card Strategy Deck
-  const summary = calcWorkShiftSummary(player, job, shiftCost, effectiveRules, statRules, campaign?.education, campaign);
+  const summary = calcWorkShiftSummary(player, job, shiftCost, effectiveRules, statRules, campaign?.education, campaign, isBusyLocation);
   const { hoursToWork, tierLabel, modes, innovationsCount, locationMistakes, turnMistakes } = summary;
 
   const cardMeta: Record<string, {

@@ -458,39 +458,6 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                       </span>
                     )}
                   </button>
-
-                  {/* Option 3: Eat Fast Food Takeout */}
-                  {fastFoodItems.length > 0 && (
-                    <button
-                      type="button"
-                      data-testid="btn-cook-fast-food"
-                      onClick={() => handlePrep('fast_food')}
-                      style={{
-                        padding: '9px 12px',
-                        borderRadius: '6px',
-                        background: 'linear-gradient(135deg, #7c2d12 0%, #9a3412 100%)',
-                        border: '1px solid #ea580c',
-                        color: '#ffedd5',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 'bold', fontSize: '0.84rem' }}>
-                          🍔 Eat Fast Food Takeout
-                        </div>
-                        <div style={{ fontSize: '0.68rem', opacity: 0.9, marginTop: '2px' }}>
-                          ⏳ 0h Prep • 0 💪 • +1 🧠, +1 👥 (Instant takeout meal)
-                        </div>
-                      </div>
-                      <span style={{ fontSize: '0.72rem', color: '#fed7aa', fontWeight: 'bold' }}>
-                        Eat ({fastFoodItems.length})
-                      </span>
-                    </button>
-                  )}
                 </div>
               </>
             )}
