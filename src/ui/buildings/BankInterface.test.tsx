@@ -209,4 +209,69 @@ describe("BankInterface", () => {
     expect(screen.getByText(/Account in default/i)).toBeInTheDocument();
   });
 
+  it('StockTradeRow dialog includes Max button for both buying max affordable shares and selling max owned shares', () => {
+    const stockDef = { id: 'acme', name: 'ACME Corp', basePrice: 40, type: 'fixed' as const };
+    const mockOnAction = vi.fn();
+
+    render(
+      <StockTradeRow stock={stockDef} price={40} owned={7} playerMoney={250} onAction={mockOnAction} />
+    );
+
+    // 1. Buy Max: floor(250 / 40) = 6 shares ($240)
+    fireEvent.click(screen.getByRole('button', { name: /^Buy$/i }));
+    const buyMaxBtn = screen.getByTestId('btn-stock-max');
+    expect(buyMaxBtn).toHaveTextContent('Max (6)');
+    fireEvent.click(buyMaxBtn);
+    fireEvent.click(screen.getByText(/Confirm Buy \(\$240\)/i));
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'buy_stock', stockId: 'acme', quantity: 6, cost: 240 });
+
+    // 2. Sell Max: 7 owned shares ($280)
+    fireEvent.click(screen.getByRole('button', { name: /^Sell$/i }));
+    const sellMaxBtn = screen.getByTestId('btn-stock-max');
+    expect(sellMaxBtn).toHaveTextContent('Max (7)');
+    fireEvent.click(sellMaxBtn);
+    fireEvent.click(screen.getByText(/Confirm Sell \(\+\$280\)/i));
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'sell_stock', stockId: 'acme', quantity: 7, revenue: 280 });
+  });
+
+  it('helpfulUI Loans tab shows computed Advanced minimum payment and Custom / Pay Full dialog', () => {
+    const mockOnAction = vi.fn();
+    const player = {
+      id: 'p1',
+      money: 800,
+      bankSavings: 0,
+      currentJobId: 'cook',
+      currentWage: 15,
+      loanDebt: 450,
+      timesDefaulted: 0,
+      loanPaymentDeadline: 8,
+      turnFlags: { loanPaidThisTurn: false },
+      inventory: { stocks: { holdings: {} } }
+    } as any;
+
+    render(
+      <BankInterface
+        player={player}
+        activeTab="loans"
+        rules={{ helpfulUI: true, versionClass: 'advanced' } as any}
+        onAction={mockOnAction}
+      />
+    );
+
+    // Advanced min on $450 debt: 20% = $90
+    expect(screen.getByText(/Min Due to Count:\s*\$90\/cycle/i)).toBeInTheDocument();
+
+    // Open Custom / Pay Full dialog
+    fireEvent.click(screen.getByTestId('btn-loan-custom-pay'));
+    expect(screen.getByTestId('loan-payment-dialog')).toBeInTheDocument();
+    expect(screen.getByText(/Minimum Required to Satisfy Billing Cycle:/i)).toBeInTheDocument();
+
+    // Click Pay Full ($500 = $450 principal + $50 fee)
+    const fullBtn = screen.getByTestId('btn-loan-preset-full');
+    fireEvent.click(fullBtn);
+    fireEvent.click(screen.getByTestId('btn-loan-confirm'));
+
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'pay_loan', amount: 500 });
+  });
+
 });

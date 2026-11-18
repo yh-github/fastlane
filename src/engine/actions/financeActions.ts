@@ -140,38 +140,141 @@ export function handleTakeLoanAction(
   return { nextPlayer, actionLog };
 }
 
+export interface LoanPaymentDetails {
+  minRequiredPayment: number;
+  fullPayoffAmount: number;
+  basePaymentAmount: number;
+  interestRate: number;
+}
+
+export interface LoanPaymentBreakdown {
+  payment: number;
+  principalApplied: number;
+  interestFee: number;
+  remainingDebt: number;
+  meetsMinimum: boolean;
+}
+
+export function calcLoanPaymentDetails(
+  loanDebt: number,
+  rules?: { versionClass?: string },
+  economyRules?: { loanPaymentAmount?: number; loanPrincipalAmount?: number; loanInterestAmount?: number }
+): LoanPaymentDetails {
+  const baseAmount = economyRules?.loanPaymentAmount ?? 50;
+  const baseInterest = economyRules?.loanInterestAmount ?? 5;
+  const basePrincipal = economyRules?.loanPrincipalAmount ?? Math.max(1, baseAmount - baseInterest);
+  const interestRate = baseAmount > 0 ? baseInterest / baseAmount : 0.1;
+
+  if (loanDebt <= 0) {
+    return {
+      minRequiredPayment: 0,
+      fullPayoffAmount: 0,
+      basePaymentAmount: baseAmount,
+      interestRate
+    };
+  }
+
+  if (loanDebt < baseAmount) {
+    return {
+      minRequiredPayment: loanDebt,
+      fullPayoffAmount: loanDebt,
+      basePaymentAmount: baseAmount,
+      interestRate
+    };
+  }
+
+  const fullInterest = Math.round(loanDebt * (baseInterest / basePrincipal));
+  const fullPayoffAmount = loanDebt + fullInterest;
+  const isAdvanced = rules?.versionClass === 'advanced';
+  const computedMin = isAdvanced
+    ? Math.max(baseAmount, Math.ceil((loanDebt * 0.20) / 10) * 10)
+    : baseAmount;
+
+  return {
+    minRequiredPayment: Math.min(fullPayoffAmount, computedMin),
+    fullPayoffAmount,
+    basePaymentAmount: baseAmount,
+    interestRate
+  };
+}
+
+export function calcLoanPaymentBreakdown(
+  loanDebt: number,
+  paymentAmount: number,
+  details: LoanPaymentDetails,
+  economyRules?: { loanPaymentAmount?: number; loanPrincipalAmount?: number; loanInterestAmount?: number }
+): LoanPaymentBreakdown {
+  if (loanDebt <= 0 || paymentAmount <= 0) {
+    return {
+      payment: 0,
+      principalApplied: 0,
+      interestFee: 0,
+      remainingDebt: Math.max(0, loanDebt),
+      meetsMinimum: false
+    };
+  }
+
+  const clampedPayment = Math.min(Math.floor(paymentAmount), details.fullPayoffAmount);
+  const baseAmount = economyRules?.loanPaymentAmount ?? details.basePaymentAmount;
+  const basePrincipal = economyRules?.loanPrincipalAmount ?? 45;
+  const baseInterest = economyRules?.loanInterestAmount ?? 5;
+
+  let interestFee: number;
+  let principalApplied: number;
+  let remainingDebt: number;
+
+  if (clampedPayment >= details.fullPayoffAmount) {
+    principalApplied = loanDebt;
+    interestFee = clampedPayment - loanDebt;
+    remainingDebt = 0;
+  } else if (clampedPayment === baseAmount) {
+    interestFee = baseInterest;
+    principalApplied = Math.min(loanDebt, basePrincipal);
+    remainingDebt = Math.max(0, loanDebt - principalApplied);
+  } else {
+    interestFee = Math.round(clampedPayment * details.interestRate);
+    principalApplied = Math.min(loanDebt, Math.max(1, clampedPayment - interestFee));
+    remainingDebt = Math.max(0, loanDebt - principalApplied);
+  }
+
+  return {
+    payment: clampedPayment,
+    principalApplied,
+    interestFee,
+    remainingDebt,
+    meetsMinimum: clampedPayment >= details.minRequiredPayment
+  };
+}
+
 export function handlePayLoanAction(
   player: PlayerState,
-  _action: { type: 'pay_loan' },
+  action: { type: 'pay_loan'; amount?: number },
   context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
 
   if ((nextPlayer.loanDebt || 0) > 0) {
-    const loanPaymentAmount = context.campaign.config.economyRules?.loanPaymentAmount ?? 50;
-    const loanPrincipalAmount = context.campaign.config.economyRules?.loanPrincipalAmount ?? 45;
-    const loanInterestAmount = context.campaign.config.economyRules?.loanInterestAmount ?? 5;
-    
-    if (nextPlayer.loanDebt < loanPaymentAmount && nextPlayer.money >= nextPlayer.loanDebt) {
-      const amount = nextPlayer.loanDebt;
-      nextPlayer.money -= amount;
-      nextPlayer.loanDebt = 0;
-      nextPlayer.loanPaymentDeadline = 0;
-      if (!nextPlayer.turnFlags) nextPlayer.turnFlags = {} as any;
-      nextPlayer.turnFlags.loanPaidThisTurn = true;
-      nextPlayer.turnFlags.loanPayableWarning = false;
-      actionLog = { key: 'action.loan.paidOff', params: { amount } };
-    } else if (nextPlayer.money >= loanPaymentAmount) {
-      nextPlayer.money -= loanPaymentAmount;
-      nextPlayer.loanDebt = Math.max(0, nextPlayer.loanDebt - loanPrincipalAmount);
+    const economyRules = context.campaign.config.economyRules;
+    const details = calcLoanPaymentDetails(nextPlayer.loanDebt, context.rules, economyRules);
+    const requested = action.amount !== undefined ? Math.floor(action.amount) : details.minRequiredPayment;
+
+    if (requested < details.minRequiredPayment) {
+      actionLog = { key: 'action.error.belowMinLoanPayment', params: { min: details.minRequiredPayment } };
+      return { nextPlayer, actionLog };
+    }
+
+    const breakdown = calcLoanPaymentBreakdown(nextPlayer.loanDebt, requested, details, economyRules);
+    if (nextPlayer.money >= breakdown.payment) {
+      nextPlayer.money -= breakdown.payment;
+      nextPlayer.loanDebt = breakdown.remainingDebt;
       if (!nextPlayer.turnFlags) nextPlayer.turnFlags = {} as any;
       nextPlayer.turnFlags.loanPaidThisTurn = true;
       nextPlayer.turnFlags.loanPayableWarning = false;
 
       if (nextPlayer.loanDebt === 0) {
         nextPlayer.loanPaymentDeadline = 0;
-        actionLog = { key: 'action.loan.paidOff', params: { amount: loanPaymentAmount } };
+        actionLog = { key: 'action.loan.paidOff', params: { amount: breakdown.payment } };
       } else {
         if (context.rules && context.rules.rollingLoanDeadline) {
           nextPlayer.loanPaymentDeadline = Math.max(nextPlayer.loanPaymentDeadline || 0, context.turn + 4);
@@ -181,7 +284,14 @@ export function handlePayLoanAction(
             nextPlayer.loanPaymentDeadline = currentMonthEnd + 4;
           }
         }
-        actionLog = { key: 'action.loan.paidInstallment', params: { payment: loanPaymentAmount, principal: loanPrincipalAmount, interest: loanInterestAmount } };
+        actionLog = {
+          key: 'action.loan.paidInstallment',
+          params: {
+            payment: breakdown.payment,
+            principal: breakdown.principalApplied,
+            interest: breakdown.interestFee
+          }
+        };
       }
     } else {
       actionLog = { key: 'action.error.notEnoughMoneyPayment' };

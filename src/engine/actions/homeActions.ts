@@ -5,6 +5,7 @@ import { requireConfig, requireAdvancedStatRules, requireAdvancedTimeRules, requ
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
 import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental, calcSocializeParameters } from '../statMath';
+import { resolveDecision, type ReplayContext } from '../replayTypes';
 
 export function handleRelaxAction(
   player: PlayerState,
@@ -40,25 +41,8 @@ export function handleRelaxAction(
       const mentalBonus = relaxEffects.get('mental') || 0;
       const extraMess = relaxEffects.get('mess') || 0;
 
-      const isParkSystem = Boolean(context.rules.enableParkSystem);
       const homeRelaxes = (nextPlayer.turnFlags.homeRelaxesThisTurn || 0) + 1;
       nextPlayer.turnFlags.homeRelaxesThisTurn = homeRelaxes;
-
-      let cabinFeverPenalty = false;
-      let cabinFeverLoss = 0;
-      if (isParkSystem && homeRelaxes >= 3) {
-        const hasBeenOutside = Boolean(
-          (nextPlayer.turnFlags.parkRelaxesThisTurn || 0) > 0 ||
-          (nextPlayer.turnFlags.parkWorkoutsThisTurn || 0) > 0 ||
-          (nextPlayer.turnFlags.parkStrollsThisTurn || 0) > 0 ||
-          (nextPlayer.turnFlags.parkJogsThisTurn || 0) > 0 ||
-          (nextPlayer.turnFlags.parkBenchesThisTurn || 0) > 0
-        );
-        if (!hasBeenOutside) {
-          cabinFeverPenalty = true;
-          cabinFeverLoss = 2;
-        }
-      }
 
       const mentalStat = nextPlayer.mentalCondition ?? 50;
       const rawPhysGain = 1 + Math.floor(mentalStat / 25) + physBonus;
@@ -84,7 +68,7 @@ export function handleRelaxAction(
       const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
       const messPenalty = Math.floor((nextPlayer.mess || 0) / 5);
       const socialMentalBonus = Math.floor((nextPlayer.social || 0) / 15);
-      const rawMentalGain = Math.max(0, firstBonus + 3 - messPenalty - cabinFeverLoss) + mentalBonus + socialMentalBonus;
+      const rawMentalGain = Math.max(0, firstBonus + 3 - messPenalty) + mentalBonus + socialMentalBonus;
       const mentalGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
         ? Math.max(0.5, roundToResolution(rawMentalGain * ratio, conditionRes))
         : rawMentalGain;
@@ -102,9 +86,7 @@ export function handleRelaxAction(
 
       nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
       const physDesc = maxPhysGain > 0 ? `+${maxPhysGain} Max Physical` : `+${physGain} Physical`;
-      let noteStr = '';
-      if (cabinFeverPenalty) noteStr += ', Cabin Fever';
-      statsStr = ` (${physDesc}, +${mentalGain} Mental${noteStr})`;
+      statsStr = ` (${physDesc}, +${mentalGain} Mental)`;
       actionLog = { key: 'action.relax', params: { stats: statsStr } };
     } else {
       // Unfed Relaxing
@@ -250,7 +232,8 @@ export function handleCleaningServiceAction(
 export function handleSocializeAction(
   player: PlayerState,
   _action: { type: 'socialize_guests' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
@@ -283,10 +266,13 @@ export function handleSocializeAction(
   const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
 
   // Roll guests based on housing tier dice (1d3 low-cost, 2d3 security, 3d3 penthouse)
-  let rawRoll = 0;
-  for (let i = 0; i < params.diceCount; i++) {
-    rawRoll += context.rng.nextInt(1, 3);
-  }
+  const rawRoll = resolveDecision(replayContext, `socialize_guests_roll_${nextPlayer.id}`, () => {
+    let total = 0;
+    for (let i = 0; i < params.diceCount; i++) {
+      total += context.rng.nextInt(1, 3);
+    }
+    return total;
+  });
 
   // Dynamic space capping: clamp guests to available room (10 free space per guest)
   const X = context.rules.spaceCapping
@@ -569,18 +555,15 @@ export function handlePrepMealAction(
       nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + messAdded);
     }
 
-    // Mental penalty: -1.5 Mental
+    // Mental penalty: -1 Mental
     const minMental = nextPlayer.mentalConditionMin ?? statRules.minMentalCondition;
-    nextPlayer.mentalCondition = safeDecrementMental(nextPlayer.mentalCondition ?? maxMental, 1.5, minMental);
+    nextPlayer.mentalCondition = safeDecrementMental(nextPlayer.mentalCondition ?? maxMental, 1, minMental);
 
-    // Malnutrition penalty for consecutive canned weeks
-    const prevCannedWeeks = nextPlayer.consecutiveCannedWeeks || 0;
-    if (prevCannedWeeks >= 1) {
-      const minPhys = nextPlayer.minPhysicalCondition ?? statRules.initialMinPhysical;
-      nextPlayer.physicalConditionMax = Math.max(minPhys, (nextPlayer.physicalConditionMax ?? maxPhysical) - 1);
-      nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax, nextPlayer.physicalCondition ?? maxPhysical);
-    }
-    nextPlayer.consecutiveCannedWeeks = prevCannedWeeks + 1;
+    // Physical penalty: -1 Max Physical upon eating canned rations
+    const minPhys = nextPlayer.minPhysicalCondition ?? statRules.initialMinPhysical;
+    nextPlayer.physicalConditionMax = Math.max(minPhys, (nextPlayer.physicalConditionMax ?? maxPhysical) - 1);
+    nextPlayer.physicalCondition = Math.min(nextPlayer.physicalConditionMax, nextPlayer.physicalCondition ?? maxPhysical);
+    nextPlayer.consecutiveCannedWeeks = 0;
 
     nextPlayer.turnFlags.hasEaten = true;
     nextPlayer.turnFlags.mealPreparedThisTurn = 'canned';

@@ -349,11 +349,12 @@ describe('Advanced 2000 - Cooking Module', () => {
   });
 
   describe('Weekly Meal Prep: Canned Food (Low Effort Survival Fallback)', () => {
-    it('heats canned rations: costs 1.0h without microwave, 0.0 Physical, produces +1 mess, lowers Mental by 1.5', () => {
+    it('heats canned rations: costs 1.0h without microwave, -1 Max Physical, produces +1 mess, lowers Mental by 1', () => {
       let player = makePlayer(campaign2000);
       player.hoursRemaining = 50;
       player.inventory.cannedFoodUnits = 2;
       player.physicalCondition = 1.0; // Exhausted
+      player.physicalConditionMax = 65;
       player.mentalCondition = 40;
       player.mess = 0;
 
@@ -362,12 +363,12 @@ describe('Advanced 2000 - Cooking Module', () => {
       const p = result.updatedPlayer;
 
       expect(p.hoursRemaining).toBe(49.0); // 1 hour prep
-      expect(p.physicalCondition).toBe(1.0); // 0 Physical cost: safe from exhaustion!
-      expect(p.mentalCondition).toBe(38.5); // -1.5 Mental (salty mystery meat)
+      expect(p.physicalCondition).toBe(1.0); // 0 immediate labor cost
+      expect(p.physicalConditionMax).toBe(64); // -1 Max Physical upon eating canned rations
+      expect(p.mentalCondition).toBe(39); // -1 Mental
       expect(p.mess).toBe(1);
       expect(p.inventory.cannedFoodUnits).toBe(1);
       expect(p.turnFlags.hasEaten).toBe(true);
-      expect(p.consecutiveCannedWeeks).toBe(1);
     });
 
     it('microwave cuts canned prep time to 0.5h and produces 0 mess', () => {
@@ -386,19 +387,22 @@ describe('Advanced 2000 - Cooking Module', () => {
       expect(p.turnFlags.hasEaten).toBe(true);
     });
 
-    it('eating canned food multiple weeks in a row degrades physicalConditionMax by 1', () => {
+    it('applies exact -1 Max Physical and -1 Mental every time canned food is eaten (no consecutive-weeks streak rule)', () => {
       let player = makePlayer(campaign2000);
       player.hoursRemaining = 50;
-      player.inventory.cannedFoodUnits = 2;
+      player.inventory.cannedFoodUnits = 3;
       player.physicalConditionMax = 65;
-      player.consecutiveCannedWeeks = 1; // Already lived on canned rations last week
+      player.mentalCondition = 40;
+      player.consecutiveCannedWeeks = 0;
 
       const { context } = createTestContext(player, campaign2000);
-      const result = gameReducer(player, { type: 'prep_meal', mealType: 'canned' }, context);
-      const p = result.updatedPlayer;
+      const res1 = gameReducer(player, { type: 'prep_meal', mealType: 'canned' }, context);
+      expect(res1.updatedPlayer.physicalConditionMax).toBe(64);
+      expect(res1.updatedPlayer.mentalCondition).toBe(39);
 
-      expect(p.physicalConditionMax).toBe(64); // Malnutrition penalty applied!
-      expect(p.consecutiveCannedWeeks).toBe(2);
+      const res2 = gameReducer(res1.updatedPlayer, { type: 'prep_meal', mealType: 'canned' }, context);
+      expect(res2.updatedPlayer.physicalConditionMax).toBe(63);
+      expect(res2.updatedPlayer.mentalCondition).toBe(38);
     });
   });
 
@@ -490,10 +494,10 @@ describe('Advanced 2000 - Cooking Module', () => {
       player.physicalCondition = 50;
       player.physicalConditionMax = 65;
 
-      const cannedItem = campaign2000.items.find(i => i.id === 'dog_food')!;
+      const cannedItem = campaign2000.items.find(i => i.id === 'canned_food')!;
       const result = buyItem(player, cannedItem, campaign2000.config.gameRules, campaign2000);
 
-      // Canned food purchased: -3 physicalConditionMax was NOT applied at checkout!
+      // Canned food purchased: no physicalConditionMax penalty applied!
       expect(result.updated.physicalConditionMax).toBe(65);
     });
   });

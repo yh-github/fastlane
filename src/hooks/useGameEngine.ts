@@ -392,6 +392,7 @@ export function useGameEngine(
       try {
         const currentBuilding = campaign.map.nodes.find(n => n.id === player.position)?.buildingId;
         const wasInside = player.turnFlags?.enteredBuildingThisTurn === currentBuilding && currentBuilding != null;
+        let moveRecorded = false;
         if (wasInside && (currentBuilding === 'bank' || currentBuilding === 'blacks_market')) {
           const preRobberyMoney = player.money;
           const preRobberyHappiness = player.happiness;
@@ -419,6 +420,7 @@ export function useGameEngine(
               engineDecisions: outDecisions
             });
           }
+          moveRecorded = true;
 
           await triggerRobberyNotificationAndAnim(player, preRobberyMoney, preRobberyHappiness, preRobberyMental, currentBuilding || '');
           // Save the RNG state back since we used it!
@@ -522,7 +524,7 @@ export function useGameEngine(
         player = recalculatePlayerEffects(player, campaign);
         updatedPlayers[activePlayerIndex] = player;
 
-        if (stepsTaken > 0 && !['bank', 'blacks_market'].includes(currentBuilding || '')) {
+        if (stepsTaken > 0 && !moveRecorded) {
           if (replayDataRef.current) {
             if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
             replayDataRef.current.steps.push({

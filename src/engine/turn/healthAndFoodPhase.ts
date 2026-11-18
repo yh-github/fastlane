@@ -220,6 +220,13 @@ export function processAdvancedHealthAndFood(
     if (hasEatenFastFood || hasCannedFood) {
       if (!hasEatenFastFood && hasCannedFood) {
         p.inventory.cannedFoodUnits!--;
+        if (state.rules.usePhysicalMentalConditions) {
+          const minPhys = p.minPhysicalCondition ?? sr.initialMinPhysical;
+          p.physicalConditionMax = Math.max(minPhys, (p.physicalConditionMax ?? sr.initialPhysicalMax) - 1);
+          p.physicalCondition = Math.min(p.physicalConditionMax, p.physicalCondition ?? p.physicalConditionMax);
+          p.mentalCondition = Math.max(sr.minMentalCondition, (p.mentalCondition ?? sr.startingMentalCondition) - 1);
+          mods.push({ stat: 'maxPhysical', diff: -1 }, { stat: 'mental', diff: -1 });
+        }
       }
       p.turnFlags.hasEaten = true;
       const key = state.rules.helpfulUI ? 'events.foodSpoiled.noFridge_qol' : 'events.foodSpoiled.noFridge';
@@ -267,6 +274,12 @@ export function processAdvancedHealthAndFood(
     } else if ((p.inventory.cannedFoodUnits || 0) > 0) {
       p.inventory.cannedFoodUnits!--;
       p.turnFlags.hasEaten = true;
+      if (state.rules.usePhysicalMentalConditions) {
+        const minPhys = p.minPhysicalCondition ?? sr.initialMinPhysical;
+        p.physicalConditionMax = Math.max(minPhys, (p.physicalConditionMax ?? sr.initialPhysicalMax) - 1);
+        p.physicalCondition = Math.min(p.physicalConditionMax, p.physicalCondition ?? p.physicalConditionMax);
+        p.mentalCondition = Math.max(sr.minMentalCondition, (p.mentalCondition ?? sr.startingMentalCondition) - 1);
+      }
     } else {
       starvedThisTurn = true;
     }

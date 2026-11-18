@@ -277,4 +277,46 @@ describe('Bank Loan System (Authentic Sierra SCI & Mechanics)', () => {
       expect(state.players[0].turnEvents.some(e => e.key === 'events.loan.due')).toBe(true);
     });
   });
+
+  describe('Custom Repayments & Computed Advanced Minimums', () => {
+    it('computes 20% minimum payment (min $50) in Advanced version and allows custom/full repayment', () => {
+      const player = {
+        id: 'player_1',
+        money: 1000,
+        loanDebt: 450,
+        loanPaymentDeadline: 8,
+        happiness: 50,
+        hoursRemaining: 50,
+        turnFlags: { loanPaidThisTurn: false, loanPayableWarning: true },
+        inventory: { appliances: [], books: [], stocks: { tBills: 0, holdings: {} }, pawnedItems: [] },
+      } as any;
+
+      const advContext: ReducerContext = {
+        campaign,
+        rules: { ...campaign.config.gameRules, versionClass: 'advanced' },
+        turn: 5,
+        economicIndex: 0,
+        rng: new Random(123),
+        state: {} as any
+      };
+
+      // Attempting $50 when computed minimum is $90 (20% of $450) is rejected
+      const tooLowRes = gameReducer(player, { type: 'pay_loan', amount: 50 }, advContext);
+      expect(tooLowRes.actionLog).toEqual({ key: 'action.error.belowMinLoanPayment', params: { min: 90 } });
+      expect(tooLowRes.updatedPlayer.loanDebt).toBe(450);
+
+      // Default { type: 'pay_loan' } in Advanced automatically pays computed minimum $90 ($9 fee + $81 principal)
+      const minRes = gameReducer(player, { type: 'pay_loan' }, advContext);
+      expect(minRes.updatedPlayer.money).toBe(910);
+      expect(minRes.updatedPlayer.loanDebt).toBe(369);
+      expect(minRes.updatedPlayer.turnFlags.loanPaidThisTurn).toBe(true);
+
+      // Custom full payoff of $450 debt ($500 total = $450 principal + $50 fee)
+      const fullRes = gameReducer(player, { type: 'pay_loan', amount: 500 }, advContext);
+      expect(fullRes.updatedPlayer.money).toBe(500);
+      expect(fullRes.updatedPlayer.loanDebt).toBe(0);
+      expect(fullRes.updatedPlayer.loanPaymentDeadline).toBe(0);
+      expect(fullRes.actionLog).toEqual(expect.objectContaining({ key: 'action.loan.paidOff', params: { amount: 500 } }));
+    });
+  });
 });

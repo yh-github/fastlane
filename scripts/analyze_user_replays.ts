@@ -99,7 +99,6 @@ async function analyzeReplay(replayConfig: typeof REPLAY_FILES[0]) {
       const prevDep = player.dependability;
       const prevMent = player.mentalCondition;
 
-      const replayCtx: ReplayContext = { inDecisions: step.engineDecisions || [], outDecisions: [] };
       const context = {
         campaign,
         rules: currentState.rules,
@@ -107,7 +106,7 @@ async function analyzeReplay(replayConfig: typeof REPLAY_FILES[0]) {
         economicIndex: currentState.economicIndex,
         rng: new Random(currentState.rngState),
         state: currentState,
-        replayContext: replayCtx
+        engineDecisions: step.engineDecisions || []
       };
 
       const { updatedPlayer, updatedPawnShopItemsForSale, actionLog } = gameReducer(player, action as any, context);

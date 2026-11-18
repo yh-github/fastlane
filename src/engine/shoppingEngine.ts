@@ -221,13 +221,7 @@ export function buyItem(
     }
   }
 
-  // Backward compatibility fallback for dog_food if not explicitly defined in effects
-  const hasDogFoodPurchaseEffect = item.effects?.some(e => e.trigger === 'on_purchase' && e.stat === 'physical_max');
-  if (rules?.usePhysicalMentalConditions && !rules?.enableCookingSystem && item.id === 'dog_food' && !hasDogFoodPurchaseEffect) {
-    const minPhys = updated.minPhysicalCondition ?? 1;
-    updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) - 3);
-    updated.physicalCondition = Math.min(updated.physicalConditionMax, updated.physicalCondition ?? 50);
-  }
+  // Note: Buying canned food incurs no immediate physical/mental penalty; penalties apply on consumption.
 
   if (rules?.usePhysicalMentalConditions && !rules?.enableCookingSystem && item.category === 'food' && item.subcategory !== 'fast_food' && item.subcategory !== 'canned' && item.subcategory !== 'coffee' && !player.turnFlags?.freshFoodHappinessGranted) {
     const maxPhys = updated.physicalConditionMax ?? 50;

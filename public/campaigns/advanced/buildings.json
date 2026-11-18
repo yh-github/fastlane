@@ -90,7 +90,7 @@
         "priceOverride": 40
       },
       {
-        "itemId": "dog_food",
+        "itemId": "canned_food",
         "priceOverride": 18
       },
       {
@@ -183,7 +183,7 @@
         "priceOverride": 40
       },
       {
-        "itemId": "dog_food",
+        "itemId": "canned_food",
         "priceOverride": 18
       },
       {

@@ -545,8 +545,9 @@ export function handleRelaxParkAction(
     let physGain = 0;
     let mentalGain = 0;
     if (relaxes === 0) {
-      physGain = 2;
-      mentalGain = 2;
+      // Base (+1 Phys, +1 Mental) + first-time park bonus (+2 Phys, +2 Mental)
+      physGain = 3;
+      mentalGain = 3;
     } else if (relaxes === 1) {
       physGain = 1;
       mentalGain = 1;

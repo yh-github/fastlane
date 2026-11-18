@@ -281,10 +281,10 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
 
     // Must NOT contain +-1
     expect(screen.queryByText(/\+-1/)).not.toBeInTheDocument();
-    // Must contain clean "-1" in physical pill and accessible title
-    const pill = screen.getByTestId('stat-pill-physical');
+    // Must contain clean "-1" in Max Physical pill and accessible title
+    const pill = screen.getByTestId('stat-pill-physicalMax');
     expect(pill.textContent).toContain('-1');
-    expect(pill).toHaveAttribute('title', expect.stringContaining('-1 Physical Condition'));
+    expect(pill).toHaveAttribute('title', expect.stringContaining('-1'));
   });
 
   // 9. Parks: No clerk face, no welcome speech bubble, standard button icons
@@ -316,7 +316,7 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     expect(screen.getByTestId('park-help-relax')).toBeInTheDocument();
     expect(screen.getByText('Workout in Park')).toBeInTheDocument();
     expect(screen.getByTestId('park-help-workout')).toBeInTheDocument();
-    expect(screen.getByText(/⏳ -3h • \+2 💪 • \+2 🧠 • 🎴 1 Event Card/i)).toBeInTheDocument();
+    expect(screen.getByText(/⏳ -3h • \+3 💪 • \+3 🧠 • 🎴 1 Event Card/i)).toBeInTheDocument();
     expect(screen.getByText(/⏳ -3h • \+1 Max 💪 • -1 💪 • \+1 🧠 • 🎴 1 Event Card/i)).toBeInTheDocument();
   });
 

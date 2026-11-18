@@ -5,7 +5,7 @@ import type { GameRules } from '../../engine/gameState';
 import { getClothesSwitchingRule } from '../../engine/rules';
 import { calcItemPrice } from '../../engine/economyEngine';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
-import { getItemDisplayName } from '../../utils/itemUtils';
+import { getItemDisplayName, getItemImagePath } from '../../utils/itemUtils';
 import { previewAction } from '../../engine/actionPreview';
 import { givesFastFoodSocial } from '../../engine/shoppingEngine';
 import { ItemCardModal } from './home/DurableCardModal';
@@ -75,12 +75,16 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
           padding: '2px 4px' 
         }}
       >
-        {availableItems.filter(item => {
-          if (rules?.advancedStores && (item.id === 'food_2weeks' || item.id === 'food_4weeks')) {
-            return false;
-          }
-          return true;
-        }).map(item => {
+        {availableItems
+          .filter(item => {
+            if (rules?.advancedStores && (item.id === 'food_2weeks' || item.id === 'food_4weeks')) {
+              return false;
+            }
+            return true;
+          })
+          .slice()
+          .sort((a, b) => calcItemPrice(a, economicIndex) - calcItemPrice(b, economicIndex))
+          .map(item => {
           const adjustedPrice = calcItemPrice(item, economicIndex);
           
           let alreadyOwned = false;
@@ -190,7 +194,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
                 {rules?.showItemImages && (
                   <img 
-                    src={`/assets/raw_images/${item.id}.png`} 
+                    src={getItemImagePath(item.id)} 
                     alt={item.name} 
                     style={{ width: '28px', height: '28px', objectFit: 'contain', flexShrink: 0 }}
                     onError={(e) => { 

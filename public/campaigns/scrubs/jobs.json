@@ -193,5 +193,13 @@
       "technical"
     ],
     "perks": []
+  },
+  {
+    "id": "uni_professor",
+    "requirements": {
+      "degrees": [
+        "publishing"
+      ]
+    }
   }
 ]

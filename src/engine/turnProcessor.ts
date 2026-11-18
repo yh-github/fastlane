@@ -357,19 +357,21 @@ export function processTurnStart(state: GameState, campaign: CampaignBundle, rep
 
   if (state.rules.enableBusyWeeks) {
     if (busyDeck.length === 0) {
-      const bag = [true, false, false, false];
-      for (let i = bag.length - 1; i > 0; i--) {
-        const j = Math.floor(rng.next() * (i + 1));
-        [bag[i], bag[j]] = [bag[j], bag[i]];
-      }
       const wasPrevBusy = Boolean(state.busyLocations?.['red_pirate']);
-      if (wasPrevBusy && bag[bag.length - 1] === true) {
-        const nonBusyIdx = bag.findIndex(val => val === false);
-        if (nonBusyIdx !== -1) {
-          [bag[bag.length - 1], bag[nonBusyIdx]] = [bag[nonBusyIdx], bag[bag.length - 1]];
+      busyDeck = resolveDecision(replay, 'busy_weeks_deck', () => {
+        const bag = [true, false, false, false];
+        for (let i = bag.length - 1; i > 0; i--) {
+          const j = Math.floor(rng.next() * (i + 1));
+          [bag[i], bag[j]] = [bag[j], bag[i]];
         }
-      }
-      busyDeck = bag;
+        if (wasPrevBusy && bag[bag.length - 1] === true) {
+          const nonBusyIdx = bag.findIndex(val => val === false);
+          if (nonBusyIdx !== -1) {
+            [bag[bag.length - 1], bag[nonBusyIdx]] = [bag[nonBusyIdx], bag[bag.length - 1]];
+          }
+        }
+        return bag;
+      });
     }
 
     // Rookie protection: Prevent busy week on the first full turn after hiring at Red Pirate

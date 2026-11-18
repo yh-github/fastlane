@@ -270,4 +270,35 @@ describe("StoreFront", () => {
     fireEvent.click(burgerItem);
     expect(mockOnAction).not.toHaveBeenCalled();
   });
+
+  it('sorts store menu items from cheapest to most expensive', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 500,
+      hoursRemaining: 10,
+      inventory: { appliances: [], books: [] }
+    } as any;
+
+    const unsortedMenu = [
+      { id: 'kraken_burger', name: 'Kraken Burger', basePrice: 120, category: 'food', subcategory: 'fast_food' },
+      { id: 'scurvy_slaw', name: 'Scurvy Slaw', basePrice: 65, category: 'food', subcategory: 'fast_food' },
+      { id: 'buccaneer_stew', name: 'Buccaneer Stew', basePrice: 85, category: 'food', subcategory: 'fast_food' }
+    ] as any;
+
+    render(
+      <StoreFront
+        player={mockPlayer}
+        onAction={vi.fn()}
+        availableItems={unsortedMenu}
+        economicIndex={0}
+      />
+    );
+
+    const cards = Array.from(document.querySelectorAll('[data-testid^="store-item-"]'));
+    expect(cards.map(c => c.getAttribute('data-testid'))).toEqual([
+      'store-item-scurvy_slaw',
+      'store-item-buccaneer_stew',
+      'store-item-kraken_burger'
+    ]);
+  });
 });

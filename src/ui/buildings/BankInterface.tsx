@@ -5,6 +5,7 @@ import type { StockDef, CampaignBundle } from '../../engine/dataLoader';
 import type { GameRules, EconomySimulationState } from '../../engine/gameState';
 import { calcStockPrice } from '../../engine/economyEngine';
 import { formatHours, calcLoanAssessment } from '../../engine/statMath';
+import { calcLoanPaymentDetails, calcLoanPaymentBreakdown } from '../../engine/actions/financeActions';
 import { ActionReasonModal } from './ActionReasonModal';
 import type { InteractionProps } from './types';
 
@@ -58,12 +59,13 @@ export function StockTradeDialog({
     }
   };
 
+  const isBuy = mode === 'buy';
+  const maxShares = isBuy ? (price > 0 ? Math.floor(playerMoney / price) : 0) : owned;
   const totalCost = numShares * price;
   const grossRevenue = numShares * price;
   const totalSellFee = numShares * sellFeePerShare;
   const netRevenue = numShares * netSellPricePerShare;
 
-  const isBuy = mode === 'buy';
   const canConfirm = isBuy 
     ? (numShares > 0 && playerMoney >= totalCost)
     : (numShares > 0 && owned >= numShares);
@@ -90,18 +92,40 @@ export function StockTradeDialog({
 
       <div style={{ background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '8px', marginBottom: '15px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>
+          <label htmlFor="stock-shares-input" style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>
             Quantity of Shares:
           </label>
-          <input 
-            type="number"
-            min="1"
-            max={!isBuy ? owned : undefined}
-            value={sharesInput}
-            onChange={(e) => handleSharesChange(e.target.value)}
-            style={{ width: '100%', padding: '8px', background: '#222', color: '#fff', border: '1px solid #555', borderRadius: '4px', boxSizing: 'border-box' }}
-            placeholder="Shares count..."
-          />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input 
+              id="stock-shares-input"
+              type="number"
+              min="1"
+              max={!isBuy ? owned : (maxShares > 0 ? maxShares : undefined)}
+              value={sharesInput}
+              onChange={(e) => handleSharesChange(e.target.value)}
+              style={{ flex: 1, minWidth: 0, padding: '8px', background: '#222', color: '#fff', border: '1px solid #555', borderRadius: '4px', boxSizing: 'border-box' }}
+              placeholder="Shares count..."
+            />
+            <button
+              type="button"
+              data-testid="btn-stock-max"
+              disabled={maxShares <= 0}
+              onClick={() => handleSharesChange(String(maxShares))}
+              style={{
+                padding: '8px 12px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                background: maxShares > 0 ? (isBuy ? '#2ecc71' : '#e74c3c') : '#444',
+                color: maxShares > 0 ? (isBuy ? '#000' : '#fff') : '#888',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: maxShares > 0 ? 'pointer' : 'not-allowed',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Max ({maxShares})
+            </button>
+          </div>
         </div>
 
         <div>
@@ -282,6 +306,194 @@ export function BankTransactionDialog({
   );
 }
 
+export function LoanPaymentDialog({
+  loanDebt,
+  playerMoney,
+  rules,
+  economyRules,
+  alreadyPaidThisTurn,
+  onConfirm,
+  onClose
+}: {
+  loanDebt: number;
+  playerMoney: number;
+  rules?: GameRules;
+  economyRules?: { loanPaymentAmount?: number; loanPrincipalAmount?: number; loanInterestAmount?: number };
+  alreadyPaidThisTurn: boolean;
+  onConfirm: (amount: number) => void;
+  onClose: () => void;
+}) {
+  const details = calcLoanPaymentDetails(loanDebt, rules, economyRules);
+  const [amountInput, setAmountInput] = useState<string>(String(details.minRequiredPayment));
+
+  const parsedAmount = Math.floor(parseInt(amountInput, 10) || 0);
+  const breakdown = calcLoanPaymentBreakdown(loanDebt, parsedAmount, details, economyRules);
+  const maxPayable = Math.min(playerMoney, details.fullPayoffAmount);
+
+  const canConfirm = parsedAmount >= details.minRequiredPayment && breakdown.payment > 0 && playerMoney >= breakdown.payment;
+
+  let validationError = '';
+  if (parsedAmount <= 0) {
+    validationError = 'Enter a valid loan payment amount.';
+  } else if (parsedAmount < details.minRequiredPayment) {
+    validationError = `Minimum payment required to count is $${details.minRequiredPayment}.`;
+  } else if (breakdown.payment > playerMoney) {
+    validationError = `Not enough cash (Costs $${breakdown.payment}, you have $${playerMoney}).`;
+  }
+
+  const presetAmounts = Array.from(new Set([
+    details.minRequiredPayment,
+    100,
+    250,
+    details.fullPayoffAmount
+  ].filter(v => v >= details.minRequiredPayment && v <= details.fullPayoffAmount)));
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div
+      data-testid="loan-payment-dialog"
+      style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        background: 'var(--panel-bg, #13132c)',
+        backdropFilter: 'blur(15px)',
+        color: '#fff',
+        padding: '24px',
+        border: '1px solid #38bdf8',
+        borderRadius: '12px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 10px rgba(56,189,248,0.45)',
+        zIndex: 10000,
+        maxWidth: '420px',
+        width: '90%',
+        textAlign: 'center'
+      }}
+    >
+      <h3 style={{ margin: '0 0 8px 0', color: '#38bdf8' }}>💵 Custom Loan Repayment</h3>
+      <div style={{ fontSize: '13px', color: '#ccc', marginBottom: '12px' }}>
+        Debt Remaining: <strong>${loanDebt}</strong> | Available Cash: <strong>${playerMoney}</strong>
+      </div>
+
+      <div style={{ fontSize: '12px', color: '#bae6fd', background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '8px 10px', borderRadius: '6px', marginBottom: '14px' }}>
+        Minimum Required to Satisfy Billing Cycle: <strong>${details.minRequiredPayment}</strong>
+        {alreadyPaidThisTurn && <span style={{ color: '#4ade80', marginLeft: '6px' }}>(✓ Already met)</span>}
+      </div>
+
+      <div style={{ background: 'rgba(0,0,0,0.4)', padding: '14px', borderRadius: '8px', marginBottom: '14px', textAlign: 'left' }}>
+        <label htmlFor="loan-payment-input" style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '6px' }}>
+          Payment Amount ($) [Min ${details.minRequiredPayment} – Full ${details.fullPayoffAmount}]:
+        </label>
+        <input
+          id="loan-payment-input"
+          type="number"
+          min={details.minRequiredPayment}
+          max={details.fullPayoffAmount}
+          value={amountInput}
+          onChange={(e) => setAmountInput(e.target.value)}
+          style={{ width: '100%', padding: '8px', background: '#222', color: '#fff', border: '1px solid #555', borderRadius: '4px', boxSizing: 'border-box', marginBottom: '10px' }}
+          placeholder="Enter payment..."
+        />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {presetAmounts.map(preset => {
+            const isFull = preset === details.fullPayoffAmount;
+            const isMin = preset === details.minRequiredPayment;
+            return (
+              <button
+                key={preset}
+                type="button"
+                data-testid={isFull ? 'btn-loan-preset-full' : isMin ? 'btn-loan-preset-min' : `btn-loan-preset-${preset}`}
+                onClick={() => setAmountInput(String(preset))}
+                style={{
+                  flex: '1 1 auto',
+                  padding: '5px 8px',
+                  fontSize: '11px',
+                  background: isFull ? '#0284c7' : '#333',
+                  color: '#fff',
+                  border: isFull ? 'none' : '1px solid #555',
+                  borderRadius: '4px',
+                  fontWeight: isFull || isMin ? 'bold' : 'normal',
+                  cursor: 'pointer'
+                }}
+              >
+                {isFull ? `Pay Full ($${preset})` : isMin ? `Min ($${preset})` : `$${preset}`}
+              </button>
+            );
+          })}
+          {maxPayable >= details.minRequiredPayment && maxPayable < details.fullPayoffAmount && (
+            <button
+              type="button"
+              data-testid="btn-loan-preset-max"
+              onClick={() => setAmountInput(String(maxPayable))}
+              style={{
+                flex: '1 1 auto',
+                padding: '5px 8px',
+                fontSize: '11px',
+                background: '#4aa',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              Max Cash (${maxPayable})
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div style={{ textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '6px', marginBottom: '14px', fontSize: '12px', lineHeight: '1.6' }}>
+        <div><strong>Cash Paid:</strong> ${breakdown.payment}</div>
+        <div><strong>Applied to Principal:</strong> -${breakdown.principalApplied}</div>
+        <div><strong>Bank Fee ({Math.round(details.interestRate * 100)}%):</strong> ${breakdown.interestFee}</div>
+        <div><strong>Remaining Debt:</strong> ${breakdown.remainingDebt}</div>
+        <div>
+          <strong>Counts Toward Cycle Minimum:</strong>{' '}
+          <span style={{ color: breakdown.meetsMinimum ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>
+            {breakdown.meetsMinimum ? '✓ Yes' : `✗ No (Need $${details.minRequiredPayment}+)`}
+          </span>
+        </div>
+      </div>
+
+      {validationError && (
+        <div style={{ fontSize: '12px', color: '#e74c3c', marginBottom: '14px', fontWeight: 'bold' }}>
+          ⚠️ {validationError}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button
+          type="button"
+          data-testid="btn-loan-confirm"
+          onClick={() => onConfirm(breakdown.payment)}
+          disabled={!canConfirm}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: canConfirm ? '#38bdf8' : '#555',
+            color: canConfirm ? '#000' : '#888',
+            border: 'none',
+            borderRadius: '4px',
+            fontWeight: 'bold',
+            cursor: canConfirm ? 'pointer' : 'not-allowed'
+          }}
+        >
+          Confirm Payment (${breakdown.payment})
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{ flex: 1, padding: '10px', background: 'transparent', color: '#fff', border: '1px solid #666', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export function StockTradeRow({ stock, price, owned, playerMoney, onAction }: { stock: StockDef, price: number, owned: number, playerMoney: number, onAction: (payload: any) => void }) {
   const { t } = useTranslation();
   const [tradeMode, setTradeMode] = useState<'buy' | 'sell' | null>(null);
@@ -414,6 +626,8 @@ export function BankInterface({
   const [reasonMsg, setReasonMsg] = useState<string | null>(null);
 
   const loanPaymentAmount = campaign?.config?.economyRules?.loanPaymentAmount ?? 50;
+  const loanDetails = calcLoanPaymentDetails(player.loanDebt || 0, rules, campaign?.config?.economyRules);
+  const [showLoanDialog, setShowLoanDialog] = useState(false);
   const assessment = calcLoanAssessment(player, campaign, turn, rules);
 
   const canDeposit = player.money > 0;
@@ -619,16 +833,23 @@ export function BankInterface({
                 {player.timesDefaulted > 0 && (
                   <span style={{ color: '#f87171' }}>🚨 Past Defaults: {player.timesDefaulted}</span>
                 )}
-                <span>📅 Terms: ${loanPaymentAmount}/mo on Week 4</span>
+                <span>
+                  📅 {player.loanDebt > 0
+                    ? `Min Due to Count: $${loanDetails.minRequiredPayment}/cycle${rules?.versionClass === 'advanced' ? ' (20% of debt, $50 min)' : ''}`
+                    : `Terms: ${rules?.versionClass === 'advanced' ? 'Min 20% ($50 floor)' : `$${loanPaymentAmount}/mo`} on Week 4`}
+                </span>
+                {player.loanDebt > 0 && player.turnFlags?.loanPaidThisTurn && (
+                  <span style={{ color: '#4ade80', fontWeight: 'bold' }}>✓ Cycle Payment Met</span>
+                )}
               </div>
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: compact ? '8px' : '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: rules?.helpfulUI ? '1fr 1fr 1fr' : '1fr 1fr', gap: compact ? '8px' : '12px' }}>
             <button 
               onClick={() => onAction({ type: 'take_loan' })}
               style={{ 
-                padding: compact ? '8px 12px' : '14px', 
+                padding: compact ? '8px 10px' : '14px', 
                 borderRadius: '8px',
                 fontSize: compact ? '12px' : undefined,
                 border: rules?.helpfulUI && !assessment.eligible ? '1px solid rgba(239, 68, 68, 0.5)' : undefined
@@ -645,16 +866,49 @@ export function BankInterface({
               onClick={() => onAction({ type: 'pay_loan' })} 
               disabled={(player.loanDebt || 0) <= 0}
               style={{ 
-                padding: compact ? '8px 12px' : '14px', 
+                padding: compact ? '8px 10px' : '14px', 
                 borderRadius: '8px',
                 fontSize: compact ? '12px' : undefined,
                 opacity: (player.loanDebt || 0) <= 0 ? 0.5 : 1,
                 cursor: (player.loanDebt || 0) <= 0 ? 'not-allowed' : 'pointer'
               }}
             >
-              {t('bank.makePayment', { amount: loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanPaymentAmount} or remainder)` })}
+              {t('bank.makePayment', { amount: loanDetails.minRequiredPayment || loanPaymentAmount, defaultValue: `Make Loan Payment ($${loanDetails.minRequiredPayment || loanPaymentAmount} or remainder)` })}
             </button>
+            {rules?.helpfulUI && (
+              <button
+                type="button"
+                data-testid="btn-loan-custom-pay"
+                disabled={(player.loanDebt || 0) <= 0}
+                onClick={() => setShowLoanDialog(true)}
+                style={{
+                  padding: compact ? '8px 10px' : '14px',
+                  borderRadius: '8px',
+                  fontSize: compact ? '12px' : undefined,
+                  opacity: (player.loanDebt || 0) <= 0 ? 0.5 : 1,
+                  cursor: (player.loanDebt || 0) <= 0 ? 'not-allowed' : 'pointer',
+                  border: (player.loanDebt || 0) > 0 ? '1px solid rgba(56, 189, 248, 0.5)' : undefined
+                }}
+              >
+                💵 {t('bank.customRepay', { defaultValue: 'Custom / Pay Full...' })}
+              </button>
+            )}
           </div>
+
+          {showLoanDialog && player.loanDebt > 0 && (
+            <LoanPaymentDialog
+              loanDebt={player.loanDebt}
+              playerMoney={player.money}
+              rules={rules}
+              economyRules={campaign?.config?.economyRules}
+              alreadyPaidThisTurn={Boolean(player.turnFlags?.loanPaidThisTurn)}
+              onConfirm={(amount) => {
+                onAction({ type: 'pay_loan', amount });
+                setShowLoanDialog(false);
+              }}
+              onClose={() => setShowLoanDialog(false)}
+            />
+          )}
         </div>
       )}
     </div>

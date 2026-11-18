@@ -19,7 +19,8 @@ export type GameAction =
   | { type: 'buy_stock'; stockId: string; quantity: number; cost: number }
   | { type: 'sell_stock'; stockId: string; quantity: number; revenue: number }
   | { type: 'take_loan' }
-  | { type: 'pay_loan' }
+  | { type: 'pay_loan'; amount?: number }
+  | { type: 'resolve_weekend'; cardId: string }
   | { type: 'rent_transaction'; amount: number }
   | { type: 'move_apartment'; housingId: string; cost: number }
   | { type: 'pay_rent_advance'; amount: number }

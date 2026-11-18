@@ -159,12 +159,13 @@ const mockCampaign: CampaignBundle = {
       effects: [{ trigger: 'continuous', stat: 'mental_max', value: 1 }]
     },
     {
-      id: 'dog_food',
+      id: 'canned_food',
       name: 'Canned Mystery Meat',
       category: 'food',
       subcategory: 'canned',
       basePrice: 18,
-      mentalBonus: -2.5
+      happinessBonus: 0,
+      mentalBonus: 0
     }
   ],
   education: [
@@ -343,16 +344,16 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
     });
   });
 
-  describe('3. Canned Mystery Meat (dog_food)', () => {
-    it('buying Canned Mystery Meat applies -2.5 mental penalty, drops Max Physical by 3, and adds to cannedFoodUnits', () => {
-      const itemDef = mockCampaign.items.find(i => i.id === 'dog_food')!;
+  describe('3. Canned Mystery Meat (canned_food)', () => {
+    it('buying Canned Mystery Meat incurs no physical or mental penalties and adds to cannedFoodUnits', () => {
+      const itemDef = mockCampaign.items.find(i => i.id === 'canned_food')!;
       const res = buyItem(player, itemDef, mockCampaign.config.gameRules, mockCampaign);
 
       expect(res.success).toBe(true);
       expect(res.updated.money).toBe(1000 - 18);
-      expect(res.updated.mentalCondition).toBe(47.5); // 50 - 2.5
-      expect(res.updated.physicalConditionMax).toBe(47); // 50 - 3
-      expect(res.updated.physicalCondition).toBe(47); // capped at new max
+      expect(res.updated.mentalCondition).toBe(50);
+      expect(res.updated.physicalConditionMax).toBe(50);
+      expect(res.updated.physicalCondition).toBe(50);
       expect(res.updated.inventory.cannedFoodUnits).toBe(1);
     });
 

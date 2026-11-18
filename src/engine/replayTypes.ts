@@ -58,7 +58,10 @@ export function resolveDecision<T>(
   }
   const result = generator();
   if (replay && replay.outDecisions) {
-    replay.outDecisions.push({ type, result });
+    replay.outDecisions.push({
+      type,
+      result: typeof result === 'object' && result !== null ? structuredClone(result) : result
+    });
   }
-  return result;
+  return typeof result === 'object' && result !== null ? structuredClone(result) : result;
 }

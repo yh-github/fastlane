@@ -14,9 +14,9 @@ export function getItemDisplayName(
     return 'Fresh Groceries (1-12 Wks)';
   }
 
-  if (isAdvanced && (itemId === 'dog_food' || itemDef?.name === 'Canned Mystery Meat')) {
+  if (itemId === 'canned_food' || (isAdvanced && (itemId === 'dog_food' || itemDef?.name === 'Canned Mystery Meat'))) {
     if (t) {
-      return t('item.dog_food_advanced', { defaultValue: itemDef?.name || 'Canned Mystery Meat' });
+      return t('item.canned_food', { defaultValue: t('item.dog_food_advanced', { defaultValue: itemDef?.name || 'Canned Mystery Meat' }) });
     }
     return itemDef?.name || 'Canned Mystery Meat';
   }
@@ -36,4 +36,10 @@ export function getItemDisplayName(
   }
 
   return itemDef?.name || itemId;
+}
+
+export function getItemImagePath(itemId: string): string {
+  if (itemId === 'crt_tv') return '/assets/raw_images/color_tv.png';
+  if (itemId === 'canned_food') return '/assets/raw_images/dog_food.png';
+  return `/assets/raw_images/${itemId}.png`;
 }

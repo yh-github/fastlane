@@ -100,6 +100,12 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
 
       const medSchool = scrubsCampaign.education.find(d => d.id === 'medical_school')!;
       expect(medSchool.prerequisites).toEqual(['physiology', 'biochemistry']);
+
+      const prof2000 = campaign2000.jobs.find(j => j.id === 'uni_professor')!;
+      expect(prof2000.requirements.degrees).toEqual(['research']);
+
+      const profScrubs = scrubsCampaign.jobs.find(j => j.id === 'uni_professor')!;
+      expect(profScrubs.requirements.degrees).toEqual(['publishing']);
     });
 
     it('preserves standard clothing durability in QT Clothing (9w/9w/13w) and used overrides in Z-Mart (7w/7w/3w)', () => {
@@ -333,6 +339,7 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
     it('clears tolerance at turn maintenance without withdrawal penalties', () => {
       const { player: pCold, state: sCold } = createTestState(6);
       pCold.turnFlags.caffeineIntake = 0;
+      pCold.turnFlags.hasEaten = true;
       pCold.physicalCondition = 40;
       pCold.mentalCondition = 40;
       const nextCold = processTurnStart({ ...sCold, players: [pCold] }, campaign2000);
@@ -995,7 +1002,7 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       expect(logs.some(l => l?.key === 'events.park.hazard')).toBe(true);
     });
 
-    it('triggers Cabin Fever penalty (-2 Mental) on 3rd consecutive home relax without visiting park', () => {
+    it('does NOT trigger Cabin Fever penalty when relaxing repeatedly at home without visiting park', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
       player.hoursRemaining = 30;
       player.physicalCondition = 50;
@@ -1009,27 +1016,10 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       player.turnFlags.parkWorkoutsThisTurn = 0;
       player.turnFlags.relaxedThisTurn = true;
 
-      // Normal 2nd+ relax: 3 (base) + 1 (socialMental: floor(20/15)=1) = 4 Mental.
-      // With Cabin Fever penalty (-2 Mental): 4 - 2 = 2 Mental! 30 + 2 = 32
+      // 2nd+ relax: 3 (base) + 1 (socialMental: floor(20/15)=1) = 4 Mental (no Cabin Fever penalty)
       const res = gameReducer(player, { type: 'relax' }, setupContext(player));
-      expect(res.updatedPlayer.mentalCondition).toBe(32);
+      expect(res.updatedPlayer.mentalCondition).toBe(34);
       expect(res.updatedPlayer.turnFlags.homeRelaxesThisTurn).toBe(3);
-
-      // If player visits park, cabin fever is prevented:
-      const playerVisitedPark = createPlayerState('p2', 'Alex', false, createDefaultGoalAllotment(), 'node_low_cost', campaign2000.config);
-      playerVisitedPark.hoursRemaining = 30;
-      playerVisitedPark.physicalCondition = 50;
-      playerVisitedPark.physicalConditionMax = 100;
-      playerVisitedPark.mentalCondition = 30;
-      playerVisitedPark.mentalConditionMax = 80;
-      playerVisitedPark.inventory.cannedFoodUnits = 10;
-      playerVisitedPark.turnFlags.hasEaten = true;
-      playerVisitedPark.turnFlags.homeRelaxesThisTurn = 2;
-      playerVisitedPark.turnFlags.parkRelaxesThisTurn = 1;
-      playerVisitedPark.turnFlags.relaxedThisTurn = true;
-
-      const resVisited = gameReducer(playerVisitedPark, { type: 'relax' }, setupContext(playerVisitedPark));
-      expect(resVisited.updatedPlayer.mentalCondition).toBe(34);
     });
 
     it('supports backwards-compatible aliases: stroll_park, jog_park, and rest_bench route properly', () => {

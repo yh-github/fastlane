@@ -532,7 +532,7 @@ describe("HomeRelax", () => {
         mealType: 'canned'
       });
 
-      expect(await screen.findByText(/Heated canned rations/i)).toBeInTheDocument();
+      expect(await screen.findByText(/Ate canned rations/i)).toBeInTheDocument();
     });
 
     it('allows preparing cold groceries meal without any appliances', async () => {

@@ -726,7 +726,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                       fontSize: '0.82em'
                     }}
                   >
-                    🥫 Eat Canned ({cannedTime}h)
+                    🥫 Eat Canned ({cannedTime}h • -1 Max 💪, -1 🧠)
                   </button>
                 )}
               </div>

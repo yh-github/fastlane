@@ -8,6 +8,7 @@ import { calcEconomyPrice } from '../economyEngine';
 import { spendHours } from '../timeManager';
 import { CURIO_CATALOG, RARE_TRINKET_CATALOG, ensurePlayerCurios } from '../curioCatalog';
 import { getPawnShopWeeklyStock } from '../../ui/buildingModal/clerkDialogue';
+import { resolveDecision, type ReplayContext } from '../replayTypes';
 
 export function handlePawnItemAction(
   player: PlayerState,
@@ -274,7 +275,8 @@ export function handlePawnKnickKnacksAction(
 export function handleRummagePawnShopAction(
   player: PlayerState,
   _action: { type: 'rummage_pawn_shop' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
@@ -292,7 +294,9 @@ export function handleRummagePawnShopAction(
   nextPlayer = spendHours(nextPlayer, 1);
 
   const rng = context.rng;
-  const roll = rng ? rng.next() : Math.random();
+  const roll = resolveDecision(replayContext, `pawn_rummage_roll_${nextPlayer.id}`, () =>
+    rng ? rng.next() : Math.random()
+  );
 
   const weeklyStock = getPawnShopWeeklyStock(
     context.campaign,
@@ -311,7 +315,9 @@ export function handleRummagePawnShopAction(
 
   if (roll < 0.20) {
     // 20%: Rare pocket trinket (untracked in inventory, on_buy +1 Mental, 0 space)
-    const trinketIdx = Math.floor((rng ? rng.next() : Math.random()) * RARE_TRINKET_CATALOG.length);
+    const trinketIdx = resolveDecision(replayContext, `pawn_rummage_trinket_${nextPlayer.id}`, () =>
+      Math.floor((rng ? rng.next() : Math.random()) * RARE_TRINKET_CATALOG.length)
+    );
     const trinket = RARE_TRINKET_CATALOG[trinketIdx] || RARE_TRINKET_CATALOG[0];
     selectedItem = {
       id: trinket.id,
@@ -338,11 +344,15 @@ export function handleRummagePawnShopAction(
     };
   } else if (roll < 0.60 && availableAppliances.length > 0) {
     // 25%: Used / broken appliance from weekly pawn stock
-    const appIdx = Math.floor((rng ? rng.next() : Math.random()) * availableAppliances.length);
+    const appIdx = resolveDecision(replayContext, `pawn_rummage_app_${nextPlayer.id}`, () =>
+      Math.floor((rng ? rng.next() : Math.random()) * availableAppliances.length)
+    );
     selectedItem = availableAppliances[appIdx];
   } else {
     // 40% (or fallback): Curio / knick-knack
-    const curioIdx = Math.floor((rng ? rng.next() : Math.random()) * CURIO_CATALOG.length);
+    const curioIdx = resolveDecision(replayContext, `pawn_rummage_curio_${nextPlayer.id}`, () =>
+      Math.floor((rng ? rng.next() : Math.random()) * CURIO_CATALOG.length)
+    );
     const curio = CURIO_CATALOG[curioIdx] || CURIO_CATALOG[0];
     selectedItem = {
       id: 'knick_knack',

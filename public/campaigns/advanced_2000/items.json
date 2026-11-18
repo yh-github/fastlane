@@ -35,7 +35,7 @@
     "mentalBonus": 0,
     "description": "Cheap diner slaw and fried patties. Quick fast food that staves off hunger.",
     "effects": [
-      { "trigger": "on_purchase", "stat": "physical", "value": -1 },
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -1 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },
@@ -49,6 +49,8 @@
     "mentalBonus": 2,
     "description": "Decadent double patty smothered in melted cheese and pirate sauce. Delicious comfort food.",
     "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -1 },
+      { "trigger": "on_purchase", "stat": "physical", "value": 2 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },
@@ -62,6 +64,8 @@
     "mentalBonus": 1,
     "description": "Hearty slow-simmered beef stew spiced with grog and served with a flaky biscuit. Warm comfort food.",
     "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -1 },
+      { "trigger": "on_purchase", "stat": "physical", "value": 1 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },

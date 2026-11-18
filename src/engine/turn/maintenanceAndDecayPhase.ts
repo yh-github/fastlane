@@ -242,11 +242,11 @@ export function processAdvancedMaintenanceAndDecay(
   // 4. Weekend (Alternative Card System or Classic)
   if (state.rules.alternativeWeekends) {
     if (player.isAi) {
-      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng, campaign, state.rules, previousPlayer);
+      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng, campaign, state.rules, previousPlayer, replay);
       const bestCardId = selectAiWeekendCard(pWithChoices, cards);
-      player = resolveWeekendChoice(pWithChoices, bestCardId, rng, state.rules, campaign.config.statRules, campaign);
+      player = resolveWeekendChoice(pWithChoices, bestCardId, rng, state.rules, campaign.config.statRules, campaign, state.turn, replay);
     } else {
-      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng, campaign, state.rules, previousPlayer);
+      const { player: pWithChoices, cards } = generateWeekendChoices(player, state.turn, campaign.weekends, rng, campaign, state.rules, previousPlayer, replay);
       player = pWithChoices;
       player.offeredWeekendCards = cards;
       player.weekendResult = undefined;

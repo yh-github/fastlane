@@ -113,8 +113,9 @@ describe('Turn Processor', () => {
       // Canned food decremented by 1
       expect(p.inventory.cannedFoodUnits).toBe(1);
       expect(p.turnFlags.hasEaten).toBe(true);
-      // No sickness or physical condition reduction
-      expect(p.physicalCondition).toBe(50);
+      // No spoiled-food sickness bounce; only canned food's -1 Max Physical & -1 Mental applies
+      expect(p.physicalConditionMax).toBe(49);
+      expect(p.physicalCondition).toBe(49);
       expect(p.turnEvents.some(e => e.key.startsWith('events.foodSpoiled.noFridge'))).toBe(true);
       expect(p.turnEvents.some(e => e.key.startsWith('events.foodSpoiled.ateSpoiled'))).toBe(false);
     });

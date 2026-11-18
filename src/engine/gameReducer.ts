@@ -48,7 +48,8 @@ import {
   handleHospitalUrgentCareAction,
   handleHospitalTherapyAction,
   handleHospitalDonateBloodAction,
-  handleHospitalCafeteriaAction
+  handleHospitalCafeteriaAction,
+  handleResolveWeekendAction
 } from './actions';
 
 export type { GameAction, ReducerContext, ReducerResult } from './actions';
@@ -109,7 +110,7 @@ export function gameReducer(
       res = handleCleaningServiceAction(nextPlayer, action, context);
       break;
     case 'socialize_guests':
-      res = handleSocializeAction(nextPlayer, action, context);
+      res = handleSocializeAction(nextPlayer, action, context, replayContext);
       break;
     case 'change_clothes':
       res = handleChangeClothesAction(nextPlayer, action, context);
@@ -205,7 +206,7 @@ export function gameReducer(
       res = handleRedrawInitiativeAction(nextPlayer, action, context, replayContext);
       break;
     case 'rummage_pawn_shop':
-      res = handleRummagePawnShopAction(nextPlayer, action, context);
+      res = handleRummagePawnShopAction(nextPlayer, action, context, replayContext);
       break;
     case 'buy_pawn_rummage_item':
     case 'buy_rummage_item':
@@ -251,6 +252,9 @@ export function gameReducer(
     case 'hospital_cafeteria':
       res = handleHospitalCafeteriaAction(nextPlayer, action, context);
       break;
+    case 'resolve_weekend':
+      res = handleResolveWeekendAction(nextPlayer, action, context, replayContext);
+      break;
   }
 
   if (res) {
@@ -262,7 +266,7 @@ export function gameReducer(
   }
 
   // If a player interacted at a building location, track that they were inside it
-  if (action.type !== 'move') {
+  if (action.type !== 'move' && action.type !== 'resolve_weekend') {
     const currentBuilding = context.campaign.map?.nodes?.find(n => n.id === nextPlayer.position)?.buildingId;
     if (currentBuilding && nextPlayer.turnFlags) {
       nextPlayer.turnFlags.enteredBuildingThisTurn = currentBuilding;

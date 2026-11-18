@@ -470,9 +470,9 @@ describe('Park System Enhancements (Advanced 2000)', () => {
       };
 
       const res = handleRelaxParkAction(player, { type: 'relax_park' }, context);
-      // Baseline rest is +2 Physical, +2 Mental
-      expect(res.nextPlayer.physicalCondition).toBe(32);
-      expect(res.nextPlayer.mentalCondition).toBe(32);
+      // Baseline first-visit rest is +3 Physical (+1 base + +2 first-visit bonus), +3 Mental
+      expect(res.nextPlayer.physicalCondition).toBe(33);
+      expect(res.nextPlayer.mentalCondition).toBe(33);
       expect(res.nextPlayer.hoursRemaining).toBe(17);
       expect(res.nextPlayer.pendingMiniGame).toBeDefined();
       expect(res.nextPlayer.pendingMiniGame?.options.length).toBe(3);

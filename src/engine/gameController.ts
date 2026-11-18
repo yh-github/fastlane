@@ -519,7 +519,7 @@ function buildActionId(choice: ActionChoice, campaign: CampaignBundle): string {
     case 'take_loan':
       return 'take_loan'
     case 'pay_loan':
-      return 'pay_loan'
+      return action.amount !== undefined ? `pay_loan_${action.amount}` : 'pay_loan'
     case 'rent_transaction':
       return 'pay_rent'
     case 'move_apartment':
@@ -550,6 +550,8 @@ function buildActionId(choice: ActionChoice, campaign: CampaignBundle): string {
       return 'jog_park'
     case 'rest_bench':
       return 'rest_bench'
+    case 'resolve_weekend':
+      return `resolve_weekend:${action.cardId}`
     default:
       return 'unknown'
   }

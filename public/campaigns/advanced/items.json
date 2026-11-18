@@ -115,6 +115,8 @@
   {
     "id": "hamburger",
     "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -1 },
+      { "trigger": "on_purchase", "stat": "physical", "value": 1 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },
@@ -122,6 +124,8 @@
     "id": "cheeseburger",
     "mentalBonus": 1,
     "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -1 },
+      { "trigger": "on_purchase", "stat": "physical", "value": 1 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },
@@ -129,12 +133,15 @@
     "id": "astro_chicken",
     "mentalBonus": 2,
     "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -1 },
+      { "trigger": "on_purchase", "stat": "physical", "value": 2 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },
   {
     "id": "fries",
     "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -1 },
       { "trigger": "on_purchase", "stat": "social", "value": 1 }
     ]
   },
@@ -175,16 +182,15 @@
     "mentalBonus": 2
   },
   {
-    "id": "dog_food",
+    "id": "canned_food",
     "name": "Canned Mystery Meat",
     "category": "food",
     "subcategory": "canned",
     "basePrice": 18,
-    "mentalBonus": -2.5,
-    "description": "Suspicious cheap canned meat. Lowers mental spirits and permanently reduces max physical fitness upon consumption.",
-    "effects": [
-      { "trigger": "on_purchase", "stat": "physical_max", "value": -3 }
-    ]
+    "happinessBonus": 0,
+    "mentalBonus": 0,
+    "description": "Cheap canned mystery meat. Never spoils, and can be eaten as emergency rations at home (-1 Max Physical, -1 Mental).",
+    "effects": []
   },
   {
     "id": "8track",

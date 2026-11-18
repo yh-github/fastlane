@@ -4,6 +4,7 @@ import type { CampaignBundle } from './dataLoader';
 import { buildAdjacencyMap, findShortestPath, buildEdgeWaypointMap, calculateTravelHours } from '../graphics/pathfinding';
 import { calcEconomyPrice, calcItemPrice } from './economyEngine';
 import { calcLoanAssessment } from './statMath';
+import { calcLoanPaymentDetails } from './actions/financeActions';
 import { canEnterBuilding, isRentOfficeOpen, playerLivesAt } from './buildingRules';
 
 export interface ActionChoice {
@@ -82,7 +83,8 @@ export function getAvailableActions(
       }
       
       if (player.loanDebt > 0) {
-        const payLoanLabel = helpful ? `Pay Loan (-$${campaign.config.economyRules.loanPaymentAmount})` : `Pay Loan`;
+        const loanDetails = calcLoanPaymentDetails(player.loanDebt, state.rules, campaign.config.economyRules);
+        const payLoanLabel = helpful ? `Pay Loan (-$${loanDetails.minRequiredPayment})` : `Pay Loan`;
         options.push({ label: payLoanLabel, action: { type: 'pay_loan' } });
       }
     }

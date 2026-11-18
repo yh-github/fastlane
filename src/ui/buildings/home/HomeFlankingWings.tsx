@@ -943,7 +943,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                           textAlign: 'left'
                         }}
                       >
-                        🥫 Eat Canned ({cannedTime}h • -1.5 🧠)
+                        🥫 Eat Canned ({cannedTime}h • -1 Max 💪, -1 🧠)
                       </button>
                     )}
                     {freshFoodUnits === 0 && cannedFoodUnits === 0 && (

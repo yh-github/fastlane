@@ -53,8 +53,8 @@ describe('Park Actions', () => {
 
     const res = handleRelaxParkAction(player, { type: 'relax_park' }, context);
     expect(res.nextPlayer.hoursRemaining).toBe(7);
-    expect(res.nextPlayer.physicalCondition).toBe(42);
-    expect(res.nextPlayer.mentalCondition).toBe(42);
+    expect(res.nextPlayer.physicalCondition).toBe(43);
+    expect(res.nextPlayer.mentalCondition).toBe(43);
   });
 
   it('allows partial park relax and scales gains proportionally with proportionalDivisibleActions', () => {
@@ -78,11 +78,11 @@ describe('Park Actions', () => {
       state: {} as any
     };
 
-    // 1.5h spent out of 3h -> ratio = 0.5 -> 2 * 0.5 = +1 physical and +1 mental
+    // 1.5h spent out of 3h -> ratio = 0.5 -> 3 * 0.5 = +1.5 physical and +1.5 mental
     const res = handleRelaxParkAction(player, { type: 'relax_park' }, context);
     expect(res.nextPlayer.hoursRemaining).toBe(0);
-    expect(res.nextPlayer.physicalCondition).toBe(41);
-    expect(res.nextPlayer.mentalCondition).toBe(41);
+    expect(res.nextPlayer.physicalCondition).toBe(41.5);
+    expect(res.nextPlayer.mentalCondition).toBe(41.5);
   });
 
   it('rejects workout when physically exhausted (< 15 physical)', () => {

@@ -597,8 +597,8 @@ export function BuildingModal({
                 // Dynamic baseline stat summary
                 let relaxStatSummary = '';
                 if (rules?.usePhysicalMentalConditions) {
-                  let pGain = relaxesThisTurn === 0 ? 2 : (relaxesThisTurn === 1 ? 1 : 0);
-                  let mGain = relaxesThisTurn === 0 ? 2 : (relaxesThisTurn === 1 ? 1 : 0);
+                  let pGain = relaxesThisTurn === 0 ? 3 : (relaxesThisTurn === 1 ? 1 : 0);
+                  let mGain = relaxesThisTurn === 0 ? 3 : (relaxesThisTurn === 1 ? 1 : 0);
                   if (isPartial) {
                     if (pGain > 0) pGain = Math.max(conditionRes, roundToResolution(pGain * ratio, conditionRes));
                     if (mGain > 0) mGain = Math.max(conditionRes, roundToResolution(mGain * ratio, conditionRes));

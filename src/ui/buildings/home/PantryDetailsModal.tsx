@@ -129,7 +129,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
       } else if (mealType === 'cold_meal') {
         setActionFeedback({ message: '🥗 Prepared cold groceries (sandwich/salad)! +0.5 🧠 (Fed)', isError: false });
       } else if (mealType === 'canned') {
-        setActionFeedback({ message: '🥫 Heated canned rations. Staved off hunger, but spirits dropped (-1.5 🧠).', isError: false });
+        setActionFeedback({ message: '🥫 Ate canned rations. Staved off hunger (-1 Max 💪, -1 🧠).', isError: false });
       } else if (mealType === 'fast_food') {
         setActionFeedback({ message: '🍔 Ate fast food takeout! Quick fuel (+1.0 🧠, +1 👥).', isError: false });
       }
@@ -449,7 +449,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                     <div>
                       <div style={{ fontWeight: 'bold', fontSize: '0.84rem' }}>🥫 Prepare Canned Food (Heated Rations)</div>
                       <div style={{ fontSize: '0.68rem', opacity: 0.85, marginTop: '2px' }}>
-                        ⏳ {cannedTime}h {hasMicrowave ? '(Microwave)' : ''} • 0 💪 • -1.5 🧠 (Emergency food)
+                        ⏳ {cannedTime}h {hasMicrowave ? '(Microwave)' : ''} • -1 Max 💪, -1 🧠 (Emergency rations)
                       </div>
                     </div>
                     {!canPrepCanned && (

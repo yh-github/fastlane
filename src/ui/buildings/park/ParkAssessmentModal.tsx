@@ -265,21 +265,32 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
                   {t('park.baselineTitle', { defaultValue: 'Guaranteed Activity Baseline (Applied on Click)' })}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                  {mode === 'relax' ? (
-                    <>
-                      <span style={{ fontSize: '13px', color: '#4ade80', fontWeight: 'bold' }}>
-                        +{isPartial ? Math.max(conditionRes, roundToResolution(2 * ratio, conditionRes)) : 2} 💪 Physical
-                      </span>
-                      <span style={{ fontSize: '13px', color: '#a855f7', fontWeight: 'bold' }}>
-                        +{isPartial ? Math.max(conditionRes, roundToResolution(2 * ratio, conditionRes)) : 2} 🧠 Mental
-                      </span>
-                      {player.turnFlags?.parkRelaxesThisTurn ? (
-                        <span style={{ fontSize: '11px', color: '#facc15' }}>
-                          ({t('park.diminishedRepeat', { defaultValue: 'Diminished on repeat visits' })})
+                  {mode === 'relax' ? (() => {
+                    const relaxesThisTurn = player.turnFlags?.parkRelaxesThisTurn || 0;
+                    const rawGain = relaxesThisTurn === 0 ? 3 : (relaxesThisTurn === 1 ? 1 : 0);
+                    const displayedGain = rawGain > 0
+                      ? (isPartial ? Math.max(conditionRes, roundToResolution(rawGain * ratio, conditionRes)) : rawGain)
+                      : 0;
+                    return (
+                      <>
+                        <span style={{ fontSize: '13px', color: displayedGain > 0 ? '#4ade80' : '#94a3b8', fontWeight: 'bold' }}>
+                          +{displayedGain} 💪 Physical
                         </span>
-                      ) : null}
-                    </>
-                  ) : isOvertraining ? (
+                        <span style={{ fontSize: '13px', color: displayedGain > 0 ? '#a855f7' : '#94a3b8', fontWeight: 'bold' }}>
+                          +{displayedGain} 🧠 Mental
+                        </span>
+                        {relaxesThisTurn === 0 ? (
+                          <span style={{ fontSize: '11px', color: '#4ade80' }}>
+                            ({t('park.firstVisitBonus', { defaultValue: 'Includes 1st-visit bonus (+2/+2)' })})
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '11px', color: '#facc15' }}>
+                            ({t('park.diminishedRepeat', { defaultValue: 'Diminished on repeat visits' })})
+                          </span>
+                        )}
+                      </>
+                    );
+                  })() : isOvertraining ? (
                     <span style={{ fontSize: '13px', color: '#ef4444', fontWeight: 'bold' }}>
                       -2 💪 Physical, -1 🧠 Mental (Overtraining Exhaustion)
                     </span>

@@ -8,7 +8,7 @@ import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../..
 import { calcItemPrice, calcEconomyPrice } from '../../../engine/economyEngine';
 import { calcBulkGroceryBasePrice } from '../../../engine/actions/shoppingActions';
 import { calcUsedSpace, calcHousingSpaceCap, calcCaffeineBuffer, hasHighCoffeeIntake } from '../../../engine/statMath';
-import { getItemDisplayName } from '../../../utils/itemUtils';
+import { getItemDisplayName, getItemImagePath } from '../../../utils/itemUtils';
 import { MessIcon } from '../../icons/MessIcon';
 import { previewAction } from '../../../engine/actionPreview';
 import { givesFastFoodSocial } from '../../../engine/shoppingEngine';
@@ -468,6 +468,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
       }
     } else if (itemDef.subcategory === 'canned') {
       onBuyModifiers.push({ label: '+1 Pantry unit (Never spoils)', icon: '🥫' });
+      effectBadges.push({ label: '🥫 On Eat: -1 Max 💪, -1 🧠' });
     } else {
       const foodUnits = isBulkGrocery ? buyQuantity : (itemDef?.units || 1);
       onBuyModifiers.push({ label: `+${foodUnits} Fresh food (Preserves with Fridge)`, icon: '🥗' });
@@ -646,7 +647,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
           ) : (
             <>
               <img 
-                src={itemId === 'crt_tv' ? '/assets/raw_images/color_tv.png' : `/assets/raw_images/${itemId}.png`} 
+                src={getItemImagePath(itemId)} 
                 alt={itemName}
                 style={{ 
                   maxWidth: '40px', 

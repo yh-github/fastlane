@@ -5,6 +5,7 @@ import type { PlayerState, GameEvent, GameRules, WeekendCard, WeekendDeckTier, S
 import { type StatRules, isAdvancedStatRules } from './rules';
 import { calcRequiredLessons } from './educationEngine';
 import { roundToResolution, hasHighCoffeeIntake } from './statMath';
+import { resolveDecision, type ReplayContext } from './replayTypes';
 
 // Helper to determine cost based on price range
 function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number, rng: Random): number {
@@ -169,241 +170,250 @@ export function generateWeekendChoices(
   rng: Random,
   campaign?: CampaignBundle,
   rules?: GameRules,
-  previousPlayer?: PlayerState
+  previousPlayer?: PlayerState,
+  replay?: ReplayContext
 ): { player: PlayerState; cards: WeekendCard[] } {
-  let updatedPlayer = player.weekendDecks ? { ...player } : initPlayerWeekendDecks(player, weekendData, rng);
-  if (!updatedPlayer.weekendDecks!.free) {
-    updatedPlayer.weekendDecks!.free = {
-      drawPile: rng.shuffle(['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat']),
-      discardPile: []
-    };
-  }
-  const decks = updatedPlayer.weekendDecks!;
-
-  // Check tickets before broke check so broke players holding tickets can scalp them
-  const tickets = updatedPlayer.inventory?.tickets || { baseball: 0, theatre: 0, concert: 0 };
-  let heldTicketType: 'baseball' | 'theatre' | 'concert' | null = null;
-  if (tickets.baseball > 0 && weekendData.ticketWeekends?.baseball) heldTicketType = 'baseball';
-  else if (tickets.theatre > 0 && weekendData.ticketWeekends?.theatre) heldTicketType = 'theatre';
-  else if (tickets.concert > 0 && weekendData.ticketWeekends?.concert) heldTicketType = 'concert';
-
-  const isCaffeineRule = Boolean(rules?.enableCaffeineSystem ?? campaign?.config?.gameRules?.enableCaffeineSystem);
-  const coffeeSourcePlayer = previousPlayer ?? player;
-  const isSprintEligible = hasHighCoffeeIntake(coffeeSourcePlayer, { enableCaffeineSystem: isCaffeineRule });
-  const hasEnrolledClasses = Object.keys(player.enrolledClasses || {}).length > 0;
-  const hasJob = player.currentJobId !== null;
-  const pickSprintCard = (): WeekendCard | null => {
-    if (!isSprintEligible || (!hasEnrolledClasses && !hasJob)) return null;
-    let sprintCardId = 'weekend_cramming_sprint';
-    if (hasJob && !hasEnrolledClasses) {
-      sprintCardId = 'weekend_overtime_grind';
-    } else if (hasJob && hasEnrolledClasses) {
-      sprintCardId = rng.next() < 0.5 ? 'weekend_cramming_sprint' : 'weekend_overtime_grind';
-    }
-    return buildCardFromId(sprintCardId, 'free', weekendData, updatedPlayer, rng);
-  };
-
-  // 1. Broke players without tickets (money < 5): Offer exactly two distinct $0 cards from the free pool
-  if (updatedPlayer.money < 5 && !heldTicketType) {
-    if (!decks.free || decks.free.drawPile.length < 2) {
-      const allFree = ['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat'];
-      const combined = [...(decks.free?.drawPile || []), ...(decks.free?.discardPile || [])];
-      const remaining = allFree.filter(id => !combined.includes(id));
-      decks.free = {
-        drawPile: rng.shuffle([...combined, ...remaining]),
+  const decisionResult = resolveDecision(replay, `weekend_choices_${player.id}`, () => {
+    let workingPlayer = player.weekendDecks ? structuredClone(player) : initPlayerWeekendDecks(player, weekendData, rng);
+    if (!workingPlayer.weekendDecks!.free) {
+      workingPlayer.weekendDecks!.free = {
+        drawPile: rng.shuffle(['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat']),
         discardPile: []
       };
     }
-    const sprintCard = pickSprintCard();
-    const id1 = decks.free.drawPile.pop() || 'free_stay_home';
-    const card1 = buildCardFromId(id1, 'free', weekendData, updatedPlayer, rng);
-    const card2 = sprintCard ?? buildCardFromId(decks.free.drawPile.pop() || 'free_deep_clean', 'free', weekendData, updatedPlayer, rng);
-    const brokeCards = sprintCard ? [sprintCard, card1] : [card1, card2];
-    updatedPlayer.offeredWeekendCards = brokeCards;
-    return { player: updatedPlayer, cards: brokeCards };
-  }
+    const decks = workingPlayer.weekendDecks!;
 
-  // 2. Solvent players (or players with tickets): 3 choices
-  const drawnCards: WeekendCard[] = [];
+    // Check tickets before broke check so broke players holding tickets can scalp them
+    const tickets = workingPlayer.inventory?.tickets || { baseball: 0, theatre: 0, concert: 0 };
+    let heldTicketType: 'baseball' | 'theatre' | 'concert' | null = null;
+    if (tickets.baseball > 0 && weekendData.ticketWeekends?.baseball) heldTicketType = 'baseball';
+    else if (tickets.theatre > 0 && weekendData.ticketWeekends?.theatre) heldTicketType = 'theatre';
+    else if (tickets.concert > 0 && weekendData.ticketWeekends?.concert) heldTicketType = 'concert';
 
-  // 2a. Ticket guarantee: If holding ticket, guarantee attend (if affordable) and resale cards
-  if (heldTicketType) {
-    const ticketCount = tickets[heldTicketType];
-    const { attendCard, resaleCard } = buildTicketCards(heldTicketType, ticketCount, weekendData, rng);
-    if (updatedPlayer.money >= attendCard.costMin) {
-      drawnCards.push(attendCard);
-      drawnCards.push(resaleCard);
-    } else {
-      // Cannot afford to go out with cash - scalping appears INSTEAD of attend card
-      drawnCards.push(resaleCard);
+    const isCaffeineRule = Boolean(rules?.enableCaffeineSystem ?? campaign?.config?.gameRules?.enableCaffeineSystem);
+    const coffeeSourcePlayer = previousPlayer ?? player;
+    const isSprintEligible = hasHighCoffeeIntake(coffeeSourcePlayer, { enableCaffeineSystem: isCaffeineRule });
+    const hasEnrolledClasses = Object.keys(player.enrolledClasses || {}).length > 0;
+    const hasJob = player.currentJobId !== null;
+    const pickSprintCard = (): WeekendCard | null => {
+      if (!isSprintEligible || (!hasEnrolledClasses && !hasJob)) return null;
+      let sprintCardId = 'weekend_cramming_sprint';
+      if (hasJob && !hasEnrolledClasses) {
+        sprintCardId = 'weekend_overtime_grind';
+      } else if (hasJob && hasEnrolledClasses) {
+        sprintCardId = rng.next() < 0.5 ? 'weekend_cramming_sprint' : 'weekend_overtime_grind';
+      }
+      return buildCardFromId(sprintCardId, 'free', weekendData, workingPlayer, rng);
+    };
+
+    // 1. Broke players without tickets (money < 5): Offer exactly two distinct $0 cards from the free pool
+    if (workingPlayer.money < 5 && !heldTicketType) {
+      if (!decks.free || decks.free.drawPile.length < 2) {
+        const allFree = ['free_stay_home', 'free_deep_clean', 'free_park_walk', 'free_porch_chat'];
+        const combined = [...(decks.free?.drawPile || []), ...(decks.free?.discardPile || [])];
+        const remaining = allFree.filter(id => !combined.includes(id));
+        decks.free = {
+          drawPile: rng.shuffle([...combined, ...remaining]),
+          discardPile: []
+        };
+      }
+      const sprintCard = pickSprintCard();
+      const id1 = decks.free.drawPile.pop() || 'free_stay_home';
+      const card1 = buildCardFromId(id1, 'free', weekendData, workingPlayer, rng);
+      const card2 = sprintCard ?? buildCardFromId(decks.free.drawPile.pop() || 'free_deep_clean', 'free', weekendData, workingPlayer, rng);
+      const brokeCards = sprintCard ? [sprintCard, card1] : [card1, card2];
+      return { weekendDecks: decks, cards: brokeCards };
     }
-  }
 
-  // 2b. High-Coffee Weekend Sprint Guarantee (Advanced 2000)
-  if (drawnCards.length < 3) {
-    const sprintCard = pickSprintCard();
-    if (sprintCard) {
-      drawnCards.push(sprintCard);
-    }
-  }
+    // 2. Solvent players (or players with tickets): 3 choices
+    const drawnCards: WeekendCard[] = [];
 
-  const slotsNeeded = 3 - drawnCards.length;
-
-  const getTierWeights = (): { tier: WeekendDeckTier; weight: number }[] => {
-    let base: Record<WeekendDeckTier, number>;
-    if (_turnNumber <= 3) {
-      base = { cheap: 4.0, free: 2.0, medium: 1.0, expensive: 0.1 };
-    } else if (_turnNumber <= 7) {
-      base = { cheap: 2.5, medium: 2.5, free: 1.5, expensive: 1.0 };
-    } else {
-      base = { expensive: 2.5, medium: 2.0, cheap: 1.5, free: 1.0 };
+    // 2a. Ticket guarantee: If holding ticket, guarantee attend (if affordable) and resale cards
+    if (heldTicketType) {
+      const ticketCount = tickets[heldTicketType];
+      const { attendCard, resaleCard } = buildTicketCards(heldTicketType, ticketCount, weekendData, rng);
+      if (workingPlayer.money >= attendCard.costMin) {
+        drawnCards.push(attendCard);
+        drawnCards.push(resaleCard);
+      } else {
+        // Cannot afford to go out with cash - scalping appears INSTEAD of attend card
+        drawnCards.push(resaleCard);
+      }
     }
 
-    const affordable: WeekendDeckTier[] = ['free'];
-    if (updatedPlayer.money >= 5) affordable.push('cheap');
-    if (updatedPlayer.money >= 15) affordable.push('medium');
-    if (updatedPlayer.money >= 50) affordable.push('expensive');
+    // 2b. High-Coffee Weekend Sprint Guarantee (Advanced 2000)
+    if (drawnCards.length < 3) {
+      const sprintCard = pickSprintCard();
+      if (sprintCard) {
+        drawnCards.push(sprintCard);
+      }
+    }
 
-    const recentTiers = updatedPlayer.recentWeekendTiers || [];
-    return affordable.map(t => {
-      let w = base[t];
-      const picks = recentTiers.filter(rt => rt === t).length;
-      w *= (1 + picks * 0.75);
-      return { tier: t, weight: w };
-    });
-  };
+    const slotsNeeded = 3 - drawnCards.length;
 
-  // Stat and type momentum bias from recent picks
-  const recentPicks = updatedPlayer.recentWeekendPicks || [];
-  const statMomentum: Record<string, number> = {};
-  const typeMomentum: Record<string, number> = {};
-  for (const p of recentPicks) {
-    if (p.targetStat) statMomentum[p.targetStat] = (statMomentum[p.targetStat] || 0) + 1;
-    if (p.type) typeMomentum[p.type] = (typeMomentum[p.type] || 0) + 1;
-  }
-
-  for (let slot = 0; slot < slotsNeeded; slot++) {
-    let candidateCard: WeekendCard | null = null;
-    let attempts = 0;
-    const maxAttempts = 35;
-
-    while (attempts < maxAttempts) {
-      attempts++;
-      const tierWeights = getTierWeights();
-      const totalWeight = tierWeights.reduce((sum, tw) => sum + tw.weight, 0);
-      let r = rng.next() * totalWeight;
-      let selectedTier: WeekendDeckTier = tierWeights[0].tier;
-      for (const tw of tierWeights) {
-        if (r <= tw.weight) {
-          selectedTier = tw.tier;
-          break;
-        }
-        r -= tw.weight;
+    const getTierWeights = (): { tier: WeekendDeckTier; weight: number }[] => {
+      let base: Record<WeekendDeckTier, number>;
+      if (_turnNumber <= 3) {
+        base = { cheap: 4.0, free: 2.0, medium: 1.0, expensive: 0.1 };
+      } else if (_turnNumber <= 7) {
+        base = { cheap: 2.5, medium: 2.5, free: 1.5, expensive: 1.0 };
+      } else {
+        base = { expensive: 2.5, medium: 2.0, cheap: 1.5, free: 1.0 };
       }
 
-      const deck = decks[selectedTier];
-      if (!deck || deck.drawPile.length === 0) {
-        if (deck && deck.discardPile.length > 0) {
-          deck.drawPile = rng.shuffle([...deck.discardPile]);
-          deck.discardPile = [];
-        } else {
-          continue;
-        }
-      }
+      const affordable: WeekendDeckTier[] = ['free'];
+      if (workingPlayer.money >= 5) affordable.push('cheap');
+      if (workingPlayer.money >= 15) affordable.push('medium');
+      if (workingPlayer.money >= 50) affordable.push('expensive');
 
-      // Sample candidate cards from the draw pile and apply stat/type momentum weighting
-      const sampleCount = Math.min(6, deck.drawPile.length);
-      const candidateIds = deck.drawPile.slice(-sampleCount);
-      let chosenCandidateIndex = candidateIds.length - 1;
+      const recentTiers = workingPlayer.recentWeekendTiers || [];
+      return affordable.map(t => {
+        let w = base[t];
+        const picks = recentTiers.filter(rt => rt === t).length;
+        w *= (1 + picks * 0.75);
+        return { tier: t, weight: w };
+      });
+    };
 
-      if (candidateIds.length > 1) {
-        const candidateScores = candidateIds.map(cid => {
-          const testCard = buildCardFromId(cid, selectedTier, weekendData, updatedPlayer, rng);
-          const statScore = testCard.targetStat ? (statMomentum[testCard.targetStat] || 0) : 0;
-          const typeScore = testCard.type ? (typeMomentum[testCard.type] || 0) : 0;
-          return 1.0 + statScore * 1.5 + typeScore * 0.75;
-        });
-        const totalScore = candidateScores.reduce((sum, s) => sum + s, 0);
-        let randScore = rng.next() * totalScore;
-        for (let i = 0; i < candidateScores.length; i++) {
-          if (randScore <= candidateScores[i]) {
-            chosenCandidateIndex = i;
+    // Stat and type momentum bias from recent picks
+    const recentPicks = workingPlayer.recentWeekendPicks || [];
+    const statMomentum: Record<string, number> = {};
+    const typeMomentum: Record<string, number> = {};
+    for (const p of recentPicks) {
+      if (p.targetStat) statMomentum[p.targetStat] = (statMomentum[p.targetStat] || 0) + 1;
+      if (p.type) typeMomentum[p.type] = (typeMomentum[p.type] || 0) + 1;
+    }
+
+    for (let slot = 0; slot < slotsNeeded; slot++) {
+      let candidateCard: WeekendCard | null = null;
+      let attempts = 0;
+      const maxAttempts = 35;
+
+      while (attempts < maxAttempts) {
+        attempts++;
+        const tierWeights = getTierWeights();
+        const totalWeight = tierWeights.reduce((sum, tw) => sum + tw.weight, 0);
+        let r = rng.next() * totalWeight;
+        let selectedTier: WeekendDeckTier = tierWeights[0].tier;
+        for (const tw of tierWeights) {
+          if (r <= tw.weight) {
+            selectedTier = tw.tier;
             break;
           }
-          randScore -= candidateScores[i];
+          r -= tw.weight;
         }
-      }
 
-      const actualIndexInPile = deck.drawPile.length - sampleCount + chosenCandidateIndex;
-      const [cardId] = deck.drawPile.splice(actualIndexInPile, 1);
-      if (!cardId) continue;
+        const deck = decks[selectedTier];
+        if (!deck || deck.drawPile.length === 0) {
+          if (deck && deck.discardPile.length > 0) {
+            deck.drawPile = rng.shuffle([...deck.discardPile]);
+            deck.discardPile = [];
+          } else {
+            continue;
+          }
+        }
 
-      const card = buildCardFromId(cardId, selectedTier, weekendData, updatedPlayer, rng);
+        // Sample candidate cards from the draw pile and apply stat/type momentum weighting
+        const sampleCount = Math.min(6, deck.drawPile.length);
+        const candidateIds = deck.drawPile.slice(-sampleCount);
+        let chosenCandidateIndex = candidateIds.length - 1;
 
-      // Constraint 1: Never duplicate card id
-      if (drawnCards.some(c => c.id === card.id)) {
-        deck.drawPile.unshift(cardId);
-        continue;
-      }
+        if (candidateIds.length > 1) {
+          const candidateScores = candidateIds.map(cid => {
+            const testCard = buildCardFromId(cid, selectedTier, weekendData, workingPlayer, rng);
+            const statScore = testCard.targetStat ? (statMomentum[testCard.targetStat] || 0) : 0;
+            const typeScore = testCard.type ? (typeMomentum[testCard.type] || 0) : 0;
+            return 1.0 + statScore * 1.5 + typeScore * 0.75;
+          });
+          const totalScore = candidateScores.reduce((sum, s) => sum + s, 0);
+          let randScore = rng.next() * totalScore;
+          for (let i = 0; i < candidateScores.length; i++) {
+            if (randScore <= candidateScores[i]) {
+              chosenCandidateIndex = i;
+              break;
+            }
+            randScore -= candidateScores[i];
+          }
+        }
 
-      // Constraint 2: Never 3 cards of the exact same type
-      if (drawnCards.length >= 2) {
-        const type0 = drawnCards[0].type;
-        const allSameTypeSoFar = drawnCards.every(c => c.type === type0);
-        if (allSameTypeSoFar && card.type === type0) {
+        const actualIndexInPile = deck.drawPile.length - sampleCount + chosenCandidateIndex;
+        const [cardId] = deck.drawPile.splice(actualIndexInPile, 1);
+        if (!cardId) continue;
+
+        const card = buildCardFromId(cardId, selectedTier, weekendData, workingPlayer, rng);
+
+        // Constraint 1: Never duplicate card id
+        if (drawnCards.some(c => c.id === card.id)) {
           deck.drawPile.unshift(cardId);
           continue;
         }
-      }
 
-      // Constraint 3: If two cards share the same type, they cannot share the same tier
-      const sameTypeCard = drawnCards.find(c => c.type === card.type);
-      if (sameTypeCard && sameTypeCard.tier === card.tier) {
-        deck.drawPile.unshift(cardId);
-        continue;
-      }
+        // Constraint 2: Never 3 cards of the exact same type
+        if (drawnCards.length >= 2) {
+          const type0 = drawnCards[0].type;
+          const allSameTypeSoFar = drawnCards.every(c => c.type === type0);
+          if (allSameTypeSoFar && card.type === type0) {
+            deck.drawPile.unshift(cardId);
+            continue;
+          }
+        }
 
-      // Constraint 4: Never 3 cards of the exact same target stat
-      if (card.targetStat && drawnCards.length >= 2) {
-        const stat0 = drawnCards[0].targetStat;
-        const allSameStatSoFar = drawnCards.every(c => c.targetStat === stat0);
-        if (allSameStatSoFar && card.targetStat === stat0) {
+        // Constraint 3: If two cards share the same type, they cannot share the same tier
+        const sameTypeCard = drawnCards.find(c => c.type === card.type);
+        if (sameTypeCard && sameTypeCard.tier === card.tier) {
           deck.drawPile.unshift(cardId);
           continue;
         }
-      }
 
-      candidateCard = card;
-      break;
-    }
-
-    if (!candidateCard) {
-      const fallbackDeck = decks.cheap.drawPile.length > 0 ? decks.cheap : (decks.free || decks.cheap);
-      if (fallbackDeck.drawPile.length === 0 && fallbackDeck.discardPile.length > 0) {
-        fallbackDeck.drawPile = rng.shuffle([...fallbackDeck.discardPile]);
-        fallbackDeck.discardPile = [];
-      }
-      let fallbackId = fallbackDeck.drawPile.find(id => {
-        if (drawnCards.some(c => c.id === id)) return false;
-        const testCard = buildCardFromId(id, 'cheap', weekendData, updatedPlayer, rng);
-        if (drawnCards.length >= 2 && drawnCards.every(c => c.type === drawnCards[0].type) && testCard.type === drawnCards[0].type) {
-          return false;
+        // Constraint 4: Never 3 cards of the exact same target stat
+        if (card.targetStat && drawnCards.length >= 2) {
+          const stat0 = drawnCards[0].targetStat;
+          const allSameStatSoFar = drawnCards.every(c => c.targetStat === stat0);
+          if (allSameStatSoFar && card.targetStat === stat0) {
+            deck.drawPile.unshift(cardId);
+            continue;
+          }
         }
-        return true;
-      });
-      if (!fallbackId) {
-        fallbackId = fallbackDeck.drawPile.pop() || 'random_0';
-      } else {
-        fallbackDeck.drawPile = fallbackDeck.drawPile.filter(id => id !== fallbackId);
+
+        candidateCard = card;
+        break;
       }
-      candidateCard = buildCardFromId(fallbackId, 'cheap', weekendData, updatedPlayer, rng);
+
+      if (!candidateCard) {
+        const fallbackDeck = decks.cheap.drawPile.length > 0 ? decks.cheap : (decks.free || decks.cheap);
+        if (fallbackDeck.drawPile.length === 0 && fallbackDeck.discardPile.length > 0) {
+          fallbackDeck.drawPile = rng.shuffle([...fallbackDeck.discardPile]);
+          fallbackDeck.discardPile = [];
+        }
+        let fallbackId = fallbackDeck.drawPile.find(id => {
+          if (drawnCards.some(c => c.id === id)) return false;
+          const testCard = buildCardFromId(id, 'cheap', weekendData, workingPlayer, rng);
+          if (drawnCards.length >= 2 && drawnCards.every(c => c.type === drawnCards[0].type) && testCard.type === drawnCards[0].type) {
+            return false;
+          }
+          return true;
+        });
+        if (!fallbackId) {
+          fallbackId = fallbackDeck.drawPile.pop() || 'random_0';
+        } else {
+          fallbackDeck.drawPile = fallbackDeck.drawPile.filter(id => id !== fallbackId);
+        }
+        candidateCard = buildCardFromId(fallbackId, 'cheap', weekendData, workingPlayer, rng);
+      }
+
+      drawnCards.push(candidateCard);
     }
 
-    drawnCards.push(candidateCard);
-  }
+    return { weekendDecks: decks, cards: drawnCards };
+  });
 
-  updatedPlayer.offeredWeekendCards = drawnCards;
-  return { player: updatedPlayer, cards: drawnCards };
+  const clonedCards = structuredClone(decisionResult.cards);
+  const updatedPlayer: PlayerState = {
+    ...player,
+    weekendDecks: structuredClone(decisionResult.weekendDecks),
+    offeredWeekendCards: clonedCards
+  };
+  return { player: updatedPlayer, cards: clonedCards };
 }
 
 export function mergeWeekendModifications(
@@ -462,7 +472,8 @@ function maintainDecksOnChoice(
   player: PlayerState,
   chosenCard: WeekendCard,
   allCards: WeekendCard[],
-  rng: Random
+  rng: Random,
+  replay?: ReplayContext
 ): void {
   const isSpecialSprint = (c: WeekendCard) =>
     c.id === 'weekend_cramming_sprint' || c.id === 'weekend_overtime_grind';
@@ -478,7 +489,12 @@ function maintainDecksOnChoice(
         const oTier = other.tier;
         if (oTier && player.weekendDecks[oTier]) {
           player.weekendDecks[oTier].drawPile.push(other.id);
-          player.weekendDecks[oTier].drawPile = rng.shuffle([...player.weekendDecks[oTier].drawPile]);
+          const unshuffled = [...player.weekendDecks[oTier].drawPile];
+          player.weekendDecks[oTier].drawPile = resolveDecision(
+            replay,
+            `weekend_reinsert_${player.id}_${oTier}_${other.id}`,
+            () => rng.shuffle(unshuffled)
+          );
         }
       }
     }
@@ -501,7 +517,8 @@ export function resolveWeekendChoice(
   rules?: GameRules,
   statRules?: StatRules,
   campaign?: CampaignBundle,
-  turnNumber?: number
+  turnNumber?: number,
+  replay?: ReplayContext
 ): PlayerState {
   let updatedPlayer: PlayerState = {
     ...player,
@@ -575,7 +592,7 @@ export function resolveWeekendChoice(
       updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
     }
 
-    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
     return finalizeWeekendResult(0, mentalBonus);
   }
 
@@ -605,7 +622,7 @@ export function resolveWeekendChoice(
       updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
     }
 
-    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
     return finalizeWeekendResult(0);
   }
 
@@ -629,7 +646,7 @@ export function resolveWeekendChoice(
       updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
     }
 
-    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
     return finalizeWeekendResult(0);
   }
 
@@ -652,7 +669,7 @@ export function resolveWeekendChoice(
       updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
     }
 
-    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
     return finalizeWeekendResult(0);
   }
 
@@ -668,29 +685,35 @@ export function resolveWeekendChoice(
       updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
     }
 
-    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
     return finalizeWeekendResult(0);
   }
 
   // 6. Handle Ticket Event Attendance
   if (card.type === 'ticket') {
-    const rawCost = card.costMax > card.costMin
-      ? Math.floor(rng.next() * (card.costMax - card.costMin + 1)) + card.costMin
-      : (card.costMin || 0);
+    const rawCost = resolveDecision(replay, `weekend_ticket_cost_${updatedPlayer.id}`, () =>
+      card.costMax > card.costMin
+        ? Math.floor(rng.next() * (card.costMax - card.costMin + 1)) + card.costMin
+        : (card.costMin || 0)
+    );
     const cost = Math.min(rawCost, updatedPlayer.money);
     updatedPlayer.money -= cost;
     if (cost > 0) {
       modifications.push({ stat: 'money', diff: -cost });
     }
 
-    const mentalBonus = (card.potentialBonusMax && card.potentialBonusMax > card.potentialBonusMin)
-      ? Math.floor(rng.next() * (card.potentialBonusMax - card.potentialBonusMin + 1)) + card.potentialBonusMin
-      : card.potentialBonusMin;
+    const mentalBonus = resolveDecision(replay, `weekend_ticket_mental_${updatedPlayer.id}`, () =>
+      (card.potentialBonusMax && card.potentialBonusMax > card.potentialBonusMin)
+        ? Math.floor(rng.next() * (card.potentialBonusMax - card.potentialBonusMin + 1)) + card.potentialBonusMin
+        : card.potentialBonusMin
+    );
     const secMin = card.potentialSecondaryBonusMin || 0;
     const secMax = card.potentialSecondaryBonusMax || secMin;
-    const socialBonus = (secMax > secMin)
-      ? Math.floor(rng.next() * (secMax - secMin + 1)) + secMin
-      : secMin;
+    const socialBonus = resolveDecision(replay, `weekend_ticket_social_${updatedPlayer.id}`, () =>
+      (secMax > secMin)
+        ? Math.floor(rng.next() * (secMax - secMin + 1)) + secMin
+        : secMin
+    );
 
     if (rules?.usePhysicalMentalConditions) {
       const maxMental = updatedPlayer.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
@@ -711,10 +734,13 @@ export function resolveWeekendChoice(
     const souvenirChance = Math.min(0.35, ticketCount * 0.10);
     let acquiredSouvenir: { id: string; name: string; icon: string } | undefined = undefined;
 
-    if (rng.next() < souvenirChance) {
-      const ticketType = (card.id.replace('ticket_', '') as 'baseball' | 'theatre' | 'concert');
-      const souvenirs = EVENT_SOUVENIRS[ticketType] || EVENT_SOUVENIRS.baseball;
-      const curioItem = souvenirs[Math.floor(rng.next() * souvenirs.length)] || souvenirs[0];
+    const ticketType = (card.id.replace('ticket_', '') as 'baseball' | 'theatre' | 'concert');
+    const souvenirs = EVENT_SOUVENIRS[ticketType] || EVENT_SOUVENIRS.baseball;
+    const souvenirIdx = resolveDecision(replay, `weekend_ticket_souvenir_${updatedPlayer.id}`, () =>
+      rng.next() < souvenirChance ? Math.floor(rng.next() * souvenirs.length) : -1
+    );
+    if (souvenirIdx >= 0) {
+      const curioItem = souvenirs[souvenirIdx] || souvenirs[0];
       const existingCurios = updatedPlayer.inventory?.curios ? [...updatedPlayer.inventory.curios] : [];
       const turnNum = turnNumber ?? 1;
       const souvenirId = `${curioItem.id}_${updatedPlayer.id}_t${turnNum}_${existingCurios.length}`;
@@ -745,7 +771,7 @@ export function resolveWeekendChoice(
       updatedPlayer.inventory.tickets = { baseball: 0, theatre: 0, concert: 0 };
     }
 
-    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
     return finalizeWeekendResult(cost, mentalBonus, acquiredSouvenir);
   }
 
@@ -799,7 +825,7 @@ export function resolveWeekendChoice(
       }
     }
 
-    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
     return finalizeWeekendResult(0, 0);
   }
 
@@ -834,12 +860,14 @@ export function resolveWeekendChoice(
       }
     }
 
-    maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+    maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
     return finalizeWeekendResult(0, 0);
   }
 
   // 7. Regular / Paid Cards
-  const rawCost = Math.floor(rng.next() * (card.costMax - card.costMin + 1)) + card.costMin;
+  const rawCost = resolveDecision(replay, `weekend_paid_cost_${updatedPlayer.id}`, () =>
+    Math.floor(rng.next() * (card.costMax - card.costMin + 1)) + card.costMin
+  );
   const cost = Math.min(rawCost, updatedPlayer.money);
   updatedPlayer.money -= cost;
   if (cost > 0) {
@@ -909,7 +937,7 @@ export function resolveWeekendChoice(
   }
 
   // Maintain decks
-  maintainDecksOnChoice(updatedPlayer, card, cards, rng);
+  maintainDecksOnChoice(updatedPlayer, card, cards, rng, replay);
 
   // Clamp limits if needed
   if (rules?.usePhysicalMentalConditions) {

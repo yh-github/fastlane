@@ -2354,7 +2354,7 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
         "priceOverride": 40,
       },
       {
-        "itemId": "dog_food",
+        "itemId": "canned_food",
         "priceOverride": 18,
       },
       {
@@ -2547,7 +2547,7 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
         "priceOverride": 40,
       },
       {
-        "itemId": "dog_food",
+        "itemId": "canned_food",
         "priceOverride": 18,
       },
       {
@@ -3385,6 +3385,16 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
     "category": "food",
     "effects": [
       {
+        "stat": "physical_max",
+        "trigger": "on_purchase",
+        "value": -1,
+      },
+      {
+        "stat": "physical",
+        "trigger": "on_purchase",
+        "value": 1,
+      },
+      {
         "stat": "social",
         "trigger": "on_purchase",
         "value": 1,
@@ -3399,6 +3409,16 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
     "basePrice": 89,
     "category": "food",
     "effects": [
+      {
+        "stat": "physical_max",
+        "trigger": "on_purchase",
+        "value": -1,
+      },
+      {
+        "stat": "physical",
+        "trigger": "on_purchase",
+        "value": 1,
+      },
       {
         "stat": "social",
         "trigger": "on_purchase",
@@ -3416,6 +3436,16 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
     "category": "food",
     "effects": [
       {
+        "stat": "physical_max",
+        "trigger": "on_purchase",
+        "value": -1,
+      },
+      {
+        "stat": "physical",
+        "trigger": "on_purchase",
+        "value": 2,
+      },
+      {
         "stat": "social",
         "trigger": "on_purchase",
         "value": 1,
@@ -3431,6 +3461,11 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
     "basePrice": 65,
     "category": "food",
     "effects": [
+      {
+        "stat": "physical_max",
+        "trigger": "on_purchase",
+        "value": -1,
+      },
       {
         "stat": "social",
         "trigger": "on_purchase",
@@ -3531,20 +3566,10 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
   },
   {
     "basePrice": 18,
-    "category": "food",
-    "description": "Suspicious cheap canned meat. Lowers mental spirits and permanently reduces max physical fitness upon consumption.",
-    "effects": [
-      {
-        "stat": "physical_max",
-        "trigger": "on_purchase",
-        "value": -3,
-      },
-    ],
+    "category": "junk",
     "happinessBonus": -1,
     "id": "dog_food",
-    "mentalBonus": -2.5,
-    "name": "Canned Mystery Meat",
-    "subcategory": "canned",
+    "name": "Dog Food",
   },
   {
     "basePrice": 75,
@@ -3579,6 +3604,17 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
     "mentalBonus": -1,
     "name": "Works of Capote",
     "space": 10,
+  },
+  {
+    "basePrice": 18,
+    "category": "food",
+    "description": "Cheap canned mystery meat. Never spoils, and can be eaten as emergency rations at home (-1 Max Physical, -1 Mental).",
+    "effects": [],
+    "happinessBonus": 0,
+    "id": "canned_food",
+    "mentalBonus": 0,
+    "name": "Canned Mystery Meat",
+    "subcategory": "canned",
   },
   {
     "basePrice": 10,

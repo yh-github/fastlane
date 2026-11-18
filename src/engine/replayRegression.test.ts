@@ -3,7 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { gameReducer } from './gameReducer';
 import { processTurnStart } from './turnProcessor';
-import { type ReplayData, type ReplayContext } from './replayTypes';
+import { createInitialGameState } from './gameState';
+import { type ReplayData, type ReplayContext, type ReplayStep } from './replayTypes';
 import { Random } from '../utils/rng';
 import { loadCampaign, type CampaignBundle } from './dataLoader';
 import { TEST_BASE_CAMPAIGN_CONFIG, TEST_BASE_GAME_RULES } from './testFactories';
@@ -202,5 +203,86 @@ describe('Deterministic Replay Regression', () => {
 
     // Verify it matches snapshot
     expect(currentState).toMatchSnapshot();
+  });
+
+  it('replays Advanced 2000 alternative weekend choices and resolve_weekend deterministically', async () => {
+    const adv2000 = await loadCampaign('advanced_2000');
+    let liveState = createInitialGameState(
+      adv2000,
+      [{ name: 'Tester', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
+      'node_low_cost',
+      adv2000.config.gameRules,
+      987654
+    );
+    const startingState = structuredClone(liveState);
+    const steps: ReplayStep[] = [];
+
+    // 1. Advance Turn 0 -> Turn 1 -> Turn 2 (triggers generateWeekendChoices)
+    for (let i = 0; i < 2; i++) {
+      const outDecisions: any[] = [];
+      const replayCtx: ReplayContext = { outDecisions };
+      liveState = processTurnStart(liveState, adv2000, replayCtx);
+      steps.push({ turn: liveState.turn - 1, action: { type: 'end_turn' }, engineDecisions: outDecisions });
+    }
+
+    const offered = liveState.players[0].offeredWeekendCards!;
+    expect(offered.length).toBeGreaterThanOrEqual(2);
+
+    // 2. Human selects card 1 via gameReducer (resolve_weekend)
+    const chosenCardId = offered[1].id;
+    const rng = new Random(liveState.rngState);
+    const weekendRes = gameReducer(liveState.players[0], { type: 'resolve_weekend', cardId: chosenCardId }, {
+      campaign: adv2000,
+      rules: liveState.rules,
+      turn: liveState.turn,
+      economicIndex: liveState.economicIndex,
+      rng,
+      state: liveState
+    });
+    liveState = {
+      ...liveState,
+      rngState: rng.getState(),
+      players: [weekendRes.updatedPlayer]
+    };
+    steps.push({
+      turn: liveState.turn,
+      action: { type: 'resolve_weekend', cardId: chosenCardId },
+      engineDecisions: weekendRes.outEngineDecisions || []
+    });
+
+    // 3. Advance Turn 2 -> Turn 3 (subsequent turn's weekend deck state & cards must also match!)
+    const turn3Decisions: any[] = [];
+    liveState = processTurnStart(liveState, adv2000, { outDecisions: turn3Decisions });
+    steps.push({ turn: 2, action: { type: 'end_turn' }, engineDecisions: turn3Decisions });
+
+    // 4. Replay from startingState using recorded engineDecisions
+    let replayedState = structuredClone(startingState);
+    for (const step of steps) {
+      if (step.action.type === 'end_turn') {
+        replayedState = processTurnStart(replayedState, adv2000, {
+          inDecisions: [...step.engineDecisions],
+          outDecisions: []
+        });
+      } else {
+        const replayRng = new Random(replayedState.rngState);
+        const res = gameReducer(replayedState.players[0], step.action as any, {
+          campaign: adv2000,
+          rules: replayedState.rules,
+          turn: replayedState.turn,
+          economicIndex: replayedState.economicIndex,
+          rng: replayRng,
+          state: replayedState,
+          engineDecisions: [...step.engineDecisions]
+        });
+        replayedState = {
+          ...replayedState,
+          rngState: replayRng.getState(),
+          players: [res.updatedPlayer]
+        };
+      }
+    }
+
+    // All gameplay state (players, weekend cards/decks, economy, turn, events) must replay identically
+    expect({ ...replayedState, rngState: liveState.rngState }).toEqual(liveState);
   });
 });

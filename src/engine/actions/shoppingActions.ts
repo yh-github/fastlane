@@ -65,9 +65,14 @@ export function handleBuyAction(
         }
       }
       if (context.rules.usePhysicalMentalConditions) {
+        const hasExplicitPhysEffect = baseItemDef.effects?.some(
+          (e: { trigger: string; stat: string }) =>
+            (e.trigger === 'on_purchase' || e.trigger === 'on_buy') &&
+            (e.stat === 'physical' || e.stat === 'physical_max')
+        );
         const isBurger = ['hamburger', 'cheeseburger', 'burger'].includes(baseItemDef.id);
         const isCurioOrParts = baseItemDef.id === 'knick_knack' || baseItemDef.id === 'spare_parts';
-        const isJunkOrBadFastFood = !isBurger && !isCurioOrParts && (
+        const isJunkOrBadFastFood = !hasExplicitPhysEffect && !isBurger && !isCurioOrParts && (
           baseItemDef.category === 'junk' ||
           ['fries', 'shake', 'cola', 'colas', 'shakes', 'astro_chicken'].includes(baseItemDef.id)
         );

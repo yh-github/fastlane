@@ -38,16 +38,16 @@ function createPlayer(overrides: Partial<PlayerState> = {}): PlayerState {
 }
 
 describe('Red Pirate Food & Coffee - Engine & Inventory Integration', () => {
-  it('purchasing Scurvy Slaw applies -1 Physical, +1 Social, marks player fed, and adds to inventory', () => {
-    const player = createPlayer({ money: 200, physicalCondition: 50, social: 10 });
+  it('purchasing Scurvy Slaw applies -1 Max Physical, +1 Social, marks player fed, and adds to inventory', () => {
+    const player = createPlayer({ money: 200, physicalCondition: 50, physicalConditionMax: 50, social: 10 });
     const slaw = campaign2000.items.find(i => i.id === 'scurvy_slaw')!;
     expect(slaw).toBeDefined();
 
     const result = buyItem(player, slaw, campaign2000.config.gameRules, campaign2000);
     expect(result.success).toBe(true);
-    // 1. Current Physical reduced by 1 (indigestion/grease), but Max Physical unchanged
+    // 1. Max Physical reduced by 1 (-1 Max_Physical on fast food), clamping current physical
+    expect(result.updated.physicalConditionMax).toBe(49);
     expect(result.updated.physicalCondition).toBe(49);
-    expect(result.updated.physicalConditionMax).toBe(player.physicalConditionMax);
     // 2. Social boosted by 1
     expect(result.updated.social).toBe(11);
     // 3. Fed status secured

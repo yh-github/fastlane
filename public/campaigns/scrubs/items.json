@@ -9,6 +9,7 @@
     "mentalBonus": -2,
     "description": "Bland institutional cafeteria stew and sterile gelatin. Nutritious but depressing.",
     "effects": [
+      { "trigger": "on_purchase", "stat": "physical_max", "value": -1 },
       { "trigger": "on_purchase", "stat": "physical", "value": 1 }
     ]
   }

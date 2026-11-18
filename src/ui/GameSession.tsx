@@ -6,7 +6,6 @@ import { BuildingModal } from './BuildingModal';
 import { GameMap } from './GameMap';
 import { GameLog } from './GameLog';
 import { WeekendScreen } from './WeekendScreen';
-import { resolveWeekendChoice } from '../engine/weekendEngine';
 import { InventoryModal } from './InventoryModal';
 import { AuthenticGoalsModal } from './authentic/AuthenticGoalsModal';
 import { AuthenticDiplomaModal } from './authentic/AuthenticDiplomaModal';
@@ -30,7 +29,6 @@ import type { GameState } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
 import type { ReplayData } from '../engine/replayTypes';
 import type { LogEntry } from '../hooks/gameEngine';
-import { Random } from '../utils/rng';
 import type { ActiveModal } from '../types/modal';
 import { saveAutoSave, clearAutoSave, resolveCampaignId } from '../utils/saveManager';
 
@@ -130,7 +128,6 @@ export const GameSession: React.FC<GameSessionProps> = ({
     streetRobberyNotice,
     setStreetRobberyNotice,
     isTravelling,
-    addLog,
   } = useGameEngine(
     campaign,
     initialGameState,
@@ -465,26 +462,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
             turn={gameState.turn}
             rules={gameState.rules}
             onSelectCard={(cardId: string) => {
-              const rng = new Random(gameState.rngState);
-              const resolvedPlayer = resolveWeekendChoice(
-                activePlayer,
-                cardId,
-                rng,
-                gameState.rules,
-                campaign.config.statRules,
-                campaign,
-                gameState.turn
-              );
-              const newPlayers = [...gameState.players];
-              newPlayers[activePlayerIndex] = resolvedPlayer;
-              setGameState({
-                ...gameState,
-                players: newPlayers,
-                rngState: rng.getState(),
-              });
-              if (resolvedPlayer.weekendResult) {
-                addLog(resolvedPlayer.weekendResult.event, gameState.turn, activePlayer.id);
-              }
+              handleAction({ type: 'resolve_weekend', cardId });
             }}
             onStartWeek={() => {
               const newPlayers = [...gameState.players];
