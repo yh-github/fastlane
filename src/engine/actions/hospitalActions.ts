@@ -3,7 +3,7 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
 import { calcMaxMental } from '../statMath';
-import { requireAdvancedStatRules } from '../rules';
+import { requireAdvancedStatRules, requireConfig } from '../rules';
 
 export function handleHospitalUrgentCareAction(
   player: PlayerState,
@@ -39,8 +39,11 @@ export function handleHospitalUrgentCareAction(
   const mods: StatModification[] = [{ stat: 'money', diff: -price }];
 
   if (context.rules.usePhysicalMentalConditions) {
-    const curPhys = nextPlayer.physicalCondition ?? 50;
-    const maxPhys = nextPlayer.physicalConditionMax ?? 65;
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const initMaxPhys = requireConfig(statRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
+    const startingPhys = requireConfig(statRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition');
+    const curPhys = nextPlayer.physicalCondition ?? startingPhys;
+    const maxPhys = nextPlayer.physicalConditionMax ?? initMaxPhys;
     let physGain = 1;
     let maxPhysGain = 0;
     let tierKey = 'action.hospital.urgentCareHealthy';
@@ -51,10 +54,10 @@ export function handleHospitalUrgentCareAction(
       const targetPhys = Math.max(curPhys + 8, 20);
       physGain = Math.min(12, Math.max(8, targetPhys - curPhys));
 
-      // Repair damaged max physical ceiling if below standard cap 65
-      if (maxPhys < 65) {
+      // Repair damaged max physical ceiling if below initial baseline cap
+      if (maxPhys < initMaxPhys) {
         maxPhysGain = 1;
-        nextPlayer.physicalConditionMax = Math.min(65, maxPhys + 1);
+        nextPlayer.physicalConditionMax = Math.min(initMaxPhys, maxPhys + 1);
         mods.push({ stat: 'maxPhysical', diff: 1 });
       }
     } else if (curPhys < 35) {
@@ -67,7 +70,7 @@ export function handleHospitalUrgentCareAction(
       physGain = 1;
     }
 
-    const effectiveMaxPhys = nextPlayer.physicalConditionMax ?? 65;
+    const effectiveMaxPhys = nextPlayer.physicalConditionMax ?? initMaxPhys;
     const oldPhys = curPhys;
     nextPlayer.physicalCondition = Math.min(effectiveMaxPhys, curPhys + physGain);
     const actualPhysGain = nextPlayer.physicalCondition - oldPhys;
@@ -209,7 +212,13 @@ export function handleHospitalDonateBloodAction(
     };
   }
 
-  const curPhys = nextPlayer.physicalCondition ?? 50;
+  const advStatRules = context.rules.usePhysicalMentalConditions
+    ? requireAdvancedStatRules(context.campaign.config.statRules)
+    : undefined;
+  const startingPhys = advStatRules
+    ? requireConfig(advStatRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition')
+    : 50;
+  const curPhys = nextPlayer.physicalCondition ?? startingPhys;
   if (context.rules.usePhysicalMentalConditions && curPhys < 20) {
     return {
       nextPlayer,
@@ -227,15 +236,16 @@ export function handleHospitalDonateBloodAction(
   nextPlayer.money += cashReward;
   const mods: StatModification[] = [{ stat: 'money', diff: cashReward }];
 
-  if (context.rules.usePhysicalMentalConditions) {
+  if (context.rules.usePhysicalMentalConditions && advStatRules) {
     // Net -3 physical (-4 whole blood drawn, +1 free orange juice & cookies snack)
-    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
-    const minPhys = statRules.minPhysicalCondition ?? 1;
-    nextPlayer.physicalCondition = Math.max(minPhys, (nextPlayer.physicalCondition ?? 50) - 3);
+    const minPhys = requireConfig(advStatRules.minPhysicalCondition, 'statRules.minPhysicalCondition');
+    nextPlayer.physicalCondition = Math.max(minPhys, curPhys - 3);
     mods.push({ stat: 'physical', diff: -3 });
 
     if (context.rules.trackSocial) {
-      nextPlayer.social = Math.min(99, (nextPlayer.social ?? 20) + 1);
+      const maxSocial = requireConfig(advStatRules.maxSocial, 'statRules.maxSocial');
+      const startingSocial = requireConfig(advStatRules.startingSocial, 'statRules.startingSocial');
+      nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? startingSocial) + 1);
       mods.push({ stat: 'social', diff: 1 });
     }
   } else {
@@ -314,15 +324,18 @@ export function handleHospitalCafeteriaAction(
 
   if (context.rules.usePhysicalMentalConditions) {
     const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const initMaxPhys = requireConfig(statRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
+    const startingPhys = requireConfig(statRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition');
+    const startingMental = requireConfig(statRules.startingMentalCondition, 'statRules.startingMentalCondition');
+    const minMental = requireConfig(statRules.minMentalCondition, 'statRules.minMentalCondition');
 
     // Caloric nourishment: +1 Physical
-    const maxPhys = nextPlayer.physicalConditionMax ?? 65;
-    nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + 1);
+    const maxPhys = nextPlayer.physicalConditionMax ?? initMaxPhys;
+    nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? startingPhys) + 1);
     mods.push({ stat: 'physical', diff: 1 });
 
     // Bland institutional mystery meat: -2 Mental
-    const minMental = statRules.minMentalCondition ?? 1;
-    nextPlayer.mentalCondition = Math.max(minMental, (nextPlayer.mentalCondition ?? 50) - 2);
+    nextPlayer.mentalCondition = Math.max(minMental, (nextPlayer.mentalCondition ?? startingMental) - 2);
     mods.push({ stat: 'mental', diff: -2 });
   } else {
     // Classic rules

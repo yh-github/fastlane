@@ -277,6 +277,74 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(secondPlayer.physicalCondition).toBe(49.5);
     });
 
+    it('rehabilitates physicalConditionMax past initialPhysicalMax (65) up to globalMaxPhysicalCondition (100) and logs exact gains/categories', () => {
+      const adv2kContext: ReducerContext = {
+        ...context,
+        rules: { ...rules, conditionResolution: 0.5 },
+        campaign: {
+          ...campaign,
+          config: {
+            ...campaign.config,
+            statRules: {
+              ...(campaign.config.statRules as any),
+              initialPhysicalMax: 65,
+              globalMaxPhysicalCondition: 100
+            }
+          }
+        }
+      };
+
+      // 1. At 65/65 (initialPhysicalMax < globalMaxPhysicalCondition): raises Max Physical above 65
+      player.mentalCondition = 50;
+      player.mentalConditionMax = 65;
+      player.physicalCondition = 65;
+      player.physicalConditionMax = 65;
+      player.inventory.freshFoodUnits = 2;
+      player.mess = 0;
+
+      const res65 = gameReducer(player, { type: 'relax' }, adv2kContext);
+      expect(res65.updatedPlayer.physicalConditionMax).toBe(66.5);
+      expect(res65.updatedPlayer.physicalCondition).toBe(65);
+      expect((res65.actionLog as any).params.stats).toContain('+1.5 Max Physical');
+      expect((res65.actionLog as any).categories).toContain('physical');
+      expect((res65.actionLog as any).categories).toContain('mental');
+
+      // 2. Clamped partial Physical gain (49.5/51 -> 51/51) logs +1.5 Physical, not +3 Physical
+      player.physicalCondition = 49.5;
+      player.physicalConditionMax = 51;
+      const resClamped = gameReducer(player, { type: 'relax' }, adv2kContext);
+      expect(resClamped.updatedPlayer.physicalCondition).toBe(51);
+      expect((resClamped.actionLog as any).params.stats).toContain('+1.5 Physical');
+
+      // 3. At globalMaxPhysicalCondition (100/100) and full mental: no phantom +Physical logged
+      player.physicalCondition = 100;
+      player.physicalConditionMax = 100;
+      player.mentalCondition = 65;
+      player.mentalConditionMax = 65;
+      const resMaxed = gameReducer(player, { type: 'relax' }, adv2kContext);
+      expect(resMaxed.updatedPlayer.physicalCondition).toBe(100);
+      expect(resMaxed.updatedPlayer.physicalConditionMax).toBe(100);
+      expect((resMaxed.actionLog as any).params.stats).toBe('');
+
+      // 4. Missing required globalMaxPhysicalCondition throws explicit config error
+      const brokenContext: ReducerContext = {
+        ...adv2kContext,
+        campaign: {
+          ...adv2kContext.campaign,
+          config: {
+            ...adv2kContext.campaign.config,
+            statRules: {
+              ...(adv2kContext.campaign.config.statRules as any),
+              globalMaxPhysicalCondition: undefined
+            }
+          }
+        }
+      };
+      expect(() => gameReducer(player, { type: 'relax' }, brokenContext)).toThrow(
+        'Missing required configuration: statRules.globalMaxPhysicalCondition'
+      );
+    });
+
     it('applies unfed penalty (+1/+1, -1 Max Phys, -1 Max Mental) when relaxing without food', () => {
       player.physicalCondition = 20;
       player.physicalConditionMax = 50;

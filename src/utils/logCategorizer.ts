@@ -181,6 +181,14 @@ export function getLogCategories(entry: LogEntry): Set<GoalFilter> {
         if (mod.stat === 'skillTech' || mod.stat === 'tech') categories.add('skillTech');
         if (mod.stat === 'skillMgmt' || mod.stat === 'mgmt' || mod.stat === 'leadership') categories.add('skillMgmt');
         if (mod.stat === 'mental' || mod.stat === 'physical') categories.add('wellbeing');
+        if (mod.stat === 'maxPhysical' || mod.stat === 'physical_max') {
+          categories.add('physical');
+          categories.add('wellbeing');
+        }
+        if (mod.stat === 'maxMental' || mod.stat === 'mental_max') {
+          categories.add('mental');
+          categories.add('wellbeing');
+        }
       }
     }
   }

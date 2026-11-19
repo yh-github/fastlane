@@ -1,5 +1,6 @@
 import React from 'react';
 import type { PlayerState, GameRules } from '../../engine/gameState';
+import { roundToResolution } from '../../engine/statMath';
 import { MessIcon } from '../../ui/icons/MessIcon';
 
 export function calculateStatDiffsAndAnimate(
@@ -12,7 +13,13 @@ export function calculateStatDiffsAndAnimate(
   const moneyDiff = (player.money ?? 0) - (oldPlayer.money ?? 0);
   const hapDiff = (player.happiness ?? 0) - (oldPlayer.happiness ?? 0);
   const physDiff = (player.physicalCondition || 0) - (oldPlayer.physicalCondition || 0);
+  const maxPhysDiff = (player.physicalConditionMax !== undefined && oldPlayer.physicalConditionMax !== undefined)
+    ? roundToResolution(player.physicalConditionMax - oldPlayer.physicalConditionMax, 0.5)
+    : 0;
   const mentalDiff = (player.mentalCondition || 0) - (oldPlayer.mentalCondition || 0);
+  const maxMentalDiff = (player.mentalConditionMax !== undefined && oldPlayer.mentalConditionMax !== undefined)
+    ? roundToResolution(player.mentalConditionMax - oldPlayer.mentalConditionMax, 0.5)
+    : 0;
   const lifeDiff = (player.lifestyle || 0) - (oldPlayer.lifestyle || 0);
   const relaxDiff = (player.relaxation || 0) - (oldPlayer.relaxation || 0);
   const depDiff = (player.dependability || 0) - (oldPlayer.dependability || 0);
@@ -42,10 +49,22 @@ export function calculateStatDiffsAndAnimate(
       triggerAnim('text', `${physDiff > 0 ? '+' : ''}${physDiff} 💪`, { targetId: 'stat-physical', customClass: physDiff > 0 ? 'anim-positive' : 'anim-negative' });
     }
   }
+  if (maxPhysDiff !== 0) {
+    diffStr.push(`${maxPhysDiff > 0 ? '+' : ''}${maxPhysDiff} Max Physical`);
+    if (rules.enableAnimations) {
+      triggerAnim('text', `${maxPhysDiff > 0 ? '+' : ''}${maxPhysDiff} Max 💪`, { targetId: 'stat-physical', customClass: maxPhysDiff > 0 ? 'anim-positive' : 'anim-negative' });
+    }
+  }
   if (mentalDiff !== 0) {
     diffStr.push(`${mentalDiff > 0 ? '+' : ''}${mentalDiff} Mental`);
     if (rules.enableAnimations) {
       triggerAnim('text', `${mentalDiff > 0 ? '+' : ''}${mentalDiff} 🧠`, { targetId: 'stat-mental', customClass: mentalDiff > 0 ? 'anim-positive' : 'anim-negative' });
+    }
+  }
+  if (maxMentalDiff !== 0) {
+    diffStr.push(`${maxMentalDiff > 0 ? '+' : ''}${maxMentalDiff} Max Mental`);
+    if (rules.enableAnimations) {
+      triggerAnim('text', `${maxMentalDiff > 0 ? '+' : ''}${maxMentalDiff} Max 🧠`, { targetId: 'stat-mental', customClass: maxMentalDiff > 0 ? 'anim-positive' : 'anim-negative' });
     }
   }
   if (lifeDiff !== 0) {

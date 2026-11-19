@@ -436,7 +436,7 @@ describe('Advanced 2000 - Cooking Module', () => {
       player.inventory.freshFoodUnits = 1;
       player.inventory.appliances = [{ id: 'stove', purchasePrice: 490, condition: 'new' }];
       player.physicalCondition = 50;
-      player.physicalConditionMax = 50; // Damaged max (global max is 65)
+      player.physicalConditionMax = 50; // Damaged max (initial max is 65, global max is 100)
       player.mentalCondition = 50;
       player.mentalConditionMax = 65;
 

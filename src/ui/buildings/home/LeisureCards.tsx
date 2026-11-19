@@ -8,6 +8,9 @@ interface LeisureCardsProps {
   isRelaxDisabled: boolean;
   hasFood: boolean;
   physGain: number;
+  maxPhysGain?: number;
+  isAtFullPhysical?: boolean;
+  isAtGlobalMaxPhysical?: boolean;
   mentalGain: number;
   scaledMess: number;
   trackMess?: boolean;
@@ -37,6 +40,9 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
   isRelaxDisabled,
   hasFood,
   physGain,
+  maxPhysGain = 0,
+  isAtFullPhysical = false,
+  isAtGlobalMaxPhysical = false,
   mentalGain,
   scaledMess,
   trackMess,
@@ -164,7 +170,13 @@ export const LeisureCards: React.FC<LeisureCardsProps> = ({
             {usePhysicalMental ? (
               hasFood ? (
                 <div style={{ color: '#85ffb5', display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', fontWeight: 'bold' }}>
-                  <span>+{physGain} 💪 Physical</span>
+                  {maxPhysGain > 0 ? (
+                    <span style={{ color: '#fdba74' }}>+{maxPhysGain} Max 💪</span>
+                  ) : isAtGlobalMaxPhysical || (isAtFullPhysical && physGain === 0) ? (
+                    <span style={{ color: '#94a3b8' }}>💪 Maxed</span>
+                  ) : (
+                    <span>+{physGain} 💪 Physical</span>
+                  )}
                   <span>+{mentalGain} 🧠 Mental</span>
                   {trackMess && scaledMess > 0 && (
                     <span style={{ color: '#f39c12', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>

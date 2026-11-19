@@ -1,7 +1,7 @@
 import React from 'react';
 import { type PlayerState, type GameState, isPlayerFed } from '../engine/gameState';
 import type { CampaignBundle } from '../engine/dataLoader';
-import type { GameRules } from '../engine/rules';
+import { isAdvancedStatRules, type GameRules } from '../engine/rules';
 import {
   calcEducationProgress,
   calcCareerProgress,
@@ -293,17 +293,20 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
   ];
 
   if (rules.usePhysicalMentalConditions) {
+    const advStatRules = isAdvancedStatRules(campaign?.config?.statRules) ? campaign.config.statRules : undefined;
+    const physMaxVal = player.physicalConditionMax ?? advStatRules?.initialPhysicalMax ?? 50;
+    const physBaseline = advStatRules?.initialPhysicalMax ?? 50;
     const physLabel = t('dashboard.physical', { defaultValue: 'Physical' });
     lifeBadges.push({
       id: 'stat-physical',
       label: physLabel,
-      value: `${player.physicalCondition || 0}/${player.physicalConditionMax || 50}`,
+      value: `${player.physicalCondition || 0}/${physMaxVal}`,
       icon: '💪',
-      hoverText: `${physLabel}: ${Math.floor(player.physicalCondition || 0)} / ${player.physicalConditionMax || 50}`,
+      hoverText: `${physLabel}: ${Math.floor(player.physicalCondition || 0)} / ${physMaxVal}`,
       danger: isPhysicalCritical,
       warning: !isPhysicalCritical && isPhysicalWarning,
       badge:
-        player.physicalConditionMax !== undefined && player.physicalConditionMax < 50
+        player.physicalConditionMax !== undefined && player.physicalConditionMax < physBaseline
           ? `Max ${player.physicalConditionMax} ↓`
           : undefined,
       isActive: activeLogFilter === 'physical',
@@ -312,17 +315,19 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
         : () => onFilterToggle?.('physical'),
     });
 
+    const mentalMaxVal = player.mentalConditionMax ?? advStatRules?.maxMentalCondition ?? 50;
+    const mentalBaseline = advStatRules?.mentalMaxBaseValue ?? 50;
     const mentalLabel = t('dashboard.mental', { defaultValue: 'Mental' });
     lifeBadges.push({
       id: 'stat-mental',
       label: mentalLabel,
-      value: `${player.mentalCondition || 0}/${player.mentalConditionMax || 50}`,
+      value: `${player.mentalCondition || 0}/${mentalMaxVal}`,
       icon: '🧠',
-      hoverText: `${mentalLabel}: ${Math.floor(player.mentalCondition || 0)} / ${player.mentalConditionMax || 50}`,
+      hoverText: `${mentalLabel}: ${Math.floor(player.mentalCondition || 0)} / ${mentalMaxVal}`,
       danger: isMentalCritical,
       warning: !isMentalCritical && isMentalWarning,
       badge:
-        player.mentalConditionMax !== undefined && player.mentalConditionMax < 50
+        player.mentalConditionMax !== undefined && player.mentalConditionMax < mentalBaseline
           ? `Max ${player.mentalConditionMax} ↓`
           : undefined,
       isActive: activeLogFilter === 'mental',

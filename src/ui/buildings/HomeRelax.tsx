@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../engine/dataLoader';
 import { type GameRules, collectItemEffects, type OwnedAppliance, isPlayerFed } from '../../engine/gameState';
+import { isAdvancedStatRules } from '../../engine/rules';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap, calcSocializeParameters, formatHours } from '../../engine/statMath';
 import { HomeApartmentView } from './home/HomeApartmentView';
@@ -203,6 +204,9 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
   const extraMess = relaxEffects.get('mess') || 0;
 
   let physGain = 0;
+  let maxPhysGain = 0;
+  let isAtFullPhysical = false;
+  let isAtGlobalMaxPhysical = false;
   let mentalGain = 0;
   let scaledMess = 0;
   let classicGain = 0;
@@ -219,6 +223,27 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
       physGain = (isDivisible && hoursToRelax < relaxCost)
         ? Math.max(0.5, roundToResolution(rawPhysGain * relaxRatio, conditionRes))
         : rawPhysGain;
+
+      const advStatRules = isAdvancedStatRules(campaign?.config?.statRules) ? campaign.config.statRules : undefined;
+      const maxPhysical = player.physicalConditionMax ?? advStatRules?.initialPhysicalMax;
+      const globalMaxPhys = advStatRules?.globalMaxPhysicalCondition;
+      const curPhys = player.physicalCondition;
+      if (curPhys !== undefined && maxPhysical !== undefined) {
+        isAtFullPhysical = curPhys >= maxPhysical;
+        isAtGlobalMaxPhysical = isAtFullPhysical && globalMaxPhys !== undefined && maxPhysical >= globalMaxPhys;
+
+        if (isAtFullPhysical) {
+          if (globalMaxPhys !== undefined && maxPhysical < globalMaxPhys) {
+            maxPhysGain = Math.min(
+              roundToResolution(globalMaxPhys - maxPhysical, conditionRes),
+              roundToResolution(physGain * 0.5, conditionRes)
+            );
+          }
+          physGain = 0;
+        } else {
+          physGain = Math.min(roundToResolution(maxPhysical - curPhys, conditionRes), physGain);
+        }
+      }
 
       const firstBonus = player.turnFlags?.relaxedThisTurn ? 0 : 2;
       const messPenalty = Math.floor((player.mess || 0) / 5);
@@ -390,6 +415,9 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
           isRelaxDisabled={isRelaxDisabled}
           hasFood={hasFood}
           physGain={physGain}
+          maxPhysGain={maxPhysGain}
+          isAtFullPhysical={isAtFullPhysical}
+          isAtGlobalMaxPhysical={isAtGlobalMaxPhysical}
           mentalGain={mentalGain}
           scaledMess={scaledMess}
           classicGain={classicGain}

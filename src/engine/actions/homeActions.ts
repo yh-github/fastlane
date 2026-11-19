@@ -29,8 +29,12 @@ export function handleRelaxAction(
   let statsStr = '';
   if (context.rules.usePhysicalMentalConditions) {
     const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
-    const maxPhysical = nextPlayer.physicalConditionMax ?? statRules.initialPhysicalMax;
-    const maxMental = nextPlayer.mentalConditionMax ?? 50;
+    const initMaxPhys = requireConfig(statRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
+    const globalMaxPhys = requireConfig(statRules.globalMaxPhysicalCondition, 'statRules.globalMaxPhysicalCondition');
+    const maxPhysical = nextPlayer.physicalConditionMax ?? initMaxPhys;
+    const defaultMaxMental = requireConfig(statRules.maxMentalCondition, 'statRules.maxMentalCondition');
+    const maxMental = nextPlayer.mentalConditionMax ?? defaultMaxMental;
+    const startingMental = requireConfig(statRules.startingMentalCondition, 'statRules.startingMentalCondition');
     const conditionRes = context.rules.conditionResolution;
 
     const isFed = isPlayerFed(nextPlayer, context.rules);
@@ -44,25 +48,29 @@ export function handleRelaxAction(
       const homeRelaxes = (nextPlayer.turnFlags.homeRelaxesThisTurn || 0) + 1;
       nextPlayer.turnFlags.homeRelaxesThisTurn = homeRelaxes;
 
-      const mentalStat = nextPlayer.mentalCondition ?? 50;
+      const mentalStat = nextPlayer.mentalCondition ?? startingMental;
       const rawPhysGain = 1 + Math.floor(mentalStat / 25) + physBonus;
       const physGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
         ? Math.max(0.5, roundToResolution(rawPhysGain * ratio, conditionRes))
         : rawPhysGain;
 
-      const globalMaxPhys = statRules.initialPhysicalMax;
       const curPhys = nextPlayer.physicalCondition ?? maxPhysical;
-      let maxPhysGain = 0;
+      let actualPhysGain = 0;
+      let actualMaxPhysGain = 0;
 
       if (curPhys >= maxPhysical && maxPhysical < globalMaxPhys) {
-        // Relaxing at full health: rehabilitate Max_Physical by half of normal physGain
-        maxPhysGain = roundToResolution(physGain * 0.5, conditionRes);
-        if (maxPhysGain > 0) {
-          nextPlayer.physicalConditionMax = Math.min(globalMaxPhys, roundToResolution(maxPhysical + maxPhysGain, conditionRes));
+        // Relaxing at full health: rehabilitate Max_Physical by half of normal physGain up to globalMaxPhys
+        const rawMaxPhysGain = roundToResolution(physGain * 0.5, conditionRes);
+        const newMaxPhys = Math.min(globalMaxPhys, roundToResolution(maxPhysical + rawMaxPhysGain, conditionRes));
+        actualMaxPhysGain = roundToResolution(newMaxPhys - maxPhysical, conditionRes);
+        if (actualMaxPhysGain > 0) {
+          nextPlayer.physicalConditionMax = newMaxPhys;
           // Current physicalCondition remains at old value (so player is now below max, needing a second relax to fill)
         }
       } else {
-        nextPlayer.physicalCondition = Math.min(maxPhysical, curPhys + physGain);
+        const newPhys = Math.min(maxPhysical, roundToResolution(curPhys + physGain, conditionRes));
+        actualPhysGain = roundToResolution(newPhys - curPhys, conditionRes);
+        nextPlayer.physicalCondition = newPhys;
       }
 
       const firstBonus = nextPlayer.turnFlags.relaxedThisTurn ? 0 : 2;
@@ -72,7 +80,10 @@ export function handleRelaxAction(
       const mentalGain = (context.rules.proportionalDivisibleActions && actualHours < relaxCost)
         ? Math.max(0.5, roundToResolution(rawMentalGain * ratio, conditionRes))
         : rawMentalGain;
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? maxMental) + mentalGain);
+      const curMental = nextPlayer.mentalCondition ?? maxMental;
+      const newMental = Math.min(maxMental, roundToResolution(curMental + mentalGain, conditionRes));
+      const actualMentalGain = roundToResolution(newMental - curMental, conditionRes);
+      nextPlayer.mentalCondition = newMental;
 
       if (context.rules.trackMess) {
         const baseRelaxMess = statRules.relaxMessIncrease;
@@ -85,8 +96,11 @@ export function handleRelaxAction(
       }
 
       nextPlayer.homeTimeThisTurn = (nextPlayer.homeTimeThisTurn || 0) + actualHours;
-      const physDesc = maxPhysGain > 0 ? `+${maxPhysGain} Max Physical` : `+${physGain} Physical`;
-      statsStr = ` (${physDesc}, +${mentalGain} Mental)`;
+      const statParts: string[] = [];
+      if (actualMaxPhysGain > 0) statParts.push(`+${actualMaxPhysGain} Max Physical`);
+      else if (actualPhysGain > 0) statParts.push(`+${actualPhysGain} Physical`);
+      if (actualMentalGain > 0) statParts.push(`+${actualMentalGain} Mental`);
+      statsStr = statParts.length > 0 ? ` (${statParts.join(', ')})` : '';
       actionLog = { key: 'action.relax', params: { stats: statsStr } };
     } else {
       // Unfed Relaxing
@@ -259,11 +273,10 @@ export function handleSocializeAction(
 
   nextPlayer = spendHours(nextPlayer, params.timeCost);
 
-  const minPhysical = nextPlayer.minPhysicalCondition ?? 1;
-  const currentPhys = nextPlayer.physicalCondition ?? 50;
-  nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, 1, minPhysical);
-
   const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+  const minPhysical = nextPlayer.minPhysicalCondition ?? requireConfig(statRules.initialMinPhysical, 'statRules.initialMinPhysical');
+  const currentPhys = nextPlayer.physicalCondition ?? requireConfig(statRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition');
+  nextPlayer.physicalCondition = safeDecrementPhysical(currentPhys, 1, minPhysical);
 
   // Roll guests based on housing tier dice (1d3 low-cost, 2d3 security, 3d3 penthouse)
   const rawRoll = resolveDecision(replayContext, `socialize_guests_roll_${nextPlayer.id}`, () => {
@@ -290,9 +303,9 @@ export function handleSocializeAction(
   const cashCost = X * params.cashRate;
   const fullReward = X; // 1:1 base social reward per guest
 
-  const currentMental = nextPlayer.mentalCondition ?? 25;
-  const minMental = statRules.minMentalCondition;
-  const maxMental = nextPlayer.mentalConditionMax ?? 90;
+  const currentMental = nextPlayer.mentalCondition ?? requireConfig(statRules.startingMentalCondition, 'statRules.startingMentalCondition');
+  const minMental = requireConfig(statRules.minMentalCondition, 'statRules.minMentalCondition');
+  const maxMental = nextPlayer.mentalConditionMax ?? requireConfig(statRules.maxMentalCondition, 'statRules.maxMentalCondition');
   const hasFullCash = nextPlayer.money >= cashCost;
   const hasFullMental = finalMentalCost <= 0 || currentMental >= finalMentalCost;
 
@@ -314,8 +327,9 @@ export function handleSocializeAction(
     actualReward = Math.floor(fullReward / 2) + params.appBonus;
   }
 
-  const maxSocial = statRules.maxSocial;
-  nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? 9) + actualReward);
+  const maxSocial = requireConfig(statRules.maxSocial, 'statRules.maxSocial');
+  const startingSocial = requireConfig(statRules.startingSocial, 'statRules.startingSocial');
+  nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? startingSocial) + actualReward);
 
   actionLog = { key: 'action.socialize', params: { reward: actualReward, guests: X } };
   return { nextPlayer, actionLog };
@@ -385,8 +399,8 @@ export function handlePrepMealAction(
   let actionLog;
 
   const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
-  const maxPhysical = nextPlayer.physicalConditionMax ?? statRules.initialPhysicalMax;
-  const maxMental = nextPlayer.mentalConditionMax ?? 50;
+  const maxPhysical = nextPlayer.physicalConditionMax ?? requireConfig(statRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
+  const maxMental = nextPlayer.mentalConditionMax ?? requireConfig(statRules.maxMentalCondition, 'statRules.maxMentalCondition');
 
   const hasStove = nextPlayer.inventory.appliances?.some(
     a => (a.id === 'stove' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken

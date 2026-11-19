@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlayerState, GameRules, MiniGameOption, StatModification } from '../../../engine/gameState';
+import type { CampaignBundle } from '../../../engine/dataLoader';
+import { isAdvancedStatRules } from '../../../engine/rules';
 import {
   PARK_RELAX_CARDS,
   PARK_WORKOUT_CARDS,
@@ -14,6 +16,7 @@ import { StatModifierPills } from '../../StatModifierPills';
 export interface ParkAssessmentModalProps {
   mode: 'relax' | 'workout';
   player: PlayerState;
+  campaign?: CampaignBundle | null;
   rules?: GameRules;
   onClose: () => void;
 }
@@ -33,6 +36,7 @@ function cardToMods(c: MiniGameOption): StatModification[] {
 export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
   mode,
   player,
+  campaign,
   rules,
   onClose
 }) => {
@@ -294,11 +298,21 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
                     <span style={{ fontSize: '13px', color: '#ef4444', fontWeight: 'bold' }}>
                       -2 💪 Physical, -1 🧠 Mental (Overtraining Exhaustion)
                     </span>
-                  ) : (
+                  ) : (() => {
+                    const rawMaxBoost = isPartial ? roundToResolution(1 * ratio, conditionRes) : 1;
+                    const globalMaxPhys = isAdvancedStatRules(campaign?.config?.statRules)
+                      ? campaign.config.statRules.globalMaxPhysicalCondition
+                      : undefined;
+                    const maxPhysGain = (player.physicalConditionMax !== undefined && globalMaxPhys !== undefined)
+                      ? Math.min(Math.max(0, roundToResolution(globalMaxPhys - player.physicalConditionMax, conditionRes)), rawMaxBoost)
+                      : rawMaxBoost;
+                    return (
                     <>
-                      <span style={{ fontSize: '13px', color: '#fdba74', fontWeight: 'bold' }}>
-                        +{isPartial ? roundToResolution(1 * ratio, conditionRes) : 1} Max 💪
-                      </span>
+                      {maxPhysGain > 0 && (
+                        <span style={{ fontSize: '13px', color: '#fdba74', fontWeight: 'bold' }}>
+                          +{maxPhysGain} Max 💪
+                        </span>
+                      )}
                       <span style={{ fontSize: '13px', color: '#f87171', fontWeight: 'bold' }}>
                         -{isPartial ? Math.max(conditionRes, roundToResolution(1 * ratio, conditionRes)) : 1} 💪 Physical
                       </span>
@@ -306,7 +320,8 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
                         +{isPartial ? Math.max(conditionRes, roundToResolution(1 * ratio, conditionRes)) : 1} 🧠 Mental
                       </span>
                     </>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
 

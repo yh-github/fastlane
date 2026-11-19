@@ -17,6 +17,9 @@ export interface HomeFlankingWingsProps {
   isRelaxDisabled: boolean;
   hasFood: boolean;
   physGain: number;
+  maxPhysGain?: number;
+  isAtFullPhysical?: boolean;
+  isAtGlobalMaxPhysical?: boolean;
   mentalGain: number;
   scaledMess: number;
   classicGain?: number;
@@ -66,6 +69,9 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
   isRelaxDisabled,
   hasFood,
   physGain,
+  maxPhysGain = 0,
+  isAtFullPhysical = false,
+  isAtGlobalMaxPhysical = false,
   mentalGain,
   scaledMess,
   classicGain,
@@ -177,6 +183,9 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
           campaign={campaign}
           hoursToRelax={hoursToRelax}
           physGain={physGain}
+          maxPhysGain={maxPhysGain}
+          isAtFullPhysical={isAtFullPhysical}
+          isAtGlobalMaxPhysical={isAtGlobalMaxPhysical}
           mentalGain={mentalGain}
           scaledMess={scaledMess}
           hasFood={hasFood}
@@ -307,7 +316,13 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
             {usePhysicalMental ? (
               hasFood ? (
                 <div style={{ color: '#86efac', display: 'flex', flexWrap: 'wrap', gap: '4px', fontWeight: 600 }}>
-                  <span>+{physGain} 💪 Phys</span>
+                  {maxPhysGain > 0 ? (
+                    <span style={{ color: '#fdba74' }}>+{maxPhysGain} Max 💪</span>
+                  ) : isAtGlobalMaxPhysical ? (
+                    <span style={{ color: '#94a3b8' }}>💪 Maxed</span>
+                  ) : (
+                    <span>+{physGain} 💪 Phys</span>
+                  )}
                   <span>+{mentalGain} 🧠 Mental</span>
                   {trackMess && scaledMess > 0 && (
                     <span style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>

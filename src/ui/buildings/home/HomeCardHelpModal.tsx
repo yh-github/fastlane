@@ -16,6 +16,9 @@ export interface HomeCardHelpModalProps {
   campaign?: CampaignBundle;
   hoursToRelax?: number;
   physGain?: number;
+  maxPhysGain?: number;
+  isAtFullPhysical?: boolean;
+  isAtGlobalMaxPhysical?: boolean;
   mentalGain?: number;
   scaledMess?: number;
   hasFood?: boolean;
@@ -48,6 +51,9 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
   rules,
   hoursToRelax = 6,
   physGain = 5,
+  maxPhysGain = 0,
+  isAtFullPhysical = false,
+  isAtGlobalMaxPhysical = false,
   mentalGain = 10,
   scaledMess = 2,
   hasFood = true,
@@ -97,7 +103,11 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
         outputs.push({
           icon: '💪',
           title: 'Physical Vitality',
-          desc: `+${physGain} Physical Condition recovered`
+          desc: hasFood && maxPhysGain > 0
+            ? `+${maxPhysGain} Max Physical (at full Physical, Relax expands your Max Physical cap instead of current Physical; relax again to fill it)`
+            : hasFood && (isAtGlobalMaxPhysical || (isAtFullPhysical && physGain === 0))
+              ? 'Physical Condition is already at the global maximum cap.'
+              : `+${physGain} Physical Condition recovered`
         });
         outputs.push({
           icon: '🧠',
@@ -119,6 +129,9 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
         });
       }
       tips.push('Ensure your pantry is stocked before relaxing so you do not suffer starvation penalties.');
+      if (rules?.usePhysicalMentalConditions) {
+        tips.push('Relaxing while fed at full Physical raises Max Physical (by half normal Physical recovery, up to the global cap) instead of current Physical; relax a second time to fill the new capacity.');
+      }
       tips.push('Appliances like TV, Stereo, Microwave, and Hot Tub improve relaxation gains.');
       break;
 

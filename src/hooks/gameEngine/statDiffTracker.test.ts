@@ -68,4 +68,43 @@ describe('calculateStatDiffsAndAnimate', () => {
     expect(diffStr).toContain('-10 Mess');
     expect(triggerAnim).not.toHaveBeenCalled();
   });
+
+  it('tracks physicalConditionMax and mentalConditionMax diffs and animates HUD badges', () => {
+    const oldPlayer = {
+      physicalCondition: 51,
+      physicalConditionMax: 51,
+      mentalCondition: 66.5,
+      mentalConditionMax: 84,
+    } as PlayerState;
+    const newPlayer = {
+      physicalCondition: 51,
+      physicalConditionMax: 52.5,
+      mentalCondition: 66.5,
+      mentalConditionMax: 85,
+    } as PlayerState;
+    const triggerAnim = vi.fn();
+
+    const diffStr = calculateStatDiffsAndAnimate(newPlayer, oldPlayer, defaultRules, triggerAnim);
+
+    expect(diffStr).toContain('+1.5 Max Physical');
+    expect(diffStr).toContain('+1 Max Mental');
+    expect(triggerAnim).toHaveBeenCalledWith('text', '+1.5 Max 💪', {
+      targetId: 'stat-physical',
+      customClass: 'anim-positive',
+    });
+    expect(triggerAnim).toHaveBeenCalledWith('text', '+1 Max 🧠', {
+      targetId: 'stat-mental',
+      customClass: 'anim-positive',
+    });
+
+    // Negative Max Physical diff (e.g. fast food)
+    const afterFastFood = { ...oldPlayer, physicalConditionMax: 50 } as PlayerState;
+    const triggerNeg = vi.fn();
+    const negDiffStr = calculateStatDiffsAndAnimate(afterFastFood, oldPlayer, defaultRules, triggerNeg);
+    expect(negDiffStr).toContain('-1 Max Physical');
+    expect(triggerNeg).toHaveBeenCalledWith('text', '-1 Max 💪', {
+      targetId: 'stat-physical',
+      customClass: 'anim-negative',
+    });
+  });
 });

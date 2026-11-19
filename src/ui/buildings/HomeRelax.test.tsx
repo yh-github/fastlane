@@ -645,4 +645,66 @@ describe("HomeRelax", () => {
       expect(await screen.findByText(/Heated fresh meal in microwave/i)).toBeInTheDocument();
     });
   });
+
+  it('displays +Max 💪 when relaxing fed at full physical below globalMaxPhysicalCondition, and 💪 Maxed at global cap', () => {
+    const mockCampaign = {
+      housing: [{ id: 'low_cost', name: 'Low Cost' }],
+      items: [],
+      config: {
+        timeRules: { relaxCost: 6, cleaningServiceCost: 1, socializeCost: 6 },
+        economyRules: { cleaningServiceBasePrice: 100 },
+        statRules: {
+          enableAdvancedStats: true,
+          initialPhysicalMax: 65,
+          globalMaxPhysicalCondition: 100,
+          relaxMessIncrease: 1,
+        }
+      }
+    } as any;
+
+    const fullPhysPlayer = {
+      id: 'p1',
+      hoursRemaining: 12,
+      physicalCondition: 51,
+      physicalConditionMax: 51,
+      mentalCondition: 50,
+      mentalConditionMax: 84,
+      social: 15,
+      mess: 0,
+      turnFlags: { relaxedThisTurn: false, hasEaten: true },
+      inventory: { freshFoodUnits: 2, appliances: [], books: [] }
+    } as any;
+
+    const { rerender } = render(
+      <HomeRelax
+        player={fullPhysPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, usePhysicalMentalConditions: true, conditionResolution: 0.5 } as any}
+        economicIndex={0}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-wing-leisure'));
+    expect(screen.getByText(/\+1\.5 Max 💪/i)).toBeInTheDocument();
+    expect(screen.queryByText(/\+3 💪 Phys/i)).not.toBeInTheDocument();
+
+    // At globalMaxPhysicalCondition (100/100)
+    const maxedPlayer = {
+      ...fullPhysPlayer,
+      physicalCondition: 100,
+      physicalConditionMax: 100,
+    };
+    rerender(
+      <HomeRelax
+        player={maxedPlayer}
+        onAction={vi.fn()}
+        campaign={mockCampaign}
+        rules={{ trackMess: true, usePhysicalMentalConditions: true, conditionResolution: 0.5 } as any}
+        economicIndex={0}
+      />
+    );
+    expect(screen.getByText(/💪 Maxed/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Max 💪/i)).not.toBeInTheDocument();
+  });
 });

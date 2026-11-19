@@ -86,7 +86,7 @@ export function calcWellbeingScore(physical: number, mental: number): number {
  * Rounds a number to a specific step resolution (e.g. 0.5 for half points, 0.1 for decimals).
  */
 export function roundToResolution(value: number, resolution: number): number {
-  if (resolution <= 0) return value;
+  if (!resolution || resolution <= 0) return value;
   const factor = 1 / resolution;
   return Math.round(value * factor) / factor;
 }

@@ -284,8 +284,8 @@ export function gameReducer(
   if (player.experience !== nextPlayer.experience) categories.add('experience');
   if (player.relaxation !== nextPlayer.relaxation) categories.add('relaxation');
   if (player.lifestyle !== nextPlayer.lifestyle) categories.add('lifestyle');
-  if (player.mentalCondition !== nextPlayer.mentalCondition) categories.add('mental');
-  if (player.physicalCondition !== nextPlayer.physicalCondition) categories.add('physical');
+  if (player.mentalCondition !== nextPlayer.mentalCondition || player.mentalConditionMax !== nextPlayer.mentalConditionMax) categories.add('mental');
+  if (player.physicalCondition !== nextPlayer.physicalCondition || player.physicalConditionMax !== nextPlayer.physicalConditionMax) categories.add('physical');
 
   if (categories.size > 0 && actionLog) {
     const catArray = Array.from(categories);

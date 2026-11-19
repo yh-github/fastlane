@@ -461,4 +461,54 @@ describe('Dashboard Component', () => {
     fireEvent.click(goalsBtn);
     expect(onOpenGoals).toHaveBeenCalledTimes(1);
   });
+
+  it('displays Max Physical warning badge relative to campaign initialPhysicalMax (65)', () => {
+    const mockPlayer = {
+      name: 'Player 1',
+      degrees: [],
+      money: 100,
+      physicalCondition: 50,
+      physicalConditionMax: 55,
+      mentalCondition: 50,
+      mentalConditionMax: 65,
+      goalAllotment: { wealth: 25, lifestyle: 25, education: 25, career: 25, wellbeing: 25 },
+      inventory: { selectedClothes: 'casual', stocks: { tBills: 0, holdings: {} } },
+      hoursRemaining: 50
+    } as unknown as PlayerState;
+
+    const mockGameState = {
+      rules: {
+        helpfulUI: true,
+        usePhysicalMentalConditions: true
+      }
+    } as any;
+
+    const mockCampaign = {
+      config: {
+        timeRules: { hoursPerTurn: 50 },
+        statRules: {
+          enableAdvancedStats: true,
+          initialPhysicalMax: 65,
+          mentalMaxBaseValue: 65,
+          mentalWarningThreshold: 18,
+          physicalWarningThreshold: 18
+        }
+      }
+    } as any;
+
+    render(
+      <Dashboard
+        player={mockPlayer}
+        gameState={mockGameState}
+        turn={1}
+        economicIndex={0}
+        hoursPerTurn={50}
+        campaign={mockCampaign}
+        onOpenInventory={() => {}}
+        onOpenSettings={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Max 55 ↓')).toBeInTheDocument();
+  });
 });

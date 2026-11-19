@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { handleRelaxParkAction, handleWorkoutParkAction } from './parkActions';
+import { handleRelaxParkAction, handleWorkoutParkAction, applyParkCardEffects } from './parkActions';
 import { createPlayerState } from '../stateFactories';
+import { TEST_ADVANCED_CAMPAIGN_CONFIG } from '../testFactories';
+import { recalculatePlayerEffects } from '../gameState';
+import { gameReducer } from '../gameReducer';
 import { Random } from '../../utils/rng';
 import type { ReducerContext } from './types';
 
@@ -8,10 +11,17 @@ describe('Park Actions', () => {
   const dummyCampaign = {
     housing: [],
     config: {
+      ...TEST_ADVANCED_CAMPAIGN_CONFIG,
       startingMoney: 200,
-      timeRules: { hoursPerTurn: 60 },
-      statRules: { startingHappiness: 10, initialPhysicalMax: 100 },
-      gameRules: { usePhysicalMentalConditions: true }
+      timeRules: { ...TEST_ADVANCED_CAMPAIGN_CONFIG.timeRules, hoursPerTurn: 60 },
+      statRules: {
+        ...TEST_ADVANCED_CAMPAIGN_CONFIG.statRules,
+        startingHappiness: 10,
+        initialPhysicalMax: 65,
+        globalMaxPhysicalCondition: 100,
+        globalMaxMentalCondition: 100,
+      },
+      gameRules: { ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules, usePhysicalMentalConditions: true }
     },
     items: [],
     jobs: [],
@@ -132,5 +142,95 @@ describe('Park Actions', () => {
     expect(res.nextPlayer.physicalConditionMax).toBe(60.5);
     expect(res.nextPlayer.physicalCondition).toBe(49.5);
     expect(res.nextPlayer.mentalCondition).toBe(50.5);
+  });
+
+  it('workout_park raises physicalConditionMax past initialPhysicalMax (65) and clamps at globalMaxPhysicalCondition (100)', () => {
+    const player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+    player.hoursRemaining = 10;
+    player.physicalCondition = 50;
+    player.physicalConditionMax = 65; // At initialPhysicalMax, below globalMaxPhysicalCondition (100)
+    player.mentalCondition = 50;
+
+    const context: ReducerContext = {
+      campaign: dummyCampaign,
+      rules: {
+        ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules,
+        usePhysicalMentalConditions: true,
+        enableParkSystem: false
+      },
+      turn: 1,
+      economicIndex: 0,
+      rng: new Random(1),
+      state: {} as any
+    };
+
+    const res = handleWorkoutParkAction(player, { type: 'workout_park' }, context);
+    expect(res.nextPlayer.physicalConditionMax).toBe(66);
+
+    // At globalMaxPhysicalCondition (100), does not exceed 100
+    const maxedPlayer = { ...player, physicalConditionMax: 100 };
+    const maxedRes = handleWorkoutParkAction(maxedPlayer, { type: 'workout_park' }, context);
+    expect(maxedRes.nextPlayer.physicalConditionMax).toBe(100);
+  });
+
+  it('applyParkCardEffects respects globalMaxPhysicalCondition/globalMaxMentalCondition and persists park_chess via resilienceBonus', () => {
+    const player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+    player.physicalConditionMax = 99.5;
+    player.mentalConditionMax = 99.5;
+
+    const customCampaign = {
+      ...dummyCampaign,
+      config: {
+        ...dummyCampaign.config,
+        statRules: {
+          ...dummyCampaign.config.statRules,
+          globalMaxPhysicalCondition: 100,
+          globalMaxMentalCondition: 100,
+          mentalMaxBaseValue: 99,
+        }
+      }
+    };
+
+    const context: ReducerContext = {
+      campaign: customCampaign,
+      rules: { ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules, usePhysicalMentalConditions: true, trackSocial: true, trackMess: false },
+      turn: 1,
+      economicIndex: 0,
+      rng: new Random(1),
+      state: {} as any
+    };
+
+    const res = applyParkCardEffects(player, {
+      type: 'park_encounter',
+      cardId: 'park_chess',
+      title: 'Park Chess Match',
+      description: '',
+      maxPhysAmount: 1,
+      maxMentalAmount: 1,
+    }, context);
+
+    expect(res.nextPlayer.physicalConditionMax).toBe(100);
+    expect(res.nextPlayer.mentalConditionMax).toBe(100);
+    expect(res.nextPlayer.resilienceBonus).toBe(0.5);
+
+    // Verify park_chess gain persists across recalculatePlayerEffects / gameReducer
+    const playerForChess = createPlayerState('p2', 'Player 2', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', customCampaign.config);
+    playerForChess.mess = 0;
+    playerForChess.social = 0;
+    const beforeRecalc = recalculatePlayerEffects(playerForChess, customCampaign);
+    const baseMaxMental = beforeRecalc.mentalConditionMax!;
+    beforeRecalc.pendingMiniGame = {
+      title: 'Park',
+      options: [{
+        type: 'park_encounter',
+        cardId: 'park_chess',
+        title: 'Park Chess Match',
+        description: '',
+        maxMentalAmount: 1,
+        mentalAmount: 1,
+      }]
+    };
+    const resolved = gameReducer(beforeRecalc, { type: 'resolve_mini_game', choiceIndex: 0 }, context);
+    expect(resolved.updatedPlayer.mentalConditionMax).toBe(baseMaxMental + 1);
   });
 });

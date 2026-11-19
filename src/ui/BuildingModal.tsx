@@ -36,6 +36,7 @@ import { SpeechBubble } from './SpeechBubble';
 import { getClerkFace, getAvailableItemsForBuilding, computeClerkResponse } from './buildingModal';
 import { useDraggableModal } from './hooks/useDraggableModal';
 import { calcEffectiveRobberyChance, formatHours, roundToResolution } from '../engine/statMath';
+import { isAdvancedStatRules } from '../engine/rules';
 import { isRentOfficeOpen as isRentOfficeOpenRule, playerLivesAt } from '../engine/buildingRules';
 
 interface BuildingModalProps {
@@ -625,11 +626,16 @@ export function BuildingModal({
                     }
                     workoutStatSummary = `-${pCost} 💪 • -${mCost} 🧠`;
                   } else {
-                    let maxB = 1;
+                    const rawMaxB = isPartial ? roundToResolution(1 * ratio, conditionRes) : 1;
+                    const globalMaxPhys = isAdvancedStatRules(campaign?.config?.statRules)
+                      ? campaign.config.statRules.globalMaxPhysicalCondition
+                      : undefined;
+                    const maxB = (player.physicalConditionMax !== undefined && globalMaxPhys !== undefined)
+                      ? Math.min(Math.max(0, roundToResolution(globalMaxPhys - player.physicalConditionMax, conditionRes)), rawMaxB)
+                      : rawMaxB;
                     let pCost = 1;
                     let mGain = 1;
                     if (isPartial) {
-                      maxB = roundToResolution(1 * ratio, conditionRes);
                       pCost = Math.max(conditionRes, roundToResolution(pCost * ratio, conditionRes));
                       mGain = Math.max(conditionRes, roundToResolution(mGain * ratio, conditionRes));
                     }
@@ -1386,6 +1392,7 @@ export function BuildingModal({
         <ParkAssessmentModal
           mode={helpParkMode}
           player={player}
+          campaign={campaign}
           rules={rules}
           onClose={() => setHelpParkMode(null)}
         />

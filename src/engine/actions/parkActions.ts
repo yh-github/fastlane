@@ -1,7 +1,7 @@
 import type { PlayerState, StatModification, GameEvent, MiniGameOption, MiniGameState, ParkDecksState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
-import { requireAdvancedStatRules } from '../rules';
+import { requireAdvancedStatRules, requireConfig } from '../rules';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { roundToResolution } from '../statMath';
 import { formatHours } from '../math/formatters';
@@ -29,17 +29,21 @@ export function handlePlayArcadeAction(
   };
 
   if (context.rules.usePhysicalMentalConditions) {
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const maxMental = nextPlayer.mentalConditionMax ?? requireConfig(statRules.maxMentalCondition, 'statRules.maxMentalCondition');
+    const startingMental = requireConfig(statRules.startingMentalCondition, 'statRules.startingMentalCondition');
+    const startingPhys = requireConfig(statRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition');
+    const minPhys = requireConfig(statRules.minPhysicalCondition, 'statRules.minPhysicalCondition');
     const modifications: StatModification[] = [{ stat: 'money', diff: -10 }];
-    const maxMental = nextPlayer.mentalConditionMax ?? 50;
     const conditionRes = context.rules.conditionResolution ?? 0.5;
 
     // +2 Mental on both first and non-first buys
-    nextPlayer.mentalCondition = Math.min(maxMental, roundToResolution((nextPlayer.mentalCondition ?? 50) + 2, conditionRes));
+    nextPlayer.mentalCondition = Math.min(maxMental, roundToResolution((nextPlayer.mentalCondition ?? startingMental) + 2, conditionRes));
     modifications.push({ stat: 'mental', diff: 2 });
 
     if (playsThisTurn > 0) {
       // Non-first buys: -0.5 Physical fatigue
-      nextPlayer.physicalCondition = Math.max(1, roundToResolution((nextPlayer.physicalCondition ?? 50) - 0.5, conditionRes));
+      nextPlayer.physicalCondition = Math.max(minPhys, roundToResolution((nextPlayer.physicalCondition ?? startingPhys) - 0.5, conditionRes));
       modifications.push({ stat: 'physical', diff: -0.5 });
     }
 
@@ -313,31 +317,41 @@ export function applyParkCardEffects(
   }
 
   if (context.rules.usePhysicalMentalConditions) {
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const initMaxPhys = requireConfig(statRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
+    const defaultMaxMental = requireConfig(statRules.maxMentalCondition, 'statRules.maxMentalCondition');
+    const startingPhys = requireConfig(statRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition');
+    const startingMental = requireConfig(statRules.startingMentalCondition, 'statRules.startingMentalCondition');
+    const minPhys = requireConfig(statRules.minPhysicalCondition, 'statRules.minPhysicalCondition');
+    const minMental = requireConfig(statRules.minMentalCondition, 'statRules.minMentalCondition');
+    const globalMaxPhys = requireConfig(statRules.globalMaxPhysicalCondition, 'statRules.globalMaxPhysicalCondition');
+    const globalMaxMental = requireConfig(statRules.globalMaxMentalCondition, 'statRules.globalMaxMentalCondition');
+
     if (choice.mentalAmount) {
-      const maxMental = nextPlayer.mentalConditionMax ?? 50;
-      nextPlayer.mentalCondition = Math.max(1, Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + choice.mentalAmount));
+      const maxMental = nextPlayer.mentalConditionMax ?? defaultMaxMental;
+      nextPlayer.mentalCondition = Math.max(minMental, Math.min(maxMental, (nextPlayer.mentalCondition ?? startingMental) + choice.mentalAmount));
       mods.push({ stat: 'mental', diff: choice.mentalAmount });
     }
     if (choice.physicalAmount) {
-      const maxPhys = nextPlayer.physicalConditionMax ?? 50;
-      nextPlayer.physicalCondition = Math.max(1, Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + choice.physicalAmount));
+      const maxPhys = nextPlayer.physicalConditionMax ?? initMaxPhys;
+      nextPlayer.physicalCondition = Math.max(minPhys, Math.min(maxPhys, (nextPlayer.physicalCondition ?? startingPhys) + choice.physicalAmount));
       mods.push({ stat: 'physical', diff: choice.physicalAmount });
     }
     if (choice.maxPhysAmount) {
-      const globalMax = 100;
-      const curMax = nextPlayer.physicalConditionMax ?? 50;
-      if (curMax < globalMax) {
-        const gain = Math.min(globalMax - curMax, choice.maxPhysAmount);
+      const curMax = nextPlayer.physicalConditionMax ?? initMaxPhys;
+      if (curMax < globalMaxPhys) {
+        const gain = Math.min(globalMaxPhys - curMax, choice.maxPhysAmount);
         nextPlayer.physicalConditionMax = curMax + gain;
         mods.push({ stat: 'maxPhysical', diff: gain });
       }
     }
     if (choice.maxMentalAmount) {
-      const globalMax = 100;
-      const curMax = nextPlayer.mentalConditionMax ?? 50;
-      if (curMax < globalMax) {
-        const gain = Math.min(globalMax - curMax, choice.maxMentalAmount);
+      const curMax = nextPlayer.mentalConditionMax ?? defaultMaxMental;
+      if (curMax < globalMaxMental) {
+        const gain = Math.min(globalMaxMental - curMax, choice.maxMentalAmount);
         nextPlayer.mentalConditionMax = curMax + gain;
+        // Persist through recalculatePlayerEffects (which recomputes mentalConditionMax from resilienceBonus)
+        nextPlayer.resilienceBonus = (nextPlayer.resilienceBonus || 0) + gain;
         mods.push({ stat: 'maxMental', diff: gain });
       }
     }
@@ -354,7 +368,11 @@ export function applyParkCardEffects(
   }
 
   if (choice.socialAmount && context.rules.trackSocial) {
-    nextPlayer.social = Math.max(1, Math.min(99, (nextPlayer.social ?? 50) + choice.socialAmount));
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const minSocial = requireConfig(statRules.minSocial, 'statRules.minSocial');
+    const maxSocial = requireConfig(statRules.maxSocial, 'statRules.maxSocial');
+    const startingSocial = requireConfig(statRules.startingSocial, 'statRules.startingSocial');
+    nextPlayer.social = Math.max(minSocial, Math.min(maxSocial, (nextPlayer.social ?? startingSocial) + choice.socialAmount));
     mods.push({ stat: 'social', diff: choice.socialAmount });
   }
 
@@ -538,8 +556,11 @@ export function handleRelaxParkAction(
 
   // Apply deterministic baseline rest
   if (context.rules.usePhysicalMentalConditions) {
-    const maxPhys = nextPlayer.physicalConditionMax ?? 50;
-    const maxMental = nextPlayer.mentalConditionMax ?? 50;
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const maxPhys = nextPlayer.physicalConditionMax ?? requireConfig(statRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
+    const maxMental = nextPlayer.mentalConditionMax ?? requireConfig(statRules.maxMentalCondition, 'statRules.maxMentalCondition');
+    const startingPhys = requireConfig(statRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition');
+    const startingMental = requireConfig(statRules.startingMentalCondition, 'statRules.startingMentalCondition');
     const conditionRes = context.rules.conditionResolution ?? 0.5;
 
     let physGain = 0;
@@ -559,10 +580,10 @@ export function handleRelaxParkAction(
     }
 
     if (physGain > 0) {
-      nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? 50) + physGain);
+      nextPlayer.physicalCondition = Math.min(maxPhys, (nextPlayer.physicalCondition ?? startingPhys) + physGain);
     }
     if (mentalGain > 0) {
-      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? 50) + mentalGain);
+      nextPlayer.mentalCondition = Math.min(maxMental, (nextPlayer.mentalCondition ?? startingMental) + mentalGain);
     }
 
     const mods: StatModification[] = [];
@@ -712,7 +733,17 @@ export function handleWorkoutParkAction(
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
 
-  if (context.rules.usePhysicalMentalConditions && (nextPlayer.physicalCondition ?? 50) < 15) {
+  const advStatRules = context.rules.usePhysicalMentalConditions
+    ? requireAdvancedStatRules(context.campaign.config.statRules)
+    : undefined;
+  const startingPhys = advStatRules
+    ? requireConfig(advStatRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition')
+    : 50;
+  const startingMental = advStatRules
+    ? requireConfig(advStatRules.startingMentalCondition, 'statRules.startingMentalCondition')
+    : 50;
+
+  if (context.rules.usePhysicalMentalConditions && (nextPlayer.physicalCondition ?? startingPhys) < 15) {
     return { nextPlayer, actionLog: { key: 'action.error.tooPhysicallyExhausted' } };
   }
 
@@ -732,8 +763,8 @@ export function handleWorkoutParkAction(
   const enableEncounters = Boolean(context.rules.enableParkSystem ?? context.rules.usePhysicalMentalConditions);
   const conditionRes = context.rules.conditionResolution ?? 0.5;
 
-  const phys = nextPlayer.physicalCondition ?? 50;
-  const mental = nextPlayer.mentalCondition ?? 50;
+  const phys = nextPlayer.physicalCondition ?? startingPhys;
+  const mental = nextPlayer.mentalCondition ?? startingMental;
   let hadFatigueMistake = false;
 
   if (context.rules.usePhysicalMentalConditions && (phys < 20 || mental < 20)) {
@@ -749,7 +780,10 @@ export function handleWorkoutParkAction(
   }
 
   if (hadFatigueMistake) {
-    nextPlayer.physicalCondition = Math.max(1, phys - 2);
+    const minPhys = advStatRules
+      ? requireConfig(advStatRules.minPhysicalCondition, 'statRules.minPhysicalCondition')
+      : 1;
+    nextPlayer.physicalCondition = Math.max(minPhys, phys - 2);
     actionLogs.push({
       key: 'action.park.workoutPulledMuscle',
       modifications: [{ stat: 'physical', diff: -2 }]
@@ -759,15 +793,17 @@ export function handleWorkoutParkAction(
 
   // Overtraining on 2nd+ workout: pushes too hard without adequate recovery
   if (workouts > 0) {
-    if (context.rules.usePhysicalMentalConditions) {
+    if (context.rules.usePhysicalMentalConditions && advStatRules) {
+      const minPhys = requireConfig(advStatRules.minPhysicalCondition, 'statRules.minPhysicalCondition');
+      const minMental = requireConfig(advStatRules.minMentalCondition, 'statRules.minMentalCondition');
       let physCost = 2;
       let mentalCost = 1;
       if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
         physCost = Math.max(conditionRes, roundToResolution(physCost * ratio, conditionRes));
         mentalCost = Math.max(conditionRes, roundToResolution(mentalCost * ratio, conditionRes));
       }
-      nextPlayer.physicalCondition = Math.max(1, phys - physCost);
-      nextPlayer.mentalCondition = Math.max(1, mental - mentalCost);
+      nextPlayer.physicalCondition = Math.max(minPhys, phys - physCost);
+      nextPlayer.mentalCondition = Math.max(minMental, mental - mentalCost);
 
       actionLogs.push({
         key: 'action.park.workoutOvertraining',
@@ -791,10 +827,12 @@ export function handleWorkoutParkAction(
   }
 
   // First workout baseline conditioning:
-  if (context.rules.usePhysicalMentalConditions) {
-    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
-    const globalMax = statRules.initialPhysicalMax ?? 100;
-    const curMax = nextPlayer.physicalConditionMax ?? 50;
+  if (context.rules.usePhysicalMentalConditions && advStatRules) {
+    const initMaxPhys = requireConfig(advStatRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
+    const globalMax = requireConfig(advStatRules.globalMaxPhysicalCondition, 'statRules.globalMaxPhysicalCondition');
+    const defaultMaxMental = requireConfig(advStatRules.maxMentalCondition, 'statRules.maxMentalCondition');
+    const minPhys = requireConfig(advStatRules.minPhysicalCondition, 'statRules.minPhysicalCondition');
+    const curMax = nextPlayer.physicalConditionMax ?? initMaxPhys;
 
     let maxDiff = 0;
     let baseMaxBoost = 1;
@@ -813,8 +851,8 @@ export function handleWorkoutParkAction(
       mentalGain = Math.max(conditionRes, roundToResolution(mentalGain * ratio, conditionRes));
     }
 
-    nextPlayer.physicalCondition = Math.max(1, Math.min(nextPlayer.physicalConditionMax ?? 50, phys - physCost));
-    nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? 50, mental + mentalGain);
+    nextPlayer.physicalCondition = Math.max(minPhys, Math.min(nextPlayer.physicalConditionMax ?? initMaxPhys, phys - physCost));
+    nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? defaultMaxMental, mental + mentalGain);
 
     const mods: StatModification[] = [
       { stat: 'physical', diff: -physCost },

@@ -37,6 +37,9 @@ interface HomeApartmentViewProps {
   isRelaxDisabled: boolean;
   hasFood: boolean;
   physGain: number;
+  maxPhysGain?: number;
+  isAtFullPhysical?: boolean;
+  isAtGlobalMaxPhysical?: boolean;
   mentalGain: number;
   scaledMess: number;
   classicGain: number;
@@ -98,6 +101,9 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
   isRelaxDisabled,
   hasFood,
   physGain,
+  maxPhysGain,
+  isAtFullPhysical,
+  isAtGlobalMaxPhysical,
   mentalGain,
   scaledMess,
   classicGain,
@@ -542,6 +548,9 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             isRelaxDisabled={isRelaxDisabled}
             hasFood={hasFood}
             physGain={physGain}
+            maxPhysGain={maxPhysGain}
+            isAtFullPhysical={isAtFullPhysical}
+            isAtGlobalMaxPhysical={isAtGlobalMaxPhysical}
             mentalGain={mentalGain}
             scaledMess={scaledMess}
             classicGain={classicGain}
@@ -576,6 +585,9 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
             isRelaxDisabled={isRelaxDisabled}
             hasFood={hasFood}
             physGain={physGain}
+            maxPhysGain={maxPhysGain}
+            isAtFullPhysical={isAtFullPhysical}
+            isAtGlobalMaxPhysical={isAtGlobalMaxPhysical}
             mentalGain={mentalGain}
             scaledMess={scaledMess}
             classicGain={classicGain}
