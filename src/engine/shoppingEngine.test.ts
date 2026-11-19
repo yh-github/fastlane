@@ -316,6 +316,67 @@ describe('Shopping Engine', () => {
       expect(result.success).toBe(true);
       expect(result.updated.hoursRemaining).toBe(0);
     });
+
+    it('supports fast food card eatMode choices: quick (0h, minimal nutrition) vs dine_in (1h, full bonuses)', () => {
+      const meal: ItemDef = {
+        id: 'kraken_burger',
+        name: 'Kraken Double Melt',
+        category: 'food',
+        subcategory: 'fast_food',
+        basePrice: 120,
+        happinessBonus: 0,
+        mentalBonus: 2,
+        effects: [
+          { trigger: 'on_purchase', stat: 'physical_max', value: -1 },
+          { trigger: 'on_purchase', stat: 'physical', value: 2 },
+          { trigger: 'on_purchase', stat: 'social', value: 1 }
+        ]
+      };
+
+      const rules = { usePhysicalMentalConditions: true, trackSocial: true, enableCookingSystem: true };
+
+      // 1. Grab & Go ('quick'): 0h time, feeds player, -1 Max Phys, skips positive Phys/Mental/Social bonuses
+      const quickPlayer = {
+        money: 200,
+        hoursRemaining: 0,
+        physicalCondition: 40,
+        physicalConditionMax: 50,
+        mentalCondition: 40,
+        mentalConditionMax: 50,
+        social: 15,
+        inventory: { fastFoodItems: [] },
+        turnFlags: { fastFoodMealsThisTurn: 0 }
+      } as unknown as PlayerState;
+
+      const quickRes = buyItem(quickPlayer, meal, rules, undefined, 1, 'quick');
+      expect(quickRes.success).toBe(true);
+      expect(quickRes.updated.hoursRemaining).toBe(0);
+      expect(quickRes.updated.turnFlags.hasEaten).toBe(true);
+      expect(quickRes.updated.physicalConditionMax).toBe(49);
+      expect(quickRes.updated.physicalCondition).toBe(40); // No +2 bonus
+      expect(quickRes.updated.mentalCondition).toBe(40); // No +2 bonus
+      expect(quickRes.updated.social).toBe(15); // No +1 bonus
+
+      // 2. Sit-Down ('dine_in'): requires and spends 1h, grants full +2 Phys, +2 Mental, +1 Social + -1 Max Phys
+      const dinePlayer = {
+        ...quickPlayer,
+        hoursRemaining: 5
+      } as unknown as PlayerState;
+
+      const dineRes = buyItem(dinePlayer, meal, rules, undefined, 1, 'dine_in');
+      expect(dineRes.success).toBe(true);
+      expect(dineRes.updated.hoursRemaining).toBe(4);
+      expect(dineRes.updated.turnFlags.hasEaten).toBe(true);
+      expect(dineRes.updated.physicalConditionMax).toBe(49);
+      expect(dineRes.updated.physicalCondition).toBe(42);
+      expect(dineRes.updated.mentalCondition).toBe(42);
+      expect(dineRes.updated.social).toBe(16);
+
+      // 3. Sit-Down fails cleanly when < 1h remaining
+      const noTimeDine = buyItem(quickPlayer, meal, rules, undefined, 1, 'dine_in');
+      expect(noTimeDine.success).toBe(false);
+      expect(noTimeDine.message.key).toBe('action.error.notEnoughTimeBuy');
+    });
   });
 
   describe('Clothes Purchasing & Durability', () => {

@@ -146,6 +146,45 @@ describe('Red Pirate Food & Coffee - Item Card Modal Clean-Up', () => {
     expect(screen.getByText(/Fast meal/i)).toBeInTheDocument();
   });
 
+  it('offers Grab & Go (0h, no bonuses) vs Sit-Down (1h, full bonuses) radio options on Kraken Burger card', () => {
+    const player = createPlayer({ money: 200, hoursRemaining: 4 });
+    const burger = campaign2000.items.find(i => i.id === 'kraken_burger')!;
+    const mockOnAction = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <ItemCardModal
+        item={burger}
+        player={player}
+        campaign={campaign2000}
+        rules={campaign2000.config.gameRules}
+        economicIndex={0}
+        mode="shop"
+        onAction={mockOnAction}
+        onClose={onClose}
+      />
+    );
+
+    const quickRadio = screen.getByTestId('radio-fastfood-quick') as HTMLInputElement;
+    const dineRadio = screen.getByTestId('radio-fastfood-dine_in') as HTMLInputElement;
+    expect(dineRadio.checked).toBe(true);
+
+    // Switch to Grab & Go (0h): stat pills drop positive bonuses (+2 Phys, +2 Mental, +1 Social)
+    fireEvent.click(quickRadio);
+    expect(quickRadio.checked).toBe(true);
+    const pillsAfterQuick = screen.getByTestId('stat-modifier-pills');
+    expect(pillsAfterQuick.textContent).toContain('-1');
+    expect(pillsAfterQuick.textContent).not.toContain('👥');
+
+    fireEvent.click(screen.getByTestId('btn-buy-modal-kraken_burger'));
+    expect(mockOnAction).toHaveBeenCalledWith({
+      type: 'buy',
+      itemId: 'kraken_burger',
+      quantity: undefined,
+      eatMode: 'quick'
+    });
+  });
+
   it('inspecting Fresh Drip Coffee shows 1st-cup Comfort Boost without overdose penalty or duplicate buy text', () => {
     const player = createPlayer({ turnFlags: { hasEaten: false, caffeineIntake: 0, coffeeCupsThisTurn: 0, fastFoodMealsThisTurn: 0 } });
     const dripCoffee = campaign2000.items.find(i => i.id === 'drip_coffee')!;

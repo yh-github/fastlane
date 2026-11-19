@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle, ItemDef } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
-import type { GameAction } from '../../../engine/actions/types';
+import type { GameAction, FastFoodEatMode } from '../../../engine/actions/types';
 import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../../../engine/actions/maintenanceActions';
 import { calcItemPrice, calcEconomyPrice } from '../../../engine/economyEngine';
 import { calcBulkGroceryBasePrice } from '../../../engine/actions/shoppingActions';
@@ -11,7 +11,7 @@ import { calcUsedSpace, calcHousingSpaceCap, calcCaffeineBuffer, hasHighCoffeeIn
 import { getItemDisplayName, getItemImagePath } from '../../../utils/itemUtils';
 import { MessIcon } from '../../icons/MessIcon';
 import { previewAction } from '../../../engine/actionPreview';
-import { givesFastFoodSocial } from '../../../engine/shoppingEngine';
+import { givesFastFoodSocial, supportsFastFoodCards } from '../../../engine/shoppingEngine';
 import { StatModifierPills } from '../../StatModifierPills';
 
 export interface ItemCardModalProps {
@@ -68,7 +68,13 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   const itemDef = item || campaign?.items.find(i => i.id === itemId);
   const isLottery = itemId === 'lottery_tickets';
   const isBulkGrocery = Boolean(rules?.advancedStores && (itemId === 'food_1week' || (itemDef?.category === 'food' && itemDef?.subcategory === 'groceries')));
+  const isFastFoodCardOptionEnabled = Boolean(isShop && itemDef && supportsFastFoodCards(itemDef, rules));
   const [buyQuantity, setBuyQuantity] = useState(1);
+  const [eatMode, setEatMode] = useState<FastFoodEatMode>(() => ((player?.hoursRemaining ?? 0) >= 1 ? 'dine_in' : 'quick'));
+
+  useEffect(() => {
+    setEatMode((player?.hoursRemaining ?? 0) >= 1 ? 'dine_in' : 'quick');
+  }, [itemId]);
   const isWardrobe = itemId === 'wardrobe';
   const isSpareParts = itemId === 'spare_parts';
   const isCurio = itemId === 'knick_knack' || itemId === 'knick_knacks';
@@ -117,16 +123,23 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     if (!isShop || !player || !itemDef || !campaign) return null;
     return previewAction(
       player,
-      { type: 'buy', itemId: itemDef.id, quantity: buyQuantity, item: itemDef } as any,
+      {
+        type: 'buy',
+        itemId: itemDef.id,
+        quantity: buyQuantity,
+        ...(isFastFoodCardOptionEnabled ? { eatMode } : {}),
+        item: itemDef
+      } as any,
       { campaign, rules, economicIndex }
     );
-  }, [player, itemDef, campaign, rules, economicIndex, buyQuantity, isShop]);
+  }, [player, itemDef, campaign, rules, economicIndex, buyQuantity, isShop, isFastFoodCardOptionEnabled, eatMode]);
 
   const isFastFood = itemDef?.category === 'food' && itemDef?.subcategory === 'fast_food';
   const givesSocial = Boolean(itemDef && givesFastFoodSocial(itemDef, rules));
   const fastFoodMealsCount = player?.turnFlags?.fastFoodMealsThisTurn || 0;
-  const isSecondFastFood = isFastFood && givesSocial && fastFoodMealsCount >= 1;
-  const hasTime = !isSecondFastFood || (player?.hoursRemaining ?? 0) >= 1;
+  const isSecondFastFood = !isFastFoodCardOptionEnabled && isFastFood && givesSocial && fastFoodMealsCount >= 1;
+  const requiresSitDownHour = isFastFoodCardOptionEnabled && eatMode === 'dine_in';
+  const hasTime = (!isSecondFastFood && !requiresSitDownHour) || (player?.hoursRemaining ?? 0) >= 1;
 
   const canBuy = actionPreview
     ? actionPreview.feasible
@@ -411,6 +424,8 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     actionPreview && actionPreview.modifications.some(m => m.stat !== 'money' && m.diff !== 0)
   );
 
+  const suppressPositiveFastFood = isFastFoodCardOptionEnabled && eatMode === 'quick';
+
   // If actionPreview did not provide stat pills (e.g. fallback or mock tests), provide fallback numeric modifiers:
   if (!hasPreviewStatMods) {
     if (itemDef?.happinessBonus && !rules?.usePhysicalMentalConditions) {
@@ -422,7 +437,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
       const mentalPerPack = itemDef?.mentalBonus ?? 1;
       const totalMental = rules?.advancedStores ? mentalPerPack * buyQuantity : mentalPerPack;
       onBuyModifiers.push({ label: `${formatDelta(totalMental)} on buy`, icon: '🧠' });
-    } else if (itemDef?.mentalBonus && rules?.usePhysicalMentalConditions && itemDef.category !== 'ticket') {
+    } else if (itemDef?.mentalBonus && rules?.usePhysicalMentalConditions && itemDef.category !== 'ticket' && !(suppressPositiveFastFood && itemDef.mentalBonus > 0)) {
       const hasExplicitMentalEffect = itemDef?.effects?.some(
         e => (e.trigger === 'on_purchase' || (e.trigger as string) === 'on_buy') && e.stat === 'mental'
       );
@@ -434,6 +449,9 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     if (itemDef?.effects) {
       for (const eff of itemDef.effects) {
         if (eff.trigger === 'on_purchase' || (eff.trigger as string) === 'on_buy') {
+          if (suppressPositiveFastFood && (eff.value ?? 0) > 0 && ['physical', 'mental', 'social', 'happiness'].includes(eff.stat)) {
+            continue;
+          }
           if (eff.stat === 'physical_max') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Max 💪`, icon: '💪' });
           else if (eff.stat === 'physical') onBuyModifiers.push({ label: `${formatDelta(eff.value)} on buy`, icon: '💪' });
           else if (eff.stat === 'mental_max') onBuyModifiers.push({ label: `${formatDelta(eff.value)} Max 🧠`, icon: '🧠' });
@@ -456,7 +474,14 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     onBuyModifiers.push({ label: 'Drinks immediately (Not food)', icon: '☕' });
   } else if (itemDef?.category === 'food') {
     if (itemDef.subcategory === 'fast_food') {
-      if (givesSocial) {
+      if (isFastFoodCardOptionEnabled) {
+        onBuyModifiers.push({ label: 'Fast meal (+1 meal turn count)', icon: '🍔' });
+        if (eatMode === 'quick') {
+          onBuyModifiers.push({ label: '0h Time (Food only; skips bonuses)', icon: '🏃' });
+        } else {
+          onBuyModifiers.push({ label: '-1 Hour (Relax & socialize bonuses)', icon: '🍽️' });
+        }
+      } else if (givesSocial) {
         onBuyModifiers.push({ label: 'Fast meal (+1 meal turn count)', icon: '🍔' });
         if (isSecondFastFood) {
           onBuyModifiers.push({ label: '-1 Hour (2nd+ meal this turn)', icon: '⏳' });
@@ -940,7 +965,92 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
               </div>
             )}
 
+            {isFastFoodCardOptionEnabled && (
+              <fieldset
+                data-testid="fast-food-eat-mode-fieldset"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.45)',
+                  border: '1px solid rgba(0, 229, 255, 0.25)',
+                  borderRadius: '8px',
+                  padding: '8px 10px',
+                  margin: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}
+              >
+                <legend style={{ fontSize: '0.74rem', fontWeight: 'bold', color: '#00e5ff', padding: '0 4px' }}>
+                  🍽️ {t('storeFront.diningOption', { defaultValue: 'Dining Option' })}
+                </legend>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  <label
+                    htmlFor={`fastfood-quick-${itemId}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      minHeight: '44px',
+                      padding: '6px 8px',
+                      borderRadius: '6px',
+                      background: eatMode === 'quick' ? 'rgba(0, 229, 255, 0.16)' : 'rgba(255, 255, 255, 0.04)',
+                      border: eatMode === 'quick' ? '1.5px solid #00e5ff' : '1px solid rgba(255, 255, 255, 0.12)',
+                      cursor: 'pointer',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <input
+                      id={`fastfood-quick-${itemId}`}
+                      data-testid="radio-fastfood-quick"
+                      type="radio"
+                      name={`fastfood-mode-${itemId}`}
+                      value="quick"
+                      checked={eatMode === 'quick'}
+                      onChange={() => setEatMode('quick')}
+                      style={{ accentColor: '#00e5ff', margin: 0, flexShrink: 0 }}
+                    />
+                    <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                      <strong style={{ fontSize: '0.74rem', color: '#fff' }}>🏃 Grab &amp; Go (0h)</strong>
+                      <span style={{ fontSize: '0.64rem', color: '#cbd5e1' }}>Food only • No bonuses</span>
+                    </span>
+                  </label>
+                  <label
+                    htmlFor={`fastfood-dine-${itemId}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      minHeight: '44px',
+                      padding: '6px 8px',
+                      borderRadius: '6px',
+                      background: eatMode === 'dine_in' ? 'rgba(0, 229, 255, 0.16)' : 'rgba(255, 255, 255, 0.04)',
+                      border: eatMode === 'dine_in' ? '1.5px solid #00e5ff' : '1px solid rgba(255, 255, 255, 0.12)',
+                      cursor: 'pointer',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <input
+                      id={`fastfood-dine-${itemId}`}
+                      data-testid="radio-fastfood-dine_in"
+                      type="radio"
+                      name={`fastfood-mode-${itemId}`}
+                      value="dine_in"
+                      checked={eatMode === 'dine_in'}
+                      onChange={() => setEatMode('dine_in')}
+                      style={{ accentColor: '#00e5ff', margin: 0, flexShrink: 0 }}
+                    />
+                    <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+                      <strong style={{ fontSize: '0.74rem', color: '#fff' }}>🍽️ Sit-Down (1h)</strong>
+                      <span style={{ fontSize: '0.64rem', color: (player?.hoursRemaining ?? 0) < 1 ? '#f87171' : '#cbd5e1' }}>
+                        {(player?.hoursRemaining ?? 0) < 1 ? 'Need 1h remaining' : 'Full Phys/Mental/Social'}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+            )}
+
             <button
+              type="button"
               data-action-target={`buy-${itemId}`}
               data-testid={`btn-buy-modal-${itemId}`}
               disabled={!canBuy || !onAction}
@@ -948,7 +1058,8 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
                 onAction?.({
                   type: 'buy',
                   itemId,
-                  quantity: (isBulkGrocery || (isLottery && rules?.advancedStores)) ? buyQuantity : undefined
+                  quantity: (isBulkGrocery || (isLottery && rules?.advancedStores)) ? buyQuantity : undefined,
+                  ...(isFastFoodCardOptionEnabled ? { eatMode } : {})
                 });
                 onClose();
               }}

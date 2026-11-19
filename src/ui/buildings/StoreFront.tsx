@@ -7,7 +7,7 @@ import { calcItemPrice } from '../../engine/economyEngine';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
 import { getItemDisplayName, getItemImagePath } from '../../utils/itemUtils';
 import { previewAction } from '../../engine/actionPreview';
-import { givesFastFoodSocial } from '../../engine/shoppingEngine';
+import { givesFastFoodSocial, supportsFastFoodCards } from '../../engine/shoppingEngine';
 import { ItemCardModal } from './home/DurableCardModal';
 import type { InteractionProps } from './types';
 
@@ -117,9 +117,10 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
           let blockedTooltip: string | undefined;
 
           if (campaign) {
+            const previewEatMode = supportsFastFoodCards(item, rules) ? 'quick' : undefined;
             const preview = previewAction(
               player,
-              { type: 'buy', itemId: item.id },
+              { type: 'buy', itemId: item.id, ...(previewEatMode ? { eatMode: previewEatMode } : {}) },
               { campaign, rules, economicIndex }
             );
             canBuy = preview.feasible;
@@ -139,7 +140,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
             const isFastFood = item.category === 'food' && item.subcategory === 'fast_food';
             const givesSocial = givesFastFoodSocial(item, rules);
             const fastFoodMealsCount = player.turnFlags?.fastFoodMealsThisTurn || 0;
-            const isSecondFastFood = isFastFood && givesSocial && fastFoodMealsCount >= 1;
+            const isSecondFastFood = !supportsFastFoodCards(item, rules) && isFastFood && givesSocial && fastFoodMealsCount >= 1;
             const hasTime = !isSecondFastFood || (player.hoursRemaining ?? 0) >= 1;
             canBuy = canAfford && (!rules?.helpfulUI || hasSpace) && hasTime;
             blockedTooltip = !hasTime ? 'Not enough time (Costs 1 hour for 2nd+ fast food meal)' : (!hasSpace ? `Not enough space (Requires ${itemSpace} space, you have ${Math.max(0, maxSpace - currentSpace)} free)` : undefined);

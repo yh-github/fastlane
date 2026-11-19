@@ -4,6 +4,8 @@ import { applyMentalChange, applyMoraleEffect } from './statEffects';
 import { calcUsedSpace, calcHousingSpaceCap } from './statMath';
 import { addApplianceCardToDeck } from './weekendEngine';
 
+import type { FastFoodEatMode } from './actions/types';
+
 export interface ShoppingResult {
   updated: PlayerState;
   success: boolean;
@@ -15,12 +17,17 @@ export function givesFastFoodSocial(item: ItemDef, rules?: Partial<GameRules>): 
   return item.subcategory === 'fast_food' && Boolean(item.effects?.some(e => e.trigger === 'on_purchase' && e.stat === 'social' && (e.value ?? 0) > 0));
 }
 
+export function supportsFastFoodCards(item: ItemDef, rules?: Partial<GameRules>): boolean {
+  return item.category === 'food' && item.subcategory === 'fast_food' && Boolean(rules?.usePhysicalMentalConditions);
+}
+
 export function buyItem(
   player: PlayerState,
   item: ItemDef,
   rules?: Partial<GameRules>,
   campaign?: CampaignBundle,
-  quantity: number = 1
+  quantity: number = 1,
+  eatMode?: FastFoodEatMode
 ): ShoppingResult {
   const price = item.basePrice ?? 0;
   if (player.money < price) {
@@ -56,7 +63,21 @@ export function buyItem(
     }
   }
 
-  if (givesFastFoodSocial(item, rules)) {
+  const isFastFoodItem = item.subcategory === 'fast_food';
+  const effectiveEatMode: FastFoodEatMode | undefined = isFastFoodItem ? eatMode : undefined;
+
+  if (effectiveEatMode === 'dine_in') {
+    if (player.hoursRemaining !== undefined && player.hoursRemaining < 1) {
+      return {
+        updated: player,
+        success: false,
+        message: {
+          key: 'action.error.notEnoughTimeBuy',
+          params: { name: item.name }
+        }
+      };
+    }
+  } else if (effectiveEatMode === undefined && givesFastFoodSocial(item, rules)) {
     const mealCount = player.turnFlags?.fastFoodMealsThisTurn || 0;
     if (mealCount >= 1 && player.hoursRemaining !== undefined && player.hoursRemaining < 1) {
       return {
@@ -110,7 +131,11 @@ export function buyItem(
   } else if (item.subcategory === 'fast_food') {
     const mealCount = (newTurnFlags.fastFoodMealsThisTurn || 0) + 1;
     newTurnFlags.fastFoodMealsThisTurn = mealCount;
-    if (!player.turnFlags?.fastFoodHappinessGranted) {
+    if (effectiveEatMode === 'quick') {
+      // Grab & Go: nourishment only, no positive relaxation/comfort bonuses
+      if (happinessBonus > 0) happinessBonus = 0;
+      if (mentalBonus > 0) mentalBonus = 0;
+    } else if (!player.turnFlags?.fastFoodHappinessGranted) {
       newTurnFlags.fastFoodHappinessGranted = true;
     } else {
       happinessBonus = 0;
@@ -194,6 +219,10 @@ export function buyItem(
       if (rules?.enableCookingSystem && item.category === 'food' && item.subcategory !== 'fast_food') {
         continue;
       }
+      // Grab & Go fast food suppresses positive Physical/Mental/Social/Happiness relaxation bonuses (keeps penalties like physical_max: -1)
+      if (effectiveEatMode === 'quick' && (effect.value ?? 0) > 0 && ['physical', 'mental', 'social', 'happiness'].includes(effect.stat)) {
+        continue;
+      }
       if (effect.stat === 'physical_max' && rules?.usePhysicalMentalConditions) {
         const minPhys = updated.minPhysicalCondition ?? 1;
         updated.physicalConditionMax = Math.max(minPhys, (updated.physicalConditionMax ?? 50) + effect.value);
@@ -242,7 +271,10 @@ export function buyItem(
     case 'food':
       if (item.subcategory === 'fast_food') {
         const mealCount = newTurnFlags.fastFoodMealsThisTurn || 1;
-        if (givesFastFoodSocial(item, rules) && mealCount > 1 && updated.hoursRemaining !== undefined) {
+        const costsSitDownHour =
+          effectiveEatMode === 'dine_in' ||
+          (effectiveEatMode === undefined && givesFastFoodSocial(item, rules) && mealCount > 1);
+        if (costsSitDownHour && updated.hoursRemaining !== undefined) {
           updated.hoursRemaining = Math.max(0, updated.hoursRemaining - 1);
         }
         if (rules?.enableCookingSystem) {

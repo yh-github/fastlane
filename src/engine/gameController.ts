@@ -505,7 +505,7 @@ function buildActionId(choice: ActionChoice, campaign: CampaignBundle): string {
     case 'apply':
       return buildApplyId(action.jobId, campaign)
     case 'buy':
-      return `buy:${action.itemId}`
+      return action.eatMode ? `buy:${action.itemId}:${action.eatMode}` : `buy:${action.itemId}`
     case 'enroll':
       return `enroll:${action.degreeId}`
     case 'study':

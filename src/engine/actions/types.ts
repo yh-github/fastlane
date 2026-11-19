@@ -5,10 +5,12 @@ import type { EngineDecision } from '../replayTypes';
 
 export type PawnableItem = OwnedAppliance | { id: string; purchasePrice: number; purchaseSource?: 'socket_city' | 'z_mart' | 'pawnshop'; condition?: 'new' | 'used'; isBook?: boolean; isBroken?: boolean };
 
+export type FastFoodEatMode = 'quick' | 'dine_in';
+
 export type GameAction =
   | { type: 'apply'; jobId: string; offeredWage?: number }
   | { type: 'work'; jobId: string; mode?: 'look_busy' | 'work_work' | 'face_time' | 'innovate' | 'show_initiative' }
-  | { type: 'buy'; itemId: string; quantity?: number }
+  | { type: 'buy'; itemId: string; quantity?: number; eatMode?: FastFoodEatMode }
   | { type: 'buy_education_credit'; baseFee?: number }
   | { type: 'enroll'; degreeId: string }
   | { type: 'study'; degreeId: string }

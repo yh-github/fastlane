@@ -1,5 +1,5 @@
 import type { PlayerState } from '../gameState';
-import type { ReducerContext, ActionHandlerResult } from './types';
+import type { ReducerContext, ActionHandlerResult, FastFoodEatMode } from './types';
 import { isAdvancedVersion } from '../rules';
 import { buyItem } from '../shoppingEngine';
 import { calcItemPrice } from '../economyEngine';
@@ -12,7 +12,7 @@ export function calcBulkGroceryBasePrice(weeks: number): number {
 
 export function handleBuyAction(
   player: PlayerState,
-  action: { type: 'buy'; itemId: string; quantity?: number },
+  action: { type: 'buy'; itemId: string; quantity?: number; eatMode?: FastFoodEatMode },
   context: ReducerContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
@@ -53,7 +53,7 @@ export function handleBuyAction(
       happinessBonus: inventoryEntry?.happinessBonusOverride ?? baseItemDef.happinessBonus
     };
 
-    const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules, context.campaign, quantity);
+    const result = buyItem(nextPlayer, itemWithPriceAndStore, context.rules, context.campaign, quantity, action.eatMode);
     if (result.success) {
       nextPlayer = spendHours(result.updated, timeCost);
       if (baseItemDef.id === 'newspaper') {
