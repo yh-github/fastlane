@@ -12,7 +12,7 @@ export interface ApplianceSlotDef {
   emptyLabelKey?: string;
 }
 
-export const BASE_APPLIANCE_SLOTS: ApplianceSlotDef[] = [
+const BASE_APPLIANCE_SLOTS: ApplianceSlotDef[] = [
   { slotId: 'refrigerator', candidateIds: ['refrigerator'], fallbackId: 'refrigerator', defaultName: 'Refrigerator' },
   { slotId: 'freezer', candidateIds: ['freezer'], fallbackId: 'freezer', defaultName: 'Freezer' },
   { slotId: 'stove', candidateIds: ['stove'], fallbackId: 'stove', defaultName: 'Stove' },
@@ -24,11 +24,7 @@ export const BASE_APPLIANCE_SLOTS: ApplianceSlotDef[] = [
   { slotId: 'hot_tub', candidateIds: ['hot_tub'], fallbackId: 'hot_tub', defaultName: 'Hot Tub' }
 ];
 
-export const DEFAULT_APPLIANCES = [
-  'refrigerator', 'freezer', 'stove', 'microwave',
-  'tv', 'stereo', 'vcr', 'computer', 'hot_tub'
-];
-export const DEFAULT_BOOKS = ['dictionary', 'encyclopedia', 'atlas'];
+const DEFAULT_BOOKS = ['dictionary', 'encyclopedia', 'atlas'];
 
 export interface ApartmentFurnishingsProps {
   player: PlayerState;

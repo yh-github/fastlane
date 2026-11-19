@@ -70,11 +70,9 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   const isBulkGrocery = Boolean(rules?.advancedStores && (itemId === 'food_1week' || (itemDef?.category === 'food' && itemDef?.subcategory === 'groceries')));
   const isFastFoodCardOptionEnabled = Boolean(isShop && itemDef && supportsFastFoodCards(itemDef, rules));
   const [buyQuantity, setBuyQuantity] = useState(1);
-  const [eatMode, setEatMode] = useState<FastFoodEatMode>(() => ((player?.hoursRemaining ?? 0) >= 1 ? 'dine_in' : 'quick'));
-
-  useEffect(() => {
-    setEatMode((player?.hoursRemaining ?? 0) >= 1 ? 'dine_in' : 'quick');
-  }, [itemId]);
+  const [eatModeSelection, setEatModeSelection] = useState<{ itemId: string; mode: FastFoodEatMode } | null>(null);
+  const defaultEatMode: FastFoodEatMode = (player?.hoursRemaining ?? 0) >= 1 ? 'dine_in' : 'quick';
+  const eatMode: FastFoodEatMode = eatModeSelection?.itemId === itemId ? eatModeSelection.mode : defaultEatMode;
   const isWardrobe = itemId === 'wardrobe';
   const isSpareParts = itemId === 'spare_parts';
   const isCurio = itemId === 'knick_knack' || itemId === 'knick_knacks';
@@ -1005,7 +1003,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
                       name={`fastfood-mode-${itemId}`}
                       value="quick"
                       checked={eatMode === 'quick'}
-                      onChange={() => setEatMode('quick')}
+                      onChange={() => setEatModeSelection({ itemId, mode: 'quick' })}
                       style={{ accentColor: '#00e5ff', margin: 0, flexShrink: 0 }}
                     />
                     <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
@@ -1035,7 +1033,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
                       name={`fastfood-mode-${itemId}`}
                       value="dine_in"
                       checked={eatMode === 'dine_in'}
-                      onChange={() => setEatMode('dine_in')}
+                      onChange={() => setEatModeSelection({ itemId, mode: 'dine_in' })}
                       style={{ accentColor: '#00e5ff', margin: 0, flexShrink: 0 }}
                     />
                     <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
