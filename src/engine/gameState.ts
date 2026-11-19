@@ -447,7 +447,7 @@ export interface OwnedCurio {
 }
 
 export interface MiniGameOption {
-  type: 'cash' | 'standing' | 'item' | 'skill' | 'initiative' | 'park_encounter';
+  type: 'cash' | 'standing' | 'item' | 'skill' | 'initiative' | 'park_encounter' | 'arcade_encounter';
   title: string;
   description: string;
   cashAmount?: number;

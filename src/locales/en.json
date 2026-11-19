@@ -99,7 +99,9 @@
       "restStiff": "Slept on a wooden bench too long, leaving your neck stiff and groggy{{stats}}"
     },
     "arcade": {
-      "played": "Played arcade games at the diner{{stats}}"
+      "played": "Played arcade games at the diner{{stats}}",
+      "cardResolved": "Arcade ({{title}}){{stats}}",
+      "glitch": "Arcade cabinet glitch ({{title}}){{stats}}"
     },
     "appliance": {
       "diySuccess": "DIY Fix successful! Repaired {{appliance}} (Success chance: {{chance}}%).",

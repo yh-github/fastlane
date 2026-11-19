@@ -433,25 +433,43 @@ export function BuildingModal({
           {building.id === 'red_pirate' && rules?.enableArcade && (() => {
             const plays = player.turnFlags?.arcadePlaysThisTurn || 0;
             const isPhysMental = Boolean(rules?.usePhysicalMentalConditions);
+            const allowPartial = Boolean(rules?.allowPartialHours || rules?.proportionalDivisibleActions);
+            const conditionRes = rules?.conditionResolution ?? 0.5;
+            const baseHours = 2;
+            const actualHours = allowPartial ? Math.min(baseHours, player.hoursRemaining) : baseHours;
+            const ratio = allowPartial && baseHours > 0 ? actualHours / baseHours : 1;
+            const costDisplay = Math.round(8 * ratio);
+            const hoursLabel = `${formatHours(actualHours > 0 ? actualHours : baseHours)}h`;
+
+            const mentalGain = roundToResolution((plays === 0 ? 2 : plays === 1 ? 1 : 0) * ratio, conditionRes);
+            const socialGain = roundToResolution((plays === 0 ? 1 : 0) * ratio, conditionRes);
+            const physPenalty = roundToResolution((plays === 0 ? 0 : plays === 1 ? 0.5 : 1) * ratio, conditionRes);
+            const happyGain = roundToResolution((plays === 0 ? 2 : 0) * ratio, conditionRes);
 
             let benefitDisplay: React.ReactNode;
             if (isPhysMental) {
               if (plays === 0) {
                 benefitDisplay = (
-                  <span>⏳ -3h • 💰 -$10 • +2 🧠</span>
+                  <span>⏳ -{hoursLabel} • 💰 -${costDisplay} • +{mentalGain} 🧠 • +{socialGain} 👥 • 🕹️ Bonus Card</span>
+                );
+              } else if (plays === 1) {
+                benefitDisplay = (
+                  <span style={{ color: '#f59e0b' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • +{mentalGain} 🧠 • -{physPenalty} 💪 (Repeat fatigue)</span>
                 );
               } else {
                 benefitDisplay = (
-                  <span style={{ color: '#f87171' }}>⏳ -3h • 💰 -$10 • +2 🧠 • -0.5 💪 (Fatigue)</span>
+                  <span style={{ color: '#f87171' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • 0 🧠 • -{physPenalty} 💪 (Overplayed)</span>
                 );
               }
             } else {
               if (plays === 0) {
-                benefitDisplay = <span>⏳ -3h • 💰 -$10 • +2 😊</span>;
+                benefitDisplay = <span>⏳ -{hoursLabel} • 💰 -${costDisplay} • +{happyGain} 😊 • 🕹️ Bonus Card</span>;
               } else {
-                benefitDisplay = <span style={{ color: '#f87171' }}>⏳ -3h • 💰 -$10 • 0 😊 (Bored)</span>;
+                benefitDisplay = <span style={{ color: '#f87171' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • 0 😊 (Bored)</span>;
               }
             }
+
+            const notEnoughHours = allowPartial ? player.hoursRemaining <= 0 : player.hoursRemaining < baseHours;
 
             return (
               <div 
@@ -476,11 +494,11 @@ export function BuildingModal({
                 <button
                   type="button"
                   className="game-button btn-secondary"
-                  disabled={player.hoursRemaining < 3 || player.money < 10}
+                  disabled={notEnoughHours || player.money < costDisplay}
                   onClick={() => handleActionIntercept({ type: 'play_arcade' })}
                   style={{ whiteSpace: 'nowrap', padding: '6px 12px', flexShrink: 0 }}
                 >
-                  Play Arcade (💰 $10)
+                  Play Arcade (💰 ${costDisplay})
                 </button>
               </div>
             );

@@ -3,24 +3,104 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
 import { requireAdvancedStatRules, requireConfig } from '../rules';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
-import { roundToResolution } from '../statMath';
+import { roundToResolution, calcMaxSkillCap } from '../statMath';
 import { formatHours } from '../math/formatters';
+
+export const ARCADE_ENCOUNTER_CARDS: MiniGameOption[] = [
+  {
+    type: 'arcade_encounter',
+    cardId: 'arcade_space_ace',
+    title: 'Space Buccaneer High Score',
+    description: 'You top the glowing leaderboard and collect a side-bet pot from the crowd.',
+    badge: 'High Score',
+    icon: '🕹️',
+    mentalAmount: 1,
+    cashAmount: 5
+  },
+  {
+    type: 'arcade_encounter',
+    cardId: 'arcade_beatemup',
+    title: 'Co-Op Beat-Em-Up Run',
+    description: 'Drop quarters alongside a regular and clear the final boss together.',
+    badge: 'Co-Op',
+    icon: '🤝',
+    socialAmount: 2,
+    mentalAmount: 0.5
+  },
+  {
+    type: 'arcade_encounter',
+    cardId: 'arcade_pcb_tinker',
+    title: 'Dipswitch & Joystick Fix',
+    description: 'Pop open the sticky coin door, reseat a microswitch, and get in a sharp run.',
+    badge: 'Tinker',
+    icon: '🔧',
+    techSkillAmount: 0.1,
+    mentalAmount: 1
+  },
+  {
+    type: 'arcade_encounter',
+    cardId: 'arcade_pinball',
+    title: 'Sea-Wolf Pinball Flow',
+    description: 'Lock in multiball combos and shake off work stress in total arcade focus.',
+    badge: 'Focus',
+    icon: '⚡',
+    mentalAmount: 1.5
+  },
+  {
+    type: 'arcade_encounter',
+    cardId: 'arcade_claw',
+    title: 'Pirate Claw Jackpot',
+    description: 'Snag a boxed figurine right at the chute and trade it cleanly at the counter.',
+    badge: 'Jackpot',
+    icon: '🧸',
+    cashAmount: 8,
+    mentalAmount: 0.5
+  },
+  {
+    type: 'arcade_encounter',
+    cardId: 'arcade_crt_tune',
+    title: 'CRT Scanline Tune-Up',
+    description: 'Dial in a flickering monitor with a regular spectator and chat about hardware.',
+    badge: 'Tech Chat',
+    icon: '🛠️',
+    techSkillAmount: 0.1,
+    socialAmount: 1
+  }
+];
+
+export const ARCADE_GLITCH_CARD: MiniGameOption = {
+  type: 'arcade_encounter',
+  cardId: 'arcade_coin_jam',
+  title: 'Sticky Coin Mech & Tilt',
+  description: 'The cabinet eats two extra tokens and resets your run on the last boss.',
+  badge: 'Glitch',
+  icon: '👾',
+  cashAmount: -2,
+  mentalAmount: -0.5
+};
 
 export function handlePlayArcadeAction(
   player: PlayerState,
   _action: { type: 'play_arcade' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
-  if (nextPlayer.hoursRemaining < 3) {
+  const costHours = 2;
+  const cashCost = 8;
+  const allowPartial = Boolean(context.rules.allowPartialHours || context.rules.proportionalDivisibleActions);
+
+  if (nextPlayer.hoursRemaining <= 0 || (!allowPartial && nextPlayer.hoursRemaining < costHours)) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
-  if (nextPlayer.money < 10) {
+  if (nextPlayer.money < cashCost) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughMoney' } };
   }
 
-  nextPlayer = spendHours(nextPlayer, 3);
-  nextPlayer.money -= 10;
+  const actualHours = Math.min(costHours, nextPlayer.hoursRemaining);
+  const ratio = actualHours / costHours;
+  nextPlayer = spendHours(nextPlayer, actualHours);
+  nextPlayer.money -= cashCost;
 
   const playsThisTurn = nextPlayer.turnFlags?.arcadePlaysThisTurn || 0;
   nextPlayer.turnFlags = {
@@ -34,30 +114,128 @@ export function handlePlayArcadeAction(
     const startingMental = requireConfig(statRules.startingMentalCondition, 'statRules.startingMentalCondition');
     const startingPhys = requireConfig(statRules.startingPhysicalCondition, 'statRules.startingPhysicalCondition');
     const minPhys = requireConfig(statRules.minPhysicalCondition, 'statRules.minPhysicalCondition');
-    const modifications: StatModification[] = [{ stat: 'money', diff: -10 }];
+    const maxSocial = requireConfig(statRules.maxSocial, 'statRules.maxSocial');
+    const startingSocial = requireConfig(statRules.startingSocial, 'statRules.startingSocial');
+    const modifications: StatModification[] = [{ stat: 'money', diff: -cashCost }];
     const conditionRes = context.rules.conditionResolution ?? 0.5;
+    const isPartial = Boolean(context.rules.proportionalDivisibleActions && actualHours < costHours);
 
-    // +2 Mental on both first and non-first buys
-    nextPlayer.mentalCondition = Math.min(maxMental, roundToResolution((nextPlayer.mentalCondition ?? startingMental) + 2, conditionRes));
-    modifications.push({ stat: 'mental', diff: 2 });
+    let mentalDelta = 0;
+    let physDelta = 0;
+    let socialDelta = 0;
 
-    if (playsThisTurn > 0) {
-      // Non-first buys: -0.5 Physical fatigue
-      nextPlayer.physicalCondition = Math.max(minPhys, roundToResolution((nextPlayer.physicalCondition ?? startingPhys) - 0.5, conditionRes));
-      modifications.push({ stat: 'physical', diff: -0.5 });
+    if (playsThisTurn === 0) {
+      mentalDelta = 2;
+      socialDelta = context.rules.trackSocial ? 1 : 0;
+    } else if (playsThisTurn === 1) {
+      mentalDelta = 1;
+      physDelta = -0.5;
+    } else {
+      mentalDelta = 0;
+      physDelta = -1;
+    }
+
+    if (isPartial) {
+      if (mentalDelta > 0) mentalDelta = Math.max(conditionRes, roundToResolution(mentalDelta * ratio, conditionRes));
+      if (physDelta < 0) physDelta = -Math.max(conditionRes, roundToResolution(Math.abs(physDelta) * ratio, conditionRes));
+      if (socialDelta > 0) socialDelta = Math.max(1, Math.round(socialDelta * ratio));
+    }
+
+    if (mentalDelta > 0) {
+      nextPlayer.mentalCondition = Math.min(maxMental, roundToResolution((nextPlayer.mentalCondition ?? startingMental) + mentalDelta, conditionRes));
+      modifications.push({ stat: 'mental', diff: mentalDelta });
+    }
+    if (socialDelta > 0) {
+      nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? startingSocial) + socialDelta);
+      modifications.push({ stat: 'social', diff: socialDelta });
+    }
+    if (physDelta < 0) {
+      nextPlayer.physicalCondition = Math.max(minPhys, roundToResolution((nextPlayer.physicalCondition ?? startingPhys) + physDelta, conditionRes));
+      modifications.push({ stat: 'physical', diff: physDelta });
+    }
+
+    const actionLogs: GameEvent[] = [{
+      key: 'action.arcade.played',
+      modifications
+    }];
+
+    // Organic Arcade Mini-Game on 1st play per turn (distinguished from Park: 2 cabinet picks or 20% mild glitch)
+    if (playsThisTurn === 0) {
+      const effectiveReplay: ReplayContext = replayContext ?? {
+        inDecisions: context.engineDecisions || [],
+        outDecisions: []
+      };
+
+      const isGlitch = resolveDecision(
+        effectiveReplay,
+        `arcade_glitch_${nextPlayer.id}_${context.turn}`,
+        () => context.rng.next() < 0.20
+      );
+
+      if (isGlitch) {
+        const rawGlitch = structuredClone(ARCADE_GLITCH_CARD);
+        const glitchCard = isPartial ? scaleParkCard(rawGlitch, ratio, conditionRes) : rawGlitch;
+        if (nextPlayer.isAi) {
+          const res = applyParkCardEffects(nextPlayer, glitchCard, context);
+          nextPlayer = res.nextPlayer;
+          actionLogs.push({
+            key: 'action.arcade.glitch',
+            params: { title: glitchCard.title, desc: glitchCard.description },
+            modifications: res.modifications
+          });
+        } else {
+          const miniGameState: MiniGameState = {
+            gameType: 'arcade_encounter',
+            title: '👾 Arcade Glitch!',
+            subtitle: 'A cabinet hiccupped near the end of your run:',
+            options: [glitchCard]
+          };
+          nextPlayer.pendingMiniGame = miniGameState;
+          nextPlayer.pendingAppraisalDilemma = miniGameState;
+        }
+      } else {
+        const pool = shuffleArray(
+          ARCADE_ENCOUNTER_CARDS,
+          context.rng,
+          effectiveReplay,
+          `arcade_draw_${nextPlayer.id}_${context.turn}`
+        );
+        const picked = pool.slice(0, 2).map(card => {
+          const cloned = structuredClone(card);
+          return isPartial ? scaleParkCard(cloned, ratio, conditionRes) : cloned;
+        });
+
+        if (nextPlayer.isAi) {
+          const bestIdx = chooseBestParkCard(picked);
+          const chosenCard = picked[bestIdx] || picked[0];
+          const res = applyParkCardEffects(nextPlayer, chosenCard, context);
+          nextPlayer = res.nextPlayer;
+          actionLogs.push({
+            key: 'action.arcade.cardResolved',
+            params: { title: chosenCard.title, desc: chosenCard.description },
+            modifications: res.modifications
+          });
+        } else {
+          const miniGameState: MiniGameState = {
+            gameType: 'arcade_encounter',
+            title: '🕹️ Pirate Arcade Corner',
+            subtitle: 'Pick a cabinet to finish your session:',
+            options: picked
+          };
+          nextPlayer.pendingMiniGame = miniGameState;
+          nextPlayer.pendingAppraisalDilemma = miniGameState;
+        }
+      }
     }
 
     return {
       nextPlayer,
-      actionLog: {
-        key: 'action.arcade.played',
-        modifications
-      }
+      actionLog: actionLogs.length === 1 ? actionLogs[0] : actionLogs
     };
   }
 
   // Classic rules (usePhysicalMentalConditions is false)
-  const modifications: StatModification[] = [{ stat: 'money', diff: -10 }];
+  const modifications: StatModification[] = [{ stat: 'money', diff: -cashCost }];
   if (playsThisTurn === 0) {
     nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
     modifications.push({ stat: 'happiness', diff: 2 });
@@ -290,6 +468,7 @@ export function chooseBestParkCard(options: MiniGameOption[]): number {
     const score =
       (opt.maxPhysAmount || 0) * 15 +
       (opt.maxMentalAmount || 0) * 15 +
+      (opt.techSkillAmount || 0) * 15 +
       (opt.mentalAmount || 0) * 4 +
       (opt.physicalAmount || 0) * 3 +
       (opt.socialAmount || 0) * 2 +
@@ -376,6 +555,20 @@ export function applyParkCardEffects(
     mods.push({ stat: 'social', diff: choice.socialAmount });
   }
 
+  if (choice.techSkillAmount && context.rules.useSkills) {
+    const statRules = context.campaign.config.statRules as any;
+    const maxTech = statRules
+      ? calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education || [], statRules, context.rules)
+      : 10;
+    const curTech = nextPlayer.skillTech || 0;
+    const nextTech = Math.min(maxTech, roundToResolution(curTech + choice.techSkillAmount, 0.05));
+    const techDiff = roundToResolution(nextTech - curTech, 0.05);
+    if (techDiff > 0) {
+      nextPlayer.skillTech = nextTech;
+      mods.push({ stat: 'skillTech', diff: techDiff });
+    }
+  }
+
   if (choice.durabilityAmount && nextPlayer.inventory?.selectedClothes) {
     const sel = nextPlayer.inventory.selectedClothes;
     if (sel === 'casual') {
@@ -434,6 +627,9 @@ export function scaleParkCard(
   }
   if (scaled.durabilityAmount !== undefined && scaled.durabilityAmount !== 0) {
     scaled.durabilityAmount = Math.min(-1, Math.round(scaled.durabilityAmount * ratio));
+  }
+  if (scaled.techSkillAmount !== undefined && scaled.techSkillAmount !== 0) {
+    scaled.techSkillAmount = Math.max(0.05, roundToResolution(scaled.techSkillAmount * ratio, 0.05));
   }
 
   return scaled;

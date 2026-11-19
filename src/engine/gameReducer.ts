@@ -223,7 +223,7 @@ export function gameReducer(
       res = handleRenegotiateRentAction(nextPlayer, action, context);
       break;
     case 'play_arcade':
-      res = handlePlayArcadeAction(nextPlayer, action, context);
+      res = handlePlayArcadeAction(nextPlayer, action, context, replayContext);
       break;
     case 'relax_park':
       res = handleRelaxParkAction(nextPlayer, action, context);

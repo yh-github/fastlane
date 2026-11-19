@@ -202,15 +202,24 @@ export function handleResolveAppraisalDilemmaAction(
         social: choice.socialAmount ?? 0
       }
     };
-  } else if (choice.type === 'park_encounter') {
+  } else if (choice.type === 'park_encounter' || choice.type === 'arcade_encounter') {
     const res = applyParkCardEffects(nextPlayer, choice, context);
     nextPlayer = res.nextPlayer;
-    const isHazard = choice.cardId?.startsWith('hazard_');
-    actionLog = {
-      key: isHazard ? 'events.park.hazard' : 'action.park.cardResolved',
-      params: { title: choice.title, desc: choice.description },
-      modifications: res.modifications
-    };
+    if (choice.type === 'arcade_encounter') {
+      const isGlitch = choice.cardId === 'arcade_coin_jam';
+      actionLog = {
+        key: isGlitch ? 'action.arcade.glitch' : 'action.arcade.cardResolved',
+        params: { title: choice.title, desc: choice.description },
+        modifications: res.modifications
+      };
+    } else {
+      const isHazard = choice.cardId?.startsWith('hazard_');
+      actionLog = {
+        key: isHazard ? 'events.park.hazard' : 'action.park.cardResolved',
+        params: { title: choice.title, desc: choice.description },
+        modifications: res.modifications
+      };
+    }
   }
 
   nextPlayer.pendingMiniGame = null;

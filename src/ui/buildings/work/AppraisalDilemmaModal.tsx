@@ -24,7 +24,7 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
   let warning: React.ReactNode = undefined;
   let helpText: React.ReactNode = undefined;
 
-  if (opt.type === 'initiative' || opt.type === 'park_encounter') {
+  if (opt.type === 'initiative' || opt.type === 'park_encounter' || opt.type === 'arcade_encounter') {
     if (opt.burnoutRisk) borderColor = '#ef4444';
     else if (opt.maxPhysAmount) borderColor = '#f97316';
     else if (opt.maxMentalAmount) borderColor = '#a855f7';

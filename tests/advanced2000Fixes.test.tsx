@@ -200,7 +200,7 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
   });
 
   // 5 & 8. Arcade mechanics and standard icons
-  it('Fix 5 & 8: Arcade does not give happiness in 2000, gives Mental & Social with diminishing returns, and uses standard icons', () => {
+  it('Fix 5 & 8: Arcade costs 2h/$8, gives Mental & Social + encounter card on 1st play, diminishing returns on repeat, and uses standard icons', () => {
     const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_burger', campaign2000.config);
     player.hoursRemaining = 20;
     player.money = 50;
@@ -209,24 +209,44 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     player.happiness = 40;
     player.physicalCondition = 40;
 
-    // Play 1: Mental +2, Social 0, NO Happiness increase
-    const r1 = gameReducer(player, { type: 'play_arcade' }, setupContext(player));
+    // Play 1 (deterministic non-glitch human resolves modal):
+    const mockNoGlitchCtx = {
+      ...setupContext(player),
+      turn: 1,
+      rng: { next: () => 0.5, nextInt: () => 0, getState: () => 1, setState: () => {} } as any,
+      engineDecisions: [{ type: 'arcade_glitch_p1_1', result: false }],
+    };
+    const r1 = gameReducer(player, { type: 'play_arcade' }, mockNoGlitchCtx);
+    expect(r1.updatedPlayer.hoursRemaining).toBe(18);
+    expect(r1.updatedPlayer.money).toBe(42);
     expect(r1.updatedPlayer.mentalCondition).toBe(32);
     expect(r1.updatedPlayer.physicalCondition).toBe(40);
-    expect(r1.updatedPlayer.social).toBe(10);
+    expect(r1.updatedPlayer.social).toBe(11);
     expect(r1.updatedPlayer.happiness).toBe(40);
     expect(r1.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(1);
+    expect(r1.updatedPlayer.pendingMiniGame?.options).toHaveLength(2);
+    expect(r1.updatedPlayer.pendingMiniGame?.options[0].type).toBe('arcade_encounter');
 
-    // Play 2: Mental +2, Physical -0.5, Social 0
-    const r2 = gameReducer(r1.updatedPlayer, { type: 'play_arcade' }, setupContext(r1.updatedPlayer));
-    expect(r2.updatedPlayer.mentalCondition).toBe(34);
-    expect(r2.updatedPlayer.physicalCondition).toBe(39.5);
-    expect(r2.updatedPlayer.social).toBe(10);
+    // Resolve card before Play 2
+    const r1Resolved = gameReducer(r1.updatedPlayer, { type: 'resolve_mini_game', choiceIndex: 0 }, { ...setupContext(r1.updatedPlayer), turn: 1 });
+    expect(r1Resolved.updatedPlayer.pendingMiniGame).toBeNull();
 
-    // Play 3+: Mental +2, Physical -0.5
+    // Play 2: +1 Mental, -0.5 Physical, 0 Social
+    const afterP1Money = r1Resolved.updatedPlayer.money;
+    const afterP1Mental = r1Resolved.updatedPlayer.mentalCondition;
+    const afterP1Phys = r1Resolved.updatedPlayer.physicalCondition;
+    const r2 = gameReducer(r1Resolved.updatedPlayer, { type: 'play_arcade' }, setupContext(r1Resolved.updatedPlayer));
+    expect(r2.updatedPlayer.hoursRemaining).toBe(16);
+    expect(r2.updatedPlayer.money).toBe(afterP1Money - 8);
+    expect(r2.updatedPlayer.mentalCondition).toBe(afterP1Mental + 1);
+    expect(r2.updatedPlayer.physicalCondition).toBe(afterP1Phys - 0.5);
+
+    // Play 3+: 0 Mental, -1 Physical
     const r3 = gameReducer(r2.updatedPlayer, { type: 'play_arcade' }, setupContext(r2.updatedPlayer));
-    expect(r3.updatedPlayer.physicalCondition).toBe(39);
-    expect(r3.updatedPlayer.mentalCondition).toBe(36);
+    expect(r3.updatedPlayer.hoursRemaining).toBe(14);
+    expect(r3.updatedPlayer.money).toBe(afterP1Money - 16);
+    expect(r3.updatedPlayer.physicalCondition).toBe(afterP1Phys - 1.5);
+    expect(r3.updatedPlayer.mentalCondition).toBe(afterP1Mental + 1);
 
     // Check UI uses standard icons and dynamic feedback
     render(
@@ -242,9 +262,9 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
       />
     );
 
-    // Check standard icons on arcade corner: ⏳ -3h • 💰 -$10 • +2 🧠
-    expect(screen.getByText(/⏳ -3h • 💰 -\$10 • \+2 🧠/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Play Arcade \(💰 \$10\)/i })).toBeInTheDocument();
+    // Check standard icons on arcade corner: ⏳ -2h • 💰 -$8 • +2 🧠 • +1 👥 • 🕹️ Bonus Card
+    expect(screen.getByText(/⏳ -2h • 💰 -\$8 • \+2 🧠 • \+1 👥 • 🕹️ Bonus Card/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Play Arcade \(💰 \$8\)/i })).toBeInTheDocument();
   });
 
   // 6. Monolith Burger items removed from Red Pirate

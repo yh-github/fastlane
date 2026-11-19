@@ -99,7 +99,9 @@
       "restStiff": "ישנת על ספסל עץ יותר מדי זמן, הצוואר שלך תפוס{{stats}}"
     },
     "arcade": {
-      "played": "שיחקת במכונת הארקייד במסעדה{{stats}}"
+      "played": "שיחקת במכונת הארקייד במסעדה{{stats}}",
+      "cardResolved": "ארקייד ({{title}}){{stats}}",
+      "glitch": "תקלה במכונת הארקייד ({{title}}){{stats}}"
     },
     "appliance": {
       "diySuccess": "תיקון עצמי הצליח! תיקנת את ה{{appliance}} (סיכוי הצלחה: {{chance}}%).",

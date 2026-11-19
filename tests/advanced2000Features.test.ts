@@ -1069,7 +1069,7 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       expect(itemIds).toContain('drip_coffee');
     });
 
-    it('play_arcade consumes 3 hours and $10 for +2 Mental (play 1) and +2 Mental, -0.5 Physical (play 2+)', () => {
+    it('play_arcade consumes 2 hours and $8 for +2 Mental, +1 Social + encounter (play 1), +1 Mental/-0.5 Phys (play 2), and 0 Mental/-1 Phys (play 3+)', () => {
       const player = createPlayerState('p1', 'Alex', false, createDefaultGoalAllotment(), 'node_burger', campaign2000.config);
       player.hoursRemaining = 20;
       player.money = 50;
@@ -1078,31 +1078,42 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       player.happiness = 40;
       player.physicalCondition = 40;
 
-      // Play 1: +2 Mental, 0 Social, 0 Happiness
-      const res1 = gameReducer(player, { type: 'play_arcade' }, setupContext(player));
-      expect(res1.updatedPlayer.hoursRemaining).toBe(17);
-      expect(res1.updatedPlayer.money).toBe(40);
+      // Play 1: +2 Mental, +1 Social, 0 Happiness, 2-card arcade_encounter draw
+      const mockCtx1 = {
+        ...setupContext(player),
+        rng: { next: () => 0.5, nextInt: () => 0, getState: () => 1, setState: () => {} } as any,
+      };
+      const res1 = gameReducer(player, { type: 'play_arcade' }, mockCtx1);
+      expect(res1.updatedPlayer.hoursRemaining).toBe(18);
+      expect(res1.updatedPlayer.money).toBe(42);
       expect(res1.updatedPlayer.mentalCondition).toBe(32);
       expect(res1.updatedPlayer.physicalCondition).toBe(40);
-      expect(res1.updatedPlayer.social).toBe(10); // No free Social
+      expect(res1.updatedPlayer.social).toBe(11);
       expect(res1.updatedPlayer.happiness).toBe(40);
       expect(res1.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(1);
+      expect(res1.updatedPlayer.pendingMiniGame?.options).toHaveLength(2);
 
-      // Play 2: +2 Mental, -0.5 Physical
-      const res2 = gameReducer(res1.updatedPlayer, { type: 'play_arcade' }, setupContext(res1.updatedPlayer));
-      expect(res2.updatedPlayer.hoursRemaining).toBe(14);
-      expect(res2.updatedPlayer.money).toBe(30);
-      expect(res2.updatedPlayer.mentalCondition).toBe(34);
-      expect(res2.updatedPlayer.physicalCondition).toBe(39.5);
-      expect(res2.updatedPlayer.social).toBe(10);
+      const res1Resolved = gameReducer(res1.updatedPlayer, { type: 'resolve_mini_game', choiceIndex: 0 }, setupContext(res1.updatedPlayer));
+      const moneyAfterP1 = res1Resolved.updatedPlayer.money;
+      const mentalAfterP1 = res1Resolved.updatedPlayer.mentalCondition;
+      const physAfterP1 = res1Resolved.updatedPlayer.physicalCondition;
+      const socialAfterP1 = res1Resolved.updatedPlayer.social;
+
+      // Play 2: +1 Mental, -0.5 Physical
+      const res2 = gameReducer(res1Resolved.updatedPlayer, { type: 'play_arcade' }, setupContext(res1Resolved.updatedPlayer));
+      expect(res2.updatedPlayer.hoursRemaining).toBe(16);
+      expect(res2.updatedPlayer.money).toBe(moneyAfterP1 - 8);
+      expect(res2.updatedPlayer.mentalCondition).toBe(mentalAfterP1 + 1);
+      expect(res2.updatedPlayer.physicalCondition).toBe(physAfterP1 - 0.5);
+      expect(res2.updatedPlayer.social).toBe(socialAfterP1);
       expect(res2.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(2);
 
-      // Play 3+: +2 Mental, -0.5 Physical
+      // Play 3+: 0 Mental, -1 Physical
       const res3 = gameReducer(res2.updatedPlayer, { type: 'play_arcade' }, setupContext(res2.updatedPlayer));
-      expect(res3.updatedPlayer.hoursRemaining).toBe(11);
-      expect(res3.updatedPlayer.money).toBe(20);
-      expect(res3.updatedPlayer.physicalCondition).toBe(39);
-      expect(res3.updatedPlayer.mentalCondition).toBe(36);
+      expect(res3.updatedPlayer.hoursRemaining).toBe(14);
+      expect(res3.updatedPlayer.money).toBe(moneyAfterP1 - 16);
+      expect(res3.updatedPlayer.physicalCondition).toBe(physAfterP1 - 1.5);
+      expect(res3.updatedPlayer.mentalCondition).toBe(mentalAfterP1 + 1);
       expect(res3.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(3);
     });
   });
