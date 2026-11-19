@@ -47,7 +47,8 @@ export function generateInitiativeCards(
   campaign: CampaignBundle | undefined,
   rng: Random | undefined,
   replay: ReplayContext | undefined,
-  actionCount: number = 1
+  actionCount: number = 1,
+  excludeTitles?: string[]
 ): MiniGameOption[] {
   const tier = getJobInitiativeTier(job);
   const isTechJob = hasJobTag(job, 'technical');
@@ -315,10 +316,15 @@ export function generateInitiativeCards(
   // SELECTION: 2 CARDS FOR TIER 1 & 2; 3 CARDS FOR TIER 3
   // ─────────────────────────────────────────────────────────────────────────
   const numChoices = tier === 3 ? 3 : 2;
+  const excludedSet = excludeTitles && excludeTitles.length > 0 ? new Set(excludeTitles) : null;
+  const filteredPool = excludedSet
+    ? candidatePool.filter(c => !excludedSet.has(c.title))
+    : candidatePool;
+  const activePool = filteredPool.length >= numChoices ? filteredPool : candidatePool;
 
   // Use replay-safe pseudo-random selections to guarantee consistency
   const shuffledIndices: number[] = [];
-  const poolSize = candidatePool.length;
+  const poolSize = activePool.length;
 
   for (let i = 0; i < poolSize; i++) {
     shuffledIndices.push(i);
@@ -338,5 +344,5 @@ export function generateInitiativeCards(
   }
 
   const chosenIndices = shuffledIndices.slice(0, numChoices);
-  return chosenIndices.map(idx => candidatePool[idx]);
+  return chosenIndices.map(idx => activePool[idx]);
 }

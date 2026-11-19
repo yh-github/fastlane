@@ -7,7 +7,6 @@ import { addApplianceCardToDeck, removeApplianceCardFromDeck } from '../weekendE
 import { calcEconomyPrice } from '../economyEngine';
 import { spendHours } from '../timeManager';
 import { CURIO_CATALOG, RARE_TRINKET_CATALOG, ensurePlayerCurios } from '../curioCatalog';
-import { getPawnShopWeeklyStock } from '../../ui/buildingModal/clerkDialogue';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 
 export function handlePawnItemAction(
@@ -272,6 +271,35 @@ export function handlePawnKnickKnacksAction(
   return { nextPlayer, actionLog };
 }
 
+function getRummageItemKey(item: ItemDef): string {
+  const isBroken = Boolean(item.tags?.includes('broken') || (item as any).isBroken);
+  if (isBroken) return `broken:${item.id}`;
+  if (item.id === 'spare_parts') return 'spare_parts';
+  if (item.tags?.includes('rare_trinket')) return `trinket:${item.id}`;
+  if (item.id === 'knick_knack') return `curio:${item.tags?.[0] || item.name}`;
+  return `${item.id}:${item.name}`;
+}
+
+function buildBrokenAppliancePool(campaign: ReducerContext['campaign'], player: PlayerState): ItemDef[] {
+  const excluded = new Set(['computer', 'hot_tub', 'refrigerator', 'freezer']);
+  const candidates = (campaign?.items || []).filter(
+    i => i.category === 'appliance' && (i.basePrice || 0) <= 500 && !excluded.has(i.id)
+  );
+  const nonDuplicate = candidates.filter(
+    item => !player.inventory.appliances.some(a => a.id === item.id && a.isBroken)
+  );
+  return nonDuplicate.map(app => ({
+    id: app.id,
+    name: `Broken ${app.name}`,
+    category: 'appliance',
+    subcategory: app.subcategory,
+    basePrice: Math.max(10, Math.floor((app.basePrice || 100) * 0.3)),
+    space: app.space || 3,
+    happinessBonus: 0,
+    tags: ['broken', 'used']
+  }));
+}
+
 export function handleRummagePawnShopAction(
   player: PlayerState,
   _action: { type: 'rummage_pawn_shop' },
@@ -294,77 +322,81 @@ export function handleRummagePawnShopAction(
   nextPlayer = spendHours(nextPlayer, 1);
 
   const rng = context.rng;
-  const roll = resolveDecision(replayContext, `pawn_rummage_roll_${nextPlayer.id}`, () =>
-    rng ? rng.next() : Math.random()
-  );
+  const previousItemKey = nextPlayer.pendingPawnRummage?.[0]
+    ? getRummageItemKey(nextPlayer.pendingPawnRummage[0])
+    : null;
+  const brokenAppliances = buildBrokenAppliancePool(context.campaign, nextPlayer);
 
-  const weeklyStock = getPawnShopWeeklyStock(
-    context.campaign,
-    context.turn,
-    nextPlayer.id,
-    context.state?.gameSeed ?? context.state?.rngState
-  );
-  const availableAppliances = weeklyStock.filter(item => {
-    if (item.tags?.includes('broken')) {
-      return !nextPlayer.inventory.appliances.some(a => a.id === item.id && a.isBroken);
+  const selectedItem = resolveDecision(replayContext, `pawn_rummage_item_${nextPlayer.id}`, () => {
+    const nextRand = () => (rng ? rng.next() : Math.random());
+
+    const rollCandidate = (): ItemDef => {
+      const roll = nextRand();
+      if (roll < 0.20) {
+        const trinketIdx = Math.floor(nextRand() * RARE_TRINKET_CATALOG.length);
+        const trinket = RARE_TRINKET_CATALOG[trinketIdx] || RARE_TRINKET_CATALOG[0];
+        return {
+          id: trinket.id,
+          name: trinket.name,
+          category: 'junk',
+          subcategory: 'rare_trinket',
+          basePrice: trinket.basePrice,
+          space: 0,
+          happinessBonus: 1,
+          tags: [trinket.id, 'rare_trinket', 'junk'],
+          description: trinket.description
+        };
+      }
+      if (roll < 0.35) {
+        return {
+          id: 'spare_parts',
+          name: 'Spare Parts Box',
+          category: 'junk',
+          basePrice: 15,
+          space: 2,
+          happinessBonus: 0,
+          tags: ['spare_parts', 'repair_material'],
+          description: 'Useful mechanical and electrical components for repairing broken appliances.'
+        };
+      }
+      if (roll < 0.60 && brokenAppliances.length > 0) {
+        const appIdx = Math.floor(nextRand() * brokenAppliances.length);
+        return brokenAppliances[appIdx];
+      }
+      const curioIdx = Math.floor(nextRand() * CURIO_CATALOG.length);
+      const curio = CURIO_CATALOG[curioIdx] || CURIO_CATALOG[0];
+      return {
+        id: 'knick_knack',
+        name: curio.name,
+        category: 'junk',
+        subcategory: 'curio',
+        basePrice: 10,
+        space: 2,
+        happinessBonus: 1,
+        tags: [curio.id, 'curio']
+      };
+    };
+
+    let candidate = rollCandidate();
+    for (let attempt = 0; attempt < 6 && previousItemKey && getRummageItemKey(candidate) === previousItemKey; attempt++) {
+      candidate = rollCandidate();
     }
-    return true;
+    if (previousItemKey && getRummageItemKey(candidate) === previousItemKey) {
+      // Deterministic fallback to a curio different from previousItemKey
+      const fallbackCurio = CURIO_CATALOG.find(c => `curio:${c.id}` !== previousItemKey) || CURIO_CATALOG[0];
+      candidate = {
+        id: 'knick_knack',
+        name: fallbackCurio.name,
+        category: 'junk',
+        subcategory: 'curio',
+        basePrice: 10,
+        space: 2,
+        happinessBonus: 1,
+        tags: [fallbackCurio.id, 'curio']
+      };
+    }
+    return candidate;
   });
-
-  let selectedItem: ItemDef;
-
-  if (roll < 0.20) {
-    // 20%: Rare pocket trinket (untracked in inventory, on_buy +1 Mental, 0 space)
-    const trinketIdx = resolveDecision(replayContext, `pawn_rummage_trinket_${nextPlayer.id}`, () =>
-      Math.floor((rng ? rng.next() : Math.random()) * RARE_TRINKET_CATALOG.length)
-    );
-    const trinket = RARE_TRINKET_CATALOG[trinketIdx] || RARE_TRINKET_CATALOG[0];
-    selectedItem = {
-      id: trinket.id,
-      name: trinket.name,
-      category: 'junk',
-      subcategory: 'rare_trinket',
-      basePrice: trinket.basePrice,
-      space: 0,
-      happinessBonus: 1,
-      tags: [trinket.id, 'rare_trinket', 'junk'],
-      description: trinket.description
-    };
-  } else if (roll < 0.35) {
-    // 15%: Spare parts for appliance repairs
-    selectedItem = {
-      id: 'spare_parts',
-      name: 'Spare Parts Box',
-      category: 'junk',
-      basePrice: 15,
-      space: 2,
-      happinessBonus: 0,
-      tags: ['spare_parts', 'repair_material'],
-      description: 'Useful mechanical and electrical components for repairing broken appliances.'
-    };
-  } else if (roll < 0.60 && availableAppliances.length > 0) {
-    // 25%: Used / broken appliance from weekly pawn stock
-    const appIdx = resolveDecision(replayContext, `pawn_rummage_app_${nextPlayer.id}`, () =>
-      Math.floor((rng ? rng.next() : Math.random()) * availableAppliances.length)
-    );
-    selectedItem = availableAppliances[appIdx];
-  } else {
-    // 40% (or fallback): Curio / knick-knack
-    const curioIdx = resolveDecision(replayContext, `pawn_rummage_curio_${nextPlayer.id}`, () =>
-      Math.floor((rng ? rng.next() : Math.random()) * CURIO_CATALOG.length)
-    );
-    const curio = CURIO_CATALOG[curioIdx] || CURIO_CATALOG[0];
-    selectedItem = {
-      id: 'knick_knack',
-      name: curio.name,
-      category: 'junk',
-      subcategory: 'curio',
-      basePrice: 10,
-      space: 2,
-      happinessBonus: 1,
-      tags: [curio.id, 'curio']
-    };
-  }
 
   nextPlayer.pendingPawnRummage = [selectedItem];
   actionLog = { key: 'action.pawn.rummaged' };

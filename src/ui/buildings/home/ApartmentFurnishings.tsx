@@ -589,7 +589,7 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
               isBook: false,
               isOwned: (player.inventory?.spareParts || 0) > 0
             })}
-            title={`Box of Spare Parts\nYou have ${(player.inventory?.spareParts || 0)} boxes (${(player.inventory?.spareParts || 0) * 2} space).\nClick to inspect or discard.`}
+            title={`Box of Spare Parts\nYou have ${(player.inventory?.spareParts || 0)} boxes (${(player.inventory?.spareParts || 0) * 2} space).\nClick to tinker, inspect, or discard.`}
             style={{
               display: 'flex',
               flexDirection: 'column',

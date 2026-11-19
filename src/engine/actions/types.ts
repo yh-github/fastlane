@@ -44,6 +44,7 @@ export type GameAction =
   | { type: 'buy_rummage_item'; itemIndex?: number }
   | { type: 'buy_pawn_rummage_item'; itemIndex?: number }
   | { type: 'discard_inventory_item'; itemType: 'spare_parts' | 'knick_knacks'; count?: number; curioId?: string }
+  | { type: 'tinker_spare_parts' }
   | { type: 'renegotiate_rent' }
   | { type: 'redraw_initiative' }
   | { type: 'close_rummage' }

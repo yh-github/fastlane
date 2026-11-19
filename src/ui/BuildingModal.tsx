@@ -285,7 +285,12 @@ export function BuildingModal({
   const itemsHere = getAvailableItemsForBuilding(building, campaign, turn, player.id, gameSeed);
 
   const handleActionIntercept = async (payload: any) => {
-    if (hasPendingMiniGame && payload.type !== 'resolve_appraisal_dilemma' && payload.type !== 'resolve_mini_game') {
+    if (
+      hasPendingMiniGame &&
+      payload.type !== 'resolve_appraisal_dilemma' &&
+      payload.type !== 'resolve_mini_game' &&
+      payload.type !== 'redraw_initiative'
+    ) {
       return;
     }
     const actionLog = await onAction(payload);

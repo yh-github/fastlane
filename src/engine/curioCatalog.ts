@@ -38,8 +38,19 @@ export const CURIO_CATALOG: CurioItem[] = [
   { id: 'curio_kaleidoscope', name: 'Stained-Glass Kaleidoscope', icon: '🌈', description: 'Stained-glass brass tube turning beads into infinite hypnotic mandalas.' }
 ];
 
+export const TINKER_GIZMO_CATALOG: CurioItem[] = [
+  { id: 'curio_clockwork_gizmo', name: 'Clockwork Desk Gizmo', icon: '⚙️', description: 'A hand-assembled brass gear escapement that clicks with soothing mechanical rhythm.' },
+  { id: 'curio_copper_coil_gizmo', name: 'Copper-Coil Gizmo', icon: '🔩', description: 'Hand-wound copper solenoid on a salvaged circuit board—humble proof of patient tinkering.' },
+  { id: 'curio_pocket_oscillator_gizmo', name: 'Pocket Oscillator Gizmo', icon: '🎛️', description: 'A miniature salvaged audio oscillator that sweeps quirky retro synth tones.' },
+  { id: 'curio_spring_automaton_gizmo', name: 'Spring-Loaded Gizmo', icon: '🔧', description: 'A clever kinetic contraption built from spare springs, bearings, and solder.' }
+];
+
 export function getCurioDef(catalogId?: string): CurioItem {
-  return CURIO_CATALOG.find(c => c.id === catalogId) || CURIO_CATALOG[0];
+  return (
+    CURIO_CATALOG.find(c => c.id === catalogId) ||
+    TINKER_GIZMO_CATALOG.find(c => c.id === catalogId) ||
+    CURIO_CATALOG[0]
+  );
 }
 
 export function ensurePlayerCurios(

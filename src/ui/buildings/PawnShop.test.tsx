@@ -173,4 +173,32 @@ describe("PawnShop", () => {
     fireEvent.click(compactRummageBtn);
     expect(mockOnAction).toHaveBeenCalledWith({ type: 'rummage_pawn_shop' });
   });
+
+  it('PawnShop allows swapping out an existing pendingPawnRummage item via Draw Another button', () => {
+    const mockPlayer = {
+      id: 'p1',
+      money: 100,
+      hoursRemaining: 5,
+      pendingPawnRummage: [
+        { id: 'spare_parts', name: 'Spare Parts Box', category: 'junk', basePrice: 15, space: 2, happinessBonus: 0 }
+      ],
+      inventory: { appliances: [], pawnedItems: [] }
+    } as any;
+    const mockOnAction = vi.fn();
+    const mockRules = { pawnRummageBins: true, helpfulUI: true } as any;
+
+    render(
+      <PawnShop
+        player={mockPlayer}
+        onAction={mockOnAction}
+        economicIndex={0}
+        rules={mockRules}
+      />
+    );
+
+    const swapBtn = screen.getByTestId('rummage-again-btn');
+    expect(swapBtn).toBeInTheDocument();
+    fireEvent.click(swapBtn);
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'rummage_pawn_shop' });
+  });
 });

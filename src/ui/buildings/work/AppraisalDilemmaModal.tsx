@@ -394,6 +394,10 @@ export function AppraisalDilemmaModal({
     height: typeof window !== 'undefined' ? window.innerHeight : 768
   });
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
+
+  useEffect(() => {
+    setSelectedIdx(0);
+  }, [dilemma]);
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const isInitiative = dilemma.gameType === 'work_initiative';
   const isPark = dilemma.gameType === 'park_encounter';

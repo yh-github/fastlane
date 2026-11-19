@@ -259,13 +259,15 @@ export function handleRedrawInitiativeAction(
   }
 
   const actionCount = (nextPlayer.workActionsThisTurn || 0) + 1;
+  const previousTitles = dilemma.options.map(o => o.title);
   const newCards = generateInitiativeCards(
     nextPlayer,
     job,
     context.campaign,
     context.rng,
     replayContext,
-    actionCount
+    actionCount,
+    previousTitles
   );
 
   const updatedDilemma: MiniGameState = {

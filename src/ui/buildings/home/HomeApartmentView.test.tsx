@@ -735,5 +735,55 @@ describe('HomeApartmentView & Mockup Sandbox', () => {
     fireEvent.click(eatCannedBtn);
     expect(onAction).toHaveBeenCalledWith({ type: 'prep_meal', mealType: 'canned' });
   });
+
+  it('renders Tinker button on owned spare_parts DurableCardModal and dispatches tinker_spare_parts', () => {
+    const onAction = vi.fn();
+    const onClose = vi.fn();
+    const playerWithParts: any = {
+      ...basePlayer,
+      hoursRemaining: 10,
+      inventory: {
+        ...basePlayer.inventory,
+        spareParts: 1
+      }
+    };
+
+    const { unmount } = render(
+      <DurableCardModal
+        durable={{ id: 'spare_parts', isBook: false, isOwned: true }}
+        player={playerWithParts}
+        campaign={mockCampaign}
+        rules={{ usePhysicalMentalConditions: true, useSkills: true } as any}
+        onAction={onAction}
+        onClose={onClose}
+      />
+    );
+
+    const tinkerBtn = screen.getByTestId('btn-tinker-spare-parts');
+    expect(tinkerBtn).toBeInTheDocument();
+    expect(tinkerBtn).not.toBeDisabled();
+    expect(screen.getByText(/\+0\.1 Tech Skill/i)).toBeInTheDocument();
+    expect(screen.getByText(/\+1 Gizmo \(Curio\)/i)).toBeInTheDocument();
+
+    fireEvent.click(tinkerBtn);
+    expect(onAction).toHaveBeenCalledWith({ type: 'tinker_spare_parts' });
+    expect(onClose).toHaveBeenCalled();
+
+    unmount();
+
+    render(
+      <DurableCardModal
+        durable={{ id: 'spare_parts', isBook: false, isOwned: true }}
+        player={{ ...playerWithParts, hoursRemaining: 2 }}
+        campaign={mockCampaign}
+        rules={{ usePhysicalMentalConditions: true, useSkills: true } as any}
+        onAction={onAction}
+        onClose={onClose}
+      />
+    );
+
+    expect(screen.getByTestId('btn-tinker-spare-parts')).toBeDisabled();
+    expect(screen.getByTestId('btn-tinker-spare-parts')).toHaveTextContent(/Need 3h/i);
+  });
 });
 

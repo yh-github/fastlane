@@ -368,5 +368,41 @@ describe('maintenanceActions', () => {
       expect(res3.updatedPlayer.inventory.uninspectedKnickKnacks).toBe(1);
       expect(getLogKey(res3.actionLog)).toBe('action.maintenance.discardKnickKnacks');
     });
+
+    it('processes tinker_spare_parts via gameReducer: costs 3h, removes 1 spare part, grants +0.1 skillTech, +1 Mental, and 1 Gizmo Curio', () => {
+      player.hoursRemaining = 10;
+      player.skillTech = 1.0;
+      player.mentalCondition = 30;
+      player.mentalConditionMax = 50;
+      player.inventory.spareParts = 2;
+      player.inventory.knickKnacks = 0;
+      player.inventory.curios = [];
+
+      const res = gameReducer(player, { type: 'tinker_spare_parts' }, context);
+
+      expect(getLogKey(res.actionLog)).toBe('action.maintenance.tinkeredSpareParts');
+      expect(res.updatedPlayer.hoursRemaining).toBe(7);
+      expect(res.updatedPlayer.inventory.spareParts).toBe(1);
+      expect(res.updatedPlayer.skillTech).toBeCloseTo(1.1, 2);
+      expect(res.updatedPlayer.mentalCondition).toBe(31);
+      expect(res.updatedPlayer.inventory.knickKnacks).toBe(1);
+      expect(res.updatedPlayer.inventory.curios).toHaveLength(1);
+      expect(res.updatedPlayer.inventory.curios![0].name).toMatch(/Gizmo/i);
+    });
+
+    it('rejects tinker_spare_parts when player lacks spare parts or hours', () => {
+      player.hoursRemaining = 10;
+      player.inventory.spareParts = 0;
+
+      const noParts = gameReducer(player, { type: 'tinker_spare_parts' }, context);
+      expect(getLogKey(noParts.actionLog)).toBe('action.error.noSpareParts');
+      expect(noParts.updatedPlayer.hoursRemaining).toBe(10);
+
+      player.inventory.spareParts = 1;
+      player.hoursRemaining = 2;
+      const noTime = gameReducer(player, { type: 'tinker_spare_parts' }, context);
+      expect(getLogKey(noTime.actionLog)).toBe('action.error.notEnoughTime');
+      expect(noTime.updatedPlayer.inventory.spareParts).toBe(1);
+    });
   });
 });

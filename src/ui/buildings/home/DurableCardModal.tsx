@@ -1247,33 +1247,93 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
             </div>
           );
         })() : isSpareParts ? (
-          (player?.inventory.spareParts || 0) > 0 ? (
-            <button
-              data-testid="btn-discard-spare-parts"
-              onClick={() => {
-                onAction?.({ type: 'discard_inventory_item', itemType: 'spare_parts', count: 1 });
-                onClose();
-              }}
-              style={{
-                width: '100%',
-                padding: '9px 12px',
-                backgroundColor: '#dc2626',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)'
-              }}
-            >
-              🗑️ Throw Away 1 Box of Parts (Frees 2 Space)
-            </button>
-          ) : (
+          (player?.inventory.spareParts || 0) > 0 ? (() => {
+            const hasTinkerHours = (player?.hoursRemaining ?? 0) >= 3;
+            const isTinkerDisabled = !player || !hasTinkerHours || !onAction;
+            const skillPart = rules?.useSkills ? '+0.1 Tech Skill • ' : '';
+            const moodPart = rules?.usePhysicalMentalConditions ? '+1 🧠' : '+1 😊';
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                <div style={{
+                  background: 'rgba(14, 165, 233, 0.1)',
+                  border: '1px solid rgba(56, 189, 248, 0.35)',
+                  borderRadius: '8px',
+                  padding: '8px 10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: '0.82rem', color: '#38bdf8' }}>
+                      🔧 {t('homeDurable.tinkerTitle', { defaultValue: 'Tinker with Parts' })}
+                    </strong>
+                    <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>⏳ 3h</span>
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#85ffb5' }}>
+                    {skillPart}{moodPart} • +1 Gizmo (Curio)
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                    {t('homeDurable.tinkerDesc', { defaultValue: 'Consumes 1 Box of Spare Parts to assemble a handmade gizmo curio.' })}
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="btn-tinker-spare-parts"
+                    data-action-target="tinker-spare-parts"
+                    disabled={isTinkerDisabled}
+                    onClick={() => {
+                      onAction?.({ type: 'tinker_spare_parts' });
+                      onClose();
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      backgroundColor: isTinkerDisabled ? '#475569' : '#0284c7',
+                      color: isTinkerDisabled ? '#94a3b8' : '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      fontSize: '0.82rem',
+                      cursor: isTinkerDisabled ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: isTinkerDisabled ? 'none' : '0 2px 8px rgba(2, 132, 199, 0.4)'
+                    }}
+                  >
+                    🔧 {t('homeDurable.tinkerBtn', { defaultValue: 'Tinker' })} {!hasTinkerHours ? `(${t('storeFront.needHours', { hours: 3, defaultValue: 'Need 3h' })})` : ''}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  data-testid="btn-discard-spare-parts"
+                  onClick={() => {
+                    onAction?.({ type: 'discard_inventory_item', itemType: 'spare_parts', count: 1 });
+                    onClose();
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    backgroundColor: '#dc2626',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)'
+                  }}
+                >
+                  🗑️ Throw Away 1 Box of Parts (Frees 2 Space)
+                </button>
+              </div>
+            );
+          })() : (
             <div style={{
               padding: '6px 10px',
               background: 'rgba(255, 255, 255, 0.03)',

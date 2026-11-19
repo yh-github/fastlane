@@ -549,6 +549,90 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       expect(passRes.updatedPlayer.pendingPawnRummage).toBeNull();
       expect(passRes.actionLog?.key).toBe('action.pawn.closedRummage');
     });
+
+    it('swaps out the current rummaged item for a different item when rummaging again', () => {
+      const startItems = [
+        { id: 'spare_parts', name: 'Spare Parts Box', category: 'junk' as const, basePrice: 15, space: 2, happinessBonus: 0 },
+        { id: 'knick_knack', name: 'Vintage Tin Robot', category: 'junk' as const, basePrice: 10, space: 2, happinessBonus: 1, tags: ['curio_vintage_tin_robot', 'curio'] }
+      ];
+
+      for (const initial of startItems) {
+        for (let seed = 1; seed <= 12; seed++) {
+          let player = makePlayer();
+          player.hoursRemaining = 10;
+          player.pendingPawnRummage = [initial];
+
+          const rng = new Random(seed);
+          const result = gameReducer(player, { type: 'rummage_pawn_shop' }, {
+            campaign,
+            rules,
+            turn: 1,
+            economicIndex: 0,
+            rng,
+            state: { players: [player], turn: 1, economicIndex: 0, gameSeed: 999, rngState: seed } as any,
+            engineDecisions: []
+          });
+
+          const nextItem = result.updatedPlayer.pendingPawnRummage?.[0];
+          expect(nextItem).toBeDefined();
+          expect(result.updatedPlayer.hoursRemaining).toBe(9);
+          // Must swap to a distinct item
+          const sameId = nextItem!.id === initial.id;
+          const sameTag = (nextItem!.tags?.[0] || '') === (initial.tags?.[0] || '');
+          expect(sameId && sameTag).toBe(false);
+        }
+      }
+    });
+
+    it('draws genuinely varied random rummaged items across seeds and sequential draws regardless of gameSeed', () => {
+      const seenAcrossSeeds = new Set<string>();
+      for (let seed = 100; seed < 140; seed += 3) {
+        let player = makePlayer();
+        player.hoursRemaining = 10;
+        const rng = new Random(seed);
+        const result = gameReducer(player, { type: 'rummage_pawn_shop' }, {
+          campaign,
+          rules,
+          turn: 1,
+          economicIndex: 0,
+          rng,
+          // Keep gameSeed fixed to ensure rummaging uses advancing rng rather than static gameSeed
+          state: { players: [player], turn: 1, economicIndex: 0, gameSeed: 42, rngState: seed } as any,
+          engineDecisions: []
+        });
+        const item = result.updatedPlayer.pendingPawnRummage![0];
+        seenAcrossSeeds.add(`${item.id}:${item.tags?.[0] || ''}`);
+      }
+      expect(seenAcrossSeeds.size).toBeGreaterThanOrEqual(5);
+
+      // Sequential rummages with an advancing Random instance also produce varied categories (including broken appliances)
+      let seqPlayer = makePlayer();
+      seqPlayer.hoursRemaining = 30;
+      const seqRng = new Random(777);
+      const seqCategories = new Set<string>();
+      let foundBrokenAppliance = false;
+      for (let step = 0; step < 20; step++) {
+        const res = gameReducer(seqPlayer, { type: 'rummage_pawn_shop' }, {
+          campaign,
+          rules,
+          turn: 1,
+          economicIndex: 0,
+          rng: seqRng,
+          state: { players: [seqPlayer], turn: 1, economicIndex: 0, gameSeed: 42, rngState: seqRng.getState() } as any,
+          engineDecisions: []
+        });
+        seqPlayer = res.updatedPlayer;
+        const drawn = seqPlayer.pendingPawnRummage![0];
+        if (drawn.tags?.includes('broken')) {
+          foundBrokenAppliance = true;
+          seqCategories.add('broken');
+        } else {
+          seqCategories.add(drawn.id);
+        }
+      }
+      expect(foundBrokenAppliance).toBe(true);
+      expect(seqCategories.size).toBeGreaterThanOrEqual(3);
+    });
   });
 
   describe('Show Initiative (Replaces Innovate)', () => {

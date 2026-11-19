@@ -38,6 +38,7 @@ import {
   handleBuyRummageItemAction,
   handleCloseRummageAction,
   handleDiscardInventoryItemAction,
+  handleTinkerSparePartsAction,
   handleRenegotiateRentAction,
   handlePlayArcadeAction,
   handleRelaxParkAction,
@@ -68,9 +69,14 @@ export function gameReducer(
     outDecisions: outEngineDecisions
   };
 
-  // If there's a pending dilemma, block all other actions until resolved
+  // If there's a pending dilemma, block all other actions until resolved (except initiative redraw)
   const hasPendingMiniGame = player.pendingMiniGame || player.pendingAppraisalDilemma;
-  if (hasPendingMiniGame && action.type !== 'resolve_appraisal_dilemma' && action.type !== 'resolve_mini_game') {
+  if (
+    hasPendingMiniGame &&
+    action.type !== 'resolve_appraisal_dilemma' &&
+    action.type !== 'resolve_mini_game' &&
+    action.type !== 'redraw_initiative'
+  ) {
     return {
       updatedPlayer: nextPlayer,
       actionLog: { key: 'action.error.mustResolveDilemma' }
@@ -218,6 +224,9 @@ export function gameReducer(
       break;
     case 'discard_inventory_item':
       res = handleDiscardInventoryItemAction(nextPlayer, action, context);
+      break;
+    case 'tinker_spare_parts':
+      res = handleTinkerSparePartsAction(nextPlayer, action, context, replayContext);
       break;
     case 'renegotiate_rent':
       res = handleRenegotiateRentAction(nextPlayer, action, context);

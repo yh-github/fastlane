@@ -5,10 +5,10 @@ import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
 import { roundToResolution, calcMaxMess, safeDecrementPhysical, safeDecrementMental, calcMaxSkillCap } from '../statMath';
-import { applyHappinessChange } from '../statEffects';
+import { applyHappinessChange, applyMentalChange } from '../statEffects';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { addApplianceCardToDeck, removeApplianceCardFromDeck } from '../weekendEngine';
-import { ensurePlayerCurios } from '../curioCatalog';
+import { ensurePlayerCurios, TINKER_GIZMO_CATALOG } from '../curioCatalog';
 
 export interface DiySuccessChanceBreakdown {
   baseChance: number;
@@ -315,6 +315,69 @@ export function handleDiscardInventoryItemAction(
       }
     }
   }
+
+  return { nextPlayer, actionLog };
+}
+
+/**
+ * Tinkers with 1 Box of Spare Parts at home: spends 3 hours, consumes 1 Spare Parts box,
+ * grants +0.1 Skill_Tech, +1 Mental (or +1 Happiness in classic), and creates 1 Gizmo Curio.
+ */
+export function handleTinkerSparePartsAction(
+  player: PlayerState,
+  _action: { type: 'tinker_spare_parts' },
+  context: ReducerContext,
+  replayContext?: ReplayContext
+): ActionHandlerResult {
+  let nextPlayer = structuredClone(player);
+  let actionLog;
+
+  if ((nextPlayer.inventory?.spareParts || 0) < 1) {
+    actionLog = { key: 'action.error.noSpareParts' };
+    return { nextPlayer, actionLog };
+  }
+
+  if (nextPlayer.hoursRemaining < 3) {
+    actionLog = { key: 'action.error.notEnoughTime' };
+    return { nextPlayer, actionLog };
+  }
+
+  nextPlayer = spendHours(nextPlayer, 3);
+  nextPlayer.inventory.spareParts = (nextPlayer.inventory.spareParts || 0) - 1;
+
+  if (context.rules.usePhysicalMentalConditions) {
+    nextPlayer = applyMentalChange(nextPlayer, 1, context.campaign.config.statRules);
+  } else {
+    nextPlayer = applyHappinessChange(nextPlayer, 1, 'appliance_repair', context.rules, context.campaign.config.statRules);
+  }
+
+  if (context.rules.useSkills) {
+    const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
+    const maxTech = calcMaxSkillCap(nextPlayer, 'skillTech', context.campaign.education, statRules, context.rules);
+    nextPlayer.skillTech = Math.min(maxTech, roundToResolution((nextPlayer.skillTech || 0) + 0.1, 0.05));
+  }
+
+  const turnNum = context.state?.turn ?? 1;
+  const curios = ensurePlayerCurios(nextPlayer, turnNum);
+  const gizmoIdx = resolveDecision(replayContext, `tinker_gizmo_${nextPlayer.id}`, () =>
+    Math.floor((context.rng ? context.rng.next() : Math.random()) * TINKER_GIZMO_CATALOG.length)
+  );
+  const gizmo = TINKER_GIZMO_CATALOG[gizmoIdx] || TINKER_GIZMO_CATALOG[0];
+  curios.push({
+    id: `${gizmo.id}_${nextPlayer.id}_t${turnNum}_${curios.length}`,
+    catalogId: gizmo.id,
+    name: gizmo.name,
+    icon: gizmo.icon,
+    flavorText: gizmo.description,
+    acquiredWeek: turnNum
+  });
+  nextPlayer.inventory.curios = curios;
+  nextPlayer.inventory.knickKnacks = curios.length;
+
+  actionLog = {
+    key: 'action.maintenance.tinkeredSpareParts',
+    params: { gizmo: gizmo.name }
+  };
 
   return { nextPlayer, actionLog };
 }

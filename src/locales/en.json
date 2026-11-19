@@ -227,7 +227,8 @@
     "callCleaningService": "Called professional cleaning service (Cost: ${{cost}})",
     "maintenance": {
       "discardSpareParts": "Threw away {{count}} box(es) of spare parts into the garbage chute.",
-      "discardKnickKnacks": "Threw away {{count}} curio(s) to free up apartment space."
+      "discardKnickKnacks": "Threw away {{count}} curio(s) to free up apartment space.",
+      "tinkeredSpareParts": "Tinkered with spare parts for 3 hours and assembled a {{gizmo}} (+0.1 Tech Skill, +1 Mental)."
     },
     "rent": {
       "paid": "Paid ${{amount}} towards rent",
@@ -268,6 +269,7 @@
       "notEnoughTimePrep": "Not enough time to prep food!",
       "mustResolveDilemma": "You must resolve the customer dilemma before doing anything else.",
       "noKnickKnacksToPawn": "You have no curios to pawn.",
+      "noSpareParts": "You have no spare parts to tinker with.",
       "noRummageItem": "That item is no longer available in the bins.",
       "applianceNotBroken": "This appliance is not broken.",
       "notEnoughMoneyRepairman": "Not enough money to hire repairman (Costs ${{cost}}).",

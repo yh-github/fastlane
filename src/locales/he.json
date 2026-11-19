@@ -227,7 +227,8 @@
     "callCleaningService": "הזמנת שירותי ניקיון מקצועיים (עלות: {{cost}}$)",
     "maintenance": {
       "discardSpareParts": "זרקת {{count}} ארגזי חלקי חילוף לפח.",
-      "discardKnickKnacks": "זרקת {{count}} חפצי נוי כדי לפנות מקום בדירה."
+      "discardKnickKnacks": "זרקת {{count}} חפצי נוי כדי לפנות מקום בדירה.",
+      "tinkeredSpareParts": "אילתרת עם חלקי חילוף במשך 3 שעות והרכבת {{gizmo}} (+0.1 מיומנות טכנית, +1 מנטלי)."
     },
     "rent": {
       "paid": "שילמת {{amount}}$ שכר דירה",
@@ -268,6 +269,7 @@
       "notEnoughTimePrep": "אין מספיק שעות להכנת אוכל!",
       "mustResolveDilemma": "עליך להכריע בדילמת הלקוח לפני שתוכל לעשות כל דבר אחר.",
       "noKnickKnacksToPawn": "אין לך חפצי נוי וענתיקות למשכן.",
+      "noSpareParts": "אין לך חלקי חילוף לאלתר איתם.",
       "noRummageItem": "פריט זה כבר אינו זמין בארגזים.",
       "applianceNotBroken": "מכשיר זה אינו מקולקל.",
       "notEnoughMoneyRepairman": "אין מספיק כסף להזמנת טכנאי (עולה {{cost}}$).",

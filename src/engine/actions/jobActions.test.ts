@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { handleResolveAppraisalDilemmaAction, handleWorkAction, handleRedrawInitiativeAction } from './jobActions';
+import { gameReducer } from '../gameReducer';
 import { createPlayerState } from '../stateFactories';
 import { Random } from '../../utils/rng';
 import type { ReducerContext } from './types';
@@ -33,6 +34,10 @@ describe('Job Actions & Initiative Card Resolution', () => {
       gameRules: { usePhysicalMentalConditions: true, useSkills: true }
     },
     education: [],
+    housing: [],
+    items: [],
+    synergies: [],
+    map: { nodes: [], edges: [] },
     messages: {}
   } as any;
 
@@ -258,5 +263,48 @@ describe('Job Actions & Initiative Card Resolution', () => {
       mockReplay
     );
     expect((secondResult.actionLog as any)?.key).toBe('action.error.cannotRedraw');
+  });
+
+  it('allows redraw_initiative through gameReducer while pendingMiniGame is active and swaps to distinct cards', () => {
+    let player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+    player.currentJobId = 'tech_lead';
+    player.currentWage = 20;
+    player.experience = 60;
+    player.dependability = 40;
+    player.hoursRemaining = 12;
+    player.mentalCondition = 40;
+
+    const workRes = gameReducer(
+      player,
+      { type: 'work', jobId: 'tech_lead', mode: 'show_initiative' },
+      mockContext
+    );
+    const initialTitles = workRes.updatedPlayer.pendingMiniGame!.options.map(o => o.title);
+    expect(initialTitles.length).toBeGreaterThanOrEqual(2);
+
+    const redrawRes = gameReducer(
+      workRes.updatedPlayer,
+      { type: 'redraw_initiative' },
+      mockContext
+    );
+
+    expect((redrawRes.actionLog as any)?.key).toBe('action.job.initiativeRedrawn');
+    expect(redrawRes.updatedPlayer.pendingMiniGame?.hasRedrawn).toBe(true);
+    expect(redrawRes.updatedPlayer.hoursRemaining).toBe(workRes.updatedPlayer.hoursRemaining - 1);
+    expect(redrawRes.updatedPlayer.mentalCondition).toBe(workRes.updatedPlayer.mentalCondition! - 1);
+
+    const swappedTitles = redrawRes.updatedPlayer.pendingMiniGame!.options.map(o => o.title);
+    expect(swappedTitles.length).toBe(initialTitles.length);
+    for (const title of swappedTitles) {
+      expect(initialTitles).not.toContain(title);
+    }
+
+    // Second redraw through gameReducer is rejected
+    const secondRedraw = gameReducer(
+      redrawRes.updatedPlayer,
+      { type: 'redraw_initiative' },
+      mockContext
+    );
+    expect((secondRedraw.actionLog as any)?.key).toBe('action.error.cannotRedraw');
   });
 });

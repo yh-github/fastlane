@@ -1453,6 +1453,45 @@ describe('BuildingModal Component', () => {
     const servicesContainer = container.querySelector('.building-modal__content > div');
     expect(servicesContainer).toHaveStyle({ flex: '1 0 auto' });
   });
+
+  it('forwards redraw_initiative when pendingMiniGame is active without blocking it in handleActionIntercept', () => {
+    const mockOnAction = vi.fn().mockResolvedValue({});
+    const playerWithInitiative: PlayerState = {
+      ...mockPlayer,
+      hoursRemaining: 10,
+      mentalCondition: 40,
+      pendingMiniGame: {
+        gameType: 'work_initiative',
+        title: 'Workplace Initiative',
+        subtitle: 'Clerk — Initiative Tier 1',
+        tier: 1,
+        hasRedrawn: false,
+        options: [
+          { type: 'initiative', badge: 'LEADERSHIP', title: 'Floor Rush Coordination', description: 'Lead team.' },
+          { type: 'initiative', badge: 'ETHICS', title: 'Pride in Cleanliness & Order', description: 'Clean up.' }
+        ]
+      }
+    };
+
+    render(
+      <BuildingModal
+        player={playerWithInitiative}
+        campaign={mockCampaign}
+        currentBuildingId="z_mart"
+        turn={1}
+        economicIndex={0}
+        rules={{ ...mockRules, usePhysicalMentalConditions: true }}
+        onAction={mockOnAction}
+        onClose={vi.fn()}
+      />
+    );
+
+    const redrawBtn = screen.getByTestId('btn-redraw-initiative');
+    expect(redrawBtn).toBeInTheDocument();
+    fireEvent.click(redrawBtn);
+
+    expect(mockOnAction).toHaveBeenCalledWith({ type: 'redraw_initiative' });
+  });
 });
 
 
