@@ -85,88 +85,202 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
   return updatedPlayer;
 }
 
-export function recalculateLifestyle(player: PlayerState, campaign: CampaignBundle): number {
-  let lifestyle = 0;
+export const LIFESTYLE_CURIO_BENCHMARK_COUNT = 3;
+const TV_SLOT_IDS = new Set(['bw_tv', 'color_tv', 'crt_tv', 'plasma_tv']);
+const AUDIO_SLOT_IDS = new Set(['8track', 'stereo']);
+const CLOTHES_SLOT_IDS = new Set(['casual_clothes', 'dress_clothes', 'business_suit']);
 
-  const housingDef = campaign.housing.find(h => h.id === player.currentHousingId);
-  if (housingDef && housingDef.lifestyleValue !== undefined) {
-    lifestyle += housingDef.lifestyleValue;
-  }
+/**
+ * Raw diminishing-returns Lifestyle contribution from curios on display.
+ */
+export function calcCurioRawLifestyle(curioCount: number): number {
+  return curioCount > 0 ? Math.min(15, Math.floor(2.8 * Math.sqrt(curioCount))) : 0;
+}
 
-  const itemCounts: Record<string, number> = {};
-  const hasStereo = player.inventory.appliances.some(a => a.id === 'stereo' && !a.isBroken);
-  const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
-  const hasTv = player.inventory.appliances.some(a => isAnyTv(a.id) && !a.isBroken);
+/**
+ * Starter housing baseline subtracted from all housing tiers so starter home = 0 Lifestyle.
+ */
+export function getStarterHousingLifestyle(campaign: CampaignBundle): number {
+  const housings = campaign.housing || [];
+  const lowCost = housings.find(h => h.id === 'low_cost');
+  if (lowCost) return lowCost.lifestyleValue ?? 0;
+  const nonStreet = housings.find(h => h.id !== 'street');
+  return nonStreet?.lifestyleValue ?? 0;
+}
 
-  for (const app of player.inventory.appliances) {
-    if (app.isBroken) continue;
-    if (hasStereo && app.id === '8track') continue;
-    if (app.id === 'vcr' && !hasTv) continue;
-    itemCounts[app.id] = (itemCounts[app.id] || 0) + 1;
-  }
-  for (const book of player.inventory.books) {
-    itemCounts[book] = (itemCounts[book] || 0) + 1;
-  }
-  if (player.inventory.casualClothesWeeks > 0) itemCounts['casual_clothes'] = 1;
-  if (player.inventory.dressClothesWeeks > 0) itemCounts['dress_clothes'] = 1;
-  if (player.inventory.businessClothesWeeks > 0) itemCounts['business_suit'] = 1;
+/**
+ * Collect item IDs purchasable in campaign shops when shops stock lifestyle-bearing items.
+ * Returns null if the campaign/mock has no shop lifestyle items, falling back to campaign.items.
+ */
+function getAvailableLifestyleItemIds(campaign: CampaignBundle): Set<string> | null {
+  const itemById = new Map((campaign.items || []).map(item => [item.id, item]));
+  const shopItemIds = new Set<string>();
+  let hasShopLifestyleItems = false;
 
-  for (const [itemId, count] of Object.entries(itemCounts)) {
-    const itemDef = campaign.items.find(i => i.id === itemId);
-    if (itemDef && itemDef.lifestyleValue) {
-      const val = itemDef.lifestyleValue;
-      if (count === 1) {
-        lifestyle += val;
-      } else if (count >= 2) {
-        lifestyle += val + Math.floor(val * 0.5);
+  for (const building of campaign.buildings || []) {
+    for (const entry of building.inventory || []) {
+      shopItemIds.add(entry.itemId);
+      if ((itemById.get(entry.itemId)?.lifestyleValue ?? 0) > 0) {
+        hasShopLifestyleItems = true;
       }
     }
   }
 
-  // Knick-knacks / Curios contribution with diminishing returns
-  const curioCount = player.inventory?.knickKnacks || 0;
-  if (curioCount > 0) {
-    lifestyle += Math.min(15, Math.floor(2.8 * Math.sqrt(curioCount)));
-  }
-
-  if (player.mess !== undefined) {
-    lifestyle -= Math.floor(messGrowth(player.mess) / 2);
-  }
-  if (player.social !== undefined) {
-    lifestyle += Math.floor(player.social / 10);
-  }
-
-  return Math.max(0, Math.min(100, lifestyle));
+  return hasShopLifestyleItems ? shopItemIds : null;
 }
 
+/**
+ * Scale a raw Lifestyle delta/value to the 0-100 calibrated scale for a campaign.
+ */
+export function scaleLifestylePoints(rawPoints: number, campaign?: CampaignBundle): number {
+  if (!campaign) return rawPoints;
+  const maxRaw = calcMaxLifestyle(campaign);
+  return Math.round((rawPoints / maxRaw) * 100);
+}
+
+/**
+ * Scaled Lifestyle contribution from curios on display for UI & engine consistency.
+ */
+export function calcCurioScaledLifestyle(curioCount: number, campaign?: CampaignBundle): number {
+  return scaleLifestylePoints(calcCurioRawLifestyle(curioCount), campaign);
+}
+
+export function recalculateLifestyle(player: PlayerState, campaign: CampaignBundle): number {
+  let rawLifestyle = 0;
+
+  const starterHousingLifestyle = getStarterHousingLifestyle(campaign);
+  const housingDef = (campaign.housing || []).find(h => h.id === player.currentHousingId);
+  if (housingDef) {
+    rawLifestyle += (housingDef.lifestyleValue ?? 0) - starterHousingLifestyle;
+  }
+
+  const itemById = new Map((campaign.items || []).map(i => [i.id, i]));
+  let bestTvVal = 0;
+  let hasWorkingTv = false;
+  let bestAudioVal = 0;
+  let vcrVal = 0;
+  const seenAppliances = new Set<string>();
+
+  for (const app of player.inventory.appliances) {
+    if (app.isBroken) continue;
+    const itemDef = itemById.get(app.id);
+    const val = itemDef?.lifestyleValue ?? 0;
+
+    if (TV_SLOT_IDS.has(app.id)) {
+      hasWorkingTv = true;
+      if (val > bestTvVal) bestTvVal = val;
+      continue;
+    }
+    if (AUDIO_SLOT_IDS.has(app.id)) {
+      if (val > bestAudioVal) bestAudioVal = val;
+      continue;
+    }
+    if (app.id === 'vcr') {
+      if (val > vcrVal) vcrVal = val;
+      continue;
+    }
+    if (!seenAppliances.has(app.id)) {
+      seenAppliances.add(app.id);
+      rawLifestyle += val;
+    }
+  }
+
+  rawLifestyle += bestTvVal + bestAudioVal + (hasWorkingTv ? vcrVal : 0);
+
+  for (const bookId of new Set(player.inventory.books)) {
+    const val = itemById.get(bookId)?.lifestyleValue ?? 0;
+    rawLifestyle += val;
+  }
+
+  // Clothes slot: best active clothing tier only
+  let bestClothesVal = 0;
+  if (player.inventory.casualClothesWeeks > 0) {
+    bestClothesVal = Math.max(bestClothesVal, itemById.get('casual_clothes')?.lifestyleValue ?? 0);
+  }
+  if (player.inventory.dressClothesWeeks > 0) {
+    bestClothesVal = Math.max(bestClothesVal, itemById.get('dress_clothes')?.lifestyleValue ?? 0);
+  }
+  if (player.inventory.businessClothesWeeks > 0) {
+    bestClothesVal = Math.max(bestClothesVal, itemById.get('business_suit')?.lifestyleValue ?? 0);
+  }
+  rawLifestyle += bestClothesVal;
+
+  // Knick-knacks / Curios contribution with diminishing returns
+  rawLifestyle += calcCurioRawLifestyle(player.inventory?.knickKnacks || 0);
+
+  if (player.mess !== undefined) {
+    rawLifestyle -= Math.floor(messGrowth(player.mess) / 2);
+  }
+  if (player.social !== undefined) {
+    const startingSocial = (campaign.config.statRules as any)?.startingSocial ?? 20;
+    rawLifestyle += Math.floor((player.social - startingSocial) / 10);
+  }
+
+  const maxRaw = calcMaxLifestyle(campaign);
+  return Math.min(100, Math.round((rawLifestyle / maxRaw) * 100));
+}
+
+/**
+ * Compute raw Lifestyle benchmark corresponding to 100 Lifestyle for this campaign:
+ * best housing (above starter) + best item per slot + all unique working durables + 3 curios (if enabled).
+ */
 export function calcMaxLifestyle(campaign: CampaignBundle): number {
   let maxLifestyle = 0;
 
-  // Max housing
-  let maxHousing = 0;
-  for (const h of campaign.housing) {
+  const starterHousingLifestyle = getStarterHousingLifestyle(campaign);
+  let maxHousing = starterHousingLifestyle;
+  for (const h of campaign.housing || []) {
     if (h.lifestyleValue !== undefined && h.lifestyleValue > maxHousing) {
       maxHousing = h.lifestyleValue;
     }
   }
-  maxLifestyle += maxHousing;
+  maxLifestyle += Math.max(0, maxHousing - starterHousingLifestyle);
 
-  // Max items (assuming optimal diminishing returns: 2 appliances, 2 books, 1 clothing)
-  for (const item of campaign.items) {
-    if (item.lifestyleValue) {
-      if (item.category === 'appliance' || item.category === 'book') {
-        maxLifestyle += item.lifestyleValue + Math.floor(item.lifestyleValue * 0.5); // 2 copies
-      } else if (item.category === 'clothes') {
-        // Technically player can hold one of each clothing type
-        maxLifestyle += item.lifestyleValue;
-      }
+  const availableIds = getAvailableLifestyleItemIds(campaign);
+  let bestTvVal = 0;
+  let hasAnyTv = false;
+  let bestAudioVal = 0;
+  let bestClothesVal = 0;
+  let vcrVal = 0;
+  const seenItems = new Set<string>();
+
+  for (const item of campaign.items || []) {
+    if (availableIds && !availableIds.has(item.id)) continue;
+    if (seenItems.has(item.id)) continue;
+    seenItems.add(item.id);
+
+    const val = item.lifestyleValue ?? 0;
+
+    if (TV_SLOT_IDS.has(item.id)) {
+      hasAnyTv = true;
+      if (val > bestTvVal) bestTvVal = val;
+      continue;
+    }
+    if (AUDIO_SLOT_IDS.has(item.id)) {
+      if (val > bestAudioVal) bestAudioVal = val;
+      continue;
+    }
+    if (CLOTHES_SLOT_IDS.has(item.id) || item.category === 'clothes') {
+      if (val > bestClothesVal) bestClothesVal = val;
+      continue;
+    }
+    if (item.id === 'vcr') {
+      if (val > vcrVal) vcrVal = val;
+      continue;
+    }
+    if (val > 0 && (item.category === 'appliance' || item.category === 'book')) {
+      maxLifestyle += val;
     }
   }
 
-  // Max curios / knick-knacks bonus
-  maxLifestyle += 15;
+  maxLifestyle += bestTvVal + bestAudioVal + bestClothesVal + (hasAnyTv ? vcrVal : 0);
 
-  return maxLifestyle;
+  // Curios benchmark (3 curios when rummaging is enabled)
+  if (campaign.config.gameRules?.pawnRummageBins) {
+    maxLifestyle += calcCurioRawLifestyle(LIFESTYLE_CURIO_BENCHMARK_COUNT);
+  }
+
+  return Math.max(1, maxLifestyle);
 }
 
 export function collectItemEffects(

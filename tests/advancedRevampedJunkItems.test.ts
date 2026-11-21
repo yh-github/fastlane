@@ -232,18 +232,19 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
       expect(calcUsedSpace(res.updated, mockCampaign, true)).toBe(10);
     });
 
-    it('8-track provides +1 lifestyle and +0.5 socialize bonus when owned alone', () => {
+    it('8-track provides +1 raw lifestyle and +0.5 socialize bonus when owned alone', () => {
       const equipped: PlayerState = {
         ...player,
+        social: mockStatRules.startingSocial,
         inventory: {
           ...player.inventory,
           appliances: [{ id: '8track', purchasePrice: 75, purchaseSource: 'z_mart' }]
         }
       };
 
-      // Housing (10) + 8track (1) = 11
+      // Housing (0 above starter) + 8track (1) out of maxRaw=8 (stereo 2 + color_tv 2 + 4 books 4) -> round(1/8 * 100) = 13
       const lifestyle = recalculateLifestyle(equipped, mockCampaign);
-      expect(lifestyle).toBe(11);
+      expect(lifestyle).toBe(13);
 
       const effects = collectItemEffects(equipped, mockCampaign, 'on_socialize');
       expect(effects.get('social')).toBe(0.5);
@@ -252,6 +253,7 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
     it('when Stereo is also owned, Stereo supersedes 8-track for socialize and lifestyle', () => {
       const equippedBoth: PlayerState = {
         ...player,
+        social: mockStatRules.startingSocial,
         inventory: {
           ...player.inventory,
           appliances: [
@@ -261,9 +263,9 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
         }
       };
 
-      // Stereo (+2 lifestyle) supersedes 8-track (+1). Total = 10 (housing) + 2 (stereo) = 12 (not 13)
+      // Stereo (2) supersedes 8-track (1). Total = 2 out of 8 -> round(2/8 * 100) = 25 (not 38)
       const lifestyle = recalculateLifestyle(equippedBoth, mockCampaign);
-      expect(lifestyle).toBe(12);
+      expect(lifestyle).toBe(25);
 
       // Stereo (+1 social) supersedes 8-track (+0.5 social). Total = 1.0 (not 1.5)
       const effects = collectItemEffects(equippedBoth, mockCampaign, 'on_socialize');
@@ -300,20 +302,24 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
       expect(calcUsedSpace(res.updated, mockCampaign, true)).toBe(10);
     });
 
-    it('Capote grants +1 lifestyle and +1 Max Mental', () => {
-      const equipped: PlayerState = {
+    it('Capote grants +1 raw lifestyle and +1 Max Mental', () => {
+      const basePlayer: PlayerState = {
         ...player,
+        social: mockStatRules.startingSocial
+      };
+      const equipped: PlayerState = {
+        ...basePlayer,
         inventory: {
-          ...player.inventory,
+          ...basePlayer.inventory,
           books: ['capote']
         }
       };
 
       const lifestyle = recalculateLifestyle(equipped, mockCampaign);
-      expect(lifestyle).toBe(11); // 10 housing + 1 Capote
+      expect(lifestyle).toBe(13); // 1 Capote out of maxRaw=8 -> round(1/8 * 100) = 13
 
       const maxMental = calcMaxMental(equipped.mess || 0, equipped.social || 0, 0, equipped, mockStatRules, mockCampaign);
-      const baseMaxMental = calcMaxMental(player.mess || 0, player.social || 0, 0, player, mockStatRules, mockCampaign);
+      const baseMaxMental = calcMaxMental(basePlayer.mess || 0, basePlayer.social || 0, 0, basePlayer, mockStatRules, mockCampaign);
       expect(maxMental).toBe(baseMaxMental + 1);
     });
 

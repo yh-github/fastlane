@@ -1,10 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PlayerState, GameRules } from '../../../engine/gameState';
+import type { CampaignBundle } from '../../../engine/dataLoader';
+import { type PlayerState, type GameRules, calcCurioScaledLifestyle } from '../../../engine/gameState';
 import { ensurePlayerCurios, getCurioDef } from '../../../engine/curioCatalog';
 
 interface CuriosFlankingWingsProps {
   player: PlayerState;
+  campaign?: CampaignBundle;
   onAction?: (action: any) => void;
   onClose: () => void;
   turn?: number;
@@ -13,6 +15,7 @@ interface CuriosFlankingWingsProps {
 
 export const CuriosFlankingWings: React.FC<CuriosFlankingWingsProps> = ({
   player,
+  campaign,
   onAction,
   onClose,
   turn = 1,
@@ -24,12 +27,12 @@ export const CuriosFlankingWings: React.FC<CuriosFlankingWingsProps> = ({
   const totalCuriosCount = curios.length + uninspectedCount;
   const curioCount = curios.length;
 
-  const currentLifestyle = curioCount > 0 ? Math.min(15, Math.floor(2.8 * Math.sqrt(curioCount))) : 0;
+  const currentLifestyle = calcCurioScaledLifestyle(curioCount, campaign);
   
   // Calculate how many curios are needed for the next lifestyle point
   let nextThreshold = curioCount;
   for (let c = curioCount + 1; c <= 35; c++) {
-    if (Math.min(15, Math.floor(2.8 * Math.sqrt(c))) > currentLifestyle) {
+    if (calcCurioScaledLifestyle(c, campaign) > currentLifestyle) {
       nextThreshold = c;
       break;
     }

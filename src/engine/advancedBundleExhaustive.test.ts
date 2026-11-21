@@ -170,9 +170,9 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
 
     it('recalculateLifestyle incorporates mess growth penalty and social boost', () => {
       const player = createPlayerState('p1', 'Player 1', false, {}, 'node_low_cost', mockCampaign.config);
-      player.mess = 14; // mess_growth = 4
-      player.social = 35; // floor(35/10) = 3
-      player.inventory.appliances = [{ id: 'color_tv', purchasePrice: 400, purchaseSource: 'socket_city' }]; // active item = 15
+      player.mess = 14; // mess_growth = 4 -> -2 raw
+      player.social = 35; // floor((35 - 9)/10) = +2 raw
+      player.inventory.appliances = [{ id: 'color_tv', purchasePrice: 400, purchaseSource: 'socket_city' }]; // 15 raw
 
       const campaignWithTV = {
         ...mockCampaign,
@@ -180,14 +180,14 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       };
 
       const recalculated = recalculateLifestyle(player, campaignWithTV);
-      // 15 (TV) + 0 (housing) - 2 (mess penalty: floor(4/2)) + 3 (social bonus) = 16
-      expect(recalculated).toBe(16);
+      // maxRaw = 15 (TV). Raw = 15 (TV) + 0 (housing) - 2 (mess penalty) + 2 (social) = 15 -> 100
+      expect(recalculated).toBe(100);
     });
 
     it('VCR requires an unbroken TV to grant lifestyle value in Advanced mode', () => {
       const player = createPlayerState('p1', 'Player 1', false, {}, 'node_low_cost', mockCampaign.config);
       player.mess = 0;
-      player.social = 0;
+      player.social = 9; // matches startingSocial=9 -> 0 social offset
       player.inventory.appliances = [{ id: 'vcr', purchasePrice: 250, purchaseSource: 'z_mart' }];
 
       const campaignWithVCR = {
@@ -206,9 +206,9 @@ describe('Advanced Feature Bundle Exhaustive Test Suite', () => {
       player.inventory.appliances.push({ id: 'color_tv', purchasePrice: 400, purchaseSource: 'socket_city', isBroken: true });
       expect(recalculateLifestyle(player, campaignWithVCR)).toBe(0);
 
-      // With working TV: grants lifestyle of TV (15) + VCR (10) = 25
+      // With working TV: grants lifestyle of TV (15) + VCR (10) = 25 out of 25 max -> 100
       player.inventory.appliances[1].isBroken = false;
-      expect(recalculateLifestyle(player, campaignWithVCR)).toBe(25);
+      expect(recalculateLifestyle(player, campaignWithVCR)).toBe(100);
     });
   });
 

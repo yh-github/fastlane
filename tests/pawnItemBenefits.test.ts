@@ -545,6 +545,7 @@ describe('Pawned Appliances Benefits & Invariants', () => {
   it('6. Lifestyle Score: Pawned appliances do not count toward lifestyle', () => {
     const equippedPlayer: PlayerState = {
       ...player,
+      social: mockStatRules.startingSocial,
       inventory: {
         ...player.inventory,
         appliances: [
@@ -554,9 +555,10 @@ describe('Pawned Appliances Benefits & Invariants', () => {
       }
     };
 
-    // Housing lifestyle (10) + stove (1) + computer (3) = 14
+    // maxRaw = 40 (penthouse above low_cost) + 17 (items) = 57
+    // Housing (0 above starter) + stove (1) + computer (3) = 4 -> round(4/57 * 100) = 7
     const equippedLifestyle = recalculateLifestyle(equippedPlayer, mockCampaign);
-    expect(equippedLifestyle).toBe(14);
+    expect(equippedLifestyle).toBe(7);
 
     // Pawn the computer
     const pawnedPlayer: PlayerState = {
@@ -568,9 +570,10 @@ describe('Pawned Appliances Benefits & Invariants', () => {
       }
     };
 
-    // Housing (10) + stove (1) = 11
+    // Housing (0 above starter) + stove (1) = 1 -> round(1/57 * 100) = 2
     const pawnedLifestyle = recalculateLifestyle(pawnedPlayer, mockCampaign);
-    expect(pawnedLifestyle).toBe(11);
+    expect(pawnedLifestyle).toBe(2);
+    expect(pawnedLifestyle).toBeLessThan(equippedLifestyle);
   });
 
   it('7. Education / Studying: Computer reduces lessons required only when owned, not when pawned', () => {

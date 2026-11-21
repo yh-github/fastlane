@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ItemDef, CampaignBundle } from '../../engine/dataLoader';
-import type { GameRules, PawnedItem } from '../../engine/gameState';
+import { type GameRules, type PawnedItem, calcCurioScaledLifestyle } from '../../engine/gameState';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcUsedSpace, calcHousingSpaceCap } from '../../engine/statMath';
 import { ensurePlayerCurios, getCurioDef } from '../../engine/curioCatalog';
@@ -646,10 +646,10 @@ export function PawnShop({
             const curios = ensurePlayerCurios(player, 1);
             
             // Calculate lifestyle impacts
-            const curLifestyle = Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacksOnDisplay)));
-            const afterSell1 = knickKnacksOnDisplay > 1 ? Math.min(15, Math.floor(2.8 * Math.sqrt(Math.max(0, knickKnacksOnDisplay - 1)))) : 0;
+            const curLifestyle = calcCurioScaledLifestyle(knickKnacksOnDisplay, campaign);
+            const afterSell1 = knickKnacksOnDisplay > 1 ? calcCurioScaledLifestyle(knickKnacksOnDisplay - 1, campaign) : 0;
             const diff1 = afterSell1 - curLifestyle;
-            const afterSell5 = knickKnacksOnDisplay > 5 ? Math.min(15, Math.floor(2.8 * Math.sqrt(Math.max(0, knickKnacksOnDisplay - 5)))) : 0;
+            const afterSell5 = knickKnacksOnDisplay > 5 ? calcCurioScaledLifestyle(knickKnacksOnDisplay - 5, campaign) : 0;
             const diff5 = afterSell5 - curLifestyle;
 
             return (

@@ -736,7 +736,7 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
         maxValue: targetLifestyle,
         currentFormatted: `${Math.floor(lifestyle)}`,
         maxFormatted: `${targetLifestyle}`,
-        percentage: targetLifestyle > 0 ? Math.min(100, Math.round((lifestyle / targetLifestyle) * 100)) : 0,
+        percentage: targetLifestyle > 0 ? Math.max(0, Math.min(100, Math.round((lifestyle / targetLifestyle) * 100))) : 0,
         description: t('hudInfo.lifestyleDesc', {
           defaultValue: 'Measures your living conditions, apartment prestige, durables, and furnishings.'
         }),

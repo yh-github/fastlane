@@ -125,7 +125,7 @@ export function buildDashboardBadges(params: BuildDashboardBadgesParams): Dashbo
     totalPoints += cappedCurrent;
   }
 
-  const victoryPercent = totalGoals > 0 ? Math.floor((totalPoints / totalGoals) * 100) : 0;
+  const victoryPercent = totalGoals > 0 ? Math.max(0, Math.floor((totalPoints / totalGoals) * 100)) : 0;
 
   const displayHappiness = !rules.allowOverAchievingGoals
     ? Math.min(player.happiness, player.goalAllotment.happiness || 0)

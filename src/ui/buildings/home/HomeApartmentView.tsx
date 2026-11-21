@@ -518,6 +518,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         modalParent ? createPortal(
           <CuriosFlankingWings
             player={player}
+            campaign={campaign}
             onAction={onAction}
             onClose={() => setIsCuriosWingsOpen(false)}
             turn={turn}
@@ -527,6 +528,7 @@ export const HomeApartmentView: React.FC<HomeApartmentViewProps> = ({
         ) : (
           <CuriosFlankingWings
             player={player}
+            campaign={campaign}
             onAction={onAction}
             onClose={() => setIsCuriosWingsOpen(false)}
             turn={turn}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle, ItemDef } from '../../../engine/dataLoader';
-import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
+import { type PlayerState, type GameRules, type OwnedAppliance, calcCurioScaledLifestyle, scaleLifestylePoints } from '../../../engine/gameState';
 import type { GameAction, FastFoodEatMode } from '../../../engine/actions/types';
 import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../../../engine/actions/maintenanceActions';
 import { calcItemPrice, calcEconomyPrice } from '../../../engine/economyEngine';
@@ -387,9 +387,10 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   }
   if (isCurio) {
     if (rules?.usePhysicalMentalConditions) {
-      const curioLifestyle = Math.min(15, Math.floor(2.8 * Math.sqrt(totalCurios || 1)));
+      const curioLifestyle = calcCurioScaledLifestyle(totalCurios || 1, campaign);
+      const maxCurioLifestyle = calcCurioScaledLifestyle(29, campaign);
       effectBadges.push({ label: `🏺 Lifestyle Synergy (+${curioLifestyle})` });
-      effectBadges.push({ label: '📈 2.8 × √Count (Max +15)' });
+      effectBadges.push({ label: `📈 2.8 × √Count (Max +${maxCurioLifestyle})` });
       effectBadges.push({ label: '+1 🧠 Turn Novelty (First Curio)' });
       effectBadges.push({ label: '🎲 Weekend Appraisal (Decor/Mental/Cash)' });
     } else {
@@ -409,7 +410,11 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     : (isCoffee || itemDef?.category === 'food' || itemDef?.category === 'clothes' || itemDef?.category === 'ticket'
         ? (itemDef?.space ?? 0)
         : ((itemDef?.space && itemDef.space > 0) ? itemDef.space : (DEFAULT_APPLIANCE_SPACE[itemId] ?? (isBook ? 10 : 20))));
-  const lifestyleVal = isVcrWithoutTv ? 0 : (isCurio ? Math.min(15, Math.floor(2.8 * Math.sqrt(totalCurios))) : (itemDef?.lifestyleValue ?? 0));
+  const lifestyleVal = isVcrWithoutTv
+    ? 0
+    : (isCurio
+        ? calcCurioScaledLifestyle(totalCurios, campaign)
+        : (itemDef?.lifestyleValue ? scaleLifestylePoints(itemDef.lifestyleValue, campaign) : 0));
 
   // Explicit on_buy modifiers
   interface OnBuyModifier {
@@ -1374,7 +1379,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
                 🗑️ Throw Away 1 Curio (Frees 2 Space)
               </button>
               <div style={{ fontSize: '0.70rem', color: '#94a3b8', textAlign: 'center', lineHeight: '1.3' }}>
-                {knickKnacks > 0 && <span>• {knickKnacks} on display shelf (+{Math.min(15, Math.floor(2.8 * Math.sqrt(knickKnacks)))} Lifestyle) </span>}
+                {knickKnacks > 0 && <span>• {knickKnacks} on display shelf (+{calcCurioScaledLifestyle(knickKnacks, campaign)} Lifestyle) </span>}
                 {uninspectedKnickKnacks > 0 && <span style={{ color: '#38bdf8' }}>• {uninspectedKnickKnacks} pending weekend appraisal</span>}
               </div>
             </div>

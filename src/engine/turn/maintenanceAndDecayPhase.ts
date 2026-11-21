@@ -1,4 +1,5 @@
 import type { PlayerState, GameState, GameEvent, StatModification } from '../gameState';
+import { recalculateLifestyle } from '../synergyEngine';
 import type { CampaignBundle } from '../dataLoader';
 import type { Random } from '../../utils/rng';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
@@ -276,13 +277,15 @@ export function processAdvancedMaintenanceAndDecay(
       const outcomeRoll = resolveDecision(replay, `curio_outcome_${player.id}_turn_${state.turn}`, () => rng.next());
 
       if (outcomeRoll < 0.40) {
-        const lifestyleGain = outcomeRoll < 0.20 ? 0.5 : 1.0;
-        player.lifestyle = Math.min(100, roundToResolution((player.lifestyle || 0) + lifestyleGain, 0.1));
+        const prevLifestyle = recalculateLifestyle(player, campaign);
         player.inventory.knickKnacks = (player.inventory.knickKnacks || 0) + uninspectedCurios;
+        const nextLifestyle = recalculateLifestyle(player, campaign);
+        const lifestyleGain = Math.max(0, nextLifestyle - prevLifestyle);
+        player.lifestyle = nextLifestyle;
         player.turnEvents.push({
           key: 'events.curioDecor',
           params: { name: curio.name, lifestyle: lifestyleGain },
-          modifications: [{ stat: 'lifestyle', diff: lifestyleGain }]
+          ...(lifestyleGain > 0 ? { modifications: [{ stat: 'lifestyle', diff: lifestyleGain }] } : {})
         });
       } else if (outcomeRoll < 0.80) {
         const mentalGain = outcomeRoll < 0.60 ? 1 : 2;
