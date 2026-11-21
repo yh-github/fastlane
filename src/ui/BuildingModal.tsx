@@ -38,6 +38,7 @@ import { useDraggableModal } from './hooks/useDraggableModal';
 import { calcEffectiveRobberyChance, formatHours, roundToResolution } from '../engine/statMath';
 import { isAdvancedStatRules } from '../engine/rules';
 import { isRentOfficeOpen as isRentOfficeOpenRule, playerLivesAt } from '../engine/buildingRules';
+import { getParkWorkoutBaseline, getParkEncounterOdds } from '../engine/actions/parkActions';
 
 interface BuildingModalProps {
   player: PlayerState | null;
@@ -249,8 +250,8 @@ export function BuildingModal({
     const checkOverflow = () => {
       if (!contentRef.current) return;
       const el = contentRef.current;
-      const isSmallViewport = typeof window !== 'undefined' && (window.innerHeight <= 720 || window.innerWidth <= 900 || measuredRect.height < 450);
-      if (isSmallViewport) {
+      const isTinyScreen = typeof window !== 'undefined' && (window.innerHeight <= 540 || window.innerWidth <= 560);
+      if (isTinyScreen) {
         setIsContentOverflowing(true);
         return;
       }
@@ -443,7 +444,9 @@ export function BuildingModal({
             const baseHours = 2;
             const actualHours = allowPartial ? Math.min(baseHours, player.hoursRemaining) : baseHours;
             const ratio = allowPartial && baseHours > 0 ? actualHours / baseHours : 1;
-            const costDisplay = Math.round(8 * ratio);
+            const costDisplay = (allowPartial && actualHours < baseHours && actualHours > 0)
+              ? Math.max(1, Math.round(8 * ratio))
+              : 8;
             const hoursLabel = `${formatHours(actualHours > 0 ? actualHours : baseHours)}h`;
 
             const mentalGain = roundToResolution((plays === 0 ? 2 : plays === 1 ? 1 : 0) * ratio, conditionRes);
@@ -459,47 +462,50 @@ export function BuildingModal({
                 );
               } else if (plays === 1) {
                 benefitDisplay = (
-                  <span style={{ color: '#f59e0b' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • +{mentalGain} 🧠 • -{physPenalty} 💪 (Repeat fatigue)</span>
+                  <span style={{ color: '#f59e0b' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • +{mentalGain} 🧠 • -{physPenalty} 💪 • 🕹️ Bonus Card (Repeat fatigue)</span>
                 );
               } else {
                 benefitDisplay = (
-                  <span style={{ color: '#f87171' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • 0 🧠 • -{physPenalty} 💪 (Overplayed)</span>
+                  <span style={{ color: '#f59e0b' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • 0 🧠 • -{physPenalty} 💪 • 🕹️ Bonus Card (Fatigued)</span>
                 );
               }
             } else {
               if (plays === 0) {
                 benefitDisplay = <span>⏳ -{hoursLabel} • 💰 -${costDisplay} • +{happyGain} 😊 • 🕹️ Bonus Card</span>;
               } else {
-                benefitDisplay = <span style={{ color: '#f87171' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • 0 😊 (Bored)</span>;
+                benefitDisplay = <span style={{ color: '#f59e0b' }}>⏳ -{hoursLabel} • 💰 -${costDisplay} • 0 😊 • 🕹️ Bonus Card (Repeat)</span>;
               }
             }
 
             const notEnoughHours = allowPartial ? player.hoursRemaining <= 0 : player.hoursRemaining < baseHours;
+            const notEnoughMoney = player.money < costDisplay;
 
             return (
               <div 
                 className="arcade-corner"
                 style={{ 
                   marginBottom: isContentOverflowing ? '6px' : '10px', 
-                  padding: isContentOverflowing ? '6px 10px' : '8px 12px', 
+                  padding: isContentOverflowing ? '6px 10px' : '10px 14px', 
                   background: 'rgba(245, 158, 11, 0.12)', 
                   border: '1px solid rgba(245, 158, 11, 0.4)', 
                   borderRadius: '6px', 
                   display: 'flex', 
+                  flexWrap: 'wrap',
                   justifyContent: 'space-between', 
                   alignItems: 'center', 
                   gap: '8px',
                   flexShrink: 0
                 }}
               >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-color, #222)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>🕹️ {t('arcade.title', { defaultValue: 'Pirate Arcade Corner' })}</div>
-                  <div style={{ fontSize: '11px', opacity: 0.85, marginTop: '2px' }}>{benefitDisplay}</div>
+                <div style={{ minWidth: 0, flex: '1 1 220px' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px', color: 'var(--text-color, #e0e0ff)', lineHeight: 1.25 }}>🕹️ {t('arcade.title', { defaultValue: 'Pirate Arcade Corner' })}</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9, marginTop: '2px', lineHeight: 1.3 }}>{benefitDisplay}</div>
                 </div>
                 <button
                   type="button"
                   className="game-button btn-secondary"
-                  disabled={notEnoughHours || player.money < costDisplay}
+                  disabled={notEnoughHours || notEnoughMoney}
+                  title={notEnoughHours ? 'Not enough hours remaining' : notEnoughMoney ? `Needs $${costDisplay}` : '80% Pick 1 of 2 Arcade Cards • 20% Mild Glitch'}
                   onClick={() => handleActionIntercept({ type: 'play_arcade' })}
                   style={{ whiteSpace: 'nowrap', padding: '6px 12px', flexShrink: 0 }}
                 >
@@ -611,8 +617,15 @@ export function BuildingModal({
                 const isPartial = allowPartialPark && actualHours < 3;
                 const hoursLabel = `⏳ -${formatHours(actualHours > 0 ? actualHours : 3)}h`;
                 const isRelaxDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3);
-                const isWorkoutDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3) || (rules?.usePhysicalMentalConditions && (player.physicalCondition ?? 50) < 15);
+                const curPhys = player.physicalCondition ?? 50;
+                const curMental = player.mentalCondition ?? 50;
+                const isWorkoutExhausted = Boolean(rules?.usePhysicalMentalConditions && curPhys < 15);
+                const isWorkoutDisabled = player.hoursRemaining <= 0 || (!allowPartialPark && player.hoursRemaining < 3) || isWorkoutExhausted;
+                const workoutStrainChance = (rules?.usePhysicalMentalConditions && !isWorkoutExhausted && (curPhys < 20 || curMental < 20))
+                  ? Math.min(0.60, Math.max(0, (20 - curPhys) * 0.05) + Math.max(0, (20 - curMental) * 0.05))
+                  : 0;
                 const isEncounterPark = Boolean(rules?.enableParkSystem ?? rules?.usePhysicalMentalConditions);
+                const parkOdds = getParkEncounterOdds(player, rules);
                 const conditionRes = rules?.conditionResolution ?? 0.5;
 
                 const relaxesThisTurn = player.turnFlags?.parkRelaxesThisTurn || 0;
@@ -640,34 +653,24 @@ export function BuildingModal({
 
                 let workoutStatSummary = '';
                 if (rules?.usePhysicalMentalConditions) {
-                  if (workoutsThisTurn > 0) {
-                    let pCost = 2;
-                    let mCost = 1;
-                    if (isPartial) {
-                      pCost = Math.max(conditionRes, roundToResolution(pCost * ratio, conditionRes));
-                      mCost = Math.max(conditionRes, roundToResolution(mCost * ratio, conditionRes));
-                    }
-                    workoutStatSummary = `-${pCost} 💪 • -${mCost} 🧠`;
-                  } else {
-                    const rawMaxB = isPartial ? roundToResolution(1 * ratio, conditionRes) : 1;
-                    const globalMaxPhys = isAdvancedStatRules(campaign?.config?.statRules)
-                      ? campaign.config.statRules.globalMaxPhysicalCondition
-                      : undefined;
-                    const maxB = (player.physicalConditionMax !== undefined && globalMaxPhys !== undefined)
-                      ? Math.min(Math.max(0, roundToResolution(globalMaxPhys - player.physicalConditionMax, conditionRes)), rawMaxB)
-                      : rawMaxB;
-                    let pCost = 1;
-                    let mGain = 1;
-                    if (isPartial) {
-                      pCost = Math.max(conditionRes, roundToResolution(pCost * ratio, conditionRes));
-                      mGain = Math.max(conditionRes, roundToResolution(mGain * ratio, conditionRes));
-                    }
-                    const maxPart = maxB > 0 ? `+${maxB} Max 💪 • ` : '';
-                    workoutStatSummary = `${maxPart}-${pCost} 💪 • +${mGain} 🧠`;
-                  }
+                  const statRulesObj = isAdvancedStatRules(campaign?.config?.statRules)
+                    ? campaign.config.statRules
+                    : undefined;
+                  const baseline = getParkWorkoutBaseline(
+                    player,
+                    rules,
+                    statRulesObj,
+                    actualHours > 0 ? actualHours : 3,
+                    3
+                  );
+                  const maxPart = baseline.maxPhysGain > 0 ? `+${baseline.maxPhysGain} Max 💪 • ` : '';
+                  const mentalPart = baseline.mentalDelta > 0
+                    ? ` • +${baseline.mentalDelta} 🧠`
+                    : (baseline.mentalDelta < 0 ? ` • ${baseline.mentalDelta} 🧠` : '');
+                  workoutStatSummary = `${maxPart}-${baseline.physCost} 💪${mentalPart}`;
                 } else {
                   if (workoutsThisTurn > 0) {
-                    let rCost = 1;
+                    let rCost = workoutsThisTurn;
                     if (isPartial) rCost = Math.max(0.5, roundToResolution(rCost * ratio, 0.5));
                     workoutStatSummary = `-${rCost} 🛌`;
                   } else {
@@ -701,6 +704,11 @@ export function BuildingModal({
                             ? `${hoursLabel} • ${relaxStatSummary} • 🎴 1 Event Card${isPartial ? ` (${Math.round(ratio * 100)}%)` : ''}`
                             : `${hoursLabel} • ${relaxStatSummary}`}
                         </span>
+                        {isEncounterPark && parkOdds.outfitMuggingChance > 0 && (
+                          <span style={{ fontSize: '11px', color: '#f87171', fontWeight: 'bold' }}>
+                            🦹 +{Math.round(parkOdds.outfitMuggingChance * 100)}% Mugging Risk ({parkOdds.outfitTier === 'business' ? 'Business Suit' : 'Dress Clothes'})
+                          </span>
+                        )}
                       </button>
                       {isEncounterPark && (
                         <button
@@ -740,20 +748,40 @@ export function BuildingModal({
                         className="game-button btn-secondary"
                         disabled={isWorkoutDisabled}
                         onClick={() => handleActionIntercept({ type: 'workout_park' })}
-                        title={isEncounterPark
-                          ? t('park.workoutEncounterDesc', `Fitness & cardiovascular conditioning (${hoursLabel} • ${workoutStatSummary} • 🎴 1 Event Card)`)
-                          : t('park.workoutDesc', `Fitness workout (${hoursLabel} • ${workoutStatSummary})`)}
+                        title={isWorkoutExhausted
+                          ? 'Too physically exhausted to work out (Requires ≥15 💪)'
+                          : isEncounterPark
+                            ? t('park.workoutEncounterDesc', `Fitness & cardiovascular conditioning (${hoursLabel} • ${workoutStatSummary} • 🎴 1 Event Card)`)
+                            : t('park.workoutDesc', `Fitness workout (${hoursLabel} • ${workoutStatSummary})`)}
                         style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '12px 8px' }}
                       >
                         <span style={{ fontSize: '20px' }}>🏃</span>
                         <strong>{t('park.workout', 'Workout in Park')}</strong>
                         <span style={{ fontSize: '11px', opacity: 0.85 }}>
                           {isEncounterPark
-                            ? (workoutsThisTurn > 0
-                                ? `${hoursLabel} • ${workoutStatSummary} (Overtraining)`
-                                : `${hoursLabel} • ${workoutStatSummary} • 🎴 1 Event Card${isPartial ? ` (${Math.round(ratio * 100)}%)` : ''}`)
+                            ? `${hoursLabel} • ${workoutStatSummary} • 🎴 1 Event Card${isPartial ? ` (${Math.round(ratio * 100)}%)` : ''}`
                             : `${hoursLabel} • ${workoutStatSummary}`}
                         </span>
+                        {workoutsThisTurn > 0 && (
+                          <span style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>
+                            ⚠️ Overtraining #{workoutsThisTurn + 1} (+{workoutsThisTurn} 💪/🧠 strain)
+                          </span>
+                        )}
+                        {isEncounterPark && parkOdds.outfitMuggingChance > 0 && (
+                          <span style={{ fontSize: '11px', color: '#f87171', fontWeight: 'bold' }}>
+                            🦹 +{Math.round(parkOdds.outfitMuggingChance * 100)}% Mugging Risk ({parkOdds.outfitTier === 'business' ? 'Business Suit' : 'Dress Clothes'})
+                          </span>
+                        )}
+                        {isWorkoutExhausted && (
+                          <span style={{ fontSize: '11px', color: '#f87171', fontWeight: 'bold' }}>
+                            🚫 Needs ≥15 💪 Physical
+                          </span>
+                        )}
+                        {workoutStrainChance > 0 && (
+                          <span style={{ fontSize: '11px', color: '#f87171', fontWeight: 'bold' }}>
+                            🩹 {Math.round(workoutStrainChance * 100)}% Strain Risk (-2 💪, no card)
+                          </span>
+                        )}
                       </button>
                       {isEncounterPark && (
                         <button

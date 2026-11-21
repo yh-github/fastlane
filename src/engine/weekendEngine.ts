@@ -8,7 +8,13 @@ import { roundToResolution, hasHighCoffeeIntake } from './statMath';
 import { resolveDecision, type ReplayContext } from './replayTypes';
 
 // Helper to determine cost based on price range
-function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney: number, rng: Random): number {
+function getWeekendCost(
+  priceType: 'cheap' | 'medium' | 'expensive',
+  playerMoney: number,
+  rng: Random,
+  replay?: ReplayContext,
+  playerId: string = 'player'
+): number {
   let min = 0;
   let max = 0;
   switch (priceType) {
@@ -16,7 +22,9 @@ function getWeekendCost(priceType: 'cheap' | 'medium' | 'expensive', playerMoney
     case 'medium': min = 15; max = 55; break;
     case 'expensive': min = 50; max = 100; break;
   }
-  const cost = Math.floor(rng.next() * (max - min + 1)) + min;
+  const cost = resolveDecision(replay, `weekend_classic_cost_${playerId}`, () =>
+    Math.floor(rng.next() * (max - min + 1)) + min
+  );
   return Math.min(cost, playerMoney);
 }
 
@@ -100,7 +108,12 @@ export function initPlayerWeekendDecks(player: PlayerState, weekendData: Weekend
   };
 }
 
-export function addApplianceCardToDeck(player: PlayerState, applianceId: string, rng?: Random): PlayerState {
+export function addApplianceCardToDeck(
+  player: PlayerState,
+  applianceId: string,
+  rng?: Random,
+  replay?: ReplayContext
+): PlayerState {
   if (!player.weekendDecks) return player;
   const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
   const hasTv = player.inventory?.appliances?.some(a => isAnyTv(a.id) && !a.isBroken);
@@ -112,7 +125,9 @@ export function addApplianceCardToDeck(player: PlayerState, applianceId: string,
   const cheap = { ...currentDecks.cheap };
   if (!cheap.drawPile.includes(cardId) && !cheap.discardPile.includes(cardId)) {
     const newDraw = [...cheap.drawPile, cardId];
-    cheap.drawPile = rng ? rng.shuffle(newDraw) : newDraw;
+    cheap.drawPile = rng
+      ? resolveDecision(replay, `weekend_add_durable_${player.id}_${applianceId}`, () => rng.shuffle(newDraw))
+      : newDraw;
     currentDecks.cheap = cheap;
   }
 
@@ -124,7 +139,9 @@ export function addApplianceCardToDeck(player: PlayerState, applianceId: string,
       const cheap2 = { ...currentDecks.cheap };
       if (!cheap2.drawPile.includes(vcrCardId) && !cheap2.discardPile.includes(vcrCardId)) {
         const newDraw2 = [...cheap2.drawPile, vcrCardId];
-        cheap2.drawPile = rng ? rng.shuffle(newDraw2) : newDraw2;
+        cheap2.drawPile = rng
+          ? resolveDecision(replay, `weekend_add_durable_${player.id}_vcr`, () => rng.shuffle(newDraw2))
+          : newDraw2;
         currentDecks.cheap = cheap2;
       }
     }
@@ -961,7 +978,8 @@ export function processWeekend(
   weekendData: WeekendDef,
   rng: Random,
   rules?: import('./gameState').GameRules,
-  campaign?: import('./dataLoader').CampaignBundle
+  campaign?: import('./dataLoader').CampaignBundle,
+  replay?: ReplayContext
 ): PlayerState {
   let newPlayer: PlayerState = { ...player, inventory: { ...player.inventory, tickets: { ...player.inventory.tickets } } };
   
@@ -985,62 +1003,77 @@ export function processWeekend(
     newPlayer.inventory.tickets.concert--;
     priceType = 'medium';
   } 
-  // 2. Durables
+  // 2. Durables & 3. Random Weekends
   else {
-    let triggeredDurableWeekend = false;
-    const shuffledAppliances = rng.shuffle(newPlayer.inventory.appliances);
-    
-    for (const app of shuffledAppliances) {
-      if (app.isBroken) continue;
-      if (app.id === 'vcr') {
-        const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
-        const hasTv = newPlayer.inventory.appliances.some(a => isAnyTv(a.id) && !a.isBroken);
-        if (!hasTv) continue;
-      }
-      if (weekendData.durableWeekends[app.id]) {
-        if (rng.next() < 0.20) {
-          const candidateEvent = { key: `events.weekend.durable_${app.id}` };
-          if (!previousPlayerWeekends.includes(candidateEvent.key)) {
-            weekendEvent = candidateEvent;
-            priceType = 'cheap';
-            triggeredDurableWeekend = true;
-            break;
+    const decision = resolveDecision(replay, `weekend_classic_event_${player.id}`, () => {
+      let selectedEvent: GameEvent | null = null;
+      let selectedPriceType: 'cheap' | 'medium' | 'expensive' = 'cheap';
+      let selectedBonus: number | undefined = undefined;
+
+      let triggeredDurableWeekend = false;
+      const shuffledAppliances = rng.shuffle(newPlayer.inventory.appliances);
+      
+      for (const app of shuffledAppliances) {
+        if (app.isBroken) continue;
+        if (app.id === 'vcr') {
+          const isAnyTv = (id: string) => id === 'color_tv' || id === 'bw_tv' || id === 'crt_tv' || id === 'plasma_tv';
+          const hasTv = newPlayer.inventory.appliances.some(a => isAnyTv(a.id) && !a.isBroken);
+          if (!hasTv) continue;
+        }
+        if (weekendData.durableWeekends[app.id]) {
+          if (rng.next() < 0.20) {
+            const candidateEvent = { key: `events.weekend.durable_${app.id}` };
+            if (!previousPlayerWeekends.includes(candidateEvent.key)) {
+              selectedEvent = candidateEvent;
+              selectedPriceType = 'cheap';
+              triggeredDurableWeekend = true;
+              break;
+            }
           }
         }
       }
-    }
 
-    // 3. Random Weekends
-    if (!triggeredDurableWeekend) {
-      let chosenIndex = -1;
-      let attempts = 0;
-      while (attempts < 100) {
-        const count = weekendData?.randomWeekends?.length || 0;
-        chosenIndex = Math.floor(rng.next() * count);
-        const candidateKey = `events.weekend.random_${chosenIndex}`;
-        if (!previousPlayerWeekends.includes(candidateKey)) {
-          break;
+      if (!triggeredDurableWeekend) {
+        let chosenIndex = -1;
+        let attempts = 0;
+        while (attempts < 100) {
+          const count = weekendData?.randomWeekends?.length || 0;
+          chosenIndex = Math.floor(rng.next() * count);
+          const candidateKey = `events.weekend.random_${chosenIndex}`;
+          if (!previousPlayerWeekends.includes(candidateKey)) {
+            break;
+          }
+          attempts++;
         }
-        attempts++;
-      }
-      
-      weekendEvent = { key: `events.weekend.random_${chosenIndex}` };
-      
-      if (chosenIndex < 28) {
-        priceType = 'cheap';
-      } else if (chosenIndex < 35) {
-        priceType = 'medium';
-      } else {
-        priceType = turnNumber >= 8 ? 'expensive' : 'medium';
+        
+        selectedEvent = { key: `events.weekend.random_${chosenIndex}` };
+        
+        if (chosenIndex < 28) {
+          selectedPriceType = 'cheap';
+        } else if (chosenIndex < 35) {
+          selectedPriceType = 'medium';
+        } else {
+          selectedPriceType = turnNumber >= 8 ? 'expensive' : 'medium';
+        }
+
+        if (chosenIndex === 41) {
+          selectedBonus = Math.floor(rng.next() * 3) + 2;
+        }
       }
 
-      if (chosenIndex === 41) {
-        happinessBonus = Math.floor(rng.next() * 3) + 2;
-      }
-    }
+      return {
+        weekendEvent: selectedEvent!,
+        priceType: selectedPriceType,
+        happinessBonus: selectedBonus
+      };
+    });
+
+    weekendEvent = decision.weekendEvent;
+    priceType = decision.priceType;
+    happinessBonus = decision.happinessBonus;
   }
 
-  const cost = getWeekendCost(priceType, newPlayer.money, rng);
+  const cost = getWeekendCost(priceType, newPlayer.money, rng, replay, player.id);
   newPlayer.money -= cost;
   
   if (happinessBonus !== undefined) {

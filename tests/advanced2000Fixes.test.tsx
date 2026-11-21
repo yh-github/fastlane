@@ -231,22 +231,38 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     const r1Resolved = gameReducer(r1.updatedPlayer, { type: 'resolve_mini_game', choiceIndex: 0 }, { ...setupContext(r1.updatedPlayer), turn: 1 });
     expect(r1Resolved.updatedPlayer.pendingMiniGame).toBeNull();
 
-    // Play 2: +1 Mental, -0.5 Physical, 0 Social
+    // Play 2: +1 Mental, -0.5 Physical, 0 Social, and STILL draws encounter cards
     const afterP1Money = r1Resolved.updatedPlayer.money;
     const afterP1Mental = r1Resolved.updatedPlayer.mentalCondition;
     const afterP1Phys = r1Resolved.updatedPlayer.physicalCondition;
-    const r2 = gameReducer(r1Resolved.updatedPlayer, { type: 'play_arcade' }, setupContext(r1Resolved.updatedPlayer));
+    const noGlitchRng = { next: () => 0.5, nextInt: () => 0, getState: () => 1, setState: () => {} } as any;
+    const r2 = gameReducer(r1Resolved.updatedPlayer, { type: 'play_arcade' }, {
+      ...setupContext(r1Resolved.updatedPlayer),
+      rng: noGlitchRng,
+      engineDecisions: [{ type: 'arcade_glitch_p1_1_1', result: false }],
+    });
     expect(r2.updatedPlayer.hoursRemaining).toBe(16);
     expect(r2.updatedPlayer.money).toBe(afterP1Money - 8);
     expect(r2.updatedPlayer.mentalCondition).toBe(afterP1Mental + 1);
     expect(r2.updatedPlayer.physicalCondition).toBe(afterP1Phys - 0.5);
+    expect(r2.updatedPlayer.pendingMiniGame?.options).toHaveLength(2);
+    expect(r2.updatedPlayer.pendingMiniGame?.options[0].type).toBe('arcade_encounter');
 
-    // Play 3+: 0 Mental, -1 Physical
-    const r3 = gameReducer(r2.updatedPlayer, { type: 'play_arcade' }, setupContext(r2.updatedPlayer));
+    const r2Resolved = gameReducer(r2.updatedPlayer, { type: 'resolve_mini_game', choiceIndex: 0 }, { ...setupContext(r2.updatedPlayer), turn: 1 });
+    expect(r2Resolved.updatedPlayer.pendingMiniGame).toBeNull();
+
+    // Play 3+: 0 Mental, -1 Physical, and STILL draws encounter cards
+    const r3 = gameReducer(r2Resolved.updatedPlayer, { type: 'play_arcade' }, {
+      ...setupContext(r2Resolved.updatedPlayer),
+      rng: noGlitchRng,
+      engineDecisions: [{ type: 'arcade_glitch_p1_1_2', result: false }],
+    });
     expect(r3.updatedPlayer.hoursRemaining).toBe(14);
-    expect(r3.updatedPlayer.money).toBe(afterP1Money - 16);
-    expect(r3.updatedPlayer.physicalCondition).toBe(afterP1Phys - 1.5);
-    expect(r3.updatedPlayer.mentalCondition).toBe(afterP1Mental + 1);
+    expect(r3.updatedPlayer.money).toBe(r2Resolved.updatedPlayer.money - 8);
+    expect(r3.updatedPlayer.physicalCondition).toBe(r2Resolved.updatedPlayer.physicalCondition - 1);
+    expect(r3.updatedPlayer.mentalCondition).toBe(r2Resolved.updatedPlayer.mentalCondition);
+    expect(r3.updatedPlayer.pendingMiniGame?.options).toHaveLength(2);
+    expect(r3.updatedPlayer.pendingMiniGame?.options[0].type).toBe('arcade_encounter');
 
     // Check UI uses standard icons and dynamic feedback
     render(
@@ -265,6 +281,16 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     // Check standard icons on arcade corner: ⏳ -2h • 💰 -$8 • +2 🧠 • +1 👥 • 🕹️ Bonus Card
     expect(screen.getByText(/⏳ -2h • 💰 -\$8 • \+2 🧠 • \+1 👥 • 🕹️ Bonus Card/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Play Arcade \(💰 \$8\)/i })).toBeInTheDocument();
+
+    // On large screen without content overflow, Red Pirate is NOT forced into compact mode and menu items have no ellipsis
+    window.innerWidth = 1440;
+    window.innerHeight = 900;
+    const pirateModal = document.querySelector('.building-modal');
+    expect(pirateModal).not.toHaveClass('building-modal--compact');
+    const stewLabel = screen.getByText(/Buccaneer Grog Stew & Biscuit/i);
+    expect(stewLabel.style.textOverflow).not.toBe('ellipsis');
+    const arcadeHeader = screen.getByText(/Pirate Arcade Corner/i);
+    expect(arcadeHeader.style.textOverflow).not.toBe('ellipsis');
   });
 
   // 6. Monolith Burger items removed from Red Pirate
@@ -337,7 +363,7 @@ describe('Advanced 2000 Targeted Fixes Verification', () => {
     expect(screen.getByText('Workout in Park')).toBeInTheDocument();
     expect(screen.getByTestId('park-help-workout')).toBeInTheDocument();
     expect(screen.getByText(/⏳ -3h • \+3 💪 • \+3 🧠 • 🎴 1 Event Card/i)).toBeInTheDocument();
-    expect(screen.getByText(/⏳ -3h • \+1 Max 💪 • -1 💪 • \+1 🧠 • 🎴 1 Event Card/i)).toBeInTheDocument();
+    expect(screen.getByText(/⏳ -3h • \+1 Max 💪 • -1 💪 • \+2 🧠 • 🎴 1 Event Card/i)).toBeInTheDocument();
   });
 
   // Coffee card & no "Nutrition happiness"

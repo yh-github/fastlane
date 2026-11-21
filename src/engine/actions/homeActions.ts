@@ -151,7 +151,8 @@ export function handleRelaxAction(
 export function handleCleanAction(
   player: PlayerState,
   _action: { type: 'clean' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
@@ -194,9 +195,15 @@ export function handleCleanAction(
   }
   if (context.rules.trackMess) {
     const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
-    const d3_1 = context.rng.nextInt(1, 3);
-    const d3_2 = context.rng.nextInt(1, 3);
-    const rawReduction = d3_1 + d3_2;
+    const effectiveReplay: ReplayContext = replayContext ?? {
+      inDecisions: context.engineDecisions || [],
+      outDecisions: []
+    };
+    const rawReduction = resolveDecision(
+      effectiveReplay,
+      `clean_mess_roll_${nextPlayer.id}`,
+      () => context.rng.nextInt(1, 3) + context.rng.nextInt(1, 3)
+    );
     const reduction = (context.rules.proportionalDivisibleActions && actualHours < 3)
       ? Math.max(1, Math.round(rawReduction * ratio))
       : rawReduction;

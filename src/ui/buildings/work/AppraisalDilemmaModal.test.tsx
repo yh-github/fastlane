@@ -378,4 +378,52 @@ describe('AppraisalDilemmaModal', () => {
 
     vi.useRealTimers();
   });
+
+  it('formats negative cashAmount as -$2 (not +$-2) and uses Arcade title/subtitle for single-card Arcade Glitch', () => {
+    window.innerWidth = 1440;
+    window.innerHeight = 900;
+
+    const onSelectOption = vi.fn();
+    const glitchDilemma = {
+      gameType: 'arcade_encounter' as const,
+      title: '👾 Arcade Glitch!',
+      subtitle: 'A cabinet hiccupped near the end of your run:',
+      options: [
+        {
+          type: 'arcade_encounter' as const,
+          cardId: 'arcade_coin_jam',
+          title: 'Sticky Coin Mech & Tilt',
+          description: 'The cabinet eats two extra tokens and resets your run on the last boss.',
+          badge: 'Glitch',
+          icon: '👾',
+          cashAmount: -2,
+          mentalAmount: -0.5
+        }
+      ]
+    };
+
+    render(
+      <AppraisalDilemmaModal
+        dilemma={glitchDilemma}
+        player={createTestPlayer({ name: 'Clara' })}
+        onSelectOption={onSelectOption}
+      />
+    );
+
+    // Title must NOT say "Appraisal Dilemma" or "A customer brought in:"
+    expect(screen.getByText('👾 Arcade Glitch!')).toBeInTheDocument();
+    expect(screen.getByText('A cabinet hiccupped near the end of your run:')).toBeInTheDocument();
+    expect(screen.queryByText(/Appraisal Dilemma/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/A customer brought in/i)).not.toBeInTheDocument();
+
+    // Cash loss must display as -$2, NEVER +$-2
+    expect(screen.getByText('-$2')).toBeInTheDocument();
+    expect(screen.queryByText(/\+\$-2/)).not.toBeInTheDocument();
+    expect(screen.getByText('-0.5 🧠')).toBeInTheDocument();
+
+    // Single-card button shows Acknowledge instead of Select
+    const ackBtn = screen.getByRole('button', { name: 'Acknowledge' });
+    fireEvent.click(ackBtn);
+    expect(onSelectOption).toHaveBeenCalledWith(0);
+  });
 });

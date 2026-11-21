@@ -441,9 +441,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                 fontSize: '0.78rem',
                 fontWeight: 'bold',
                 color: '#fff',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
+                lineHeight: 1.2
               }}>
                 {t(`job.${job.id}`, { defaultValue: job.title })}
               </span>
@@ -584,9 +582,7 @@ export const WorkConsolePopup: React.FC<WorkConsolePopupProps> = ({
                     fontSize: '0.68rem',
                     fontWeight: isSelected ? 'bold' : 'normal',
                     color: isSelected ? '#fff' : '#cbd5e1',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
+                    whiteSpace: 'nowrap'
                   }}>
                     {meta.shortName}
                   </span>

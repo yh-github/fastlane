@@ -162,7 +162,7 @@ describe('Park System Enhancements (Advanced 2000)', () => {
       expect(screen.getByText(/Low condition risk/i)).toBeInTheDocument();
     });
 
-    it('indicates overtraining warning if player already worked out this turn', () => {
+    it('indicates overtraining warning and escalating costs if player already worked out this turn', () => {
       const overtrainedPlayer = getMockPlayer();
       overtrainedPlayer.turnFlags = {
         ...overtrainedPlayer.turnFlags,
@@ -173,12 +173,105 @@ describe('Park System Enhancements (Advanced 2000)', () => {
         <ParkAssessmentModal
           mode="workout"
           player={overtrainedPlayer}
+          campaign={campaign2000}
           rules={campaign2000.config.gameRules}
           onClose={vi.fn()}
         />
       );
 
       expect(screen.getByText(/Overtraining Notice:/i)).toBeInTheDocument();
+      expect(screen.getByText(/increase Physical and Mental costs by \+1 per session/i)).toBeInTheDocument();
+      expect(screen.getByText(/still draw an Event Card/i)).toBeInTheDocument();
+      expect(screen.getByText(/^\+1 Max 💪$/)).toBeInTheDocument();
+      expect(screen.getByText(/-2 💪 Physical/)).toBeInTheDocument();
+      expect(screen.getByText(/-1 🧠 Mental/)).toBeInTheDocument();
+    });
+
+    it('adjusts ParkAssessmentModal odds and shows outfit mugging preview for Dress (+5%) and Business (+10%) clothes', () => {
+      const dressPlayer = getMockPlayer();
+      dressPlayer.inventory.selectedClothes = 'dress';
+
+      const { rerender } = render(
+        <ParkAssessmentModal
+          mode="relax"
+          player={dressPlayer}
+          campaign={campaign2000}
+          rules={campaign2000.config.gameRules}
+          onClose={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText('70%')).toBeInTheDocument();
+      expect(screen.getByText('25%')).toBeInTheDocument();
+      expect(screen.getByTestId('park-outfit-mugging-odds')).toHaveTextContent('+5%');
+      expect(screen.getByTestId('park-outfit-mugging-odds')).toHaveTextContent('Dress Clothes');
+
+      fireEvent.click(screen.getByTestId('park-help-tab-hazards'));
+      expect(screen.getByTestId('park-outfit-mugging-preview')).toHaveTextContent('Flashy Target');
+      expect(screen.getByTestId('park-outfit-mugging-preview')).toHaveTextContent('$37 cash');
+
+      const bizPlayer = getMockPlayer();
+      bizPlayer.inventory.selectedClothes = 'business';
+      rerender(
+        <ParkAssessmentModal
+          mode="workout"
+          player={bizPlayer}
+          campaign={campaign2000}
+          rules={campaign2000.config.gameRules}
+          onClose={vi.fn()}
+        />
+      );
+      fireEvent.click(screen.getByTestId('park-help-tab-overview'));
+      expect(screen.getByText('65%')).toBeInTheDocument();
+      expect(screen.getByTestId('park-outfit-mugging-odds')).toHaveTextContent('+10%');
+      expect(screen.getByTestId('park-outfit-mugging-odds')).toHaveTextContent('Business Suit');
+    });
+
+    it('shows informed warnings on Park Workout button for escalating overtraining, outfit mugging, strain risk, and physical exhaustion', () => {
+      const player = createPlayerState(
+        'p1',
+        'Alex',
+        false,
+        createDefaultGoalAllotment(),
+        'node_park_campus',
+        campaign2000.config
+      );
+      player.physicalCondition = 18;
+      player.mentalCondition = 18;
+      player.inventory.selectedClothes = 'business';
+      player.turnFlags = { ...player.turnFlags, parkWorkoutsThisTurn: 1 };
+
+      const { rerender } = render(
+        <BuildingModal
+          player={player}
+          campaign={campaign2000}
+          currentBuildingId="campus_park"
+          turn={1}
+          rules={campaign2000.config.gameRules}
+          onAction={vi.fn().mockResolvedValue({})}
+          onClose={vi.fn()}
+        />
+      );
+
+      // Overtraining shows session #2 escalation, +10% Business Suit mugging risk, and 20% strain risk
+      expect(screen.getByText(/Overtraining #2 \(\+1 💪\/🧠 strain\)/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/\+10% Mugging Risk \(Business Suit\)/i).length).toBe(2);
+      expect(screen.getByText(/20% Strain Risk/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/🎴 1 Event Card/i).length).toBe(2);
+
+      // When physical < 15, clearly informs player why workout is disabled
+      rerender(
+        <BuildingModal
+          player={{ ...player, physicalCondition: 12 }}
+          campaign={campaign2000}
+          currentBuildingId="campus_park"
+          turn={1}
+          rules={campaign2000.config.gameRules}
+          onAction={vi.fn().mockResolvedValue({})}
+          onClose={vi.fn()}
+        />
+      );
+      expect(screen.getByText(/Needs ≥15 💪 Physical/i)).toBeInTheDocument();
     });
   });
 
@@ -507,10 +600,10 @@ describe('Park System Enhancements (Advanced 2000)', () => {
       };
 
       const res = handleWorkoutParkAction(player, { type: 'workout_park' }, context);
-      // Baseline workout: +1 Max Phys, -1 Phys, +1 Mental
+      // Baseline first workout: +1 Max Phys, -1 Phys, +2 Mental (on-first bonus)
       expect(res.nextPlayer.physicalConditionMax).toBe(51);
       expect(res.nextPlayer.physicalCondition).toBe(29);
-      expect(res.nextPlayer.mentalCondition).toBe(31);
+      expect(res.nextPlayer.mentalCondition).toBe(32);
       expect(res.nextPlayer.hoursRemaining).toBe(17);
       expect(res.nextPlayer.pendingMiniGame).toBeDefined();
     });

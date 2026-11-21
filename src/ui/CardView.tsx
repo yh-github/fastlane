@@ -233,12 +233,7 @@ export const CardView = React.forwardRef<HTMLDivElement, CardViewProps>(({
         textAlign: 'center',
         margin: compact ? '0 0 4px' : '0 0 8px',
         padding: '0 2px',
-        flex: 1,
-        display: '-webkit-box',
-        WebkitLineClamp: compact ? 2 : 4,
-        WebkitBoxOrient: 'vertical',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis'
+        flex: 1
       }}>
         {description}
       </p>

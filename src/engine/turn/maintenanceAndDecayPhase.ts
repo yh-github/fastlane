@@ -160,7 +160,7 @@ export function processBaseMaintenanceAndDecay(
   }
 
   // 4. Classic Weekend
-  player = processWeekend(player, state.turn, previousPlayerWeekends, campaign.weekends, rng, state.rules, campaign);
+  player = processWeekend(player, state.turn, previousPlayerWeekends, campaign.weekends, rng, state.rules, campaign, replay);
   if (player.weekendResult) {
     previousPlayerWeekends.push(player.weekendResult.event.key);
   }
@@ -252,7 +252,7 @@ export function processAdvancedMaintenanceAndDecay(
       player.weekendResult = undefined;
     }
   } else {
-    player = processWeekend(player, state.turn, previousPlayerWeekends, campaign.weekends, rng, state.rules, campaign);
+    player = processWeekend(player, state.turn, previousPlayerWeekends, campaign.weekends, rng, state.rules, campaign, replay);
   }
   if (player.weekendResult) {
     previousPlayerWeekends.push(player.weekendResult.event.key);
@@ -500,7 +500,9 @@ export function processPostHealthMaintenance(
           modifications: [{ stat: state.rules.usePhysicalMentalConditions ? 'mental' : 'happiness', diff: -1 }]
         });
       } else {
-        const repairCost = Math.floor(targetApp.purchasePrice * (minRepairPct + rng.next() * repairRange));
+        const repairCost = resolveDecision(replay, `appliance_repair_${player.id}_${targetApp.id}`, () =>
+          Math.floor(targetApp.purchasePrice * (minRepairPct + rng.next() * repairRange))
+        );
         player.money = Math.max(0, player.money - repairCost);
         player = applyHappinessChange(player, -1, 'appliance_breakage', state.rules, campaign.config.statRules);
         player.turnEvents.push({

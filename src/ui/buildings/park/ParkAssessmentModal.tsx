@@ -7,6 +7,10 @@ import {
   PARK_RELAX_CARDS,
   PARK_WORKOUT_CARDS,
   PARK_HAZARD_CARDS,
+  PARK_OUTFIT_MUGGING_CARDS,
+  getParkWorkoutBaseline,
+  getParkEncounterOdds,
+  resolveParkMuggingCard,
   scaleParkCard
 } from '../../../engine/actions/parkActions';
 import { formatHours } from '../../../engine/math/formatters';
@@ -65,6 +69,27 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
   const mental = player.mentalCondition ?? 50;
   const workoutsThisTurn = player.turnFlags?.parkWorkoutsThisTurn || 0;
   const isOvertraining = mode === 'workout' && workoutsThisTurn > 0;
+  const parkOdds = getParkEncounterOdds(player, rules);
+  const statRulesObj = isAdvancedStatRules(campaign?.config?.statRules)
+    ? campaign.config.statRules
+    : undefined;
+  const workoutBaseline = getParkWorkoutBaseline(
+    player,
+    rules,
+    statRulesObj,
+    actualHours > 0 ? actualHours : costHours,
+    costHours
+  );
+  const activeOutfitMuggingCard = parkOdds.outfitTier
+    ? (() => {
+        const resolved = resolveParkMuggingCard(
+          PARK_OUTFIT_MUGGING_CARDS[parkOdds.outfitTier],
+          player,
+          parkOdds.outfitTier
+        );
+        return isPartial ? scaleParkCard(resolved, ratio, conditionRes) : resolved;
+      })()
+    : null;
 
   // Fatigue mistake chance calculation
   let mistakeChance = 0;
@@ -77,22 +102,7 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
     return PARK_HAZARD_CARDS.map(raw => {
       let card = structuredClone(raw);
       if (card.cardId === 'hazard_pickpocket') {
-        if (player.money >= 150) {
-          const stolen = Math.min(100, Math.max(25, Math.floor(player.money * 0.15)));
-          card = {
-            ...card,
-            cashAmount: -stolen,
-            mentalAmount: -2,
-            description: `A pickpocket bumps into you in the crowd and steals $${stolen} cash!`
-          };
-        } else {
-          card = {
-            ...card,
-            cashAmount: 0,
-            mentalAmount: -1,
-            description: 'A pickpocket targets you but finds empty pockets ($0 stolen).'
-          };
-        }
+        card = resolveParkMuggingCard(card, player);
       }
       return isPartial ? scaleParkCard(card, ratio, conditionRes) : card;
     });
@@ -294,34 +304,30 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
                         )}
                       </>
                     );
-                  })() : isOvertraining ? (
-                    <span style={{ fontSize: '13px', color: '#ef4444', fontWeight: 'bold' }}>
-                      -2 💪 Physical, -1 🧠 Mental (Overtraining Exhaustion)
-                    </span>
-                  ) : (() => {
-                    const rawMaxBoost = isPartial ? roundToResolution(1 * ratio, conditionRes) : 1;
-                    const globalMaxPhys = isAdvancedStatRules(campaign?.config?.statRules)
-                      ? campaign.config.statRules.globalMaxPhysicalCondition
-                      : undefined;
-                    const maxPhysGain = (player.physicalConditionMax !== undefined && globalMaxPhys !== undefined)
-                      ? Math.min(Math.max(0, roundToResolution(globalMaxPhys - player.physicalConditionMax, conditionRes)), rawMaxBoost)
-                      : rawMaxBoost;
-                    return (
+                  })() : (
                     <>
-                      {maxPhysGain > 0 && (
+                      {workoutBaseline.maxPhysGain > 0 && (
                         <span style={{ fontSize: '13px', color: '#fdba74', fontWeight: 'bold' }}>
-                          +{maxPhysGain} Max 💪
+                          +{workoutBaseline.maxPhysGain} Max 💪
                         </span>
                       )}
                       <span style={{ fontSize: '13px', color: '#f87171', fontWeight: 'bold' }}>
-                        -{isPartial ? Math.max(conditionRes, roundToResolution(1 * ratio, conditionRes)) : 1} 💪 Physical
+                        -{workoutBaseline.physCost} 💪 Physical
                       </span>
-                      <span style={{ fontSize: '13px', color: '#a855f7', fontWeight: 'bold' }}>
-                        +{isPartial ? Math.max(conditionRes, roundToResolution(1 * ratio, conditionRes)) : 1} 🧠 Mental
+                      <span style={{ fontSize: '13px', color: workoutBaseline.mentalDelta >= 0 ? '#a855f7' : '#ef4444', fontWeight: 'bold' }}>
+                        {workoutBaseline.mentalDelta >= 0 ? `+${workoutBaseline.mentalDelta}` : workoutBaseline.mentalDelta} 🧠 Mental
                       </span>
+                      {workoutsThisTurn === 0 ? (
+                        <span style={{ fontSize: '11px', color: '#4ade80' }}>
+                          ({t('park.workoutFirstBonus', { defaultValue: 'Includes 1st-visit bonus (+2 🧠)' })})
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '11px', color: '#facc15' }}>
+                          ({t('park.workoutEscalation', { count: workoutsThisTurn + 1, defaultValue: `Session #${workoutsThisTurn + 1} escalating strain` })})
+                        </span>
+                      )}
                     </>
-                    );
-                  })()}
+                  )}
                 </div>
               </div>
 
@@ -345,7 +351,12 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
                 )}
                 {isOvertraining && (
                   <div style={{ marginTop: '8px', fontSize: '12px', color: '#fca5a5', background: 'rgba(239, 68, 68, 0.15)', padding: '6px 10px', borderRadius: '4px' }}>
-                    ⚠️ <strong>Overtraining Notice:</strong> You have already worked out in the park this turn! Pushing through another workout will trigger exhaustion (-2 💪, -1 🧠) with no positive training cards.
+                    ⚠️ <strong>Overtraining Notice:</strong> Repeat workouts this turn increase Physical and Mental costs by +1 per session (currently -{workoutBaseline.physCost} 💪, {workoutBaseline.mentalDelta} 🧠; resets next turn), though you{workoutBaseline.maxPhysGain > 0 ? ` still gain +${workoutBaseline.maxPhysGain} Max 💪 baseline and` : ''} still draw an Event Card ({Math.round(parkOdds.goodChance * 100)}% Workout Focus / {Math.round(parkOdds.totalBadChance * 100)}% Risk).
+                  </div>
+                )}
+                {mode === 'workout' && phys < 15 && (
+                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#fca5a5', background: 'rgba(239, 68, 68, 0.15)', padding: '6px 10px', borderRadius: '4px' }}>
+                    🚫 <strong>Too Exhausted:</strong> Physical Condition must be at least 15 💪 to start a workout.
                   </div>
                 )}
               </div>
@@ -354,15 +365,34 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
                   <div style={{ fontSize: '11px', color: '#86efac', textTransform: 'uppercase' }}>🌟 Encounter Odds</div>
-                  <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#4ade80' }}>75%</div>
+                  <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#4ade80' }}>
+                    {Math.round(parkOdds.goodChance * 100)}%
+                  </div>
                   <div style={{ fontSize: '11px', color: '#cbd5e1' }}>1 Card (Pick 1 of 3)</div>
                 </div>
 
                 <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
                   <div style={{ fontSize: '11px', color: '#fca5a5', textTransform: 'uppercase' }}>⚠️ Hazard Risk</div>
-                  <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#f87171' }}>25%</div>
+                  <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#f87171' }}>
+                    {Math.round(parkOdds.hazardChance * 100)}%
+                  </div>
                   <div style={{ fontSize: '11px', color: '#cbd5e1' }}>1 Mishap Card</div>
                 </div>
+
+                {parkOdds.outfitMuggingChance > 0 && (
+                  <div
+                    data-testid="park-outfit-mugging-odds"
+                    style={{ background: 'rgba(220, 38, 38, 0.15)', border: '1px solid rgba(248, 113, 113, 0.5)', borderRadius: '8px', padding: '10px', textAlign: 'center' }}
+                  >
+                    <div style={{ fontSize: '11px', color: '#fca5a5', textTransform: 'uppercase' }}>🦹 Outfit Mugging Risk</div>
+                    <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#f87171' }}>
+                      +{Math.round(parkOdds.outfitMuggingChance * 100)}%
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                      {parkOdds.outfitTier === 'business' ? 'Business Suit' : 'Dress Clothes'} (~{(parkOdds.totalMuggingChance * 100).toFixed(1)}% total incl. pickpocket)
+                    </div>
+                  </div>
+                )}
 
                 {mode === 'workout' && (
                   <div style={{ background: mistakeChance > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.05)', border: mistakeChance > 0 ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
@@ -456,8 +486,34 @@ export const ParkAssessmentModal: React.FC<ParkAssessmentModalProps> = ({
 
           {activeTab === 'hazards' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {activeOutfitMuggingCard && (
+                <div
+                  data-testid="park-outfit-mugging-preview"
+                  style={{
+                    background: 'rgba(220, 38, 38, 0.12)',
+                    border: '1px solid rgba(248, 113, 113, 0.45)',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                  }}
+                >
+                  <div style={{ fontSize: '11px', color: '#fca5a5', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                    🦹 +{Math.round(parkOdds.outfitMuggingChance * 100)}% Outfit Mugging Risk ({parkOdds.outfitTier === 'business' ? 'Business Suit' : 'Dress Clothes'})
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '18px' }}>{activeOutfitMuggingCard.icon || '🦹'}</span>
+                      <strong style={{ fontSize: '14px', color: '#fecaca' }}>{activeOutfitMuggingCard.title}</strong>
+                    </div>
+                    <StatModifierPills modifications={cardToMods(activeOutfitMuggingCard)} />
+                  </div>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#e2e8f0' }}>{activeOutfitMuggingCard.description}</p>
+                </div>
+              )}
               <span style={{ fontSize: '12px', color: '#f87171' }}>
-                ⚠️ 25% chance to encounter 1 random hazard from this pool:
+                ⚠️ {Math.round(parkOdds.hazardChance * 100)}% chance to encounter 1 random hazard from this pool:
               </span>
               {computedHazards.map((h, idx) => (
                 <div

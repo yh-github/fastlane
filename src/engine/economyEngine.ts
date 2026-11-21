@@ -578,7 +578,7 @@ export function applyMarketCrash(
   player: PlayerState,
   severity: 'minor' | 'moderate' | 'major',
   rng: Random,
-  _replay?: ReplayContext,
+  replay?: ReplayContext,
   rules?: GameRules,
   statRules?: StatRules,
   campaign?: CampaignBundle,
@@ -606,7 +606,8 @@ export function applyMarketCrash(
     
     // 50% chance to lose job, otherwise wage cut
     if (updated.currentJobId !== null) {
-      if (rng.next() < 0.5) {
+      const lostJob = resolveDecision(replay, `market_crash_job_loss_${player.id}`, () => rng.next() < 0.5);
+      if (lostJob) {
         if (hasMeritShield) {
           // In Advanced mode: Merits reduce firing to "just" a pay cut (keeps job, but wage reduced to 80% with -3 happiness penalty)
           updated.turnEvents.push({ key: 'events.marketCrash.jobSparedMerits' });

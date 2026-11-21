@@ -16,16 +16,20 @@ interface AppraisalDilemmaModalProps {
   armDelayMs?: number;
 }
 
+function formatSignedDollar(amount: number): string {
+  return amount < 0 ? `-$${Math.abs(amount)}` : `+$${amount}`;
+}
+
 function getOptionDetails(opt: any, hasSpace: boolean) {
   let icon: React.ReactNode = opt.icon || '💵';
   let borderColor = '#22c55e';
-  let rewardText = `+$${opt.cashAmount || 0}`;
+  let rewardText = formatSignedDollar(opt.cashAmount || 0);
   let shortTag = opt.title ? opt.title.split(' ')[0] : 'Choice';
   let warning: React.ReactNode = undefined;
   let helpText: React.ReactNode = undefined;
 
   if (opt.type === 'initiative' || opt.type === 'park_encounter' || opt.type === 'arcade_encounter') {
-    if (opt.burnoutRisk) borderColor = '#ef4444';
+    if (opt.burnoutRisk || (opt.cashAmount && opt.cashAmount < 0)) borderColor = '#ef4444';
     else if (opt.maxPhysAmount) borderColor = '#f97316';
     else if (opt.maxMentalAmount) borderColor = '#a855f7';
     else if (opt.leadershipSkillAmount) borderColor = '#38bdf8';
@@ -33,7 +37,8 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
     else if (opt.standingAmount) borderColor = '#facc15';
     else if (opt.mentalAmount && opt.mentalAmount > 0) borderColor = '#a855f7';
     else if (opt.socialAmount && opt.socialAmount > 0) borderColor = '#6366f1';
-    else if (opt.cashAmount) borderColor = '#22c55e';
+    else if (opt.cashAmount && opt.cashAmount > 0) borderColor = '#22c55e';
+    else if (opt.mentalAmount && opt.mentalAmount < 0) borderColor = '#ef4444';
     else borderColor = '#f59e0b';
 
     icon = opt.icon || (
@@ -56,7 +61,7 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
     if (opt.expAmount) parts.push(`+${opt.expAmount} 👌`);
     if (opt.standingAmount) parts.push(`+${opt.standingAmount} 🌟`);
     if (opt.depAmount) parts.push(`+${opt.depAmount} 🤝`);
-    if (opt.cashAmount) parts.push(`+$${opt.cashAmount}`);
+    if (opt.cashAmount) parts.push(formatSignedDollar(opt.cashAmount));
     if (opt.cashCost) parts.push(`-$${opt.cashCost}`);
     if (opt.mentalAmount && opt.mentalAmount > 0) parts.push(`+${opt.mentalAmount} 🧠`);
     if (opt.mentalAmount && opt.mentalAmount < 0) parts.push(`${opt.mentalAmount} 🧠`);
@@ -128,10 +133,17 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
         </div>
       );
     }
-    if (opt.cashAmount) {
+    if (opt.cashAmount && opt.cashAmount > 0) {
       helpParts.push(
         <div key="cash" style={{ marginBottom: '4px' }}>
           <strong>💵 Cash Bounty (+${opt.cashAmount}):</strong> Immediate earnings from client efficiency and bonuses.
+        </div>
+      );
+    }
+    if (opt.cashAmount && opt.cashAmount < 0) {
+      helpParts.push(
+        <div key="cash-loss" style={{ marginBottom: '4px' }}>
+          <strong>💸 Cash Loss (-${Math.abs(opt.cashAmount)}):</strong> Extra coins or unexpected out-of-pocket expense.
         </div>
       );
     }
@@ -347,8 +359,8 @@ function getOptionDetails(opt: any, hasSpace: boolean) {
   } else {
     // cash
     icon = '💵';
-    borderColor = '#22c55e';
-    rewardText = `+$${opt.cashAmount || 0}`;
+    borderColor = (opt.cashAmount || 0) < 0 ? '#ef4444' : '#22c55e';
+    rewardText = formatSignedDollar(opt.cashAmount || 0);
     shortTag = 'Cash';
     helpText = (
       <div>
@@ -401,6 +413,7 @@ export function AppraisalDilemmaModal({
   const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const isInitiative = dilemma.gameType === 'work_initiative';
   const isPark = dilemma.gameType === 'park_encounter';
+  const isArcade = dilemma.gameType === 'arcade_encounter';
 
   useEffect(() => {
     const handleResize = () => {
@@ -470,12 +483,25 @@ export function AppraisalDilemmaModal({
   // Fall back to document.body if running in an isolated test environment without a full viewport.
   const portalTarget = document.querySelector('.game-viewport') || document.body;
 
+  const isSinglePenaltyCard = count === 1 && (
+    (dilemma.options[0]?.cashAmount ?? 0) < 0 ||
+    (dilemma.options[0]?.mentalAmount ?? 0) < 0 ||
+    (dilemma.options[0]?.physicalAmount ?? 0) < 0
+  );
   const modalTitle = isInitiative
     ? (dilemma.title || t('appraisalDilemma.initiativeTitle', { defaultValue: 'Workplace Initiative' }))
     : isPark
     ? (dilemma.title || t('appraisalDilemma.parkTitle', { defaultValue: 'Park Encounter' }))
-    : t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' });
-  const headerIcons = isInitiative ? '🌟 👔 👌' : isPark ? '🌳 🍃 ☀️' : '🔍 ⚖️ 🏷️';
+    : isArcade
+    ? (dilemma.title || t('appraisalDilemma.arcadeTitle', { defaultValue: 'Pirate Arcade Corner' }))
+    : (dilemma.title || t('appraisalDilemma.title', { defaultValue: 'Appraisal Dilemma' }));
+  const headerIcons = isInitiative
+    ? '🌟 👔 👌'
+    : isPark
+    ? '🌳 🍃 ☀️'
+    : isArcade
+    ? (isSinglePenaltyCard ? '👾 💥 ⚠️' : '🕹️ 👾 ⚡')
+    : '🔍 ⚖️ 🏷️';
 
   return createPortal(
     <div
@@ -514,7 +540,7 @@ export function AppraisalDilemmaModal({
           background: 'linear-gradient(145deg, #1e293b, #0f172a)',
           padding: isCompact ? '12px 14px' : '20px 22px',
           borderRadius: isCompact ? '10px' : '12px',
-          width: isCarouselMode ? 'min(580px, 96vw)' : (isCompact ? 'min(780px, 96vw)' : '720px'),
+          width: count === 1 ? 'min(420px, 96vw)' : (isCarouselMode ? 'min(580px, 96vw)' : (isCompact ? 'min(780px, 96vw)' : '720px')),
           maxWidth: '96%',
           maxHeight: 'min(92vh, 620px)',
           overflowY: isCarouselMode ? 'visible' : 'auto',
@@ -541,6 +567,10 @@ export function AppraisalDilemmaModal({
                 dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
               ) : isPark ? (
                 dilemma.subtitle || t('appraisalDilemma.parkSubtitle', { defaultValue: 'Choose how to spend your time in the park:' })
+              ) : isArcade ? (
+                dilemma.subtitle || t('appraisalDilemma.arcadeSubtitle', { defaultValue: 'Pick a cabinet to finish your session:' })
+              ) : dilemma.subtitle && !dilemma.itemTitle ? (
+                dilemma.subtitle
               ) : (
                 <>
                   {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
@@ -560,6 +590,10 @@ export function AppraisalDilemmaModal({
                 dilemma.subtitle || t('appraisalDilemma.initiativeSubtitle', { defaultValue: 'Select an opportunity to advance your career:' })
               ) : isPark ? (
                 dilemma.subtitle || t('appraisalDilemma.parkSubtitle', { defaultValue: 'Choose how to spend your time in the park:' })
+              ) : isArcade ? (
+                dilemma.subtitle || t('appraisalDilemma.arcadeSubtitle', { defaultValue: 'Pick a cabinet to finish your session:' })
+              ) : dilemma.subtitle && !dilemma.itemTitle ? (
+                dilemma.subtitle
               ) : (
                 <>
                   {t('appraisalDilemma.subtitle', { defaultValue: 'A customer brought in:' })}{' '}
@@ -659,7 +693,9 @@ export function AppraisalDilemmaModal({
           style={{
             ...(!isCarouselMode ? {
               display: 'grid',
-              gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
+              gridTemplateColumns: count === 1 ? 'minmax(0, 300px)' : `repeat(${count}, minmax(0, 1fr))`,
+              justifyContent: count === 1 ? 'center' : undefined,
+              justifyItems: count === 1 ? 'center' : undefined,
               gap: isCompact ? '8px' : '12px',
               marginBottom: isCompact ? '6px' : '12px',
               alignItems: 'stretch'
@@ -701,12 +737,12 @@ export function AppraisalDilemmaModal({
                 description={displayDesc}
                 warning={details.warning}
                 outcome={(details as any).outcomeNode || details.rewardText}
-                outcomeLabel={isInitiative ? 'Modifiers' : isPark ? 'Effects' : 'Reward'}
+                outcomeLabel={isInitiative ? 'Modifiers' : (isPark || isArcade) ? 'Effects' : 'Reward'}
                 helpText={details.helpText}
                 helpBtnTestId={`card-help-btn-${idx}`}
                 helpPanelTestId={`card-help-panel-${idx}`}
-                selectLabel="Select"
-                confirmLabel="✓ Accept"
+                selectLabel={count === 1 ? (isSinglePenaltyCard ? 'Acknowledge' : 'Continue') : 'Select'}
+                confirmLabel={count === 1 ? (isSinglePenaltyCard ? 'Acknowledge' : 'Continue') : '✓ Accept'}
               />
             );
           })}
@@ -761,7 +797,7 @@ export function AppraisalDilemmaModal({
                 <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
                   {t('appraisalDilemma.chosenOptionPrompt', { defaultValue: 'Selected Option:' })}
                 </div>
-                <div style={{ fontSize: '0.84rem', fontWeight: 'bold', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: '0.84rem', fontWeight: 'bold', color: '#fff', lineHeight: 1.25 }}>
                   {opt.title}
                 </div>
               </div>

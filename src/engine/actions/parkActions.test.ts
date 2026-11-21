@@ -4,6 +4,8 @@ import {
   handleWorkoutParkAction,
   handlePlayArcadeAction,
   applyParkCardEffects,
+  getParkEncounterOdds,
+  getParkWorkoutBaseline,
   ARCADE_ENCOUNTER_CARDS,
   ARCADE_GLITCH_CARD,
 } from './parkActions';
@@ -145,10 +147,10 @@ describe('Park Actions', () => {
     const res = handleWorkoutParkAction(player, { type: 'workout_park' }, context);
     expect(res.nextPlayer.hoursRemaining).toBe(0);
     // ratio = 1.5 / 3 = 0.5
-    // maxPhysical +0.5, physical -0.5, mental +0.5
+    // maxPhysical +0.5, physical -0.5, mental +1 (+2 on-first scaled by 0.5)
     expect(res.nextPlayer.physicalConditionMax).toBe(60.5);
     expect(res.nextPlayer.physicalCondition).toBe(49.5);
-    expect(res.nextPlayer.mentalCondition).toBe(50.5);
+    expect(res.nextPlayer.mentalCondition).toBe(51);
   });
 
   it('workout_park raises physicalConditionMax past initialPhysicalMax (65) and clamps at globalMaxPhysicalCondition (100)', () => {
@@ -386,6 +388,222 @@ describe('Park Actions', () => {
       // Verify ARCADE_ENCOUNTER_CARDS exists & scaled card applied positive bonuses cleanly
       expect(ARCADE_ENCOUNTER_CARDS.length).toBeGreaterThanOrEqual(2);
       expect(res.updatedPlayer.mentalCondition).toBeGreaterThan(40.5);
+    });
+
+    it('still draws arcade encounter cards on 2nd and 3rd+ plays in the same turn', () => {
+      const player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+      player.hoursRemaining = 10;
+      player.money = 50;
+      player.physicalCondition = 40;
+      player.mentalCondition = 40;
+      player.turnFlags = { ...player.turnFlags, arcadePlaysThisTurn: 2 };
+
+      const context: ReducerContext = {
+        campaign: dummyCampaign,
+        rules: {
+          ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules,
+          usePhysicalMentalConditions: true,
+          trackSocial: true,
+          enableArcade: true,
+        },
+        turn: 1,
+        economicIndex: 0,
+        rng: new Random(1),
+        state: { turn: 1, players: [player] } as any,
+        engineDecisions: [{ type: 'arcade_glitch_p1_1_2', result: false }],
+      };
+
+      const res = gameReducer(player, { type: 'play_arcade' }, context);
+      expect(res.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(3);
+      expect(res.updatedPlayer.physicalCondition).toBe(39); // -1 physical strain
+      expect(res.updatedPlayer.pendingMiniGame?.gameType).toBe('arcade_encounter');
+      expect(res.updatedPlayer.pendingMiniGame?.options).toHaveLength(2);
+    });
+  });
+
+  describe('Escalating Park Workout Costs & On-First Mental Bonus', () => {
+    it('awards +1 Max Phys and +2 Mental on 1st session, then escalates Physical/Mental cost by 1 per repeat session while keeping +1 Max Phys & card draws', () => {
+      const player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+      player.hoursRemaining = 20;
+      player.physicalCondition = 50;
+      player.physicalConditionMax = 65;
+      player.mentalCondition = 50;
+
+      const context: ReducerContext = {
+        campaign: dummyCampaign,
+        rules: {
+          ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules,
+          usePhysicalMentalConditions: true,
+          enableParkSystem: true,
+        },
+        turn: 1,
+        economicIndex: 0,
+        rng: { next: () => 0.8 } as any, // good encounter (> 0.25)
+        state: { turn: 1, players: [player] } as any,
+      };
+
+      // Baseline helper check across sessions 0..2
+      expect(getParkWorkoutBaseline(player, context.rules, dummyCampaign.config.statRules)).toEqual({
+        workoutsBefore: 0,
+        maxPhysGain: 1,
+        physCost: 1,
+        mentalDelta: 2,
+      });
+
+      // Session 1 (workouts = 0): +1 Max Phys, -1 Phys, +2 Mental (on-first bonus)
+      const res1 = handleWorkoutParkAction(player, { type: 'workout_park' }, context);
+      expect(res1.nextPlayer.hoursRemaining).toBe(17);
+      expect(res1.nextPlayer.physicalConditionMax).toBe(66);
+      expect(res1.nextPlayer.physicalCondition).toBe(49);
+      expect(res1.nextPlayer.mentalCondition).toBe(52);
+      expect(res1.nextPlayer.turnFlags.parkWorkoutsThisTurn).toBe(1);
+      expect(res1.nextPlayer.pendingMiniGame?.gameType).toBe('park_encounter');
+      expect(res1.nextPlayer.pendingMiniGame?.options).toHaveLength(3);
+
+      // Session 2 (workouts = 1): +1 Max Phys, -2 Phys, -1 Mental
+      const s2Player = { ...res1.nextPlayer, pendingMiniGame: null, pendingAppraisalDilemma: null };
+      const res2 = handleWorkoutParkAction(s2Player, { type: 'workout_park' }, context);
+      expect(res2.nextPlayer.hoursRemaining).toBe(14);
+      expect(res2.nextPlayer.physicalConditionMax).toBe(67);
+      expect(res2.nextPlayer.physicalCondition).toBe(47); // 49 - 2
+      expect(res2.nextPlayer.mentalCondition).toBe(51); // 52 - 1
+      expect(res2.nextPlayer.turnFlags.parkWorkoutsThisTurn).toBe(2);
+      expect(res2.nextPlayer.pendingMiniGame?.gameType).toBe('park_encounter');
+      expect(res2.nextPlayer.pendingMiniGame?.options).toHaveLength(3);
+
+      // Session 3 (workouts = 2): +1 Max Phys, -3 Phys, -2 Mental
+      const s3Player = { ...res2.nextPlayer, pendingMiniGame: null, pendingAppraisalDilemma: null };
+      const res3 = handleWorkoutParkAction(s3Player, { type: 'workout_park' }, context);
+      expect(res3.nextPlayer.hoursRemaining).toBe(11);
+      expect(res3.nextPlayer.physicalConditionMax).toBe(68);
+      expect(res3.nextPlayer.physicalCondition).toBe(44); // 47 - 3
+      expect(res3.nextPlayer.mentalCondition).toBe(49); // 51 - 2
+      expect(res3.nextPlayer.turnFlags.parkWorkoutsThisTurn).toBe(3);
+      expect(res3.nextPlayer.pendingMiniGame?.gameType).toBe('park_encounter');
+    });
+  });
+
+  describe('Park Mugging Odds by Outfit (Option A)', () => {
+    it('computes +5pp mugging odds for dress and +10pp for business only when enableParkSystem is true', () => {
+      const player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+
+      player.inventory.selectedClothes = 'casual';
+      expect(getParkEncounterOdds(player, { enableParkSystem: true })).toEqual({
+        outfitTier: null,
+        outfitMuggingChance: 0,
+        hazardChance: 0.25,
+        goodChance: 0.75,
+        totalBadChance: 0.25,
+        totalMuggingChance: 0.0417,
+      });
+
+      player.inventory.selectedClothes = 'dress';
+      expect(getParkEncounterOdds(player, { enableParkSystem: true })).toEqual({
+        outfitTier: 'dress',
+        outfitMuggingChance: 0.05,
+        hazardChance: 0.25,
+        goodChance: 0.70,
+        totalBadChance: 0.30,
+        totalMuggingChance: 0.0917,
+      });
+
+      player.inventory.selectedClothes = 'business';
+      expect(getParkEncounterOdds(player, { enableParkSystem: true })).toEqual({
+        outfitTier: 'business',
+        outfitMuggingChance: 0.10,
+        hazardChance: 0.25,
+        goodChance: 0.65,
+        totalBadChance: 0.35,
+        totalMuggingChance: 0.1417,
+      });
+
+      // Disabled when enableParkSystem is false even if wearing business suit
+      expect(getParkEncounterOdds(player, { enableParkSystem: false }).outfitMuggingChance).toBe(0);
+    });
+
+    it('triggers outfit mugging card on [0, bonus), hazard on [bonus, bonus+0.25), and encounter above, without polluting parkDecks.hazard', () => {
+      const makePlayer = (clothes: 'casual' | 'dress' | 'business', money: number) => {
+        const p = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+        p.hoursRemaining = 20;
+        p.money = money;
+        p.physicalCondition = 40;
+        p.mentalCondition = 40;
+        p.inventory.selectedClothes = clothes;
+        return p;
+      };
+
+      const makeCtx = (roll: number): ReducerContext => ({
+        campaign: dummyCampaign,
+        rules: {
+          ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules,
+          usePhysicalMentalConditions: true,
+          enableParkSystem: true,
+        },
+        turn: 1,
+        economicIndex: 0,
+        rng: { next: () => roll } as any,
+        state: { turn: 1 } as any,
+      });
+
+      // Dress clothes (5% mugging, 25% hazard, 70% good):
+      // Roll 0.03 < 0.05 => outfit mugging
+      const dressMug = handleRelaxParkAction(makePlayer('dress', 300), { type: 'relax_park' }, makeCtx(0.03));
+      expect(dressMug.nextPlayer.pendingMiniGame?.gameType).toBe('park_hazard');
+      expect(dressMug.nextPlayer.pendingMiniGame?.title).toBe('Park Mugging!');
+      expect(dressMug.nextPlayer.pendingMiniGame?.options[0].cardId).toBe('hazard_outfit_mugging');
+      expect(dressMug.nextPlayer.pendingMiniGame?.options[0].cashAmount).toBe(-45); // 15% of 300
+      expect(dressMug.nextPlayer.pendingMiniGame?.options[0].mentalAmount).toBe(-2);
+      expect(dressMug.nextPlayer.parkDecks?.hazard.discardPile || []).toHaveLength(0);
+
+      // Roll 0.27 is in [0.05, 0.30) => normal hazard (whereas casual at 0.27 would be good)
+      const dressHazard = handleRelaxParkAction(makePlayer('dress', 300), { type: 'relax_park' }, makeCtx(0.27));
+      expect(dressHazard.nextPlayer.pendingMiniGame?.gameType).toBe('park_hazard');
+      expect(dressHazard.nextPlayer.pendingMiniGame?.title).toBe('Park Hazard!');
+
+      const casualGood = handleRelaxParkAction(makePlayer('casual', 300), { type: 'relax_park' }, makeCtx(0.27));
+      expect(casualGood.nextPlayer.pendingMiniGame?.gameType).toBe('park_encounter');
+
+      // Business clothes (10% mugging) with < $150 steals $0 and -1 Mental in workout_park
+      const bizLowCashMug = handleWorkoutParkAction(makePlayer('business', 100), { type: 'workout_park' }, makeCtx(0.08));
+      expect(bizLowCashMug.nextPlayer.pendingMiniGame?.gameType).toBe('park_hazard');
+      expect(bizLowCashMug.nextPlayer.pendingMiniGame?.options[0].cardId).toBe('hazard_outfit_mugging');
+      expect(bizLowCashMug.nextPlayer.pendingMiniGame?.options[0].cashAmount).toBe(0);
+      expect(bizLowCashMug.nextPlayer.pendingMiniGame?.options[0].mentalAmount).toBe(-1);
+
+      // Roll 0.33 is in [0.10, 0.35) => hazard for business; >= 0.35 => good encounter
+      const bizHazard = handleWorkoutParkAction(makePlayer('business', 300), { type: 'workout_park' }, makeCtx(0.33));
+      expect(bizHazard.nextPlayer.pendingMiniGame?.gameType).toBe('park_hazard');
+      expect(bizHazard.nextPlayer.pendingMiniGame?.title).toBe('Park Hazard!');
+
+      const bizGood = handleWorkoutParkAction(makePlayer('business', 300), { type: 'workout_park' }, makeCtx(0.36));
+      expect(bizGood.nextPlayer.pendingMiniGame?.gameType).toBe('park_encounter');
+    });
+
+    it('supports legacy boolean park_roll_bad and park_workout_bad engineDecisions during replay', () => {
+      const player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+      player.hoursRemaining = 20;
+      player.physicalCondition = 40;
+      player.mentalCondition = 40;
+
+      const ctxHazard: ReducerContext = {
+        campaign: dummyCampaign,
+        rules: { ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules, usePhysicalMentalConditions: true, enableParkSystem: true },
+        turn: 1,
+        economicIndex: 0,
+        rng: { next: () => 0.99 } as any,
+        state: { turn: 1 } as any,
+        engineDecisions: [{ type: 'park_roll_bad_p1_1_0', result: true }],
+      };
+      const resHazard = handleRelaxParkAction(player, { type: 'relax_park' }, ctxHazard);
+      expect(resHazard.nextPlayer.pendingMiniGame?.gameType).toBe('park_hazard');
+
+      const ctxGood: ReducerContext = {
+        ...ctxHazard,
+        rng: { next: () => 0.01 } as any,
+        engineDecisions: [{ type: 'park_workout_bad_p1_1_0', result: false }],
+      };
+      const resGood = handleWorkoutParkAction(player, { type: 'workout_park' }, ctxGood);
+      expect(resGood.nextPlayer.pendingMiniGame?.gameType).toBe('park_encounter');
     });
   });
 });

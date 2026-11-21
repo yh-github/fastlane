@@ -321,6 +321,15 @@ export function useGameEngine(
           delete player.turnFlags?.enteredBuildingThisTurn;
           updatedPlayers[activePlayerIndex] = player;
 
+          if (replayDataRef.current) {
+            if (!replayDataRef.current.steps) replayDataRef.current.steps = [];
+            replayDataRef.current.steps.push({
+              turn: currentState.turn,
+              action: { type: 'exit_building' },
+              engineDecisions: outDecisions
+            });
+          }
+
           await triggerRobberyNotificationAndAnim(player, preRobberyMoney, preRobberyHappiness, preRobberyMental, currentBuilding || '');
           setGameState(prev => prev ? { ...prev, rngState: rng.getState(), players: updatedPlayers } : prev);
         }

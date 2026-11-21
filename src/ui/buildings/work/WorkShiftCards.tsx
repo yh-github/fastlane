@@ -546,9 +546,6 @@ export const WorkShiftCards: React.FC<WorkShiftCardsProps> = ({
               cursor: 'pointer',
               boxShadow: canAfford ? `0 2px 8px ${meta.glowColor}` : 'none',
               transition: 'all 0.15s ease',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
               lineHeight: '1.2'
             }}
             onMouseDown={(e) => {

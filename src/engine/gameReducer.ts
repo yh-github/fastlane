@@ -110,7 +110,7 @@ export function gameReducer(
       res = handlePrepMealAction(nextPlayer, action, context);
       break;
     case 'clean':
-      res = handleCleanAction(nextPlayer, action, context);
+      res = handleCleanAction(nextPlayer, action, context, replayContext);
       break;
     case 'call_cleaning_service':
       res = handleCleaningServiceAction(nextPlayer, action, context);
@@ -229,25 +229,25 @@ export function gameReducer(
       res = handleTinkerSparePartsAction(nextPlayer, action, context, replayContext);
       break;
     case 'renegotiate_rent':
-      res = handleRenegotiateRentAction(nextPlayer, action, context);
+      res = handleRenegotiateRentAction(nextPlayer, action, context, replayContext);
       break;
     case 'play_arcade':
       res = handlePlayArcadeAction(nextPlayer, action, context, replayContext);
       break;
     case 'relax_park':
-      res = handleRelaxParkAction(nextPlayer, action, context);
+      res = handleRelaxParkAction(nextPlayer, action, context, replayContext);
       break;
     case 'workout_park':
-      res = handleWorkoutParkAction(nextPlayer, action, context);
+      res = handleWorkoutParkAction(nextPlayer, action, context, replayContext);
       break;
     case 'stroll_park':
-      res = handleParkStrollAction(nextPlayer, action, context);
+      res = handleParkStrollAction(nextPlayer, action, context, replayContext);
       break;
     case 'jog_park':
-      res = handleParkJogAction(nextPlayer, action, context);
+      res = handleParkJogAction(nextPlayer, action, context, replayContext);
       break;
     case 'rest_bench':
-      res = handleParkRestAction(nextPlayer, action, context);
+      res = handleParkRestAction(nextPlayer, action, context, replayContext);
       break;
     case 'hospital_urgent_care':
       res = handleHospitalUrgentCareAction(nextPlayer, action, context);

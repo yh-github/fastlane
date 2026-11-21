@@ -4,6 +4,8 @@ import path from 'path';
 import { gameReducer } from './gameReducer';
 import { processTurnStart } from './turnProcessor';
 import { createInitialGameState } from './gameState';
+import { applyMarketCrash } from './economyEngine';
+import { processWeekend, initPlayerWeekendDecks } from './weekendEngine';
 import { type ReplayData, type ReplayContext, type ReplayStep } from './replayTypes';
 import { Random } from '../utils/rng';
 import { loadCampaign, type CampaignBundle } from './dataLoader';
@@ -284,5 +286,260 @@ describe('Deterministic Replay Regression', () => {
 
     // All gameplay state (players, weekend cards/decks, economy, turn, events) must replay identically
     expect({ ...replayedState, rngState: liveState.rngState }).toEqual(liveState);
+  });
+
+  it('records and replays all park actions and play_arcade deterministically under a mismatched RNG seed', async () => {
+    const adv2000 = await loadCampaign('advanced_2000');
+
+    const verifyActionDeterministic = (
+      action: any,
+      mutatePlayer?: (p: any) => any,
+      expectedDecisionPrefixes: string[] = []
+    ) => {
+      const baseState = createInitialGameState(
+        adv2000,
+        [{ name: 'ParkTester', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
+        'node_park_east',
+        adv2000.config.gameRules,
+        424242
+      );
+      const startPlayer = mutatePlayer ? mutatePlayer(baseState.players[0]) : baseState.players[0];
+      const liveState = { ...baseState, players: [startPlayer] };
+
+      const liveRes = gameReducer(liveState.players[0], action, {
+        campaign: adv2000,
+        rules: liveState.rules,
+        turn: liveState.turn,
+        economicIndex: liveState.economicIndex,
+        rng: new Random(11111),
+        state: liveState
+      });
+
+      const outDecisions = liveRes.outEngineDecisions || [];
+      expect(outDecisions.length).toBeGreaterThan(0);
+      for (const prefix of expectedDecisionPrefixes) {
+        expect(outDecisions.some(d => d.type.startsWith(prefix))).toBe(true);
+      }
+
+      const replayRes = gameReducer(liveState.players[0], action, {
+        campaign: adv2000,
+        rules: liveState.rules,
+        turn: liveState.turn,
+        economicIndex: liveState.economicIndex,
+        rng: new Random(999999),
+        state: liveState,
+        engineDecisions: structuredClone(outDecisions)
+      });
+
+      expect(replayRes.updatedPlayer).toEqual(liveRes.updatedPlayer);
+    };
+
+    verifyActionDeterministic({ type: 'relax_park' }, undefined, ['park_roll_bad_']);
+    verifyActionDeterministic({ type: 'stroll_park' }, undefined, ['park_roll_bad_']);
+    verifyActionDeterministic({ type: 'rest_bench' }, undefined, ['park_roll_bad_']);
+    verifyActionDeterministic({ type: 'workout_park' }, undefined, ['park_workout_bad_']);
+    verifyActionDeterministic({ type: 'jog_park' }, undefined, ['park_workout_bad_']);
+    // Low condition triggers fatigue mistake roll before workout deck draw
+    verifyActionDeterministic(
+      { type: 'workout_park' },
+      p => ({ ...p, physicalCondition: 15, mentalCondition: 10 }),
+      ['park_workout_fatigue_']
+    );
+    verifyActionDeterministic({ type: 'play_arcade' }, p => ({ ...p, position: 'node_burger' }), ['arcade_glitch_']);
+
+    // Outfit-based park mugging ('business' clothes) records 'mugging' and replays identically
+    const bizBase = createInitialGameState(
+      adv2000,
+      [{ name: 'BizParkTester', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
+      'node_park_east',
+      adv2000.config.gameRules,
+      424242
+    );
+    const bizPlayer = {
+      ...bizBase.players[0],
+      money: 300,
+      inventory: { ...bizBase.players[0].inventory, selectedClothes: 'business' as const, businessClothesWeeks: 5 }
+    };
+    const bizState = { ...bizBase, players: [bizPlayer] };
+    for (const [action, prefix] of [
+      [{ type: 'relax_park' }, 'park_roll_bad_'],
+      [{ type: 'workout_park' }, 'park_workout_bad_']
+    ] as const) {
+      const liveMug = gameReducer(bizPlayer, action as any, {
+        campaign: adv2000,
+        rules: bizState.rules,
+        turn: bizState.turn,
+        economicIndex: bizState.economicIndex,
+        rng: { next: () => 0.05, nextInt: () => 0, getState: () => 1, setState: () => {} } as any,
+        state: bizState
+      });
+      const outMug = liveMug.outEngineDecisions || [];
+      expect(outMug.some(d => d.type.startsWith(prefix) && d.result === 'mugging')).toBe(true);
+
+      const replayMug = gameReducer(bizPlayer, action as any, {
+        campaign: adv2000,
+        rules: bizState.rules,
+        turn: bizState.turn,
+        economicIndex: bizState.economicIndex,
+        rng: new Random(999999),
+        state: bizState,
+        engineDecisions: structuredClone(outMug)
+      });
+      expect(replayMug.updatedPlayer).toEqual(liveMug.updatedPlayer);
+    }
+  });
+
+  it('records and replays clean, renegotiate_rent mistakes, and appliance repair deck shuffle deterministically', async () => {
+    const adv2000 = await loadCampaign('advanced_2000');
+
+    const runRoundTrip = (
+      action: any,
+      setupPlayer: (p: any) => any,
+      expectedPrefixes: string[]
+    ) => {
+      const baseState = createInitialGameState(
+        adv2000,
+        [{ name: 'HomeTester', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
+        'node_low_cost',
+        adv2000.config.gameRules,
+        55555
+      );
+      const startPlayer = setupPlayer(baseState.players[0]);
+      const liveState = { ...baseState, players: [startPlayer] };
+
+      const liveRes = gameReducer(liveState.players[0], action, {
+        campaign: adv2000,
+        rules: liveState.rules,
+        turn: liveState.turn,
+        economicIndex: liveState.economicIndex,
+        rng: new Random(22222),
+        state: liveState
+      });
+
+      const outDecisions = liveRes.outEngineDecisions || [];
+      expect(outDecisions.length).toBeGreaterThan(0);
+      for (const prefix of expectedPrefixes) {
+        expect(outDecisions.some(d => d.type.startsWith(prefix))).toBe(true);
+      }
+
+      const replayRes = gameReducer(liveState.players[0], action, {
+        campaign: adv2000,
+        rules: liveState.rules,
+        turn: liveState.turn,
+        economicIndex: liveState.economicIndex,
+        rng: new Random(888888),
+        state: liveState,
+        engineDecisions: structuredClone(outDecisions)
+      });
+
+      expect(replayRes.updatedPlayer).toEqual(liveRes.updatedPlayer);
+    };
+
+    runRoundTrip(
+      { type: 'clean' },
+      p => ({ ...p, mess: 10 }),
+      ['clean_mess_roll_']
+    );
+
+    runRoundTrip(
+      { type: 'renegotiate_rent' },
+      p => ({
+        ...p,
+        position: 'node_rent',
+        currentRentPrice: 500,
+        rentPaymentsAtCurrentRate: 1,
+        mentalCondition: 5,
+        social: 5
+      }),
+      ['renegotiate_mental_mistake_', 'renegotiate_social_mistake_']
+    );
+
+    runRoundTrip(
+      { type: 'appliance_maintenance', applianceId: 'microwave', option: 'repairman' },
+      p => {
+        const decked = initPlayerWeekendDecks(p, adv2000.weekends, new Random(123));
+        return {
+          ...decked,
+          money: 500,
+          inventory: {
+            ...decked.inventory,
+            appliances: [{ id: 'microwave', purchasePrice: 200, condition: 'used', isBroken: true }]
+          }
+        };
+      },
+      ['weekend_add_durable_']
+    );
+  });
+
+  it('records and replays moderate market crash job loss and classic weekends deterministically', async () => {
+    const classic = await loadCampaign('1990_classic_cdrom');
+    const state = createInitialGameState(
+      classic,
+      [{ name: 'ClassicTester', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
+      'node_low_cost',
+      classic.config.gameRules,
+      77777
+    );
+    const employedPlayer = {
+      ...state.players[0],
+      currentJobId: classic.jobs[0].id,
+      currentWage: classic.jobs[0].baseWage,
+      money: 200
+    };
+
+    // 1. Moderate market crash job loss roll
+    const crashOut: any[] = [];
+    const liveCrash = applyMarketCrash(
+      employedPlayer,
+      'moderate',
+      new Random(12345),
+      { outDecisions: crashOut },
+      state.rules,
+      classic.config.statRules,
+      classic,
+      state.economicIndex,
+      state.turn
+    );
+    expect(crashOut.some(d => d.type.startsWith('market_crash_job_loss_'))).toBe(true);
+
+    const replayedCrash = applyMarketCrash(
+      employedPlayer,
+      'moderate',
+      new Random(987654),
+      { inDecisions: structuredClone(crashOut), outDecisions: [] },
+      state.rules,
+      classic.config.statRules,
+      classic,
+      state.economicIndex,
+      state.turn
+    );
+    expect(replayedCrash).toEqual(liveCrash);
+
+    // 2. Classic processWeekend
+    const weekendOut: any[] = [];
+    const liveWeekend = processWeekend(
+      employedPlayer,
+      3,
+      [],
+      classic.weekends,
+      new Random(12345),
+      state.rules,
+      classic,
+      { outDecisions: weekendOut }
+    );
+    expect(weekendOut.some(d => d.type.startsWith('weekend_classic_event_'))).toBe(true);
+    expect(weekendOut.some(d => d.type.startsWith('weekend_classic_cost_'))).toBe(true);
+
+    const replayedWeekend = processWeekend(
+      employedPlayer,
+      3,
+      [],
+      classic.weekends,
+      new Random(987654),
+      state.rules,
+      classic,
+      { inDecisions: structuredClone(weekendOut), outDecisions: [] }
+    );
+    expect(replayedWeekend).toEqual(liveWeekend);
   });
 });

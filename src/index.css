@@ -662,7 +662,7 @@ body {
 }
 
 /* Small screen responsive adjustments */
-@media (max-height: 720px), (max-width: 900px) {
+@media (max-height: 580px), (max-width: 768px) {
   .building-modal,
   .building-modal--curved,
   .building-modal--schematic {

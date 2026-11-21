@@ -78,9 +78,7 @@ export const CuriosFlankingWings: React.FC<CuriosFlankingWingsProps> = ({
                   color: '#38bdf8',
                   fontWeight: 'bold',
                   fontSize: '0.78rem',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  lineHeight: 1.25
                 }}>
                   {c.name}
                 </div>
@@ -179,9 +177,7 @@ export const CuriosFlankingWings: React.FC<CuriosFlankingWingsProps> = ({
                 color: '#fef08a',
                 fontWeight: 'bold',
                 fontSize: '0.78rem',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
+                lineHeight: 1.25
               }}>
                 {c.name}
               </div>

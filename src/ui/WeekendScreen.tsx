@@ -228,7 +228,7 @@ function GeneratedWeekendScreen({ player, turn, onStartWeek, onSelectCard, rules
             maxWidth: '90%',
             boxSizing: 'border-box'
           }}>
-            <span style={{ fontSize: isCompact ? '0.84rem' : '0.95rem', color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: isCompact ? '0.84rem' : '0.95rem', color: '#e2e8f0', lineHeight: 1.25 }}>
               {selectedCard
                 ? t('weekendScreen.selectedCardPrompt', {
                     defaultValue: `Selected: {{name}}`,

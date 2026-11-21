@@ -189,7 +189,7 @@ export function handleApplianceMaintenanceAction(
     if (isSuccess) {
       nextPlayer.inventory.appliances[appIndex] = { ...app, isBroken: false, condition: 'used' };
       if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
-        nextPlayer = addApplianceCardToDeck(nextPlayer, app.id, context.rng);
+        nextPlayer = addApplianceCardToDeck(nextPlayer, app.id, context.rng, replayContext);
       }
 
       // Reward: +3 Mental Condition (or +1 Happiness), +0.5 skill_tech
@@ -237,7 +237,7 @@ export function handleApplianceMaintenanceAction(
     nextPlayer.money -= repairCost;
     nextPlayer.inventory.appliances[appIndex] = { ...app, isBroken: false, condition: 'new' };
     if (context.rules.alternativeWeekends && nextPlayer.weekendDecks) {
-      nextPlayer = addApplianceCardToDeck(nextPlayer, app.id, context.rng);
+      nextPlayer = addApplianceCardToDeck(nextPlayer, app.id, context.rng, replayContext);
     }
 
     actionLog = { key: 'action.appliance.repairmanSuccess', params: { appliance: applianceName, cost: repairCost } };

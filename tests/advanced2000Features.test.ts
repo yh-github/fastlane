@@ -1099,22 +1099,34 @@ describe('Advanced 2000 & Scrubs Campaign Features', () => {
       const physAfterP1 = res1Resolved.updatedPlayer.physicalCondition;
       const socialAfterP1 = res1Resolved.updatedPlayer.social;
 
-      // Play 2: +1 Mental, -0.5 Physical
-      const res2 = gameReducer(res1Resolved.updatedPlayer, { type: 'play_arcade' }, setupContext(res1Resolved.updatedPlayer));
+      // Play 2: +1 Mental, -0.5 Physical, still draws encounter cards
+      const noGlitchCtx2 = {
+        ...setupContext(res1Resolved.updatedPlayer),
+        rng: { next: () => 0.5, nextInt: () => 0, getState: () => 1, setState: () => {} } as any,
+      };
+      const res2 = gameReducer(res1Resolved.updatedPlayer, { type: 'play_arcade' }, noGlitchCtx2);
       expect(res2.updatedPlayer.hoursRemaining).toBe(16);
       expect(res2.updatedPlayer.money).toBe(moneyAfterP1 - 8);
       expect(res2.updatedPlayer.mentalCondition).toBe(mentalAfterP1 + 1);
       expect(res2.updatedPlayer.physicalCondition).toBe(physAfterP1 - 0.5);
       expect(res2.updatedPlayer.social).toBe(socialAfterP1);
       expect(res2.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(2);
+      expect(res2.updatedPlayer.pendingMiniGame?.options).toHaveLength(2);
 
-      // Play 3+: 0 Mental, -1 Physical
-      const res3 = gameReducer(res2.updatedPlayer, { type: 'play_arcade' }, setupContext(res2.updatedPlayer));
+      const res2Resolved = gameReducer(res2.updatedPlayer, { type: 'resolve_mini_game', choiceIndex: 0 }, setupContext(res2.updatedPlayer));
+
+      // Play 3+: 0 Mental, -1 Physical, still draws encounter cards
+      const noGlitchCtx3 = {
+        ...setupContext(res2Resolved.updatedPlayer),
+        rng: { next: () => 0.5, nextInt: () => 0, getState: () => 1, setState: () => {} } as any,
+      };
+      const res3 = gameReducer(res2Resolved.updatedPlayer, { type: 'play_arcade' }, noGlitchCtx3);
       expect(res3.updatedPlayer.hoursRemaining).toBe(14);
-      expect(res3.updatedPlayer.money).toBe(moneyAfterP1 - 16);
-      expect(res3.updatedPlayer.physicalCondition).toBe(physAfterP1 - 1.5);
-      expect(res3.updatedPlayer.mentalCondition).toBe(mentalAfterP1 + 1);
+      expect(res3.updatedPlayer.money).toBe(res2Resolved.updatedPlayer.money - 8);
+      expect(res3.updatedPlayer.physicalCondition).toBe(res2Resolved.updatedPlayer.physicalCondition - 1);
+      expect(res3.updatedPlayer.mentalCondition).toBe(res2Resolved.updatedPlayer.mentalCondition);
       expect(res3.updatedPlayer.turnFlags.arcadePlaysThisTurn).toBe(3);
+      expect(res3.updatedPlayer.pendingMiniGame?.options).toHaveLength(2);
     });
   });
 

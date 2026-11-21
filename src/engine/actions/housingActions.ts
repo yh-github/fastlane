@@ -157,7 +157,8 @@ export function handleAskRentExtensionAction(
 export function handleRenegotiateRentAction(
   player: PlayerState,
   _action: { type: 'renegotiate_rent' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   let actionLog;
@@ -201,13 +202,16 @@ export function handleRenegotiateRentAction(
   let mentalMistake = false;
   let socialMistake = false;
 
-  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
+  const effectiveReplay: ReplayContext = replayContext ?? {
+    inDecisions: context.engineDecisions || [],
+    outDecisions: []
+  };
   const actionCount = nextPlayer.rentRenegotiationsAsked;
 
   if (context.rules.usePhysicalMentalConditions && curMental < 10) {
     const mentalChance = (10 - curMental) * 0.025;
     mentalMistake = resolveDecision(
-      replayContext,
+      effectiveReplay,
       `renegotiate_mental_mistake_${nextPlayer.id}_${actionCount}`,
       () => context.rng.next() < mentalChance
     );
@@ -216,7 +220,7 @@ export function handleRenegotiateRentAction(
   if (context.rules.trackSocial && curSocial < 10) {
     const socialChance = (10 - curSocial) * 0.0125;
     socialMistake = resolveDecision(
-      replayContext,
+      effectiveReplay,
       `renegotiate_social_mistake_${nextPlayer.id}_${actionCount}`,
       () => context.rng.next() < socialChance
     );

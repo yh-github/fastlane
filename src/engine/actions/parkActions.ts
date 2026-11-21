@@ -1,7 +1,7 @@
 import type { PlayerState, StatModification, GameEvent, MiniGameOption, MiniGameState, ParkDecksState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { spendHours } from '../timeManager';
-import { requireAdvancedStatRules, requireConfig } from '../rules';
+import { requireAdvancedStatRules, requireConfig, type GameRules } from '../rules';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 import { roundToResolution, calcMaxSkillCap } from '../statMath';
 import { formatHours } from '../math/formatters';
@@ -87,18 +87,20 @@ export function handlePlayArcadeAction(
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   const costHours = 2;
-  const cashCost = 8;
   const allowPartial = Boolean(context.rules.allowPartialHours || context.rules.proportionalDivisibleActions);
 
   if (nextPlayer.hoursRemaining <= 0 || (!allowPartial && nextPlayer.hoursRemaining < costHours)) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
+
+  const actualHours = Math.min(costHours, nextPlayer.hoursRemaining);
+  const ratio = actualHours / costHours;
+  const cashCost = (allowPartial && actualHours < costHours) ? Math.max(1, Math.round(8 * ratio)) : 8;
+
   if (nextPlayer.money < cashCost) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughMoney' } };
   }
 
-  const actualHours = Math.min(costHours, nextPlayer.hoursRemaining);
-  const ratio = actualHours / costHours;
   nextPlayer = spendHours(nextPlayer, actualHours);
   nextPlayer.money -= cashCost;
 
@@ -159,74 +161,9 @@ export function handlePlayArcadeAction(
       modifications
     }];
 
-    // Organic Arcade Mini-Game on 1st play per turn (distinguished from Park: 2 cabinet picks or 20% mild glitch)
-    if (playsThisTurn === 0) {
-      const effectiveReplay: ReplayContext = replayContext ?? {
-        inDecisions: context.engineDecisions || [],
-        outDecisions: []
-      };
-
-      const isGlitch = resolveDecision(
-        effectiveReplay,
-        `arcade_glitch_${nextPlayer.id}_${context.turn}`,
-        () => context.rng.next() < 0.20
-      );
-
-      if (isGlitch) {
-        const rawGlitch = structuredClone(ARCADE_GLITCH_CARD);
-        const glitchCard = isPartial ? scaleParkCard(rawGlitch, ratio, conditionRes) : rawGlitch;
-        if (nextPlayer.isAi) {
-          const res = applyParkCardEffects(nextPlayer, glitchCard, context);
-          nextPlayer = res.nextPlayer;
-          actionLogs.push({
-            key: 'action.arcade.glitch',
-            params: { title: glitchCard.title, desc: glitchCard.description },
-            modifications: res.modifications
-          });
-        } else {
-          const miniGameState: MiniGameState = {
-            gameType: 'arcade_encounter',
-            title: '👾 Arcade Glitch!',
-            subtitle: 'A cabinet hiccupped near the end of your run:',
-            options: [glitchCard]
-          };
-          nextPlayer.pendingMiniGame = miniGameState;
-          nextPlayer.pendingAppraisalDilemma = miniGameState;
-        }
-      } else {
-        const pool = shuffleArray(
-          ARCADE_ENCOUNTER_CARDS,
-          context.rng,
-          effectiveReplay,
-          `arcade_draw_${nextPlayer.id}_${context.turn}`
-        );
-        const picked = pool.slice(0, 2).map(card => {
-          const cloned = structuredClone(card);
-          return isPartial ? scaleParkCard(cloned, ratio, conditionRes) : cloned;
-        });
-
-        if (nextPlayer.isAi) {
-          const bestIdx = chooseBestParkCard(picked);
-          const chosenCard = picked[bestIdx] || picked[0];
-          const res = applyParkCardEffects(nextPlayer, chosenCard, context);
-          nextPlayer = res.nextPlayer;
-          actionLogs.push({
-            key: 'action.arcade.cardResolved',
-            params: { title: chosenCard.title, desc: chosenCard.description },
-            modifications: res.modifications
-          });
-        } else {
-          const miniGameState: MiniGameState = {
-            gameType: 'arcade_encounter',
-            title: '🕹️ Pirate Arcade Corner',
-            subtitle: 'Pick a cabinet to finish your session:',
-            options: picked
-          };
-          nextPlayer.pendingMiniGame = miniGameState;
-          nextPlayer.pendingAppraisalDilemma = miniGameState;
-        }
-      }
-    }
+    const encounterRes = resolveArcadeEncounter(nextPlayer, playsThisTurn, isPartial, ratio, conditionRes, context, replayContext);
+    nextPlayer = encounterRes.nextPlayer;
+    if (encounterRes.extraLog) actionLogs.push(encounterRes.extraLog);
 
     return {
       nextPlayer,
@@ -241,13 +178,107 @@ export function handlePlayArcadeAction(
     modifications.push({ stat: 'happiness', diff: 2 });
   }
 
+  const actionLogs: GameEvent[] = [{
+    key: 'action.arcade.played',
+    modifications
+  }];
+
+  const conditionRes = context.rules.conditionResolution ?? 0.5;
+  const isPartial = Boolean(context.rules.proportionalDivisibleActions && actualHours < costHours);
+  const encounterRes = resolveArcadeEncounter(nextPlayer, playsThisTurn, isPartial, ratio, conditionRes, context, replayContext);
+  nextPlayer = encounterRes.nextPlayer;
+  if (encounterRes.extraLog) actionLogs.push(encounterRes.extraLog);
+
   return {
     nextPlayer,
-    actionLog: {
-      key: 'action.arcade.played',
-      modifications
-    }
+    actionLog: actionLogs.length === 1 ? actionLogs[0] : actionLogs
   };
+}
+
+/**
+ * Draws arcade cabinet encounter cards (80% 2-card choice, 20% mild glitch) on every play.
+ */
+function resolveArcadeEncounter(
+  player: PlayerState,
+  playsThisTurn: number,
+  isPartial: boolean,
+  ratio: number,
+  conditionRes: number,
+  context: ReducerContext,
+  replayContext?: ReplayContext
+): { nextPlayer: PlayerState; extraLog?: GameEvent } {
+  let nextPlayer = player;
+  const effectiveReplay: ReplayContext = replayContext ?? {
+    inDecisions: context.engineDecisions || [],
+    outDecisions: []
+  };
+  const keySuffix = playsThisTurn === 0 ? '' : `_${playsThisTurn}`;
+
+  const isGlitch = resolveDecision(
+    effectiveReplay,
+    `arcade_glitch_${nextPlayer.id}_${context.turn}${keySuffix}`,
+    () => context.rng.next() < 0.20
+  );
+
+  if (isGlitch) {
+    const rawGlitch = structuredClone(ARCADE_GLITCH_CARD);
+    const glitchCard = isPartial ? scaleParkCard(rawGlitch, ratio, conditionRes) : rawGlitch;
+    if (nextPlayer.isAi) {
+      const res = applyParkCardEffects(nextPlayer, glitchCard, context);
+      return {
+        nextPlayer: res.nextPlayer,
+        extraLog: {
+          key: 'action.arcade.glitch',
+          params: { title: glitchCard.title, desc: glitchCard.description },
+          modifications: res.modifications
+        }
+      };
+    }
+    const miniGameState: MiniGameState = {
+      gameType: 'arcade_encounter',
+      title: '👾 Arcade Glitch!',
+      subtitle: 'A cabinet hiccupped near the end of your run:',
+      options: [glitchCard]
+    };
+    nextPlayer.pendingMiniGame = miniGameState;
+    nextPlayer.pendingAppraisalDilemma = miniGameState;
+    return { nextPlayer };
+  }
+
+  const pool = shuffleArray(
+    ARCADE_ENCOUNTER_CARDS,
+    context.rng,
+    effectiveReplay,
+    `arcade_draw_${nextPlayer.id}_${context.turn}${keySuffix}`
+  );
+  const picked = pool.slice(0, 2).map(card => {
+    const cloned = structuredClone(card);
+    return isPartial ? scaleParkCard(cloned, ratio, conditionRes) : cloned;
+  });
+
+  if (nextPlayer.isAi) {
+    const bestIdx = chooseBestParkCard(picked);
+    const chosenCard = picked[bestIdx] || picked[0];
+    const res = applyParkCardEffects(nextPlayer, chosenCard, context);
+    return {
+      nextPlayer: res.nextPlayer,
+      extraLog: {
+        key: 'action.arcade.cardResolved',
+        params: { title: chosenCard.title, desc: chosenCard.description },
+        modifications: res.modifications
+      }
+    };
+  }
+
+  const miniGameState: MiniGameState = {
+    gameType: 'arcade_encounter',
+    title: '🕹️ Pirate Arcade Corner',
+    subtitle: 'Pick a cabinet to finish your session:',
+    options: picked
+  };
+  nextPlayer.pendingMiniGame = miniGameState;
+  nextPlayer.pendingAppraisalDilemma = miniGameState;
+  return { nextPlayer };
 }
 
 // ── PARK CARD DECKS DEFINITION ──
@@ -460,6 +491,158 @@ export const PARK_HAZARD_CARDS: MiniGameOption[] = [
   }
 ];
 
+export const PARK_OUTFIT_MUGGING_CARDS: Record<'dress' | 'business', MiniGameOption> = {
+  dress: {
+    type: 'park_encounter',
+    cardId: 'hazard_outfit_mugging',
+    title: 'Flashy Target',
+    description: "Your Dress Clothes caught a mugger's eye in the park.",
+    icon: '🦹',
+    mentalAmount: -1
+  },
+  business: {
+    type: 'park_encounter',
+    cardId: 'hazard_outfit_mugging',
+    title: 'Prime Target',
+    description: 'Your expensive Business Suit drew an opportunistic mugger in the park.',
+    icon: '🦹',
+    mentalAmount: -1
+  }
+};
+
+export interface ParkEncounterOdds {
+  outfitTier: 'dress' | 'business' | null;
+  outfitMuggingChance: number;
+  hazardChance: number;
+  goodChance: number;
+  totalBadChance: number;
+  totalMuggingChance: number;
+}
+
+export type ParkEncounterOutcome = 'mugging' | 'hazard' | 'good';
+
+/**
+ * Computes park encounter/hazard/mugging probabilities.
+ * Outfit-based mugging bonuses (+5pp Dress, +10pp Business) apply only when `enableParkSystem` is enabled.
+ */
+export function getParkEncounterOdds(
+  player: PlayerState,
+  rules?: Partial<GameRules>
+): ParkEncounterOdds {
+  const enablePark = Boolean(rules?.enableParkSystem);
+  const selected = player.inventory?.selectedClothes;
+  const outfitTier: 'dress' | 'business' | null = enablePark
+    ? (selected === 'dress' ? 'dress' : (selected === 'business' ? 'business' : null))
+    : null;
+  const outfitMuggingChance = outfitTier === 'business' ? 0.10 : (outfitTier === 'dress' ? 0.05 : 0);
+  const hazardChance = 0.25;
+  const goodChance = Number((1 - hazardChance - outfitMuggingChance).toFixed(4));
+  const totalBadChance = Number((hazardChance + outfitMuggingChance).toFixed(4));
+  const totalMuggingChance = Number((outfitMuggingChance + hazardChance / PARK_HAZARD_CARDS.length).toFixed(4));
+  return {
+    outfitTier,
+    outfitMuggingChance,
+    hazardChance,
+    goodChance,
+    totalBadChance,
+    totalMuggingChance
+  };
+}
+
+/**
+ * Resolves cash stolen and narrative description for park pickpocket and outfit-mugging cards.
+ */
+export function resolveParkMuggingCard(
+  card: MiniGameOption,
+  player: PlayerState,
+  outfitTier?: 'dress' | 'business' | null
+): MiniGameOption {
+  if (player.money >= 150) {
+    const stolen = Math.min(100, Math.max(25, Math.floor(player.money * 0.15)));
+    if (card.cardId === 'hazard_outfit_mugging') {
+      const outfitLabel = outfitTier === 'business' ? 'Business Suit' : 'Dress Clothes';
+      return {
+        ...card,
+        cashAmount: -stolen,
+        mentalAmount: -2,
+        description: `Wearing your ${outfitLabel} made you an easy mark — a mugger cornered you and lifted $${stolen} cash!`
+      };
+    }
+    return {
+      ...card,
+      cashAmount: -stolen,
+      mentalAmount: -2,
+      description: `A pickpocket bumped into you and lifted $${stolen} cash!`
+    };
+  }
+
+  if (card.cardId === 'hazard_outfit_mugging') {
+    const outfitLabel = outfitTier === 'business' ? 'Business Suit' : 'Dress Clothes';
+    return {
+      ...card,
+      cashAmount: 0,
+      mentalAmount: -1,
+      description: `Your ${outfitLabel} drew a mugger, but they found nothing in your pockets!`
+    };
+  }
+
+  return {
+    ...card,
+    cashAmount: 0,
+    mentalAmount: -1,
+    description: 'A pickpocket bumped into you and found nothing in your pockets!'
+  };
+}
+
+export interface ParkWorkoutBaseline {
+  workoutsBefore: number;
+  maxPhysGain: number;
+  physCost: number;
+  mentalDelta: number;
+}
+
+/**
+ * Computes baseline conditioning modifiers for a park workout session.
+ * Every session grants +1 Max Physical (up to globalMax), while Physical cost (1 + n)
+ * and Mental cost (n) escalate by 1 each session within a turn, with a +2 Mental on-first bonus.
+ */
+export function getParkWorkoutBaseline(
+  player: PlayerState,
+  rules: Partial<GameRules> | undefined,
+  statRules: { initialPhysicalMax: number; globalMaxPhysicalCondition: number } | undefined,
+  actualHours: number = 3,
+  costHours: number = 3
+): ParkWorkoutBaseline {
+  const workoutsBefore = player.turnFlags?.parkWorkoutsThisTurn || 0;
+  const conditionRes = rules?.conditionResolution ?? 0.5;
+  const ratio = costHours > 0 ? actualHours / costHours : 1;
+  const scalePartial = Boolean(rules?.proportionalDivisibleActions && actualHours < costHours);
+
+  const rawMaxBoost = scalePartial ? roundToResolution(1 * ratio, conditionRes) : 1;
+  const curMax = player.physicalConditionMax ?? statRules?.initialPhysicalMax;
+  const globalMax = statRules?.globalMaxPhysicalCondition;
+  const maxPhysGain = (curMax !== undefined && globalMax !== undefined)
+    ? Math.min(Math.max(0, roundToResolution(globalMax - curMax, conditionRes)), rawMaxBoost)
+    : rawMaxBoost;
+
+  const rawPhysCost = 1 + workoutsBefore;
+  const physCost = scalePartial
+    ? Math.max(conditionRes, roundToResolution(rawPhysCost * ratio, conditionRes))
+    : rawPhysCost;
+
+  const rawMentalDelta = workoutsBefore === 0 ? 2 : -workoutsBefore;
+  let mentalDelta = rawMentalDelta;
+  if (scalePartial) {
+    if (rawMentalDelta > 0) {
+      mentalDelta = Math.max(conditionRes, roundToResolution(rawMentalDelta * ratio, conditionRes));
+    } else if (rawMentalDelta < 0) {
+      mentalDelta = -Math.max(conditionRes, roundToResolution(Math.abs(rawMentalDelta) * ratio, conditionRes));
+    }
+  }
+
+  return { workoutsBefore, maxPhysGain, physCost, mentalDelta };
+}
+
 export function chooseBestParkCard(options: MiniGameOption[]): number {
   let bestIdx = 0;
   let bestScore = -Infinity;
@@ -623,7 +806,11 @@ export function scaleParkCard(
     scaled.socialAmount = Math.max(1, Math.round(scaled.socialAmount * ratio));
   }
   if (scaled.cashAmount !== undefined && scaled.cashAmount !== 0) {
+    const origCash = scaled.cashAmount;
     scaled.cashAmount = Math.round(scaled.cashAmount * ratio);
+    if ((scaled.cardId === 'hazard_pickpocket' || scaled.cardId === 'hazard_outfit_mugging') && origCash < 0 && scaled.cashAmount !== origCash) {
+      scaled.description = scaled.description.replace(`$${Math.abs(origCash)}`, `$${Math.abs(scaled.cashAmount)}`);
+    }
   }
   if (scaled.durabilityAmount !== undefined && scaled.durabilityAmount !== 0) {
     scaled.durabilityAmount = Math.min(-1, Math.round(scaled.durabilityAmount * ratio));
@@ -650,7 +837,8 @@ export function drawParkCards(
   deckType: 'relax' | 'workout' | 'hazard',
   count: number,
   context: ReducerContext,
-  decisionPrefix: string
+  decisionPrefix: string,
+  replayContext?: ReplayContext
 ): { cards: MiniGameOption[]; updatedDecks: ParkDecksState } {
   const decks: ParkDecksState = player.parkDecks
     ? structuredClone(player.parkDecks)
@@ -668,7 +856,10 @@ export function drawParkCards(
   );
   const allCardIds = cardPool.map(c => c.cardId!);
 
-  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
+  const effectiveReplay: ReplayContext = replayContext ?? {
+    inDecisions: context.engineDecisions || [],
+    outDecisions: []
+  };
 
   if (deck.drawPile.length < count) {
     let pool = [...deck.discardPile];
@@ -676,13 +867,13 @@ export function drawParkCards(
     if (pool.length === 0) {
       pool = [...allCardIds];
     }
-    const shuffled = shuffleArray(pool, context.rng, replayContext, `${decisionPrefix}_reshuffle_${deckType}`);
+    const shuffled = shuffleArray(pool, context.rng, effectiveReplay, `${decisionPrefix}_reshuffle_${deckType}`);
     deck.drawPile = [...deck.drawPile, ...shuffled];
   }
 
   if (deck.drawPile.length < count) {
     const extra = allCardIds.filter(id => !deck.drawPile.includes(id));
-    const shuffled = shuffleArray(extra, context.rng, replayContext, `${decisionPrefix}_refill_${deckType}`);
+    const shuffled = shuffleArray(extra, context.rng, effectiveReplay, `${decisionPrefix}_refill_${deckType}`);
     deck.drawPile = [...deck.drawPile, ...shuffled];
   }
 
@@ -697,22 +888,7 @@ export function drawParkCards(
   const drawnCards: MiniGameOption[] = drawnIds.map(id => {
     let card = structuredClone(cardMap.get(id) || cardPool[0]);
     if (card.cardId === 'hazard_pickpocket') {
-      if (player.money >= 150) {
-        const stolen = Math.min(100, Math.max(25, Math.floor(player.money * 0.15)));
-        card = {
-          ...card,
-          cashAmount: -stolen,
-          mentalAmount: -2,
-          description: `A pickpocket bumped into you and lifted $${stolen} cash!`
-        };
-      } else {
-        card = {
-          ...card,
-          cashAmount: 0,
-          mentalAmount: -1,
-          description: `A pickpocket bumped into you and found nothing in your pockets!`
-        };
-      }
+      card = resolveParkMuggingCard(card, player);
     }
     return card;
   });
@@ -722,10 +898,183 @@ export function drawParkCards(
 
 // ── CORE ACTIONS ──
 
+function rollParkEncounterOutcome(
+  replayContext: ReplayContext,
+  decisionKey: string,
+  rng: { next: () => number },
+  odds: ParkEncounterOdds
+): ParkEncounterOutcome {
+  const raw = resolveDecision<ParkEncounterOutcome | boolean>(
+    replayContext,
+    decisionKey,
+    () => {
+      const r = rng.next();
+      if (odds.outfitMuggingChance > 0 && r < odds.outfitMuggingChance) {
+        return 'mugging';
+      }
+      if (r < odds.outfitMuggingChance + odds.hazardChance) {
+        return 'hazard';
+      }
+      return 'good';
+    }
+  );
+  if (raw === true) return 'hazard';
+  if (raw === false) return 'good';
+  return raw;
+}
+
+function resolveParkEncounterBranch(params: {
+  player: PlayerState;
+  deckType: 'relax' | 'workout';
+  badDecisionKey: string;
+  hazardPrefix: string;
+  goodPrefix: string;
+  hazardSubtitle: string;
+  goodTitle: string;
+  goodSubtitle: string;
+  ratio: number;
+  actualHours: number;
+  costHours: number;
+  conditionRes: number;
+  context: ReducerContext;
+  replayContext: ReplayContext;
+  actionLogs: GameEvent[];
+}): PlayerState {
+  const {
+    deckType,
+    badDecisionKey,
+    hazardPrefix,
+    goodPrefix,
+    hazardSubtitle,
+    goodTitle,
+    goodSubtitle,
+    ratio,
+    actualHours,
+    costHours,
+    conditionRes,
+    context,
+    replayContext,
+    actionLogs
+  } = params;
+  let nextPlayer = params.player;
+  const scalePartial = Boolean(context.rules.proportionalDivisibleActions && actualHours < costHours);
+  const odds = getParkEncounterOdds(nextPlayer, context.rules);
+  const outcome = rollParkEncounterOutcome(replayContext, badDecisionKey, context.rng, odds);
+
+  if (outcome === 'mugging' && odds.outfitTier) {
+    const rawMugging = resolveParkMuggingCard(
+      PARK_OUTFIT_MUGGING_CARDS[odds.outfitTier],
+      nextPlayer,
+      odds.outfitTier
+    );
+    const muggingCard = scalePartial ? scaleParkCard(rawMugging, ratio, conditionRes) : rawMugging;
+
+    if (nextPlayer.isAi) {
+      const res = applyParkCardEffects(nextPlayer, muggingCard, context);
+      nextPlayer = res.nextPlayer;
+      actionLogs.push({
+        key: 'events.park.hazard',
+        params: { title: muggingCard.title, desc: muggingCard.description },
+        modifications: res.modifications
+      });
+    } else {
+      const miniGameState: MiniGameState = {
+        gameType: 'park_hazard',
+        title: 'Park Mugging!',
+        subtitle: 'Your upscale outfit attracted unwanted attention:',
+        options: [muggingCard]
+      };
+      nextPlayer.pendingMiniGame = miniGameState;
+      nextPlayer.pendingAppraisalDilemma = miniGameState;
+      actionLogs.push({
+        key: 'events.park.hazard',
+        params: { title: muggingCard.title, desc: muggingCard.description }
+      });
+    }
+    return nextPlayer;
+  }
+
+  if (outcome === 'hazard' || outcome === 'mugging') {
+    const { cards: [rawHazardCard], updatedDecks } = drawParkCards(
+      nextPlayer,
+      'hazard',
+      1,
+      context,
+      hazardPrefix,
+      replayContext
+    );
+    nextPlayer.parkDecks = updatedDecks;
+    const hazardCard = scalePartial ? scaleParkCard(rawHazardCard, ratio, conditionRes) : rawHazardCard;
+
+    if (nextPlayer.isAi) {
+      const res = applyParkCardEffects(nextPlayer, hazardCard, context);
+      nextPlayer = res.nextPlayer;
+      actionLogs.push({
+        key: 'events.park.hazard',
+        params: { title: hazardCard.title, desc: hazardCard.description },
+        modifications: res.modifications
+      });
+    } else {
+      const miniGameState: MiniGameState = {
+        gameType: 'park_hazard',
+        title: 'Park Hazard!',
+        subtitle: hazardSubtitle,
+        options: [hazardCard]
+      };
+      nextPlayer.pendingMiniGame = miniGameState;
+      nextPlayer.pendingAppraisalDilemma = miniGameState;
+      actionLogs.push({
+        key: 'events.park.hazard',
+        params: { title: hazardCard.title, desc: hazardCard.description }
+      });
+    }
+    return nextPlayer;
+  }
+
+  const { cards: rawCards, updatedDecks } = drawParkCards(
+    nextPlayer,
+    deckType,
+    3,
+    context,
+    goodPrefix,
+    replayContext
+  );
+  nextPlayer.parkDecks = updatedDecks;
+
+  const cards = scalePartial ? rawCards.map(c => scaleParkCard(c, ratio, conditionRes)) : rawCards;
+
+  if (nextPlayer.isAi) {
+    const bestIdx = chooseBestParkCard(cards);
+    const chosenCard = cards[bestIdx];
+    const res = applyParkCardEffects(nextPlayer, chosenCard, context);
+    nextPlayer = res.nextPlayer;
+    actionLogs.push({
+      key: 'action.park.cardResolved',
+      params: { title: chosenCard.title },
+      modifications: res.modifications
+    });
+  } else {
+    const miniGameState: MiniGameState = {
+      gameType: 'park_encounter',
+      title: goodTitle,
+      subtitle: goodSubtitle,
+      options: cards
+    };
+    nextPlayer.pendingMiniGame = miniGameState;
+    nextPlayer.pendingAppraisalDilemma = miniGameState;
+    actionLogs.push({
+      key: 'action.park.cardsDrawn',
+      params: { count: cards.length }
+    });
+  }
+  return nextPlayer;
+}
+
 export function handleRelaxParkAction(
   player: PlayerState,
   _action: { type: 'relax_park' } | { type: 'stroll_park' } | { type: 'rest_bench' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   const costHours = 3;
@@ -747,7 +1096,10 @@ export function handleRelaxParkAction(
   };
 
   const actionLogs: GameEvent[] = [];
-  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
+  const effectiveReplay: ReplayContext = replayContext ?? {
+    inDecisions: context.engineDecisions || [],
+    outDecisions: []
+  };
   const enableEncounters = Boolean(context.rules.enableParkSystem ?? context.rules.usePhysicalMentalConditions);
 
   // Apply deterministic baseline rest
@@ -825,91 +1177,28 @@ export function handleRelaxParkAction(
   }
 
   // Advanced 2000 Encounter System:
-  // Baseline stats applied above; now draw 1 Event Card (75% encounter, 25% hazard)
+  // Baseline stats applied above; now draw 1 Event Card (encounter / hazard / outfit mugging)
   const conditionRes = context.rules.conditionResolution ?? 0.5;
-  const isBadRoll = resolveDecision(
-    replayContext,
-    `park_roll_bad_${nextPlayer.id}_${context.turn}_${relaxes}`,
-    () => context.rng.next() < 0.25
-  );
-
-    if (isBadRoll) {
-      const { cards: [rawHazardCard], updatedDecks } = drawParkCards(
-        nextPlayer,
-        'hazard',
-        1,
-        context,
-        `park_hazard_${nextPlayer.id}_${context.turn}_${relaxes}`
-      );
-      nextPlayer.parkDecks = updatedDecks;
-      const hazardCard = (context.rules.proportionalDivisibleActions && actualHours < costHours)
-        ? scaleParkCard(rawHazardCard, ratio, conditionRes)
-        : rawHazardCard;
-
-      if (nextPlayer.isAi) {
-        const res = applyParkCardEffects(nextPlayer, hazardCard, context);
-        nextPlayer = res.nextPlayer;
-        actionLogs.push({
-          key: 'events.park.hazard',
-          params: { title: hazardCard.title, desc: hazardCard.description },
-          modifications: res.modifications
-        });
-      } else {
-        const miniGameState: MiniGameState = {
-          gameType: 'park_hazard',
-          title: 'Park Hazard!',
-          subtitle: 'An unexpected incident interrupted your visit:',
-          options: [hazardCard]
-        };
-        nextPlayer.pendingMiniGame = miniGameState;
-        nextPlayer.pendingAppraisalDilemma = miniGameState;
-        actionLogs.push({
-          key: 'events.park.hazard',
-          params: { title: hazardCard.title, desc: hazardCard.description }
-        });
-      }
-    } else {
-      const { cards: rawCards, updatedDecks } = drawParkCards(
-        nextPlayer,
-        'relax',
-        3,
-        context,
-        `park_relax_${nextPlayer.id}_${context.turn}_${relaxes}`
-      );
-      nextPlayer.parkDecks = updatedDecks;
-
-      const cards = (context.rules.proportionalDivisibleActions && actualHours < costHours)
-        ? rawCards.map(c => scaleParkCard(c, ratio, conditionRes))
-        : rawCards;
-
-      if (nextPlayer.isAi) {
-        const bestIdx = chooseBestParkCard(cards);
-        const chosenCard = cards[bestIdx];
-        const res = applyParkCardEffects(nextPlayer, chosenCard, context);
-        nextPlayer = res.nextPlayer;
-        actionLogs.push({
-          key: 'action.park.cardResolved',
-          params: { title: chosenCard.title },
-          modifications: res.modifications
-        });
-      } else {
-        const isPartial = context.rules.proportionalDivisibleActions && actualHours < costHours;
-        const miniGameState: MiniGameState = {
-          gameType: 'park_encounter',
-          title: 'Park Encounter',
-          subtitle: isPartial
-            ? `Quick Park Visit (${formatHours(actualHours)}h / 3h) - Proportional Effects:`
-            : 'Choose how to spend your time in the park:',
-          options: cards
-        };
-        nextPlayer.pendingMiniGame = miniGameState;
-        nextPlayer.pendingAppraisalDilemma = miniGameState;
-        actionLogs.push({
-          key: 'action.park.cardsDrawn',
-          params: { count: cards.length }
-        });
-      }
-    }
+  const isPartial = Boolean(context.rules.proportionalDivisibleActions && actualHours < costHours);
+  nextPlayer = resolveParkEncounterBranch({
+    player: nextPlayer,
+    deckType: 'relax',
+    badDecisionKey: `park_roll_bad_${nextPlayer.id}_${context.turn}_${relaxes}`,
+    hazardPrefix: `park_hazard_${nextPlayer.id}_${context.turn}_${relaxes}`,
+    goodPrefix: `park_relax_${nextPlayer.id}_${context.turn}_${relaxes}`,
+    hazardSubtitle: 'An unexpected incident interrupted your visit:',
+    goodTitle: 'Park Encounter',
+    goodSubtitle: isPartial
+      ? `Quick Park Visit (${formatHours(actualHours)}h / 3h) - Proportional Effects:`
+      : 'Choose how to spend your time in the park:',
+    ratio,
+    actualHours,
+    costHours,
+    conditionRes,
+    context,
+    replayContext: effectiveReplay,
+    actionLogs
+  });
 
   return {
     nextPlayer,
@@ -920,7 +1209,8 @@ export function handleRelaxParkAction(
 export function handleWorkoutParkAction(
   player: PlayerState,
   _action: { type: 'workout_park' } | { type: 'jog_park' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
   let nextPlayer = structuredClone(player);
   const costHours = 3;
@@ -955,7 +1245,10 @@ export function handleWorkoutParkAction(
   };
 
   const actionLogs: GameEvent[] = [];
-  const replayContext: ReplayContext = { inDecisions: context.engineDecisions || [], outDecisions: [] };
+  const effectiveReplay: ReplayContext = replayContext ?? {
+    inDecisions: context.engineDecisions || [],
+    outDecisions: []
+  };
   const enableEncounters = Boolean(context.rules.enableParkSystem ?? context.rules.usePhysicalMentalConditions);
   const conditionRes = context.rules.conditionResolution ?? 0.5;
 
@@ -969,7 +1262,7 @@ export function handleWorkoutParkAction(
       Math.max(0, (20 - phys) * 0.05) + Math.max(0, (20 - mental) * 0.05)
     );
     hadFatigueMistake = resolveDecision(
-      replayContext,
+      effectiveReplay,
       `park_workout_fatigue_${nextPlayer.id}_${context.turn}_${workouts}`,
       () => context.rng.next() < mistakeChance
     );
@@ -987,81 +1280,54 @@ export function handleWorkoutParkAction(
     return { nextPlayer, actionLog: actionLogs[0] };
   }
 
-  // Overtraining on 2nd+ workout: pushes too hard without adequate recovery
-  if (workouts > 0) {
-    if (context.rules.usePhysicalMentalConditions && advStatRules) {
-      const minPhys = requireConfig(advStatRules.minPhysicalCondition, 'statRules.minPhysicalCondition');
-      const minMental = requireConfig(advStatRules.minMentalCondition, 'statRules.minMentalCondition');
-      let physCost = 2;
-      let mentalCost = 1;
-      if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-        physCost = Math.max(conditionRes, roundToResolution(physCost * ratio, conditionRes));
-        mentalCost = Math.max(conditionRes, roundToResolution(mentalCost * ratio, conditionRes));
-      }
-      nextPlayer.physicalCondition = Math.max(minPhys, phys - physCost);
-      nextPlayer.mentalCondition = Math.max(minMental, mental - mentalCost);
-
-      actionLogs.push({
-        key: 'action.park.workoutOvertraining',
-        modifications: [
-          { stat: 'physical', diff: -physCost },
-          { stat: 'mental', diff: -mentalCost }
-        ]
-      });
-    } else {
-      let relCost = 1;
-      if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-        relCost = Math.max(0.5, roundToResolution(relCost * ratio, 0.5));
-      }
-      nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - relCost);
-      actionLogs.push({
-        key: 'action.park.workoutOvertraining',
-        modifications: [{ stat: 'relaxation', diff: -relCost }]
-      });
-    }
-    return { nextPlayer, actionLog: actionLogs[0] };
-  }
-
-  // First workout baseline conditioning:
   if (context.rules.usePhysicalMentalConditions && advStatRules) {
     const initMaxPhys = requireConfig(advStatRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
     const globalMax = requireConfig(advStatRules.globalMaxPhysicalCondition, 'statRules.globalMaxPhysicalCondition');
     const defaultMaxMental = requireConfig(advStatRules.maxMentalCondition, 'statRules.maxMentalCondition');
     const minPhys = requireConfig(advStatRules.minPhysicalCondition, 'statRules.minPhysicalCondition');
+    const minMental = requireConfig(advStatRules.minMentalCondition, 'statRules.minMentalCondition');
     const curMax = nextPlayer.physicalConditionMax ?? initMaxPhys;
 
-    let maxDiff = 0;
-    let baseMaxBoost = 1;
-    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-      baseMaxBoost = roundToResolution(1 * ratio, conditionRes);
-    }
-    if (curMax < globalMax && baseMaxBoost > 0) {
-      maxDiff = Math.min(globalMax - curMax, baseMaxBoost);
-      nextPlayer.physicalConditionMax = curMax + maxDiff;
+    const baseline = getParkWorkoutBaseline(
+      player,
+      context.rules,
+      { initialPhysicalMax: initMaxPhys, globalMaxPhysicalCondition: globalMax },
+      actualHours,
+      costHours
+    );
+
+    if (baseline.maxPhysGain > 0) {
+      nextPlayer.physicalConditionMax = curMax + baseline.maxPhysGain;
     }
 
-    let physCost = 1;
-    let mentalGain = 1;
-    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
-      physCost = Math.max(conditionRes, roundToResolution(physCost * ratio, conditionRes));
-      mentalGain = Math.max(conditionRes, roundToResolution(mentalGain * ratio, conditionRes));
-    }
-
-    nextPlayer.physicalCondition = Math.max(minPhys, Math.min(nextPlayer.physicalConditionMax ?? initMaxPhys, phys - physCost));
-    nextPlayer.mentalCondition = Math.min(nextPlayer.mentalConditionMax ?? defaultMaxMental, mental + mentalGain);
+    const effectivePhysMax = nextPlayer.physicalConditionMax ?? initMaxPhys;
+    const effectiveMentalMax = nextPlayer.mentalConditionMax ?? defaultMaxMental;
+    nextPlayer.physicalCondition = Math.max(minPhys, Math.min(effectivePhysMax, phys - baseline.physCost));
+    nextPlayer.mentalCondition = Math.max(minMental, Math.min(effectiveMentalMax, mental + baseline.mentalDelta));
 
     const mods: StatModification[] = [
-      { stat: 'physical', diff: -physCost },
-      { stat: 'mental', diff: mentalGain }
+      { stat: 'physical', diff: -baseline.physCost },
+      ...(baseline.mentalDelta !== 0 ? [{ stat: 'mental' as const, diff: baseline.mentalDelta }] : [])
     ];
-    if (maxDiff > 0) mods.push({ stat: 'maxPhysical', diff: maxDiff });
+    if (baseline.maxPhysGain > 0) mods.push({ stat: 'maxPhysical', diff: baseline.maxPhysGain });
 
     actionLogs.push({
-      key: 'action.park.workout',
+      key: workouts === 0 ? 'action.park.workout' : 'action.park.workoutOvertraining',
       modifications: mods
     });
+  } else if (workouts > 0) {
+    // Classic rules (repeat workout)
+    let relCost = workouts;
+    if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
+      relCost = Math.max(0.5, roundToResolution(relCost * ratio, 0.5));
+    }
+    nextPlayer.relaxation = Math.max(0, nextPlayer.relaxation - relCost);
+    actionLogs.push({
+      key: 'action.park.workoutOvertraining',
+      modifications: [{ stat: 'relaxation', diff: -relCost }]
+    });
   } else {
-    // Classic rules
+    // Classic rules (first workout)
     let relGain = 2;
     let hapCost = 1;
     if (context.rules.proportionalDivisibleActions && actualHours < costHours) {
@@ -1083,90 +1349,27 @@ export function handleWorkoutParkAction(
     return { nextPlayer, actionLog: actionLogs[0] };
   }
 
-  // Encounters active: draw 1 Event Card (25% hazard, 75% workout cards)
-  const isBadRoll = resolveDecision(
-    replayContext,
-    `park_workout_bad_${nextPlayer.id}_${context.turn}_${workouts}`,
-    () => context.rng.next() < 0.25
-  );
-
-    if (isBadRoll) {
-      const { cards: [rawHazardCard], updatedDecks } = drawParkCards(
-        nextPlayer,
-        'hazard',
-        1,
-        context,
-        `park_hazard_workout_${nextPlayer.id}_${context.turn}_${workouts}`
-      );
-      nextPlayer.parkDecks = updatedDecks;
-      const hazardCard = (context.rules.proportionalDivisibleActions && actualHours < costHours)
-        ? scaleParkCard(rawHazardCard, ratio, conditionRes)
-        : rawHazardCard;
-
-      if (nextPlayer.isAi) {
-        const res = applyParkCardEffects(nextPlayer, hazardCard, context);
-        nextPlayer = res.nextPlayer;
-        actionLogs.push({
-          key: 'events.park.hazard',
-          params: { title: hazardCard.title, desc: hazardCard.description },
-          modifications: res.modifications
-        });
-      } else {
-        const miniGameState: MiniGameState = {
-          gameType: 'park_hazard',
-          title: 'Park Hazard!',
-          subtitle: 'An unexpected incident interrupted your workout:',
-          options: [hazardCard]
-        };
-        nextPlayer.pendingMiniGame = miniGameState;
-        nextPlayer.pendingAppraisalDilemma = miniGameState;
-        actionLogs.push({
-          key: 'events.park.hazard',
-          params: { title: hazardCard.title, desc: hazardCard.description }
-        });
-      }
-    } else {
-      const { cards: rawCards, updatedDecks } = drawParkCards(
-        nextPlayer,
-        'workout',
-        3,
-        context,
-        `park_workout_deck_${nextPlayer.id}_${context.turn}_${workouts}`
-      );
-      nextPlayer.parkDecks = updatedDecks;
-
-      const cards = (context.rules.proportionalDivisibleActions && actualHours < costHours)
-        ? rawCards.map(c => scaleParkCard(c, ratio, conditionRes))
-        : rawCards;
-
-      if (nextPlayer.isAi) {
-        const bestIdx = chooseBestParkCard(cards);
-        const chosenCard = cards[bestIdx];
-        const res = applyParkCardEffects(nextPlayer, chosenCard, context);
-        nextPlayer = res.nextPlayer;
-        actionLogs.push({
-          key: 'action.park.cardResolved',
-          params: { title: chosenCard.title },
-          modifications: res.modifications
-        });
-      } else {
-        const isPartial = context.rules.proportionalDivisibleActions && actualHours < costHours;
-        const miniGameState: MiniGameState = {
-          gameType: 'park_encounter',
-          title: 'Park Workout Encounter',
-          subtitle: isPartial
-            ? `Quick Workout (${formatHours(actualHours)}h / 3h) - Proportional Effects:`
-            : 'Select an athletic training focus:',
-          options: cards
-        };
-        nextPlayer.pendingMiniGame = miniGameState;
-        nextPlayer.pendingAppraisalDilemma = miniGameState;
-        actionLogs.push({
-          key: 'action.park.cardsDrawn',
-          params: { count: cards.length }
-        });
-      }
-    }
+  // Encounters active: draw 1 Event Card (encounter / hazard / outfit mugging)
+  const isPartial = Boolean(context.rules.proportionalDivisibleActions && actualHours < costHours);
+  nextPlayer = resolveParkEncounterBranch({
+    player: nextPlayer,
+    deckType: 'workout',
+    badDecisionKey: `park_workout_bad_${nextPlayer.id}_${context.turn}_${workouts}`,
+    hazardPrefix: `park_hazard_workout_${nextPlayer.id}_${context.turn}_${workouts}`,
+    goodPrefix: `park_workout_deck_${nextPlayer.id}_${context.turn}_${workouts}`,
+    hazardSubtitle: 'An unexpected incident interrupted your workout:',
+    goodTitle: 'Park Workout Encounter',
+    goodSubtitle: isPartial
+      ? `Quick Workout (${formatHours(actualHours)}h / 3h) - Proportional Effects:`
+      : 'Select an athletic training focus:',
+    ratio,
+    actualHours,
+    costHours,
+    conditionRes,
+    context,
+    replayContext: effectiveReplay,
+    actionLogs
+  });
 
   return {
     nextPlayer,
@@ -1179,23 +1382,26 @@ export function handleWorkoutParkAction(
 export function handleParkStrollAction(
   player: PlayerState,
   action: { type: 'stroll_park' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
-  return handleRelaxParkAction(player, action, context);
+  return handleRelaxParkAction(player, action, context, replayContext);
 }
 
 export function handleParkRestAction(
   player: PlayerState,
   action: { type: 'rest_bench' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
-  return handleRelaxParkAction(player, action, context);
+  return handleRelaxParkAction(player, action, context, replayContext);
 }
 
 export function handleParkJogAction(
   player: PlayerState,
   action: { type: 'jog_park' },
-  context: ReducerContext
+  context: ReducerContext,
+  replayContext?: ReplayContext
 ): ActionHandlerResult {
-  return handleWorkoutParkAction(player, action, context);
+  return handleWorkoutParkAction(player, action, context, replayContext);
 }

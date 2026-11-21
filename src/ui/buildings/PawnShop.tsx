@@ -257,9 +257,8 @@ export function PawnShop({
                               fontWeight: 'bold',
                               fontSize: compact ? '0.82rem' : '0.88rem',
                               color: isTrinket ? '#34d399' : isBroken ? '#fca5a5' : '#fef3c7',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
+                              lineHeight: 1.25,
+                              overflowWrap: 'break-word'
                             }}>
                               {displayName}
                             </span>
@@ -364,14 +363,11 @@ export function PawnShop({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
                     <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>📦</span>
-                    <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                    <div style={{ minWidth: 0 }}>
                       <div style={{
                         color: '#fbbf24',
                         fontSize: '0.82rem',
                         fontWeight: 'bold',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
                         lineHeight: 1.2
                       }}>
                         {t('pawnShop.rummageTitle', { defaultValue: 'Dusty Junk Bins & Crates' })}
@@ -379,9 +375,6 @@ export function PawnShop({
                       <div style={{
                         color: '#9ca3af',
                         fontSize: '0.68rem',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
                         lineHeight: 1.2
                       }}>
                         {t('pawnShop.rummageCompactDesc', { defaultValue: 'Dig for curios, parts & bargains (1 hr)' })}
@@ -543,7 +536,7 @@ export function PawnShop({
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         )}
-                        <span style={{ fontSize: compact ? '12px' : '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: compact ? '12px' : '13px', lineHeight: 1.25, overflowWrap: 'break-word' }}>
                           {displayName}
                           {rules?.spaceCapping && itemSpace > 0 && (
                             <span style={{ color: !hasSpace ? '#e74c3c' : '#00e5ff', marginLeft: '6px', fontSize: '11px' }}>
@@ -616,7 +609,7 @@ export function PawnShop({
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         )}
-                        <span style={{ fontSize: compact ? '12px' : '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: compact ? '12px' : '13px', lineHeight: 1.25, overflowWrap: 'break-word' }}>
                           {t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}
                           {app.isBroken && (
                             <span style={{ marginLeft: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>
@@ -861,7 +854,7 @@ export function PawnShop({
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                               <span style={{ fontSize: compact ? '1rem' : '1.2rem', flexShrink: 0 }}>{icon}</span>
                               <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: compact ? '10px' : '11px', color: '#fff', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ fontSize: compact ? '10px' : '11px', color: '#fff', fontWeight: 'bold', lineHeight: 1.25, overflowWrap: 'break-word' }}>
                                   {c.name}
                                 </div>
                                 <div style={{ fontSize: compact ? '8px' : '9px', color: '#94a3b8' }}>
@@ -941,7 +934,7 @@ export function PawnShop({
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <span style={{ fontSize: compact ? '12px' : '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: compact ? '12px' : '13px', lineHeight: 1.25, overflowWrap: 'break-word' }}>
                         {t(`item.${item.id}`, { defaultValue: formatItemName(item.id) })}
                         {isBroken && (
                           <span style={{ marginLeft: '6px', fontSize: compact ? '10px' : '11px', color: '#ef4444', fontWeight: 'bold' }}>
@@ -1014,7 +1007,7 @@ export function PawnShop({
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <span style={{ fontSize: compact ? '12px' : '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: compact ? '12px' : '13px', lineHeight: 1.25, overflowWrap: 'break-word' }}>
                         {t(`item.${app.itemId}`, { defaultValue: formatItemName(app.itemId) })}
                         {app.isBroken && (
                           <span style={{ marginLeft: '6px', fontSize: compact ? '10px' : '11px', color: '#ef4444', fontWeight: 'bold' }}>

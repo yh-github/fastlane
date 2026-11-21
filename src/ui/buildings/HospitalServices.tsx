@@ -114,7 +114,7 @@ export const HospitalServices: React.FC<HospitalServicesProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
             <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>🩺</span>
-            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', lineHeight: 1.25 }}>
               {t('hospital.treatmentsModalTitle', { defaultValue: 'Clinical Treatments' })}
             </strong>
           </div>
@@ -185,7 +185,7 @@ export const HospitalServices: React.FC<HospitalServicesProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
             <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>🩸</span>
-            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', lineHeight: 1.25 }}>
               {t('hospital.bloodDonationTitle', { defaultValue: 'Emergency Blood Donation' })}
             </strong>
           </div>
@@ -267,7 +267,7 @@ export const HospitalServices: React.FC<HospitalServicesProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
             <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>🍲</span>
-            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <strong style={{ fontSize: '0.9rem', color: '#f8fafc', lineHeight: 1.25 }}>
               {t('hospital.cafeteriaTitle', { defaultValue: 'Basement Cafeteria' })}
             </strong>
           </div>

@@ -33,6 +33,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
             borderRadius: '6px', 
             border: '1px solid rgba(255, 255, 255, 0.15)',
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '10px'
@@ -70,8 +71,8 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
         className="store-front-grid"
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', 
-          gap: '8px', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', 
+          gap: '10px', 
           padding: '2px 4px' 
         }}
       >
@@ -192,7 +193,7 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                 boxSizing: 'border-box'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                 {rules?.showItemImages && (
                   <img 
                     src={getItemImagePath(item.id)} 
@@ -217,8 +218,8 @@ export function StoreFront({ player, onAction, availableItems, economicIndex = 0
                 >
                   {isCoffeeItem ? '☕' : (item.category === 'food' ? '🍔' : (item.category === 'clothes' ? '👔' : (item.category === 'book' ? '📚' : (item.category === 'ticket' ? '🎟️' : '📦'))))}
                 </span>
-                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-                  <span style={{ fontSize: '13px', fontWeight: '500', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <span style={{ fontSize: '13px', fontWeight: '500', color: '#fff', lineHeight: 1.25, overflowWrap: 'break-word' }}>
                     {getItemDisplayName(item.id, item, t, !!rules?.usePhysicalMentalConditions, !!rules?.advancedStores)}
                   </span>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center', fontSize: '11px' }}>
