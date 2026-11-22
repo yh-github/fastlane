@@ -7,7 +7,7 @@ import type { GameAction, FastFoodEatMode } from '../../../engine/actions/types'
 import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../../../engine/actions/maintenanceActions';
 import { calcItemPrice, calcEconomyPrice } from '../../../engine/economyEngine';
 import { calcBulkGroceryBasePrice } from '../../../engine/actions/shoppingActions';
-import { calcUsedSpace, calcHousingSpaceCap, calcCaffeineBuffer, hasHighCoffeeIntake } from '../../../engine/statMath';
+import { calcUsedSpace, calcHousingSpaceCap, calcCaffeineBuffer, hasHighCoffeeIntake, getRobotVacuumStatus } from '../../../engine/statMath';
 import { getItemDisplayName, getItemImagePath } from '../../../utils/itemUtils';
 import { MessIcon } from '../../icons/MessIcon';
 import { previewAction } from '../../../engine/actionPreview';
@@ -259,6 +259,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   } else if (itemId === 'freezer') {
     if (rules?.enableCookingSystem) {
       effectBadges.push({ label: '🧊 Stores 6 Food Standalone (12 with Refrigerator)' });
+      effectBadges.push({ label: '⏳ Standalone Thaw: +0.5h w/ Micro, +1h Stove, 3h Cold' });
     } else {
       effectBadges.push({ label: '🧊 Stores up to 12 Food (Needs Refrigerator)' });
     }
@@ -278,12 +279,28 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
     if (rules?.enableCookingSystem) {
       effectBadges.push({ label: '⚡ Microwave Fresh: +0.5 💪, +1 🧠 (1h, 0 💪 cost)' });
       effectBadges.push({ label: '⏱️ Cuts Stove & Canned Prep Time & -1 Mess' });
-      effectBadges.push({ label: '🧊 Thaws Frozen Food Instantly (No +1h Delay)' });
+      effectBadges.push({ label: '🧊 Speeds Freezer Thaw (1.5h Micro, 2h Stove)' });
     } else if (!rules?.usePhysicalMentalConditions) {
       effectBadges.push({ label: '⚡ +1 😊/turn' });
     } else if (!itemDef?.effects || itemDef.effects.length === 0) {
       effectBadges.push({ label: '+1 💪 On Relax' });
       effectBadges.push({ label: '+1 👥 On Socialize' });
+    }
+  } else if (itemId === 'dishwasher') {
+    effectBadges.push({ label: '🍽️ Zero Mess from Cooking & Canned Meals' });
+    effectBadges.push({ label: '🎉 -33% Party Mess When Hosting Guests' });
+  } else if (itemId === 'robot_vacuum') {
+    effectBadges.push({ label: '🤖 Auto-Cleans up to 4 Mess/turn (0h, 0 💪)' });
+    effectBadges.push({ label: '⚠️ Needs Mess ≤ 20 & ≥ 5 Free Space' });
+    if (isOwned && !isBroken && player) {
+      const vacStatus = getRobotVacuumStatus(player, campaign, rules);
+      if (vacStatus.isBlocked) {
+        const blockReasons = [
+          vacStatus.isMessBlocked ? 'Mess > 20' : null,
+          vacStatus.isSpaceBlocked ? '< 5 Free Space' : null,
+        ].filter(Boolean).join(' & ');
+        effectBadges.push({ label: `🚨 Currently Blocked (${blockReasons})` });
+      }
     }
   } else if (itemId === 'computer') {
     effectBadges.push({ label: '🎓 Bonus Study Credit (-1 Lesson)' });
@@ -693,7 +710,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
               />
               <span 
                 style={{ 
-                  display: (isCoffee || !itemDef) ? 'inline-block' : 'none', 
+                  display: !itemDef ? 'inline-block' : 'none', 
                   fontSize: '1.8rem',
                   lineHeight: 1
                 }}
@@ -728,7 +745,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
 
         {/* Gameplay Narrative Description */}
         {(() => {
-          const isRuleDrivenKitchenAppliance = itemId === 'stove' || itemId === 'microwave' || itemId === 'freezer' || itemId === 'refrigerator';
+          const isRuleDrivenKitchenAppliance = itemId === 'stove' || itemId === 'microwave' || itemId === 'freezer' || itemId === 'refrigerator' || itemId === 'dishwasher' || itemId === 'robot_vacuum';
           const desc = isRuleDrivenKitchenAppliance
             ? (getGameplayDescription(itemId, rules, isBook) || itemDef?.description)
             : (itemDef?.description || getGameplayDescription(itemId, rules, isBook));
@@ -1448,7 +1465,7 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
         ) : null}
 
         {/* Open Kitchen Button for cooking appliances */}
-        {rules?.enableCookingSystem && isOwned && (itemId === 'stove' || itemId === 'microwave' || itemId === 'refrigerator' || itemId === 'freezer') && onOpenKitchen && (
+        {rules?.enableCookingSystem && isOwned && (itemId === 'stove' || itemId === 'microwave' || itemId === 'refrigerator' || itemId === 'freezer' || itemId === 'dishwasher') && onOpenKitchen && (
           <button
             type="button"
             data-testid="btn-durable-open-kitchen"

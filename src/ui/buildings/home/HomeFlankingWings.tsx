@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type PlayerState, type GameRules, isPlayerFed } from '../../../engine/gameState';
+import { calcKitchenMealParameters, calcHostMessGenerated } from '../../../engine/actions/homeActions';
 import type { CampaignBundle } from '../../../engine/dataLoader';
-import { formatHours, messGrowth } from '../../../engine/statMath';
+import { formatHours, messGrowth, getRobotVacuumStatus, ROBOT_VACUUM_CLUTTER_THRESHOLD, ROBOT_VACUUM_MIN_FREE_SPACE, ROBOT_VACUUM_CLEAN_AMOUNT } from '../../../engine/statMath';
 import { HomeCardHelpModal, type HomeActionType } from './HomeCardHelpModal';
 import { MessIcon } from '../../icons/MessIcon';
 
@@ -113,12 +114,28 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
         : `$${socialParams.minCashNeeded}–$${socialParams.maxCashNeeded}`)
     : '$0';
 
+  const kitchen = calcKitchenMealParameters(player, campaign);
+  const {
+    hasStove,
+    hasMicrowave,
+    hasDishwasher,
+    isStandaloneFreezer,
+    homeCookedTime: cookTime,
+    microwaveTime,
+    coldMealTime: coldTime,
+    cannedTime,
+  } = kitchen;
+  const effectiveHasFridge = hasFridge || kitchen.hasFridge;
+  const effectiveHasFreezer = hasFreezer || kitchen.hasFreezer;
+  const vacuumStatus = getRobotVacuumStatus(player, campaign, rules);
+  const hasRobotVacuum = vacuumStatus.isWorking;
+
   // Mess range for Host
   const growth = messGrowth(player.mess || 0);
   const minGuests = socialParams?.effectiveMinGuests ?? 1;
   const maxGuests = socialParams?.effectiveMaxGuests ?? 3;
-  const minMessAdded = minGuests * growth;
-  const maxMessAdded = maxGuests * growth;
+  const minMessAdded = calcHostMessGenerated(minGuests * growth, hasDishwasher);
+  const maxMessAdded = calcHostMessGenerated(maxGuests * growth, hasDishwasher);
   const hostMessRangeStr = minMessAdded === maxMessAdded ? `+${minMessAdded}` : `+${minMessAdded}..+${maxMessAdded}`;
 
   // Clean reduction range for DIY Clean
@@ -138,19 +155,7 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
   const cannedFoodUnits = player.inventory?.cannedFoodUnits || 0;
   const fastFoodCount = player.inventory?.fastFoodItems?.length || 0;
 
-  const hasStove = player.inventory?.appliances?.some(
-    a => (a.id === 'stove' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken
-  ) ?? false;
-  const hasMicrowave = player.inventory?.appliances?.some(
-    a => (a.id === 'microwave' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('microwave')) && !a.isBroken
-  ) ?? false;
   const curPhys = player.physicalCondition ?? 50;
-  let cookTime = hasMicrowave ? 1.5 : 2.5;
-  if (hasFreezer && !hasFridge && !hasMicrowave) {
-    cookTime += 1.0;
-  }
-  const coldTime = (hasFreezer && !hasFridge && !hasMicrowave) ? 1.5 : 0.5;
-  const cannedTime = hasMicrowave ? 0.5 : 1.0;
 
   type FreshMealType = 'home_cooked' | 'microwave' | 'cold_meal';
   let bestFreshMethod: FreshMealType = 'cold_meal';
@@ -160,10 +165,10 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
     bestFreshMethod = 'home_cooked';
     freshHoursNeeded = cookTime;
     freshBtnLabel = `🍳 Cook Fresh (${cookTime}h • +1.5 💪, +2 🧠)`;
-  } else if (hasMicrowave && player.hoursRemaining >= 1.0) {
+  } else if (hasMicrowave && player.hoursRemaining >= microwaveTime) {
     bestFreshMethod = 'microwave';
-    freshHoursNeeded = 1.0;
-    freshBtnLabel = `⚡ Microwave Fresh (1h • +0.5 💪, +1 🧠)`;
+    freshHoursNeeded = microwaveTime;
+    freshBtnLabel = `⚡ Microwave Fresh (${microwaveTime}h • +0.5 💪, +1 🧠)`;
   }
   const canCookFresh = freshFoodUnits >= 1 && player.hoursRemaining >= freshHoursNeeded;
   const canEatCanned = cannedFoodUnits >= 1 && player.hoursRemaining >= cannedTime;
@@ -667,6 +672,22 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
                   {t('homeRelax.manualLabor', { defaultValue: 'Manual Labor' })}
                 </span>
               </div>
+              {hasRobotVacuum && (
+                <div style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 600,
+                  marginTop: '2px',
+                  color: vacuumStatus.canOperate ? '#86efac' : '#fbbf24'
+                }}>
+                  {vacuumStatus.canOperate
+                    ? `🤖 Robot Vacuum: Active (-${ROBOT_VACUUM_CLEAN_AMOUNT} 🧹 at turn start)`
+                    : (vacuumStatus.isMessBlocked && vacuumStatus.isSpaceBlocked
+                        ? `⚠️ Robot Vacuum: Blocked (Mess > ${ROBOT_VACUUM_CLUTTER_THRESHOLD} & < ${ROBOT_VACUUM_MIN_FREE_SPACE} space!)`
+                        : vacuumStatus.isMessBlocked
+                          ? `⚠️ Robot Vacuum: Stuck on clutter (Mess > ${ROBOT_VACUUM_CLUTTER_THRESHOLD}!)`
+                          : `⚠️ Robot Vacuum: Too cramped (< ${ROBOT_VACUUM_MIN_FREE_SPACE} free space!)`)}
+                </div>
+              )}
             </div>
 
             {/* Action Button */}
@@ -842,15 +863,15 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span style={{
-                background: hasFridge ? '#064e3b' : '#78350f',
-                color: hasFridge ? '#6ee7b7' : '#fde68a',
+                background: effectiveHasFridge ? '#064e3b' : (effectiveHasFreezer && rules?.enableCookingSystem ? '#0c4a6e' : '#78350f'),
+                color: effectiveHasFridge ? '#6ee7b7' : (effectiveHasFreezer && rules?.enableCookingSystem ? '#7dd3fc' : '#fde68a'),
                 fontSize: '0.62rem',
                 fontWeight: 800,
                 padding: '2px 5px',
                 borderRadius: '4px',
-                border: `1px solid ${hasFridge ? '#059669' : '#d97706'}`
+                border: `1px solid ${effectiveHasFridge ? '#059669' : (effectiveHasFreezer && rules?.enableCookingSystem ? '#0284c7' : '#d97706')}`
               }}>
-                {hasFreezer ? '❄️ Freeze' : (hasFridge ? '🧊 Fridge' : '⚠️ No Cold')}
+                {effectiveHasFreezer ? '❄️ Freeze' : (effectiveHasFridge ? '🧊 Fridge' : '⚠️ No Cold')}
               </span>
               <button
                 type="button"
@@ -898,15 +919,21 @@ export const HomeFlankingWings: React.FC<HomeFlankingWingsProps> = ({
               </div>
             )}
             <div style={{
-              color: hasFridge ? '#86efac' : (freshFoodUnits > 0 ? '#fca5a5' : '#94a3b8'),
+              color: effectiveHasFridge
+                ? '#86efac'
+                : (isStandaloneFreezer && rules?.enableCookingSystem
+                    ? '#7dd3fc'
+                    : (freshFoodUnits > 0 ? '#fca5a5' : '#94a3b8')),
               fontSize: '0.64rem',
               marginTop: '1px'
             }}>
-              {hasFridge 
-                ? '✓ Safe from spoilage' 
-                : (freshFoodUnits > 0 
-                    ? `⚠️ ${freshFoodUnits} fresh spoils at turn end!` 
-                    : t('homeRelax.pantryStable', { defaultValue: '✓ Stable (no perishables)' }))}
+              {effectiveHasFridge
+                ? '✓ Safe from spoilage'
+                : (isStandaloneFreezer && rules?.enableCookingSystem
+                    ? '❄️ Frozen storage (6 wks, +thaw time)'
+                    : (freshFoodUnits > 0
+                        ? `⚠️ ${freshFoodUnits} fresh spoils at turn end!`
+                        : t('homeRelax.pantryStable', { defaultValue: '✓ Stable (no perishables)' })))}
             </div>
             {rules?.enableCookingSystem && (
               <div style={{

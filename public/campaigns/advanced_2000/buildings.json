@@ -139,6 +139,11 @@
         "tags": ["microwave"]
       },
       {
+        "itemId": "dishwasher",
+        "priceOverride": 350,
+        "tags": ["dishwasher"]
+      },
+      {
         "itemId": "vcr",
         "priceOverride": 250
       },
@@ -237,6 +242,16 @@
         "itemId": "microwave",
         "priceOverride": 330,
         "tags": ["microwave"]
+      },
+      {
+        "itemId": "dishwasher",
+        "priceOverride": 420,
+        "tags": ["dishwasher"]
+      },
+      {
+        "itemId": "robot_vacuum",
+        "priceOverride": 680,
+        "tags": ["robot_vacuum", "tech"]
       },
       {
         "itemId": "hot_tub",

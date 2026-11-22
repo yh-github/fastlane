@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { PlayerState, GameRules, OwnedAppliance } from '../../../engine/gameState';
 import { getClothesSwitchingRule } from '../../../engine/rules';
+import { getRobotVacuumStatus } from '../../../engine/statMath';
 
 export interface ApplianceSlotDef {
   slotId: string;
@@ -149,6 +150,17 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
 
           const isNew = ownedApp ? (ownedApp.condition === 'new' || ownedApp.purchaseSource === 'socket_city') : false;
           const isBroken = Boolean(ownedApp?.isBroken);
+          const vacuumStatus = (activeItemId === 'robot_vacuum' && isOwned && !isBroken)
+            ? getRobotVacuumStatus(player, campaign, rules)
+            : null;
+          const isVacuumBlocked = Boolean(vacuumStatus?.isBlocked);
+          const vacuumBlockedReason = vacuumStatus
+            ? (vacuumStatus.isMessBlocked && vacuumStatus.isSpaceBlocked
+                ? 'Mess > 20 & < 5 free space'
+                : vacuumStatus.isMessBlocked
+                  ? 'Mess > 20'
+                  : 'Needs ≥ 5 free space')
+            : '';
           const testId = isOwned ? `durable-card-${activeItemId}` : (slot.slotId === 'tv' ? 'durable-card-tv' : `durable-card-${slot.slotId}`);
 
           return (
@@ -163,7 +175,11 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 isOwned
               })}
               title={isOwned 
-                ? (isBroken ? `${itemName} (BROKEN — Needs Repair) — Click to maintain` : `${itemName} (${isNew ? 'New' : 'Used'}) — Click to inspect`)
+                ? (isBroken
+                    ? `${itemName} (BROKEN — Needs Repair) — Click to maintain`
+                    : (isVacuumBlocked
+                        ? `${itemName} (BLOCKED — ${vacuumBlockedReason}) — Click to inspect`
+                        : `${itemName} (${isNew ? 'New' : 'Used'}) — Click to inspect`))
                 : `${itemName} (Unowned — Available at Socket City/Z-Mart)`}
               style={{
                 display: 'flex',
@@ -173,15 +189,23 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 width: '58px',
                 height: '62px',
                 background: isOwned 
-                  ? (isBroken ? 'rgba(239, 68, 68, 0.22)' : 'rgba(0, 0, 0, 0.45)') 
+                  ? (isBroken
+                      ? 'rgba(239, 68, 68, 0.22)'
+                      : (isVacuumBlocked ? 'rgba(245, 158, 11, 0.22)' : 'rgba(0, 0, 0, 0.45)')) 
                   : 'rgba(255, 255, 255, 0.05)',
                 border: isOwned 
-                  ? (isBroken ? '1.5px solid #ef4444' : `1.5px solid ${isNew ? '#2ecc71' : '#3498db'}`)
+                  ? (isBroken
+                      ? '1.5px solid #ef4444'
+                      : (isVacuumBlocked ? '1.5px solid #f59e0b' : `1.5px solid ${isNew ? '#2ecc71' : '#3498db'}`))
                   : '1.5px dashed rgba(255, 255, 255, 0.35)',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 boxShadow: isOwned 
-                  ? (isBroken ? '0 0 10px rgba(239, 68, 68, 0.5)' : (isNew ? '0 0 8px rgba(46, 204, 113, 0.25)' : '0 0 8px rgba(52, 152, 219, 0.25)'))
+                  ? (isBroken
+                      ? '0 0 10px rgba(239, 68, 68, 0.5)'
+                      : (isVacuumBlocked
+                          ? '0 0 10px rgba(245, 158, 11, 0.45)'
+                          : (isNew ? '0 0 8px rgba(46, 204, 113, 0.25)' : '0 0 8px rgba(52, 152, 219, 0.25)')))
                   : 'none',
                 opacity: isOwned ? 1 : 0.8,
                 transition: 'all 0.15s ease',
@@ -194,9 +218,11 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 if (isOwned) {
                   e.currentTarget.style.boxShadow = isBroken 
                     ? '0 0 16px rgba(239, 68, 68, 0.8)' 
-                    : (isNew 
-                      ? '0 0 12px rgba(46, 204, 113, 0.5)' 
-                      : '0 0 12px rgba(52, 152, 219, 0.5)');
+                    : (isVacuumBlocked
+                        ? '0 0 16px rgba(245, 158, 11, 0.8)'
+                        : (isNew 
+                          ? '0 0 12px rgba(46, 204, 113, 0.5)' 
+                          : '0 0 12px rgba(52, 152, 219, 0.5)'));
                 } else {
                   e.currentTarget.style.opacity = '1';
                 }
@@ -206,9 +232,11 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                 if (isOwned) {
                   e.currentTarget.style.boxShadow = isBroken 
                     ? '0 0 10px rgba(239, 68, 68, 0.5)' 
-                    : (isNew 
-                      ? '0 0 8px rgba(46, 204, 113, 0.25)' 
-                      : '0 0 8px rgba(52, 152, 219, 0.25)');
+                    : (isVacuumBlocked
+                        ? '0 0 10px rgba(245, 158, 11, 0.45)'
+                        : (isNew 
+                          ? '0 0 8px rgba(46, 204, 113, 0.25)' 
+                          : '0 0 8px rgba(52, 152, 219, 0.25)'));
                 } else {
                   e.currentTarget.style.opacity = '0.8';
                 }
@@ -263,6 +291,27 @@ export const ApartmentFurnishings: React.FC<ApartmentFurnishingsProps> = ({
                     border: '1px solid #f87171'
                   }}>
                     BROKEN
+                  </span>
+                ) : isVacuumBlocked ? (
+                  <span
+                    data-testid="robot-vacuum-blocked-badge"
+                    style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      background: '#f59e0b',
+                      color: '#000000',
+                      fontSize: '0.48rem',
+                      fontWeight: 800,
+                      letterSpacing: '0.03em',
+                      padding: '1px 4px',
+                      borderRadius: '4px',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.8)',
+                      zIndex: 2,
+                      border: '1px solid #fde68a'
+                    }}
+                  >
+                    ⚠️ CLUTTER
                   </span>
                 ) : (
                   <span style={{

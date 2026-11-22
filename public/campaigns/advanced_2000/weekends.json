@@ -14,6 +14,8 @@
     "vcr": { "text": "You rented some movies and ate artificially flavored buttered popcorn." },
     "stereo": { "text": "You spent the weekend playing your stereo and patching the plaster your speakers cracked." },
     "microwave": { "text": "You spent the weekend cleaning your microwave after an experimental reheating disaster." },
+    "dishwasher": { "text": "You loaded every dish, pot, and coffee mug you own into the dishwasher and listened to its soothing rinse cycle all weekend." },
+    "robot_vacuum": { "text": "You spent the weekend watching your robot vacuum bump into table legs and mapping out its patrol routes." },
     "hot_tub": { "text": "You and some friends had a hot tub party this weekend." }
   },
   "randomWeekends": [

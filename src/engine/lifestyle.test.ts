@@ -32,9 +32,9 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
 
     // advanced: Penthouse above low_cost (40) + shared appliances/books (22) + color_tv (2) + business_suit (2) + 3 curios (4) = 70
     expect(calcMaxLifestyle(advanced)).toBe(70);
-    // advanced_2000 & scrubs: plasma_tv (3) replaces color_tv (2) -> 71
-    expect(calcMaxLifestyle(adv2000)).toBe(71);
-    expect(calcMaxLifestyle(scrubs)).toBe(71);
+    // advanced_2000 & scrubs: plasma_tv (3) replaces color_tv (2) + dishwasher (2) + robot_vacuum (2) -> 75
+    expect(calcMaxLifestyle(adv2000)).toBe(75);
+    expect(calcMaxLifestyle(scrubs)).toBe(75);
 
     const noCuriosCampaign = {
       ...advanced,
@@ -88,12 +88,12 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
       { id: 'plasma_tv', purchasePrice: 750, purchaseSource: 'socket_city' },
       { id: 'plasma_tv', purchasePrice: 750, purchaseSource: 'socket_city' },
     ];
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((3 / 71) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((3 / 75) * 100));
 
     // Break plasma_tvs -> falls back to working crt_tv (1)
     player.inventory.appliances[1].isBroken = true;
     player.inventory.appliances[2].isBroken = true;
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((1 / 71) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((1 / 75) * 100));
 
     // Break crt_tv too -> 0 TV lifestyle
     player.inventory.appliances[0].isBroken = true;
@@ -104,15 +104,15 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
       { id: '8track', purchasePrice: 75, purchaseSource: 'z_mart' },
       { id: 'stereo', purchasePrice: 412, purchaseSource: 'socket_city' },
     ];
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((2 / 71) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((2 / 75) * 100));
     player.inventory.appliances[1].isBroken = true;
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((1 / 71) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((1 / 75) * 100));
 
     // Clothes slot: dress_clothes (1) + business_suit (2) -> only business_suit (2), not 3
     player.inventory.appliances = [];
     player.inventory.dressClothesWeeks = 5;
     player.inventory.businessClothesWeeks = 10;
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((2 / 71) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((2 / 75) * 100));
 
     // Duplicate non-slot appliances (2 hot tubs) only count once (5 raw, not 7)
     player.inventory.dressClothesWeeks = 0;
@@ -121,7 +121,7 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
       { id: 'hot_tub', purchasePrice: 1255, purchaseSource: 'socket_city' },
       { id: 'hot_tub', purchasePrice: 1255, purchaseSource: 'socket_city' },
     ];
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((5 / 71) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((5 / 75) * 100));
   });
 
   it('awards exact 100 Lifestyle for Penthouse + all top working durables + Business Suit + 3 curios', async () => {
@@ -133,7 +133,8 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
       const campaign = await loadCampaign(id);
       const player = createPlayerState('p1', 'Hero', false, {}, 'node_security', campaign.config);
       player.currentHousingId = 'penthouse';
-      player.inventory.appliances = [...ALL_TOP_SHARED_APPLIANCES, topTv].map(appId => ({
+      const extra2000Appliances = id === 'advanced' ? [] : ['dishwasher', 'robot_vacuum'];
+      player.inventory.appliances = [...ALL_TOP_SHARED_APPLIANCES, ...extra2000Appliances, topTv].map(appId => ({
         id: appId,
         purchasePrice: 500,
         purchaseSource: 'socket_city',

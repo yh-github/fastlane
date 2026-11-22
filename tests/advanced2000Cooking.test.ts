@@ -6,6 +6,7 @@ import { recalculatePlayerEffects, isPlayerFed } from '../src/engine/gameState';
 import { processAdvancedHealthAndFood } from '../src/engine/turn/healthAndFoodPhase';
 import { processTurnStart } from '../src/engine/turnProcessor';
 import { buyItem } from '../src/engine/shoppingEngine';
+import { getItemImagePath } from '../src/utils/itemUtils';
 import { buildDashboardBadges } from '../src/ui/dashboardBadges';
 import { getHudAttributeInfo } from '../src/ui/hudAttributeInfo';
 import { Random } from '../src/utils/rng';
@@ -236,7 +237,7 @@ describe('Advanced 2000 - Cooking Module', () => {
       expect(p.turnFlags.hasEaten).toBe(true);
     });
 
-    it('microwave eliminates freezer thaw penalty and cuts cooking time to 1.5h', () => {
+    it('microwave speeds up standalone freezer defrost for stove cooking (2.0h vs 1.5h with fridge)', () => {
       let player = makePlayer(campaign2000);
       player.hoursRemaining = 50;
       player.inventory.freshFoodUnits = 2;
@@ -251,9 +252,73 @@ describe('Advanced 2000 - Cooking Module', () => {
       const result = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
       const p = result.updatedPlayer;
 
-      // Instant microwave defrost + prep boost = 1.5h
-      expect(p.hoursRemaining).toBe(48.5);
+      // Base 1.5h (Stove + Micro) + 0.5h standalone freezer defrost = 2.0h (longer than with a Fridge)
+      expect(p.hoursRemaining).toBe(48.0);
       expect(p.turnFlags.hasEaten).toBe(true);
+    });
+
+    it('standalone freezer cold meal takes 3.0h counter-thaw without microwave and 1.0h with microwave', () => {
+      // 1. Standalone freezer only -> 3.0h counter thaw
+      let playerNoMicro = makePlayer(campaign2000);
+      playerNoMicro.hoursRemaining = 50;
+      playerNoMicro.inventory.freshFoodUnits = 1;
+      playerNoMicro.inventory.appliances = [{ id: 'freezer', purchasePrice: 513, condition: 'new' }];
+
+      const { context: c1 } = createTestContext(playerNoMicro, campaign2000);
+      const resNoMicro = gameReducer(playerNoMicro, { type: 'prep_meal', mealType: 'cold_meal' }, c1);
+      expect(resNoMicro.updatedPlayer.hoursRemaining).toBe(47.0); // 50 - 3.0h
+      expect(resNoMicro.updatedPlayer.turnFlags.hasEaten).toBe(true);
+
+      // 2. Standalone freezer + microwave -> 1.0h defrost
+      let playerWithMicro = makePlayer(campaign2000);
+      playerWithMicro.hoursRemaining = 50;
+      playerWithMicro.inventory.freshFoodUnits = 1;
+      playerWithMicro.inventory.appliances = [
+        { id: 'freezer', purchasePrice: 513, condition: 'new' },
+        { id: 'microwave', purchasePrice: 220, condition: 'new' }
+      ];
+
+      const { context: c2 } = createTestContext(playerWithMicro, campaign2000);
+      const resWithMicro = gameReducer(playerWithMicro, { type: 'prep_meal', mealType: 'cold_meal' }, c2);
+      expect(resWithMicro.updatedPlayer.hoursRemaining).toBe(49.0); // 50 - 1.0h
+      expect(resWithMicro.updatedPlayer.turnFlags.hasEaten).toBe(true);
+    });
+
+    it('standalone freezer microwave meal takes 1.5h (+0.5h defrost vs 1.0h with fridge)', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 1;
+      player.inventory.appliances = [
+        { id: 'freezer', purchasePrice: 513, condition: 'new' },
+        { id: 'microwave', purchasePrice: 220, condition: 'new' }
+      ];
+
+      const { context } = createTestContext(player, campaign2000);
+      const result = gameReducer(player, { type: 'prep_meal', mealType: 'microwave' }, context);
+      expect(result.updatedPlayer.hoursRemaining).toBe(48.5); // 50 - 1.5h
+      expect(result.updatedPlayer.turnFlags.hasEaten).toBe(true);
+    });
+
+    it('fridge + freezer eliminates standalone thaw penalty (1.5h stove+micro, 1.0h micro, 0.5h cold)', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 3;
+      player.inventory.appliances = [
+        { id: 'refrigerator', purchasePrice: 650, condition: 'new' },
+        { id: 'freezer', purchasePrice: 513, condition: 'new' },
+        { id: 'stove', purchasePrice: 490, condition: 'new' },
+        { id: 'microwave', purchasePrice: 220, condition: 'new' }
+      ];
+
+      const { context } = createTestContext(player, campaign2000);
+      const resStove = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      expect(resStove.updatedPlayer.hoursRemaining).toBe(48.5); // 1.5h
+
+      const resMicro = gameReducer(player, { type: 'prep_meal', mealType: 'microwave' }, context);
+      expect(resMicro.updatedPlayer.hoursRemaining).toBe(49.0); // 1.0h
+
+      const resCold = gameReducer(player, { type: 'prep_meal', mealType: 'cold_meal' }, context);
+      expect(resCold.updatedPlayer.hoursRemaining).toBe(49.5); // 0.5h
     });
   });
 
@@ -659,6 +724,177 @@ describe('Advanced 2000 - Cooking Module', () => {
       const afterCafe2 = gameReducer(afterRelax.updatedPlayer, { type: 'hospital_cafeteria' }, c2);
       expect(afterCafe2.actionLog?.key).toBe('action.hospital.cafeteriaSuccess');
       expect(afterCafe2.updatedPlayer.money).toBe(40); // 120 - 40 - 40
+    });
+  });
+
+  describe('Dishwasher & Robot Vacuum (Advanced 2000 Exclusives)', () => {
+    it('keeps dishwasher and robot_vacuum scoped to advanced_2000 (and scrubs), with calibrated space and price', async () => {
+      const advanced90s = await loadCampaign('advanced');
+      const scrubs = await loadCampaign('scrubs');
+
+      const dw = campaign2000.items.find(i => i.id === 'dishwasher');
+      const rv = campaign2000.items.find(i => i.id === 'robot_vacuum');
+      expect(dw).toBeDefined();
+      expect(dw?.space).toBe(40);
+      expect(rv).toBeDefined();
+      expect(rv?.basePrice).toBe(680);
+      expect(scrubs.items.find(i => i.id === 'dishwasher')).toBeDefined();
+      expect(scrubs.items.find(i => i.id === 'robot_vacuum')).toBeDefined();
+
+      expect(advanced90s.items.find(i => i.id === 'dishwasher')).toBeUndefined();
+      expect(advanced90s.items.find(i => i.id === 'robot_vacuum')).toBeUndefined();
+      expect(campaignFloppy.items.find(i => i.id === 'dishwasher')).toBeUndefined();
+      expect(campaignFloppy.items.find(i => i.id === 'robot_vacuum')).toBeUndefined();
+    });
+
+    it('dishwasher eliminates mess on home_cooked, microwave, and canned meals unless broken', () => {
+      let player = makePlayer(campaign2000);
+      player.hoursRemaining = 50;
+      player.inventory.freshFoodUnits = 3;
+      player.inventory.cannedFoodUnits = 2;
+      player.inventory.appliances = [
+        { id: 'stove', purchasePrice: 490, condition: 'new' },
+        { id: 'microwave', purchasePrice: 220, condition: 'new' },
+        { id: 'dishwasher', purchasePrice: 350, condition: 'new' }
+      ];
+      player.physicalCondition = 40;
+      player.mess = 0;
+
+      const { context } = createTestContext(player, campaign2000);
+      const rHome = gameReducer(player, { type: 'prep_meal', mealType: 'home_cooked' }, context);
+      expect(rHome.updatedPlayer.mess).toBe(0);
+
+      const rMicro = gameReducer(player, { type: 'prep_meal', mealType: 'microwave' }, context);
+      expect(rMicro.updatedPlayer.mess).toBe(0);
+
+      // Even without microwave, canned meal generates 0 mess with dishwasher
+      let noMicroPlayer = makePlayer(campaign2000);
+      noMicroPlayer.hoursRemaining = 50;
+      noMicroPlayer.inventory.cannedFoodUnits = 1;
+      noMicroPlayer.inventory.appliances = [{ id: 'dishwasher', purchasePrice: 350, condition: 'new' }];
+      noMicroPlayer.mess = 0;
+      const { context: cNoMicro } = createTestContext(noMicroPlayer, campaign2000);
+      const rCanned = gameReducer(noMicroPlayer, { type: 'prep_meal', mealType: 'canned' }, cNoMicro);
+      expect(rCanned.updatedPlayer.mess).toBe(0);
+
+      // Broken dishwasher no longer eliminates cooking mess
+      let brokenPlayer = structuredClone(player);
+      brokenPlayer.inventory.appliances[2].isBroken = true;
+      const { context: cBroken } = createTestContext(brokenPlayer, campaign2000);
+      const rBroken = gameReducer(brokenPlayer, { type: 'prep_meal', mealType: 'home_cooked' }, cBroken);
+      expect(rBroken.updatedPlayer.mess).toBe(1); // Stove + Microwave default
+    });
+
+    it('dishwasher cuts party mess from socialize_guests by ~1/3 (min -1)', () => {
+      let basePlayer = makePlayer(campaign2000);
+      basePlayer.hoursRemaining = 50;
+      basePlayer.money = 500;
+      basePlayer.physicalCondition = 40;
+      basePlayer.mentalCondition = 40;
+      basePlayer.mess = 5; // messGrowth(5) = floor(0.2*6)+1 = 2; 3 guests -> +6 raw mess
+
+      let dwPlayer = structuredClone(basePlayer);
+      dwPlayer.inventory.appliances = [{ id: 'dishwasher', purchasePrice: 350, condition: 'new' }];
+
+      const { context: cBase } = createTestContext(basePlayer, campaign2000);
+      const resBase = gameReducer(basePlayer, { type: 'socialize_guests' }, {
+        ...cBase,
+        engineDecisions: [{ type: 'socialize_guests_roll_p1', result: 3 }]
+      });
+      const baseAdded = (resBase.updatedPlayer.mess || 0) - 5;
+      expect(baseAdded).toBe(6);
+
+      const { context: cDw } = createTestContext(dwPlayer, campaign2000);
+      const resDw = gameReducer(dwPlayer, { type: 'socialize_guests' }, {
+        ...cDw,
+        engineDecisions: [{ type: 'socialize_guests_roll_p1', result: 3 }]
+      });
+      const dwAdded = (resDw.updatedPlayer.mess || 0) - 5;
+      expect(dwAdded).toBe(4); // 6 - round(6/3) = 4
+    });
+
+    it('robot vacuum auto-cleans up to 4 mess at turn start when pre-turn mess <= 20', () => {
+      let player = makePlayer(campaign2000);
+      player.currentHousingId = 'security';
+      player.inventory.freshFoodUnits = 3;
+      player.inventory.appliances = [
+        { id: 'refrigerator', purchasePrice: 650, condition: 'new' },
+        { id: 'robot_vacuum', purchasePrice: 480, condition: 'new' }
+      ];
+      player.mess = 10; // growth = floor(0.2 * 11) + 1 = 3 -> 13; vacuum cleans 4 -> 9
+
+      const { state } = createTestContext(player, campaign2000);
+      state.turn = 1;
+      const nextState = processTurnStart(state, campaign2000);
+      const nextP = nextState.players[0];
+
+      expect(nextP.mess).toBe(9);
+      expect(nextP.turnEvents.some(e => e.key === 'events.robotVacuumStuck')).toBe(false);
+    });
+
+    it('robot vacuum stalls on clutter when pre-turn mess > 20 or when broken', () => {
+      let clutteredPlayer = makePlayer(campaign2000);
+      clutteredPlayer.currentHousingId = 'security';
+      clutteredPlayer.inventory.freshFoodUnits = 3;
+      clutteredPlayer.inventory.appliances = [
+        { id: 'refrigerator', purchasePrice: 650, condition: 'new' },
+        { id: 'robot_vacuum', purchasePrice: 480, condition: 'new' }
+      ];
+      clutteredPlayer.mess = 21; // > 20 clutter threshold; growth = floor(0.2 * 22) + 1 = 5 -> 26
+
+      const { state: s1 } = createTestContext(clutteredPlayer, campaign2000);
+      s1.turn = 1;
+      const next1 = processTurnStart(s1, campaign2000);
+      expect(next1.players[0].mess).toBe(26);
+      expect(next1.players[0].turnEvents.some(e => e.key === 'events.robotVacuumStuck')).toBe(true);
+
+      // Broken robot vacuum neither cleans nor triggers clutter stuck event
+      let brokenPlayer = structuredClone(clutteredPlayer);
+      brokenPlayer.mess = 10;
+      brokenPlayer.inventory.appliances[1].isBroken = true;
+      const { state: s2 } = createTestContext(brokenPlayer, campaign2000);
+      s2.turn = 1;
+      const next2 = processTurnStart(s2, campaign2000);
+      expect(next2.players[0].mess).toBe(13); // 10 + 3 growth, 0 vacuum clean
+      expect(next2.players[0].turnEvents.some(e => e.key === 'events.robotVacuumStuck')).toBe(false);
+    });
+
+    it('robot vacuum requires >= 5 free space under spaceCapping even when mess <= 20', () => {
+      // Low-cost housing spaceCap = 100.
+      // refrigerator (40) + stove (40) + robot_vacuum (10) = 90 durables space.
+      // With mess = 6 -> usedSpace = 96 -> freeSpace = 4 (< 5) -> vacuum stalls!
+      let crampedPlayer = makePlayer(campaign2000);
+      crampedPlayer.currentHousingId = 'low_cost';
+      crampedPlayer.inventory.freshFoodUnits = 3;
+      crampedPlayer.inventory.appliances = [
+        { id: 'refrigerator', purchasePrice: 650, condition: 'new' },
+        { id: 'stove', purchasePrice: 490, condition: 'new' },
+        { id: 'robot_vacuum', purchasePrice: 680, condition: 'new' }
+      ];
+      crampedPlayer.mess = 6; // <= 20 mess, but only 4 free space! growth(6) = floor(0.2*7)+1 = 2 -> 8
+
+      const { state: sCramped } = createTestContext(crampedPlayer, campaign2000);
+      sCramped.turn = 1;
+      const nextCramped = processTurnStart(sCramped, campaign2000);
+      expect(nextCramped.players[0].mess).toBe(8);
+      expect(nextCramped.players[0].turnEvents.some(e => e.key === 'events.robotVacuumStuck')).toBe(true);
+
+      // With mess = 5 -> usedSpace = 95 -> freeSpace = 5 (>= 5) -> vacuum operates!
+      let spaciousPlayer = structuredClone(crampedPlayer);
+      spaciousPlayer.mess = 5; // growth(5) = floor(0.2*6)+1 = 2 -> 7, minus 4 = 3
+      const { state: sSpacious } = createTestContext(spaciousPlayer, campaign2000);
+      sSpacious.turn = 1;
+      const nextSpacious = processTurnStart(sSpacious, campaign2000);
+      expect(nextSpacious.players[0].mess).toBe(3);
+      expect(nextSpacious.players[0].turnEvents.some(e => e.key === 'events.robotVacuumStuck')).toBe(false);
+    });
+
+    it('maps Red Pirate fast food placeholders, plasma_tv, and drip_coffee image paths cleanly', () => {
+      expect(getItemImagePath('scurvy_slaw')).toBe('/assets/raw_images/fries.png');
+      expect(getItemImagePath('buccaneer_stew')).toBe('/assets/raw_images/cheeseburger.png');
+      expect(getItemImagePath('kraken_burger')).toBe('/assets/raw_images/astro_chicken.png');
+      expect(getItemImagePath('plasma_tv')).toBe('/assets/raw_images/plasma_tv.png');
+      expect(getItemImagePath('drip_coffee')).toBe('/assets/raw_images/drip_coffee.png');
     });
   });
 });

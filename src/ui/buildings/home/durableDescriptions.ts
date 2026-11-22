@@ -5,6 +5,8 @@ export const DEFAULT_APPLIANCE_SPACE: Record<string, number> = {
   freezer: 30,
   stove: 40,
   microwave: 20,
+  dishwasher: 40,
+  robot_vacuum: 10,
   color_tv: 20,
   bw_tv: 20,
   crt_tv: 25,
@@ -64,7 +66,7 @@ export function getGameplayDescription(id: string, rules?: GameRules, isBook?: b
       return 'Prevents fresh grocery spoilage for up to 6 food units at turn end. Without a refrigerator, unpreserved food rots into mess.';
     case 'freezer':
       return rules?.enableCookingSystem
-        ? 'Deep freeze food storage. Preserves up to 6 Fresh Food units standalone (requires thawing unless paired with a Refrigerator or Microwave), or expands storage to 12 units when paired with a Refrigerator.'
+        ? 'Deep freeze food storage. Preserves up to 6 Fresh Food units standalone as a temporary fallback (incurs thawing delays: 3.0h counter thaw if cold, +1.0h on Stove alone, or +0.5h even with Microwave), or expands storage to 12 units with zero thaw delay when paired with a Refrigerator.'
         : 'Expands food preservation capacity from 6 up to 12 units per turn. Requires an active Refrigerator to function; does not prevent spoilage on its own.';
     case 'stove':
       return rules?.enableCookingSystem
@@ -74,10 +76,14 @@ export function getGameplayDescription(id: string, rules?: GameRules, isBook?: b
             : 'Cook hot meals at home. Awards +1 Happiness every turn.');
     case 'microwave':
       return rules?.enableCookingSystem
-        ? 'Reheats Fresh Groceries into quick Microwave Meals (1h, 0 Physical cost, +0.5 Physical, +1 Mental, +1 Mess). Also cuts Stove and Canned prep time by ~50%, reduces cooking Mess by 1, and eliminates Freezer thaw delay.'
+        ? 'Reheats Fresh Groceries into quick Microwave Meals (1h, 0 Physical cost, +0.5 Physical, +1 Mental, +1 Mess; 1.5h from standalone Freezer). Also cuts Stove and Canned prep time by ~50%, reduces cooking Mess by 1, and reduces standalone Freezer thaw delays (+0.5h defrost).'
         : (rules?.usePhysicalMentalConditions
             ? 'Quickly reheat meals. Restores +1 Physical when relaxing and +1 Social when socializing.'
             : 'Quickly reheat meals. Awards +1 Happiness every turn.');
+    case 'dishwasher':
+      return 'Automated kitchen cleanup. Eliminates all kitchen Mess from cooking Stove, Microwave, and Canned meals, and cuts party Mess when hosting guests by a third.';
+    case 'robot_vacuum':
+      return 'Autonomous Y2K floor cleaner. Automatically cleans up to 4 Mess at turn start for 0h and 0 stamina, provided apartment Mess <= 20 and there is at least 5 Free Space to maneuver.';
     case 'color_tv':
     case 'crt_tv':
       return rules?.usePhysicalMentalConditions

@@ -12,6 +12,62 @@ import {
 import type { CampaignBundle, JobDef } from '../dataLoader';
 import { hasJobTag } from '../jobTags';
 
+export const ROBOT_VACUUM_CLUTTER_THRESHOLD = 20;
+export const ROBOT_VACUUM_MIN_FREE_SPACE = 5;
+export const ROBOT_VACUUM_CLEAN_AMOUNT = 4;
+
+export interface RobotVacuumStatus {
+  isWorking: boolean;
+  mess: number;
+  freeSpace: number;
+  isMessBlocked: boolean;
+  isSpaceBlocked: boolean;
+  isBlocked: boolean;
+  canOperate: boolean;
+}
+
+/**
+ * Checks whether the player owns at least one unbroken appliance matching the given ID or tag.
+ */
+export function hasWorkingAppliance(
+  player: PlayerState,
+  campaign: CampaignBundle | undefined,
+  idOrTag: string
+): boolean {
+  return player.inventory?.appliances?.some(
+    a => (a.id === idOrTag || campaign?.items?.find(i => i.id === a.id)?.tags?.includes(idOrTag)) && !a.isBroken
+  ) ?? false;
+}
+
+/**
+ * Evaluates whether a working Robot Vacuum can operate or is blocked by clutter / cramped space.
+ */
+export function getRobotVacuumStatus(
+  player: PlayerState,
+  campaign?: CampaignBundle,
+  rules?: Partial<GameRules>
+): RobotVacuumStatus {
+  const isWorking = hasWorkingAppliance(player, campaign, 'robot_vacuum');
+  const mess = player.mess || 0;
+  const usedSpace = calcUsedSpace(player, campaign, true);
+  const spaceCap = calcHousingSpaceCap(player, campaign);
+  const freeSpace = rules?.spaceCapping ? Math.max(0, spaceCap - usedSpace) : Infinity;
+  const isMessBlocked = mess > ROBOT_VACUUM_CLUTTER_THRESHOLD;
+  const isSpaceBlocked = Boolean(rules?.spaceCapping) && freeSpace < ROBOT_VACUUM_MIN_FREE_SPACE;
+  const isBlocked = isWorking && (isMessBlocked || isSpaceBlocked);
+  const canOperate = isWorking && !isMessBlocked && !isSpaceBlocked;
+
+  return {
+    isWorking,
+    mess,
+    freeSpace,
+    isMessBlocked,
+    isSpaceBlocked,
+    isBlocked,
+    canOperate,
+  };
+}
+
 /**
  * Calculate mess growth based on current mess.
  * Formula: mess_growth(current_mess) = Math.floor(0.2 * (current_mess + 1)) + 1

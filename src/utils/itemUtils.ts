@@ -41,5 +41,8 @@ export function getItemDisplayName(
 export function getItemImagePath(itemId: string): string {
   if (itemId === 'crt_tv') return '/assets/raw_images/color_tv.png';
   if (itemId === 'canned_food') return '/assets/raw_images/dog_food.png';
+  if (itemId === 'scurvy_slaw') return '/assets/raw_images/fries.png';
+  if (itemId === 'buccaneer_stew') return '/assets/raw_images/cheeseburger.png';
+  if (itemId === 'kraken_burger') return '/assets/raw_images/astro_chicken.png';
   return `/assets/raw_images/${itemId}.png`;
 }

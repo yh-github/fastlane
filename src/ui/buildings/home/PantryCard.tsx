@@ -63,11 +63,11 @@ export const PantryCard: React.FC<PantryCardProps> = ({
             fontWeight: 'bold',
             padding: '2px 8px',
             borderRadius: '10px',
-            backgroundColor: hasFridge ? '#064e3b' : '#7c2d12',
-            color: hasFridge ? '#a7f3d0' : '#fed7aa',
+            backgroundColor: hasFridge ? '#064e3b' : (hasFreezer ? '#0c4a6e' : '#7c2d12'),
+            color: hasFridge ? '#a7f3d0' : (hasFreezer ? '#bae6fd' : '#fed7aa'),
             boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            {hasFridge ? (hasFreezer ? t('homeRelax.fridgeFreezer', { defaultValue: '🧊 Fridge + Freezer' }) : t('homeRelax.fridgeActive', { defaultValue: '🧊 Fridge Active' })) : t('homeRelax.noFridge', { defaultValue: '⚠️ No Fridge' })}
+            {hasFridge ? (hasFreezer ? t('homeRelax.fridgeFreezer', { defaultValue: '🧊 Fridge + Freezer' }) : t('homeRelax.fridgeActive', { defaultValue: '🧊 Fridge Active' })) : (hasFreezer ? t('homeRelax.freezerOnly', { defaultValue: '❄️ Freezer (6w, +thaw)' }) : t('homeRelax.noFridge', { defaultValue: '⚠️ No Fridge' }))}
           </span>
         </div>
 
@@ -129,8 +129,12 @@ export const PantryCard: React.FC<PantryCardProps> = ({
               <div style={{ fontSize: '0.80rem', fontWeight: 'bold', color: '#fff' }}>
                 {t('inventoryModal.freshFood', { defaultValue: 'Fresh Food' })}
               </div>
-              <div style={{ fontSize: '0.68rem', color: hasFridge ? '#2ecc71' : '#e67e22' }}>
-                {hasFridge ? t('homeRelax.protectedFromSpoilage', { defaultValue: 'Protected from spoilage' }) : t('homeRelax.willSpoil', { defaultValue: 'Will spoil without refrigerator' })}
+              <div style={{ fontSize: '0.68rem', color: hasFridge ? '#2ecc71' : (hasFreezer ? '#38bdf8' : '#e67e22') }}>
+                {hasFridge
+                  ? t('homeRelax.protectedFromSpoilage', { defaultValue: 'Protected from spoilage' })
+                  : hasFreezer
+                    ? t('homeRelax.frozenStorage', { defaultValue: 'Frozen storage (6 wks, +thaw time)' })
+                    : t('homeRelax.willSpoil', { defaultValue: 'Will spoil without refrigerator' })}
               </div>
             </div>
           </div>

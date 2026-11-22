@@ -1,10 +1,11 @@
 import type { PlayerState } from '../gameState';
+import type { CampaignBundle } from '../dataLoader';
 import { collectItemEffects, markClothesWorn, isPlayerFed } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { requireConfig, requireAdvancedStatRules, requireAdvancedTimeRules, requireAdvancedEconomyRules, getClothesSwitchingRule } from '../rules';
 import { spendHours } from '../timeManager';
 import { calcEconomyPrice } from '../economyEngine';
-import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental, calcSocializeParameters } from '../statMath';
+import { roundToResolution, calcMaxMess, messGrowth, safeDecrementPhysical, safeDecrementMental, calcSocializeParameters, hasWorkingAppliance } from '../statMath';
 import { resolveDecision, type ReplayContext } from '../replayTypes';
 
 export function handleRelaxAction(
@@ -300,7 +301,9 @@ export function handleSocializeAction(
     : rawRoll;
 
   const growth = messGrowth(nextPlayer.mess || 0);
-  const messGen = X * growth;
+  const rawMessGen = X * growth;
+  const hasDishwasher = hasWorkingAppliance(nextPlayer, context.campaign, 'dishwasher');
+  const messGen = calcHostMessGenerated(rawMessGen, hasDishwasher);
   const maxMess = calcMaxMess(nextPlayer, statRules, context.campaign);
   nextPlayer.mess = Math.min(maxMess, (nextPlayer.mess || 0) + messGen);
 
@@ -397,6 +400,77 @@ export function handleChangeClothesAction(
   return { nextPlayer, actionLog };
 }
 
+export interface KitchenMealParameters {
+  hasFridge: boolean;
+  hasFreezer: boolean;
+  hasStove: boolean;
+  hasMicrowave: boolean;
+  hasDishwasher: boolean;
+  isStandaloneFreezer: boolean;
+  homeCookedTime: number;
+  homeCookedMess: number;
+  microwaveTime: number;
+  microwaveMess: number;
+  coldMealTime: number;
+  coldMealMess: number;
+  cannedTime: number;
+  cannedMess: number;
+}
+
+/**
+ * Computes meal prep durations and mess generation from active kitchen appliances.
+ */
+export function calcKitchenMealParameters(
+  player: PlayerState,
+  campaign?: CampaignBundle
+): KitchenMealParameters {
+  const hasFridge = hasWorkingAppliance(player, campaign, 'refrigerator');
+  const hasFreezer = hasWorkingAppliance(player, campaign, 'freezer');
+  const hasStove = hasWorkingAppliance(player, campaign, 'stove');
+  const hasMicrowave = hasWorkingAppliance(player, campaign, 'microwave');
+  const hasDishwasher = hasWorkingAppliance(player, campaign, 'dishwasher');
+  const isStandaloneFreezer = hasFreezer && !hasFridge;
+
+  const homeCookedTime = isStandaloneFreezer
+    ? (hasMicrowave ? 2.0 : 3.5)
+    : (hasMicrowave ? 1.5 : 2.5);
+  const microwaveTime = isStandaloneFreezer ? 1.5 : 1.0;
+  const coldMealTime = isStandaloneFreezer
+    ? (hasMicrowave ? 1.0 : 3.0)
+    : 0.5;
+  const cannedTime = hasMicrowave ? 0.5 : 1.0;
+
+  const homeCookedMess = hasDishwasher ? 0 : (hasMicrowave ? 1 : 2);
+  const microwaveMess = hasDishwasher ? 0 : 1;
+  const coldMealMess = 0;
+  const cannedMess = hasDishwasher ? 0 : (hasMicrowave ? 0 : 1);
+
+  return {
+    hasFridge,
+    hasFreezer,
+    hasStove,
+    hasMicrowave,
+    hasDishwasher,
+    isStandaloneFreezer,
+    homeCookedTime,
+    homeCookedMess,
+    microwaveTime,
+    microwaveMess,
+    coldMealTime,
+    coldMealMess,
+    cannedTime,
+    cannedMess,
+  };
+}
+
+/**
+ * Computes apartment mess added by hosting guests, applying dishwasher cleanup reduction.
+ */
+export function calcHostMessGenerated(rawMess: number, hasDishwasher: boolean): number {
+  if (!hasDishwasher || rawMess <= 0) return rawMess;
+  return Math.max(0, rawMess - Math.max(1, Math.round(rawMess / 3)));
+}
+
 export function handlePrepMealAction(
   player: PlayerState,
   action: { type: 'prep_meal'; mealType: 'home_cooked' | 'microwave' | 'cold_meal' | 'canned' | 'fast_food' },
@@ -409,24 +483,13 @@ export function handlePrepMealAction(
   const maxPhysical = nextPlayer.physicalConditionMax ?? requireConfig(statRules.initialPhysicalMax, 'statRules.initialPhysicalMax');
   const maxMental = nextPlayer.mentalConditionMax ?? requireConfig(statRules.maxMentalCondition, 'statRules.maxMentalCondition');
 
-  const hasStove = nextPlayer.inventory.appliances?.some(
-    a => (a.id === 'stove' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken
-  );
-  const hasMicrowave = nextPlayer.inventory.appliances?.some(
-    a => (a.id === 'microwave' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('microwave')) && !a.isBroken
-  );
-  const hasFridge = nextPlayer.inventory.appliances?.some(
-    a => (a.id === 'refrigerator' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('refrigerator')) && !a.isBroken
-  );
-  const hasFreezer = nextPlayer.inventory.appliances?.some(
-    a => (a.id === 'freezer' || context.campaign.items.find(i => i.id === a.id)?.tags?.includes('freezer')) && !a.isBroken
-  );
+  const kitchen = calcKitchenMealParameters(nextPlayer, context.campaign);
 
   if (action.mealType === 'home_cooked') {
     if ((nextPlayer.inventory.freshFoodUnits || 0) < 1) {
       return { nextPlayer, actionLog: { key: 'action.error.noFreshFood' } };
     }
-    if (!hasStove) {
+    if (!kitchen.hasStove) {
       return { nextPlayer, actionLog: { key: 'action.error.needStove' } };
     }
 
@@ -436,12 +499,7 @@ export function handlePrepMealAction(
       return { nextPlayer, actionLog: { key: 'action.error.tooExhaustedToCook' } };
     }
 
-    // Time: Base 2.5h, 1.5h with microwave
-    // If standalone freezer without fridge and without microwave: +1.0h thaw delay
-    let timeNeeded = hasMicrowave ? 1.5 : 2.5;
-    if (hasFreezer && !hasFridge && !hasMicrowave) {
-      timeNeeded += 1.0;
-    }
+    const timeNeeded = kitchen.homeCookedTime;
 
     if (nextPlayer.hoursRemaining < timeNeeded) {
       return { nextPlayer, actionLog: { key: 'action.error.notEnoughTimeCook' } };
@@ -457,9 +515,9 @@ export function handlePrepMealAction(
     const minPhysical = nextPlayer.minPhysicalCondition ?? statRules.initialMinPhysical;
     nextPlayer.physicalCondition = safeDecrementPhysical(nextPlayer.physicalCondition ?? maxPhysical, 1.0, minPhysical);
 
-    // Mess produced: 2 mess (1 with microwave)
-    const messAdded = hasMicrowave ? 1 : 2;
-    if (context.rules.trackMess) {
+    // Mess produced: 2 base, 1 with microwave, 0 with dishwasher
+    const messAdded = kitchen.homeCookedMess;
+    if (context.rules.trackMess && messAdded > 0) {
       const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
       nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + messAdded);
     }
@@ -486,11 +544,11 @@ export function handlePrepMealAction(
     if ((nextPlayer.inventory.freshFoodUnits || 0) < 1) {
       return { nextPlayer, actionLog: { key: 'action.error.noFreshFood' } };
     }
-    if (!hasMicrowave) {
+    if (!kitchen.hasMicrowave) {
       return { nextPlayer, actionLog: { key: 'action.error.needMicrowave' } };
     }
 
-    const timeNeeded = 1.0;
+    const timeNeeded = kitchen.microwaveTime;
     if (nextPlayer.hoursRemaining < timeNeeded) {
       return { nextPlayer, actionLog: { key: 'action.error.notEnoughTimeCook' } };
     }
@@ -498,8 +556,8 @@ export function handlePrepMealAction(
     nextPlayer = spendHours(nextPlayer, timeNeeded);
     nextPlayer.inventory.freshFoodUnits--;
 
-    const messAdded = 1;
-    if (context.rules.trackMess) {
+    const messAdded = kitchen.microwaveMess;
+    if (context.rules.trackMess && messAdded > 0) {
       const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
       nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + messAdded);
     }
@@ -526,10 +584,7 @@ export function handlePrepMealAction(
       return { nextPlayer, actionLog: { key: 'action.error.noFreshFood' } };
     }
 
-    let timeNeeded = 0.5;
-    if (hasFreezer && !hasFridge && !hasMicrowave) {
-      timeNeeded += 1.0; // frozen without microwave requires thaw delay
-    }
+    const timeNeeded = kitchen.coldMealTime;
 
     if (nextPlayer.hoursRemaining < timeNeeded) {
       return { nextPlayer, actionLog: { key: 'action.error.notEnoughTimePrep' } };
@@ -558,7 +613,7 @@ export function handlePrepMealAction(
       return { nextPlayer, actionLog: { key: 'action.error.noCannedFood' } };
     }
 
-    const timeNeeded = hasMicrowave ? 0.5 : 1.0;
+    const timeNeeded = kitchen.cannedTime;
     if (nextPlayer.hoursRemaining < timeNeeded) {
       return { nextPlayer, actionLog: { key: 'action.error.notEnoughTimePrep' } };
     }
@@ -569,8 +624,8 @@ export function handlePrepMealAction(
     // Consume 1 canned food unit
     nextPlayer.inventory.cannedFoodUnits = (nextPlayer.inventory.cannedFoodUnits || 0) - 1;
 
-    // Mess: 1 mess without microwave, 0 with microwave
-    const messAdded = hasMicrowave ? 0 : 1;
+    // Mess: 1 mess without microwave/dishwasher, 0 with microwave or dishwasher
+    const messAdded = kitchen.cannedMess;
     if (context.rules.trackMess && messAdded > 0) {
       const maxCap = calcMaxMess(nextPlayer, statRules, context.campaign);
       nextPlayer.mess = Math.min(maxCap, (nextPlayer.mess || 0) + messAdded);

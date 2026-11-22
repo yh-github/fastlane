@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { type PlayerState, type GameRules, isPlayerFed } from '../../../engine/gameState';
+import { calcKitchenMealParameters } from '../../../engine/actions/homeActions';
 import type { CampaignBundle } from '../../../engine/dataLoader';
 import type { GameAction } from '../../../engine/actions/types';
 
@@ -34,18 +35,22 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [onClose]);
 
-  const hasFridge = player.inventory?.appliances?.some(
-    a => (a.id === 'refrigerator' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('refrigerator')) && !a.isBroken
-  ) ?? false;
-  const hasFreezer = player.inventory?.appliances?.some(
-    a => (a.id === 'freezer' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('freezer')) && !a.isBroken
-  ) ?? false;
-  const hasStove = player.inventory?.appliances?.some(
-    a => (a.id === 'stove' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken
-  ) ?? false;
-  const hasMicrowave = player.inventory?.appliances?.some(
-    a => (a.id === 'microwave' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('microwave')) && !a.isBroken
-  ) ?? false;
+  const kitchen = calcKitchenMealParameters(player, campaign);
+  const {
+    hasFridge,
+    hasFreezer,
+    hasStove,
+    hasMicrowave,
+    hasDishwasher,
+    isStandaloneFreezer,
+    homeCookedTime: cookTime,
+    homeCookedMess: cookMess,
+    microwaveTime,
+    microwaveMess,
+    coldMealTime: coldTime,
+    cannedTime,
+    cannedMess,
+  } = kitchen;
 
   const freshUnits = player.inventory?.freshFoodUnits || 0;
   const cannedUnits = player.inventory?.cannedFoodUnits || 0;
@@ -54,20 +59,14 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
   const hasEaten = isPlayerFed(player, rules);
   const currentPhys = player.physicalCondition ?? 50;
 
-  // Cooking calculations
-  let cookTime = hasMicrowave ? 1.5 : 2.5;
-  if (hasFreezer && !hasFridge && !hasMicrowave) {
-    cookTime += 1.0;
-  }
-  const coldTime = (hasFreezer && !hasFridge && !hasMicrowave) ? 1.5 : 0.5;
-  const cannedTime = hasMicrowave ? 0.5 : 1.0;
-
   // Dynamically select best fresh food prep method
   type FreshMealType = 'home_cooked' | 'microwave' | 'cold_meal';
   let bestFreshMethod: FreshMealType = 'cold_meal';
-  let freshMethodTitle = 'Cold Meal (Sandwich & Salad)';
+  let freshMethodTitle = isStandaloneFreezer && !hasMicrowave
+    ? 'Cold Meal (Counter Thaw)'
+    : 'Cold Meal (Sandwich & Salad)';
   let freshMethodIcon = '🥗';
-  let freshMethodDesc = `⏳ ${coldTime}h • 0 💪 • 0 🧹 → +0.5 🧠 (No appliances needed)`;
+  let freshMethodDesc = `⏳ ${coldTime}h${isStandaloneFreezer ? (hasMicrowave ? ' (Micro thaw)' : ' (Slow thaw)') : ''} • 0 💪 • 0 🧹 → +0.5 🧠`;
   let freshTimeNeeded = coldTime;
   let canCookFresh = false;
   let freshDisabledReason = '';
@@ -76,23 +75,23 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
     bestFreshMethod = 'home_cooked';
     freshMethodTitle = 'Home Cooked Meal';
     freshMethodIcon = '🍳';
-    freshMethodDesc = `Stove ${hasMicrowave ? '+ Microwave (defrost)' : ''} • ⏳ ${cookTime}h • -1.0 💪 • +${hasMicrowave ? 1 : 2} 🧹 → Net +1.5 💪, +2.0 🧠`;
+    freshMethodDesc = `Stove${hasMicrowave ? ' + Microwave' : ''}${hasDishwasher ? ' + Dishwasher' : ''} • ⏳ ${cookTime}h • -1.0 💪 • +${cookMess} 🧹 → Net +1.5 💪, +2.0 🧠`;
     freshTimeNeeded = cookTime;
     canCookFresh = freshUnits >= 1;
-  } else if (hasMicrowave && player.hoursRemaining >= 1.0) {
+  } else if (hasMicrowave && player.hoursRemaining >= microwaveTime) {
     bestFreshMethod = 'microwave';
     freshMethodTitle = 'Microwave Meal';
     freshMethodIcon = '⚡';
-    freshMethodDesc = `Microwave • ⏳ 1.0h • 0 💪 • +1 🧹 → +0.5 💪, +1.0 🧠`;
-    freshTimeNeeded = 1.0;
+    freshMethodDesc = `Microwave${hasDishwasher ? ' + Dishwasher' : ''}${isStandaloneFreezer ? ' (defrost)' : ''} • ⏳ ${microwaveTime}h • 0 💪 • +${microwaveMess} 🧹 → +0.5 💪, +1.0 🧠`;
+    freshTimeNeeded = microwaveTime;
     canCookFresh = freshUnits >= 1;
   } else {
     bestFreshMethod = 'cold_meal';
     freshMethodTitle = (hasStove && currentPhys < 1.5)
       ? 'Cold Meal (Too exhausted for stove)'
-      : 'Cold Meal (Sandwich & Salad)';
+      : (isStandaloneFreezer && !hasMicrowave ? 'Cold Meal (Counter Thaw)' : 'Cold Meal (Sandwich & Salad)');
     freshMethodIcon = '🥗';
-    freshMethodDesc = `⏳ ${coldTime}h • 0 💪 • 0 🧹 → +0.5 🧠 (No appliances)`;
+    freshMethodDesc = `⏳ ${coldTime}h${isStandaloneFreezer ? (hasMicrowave ? ' (Micro thaw)' : ' (Slow thaw)') : ''} • 0 💪 • 0 🧹 → +0.5 🧠`;
     freshTimeNeeded = coldTime;
     canCookFresh = freshUnits >= 1 && player.hoursRemaining >= coldTime;
   }
@@ -226,8 +225,8 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
             }}
           >
             <span style={{ color: '#94a3b8' }}>Appliance Status:</span>
-            <span style={{ fontWeight: 'bold', color: hasFridge || hasFreezer ? '#2ecc71' : '#e67e22', fontSize: '0.8rem' }}>
-              {hasFridge && hasFreezer ? '🧊 Fridge + Freezer' : hasFridge ? '🧊 Refrigerator Active' : hasFreezer ? '❄️ Deep Freezer Active' : '⚠️ No Cold Storage'}
+            <span style={{ fontWeight: 'bold', color: hasFridge ? '#2ecc71' : (hasFreezer ? '#38bdf8' : '#e67e22'), fontSize: '0.8rem' }}>
+              {hasFridge && hasFreezer ? '🧊 Fridge + Freezer' : hasFridge ? '🧊 Refrigerator Active' : hasFreezer ? '❄️ Frozen storage (6 wks, +thaw time)' : '⚠️ No Cold Storage'}
             </span>
           </div>
 
@@ -449,7 +448,7 @@ export const PantryDetailsModal: React.FC<PantryDetailsModalProps> = ({
                     <div>
                       <div style={{ fontWeight: 'bold', fontSize: '0.84rem' }}>🥫 Prepare Canned Food (Heated Rations)</div>
                       <div style={{ fontSize: '0.68rem', opacity: 0.85, marginTop: '2px' }}>
-                        ⏳ {cannedTime}h {hasMicrowave ? '(Microwave)' : ''} • -1 Max 💪, -1 🧠 (Emergency rations)
+                        ⏳ {cannedTime}h {hasMicrowave ? '(Microwave)' : ''} • +{cannedMess} 🧹 • -1 Max 💪, -1 🧠 (Emergency rations)
                       </div>
                     </div>
                     {!canPrepCanned && (

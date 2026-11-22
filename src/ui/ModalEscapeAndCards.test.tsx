@@ -689,4 +689,68 @@ describe('Modal Escape and Card Popups', () => {
     );
     expect(screen.getByText('🧊 Stores 6 Food Standalone (12 with Refrigerator)')).toBeInTheDocument();
   });
+
+  it('shows CLUTTER notification badge on working robot_vacuum home icon when blocked by mess or < 5 free space', () => {
+    const vacuumCampaign: CampaignBundle = {
+      ...mockCampaign,
+      housing: [{ id: 'low_cost', name: 'Low-Cost Housing', baseRent: 300, spaceCap: 100, isRobberyImmune: false, homeNodeId: 'node_home', description: '' }],
+      items: [
+        { id: 'refrigerator', name: 'Refrigerator', category: 'appliance', space: 40, happinessBonus: 1 },
+        { id: 'stove', name: 'Stove', category: 'appliance', space: 40, happinessBonus: 1 },
+        { id: 'robot_vacuum', name: 'Robot Vacuum', category: 'appliance', space: 10, happinessBonus: 2 },
+      ],
+    } as any;
+
+    const okPlayer: PlayerState = {
+      ...mockPlayer,
+      currentHousingId: 'low_cost',
+      mess: 5, // 90 durables + 5 mess = 95/100 -> 5 free space -> OK
+      inventory: {
+        ...mockPlayer.inventory,
+        appliances: [
+          { id: 'refrigerator', condition: 'new', isBroken: false },
+          { id: 'stove', condition: 'new', isBroken: false },
+          { id: 'robot_vacuum', condition: 'new', isBroken: false },
+        ],
+      },
+    } as any;
+
+    const { rerender } = render(
+      <ApartmentFurnishings
+        player={okPlayer}
+        campaign={vacuumCampaign}
+        rules={baseRules}
+        onInspectDurable={vi.fn()}
+      />
+    );
+    expect(screen.queryByTestId('robot-vacuum-blocked-badge')).not.toBeInTheDocument();
+
+    // Blocked by < 5 free space (mess 6 -> 96/100 -> 4 free space)
+    const crampedPlayer = { ...okPlayer, mess: 6 };
+    rerender(
+      <ApartmentFurnishings
+        player={crampedPlayer}
+        campaign={vacuumCampaign}
+        rules={baseRules}
+        onInspectDurable={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('robot-vacuum-blocked-badge')).toHaveTextContent('⚠️ CLUTTER');
+
+    // Blocked by mess > 20 even in spacious penthouse
+    const messyPenthouseCampaign: CampaignBundle = {
+      ...vacuumCampaign,
+      housing: [{ id: 'penthouse', name: 'Penthouse', baseRent: 850, spaceCap: 500, isRobberyImmune: true, homeNodeId: 'node_home', description: '' }],
+    } as any;
+    const messyPlayer = { ...okPlayer, currentHousingId: 'penthouse', mess: 21 };
+    rerender(
+      <ApartmentFurnishings
+        player={messyPlayer}
+        campaign={messyPenthouseCampaign}
+        rules={baseRules}
+        onInspectDurable={vi.fn()}
+      />
+    );
+    expect(screen.getByTestId('robot-vacuum-blocked-badge')).toHaveTextContent('⚠️ CLUTTER');
+  });
 });

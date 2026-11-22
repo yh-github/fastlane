@@ -245,7 +245,13 @@ export const HomeCardHelpModal: React.FC<HomeCardHelpModalProps> = ({
       inputs.push({
         icon: '🧊',
         title: 'Cold Storage Equipment',
-        desc: hasFreezer ? 'Refrigerator + Freezer (Full spoilage protection)' : (hasFridge ? 'Refrigerator active (Shields fresh food from rot)' : 'No Refrigerator (Fresh food risks spoiling at turn end!)')
+        desc: hasFridge && hasFreezer
+          ? 'Refrigerator + Freezer (Full spoilage protection)'
+          : hasFridge
+            ? 'Refrigerator active (Shields fresh food from rot)'
+            : hasFreezer && rules?.enableCookingSystem
+              ? 'Standalone Freezer (Stores 6 frozen food, +thaw time)'
+              : 'No Refrigerator (Fresh food risks spoiling at turn end!)'
       });
       outputs.push({
         icon: '🥗',

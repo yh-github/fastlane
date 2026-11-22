@@ -115,5 +115,29 @@
     "space": 30,
     "tags": ["freezer"],
     "description": "Deep freeze food storage for up to 6 weeks. Extends to 12 weeks when paired with Refrigerator."
+  },
+  {
+    "id": "dishwasher",
+    "name": "Dishwasher",
+    "category": "appliance",
+    "basePrice": 350,
+    "happinessBonus": 1,
+    "lifestyleValue": 2,
+    "space": 40,
+    "tags": ["dishwasher"],
+    "description": "Eliminates kitchen mess from cooking and canned meals, and cuts party mess when hosting guests by a third.",
+    "effects": []
+  },
+  {
+    "id": "robot_vacuum",
+    "name": "Robot Vacuum",
+    "category": "appliance",
+    "basePrice": 680,
+    "happinessBonus": 2,
+    "lifestyleValue": 2,
+    "space": 10,
+    "tags": ["robot_vacuum", "tech"],
+    "description": "Autonomous Y2K robotic floor cleaner. Automatically cleans up to 4 Mess at turn start for 0h and 0 stamina, provided Mess <= 20 and the home has at least 5 Free Space.",
+    "effects": []
   }
 ]

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle } from '../../engine/dataLoader';
 import { type GameRules, collectItemEffects, type OwnedAppliance, isPlayerFed } from '../../engine/gameState';
+import { calcKitchenMealParameters } from '../../engine/actions/homeActions';
 import { isAdvancedStatRules } from '../../engine/rules';
 import { calcEconomyPrice } from '../../engine/economyEngine';
 import { calcMaxMess, roundToResolution, calcUsedSpace, calcHousingSpaceCap, calcSocializeParameters, formatHours } from '../../engine/statMath';
@@ -682,23 +683,22 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
         {rules?.enableCookingSystem && (() => {
           const freshUnits = player.inventory?.freshFoodUnits || 0;
           const cannedUnits = player.inventory?.cannedFoodUnits || 0;
-          const hasStove = player.inventory?.appliances?.some(
-            a => (a.id === 'stove' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('stove')) && !a.isBroken
-          ) ?? false;
-          const hasMicrowave = player.inventory?.appliances?.some(
-            a => (a.id === 'microwave' || campaign?.items?.find(i => i.id === a.id)?.tags?.includes('microwave')) && !a.isBroken
-          ) ?? false;
+          const kitchen = calcKitchenMealParameters(player, campaign);
+          const {
+            hasStove,
+            hasMicrowave,
+            homeCookedTime: cookTime,
+            microwaveTime,
+            coldMealTime: coldTime,
+            cannedTime,
+          } = kitchen;
           const curPhys = player.physicalCondition ?? 50;
-          let cookTime = hasMicrowave ? 1.5 : 2.5;
-          if (hasFreezer && !hasFridge && !hasMicrowave) cookTime += 1.0;
-          const coldTime = (hasFreezer && !hasFridge && !hasMicrowave) ? 1.5 : 0.5;
-          const cannedTime = hasMicrowave ? 0.5 : 1.0;
           const freshMethod = (hasStove && curPhys >= 1.5 && player.hoursRemaining >= cookTime)
             ? 'home_cooked'
-            : (hasMicrowave && player.hoursRemaining >= 1.0)
+            : (hasMicrowave && player.hoursRemaining >= microwaveTime)
               ? 'microwave'
               : 'cold_meal';
-          const freshHours = freshMethod === 'home_cooked' ? cookTime : (freshMethod === 'microwave' ? 1.0 : coldTime);
+          const freshHours = freshMethod === 'home_cooked' ? cookTime : (freshMethod === 'microwave' ? microwaveTime : coldTime);
           const canCookFresh = freshUnits >= 1 && player.hoursRemaining >= freshHours;
           const canEatCanned = cannedUnits >= 1 && player.hoursRemaining >= cannedTime;
 
@@ -734,7 +734,7 @@ export function HomeRelax({ player, onAction, campaign, rules, economicIndex = 0
                     {freshMethod === 'home_cooked'
                       ? `🍳 Cook Fresh (${cookTime}h)`
                       : freshMethod === 'microwave'
-                        ? `⚡ Microwave Fresh (1h)`
+                        ? `⚡ Microwave Fresh (${microwaveTime}h)`
                         : `🥗 Eat Cold (${coldTime}h)`}
                   </button>
                 )}

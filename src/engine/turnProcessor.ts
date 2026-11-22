@@ -5,7 +5,7 @@
 import { type GameState, type PlayerState, type StatModification, type PawnedItem, recalculatePlayerEffects, collectItemEffects } from './gameState';
 import { type CampaignBundle } from './dataLoader';
 import { applyMoraleEffect } from './statEffects';
-import { messGrowth, calcMaxMental, calcMaxMess } from './statMath';
+import { messGrowth, calcMaxMental, calcMaxMess, getRobotVacuumStatus, ROBOT_VACUUM_CLUTTER_THRESHOLD, ROBOT_VACUUM_CLEAN_AMOUNT } from './statMath';
 import { resetPlayerClock } from './timeManager';
 import { Random } from '../utils/rng';
 import { resolveDecision, type ReplayContext } from './replayTypes';
@@ -212,8 +212,21 @@ function processAdvancedPlayerTurn(
 
     if (state.rules.trackMess) {
       const maxMess = calcMaxMess(p, sr);
-      const growth = messGrowth(p.mess || 0);
-      p.mess = Math.min(maxMess, (p.mess || 0) + growth);
+      const vacuumStatus = getRobotVacuumStatus(p, campaign, state.rules);
+      const preTurnMess = p.mess || 0;
+      const growth = messGrowth(preTurnMess);
+      p.mess = Math.min(maxMess, preTurnMess + growth);
+
+      if (vacuumStatus.isWorking) {
+        if (vacuumStatus.canOperate) {
+          p.mess = Math.max(sr.globalMessMin, p.mess - ROBOT_VACUUM_CLEAN_AMOUNT);
+        } else {
+          p.turnEvents.push({
+            key: 'events.robotVacuumStuck',
+            params: { mess: p.mess, threshold: ROBOT_VACUUM_CLUTTER_THRESHOLD }
+          });
+        }
+      }
     }
     if (state.rules.usePhysicalMentalConditions) {
       if (state.rules.trackSocial) {
