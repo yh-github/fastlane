@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAvailableCampaigns, loadAvailableCampaigns, type CampaignInfo } from '../engine/dataLoader';
+import { usePwaInstall } from '../hooks/usePwaInstall';
 import { RulesScreen, type TabType } from './RulesScreen';
 
 interface TitleScreenProps {
@@ -9,6 +10,7 @@ interface TitleScreenProps {
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
   const { t, i18n } = useTranslation();
+  const { canInstall, isInstalling, triggerInstall } = usePwaInstall();
   const [campaigns, setCampaigns] = useState<CampaignInfo[]>(getAvailableCampaigns());
   const defaultCampaign = campaigns.find(c => c.id === 'qol_improved') || campaigns[0];
   const [selectedCampaignId, setSelectedCampaignId] = useState(defaultCampaign.id);
@@ -77,6 +79,18 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({ onStartGame }) => {
         >
           View Version Differences
         </button>
+        {canInstall && (
+          <button
+            type="button"
+            className="title-screen__btn"
+            aria-disabled={isInstalling ? 'true' : undefined}
+            onClick={() => { void triggerInstall(); }}
+            style={{ background: '#059669', fontSize: '1.05rem', padding: '0.65rem 1.4rem', marginTop: '0' }}
+            data-testid="btn-install-pwa"
+          >
+            {t('titleScreen.installApp', 'Install App')}
+          </button>
+        )}
       </div>
     </div>
   );

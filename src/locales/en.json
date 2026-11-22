@@ -2,6 +2,7 @@
   "titleScreen": {
     "subtitle": "Modernized",
     "startGame": "New Game",
+    "installApp": "Install App",
     "language": "Language",
     "continueGame": "Continue Game",
     "continueSavedGame": "Continue Saved Game"
