@@ -38,7 +38,7 @@ import { useDraggableModal } from './hooks/useDraggableModal';
 import { calcEffectiveRobberyChance, formatHours, roundToResolution } from '../engine/statMath';
 import { isAdvancedStatRules } from '../engine/rules';
 import { isRentOfficeOpen as isRentOfficeOpenRule, playerLivesAt } from '../engine/buildingRules';
-import { getParkWorkoutBaseline, getParkEncounterOdds } from '../engine/actions/parkActions';
+import { getParkWorkoutBaseline, getParkEncounterOdds, getArcadeBaseline } from '../engine/actions/parkActions';
 
 interface BuildingModalProps {
   player: PlayerState | null;
@@ -437,22 +437,21 @@ export function BuildingModal({
             </div>
           )}
           {building.id === 'red_pirate' && rules?.enableArcade && (() => {
-            const plays = player.turnFlags?.arcadePlaysThisTurn || 0;
             const isPhysMental = Boolean(rules?.usePhysicalMentalConditions);
             const allowPartial = Boolean(rules?.allowPartialHours || rules?.proportionalDivisibleActions);
-            const conditionRes = rules?.conditionResolution ?? 0.5;
             const baseHours = 2;
-            const actualHours = allowPartial ? Math.min(baseHours, player.hoursRemaining) : baseHours;
-            const ratio = allowPartial && baseHours > 0 ? actualHours / baseHours : 1;
-            const costDisplay = (allowPartial && actualHours < baseHours && actualHours > 0)
-              ? Math.max(1, Math.round(8 * ratio))
-              : 8;
-            const hoursLabel = `${formatHours(actualHours > 0 ? actualHours : baseHours)}h`;
-
-            const mentalGain = roundToResolution((plays === 0 ? 2 : plays === 1 ? 1 : 0) * ratio, conditionRes);
-            const socialGain = roundToResolution((plays === 0 ? 1 : 0) * ratio, conditionRes);
-            const physPenalty = roundToResolution((plays === 0 ? 0 : plays === 1 ? 0.5 : 1) * ratio, conditionRes);
-            const happyGain = roundToResolution((plays === 0 ? 2 : 0) * ratio, conditionRes);
+            const baseline = getArcadeBaseline(player, rules, baseHours);
+            const {
+              playsBefore: plays,
+              actualHours,
+              cashCost: costDisplay,
+              mentalDelta: mentalGain,
+              socialDelta: socialGain,
+              physDelta,
+              happyDelta: happyGain
+            } = baseline;
+            const physPenalty = Math.abs(physDelta);
+            const hoursLabel = `${formatHours(actualHours)}h`;
 
             let benefitDisplay: React.ReactNode;
             if (isPhysMental) {

@@ -6,8 +6,12 @@ import {
   applyParkCardEffects,
   getParkEncounterOdds,
   getParkWorkoutBaseline,
+  getArcadeBaseline,
+  scaleParkCard,
   ARCADE_ENCOUNTER_CARDS,
   ARCADE_GLITCH_CARD,
+  PARK_RELAX_CARDS,
+  PARK_WORKOUT_CARDS,
 } from './parkActions';
 import { createPlayerState } from '../stateFactories';
 import { TEST_ADVANCED_CAMPAIGN_CONFIG } from '../testFactories';
@@ -604,6 +608,99 @@ describe('Park Actions', () => {
       };
       const resGood = handleWorkoutParkAction(player, { type: 'workout_park' }, ctxGood);
       expect(resGood.nextPlayer.pendingMiniGame?.gameType).toBe('park_encounter');
+    });
+
+    it('clamps partial arcade baseline/cards to >= $1 cash and >= 0.5 stats (including social), and keeps bad events unscaled', () => {
+      const player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+      player.hoursRemaining = 0.14;
+      player.money = 300;
+      player.physicalCondition = 40;
+      player.mentalCondition = 40;
+      player.social = 10;
+
+      const advRules = {
+        ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules,
+        usePhysicalMentalConditions: true,
+        trackSocial: true,
+        enableArcade: true,
+        enableParkSystem: true,
+        allowPartialHours: true,
+        proportionalDivisibleActions: true,
+        conditionResolution: 0.5,
+      };
+
+      const baseline = getArcadeBaseline(player, advRules, 2);
+      expect(baseline.actualHours).toBe(0.14);
+      expect(baseline.cashCost).toBe(1);
+      expect(baseline.mentalDelta).toBe(0.5);
+      expect(baseline.socialDelta).toBe(0.5);
+
+      const arcadeRes = gameReducer(player, { type: 'play_arcade' }, {
+        campaign: dummyCampaign,
+        rules: advRules,
+        turn: 1,
+        economicIndex: 0,
+        rng: new Random(1),
+        state: { turn: 1, players: [player] } as any,
+        engineDecisions: [{ type: 'arcade_glitch_p1_1', result: false }],
+      });
+      expect(arcadeRes.updatedPlayer.hoursRemaining).toBe(0);
+      expect(arcadeRes.updatedPlayer.money).toBe(299);
+      expect(arcadeRes.updatedPlayer.mentalCondition).toBe(40.5);
+      expect(arcadeRes.updatedPlayer.social).toBe(10.5);
+      for (const opt of arcadeRes.updatedPlayer.pendingMiniGame?.options || []) {
+        if (opt.cashAmount !== undefined) expect(opt.cashAmount).toBeGreaterThanOrEqual(1);
+        if (opt.mentalAmount !== undefined) expect(opt.mentalAmount).toBeGreaterThanOrEqual(0.5);
+        if (opt.socialAmount !== undefined) expect(opt.socialAmount).toBeGreaterThanOrEqual(0.5);
+      }
+
+      // Glitch on tiny partial hours stays unscaled (-$2, -0.5 Mental)
+      const glitchRes = gameReducer(player, { type: 'play_arcade' }, {
+        campaign: dummyCampaign,
+        rules: advRules,
+        turn: 1,
+        economicIndex: 0,
+        rng: new Random(1),
+        state: { turn: 1, players: [player] } as any,
+        engineDecisions: [{ type: 'arcade_glitch_p1_1', result: true }],
+      });
+      expect(glitchRes.updatedPlayer.pendingMiniGame?.options[0]).toEqual(ARCADE_GLITCH_CARD);
+
+      // Park hazards & outfit muggings stay unscaled on partial hours
+      const dressedPlayer = { ...player, inventory: { ...player.inventory, selectedClothes: 'business' as const } };
+      const mugRes = handleRelaxParkAction(dressedPlayer, { type: 'relax_park' }, {
+        campaign: dummyCampaign,
+        rules: advRules,
+        turn: 1,
+        economicIndex: 0,
+        rng: { next: () => 0.05 } as any,
+        state: { turn: 1 } as any,
+      });
+      expect(mugRes.nextPlayer.pendingMiniGame?.options[0].cashAmount).toBe(-45); // Full 15% of $300
+      expect(mugRes.nextPlayer.pendingMiniGame?.options[0].mentalAmount).toBe(-2);
+
+      const hazardRes = handleRelaxParkAction(player, { type: 'relax_park' }, {
+        campaign: dummyCampaign,
+        rules: advRules,
+        turn: 1,
+        economicIndex: 0,
+        rng: { next: () => 0.1 } as any,
+        state: { turn: 1 } as any,
+        engineDecisions: [{ type: 'park_roll_bad_p1_1_0', result: 'hazard' }],
+      });
+      const hazardCard = hazardRes.nextPlayer.pendingMiniGame?.options[0];
+      if (hazardCard?.mentalAmount !== undefined) expect(hazardCard.mentalAmount).toBe(-1);
+      if (hazardCard?.physicalAmount !== undefined) expect(hazardCard.physicalAmount).toBe(-1);
+
+      // scaleParkCard: positive cash clamps to >= $1, stats & social clamp to >= 0.5, mixed hill sprints scales both sides
+      const droppedBill = PARK_RELAX_CARDS.find(c => c.cardId === 'park_dropped_bill')!;
+      const scaledBill = scaleParkCard(droppedBill, 0.14 / 3, 0.5);
+      expect(scaledBill.cashAmount).toBe(1);
+      expect(scaledBill.mentalAmount).toBe(0.5);
+
+      const hillSprints = PARK_WORKOUT_CARDS.find(c => c.cardId === 'workout_hill_sprints')!;
+      expect(scaleParkCard(hillSprints, 0.5, 0.5)).toMatchObject({ maxPhysAmount: 1, physicalAmount: -1.5 });
+      expect(scaleParkCard(hillSprints, 0.14 / 3, 0.5)).toMatchObject({ maxPhysAmount: 0.5, physicalAmount: -0.5 });
     });
   });
 });

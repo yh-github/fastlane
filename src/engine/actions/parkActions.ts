@@ -79,6 +79,89 @@ export const ARCADE_GLITCH_CARD: MiniGameOption = {
   mentalAmount: -0.5
 };
 
+export interface ArcadeBaseline {
+  playsBefore: number;
+  actualHours: number;
+  cashCost: number;
+  mentalDelta: number;
+  physDelta: number;
+  socialDelta: number;
+  happyDelta: number;
+  isPartial: boolean;
+}
+
+/**
+ * Scales a non-zero stat delta by `ratio` rounded to `resolution`,
+ * clamping away from zero to at least `±resolution` (e.g. `±0.5`).
+ */
+function scaleStatWithMinimum(value: number, ratio: number, resolution: number): number {
+  if (value === 0 || ratio >= 1) return value;
+  const scaled = roundToResolution(Math.abs(value) * ratio, resolution);
+  const clamped = Math.max(resolution, scaled);
+  return value > 0 ? clamped : -clamped;
+}
+
+/**
+ * Scales a non-zero cash delta by `ratio` rounded to whole dollars,
+ * clamping away from zero to at least `±1`.
+ */
+function scaleCashWithMinimum(value: number, ratio: number): number {
+  if (value === 0 || ratio >= 1) return value;
+  const rounded = Math.round(Math.abs(value) * ratio);
+  const clamped = Math.max(1, rounded);
+  return value > 0 ? clamped : -clamped;
+}
+
+/**
+ * Computes baseline time, cash cost, and stat modifiers for playing the arcade,
+ * shared between the engine reducer and UI previews.
+ */
+export function getArcadeBaseline(
+  player: PlayerState,
+  rules: Partial<GameRules> | undefined,
+  costHours: number = 2
+): ArcadeBaseline {
+  const playsBefore = player.turnFlags?.arcadePlaysThisTurn || 0;
+  const allowPartial = Boolean(rules?.allowPartialHours || rules?.proportionalDivisibleActions);
+  const actualHours = allowPartial && player.hoursRemaining > 0
+    ? Math.min(costHours, player.hoursRemaining)
+    : costHours;
+  const ratio = costHours > 0 ? actualHours / costHours : 1;
+  const isPartial = Boolean(rules?.proportionalDivisibleActions && actualHours < costHours);
+  const cashCost = (allowPartial && actualHours < costHours) ? scaleCashWithMinimum(8, ratio) : 8;
+  const conditionRes = rules?.conditionResolution ?? 0.5;
+
+  let rawMental = 0;
+  let rawPhys = 0;
+  let rawSocial = 0;
+  let rawHappy = 0;
+
+  if (rules?.usePhysicalMentalConditions) {
+    if (playsBefore === 0) {
+      rawMental = 2;
+      rawSocial = rules.trackSocial ? 1 : 0;
+    } else if (playsBefore === 1) {
+      rawMental = 1;
+      rawPhys = -0.5;
+    } else {
+      rawPhys = -1;
+    }
+  } else if (playsBefore === 0) {
+    rawHappy = 2;
+  }
+
+  return {
+    playsBefore,
+    actualHours,
+    cashCost,
+    mentalDelta: isPartial ? scaleStatWithMinimum(rawMental, ratio, conditionRes) : rawMental,
+    physDelta: isPartial ? scaleStatWithMinimum(rawPhys, ratio, conditionRes) : rawPhys,
+    socialDelta: isPartial ? scaleStatWithMinimum(rawSocial, ratio, conditionRes) : rawSocial,
+    happyDelta: isPartial ? scaleStatWithMinimum(rawHappy, ratio, conditionRes) : rawHappy,
+    isPartial
+  };
+}
+
 export function handlePlayArcadeAction(
   player: PlayerState,
   _action: { type: 'play_arcade' },
@@ -93,9 +176,9 @@ export function handlePlayArcadeAction(
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughTime' } };
   }
 
-  const actualHours = Math.min(costHours, nextPlayer.hoursRemaining);
+  const baseline = getArcadeBaseline(nextPlayer, context.rules, costHours);
+  const { playsBefore: playsThisTurn, actualHours, cashCost, isPartial } = baseline;
   const ratio = actualHours / costHours;
-  const cashCost = (allowPartial && actualHours < costHours) ? Math.max(1, Math.round(8 * ratio)) : 8;
 
   if (nextPlayer.money < cashCost) {
     return { nextPlayer, actionLog: { key: 'action.error.notEnoughMoney' } };
@@ -104,11 +187,12 @@ export function handlePlayArcadeAction(
   nextPlayer = spendHours(nextPlayer, actualHours);
   nextPlayer.money -= cashCost;
 
-  const playsThisTurn = nextPlayer.turnFlags?.arcadePlaysThisTurn || 0;
   nextPlayer.turnFlags = {
     ...nextPlayer.turnFlags,
     arcadePlaysThisTurn: playsThisTurn + 1
   };
+
+  const conditionRes = context.rules.conditionResolution ?? 0.5;
 
   if (context.rules.usePhysicalMentalConditions) {
     const statRules = requireAdvancedStatRules(context.campaign.config.statRules);
@@ -119,41 +203,18 @@ export function handlePlayArcadeAction(
     const maxSocial = requireConfig(statRules.maxSocial, 'statRules.maxSocial');
     const startingSocial = requireConfig(statRules.startingSocial, 'statRules.startingSocial');
     const modifications: StatModification[] = [{ stat: 'money', diff: -cashCost }];
-    const conditionRes = context.rules.conditionResolution ?? 0.5;
-    const isPartial = Boolean(context.rules.proportionalDivisibleActions && actualHours < costHours);
 
-    let mentalDelta = 0;
-    let physDelta = 0;
-    let socialDelta = 0;
-
-    if (playsThisTurn === 0) {
-      mentalDelta = 2;
-      socialDelta = context.rules.trackSocial ? 1 : 0;
-    } else if (playsThisTurn === 1) {
-      mentalDelta = 1;
-      physDelta = -0.5;
-    } else {
-      mentalDelta = 0;
-      physDelta = -1;
+    if (baseline.mentalDelta > 0) {
+      nextPlayer.mentalCondition = Math.min(maxMental, roundToResolution((nextPlayer.mentalCondition ?? startingMental) + baseline.mentalDelta, conditionRes));
+      modifications.push({ stat: 'mental', diff: baseline.mentalDelta });
     }
-
-    if (isPartial) {
-      if (mentalDelta > 0) mentalDelta = Math.max(conditionRes, roundToResolution(mentalDelta * ratio, conditionRes));
-      if (physDelta < 0) physDelta = -Math.max(conditionRes, roundToResolution(Math.abs(physDelta) * ratio, conditionRes));
-      if (socialDelta > 0) socialDelta = Math.max(1, Math.round(socialDelta * ratio));
+    if (baseline.socialDelta > 0) {
+      nextPlayer.social = Math.min(maxSocial, roundToResolution((nextPlayer.social ?? startingSocial) + baseline.socialDelta, conditionRes));
+      modifications.push({ stat: 'social', diff: baseline.socialDelta });
     }
-
-    if (mentalDelta > 0) {
-      nextPlayer.mentalCondition = Math.min(maxMental, roundToResolution((nextPlayer.mentalCondition ?? startingMental) + mentalDelta, conditionRes));
-      modifications.push({ stat: 'mental', diff: mentalDelta });
-    }
-    if (socialDelta > 0) {
-      nextPlayer.social = Math.min(maxSocial, (nextPlayer.social ?? startingSocial) + socialDelta);
-      modifications.push({ stat: 'social', diff: socialDelta });
-    }
-    if (physDelta < 0) {
-      nextPlayer.physicalCondition = Math.max(minPhys, roundToResolution((nextPlayer.physicalCondition ?? startingPhys) + physDelta, conditionRes));
-      modifications.push({ stat: 'physical', diff: physDelta });
+    if (baseline.physDelta < 0) {
+      nextPlayer.physicalCondition = Math.max(minPhys, roundToResolution((nextPlayer.physicalCondition ?? startingPhys) + baseline.physDelta, conditionRes));
+      modifications.push({ stat: 'physical', diff: baseline.physDelta });
     }
 
     const actionLogs: GameEvent[] = [{
@@ -173,9 +234,9 @@ export function handlePlayArcadeAction(
 
   // Classic rules (usePhysicalMentalConditions is false)
   const modifications: StatModification[] = [{ stat: 'money', diff: -cashCost }];
-  if (playsThisTurn === 0) {
-    nextPlayer.happiness = Math.min(100, nextPlayer.happiness + 2);
-    modifications.push({ stat: 'happiness', diff: 2 });
+  if (baseline.happyDelta > 0) {
+    nextPlayer.happiness = Math.min(100, roundToResolution(nextPlayer.happiness + baseline.happyDelta, conditionRes));
+    modifications.push({ stat: 'happiness', diff: baseline.happyDelta });
   }
 
   const actionLogs: GameEvent[] = [{
@@ -183,8 +244,6 @@ export function handlePlayArcadeAction(
     modifications
   }];
 
-  const conditionRes = context.rules.conditionResolution ?? 0.5;
-  const isPartial = Boolean(context.rules.proportionalDivisibleActions && actualHours < costHours);
   const encounterRes = resolveArcadeEncounter(nextPlayer, playsThisTurn, isPartial, ratio, conditionRes, context, replayContext);
   nextPlayer = encounterRes.nextPlayer;
   if (encounterRes.extraLog) actionLogs.push(encounterRes.extraLog);
@@ -221,8 +280,8 @@ function resolveArcadeEncounter(
   );
 
   if (isGlitch) {
-    const rawGlitch = structuredClone(ARCADE_GLITCH_CARD);
-    const glitchCard = isPartial ? scaleParkCard(rawGlitch, ratio, conditionRes) : rawGlitch;
+    // Bad events always apply at full strength (no partial-hour scaling)
+    const glitchCard = structuredClone(ARCADE_GLITCH_CARD);
     if (nextPlayer.isAi) {
       const res = applyParkCardEffects(nextPlayer, glitchCard, context);
       return {
@@ -627,18 +686,13 @@ export function getParkWorkoutBaseline(
 
   const rawPhysCost = 1 + workoutsBefore;
   const physCost = scalePartial
-    ? Math.max(conditionRes, roundToResolution(rawPhysCost * ratio, conditionRes))
+    ? scaleStatWithMinimum(rawPhysCost, ratio, conditionRes)
     : rawPhysCost;
 
   const rawMentalDelta = workoutsBefore === 0 ? 2 : -workoutsBefore;
-  let mentalDelta = rawMentalDelta;
-  if (scalePartial) {
-    if (rawMentalDelta > 0) {
-      mentalDelta = Math.max(conditionRes, roundToResolution(rawMentalDelta * ratio, conditionRes));
-    } else if (rawMentalDelta < 0) {
-      mentalDelta = -Math.max(conditionRes, roundToResolution(Math.abs(rawMentalDelta) * ratio, conditionRes));
-    }
-  }
+  const mentalDelta = scalePartial
+    ? scaleStatWithMinimum(rawMentalDelta, ratio, conditionRes)
+    : rawMentalDelta;
 
   return { workoutsBefore, maxPhysGain, physCost, mentalDelta };
 }
@@ -734,7 +788,8 @@ export function applyParkCardEffects(
     const minSocial = requireConfig(statRules.minSocial, 'statRules.minSocial');
     const maxSocial = requireConfig(statRules.maxSocial, 'statRules.maxSocial');
     const startingSocial = requireConfig(statRules.startingSocial, 'statRules.startingSocial');
-    nextPlayer.social = Math.max(minSocial, Math.min(maxSocial, (nextPlayer.social ?? startingSocial) + choice.socialAmount));
+    const conditionRes = context.rules.conditionResolution ?? 0.5;
+    nextPlayer.social = Math.max(minSocial, Math.min(maxSocial, roundToResolution((nextPlayer.social ?? startingSocial) + choice.socialAmount, conditionRes)));
     mods.push({ stat: 'social', diff: choice.socialAmount });
   }
 
@@ -775,39 +830,23 @@ export function scaleParkCard(
   const scaled = structuredClone(card);
 
   if (scaled.mentalAmount !== undefined && scaled.mentalAmount !== 0) {
-    const raw = scaled.mentalAmount * ratio;
-    scaled.mentalAmount = roundToResolution(raw, conditionRes);
-    if (scaled.mentalAmount === 0) {
-      scaled.mentalAmount = raw > 0 ? conditionRes : -conditionRes;
-    }
+    scaled.mentalAmount = scaleStatWithMinimum(scaled.mentalAmount, ratio, conditionRes);
   }
   if (scaled.physicalAmount !== undefined && scaled.physicalAmount !== 0) {
-    const raw = scaled.physicalAmount * ratio;
-    scaled.physicalAmount = roundToResolution(raw, conditionRes);
-    if (scaled.physicalAmount === 0) {
-      scaled.physicalAmount = raw > 0 ? conditionRes : -conditionRes;
-    }
+    scaled.physicalAmount = scaleStatWithMinimum(scaled.physicalAmount, ratio, conditionRes);
   }
   if (scaled.maxPhysAmount !== undefined && scaled.maxPhysAmount !== 0) {
-    const raw = scaled.maxPhysAmount * ratio;
-    scaled.maxPhysAmount = roundToResolution(raw, conditionRes);
-    if (scaled.maxPhysAmount === 0) {
-      scaled.maxPhysAmount = conditionRes;
-    }
+    scaled.maxPhysAmount = scaleStatWithMinimum(scaled.maxPhysAmount, ratio, conditionRes);
   }
   if (scaled.maxMentalAmount !== undefined && scaled.maxMentalAmount !== 0) {
-    const raw = scaled.maxMentalAmount * ratio;
-    scaled.maxMentalAmount = roundToResolution(raw, conditionRes);
-    if (scaled.maxMentalAmount === 0) {
-      scaled.maxMentalAmount = conditionRes;
-    }
+    scaled.maxMentalAmount = scaleStatWithMinimum(scaled.maxMentalAmount, ratio, conditionRes);
   }
   if (scaled.socialAmount !== undefined && scaled.socialAmount !== 0) {
-    scaled.socialAmount = Math.max(1, Math.round(scaled.socialAmount * ratio));
+    scaled.socialAmount = scaleStatWithMinimum(scaled.socialAmount, ratio, conditionRes);
   }
   if (scaled.cashAmount !== undefined && scaled.cashAmount !== 0) {
     const origCash = scaled.cashAmount;
-    scaled.cashAmount = Math.round(scaled.cashAmount * ratio);
+    scaled.cashAmount = scaleCashWithMinimum(origCash, ratio);
     if ((scaled.cardId === 'hazard_pickpocket' || scaled.cardId === 'hazard_outfit_mugging') && origCash < 0 && scaled.cashAmount !== origCash) {
       scaled.description = scaled.description.replace(`$${Math.abs(origCash)}`, `$${Math.abs(scaled.cashAmount)}`);
     }
@@ -962,12 +1001,12 @@ function resolveParkEncounterBranch(params: {
   const outcome = rollParkEncounterOutcome(replayContext, badDecisionKey, context.rng, odds);
 
   if (outcome === 'mugging' && odds.outfitTier) {
-    const rawMugging = resolveParkMuggingCard(
+    // Bad events always apply at full strength (no partial-hour scaling)
+    const muggingCard = resolveParkMuggingCard(
       PARK_OUTFIT_MUGGING_CARDS[odds.outfitTier],
       nextPlayer,
       odds.outfitTier
     );
-    const muggingCard = scalePartial ? scaleParkCard(rawMugging, ratio, conditionRes) : rawMugging;
 
     if (nextPlayer.isAi) {
       const res = applyParkCardEffects(nextPlayer, muggingCard, context);
@@ -995,7 +1034,7 @@ function resolveParkEncounterBranch(params: {
   }
 
   if (outcome === 'hazard' || outcome === 'mugging') {
-    const { cards: [rawHazardCard], updatedDecks } = drawParkCards(
+    const { cards: [hazardCard], updatedDecks } = drawParkCards(
       nextPlayer,
       'hazard',
       1,
@@ -1004,7 +1043,7 @@ function resolveParkEncounterBranch(params: {
       replayContext
     );
     nextPlayer.parkDecks = updatedDecks;
-    const hazardCard = scalePartial ? scaleParkCard(rawHazardCard, ratio, conditionRes) : rawHazardCard;
+    // Bad events always apply at full strength (no partial-hour scaling)
 
     if (nextPlayer.isAi) {
       const res = applyParkCardEffects(nextPlayer, hazardCard, context);
