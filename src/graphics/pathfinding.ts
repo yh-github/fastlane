@@ -9,6 +9,7 @@
 
 import type { MapNode, MapEdge } from '../engine/dataLoader';
 import type { MapRules } from '../engine/rules';
+import { normalizeHours } from '../engine/timeManager';
 
 // ─── Pathfinding Types ──────────────────────────────────────────
 
@@ -187,11 +188,11 @@ export function calculateTravelHours(
 
   if (model === 'waypoints' && pathResult.totalWaypoints !== undefined) {
     const stepsPerHour = rules?.stepsPerHour ?? 14;
-    return pathResult.totalWaypoints / stepsPerHour;
+    return normalizeHours(pathResult.totalWaypoints / stepsPerHour);
   }
 
   const costPerHop = rules?.movementCostPerNode ?? 0.5;
-  return pathResult.steps * costPerHop;
+  return normalizeHours(pathResult.steps * costPerHop);
 }
 
 /**

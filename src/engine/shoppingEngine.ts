@@ -3,6 +3,7 @@ import type { ItemDef, CampaignBundle } from './dataLoader';
 import { applyMentalChange, applyMoraleEffect } from './statEffects';
 import { calcUsedSpace, calcHousingSpaceCap } from './statMath';
 import { addApplianceCardToDeck } from './weekendEngine';
+import { spendHours, canAffordAction } from './timeManager';
 
 import type { FastFoodEatMode } from './actions/types';
 
@@ -67,7 +68,7 @@ export function buyItem(
   const effectiveEatMode: FastFoodEatMode | undefined = isFastFoodItem ? eatMode : undefined;
 
   if (effectiveEatMode === 'dine_in') {
-    if (player.hoursRemaining !== undefined && player.hoursRemaining < 1) {
+    if (player.hoursRemaining !== undefined && !canAffordAction(player, 1, true)) {
       return {
         updated: player,
         success: false,
@@ -79,7 +80,7 @@ export function buyItem(
     }
   } else if (effectiveEatMode === undefined && givesFastFoodSocial(item, rules)) {
     const mealCount = player.turnFlags?.fastFoodMealsThisTurn || 0;
-    if (mealCount >= 1 && player.hoursRemaining !== undefined && player.hoursRemaining < 1) {
+    if (mealCount >= 1 && player.hoursRemaining !== undefined && !canAffordAction(player, 1, true)) {
       return {
         updated: player,
         success: false,
@@ -275,7 +276,7 @@ export function buyItem(
           effectiveEatMode === 'dine_in' ||
           (effectiveEatMode === undefined && givesFastFoodSocial(item, rules) && mealCount > 1);
         if (costsSitDownHour && updated.hoursRemaining !== undefined) {
-          updated.hoursRemaining = Math.max(0, updated.hoursRemaining - 1);
+          updated = spendHours(updated, 1);
         }
         if (rules?.enableCookingSystem) {
           // In cooking system, eating at fast food restaurant immediately feeds player for this turn

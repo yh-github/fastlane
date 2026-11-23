@@ -1,6 +1,6 @@
 import { createTestGameState } from './testFactories';
 import { describe, it, expect } from 'vitest';
-import { canAffordAction, spendHours, resetPlayerClock, isGameOver } from './timeManager';
+import { canAffordAction, spendHours, resetPlayerClock, isGameOver, normalizeHours } from './timeManager';
 import {  } from './gameState';
 
 describe('timeManager', () => {
@@ -68,5 +68,29 @@ describe('timeManager', () => {
     expect(isGameOver(state, 0)).toBe(false); // 0 means no limit
     expect(isGameOver(state, 20)).toBe(false);
     expect(isGameOver(state, 5)).toBe(true);
+  });
+
+  it('normalizeHours eliminates IEEE-754 drift and snaps sub-epsilon slivers to 0', () => {
+    expect(normalizeHours(21.999999999999993)).toBe(22);
+    expect(normalizeHours(1e-14)).toBe(0);
+    expect(normalizeHours(-0.0001)).toBe(0);
+    expect(normalizeHours(1 / 7)).toBe(0.14285714);
+  });
+
+  it('spendHours drains repeated fractional waypoint deductions cleanly to exact 0', () => {
+    let state = createTestGameState(mockCampaign, [{name: 'Test', isAi: false, goals: {wealth:25, happiness:25, education:25, career:25}}], 'node_low_cost');
+    let player = state.players[0];
+
+    player.hoursRemaining = 1;
+    for (let i = 0; i < 7; i++) {
+      player = spendHours(player, 1 / 7);
+    }
+    expect(player.hoursRemaining).toBe(0);
+    expect(canAffordAction(player, 1, false)).toBe(false);
+
+    player.hoursRemaining = 5.99999999;
+    expect(canAffordAction(player, 6, true)).toBe(true);
+    player = spendHours(player, 6);
+    expect(player.hoursRemaining).toBe(0);
   });
 });

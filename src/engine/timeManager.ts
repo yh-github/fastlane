@@ -8,6 +8,19 @@ import { type GameState, type PlayerState, markClothesWorn } from './gameState';
 
 // ─── Time Management Functions ──────────────────────────────────
 
+const HOURS_PRECISION = 1e8;
+export const HOURS_EPSILON = 1e-6;
+
+/**
+ * Normalize an hour quantity to eliminate IEEE-754 floating-point drift
+ * (e.g. `21.999999999999993` -> `22`, `1e-14` -> `0`) while preserving
+ * exact fractional waypoint costs (such as `1/7` or `1/14`).
+ */
+export function normalizeHours(hours: number): number {
+  if (!Number.isFinite(hours) || hours <= HOURS_EPSILON) return 0;
+  return Math.round(hours * HOURS_PRECISION) / HOURS_PRECISION;
+}
+
 /**
  * Check if the player has enough hours to perform an action.
  * Most actions require at least 1 hour remaining, even if they cost more
@@ -19,10 +32,11 @@ import { type GameState, type PlayerState, markClothesWorn } from './gameState';
  */
 export function canAffordAction(player: PlayerState, cost: number, strictCost: boolean = false): boolean {
   if (cost === 0) return true; // Zero-cost actions are always allowed
+  const remaining = normalizeHours(player.hoursRemaining);
   if (strictCost) {
-    return player.hoursRemaining >= cost;
+    return remaining + HOURS_EPSILON >= cost;
   }
-  return player.hoursRemaining > 0; // "At least some time left" rule
+  return remaining > 0; // "At least some time left" rule
 }
 
 /**
@@ -35,11 +49,14 @@ export function canAffordAction(player: PlayerState, cost: number, strictCost: b
  */
 export function spendHours(player: PlayerState, cost: number): PlayerState {
   if (cost === 0) return player;
-  
-  // If they are out of time, they can't do actions with a cost
-  if (player.hoursRemaining <= 0) return player;
 
-  const newHours = Math.max(0, player.hoursRemaining - cost);
+  const remaining = normalizeHours(player.hoursRemaining);
+  // If they are out of time, they can't do actions with a cost
+  if (remaining <= 0) {
+    return remaining === player.hoursRemaining ? player : { ...player, hoursRemaining: 0 };
+  }
+
+  const newHours = normalizeHours(remaining - cost);
 
   let updated: PlayerState = {
     ...player,
@@ -59,7 +76,7 @@ export function spendHours(player: PlayerState, cost: number): PlayerState {
  */
 export function resetPlayerClock(player: PlayerState, hoursPerTurn: number): PlayerState {
   const debt = player.turnFlags?.caffeineDebt || 0;
-  const startingHours = Math.max(0, hoursPerTurn - debt);
+  const startingHours = normalizeHours(hoursPerTurn - debt);
   
   return {
     ...player,

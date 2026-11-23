@@ -5,6 +5,7 @@ import { calcUsedSpace, calcMovingFee, calcLandlordStanding } from '../statMath'
 import { calcEconomyPrice } from '../economyEngine';
 import { resolveDecision } from '../replayTypes';
 import { applyHappinessChange, applyMentalChange } from '../statEffects';
+import { spendHours, canAffordAction } from '../timeManager';
 
 export function handleRentTransactionAction(
   player: PlayerState,
@@ -181,13 +182,13 @@ export function handleRenegotiateRentAction(
     return { nextPlayer, actionLog };
   }
 
-  if (nextPlayer.hoursRemaining < 1) {
+  if (!canAffordAction(nextPlayer, 1, true)) {
     actionLog = { key: 'action.error.notEnoughHours' };
     return { nextPlayer, actionLog };
   }
 
   // Costs 1 hour
-  nextPlayer.hoursRemaining -= 1;
+  nextPlayer = spendHours(nextPlayer, 1);
 
   const curMental = nextPlayer.mentalCondition ?? 50;
   const curSocial = nextPlayer.social ?? 20;
