@@ -276,6 +276,73 @@ describe('Bank Loan System (Authentic Sierra SCI & Mechanics)', () => {
       expect(state.players[0].turnFlags.loanPayableWarning).toBe(true);
       expect(state.players[0].turnEvents.some(e => e.key === 'events.loan.due')).toBe(true);
     });
+
+    it('does not immediately default when taking a loan on a month-end turn (Week 4) with rollingLoanDeadline false', () => {
+      let state = createInitialGameState(
+        campaign,
+        [{ name: 'Player 1', isAi: false, goals: { wealth: 50, happiness: 50, education: 50, career: 50 } }],
+        'node_low_cost',
+        { rollingLoanDeadline: false },
+        12345
+      );
+      state = processTurnStart(state, campaign); // Turn 1
+      state = processTurnStart(state, campaign); // Turn 2
+      state = processTurnStart(state, campaign); // Turn 3
+      state = processTurnStart(state, campaign); // Turn 4
+      expect(state.turn).toBe(4);
+
+      state.players[0].money = 1000;
+      state.players[0].currentWage = 20;
+      state.players[0].currentJobId = 'factory_worker';
+
+      const context: ReducerContext = {
+        campaign,
+        rules: state.rules,
+        turn: 4,
+        economicIndex: 0,
+        rng: new Random(1),
+        state
+      };
+      const loanRes = gameReducer(state.players[0], { type: 'take_loan' }, context);
+      state.players[0] = loanRes.updatedPlayer;
+
+      // Borrowing on Week 4 sets first due date to Week 8 (next month), not Week 4!
+      expect(state.players[0].loanPaymentDeadline).toBe(8);
+
+      // End Week 4 -> Start Week 5: must NOT default or emit overdue!
+      state = processTurnStart(state, campaign);
+      expect(state.turn).toBe(5);
+      expect(state.players[0].timesDefaulted).toBe(0);
+      expect(state.players[0].turnFlags.loanDefaultWarning).toBe(false);
+      expect(state.players[0].turnEvents.some(e => e.key === 'events.loan.overdue')).toBe(false);
+      expect(state.players[0].turnEvents.some(e => e.key === 'events.loan.due')).toBe(false);
+
+      // Advance to Week 8 -> receives Notice 5 (events.loan.due)
+      state = processTurnStart(state, campaign); // 6
+      state = processTurnStart(state, campaign); // 7
+      state = processTurnStart(state, campaign); // 8
+      expect(state.turn).toBe(8);
+      expect(state.players[0].turnFlags.loanPayableWarning).toBe(true);
+      expect(state.players[0].turnEvents.some(e => e.key === 'events.loan.due')).toBe(true);
+
+      // End Week 8 without paying -> NOW defaults once
+      state = processTurnStart(state, campaign); // 9
+      expect(state.turn).toBe(9);
+      expect(state.players[0].timesDefaulted).toBe(1);
+      expect(state.players[0].turnEvents.some(e => e.key === 'events.loan.overdue')).toBe(true);
+      expect(state.players[0].loanPaymentDeadline).toBe(12);
+    });
+
+    it('enables rollingLoanDeadline in Advanced campaign variants and disables it in Classic/QoL variants', async () => {
+      for (const id of ['advanced', 'advanced_2000', 'scrubs']) {
+        const bundle = await loadCampaign(id);
+        expect(bundle.config.gameRules.rollingLoanDeadline, `${id} should enable rollingLoanDeadline`).toBe(true);
+      }
+      for (const id of ['1990_classic_floppy', '1990_classic_cdrom', 'qol_improved']) {
+        const bundle = await loadCampaign(id);
+        expect(bundle.config.gameRules.rollingLoanDeadline, `${id} should keep rollingLoanDeadline off`).toBe(false);
+      }
+    });
   });
 
   describe('Custom Repayments & Computed Advanced Minimums', () => {

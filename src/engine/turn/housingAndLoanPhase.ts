@@ -2,7 +2,7 @@ import type { PlayerState, GameState } from '../gameState';
 import type { CampaignBundle } from '../dataLoader';
 import { calcEconomyPrice } from '../economyEngine';
 import { applyHappinessChange } from '../statEffects';
-import { calcLandlordStanding } from '../statMath';
+import { calcLandlordStanding, calcAdvancedLoanDeadline } from '../statMath';
 
 export function processHousingAndLoanPhase(
   p: PlayerState,
@@ -175,19 +175,19 @@ export function processHousingAndLoanPhase(
         p = applyHappinessChange(p, -1, 'loan_default', state.rules, campaign.config.statRules);
         p.turnFlags.loanDefaultWarning = true;
         p.turnEvents.push({ key: 'events.loan.overdue' });
-        if (state.rules.rollingLoanDeadline) {
-          p.loanPaymentDeadline = finishedTurn + 4;
-        } else {
-          p.loanPaymentDeadline = Math.floor((finishedTurn - 1) / 4) * 4 + 8;
-        }
-      } else {
-        if (p.loanPaymentDeadline <= finishedTurn) {
-          if (state.rules.rollingLoanDeadline) {
-            p.loanPaymentDeadline = finishedTurn + 4;
-          } else {
-            p.loanPaymentDeadline = Math.floor((finishedTurn - 1) / 4) * 4 + 8;
-          }
-        }
+        p.loanPaymentDeadline = calcAdvancedLoanDeadline(
+          p.loanPaymentDeadline,
+          finishedTurn,
+          Boolean(state.rules.rollingLoanDeadline),
+          'turn_rollover'
+        );
+      } else if (p.loanPaymentDeadline <= finishedTurn) {
+        p.loanPaymentDeadline = calcAdvancedLoanDeadline(
+          p.loanPaymentDeadline,
+          finishedTurn,
+          Boolean(state.rules.rollingLoanDeadline),
+          'turn_rollover'
+        );
       }
     }
 

@@ -33,6 +33,7 @@
     "enableAnimations": true,
     "showItemImages": true,
     "strictEviction": true,
+    "rollingLoanDeadline": true,
     "clothingDecaysAll": false,
     "bypassDoctorIfBroke": false,
     "enableRelaxationDoctor": false,

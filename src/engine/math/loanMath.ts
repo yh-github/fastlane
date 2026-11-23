@@ -2,6 +2,41 @@ import type { PlayerState } from '../gameState';
 import type { CampaignBundle } from '../dataLoader';
 import type { GameRules } from '../rules';
 
+/**
+ * Computes the first payment deadline for a newly originated loan.
+ * - Rolling mode: 4 turns from origination (`turn + 4`).
+ * - Calendar-month mode: next month-end multiple of 4 strictly after `turn`
+ *   (e.g., turns 1-3 -> Week 4, turn 4 -> Week 8, turn 16 -> Week 20), so a loan
+ *   taken on a month-end turn never defaults on the same turn it was taken.
+ */
+export function calcInitialLoanDeadline(turn: number, rollingLoanDeadline: boolean): number {
+  if (rollingLoanDeadline) {
+    return turn + 4;
+  }
+  return Math.floor(turn / 4) * 4 + 4;
+}
+
+/**
+ * Computes the next loan payment deadline after servicing a loan or advancing past a billing turn.
+ */
+export function calcAdvancedLoanDeadline(
+  currentDeadline: number,
+  turn: number,
+  rollingLoanDeadline: boolean,
+  mode: 'payment' | 'turn_rollover'
+): number {
+  if (rollingLoanDeadline) {
+    return mode === 'payment'
+      ? Math.max(currentDeadline, turn + 4)
+      : turn + 4;
+  }
+  if (mode === 'payment') {
+    const currentMonthEnd = Math.floor((turn - 1) / 4) * 4 + 4;
+    return currentDeadline <= currentMonthEnd ? currentMonthEnd + 4 : currentDeadline;
+  }
+  return Math.floor((turn - 1) / 4) * 4 + 8;
+}
+
 export interface LoanAssessment {
   eligible: boolean;
   approvalChance: number; // 100 or 0

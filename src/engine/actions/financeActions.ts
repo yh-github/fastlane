@@ -1,9 +1,9 @@
 import type { PlayerState } from '../gameState';
 import type { ReducerContext, ActionHandlerResult } from './types';
 import { requireConfig } from '../rules';
-import { spendHours } from '../timeManager';
+import { spendHours, canAffordAction } from '../timeManager';
 import { applyHappinessChange } from '../statEffects';
-import { calcLoanAssessment } from '../statMath';
+import { calcLoanAssessment, calcInitialLoanDeadline, calcAdvancedLoanDeadline } from '../statMath';
 
 export function handleBankTransactionAction(
   player: PlayerState,
@@ -43,7 +43,7 @@ export function handleOpenBrokerAction(
   let actionLog;
 
   const timeCost = requireConfig(context.campaign.config.timeRules?.brokerCost, 'timeRules.brokerCost');
-  if (nextPlayer.hoursRemaining < timeCost) {
+  if (!canAffordAction(nextPlayer, timeCost, true)) {
     actionLog = { key: 'action.error.notEnoughTimeBroker' };
     return { nextPlayer, actionLog };
   }
@@ -111,7 +111,7 @@ export function handleTakeLoanAction(
   let actionLog;
 
   const timeCost = requireConfig(context.campaign.config.timeRules?.loanCost, 'timeRules.loanCost');
-  if (nextPlayer.hoursRemaining < timeCost) {
+  if (!canAffordAction(nextPlayer, timeCost, true)) {
     actionLog = { key: 'action.error.notEnoughTimeLoan' };
     return { nextPlayer, actionLog };
   }
@@ -125,11 +125,10 @@ export function handleTakeLoanAction(
   } else {
     const loanSize = assessment.estimatedAmount;
     if ((nextPlayer.loanDebt || 0) === 0) {
-      if (context.rules.rollingLoanDeadline) {
-        nextPlayer.loanPaymentDeadline = context.turn + 4;
-      } else {
-        nextPlayer.loanPaymentDeadline = Math.floor((context.turn - 1) / 4) * 4 + 4; // Week 4 of current month
-      }
+      nextPlayer.loanPaymentDeadline = calcInitialLoanDeadline(
+        context.turn,
+        Boolean(context.rules.rollingLoanDeadline)
+      );
     }
     nextPlayer.money += loanSize;
     nextPlayer.loanDebt = (nextPlayer.loanDebt || 0) + loanSize;
@@ -276,14 +275,12 @@ export function handlePayLoanAction(
         nextPlayer.loanPaymentDeadline = 0;
         actionLog = { key: 'action.loan.paidOff', params: { amount: breakdown.payment } };
       } else {
-        if (context.rules && context.rules.rollingLoanDeadline) {
-          nextPlayer.loanPaymentDeadline = Math.max(nextPlayer.loanPaymentDeadline || 0, context.turn + 4);
-        } else {
-          const currentMonthEnd = Math.floor((context.turn - 1) / 4) * 4 + 4;
-          if ((nextPlayer.loanPaymentDeadline || 0) <= currentMonthEnd) {
-            nextPlayer.loanPaymentDeadline = currentMonthEnd + 4;
-          }
-        }
+        nextPlayer.loanPaymentDeadline = calcAdvancedLoanDeadline(
+          nextPlayer.loanPaymentDeadline || 0,
+          context.turn,
+          Boolean(context.rules?.rollingLoanDeadline),
+          'payment'
+        );
         actionLog = {
           key: 'action.loan.paidInstallment',
           params: {

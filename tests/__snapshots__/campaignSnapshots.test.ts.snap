@@ -2674,7 +2674,7 @@ exports[`Legacy Campaigns Golden Snapshots (Zero-Regression Guardrail) > Campaig
     "relaxationDoctorThreshold": 10,
     "removeCharacterBg": true,
     "requireJobForLoan": false,
-    "rollingLoanDeadline": false,
+    "rollingLoanDeadline": true,
     "showItemImages": true,
     "showJobTags": true,
     "showWindowPositionSize": false,
