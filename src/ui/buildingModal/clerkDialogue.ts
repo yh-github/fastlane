@@ -2,6 +2,62 @@ import type { BuildingDef, CampaignBundle, ItemDef } from '../../engine/dataLoad
 import { CURIO_CATALOG } from '../../engine/curioCatalog';
 import { formatDegreeName } from '../../engine/jobEngine';
 
+const NARRATIVE_CLERK_KEYS: Record<string, string> = {
+  'action.job.mistake': 'clerkDialogs.narrative.job.mistake',
+  'action.job.executiveMistake': 'clerkDialogs.narrative.job.executiveMistake',
+  'action.job.socialMistake': 'clerkDialogs.narrative.job.socialMistake',
+  'action.job.soulCrushing': 'clerkDialogs.narrative.job.soulCrushing',
+  'action.job.initiativeFailed': 'clerkDialogs.narrative.job.initiativeFailed',
+  'action.job.initiativeSuccess': 'clerkDialogs.narrative.job.initiativeSuccess',
+  'action.job.initiativeChoiceResolved': 'clerkDialogs.narrative.job.initiativeChoiceResolved',
+  'action.job.initiativeClearedMistake': 'clerkDialogs.narrative.job.initiativeClearedMistake',
+  'action.job.faceTimeClearedMistake': 'clerkDialogs.narrative.job.faceTimeClearedMistake',
+  'action.job.busyWeekShift': 'clerkDialogs.narrative.job.busyWeekShift',
+  'action.job.busyWeekClearedMistake': 'clerkDialogs.narrative.job.busyWeekClearedMistake',
+  'action.job.innovateGainExp': 'clerkDialogs.narrative.job.innovate',
+  'action.job.innovateGainDep': 'clerkDialogs.narrative.job.innovate',
+  'action.job.innovateGainBoth': 'clerkDialogs.narrative.job.innovate',
+  'action.job.innovateCapExp': 'clerkDialogs.narrative.job.innovateBreakthrough',
+  'action.job.innovateCapDep': 'clerkDialogs.narrative.job.innovateBreakthrough',
+  'action.job.fired': 'clerkDialogs.narrative.job.fired',
+  'action.job.firedMistakes': 'clerkDialogs.narrative.job.firedMistakes',
+  'action.job.garnished': 'clerkDialogs.narrative.job.garnished',
+  'action.job.appraisalDilemmaTriggered': 'clerkDialogs.narrative.job.appraisalDilemmaTriggered',
+  'action.job.appraisalChoiceCash': 'clerkDialogs.narrative.job.appraisalResolved',
+  'action.job.appraisalChoiceStanding': 'clerkDialogs.narrative.job.appraisalResolved',
+  'action.job.appraisalChoiceSkill': 'clerkDialogs.narrative.job.appraisalResolved',
+  'action.job.appraisalChoiceCurio': 'clerkDialogs.narrative.job.appraisalResolved',
+  'action.job.appraisalChoiceSpareParts': 'clerkDialogs.narrative.job.appraisalResolved',
+  'action.education.graduated': 'clerkDialogs.narrative.education.graduated',
+  'action.education.failedCourse': 'clerkDialogs.narrative.education.failedCourse',
+  'action.loan.paidInstallment': 'clerkDialogs.narrative.loan.paidInstallment',
+  'action.loan.paidOff': 'clerkDialogs.narrative.loan.paidOff',
+  'action.rent.renegotiateApproved': 'clerkDialogs.narrative.rent.renegotiateApproved',
+  'action.rent.renegotiateCompromise': 'clerkDialogs.narrative.rent.renegotiateCompromise',
+  'action.rent.renegotiateDenied': 'clerkDialogs.narrative.rent.renegotiateDenied',
+  'action.rent.renegotiateNotCheaper': 'clerkDialogs.narrative.rent.renegotiateNotCheaper',
+  'action.rent.renegotiateMistake': 'clerkDialogs.narrative.rent.renegotiateMistake',
+  'action.hospital.urgentCareCritical': 'clerkDialogs.narrative.hospital.urgentCareCritical',
+  'action.hospital.urgentCareModerate': 'clerkDialogs.narrative.hospital.urgentCareModerate',
+  'action.hospital.urgentCareHealthy': 'clerkDialogs.narrative.hospital.urgentCareHealthy',
+  'action.hospital.urgentCareSuccess': 'clerkDialogs.narrative.hospital.urgentCareSuccess',
+  'action.hospital.therapySuccess': 'clerkDialogs.narrative.hospital.therapySuccess',
+  'action.hospital.bloodDonationSuccess': 'clerkDialogs.narrative.hospital.bloodDonationSuccess',
+  'action.hospital.cafeteriaSuccess': 'clerkDialogs.narrative.hospital.cafeteriaSuccess',
+};
+
+function translateClerkLog(log: any, t: (key: string, options?: any) => any): string {
+  if (!log?.key) return '';
+  const narrativeKey = NARRATIVE_CLERK_KEYS[log.key];
+  if (narrativeKey) {
+    const narrative = String(t(narrativeKey, { ...(log.params || {}), defaultValue: '' }));
+    if (narrative && narrative !== narrativeKey) {
+      return narrative;
+    }
+  }
+  return String(t(log.key, log.params as any));
+}
+
 export function getClerkFace(id: string, archetype: string): string {
   switch (id) {
     case 'burger_palace': return '🧑‍🍳'; // Burger Palace: Cook / Chef
@@ -228,11 +284,11 @@ export function computeClerkResponse(
       }
     } else if (payload.type === 'study') {
       if (mainLog?.key === 'action.education.failedCourse') {
-        return String(t('action.education.failedCourse', mainLog.params as any));
+        return translateClerkLog(mainLog, t);
       } else if (mainLog?.key === 'action.education.mistake') {
         return String(t('action.education.mistake', { strikes: 1, ...(mainLog.params as any) }));
       } else if (mainLog?.key === 'action.education.graduated') {
-        return String(t('action.education.graduated', mainLog.params as any));
+        return translateClerkLog(mainLog, t);
       } else if (mainLog?.key === 'action.error.notEnoughTime') {
         return String(t('action.error.notEnoughTime', { defaultValue: 'Not enough time to study.' }));
       } else if (mainLog?.key === 'action.error.tooExhausted') {
@@ -323,12 +379,13 @@ export function computeClerkResponse(
       if (Array.isArray(actionLog)) {
         const speechParts = actionLog
           .filter(l => l.key !== 'action.job.worked')
-          .map(l => String(t(l.key, l.params as any)));
+          .map(l => translateClerkLog(l, t))
+          .filter(Boolean);
         if (speechParts.length > 0) {
-          return speechParts.join('\n\n');
+          return Array.from(new Set(speechParts)).join('\n\n');
         }
       } else if (mainLog.key !== 'action.job.worked') {
-        return String(t(mainLog.key, mainLog.params as any));
+        return translateClerkLog(mainLog, t);
       }
     } else if (payload.type === 'ask_rent_extension') {
       if (mainLog.key === 'action.rent.alreadyGranted') {
@@ -382,10 +439,12 @@ export function computeClerkResponse(
     } else if (payload.type === 'pay_loan') {
       if (success) {
         if (mainLog?.key === 'action.loan.paidOff') {
-          return t('action.loan.paidOff', { amount: 0, ...(mainLog.params || {}) }) as string;
+          return translateClerkLog({ ...mainLog, params: { amount: 0, ...(mainLog.params || {}) } }, t);
         }
-        const params = { payment: 0, principal: 0, interest: 0, ...(mainLog?.params || {}) };
-        return t('action.loan.paidInstallment', params) as string;
+        return translateClerkLog({
+          key: 'action.loan.paidInstallment',
+          params: { payment: 0, principal: 0, interest: 0, ...(mainLog?.params || {}) }
+        }, t);
       } else {
         if (mainLog?.key === 'action.error.noLoan') {
           return t('action.error.noLoan', { defaultValue: "You don't have a loan." }) as string;
@@ -408,7 +467,7 @@ export function computeClerkResponse(
       }
     } else if (payload.type === 'renegotiate_rent') {
       if (mainLog?.key) {
-        return String(t(mainLog.key, { ...(mainLog.params || {}) }));
+        return translateClerkLog(mainLog, t);
       }
     } else if (
       payload.type === 'hospital_urgent_care' ||
@@ -417,7 +476,7 @@ export function computeClerkResponse(
       payload.type === 'hospital_cafeteria'
     ) {
       if (mainLog?.key) {
-        return String(t(mainLog.key, { ...(mainLog.params || {}) }));
+        return translateClerkLog(mainLog, t);
       }
     }
   }

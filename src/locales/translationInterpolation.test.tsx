@@ -505,7 +505,7 @@ describe('Translation Interpolation & Template Verification', () => {
         i18n.t,
         (_key, fallback) => fallback
       );
-      expect(responseEn).toBe('Paid off the remaining loan ($30)');
+      expect(responseEn).toBe('Congratulations! Your $30 payment clears the rest of your loan in full.');
       expect(responseEn).not.toContain('{');
       expect(responseEn).not.toContain('}');
 
@@ -518,7 +518,7 @@ describe('Translation Interpolation & Template Verification', () => {
         i18n.t,
         (_key, fallback) => fallback
       );
-      expect(responseHe).toBe('שילמת את יתרת ההלוואה (30$)');
+      expect(responseHe).toBe('מזל טוב! התשלום בסך $30 סוגר את יתרת ההלוואה שלך במלואה.');
       expect(responseHe).not.toContain('{');
       expect(responseHe).not.toContain('}');
     });
@@ -533,7 +533,7 @@ describe('Translation Interpolation & Template Verification', () => {
         i18n.t,
         (_key, fallback) => fallback
       );
-      expect(responseEn).toBe('Made a loan payment of $50 (Principal: $45, Interest: $5)');
+      expect(responseEn).toBe('Thank you for your payment of $50. Your loan account is up to date.');
       expect(responseEn).not.toContain('{');
       expect(responseEn).not.toContain('}');
 
@@ -546,7 +546,7 @@ describe('Translation Interpolation & Template Verification', () => {
         i18n.t,
         (_key, fallback) => fallback
       );
-      expect(responseHe).toBe('שילמת תשלום הלוואה של 50$ (קרן: 45$, ריבית: 5$)');
+      expect(responseHe).toBe('תודה על התשלום בסך $50. חשבון ההלוואה שלך עודכן.');
       expect(responseHe).not.toContain('{');
       expect(responseHe).not.toContain('}');
     });
@@ -683,6 +683,37 @@ describe('Translation Interpolation & Template Verification', () => {
       expect(textHe).toContain('שגית במהלך הלימודים ב-Computer Science (Mental)!');
       expect(textHe).not.toContain('{');
       expect(textHe).not.toContain('}');
+    });
+
+    it('renders narrative clerk speech bubbles without game-term clutter in en and he', () => {
+      const mockWorkDef = { id: 'factory', name: 'Factory', archetype: 'workplace' } as any;
+      const workLogs = [
+        { key: 'action.job.worked', params: { title: 'General Manager', wagesEarned: 328, stats: ' (-1 Physical, -1 Mental)' } },
+        { key: 'action.job.executiveMistake' },
+        { key: 'action.job.mistake', params: { type: 'Executive', penalty: 1, total: 1 } }
+      ];
+
+      i18n.changeLanguage('en');
+      const enWork = computeClerkResponse({ type: 'work' }, workLogs, mockWorkDef, i18n.t, (_k, d) => d);
+      expect(enWork).not.toContain('Dependability');
+      expect(enWork).not.toContain('Mental');
+      expect(enWork).not.toContain('{');
+
+      i18n.changeLanguage('he');
+      const heWork = computeClerkResponse({ type: 'work' }, workLogs, mockWorkDef, i18n.t, (_k, d) => d);
+      expect(heWork).not.toContain('אמינות');
+      expect(heWork).not.toContain('{');
+
+      i18n.changeLanguage('en');
+      const enRent = computeClerkResponse(
+        { type: 'renegotiate_rent' },
+        { key: 'action.rent.renegotiateApproved', params: { oldRent: 760, newRent: 680, standing: 3 } },
+        mockBuildingDef,
+        i18n.t,
+        (_k, d) => d
+      );
+      expect(enRent).toContain('$680');
+      expect(enRent).not.toContain('Standing');
     });
   });
 });

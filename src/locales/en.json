@@ -1104,7 +1104,53 @@
       "insufficientFunds": "You don't have enough money."
     },
     "noTimeToReadNewspaper": "No time to read the newspaper.",
-    "closingSoon": "Sorry. We're closing. You'll have to come back next week."
+    "closingSoon": "Sorry. We're closing. You'll have to come back next week.",
+    "narrative": {
+      "job": {
+        "mistake": "Careful! Slip-ups like that hurt your standing around here. Keep your head in the game.",
+        "executiveMistake": "That was a costly judgment call at the top — the board won't overlook many of those.",
+        "socialMistake": "Oof, that got awkward fast. Maybe catch your breath before dealing with people again.",
+        "soulCrushing": "Same routine, same walls... you look like you've outgrown this place.",
+        "initiativeFailed": "Bold move, though that initiative didn't pan out quite like you'd hoped.",
+        "initiativeSuccess": "Impressive leadership on that one — people around here noticed.",
+        "initiativeChoiceResolved": "Good call handling '{{title}}'. That's how you make your mark.",
+        "initiativeClearedMistake": "Stepping up like that smoothed things over with management.",
+        "faceTimeClearedMistake": "Putting in the extra face time helped mend your reputation here.",
+        "busyWeekShift": "All hands on deck, and you pulled your weight through the rush!",
+        "busyWeekClearedMistake": "Showing up when things got hectic earned you a fresh slate here.",
+        "innovate": "Nice idea! Fresh thinking like that keeps this place moving forward.",
+        "innovateBreakthrough": "Now THAT'S a genuine breakthrough — you've raised the bar for everyone here.",
+        "fired": "You've missed too many shifts. Turn in your badge — you're fired!",
+        "firedMistakes": "Three blunders in one week? That's the last straw — pack your desk, you're fired!",
+        "garnished": "Your landlord already sent someone by to collect ${{amount}} out of your paycheck.",
+        "appraisalDilemmaTriggered": "A customer just walked up to the counter with something unusual — take a look.",
+        "appraisalResolved": "Smooth handling at the counter — the customer walked away satisfied."
+      },
+      "education": {
+        "graduated": "Congratulations! You've completed all the coursework for {{name}}!",
+        "failedCourse": "I'm sorry, three strikes means you'll have to retake {{name}} next semester."
+      },
+      "loan": {
+        "paidInstallment": "Thank you for your payment of ${{payment}}. Your loan account is up to date.",
+        "paidOff": "Congratulations! Your ${{amount}} payment clears the rest of your loan in full."
+      },
+      "rent": {
+        "renegotiateApproved": "Alright, you've been a solid tenant — I'll bring your rent down to ${{newRent}} a month.",
+        "renegotiateCompromise": "I can't match market all the way, but I'll meet you partway at ${{newRent}} a month.",
+        "renegotiateDenied": "With your track record here, I'm not cutting a deal on the rent.",
+        "renegotiateNotCheaper": "Market rates aren't any cheaper than what you're already paying.",
+        "renegotiateMistake": "Coming at me like that isn't going to lower your rent. Come back when you're calmer."
+      },
+      "hospital": {
+        "urgentCareCritical": "We got you stabilized just in time. Take it easy for a while!",
+        "urgentCareModerate": "All patched up. Get some rest and proper meals from here.",
+        "urgentCareHealthy": "Nurse Carla hands you an ice pack: 'Stop wasting emergency room time with minor paper cuts!'",
+        "urgentCareSuccess": "All taken care of — try to stay out of trouble.",
+        "therapySuccess": "Good session today. Take a breath — you look a little lighter already.",
+        "bloodDonationSuccess": "All done! Here's your ${{reward}} and a complimentary juice box — take it easy today.",
+        "cafeteriaSuccess": "Hope the daily special filled you up — don't blame the chef for the aftertaste."
+      }
+    }
   },
   "jobBoard": {
     "title": "Job Board: Select Location",
