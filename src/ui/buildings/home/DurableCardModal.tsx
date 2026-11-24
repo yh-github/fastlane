@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { CampaignBundle, ItemDef } from '../../../engine/dataLoader';
-import { type PlayerState, type GameRules, type OwnedAppliance, calcCurioScaledLifestyle, scaleLifestylePoints } from '../../../engine/gameState';
+import { type PlayerState, type GameRules, type OwnedAppliance, calcCurioScaledLifestyle, scaleLifestylePoints, LIFESTYLE_CURIO_MAX_COUNT } from '../../../engine/gameState';
 import type { GameAction, FastFoodEatMode } from '../../../engine/actions/types';
 import { calcDiySuccessChance, calcRepairmanCost, calcThrowOutMess } from '../../../engine/actions/maintenanceActions';
 import { calcItemPrice, calcEconomyPrice } from '../../../engine/economyEngine';
@@ -405,9 +405,9 @@ export const ItemCardModal: React.FC<ItemCardModalProps> = ({
   if (isCurio) {
     if (rules?.usePhysicalMentalConditions) {
       const curioLifestyle = calcCurioScaledLifestyle(totalCurios || 1, campaign);
-      const maxCurioLifestyle = calcCurioScaledLifestyle(29, campaign);
+      const maxCurioLifestyle = calcCurioScaledLifestyle(LIFESTYLE_CURIO_MAX_COUNT, campaign);
       effectBadges.push({ label: `🏺 Lifestyle Synergy (+${curioLifestyle})` });
-      effectBadges.push({ label: `📈 2.8 × √Count (Max +${maxCurioLifestyle})` });
+      effectBadges.push({ label: `📈 Diminishing up to ${LIFESTYLE_CURIO_MAX_COUNT} Curios (Max +${maxCurioLifestyle})` });
       effectBadges.push({ label: '+1 🧠 Turn Novelty (First Curio)' });
       effectBadges.push({ label: '🎲 Weekend Appraisal (Decor/Mental/Cash)' });
     } else {

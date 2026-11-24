@@ -27,7 +27,7 @@
   },
   {
     "id": "color_tv",
-    "lifestyleValue": 2,
+    "lifestyleValue": 4,
     "space": 20,
     "effects": [
       { "trigger": "on_socialize", "stat": "social", "value": 2 }
@@ -56,7 +56,7 @@
   },
   {
     "id": "hot_tub",
-    "lifestyleValue": 5,
+    "lifestyleValue": 8,
     "mentalBonus": 5,
     "space": 90,
     "effects": [
@@ -71,7 +71,7 @@
   },
   {
     "id": "computer",
-    "lifestyleValue": 3,
+    "lifestyleValue": 6,
     "space": 40,
     "effects": [
       { "trigger": "continuous", "stat": "mental_max", "value": 3 }
@@ -110,7 +110,7 @@
   },
   {
     "id": "business_suit",
-    "lifestyleValue": 2
+    "lifestyleValue": 3
   },
   {
     "id": "hamburger",

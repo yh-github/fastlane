@@ -738,15 +738,15 @@ export function getHudAttributeInfo(params: BuildHudAttributeInfoParams): HudAtt
         maxFormatted: `${targetLifestyle}`,
         percentage: targetLifestyle > 0 ? Math.max(0, Math.min(100, Math.round((lifestyle / targetLifestyle) * 100))) : 0,
         description: t('hudInfo.lifestyleDesc', {
-          defaultValue: 'Measures your living conditions, apartment prestige, durables, and furnishings.'
+          defaultValue: 'Measures your living conditions, apartment prestige, durables, curios, and high-society Social standing.'
         }),
         maxExplanation: t('hudInfo.lifestyleMax', {
           defaultValue: `Target: ${targetLifestyle} lifestyle points.`
         }),
         increases: [
-          t('hudInfo.lifeInc1', { defaultValue: 'Moving into higher-tier housing (Security Complex, Luxury Suites)' }),
-          t('hudInfo.lifeInc2', { defaultValue: 'Purchasing appliances, stereos, and curios for your apartment' }),
-          t('hudInfo.lifeInc3', { defaultValue: 'Keeping your apartment clean and well-maintained' }),
+          t('hudInfo.lifeInc1', { defaultValue: 'Moving into higher-tier housing (Security Complex, Penthouse Suite)' }),
+          t('hudInfo.lifeInc2', { defaultValue: 'Purchasing durables, fine attire, books, and up to 5 curios for your home' }),
+          t('hudInfo.lifeInc3', { defaultValue: 'Building Social standing and keeping your apartment clean' }),
         ],
         decreases: [
           t('hudInfo.lifeDec1', { defaultValue: 'Downsizing to low-cost or slum housing' }),

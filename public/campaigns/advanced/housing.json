@@ -16,7 +16,7 @@
   },
   {
     "id": "security",
-    "lifestyleValue": 30,
+    "lifestyleValue": 22,
     "spaceCap": 250
   },
   {
@@ -26,7 +26,7 @@
     "isRobberyImmune": true,
     "homeNodeId": "node_security",
     "description": "Ultra-luxurious top-floor suite with massive living space.",
-    "lifestyleValue": 50,
+    "lifestyleValue": 35,
     "spaceCap": 500
   }
 ]

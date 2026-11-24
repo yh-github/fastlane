@@ -18,7 +18,7 @@
     "category": "appliance",
     "basePrice": 650,
     "happinessBonus": 2,
-    "lifestyleValue": 3,
+    "lifestyleValue": 5,
     "space": 10,
     "description": "Cutting-edge Y2K flat-screen display. Sleek profile with vibrant high-definition picture.",
     "effects": [
@@ -134,7 +134,7 @@
     "category": "appliance",
     "basePrice": 680,
     "happinessBonus": 2,
-    "lifestyleValue": 2,
+    "lifestyleValue": 3,
     "space": 10,
     "tags": ["robot_vacuum", "tech"],
     "description": "Autonomous Y2K robotic floor cleaner. Automatically cleans up to 4 Mess at turn start for 0h and 0 stamina, provided Mess <= 20 and the home has at least 5 Free Space.",

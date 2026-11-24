@@ -85,16 +85,32 @@ export function recalculatePlayerEffects(player: PlayerState, campaign: Campaign
   return updatedPlayer;
 }
 
-export const LIFESTYLE_CURIO_BENCHMARK_COUNT = 3;
+export const LIFESTYLE_CURIO_MAX_COUNT = 5;
 const TV_SLOT_IDS = new Set(['bw_tv', 'color_tv', 'crt_tv', 'plasma_tv']);
 const AUDIO_SLOT_IDS = new Set(['8track', 'stereo']);
 const CLOTHES_SLOT_IDS = new Set(['casual_clothes', 'dress_clothes', 'business_suit']);
 
 /**
- * Raw diminishing-returns Lifestyle contribution from curios on display.
+ * Raw diminishing-returns Lifestyle contribution from curios on display,
+ * capped at LIFESTYLE_CURIO_MAX_COUNT curios to avoid tedious pawn-rummage grinding.
  */
 export function calcCurioRawLifestyle(curioCount: number): number {
-  return curioCount > 0 ? Math.min(15, Math.floor(2.8 * Math.sqrt(curioCount))) : 0;
+  if (curioCount <= 0) return 0;
+  const cappedCount = Math.min(LIFESTYLE_CURIO_MAX_COUNT, curioCount);
+  return Math.floor(2.8 * Math.sqrt(cappedCount));
+}
+
+/**
+ * Raw Lifestyle contribution from Social standing relative to startingSocial,
+ * clamped at maxSocial so Social can never push Lifestyle above 100%.
+ */
+export function calcSocialRawLifestyle(
+  social: number,
+  startingSocial: number = 20,
+  maxSocial: number = 99
+): number {
+  const effectiveSocial = Math.min(maxSocial, social);
+  return Math.floor((effectiveSocial - startingSocial) / 4);
 }
 
 /**
@@ -212,8 +228,10 @@ export function recalculateLifestyle(player: PlayerState, campaign: CampaignBund
     rawLifestyle -= Math.floor(messGrowth(player.mess) / 2);
   }
   if (player.social !== undefined) {
-    const startingSocial = (campaign.config.statRules as any)?.startingSocial ?? 20;
-    rawLifestyle += Math.floor((player.social - startingSocial) / 10);
+    const sr = campaign.config.statRules as any;
+    const startingSocial = sr?.startingSocial ?? 20;
+    const maxSocial = sr?.maxSocial ?? 99;
+    rawLifestyle += calcSocialRawLifestyle(player.social, startingSocial, maxSocial);
   }
 
   const maxRaw = calcMaxLifestyle(campaign);
@@ -221,8 +239,9 @@ export function recalculateLifestyle(player: PlayerState, campaign: CampaignBund
 }
 
 /**
- * Compute raw Lifestyle benchmark corresponding to 100 Lifestyle for this campaign:
- * best housing (above starter) + best item per slot + all unique working durables + 3 curios (if enabled).
+ * Compute true maximum raw Lifestyle achievable in this campaign (equal to 100 Lifestyle):
+ * best housing (above starter) + best item per slot + all unique working durables
+ * + capped curios (if enabled) + max Social standing (if trackSocial enabled).
  */
 export function calcMaxLifestyle(campaign: CampaignBundle): number {
   let maxLifestyle = 0;
@@ -275,9 +294,17 @@ export function calcMaxLifestyle(campaign: CampaignBundle): number {
 
   maxLifestyle += bestTvVal + bestAudioVal + bestClothesVal + (hasAnyTv ? vcrVal : 0);
 
-  // Curios benchmark (3 curios when rummaging is enabled)
+  // Curios cap (5 curios when rummaging is enabled)
   if (campaign.config.gameRules?.pawnRummageBins) {
-    maxLifestyle += calcCurioRawLifestyle(LIFESTYLE_CURIO_BENCHMARK_COUNT);
+    maxLifestyle += calcCurioRawLifestyle(LIFESTYLE_CURIO_MAX_COUNT);
+  }
+
+  // Peak Social standing (startingSocial -> configured maxSocial when trackSocial is enabled)
+  if (campaign.config.gameRules?.trackSocial) {
+    const sr = campaign.config.statRules as any;
+    const startingSocial = sr?.startingSocial ?? 20;
+    const maxSocial = sr?.maxSocial ?? 99;
+    maxLifestyle += Math.max(0, calcSocialRawLifestyle(maxSocial, startingSocial, maxSocial));
   }
 
   return Math.max(1, maxLifestyle);

@@ -341,7 +341,7 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
   });
 
   describe('Knick-Knack Lifestyle Contribution & Space Trade-offs', () => {
-    it('grants lifestyle bonus with diminishing returns: min(15, floor(2.8 * sqrt(curios))) scaled to 0-100', () => {
+    it('grants lifestyle bonus with diminishing returns capped at 5 curios: floor(2.8 * sqrt(min(5, curios))) scaled to 0-100', () => {
       let player = makePlayer();
       player.currentHousingId = 'low_cost'; // 0 above starter
       player.mess = 0;
@@ -350,42 +350,41 @@ describe('Pawn Shop Jobs, Knick-Knacks & Dilemmas', () => {
       // 0 curios -> 0 lifestyle
       expect(recalculateLifestyle(player, campaign)).toBe(0);
 
-      // 1 curio -> +2 raw -> round(2/70 * 100) = 3
+      // 1 curio -> +2 raw -> round(2/85 * 100) = 2
       player.inventory.knickKnacks = 1;
-      expect(recalculateLifestyle(player, campaign)).toBe(3);
+      expect(recalculateLifestyle(player, campaign)).toBe(2);
 
-      // 4 curios -> +5 raw -> round(5/70 * 100) = 7
+      // 3 curios -> +4 raw -> round(4/85 * 100) = 5
+      player.inventory.knickKnacks = 3;
+      expect(recalculateLifestyle(player, campaign)).toBe(5);
+
+      // 4 curios -> +5 raw -> round(5/85 * 100) = 6
       player.inventory.knickKnacks = 4;
+      expect(recalculateLifestyle(player, campaign)).toBe(6);
+
+      // 5 curios -> +6 raw (cap) -> round(6/85 * 100) = 7
+      player.inventory.knickKnacks = 5;
       expect(recalculateLifestyle(player, campaign)).toBe(7);
 
-      // 10 curios -> +8 raw -> round(8/70 * 100) = 11
-      player.inventory.knickKnacks = 10;
-      expect(recalculateLifestyle(player, campaign)).toBe(11);
-
-      // 16 curios -> +11 raw -> round(11/70 * 100) = 16
+      // 16 & 36 curios -> capped at +6 raw -> still 7 (no curio-spam cheese)
       player.inventory.knickKnacks = 16;
-      expect(recalculateLifestyle(player, campaign)).toBe(16);
+      expect(recalculateLifestyle(player, campaign)).toBe(7);
 
-      // 25 curios -> +14 raw -> round(14/70 * 100) = 20
-      player.inventory.knickKnacks = 25;
-      expect(recalculateLifestyle(player, campaign)).toBe(20);
-
-      // 36 curios -> +15 raw (capped) -> round(15/70 * 100) = 21
       player.inventory.knickKnacks = 36;
-      expect(recalculateLifestyle(player, campaign)).toBe(21);
+      expect(recalculateLifestyle(player, campaign)).toBe(7);
     });
 
-    it('enables low-cost starter home to reach 20+ lifestyle through curio collection and social', () => {
+    it('enables low-cost starter home to gain meaningful lifestyle through curio collection and social', () => {
       let player = makePlayer();
       player.currentHousingId = 'low_cost'; // 0 above starter
       player.mess = 0;
-      player.social = 50; // +3 raw (floor((50-20)/10))
-      player.inventory.knickKnacks = 16; // +11 raw -> 14 raw total -> round(14/70 * 100) = 20
+      player.social = 50; // +7 raw (floor((50-20)/4))
+      player.inventory.knickKnacks = 16; // capped at +6 raw -> 13 raw total -> round(13/85 * 100) = 15
 
       const lifestyle = recalculateLifestyle(player, campaign);
-      expect(lifestyle).toBe(20);
+      expect(lifestyle).toBe(15);
 
-      // 16 curios take 32 space out of low_cost home 100 space cap
+      // 16 curios still take 32 space out of low_cost home 100 space cap
       const usedSpace = calcUsedSpace(player, campaign, false);
       expect(usedSpace).toBe(32);
     });

@@ -242,9 +242,9 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
         }
       };
 
-      // Housing (0 above starter) + 8track (1) out of maxRaw=8 (stereo 2 + color_tv 2 + 4 books 4) -> round(1/8 * 100) = 13
+      // Housing (0 above starter) + 8track (1) out of maxRaw=27 (stereo 2 + color_tv 2 + 4 books 4 + maxSocial 19) -> round(1/27 * 100) = 4
       const lifestyle = recalculateLifestyle(equipped, mockCampaign);
-      expect(lifestyle).toBe(13);
+      expect(lifestyle).toBe(Math.round((1 / 27) * 100));
 
       const effects = collectItemEffects(equipped, mockCampaign, 'on_socialize');
       expect(effects.get('social')).toBe(0.5);
@@ -263,9 +263,9 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
         }
       };
 
-      // Stereo (2) supersedes 8-track (1). Total = 2 out of 8 -> round(2/8 * 100) = 25 (not 38)
+      // Stereo (2) supersedes 8-track (1). Total = 2 out of 27 -> round(2/27 * 100) = 7 (not 11)
       const lifestyle = recalculateLifestyle(equippedBoth, mockCampaign);
-      expect(lifestyle).toBe(25);
+      expect(lifestyle).toBe(Math.round((2 / 27) * 100));
 
       // Stereo (+1 social) supersedes 8-track (+0.5 social). Total = 1.0 (not 1.5)
       const effects = collectItemEffects(equippedBoth, mockCampaign, 'on_socialize');
@@ -316,7 +316,7 @@ describe('Advanced Edition: Revamped Former Junk Items & Survival Rules', () => 
       };
 
       const lifestyle = recalculateLifestyle(equipped, mockCampaign);
-      expect(lifestyle).toBe(13); // 1 Capote out of maxRaw=8 -> round(1/8 * 100) = 13
+      expect(lifestyle).toBe(Math.round((1 / 27) * 100)); // 1 Capote out of maxRaw=27 -> round(1/27 * 100) = 4
 
       const maxMental = calcMaxMental(equipped.mess || 0, equipped.social || 0, 0, equipped, mockStatRules, mockCampaign);
       const baseMaxMental = calcMaxMental(basePlayer.mess || 0, basePlayer.social || 0, 0, basePlayer, mockStatRules, mockCampaign);

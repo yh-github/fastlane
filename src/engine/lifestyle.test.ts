@@ -7,6 +7,7 @@ import {
   recalculatePlayerEffects,
   calcMaxLifestyle,
   calcCurioScaledLifestyle,
+  LIFESTYLE_CURIO_MAX_COUNT,
 } from './gameState';
 import { processTurnStart } from './turnProcessor';
 import { getHudAttributeInfo } from '../ui/hudAttributeInfo';
@@ -25,16 +26,17 @@ const ALL_TOP_SHARED_APPLIANCES = [
 const ALL_BOOKS = ['encyclopedia', 'dictionary', 'atlas', 'capote'];
 
 describe('Calibrated Lifestyle Goal Scoring', () => {
-  it('computes per-version 100 Lifestyle benchmarks accurately', async () => {
+  it('computes per-version 100 Lifestyle benchmarks accurately from configured maxes', async () => {
     const advanced = await loadCampaign('advanced');
     const adv2000 = await loadCampaign('advanced_2000');
     const scrubs = await loadCampaign('scrubs');
 
-    // advanced: Penthouse above low_cost (40) + shared appliances/books (22) + color_tv (2) + business_suit (2) + 3 curios (4) = 70
-    expect(calcMaxLifestyle(advanced)).toBe(70);
-    // advanced_2000 & scrubs: plasma_tv (3) replaces color_tv (2) + dishwasher (2) + robot_vacuum (2) -> 75
-    expect(calcMaxLifestyle(adv2000)).toBe(75);
-    expect(calcMaxLifestyle(scrubs)).toBe(75);
+    // advanced: Penthouse above low_cost (25) + shared apps/books (32) + color_tv (4) + business_suit (3) + 5 curios (6) + maxSocial 99 (19) = 85
+    // shared apps/books = fridge(1)+freezer(2)+stove(1)+microwave(2)+vcr(2)+stereo(2)+hot_tub(8)+computer(6) + 4 books(4) = 28 -> +25 +4 +3 +6 +19 = 85
+    expect(calcMaxLifestyle(advanced)).toBe(85);
+    // advanced_2000 & scrubs: plasma_tv (5) replaces color_tv (4) + dishwasher (2) + robot_vacuum (3) -> 91
+    expect(calcMaxLifestyle(adv2000)).toBe(91);
+    expect(calcMaxLifestyle(scrubs)).toBe(91);
 
     const noCuriosCampaign = {
       ...advanced,
@@ -46,7 +48,20 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
         },
       },
     };
-    expect(calcMaxLifestyle(noCuriosCampaign)).toBe(66);
+    expect(calcMaxLifestyle(noCuriosCampaign)).toBe(79);
+
+    // Custom maxSocial dynamically updates calcMaxLifestyle just like max education/housing
+    const lowerMaxSocialCampaign = {
+      ...advanced,
+      config: {
+        ...advanced.config,
+        statRules: {
+          ...advanced.config.statRules,
+          maxSocial: 60,
+        },
+      },
+    } as typeof advanced;
+    expect(calcMaxLifestyle(lowerMaxSocialCampaign)).toBe(76); // 85 - 19 + floor((60-20)/4)=10 = 76
   });
 
   it('starts at exactly 0 Lifestyle on Turn 0 across all Advanced campaigns', async () => {
@@ -62,38 +77,38 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
   it('allows homelessness, high mess, and low social to push Lifestyle below 0', async () => {
     const advanced = await loadCampaign('advanced');
 
-    // Homeless on the streets: -10 raw / 70 = -14
+    // Homeless on the streets: -10 raw / 85 = -12
     const homeless = createPlayerState('p1', 'Hero', false, {}, 'node_low_cost', advanced.config);
     homeless.currentHousingId = 'street';
-    expect(recalculateLifestyle(homeless, advanced)).toBe(-14);
+    expect(recalculateLifestyle(homeless, advanced)).toBe(-12);
 
-    // Filthy empty starter apartment (mess=50 -> -5 raw / 70 = -7)
+    // Filthy empty starter apartment (mess=50 -> -5 raw / 85 = -6)
     const messy = createPlayerState('p1', 'Hero', false, {}, 'node_low_cost', advanced.config);
     messy.mess = 50;
-    expect(recalculateLifestyle(messy, advanced)).toBe(-7);
+    expect(recalculateLifestyle(messy, advanced)).toBe(-6);
 
-    // Antisocial recluse (social=1, startingSocial=20 -> floor(-19/10) = -2 raw / 70 = -3)
+    // Antisocial recluse (social=1, startingSocial=20 -> floor(-19/4) = -5 raw / 85 = -6)
     const recluse = createPlayerState('p1', 'Hero', false, {}, 'node_low_cost', advanced.config);
     recluse.social = 1;
-    expect(recalculateLifestyle(recluse, advanced)).toBe(-3);
+    expect(recalculateLifestyle(recluse, advanced)).toBe(-6);
   });
 
   it('counts only the best working item per slot (TV, Audio, Clothes) and no duplicate stacking', async () => {
     const adv2000 = await loadCampaign('advanced_2000');
     const player = createPlayerState('p1', 'Hero', false, {}, 'node_low_cost', adv2000.config);
 
-    // Own both crt_tv (1) and plasma_tv (3) + duplicate plasma_tv -> only best plasma_tv (3) counts
+    // Own both crt_tv (1) and plasma_tv (5) + duplicate plasma_tv -> only best plasma_tv (5) counts
     player.inventory.appliances = [
       { id: 'crt_tv', purchasePrice: 140, purchaseSource: 'z_mart' },
       { id: 'plasma_tv', purchasePrice: 750, purchaseSource: 'socket_city' },
       { id: 'plasma_tv', purchasePrice: 750, purchaseSource: 'socket_city' },
     ];
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((3 / 75) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((5 / 91) * 100));
 
     // Break plasma_tvs -> falls back to working crt_tv (1)
     player.inventory.appliances[1].isBroken = true;
     player.inventory.appliances[2].isBroken = true;
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((1 / 75) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((1 / 91) * 100));
 
     // Break crt_tv too -> 0 TV lifestyle
     player.inventory.appliances[0].isBroken = true;
@@ -104,27 +119,27 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
       { id: '8track', purchasePrice: 75, purchaseSource: 'z_mart' },
       { id: 'stereo', purchasePrice: 412, purchaseSource: 'socket_city' },
     ];
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((2 / 75) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((2 / 91) * 100));
     player.inventory.appliances[1].isBroken = true;
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((1 / 75) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((1 / 91) * 100));
 
-    // Clothes slot: dress_clothes (1) + business_suit (2) -> only business_suit (2), not 3
+    // Clothes slot: dress_clothes (1) + business_suit (3) -> only business_suit (3), not 4
     player.inventory.appliances = [];
     player.inventory.dressClothesWeeks = 5;
     player.inventory.businessClothesWeeks = 10;
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((2 / 75) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((3 / 91) * 100));
 
-    // Duplicate non-slot appliances (2 hot tubs) only count once (5 raw, not 7)
+    // Duplicate non-slot appliances (2 hot tubs) only count once (8 raw, not 16)
     player.inventory.dressClothesWeeks = 0;
     player.inventory.businessClothesWeeks = 0;
     player.inventory.appliances = [
       { id: 'hot_tub', purchasePrice: 1255, purchaseSource: 'socket_city' },
       { id: 'hot_tub', purchasePrice: 1255, purchaseSource: 'socket_city' },
     ];
-    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((5 / 75) * 100));
+    expect(recalculateLifestyle(player, adv2000)).toBe(Math.round((8 / 91) * 100));
   });
 
-  it('awards exact 100 Lifestyle for Penthouse + all top working durables + Business Suit + 3 curios', async () => {
+  it('requires Penthouse, all top working durables, Business Suit, capped curios, and peak Social for 100 Lifestyle', async () => {
     for (const [id, topTv] of [
       ['advanced', 'color_tv'],
       ['advanced_2000', 'plasma_tv'],
@@ -141,17 +156,32 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
       }));
       player.inventory.books = [...ALL_BOOKS];
       player.inventory.businessClothesWeeks = 10;
-      player.inventory.knickKnacks = 3;
+      player.inventory.knickKnacks = LIFESTYLE_CURIO_MAX_COUNT;
+      player.social = 96; // floor((96 - 20) / 4) = 19 (top Social tier)
 
       expect(recalculateLifestyle(player, campaign)).toBe(100);
 
-      // Missing the 3rd curio keeps score below 100 (at baseline social=20)
-      player.inventory.knickKnacks = 2;
+      // Missing peak Social (95 instead of 96-99) keeps score below 100
+      player.social = 95;
+      expect(recalculateLifestyle(player, campaign)).toBeLessThan(100);
+      player.social = 99;
+
+      // Missing the 5th curio keeps score below 100 (even at maxSocial=99)
+      player.inventory.knickKnacks = LIFESTYLE_CURIO_MAX_COUNT - 1;
       expect(recalculateLifestyle(player, campaign)).toBeLessThan(100);
 
-      // Social above baseline (e.g. social=40 -> +2 raw) acts as a buffer back to 100
-      player.social = 40;
+      // Spamming extra curios past cap (e.g. 25 curios) still cannot substitute for missing items or exceed 100
+      player.inventory.knickKnacks = 25;
+      expect(calcCurioScaledLifestyle(25, campaign)).toBe(calcCurioScaledLifestyle(LIFESTYLE_CURIO_MAX_COUNT, campaign));
       expect(recalculateLifestyle(player, campaign)).toBe(100);
+
+      // Missing even 1 book (capote) or 1 durable (computer) drops below 100 despite max Social & curio spam
+      player.inventory.books = ['encyclopedia', 'dictionary', 'atlas'];
+      expect(recalculateLifestyle(player, campaign)).toBeLessThan(100);
+      player.inventory.books = [...ALL_BOOKS];
+
+      player.inventory.appliances = player.inventory.appliances.filter(a => a.id !== 'computer');
+      expect(recalculateLifestyle(player, campaign)).toBeLessThan(100);
     }
   });
 
@@ -199,8 +229,8 @@ describe('Calibrated Lifestyle Goal Scoring', () => {
       rules: campaign.config.gameRules,
       turn: 1,
     });
-    expect(hudInfo?.currentValue).toBe(-14);
-    expect(hudInfo?.currentFormatted).toBe('-14');
+    expect(hudInfo?.currentValue).toBe(-12);
+    expect(hudInfo?.currentFormatted).toBe('-12');
     expect(hudInfo?.percentage).toBe(0);
   });
 });
