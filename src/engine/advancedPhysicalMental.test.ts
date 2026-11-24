@@ -497,7 +497,7 @@ describe('Advanced Physical & Mental Condition Overhaul', () => {
       expect(result.success).toBe(true);
       expect(result.updated.mistakesByLocation?.['tech_hq']).toBe(1);
       expect(result.updated.physicalConditionMax).toBe(49);
-      expect(result.updated.dependability).toBe(50); // 0 penalty on first mistake (curMistakes was 0)
+      expect(result.updated.dependability).toBe(49); // -1 penalty on first mistake
     });
 
     it('location mistakes apply employability penalty when applying for jobs at that location', () => {

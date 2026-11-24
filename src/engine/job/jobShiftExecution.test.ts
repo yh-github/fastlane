@@ -1641,8 +1641,51 @@ describe("Job Engine - workShift", () => {
         const grindReplay: ReplayContext = { inDecisions: [{ type: 'work_newjob_mistake_p_rookie_4', result: true }], outDecisions: [] };
         const grindRes = workShift({ ...rookie, workActionsThisTurn: 3 }, factoryJob, 6, advRules, escalatedStatRules, 'work_work', new Random(1), grindReplay);
         expect(grindRes.updated.mistakesByLocation?.factory).toBe(1);
-        expect(grindRes.updated.dependability).toBe(19); // -1 Dep operational mistake penalty
-        expect(grindRes.messages?.some(m => m.key === 'action.job.mistake' && String(m.params?.type).includes('Inexperience'))).toBe(true);
+        expect(grindRes.updated.dependability).toBe(18); // -1 base 1st mistake + -1 operational inexperience penalty
+        expect(grindRes.messages?.some(m => m.key === 'action.job.mistake' && String(m.params?.type).includes('Inexperience') && m.params?.penalty === 2)).toBe(true);
+      });
+
+      it('deducts -1 Dependability on 1st mistake, -2 on 2nd, and -3 on 3rd, matching the log penalty param', () => {
+        const worker = {
+          id: 'p_escalate',
+          hoursRemaining: 60,
+          currentJobId: 'factory_scrap_sorter',
+          currentWage: 7,
+          experience: 40, // safely above newjob margin
+          dependability: 30,
+          physicalCondition: 10, // below threshold -> physical mistake triggers
+          mentalCondition: 50,
+          social: 50,
+          inventory: { casualClothesWeeks: 10, selectedClothes: 'casual' },
+          turnFlags: {}
+        } as unknown as PlayerState;
+
+        // 1st mistake (curMistakes=0): -1 Dep
+        const res1 = workShift(worker, factoryJob, 6, advRules, escalatedStatRules, 'work_work', new Random(1), {
+          inDecisions: [{ type: 'work_phys_mistake_p_escalate_1', result: true }],
+          outDecisions: []
+        });
+        expect(res1.updated.dependability).toBe(29);
+        expect(res1.updated.mistakesByLocation?.factory).toBe(1);
+        expect(res1.messages?.find(m => m.key === 'action.job.mistake')?.params?.penalty).toBe(1);
+
+        // 2nd mistake (curMistakes=1): -2 Dep (29 -> 27)
+        const res2 = workShift(res1.updated, factoryJob, 6, advRules, escalatedStatRules, 'work_work', new Random(1), {
+          inDecisions: [{ type: 'work_phys_mistake_p_escalate_2', result: true }],
+          outDecisions: []
+        });
+        expect(res2.updated.dependability).toBe(27);
+        expect(res2.updated.mistakesByLocation?.factory).toBe(2);
+        expect(res2.messages?.find(m => m.key === 'action.job.mistake')?.params?.penalty).toBe(2);
+
+        // 3rd mistake on next turn (turnFlags cleared so not fired): -3 Dep (27 -> 24)
+        const res3 = workShift({ ...res2.updated, workMistakesThisTurn: 0, turnFlags: { ...res2.updated.turnFlags, workMistakesThisTurn: 0 } }, factoryJob, 6, advRules, escalatedStatRules, 'work_work', new Random(1), {
+          inDecisions: [{ type: 'work_phys_mistake_p_escalate_3', result: true }],
+          outDecisions: []
+        });
+        expect(res3.updated.dependability).toBe(24);
+        expect(res3.updated.mistakesByLocation?.factory).toBe(3);
+        expect(res3.messages?.find(m => m.key === 'action.job.mistake')?.params?.penalty).toBe(3);
       });
     });
 
@@ -1871,7 +1914,7 @@ describe("Job Engine - workShift", () => {
         expect(res.messages?.some(m => m.key === 'action.job.initiativeFailed')).toBe(true);
         expect(res.messages?.some(m => m.key === 'action.job.mistake' && String(m.params?.type).includes('Rushed Initiative'))).toBe(true);
 
-        // If standing was already 0, deducts 1 extra Dependability instead
+        // If standing was already 0, deducts 1 extra Dependability on top of 1st-mistake -1 Dep
         const zeroStandingRes = workShift(
           { ...failPlayer, id: 'p_init_fail0', initiativesByLocation: { bank: 0 } },
           midMgmtFrontline,
@@ -1883,7 +1926,7 @@ describe("Job Engine - workShift", () => {
           { inDecisions: [{ type: 'work_initiative_mistake_p_init_fail0_1', result: true }], outDecisions: [] }
         );
         expect(zeroStandingRes.updated.initiativesByLocation?.bank).toBe(0);
-        expect(zeroStandingRes.updated.dependability).toBe(39);
+        expect(zeroStandingRes.updated.dependability).toBe(38);
       });
     });
   });

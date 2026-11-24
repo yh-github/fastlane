@@ -551,6 +551,7 @@ export function workShift(
   const anyMistake = physMistake || mentalMistake || socialMistake || execMistake || newJobMistake || initiativeMistake;
   if (anyMistake) {
     const curMistakes = updated.mistakesByLocation?.[job.locationId] || 0;
+    const depBeforeMistake = updated.dependability;
     let mistakesAdded = 0;
     if (physMistake) {
       mistakesAdded++;
@@ -595,8 +596,10 @@ export function workShift(
       messages.push({ key: 'action.job.initiativeFailed' });
     }
 
-    // Penalty = NUM_OF_MISTAKES (current counter before adding this turn's mistakes)
-    updated.dependability = Math.max(0, updated.dependability - curMistakes);
+    // Escalating Dependability penalty: -1 on 1st mistake, -2 on 2nd, -3 on 3rd, etc.
+    const escalatingDepPenalty = curMistakes + 1;
+    updated.dependability = Math.max(0, updated.dependability - escalatingDepPenalty);
+    const totalDepLost = Math.max(0, roundToResolution(depBeforeMistake - updated.dependability, 0.5));
     const extraSocialPenalty = getJobWorkMistakeSocialPenalty(job);
     if (extraSocialPenalty > 0) {
       updated.social = Math.max(1, (updated.social || 1) - extraSocialPenalty);
@@ -625,7 +628,7 @@ export function workShift(
       newJobMistake ? 'Inexperience' : null,
       initiativeMistake ? (hoursToWork < shiftCost ? 'Rushed Initiative' : 'Initiative') : null
     ].filter(Boolean).join(' & ');
-    messages.push({ key: 'action.job.mistake', params: { type: mistakeTypes, penalty: curMistakes, total: curMistakes + mistakesAdded } });
+    messages.push({ key: 'action.job.mistake', params: { type: mistakeTypes, penalty: totalDepLost, total: curMistakes + mistakesAdded } });
 
     const mistakeTerminationThreshold = 3 + locMerits;
     if (currentTurnMistakes >= mistakeTerminationThreshold) {
