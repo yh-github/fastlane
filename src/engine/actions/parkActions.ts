@@ -1025,10 +1025,6 @@ function resolveParkEncounterBranch(params: {
       };
       nextPlayer.pendingMiniGame = miniGameState;
       nextPlayer.pendingAppraisalDilemma = miniGameState;
-      actionLogs.push({
-        key: 'events.park.hazard',
-        params: { title: muggingCard.title, desc: muggingCard.description }
-      });
     }
     return nextPlayer;
   }
@@ -1062,10 +1058,6 @@ function resolveParkEncounterBranch(params: {
       };
       nextPlayer.pendingMiniGame = miniGameState;
       nextPlayer.pendingAppraisalDilemma = miniGameState;
-      actionLogs.push({
-        key: 'events.park.hazard',
-        params: { title: hazardCard.title, desc: hazardCard.description }
-      });
     }
     return nextPlayer;
   }

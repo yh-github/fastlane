@@ -702,5 +702,72 @@ describe('Park Actions', () => {
       expect(scaleParkCard(hillSprints, 0.5, 0.5)).toMatchObject({ maxPhysAmount: 1, physicalAmount: -1.5 });
       expect(scaleParkCard(hillSprints, 0.14 / 3, 0.5)).toMatchObject({ maxPhysAmount: 0.5, physicalAmount: -0.5 });
     });
+
+    it('logs events.park.hazard only once when human triggers and resolves a park hazard or outfit mugging', () => {
+      const advRules = {
+        ...TEST_ADVANCED_CAMPAIGN_CONFIG.gameRules,
+        usePhysicalMentalConditions: true,
+        trackSocial: true,
+        enableParkSystem: true,
+      };
+
+      const runHumanHazardFlow = (
+        action: { type: 'relax_park' | 'workout_park' },
+        selectedClothes: 'casual' | 'business',
+        decision: { type: string; result: string }
+      ) => {
+        const player = createPlayerState('p1', 'Player 1', false, { wealth: 50, happiness: 50, education: 50, career: 50 }, 'node_1', dummyCampaign.config);
+        player.hoursRemaining = 20;
+        player.money = 300;
+        player.physicalCondition = 40;
+        player.mentalCondition = 40;
+        player.inventory.selectedClothes = selectedClothes;
+
+        const drawRes = gameReducer(player, action, {
+          campaign: dummyCampaign,
+          rules: advRules,
+          turn: 1,
+          economicIndex: 0,
+          rng: new Random(1),
+          state: { turn: 1, players: [player] } as any,
+          engineDecisions: [decision],
+        });
+        const drawLogs = Array.isArray(drawRes.actionLog) ? drawRes.actionLog : (drawRes.actionLog ? [drawRes.actionLog] : []);
+
+        const resolveRes = gameReducer(drawRes.updatedPlayer, { type: 'resolve_mini_game', choiceIndex: 0 }, {
+          campaign: dummyCampaign,
+          rules: advRules,
+          turn: 1,
+          economicIndex: 0,
+          rng: new Random(1),
+          state: { turn: 1, players: [drawRes.updatedPlayer] } as any,
+        });
+        const resolveLogs = Array.isArray(resolveRes.actionLog) ? resolveRes.actionLog : (resolveRes.actionLog ? [resolveRes.actionLog] : []);
+
+        const allLogs = [...drawLogs, ...resolveLogs];
+        const hazardLogs = allLogs.filter(l => l.key === 'events.park.hazard');
+        return { drawLogs, resolveLogs, hazardLogs };
+      };
+
+      const relaxHazard = runHumanHazardFlow(
+        { type: 'relax_park' },
+        'casual',
+        { type: 'park_roll_bad_p1_1_0', result: 'hazard' }
+      );
+      expect(relaxHazard.drawLogs.filter(l => l.key === 'events.park.hazard')).toHaveLength(0);
+      expect(relaxHazard.resolveLogs.filter(l => l.key === 'events.park.hazard')).toHaveLength(1);
+      expect(relaxHazard.hazardLogs).toHaveLength(1);
+      expect(relaxHazard.hazardLogs[0].modifications?.length).toBeGreaterThan(0);
+
+      const workoutMugging = runHumanHazardFlow(
+        { type: 'workout_park' },
+        'business',
+        { type: 'park_workout_bad_p1_1_0', result: 'mugging' }
+      );
+      expect(workoutMugging.drawLogs.filter(l => l.key === 'events.park.hazard')).toHaveLength(0);
+      expect(workoutMugging.resolveLogs.filter(l => l.key === 'events.park.hazard')).toHaveLength(1);
+      expect(workoutMugging.hazardLogs).toHaveLength(1);
+      expect(workoutMugging.hazardLogs[0].modifications?.length).toBeGreaterThan(0);
+    });
   });
 });
